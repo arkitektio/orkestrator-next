@@ -1,31 +1,25 @@
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { toast } from "@/components/ui/use-toast";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 import { notEmpty } from "@/lib/utils";
 import {
   PostmanReservationFragment,
-  ReservationStatus,
-  useAssignNodeQuery,
-  useConstantNodeQuery,
   useDetailReservationQuery,
 } from "@/rekuest/api/graphql";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { EasyGuard } from "@jhnnsrs/arkitekt";
 import {
+  NodeDescription,
   Port,
   PortGroup,
   RekuestGuard,
   portToDefaults,
-  useWidgetRegistry,
-  yupSchemaBuilder,
-  withRekuest,
   usePostman,
-  NodeDescription,
-  argDictToArgs,
+  useWidgetRegistry,
+  withRekuest,
+  yupSchemaBuilder,
 } from "@jhnnsrs/rekuest";
-import { set } from "date-fns";
-import { useEffect, useCallback, useState, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
 
@@ -35,17 +29,11 @@ export const portHash = (port: Port[]) => {
     .join("-");
 };
 
-export const PortForm = (props: {
-  description: string;
-  reservation: PostmanReservationFragment;
+export const usePortForm = (props: {
   ports: Port[];
-  groups: PortGroup[];
   overwrites?: { [key: string]: any };
+  autoReset?: boolean;
 }) => {
-  const { assign } = usePostman();
-  const { registry } = useWidgetRegistry();
-  const [argDict, setArgDict] = useState<{ [key: string]: any }>({});
-
   const hash = portHash(props.ports);
 
   const schema = useMemo(() => yupSchemaBuilder(props.ports), [hash]);
@@ -67,8 +55,28 @@ export const PortForm = (props: {
   });
 
   useEffect(() => {
+    if (!props.autoReset) return;
     form.reset(portToDefaults(props.ports, props.overwrites || {}));
   }, [hash]);
+
+  return form;
+};
+
+export const PortForm = (props: {
+  description: string;
+  reservation: PostmanReservationFragment;
+  ports: Port[];
+  groups: PortGroup[];
+  overwrites?: { [key: string]: any };
+}) => {
+  const { assign } = usePostman();
+  const { registry } = useWidgetRegistry();
+  const [argDict, setArgDict] = useState<{ [key: string]: any }>({});
+
+  const form = usePortForm({
+    ports: props.ports,
+    overwrites: props.overwrites,
+  });
 
   function onSubmit(data: any) {
     console.log(data);

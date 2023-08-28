@@ -1,0 +1,29 @@
+query ConstantNode($id: ID!) {
+  node(id: $id) {
+    name
+    description
+    ...Ports
+  }
+}
+
+query AssignNode($reservation: ID!) {
+  node(reservation: $reservation) {
+    name
+    description
+    ...Ports
+  }
+}
+
+query ReturnNode($assignation: ID!) {
+  node(assignation: $assignation) {
+    name
+    description
+    ...Ports
+  }
+}
+
+query AllNodes($limit: Int) {
+  allnodes(order: "-time", limit: $limit) {
+    ...ListNode
+  }
+}

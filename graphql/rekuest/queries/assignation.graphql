@@ -1,0 +1,5 @@
+query Assignations($instanceId: String!) {
+  requests(exclude: [DONE, CRITICAL], instanceId: $instanceId) {
+    ...PostmanAssignation
+  }
+}

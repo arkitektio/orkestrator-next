@@ -1,0 +1,25 @@
+mutation Reserve(
+  $instanceId: ID!
+  $node: ID
+  $hash: String
+  $template: ID
+  $params: ReserveParamsInput
+  $binds: ReserveBindsInput
+  $title: String
+  $imitate: ID
+  $allowAutoRequest: Boolean
+) {
+  reserve(
+    instanceId: $instanceId
+    node: $node
+    template: $template
+    hash: $hash
+    params: $params
+    binds: $binds
+    title: $title
+    allowAutoRequest: $allowAutoRequest
+    imitate: $imitate
+  ) {
+    ...PostmanReservation
+  }
+}

@@ -1,0 +1,20 @@
+overwrite: true
+schema: "http://100.91.169.37:8090/graphql"
+documents: "graphql/rekuest/**/*.graphql"
+generates:
+  src/rekuest/api/fragments.ts:
+    plugins:
+      - "fragment-matcher"
+  src/rekuest/api/graphql.ts:
+    plugins:
+      - "typescript"
+      - "typescript-operations"
+      - "typescript-react-apollo"
+    config:
+      withHooks: true
+      reactApolloVersion: 3
+      arrayInputCoercion: false
+
+  src/rekuest/api/graphql.schema.json:
+    plugins:
+      - "introspection"

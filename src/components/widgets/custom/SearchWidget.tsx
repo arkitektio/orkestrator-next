@@ -1,0 +1,48 @@
+import { SearchField, SearchOptions } from "@/components/fields/SearchField";
+import { FormField } from "@/components/ui/form";
+import { PortKind, SearchWidgetFragment } from "@/rekuest/api/graphql";
+import { gql } from "@apollo/client";
+import { InputWidgetProps, Ward, useWidgetRegistry } from "@jhnnsrs/rekuest";
+import { useCallback, useEffect, useMemo } from "react";
+import { useFormContext } from "react-hook-form";
+
+export const SearchWidget = (props: InputWidgetProps<SearchWidgetFragment>) => {
+  const form = useFormContext();
+  const { registry } = useWidgetRegistry();
+
+  console.log(props.widget?.ward);
+  let query = props?.widget?.query || "";
+  let wardKey = props.widget?.ward;
+  console.log(query, wardKey);
+
+  const theward = useMemo(
+    () => registry.getWard(wardKey || "default"),
+    [registry, wardKey]
+  );
+
+  const values = useMemo(() => form.getValues(), [form.formState]);
+  console.log(values);
+
+  const search = useCallback(
+    async (searching: SearchOptions) => {
+      if (!theward.search) throw new Error("Ward does not support search");
+      let options = await theward.search({
+        query: query,
+        variables: { ...searching, ...values },
+      });
+      return options;
+    },
+    [theward, query, values]
+  );
+
+  return (
+    <SearchField
+      name={props.port.key}
+      label={props.port.label || undefined}
+      search={search}
+      description={props.port.description || undefined}
+      noOptionFoundPlaceholder="No options found"
+      commandPlaceholder="Search..."
+    />
+  );
+};

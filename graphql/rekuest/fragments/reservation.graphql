@@ -1,0 +1,7 @@
+fragment PostmanReservation on Reservation {
+  title
+  status
+  id
+  reference
+  statusmessage
+}

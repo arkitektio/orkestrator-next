@@ -1,0 +1,10 @@
+fragment PostmanAssignation on Assignation {
+  id
+  status
+  statusmessage
+  args
+  kwargs
+  reference
+  progress
+  returns
+}

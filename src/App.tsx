@@ -1,4 +1,11 @@
-import { EasyProvider, AutoConfiguration } from "@jhnnsrs/arkitekt";
+import {
+  EasyProvider,
+  AutoConfiguration,
+  useApp,
+  EasyGuard,
+  LogoutButton,
+  UnconnectButton,
+} from "@jhnnsrs/arkitekt";
 import "./index.css";
 import Home from "./pages/Home";
 import Node from "./pages/Node";
@@ -13,12 +20,14 @@ import { ShadnWigets } from "./components/widgets/ShadnWigets";
 import { Toaster } from "./components/ui/toaster";
 import rekuestFragments from "./rekuest/api/fragments";
 import mikroFragments from "./rekuest/api/fragments";
+import flussFragments from "./reaktion/api/fragments";
 import {
   GraphQLPostman,
   RekuestGuard,
   useWidgetRegistry,
   withRekuest,
 } from "@jhnnsrs/rekuest";
+import { FlussGuard, withFluss } from "@jhnnsrs/fluss";
 import { useToast } from "./components/ui/use-toast";
 import {
   PostmanAssignationFragment,
@@ -26,6 +35,9 @@ import {
 } from "./rekuest/api/graphql";
 import { ReturnsContainer } from "./components/widgets/returns/ReturnsContainer";
 import { notEmpty } from "./lib/utils";
+import { useFlowQuery } from "./reaktion/api/graphql";
+import { EditFlow } from "./reaktion/edit/EditFlow";
+import { TooltipProvider } from "./components/ui/tooltip";
 
 export const AssignContainer = (props: {
   assignation: PostmanAssignationFragment;
@@ -51,6 +63,30 @@ export const AssignContainer = (props: {
   );
 };
 
+export const Flow = () => {
+  const { data } = withFluss(useFlowQuery)({
+    variables: {
+      id: "389",
+    },
+  });
+
+  return <> {data?.flow && <EditFlow flow={data.flow} />}</>;
+};
+
+export const Test = () => {
+  const { manifest } = useApp();
+
+  return (
+    <EasyGuard>
+      <FlussGuard fallback="Not yed with lust">
+        <Flow />
+      </FlussGuard>
+      <LogoutButton />
+      <UnconnectButton />
+    </EasyGuard>
+  );
+};
+
 function App() {
   const { toast } = useToast();
 
@@ -61,12 +97,11 @@ function App() {
         identifier: "github.io.jhnnsrs.orkestrator",
       }}
     >
-      <Toaster />
-      <ShadnWigets />
       <AutoConfiguration
-        endpoints={["100.91.169.37:8000"]}
-        rekuestPossibleTypes={rekuestFragments.possibleTypes}
-        mikroPossibleTypes={mikroFragments.possibleTypes}
+        wellKnownEndpoints={["100.91.169.37:8000"]}
+        rekuest={{ possibleTypes: rekuestFragments.possibleTypes }}
+        mikro={{ possibleTypes: mikroFragments.possibleTypes }}
+        fluss={{ possibleTypes: flussFragments.possibleTypes }}
       />
       <RekuestGuard>
         <GraphQLPostman
@@ -90,50 +125,55 @@ function App() {
         />
       </RekuestGuard>
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <BrowserRouter>
-          <div className="md:hidden">
-            <img
-              src="/examples/music-light.png"
-              width={1280}
-              height={1114}
-              alt="Music"
-              className="block dark:hidden"
-            />
-            <img
-              src="/examples/music-dark.png"
-              width={1280}
-              height={1114}
-              alt="Music"
-              className="hidden dark:block"
-            />
-          </div>
-          <div className="hidden md:block">
-            <Menu />
-            <div className="border-t">
-              <div className="bg-background">
-                <div className="grid lg:grid-cols-5">
-                  <RekuestGuard>
-                    <Sidebar className="hidden lg:block" />
-                  </RekuestGuard>
+        <TooltipProvider>
+          <Toaster />
+          <ShadnWigets />
+          <BrowserRouter>
+            <div className="md:hidden">
+              <img
+                src="/examples/music-light.png"
+                width={1280}
+                height={1114}
+                alt="Music"
+                className="block dark:hidden"
+              />
+              <img
+                src="/examples/music-dark.png"
+                width={1280}
+                height={1114}
+                alt="Music"
+                className="hidden dark:block"
+              />
+            </div>
+            <div className="hidden md:block">
+              <Menu />
+              <div className="border-t">
+                <div className="h-full bg-background">
+                  <div className="grid lg:grid-cols-5">
+                    <RekuestGuard>
+                      <Sidebar className="hidden lg:block" />
+                    </RekuestGuard>
 
-                  <div className="col-span-3 lg:col-span-4 lg:border-l">
-                    <div className="h-full px-4 py-6 lg:px-8">
-                      <Routes>
-                        <Route path="/" element={<Home />} />
-                        <Route path="/nodes/:id" element={<Node />} />
-                        <Route
-                          path="/reservations/:id"
-                          element={<Reservation />}
-                        />
-                        <Route path="/callback" element={<Callback />} />
-                      </Routes>
+                    <div className="col-span-3 lg:col-span-4 lg:border-l">
+                      <div className="h-full px-4 py-6 lg:px-8">
+                        <Routes>
+                          <Route path="/" element={<Home />} />
+                          <Route path="/fluss" element={<Test />} />
+                          <Route path="/nodes/:id" element={<Node />} />
+                          <Route
+                            path="/reservations/:id"
+                            element={<Reservation />}
+                          />
+                          <Route path="/callback" element={<Callback />} />
+                        </Routes>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </BrowserRouter>
+          </BrowserRouter>
+        </TooltipProvider>
       </ThemeProvider>
     </EasyProvider>
   );

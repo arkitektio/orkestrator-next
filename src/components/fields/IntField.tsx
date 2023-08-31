@@ -28,7 +28,7 @@ export const IntField = (props: FieldProps & { placeholder?: string }) => {
               }
               {...field}
               onChange={(e) => {
-                field.onChange(parseInt(e.target.value));
+                field.onChange(e);
               }}
               type="number"
             />

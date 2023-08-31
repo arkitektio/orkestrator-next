@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
+import { toast } from "@/components/ui/use-toast";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 import { notEmpty } from "@/lib/utils";
 import {
@@ -13,6 +14,7 @@ import {
   Port,
   PortGroup,
   RekuestGuard,
+  argDictToArgs,
   portToDefaults,
   usePostman,
   useWidgetRegistry,
@@ -32,13 +34,14 @@ export const portHash = (port: Port[]) => {
 export const usePortForm = (props: {
   ports: Port[];
   overwrites?: { [key: string]: any };
-  autoReset?: boolean;
+  doNotAutoReset?: boolean;
 }) => {
   const hash = portHash(props.ports);
 
   const schema = useMemo(() => yupSchemaBuilder(props.ports), [hash]);
   const resolver = useCallback(
     async (data: any, context: any, options: any) => {
+      console.log(data);
       return await yupResolver(schema)(data, context, options);
     },
     [hash, schema]
@@ -55,7 +58,7 @@ export const usePortForm = (props: {
   });
 
   useEffect(() => {
-    if (!props.autoReset) return;
+    if (props.doNotAutoReset) return;
     form.reset(portToDefaults(props.ports, props.overwrites || {}));
   }, [hash]);
 
@@ -81,22 +84,37 @@ export const PortForm = (props: {
   function onSubmit(data: any) {
     console.log(data);
     setArgDict(data);
+    assign({
+      reservation: props.reservation.id,
+      args: argDictToArgs(data, props.ports),
+    }).then((res) => {
+      toast({
+        title: "Assigned",
+        description: "The reservation has been assigned",
+      });
+    });
   }
 
   return (
     <>
       <NodeDescription description={props.description} variables={argDict} />
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
+        <form
+          onSubmit={form.handleSubmit(onSubmit, () => {
+            toast({
+              title: "Error",
+              description: "Something went wrong",
+            });
+          })}
+          className="space-y-6 mt-4"
+        >
           <ArgsContainer
             registry={registry}
             ports={props.ports}
             groups={props.groups}
           />
         </form>
-        <Button type="submit" disabled={!form.formState.isValid}>
-          Assign
-        </Button>
+        <Button type="submit">Assign</Button>
       </Form>
     </>
   );

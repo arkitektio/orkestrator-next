@@ -4,9 +4,8 @@ import {
   EffectWrapper,
   Port,
   PortGroup,
-  WidgetRegistryType,
-} from "@jhnnsrs/rekuest";
-import { useState, useEffect, useMemo } from "react";
+} from "@jhnnsrs/rekuest-next";
+import { useMemo } from "react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -32,9 +31,9 @@ export const ArgsContainer = ({
   let hash = portHash(ports.filter(notEmpty));
 
   const filledGroups = useMemo(() => {
-    let argGroups: FilledGroup[] = [{ key: "default", ports: [] }].concat(
-      groups?.filter(notEmpty).map((g) => ({ ...g, ports: [] })) || []
-    );
+    let argGroups: FilledGroup[] = [
+      { key: "default", ports: [], hidden: false },
+    ].concat(groups?.filter(notEmpty).map((g) => ({ ...g, ports: [] })) || []);
     let defaultGroup = argGroups.find((g) => g.key === "default");
     for (let port of ports) {
       if (!port) continue;

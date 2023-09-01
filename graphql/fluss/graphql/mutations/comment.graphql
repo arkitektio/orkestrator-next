@@ -1,0 +1,27 @@
+mutation CreateComment(
+  $id: ID!
+  $model: CommentableModels!
+  $descendents: [DescendendInput]!
+  $parent: ID
+) {
+  createComment(
+    object: $id
+    type: $model
+    descendents: $descendents
+    parent: $parent
+  ) {
+    ...ListComment
+  }
+}
+
+mutation ReplyTo($descendents: [DescendendInput]!, $parent: ID!) {
+  replyTo(descendents: $descendents, parent: $parent) {
+    ...ListComment
+  }
+}
+
+mutation ResolveComment($id: ID!) {
+  resolveComment(id: $id) {
+    ...ListComment
+  }
+}

@@ -1,13 +1,12 @@
 import { SearchField, SearchOptions } from "@/components/fields/SearchField";
-import { FormField } from "@/components/ui/form";
 import { notEmpty } from "@/lib/utils";
-import { ChoiceWidgetFragment } from "@/rekuest/api/graphql";
-import { InputWidgetProps, Ward, useWidgetRegistry } from "@jhnnsrs/rekuest";
-import { useCallback, useMemo } from "react";
+import { ChoiceAssignWidgetFragment } from "@/rekuest/api/graphql";
+import { InputWidgetProps } from "@jhnnsrs/rekuest-next";
+import { useCallback } from "react";
 import { useFormContext } from "react-hook-form";
 
 export const ListChoicesWidget = (
-  props: InputWidgetProps<ChoiceWidgetFragment>
+  props: InputWidgetProps<ChoiceAssignWidgetFragment>
 ) => {
   const form = useFormContext();
 

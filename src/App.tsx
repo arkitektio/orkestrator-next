@@ -4,6 +4,7 @@ import {
   useApp,
   EasyGuard,
   LogoutButton,
+  Callback,
   UnconnectButton,
 } from "@jhnnsrs/arkitekt";
 import "./index.css";
@@ -15,38 +16,42 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Menu } from "./components/navigation/Menu";
 import { Sidebar } from "./components/navigation/Sidebar";
 import { ThemeProvider } from "./providers/ThemeProvider";
-import { Callback } from "./components/Callback";
 import { ShadnWigets } from "./components/widgets/ShadnWigets";
 import { Toaster } from "./components/ui/toaster";
-import rekuestFragments from "./rekuest/api/fragments";
 import mikroFragments from "./rekuest/api/fragments";
-import flussFragments from "./reaktion/api/fragments";
+import { useFlowQuery } from "@/rekuest/api/graphql";
 import {
   GraphQLPostman,
   RekuestGuard,
   useWidgetRegistry,
   withRekuest,
-} from "@jhnnsrs/rekuest";
+  RekuestProvider,
+  WidgetRegistryProvider,
+  PostmanProvider,
+} from "@jhnnsrs/rekuest-next";
 import { FlussGuard, withFluss } from "@jhnnsrs/fluss";
 import { useToast } from "./components/ui/use-toast";
 import {
+  AssignationEventFragment,
   PostmanAssignationFragment,
   useReturnNodeQuery,
 } from "./rekuest/api/graphql";
 import { ReturnsContainer } from "./components/widgets/returns/ReturnsContainer";
 import { notEmpty } from "./lib/utils";
-import { useFlowQuery } from "./reaktion/api/graphql";
 import { EditFlow } from "./reaktion/edit/EditFlow";
 import { TooltipProvider } from "./components/ui/tooltip";
+import { RekuestNextAutoConfigure } from "./config/RekuestNextAutoConfigure";
+import { SmartProvider } from "./smart/provider";
+import { SmartModel } from "./smart/SmartModel";
 
 export const AssignContainer = (props: {
-  assignation: PostmanAssignationFragment;
+  event: AssignationEventFragment;
   returns: any[];
 }) => {
   const { registry } = useWidgetRegistry();
   const { data } = withRekuest(useReturnNodeQuery)({
     variables: {
-      assignation: props.assignation.id,
+      assignation: props.event.assignation.id,
     },
   });
 
@@ -64,13 +69,15 @@ export const AssignContainer = (props: {
 };
 
 export const Flow = () => {
-  const { data } = withFluss(useFlowQuery)({
+  const { data, error } = withRekuest(useFlowQuery)({
     variables: {
-      id: "389",
+      id: "18",
     },
   });
 
-  return <> {data?.flow && <EditFlow flow={data.flow} />}</>;
+  console.log(error?.message, data);
+
+  return <> ddd{data?.flow && <EditFlow flow={data.flow} />}</>;
 };
 
 export const Test = () => {
@@ -78,9 +85,10 @@ export const Test = () => {
 
   return (
     <EasyGuard>
-      <FlussGuard fallback="Not yed with lust">
+      <RekuestGuard fallback={"NOOOO Request?"}>
         <Flow />
-      </FlussGuard>
+      </RekuestGuard>
+      hallo
       <LogoutButton />
       <UnconnectButton />
     </EasyGuard>
@@ -97,84 +105,77 @@ function App() {
         identifier: "github.io.jhnnsrs.orkestrator",
       }}
     >
-      <AutoConfiguration
-        wellKnownEndpoints={["100.91.169.37:8000"]}
-        rekuest={{ possibleTypes: rekuestFragments.possibleTypes }}
-        mikro={{ possibleTypes: mikroFragments.possibleTypes }}
-        fluss={{ possibleTypes: flussFragments.possibleTypes }}
-      />
-      <RekuestGuard>
-        <GraphQLPostman
-          instanceId="main"
-          onAssignUpdate={(a) =>
-            toast({
-              title: "Assign Update",
-              description: (
-                <>
-                  {" "}
-                  {a.status}{" "}
-                  {a.returns && (
-                    <RekuestGuard fallback={"NOOOO Request?"}>
-                      <AssignContainer assignation={a} returns={a.returns} />
-                    </RekuestGuard>
-                  )}
-                </>
-              ),
-            })
-          }
-        />
-      </RekuestGuard>
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <TooltipProvider>
-          <Toaster />
-          <ShadnWigets />
-          <BrowserRouter>
-            <div className="md:hidden">
-              <img
-                src="/examples/music-light.png"
-                width={1280}
-                height={1114}
-                alt="Music"
-                className="block dark:hidden"
+      <SmartProvider>
+        <RekuestProvider>
+          <WidgetRegistryProvider>
+            <PostmanProvider>
+              <RekuestNextAutoConfigure />
+              <AutoConfiguration
+                wellKnownEndpoints={["100.91.169.37:8000"]}
+                mikro={{ possibleTypes: mikroFragments.possibleTypes }}
               />
-              <img
-                src="/examples/music-dark.png"
-                width={1280}
-                height={1114}
-                alt="Music"
-                className="hidden dark:block"
-              />
-            </div>
-            <div className="hidden md:block">
-              <Menu />
-              <div className="border-t">
-                <div className="h-full bg-background">
-                  <div className="grid lg:grid-cols-5">
-                    <RekuestGuard>
-                      <Sidebar className="hidden lg:block" />
-                    </RekuestGuard>
+              <RekuestGuard>
+                <GraphQLPostman
+                  instanceId="main"
+                  onAssignUpdate={(a) =>
+                    toast({
+                      title: "Assign Update",
+                      description: (
+                        <>
+                          {" "}
+                          {a.returns && (
+                            <RekuestGuard fallback={"NOOOO Request?"}>
+                              <AssignContainer event={a} returns={a.returns} />
+                            </RekuestGuard>
+                          )}
+                        </>
+                      ),
+                    })
+                  }
+                />
+              </RekuestGuard>
+              <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+                <TooltipProvider>
+                  <Toaster />
+                  <ShadnWigets />
+                  <BrowserRouter>
+                    <div className="flex flex-col h-screen w-screen">
+                      <Menu />
+                      <div className="flex-grow border-t">
+                        <div className="h-full bg-background">
+                          <div className="h-full grid lg:grid-cols-12">
+                            <RekuestGuard>
+                              <Sidebar className="hidden lg:block" />
+                            </RekuestGuard>
 
-                    <div className="col-span-3 lg:col-span-4 lg:border-l">
-                      <div className="h-full px-4 py-6 lg:px-8">
-                        <Routes>
-                          <Route path="/" element={<Home />} />
-                          <Route path="/fluss" element={<Test />} />
-                          <Route path="/nodes/:id" element={<Node />} />
-                          <Route
-                            path="/reservations/:id"
-                            element={<Reservation />}
-                          />
-                          <Route path="/callback" element={<Callback />} />
-                        </Routes>
+                            <div className="col-span-10 lg:col-span-11 lg:border-l">
+                              <div className="h-full ">
+                                <Routes>
+                                  <Route path="/" element={<Home />} />
+                                  <Route path="/fluss" element={<Test />} />
+                                  <Route path="/nodes/:id" element={<Node />} />
+                                  <Route
+                                    path="/reservations/:id"
+                                    element={<Reservation />}
+                                  />
+                                  <Route
+                                    path="/callback"
+                                    element={<Callback />}
+                                  />
+                                </Routes>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </BrowserRouter>
-        </TooltipProvider>
-      </ThemeProvider>
+                  </BrowserRouter>
+                </TooltipProvider>
+              </ThemeProvider>
+            </PostmanProvider>
+          </WidgetRegistryProvider>
+        </RekuestProvider>
+      </SmartProvider>
     </EasyProvider>
   );
 }

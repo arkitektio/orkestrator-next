@@ -1,0 +1,160 @@
+fragment BaseGraphNode on GraphNode {
+  ins {
+    ...Port
+  }
+  outs {
+    ...Port
+  }
+  constants {
+    ...Port
+  }
+  globalsMap
+  constantsMap
+  title
+  description
+  kind
+}
+
+fragment RetriableNode on RetriableNode {
+  retries
+  retryDelay
+}
+
+fragment AssignableNode on AssignableNode {
+  nextTimeout
+}
+
+fragment ArkitektGraphNode on ArkitektGraphNode {
+  ...BaseGraphNode
+  ...RetriableNode
+  ...AssignableNode
+  __typename
+  hash
+  mapStrategy
+  allowLocalExecution
+  binds {
+    templates
+  }
+  nodeKind
+}
+
+fragment ReactiveNode on ReactiveNode {
+  ...BaseGraphNode
+  __typename
+  implementation
+}
+
+fragment ArgNode on ArgNode {
+  ...BaseGraphNode
+  __typename
+}
+
+fragment ReturnNode on ReturnNode {
+  ...BaseGraphNode
+  __typename
+}
+
+fragment GraphNode on GraphNode {
+  __typename
+  id
+  position {
+    x
+    y
+  }
+  parentNode
+  ...ArkitektGraphNode
+  ...ReactiveNode
+  ...ArgNode
+  ...ReturnNode
+}
+
+fragment BaseGraphEdge on GraphEdge {
+  __typename
+  id
+  source
+  sourceHandle
+  target
+  targetHandle
+  kind
+  stream {
+    ...StreamItem
+  }
+}
+
+fragment LoggingEdge on LoggingEdge {
+  ...BaseGraphEdge
+  level
+}
+
+fragment VanillaEdge on VanillaEdge {
+  ...BaseGraphEdge
+  __typename
+}
+
+fragment GraphEdge on GraphEdge {
+  ...LoggingEdge
+  ...VanillaEdge
+}
+
+fragment StreamItem on StreamItem {
+  kind
+  label
+}
+
+fragment GlobalArg on GlobalArg {
+  key
+  port {
+    ...Port
+  }
+}
+
+fragment Graph on Graph {
+  nodes {
+    ...GraphNode
+  }
+  edges {
+    ...GraphEdge
+  }
+  globals {
+    ...GlobalArg
+  }
+}
+
+fragment Flow on Flow {
+  __typename
+  id
+  graph {
+    ...Graph
+  }
+  title
+  description
+  createdAt
+  workspace {
+    id
+  }
+}
+
+fragment ListFlow on Flow {
+  id
+  title
+  createdAt
+  workspace {
+    id
+  }
+}
+
+fragment ListWorkspace on Workspace {
+  id
+  title
+  latestFlow {
+    ...ListFlow
+  }
+}
+
+fragment Workspace on Workspace {
+  id
+  title
+  latestFlow {
+    ...Flow
+  }
+}

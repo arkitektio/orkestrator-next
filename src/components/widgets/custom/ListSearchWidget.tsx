@@ -1,13 +1,11 @@
 import { ListSearchField } from "@/components/fields/ListSearchField";
 import { SearchOptions } from "@/components/fields/SearchField";
-import { FormField } from "@/components/ui/form";
-import { SearchWidgetFragment } from "@/rekuest/api/graphql";
-import { InputWidgetProps, useWidgetRegistry } from "@jhnnsrs/rekuest";
+import { SearchAssignWidgetFragment } from "@/rekuest/api/graphql";
+import { InputWidgetProps, useWidgetRegistry } from "@jhnnsrs/rekuest-next";
 import { useCallback, useMemo } from "react";
-import { useFormContext } from "react-hook-form";
 
 export const ListSearchWidget = (
-  props: InputWidgetProps<SearchWidgetFragment>
+  props: InputWidgetProps<SearchAssignWidgetFragment>
 ) => {
   const { registry } = useWidgetRegistry();
 

@@ -1,0 +1,17 @@
+fragment PostmanAssignation on Assignation {
+  id
+  status
+  args
+  reference
+}
+
+fragment AssignationEvent on AssignationEvent {
+  id
+  kind
+  level
+  returns
+  assignation {
+    id
+  }
+  createdAt
+}

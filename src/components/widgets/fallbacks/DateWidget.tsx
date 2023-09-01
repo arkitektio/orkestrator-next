@@ -1,5 +1,5 @@
 import { DateField } from "@/components/fields/DateField";
-import { InputWidgetProps } from "@jhnnsrs/rekuest";
+import { InputWidgetProps } from "@jhnnsrs/rekuest-next";
 
 export const DateWidget = (props: InputWidgetProps) => {
   return (

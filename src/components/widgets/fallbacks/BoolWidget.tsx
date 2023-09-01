@@ -1,17 +1,5 @@
-import { Input } from "@/components/ui/input";
-import { InputWidgetProps, ReturnWidgetProps } from "@jhnnsrs/rekuest";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { useFormContext } from "react-hook-form";
-import { Switch } from "@/components/ui/switch";
 import { SwitchField } from "@/components/fields/SwitchField";
+import { InputWidgetProps } from "@jhnnsrs/rekuest-next";
 
 export const BoolWidget = (props: InputWidgetProps) => {
   return (

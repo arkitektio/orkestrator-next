@@ -1,10 +1,10 @@
-import React, { useEffect } from "react";
-import { EdgeLabelRenderer, getSmoothStepPath } from "reactflow";
-import { LabeledEdgeProps } from "../../types";
-import { StreamKind } from "../../api/graphql";
 import { Card } from "@/components/ui/card";
+import { VanillaEdgeProps } from "@/reaktion/types";
+import { PortKind } from "@/rekuest/api/graphql";
+import React from "react";
+import { EdgeLabelRenderer, getSmoothStepPath } from "reactflow";
 
-export const LabeledShowEdge: React.FC<LabeledEdgeProps> = (props) => {
+export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
   const color = "rgb(30 58 138)";
 
   const {
@@ -61,9 +61,8 @@ export const LabeledShowEdge: React.FC<LabeledEdgeProps> = (props) => {
         >
           {data?.stream.map((item, index) => (
             <div className="text-xs " key={index}>
-              {(item?.kind == StreamKind.List
-                ? "[ " + (item?.child?.identifier || item?.child?.kind) + " ]"
-                : item?.identifier || item?.kind) + (item?.nullable ? "?" : "")}
+              {item.kind}
+              {item.label}
             </div>
           ))}
         </Card>

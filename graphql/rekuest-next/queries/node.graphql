@@ -1,0 +1,27 @@
+query ConstantNode($id: ID!) {
+  node(id: $id) {
+    ...GraphNodeNode
+  }
+}
+
+query AssignNode($reservation: ID!) {
+  node(reservation: $reservation) {
+    name
+    description
+    ...Ports
+  }
+}
+
+query ReturnNode($assignation: ID!) {
+  node(assignation: $assignation) {
+    name
+    description
+    ...Ports
+  }
+}
+
+query AllNodes($limit: Int) {
+  nodes(order: { definedAt: ASC }, pagination: { limit: $limit }) {
+    ...ListNode
+  }
+}

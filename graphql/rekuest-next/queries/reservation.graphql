@@ -1,0 +1,18 @@
+query Reservations($instanceId: InstanceId!) {
+  reservations(
+    filters: { status: [ENDED], waiter: { instanceId: $instanceId } }
+  ) {
+    ...PostmanReservation
+  }
+}
+
+query DetailReservation($id: ID!) {
+  reservation(id: $id) {
+    ...PostmanReservation
+    node {
+      name
+      description
+      ...Ports
+    }
+  }
+}

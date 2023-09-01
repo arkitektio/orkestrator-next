@@ -6,43 +6,36 @@
       }
       const result: PossibleTypesResultData = {
   "possibleTypes": {
-    "Annotation": [
-      "AttributePredicate",
-      "CustomAnnotation",
-      "IsPredicate",
-      "ValueRange"
+    "AssignWidget": [
+      "ChoiceAssignWidget",
+      "CustomAssignWidget",
+      "SearchAssignWidget",
+      "SliderAssignWidget",
+      "StringAssignWidget"
     ],
-    "CommentNode": [
-      "MentionDescendent",
-      "ParagraphDescendent"
+    "AssignableNode": [
+      "ArkitektGraphNode"
     ],
-    "Descendent": [
-      "Leaf",
-      "MentionDescendent",
-      "ParagraphDescendent"
+    "Effect": [
+      "CustomEffect",
+      "MessageEffect"
     ],
-    "Repository": [
-      "AppRepository",
-      "MirrorRepository"
+    "GraphEdge": [
+      "LoggingEdge",
+      "VanillaEdge"
+    ],
+    "GraphNode": [
+      "ArgNode",
+      "ArkitektGraphNode",
+      "ReactiveNode",
+      "ReturnNode"
+    ],
+    "RetriableNode": [
+      "ArkitektGraphNode"
     ],
     "ReturnWidget": [
       "ChoiceReturnWidget",
-      "CustomReturnWidget",
-      "ImageReturnWidget"
-    ],
-    "Widget": [
-      "BoolWidget",
-      "ChoiceWidget",
-      "ColorWidget",
-      "CustomWidget",
-      "DateWidget",
-      "IntWidget",
-      "LinkWidget",
-      "QueryWidget",
-      "SearchWidget",
-      "SliderWidget",
-      "StringWidget",
-      "TemplateWidget"
+      "CustomReturnWidget"
     ]
   }
 };

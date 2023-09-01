@@ -1,6 +1,6 @@
 overwrite: true
-schema: "http://100.91.169.37:8090/graphql"
-documents: "graphql/rekuest/**/*.graphql"
+schema: "http://100.91.169.37:8020/graphql"
+documents: "graphql/rekuest-next/**/*.graphql"
 generates:
   src/rekuest/api/fragments.ts:
     plugins:

@@ -1,12 +1,12 @@
 import { SearchField, SearchOptions } from "@/components/fields/SearchField";
-import { FormField } from "@/components/ui/form";
-import { PortKind, SearchWidgetFragment } from "@/rekuest/api/graphql";
-import { gql } from "@apollo/client";
-import { InputWidgetProps, Ward, useWidgetRegistry } from "@jhnnsrs/rekuest";
-import { useCallback, useEffect, useMemo } from "react";
+import { SearchAssignWidgetFragment } from "@/rekuest/api/graphql";
+import { InputWidgetProps, useWidgetRegistry } from "@jhnnsrs/rekuest-next";
+import { useCallback, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 
-export const SearchWidget = (props: InputWidgetProps<SearchWidgetFragment>) => {
+export const SearchWidget = (
+  props: InputWidgetProps<SearchAssignWidgetFragment>
+) => {
   const form = useFormContext();
   const { registry } = useWidgetRegistry();
 

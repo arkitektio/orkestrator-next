@@ -1,27 +1,26 @@
+import { FlowFragment } from "@/rekuest/api/graphql";
 import React from "react";
-import { EdgeTypes, useEdgesState, useNodesState } from "reactflow";
-import { FlowFragment } from "../api/graphql";
+import { useEdgesState, useNodesState } from "reactflow";
 import { Graph } from "../base/Graph";
+import { EdgeTypes, FlowEdge, FlowNode, NodeTypes } from "../types";
+import { edges_to_flowedges, nodes_to_flownodes } from "../utils";
 import { ShowRiverContext } from "./context";
+import { LabeledShowEdge } from "./edges/LabeledShowEdge";
 import { ArkitektTrackNodeWidget } from "./nodes/ArkitektTrackNodeWidget";
 import { ReactiveTrackNodeWidget } from "./nodes/ReactiveTrackNodeWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
-import { LabeledShowEdge } from "./edges/LabeledShowEdge";
-import { edges_to_flowedges, nodes_to_flownodes } from "../utils";
-import { NodeTypes } from "../types";
-import { ConstantShowkNodeWidget } from "./nodes/generic/ConstantsShowNodeWidget";
 
 const nodeTypes: NodeTypes = {
-  ArkitektNode: ArkitektTrackNodeWidget,
+  ArkitektGraphNode: ArkitektTrackNodeWidget,
   ReactiveNode: ReactiveTrackNodeWidget,
-  KwargNode: ConstantShowkNodeWidget,
   ArgNode: ArgTrackNodeWidget,
   ReturnNode: ReturnTrackNodeWidget,
 };
 
 const edgeTypes: EdgeTypes = {
-  LabeledEdge: LabeledShowEdge,
+  LoggingEdge: LabeledShowEdge,
+  VanillaEdge: LabeledShowEdge,
 };
 
 export type Props = {
@@ -45,8 +44,8 @@ export const ShowRiver: React.FC<Props> = ({ flow }) => {
       }}
     >
       <Graph
-        nodes={nodes}
-        edges={edges}
+        nodes={nodes as FlowNode[]}
+        edges={edges as FlowEdge[]}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         elementsSelectable={true}

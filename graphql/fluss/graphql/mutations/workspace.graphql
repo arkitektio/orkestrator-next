@@ -1,0 +1,16 @@
+mutation DeleteWorkspace($id: ID!) {
+  deleteWorkspace(id: $id) {
+    id
+  }
+}
+
+mutation PinWorkspace($id: ID!, $pin: Boolean!) {
+  pinWorkspace(id: $id, pin: $pin) {
+    id
+    pinnedBy {
+      id
+      email
+    }
+    pinned
+  }
+}

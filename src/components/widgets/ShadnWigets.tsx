@@ -1,5 +1,5 @@
 import { PortKind } from "@/rekuest/api/graphql";
-import { useWidgetRegistry } from "@jhnnsrs/rekuest";
+import { useWidgetRegistry } from "@jhnnsrs/rekuest-next";
 import { useEffect } from "react";
 import { IntWidget } from "./fallbacks/IntWidget";
 import { SearchWidget } from "./custom/SearchWidget";
@@ -35,8 +35,14 @@ export const ShadnWigets = () => {
       StringWidget
     );
 
-    let search = registry.registerInputWidget("SearchWidget", SearchWidget);
-    let choices = registry.registerInputWidget("ChoiceWidget", ChoicesWidget);
+    let search = registry.registerInputWidget(
+      "SearchAssignWidget",
+      SearchWidget
+    );
+    let choices = registry.registerInputWidget(
+      "ChoiceAssignWidget",
+      ChoicesWidget
+    );
 
     return () => {
       int();

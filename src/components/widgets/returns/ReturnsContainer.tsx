@@ -1,4 +1,4 @@
-import { Port, PortGroup, ReturnContainerProps } from "@jhnnsrs/rekuest";
+import { Port, PortGroup, ReturnContainerProps } from "@jhnnsrs/rekuest-next";
 
 export type FilledGroup = PortGroup & {
   ports: Port[];

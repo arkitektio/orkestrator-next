@@ -1,5 +1,5 @@
 import { IntField } from "@/components/fields/IntField";
-import { InputWidgetProps } from "@jhnnsrs/rekuest";
+import { InputWidgetProps } from "@jhnnsrs/rekuest-next";
 
 export const IntWidget = (props: InputWidgetProps) => {
   return (

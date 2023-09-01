@@ -1,5 +1,5 @@
 import { StringField } from "@/components/fields/StringField";
-import { InputWidgetProps } from "@jhnnsrs/rekuest";
+import { InputWidgetProps } from "@jhnnsrs/rekuest-next";
 import { useFormContext } from "react-hook-form";
 
 export const StringWidget = (props: InputWidgetProps) => {

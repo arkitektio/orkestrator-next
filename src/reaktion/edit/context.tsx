@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
-import { FlowFragment } from "../api/graphql";
 import { ArkitektNodeData } from "../types";
+import { FlowFragment } from "@/rekuest/api/graphql";
 
 export type ShowRiverContextType = {
   flow?: FlowFragment | null;

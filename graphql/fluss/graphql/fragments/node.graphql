@@ -1,0 +1,18 @@
+fragment ReactiveTemplate on ReactiveTemplate {
+  constream {
+    ...Port
+  }
+  instream {
+    ...Port
+  }
+  outstream {
+    ...Port
+  }
+  name
+  implementation
+  description
+  id
+  constants {
+    ...Port
+  }
+}

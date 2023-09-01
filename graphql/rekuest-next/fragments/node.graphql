@@ -1,0 +1,18 @@
+fragment ListNode on Node {
+  id
+  name
+  description
+}
+
+fragment GraphNodeNode on Node {
+  name
+  description
+  kind
+  hash
+  id
+  collections {
+    id
+    name
+  }
+  ...Ports
+}

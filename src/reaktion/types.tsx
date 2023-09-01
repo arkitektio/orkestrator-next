@@ -1,101 +1,104 @@
-import { Connection, Edge, EdgeProps, Node, NodeProps } from "reactflow";
 import {
   ArgNodeFragment,
-  ArkitektNodeFragment,
-  ConditionEventFragment,
-  FancyEdgeFragment,
-  FlowEdgeCommonsFragment,
-  FlowFragment,
-  FlowNodeCommonsFragment,
+  ArkitektGraphNodeFragment,
+  BaseGraphEdgeFragment,
+  BaseGraphNodeFragment,
+  GlobalArg,
+  GlobalArgFragment,
+  GlobalArgInput,
+  GraphEdgeFragment,
+  GraphEdgeInput,
+  GraphEdgeKind,
+  GraphFragment,
   GraphNodeFragment,
-  KwargNodeFragment,
-  LabeledEdgeFragment,
-  LocalNodeFragment,
+  GraphNodeInput,
+  GraphNodeKind,
+  LoggingEdgeFragment,
   PortFragment,
   ReactiveNodeFragment,
   ReturnNodeFragment,
-  RunEventFragment,
-} from "./api/graphql";
+  StreamItemFragment,
+  VanillaEdgeFragment,
+} from "@/rekuest/api/graphql";
+import { Connection, Edge, EdgeProps, Node, NodeProps } from "reactflow";
 
-export type LoadingEnhanced<T, L = {}> = T & { extras?: L };
+export type DataEnhancer<T, L = {}> = T & { extras?: L };
 
-export type ArgNodeData = LoadingEnhanced<ArgNodeFragment>;
-export type ReturnNodeData = LoadingEnhanced<ReturnNodeFragment>;
-export type KwargNodeData = LoadingEnhanced<KwargNodeFragment>;
-
-export type ArkitektNodeData = LoadingEnhanced<ArkitektNodeFragment>;
-
-export type ArkitektFilterNodeData = LoadingEnhanced<ArkitektNodeFragment>;
-
-export type LocalNodeData = LoadingEnhanced<LocalNodeFragment>;
-
-export type GraphNodeData = LoadingEnhanced<GraphNodeFragment>;
-
-export type ReactiveNodeData = LoadingEnhanced<ReactiveNodeFragment>;
+export type ArgNodeData = DataEnhancer<ArgNodeFragment>;
+export type ReturnNodeData = DataEnhancer<ReturnNodeFragment>;
+export type ArkitektNodeData = DataEnhancer<ArkitektGraphNodeFragment>;
+export type ReactiveNodeData = DataEnhancer<ReactiveNodeFragment>;
 
 export type ArgNodeProps = NodeProps<ArgNodeData>;
 export type ReturnNodeProps = NodeProps<ReturnNodeData>;
-export type KwargNodeProps = NodeProps<KwargNodeData>;
-export type IONodeProps = ArgNodeProps | ReturnNodeProps | KwargNodeProps;
+export type IONodeProps = ArgNodeProps | ReturnNodeProps;
 
 export type ArkitektNodeProps = NodeProps<ArkitektNodeData>;
-export type GraphNodeProps = NodeProps<GraphNodeData>;
-export type LocalNodeProps = NodeProps<LocalNodeData>;
-
 export type ReactiveNodeProps = NodeProps<ReactiveNodeData>;
 
 export type Elements = Element[];
 
-export type FlowGraph = FlowFragment["graph"];
+export type FlowGraph = GraphFragment;
 export type FlowEdges = FlowGraph["edges"];
 
-export type FlowNode<T = {}> = Node<T & FlowNodeCommonsFragment>;
-export type FlowEdge<T = {}> = Edge<T & FlowEdgeCommonsFragment>;
+export type NodeTypeUnion = Exclude<
+  BaseGraphNodeFragment["__typename"],
+  null | undefined
+>;
 
-export type FancyEdgeProps = EdgeProps<FancyEdgeFragment>;
-export type LabeledEdgeProps = EdgeProps<LabeledEdgeFragment>;
+export type EdgeTypeUnion = Exclude<
+  BaseGraphEdgeFragment["__typename"],
+  null | undefined
+>;
 
-export type Event = "next" | "error" | "complete";
-
-export type RunState = {
-  events?: (RunEventFragment | null)[];
-  t: number;
+export type EnhancedEdge<T = {}> = Edge<T & BaseGraphEdgeFragment> & {
+  type: EdgeTypeUnion;
 };
 
-export type ConditionState = {
-  events?: (ConditionEventFragment | null)[];
-  timepoint: Date;
-};
+export type FlowNodeInherent = "id" | "position" | "type";
+export type FlowEdgeInherent =
+  | "id"
+  | "source"
+  | "target"
+  | "type"
+  | "sourceHandle"
+  | "targetHandle";
 
-export type ConnectionUpdate = {
-  nodes?: FlowNode[];
-  edges?: FlowEdge[];
-  errors?: ConnectionError[];
-  args?: (PortFragment | null)[];
-  returns?: (PortFragment | null)[];
-};
+export type FlowNode<T = GraphNodeFragment> = Node<
+  Omit<T & BaseGraphNodeFragment, FlowNodeInherent>,
+  NodeTypeUnion
+>;
+export type FlowEdge<T = GraphEdgeFragment> = EnhancedEdge<
+  Omit<T & BaseGraphEdgeFragment, FlowEdgeInherent>
+>;
+
+export type VanillaEdgeProps = EdgeProps<VanillaEdgeFragment>;
+export type LoggingEdgeProps = EdgeProps<LoggingEdgeFragment>;
 
 export type ConnectionError = {
   message: string;
 };
 
-export type ConnState = {
-  isConnecting: boolean;
-  isConnectable: boolean;
-  error?: string | undefined;
+export type NewState = {
+  nodes: FlowNode[];
+  edges: FlowEdge[];
+  globals: GlobalArg[];
 };
 
-export type CommonNode = FlowNodeCommonsFragment;
+export type ConnectionUpdate = {
+  state: NewState;
+  errors?: ConnectionError[];
+};
 
 export type Connector<
-  X extends FlowNodeCommonsFragment = FlowNodeCommonsFragment,
-  Y extends FlowNodeCommonsFragment = FlowNodeCommonsFragment
+  X extends BaseGraphNodeFragment = BaseGraphNodeFragment,
+  Y extends BaseGraphNodeFragment = BaseGraphNodeFragment
 > = (options: {
   params: Connection;
   sourceNode: FlowNode<X>;
   targetNode: FlowNode<Y>;
-  sourceStream: PortFragment[];
-  targetStream: PortFragment[];
+  sourcePort: PortFragment[];
+  targetPort: PortFragment[];
   sourceTypes: string[];
   targetTypes: string[];
   nodes: FlowNode[];
@@ -111,18 +114,6 @@ export enum RiverMode {
   PROVISION = "PROVISION",
 }
 
-export type NodeTypeUnion = Exclude<
-  FlowNodeCommonsFragment["__typename"],
-  null | undefined
->;
-
-export type dddd = Exclude<FlowNodeCommonsFragment, null | undefined>;
-
-export type EdgeTypeUnion = Exclude<
-  FlowEdgeCommonsFragment["__typename"],
-  null | undefined
->;
-
 export type ConnectionMap = {
   [k in NodeTypeUnion]: {
     [t in NodeTypeUnion]: Connector;
@@ -133,3 +124,12 @@ export type NodeTypes = {
   [l in NodeTypeUnion]: React.FC<NodeProps>;
 };
 export type EdgeTypes = { [l in EdgeTypeUnion]: React.FC<EdgeProps> };
+
+export type NodeInput = GraphNodeInput;
+export type EdgeInput = GraphEdgeInput;
+export type GlobalInput = GlobalArgInput;
+
+export type NodeFragment = GraphNodeFragment;
+export type EdgeFragement = GraphEdgeFragment;
+export type GlobalFragment = GlobalArgFragment;
+export type StreamItemFragment = StreamItemFragment;

@@ -1,0 +1,5 @@
+mutation Unassign($assignation: ID!) {
+  unassign(input: { assignation: $assignation }) {
+    id
+  }
+}

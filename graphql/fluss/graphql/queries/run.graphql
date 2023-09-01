@@ -1,0 +1,63 @@
+query Snapshots {
+  snapshots {
+    ...ListSnapshot
+  }
+}
+
+query DetailSnapshot($id: ID!) {
+  snapshot(id: $id) {
+    ...Snapshot
+  }
+}
+
+query Runs {
+  runs {
+    ...ListRun
+  }
+}
+
+query MyRuns($limit: Int, $offset: Int, $order: String, $createdDay: DateTime) {
+  myruns(
+    limit: $limit
+    offset: $offset
+    order: $order
+    createdDay: $createdDay
+  ) {
+    ...ListRun
+  }
+}
+
+query PinnedRuns(
+  $limit: Int
+  $offset: Int
+  $order: String
+  $createdDay: DateTime
+) {
+  runs(
+    limit: $limit
+    offset: $offset
+    order: $order
+    pinned: true
+    createdDay: $createdDay
+  ) {
+    ...ListRun
+  }
+}
+
+query DetailRun($id: ID, $assignation: ID) {
+  run(id: $id, assignation: $assignation) {
+    ...Run
+  }
+}
+
+query ExportRun($id: ID) {
+  run(id: $id) {
+    ...ExportRun
+  }
+}
+
+query EventsBetween($id: ID!, $min: Int, $max: Int) {
+  eventsBetween(run: $id, min: $min, max: $max) {
+    ...RunEvent
+  }
+}

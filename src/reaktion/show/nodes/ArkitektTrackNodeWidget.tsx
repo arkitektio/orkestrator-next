@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Popover, PopoverTrigger } from "@/components/ui/popover";
 import { PopoverContent } from "@radix-ui/react-popover";
+import { NodeKind } from "@/rekuest/api/graphql";
 
 export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
   data,
@@ -24,10 +25,10 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
   return (
     <NodeShowLayout
       id={id}
-      color={data.kind == "generator" ? "pink" : "red"}
+      color={data.nodeKind == NodeKind.Generator ? "pink" : "red"}
       selected={selected}
     >
-      {data.instream.map((s, index) => (
+      {data.ins.map((s, index) => (
         <Popover>
           <Handle
             type="target"
@@ -65,11 +66,11 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
         </Popover>
       ))}
       <CardHeader className="p-4">
-        <CardTitle>{data?.name}</CardTitle>
+        <CardTitle>{data?.title}</CardTitle>
         <CardDescription>Card Description</CardDescription>
         <Tooltip></Tooltip>
       </CardHeader>
-      {data.outstream.map((s, index) => (
+      {data.outs.map((s, index) => (
         <Popover>
           <Handle
             type="source"

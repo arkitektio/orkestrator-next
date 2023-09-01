@@ -1,10 +1,50 @@
 import React from "react";
 import { Handle, Position } from "reactflow";
 import { ReactiveNodeProps } from "../../types";
-import { ReactiveImplementationModelInput } from "../../api/graphql";
+import { PortFragment, ReactiveImplementation } from "@/rekuest/api/graphql";
+import { usePortForm } from "@/pages/Reservation";
+import { useWidgetRegistry } from "@jhnnsrs/rekuest-next";
+import { toast } from "@/components/ui/use-toast";
+import { ArgsContainer } from "@/components/widgets/ArgsContainer";
+import { Form } from "@/components/ui/form";
+
+export const Constants = (props: {
+  ports: PortFragment[];
+  overwrites: { [key: string]: any };
+  onClick: (instream: number, onposition: number) => void;
+}) => {
+  const form = usePortForm({
+    ports: props.ports,
+    overwrites: props.overwrites,
+  });
+
+  function onSubmit(data: any) {
+    console.log(data);
+  }
+
+  const { registry } = useWidgetRegistry();
+
+  return (
+    <>
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit, () => {
+            toast({
+              title: "Error",
+              description: "Something went wrong",
+            });
+          })}
+          className="space-y-6 mt-4"
+        >
+          <ArgsContainer registry={registry} ports={props.ports} />
+        </form>
+      </Form>
+    </>
+  );
+};
 
 export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({
-  data: { outstream, instream, constream, implementation },
+  data: { outs, ins, constants, implementation, ...data },
   id,
 }) => {
   return (
@@ -14,8 +54,8 @@ export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({
       <div style={{ width: 40 }} className="custom-drag-handle">
         {implementation &&
           [
-            ReactiveImplementationModelInput.Combinelatest,
-            ReactiveImplementationModelInput.Withlatest,
+            ReactiveImplementation.Combinelatest,
+            ReactiveImplementation.Withlatest,
           ].includes(implementation) && (
             <svg height="40" width="40">
               <polygon
@@ -29,7 +69,7 @@ export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({
             </svg>
           )}
         {implementation &&
-          [ReactiveImplementationModelInput.Gate].includes(implementation) && (
+          [ReactiveImplementation.Gate].includes(implementation) && (
             <svg height="40" width="40">
               <polygon
                 points="0,40 40,20 0,0"
@@ -42,15 +82,13 @@ export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({
             </svg>
           )}
         {implementation &&
-          [ReactiveImplementationModelInput.Filter].includes(
-            implementation
-          ) && (
+          [ReactiveImplementation.Filter].includes(implementation) && (
             <div className="px-2 py-2 z-50 shadow-xl bg-white rounded-md dark:bg-gray-800 text-green-500 dark:text-green-200 text-black border w-full h-full border-green-500 shadow-green-500/50 dark:border-green-200 dark:shadow-green-200/10">
               <h1>{implementation}</h1>
             </div>
           )}
         {implementation &&
-          [ReactiveImplementationModelInput.Split].includes(implementation) && (
+          [ReactiveImplementation.Split].includes(implementation) && (
             <svg height="40" width="40">
               <polygon
                 points="0,20 40,40 40,0"
@@ -64,8 +102,8 @@ export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({
           )}
         {implementation &&
           [
-            ReactiveImplementationModelInput.ToList,
-            ReactiveImplementationModelInput.BufferComplete,
+            ReactiveImplementation.ToList,
+            ReactiveImplementation.BufferComplete,
           ].includes(implementation) && (
             <svg height="40" width="40">
               <polygon
@@ -80,7 +118,7 @@ export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({
             </svg>
           )}
         {implementation &&
-          [ReactiveImplementationModelInput.Chunk].includes(implementation) && (
+          [ReactiveImplementation.Chunk].includes(implementation) && (
             <svg height="40" width="40">
               <polygon
                 points="0,0 40,0 40,40 0,40"
@@ -94,7 +132,7 @@ export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({
             </svg>
           )}
         {implementation &&
-          [ReactiveImplementationModelInput.Omit].includes(implementation) && (
+          [ReactiveImplementation.Omit].includes(implementation) && (
             <svg height="40" width="40">
               <text>
                 <textPath
@@ -116,20 +154,15 @@ export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({
               />
             </svg>
           )}
-        {constream?.map((s, index, array) => (
-          <Handle
-            type="target"
-            position={Position.Bottom}
-            id={`kwarg_${index}`}
-            key={index}
-            style={{
-              background: "#555",
-              marginTop: 10,
-              height: "1em",
-            }}
-          ></Handle>
-        ))}
-        {instream?.map((s, index, array) => (
+        {constants && constants.length >= 0 && (
+          <Constants
+            ports={constants}
+            overwrites={data.constantsMap}
+            onClick={() => {}}
+          />
+        )}
+
+        {ins?.map((s, index, array) => (
           <Handle
             key={index}
             type="target"
@@ -142,7 +175,7 @@ export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({
             }}
           />
         ))}
-        {outstream?.map((s, index, array) => (
+        {outs?.map((s, index, array) => (
           <Handle
             key={index}
             type="source"

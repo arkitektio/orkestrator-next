@@ -1,0 +1,5 @@
+query Flow($id: ID!) {
+  flow(id: $id) {
+    ...Flow
+  }
+}

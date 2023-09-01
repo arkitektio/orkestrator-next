@@ -20,7 +20,7 @@ import {
   useWidgetRegistry,
   withRekuest,
   yupSchemaBuilder,
-} from "@jhnnsrs/rekuest";
+} from "@jhnnsrs/rekuest-next";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";

@@ -1,3 +1,5 @@
+import { Card } from "@/components/ui/card";
+import { SmartModel } from "@/smart/SmartModel";
 import { EasyGuard } from "@jhnnsrs/arkitekt";
 import { RekuestGuard } from "@jhnnsrs/rekuest";
 
@@ -11,6 +13,19 @@ function Home() {
       <EasyGuard>
         <RekuestGuard>
           <Hallo />
+          <SmartModel
+            identifier="github.io.jhnnsrs.orkestrator"
+            object="latest"
+          >
+            <Card>Hallo</Card>
+          </SmartModel>
+
+          <SmartModel
+            identifier="github.io.jhnnsrs.orkestrator"
+            object="latest"
+          >
+            <Card>Two</Card>
+          </SmartModel>
         </RekuestGuard>
       </EasyGuard>
     </>

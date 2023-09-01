@@ -1,0 +1,34 @@
+mutation UpdateFlow($id: ID!, $graph: GraphInput!, $screenshot: ImageFile) {
+  updateworkspace(id: $id, graph: $graph, screenshot: $screenshot) {
+    ...Workspace
+  }
+}
+
+mutation DeleteFlow($id: ID!) {
+  deleteFlow(id: $id) {
+    id
+  }
+}
+
+mutation CreateVanillaDiagram($name: String, $restrict: [String]) {
+  drawvanilla(name: $name, restrict: $restrict) {
+    ...Workspace
+  }
+}
+
+mutation ImportFlow($name: String, $graph: GraphInput!) {
+  importflow(name: $name, graph: $graph) {
+    ...Workspace
+  }
+}
+
+mutation pinFlow($id: ID!, $pin: Boolean!) {
+  pinFlow(id: $id, pin: $pin) {
+    id
+    pinnedBy {
+      id
+      email
+    }
+    pinned
+  }
+}

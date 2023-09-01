@@ -1,0 +1,5 @@
+mutation Assign($reservation: ID!, $args: [Arg!]!) {
+  assign(input: { reservation: $reservation, args: $args }) {
+    ...PostmanAssignation
+  }
+}

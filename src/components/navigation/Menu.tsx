@@ -15,28 +15,22 @@ import {
   MenubarTrigger,
 } from "@/components/ui/menubar";
 import { ModeToggle } from "./ModeToggle";
+import { LogoutButton, UnconnectButton } from "@jhnnsrs/arkitekt";
 
 export function Menu() {
   return (
     <Menubar className="rounded-none border-b border-none px-2 lg:px-4 w-full">
       <MenubarMenu>
-        <MenubarTrigger className="font-bold">Docai</MenubarTrigger>
+        <MenubarTrigger className="font-bold">Orkestrator</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem>About Docai</MenubarItem>
-          <MenubarSeparator />
           <MenubarItem>
-            Preferences... <MenubarShortcut>⌘,</MenubarShortcut>
+            <LogoutButton>Logout</LogoutButton>{" "}
+            <MenubarShortcut>⌘,</MenubarShortcut>
           </MenubarItem>
           <MenubarSeparator />
           <MenubarItem>
-            Hide Music... <MenubarShortcut>⌘H</MenubarShortcut>
-          </MenubarItem>
-          <MenubarItem>
-            Hide Others... <MenubarShortcut>⇧⌘H</MenubarShortcut>
-          </MenubarItem>
-          <MenubarShortcut />
-          <MenubarItem>
-            Quit Music <MenubarShortcut>⌘Q</MenubarShortcut>
+            <UnconnectButton>Unconnect</UnconnectButton>
+            <MenubarShortcut>⌘H</MenubarShortcut>
           </MenubarItem>
         </MenubarContent>
       </MenubarMenu>

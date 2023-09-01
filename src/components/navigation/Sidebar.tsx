@@ -1,6 +1,6 @@
 import { cn, notEmpty } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { withRekuest } from "@jhnnsrs/rekuest";
+import { withRekuest } from "@jhnnsrs/rekuest-next";
 import {
   ReservationStatus,
   useAllNodesQuery,
@@ -8,6 +8,7 @@ import {
 } from "@/rekuest/api/graphql";
 import { Link, NavLink } from "react-router-dom";
 import { StatusPulse } from "../ui/status";
+import { SmartModel } from "@/smart/SmartModel";
 
 const colorForReservationStatus = (status: ReservationStatus) => {
   return {
@@ -70,18 +71,13 @@ export function Sidebar({ className }: SidebarProps) {
           <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
             Nodes
           </h2>
-          {data?.allnodes?.filter(notEmpty).map((node) => (
+          {data?.nodes?.filter(notEmpty).map((node) => (
             <NavLink to={`/nodes/${node.id}`} key={node.id}>
               {({ isActive }) => (
-                <Button
-                  variant="ghost"
-                  className={cn(
-                    "w-full justify-start gap-2 group ",
-                    isActive && "bg-secondary/60"
-                  )}
-                >
+                <SmartModel identifier="@rekuest-next/node" object={node.id}>
                   {node.name}
-                </Button>
+                  {node.id}
+                </SmartModel>
               )}
             </NavLink>
           ))}

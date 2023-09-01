@@ -5,7 +5,7 @@ import { NodeShowLayout } from "../../layout/NodeShow";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const ReturnTrackNodeWidget: React.FC<ReturnNodeProps> = ({
-  data: { outstream, instream },
+  data: { ins },
   id,
   selected,
 }) => {
@@ -20,11 +20,14 @@ export const ReturnTrackNodeWidget: React.FC<ReturnNodeProps> = ({
             Inputs{" "}
           </CardTitle>
           <CardDescription>
-            {instream[0]?.map((o) => o?.identifier).join(" | ")}
+            {ins
+              .at(0)
+              ?.map((o) => o?.identifier)
+              .join(" | ")}
           </CardDescription>
         </CardHeader>
       </NodeShowLayout>
-      {instream.map((s, index) => (
+      {ins.map((s, index) => (
         <Handle
           type="target"
           position={Position.Left}

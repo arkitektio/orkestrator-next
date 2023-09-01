@@ -1,5 +1,5 @@
 import { FloatField } from "@/components/fields/FloatField";
-import { InputWidgetProps } from "@jhnnsrs/rekuest";
+import { InputWidgetProps } from "@jhnnsrs/rekuest-next";
 
 export const FloatWidget = (props: InputWidgetProps) => {
   return (

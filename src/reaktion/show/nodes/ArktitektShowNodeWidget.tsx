@@ -1,7 +1,6 @@
 import React from "react";
 import { Handle, Position } from "reactflow";
 import { ArkitektNodeProps } from "../../types";
-import { NodeShowLayout } from "../layout/NodeShow";
 import {
   Card,
   CardDescription,
@@ -16,6 +15,7 @@ import {
 import { Popover, PopoverTrigger } from "@/components/ui/popover";
 import { PopoverContent } from "@radix-ui/react-popover";
 import { NodeKind } from "@/rekuest/api/graphql";
+import { NodeShowLayout } from "@/reaktion/base/NodeShow";
 
 export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
   data,

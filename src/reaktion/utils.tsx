@@ -20,16 +20,22 @@ import {
   StreamItemInput,
   NodeKind,
   MapStrategy,
+  ReactiveNodeFragment,
+  ReactiveTemplateFragment,
+  PortFragment,
+  PortKind,
+  ChildPortFragment,
 } from "@/rekuest/api/graphql";
 import { v4 as uuidv4 } from "uuid";
 import { portToDefaults } from "@jhnnsrs/rekuest-next";
+import { XYPosition } from "reactflow";
 
 export const globalArgKey = (id: string, key: string) => {
   return `${id}.${key}`;
 };
 
 export function notEmpty<TValue>(
-  value: TValue | null | undefined
+  value: TValue | null | undefined,
 ): value is TValue {
   if (value === null || value === undefined) return false;
   return true;
@@ -37,7 +43,7 @@ export function notEmpty<TValue>(
 
 export function keyInObject(
   key: string,
-  obj: any
+  obj: any,
 ): obj is {
   [key: string]: any;
 } {
@@ -53,8 +59,8 @@ export const nodes_to_flownodes = (nodes: NodeFragment[]): FlowNode[] => {
           const node_: FlowNode = {
             type: __typename,
             id: id,
-            position: position,
-            data: node,
+            position: {x: position.x, y: position.y},
+            data: {__typename, ...rest},
             dragHandle: ".custom-drag-handle",
             parentNode: rest.parentNode ? rest.parentNode : undefined,
           };
@@ -117,11 +123,12 @@ export const globalToInput = (node: GlobalFragment): GlobalArgInput => {
 };
 
 export const streamItemToInput = (
-  node: StreamItemFragment
+  node: StreamItemFragment,
 ): StreamItemInput => {
   const { __typename, ...rest } = node;
   return { ...rest };
 };
+
 
 export const flowEdgeToInput = (edge: FlowEdge): EdgeInput => {
   const { id, source, sourceHandle, target, targetHandle, data } = edge;
@@ -148,14 +155,14 @@ export const flowedges_to_inputedges = (flowedges: FlowEdge[]): EdgeInput[] => {
 };
 
 export const globals_to_inputglobals = (
-  globals: GlobalFragment[]
+  globals: GlobalFragment[],
 ): GlobalInput[] => {
   return globals.map(globalToInput);
 };
 
 export const arkitektNodeToFlowNode = (
   node: GraphNodeNodeFragment,
-  position: { x: number; y: number }
+  position: { x: number; y: number },
 ): FlowNode<ArkitektGraphNodeFragment> => {
   let nodeId = "ark-" + uuidv4();
 
@@ -170,7 +177,7 @@ export const arkitektNodeToFlowNode = (
       ],
       outs: [node?.returns],
       constants: node.args.filter(
-        (x) => x?.nullable || x?.default != undefined
+        (x) => x?.nullable || x?.default != undefined,
       ),
 
       title: node?.name || "no-name",
@@ -191,4 +198,56 @@ export const arkitektNodeToFlowNode = (
   };
 
   return node_;
+};
+
+export const reactiveTemplateToFlowNode = (
+  node: ReactiveTemplateFragment,
+  position: { x: number; y: number },
+): FlowNode<ReactiveNodeFragment> => {
+  let nodeId = "reactive-" + uuidv4();
+
+  let node_: FlowNode<ReactiveNodeFragment> = {
+    id: nodeId,
+    type: "ReactiveNode",
+    dragHandle: ".custom-drag-handle",
+    data: {
+      __typename: "ReactiveNode",
+      ins: node.ins,
+      implementation: node.implementation,
+      outs: node.outs,
+      constants: node.constants,
+      title: node?.title || "no-name",
+      description: node.description || "",
+    },
+    position: position,
+  };
+
+  return node_;
+};
+
+export const listPortToSingle = (
+  port: PortFragment,
+  key: string,
+): PortFragment => {
+  if (port.kind != PortKind.List) throw new Error("Port is not a list");
+  if (!port.child) throw new Error("Port has no child");
+
+  const { __typename, child, variants, ...rest } = port.child;
+  return {
+    ...rest,
+    key: key,
+    __typename: "Port",
+    child: child as ChildPortFragment | undefined,
+    variants: variants as ChildPortFragment[] | undefined,
+  };
+};
+
+export const nodeIdBuilder = () => {
+  return uuidv4();
+};
+
+export const handleToStream = (handle: string | undefined | null) => {
+  if (handle == undefined) return -1;
+  const parts = handle.split("_");
+  return parseInt(parts[parts.length - 1]);
 };

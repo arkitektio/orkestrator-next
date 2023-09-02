@@ -43,6 +43,8 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import { RekuestNextAutoConfigure } from "./config/RekuestNextAutoConfigure";
 import { SmartProvider } from "./smart/provider";
 import { SmartModel } from "./smart/SmartModel";
+import Flow from "./pages/Flow";
+import Workspace from "./pages/Workspace";
 
 export const AssignContainer = (props: {
   event: AssignationEventFragment;
@@ -66,18 +68,6 @@ export const AssignContainer = (props: {
       />
     </>
   );
-};
-
-export const Flow = () => {
-  const { data, error } = withRekuest(useFlowQuery)({
-    variables: {
-      id: "18",
-    },
-  });
-
-  console.log(error?.message, data);
-
-  return <> ddd{data?.flow && <EditFlow flow={data.flow} />}</>;
 };
 
 export const Test = () => {
@@ -153,7 +143,9 @@ function App() {
                                 <Routes>
                                   <Route path="/" element={<Home />} />
                                   <Route path="/fluss" element={<Test />} />
+                                  <Route path="/flows/:id" element={<Flow />} />
                                   <Route path="/nodes/:id" element={<Node />} />
+                                  <Route path="/workspaces/:id" element={<Workspace />} />
                                   <Route
                                     path="/reservations/:id"
                                     element={<Reservation />}

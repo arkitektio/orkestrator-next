@@ -1,30 +1,24 @@
-import { cn, notEmpty } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
+import { cn, notEmpty } from "@/lib/utils";
 import {
   ReservationStatus,
   useAllNodesQuery,
+  useFlowsQuery,
+  useReactiveTemplatesQuery,
   useReservationsQuery,
+  useWorkspacesQuery,
 } from "@/rekuest/api/graphql";
-import { Link, NavLink } from "react-router-dom";
-import { StatusPulse } from "../ui/status";
 import { SmartModel } from "@/smart/SmartModel";
+import { withRekuest } from "@jhnnsrs/rekuest-next";
+import { NavLink } from "react-router-dom";
+import { StatusPulse } from "../ui/status";
 
 const colorForReservationStatus = (status: ReservationStatus) => {
   return {
+    [ReservationStatus.Inactive]: "red-500",
     [ReservationStatus.Active]: "green-500",
-    [ReservationStatus.Canceling]: "green-500",
-    [ReservationStatus.Cancelled]: "green-500",
-    [ReservationStatus.Critical]: "red-500",
-    [ReservationStatus.Disconnect]: "red-500",
-    [ReservationStatus.Disconnected]: "red-500",
-    [ReservationStatus.Ended]: "red-500",
-    [ReservationStatus.Error]: "red-500",
-    [ReservationStatus.NonViable]: "red-500",
-    [ReservationStatus.Providing]: "red-500",
-    [ReservationStatus.Rerouting]: "red-500",
-    [ReservationStatus.Routing]: "red-500",
-    [ReservationStatus.Waiting]: "red-500",
+    [ReservationStatus.Ended]: "gray-500",
+    [ReservationStatus.Unconnected]: "yellow-500",
   }[status];
 };
 
@@ -35,6 +29,20 @@ export function Sidebar({ className }: SidebarProps) {
     variables: {
       limit: 10,
     },
+  });
+
+  const { data: flowsdata } = withRekuest(useFlowsQuery)({
+    variables: {
+      limit: 10,
+    },
+  });
+
+  const { data: reactive } = withRekuest(useReactiveTemplatesQuery)({
+    variables: {},
+  });
+
+  const { data: work } = withRekuest(useWorkspacesQuery)({
+    variables: {},
   });
 
   const { data: resdata } = withRekuest(useReservationsQuery)({
@@ -57,11 +65,11 @@ export function Sidebar({ className }: SidebarProps) {
                   variant="ghost"
                   className={cn(
                     "w-full justify-start gap-2 group ",
-                    isActive && "bg-secondary/60"
+                    isActive && "bg-secondary/60",
                   )}
                 >
                   <StatusPulse color={colorForReservationStatus(res.status)} />
-                  {res.node.name}
+                  {res.title}
                 </Button>
               )}
             </NavLink>
@@ -77,6 +85,51 @@ export function Sidebar({ className }: SidebarProps) {
                 <SmartModel identifier="@rekuest-next/node" object={node.id}>
                   {node.name}
                   {node.id}
+                </SmartModel>
+              )}
+            </NavLink>
+          ))}
+        </div>
+        <div className="px-3 py-2">
+          <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+            Reactive
+          </h2>
+          {reactive?.reactiveTemplates?.filter(notEmpty).map((r) => (
+            <NavLink to={`/r/${r.id}`} key={r.id}>
+              {({ isActive }) => (
+                <SmartModel
+                  identifier="@rekuest-next/reactive-template"
+                  object={r.id}
+                >
+                  {r.title}
+                </SmartModel>
+              )}
+            </NavLink>
+          ))}
+        </div>
+        <div className="px-3 py-2">
+          <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+            Flow
+          </h2>
+          {flowsdata?.flows?.map((flow) => (
+            <NavLink to={`/flows/${flow.id}`} key={flow.id}>
+              {({ isActive }) => (
+                <SmartModel identifier="@rekuest-next/flow" object={flow.id}>
+                  {flow.title}
+                </SmartModel>
+              )}
+            </NavLink>
+          ))}
+        </div>
+        <div className="px-3 py-2">
+          <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+            Workspaces
+          </h2>
+          {work?.workspaces?.map((w) => (
+            <NavLink to={`/workspaces/${w.id}`} key={w.id}>
+              {({ isActive }) => (
+                <SmartModel identifier="@rekuest-next/workspace" object={w.id}>
+                  {w.title}
                 </SmartModel>
               )}
             </NavLink>

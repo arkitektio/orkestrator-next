@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
-import { EdgeLabelRenderer, getSmoothStepPath } from "reactflow";
-import { VanillaEdgeProps } from "../../types";
+import { EdgeLabelRenderer, getSmoothStepPath, useNodes } from "reactflow";
+import { FlowNode, VanillaEdgeProps } from "../../types";
 import { Card } from "@/components/ui/card";
+import { handleToStream } from "@/reaktion/utils";
 
 export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
   const color = "rgb(30 58 138)";
@@ -10,6 +11,7 @@ export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
     id,
     sourcePosition,
     targetPosition,
+    targetHandleId,
     sourceX,
     sourceY,
     targetX,
@@ -28,6 +30,9 @@ export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
     targetX,
     targetY,
   });
+
+
+  const node = useNodes().find((n) => n.id == data?.target) as FlowNode | undefined;
 
   return (
     <>
@@ -56,13 +61,9 @@ export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
             pointerEvents: "all",
           }}
-          className="p-2  text-white"
+          className="p-2 text-white"
         >
-          {data?.stream.map((item, index) => (
-            <div className="text-xs " key={index}>
-              {item.kind} {item.label}
-            </div>
-          ))}
+          {node?.data?.ins.at(handleToStream(targetHandleId))?.map(c => <div className="text-xs">{c.identifier}</div>)}
         </Card>
       </EdgeLabelRenderer>
     </>

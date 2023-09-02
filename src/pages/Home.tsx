@@ -1,10 +1,12 @@
 import { Card } from "@/components/ui/card";
 import { SmartModel } from "@/smart/SmartModel";
 import { EasyGuard } from "@jhnnsrs/arkitekt";
-import { RekuestGuard } from "@jhnnsrs/rekuest";
+import { RekuestGuard } from "@jhnnsrs/rekuest-next";
+import { HerreGuard, useHerre } from "@jhnnsrs/herre";
 
 export const Hallo: React.FC = (props) => {
-  return <>Hallo you</>;
+  const { token } = useHerre();
+  return <>ddd{token}</>;
 };
 
 function Home() {

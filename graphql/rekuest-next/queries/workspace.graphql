@@ -3,3 +3,9 @@ query Workspace($id: ID!) {
     ...Workspace
   }
 }
+
+query Workspaces($pagination: OffsetPaginationInput) {
+  workspaces(pagination: $pagination) {
+    ...ListWorkspace
+  }
+}

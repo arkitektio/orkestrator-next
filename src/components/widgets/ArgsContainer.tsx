@@ -22,6 +22,14 @@ export const portHash = (port: Port[]) => {
     .join("-");
 };
 
+export const NanaContainer = () => {
+  return (
+    <div className="grid @lg:grid-cols-2 @lg:grid-cols-2 @xl:grid-cols-3 @2xl:grid-cols-4 @3xl:grid-cols-5 @5xl:grid-cols-6 gap-5">
+      {" "}
+    </div>
+  );
+};
+
 export const ArgsContainer = ({
   ports,
   groups,
@@ -63,7 +71,7 @@ export const ArgsContainer = ({
 
   return (
     <div
-      className={`grid @lg:grid-cols-${lg_size} @xl-grid-cols-${xl_size} @2xl:grid-cols-${xxl_size}  @3xl:grid-cols-${xxxl_size}   @5xl:grid-cols-${xxxxl_size} gap-5`}
+      className={`grid @lg:grid-cols-${lg_size} @xl:grid-cols-${xl_size} @2xl:grid-cols-${xxl_size}  @3xl:grid-cols-${xxxl_size}   @5xl:grid-cols-${xxxxl_size} gap-5 `}
     >
       {filledGroups.map((group, index) => {
         return (
@@ -94,6 +102,7 @@ export const ArgsContainer = ({
             </CollapsibleContent>
           </Collapsible>
         );
+        <NanaContainer />;
       })}
     </div>
   );

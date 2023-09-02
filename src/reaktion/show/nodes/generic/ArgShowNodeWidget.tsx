@@ -1,15 +1,11 @@
 import React, { memo, useState } from "react";
 import { Handle, Position } from "reactflow";
 import { ArgNodeProps } from "../../../types";
-import { NodeShowLayout } from "../../layout/NodeShow";
-import {
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "../../../components/ui/card";
+import { NodeShowLayout } from "@/reaktion/base/NodeShow";
+import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export const ArgTrackNodeWidget: React.FC<ArgNodeProps> = ({
-  data: { outstream, instream },
+  data: { ins, outs },
   id,
   selected,
 }) => {
@@ -24,11 +20,11 @@ export const ArgTrackNodeWidget: React.FC<ArgNodeProps> = ({
             Inputs{" "}
           </CardTitle>
           <CardDescription>
-            {outstream[0]?.map((o) => o?.identifier).join(" | ")}
+            {ins[0]?.map((o) => o?.identifier).join(" | ")}
           </CardDescription>
         </CardHeader>
       </NodeShowLayout>
-      {outstream.map((s, index) => (
+      {outs.map((s, index) => (
         <Handle
           type="source"
           position={Position.Right}

@@ -81,7 +81,7 @@ export const ListButtonLabel = (props: {
 export type SearchOptions = { search?: string; values?: string[] };
 
 export type SearchFunction = (
-  searching: SearchOptions
+  searching: SearchOptions,
 ) => Promise<(Option | null | undefined)[]>;
 
 export const ListSearchField = ({
@@ -142,7 +142,7 @@ export const ListSearchField = ({
                     role="combobox"
                     className={cn(
                       "justify-between overflow-hidden truncate ellipsis",
-                      !field.value && "text-muted-foreground"
+                      !field.value && "text-muted-foreground",
                     )}
                   >
                     {field.value ? (
@@ -186,17 +186,17 @@ export const ListSearchField = ({
                                 form.setValue(
                                   name,
                                   field.value.filter(
-                                    (v: string) => v !== option.value
+                                    (v: string) => v !== option.value,
                                   ),
-                                  { shouldValidate: true }
+                                  { shouldValidate: true },
                                 );
                               } else {
                                 form.setValue(
                                   name,
                                   [...field.value, option.value].filter(
-                                    notEmpty
+                                    notEmpty,
                                   ),
-                                  { shouldValidate: true }
+                                  { shouldValidate: true },
                                 );
                               }
                             }
@@ -208,7 +208,7 @@ export const ListSearchField = ({
                               "ml-auto h-4 w-4",
                               field.value && field.value.includes(option.value)
                                 ? "opacity-100"
-                                : "opacity-0"
+                                : "opacity-0",
                             )}
                           />
                         </CommandItem>

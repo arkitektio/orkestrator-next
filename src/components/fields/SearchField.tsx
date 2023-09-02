@@ -60,7 +60,7 @@ export const ButtonLabel = (props: {
 export type SearchOptions = { search?: string; values?: (string | number)[] };
 
 export type SearchFunction = (
-  searching: SearchOptions
+  searching: SearchOptions,
 ) => Promise<(Option | null | undefined)[]>;
 
 export const SearchField = ({
@@ -123,7 +123,7 @@ export const SearchField = ({
                     role="combobox"
                     className={cn(
                       "justify-between overflow-hidden truncate ellipsis",
-                      !field.value && "text-muted-foreground"
+                      !field.value && "text-muted-foreground",
                     )}
                   >
                     {field.value ? (
@@ -168,7 +168,7 @@ export const SearchField = ({
                             "ml-auto h-4 w-4",
                             option.value === field.value
                               ? "opacity-100"
-                              : "opacity-0"
+                              : "opacity-0",
                           )}
                         />
                       </CommandItem>

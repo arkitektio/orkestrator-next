@@ -3,3 +3,9 @@ query Flow($id: ID!) {
     ...Flow
   }
 }
+
+query Flows($limit: Int) {
+  flows(pagination: { limit: $limit }) {
+    ...ListFlow
+  }
+}

@@ -29,6 +29,12 @@ export type ReturnNodeData = DataEnhancer<ReturnNodeFragment>;
 export type ArkitektNodeData = DataEnhancer<ArkitektGraphNodeFragment>;
 export type ReactiveNodeData = DataEnhancer<ReactiveNodeFragment>;
 
+export type NodeData =
+  | ArgNodeData
+  | ReturnNodeData
+  | ArkitektNodeData
+  | ReactiveNodeData;
+
 export type ArgNodeProps = NodeProps<ArgNodeData>;
 export type ReturnNodeProps = NodeProps<ReturnNodeData>;
 export type IONodeProps = ArgNodeProps | ReturnNodeProps;
@@ -64,8 +70,13 @@ export type FlowEdgeInherent =
   | "sourceHandle"
   | "targetHandle";
 
+export type FlowNodeData<T = GraphNodeFragment> = Omit<
+  T & BaseGraphNodeFragment,
+  FlowNodeInherent
+>;
+
 export type FlowNode<T = GraphNodeFragment> = Node<
-  Omit<T & BaseGraphNodeFragment, FlowNodeInherent>,
+  FlowNodeData<T>,
   NodeTypeUnion
 >;
 export type FlowEdge<T = GraphEdgeFragment> = EnhancedEdge<
@@ -92,7 +103,7 @@ export type ConnectionUpdate = {
 
 export type Connector<
   X extends BaseGraphNodeFragment = BaseGraphNodeFragment,
-  Y extends BaseGraphNodeFragment = BaseGraphNodeFragment
+  Y extends BaseGraphNodeFragment = BaseGraphNodeFragment,
 > = (options: {
   params: Connection;
   sourceNode: FlowNode<X>;

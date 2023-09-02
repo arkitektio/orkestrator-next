@@ -5,7 +5,7 @@ import { InputWidgetProps, useWidgetRegistry } from "@jhnnsrs/rekuest-next";
 import { useCallback, useMemo } from "react";
 
 export const ListSearchWidget = (
-  props: InputWidgetProps<SearchAssignWidgetFragment>
+  props: InputWidgetProps<SearchAssignWidgetFragment>,
 ) => {
   const { registry } = useWidgetRegistry();
 
@@ -14,7 +14,7 @@ export const ListSearchWidget = (
 
   const theward = useMemo(
     () => registry.getWard(wardKey || "default"),
-    [registry, wardKey]
+    [registry, wardKey],
   );
 
   const search = useCallback(
@@ -26,7 +26,7 @@ export const ListSearchWidget = (
       });
       return options;
     },
-    [theward, query]
+    [theward, query],
   );
 
   return (

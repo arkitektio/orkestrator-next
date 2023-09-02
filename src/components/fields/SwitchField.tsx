@@ -1,5 +1,5 @@
 import { Input } from "@/components/ui/input";
-import { InputWidgetProps, ReturnWidgetProps } from "@jhnnsrs/rekuest";
+import { InputWidgetProps, ReturnWidgetProps } from "@jhnnsrs/rekuest-next";
 import {
   Form,
   FormControl,

@@ -94,7 +94,7 @@ export const SmartModel = ({
         isDragging: monitor.isDragging(),
       }),
     }),
-    [self]
+    [self],
   );
 
   useEffect(() => {

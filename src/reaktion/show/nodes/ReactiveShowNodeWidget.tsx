@@ -1,50 +1,10 @@
 import React from "react";
 import { Handle, Position } from "reactflow";
 import { ReactiveNodeProps } from "../../types";
-import { PortFragment, ReactiveImplementation } from "@/rekuest/api/graphql";
-import { usePortForm } from "@/pages/Reservation";
-import { useWidgetRegistry } from "@jhnnsrs/rekuest-next";
-import { toast } from "@/components/ui/use-toast";
-import { ArgsContainer } from "@/components/widgets/ArgsContainer";
-import { Form } from "@/components/ui/form";
-
-export const Constants = (props: {
-  ports: PortFragment[];
-  overwrites: { [key: string]: any };
-  onClick: (instream: number, onposition: number) => void;
-}) => {
-  const form = usePortForm({
-    ports: props.ports,
-    overwrites: props.overwrites,
-  });
-
-  function onSubmit(data: any) {
-    console.log(data);
-  }
-
-  const { registry } = useWidgetRegistry();
-
-  return (
-    <>
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit, () => {
-            toast({
-              title: "Error",
-              description: "Something went wrong",
-            });
-          })}
-          className="space-y-6 mt-4"
-        >
-          <ArgsContainer registry={registry} ports={props.ports} />
-        </form>
-      </Form>
-    </>
-  );
-};
+import { ReactiveImplementation } from "@/rekuest/api/graphql";
 
 export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({
-  data: { outs, ins, constants, implementation, ...data },
+  data: { ins, outs, constants, implementation },
   id,
 }) => {
   return (
@@ -154,14 +114,6 @@ export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({
               />
             </svg>
           )}
-        {constants && constants.length >= 0 && (
-          <Constants
-            ports={constants}
-            overwrites={data.constantsMap}
-            onClick={() => {}}
-          />
-        )}
-
         {ins?.map((s, index, array) => (
           <Handle
             key={index}

@@ -5,7 +5,7 @@ import { useCallback, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 
 export const SearchWidget = (
-  props: InputWidgetProps<SearchAssignWidgetFragment>
+  props: InputWidgetProps<SearchAssignWidgetFragment>,
 ) => {
   const form = useFormContext();
   const { registry } = useWidgetRegistry();
@@ -17,7 +17,7 @@ export const SearchWidget = (
 
   const theward = useMemo(
     () => registry.getWard(wardKey || "default"),
-    [registry, wardKey]
+    [registry, wardKey],
   );
 
   const values = useMemo(() => form.getValues(), [form.formState]);
@@ -32,7 +32,7 @@ export const SearchWidget = (
       });
       return options;
     },
-    [theward, query, values]
+    [theward, query, values],
   );
 
   return (

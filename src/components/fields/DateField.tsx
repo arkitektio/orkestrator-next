@@ -1,5 +1,5 @@
 import { Input } from "@/components/ui/input";
-import { InputWidgetProps, ReturnWidgetProps } from "@jhnnsrs/rekuest";
+import { InputWidgetProps, ReturnWidgetProps } from "@jhnnsrs/rekuest-next";
 import {
   Form,
   FormControl,
@@ -38,7 +38,7 @@ export const DateField = (props: FieldProps) => {
                   variant={"outline"}
                   className={cn(
                     "w-[240px] pl-3 text-left font-normal",
-                    !field.value && "text-muted-foreground"
+                    !field.value && "text-muted-foreground",
                   )}
                 >
                   {field.value ? (

@@ -10,7 +10,7 @@ import {
 import { Form } from "@/components/ui/form";
 import { useConstantNodeQuery } from "@/rekuest/api/graphql";
 import { EasyGuard } from "@jhnnsrs/arkitekt";
-import { RekuestGuard, usePostman, withRekuest } from "@jhnnsrs/rekuest";
+import { RekuestGuard, usePostman, withRekuest } from "@jhnnsrs/rekuest-next";
 import { useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
 

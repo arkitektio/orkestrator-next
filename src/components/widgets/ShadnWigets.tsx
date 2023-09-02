@@ -13,6 +13,7 @@ import { UnionWidget } from "./fallbacks/UnionWidget";
 import { IntReturnWidget } from "./returns/fallbacks/IntReturnWidget";
 import { StringReturnWidget } from "./returns/fallbacks/StringReturnWidget";
 import { BoolReturnWidget } from "./returns/fallbacks/BoolReturnWidget";
+import { StructureWidget } from "./fallbacks/StructureWidget";
 
 export const ShadnWigets = () => {
   const { registry } = useWidgetRegistry();
@@ -24,24 +25,28 @@ export const ShadnWigets = () => {
     let date = registry.registerInputWidgetFallback(PortKind.Date, DateWidget);
     let union = registry.registerInputWidgetFallback(
       PortKind.Union,
-      UnionWidget
+      UnionWidget,
     );
     let float = registry.registerInputWidgetFallback(
       PortKind.Float,
-      FloatWidget
+      FloatWidget,
     );
     let string = registry.registerInputWidgetFallback(
       PortKind.String,
-      StringWidget
+      StringWidget,
+    );
+    let structure = registry.registerInputWidgetFallback(
+      PortKind.Structure,
+      StructureWidget,
     );
 
     let search = registry.registerInputWidget(
       "SearchAssignWidget",
-      SearchWidget
+      SearchWidget,
     );
     let choices = registry.registerInputWidget(
       "ChoiceAssignWidget",
-      ChoicesWidget
+      ChoicesWidget,
     );
 
     return () => {
@@ -54,21 +59,22 @@ export const ShadnWigets = () => {
       float();
       union();
       choices();
+      structure();
     };
   }, []);
 
   useEffect(() => {
     let int = registry.registerReturnWidgetFallback(
       PortKind.Int,
-      IntReturnWidget
+      IntReturnWidget,
     );
     let list = registry.registerReturnWidgetFallback(
       PortKind.String,
-      StringReturnWidget
+      StringReturnWidget,
     );
     let bool = registry.registerReturnWidgetFallback(
       PortKind.Bool,
-      BoolReturnWidget
+      BoolReturnWidget,
     );
 
     return () => {

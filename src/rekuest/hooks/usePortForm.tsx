@@ -22,7 +22,7 @@ export const usePortForm = (props: {
       console.log(data);
       return await yupResolver(schema)(data, context, options);
     },
-    [hash, schema]
+    [hash, schema],
   );
 
   const defaultValues = useCallback(async () => {

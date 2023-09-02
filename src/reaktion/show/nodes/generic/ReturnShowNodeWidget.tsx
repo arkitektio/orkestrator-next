@@ -1,15 +1,11 @@
+import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { NodeShowLayout } from "@/reaktion/base/NodeShow";
+import { ReturnNodeProps } from "@/reaktion/types";
 import React, { useState } from "react";
 import { Handle, Position } from "reactflow";
-import { ReturnNodeProps } from "../../../types";
-import { NodeShowLayout } from "../../layout/NodeShow";
-import {
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "../../../components/ui/card";
 
 export const ReturnTrackNodeWidget: React.FC<ReturnNodeProps> = ({
-  data: { outstream, instream },
+  data: { ins, outs },
   id,
   selected,
 }) => {
@@ -24,11 +20,11 @@ export const ReturnTrackNodeWidget: React.FC<ReturnNodeProps> = ({
             Inputs{" "}
           </CardTitle>
           <CardDescription>
-            {instream[0]?.map((o) => o?.identifier).join(" | ")}
+            {ins[0]?.map((o) => o?.identifier).join(" | ")}
           </CardDescription>
         </CardHeader>
       </NodeShowLayout>
-      {instream.map((s, index) => (
+      {outs.map((s, index) => (
         <Handle
           type="target"
           position={Position.Left}

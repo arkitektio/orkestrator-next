@@ -37,7 +37,7 @@ export const createFlussClient = (config: FlussConfig) => {
       );
     },
     wsLink,
-    queryLink as unknown as ApolloLink
+    queryLink as unknown as ApolloLink,
   );
 
   return new ApolloClient({

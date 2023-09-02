@@ -81,7 +81,7 @@ const SubForm = ({
       }
       return choices.filter(notEmpty);
     },
-    [choices]
+    [choices],
   );
 
   return (

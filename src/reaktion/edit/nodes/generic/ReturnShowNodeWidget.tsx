@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Handle, Position } from "reactflow";
 import { ReturnNodeProps } from "../../../types";
-import { NodeShowLayout } from "../../layout/NodeShow";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { NodeShowLayout } from "@/reaktion/base/NodeShow";
+import { InStream } from "@/reaktion/base/Instream";
 
 export const ReturnTrackNodeWidget: React.FC<ReturnNodeProps> = ({
   data: { ins },
@@ -15,9 +16,9 @@ export const ReturnTrackNodeWidget: React.FC<ReturnNodeProps> = ({
   return (
     <>
       <NodeShowLayout color="red" id={id} selected={selected}>
-        <CardHeader className="p-4">
+        <CardHeader className="p-4 group">
           <CardTitle onDoubleClick={() => setIsSmall(!isSmall)}>
-            Inputs{" "}
+            Outputs{" "}
           </CardTitle>
           <CardDescription>
             {ins
@@ -26,15 +27,11 @@ export const ReturnTrackNodeWidget: React.FC<ReturnNodeProps> = ({
               .join(" | ")}
           </CardDescription>
         </CardHeader>
+
+        {ins.map((s, index) => (
+          <InStream stream={s} id={index} length={ins.length} />
+        ))}
       </NodeShowLayout>
-      {ins.map((s, index) => (
-        <Handle
-          type="target"
-          position={Position.Left}
-          id={"arg_" + index}
-          style={{ background: "#555" }}
-        />
-      ))}
     </>
   );
 };

@@ -6,7 +6,7 @@ import { useCallback } from "react";
 import { useFormContext } from "react-hook-form";
 
 export const ChoicesWidget = (
-  props: InputWidgetProps<ChoiceAssignWidgetFragment>
+  props: InputWidgetProps<ChoiceAssignWidgetFragment>,
 ) => {
   const form = useFormContext();
 
@@ -28,7 +28,7 @@ export const ChoicesWidget = (
       }
       return choices.filter(notEmpty);
     },
-    [choices]
+    [choices],
   );
 
   return (

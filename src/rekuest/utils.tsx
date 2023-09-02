@@ -30,12 +30,12 @@ export const assignWidgetTypeToKindMap: {
 };
 
 export const assignWidgetTypeToKind = (
-  typename: AssignWidgetTypeNames
+  typename: AssignWidgetTypeNames,
 ): AssignWidgetKind => {
   return assignWidgetTypeToKindMap[typename];
 };
 export const assignWidgetToInput = (
-  widget: AssignWidgetFragment
+  widget: AssignWidgetFragment,
 ): AssignWidgetInput => {
   const { __typename, ...rest } = widget;
   const input: AssignWidgetInput = {
@@ -55,13 +55,13 @@ export const returnWidgetTypeToKindMap: {
 };
 
 export const returnWidgetTypeToKind = (
-  typename: ReturnWidgetTypeNames
+  typename: ReturnWidgetTypeNames,
 ): ReturnWidgetKind => {
   return returnWidgetTypeToKindMap[typename];
 };
 
 export const returnWidgetToInput = (
-  widget: ReturnWidgetFragment
+  widget: ReturnWidgetFragment,
 ): ReturnWidgetInput => {
   const { __typename, ...rest } = widget;
   const input: ReturnWidgetInput = {

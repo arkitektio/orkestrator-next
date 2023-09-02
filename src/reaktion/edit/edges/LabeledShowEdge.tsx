@@ -31,8 +31,9 @@ export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
     targetY,
   });
 
-
-  const node = useNodes().find((n) => n.id == data?.target) as FlowNode | undefined;
+  const node = useNodes().find((n) => n.id == data?.target) as
+    | FlowNode
+    | undefined;
 
   return (
     <>
@@ -63,7 +64,9 @@ export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
           }}
           className="p-2 text-white"
         >
-          {node?.data?.ins.at(handleToStream(targetHandleId))?.map(c => <div className="text-xs">{c.identifier}</div>)}
+          {node?.data?.ins
+            .at(handleToStream(targetHandleId))
+            ?.map((c) => <div className="text-xs">{c.identifier}</div>)}
         </Card>
       </EdgeLabelRenderer>
     </>

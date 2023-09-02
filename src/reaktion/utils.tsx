@@ -25,6 +25,7 @@ import {
   PortFragment,
   PortKind,
   ChildPortFragment,
+  PortScope,
 } from "@/rekuest/api/graphql";
 import { v4 as uuidv4 } from "uuid";
 import { portToDefaults } from "@jhnnsrs/rekuest-next";
@@ -59,8 +60,8 @@ export const nodes_to_flownodes = (nodes: NodeFragment[]): FlowNode[] => {
           const node_: FlowNode = {
             type: __typename,
             id: id,
-            position: {x: position.x, y: position.y},
-            data: {__typename, ...rest},
+            position: { x: position.x, y: position.y },
+            data: { __typename, ...rest },
             dragHandle: ".custom-drag-handle",
             parentNode: rest.parentNode ? rest.parentNode : undefined,
           };
@@ -128,7 +129,6 @@ export const streamItemToInput = (
   const { __typename, ...rest } = node;
   return { ...rest };
 };
-
 
 export const flowEdgeToInput = (edge: FlowEdge): EdgeInput => {
   const { id, source, sourceHandle, target, targetHandle, data } = edge;
@@ -239,6 +239,20 @@ export const listPortToSingle = (
     __typename: "Port",
     child: child as ChildPortFragment | undefined,
     variants: variants as ChildPortFragment[] | undefined,
+  };
+};
+
+export const singleToList = (
+  port: PortFragment,
+): PortFragment => {
+  const { __typename, key, ...rest } = port;
+  return {
+    nullable: false,
+    kind: PortKind.List,
+    scope: PortScope.Global,
+    key: key,
+    __typename: "Port",
+    child: rest as ChildPortFragment | undefined,
   };
 };
 

@@ -24,18 +24,19 @@ export const WorkspaceDetail = (props: { id: string }) => {
         <EditFlow
           flow={data?.workspace.latestFlow}
           onSave={(e) => {
-            console.log("saving flow", e)
+            console.log("saving flow", e);
             saveFlow({
               variables: {
                 id: props.id,
                 graph: e,
               },
-            }).then((e) => {
-              console.log(e);
-            }).catch((e) => {
-              console.log(e);
-            });
-
+            })
+              .then((e) => {
+                console.log(e);
+              })
+              .catch((e) => {
+                console.log(e);
+              });
           }}
         />
       )}

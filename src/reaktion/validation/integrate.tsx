@@ -5,11 +5,17 @@ import {
   GraphNodeKind,
   PortFragment,
   ReactiveImplementation,
+  VanillaEdge,
 } from "@/rekuest/api/graphql";
 import { Connection, XYPosition } from "reactflow";
 import { FlowEdge, FlowNode, FlowNodeData, NodeData } from "../types";
-import { handleToStream, listPortToSingle, nodeIdBuilder } from "../utils";
-import { isSameStream, reduceStream, withNewStream } from "./utils";
+import { handleToStream, listPortToSingle, nodeIdBuilder, singleToList } from "../utils";
+import {
+  isSameStream,
+  islistTransformable,
+  reduceStream,
+  withNewStream,
+} from "./utils";
 import {
   ChangeOutcome,
   PortType,
@@ -61,6 +67,8 @@ export const onlyValid = (
 ): ChangeOutcome => {
   if (event.type == "target") {
     if (isSameStream(data.ins.at(event.index), event.stream)) return {}; // No change needed
+    if (islistTransformable(data.ins.at(event.index), event.stream))
+      return { needsTransforms: ["to_list"] }; // No change needed
     throw new Error("Ports do not match");
   } else {
     if (isSameStream(data.outs.at(event.index), event.stream)) return {}; // No change needed
@@ -168,7 +176,7 @@ export const getTransform = (
         kind: GraphNodeKind.Reactive,
         ins: [instream],
         constantsMap: {},
-        outs: [instream.map((p, index) => listPortToSingle(p, p.key))],
+        outs: [instream.map((p, index) => singleToList(p))],
         constants: [],
         implementation: ReactiveImplementation.ToList,
       },
@@ -198,6 +206,33 @@ export const getTransform = (
   throw new Error("Unknown transform");
 };
 
+export const createVanillaTransformEdge = (
+  id: string,
+  source: string,
+  sourceStream: number,
+  target: string,
+  targetStream: number,
+): FlowEdge => {
+  return {
+    id: id,
+    source: source,
+    sourceHandle: "return_" + sourceStream,
+    target: target,
+    targetHandle: "arg_" + targetStream,
+    type: "VanillaEdge",
+    data: {
+      __typename: "VanillaEdge",
+      id: id,
+      kind: GraphEdgeKind.Vanilla,
+      stream: [],
+      source: source,
+      sourceHandle: "return_" + sourceStream,
+      target: target,
+      targetHandle: "arg_" + targetStream,
+    },
+  };
+};
+
 export const transitionOrCut = (options: TransitionOptions): void => {
   let changeCount = options.runningCount;
   let node = options.state.nodes.find((n) => n.id == options.nodeID);
@@ -224,14 +259,40 @@ export const transitionOrCut = (options: TransitionOptions): void => {
   if (outcome.needsTransforms) {
     // We need to add transforms to the stream
 
-    for (let transform of outcome.needsTransforms) {
-      let transformNode = getTransform(
-        transform,
-        options.stream,
-        node.position,
-      );
-      options.state.nodes = [...options.state.nodes, transformNode];
+
+    let lastNode = options.nodeID;
+    let lastStreamIndex = options.index;
+
+
+    for (let transform of outcome.needsTransforms.reverse()) {
+
+        let transformNode = getTransform(
+            transform,
+            options.stream,
+            node.position,
+        );
+
+        const edge = createVanillaTransformEdge(
+            nodeIdBuilder(),
+            transformNode.id,
+            0,
+            lastNode,
+            lastStreamIndex,
+        );
+
+        lastNode = transformNode.id;
+        lastStreamIndex = 0;
+
+        options.state.nodes = [...options.state.nodes, transformNode];
+        options.state.edges = [...options.state.edges, edge];
+      
     }
+
+    options.state.edges = options.state.edges.filter(
+        (e) => e.id != options.edgeID,
+    );
+
+    
   }
 
   if (outcome.denied) {

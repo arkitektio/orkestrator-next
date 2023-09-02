@@ -1948,19 +1948,15 @@
             "description": null,
             "args": [],
             "type": {
-              "kind": "NON_NULL",
+              "kind": "LIST",
               "name": null,
               "ofType": {
-                "kind": "LIST",
+                "kind": "NON_NULL",
                 "name": null,
                 "ofType": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "kind": "OBJECT",
-                    "name": "ChildPort",
-                    "ofType": null
-                  }
+                  "kind": "OBJECT",
+                  "name": "ChildPort",
+                  "ofType": null
                 }
               }
             },
@@ -4622,6 +4618,18 @@
             "type": {
               "kind": "SCALAR",
               "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "nodeKind",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "NodeKind",
               "ofType": null
             },
             "defaultValue": "null",

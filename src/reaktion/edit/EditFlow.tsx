@@ -128,7 +128,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         edges: validated.state.edges.map((e) => flowEdgeToInput(e)),
         globals: [],
       };
-      console.log("Saving", graph)
+      console.log("Saving", graph);
       onSave && onSave(graph);
     } else {
       console.log("not valid");

@@ -145,7 +145,10 @@ function App() {
                                   <Route path="/fluss" element={<Test />} />
                                   <Route path="/flows/:id" element={<Flow />} />
                                   <Route path="/nodes/:id" element={<Node />} />
-                                  <Route path="/workspaces/:id" element={<Workspace />} />
+                                  <Route
+                                    path="/workspaces/:id"
+                                    element={<Workspace />}
+                                  />
                                   <Route
                                     path="/reservations/:id"
                                     element={<Reservation />}

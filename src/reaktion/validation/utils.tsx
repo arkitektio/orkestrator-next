@@ -1,32 +1,50 @@
 import { PortFragment, PortKind } from "@/rekuest/api/graphql";
 
 export const isSameStream = (
-  left: PortFragment[] | undefined,
-  right: PortFragment[] | undefined,
+  challenging: PortFragment[] | undefined,
+  having: PortFragment[] | undefined,
 ): boolean => {
-  if (left == undefined || right == undefined) return false;
-  if (left.length != right.length) return false;
-  for (let i = 0; i < left.length; i++) {
-    if (left[i].kind != right[i].kind) return false;
-    if (left[i].identifier != right[i].identifier) return false;
+  if (challenging == undefined || having == undefined) return false;
+  if (challenging.length != having.length) return false;
+  for (let i = 0; i < having.length; i++) {
+    if (having[i].kind != challenging[i].kind) return false;
+    if (having[i].identifier != challenging[i].identifier) return false;
   }
   return true;
 };
 
 export const islistTransformable = (
-  left: PortFragment[] | undefined,
-  right: PortFragment[] | undefined,
+  challenging: PortFragment[] | undefined,
+  having: PortFragment[] | undefined,
 ): boolean => {
-  if (left == undefined || right == undefined) return false;
-  if (left.length != right.length) return false;
-  for (let i = 0; i < left.length; i++) {
-    if (left[i].kind != PortKind.List) return false;
-    if (left[i].child == undefined) return false;
-    if (left[i].child?.kind != right[i].kind) return false;
-    if (left[i].child?.identifier != right[i].identifier) return false;
+  if (challenging == undefined || having == undefined) return false;
+  if (challenging.length != having.length) return false;
+  for (let i = 0; i < challenging.length; i++) {
+    if (having[i].kind != PortKind.List) return false;
+    if (having[i].child == undefined) return false;
+    if (having[i].child?.kind != challenging[i].kind) return false;
+    if (having[i].child?.identifier != challenging[i].identifier) return false;
   }
 
   return true;
+};
+
+
+export const isNullTransformable = (
+  challenging: PortFragment[] | undefined,
+  having: PortFragment[] | undefined,
+): boolean => {
+  if (challenging == undefined || having == undefined) return false;
+  if (challenging.length != having.length) return false;
+  let hasNonNullMismatch = false
+
+  for (let i = 0; i < challenging.length; i++) {
+    if (having[i].identifier != challenging[i].identifier) return false;
+    if (having[i].kind != challenging[i].kind) return false;
+    if (having[i].nullable != challenging[i].nullable) hasNonNullMismatch = true;
+  }
+
+  return hasNonNullMismatch;
 };
 
 export const withNewStream = (

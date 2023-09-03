@@ -4952,6 +4952,11 @@ react-remove-scroll@2.5.5:
     use-callback-ref "^1.3.0"
     use-sidecar "^1.1.2"
 
+react-resizable-panels@^0.0.55:
+  version "0.0.55"
+  resolved "https://registry.yarnpkg.com/react-resizable-panels/-/react-resizable-panels-0.0.55.tgz#adf06d35ae09748ab7051a4bd2c5be8087ef1a66"
+  integrity sha512-J/LTFzUEjJiqwSjVh8gjUXkQDA8MRPjARASfn++d2+KOgA+9UcRYUfE3QBJixer2vkk+ffQ4cq3QzWzzHgqYpQ==
+
 react-router-dom@^6.15.0:
   version "6.15.0"
   resolved "https://registry.yarnpkg.com/react-router-dom/-/react-router-dom-6.15.0.tgz#6da7db61e56797266fbbef0d5e324d6ac443ee40"
@@ -5629,6 +5634,11 @@ use-sync-external-store@1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/use-sync-external-store/-/use-sync-external-store-1.2.0.tgz#7dbefd6ef3fe4e767a0cf5d7287aacfb5846928a"
   integrity sha512-eEgnFxGQ1Ife9bzYs6VLi8/4X6CObHMw9Qr9tPY43iKwsPw8xE8+EFsf/2cFZ5S3esXgpWgtSCtLNS41F+sKPA==
+
+use-undoable@^3.3.12:
+  version "3.3.12"
+  resolved "https://registry.yarnpkg.com/use-undoable/-/use-undoable-3.3.12.tgz#c60067dadd8e34921c68d223f1a571a0bea24810"
+  integrity sha512-xFBmHaxJaeTXQDHQvCgvHhxKyKhz9g1vw2rviYlXvNJvJvPysHD3jnvSt6SoAWrpDwKbDwndfFPsBMpQGU7xrw==
 
 util-deprecate@^1.0.1, util-deprecate@^1.0.2:
   version "1.0.2"

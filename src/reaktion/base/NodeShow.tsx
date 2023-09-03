@@ -7,24 +7,20 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { NodeResizer, NodeResizeControl } from "reactflow";
+import { cn } from "@/lib/utils";
 
-const additional = {
-  pink: "border-pink-500 shadow-pink-500/5 dark:border-pink-200 dark:shadow-pink-200/10 shadow-xxl",
-  blue: "border-blue-500 shadow-blue-500/50 dark:border-blue-200 dark:shadow-blue-200/10  shadow-xxl",
-  green:
-    "border-green-500 shadow-green-500/50 dark:border-green-200 dark:shadow-green-200/10  shadow-xxl",
-  red: "border-red-500 shadow-red-500/50 dark:border-red-200 dark:shadow-red-200/10  shadow-xxl",
-};
+
 
 type NodeProps = {
   children: React.ReactNode;
-  color?: keyof typeof additional;
+  color?: string
   id: string;
   selected?: boolean;
   minWidth?: number;
   minHeight?: number;
   maxWidth?: number;
   maxHeight?: number;
+  contextMenu?: React.ReactNode;
 };
 
 const controlStyle = {
@@ -37,6 +33,7 @@ export const NodeShowLayout: React.FC<NodeProps> = ({
   id,
   color = "pink",
   selected,
+  contextMenu,
   minWidth = 100,
   minHeight = 30,
   maxWidth = 700,
@@ -47,18 +44,15 @@ export const NodeShowLayout: React.FC<NodeProps> = ({
       <ContextMenu>
         <ContextMenuTrigger>
           <Card
-            className={`custom-drag-handle h-full z-10 group  ${
-              selected && additional[color]
-            } `}
+            className={cn("custom-drag-handle h-full z-10 group shadow-inner",
+              selected && color)
+            }
           >
             {children}
           </Card>
         </ContextMenuTrigger>
         <ContextMenuContent>
-          <ContextMenuItem>Profile</ContextMenuItem>
-          <ContextMenuItem>Billing</ContextMenuItem>
-          <ContextMenuItem>Team</ContextMenuItem>
-          <ContextMenuItem>Subscription</ContextMenuItem>
+          {contextMenu}
         </ContextMenuContent>
       </ContextMenu>
       <NodeResizeControl
@@ -72,7 +66,7 @@ export const NodeShowLayout: React.FC<NodeProps> = ({
         <div
           className={`${
             !selected && "hidden"
-          }  absolute bottom-0 right-0 w-3 h-3 z-10 translate-x-[-1/2] translate-y-[-1/2] bg-white rounded-full shadow-md border-2 border-white dark:border-gray-800 dark:bg-gray-800 dark:shadow-none/0`}
+          }  absolute  bottom-0 right-0 w-3 h-3 z-10 translate-x-[-1/2] translate-y-[-1/2] bg-white rounded-full shadow-md border-2 border-white dark:border-gray-800 dark:bg-gray-800 dark:shadow-none/0`}
         >
           <svg
             width="15"

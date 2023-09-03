@@ -15,7 +15,7 @@ export const ReturnTrackNodeWidget: React.FC<ReturnNodeProps> = ({
 
   return (
     <>
-      <NodeShowLayout color="red" id={id} selected={selected}>
+      <NodeShowLayout color="border-red-500 shadow-red-500/50 dark:border-red-200 dark:shadow-red-200/10  shadow-xxl" id={id} selected={selected}>
         <CardHeader className="p-4 group">
           <CardTitle onDoubleClick={() => setIsSmall(!isSmall)}>
             Outputs{" "}

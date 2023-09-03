@@ -12,6 +12,7 @@ export type ValidationError = {
   type: "node" | "edge";
   level: "critical" | "warning";
   comparing?: Compare;
+  path?: string; // only for node where the error occured
   id: string;
   message: string;
 };
@@ -20,8 +21,7 @@ export type SolvedError = ValidationError & {
   solvedBy: string;
 };
 
-export type ValidationResult = {
-  state: FlowState;
+export type ValidationResult =  FlowState & {
   valid: boolean;
   solvedErrors: SolvedError[];
   remainingErrors: ValidationError[];
@@ -35,7 +35,7 @@ export type FlowState = {
 
 export type PortType = "source" | "target";
 
-export type Transform = "to_list";
+export type Transform = "to_list" | "from_list" | "ensure";
 
 export type ChangeEvent = {
   stream: PortFragment[];
@@ -52,7 +52,7 @@ export type CausedChange = ChangeEvent[];
 export type ChangeOutcome = {
   data?: FlowNodeData;
   changes?: ChangeEvent[];
-  needsTransforms?: Transform[];
+  needsTransform?: Transform;
   denied?: string;
 };
 

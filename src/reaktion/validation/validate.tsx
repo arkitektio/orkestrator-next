@@ -1,10 +1,12 @@
-import { FlowEdge } from "../types";
+import { yupSchemaBuilder } from "@jhnnsrs/rekuest-next";
+import { FlowEdge, FlowNode } from "../types";
 import {
   FlowState,
   SolvedError,
   ValidationError,
   ValidationResult,
 } from "./types";
+import { ValidationError as YupValidationError } from "yup";
 
 const validateNoEdgeWithItself = (
   previous: ValidationResult,
@@ -12,7 +14,7 @@ const validateNoEdgeWithItself = (
   let validatedEdges: FlowEdge[] = [];
   let solvedErrors: SolvedError[] = [];
 
-  for (let edge of previous.state.edges) {
+  for (let edge of previous.edges) {
     if (edge.source == edge.target) {
       solvedErrors.push({
         type: "edge",
@@ -27,7 +29,8 @@ const validateNoEdgeWithItself = (
   }
 
   return {
-    state: { ...previous.state, edges: validatedEdges },
+    ...previous,
+    edges: validatedEdges,
     solvedErrors: solvedErrors,
   };
 };
@@ -45,9 +48,9 @@ const validateMatchingPorts = (
   let solvedErrors: SolvedError[] = [];
   let remain: ValidationError[] = [];
 
-  for (let edge of previous.state.edges) {
-    const sourceNode = previous.state.nodes.find((n) => n.id == edge.source);
-    const targetNode = previous.state.nodes.find((n) => n.id == edge.target);
+  for (let edge of previous.edges) {
+    const sourceNode = previous.nodes.find((n) => n.id == edge.source);
+    const targetNode = previous.nodes.find((n) => n.id == edge.target);
 
     const sourceStreamIndex = handleToStream(edge.sourceHandle);
     const targetStreamIndex = handleToStream(edge.targetHandle);
@@ -56,21 +59,23 @@ const validateMatchingPorts = (
     const targetStream = targetNode?.data.ins.at(targetStreamIndex);
 
     if (sourceStream == undefined || targetStream == undefined) {
-      remain.push({
+      solvedErrors.push({
         type: "edge",
         id: edge.id,
         level: "critical",
         message: "Edge with non existing handles. This is bad",
+        solvedBy: "Removing the edge",
       });
       continue;
     }
 
     if (sourceStream.length != targetStream.length) {
-      remain.push({
+      solvedErrors.push({
         type: "edge",
         id: edge.id,
         level: "warning",
         message: "Connecting edge does not have correct number of ports",
+        solvedBy: "Removing the edge",
       });
       continue;
     }
@@ -85,7 +90,7 @@ const validateMatchingPorts = (
       if (
         sourceStream[sourceItemIndex].kind != targetStream[sourceItemIndex].kind
       ) {
-        remain.push({
+        solvedErrors.push({
           type: "edge",
           id: edge.id,
           comparing: {
@@ -96,6 +101,7 @@ const validateMatchingPorts = (
           },
           level: "warning",
           message: "Port Kind mismatch",
+          solvedBy: "Removing the edge",
         });
         streamsMatch = false;
       }
@@ -103,7 +109,7 @@ const validateMatchingPorts = (
         sourceStream[sourceItemIndex].identifier !=
         targetStream[sourceItemIndex].identifier
       ) {
-        remain.push({
+        solvedErrors.push({
           type: "edge",
           id: edge.id,
           comparing: {
@@ -114,6 +120,7 @@ const validateMatchingPorts = (
           },
           level: "warning",
           message: "Port Identifier mismatch",
+          solvedBy: "Removing the edge",
         });
         streamsMatch = false;
       }
@@ -124,7 +131,8 @@ const validateMatchingPorts = (
   }
 
   return {
-    state: { ...previous.state, edges: validatedEdges },
+    ...previous,
+    edges: validatedEdges,
     solvedErrors: solvedErrors,
     remainingErrors: remain,
   };
@@ -132,9 +140,61 @@ const validateMatchingPorts = (
 
 const validators = [validateNoEdgeWithItself, validateMatchingPorts];
 
-export const validateState = (state: FlowState): ValidationResult => {
+
+
+export const validateNodeConstants = (
+  state: ValidationResult,
+  node: FlowNode 
+): ValidationResult  => {
+  console.log("Validating node constants")
+  const schema = yupSchemaBuilder(node.data.constants)
+  try {
+    schema.validateSync(node.data.constantsMap, { abortEarly: false })
+    return state
+  }
+  catch (e) {
+    console.log("Validation error", e)
+    let validationError = e as YupValidationError;
+
+    let newRemainingErrors: ValidationError[] = [];
+
+    validationError.inner.forEach((element) => {
+      const path = element.path;
+
+      newRemainingErrors.push({
+        type: "node",
+        id: node.id,
+        path: path,
+        level: "critical",
+        message: element.message,
+      });
+
+      
+    });
+
+    return {
+      ...state,
+      valid: false,
+      remainingErrors: [
+        ...state.remainingErrors,
+        ...newRemainingErrors
+      ],
+    }
+  }
+
+}
+
+
+export type ValidationOptions = {
+  validateNodeDefaults: boolean;
+}
+
+export const validateState = (state: FlowState, options?: ValidationOptions): ValidationResult => {
+  if (options == undefined) options = { validateNodeDefaults: true };
+
+
   let initial: ValidationResult = {
-    state: state,
+    ...state,
     valid: true,
     solvedErrors: [],
     remainingErrors: [],
@@ -143,6 +203,13 @@ export const validateState = (state: FlowState): ValidationResult => {
   for (let validator of validators) {
     let validated = validator(initial);
     initial = { ...initial, ...validated };
+  }
+
+  if (options.validateNodeDefaults) {
+    for (let node of initial.nodes) {
+      let validated = validateNodeConstants(initial, node);
+      initial = { ...initial, ...validated };
+    }
   }
 
   return initial;

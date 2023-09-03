@@ -40,7 +40,6 @@ export const Graph: React.FC<Props> = ({
       {...props}
     >
       <Background />
-      <Controls className="flex flex-row bg-white" />
       {children}
     </ReactFlow>
   );

@@ -2,7 +2,8 @@ import React, { useEffect } from "react";
 import { EdgeLabelRenderer, getSmoothStepPath, useNodes } from "reactflow";
 import { FlowNode, VanillaEdgeProps } from "../../types";
 import { Card } from "@/components/ui/card";
-import { handleToStream } from "@/reaktion/utils";
+import { handleToStream, streamToReactNode, streamToReadable } from "@/reaktion/utils";
+import { useEditRiver } from "../context";
 
 export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
   const color = "rgb(30 58 138)";
@@ -31,6 +32,8 @@ export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
     targetY,
   });
 
+  const { showEdgeLabels } = useEditRiver();
+
   const node = useNodes().find((n) => n.id == data?.target) as
     | FlowNode
     | undefined;
@@ -55,20 +58,19 @@ export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
           className="group"
         ></textPath>
       </text>
-      <EdgeLabelRenderer>
+      {showEdgeLabels && <EdgeLabelRenderer>
         <Card
           style={{
             position: "absolute",
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
             pointerEvents: "all",
           }}
-          className="p-2 text-white"
+          className="p-2 text-white max-w-[200px] overflow-hidden ellipsis truncate text-xs"
         >
-          {node?.data?.ins
-            .at(handleToStream(targetHandleId))
-            ?.map((c) => <div className="text-xs">{c.identifier}</div>)}
+          {streamToReactNode(node?.data?.ins
+            .at(handleToStream(targetHandleId)))}
         </Card>
-      </EdgeLabelRenderer>
+      </EdgeLabelRenderer>}
     </>
   );
 };

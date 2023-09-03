@@ -166,6 +166,7 @@ export const arkitektNodeToFlowNode = (
 ): FlowNode<ArkitektGraphNodeFragment> => {
   let nodeId = "ark-" + uuidv4();
 
+  console.log(nodeId)
   let node_: FlowNode<ArkitektGraphNodeFragment> = {
     id: nodeId,
     type: "ArkitektGraphNode",
@@ -265,3 +266,58 @@ export const handleToStream = (handle: string | undefined | null) => {
   const parts = handle.split("_");
   return parseInt(parts[parts.length - 1]);
 };
+
+
+export const portToReadble = (port: PortFragment | ChildPortFragment | undefined | null, withLocalDisclaimer: boolean): string => {
+
+  if (!port) return "undefined";
+
+  let answer = withLocalDisclaimer ? (port.scope == PortScope.Local ? "local " : "") : "";
+  if (port.nullable) answer += "?";
+  if (port.kind == PortKind.List) {
+    answer += "[" + portToReadble(port.child as ChildPortFragment, withLocalDisclaimer) + "]";
+  }
+
+  if (port.kind == PortKind.Dict) {
+    answer +=  "{" + portToReadble(port.child as ChildPortFragment, withLocalDisclaimer) + "}";
+  }
+
+  if (port.kind == PortKind.Int) {
+    answer +=  "int";
+  }
+
+  if (port.kind == PortKind.Float) {
+    answer +=  "float";
+  }
+
+  if (port.kind == PortKind.String) {
+    answer +=  "string";
+  }
+
+  if (port.kind == PortKind.Bool) {
+    answer +=  "bool";
+  }
+
+  if (port.kind == PortKind.Union) {
+    if (!port.variants) throw new Error("Union has no variants");
+    answer +=  port.variants.map(p => portToReadble(p as ChildPortFragment, withLocalDisclaimer)).join(" | ");
+  }
+
+  if (port.kind == PortKind.Structure)  {
+    answer +=  port.identifier;
+  }
+
+  return answer;
+}
+
+export const streamToReadable =  (stream: PortFragment[] | undefined, withLocalDisclaimer?: boolean): string => {
+  if (!stream) return "undefinedStream";
+  return stream.map(p => portToReadble(p, withLocalDisclaimer == true)).join(" | ");
+}
+
+
+
+export const streamToReactNode = (stream: PortFragment[] | undefined, withLocalDisclaimer?: boolean): JSX.Element => {
+  if (!stream) return <div className="text-red-400">undefinedStream</div>;
+  return <div className="flex flex-row flex-wrap ">{stream.map(p => <div className="flex-1">{portToReadble(p, withLocalDisclaimer == true)}</div>)}</div>;
+}

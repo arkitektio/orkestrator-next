@@ -1,27 +1,23 @@
-import React from "react";
-import { Handle, Position } from "reactflow";
-import { ReactiveNodeData, ReactiveNodeProps } from "../../types";
-import { PortFragment, ReactiveImplementation } from "@/rekuest/api/graphql";
-import { usePortForm } from "@/pages/Reservation";
-import { useWidgetRegistry } from "@jhnnsrs/rekuest-next";
-import { toast } from "@/components/ui/use-toast";
-import { ArgsContainer } from "@/components/widgets/ArgsContainer";
-import { Form } from "@/components/ui/form";
-import { InStream } from "@/reaktion/base/Instream";
-import { OutStream } from "@/reaktion/base/Outstream";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Popover,
-  PopoverTrigger,
   PopoverContent,
+  PopoverTrigger,
 } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Constants } from "@/reaktion/base/Constants";
+import { InStream } from "@/reaktion/base/Instream";
+import { OutStream } from "@/reaktion/base/Outstream";
+import { ReactiveImplementation } from "@/rekuest/api/graphql";
+import React from "react";
+import { ReactiveNodeData, ReactiveNodeProps } from "../../types";
 
 export type ShapeProps = {
   implementation: ReactiveImplementation;
   data: ReactiveNodeData;
 };
 
-export const ZipProps = ({ data }: ShapeProps) => {
+export const TriangleToRight = ({ data }: ShapeProps) => {
   return (
     <>
       <svg height="40" width="40">
@@ -29,8 +25,8 @@ export const ZipProps = ({ data }: ShapeProps) => {
           points="0,40 40,20 0,0"
           style={{
             strokeWidth: 1,
-            stroke: "hsl(var(--secondary))",
-            fill: "hsl(var(--secondary))",
+            stroke: "hsl(var(--accent))",
+            fill: "hsl(var(--accent))",
           }}
         />
       </svg>
@@ -38,33 +34,54 @@ export const ZipProps = ({ data }: ShapeProps) => {
   );
 };
 
+export const Default = ({ data }: ShapeProps) => {
+  return (
+    <>
+      <Card className="rounded-md">
+        <CardHeader className="p-1">
+          <Tooltip>
+            <TooltipTrigger>
+          <CardTitle className="text-xs">{data.title}</CardTitle>
+          </TooltipTrigger>
+          <TooltipContent>
+          <CardDescription className="text-xs">
+            {data.description}
+          </CardDescription></TooltipContent>
+
+          </Tooltip>
+        </CardHeader>
+      </Card>
+    </>
+  );
+};
+
 const shapeMap: { [key in ReactiveImplementation]: React.FC<ShapeProps> } = {
-  [ReactiveImplementation.Combinelatest]: ZipProps,
-  [ReactiveImplementation.Withlatest]: ZipProps,
-  [ReactiveImplementation.Zip]: ZipProps,
-  [ReactiveImplementation.Gate]: ZipProps,
-  [ReactiveImplementation.Filter]: ZipProps,
-  [ReactiveImplementation.Split]: ZipProps,
-  [ReactiveImplementation.ToList]: ZipProps,
-  [ReactiveImplementation.BufferComplete]: ZipProps,
-  [ReactiveImplementation.Chunk]: ZipProps,
-  [ReactiveImplementation.Omit]: ZipProps,
-  [ReactiveImplementation.Add]: ZipProps,
-  [ReactiveImplementation.All]: ZipProps,
-  [ReactiveImplementation.And]: ZipProps,
-  [ReactiveImplementation.BufferUntil]: ZipProps,
-  [ReactiveImplementation.Delay]: ZipProps,
-  [ReactiveImplementation.DelayUntil]: ZipProps,
-  [ReactiveImplementation.Divide]: ZipProps,
-  [ReactiveImplementation.Ensure]: ZipProps,
-  [ReactiveImplementation.Foreach]: ZipProps,
-  [ReactiveImplementation.If]: ZipProps,
-  [ReactiveImplementation.Modulo]: ZipProps,
-  [ReactiveImplementation.Power]: ZipProps,
-  [ReactiveImplementation.Prefix]: ZipProps,
-  [ReactiveImplementation.Subtract]: ZipProps,
-  [ReactiveImplementation.Multiply]: ZipProps,
-  [ReactiveImplementation.Suffix]: ZipProps,
+  [ReactiveImplementation.Combinelatest]: TriangleToRight,
+  [ReactiveImplementation.Withlatest]: TriangleToRight,
+  [ReactiveImplementation.Zip]: TriangleToRight,
+  [ReactiveImplementation.Gate]: Default,
+  [ReactiveImplementation.Filter]: Default,
+  [ReactiveImplementation.Split]: Default,
+  [ReactiveImplementation.ToList]: Default,
+  [ReactiveImplementation.BufferComplete]: Default,
+  [ReactiveImplementation.Chunk]: Default,
+  [ReactiveImplementation.Omit]: Default,
+  [ReactiveImplementation.Add]: Default,
+  [ReactiveImplementation.All]: Default,
+  [ReactiveImplementation.And]: Default,
+  [ReactiveImplementation.BufferUntil]: Default,
+  [ReactiveImplementation.Delay]: Default,
+  [ReactiveImplementation.DelayUntil]: Default,
+  [ReactiveImplementation.Divide]: Default,
+  [ReactiveImplementation.Ensure]: Default,
+  [ReactiveImplementation.Foreach]: Default,
+  [ReactiveImplementation.If]: Default,
+  [ReactiveImplementation.Modulo]: Default,
+  [ReactiveImplementation.Power]: Default,
+  [ReactiveImplementation.Prefix]: Default,
+  [ReactiveImplementation.Subtract]: Default,
+  [ReactiveImplementation.Multiply]: Default,
+  [ReactiveImplementation.Suffix]: Default,
 };
 
 const shapeForImplementation = (

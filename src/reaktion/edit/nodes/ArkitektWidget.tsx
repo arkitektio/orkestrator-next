@@ -1,16 +1,18 @@
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tooltip } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import { Args } from "@/reaktion/base/Args";
 import { Constants } from "@/reaktion/base/Constants";
+import { Constream } from "@/reaktion/base/Constream";
 import { InStream } from "@/reaktion/base/Instream";
 import { NodeShowLayout } from "@/reaktion/base/NodeShow";
 import { OutStream } from "@/reaktion/base/Outstream";
 import { NodeKind, PortFragment } from "@/rekuest/api/graphql";
 import { NodeDescription } from "@jhnnsrs/rekuest-next";
-import React, { useEffect } from "react";
+import React from "react";
 import { ArkitektNodeProps } from "../../types";
 import { useEditRiver } from "../context";
-import { Constream } from "@/reaktion/base/Constream";
-import { useUpdateNodeInternals } from "reactflow";
+import { Returns } from "@/reaktion/base/Returns";
+import { ContextMenuItem } from "@/components/ui/context-menu";
 
 export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
   data: { ins, outs, constants, ...data },
@@ -18,8 +20,6 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
   selected,
 }) => {
   const { updateData } = useEditRiver();
-
-  const [open, setOpen] = React.useState<boolean | undefined>(undefined);
 
   const onClickIn = (stream_index: number, onposition: number) => {
     let item = ins?.[stream_index]?.[onposition] as PortFragment;
@@ -36,28 +36,29 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
       },
       id,
     );
+
   };
 
-  const onClickOut = (stream_index: number, onposition: number) => {
+  
+
+  const onToArg = (port: PortFragment) => {
     updateData(
       {
-        outs:
-          outs?.map((s, index) =>
-            index == stream_index
-              ? s?.filter((i, index) => index != onposition) || []
-              : s,
-          ) || [],
+        constants: constants.filter((i, index) =>  i.key != port.key) || [],
+        ins: [[...(ins?.at(0) || []), port]],
       },
       id,
     );
   };
 
-  const onClickCon = (onposition: number, to: number) => {
-    let item = constants[onposition] as PortFragment;
+  const onToGlobal = (port: PortFragment, key: string) => {
+
+
+
     updateData(
       {
-        constants: constants.filter((i, index) => index != onposition) || [],
-        ins: [[...(ins?.at(to) || []), item]],
+        constants: constants.filter((i, index) =>  i.key != port.key) || [],
+        ins: [[...(ins?.at(to) || []), port]],
       },
       id,
     );
@@ -66,23 +67,24 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
   return (
     <NodeShowLayout
       id={id}
-      color={data.nodeKind == NodeKind.Generator ? "pink" : "red"}
+      color={cn(data.nodeKind == NodeKind.Generator ? "border-pink-500 shadow-pink-500/50 dark:border-pink-200 dark:shadow-pink-200/10 shadow-xxl" : "border-pink-500 shadow-pink-500/50 dark:border-pink-200 dark:shadow-pink-200/10 shadow-xxl")}
       selected={selected}
+      contextMenu={
+        <>
+          <ContextMenuItem>Fart</ContextMenuItem>
+        
+        </>
+      }
     >
       {ins.map((s, index) => (
         <InStream
           stream={s}
           id={index}
-          onClick={onClickIn}
           length={ins.length}
-          open={open}
         />
       ))}
       <CardHeader
         className="p-4"
-        onDoubleClick={() =>
-          open == undefined ? setOpen(true) : setOpen(undefined)
-        }
       >
         <CardTitle>{data?.title}</CardTitle>
         <CardDescription>
@@ -91,23 +93,22 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
             variables={data.constantsMap}
           />
         </CardDescription>
+
+        <div className="text-xs text-muted-foreground inline ">Args</div>
+        <Args stream={ins.at(0) || []} id={0} onClick={onClickIn} />
+
+        <div className="text-xs text-muted-foreground inline ">Constants</div>
+        <Constants ports={constants} overwrites={data.constantsMap} onToArg={onToArg} onToGlobal={onToGlobal}/>
+
       </CardHeader>
       {outs.map((s, index) => (
         <OutStream
           stream={s}
           id={index}
-          onClick={onClickOut}
-          length={ins.length}
-          open={open}
+          length={outs.length}
         />
       ))}
 
-      <Constream
-        constants={constants}
-        onClick={(e) => onClickCon(e, 0)}
-        constantsMap={data.constantsMap}
-        open={open}
-      />
     </NodeShowLayout>
   );
 };

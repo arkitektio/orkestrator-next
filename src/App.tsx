@@ -11,6 +11,7 @@ import "./index.css";
 import Home from "./pages/Home";
 import Node from "./pages/Node";
 import Reservation from "./pages/Reservation";
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Menu } from "./components/navigation/Menu";
@@ -45,6 +46,7 @@ import { SmartProvider } from "./smart/provider";
 import { SmartModel } from "./smart/SmartModel";
 import Flow from "./pages/Flow";
 import Workspace from "./pages/Workspace";
+import { CommandMenu } from "./command/Menu";
 
 export const AssignContainer = (props: {
   event: AssignationEventFragment;
@@ -98,6 +100,7 @@ function App() {
       <SmartProvider>
         <RekuestProvider>
           <WidgetRegistryProvider>
+            <CommandMenu/>
             <PostmanProvider>
               <RekuestNextAutoConfigure />
               <AutoConfiguration
@@ -133,12 +136,15 @@ function App() {
                       <Menu />
                       <div className="flex-grow border-t">
                         <div className="h-full bg-background">
-                          <div className="h-full grid lg:grid-cols-12">
-                            <RekuestGuard>
-                              <Sidebar className="hidden lg:block" />
-                            </RekuestGuard>
+                        <PanelGroup autoSaveId="persistence" direction="horizontal">
+                            <Panel>
+                              <RekuestGuard>
+                                <Sidebar className="" />
+                              </RekuestGuard>
+                            </Panel>
+                            <PanelResizeHandle className="h-full w-1 opacity-0 hover:opacity-80 bg-white" />
 
-                            <div className="col-span-10 lg:col-span-11 lg:border-l">
+                            <Panel>
                               <div className="h-full ">
                                 <Routes>
                                   <Route path="/" element={<Home />} />
@@ -159,8 +165,8 @@ function App() {
                                   />
                                 </Routes>
                               </div>
-                            </div>
-                          </div>
+                              </Panel>
+                        </PanelGroup>
                         </div>
                       </div>
                     </div>

@@ -1,17 +1,14 @@
-import { Input } from "@/components/ui/input";
-import { InputWidgetProps, ReturnWidgetProps } from "@jhnnsrs/rekuest-next";
 import {
-  Form,
   FormControl,
   FormDescription,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 import { useFormContext } from "react-hook-form";
-import { FieldProps } from "./types";
 import { Switch } from "../ui/switch";
+import { FieldProps } from "./types";
 
 export const SwitchField = (props: FieldProps & { placeholder?: string }) => {
   const form = useFormContext();

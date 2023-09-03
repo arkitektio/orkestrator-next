@@ -1,11 +1,10 @@
+import { ReactiveImplementation } from "@/rekuest/api/graphql";
 import React from "react";
 import { Handle, Position } from "reactflow";
 import { ReactiveNodeProps } from "../../types";
-import { ReactiveImplementation } from "@/rekuest/api/graphql";
 
 export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({
   data: { ins, outs, constants, implementation },
-  id,
 }) => {
   return (
     <>

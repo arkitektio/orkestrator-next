@@ -1,52 +1,47 @@
 import {
-  EasyProvider,
   AutoConfiguration,
-  useApp,
-  EasyGuard,
-  LogoutButton,
   Callback,
+  EasyGuard,
+  EasyProvider,
+  LogoutButton,
   UnconnectButton,
+  useApp,
 } from "@jhnnsrs/arkitekt";
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import "./index.css";
 import Home from "./pages/Home";
 import Node from "./pages/Node";
 import Reservation from "./pages/Reservation";
-import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Menu } from "./components/navigation/Menu";
-import { Sidebar } from "./components/navigation/Sidebar";
-import { ThemeProvider } from "./providers/ThemeProvider";
-import { ShadnWigets } from "./components/widgets/ShadnWigets";
-import { Toaster } from "./components/ui/toaster";
-import mikroFragments from "./rekuest/api/fragments";
-import { useFlowQuery } from "@/rekuest/api/graphql";
 import {
   GraphQLPostman,
+  PostmanProvider,
   RekuestGuard,
-  useWidgetRegistry,
-  withRekuest,
   RekuestProvider,
   WidgetRegistryProvider,
-  PostmanProvider,
+  useWidgetRegistry,
+  withRekuest,
 } from "@jhnnsrs/rekuest-next";
-import { FlussGuard, withFluss } from "@jhnnsrs/fluss";
-import { useToast } from "./components/ui/use-toast";
-import {
-  AssignationEventFragment,
-  PostmanAssignationFragment,
-  useReturnNodeQuery,
-} from "./rekuest/api/graphql";
-import { ReturnsContainer } from "./components/widgets/returns/ReturnsContainer";
-import { notEmpty } from "./lib/utils";
-import { EditFlow } from "./reaktion/edit/EditFlow";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { CommandMenu } from "./command/Menu";
+import { Menu } from "./components/navigation/Menu";
+import { Sidebar } from "./components/navigation/Sidebar";
+import { Toaster } from "./components/ui/toaster";
 import { TooltipProvider } from "./components/ui/tooltip";
+import { useToast } from "./components/ui/use-toast";
+import { ShadnWigets } from "./components/widgets/ShadnWigets";
+import { ReturnsContainer } from "./components/widgets/returns/ReturnsContainer";
 import { RekuestNextAutoConfigure } from "./config/RekuestNextAutoConfigure";
-import { SmartProvider } from "./smart/provider";
-import { SmartModel } from "./smart/SmartModel";
+import { notEmpty } from "./lib/utils";
 import Flow from "./pages/Flow";
 import Workspace from "./pages/Workspace";
-import { CommandMenu } from "./command/Menu";
+import { ThemeProvider } from "./providers/ThemeProvider";
+import mikroFragments from "./rekuest/api/fragments";
+import {
+  AssignationEventFragment,
+  useReturnNodeQuery
+} from "./rekuest/api/graphql";
+import { SmartProvider } from "./smart/provider";
 
 export const AssignContainer = (props: {
   event: AssignationEventFragment;

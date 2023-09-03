@@ -1,16 +1,13 @@
 import {
-  ChildPortFragment,
   GraphEdgeKind,
   GraphNodeFragment,
   GraphNodeKind,
   PortFragment,
-  PortKind,
-  PortScope,
   ReactiveImplementation
 } from "@/rekuest/api/graphql";
 import { Connection, XYPosition } from "reactflow";
 import { FlowEdge, FlowNode, FlowNodeData } from "../types";
-import { handleToStream, nodeIdBuilder, singleToList, streamToReadable} from "../utils";
+import { handleToStream, nodeIdBuilder, singleToList, streamToReadable } from "../utils";
 import {
   ChangeEvent,
   ChangeOutcome,

@@ -1,7 +1,7 @@
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { useEffect, useState } from "react"
 
-export const CommandMenu = (props: {}) => {
+export const CommandMenu = () => {
     const [open, setOpen] = useState(false)
    
     useEffect(() => {

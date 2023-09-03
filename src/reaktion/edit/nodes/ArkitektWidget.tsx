@@ -13,6 +13,16 @@ import { ArkitektNodeProps } from "../../types";
 import { useEditRiver } from "../context";
 import { Returns } from "@/reaktion/base/Returns";
 import { ContextMenuItem } from "@/components/ui/context-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+import { GearIcon } from "@radix-ui/react-icons";
+
 
 export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
   data: { ins, outs, constants, ...data },
@@ -86,7 +96,24 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
       <CardHeader
         className="p-4"
       >
-        <CardTitle>{data?.title}</CardTitle>
+        <CardTitle><div className="flex justify-between">
+          
+          
+          {data?.title}
+        <Sheet>
+        <SheetTrigger className="group-hover:opacity-100 opacity-0 transition-all duration-3000"><GearIcon/></SheetTrigger>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>These are advanced settings</SheetTitle>
+            <SheetDescription>
+              You can change the settings here
+              but be aware that they might smeellll
+            </SheetDescription>
+          </SheetHeader>
+        </SheetContent>
+      </Sheet>
+          </div>
+        </CardTitle>
         <CardDescription>
           <NodeDescription
             description={data.description}
@@ -99,6 +126,7 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
 
         <div className="text-xs text-muted-foreground inline ">Constants</div>
         <Constants ports={constants} overwrites={data.constantsMap} onToArg={onToArg} onToGlobal={onToGlobal}/>
+             
 
       </CardHeader>
       {outs.map((s, index) => (

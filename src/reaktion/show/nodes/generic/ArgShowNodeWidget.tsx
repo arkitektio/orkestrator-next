@@ -1,15 +1,14 @@
-import React, { memo, useState } from "react";
+import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { NodeShowLayout } from "@/reaktion/base/NodeShow";
+import React, { useState } from "react";
 import { Handle, Position } from "reactflow";
 import { ArgNodeProps } from "../../../types";
-import { NodeShowLayout } from "@/reaktion/base/NodeShow";
-import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export const ArgTrackNodeWidget: React.FC<ArgNodeProps> = ({
   data: { ins, outs },
   id,
   selected,
 }) => {
-  const [show, setShow] = useState(false);
   const [isSmall, setIsSmall] = useState(true);
 
   return (

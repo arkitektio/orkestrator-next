@@ -1,4 +1,23 @@
+import {
+  ArkitektGraphNodeFragment,
+  BindsFragment,
+  BindsInput,
+  ChildPortFragment,
+  GlobalArgInput,
+  GraphNodeKind,
+  GraphNodeNodeFragment,
+  MapStrategy,
+  NodeKind,
+  PortFragment,
+  PortKind,
+  PortScope,
+  ReactiveNodeFragment,
+  ReactiveTemplateFragment,
+  StreamItemInput
+} from "@/rekuest/api/graphql";
 import { convertPortToInput } from "@/rekuest/utils";
+import { portToDefaults } from "@jhnnsrs/rekuest-next";
+import { v4 as uuidv4 } from "uuid";
 import {
   EdgeFragement,
   EdgeInput,
@@ -8,30 +27,8 @@ import {
   GlobalInput,
   NodeFragment,
   NodeInput,
-  NodeTypeUnion,
-  StreamItemFragment,
+  StreamItemFragment
 } from "./types";
-import {
-  ArkitektGraphNodeFragment,
-  GlobalArgFragment,
-  GlobalArgInput,
-  GraphNodeKind,
-  GraphNodeNodeFragment,
-  StreamItemInput,
-  NodeKind,
-  MapStrategy,
-  ReactiveNodeFragment,
-  ReactiveTemplateFragment,
-  PortFragment,
-  PortKind,
-  ChildPortFragment,
-  PortScope,
-  BindsInput,
-  BindsFragment,
-} from "@/rekuest/api/graphql";
-import { v4 as uuidv4 } from "uuid";
-import { portToDefaults } from "@jhnnsrs/rekuest-next";
-import { XYPosition } from "reactflow";
 
 export const globalArgKey = (id: string, key: string) => {
   return `${id}.${key}`;

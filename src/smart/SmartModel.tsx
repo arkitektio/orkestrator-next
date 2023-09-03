@@ -1,7 +1,7 @@
 import { Popover } from "@/components/ui/popover";
 import { SMART_MODEL_DROP_TYPE } from "@/constants";
 import { PopoverAnchor, PopoverContent } from "@radix-ui/react-popover";
-import React, { Fragment, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { getEmptyImage } from "react-dnd-html5-backend";
 

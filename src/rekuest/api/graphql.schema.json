@@ -4553,6 +4553,18 @@
             "deprecationReason": null
           },
           {
+            "name": "implementation",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "ReactiveImplementation",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "ins",
             "description": null,
             "type": {
@@ -8664,17 +8676,9 @@
                   "kind": "NON_NULL",
                   "name": null,
                   "ofType": {
-                    "kind": "LIST",
-                    "name": null,
-                    "ofType": {
-                      "kind": "NON_NULL",
-                      "name": null,
-                      "ofType": {
-                        "kind": "OBJECT",
-                        "name": "Port",
-                        "ofType": null
-                      }
-                    }
+                    "kind": "OBJECT",
+                    "name": "Port",
+                    "ofType": null
                   }
                 }
               }
@@ -9000,6 +9004,22 @@
         "name": "Reservation",
         "description": null,
         "fields": [
+          {
+            "name": "binds",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "Binds",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "id",
             "description": null,
@@ -10925,7 +10945,7 @@
             "deprecationReason": null
           },
           {
-            "name": "name",
+            "name": "interface",
             "description": null,
             "args": [],
             "type": {
@@ -10936,6 +10956,18 @@
                 "name": "String",
                 "ofType": null
               }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "name",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null

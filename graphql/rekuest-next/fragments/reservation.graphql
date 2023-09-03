@@ -1,8 +1,16 @@
+fragment Binds on Binds {
+  templates
+}
+
+
 fragment PostmanReservation on Reservation {
   title
   status
   id
   reference
+  binds {
+    ...Binds
+  }
 }
 
 fragment ReservationEvent on ReservationEvent {

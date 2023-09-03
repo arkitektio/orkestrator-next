@@ -33,7 +33,7 @@ fragment ArkitektGraphNode on ArkitektGraphNode {
   mapStrategy
   allowLocalExecution
   binds {
-    templates
+    ...Binds
   }
   nodeKind
 }

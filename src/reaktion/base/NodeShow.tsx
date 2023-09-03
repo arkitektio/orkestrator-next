@@ -44,7 +44,7 @@ export const NodeShowLayout: React.FC<NodeProps> = ({
       <ContextMenu>
         <ContextMenuTrigger>
           <Card
-            className={cn("custom-drag-handle h-full z-10 group shadow-inner",
+            className={cn("custom-drag-handle h-full z-10 group shadow overflow-auto",
               selected && color)
             }
           >
@@ -61,7 +61,7 @@ export const NodeShowLayout: React.FC<NodeProps> = ({
         minHeight={70}
         maxHeight={maxHeight}
         maxWidth={maxWidth}
-        className="overflow-hidden"
+        className=""
       >
         <div
           className={`${

@@ -26,6 +26,8 @@ import {
   PortKind,
   ChildPortFragment,
   PortScope,
+  BindsInput,
+  BindsFragment,
 } from "@/rekuest/api/graphql";
 import { v4 as uuidv4 } from "uuid";
 import { portToDefaults } from "@jhnnsrs/rekuest-next";
@@ -103,16 +105,18 @@ export const flowNodeToInput = (node: FlowNode): NodeInput => {
     id,
     position,
     parentNode,
-    data: { outs, constants, ins, __typename, ...rest },
+    data: { outs, constants, ins, __typename, binds, ...rest },
   } = node;
   if (!__typename) throw new Error("No type");
   const node_: NodeInput = {
     ins: ins.map((s) => s.map(convertPortToInput)),
     outs: outs.map((s) => s.map(convertPortToInput)),
     constants: constants.map(convertPortToInput),
+
     id,
     position: { x: position.x, y: position.y },
     parentNode: parentNode,
+    binds: binds && bindsToInput(binds),
     ...rest,
   };
   return node_;
@@ -126,6 +130,13 @@ export const globalToInput = (node: GlobalFragment): GlobalArgInput => {
 export const streamItemToInput = (
   node: StreamItemFragment,
 ): StreamItemInput => {
+  const { __typename, ...rest } = node;
+  return { ...rest };
+};
+
+export const bindsToInput = (
+  node: BindsFragment,
+): BindsInput => {
   const { __typename, ...rest } = node;
   return { ...rest };
 };
@@ -216,7 +227,10 @@ export const reactiveTemplateToFlowNode = (
       ins: node.ins,
       implementation: node.implementation,
       outs: node.outs,
+      kind: GraphNodeKind.Reactive,
       constants: node.constants,
+      constantsMap: portToDefaults(node.constants, {}),
+      globalsMap: {},
       title: node?.title || "no-name",
       description: node.description || "",
     },

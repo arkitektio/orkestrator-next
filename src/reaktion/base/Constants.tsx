@@ -41,8 +41,10 @@ export const ArgsContainer = ({
   onToArg,
   onToGlobal,
   registry,
-}: ArgsContainerProps & {onToArg?: (port: PortFragment) => void;
-  onToGlobal?: (port: PortFragment, key: string) => void;}) => {
+}: ArgsContainerProps & {
+  onToArg?: (port: PortFragment) => void;
+  onToGlobal?: (port: PortFragment, key: string) => void;
+}) => {
   let hash = portHash(ports.filter(notEmpty));
 
   const filledGroups = useMemo(() => {
@@ -98,7 +100,6 @@ export const ArgsContainer = ({
                     registry={registry}
                   >
                     <div className="flex flex-row gap-2 justify-between">
-                      
                       <div className="flex-grow">
                         <Widget
                           key={index}
@@ -106,10 +107,26 @@ export const ArgsContainer = ({
                           widget={port.assignWidget}
                           options={options}
                         />
-                        </div>
+                      </div>
                       <div className="my-auto flex-col flex">
-                      {onToArg && <Button variant="ghost" className="py-1 px-1" onClick={() => onToArg(port)}><ChevronUpIcon/></Button>}
-                      {onToGlobal && <Button variant="ghost" className="py-1 px-1" onClick={() => onToGlobal(port, "nana")}><DoubleArrowUpIcon/></Button>}
+                        {onToArg && (
+                          <Button
+                            variant="ghost"
+                            className="py-1 px-1"
+                            onClick={() => onToArg(port)}
+                          >
+                            <ChevronUpIcon />
+                          </Button>
+                        )}
+                        {onToGlobal && (
+                          <Button
+                            variant="ghost"
+                            className="py-1 px-1"
+                            onClick={() => onToGlobal(port, "nana")}
+                          >
+                            <DoubleArrowUpIcon />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </EffectWrapper>
@@ -144,11 +161,13 @@ export const Constants = (props: {
   return (
     <>
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-6 mt-4"
-        >
-          <ArgsContainer registry={registry} ports={props.ports} onToArg={props.onToArg} onToGlobal={props.onToGlobal}/>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
+          <ArgsContainer
+            registry={registry}
+            ports={props.ports}
+            onToArg={props.onToArg}
+            onToGlobal={props.onToGlobal}
+          />
         </form>
       </Form>
     </>

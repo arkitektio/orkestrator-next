@@ -62,12 +62,21 @@ import { ArkitektTrackNodeWidget } from "./nodes/ArkitektWidget";
 import { ReactiveTrackNodeWidget } from "./nodes/ReactiveWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
-import { FlowState, SolvedError, ValidationError, ValidationResult } from "../validation/types";
+import {
+  FlowState,
+  SolvedError,
+  ValidationError,
+  ValidationResult,
+} from "../validation/types";
 import { validateState } from "../validation/validate";
 import { integrate } from "../validation/integrate";
-import useUndoable, { MutationBehavior } from "use-undoable"
+import useUndoable, { MutationBehavior } from "use-undoable";
 import { RemainingErrorRender, SolvedErrorRender } from "./ErrorRender";
-import { DoubleArrowLeftIcon, DoubleArrowRightIcon, LetterCaseToggleIcon } from '@radix-ui/react-icons';
+import {
+  DoubleArrowLeftIcon,
+  DoubleArrowRightIcon,
+  LetterCaseToggleIcon,
+} from "@radix-ui/react-icons";
 import { cn } from "@/lib/utils";
 import { isValid, set } from "date-fns";
 
@@ -95,63 +104,74 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
   const [reactFlowInstance, setReactFlowInstance] =
     useState<ReactFlowInstance | null>(null);
 
+  const [state, setState, { redo, undo, canRedo, canUndo }] =
+    useUndoable<ValidationResult>({
+      nodes: nodes_to_flownodes(flow.graph?.nodes),
+      edges: edges_to_flowedges(flow.graph?.edges),
+      globals: [],
+      remainingErrors: [],
+      solvedErrors: [],
+      valid: true,
+    });
 
-  const [state, setState, { redo, undo, canRedo, canUndo}] = useUndoable<ValidationResult>({
-    nodes: nodes_to_flownodes(flow.graph?.nodes),
-    edges: edges_to_flowedges(flow.graph?.edges),
-    globals: [],
-    remainingErrors: [],
-    solvedErrors: [],
-    valid: true,
-  })
-
-
-	const triggerNodepdate = useCallback(
-		(v: FlowNode[], mutation?: MutationBehavior | undefined, ignoreAction?: boolean | undefined) => {
-			// To prevent a mismatch of state updates,
-			// we'll use the value passed into this
-			// function instead of the state directly.
-			setState(e => ({
-        ...e,
-				nodes: v,
-			}), mutation, ignoreAction);
-		},
-		[setState]
-	);
+  const triggerNodepdate = useCallback(
+    (
+      v: FlowNode[],
+      mutation?: MutationBehavior | undefined,
+      ignoreAction?: boolean | undefined,
+    ) => {
+      // To prevent a mismatch of state updates,
+      // we'll use the value passed into this
+      // function instead of the state directly.
+      setState(
+        (e) => ({
+          ...e,
+          nodes: v,
+        }),
+        mutation,
+        ignoreAction,
+      );
+    },
+    [setState],
+  );
 
   const triggerEdgeUpdate = useCallback(
-		(v: FlowEdge[], mutation?: MutationBehavior | undefined, ignoreAction?: boolean | undefined) => {
-			// To prevent a mismatch of state updates,
-			// we'll use the value passed into this
-			// function instead of the state directly.
-			setState(e => ({
-        ...e,
-        edges: v,
-			}), mutation, ignoreAction);
-		},
-		[setState]
-	);
+    (
+      v: FlowEdge[],
+      mutation?: MutationBehavior | undefined,
+      ignoreAction?: boolean | undefined,
+    ) => {
+      // To prevent a mismatch of state updates,
+      // we'll use the value passed into this
+      // function instead of the state directly.
+      setState(
+        (e) => ({
+          ...e,
+          edges: v,
+        }),
+        mutation,
+        ignoreAction,
+      );
+    },
+    [setState],
+  );
 
-
-	// We declare these callbacks as React Flow suggests,
-	// but we don't set the state directly. Instead, we pass
-	// it to the triggerUpdate function so that it alone can
-	// handle the state updates.
-
-
-
+  // We declare these callbacks as React Flow suggests,
+  // but we don't set the state directly. Instead, we pass
+  // it to the triggerUpdate function so that it alone can
+  // handle the state updates.
 
   useEffect(() => {
     const keyUpListener = (event: KeyboardEvent) => {
-      console.log("keyUpListener", event)
+      console.log("keyUpListener", event);
       if (event.key == "z" && event.ctrlKey) {
-        undo()
+        undo();
       }
       if (event.key == "y" && event.ctrlKey) {
-        redo()
+        redo();
       }
-    }
-    
+    };
+
     document.addEventListener("keyup", keyUpListener);
 
     return () => {
@@ -159,38 +179,49 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
     };
   }, [undo, redo]);
 
-	const onNodesChange = useCallback(
-		(changes: NodeChange[]) => {
-      if (changes.length == 1 && (changes[0].type == "position" || changes[0].type == "dimensions") ){
-        triggerNodepdate(applyNodeChanges(changes, state.nodes) as FlowNode[], undefined, true);
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      if (
+        changes.length == 1 &&
+        (changes[0].type == "position" || changes[0].type == "dimensions")
+      ) {
+        triggerNodepdate(
+          applyNodeChanges(changes, state.nodes) as FlowNode[],
+          undefined,
+          true,
+        );
       }
-			triggerNodepdate(applyNodeChanges(changes, state.nodes) as FlowNode[], undefined, false);
-		},
-		[triggerNodepdate, state.nodes]
-	);
+      triggerNodepdate(
+        applyNodeChanges(changes, state.nodes) as FlowNode[],
+        undefined,
+        false,
+      );
+    },
+    [triggerNodepdate, state.nodes],
+  );
 
-	const onEdgesChange = useCallback(
-		(changes: EdgeChange[]) => {
-			triggerEdgeUpdate(applyEdgeChanges(changes, state.edges) as FlowEdge[]);
-		},
-		[triggerEdgeUpdate, state.edges]
-	);
-
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange[]) => {
+      triggerEdgeUpdate(applyEdgeChanges(changes, state.edges) as FlowEdge[]);
+    },
+    [triggerEdgeUpdate, state.edges],
+  );
 
   const updateNodeData = (data: Partial<ArkitektNodeData>, id: string) => {
-
-    setState(state => validateState({
-      nodes: state.nodes.map((n) => {
-        if (n.id === id) {
-          n.data = { ...n.data, ...data };
-          console.log("found node", n);
+    setState((state) =>
+      validateState({
+        nodes: state.nodes.map((n) => {
+          if (n.id === id) {
+            n.data = { ...n.data, ...data };
+            console.log("found node", n);
+            return n;
+          }
           return n;
-        }
-        return n;
+        }),
+        edges: state.edges,
+        globals: [],
       }),
-      edges: state.edges,
-      globals: [],
-    }))
+    );
   };
 
   const save = () => {
@@ -217,9 +248,8 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
   };
 
   const addNode = (node: FlowNode) => {
-    setState((e) => ({...e, nodes: [...e.nodes, node]}));
+    setState((e) => ({ ...e, nodes: [...e.nodes, node] }));
   };
-
 
   const validate = (newState?: Partial<FlowState> | undefined) => {
     const nodes = (reactFlowInstance?.getNodes() as FlowNode[]) || [];
@@ -369,7 +399,14 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                   <>
                     <CardDescription> Remaining Errors </CardDescription>
                     {state.remainingErrors.map((e) => (
-                      <RemainingErrorRender error={e} onClick={(e) => onNodesChange([{type: "select", id: e.id, selected: true}])}/>
+                      <RemainingErrorRender
+                        error={e}
+                        onClick={(e) =>
+                          onNodesChange([
+                            { type: "select", id: e.id, selected: true },
+                          ])
+                        }
+                      />
                     ))}
                   </>
                 )}
@@ -377,7 +414,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                   <>
                     <CardDescription> Solved Errors </CardDescription>
                     {state.solvedErrors.map((e) => (
-                      <SolvedErrorRender error={e}/>
+                      <SolvedErrorRender error={e} />
                     ))}
                   </>
                 )}
@@ -400,12 +437,37 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
             fitView
             attributionPosition="bottom-right"
           >
-
             <Controls className="flex flex-row bg-white gap-2 rounded rounded-md overflow-hidden px-2">
-                <button onClick={() => undo()} disabled={!canUndo} className={cn(" hover:bg-primary", "text-muted disabled:text-gray-200")}><DoubleArrowLeftIcon/> </button>
-                <button onClick={() => redo()}  disabled={!canRedo} className={cn(" hover:bg-primary", "text-muted disabled:text-gray-200")}><DoubleArrowRightIcon/> </button>
-                <button onClick={() => setShowEdgeLabels(!showEdgeLabels)}  className={cn(" hover:bg-primary", showEdgeLabels ? "text-muted" : "text-black")}><LetterCaseToggleIcon/> </button>
-              </Controls>
+              <button
+                onClick={() => undo()}
+                disabled={!canUndo}
+                className={cn(
+                  " hover:bg-primary",
+                  "text-muted disabled:text-gray-200",
+                )}
+              >
+                <DoubleArrowLeftIcon />{" "}
+              </button>
+              <button
+                onClick={() => redo()}
+                disabled={!canRedo}
+                className={cn(
+                  " hover:bg-primary",
+                  "text-muted disabled:text-gray-200",
+                )}
+              >
+                <DoubleArrowRightIcon />{" "}
+              </button>
+              <button
+                onClick={() => setShowEdgeLabels(!showEdgeLabels)}
+                className={cn(
+                  " hover:bg-primary",
+                  showEdgeLabels ? "text-muted" : "text-black",
+                )}
+              >
+                <LetterCaseToggleIcon />{" "}
+              </button>
+            </Controls>
           </Graph>
         </div>
       </div>

@@ -1,0 +1,20 @@
+query GlobalSearch(
+  $search: String
+  $noImages: Boolean!
+  $noFiles: Boolean!
+  $pagination: OffsetPaginationInput
+) {
+  images: images(
+    filters: { name: { iContains: $search } }
+    pagination: $pagination
+  ) @skip(if: $noImages) {
+    ...ListImage
+  }
+
+  files: files(
+    filters: { name: { iContains: $search } }
+    pagination: $pagination
+  ) @skip(if: $noFiles) {
+    ...ListFile
+  }
+}

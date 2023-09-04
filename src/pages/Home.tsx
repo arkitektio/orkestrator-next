@@ -1,8 +1,9 @@
 import { Card } from "@/components/ui/card";
-import { SmartModel } from "@/smart/SmartModel";
+import { SmartModel } from "@/providers/smart/SmartModel";
 import { EasyGuard } from "@jhnnsrs/arkitekt";
 import { RekuestGuard } from "@jhnnsrs/rekuest-next";
 import { HerreGuard, useHerre } from "@jhnnsrs/herre";
+import { RekuestModuleLink } from "@/linkers";
 
 export const Hallo: React.FC = (props) => {
   const { token } = useHerre();
@@ -15,19 +16,6 @@ function Home() {
       <EasyGuard>
         <RekuestGuard>
           <Hallo />
-          <SmartModel
-            identifier="github.io.jhnnsrs.orkestrator"
-            object="latest"
-          >
-            <Card>Hallo</Card>
-          </SmartModel>
-
-          <SmartModel
-            identifier="github.io.jhnnsrs.orkestrator"
-            object="latest"
-          >
-            <Card>Two</Card>
-          </SmartModel>
         </RekuestGuard>
       </EasyGuard>
     </>

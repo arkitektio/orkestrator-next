@@ -1,5 +1,0 @@
-query FlussGlobalSearch($search: String) {
-  workspaces(search: $search) {
-    ...ListWorkspace
-  }
-}

@@ -2,7 +2,11 @@ import React, { useEffect } from "react";
 import { EdgeLabelRenderer, getSmoothStepPath, useNodes } from "reactflow";
 import { FlowNode, VanillaEdgeProps } from "../../types";
 import { Card } from "@/components/ui/card";
-import { handleToStream, streamToReactNode, streamToReadable } from "@/reaktion/utils";
+import {
+  handleToStream,
+  streamToReactNode,
+  streamToReadable,
+} from "@/reaktion/utils";
 import { useEditRiver } from "../context";
 
 export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
@@ -58,19 +62,22 @@ export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
           className="group"
         ></textPath>
       </text>
-      {showEdgeLabels && <EdgeLabelRenderer>
-        <Card
-          style={{
-            position: "absolute",
-            transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-            pointerEvents: "all",
-          }}
-          className="p-2 text-white max-w-[200px] overflow-hidden ellipsis truncate text-xs"
-        >
-          {streamToReactNode(node?.data?.ins
-            .at(handleToStream(targetHandleId)))}
-        </Card>
-      </EdgeLabelRenderer>}
+      {showEdgeLabels && (
+        <EdgeLabelRenderer>
+          <Card
+            style={{
+              position: "absolute",
+              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+              pointerEvents: "all",
+            }}
+            className="p-2 text-white max-w-[200px] overflow-hidden ellipsis truncate text-xs"
+          >
+            {streamToReactNode(
+              node?.data?.ins.at(handleToStream(targetHandleId)),
+            )}
+          </Card>
+        </EdgeLabelRenderer>
+      )}
     </>
   );
 };

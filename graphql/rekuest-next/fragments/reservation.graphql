@@ -2,12 +2,16 @@ fragment Binds on Binds {
   templates
 }
 
-
 fragment PostmanReservation on Reservation {
   title
   status
   id
   reference
+  node {
+    ...Ports
+    name
+    description
+  }
   binds {
     ...Binds
   }

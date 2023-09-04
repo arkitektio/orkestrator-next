@@ -21,7 +21,7 @@ export type SolvedError = ValidationError & {
   solvedBy: string;
 };
 
-export type ValidationResult =  FlowState & {
+export type ValidationResult = FlowState & {
   valid: boolean;
   solvedErrors: SolvedError[];
   remainingErrors: ValidationError[];

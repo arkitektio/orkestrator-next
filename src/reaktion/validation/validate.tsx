@@ -140,20 +140,17 @@ const validateMatchingPorts = (
 
 const validators = [validateNoEdgeWithItself, validateMatchingPorts];
 
-
-
 export const validateNodeConstants = (
   state: ValidationResult,
-  node: FlowNode 
-): ValidationResult  => {
-  console.log("Validating node constants")
-  const schema = yupSchemaBuilder(node.data.constants)
+  node: FlowNode,
+): ValidationResult => {
+  console.log("Validating node constants");
+  const schema = yupSchemaBuilder(node.data.constants);
   try {
-    schema.validateSync(node.data.constantsMap, { abortEarly: false })
-    return state
-  }
-  catch (e) {
-    console.log("Validation error", e)
+    schema.validateSync(node.data.constantsMap, { abortEarly: false });
+    return state;
+  } catch (e) {
+    console.log("Validation error", e);
     let validationError = e as YupValidationError;
 
     let newRemainingErrors: ValidationError[] = [];
@@ -168,30 +165,25 @@ export const validateNodeConstants = (
         level: "critical",
         message: element.message,
       });
-
-      
     });
 
     return {
       ...state,
       valid: false,
-      remainingErrors: [
-        ...state.remainingErrors,
-        ...newRemainingErrors
-      ],
-    }
+      remainingErrors: [...state.remainingErrors, ...newRemainingErrors],
+    };
   }
-
-}
-
+};
 
 export type ValidationOptions = {
   validateNodeDefaults: boolean;
-}
+};
 
-export const validateState = (state: FlowState, options?: ValidationOptions): ValidationResult => {
+export const validateState = (
+  state: FlowState,
+  options?: ValidationOptions,
+): ValidationResult => {
   if (options == undefined) options = { validateNodeDefaults: true };
-
 
   let initial: ValidationResult = {
     ...state,

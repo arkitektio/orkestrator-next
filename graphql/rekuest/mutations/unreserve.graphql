@@ -1,5 +1,0 @@
-mutation Unreserve($reservation: ID!) {
-  unreserve(id: $reservation) {
-    id
-  }
-}

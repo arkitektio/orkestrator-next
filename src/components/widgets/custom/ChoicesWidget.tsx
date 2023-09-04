@@ -8,7 +8,6 @@ import { useFormContext } from "react-hook-form";
 export const ChoicesWidget = (
   props: InputWidgetProps<ChoiceAssignWidgetFragment>,
 ) => {
-
   console.log(props.widget?.choices);
   const choices = props.widget?.choices || [];
 

@@ -13,7 +13,7 @@ import {
   PortScope,
   ReactiveNodeFragment,
   ReactiveTemplateFragment,
-  StreamItemInput
+  StreamItemInput,
 } from "@/rekuest/api/graphql";
 import { convertPortToInput } from "@/rekuest/utils";
 import { portToDefaults } from "@jhnnsrs/rekuest-next";
@@ -27,7 +27,7 @@ import {
   GlobalInput,
   NodeFragment,
   NodeInput,
-  StreamItemFragment
+  StreamItemFragment,
 } from "./types";
 
 export const globalArgKey = (id: string, key: string) => {
@@ -131,9 +131,7 @@ export const streamItemToInput = (
   return { ...rest };
 };
 
-export const bindsToInput = (
-  node: BindsFragment,
-): BindsInput => {
+export const bindsToInput = (node: BindsFragment): BindsInput => {
   const { __typename, ...rest } = node;
   return { ...rest };
 };
@@ -174,7 +172,7 @@ export const arkitektNodeToFlowNode = (
 ): FlowNode<ArkitektGraphNodeFragment> => {
   let nodeId = "ark-" + uuidv4();
 
-  console.log(nodeId)
+  console.log(nodeId);
   let node_: FlowNode<ArkitektGraphNodeFragment> = {
     id: nodeId,
     type: "ArkitektGraphNode",
@@ -254,9 +252,7 @@ export const listPortToSingle = (
   };
 };
 
-export const singleToList = (
-  port: PortFragment,
-): PortFragment => {
+export const singleToList = (port: PortFragment): PortFragment => {
   const { __typename, key, ...rest } = port;
   return {
     nullable: false,
@@ -278,57 +274,84 @@ export const handleToStream = (handle: string | undefined | null) => {
   return parseInt(parts[parts.length - 1]);
 };
 
-
-export const portToReadble = (port: PortFragment | ChildPortFragment | undefined | null, withLocalDisclaimer: boolean): string => {
-
+export const portToReadble = (
+  port: PortFragment | ChildPortFragment | undefined | null,
+  withLocalDisclaimer: boolean,
+): string => {
   if (!port) return "undefined";
 
-  let answer = withLocalDisclaimer ? (port.scope == PortScope.Local ? "local " : "") : "";
+  let answer = withLocalDisclaimer
+    ? port.scope == PortScope.Local
+      ? "local "
+      : ""
+    : "";
   if (port.nullable) answer += "?";
   if (port.kind == PortKind.List) {
-    answer += "[" + portToReadble(port.child as ChildPortFragment, withLocalDisclaimer) + "]";
+    answer +=
+      "[" +
+      portToReadble(port.child as ChildPortFragment, withLocalDisclaimer) +
+      "]";
   }
 
   if (port.kind == PortKind.Dict) {
-    answer +=  "{" + portToReadble(port.child as ChildPortFragment, withLocalDisclaimer) + "}";
+    answer +=
+      "{" +
+      portToReadble(port.child as ChildPortFragment, withLocalDisclaimer) +
+      "}";
   }
 
   if (port.kind == PortKind.Int) {
-    answer +=  "int";
+    answer += "int";
   }
 
   if (port.kind == PortKind.Float) {
-    answer +=  "float";
+    answer += "float";
   }
 
   if (port.kind == PortKind.String) {
-    answer +=  "string";
+    answer += "string";
   }
 
   if (port.kind == PortKind.Bool) {
-    answer +=  "bool";
+    answer += "bool";
   }
 
   if (port.kind == PortKind.Union) {
     if (!port.variants) throw new Error("Union has no variants");
-    answer +=  port.variants.map(p => portToReadble(p as ChildPortFragment, withLocalDisclaimer)).join(" | ");
+    answer += port.variants
+      .map((p) => portToReadble(p as ChildPortFragment, withLocalDisclaimer))
+      .join(" | ");
   }
 
-  if (port.kind == PortKind.Structure)  {
-    answer +=  port.identifier;
+  if (port.kind == PortKind.Structure) {
+    answer += port.identifier;
   }
 
   return answer;
-}
+};
 
-export const streamToReadable =  (stream: PortFragment[] | undefined, withLocalDisclaimer?: boolean): string => {
+export const streamToReadable = (
+  stream: PortFragment[] | undefined,
+  withLocalDisclaimer?: boolean,
+): string => {
   if (!stream) return "undefinedStream";
-  return stream.map(p => portToReadble(p, withLocalDisclaimer == true)).join(" | ");
-}
+  return stream
+    .map((p) => portToReadble(p, withLocalDisclaimer == true))
+    .join(" | ");
+};
 
-
-
-export const streamToReactNode = (stream: PortFragment[] | undefined, withLocalDisclaimer?: boolean): JSX.Element => {
+export const streamToReactNode = (
+  stream: PortFragment[] | undefined,
+  withLocalDisclaimer?: boolean,
+): JSX.Element => {
   if (!stream) return <div className="text-red-400">undefinedStream</div>;
-  return <div className="flex flex-row flex-wrap ">{stream.map(p => <div className="flex-1">{portToReadble(p, withLocalDisclaimer == true)}</div>)}</div>;
-}
+  return (
+    <div className="flex flex-row flex-wrap ">
+      {stream.map((p) => (
+        <div className="flex-1">
+          {portToReadble(p, withLocalDisclaimer == true)}
+        </div>
+      ))}
+    </div>
+  );
+};

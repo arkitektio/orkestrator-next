@@ -16,7 +16,11 @@ export const ArgTrackNodeWidget: React.FC<ArgNodeProps> = ({
 
   return (
     <>
-      <NodeShowLayout color="border-blue-500 shadow-blue-500/50 dark:border-blue-200 dark:shadow-blue-200/10  shadow-xxl" id={id} selected={selected}>
+      <NodeShowLayout
+        color="border-blue-500 shadow-blue-500/50 dark:border-blue-200 dark:shadow-blue-200/10  shadow-xxl"
+        id={id}
+        selected={selected}
+      >
         <CardHeader className="p-4">
           <CardTitle onDoubleClick={() => setIsSmall(!isSmall)}>
             Inputs{" "}

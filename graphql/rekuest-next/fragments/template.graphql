@@ -1,9 +1,4 @@
-
-
-
 fragment DetailTemplate on Template {
   id
   interface
 }
-
-

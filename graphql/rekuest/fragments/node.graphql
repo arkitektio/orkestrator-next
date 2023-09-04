@@ -1,5 +1,0 @@
-fragment ListNode on Node {
-  id
-  name
-  description
-}

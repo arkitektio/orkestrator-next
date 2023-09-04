@@ -3,11 +3,16 @@ import {
   GraphNodeFragment,
   GraphNodeKind,
   PortFragment,
-  ReactiveImplementation
+  ReactiveImplementation,
 } from "@/rekuest/api/graphql";
 import { Connection, XYPosition } from "reactflow";
 import { FlowEdge, FlowNode, FlowNodeData } from "../types";
-import { handleToStream, nodeIdBuilder, singleToList, streamToReadable } from "../utils";
+import {
+  handleToStream,
+  nodeIdBuilder,
+  singleToList,
+  streamToReadable,
+} from "../utils";
 import {
   ChangeEvent,
   ChangeOutcome,
@@ -15,7 +20,7 @@ import {
   PortType,
   SolvedError,
   Transform,
-  ValidationResult
+  ValidationResult,
 } from "./types";
 import {
   isNullTransformable,
@@ -59,16 +64,24 @@ export const changeZip = (
   }
 };
 
-
-
-
 const logChallenge = (data: FlowNodeData, event: ChangeEvent) => {
-  if (event.type == "target") console.log(data.title, "is challenged as a Target: Having input" , streamToReadable(data.ins.at(event.index)), "and challenged by", streamToReadable(event.stream));
-  if (event.type == "source") console.log(data.title, "is challenged as a Source: Having output" , streamToReadable(data.outs.at(event.index)), "and challenged by", streamToReadable(event.stream));
-}
-
-
-
+  if (event.type == "target")
+    console.log(
+      data.title,
+      "is challenged as a Target: Having input",
+      streamToReadable(data.ins.at(event.index)),
+      "and challenged by",
+      streamToReadable(event.stream),
+    );
+  if (event.type == "source")
+    console.log(
+      data.title,
+      "is challenged as a Source: Having output",
+      streamToReadable(data.outs.at(event.index)),
+      "and challenged by",
+      streamToReadable(event.stream),
+    );
+};
 
 export const onlyValid = (
   data: FlowNodeData,
@@ -77,14 +90,14 @@ export const onlyValid = (
   logChallenge(data, event);
   console.log(islistTransformable(event.stream, data.ins.at(event.index)));
   if (event.type == "target") {
-    if (isSameStream(event.stream, data.ins.at(event.index),)) return {}; // No change needed
+    if (isSameStream(event.stream, data.ins.at(event.index))) return {}; // No change needed
     if (islistTransformable(event.stream, data.ins.at(event.index)))
       return { needsTransform: "to_list" }; // No change needed// No change needed
     if (isNullTransformable(event.stream, data.ins.at(event.index)))
       return { needsTransform: "ensure" };
     throw new Error("Ports do not match");
   } else {
-    if (isSameStream(data.outs.at(event.index), event.stream)) return {}; 
+    if (isSameStream(data.outs.at(event.index), event.stream)) return {};
     throw new Error("Ports do not match");
   }
 };
@@ -202,11 +215,12 @@ export const getTransform = (
         __typename: "ReactiveNode",
         globalsMap: {},
         title: "Ensure",
-        description: "Ensures that the stream has no null items (will raise an error if it is)",
+        description:
+          "Ensures that the stream has no null items (will raise an error if it is)",
         kind: GraphNodeKind.Reactive,
         ins: [instream],
         constantsMap: {},
-        outs: [instream.map((p) => ({...p, nullable: false}))],
+        outs: [instream.map((p) => ({ ...p, nullable: false }))],
         constants: [],
         implementation: ReactiveImplementation.Ensure,
       },
@@ -243,13 +257,14 @@ export const createVanillaTransformEdge = (
   };
 };
 
-export const removeEdgeAndSolve = (state: ValidationResult, edgeID: string, message: string) => {
-
+export const removeEdgeAndSolve = (
+  state: ValidationResult,
+  edgeID: string,
+  message: string,
+) => {
   let edge = state.edges.find((e) => e.id == edgeID);
   if (!edge) throw new Error("Edge not found. Should never throw");
-  state.edges = state.edges.filter(
-    (e) => e.id != edgeID,
-  );
+  state.edges = state.edges.filter((e) => e.id != edgeID);
   state.solvedErrors = [
     ...state.solvedErrors,
     {
@@ -266,11 +281,14 @@ export const removeEdgeAndSolve = (state: ValidationResult, edgeID: string, mess
       solvedBy: "Removing the Edge",
     },
   ];
-}
+};
 
-
-export const addEdgeAndSolve = (state: ValidationResult, edge: FlowEdge, message: string) => {
-  state.edges = [...state.edges, edge]
+export const addEdgeAndSolve = (
+  state: ValidationResult,
+  edge: FlowEdge,
+  message: string,
+) => {
+  state.edges = [...state.edges, edge];
   state.solvedErrors = [
     ...state.solvedErrors,
     {
@@ -281,10 +299,14 @@ export const addEdgeAndSolve = (state: ValidationResult, edge: FlowEdge, message
       solvedBy: "Adding an Edge",
     },
   ];
-}
+};
 
-export const addNodeAndSolve = (state: ValidationResult, node: FlowNode, message: string) => {
-  state.nodes = [...state.nodes, node]
+export const addNodeAndSolve = (
+  state: ValidationResult,
+  node: FlowNode,
+  message: string,
+) => {
+  state.nodes = [...state.nodes, node];
   state.solvedErrors = [
     ...state.solvedErrors,
     {
@@ -295,96 +317,111 @@ export const addNodeAndSolve = (state: ValidationResult, node: FlowNode, message
       solvedBy: "Added a Node",
     },
   ];
-}
+};
 
-export const findSourceForEdgeID = (state: ValidationResult, edgeID: string): FlowNode => {
+export const findSourceForEdgeID = (
+  state: ValidationResult,
+  edgeID: string,
+): FlowNode => {
   let edge = state.edges.find((e) => e.id == edgeID);
   if (!edge) throw new Error("Edge not found. Should never throw");
   let node = state.nodes.find((n) => n.id == edge.source);
   if (!node) throw new Error("Node not found. Should never throw");
   return node;
-}
+};
 
-export const findSourceStreamForEdgeID = (state: ValidationResult, edgeID: string): number => {
+export const findSourceStreamForEdgeID = (
+  state: ValidationResult,
+  edgeID: string,
+): number => {
   let edge = state.edges.find((e) => e.id == edgeID);
   if (!edge) throw new Error("Edge not found. Should never throw");
   return handleToStream(edge.sourceHandle);
-}
+};
 
-export const findTargetStreamForEdgeID = (state: ValidationResult, edgeID: string): number => {
+export const findTargetStreamForEdgeID = (
+  state: ValidationResult,
+  edgeID: string,
+): number => {
   let edge = state.edges.find((e) => e.id == edgeID);
   if (!edge) throw new Error("Edge not found. Should never throw");
   return handleToStream(edge.targetHandle);
-}
+};
 
-export const findTargetForEdgeID = (state: ValidationResult, edgeID: string): FlowNode => {
+export const findTargetForEdgeID = (
+  state: ValidationResult,
+  edgeID: string,
+): FlowNode => {
   let edge = state.edges.find((e) => e.id == edgeID);
   if (!edge) throw new Error("Edge not found. Should never throw");
   let node = state.nodes.find((n) => n.id == edge.target);
   if (!node) throw new Error("Node not found. Should never throw");
   return node;
-}
+};
 
-export const findNodeForID = (state: ValidationResult, nodeID: string): FlowNode => {
+export const findNodeForID = (
+  state: ValidationResult,
+  nodeID: string,
+): FlowNode => {
   let node = state.nodes.find((n) => n.id == nodeID);
   if (!node) throw new Error("Node not found. Should never throw");
   return node;
-}
+};
 
+export const addTransform = (
+  state: ValidationResult,
+  options: TransitionOptions,
+  transform: Transform,
+): void => {
+  // We remove the original edge
+  // We need to add transform to the right direction
 
-export const addTransform = (state: ValidationResult, options: TransitionOptions, transform: Transform): void => {
+  let targetNode = findTargetForEdgeID(state, options.edgeID);
+  let sourceNode = findSourceForEdgeID(state, options.edgeID);
 
-    // We remove the original edge
-    // We need to add transform to the right direction
+  let sourceStream = findSourceStreamForEdgeID(state, options.edgeID);
+  let targetStream = findTargetStreamForEdgeID(state, options.edgeID);
 
-    let targetNode = findTargetForEdgeID(state, options.edgeID);
-    let sourceNode = findSourceForEdgeID(state, options.edgeID);
+  let targetNodePosition = targetNode.position; // node is target
+  let sourceNodePostion = sourceNode.position; // node is source
 
-    let sourceStream = findSourceStreamForEdgeID(state, options.edgeID);
-    let targetStream = findTargetStreamForEdgeID(state, options.edgeID);
+  let inbetweenPosition: XYPosition = {
+    x: (targetNodePosition.x + sourceNodePostion.x) / 2,
+    y: (targetNodePosition.y + sourceNodePostion.y) / 2,
+  };
 
-    let targetNodePosition = targetNode.position; // node is target
-    let sourceNodePostion = sourceNode.position; // node is source
+  let transformNode = getTransform(
+    transform,
+    options.stream,
+    inbetweenPosition,
+  );
 
-    let inbetweenPosition: XYPosition = {
-      x: (targetNodePosition.x + sourceNodePostion.x) / 2,
-      y: (targetNodePosition.y + sourceNodePostion.y) / 2,
-    };
+  const toTransformEdge = createVanillaTransformEdge(
+    options.edgeID, //reusing the old id
+    sourceNode.id,
+    sourceStream,
+    transformNode.id,
+    0, //transform ports are always 0
+  );
 
-    
+  const toTargetEdge = createVanillaTransformEdge(
+    options.edgeID + "-transform", //adding suffix old id
+    transformNode.id,
+    0,
+    targetNode.id,
+    targetStream, //transform ports are always 0
+  );
 
-    let transformNode = getTransform(
-        transform,
-        options.stream,
-        inbetweenPosition,
-    );
+  removeEdgeAndSolve(state, options.edgeID, "Removed because of transform");
+  addNodeAndSolve(state, transformNode, "Added because of transform");
+  addEdgeAndSolve(state, toTransformEdge, "Added because of transform");
+  addEdgeAndSolve(state, toTargetEdge, "Added because of transform");
+};
 
-    const toTransformEdge = createVanillaTransformEdge(
-        options.edgeID, //reusing the old id
-        sourceNode.id,
-        sourceStream,
-        transformNode.id,
-        0, //transform ports are always 0
-    );
-
-    const toTargetEdge = createVanillaTransformEdge(
-      options.edgeID + "-transform", //adding suffix old id
-      transformNode.id,
-      0,
-      targetNode.id,
-      targetStream, //transform ports are always 0
-    );
-
-    removeEdgeAndSolve(state, options.edgeID, "Removed because of transform")
-    addNodeAndSolve(state, transformNode, "Added because of transform")
-    addEdgeAndSolve(state, toTransformEdge, "Added because of transform")
-    addEdgeAndSolve(state, toTargetEdge, "Added because of transform")
-       
-}
-
-
-
-export const transitionOrCut = (state: ValidationResult, options: TransitionOptions): void => {
+export const transitionOrCut = (
+  state: ValidationResult,
+  options: TransitionOptions,
+): void => {
   let changeCount = options.runningCount;
   let node = state.nodes.find((n) => n.id == options.nodeID);
   if (!node) throw new Error("Node not found. Should never throw");
@@ -395,26 +432,24 @@ export const transitionOrCut = (state: ValidationResult, options: TransitionOpti
     index: options.index,
   });
 
-  
-
   if (outcome.needsTransform) {
     if (options.allowTransforms) {
       addTransform(state, options, outcome.needsTransform);
+    } else {
+      removeEdgeAndSolve(
+        state,
+        options.edgeID,
+        "Removed because of unallowed transform.",
+      );
+      return;
     }
-    else {
-      removeEdgeAndSolve(state, options.edgeID, "Removed because of unallowed transform.")
-      return
-    }
-    
   }
 
   if (outcome.denied) {
-
     removeEdgeAndSolve(state, options.edgeID, outcome.denied);
     return;
-    
   }
-   
+
   // Only change the node if the data has changed and the node is not denied
   if (outcome.data) {
     // The node needs to change because of the transition
@@ -442,8 +477,7 @@ export const transitionOrCut = (state: ValidationResult, options: TransitionOpti
         ]; // We need to copy the array because we are changing it
         for (let edge of affectedEdges) {
           if (changeCount < options.maxCount) {
-            transitionOrCut(
-              state, {
+            transitionOrCut(state, {
               ...options,
               stream: change.stream,
               type: "target", // TODO: Check if this is correct
@@ -471,8 +505,7 @@ export const transitionOrCut = (state: ValidationResult, options: TransitionOpti
         ]; // We need to copy the array because we are changing it
         for (let edge of affectedEdges) {
           if (changeCount < options.maxCount) {
-            transitionOrCut(
-              state, {
+            transitionOrCut(state, {
               ...options,
               stream: change.stream,
               type: "source", // TODO: Check if this is correct
@@ -496,9 +529,7 @@ export const transitionOrCut = (state: ValidationResult, options: TransitionOpti
     }
 
     // Remove all edges that are not transition because of the maxCount
-    state.edges = state.edges.filter(
-      (e) => !removedEdges.includes(e),
-    );
+    state.edges = state.edges.filter((e) => !removedEdges.includes(e));
     state.solvedErrors = [...state.solvedErrors, ...solvedErrors];
   }
 };
@@ -555,9 +586,15 @@ export const integrate = (
     },
   };
 
-  const initialState: ValidationResult = { ...state, edges: [...state.edges, edge], solvedErrors: [], remainingErrors: [], valid: true };
+  const initialState: ValidationResult = {
+    ...state,
+    edges: [...state.edges, edge],
+    solvedErrors: [],
+    remainingErrors: [],
+    valid: true,
+  };
 
-  let validatableChangeRightState = { ...initialState};
+  let validatableChangeRightState = { ...initialState };
 
   let transitionRightOptions: TransitionOptions = {
     maxCount: 10,

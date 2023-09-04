@@ -3,5 +3,3 @@ query Template($id: ID!) {
     ...DetailTemplate
   }
 }
-
-

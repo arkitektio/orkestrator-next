@@ -16,7 +16,7 @@ import {
   ReactiveNodeFragment,
   ReturnNodeFragment,
   StreamItemFragment,
-  VanillaEdgeFragment
+  VanillaEdgeFragment,
 } from "@/rekuest/api/graphql";
 import { Connection, Edge, EdgeProps, Node, NodeProps } from "reactflow";
 

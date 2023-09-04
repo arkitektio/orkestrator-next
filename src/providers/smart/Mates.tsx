@@ -22,7 +22,7 @@ export const Mates = ({
   onError,
   mateFinder,
 }: SelfMatesProps) => {
-  const [moreMates, setMoreMates] = useState<Mate[] | undefined>();
+  const [moreMates, setMoreMates] = useState<Mate[] | undefined>([]);
   const [focusIndex, setFocusIndex] = useState<number>();
 
   useEffect(() => {
@@ -79,6 +79,7 @@ export const Mates = ({
           onError={onError}
         />
       ))}
+      {moreMates?.length == 0 && <> No Mates man </>}
     </>
   );
 };

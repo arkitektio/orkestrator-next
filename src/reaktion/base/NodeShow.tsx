@@ -9,11 +9,9 @@ import {
 import { NodeResizer, NodeResizeControl } from "reactflow";
 import { cn } from "@/lib/utils";
 
-
-
 type NodeProps = {
   children: React.ReactNode;
-  color?: string
+  color?: string;
   id: string;
   selected?: boolean;
   minWidth?: number;
@@ -44,16 +42,15 @@ export const NodeShowLayout: React.FC<NodeProps> = ({
       <ContextMenu>
         <ContextMenuTrigger>
           <Card
-            className={cn("custom-drag-handle h-full z-10 group shadow overflow-auto",
-              selected && color)
-            }
+            className={cn(
+              "custom-drag-handle h-full z-10 group shadow overflow-auto",
+              selected && color,
+            )}
           >
             {children}
           </Card>
         </ContextMenuTrigger>
-        <ContextMenuContent>
-          {contextMenu}
-        </ContextMenuContent>
+        <ContextMenuContent>{contextMenu}</ContextMenuContent>
       </ContextMenu>
       <NodeResizeControl
         style={controlStyle}

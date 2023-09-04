@@ -1,10 +1,19 @@
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Constants } from "@/reaktion/base/Constants";
 import { InStream } from "@/reaktion/base/Instream";
 import { OutStream } from "@/reaktion/base/Outstream";
@@ -41,13 +50,13 @@ export const Default = ({ data }: ShapeProps) => {
         <CardHeader className="p-1">
           <Tooltip>
             <TooltipTrigger>
-          <CardTitle className="text-xs">{data.title}</CardTitle>
-          </TooltipTrigger>
-          <TooltipContent>
-          <CardDescription className="text-xs">
-            {data.description}
-          </CardDescription></TooltipContent>
-
+              <CardTitle className="text-xs">{data.title}</CardTitle>
+            </TooltipTrigger>
+            <TooltipContent>
+              <CardDescription className="text-xs">
+                {data.description}
+              </CardDescription>
+            </TooltipContent>
           </Tooltip>
         </CardHeader>
       </Card>

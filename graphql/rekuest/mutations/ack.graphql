@@ -1,5 +1,0 @@
-mutation Acknowledge($assignation: ID!) {
-  ack(assignation: $assignation) {
-    ...PostmanAssignation
-  }
-}

@@ -1,0 +1,30 @@
+query Me {
+  me {
+    ...DetailUser
+  }
+}
+
+query User($id: ID!) {
+  user(id: $id) {
+    ...DetailUser
+  }
+}
+
+query DetailUser($id: ID!) {
+  user(id: $id) {
+    ...DetailUser
+  }
+}
+
+query UserOptions($search: String) {
+  options: users(filters: {search: $search}) {
+    value: id
+    label: username
+  }
+}
+
+query Profile {
+  me {
+    ...MeUser
+  }
+}

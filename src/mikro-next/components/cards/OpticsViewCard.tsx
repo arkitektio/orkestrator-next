@@ -1,13 +1,14 @@
-import { MikroOpticsView } from "@/linkers";
+import { MikroOpticsView, MikroInstrument } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
 import { OpticsViewFragment } from "../../api/graphql";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Props {
   view: OpticsViewFragment;
   mates?: MateFinder[];
 }
 
-const Card = ({ view, mates }: Props) => {
+const TheCard = ({ view, mates }: Props) => {
   return (
     <MikroOpticsView.Smart
       object={view?.id}
@@ -20,11 +21,25 @@ const Card = ({ view, mates }: Props) => {
       }
       mates={mates}
     >
-      <div className="px-2 py-2 h-full w-full absolute top-0 left-0 bg-opacity-20 bg-back-999 hover:bg-opacity-10 transition-all ease-in-out duration-200 truncate">
-        {view.instrument?.name}
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            {" "}
+            {view.instrument && <MikroInstrument.DetailLink
+              className={({ isActive } /*  */) =>
+                "z-10 font-bold text-md mb-2 cursor-pointer " +
+                (isActive ? "text-primary-300" : "")
+              }
+              object={view.instrument.id}
+            >
+              {view.instrument.name}
+            </MikroInstrument.DetailLink>}
+          </CardTitle>
+
+        </CardHeader>
+      </Card>
     </MikroOpticsView.Smart>
   );
 };
 
-export default Card;
+export default TheCard;

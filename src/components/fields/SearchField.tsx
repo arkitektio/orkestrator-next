@@ -62,6 +62,16 @@ export type SearchFunction = (
   searching: SearchOptions,
 ) => Promise<(Option | null | undefined)[]>;
 
+export type SearchFieldProps = {
+  name: string;
+  label?: string;
+  description?: string;
+  placeholder?: string;
+  commandPlaceholder?: string;
+  noOptionFoundPlaceholder?: string;
+  search: SearchFunction;
+};
+
 export const SearchField = ({
   name,
   label,
@@ -70,15 +80,7 @@ export const SearchField = ({
   commandPlaceholder = "Search...",
   noOptionFoundPlaceholder = "No options found",
   description,
-}: {
-  name: string;
-  label?: string;
-  description?: string;
-  placeholder?: string;
-  commandPlaceholder?: string;
-  noOptionFoundPlaceholder?: string;
-  search: SearchFunction;
-}) => {
+}: SearchFieldProps) => {
   const form = useFormContext();
 
   const [options, setOptions] = useState<(Option | null | undefined)[]>([]);
@@ -128,7 +130,7 @@ export const SearchField = ({
                     {field.value ? (
                       <ButtonLabel search={search} value={field.value} />
                     ) : (
-                      <> placeholder</>
+                      <> {error ? error : placeholder}</>
                     )}
                     <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>

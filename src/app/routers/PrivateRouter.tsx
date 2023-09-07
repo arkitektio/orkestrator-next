@@ -14,7 +14,7 @@ export const PrivateRouter: React.FC<Props> = (props) => {
       <EasyGuard>
         <Routes>
           <Route path="mikronext/*" element={<MikroNextModule />} />
-          <Route path="rekuestnext/*" element={<RekuestNextModule />} />
+          <Route path="rekuest/*" element={<RekuestNextModule />} />
           <Route path="reaktion/*" element={<ReaktionModule />} />
         </Routes>
       </EasyGuard>

@@ -1,0 +1,13 @@
+fragment RGBContext on RGBContext {
+  id
+  views {
+    ...RGBView
+  }
+  pinned
+  name
+}
+
+fragment ListRGBContext on RGBContext {
+  id
+  name
+}

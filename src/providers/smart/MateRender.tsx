@@ -5,6 +5,7 @@ import { SMART_MODEL_DROP_TYPE } from "../../constants";
 import { Mate, MateOptions } from "@/mates/types";
 import { Structure } from "@/types";
 import { useSelection } from "../selection/SelectionContext";
+import { Button } from "@/components/ui/button";
 
 export interface MateProps {
   mate: Mate;
@@ -40,12 +41,10 @@ export const MateRender: React.FC<MateProps> = ({
           progress: prog,
         })
         .then(() => {
-          prog(undefined);
           onDone && onDone();
           console.log("done");
         })
         .catch((error) => {
-          prog(undefined);
           console.log(error);
           onError && onError(error);
         });
@@ -121,25 +120,11 @@ export const MateRender: React.FC<MateProps> = ({
   }, [focus]);
 
   return (
-    <div
+    <Button
       ref={drop}
-      className={
-        mate.className
-          ? typeof mate.className == "function"
-            ? mate.className({ isOver: isOver || focus })
-            : mate.className
-          : `flex-1 rounded shadow-md group  text-black bg-center bg-cover bg-primary-200 px-2 py-1 transition-colors ${
-              isOver || focus ? "bg-primary-500 text-slate-50" : ""
-            }${
-              clickable &&
-              "hover:bg-primary-500 hover:text-slate-50 cursor-pointer"
-            }
-            
-            `
-      }
       onClick={click}
     >
       {mate?.label}
-    </div>
+    </Button>
   );
 };

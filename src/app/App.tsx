@@ -3,6 +3,7 @@ import { AppProvider } from "./AppProvider";
 import { Routes, Route } from "react-router-dom";
 import PublicRouter from "./routers/PublicRouter";
 import PrivateRouter from "./routers/PrivateRouter";
+import { LogoutButton, UnconnectButton } from "@jhnnsrs/arkitekt";
 
 function App() {
   return (

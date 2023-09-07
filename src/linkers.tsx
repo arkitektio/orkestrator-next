@@ -2,16 +2,16 @@ import { buildModuleLink, buildSmart } from "@/providers/smart/builder";
 
 export const RekuestAssignation = buildSmart(
   "@rekuest-next/assignation",
-  "rekuestnext/assignation",
+  "rekuest/assignation",
 );
 
 export const RekuestNode = buildSmart(
   "@rekuest-next/node",
-  "rekuestnext/nodes",
+  "rekuest/nodes",
 );
 export const RekuestTemplate = buildSmart(
   "@rekuest-next/template",
-  "rekuestnext/templates",
+  "rekuest/templates",
 );
 export const RekuestFlow = buildSmart("@rekuest-next/flow", "reaktion/flows");
 export const RekuestWorkspace = buildSmart(
@@ -20,7 +20,7 @@ export const RekuestWorkspace = buildSmart(
 );
 export const RekuestReservation = buildSmart(
   "@rekuest-next/reservation",
-  "rekeustnext/reservations",
+  "rekuest/reservations",
 );
 
 export const MikroImage = buildSmart("@mikronext/image", "mikronext/images");
@@ -47,6 +47,11 @@ export const MikroLabelView = buildSmart(
   "mikronext/labelviews",
 );
 
+export const MikroFluorophore = buildSmart(
+  "@mikronext/fluorophore",
+  "mikronext/fluorophores",
+);
+
 export const MikroFile = buildSmart("@mikronext/file", "mikronext/files");
 
 export const MikroStage = buildSmart("@mikronext/stage", "mikronext/stages");
@@ -56,9 +61,24 @@ export const MikroChannelView = buildSmart(
   "mikronext/channelviews",
 );
 
+export const MikroRGBView = buildSmart(
+  "@mikronext/rgbview",
+  "mikronext/rgbviews",
+);
+
+export const MikroRGBContext = buildSmart(
+  "@mikronext/rgbcontext",
+  "mikronext/rgbcontexts",
+);
+
 export const MikroOpticsView = buildSmart(
   "@mikronext/opticsview",
   "mikronext/opticsviews",
+);
+
+export const MikroInstrument = buildSmart(
+  "@mikronext/instrument",
+  "mikronext/instruments",
 );
 
 export const RekuestModuleLink = buildModuleLink("rekuestnext");

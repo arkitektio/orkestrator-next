@@ -84,6 +84,16 @@ export type SearchFunction = (
   searching: SearchOptions,
 ) => Promise<(Option | null | undefined)[]>;
 
+export type ListSearchFieldProps = {
+  name: string;
+  label?: string;
+  description?: string;
+  placeholder?: string;
+  commandPlaceholder?: string;
+  noOptionFoundPlaceholder?: string;
+  search: SearchFunction;
+};
+
 export const ListSearchField = ({
   name,
   label,
@@ -92,15 +102,7 @@ export const ListSearchField = ({
   commandPlaceholder = "Search...",
   noOptionFoundPlaceholder = "No options found",
   description,
-}: {
-  name: string;
-  label?: string;
-  description?: string;
-  placeholder?: string;
-  commandPlaceholder?: string;
-  noOptionFoundPlaceholder?: string;
-  search: SearchFunction;
-}) => {
+}: ListSearchFieldProps) => {
   const form = useFormContext();
 
   const [options, setOptions] = useState<(Option | null | undefined)[]>([]);

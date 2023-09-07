@@ -1,6 +1,6 @@
 query Reservations($instanceId: InstanceId!) {
-  reservations(
-    filters: { status: [ENDED], waiter: { instanceId: $instanceId } }
+  myreservations(
+    instanceId: $instanceId
   ) {
     ...PostmanReservation
   }

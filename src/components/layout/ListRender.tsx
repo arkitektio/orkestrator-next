@@ -13,6 +13,7 @@ export type ListRenderProps<T> = {
   additionalChildren?: ReactNode;
   array: T[] | undefined | null;
   limit?: number;
+  fit?: boolean;
   actions?: React.ReactNode;
   refetch?: (values: { pagination: OffsetPaginationInput }) => Promise<any>;
 };
@@ -24,6 +25,7 @@ export const ListRender = <T extends any>({
   actions,
   children,
   refetch,
+  fit,
   additionalChildren,
   loader,
   limit = 20,
@@ -66,7 +68,7 @@ export const ListRender = <T extends any>({
           >
             {title}
           </ListTitle>
-          <ContainerGrid fitLength={array.length}>
+          <ContainerGrid fitLength={fit ? array.length : undefined}>
             {array?.map(children)}
             {additionalChildren}
           </ContainerGrid>

@@ -1,0 +1,16 @@
+query Releases {
+  releases {
+    ...ListRelease
+  }
+}
+
+query Release($identifier: AppIdentifier, $version: Version, $id: ID, $clientId: ID) {
+  release(
+    identifier: $identifier
+    version: $version
+    id: $id
+    clientId: $clientId
+  ) {
+    ...DetailRelease
+  }
+}

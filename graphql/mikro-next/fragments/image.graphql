@@ -9,10 +9,11 @@ fragment Image on Image {
   }
   views {
     ...ChannelView
-    ...TransformationView
+    ...AffineTransformationView
     ...LabelView
     ...TimepointView
     ...OpticsView
+    ...RGBView
   }
   pinned
   renders {

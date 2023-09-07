@@ -1,29 +1,50 @@
 import { MikroHistory, RekuestAssignation } from "@/linkers";
-import { useDatalayer } from "@jhnnsrs/datalayer";
 import { MateFinder } from "../../../mates/types";
-import { HistoryFragment } from "../../api/graphql";
+import { HistoryFragment, HistoryKind } from "../../api/graphql";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { UserInfo } from "@/lok-next/components/protected/UserInfo";
+import Timestamp from "react-timestamp";
+import { Badge } from "@/components/ui/badge";
 
 interface HistoryCardProps {
   history: HistoryFragment;
   mates?: MateFinder[];
 }
 
-const HistoryCard = ({ history, mates }: HistoryCardProps) => {
-  const { s3resolve } = useDatalayer();
 
+
+
+
+
+const TheCard = ({ history, mates }: HistoryCardProps) => {
   return (
     <MikroHistory.Smart
       object={history?.id}
-      dragClassName={({ isOver, canDrop, isSelected, isDragging }) =>
-        `relative rounded group text-white bg-center bg-back-999 shadow-lg h-20  hover:bg-back-800 transition-all ease-in-out duration-200 group ${
-          isOver && !isDragging && "border-primary-200 border"
-        } ${isDragging && "ring-primary-200 ring"} ${
-          isSelected && "ring-2 ring-secondary-500"
-        }`
-      }
       mates={mates}
     >
-      <div className="px-2 py-2 h-full w-full absolute top-0 left-0 bg-opacity-20 bg-back-999 hover:bg-opacity-10 transition-all ease-in-out duration-200 truncate">
+      <Card>
+        <CardHeader className="flex flex-row gap-1">
+          <UserInfo sub={history.user?.sub}></UserInfo> 
+          <div className="flex flex-col">
+          <CardTitle>{history.kind == HistoryKind.Create && "created it"} {history.kind == HistoryKind.Update && "updated"} {history.kind == HistoryKind.Delete && "deleted it"}</CardTitle>
+          <CardDescription><Timestamp date={history.date} relative/></CardDescription>
+          </div>
+
+         
+          
+          
+        </CardHeader>
+        <CardContent>
+
+        {history.effectiveChanges.map((change) => (
+            <div className="flex flex-row gap-1">
+            <Badge variant="outline"> {change.field}</Badge> <div className="text-xs text-muted-foreground my-auto">from</div> <div className="text-muted-xs my-auto">{change.oldValue}</div> <div className="text-xs text-muted-foreground my-auto">to</div><div className="text-xs my-auto">{change.newValue}</div>
+            </div>
+          ))}
+
+
+
+
         {history.during && (
           <RekuestAssignation.DetailLink
             className={({ isActive } /*  */) =>
@@ -32,13 +53,13 @@ const HistoryCard = ({ history, mates }: HistoryCardProps) => {
             }
             object={history.during}
           >
-            Open Assignation
+            <Badge > during</Badge>
           </RekuestAssignation.DetailLink>
         )}
-        {history.kind}
-      </div>
+        </CardContent>
+      </Card>
     </MikroHistory.Smart>
   );
 };
 
-export default HistoryCard;
+export default TheCard;

@@ -146,6 +146,7 @@ fragment ListFlow on Flow {
 fragment ListWorkspace on Workspace {
   id
   title
+  description
   latestFlow {
     ...ListFlow
   }

@@ -1,0 +1,12 @@
+mutation CreateAffineTransformationView($image: ID!, $affineMatrix: FourByFourMatrix!, $stage: ID) {
+  createAffineTransformationView(input: {image: $image, affineMatrix: $affineMatrix, stage: $stage}) {
+    ...AffineTransformationView
+  }
+}
+
+
+mutation CreateRGBView($image: ID!, $rScale: Float!, $gScale: Float!, $bScale: Float!, $context: ID) {
+  createRgbView(input: {image: $image, rScale: $rScale, gScale: $gScale, bScale: $bScale, context: $context}) {
+    ...RGBView
+  }
+}

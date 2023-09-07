@@ -1,6 +1,6 @@
-import { Popover } from "@/components/ui/popover";
+import { Popover, PopoverContent } from "@/components/ui/popover";
 import { SMART_MODEL_DROP_TYPE } from "@/constants";
-import { PopoverAnchor, PopoverContent } from "@radix-ui/react-popover";
+import { PopoverAnchor } from "@radix-ui/react-popover";
 import React, { useEffect, useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { getEmptyImage } from "react-dnd-html5-backend";
@@ -8,6 +8,7 @@ import { SmartModelProps } from "./types";
 import { Mates } from "./Mates";
 import { Structure } from "@/types";
 import { composeMates } from "@/mates/compose";
+import { Card } from "@/components/ui/card";
 
 export const SmartModel = ({
   showSelfMates = true,
@@ -97,31 +98,13 @@ export const SmartModel = ({
       data-disableselect
       data-identifier={props.identifier}
       data-object={props.object}
-      className={dropClassNameFunc({
-        isDragging,
-        isOver,
-        canDrop,
-        progress,
-      })}
-      style={
-        props.dropStyle &&
-        props.dropStyle({
-          isDragging,
-          isOver,
-          canDrop,
-          progress,
-        })
-      }
-      onDoubleClick={() => {
-        setShow(!show);
-      }}
       onContextMenu={(e) => {
         setShow(!show);
         e.preventDefault();
       }}
     >
       <Popover open={isOver || show}>
-        <PopoverContent>
+        <PopoverContent side="bottom" sideOffset={-10}>
           {(isOver || show) && (
             <Mates
               self={self}
@@ -133,7 +116,6 @@ export const SmartModel = ({
               mateFinder={mates && composeMates(mates)}
             />
           )}
-          Hallo
         </PopoverContent>
         <PopoverAnchor
           ref={drag}

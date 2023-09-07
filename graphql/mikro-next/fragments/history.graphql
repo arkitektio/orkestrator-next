@@ -2,5 +2,13 @@ fragment History on History {
   id
   during
   kind
+  user {
+    sub
+  }
   date
+  effectiveChanges {
+    field
+    oldValue
+    newValue
+  }
 }

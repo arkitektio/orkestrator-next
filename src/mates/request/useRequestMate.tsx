@@ -4,7 +4,7 @@ import { useSettings } from "@/providers/settings/SettingsContext";
 import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { useReservationsQuery } from "@/rekuest/api/graphql";
 
-export const usePostmanMate: () => MateFinder = () => {
+export const useRequestMate: () => MateFinder = () => {
   const { assign } = useRequester();
   const { settings } = useSettings();
 

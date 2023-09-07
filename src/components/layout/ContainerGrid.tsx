@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { useSelection } from "@/providers/selection/SelectionContext";
 import autoAnimate from "@formkit/auto-animate";
-import { notEmpty } from "@/lib/utils";
+import { cn, notEmpty } from "@/lib/utils";
 
 export type FittingResponsiveGridProps = {
   children?: React.ReactNode;
@@ -63,14 +63,19 @@ export const ContainerGrid: React.FC<FittingResponsiveGridProps> = ({
 
 export type IResponsiveGridProps = {
   children?: React.ReactNode;
+  className?: string;
 };
 
 const ResponsiveContainerGrid: React.FC<IResponsiveGridProps> = ({
   children,
+  className,
 }) => {
   return (
     <div
-      className={`grid @lg:grid-cols-2 @xl:grid-cols-3 @2xl:grid-cols-4  @3xl:grid-cols-5 @4xl:grid-cols-6 gap-4`}
+      className={cn(
+        `grid @lg:grid-cols-2 @xl:grid-cols-3 @2xl:grid-cols-4  @3xl:grid-cols-5 @4xl:grid-cols-6 gap-2`,
+        className,
+      )}
       data-enableselect="true"
     >
       {children}

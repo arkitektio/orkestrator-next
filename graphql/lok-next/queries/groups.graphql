@@ -1,0 +1,13 @@
+query GroupOptions($search: String) {
+  options: groups(filters: {search: $search}) {
+    value: name
+    label: name
+  }
+}
+
+
+query DetailGroup($id: ID!) {
+  group(id: $id) {
+    ...DetailGroup
+  }
+}

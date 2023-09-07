@@ -3,7 +3,7 @@ mutation from_array_like(
   $name: String!
   $origins: [ID!]
   $channelViews: [PartialChannelViewInput!]
-  $transformationViews: [PartialTransformationViewInput!]
+  $transformationViews: [PartialAffineTransformationViewInput!]
   $labelViews: [PartialLabelViewInput!]
   $timepointViews: [PartialTimepointViewInput!]
   $opticsViews: [PartialOpticsViewInput!]
@@ -38,6 +38,12 @@ mutation RequestAccess($store: ID!, $duration: Int) {
 
 mutation PinImage($id: ID!, $pin: Boolean!) {
   pinImage(input: { id: $id, pin: $pin }) {
+    ...Image
+  }
+}
+
+mutation UpdateImage($input: UpdateImageInput!) {
+  updateImage(input: $input) {
     ...Image
   }
 }

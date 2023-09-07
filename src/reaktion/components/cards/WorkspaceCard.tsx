@@ -1,7 +1,13 @@
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { RekuestWorkspace } from "@/linkers";
 import { MateFinder } from "@/mates/types";
 import { ListWorkspaceFragment } from "@/rekuest/api/graphql";
+import Timestamp from "react-timestamp";
 
 interface Props {
   workspace: ListWorkspaceFragment;
@@ -21,9 +27,20 @@ const TheCard = ({ workspace, mates }: Props) => {
       }
     >
       <Card>
-        <RekuestWorkspace.DetailLink object={workspace.id}>
-          {workspace.id}
-        </RekuestWorkspace.DetailLink>
+        <CardHeader>
+          <CardTitle>
+            <RekuestWorkspace.DetailLink object={workspace.id}>
+              {workspace.title}
+            </RekuestWorkspace.DetailLink>
+          </CardTitle>
+          <CardDescription>
+            {workspace.description || "No description"}
+            <br />
+            {workspace.latestFlow?.createdAt && (
+              <Timestamp date={workspace.latestFlow.createdAt} />
+            )}
+          </CardDescription>
+        </CardHeader>
       </Card>
     </RekuestWorkspace.Smart>
   );

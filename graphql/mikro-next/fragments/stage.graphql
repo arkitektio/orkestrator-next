@@ -1,7 +1,7 @@
 fragment Stage on Stage {
   id
-  views {
-    ...TransformationView
+  affineViews {
+    ...AffineTransformationView
   }
   pinned
   name

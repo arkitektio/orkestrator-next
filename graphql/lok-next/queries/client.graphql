@@ -1,0 +1,18 @@
+query Clients {
+  clients {
+    ...ListClient
+  }
+}
+
+query DetailClient($clientId: ID, $id: ID) {
+  client(clientId: $clientId, id: $id) {
+    ...DetailClient
+  }
+}
+
+query MyManagedClients($kind: ClientKind!) {
+  myManagedClients(kind: $kind) {
+    ...ListClient
+  }
+}
+

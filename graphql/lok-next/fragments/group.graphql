@@ -1,0 +1,12 @@
+fragment DetailGroup on Group {
+  id
+  name
+  users {
+    ...ListUser
+  }
+}
+
+fragment ListGroup on Group {
+  id
+  name
+}

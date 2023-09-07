@@ -16,10 +16,10 @@ const Module: React.FC<Props> = (props) => {
       <ModuleLayout pane={<></>}>
         <Routes>
           <Route index element={<Home />} />
-          <Route path="workspace/:id" element={<Workspace />} />
-          <Route path="flow/:id" element={<Flow />} />
-          <Route path="node/:id" element={<Node />} />
-          <Route path="reservation/:id" element={<Reservation />} />
+          <Route path="workspaces/:id" element={<Workspace />} />
+          <Route path="flows/:id" element={<Flow />} />
+          <Route path="nodes/:id" element={<Node />} />
+          <Route path="reservations/:id" element={<Reservation />} />
         </Routes>
       </ModuleLayout>
     </RekuestGuard>

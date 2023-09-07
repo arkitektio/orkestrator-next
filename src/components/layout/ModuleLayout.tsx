@@ -7,15 +7,17 @@ export type ModuleLayoutProps = {
 
 export const ModuleLayout = ({ pane, children }: ModuleLayoutProps) => {
   return (
-    <PanelGroup autoSaveId="persistence" direction="horizontal">
+    <PanelGroup autoSaveId="module" direction="horizontal">
       {pane && (
         <>
-          <Panel className="border-r-2 border bg-muted ">{pane}</Panel>
-          <PanelResizeHandle className="h-full w-1 opacity-0 hover:opacity-80 bg-white" />
+          <Panel defaultSize={10} className="border-r-2 border bg-seperator">
+            {pane}
+          </Panel>
+          <PanelResizeHandle className="h-full w-1 opacity-0 hover:opacity-80 bg-accent translate-x-[-50%]" />
         </>
       )}
 
-      <Panel>{children}</Panel>
+      <Panel defaultSize={90}>{children}</Panel>
     </PanelGroup>
   );
 };

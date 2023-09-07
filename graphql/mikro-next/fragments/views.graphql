@@ -11,14 +11,27 @@ fragment ChannelView on ChannelView {
   }
 }
 
-fragment TransformationView on TransformationView {
+fragment AffineTransformationView on AffineTransformationView {
   ...View
   id
-  kind
-  matrix
+  affineMatrix
   stage {
     id
+    name
   }
+}
+
+fragment RGBView on RGBView {
+  ...View
+  id
+  context {
+    id
+    name
+  }
+  rScale
+  gScale
+  bScale
+  fullColour
 }
 
 fragment TimepointView on TimepointView {

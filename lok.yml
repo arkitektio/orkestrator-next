@@ -1,0 +1,18 @@
+overwrite: true
+schema: "http://localhost:8233/graphql"
+documents: "graphql/lok-next/**/*.graphql"
+generates:
+  src/lok-next/api/fragments.ts:
+    plugins:
+      - "fragment-matcher"
+  src/lok-next/api/graphql.ts:
+    plugins:
+      - "typescript"
+      - "typescript-operations"
+      - "typescript-react-apollo"
+    config:
+      withHooks: true
+      reactApolloVersion: 3
+  src/lok-next/graphql.schema.json:
+    plugins:
+      - "introspection"

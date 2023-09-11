@@ -19,6 +19,11 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { MikroDataset } from "@/linkers";
 import { ListRender } from "@/components/layout/ListRender";
 import { DropZone } from "@/components/ui/dropzone";
+import { DetailPane, DetailPaneHeader, DetailPaneTitle } from "@/components/ui/pane";
+import { PinToggle } from "../components/ui/PinToggle";
+import { HobbyKnifeIcon } from "@radix-ui/react-icons";
+import { FormSheet } from "@/components/dialog/FormDialog";
+import { UpdateDatasetForm } from "../forms/UpdateDatasetForm";
 
 export type IRepresentationScreenProps = {};
 
@@ -42,39 +47,32 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
 
   return (
     <PageLayout actions={<MikroDataset.Actions id={id} />}>
-      <div className="p-3 flex-grow flex flex-col">
-        <div className="flex flex-row">
-          <div className="flex-grow" />
-          <div className="flex text-white">
-            {data?.dataset?.id && (
-              <button
-                type="button"
-                onClick={() =>
-                  pinDataset({
-                    variables: {
-                      id: data?.dataset?.id || "",
-                      pin: !data?.dataset?.pinned || false,
-                    },
-                  })
+     <DetailPane className="p-3 @container">
+      <DetailPaneHeader>
+              <DetailPaneTitle
+                actions={
+                  <>
+                  <PinToggle
+                    onPin={(e) => {
+                      data?.dataset.id
+                    }}
+                    pinned={data?.dataset?.pinned || false}
+                  />
+                  <FormSheet trigger={<HobbyKnifeIcon/>}>
+                      {data?.dataset && <UpdateDatasetForm dataset={data?.dataset} />}
+                  </FormSheet>
+                  </>
                 }
               >
-                {data?.dataset?.pinned ? <BsPinFill /> : <BsPinAngle />}
-              </button>
-            )}
-          </div>
-        </div>
+                {data?.dataset?.name}
+              </DetailPaneTitle>
+            </DetailPaneHeader>
         <div className="flex flex-col bg-white p-3 rounded rounded-md mt-2 mb-2">
           <div className="font-light mt-2 ">Created At</div>
           <div className="text-md mt-2 ">
             <Timestamp date={data?.dataset?.createdAt} />
           </div>
           <div className="font-light mt-2 ">Created by</div>
-          <div className="font-light mt-2 ">Provenance</div>
-          <div className="text-md mt-2 ">
-            {data?.dataset?.history?.map((history, index) => (
-              <HistoryCard key={index} history={history} />
-            ))}
-          </div>
 
           <div className="font-light mt-2 ">Tags</div>
           <div className="text-xl flex mb-2">
@@ -137,7 +135,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
         >
           {(image, index) => <ImageCard image={image} key={index} />}
         </ListRender>
-      </div>
+      </DetailPane>
     </PageLayout>
   );
 };

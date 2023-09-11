@@ -1,39 +1,28 @@
-import { Form } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { GlobalSearchQueryVariables } from "@/mikro-next/api/graphql";
-import { useForm, useWatch } from "react-hook-form";
+import { ToggleField } from "@/components/fields/ToggleField";
+import { AutoSubmitter } from "@/components/form/AutoSubmitter";
 import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+  Form, FormControl, FormField,
+  FormItem
 } from "@/components/ui/form";
-import { useFormContext } from "react-hook-form";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ArrowDown } from "lucide-react";
+import { NodeFilter, NodeSearchQueryVariables } from "@/rekuest/api/graphql";
 import { PopoverAnchor } from "@radix-ui/react-popover";
-import { SwitchField } from "@/components/fields/SwitchField";
-import { ToggleField } from "@/components/fields/ToggleField";
-import debounce from "debounce";
-import { useEffect } from "react";
-import { AutoSubmitter } from "@/components/form/AutoSubmitter";
+import { ArrowDown } from "lucide-react";
+import { useForm } from "react-hook-form";
 
 interface FilterProps {
-  onFilterChanged: (values: GlobalSearchQueryVariables) => any;
-  defaultValue: GlobalSearchQueryVariables & { search: string };
+  onFilterChanged: (values: NodeFilter) => any;
+  defaultValue: NodeFilter;
   className?: string;
   placeholder?: string;
 }
 
-export const FilterSearch = () => {
-  return <Input type="text" placeholder="Search" />;
-};
+
 
 const Filter: React.FC<FilterProps> = ({ onFilterChanged, defaultValue }) => {
   const form = useForm({
@@ -70,10 +59,7 @@ const Filter: React.FC<FilterProps> = ({ onFilterChanged, defaultValue }) => {
           <PopoverContent>
             <div className="flex flex-row gap-2">
               <ToggleField label="No Images" name="noImages">
-                Exclude Images
-              </ToggleField>
-              <ToggleField label="No Files" name="noFiles">
-                Exclude Files
+                Exclude Globals
               </ToggleField>
             </div>
           </PopoverContent>

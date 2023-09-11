@@ -84,3 +84,7 @@ export const MikroInstrument = buildSmart(
 export const RekuestModuleLink = buildModuleLink("rekuestnext");
 export const MikroModuleLink = buildModuleLink("mikronext");
 export const ReaktionModuleLink = buildModuleLink("reaktion");
+
+
+export const LokUser = buildSmart("@loknext/user", "lok/users");
+export const LokGroup = buildSmart("@lokgroup/group", "lok/groups");

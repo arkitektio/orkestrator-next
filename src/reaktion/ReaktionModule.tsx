@@ -5,13 +5,14 @@ import { Route, Routes } from "react-router";
 import Flow from "./pages/Flow";
 import Workspace from "./pages/Workspace";
 import Home from "./pages/Home";
+import SearchPane from "./panes/SearchPane";
 
 interface Props {}
 
 const Module: React.FC<Props> = (props) => {
   return (
     <RekuestGuard fallback={<>Loading</>}>
-      <ModuleLayout pane={<></>}>
+      <ModuleLayout pane={<><SearchPane/></>}>
         <Routes>
           <Route index element={<Home />} />
           <Route path="workspaces/:id" element={<Workspace />} />

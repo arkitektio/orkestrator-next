@@ -1,4 +1,4 @@
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RekuestNode } from "@/linkers";
 import { useReserveMate } from "@/mates/reserve/useReserveMate";
 import { MateFinder } from "@/mates/types";
@@ -28,6 +28,9 @@ const TheCard = ({ node, mates }: Props) => {
             {node.name}
             </RekuestNode.DetailLink>
           </CardTitle>
+          <CardDescription>
+            {node?.description}
+          </CardDescription>
         </CardHeader>
       </Card>
     </RekuestNode.Smart>

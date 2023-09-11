@@ -22,7 +22,7 @@ import {
   ReactiveTemplateQuery,
 } from "@/rekuest/api/graphql";
 import { useRekuest } from "@jhnnsrs/rekuest-next";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDrop } from "react-dnd";
 import {
   Connection,
@@ -288,6 +288,9 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
     setState(validatedState);
   };
 
+  const hasRemainingErrors = useMemo(() => (state.remainingErrors.length > 0), [state])
+  const hasSolvedErrors = useMemo(() => (state.solvedErrors.length > 0), [state])
+
   const [{ isOver, canDrop, type }, dropref] = useDrop(() => {
     return {
       accept: [SMART_MODEL_DROP_TYPE],
@@ -384,17 +387,15 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         data-disableselect
       >
         <div ref={dropref} className="flex flex-grow h-full w-full relative">
-          <div className="absolute top-0 right-0  mr-3 mt-5 z-50">
-            <Card>
+
+        {state.valid && <div className="absolute bottom-0 right-0  mr-3 mb-5 z-50"><Button onClick={() => save()}> Save </Button></div>}
+        {hasRemainingErrors || hasSolvedErrors &&<div className="absolute top-0 right-0  mr-3 mt-5 z-50">
+             <Card>
+
               <CardHeader>
-                <CardTitle>Errors </CardTitle>
-                <CardDescription>
-                  We found these errors in your graph{" "}
-                </CardDescription>
-                <Button onClick={() => validate()}> Validate all </Button>
-                {state.valid && <Button onClick={() => save()}> Save </Button>}
+                <CardDescription>For your information </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent >
                 {state.remainingErrors.length > 0 && (
                   <>
                     <CardDescription> Remaining Errors </CardDescription>
@@ -408,11 +409,13 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                         }
                       />
                     ))}
+
+                  <Button onClick={() => validate()}> Revalidate all </Button>
                   </>
                 )}
                 {state.solvedErrors.length > 0 && (
                   <>
-                    <CardDescription> Solved Errors </CardDescription>
+                    <CardDescription> We just solved these Errors </CardDescription>
                     {state.solvedErrors.map((e) => (
                       <SolvedErrorRender error={e} />
                     ))}
@@ -420,7 +423,8 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                 )}
               </CardContent>
             </Card>
-          </div>
+
+          </div> }
           {isOver && (
             <div className="absolute top-[50%] left-[50%]">Drop me {":D"} </div>
           )}

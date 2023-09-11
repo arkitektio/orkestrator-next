@@ -1,0 +1,12 @@
+query NodeSearch(
+  $filters: NodeFilter
+  $pagination: OffsetPaginationInput
+) {
+  nodes: nodes(
+    filters: $filters
+    pagination: $pagination
+  ) {
+    ...ListNode
+  }
+
+}

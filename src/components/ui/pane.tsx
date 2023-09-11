@@ -42,7 +42,7 @@ export const DetailPaneDescription = ({
   className,
   ...props
 }: React.ComponentProps<typeof CardDescription>) => {
-  return <DetailPaneDescription {...props} className={cn("", className)} />;
+  return <CardDescription {...props} className={cn("", className)} />;
 };
 
 export const DetailPaneContent = ({

@@ -1,26 +1,32 @@
+import { ListRender } from "@/components/layout/ListRender";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { withMikroNext } from "@jhnnsrs/mikro-next";
 import * as React from "react";
 import {
-  GlobalSearchQueryVariables,
-  useGlobalSearchLazyQuery,
+  useGlobalSearchQuery
 } from "../api/graphql";
-import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useDebounce } from "@uidotdev/usehooks";
-import { ListRender } from "@/components/layout/ListRender";
-import ImageCard from "../components/cards/ImageCard";
 import FileCard from "../components/cards/FileCard";
+import ImageCard from "../components/cards/ImageCard";
+import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
 
 interface IDataSidebarProps {}
 
 const Pane: React.FunctionComponent<IDataSidebarProps> = (props) => {
-  const [fetch, { data }] = withMikroNext(useGlobalSearchLazyQuery)();
+  const {data , refetch} = withMikroNext(useGlobalSearchQuery)({
+    variables: {
+      search: "",
+      noImages: false,
+      noFiles: false,
+      pagination: {
+        limit: 10
+      }
+  }});
 
   return (
     <>
       <div className="flex h-full flex-col p-2 mt-2" data-enableselect={true}>
         <GlobalSearchFilter
-          onFilterChanged={(e) => fetch({ variables: e })}
+          onFilterChanged={(e) => refetch(e)}
           defaultValue={{ search: "", noImages: false, noFiles: false }}
         />
         <ScrollArea

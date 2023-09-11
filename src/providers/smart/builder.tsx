@@ -81,6 +81,8 @@ export const buildSmart = (model: Identifier, to: string) => {
   };
 };
 
+export type Smart = ReturnType<typeof buildSmart>;
+
 export const buildModuleLink = (module: string) => {
   return ({ children, ...props }: OmitedNavLinkProps) => {
     return (

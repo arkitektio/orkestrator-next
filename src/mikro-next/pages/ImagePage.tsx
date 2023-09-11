@@ -38,6 +38,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { HobbyKnifeIcon, PlusIcon } from "@radix-ui/react-icons";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
+import { Komments } from "@/lok-next/components/komments/Komments";
 
 export type IRepresentationScreenProps = {};
 
@@ -61,12 +62,17 @@ const ImagePage: React.FC<IRepresentationScreenProps> = () => {
   return (
     <PageLayout
       actions={<MikroImage.Actions id={id} />}
-      sidebars={<ProvenanceSidebar items={data?.image.history} />}
+      sidebars={<div className="p-3">
+      <ProvenanceSidebar items={data?.image.history} />
+      <Komments identifier="@mikro/image" object={id} />
+      
+      
+      </div>}
     >
       <Tabs defaultValue="raw" className="relative overflow-y-auto">
         <div className="flex @2xl:flex-row-reverse flex-col rounded-md gap-4 mt-2">
-          <Card className="flex-1 overflow-hidden">
-            <AspectRatio ratio={aspectRatio}>
+          <div className="flex-1  overflow-hidden ">
+            <AspectRatio ratio={aspectRatio} className="overflow-hidden rounded rounded-md shadow shadow-xl">
               <TabsContent
                 value="raw"
                 className={"h-full w-full mt-0 rounded rounded-md "}
@@ -89,7 +95,7 @@ const ImagePage: React.FC<IRepresentationScreenProps> = () => {
                 </TabsContent>
               ))}
             </AspectRatio>
-          </Card>
+          </div>
           <DetailPane className="flex-1 @container">
             <DetailPaneHeader>
               <DetailPaneTitle
@@ -132,7 +138,7 @@ const ImagePage: React.FC<IRepresentationScreenProps> = () => {
                 </>
               )}
               <div className="font-light mt-2 ">Show</div>
-              <TabsList>
+              <TabsList className="flex-wrap items-start">
                 <TabsTrigger value="raw">Raw</TabsTrigger>
                 {data?.image?.renders?.map((render, i) => (
                   <TabsTrigger key={i} value={render.id}>

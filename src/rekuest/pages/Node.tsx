@@ -1,3 +1,4 @@
+import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,9 +9,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
+import { DetailPane, DetailPaneDescription, DetailPaneHeader, DetailPaneTitle } from "@/components/ui/pane";
 import { useConstantNodeQuery } from "@/rekuest/api/graphql";
-import { EasyGuard } from "@jhnnsrs/arkitekt";
-import { RekuestGuard, usePostman, withRekuest } from "@jhnnsrs/rekuest-next";
+import { usePostman, withRekuest } from "@jhnnsrs/rekuest-next";
 import { useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
 
@@ -47,8 +48,14 @@ export const NodeInfo = (props: { id: string }) => {
   });
 
   return (
-    <>
-      <h1 className="text-2xl font-bold">{data?.node?.__typename}</h1>
+    <ModelPageLayout identifier="@rekuest/node" object={props.id}>
+      <DetailPane>
+      <DetailPaneHeader >
+      <DetailPaneTitle>{data?.node?.name}</DetailPaneTitle>
+      <DetailPaneDescription>{data?.node?.description}</DetailPaneDescription>
+      </DetailPaneHeader>
+      
+      
       <Dialog>
         <DialogTrigger>Reserve</DialogTrigger>
         <DialogContent>
@@ -62,7 +69,8 @@ export const NodeInfo = (props: { id: string }) => {
           </DialogHeader>
         </DialogContent>
       </Dialog>
-    </>
+      </DetailPane>
+    </ModelPageLayout>
   );
 };
 
@@ -74,11 +82,7 @@ function Page() {
 
   return (
     <>
-      <EasyGuard>
-        <RekuestGuard>
-          <NodeInfo id={id} />
-        </RekuestGuard>
-      </EasyGuard>
+       <NodeInfo id={id} />
     </>
   );
 }

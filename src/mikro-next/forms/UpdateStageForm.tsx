@@ -5,14 +5,10 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { withMikroNext } from "@jhnnsrs/mikro-next";
 import { useForm } from "react-hook-form";
-import {
-  StageFragment,
-  useUpdateImageMutation
-} from "../api/graphql";
+import { StageFragment, useUpdateImageMutation } from "../api/graphql";
 
 export const UpdateStageForm = (props: { stage: StageFragment }) => {
   const [add] = withMikroNext(useUpdateImageMutation)();
-
 
   const dialog = useGraphQlFormDialog(add);
 
@@ -32,12 +28,12 @@ export const UpdateStageForm = (props: { stage: StageFragment }) => {
                 input: {
                   id: props.stage.id,
                   ...data,
-              }},
+                },
+              },
             });
           })}
         >
           <div className="grid grid-cols-2 gap-2">
-
             <div className="col-span-2 flex-col gap-1 flex">
               <StringField
                 label="New Name"

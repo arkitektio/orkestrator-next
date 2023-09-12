@@ -62,17 +62,20 @@ const ImagePage: React.FC<IRepresentationScreenProps> = () => {
   return (
     <PageLayout
       actions={<MikroImage.Actions id={id} />}
-      sidebars={<div className="p-3">
-      <ProvenanceSidebar items={data?.image.history} />
-      <Komments identifier="@mikro/image" object={id} />
-      
-      
-      </div>}
+      sidebars={
+        <div className="p-3">
+          <ProvenanceSidebar items={data?.image.history} />
+          <Komments identifier="@mikro/image" object={id} />
+        </div>
+      }
     >
       <Tabs defaultValue="raw" className="relative overflow-y-auto">
         <div className="flex @2xl:flex-row-reverse flex-col rounded-md gap-4 mt-2">
           <div className="flex-1  overflow-hidden ">
-            <AspectRatio ratio={aspectRatio} className="overflow-hidden rounded rounded-md shadow shadow-xl">
+            <AspectRatio
+              ratio={aspectRatio}
+              className="overflow-hidden rounded rounded-md shadow shadow-xl"
+            >
               <TabsContent
                 value="raw"
                 className={"h-full w-full mt-0 rounded rounded-md "}
@@ -101,21 +104,21 @@ const ImagePage: React.FC<IRepresentationScreenProps> = () => {
               <DetailPaneTitle
                 actions={
                   <>
-                  <PinToggle
-                    onPin={(e) => {
-                      data?.image.id &&
-                        pinImage({
-                          variables: {
-                            id: data?.image?.id,
-                            pin: e,
-                          },
-                        });
-                    }}
-                    pinned={data?.image?.pinned || false}
-                  />
-                  <FormSheet trigger={<HobbyKnifeIcon/>}>
+                    <PinToggle
+                      onPin={(e) => {
+                        data?.image.id &&
+                          pinImage({
+                            variables: {
+                              id: data?.image?.id,
+                              pin: e,
+                            },
+                          });
+                      }}
+                      pinned={data?.image?.pinned || false}
+                    />
+                    <FormSheet trigger={<HobbyKnifeIcon />}>
                       {data?.image && <UpdateImageForm image={data?.image} />}
-                  </FormSheet>
+                    </FormSheet>
                   </>
                 }
               >
@@ -198,14 +201,15 @@ const ImagePage: React.FC<IRepresentationScreenProps> = () => {
                       )}
                     </>
                   ))}
-                  {data?.image && <Card className="opacity-0 hover:opacity-100 relative">
-                    <CardContent className="grid place-items-center w-full h-full">
-                      <FormDialog trigger={<PlusIcon className="text-xl"/>}>
-                        <AddImageViewForm image={data?.image.id} />
-                      </FormDialog>
+                  {data?.image && (
+                    <Card className="opacity-0 hover:opacity-100 relative">
+                      <CardContent className="grid place-items-center w-full h-full">
+                        <FormDialog trigger={<PlusIcon className="text-xl" />}>
+                          <AddImageViewForm image={data?.image.id} />
+                        </FormDialog>
                       </CardContent>
                     </Card>
-                  }
+                  )}
                 </ResponsiveContainerGrid>
               </ScrollArea>
               <ListRender title="Metrics" array={data?.image?.metrics}>

@@ -25,13 +25,15 @@ const Reservations: React.FC<IMyReservationsProps> = () => {
       </RekuestReservation.ListLink>
       <div className="mt-2 mb-4">
         <ContainerGrid>
-          {data?.reservations?.filter(notEmpty).map((res, index) => (
-            <ReservationCard
-              key={index}
-              reservation={res}
-              mates={[requesterMate(res)]}
-            />
-          ))}
+          {data?.reservations
+            ?.filter(notEmpty)
+            .map((res, index) => (
+              <ReservationCard
+                key={index}
+                reservation={res}
+                mates={[requesterMate(res)]}
+              />
+            ))}
         </ContainerGrid>
       </div>
     </>

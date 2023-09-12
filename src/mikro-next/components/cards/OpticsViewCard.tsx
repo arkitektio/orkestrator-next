@@ -10,25 +10,23 @@ interface Props {
 
 const TheCard = ({ view, mates }: Props) => {
   return (
-    <MikroOpticsView.Smart
-      object={view?.id}
-      mates={mates}
-    >
+    <MikroOpticsView.Smart object={view?.id} mates={mates}>
       <Card>
         <CardHeader>
           <CardTitle>
             {" "}
-            {view.instrument && <MikroInstrument.DetailLink
-              className={({ isActive } /*  */) =>
-                "z-10 font-bold text-md mb-2 cursor-pointer " +
-                (isActive ? "text-primary-300" : "")
-              }
-              object={view.instrument.id}
-            >
-              {view.instrument.name}
-            </MikroInstrument.DetailLink>}
+            {view.instrument && (
+              <MikroInstrument.DetailLink
+                className={({ isActive } /*  */) =>
+                  "z-10 font-bold text-md mb-2 cursor-pointer " +
+                  (isActive ? "text-primary-300" : "")
+                }
+                object={view.instrument.id}
+              >
+                {view.instrument.name}
+              </MikroInstrument.DetailLink>
+            )}
           </CardTitle>
-
         </CardHeader>
       </Card>
     </MikroOpticsView.Smart>

@@ -1,31 +1,22 @@
-
-      export interface PossibleTypesResultData {
-        possibleTypes: {
-          [key: string]: string[]
-        }
-      }
-      const result: PossibleTypesResultData = {
-  "possibleTypes": {
-    "ImageMetric": [
-      "ImageIntMetric"
-    ],
-    "IntMetric": [
-      "ImageIntMetric"
-    ],
-    "ROI": [],
-    "Render": [
-      "Snapshot",
-      "Video"
-    ],
-    "View": [
+export interface PossibleTypesResultData {
+  possibleTypes: {
+    [key: string]: string[];
+  };
+}
+const result: PossibleTypesResultData = {
+  possibleTypes: {
+    ImageMetric: ["ImageIntMetric"],
+    IntMetric: ["ImageIntMetric"],
+    ROI: [],
+    Render: ["Snapshot", "Video"],
+    View: [
       "AffineTransformationView",
       "ChannelView",
       "LabelView",
       "OpticsView",
       "RGBView",
-      "TimepointView"
-    ]
-  }
+      "TimepointView",
+    ],
+  },
 };
-      export default result;
-    
+export default result;

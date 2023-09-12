@@ -1,7 +1,12 @@
-
 import { withLokNext } from "@jhnnsrs/lok-next";
 import { KommentProps } from "./types";
-import { CommentsForDocument, CommentsForQuery, useCommentsForQuery, useCreateCommentMutation, useReplyToMutation } from "@/lok-next/api/graphql";
+import {
+  CommentsForDocument,
+  CommentsForQuery,
+  useCommentsForQuery,
+  useCreateCommentMutation,
+  useReplyToMutation,
+} from "@/lok-next/api/graphql";
 import { CommentEdit } from "./edit/CommentEdit";
 import { CommentList } from "./display/CommentList";
 
@@ -9,7 +14,6 @@ export const Komments = ({ identifier, object }: KommentProps) => {
   const { data } = withLokNext(useCommentsForQuery)({
     variables: { identifier, object },
   });
-
 
   const [createComment] = withLokNext(useCreateCommentMutation)({
     update(cache, result) {
@@ -29,7 +33,7 @@ export const Komments = ({ identifier, object }: KommentProps) => {
                 ? [result.data.createComment, ...data?.commentsFor]
                 : data?.commentsFor,
           };
-        }
+        },
       );
     },
   });
@@ -41,11 +45,7 @@ export const Komments = ({ identifier, object }: KommentProps) => {
         object={object}
         createComment={createComment}
       />
-      {data?.commentsFor && (
-        <CommentList
-          comments={data?.commentsFor}
-        />
-      )}
+      {data?.commentsFor && <CommentList comments={data?.commentsFor} />}
     </div>
   );
 };

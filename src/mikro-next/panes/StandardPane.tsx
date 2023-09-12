@@ -2,9 +2,7 @@ import { ListRender } from "@/components/layout/ListRender";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { withMikroNext } from "@jhnnsrs/mikro-next";
 import * as React from "react";
-import {
-  useGlobalSearchQuery
-} from "../api/graphql";
+import { useGlobalSearchQuery } from "../api/graphql";
 import FileCard from "../components/cards/FileCard";
 import ImageCard from "../components/cards/ImageCard";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
@@ -12,15 +10,16 @@ import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
 interface IDataSidebarProps {}
 
 const Pane: React.FunctionComponent<IDataSidebarProps> = (props) => {
-  const {data , refetch} = withMikroNext(useGlobalSearchQuery)({
+  const { data, refetch } = withMikroNext(useGlobalSearchQuery)({
     variables: {
       search: "",
       noImages: false,
       noFiles: false,
       pagination: {
-        limit: 10
-      }
-  }});
+        limit: 10,
+      },
+    },
+  });
 
   return (
     <>

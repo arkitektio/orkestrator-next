@@ -5,20 +5,17 @@ fragment Leaf on LeafDescendant {
   text
 }
 
-
 fragment CommentUser on User {
   id
   username
   avatar
 }
 
-
 fragment Mention on MentionDescendant {
   user {
     ...CommentUser
   }
 }
-
 
 fragment Paragraph on ParagraphDescendant {
   size
@@ -34,7 +31,6 @@ fragment Descendant on Descendant {
       ...Leaf
       ...Mention
       ...Paragraph
-
     }
     ...Leaf
     ...Mention

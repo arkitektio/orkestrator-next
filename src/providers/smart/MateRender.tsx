@@ -120,10 +120,7 @@ export const MateRender: React.FC<MateProps> = ({
   }, [focus]);
 
   return (
-    <Button
-      ref={drop}
-      onClick={click}
-    >
+    <Button ref={drop} onClick={click}>
       {mate?.label}
     </Button>
   );

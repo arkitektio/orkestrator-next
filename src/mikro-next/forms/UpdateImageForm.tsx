@@ -37,12 +37,12 @@ export const UpdateImageForm = (props: { image: ImageFragment }) => {
                 input: {
                   id: props.image.id,
                   ...data,
-              }},
+                },
+              },
             });
           })}
         >
           <div className="grid grid-cols-2 gap-2">
-
             <div className="col-span-2 flex-col gap-1 flex">
               <StringField
                 label="New Name"

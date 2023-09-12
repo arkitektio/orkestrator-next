@@ -140,7 +140,7 @@ export interface XArrayMetadata {
 type Labels = [...string[], "y", "x"];
 function getAxisLabelsAndChannelAxis(
   xarray_metadata: XArrayMetadata,
-  arr: ZarrArray
+  arr: ZarrArray,
 ): { labels: Labels; channel_axis: number } {
   // type cast string[] to Labels
   let labels = xarray_metadata.metadata["data/.zattrs"]
@@ -151,7 +151,7 @@ function getAxisLabelsAndChannelAxis(
 }
 
 export async function openZarrArray(
-  url: string
+  url: string,
 ): Promise<{ data: ZarrArray; metadata: XArrayMetadata }> {
   // If the loader fails to load, handle the error (show an error snackbar).
   // Otherwise load.

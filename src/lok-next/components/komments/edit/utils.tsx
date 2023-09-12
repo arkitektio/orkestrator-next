@@ -63,7 +63,7 @@ export const KommentLeaf = ({
 
 export const insertMention = (
   editor: KommentEditor,
-  q: { value: string; label: string } | undefined | null
+  q: { value: string; label: string } | undefined | null,
 ) => {
   console.log(q);
   if (!q) return;

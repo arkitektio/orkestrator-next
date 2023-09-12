@@ -10,7 +10,10 @@ export const ModuleLayout = ({ pane, children }: ModuleLayoutProps) => {
     <PanelGroup autoSaveId="module" direction="horizontal">
       {pane && (
         <>
-          <Panel defaultSize={10} className="border-r-2 border bg-seperator">
+          <Panel
+            defaultSize={10}
+            className="border-r border-gray-500 bg-background"
+          >
             {pane}
           </Panel>
           <PanelResizeHandle className="h-full w-1 opacity-0 hover:opacity-80 bg-accent translate-x-[-50%]" />

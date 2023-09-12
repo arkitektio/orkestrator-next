@@ -2,7 +2,7 @@ import {
   Assignation,
   Reservation,
   ReserveVariables,
-  UnreserveVariables
+  UnreserveVariables,
 } from "@jhnnsrs/rekuest-next";
 import React, { useContext } from "react";
 

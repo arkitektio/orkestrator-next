@@ -12,6 +12,7 @@ import {
   ConstantNodeQuery,
   FlowFragment,
   GlobalArg,
+  GlobalArgFragment,
   GraphEdgeKind,
   GraphInput,
   GraphNodeFragment,
@@ -21,8 +22,14 @@ import {
   ReactiveTemplateDocument,
   ReactiveTemplateQuery,
 } from "@/rekuest/api/graphql";
-import { useRekuest } from "@jhnnsrs/rekuest-next";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { portToDefaults, useRekuest } from "@jhnnsrs/rekuest-next";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useDrop } from "react-dnd";
 import {
   Connection,
@@ -79,6 +86,8 @@ import {
 } from "@radix-ui/react-icons";
 import { cn } from "@/lib/utils";
 import { isValid, set } from "date-fns";
+import { ArgsContainer, Constants } from "../base/Constants";
+import { X } from "lucide-react";
 
 const nodeTypes: NodeTypes = {
   ArkitektGraphNode: ArkitektTrackNodeWidget,
@@ -224,6 +233,242 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
     );
   };
 
+  const moveConstantToStream = (
+    nodeId: string,
+    conindex: number,
+    instream: number,
+  ) => {
+    setState((state) => {
+      const node = state.nodes.find((n) => n.id == nodeId);
+      if (!node) {
+        console.log("Could not find node", nodeId);
+        return state;
+      }
+
+      const constant = node.data.constants.at(conindex);
+      if (!constant) {
+        console.log("Could not find constant", conindex);
+        return state;
+      }
+
+      let new_instream = node.data.ins.map((s, index) => {
+        if (index == instream) {
+          return [...s, constant];
+        }
+        return s;
+      });
+
+      console.log("new_instream", new_instream);
+
+      let new_constants = node.data.constants.filter(
+        (i, index) => index != conindex,
+      );
+
+      console.log("new_constants", new_constants);
+
+      let new_data = {
+        ...node.data,
+        ins: new_instream, //TODO: This is not correct
+        constants: new_constants,
+        constantsMap: { ...node.data.constantsMap, [constant.key]: undefined },
+        globalsMap: { ...node.data.globalsMap, [constant.key]: undefined },
+      };
+
+      return validateState({
+        nodes: state.nodes.map((n) => {
+          if (n.id === nodeId) {
+            n.data = new_data;
+            console.log("found node", n);
+            return n;
+          }
+          return n;
+        }),
+        edges: state.edges,
+        globals: state.globals,
+      });
+    });
+  };
+
+  const moveStreamToConstants = (
+    nodeId: string,
+    streamIndex: number,
+    streamItem: number,
+  ) => {
+    setState((state) => {
+      const node = state.nodes.find((n) => n.id == nodeId);
+      if (!node) {
+        console.log("Could not find node", nodeId);
+        return state;
+      }
+
+      const streamitem = node.data.ins.at(streamIndex)?.at(streamItem);
+      if (!streamitem) {
+        console.log("Could not find streamitem", streamitem);
+        return state;
+      }
+
+      let new_instream = node.data.ins.map((s, index) => {
+        if (index == streamIndex) {
+          return s.filter((i, index) => index != streamItem);
+        }
+        return s;
+      });
+
+      let new_data = {
+        ...node.data,
+        ins: new_instream, //TODO: This is not correct
+        constants: [...node.data.constants, streamitem],
+        constantsMap: {
+          ...node.data.constantsMap,
+          [streamitem.key]: streamitem.default,
+        },
+      };
+
+      return validateState({
+        nodes: state.nodes.map((n) => {
+          if (n.id === nodeId) {
+            n.data = new_data;
+            console.log("found node", n);
+            return n;
+          }
+          return n;
+        }),
+        edges: state.edges,
+        globals: state.globals,
+      });
+    });
+  };
+
+  const moveConstantToGlobals = (
+    nodeId: string,
+    conindex: number,
+    globalkey?: string | undefined,
+  ) => {
+    setState((state) => {
+      const node = state.nodes.find((n) => n.id == nodeId);
+      if (!node) {
+        console.log("Could not find node", nodeId);
+        return state;
+      }
+
+      const constant = node.data.constants.at(conindex);
+      if (!constant) {
+        console.log("Could not find constant", conindex);
+        return state;
+      }
+
+      let new_globals = state.globals;
+      if (!globalkey) {
+        new_globals = [...state.globals, { key: constant.key, port: constant }];
+        globalkey = constant.key;
+      } else {
+        new_globals = state.globals.map((g) => {
+          if (g.key == globalkey) {
+            return { ...g, port: constant };
+          }
+          return g;
+        });
+      }
+
+      let new_data = {
+        ...node.data,
+        constants: node.data.constants, //We are not removing the constant but we are removing the constant from the constantsMap
+        constantsMap: { ...node.data.constantsMap, [constant.key]: undefined },
+        globalsMap: { ...node.data.globalsMap, [constant.key]: globalkey },
+      };
+
+      return validateState({
+        nodes: state.nodes.map((n) => {
+          if (n.id === nodeId) {
+            n.data = new_data;
+            console.log("found node", n);
+            return n;
+          }
+          return n;
+        }),
+        edges: state.edges,
+        globals: new_globals,
+      });
+    });
+  };
+
+  const removeGlobal = (globalkey: string) => {
+    setState((state) => {
+      const nodes = state.nodes.map((n) => {
+        let new_data = {
+          ...n.data,
+          globalsMap: Object.fromEntries(
+            Object.entries(n.data.globalsMap).filter(
+              ([key, value]) => value != globalkey,
+            ),
+          ),
+        };
+        return { ...n, data: new_data };
+      });
+
+      return validateState({
+        nodes: nodes,
+        edges: state.edges,
+        globals: state.globals.filter((g) => g.key != globalkey),
+      });
+    });
+  };
+
+  const movePortToConstants = (
+    nodeId: string,
+    port: PortFragment,
+    instream: number,
+  ) => {
+    setState((state) => {
+      const node = state.nodes.find((n) => n.id == nodeId);
+      if (!node) {
+        console.log("Could not find node", nodeId);
+        return state;
+      }
+
+      let new_instream = node.data.ins.map((s, index) => {
+        if (index == instream) {
+          return [...s.filter((i) => i.key != port.key), port];
+        }
+        return s.filter((i) => i.key != port.key);
+      });
+
+      let new_data = {
+        ...node.data,
+        ins: new_instream, //TODO: This is not correct
+        constants:
+          node.data.constants.filter((i, index) => i.key != port.key) || [],
+        globalsMap: { ...node.data.globalsMap, [port.key]: undefined },
+      };
+
+      return validateState({
+        nodes: state.nodes.map((n) => {
+          if (n.id === nodeId) {
+            n.data = new_data;
+            console.log("found node", n);
+            return n;
+          }
+          return n;
+        }),
+        edges: state.edges,
+        globals: [],
+      });
+    });
+  };
+
+  const setGlobals = (globals: GlobalArgFragment[]) => {
+    console.log("setGlobals", globals);
+    setState((state) =>
+      validateState({
+        nodes: state.nodes,
+        edges: state.edges,
+        globals: globals,
+      }),
+    );
+  };
+
+  const globals = useMemo(() => state.globals, [state]);
+
   const save = () => {
     const nodes = (reactFlowInstance?.getNodes() as FlowNode[]) || [];
     const edges = (reactFlowInstance?.getEdges() as FlowEdge[]) || [];
@@ -288,8 +533,11 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
     setState(validatedState);
   };
 
-  const hasRemainingErrors = useMemo(() => (state.remainingErrors.length > 0), [state])
-  const hasSolvedErrors = useMemo(() => (state.solvedErrors.length > 0), [state])
+  const hasRemainingErrors = useMemo(
+    () => state.remainingErrors.length > 0,
+    [state],
+  );
+  const hasSolvedErrors = useMemo(() => state.solvedErrors.length > 0, [state]);
 
   const [{ isOver, canDrop, type }, dropref] = useDrop(() => {
     return {
@@ -378,6 +626,12 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       value={{
         flow,
         updateData: updateNodeData,
+        setGlobals: setGlobals,
+        moveConstantToGlobals,
+        moveStreamToConstants,
+        moveConstantToStream,
+        removeGlobal,
+        state: state,
         showEdgeLabels: showEdgeLabels,
       }}
     >
@@ -387,44 +641,71 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         data-disableselect
       >
         <div ref={dropref} className="flex flex-grow h-full w-full relative">
+          {state.valid && (
+            <div className="absolute bottom-0 right-0  mr-3 mb-5 z-50">
+              <Button onClick={() => save()}> Save </Button>
+            </div>
+          )}
 
-        {state.valid && <div className="absolute bottom-0 right-0  mr-3 mb-5 z-50"><Button onClick={() => save()}> Save </Button></div>}
-        {hasRemainingErrors || hasSolvedErrors &&<div className="absolute top-0 right-0  mr-3 mt-5 z-50">
-             <Card>
+          {globals.length > 0 && (
+            <div className="absolute  top-0 left-0  ml-3 mt-5 z-50">
+              <Card>
+                <CardHeader>
+                  <CardDescription>Globals </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Constants
+                    ports={globals.map((x) => ({ ...x.port, key: x.key }))}
+                    overwrites={{}}
+                    onToArg={(e) => removeGlobal(e.key)}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          )}
+          {hasRemainingErrors ||
+            (hasSolvedErrors && (
+              <div className="absolute top-0 right-0  mr-3 mt-5 z-50">
+                <Card>
+                  <CardHeader>
+                    <CardDescription>For your information </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {state.remainingErrors.length > 0 && (
+                      <>
+                        <CardDescription> Remaining Errors </CardDescription>
+                        {state.remainingErrors.map((e) => (
+                          <RemainingErrorRender
+                            error={e}
+                            onClick={(e) =>
+                              onNodesChange([
+                                { type: "select", id: e.id, selected: true },
+                              ])
+                            }
+                          />
+                        ))}
 
-              <CardHeader>
-                <CardDescription>For your information </CardDescription>
-              </CardHeader>
-              <CardContent >
-                {state.remainingErrors.length > 0 && (
-                  <>
-                    <CardDescription> Remaining Errors </CardDescription>
-                    {state.remainingErrors.map((e) => (
-                      <RemainingErrorRender
-                        error={e}
-                        onClick={(e) =>
-                          onNodesChange([
-                            { type: "select", id: e.id, selected: true },
-                          ])
-                        }
-                      />
-                    ))}
-
-                  <Button onClick={() => validate()}> Revalidate all </Button>
-                  </>
-                )}
-                {state.solvedErrors.length > 0 && (
-                  <>
-                    <CardDescription> We just solved these Errors </CardDescription>
-                    {state.solvedErrors.map((e) => (
-                      <SolvedErrorRender error={e} />
-                    ))}
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-          </div> }
+                        <Button onClick={() => validate()}>
+                          {" "}
+                          Revalidate all{" "}
+                        </Button>
+                      </>
+                    )}
+                    {state.solvedErrors.length > 0 && (
+                      <>
+                        <CardDescription>
+                          {" "}
+                          We just solved these Errors{" "}
+                        </CardDescription>
+                        {state.solvedErrors.map((e) => (
+                          <SolvedErrorRender error={e} />
+                        ))}
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            ))}
           {isOver && (
             <div className="absolute top-[50%] left-[50%]">Drop me {":D"} </div>
           )}

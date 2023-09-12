@@ -130,7 +130,7 @@ export function getTypedArrayCtr(dtype: DtypeString) {
   const ctr = DTYPE_TYPEDARRAY_MAPPING[dtype];
   if (!ctr) {
     throw Error(
-      `Dtype not recognized or not supported in extended zarr.js, got ${dtype}.`
+      `Dtype not recognized or not supported in extended zarr.js, got ${dtype}.`,
     );
   }
   return ctr;
@@ -139,7 +139,7 @@ export function getTypedArrayCtr(dtype: DtypeString) {
 export const downloadChunk = async (
   client: AwsClient,
   url: string,
-  array: ZarrArray
+  array: ZarrArray,
 ) => {
   //console.log(x);
   let data = await client.fetch(url);
@@ -165,11 +165,11 @@ export const getChunk = async (
   aws: AwsClient,
   chunkCoords: number[],
   array: ZarrArray,
-  path: string
+  path: string,
 ) => {
   const url = joinUrlParts(
     path,
-    array.keyPrefix + chunkCoords.join(array.meta.dimension_separator ?? ".")
+    array.keyPrefix + chunkCoords.join(array.meta.dimension_separator ?? "."),
   );
 
   return await downloadChunk(aws, url, array);
@@ -179,13 +179,13 @@ export const getChunkItem = async (
   aws: AwsClient,
   proj: ChunkProjection,
   array: ZarrArray,
-  path: string
+  path: string,
 ) => {
   const rawChunk = await getChunk(aws, proj.chunkCoords, array, path);
   const decodedChunk = new NestedArray(
     rawChunk,
     array.meta.chunks,
-    array.dtype
+    array.dtype,
   );
 
   if (

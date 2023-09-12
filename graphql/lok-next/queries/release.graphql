@@ -4,7 +4,12 @@ query Releases {
   }
 }
 
-query Release($identifier: AppIdentifier, $version: Version, $id: ID, $clientId: ID) {
+query Release(
+  $identifier: AppIdentifier
+  $version: Version
+  $id: ID
+  $clientId: ID
+) {
   release(
     identifier: $identifier
     version: $version

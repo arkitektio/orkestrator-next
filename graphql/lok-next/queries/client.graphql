@@ -15,4 +15,3 @@ query MyManagedClients($kind: ClientKind!) {
     ...ListClient
   }
 }
-

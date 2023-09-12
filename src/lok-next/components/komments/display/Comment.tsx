@@ -6,7 +6,6 @@ import { Mention } from "./Mention";
 import { LokUser } from "@/linkers";
 import { CommentEdit } from "../edit/CommentEdit";
 
-
 export const renderLeaf = (x: LeafType) => {
   if (x.italic) {
     return <i>{x.text}</i>;
@@ -118,7 +117,7 @@ export const Comment = ({ comment }: { comment: ListCommentType }) => {
                 hide{" "}
               </button>
               <div className="flex-grow">
-                <CommentEdit parent={comment?.id}  identifier={identifier}/>
+                <CommentEdit parent={comment?.id} identifier={identifier} />
               </div>
             </div>
           )}

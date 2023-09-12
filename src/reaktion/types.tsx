@@ -59,12 +59,12 @@ export type EnhancedEdge<T = {}> = Edge<T & BaseGraphEdgeFragment> & {
   type: EdgeTypeUnion;
 };
 
-export type FlowNodeInherent = "id" | "position" | "type";
+export type FlowNodeInherent = "id" | "position" | "__typename";
 export type FlowEdgeInherent =
   | "id"
   | "source"
   | "target"
-  | "type"
+  | "__typename"
   | "sourceHandle"
   | "targetHandle";
 
@@ -73,13 +73,15 @@ export type FlowNodeData<T = GraphNodeFragment> = Omit<
   FlowNodeInherent
 >;
 
+export type FlowEdgeData<T = GraphEdgeFragment> = Omit<
+  T & BaseGraphEdgeFragment,
+  FlowEdgeInherent
+>;
 export type FlowNode<T = GraphNodeFragment> = Node<
   FlowNodeData<T>,
   NodeTypeUnion
 >;
-export type FlowEdge<T = GraphEdgeFragment> = EnhancedEdge<
-  Omit<T & BaseGraphEdgeFragment, FlowEdgeInherent>
->;
+export type FlowEdge<T = GraphEdgeFragment> = Edge<FlowEdgeData<T>>;
 
 export type VanillaEdgeProps = EdgeProps<VanillaEdgeFragment>;
 export type LoggingEdgeProps = EdgeProps<LoggingEdgeFragment>;

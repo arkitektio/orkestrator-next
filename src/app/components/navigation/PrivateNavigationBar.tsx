@@ -32,7 +32,7 @@ export type INavigationBarProps = {
 const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
   return (
     <NavigationMenu
-      className="flex flex-grow sm:flex-col flex-row gap-8  items-center justify-start h-full bg-card-background dark:bg-background "
+      className="flex flex-grow sm:flex-col flex-row gap-8  items-center justify-start h-full bg-background dark:bg-background"
       orientation="vertical"
     >
       <div className="hidden flex-initial mt-2  font-light text-xl md:block  border-b-gray-600 ">

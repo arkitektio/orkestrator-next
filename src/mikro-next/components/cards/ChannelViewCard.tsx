@@ -10,15 +10,10 @@ interface Props {
 
 const TheCard = ({ view, mates }: Props) => {
   return (
-    <MikroChannelView.Smart
-      object={view?.id}
-    >
+    <MikroChannelView.Smart object={view?.id}>
       <Card>
         <CardHeader>
-          <CardTitle>
-            {" "}
-            {view.channel.name}
-          </CardTitle>
+          <CardTitle> {view.channel.name}</CardTitle>
         </CardHeader>
       </Card>
     </MikroChannelView.Smart>

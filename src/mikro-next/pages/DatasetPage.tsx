@@ -19,7 +19,11 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { MikroDataset } from "@/linkers";
 import { ListRender } from "@/components/layout/ListRender";
 import { DropZone } from "@/components/ui/dropzone";
-import { DetailPane, DetailPaneHeader, DetailPaneTitle } from "@/components/ui/pane";
+import {
+  DetailPane,
+  DetailPaneHeader,
+  DetailPaneTitle,
+} from "@/components/ui/pane";
 import { PinToggle } from "../components/ui/PinToggle";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { FormSheet } from "@/components/dialog/FormDialog";
@@ -47,26 +51,28 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
 
   return (
     <PageLayout actions={<MikroDataset.Actions id={id} />}>
-     <DetailPane className="p-3 @container">
-      <DetailPaneHeader>
-              <DetailPaneTitle
-                actions={
-                  <>
-                  <PinToggle
-                    onPin={(e) => {
-                      data?.dataset.id
-                    }}
-                    pinned={data?.dataset?.pinned || false}
-                  />
-                  <FormSheet trigger={<HobbyKnifeIcon/>}>
-                      {data?.dataset && <UpdateDatasetForm dataset={data?.dataset} />}
-                  </FormSheet>
-                  </>
-                }
-              >
-                {data?.dataset?.name}
-              </DetailPaneTitle>
-            </DetailPaneHeader>
+      <DetailPane className="p-3 @container">
+        <DetailPaneHeader>
+          <DetailPaneTitle
+            actions={
+              <>
+                <PinToggle
+                  onPin={(e) => {
+                    data?.dataset.id;
+                  }}
+                  pinned={data?.dataset?.pinned || false}
+                />
+                <FormSheet trigger={<HobbyKnifeIcon />}>
+                  {data?.dataset && (
+                    <UpdateDatasetForm dataset={data?.dataset} />
+                  )}
+                </FormSheet>
+              </>
+            }
+          >
+            {data?.dataset?.name}
+          </DetailPaneTitle>
+        </DetailPaneHeader>
         <div className="flex flex-col bg-white p-3 rounded rounded-md mt-2 mb-2">
           <div className="font-light mt-2 ">Created At</div>
           <div className="text-md mt-2 ">

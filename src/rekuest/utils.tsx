@@ -104,7 +104,7 @@ export const cleanChild = (port: ChildPortFragment): ChildPortInput => {
     ...rest,
     variants:
       variants && variants.map((c) => cleanChild(c as ChildPortFragment)),
-    child: cleanChild(child as ChildPortFragment),
+    child: child && cleanChild(child as ChildPortFragment),
     assignWidget: assignWidget && assignWidgetToInput(assignWidget),
     returnWidget: returnWidget && returnWidgetToInput(returnWidget),
   };

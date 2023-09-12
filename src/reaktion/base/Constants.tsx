@@ -43,7 +43,7 @@ export const ArgsContainer = ({
   registry,
 }: ArgsContainerProps & {
   onToArg?: (port: PortFragment) => void;
-  onToGlobal?: (port: PortFragment, key: string) => void;
+  onToGlobal?: (port: PortFragment, key?: string | undefined) => void;
 }) => {
   let hash = portHash(ports.filter(notEmpty));
 
@@ -122,7 +122,7 @@ export const ArgsContainer = ({
                           <Button
                             variant="ghost"
                             className="py-1 px-1"
-                            onClick={() => onToGlobal(port, "nana")}
+                            onClick={() => onToGlobal(port, undefined)}
                           >
                             <DoubleArrowUpIcon />
                           </Button>
@@ -145,7 +145,7 @@ export const Constants = (props: {
   ports: PortFragment[];
   overwrites: { [key: string]: any };
   onToArg?: (port: PortFragment) => void;
-  onToGlobal?: (port: PortFragment, key: string) => void;
+  onToGlobal?: (port: PortFragment, key?: string | undefined) => void;
 }) => {
   const form = usePortForm({
     ports: props.ports,

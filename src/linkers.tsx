@@ -5,10 +5,7 @@ export const RekuestAssignation = buildSmart(
   "rekuest/assignation",
 );
 
-export const RekuestNode = buildSmart(
-  "@rekuest-next/node",
-  "rekuest/nodes",
-);
+export const RekuestNode = buildSmart("@rekuest-next/node", "rekuest/nodes");
 export const RekuestTemplate = buildSmart(
   "@rekuest-next/template",
   "rekuest/templates",
@@ -84,7 +81,6 @@ export const MikroInstrument = buildSmart(
 export const RekuestModuleLink = buildModuleLink("rekuestnext");
 export const MikroModuleLink = buildModuleLink("mikronext");
 export const ReaktionModuleLink = buildModuleLink("reaktion");
-
 
 export const LokUser = buildSmart("@loknext/user", "lok/users");
 export const LokGroup = buildSmart("@lokgroup/group", "lok/groups");

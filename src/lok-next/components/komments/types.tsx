@@ -1,7 +1,15 @@
-import { CreateCommentMutationFn, DescendantFragment, DescendantInput, DetailCommentFragment, LeafFragment, ListCommentFragment, MentionFragment, ReplyToMutationFn } from "@/lok-next/api/graphql";
+import {
+  CreateCommentMutationFn,
+  DescendantFragment,
+  DescendantInput,
+  DetailCommentFragment,
+  LeafFragment,
+  ListCommentFragment,
+  MentionFragment,
+  ReplyToMutationFn,
+} from "@/lok-next/api/graphql";
 import { BaseEditor, BaseElement, BaseText } from "slate";
 import { ReactEditor, RenderElementProps, RenderLeafProps } from "slate-react";
-
 
 export type ListCommentType = ListCommentFragment;
 export type DetailCommentType = DetailCommentFragment;

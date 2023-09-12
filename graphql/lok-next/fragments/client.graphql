@@ -12,7 +12,6 @@ fragment DetailClient on Client {
     authorizationGrantType
     redirectUris
   }
-  
 }
 
 fragment ListClient on Client {

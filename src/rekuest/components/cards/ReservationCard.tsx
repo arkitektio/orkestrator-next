@@ -3,7 +3,10 @@ import { RekuestNode, RekuestReservation } from "@/linkers";
 import { useRequestMate } from "@/mates/request/useRequestMate";
 import { useReserveMate } from "@/mates/reserve/useReserveMate";
 import { MateFinder } from "@/mates/types";
-import { ListNodeFragment, PostmanReservationFragment } from "@/rekuest/api/graphql";
+import {
+  ListNodeFragment,
+  PostmanReservationFragment,
+} from "@/rekuest/api/graphql";
 
 interface Props {
   reservation: PostmanReservationFragment;
@@ -11,23 +14,17 @@ interface Props {
 }
 
 const TheCard = ({ reservation, mates }: Props) => {
-
-  const requestMate = useRequestMate()
-
+  const requestMate = useRequestMate();
 
   return (
-    <RekuestReservation.Smart
-      object={reservation?.id}
-      mates={[requestMate]}
-    >
+    <RekuestReservation.Smart object={reservation?.id} mates={[requestMate]}>
       <Card>
         <CardHeader>
           <CardTitle>
-          <RekuestReservation.DetailLink object={reservation?.id}>
-            {" "}
-            {reservation.node.name}
+            <RekuestReservation.DetailLink object={reservation?.id}>
+              {" "}
+              {reservation.node.name}
             </RekuestReservation.DetailLink>
-            
           </CardTitle>
         </CardHeader>
       </Card>

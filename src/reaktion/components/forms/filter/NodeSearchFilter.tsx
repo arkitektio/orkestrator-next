@@ -1,9 +1,6 @@
 import { ToggleField } from "@/components/fields/ToggleField";
 import { AutoSubmitter } from "@/components/form/AutoSubmitter";
-import {
-  Form, FormControl, FormField,
-  FormItem
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
   Popover,
@@ -21,8 +18,6 @@ interface FilterProps {
   className?: string;
   placeholder?: string;
 }
-
-
 
 const Filter: React.FC<FilterProps> = ({ onFilterChanged, defaultValue }) => {
   const form = useForm({

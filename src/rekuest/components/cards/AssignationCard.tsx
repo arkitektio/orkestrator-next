@@ -10,14 +10,12 @@ interface Props {
 
 const TheCard = ({ assignation, mates }: Props) => {
   return (
-    <RekuestAssignation.Smart
-      object={assignation?.id}
-    >
+    <RekuestAssignation.Smart object={assignation?.id}>
       <Card>
         <CardHeader>
           <CardTitle>
             <RekuestAssignation.DetailLink object={assignation.id}>
-            {assignation.status}
+              {assignation.status}
             </RekuestAssignation.DetailLink>
           </CardTitle>
         </CardHeader>

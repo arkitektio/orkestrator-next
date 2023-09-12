@@ -1,4 +1,8 @@
-import { GlobalArg, PortFragment } from "@/rekuest/api/graphql";
+import {
+  GlobalArg,
+  GlobalArgFragment,
+  PortFragment,
+} from "@/rekuest/api/graphql";
 import { FlowEdge, FlowNode, FlowNodeData, NodeData } from "../types";
 
 export type Compare = {
@@ -30,7 +34,7 @@ export type ValidationResult = FlowState & {
 export type FlowState = {
   nodes: FlowNode[];
   edges: FlowEdge[];
-  globals: GlobalArg[];
+  globals: GlobalArgFragment[];
 };
 
 export type PortType = "source" | "target";

@@ -8,7 +8,7 @@ export type PageLayoutProps = {
   actions?: React.ReactNode;
 };
 
-export const PageLayout = ({ sidebars, children}: PageLayoutProps) => {
+export const PageLayout = ({ sidebars, children }: PageLayoutProps) => {
   return (
     <PanelGroup autoSaveId="page" direction="horizontal">
       <Panel className="" defaultSize={80}>
@@ -17,7 +17,6 @@ export const PageLayout = ({ sidebars, children}: PageLayoutProps) => {
             <BreadCrumbs />
           </div>
           <ScrollArea className="flex-grow @container">{children}</ScrollArea>
-
         </div>
       </Panel>
       {sidebars && (
@@ -29,7 +28,6 @@ export const PageLayout = ({ sidebars, children}: PageLayoutProps) => {
             className="border-l-2 border-gray-900 bg-middleground"
           >
             {sidebars}
-            
           </Panel>
         </>
       )}

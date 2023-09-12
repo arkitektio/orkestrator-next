@@ -60,7 +60,7 @@ export const nodes_to_flownodes = (nodes: NodeFragment[]): FlowNode[] => {
             type: __typename,
             id: id,
             position: { x: position.x, y: position.y },
-            data: { __typename, ...rest },
+            data: { ...rest },
             dragHandle: ".custom-drag-handle",
             parentNode: rest.parentNode ? rest.parentNode : undefined,
           };
@@ -78,15 +78,23 @@ export const edges_to_flowedges = (edges: EdgeFragement[]): FlowEdge[] => {
     edges
       ?.map((edge) => {
         if (edge) {
-          const { id, source, sourceHandle, target, targetHandle } = edge;
-          const flowedge: FlowEdge = {
+          const {
             id,
-            type: edge.__typename,
             source,
             sourceHandle,
             target,
             targetHandle,
-            data: edge,
+            __typename,
+            ...rest
+          } = edge;
+          const flowedge: FlowEdge = {
+            id,
+            type: __typename,
+            source,
+            sourceHandle,
+            target,
+            targetHandle,
+            data: rest,
           };
           return flowedge;
         }
@@ -100,16 +108,15 @@ export const edges_to_flowedges = (edges: EdgeFragement[]): FlowEdge[] => {
 export const flowNodeToInput = (node: FlowNode): NodeInput => {
   const {
     id,
+    type,
     position,
     parentNode,
-    data: { outs, constants, ins, __typename, binds, ...rest },
+    data: { outs, constants, ins, binds, ...rest },
   } = node;
-  if (!__typename) throw new Error("No type");
   const node_: NodeInput = {
     ins: ins.map((s) => s.map(convertPortToInput)),
     outs: outs.map((s) => s.map(convertPortToInput)),
     constants: constants.map(convertPortToInput),
-
     id,
     position: { x: position.x, y: position.y },
     parentNode: parentNode,
@@ -138,7 +145,8 @@ export const bindsToInput = (node: BindsFragment): BindsInput => {
 
 export const flowEdgeToInput = (edge: FlowEdge): EdgeInput => {
   const { id, source, sourceHandle, target, targetHandle, data } = edge;
-  const { __typename, stream, ...cleaned } = data || {};
+  if (!data) throw new Error("No data set");
+  const { stream, ...cleaned } = data;
   if (!sourceHandle || !targetHandle) throw new Error("No handle specified");
   const edge_: EdgeInput = {
     id: id,
@@ -146,8 +154,8 @@ export const flowEdgeToInput = (edge: FlowEdge): EdgeInput => {
     sourceHandle: sourceHandle,
     target: target,
     targetHandle: targetHandle,
-    ...cleaned,
     stream: stream?.map(streamItemToInput) || [],
+    ...cleaned,
   };
   return edge_;
 };
@@ -178,7 +186,6 @@ export const arkitektNodeToFlowNode = (
     type: "ArkitektGraphNode",
     dragHandle: ".custom-drag-handle",
     data: {
-      __typename: "ArkitektGraphNode",
       ins: [
         node.args.filter((x) => !x?.nullable && x?.default == undefined), // by default, all nullable and default values are optional so not part of stream
       ],
@@ -186,7 +193,6 @@ export const arkitektNodeToFlowNode = (
       constants: node.args.filter(
         (x) => x?.nullable || x?.default != undefined,
       ),
-
       title: node?.name || "no-name",
       description: node.description || "",
       mapStrategy: MapStrategy.Map,
@@ -218,7 +224,6 @@ export const reactiveTemplateToFlowNode = (
     type: "ReactiveNode",
     dragHandle: ".custom-drag-handle",
     data: {
-      __typename: "ReactiveNode",
       ins: node.ins,
       implementation: node.implementation,
       outs: node.outs,

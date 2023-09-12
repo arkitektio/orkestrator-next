@@ -12,7 +12,13 @@ interface Props {}
 const Module: React.FC<Props> = (props) => {
   return (
     <RekuestGuard fallback={<>Loading</>}>
-      <ModuleLayout pane={<><SearchPane/></>}>
+      <ModuleLayout
+        pane={
+          <>
+            <SearchPane />
+          </>
+        }
+      >
         <Routes>
           <Route index element={<Home />} />
           <Route path="workspaces/:id" element={<Workspace />} />

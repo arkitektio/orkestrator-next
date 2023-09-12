@@ -9,7 +9,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { DetailPane, DetailPaneDescription, DetailPaneHeader, DetailPaneTitle } from "@/components/ui/pane";
+import {
+  DetailPane,
+  DetailPaneDescription,
+  DetailPaneHeader,
+  DetailPaneTitle,
+} from "@/components/ui/pane";
 import { useConstantNodeQuery } from "@/rekuest/api/graphql";
 import { usePostman, withRekuest } from "@jhnnsrs/rekuest-next";
 import { useForm } from "react-hook-form";
@@ -50,25 +55,26 @@ export const NodeInfo = (props: { id: string }) => {
   return (
     <ModelPageLayout identifier="@rekuest/node" object={props.id}>
       <DetailPane>
-      <DetailPaneHeader >
-      <DetailPaneTitle>{data?.node?.name}</DetailPaneTitle>
-      <DetailPaneDescription>{data?.node?.description}</DetailPaneDescription>
-      </DetailPaneHeader>
-      
-      
-      <Dialog>
-        <DialogTrigger>Reserve</DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reserve</DialogTitle>
-            <DialogDescription>
-              This action cannot be undone. This will permanently delete your
-              account and remove your data from our servers.
-            </DialogDescription>
-            <ReserveForm node={props.id} />
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
+        <DetailPaneHeader>
+          <DetailPaneTitle>{data?.node?.name}</DetailPaneTitle>
+          <DetailPaneDescription>
+            {data?.node?.description}
+          </DetailPaneDescription>
+        </DetailPaneHeader>
+
+        <Dialog>
+          <DialogTrigger>Reserve</DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Reserve</DialogTitle>
+              <DialogDescription>
+                This action cannot be undone. This will permanently delete your
+                account and remove your data from our servers.
+              </DialogDescription>
+              <ReserveForm node={props.id} />
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
       </DetailPane>
     </ModelPageLayout>
   );
@@ -82,7 +88,7 @@ function Page() {
 
   return (
     <>
-       <NodeInfo id={id} />
+      <NodeInfo id={id} />
     </>
   );
 }

@@ -8,12 +8,11 @@ import { useForm } from "react-hook-form";
 import {
   DatasetFragment,
   StageFragment,
-  useUpdateImageMutation
+  useUpdateImageMutation,
 } from "../api/graphql";
 
 export const UpdateDatasetForm = (props: { dataset: DatasetFragment }) => {
   const [add] = withMikroNext(useUpdateImageMutation)();
-
 
   const dialog = useGraphQlFormDialog(add);
 
@@ -33,12 +32,12 @@ export const UpdateDatasetForm = (props: { dataset: DatasetFragment }) => {
                 input: {
                   id: props.dataset.id,
                   ...data,
-              }},
+                },
+              },
             });
           })}
         >
           <div className="grid grid-cols-2 gap-2">
-
             <div className="col-span-2 flex-col gap-1 flex">
               <StringField
                 label="New Name"

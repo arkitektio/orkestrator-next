@@ -36,6 +36,7 @@ fragment ChoiceAssignWidget on ChoiceAssignWidget {
 }
 
 fragment ChildPortNested on ChildPort {
+  __typename
   kind
   identifier
   child {
@@ -70,6 +71,7 @@ fragment ChildPortNested on ChildPort {
 }
 
 fragment ChildPort on ChildPort {
+  __typename
   kind
   identifier
   scope

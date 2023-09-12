@@ -26,14 +26,15 @@ const TheCard = ({ view, mates }: Props) => {
               {view.fluorophore?.name}
             </MikroFluorophore.DetailLink>
             <div className=" @xl:block hidden">
-            <div className="mt-1 flex flex-row gap-1 text-xs">
-              <div className="text-muted-foreground flex flex-row gap-1">
-                <ArrowDownIcon/>{view.fluorophore?.emissionWavelength} nm
+              <div className="mt-1 flex flex-row gap-1 text-xs">
+                <div className="text-muted-foreground flex flex-row gap-1">
+                  <ArrowDownIcon />
+                  {view.fluorophore?.emissionWavelength} nm
+                </div>
+                <div className="text-muted-foreground flex flex-row gap-1">
+                  <ArrowUpIcon /> {view.fluorophore?.excitationWavelength} nm
+                </div>
               </div>
-              <div className="text-muted-foreground flex flex-row gap-1">
-               <ArrowUpIcon/> {view.fluorophore?.excitationWavelength} nm
-              </div>
-            </div>
             </div>
           </CardTitle>
         </CardHeader>

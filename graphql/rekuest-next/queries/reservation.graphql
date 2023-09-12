@@ -1,7 +1,5 @@
 query Reservations($instanceId: InstanceId!) {
-  myreservations(
-    instanceId: $instanceId
-  ) {
+  myreservations(instanceId: $instanceId) {
     ...PostmanReservation
   }
 }

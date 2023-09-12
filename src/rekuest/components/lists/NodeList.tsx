@@ -1,6 +1,10 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { MikroDataset } from "@/linkers";
-import { NodeFilter, OffsetPaginationInput, useAllNodesQuery } from "@/rekuest/api/graphql";
+import {
+  NodeFilter,
+  OffsetPaginationInput,
+  useAllNodesQuery,
+} from "@/rekuest/api/graphql";
 import { withMikroNext } from "@jhnnsrs/mikro-next";
 import NodeCard from "../cards/NodeCard";
 import { withRekuest } from "@jhnnsrs/rekuest-next";

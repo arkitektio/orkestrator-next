@@ -10,9 +10,11 @@ query GetStages($filters: StageFilter, $pagination: OffsetPaginationInput) {
   }
 }
 
-
 query StageOptions($search: String, $values: [ID!]) {
-  options: stages(filters: {search: $search,  ids: $values}, pagination: {limit: 10}) {
+  options: stages(
+    filters: { search: $search, ids: $values }
+    pagination: { limit: 10 }
+  ) {
     value: id
     label: name
   }

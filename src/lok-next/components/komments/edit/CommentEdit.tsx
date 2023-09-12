@@ -4,11 +4,19 @@ import { TiTick } from "react-icons/ti";
 import { Editor, Node, Range, Transforms, createEditor } from "slate";
 import { Editable, ReactEditor, Slate, useSlate, withReact } from "slate-react";
 import { CreateCommentFunc, KommentEditor } from "../types";
-import { DescendantKind, useUserOptionsLazyQuery } from "@/lok-next/api/graphql";
-import { KommentElement, KommentLeaf, Portal, insertMention, withMentions } from "./utils";
+import {
+  DescendantKind,
+  useUserOptionsLazyQuery,
+} from "@/lok-next/api/graphql";
+import {
+  KommentElement,
+  KommentLeaf,
+  Portal,
+  insertMention,
+  withMentions,
+} from "./utils";
 import { withLokNext } from "@jhnnsrs/lok-next";
 import { Textarea } from "@/components/ui/textarea";
-
 
 export type ICommentEditProps<T> = {
   id: string;
@@ -89,12 +97,12 @@ export const CommentEdit = ({
 
   const renderElement = useCallback(
     (props: any) => <KommentElement {...props} />,
-    []
+    [],
   );
 
   const renderLeaf = useCallback(
     (props: any) => <KommentLeaf {...props} />,
-    []
+    [],
   );
 
   useEffect(() => {
@@ -160,7 +168,7 @@ export const CommentEdit = ({
             Transforms.select(editor, target);
             insertMention(
               editor,
-              data?.data?.options && data.data.options[index]
+              data?.data?.options && data.data.options[index],
             );
             setTarget(undefined);
             break;
@@ -171,7 +179,7 @@ export const CommentEdit = ({
         }
       }
     },
-    [index, search, target, data.data?.options]
+    [index, search, target, data.data?.options],
   );
 
   return (

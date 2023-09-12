@@ -26,7 +26,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <EasyProvider manifest={manifest}>
       <SmartProvider>
-       
         <RekuestProvider>
           <MikroNextProvider>
             <LokNextProvider>
@@ -38,16 +37,16 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                     <ShadnWigets />
                   </RekuestGuard>
                   <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-                  <RequesterProvider>
-                    <ReserverProvider>
-                      <ReserveResolver/>
-                    <TooltipProvider>
-                      <Toaster />
-                      <AppConfiguration />
-                      <BrowserRouter>{children}</BrowserRouter>
-                    </TooltipProvider>
-                    </ReserverProvider>
-        </RequesterProvider>
+                    <RequesterProvider>
+                      <ReserverProvider>
+                        <ReserveResolver />
+                        <TooltipProvider>
+                          <Toaster />
+                          <AppConfiguration />
+                          <BrowserRouter>{children}</BrowserRouter>
+                        </TooltipProvider>
+                      </ReserverProvider>
+                    </RequesterProvider>
                   </ThemeProvider>
                 </PostmanProvider>
               </WidgetRegistryProvider>

@@ -24,9 +24,9 @@ export const ReserverProvider: React.FC<ReserverProviderProps> = ({
 }) => {
   const { reserve: postreserve, unreserve: postunreserve } = usePostman();
 
-  const [pendingRequests, setPendingRequests] = React.useState<ReserveRequest[]>(
-    [],
-  );
+  const [pendingRequests, setPendingRequests] = React.useState<
+    ReserveRequest[]
+  >([]);
 
   const resolve = useCallback(
     (request: ResolvedReserveRequest) => {
@@ -70,7 +70,7 @@ export const ReserverProvider: React.FC<ReserverProviderProps> = ({
         variables: variables,
       };
 
-      console.log( request)
+      console.log(request);
 
       setPendingRequests((pendingRequests) => {
         return [...pendingRequests, request];

@@ -20,7 +20,11 @@ query ReturnNode($assignation: ID!) {
   }
 }
 
-query AllNodes($pagination: OffsetPaginationInput, $filters: NodeFilter, $order: NodeOrder) {
+query AllNodes(
+  $pagination: OffsetPaginationInput
+  $filters: NodeFilter
+  $order: NodeOrder
+) {
   nodes(order: $order, pagination: $pagination, filters: $filters) {
     ...ListNode
   }

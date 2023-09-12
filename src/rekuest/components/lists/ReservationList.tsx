@@ -5,8 +5,7 @@ import { useReservationsQuery } from "@/rekuest/api/graphql";
 import { withRekuest } from "@jhnnsrs/rekuest-next";
 import ReservationCard from "../cards/ReservationCard";
 
-export type Props = {
-};
+export type Props = {};
 
 const List = ({}: Props) => {
   const { settings } = useSettings();
@@ -18,16 +17,18 @@ const List = ({}: Props) => {
 
   return (
     <>
-    <ListRender
-      array={data?.myreservations}
-      title={
-        <MikroDataset.ListLink className="flex-0">
-          Reservations
-        </MikroDataset.ListLink>
-      }
-    >
-      {(ex, index) => <ReservationCard key={index} reservation={ex} mates={[]} />}
-    </ListRender>
+      <ListRender
+        array={data?.myreservations}
+        title={
+          <MikroDataset.ListLink className="flex-0">
+            Reservations
+          </MikroDataset.ListLink>
+        }
+      >
+        {(ex, index) => (
+          <ReservationCard key={index} reservation={ex} mates={[]} />
+        )}
+      </ListRender>
     </>
   );
 };

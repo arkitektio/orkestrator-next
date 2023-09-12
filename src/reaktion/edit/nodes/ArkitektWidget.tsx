@@ -28,43 +28,30 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
   id,
   selected,
 }) => {
-  const { updateData } = useEditRiver();
+  const {
+    moveConstantToGlobals,
+    moveConstantToStream,
+    moveStreamToConstants,
+  } = useEditRiver();
 
   const onClickIn = (stream_index: number, onposition: number) => {
-    let item = ins?.[stream_index]?.[onposition] as PortFragment;
-
-    updateData(
-      {
-        ins:
-          ins.map((s, index) =>
-            index == stream_index
-              ? s?.filter((i, index) => index != onposition) || []
-              : s,
-          ) || [],
-        constants: [...constants, item],
-      },
-      id,
-    );
+    moveStreamToConstants(id, stream_index, onposition);
   };
 
   const onToArg = (port: PortFragment) => {
-    updateData(
-      {
-        constants: constants.filter((i, index) => i.key != port.key) || [],
-        ins: [[...(ins?.at(0) || []), port]],
-      },
-      id,
-    );
+    const index = constants.findIndex((i) => i.key == port.key);
+    if (index == -1) {
+      return;
+    }
+    moveConstantToStream(id, index, 0);
   };
 
-  const onToGlobal = (port: PortFragment, key: string) => {
-    updateData(
-      {
-        constants: constants.filter((i, index) => i.key != port.key) || [],
-        ins: [[...(ins?.at(to) || []), port]],
-      },
-      id,
-    );
+  const onToGlobal = (port: PortFragment, key?: string | undefined) => {
+    const index = constants.findIndex((i) => i.key == port.key);
+    if (index == -1) {
+      return;
+    }
+    moveConstantToGlobals(id, index, key);
   };
 
   return (
@@ -72,8 +59,8 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
       id={id}
       color={cn(
         data.nodeKind == NodeKind.Generator
-          ? "border-pink-500 shadow-pink-500/50 dark:border-pink-200 dark:shadow-pink-200/10 shadow-xxl"
-          : "border-pink-500 shadow-pink-500/50 dark:border-pink-200 dark:shadow-pink-200/10 shadow-xxl",
+          ? "border-pink-500 shadow-pink-500/10 dark:border-pink-200 dark:shadow-pink-200/20 shadow-xl"
+          : "border-pink-500 shadow-pink-500/10 dark:border-pink-200 dark:shadow-pink-200/20 shadow-xl",
       )}
       selected={selected}
       contextMenu={
@@ -117,7 +104,7 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
 
         <div className="text-xs text-muted-foreground inline ">Constants</div>
         <Constants
-          ports={constants}
+          ports={constants.filter((x) => !(x.key in data.globalsMap))}
           overwrites={data.constantsMap}
           onToArg={onToArg}
           onToGlobal={onToGlobal}

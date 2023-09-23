@@ -15,6 +15,21 @@ mutation CreateFluorophore(
   }
 }
 
+mutation AutoCreateFluorophore(
+  $input: String!
+){
+  result: createFluorophore(
+    input: {
+      name: $input
+    }
+  ) {
+    value: id
+    label: name
+  }
+}
+
+
+
 mutation EnsureFluorophore(
   $name: String!
   $excitationWavelength: Micrometers

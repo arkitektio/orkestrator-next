@@ -2,6 +2,7 @@ import { MikroChannelView } from "@/linkers";
 import { ChannelViewFragment } from "../../api/graphql";
 import { MateFinder } from "@/mates/types";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { ViewCard } from "./meta/ViewCard";
 
 interface Props {
   view: ChannelViewFragment;
@@ -11,11 +12,11 @@ interface Props {
 const TheCard = ({ view, mates }: Props) => {
   return (
     <MikroChannelView.Smart object={view?.id}>
-      <Card>
+      <ViewCard view={view}>
         <CardHeader>
           <CardTitle> {view.channel.name}</CardTitle>
         </CardHeader>
-      </Card>
+      </ViewCard>
     </MikroChannelView.Smart>
   );
 };

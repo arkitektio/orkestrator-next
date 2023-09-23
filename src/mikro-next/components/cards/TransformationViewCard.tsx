@@ -1,7 +1,10 @@
-import { MikroStage, MikroTransformationView } from "@/linkers";
+import { MikroStage, MikroAffineTransformationView } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
 import { AffineTransformationViewFragment } from "../../api/graphql";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMatchedView } from "@/providers/view/ViewContext";
+import { ViewCard } from "./meta/ViewCard";
+import { useDeleteAffineTransformationViewMate } from "@/mikro-next/mates/transformationview";
 
 interface Props {
   view: AffineTransformationViewFragment;
@@ -30,9 +33,15 @@ export const AffineInformation = ({ matrix }: { matrix: number[][] }) => {
 };
 
 const CardItem = ({ view, mates }: Props) => {
+
+
+
+  const deleteMate = useDeleteAffineTransformationViewMate()
+
+
   return (
-    <MikroTransformationView.Smart object={view?.id} mates={mates}>
-      <Card>
+    <MikroAffineTransformationView.Smart object={view?.id} mates={[deleteMate]}>
+      <ViewCard view={view}>
         <CardHeader>
           <CardTitle>
             {" "}
@@ -49,8 +58,8 @@ const CardItem = ({ view, mates }: Props) => {
 
           <AffineInformation matrix={view.affineMatrix} />
         </CardHeader>
-      </Card>
-    </MikroTransformationView.Smart>
+      </ViewCard>
+    </MikroAffineTransformationView.Smart>
   );
 };
 

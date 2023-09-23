@@ -28,11 +28,8 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
   id,
   selected,
 }) => {
-  const {
-    moveConstantToGlobals,
-    moveConstantToStream,
-    moveStreamToConstants,
-  } = useEditRiver();
+  const { moveConstantToGlobals, moveConstantToStream, moveStreamToConstants } =
+    useEditRiver();
 
   const onClickIn = (stream_index: number, onposition: number) => {
     moveStreamToConstants(id, stream_index, onposition);

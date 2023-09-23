@@ -10,6 +10,31 @@ mutation CreateAffineTransformationView(
   }
 }
 
+mutation DeleteAffineTransformationView(
+  $id: ID!
+) {
+  deleteAffineTransformationView(
+    input: { id: $id }
+  ) 
+}
+
+mutation DeleteRGBView(
+  $id: ID!
+) {
+  deleteRgbView(
+    input: { id: $id }
+  )
+}
+
+mutation DeleteChannelView(
+  $id: ID!
+) {
+  deleteChannelView(
+    input: { id: $id }
+  ) 
+}
+
+
 mutation CreateRGBView(
   $image: ID!
   $rScale: Float!
@@ -27,5 +52,44 @@ mutation CreateRGBView(
     }
   ) {
     ...RGBView
+  }
+}
+
+
+mutation CreateLabelView(
+  $image: ID!
+  $fluorophore: ID
+  $primaryAntibody: ID
+  $secondaryAntibody: ID
+) {
+  createLabelView(
+    input: {
+      image: $image
+      fluorophore: $fluorophore
+      primaryAntibody: $primaryAntibody
+      secondaryAntibody: $secondaryAntibody
+    }
+  ) {
+    ...LabelView
+  }
+}
+
+mutation CreateWellPositionView(
+  $input: WellPositionViewInput!
+) {
+  createWellPositionView(
+    input: $input
+  ) {
+    ...WellPositionView
+  }
+}
+
+mutation CreateContinousScanView(
+  $input: ContinousScanViewInput!
+) {
+  createContinousScanView(
+    input: $input
+  ) {
+    ...ContinousScanView
   }
 }

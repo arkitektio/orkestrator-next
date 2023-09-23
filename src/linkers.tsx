@@ -34,9 +34,9 @@ export const MikroHistory = buildSmart(
   "mikronext/history",
 );
 
-export const MikroTransformationView = buildSmart(
-  "@mikronext/transformationview",
-  "transformationviews",
+export const MikroAffineTransformationView = buildSmart(
+  "@mikronext/affinetransformationview",
+  "affinetransformationviews",
 );
 
 export const MikroLabelView = buildSmart(

@@ -25,7 +25,7 @@ export const Args = ({
               <TooltipTrigger>
                 <Button
                   variant="outline"
-                  className="inline my-auto px-2 h-full flex flex-row py-1 disabled:opacity-50"
+                  className="inline my-auto px-2 h-full flex flex-row py-1 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => onClick && onClick(id, index)}
                   disabled={s.scope == PortScope.Local && s.nullable == false}
                 >
@@ -50,7 +50,7 @@ export const Args = ({
                 <p className="text-sm inline">{s?.identifier || s.kind}</p>
                 <div className="text-xs mt-0"> {s?.description}</div>
                 {s.scope == PortScope.Local && s.nullable == false && (
-                  <div className="text-xs mt-0 text-muted-foreground">
+                  <div className="text-xs mt-0 text-muted-foreground ">
                     {" "}
                     Local non-nullable Ports cannot be constants
                   </div>

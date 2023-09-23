@@ -1,0 +1,21 @@
+query GetFluorophore($id: ID!) {
+  fluorophore(id: $id) {
+    ...Fluorophore
+  }
+}
+
+query GetFluorophores($filters: FluorophoreFilter, $pagination: OffsetPaginationInput) {
+  fluorophores(filters: $filters, pagination: $pagination) {
+    ...Fluorophore
+  }
+}
+
+query FluorophoreOptions($search: String, $values: [ID!]) {
+  options: fluorophores(
+    filters: { search: $search, ids: $values }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: name
+  }
+}

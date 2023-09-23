@@ -2,6 +2,7 @@ import { MikroOpticsView, MikroInstrument } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
 import { OpticsViewFragment } from "../../api/graphql";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { ViewCard } from "./meta/ViewCard";
 
 interface Props {
   view: OpticsViewFragment;
@@ -11,7 +12,7 @@ interface Props {
 const TheCard = ({ view, mates }: Props) => {
   return (
     <MikroOpticsView.Smart object={view?.id} mates={mates}>
-      <Card>
+      <ViewCard view={view}>
         <CardHeader>
           <CardTitle>
             {" "}
@@ -28,7 +29,7 @@ const TheCard = ({ view, mates }: Props) => {
             )}
           </CardTitle>
         </CardHeader>
-      </Card>
+      </ViewCard>
     </MikroOpticsView.Smart>
   );
 };

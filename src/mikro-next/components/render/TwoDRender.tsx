@@ -6,6 +6,7 @@ import {
   AvailableColormap,
   XArrayProvider,
 } from "@/mikro-next/providers/xarray/provider";
+import { useView } from "@/providers/view/ViewContext";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import useMeasure from "react-use-measure";
 
@@ -107,6 +108,35 @@ export const Canvas: React.FC<{
       ref={layerRef}
       className="absolute top-0 left-0"
     ></canvas>
+  );
+};
+
+export const TwoDViewCanvas = ({
+  store,
+  colormap,
+  className,
+  follow = "width",
+}: TwoDProps) => {
+  console.log("Rerendering 2D offcanvas", store);
+
+  const [ref, bounds] = useMeasure({
+    debounce: 100,
+  });
+
+  console.log(bounds);
+
+  const { activeView } = useView();
+
+  return (
+    <Canvas
+      colormap={colormap}
+      store={store}
+      width={bounds.width}
+      height={bounds.height}
+      c={activeView.cMin || 0}
+      t={activeView.tMin || 0}
+      z={activeView.zMin || 0}
+    />
   );
 };
 

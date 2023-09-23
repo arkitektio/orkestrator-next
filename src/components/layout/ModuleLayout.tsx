@@ -13,6 +13,7 @@ export const ModuleLayout = ({ pane, children }: ModuleLayoutProps) => {
           <Panel
             defaultSize={10}
             className="border-r border-gray-500 bg-background"
+            style={{overflowY: "scroll"}}
           >
             {pane}
           </Panel>

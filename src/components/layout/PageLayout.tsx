@@ -1,6 +1,7 @@
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import BreadCrumbs from "../navigation/BreadCrumbs";
 import { ScrollArea } from "../ui/scroll-area";
+import { Actionbar } from "./Actionbar";
 
 export type PageLayoutProps = {
   children: React.ReactNode;
@@ -8,15 +9,20 @@ export type PageLayoutProps = {
   actions?: React.ReactNode;
 };
 
-export const PageLayout = ({ sidebars, children }: PageLayoutProps) => {
+export const PageLayout = ({
+  sidebars,
+  children,
+  actions,
+}: PageLayoutProps) => {
   return (
     <PanelGroup autoSaveId="page" direction="horizontal">
       <Panel className="" defaultSize={80}>
-        <div className="flex flex-col p-2">
+        <div className="h-full flex flex-col p-2 relative">
           <div className="flex-shrink">
             <BreadCrumbs />
           </div>
-          <ScrollArea className="flex-grow @container">{children}</ScrollArea>
+          <ScrollArea className="flex-grow @container overflow-y-scroll">{children}</ScrollArea>
+          <Actionbar>{actions}</Actionbar>
         </div>
       </Panel>
       {sidebars && (

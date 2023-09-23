@@ -145,7 +145,9 @@ export const validateNodeConstants = (
   node: FlowNode,
 ): ValidationResult => {
   console.log("Validating node constants");
-  const schema = yupSchemaBuilder(node.data.constants.filter(k => !(k.key in node.data.globalsMap))); // Only validate non global constants
+  const schema = yupSchemaBuilder(
+    node.data.constants.filter((k) => !(k.key in node.data.globalsMap)),
+  ); // Only validate non global constants
   try {
     schema.validateSync(node.data.constantsMap, { abortEarly: false });
     return state;

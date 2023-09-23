@@ -44,7 +44,7 @@ export const NodeShowLayout: React.FC<NodeProps> = ({
           <Card
             className={cn(
               "custom-drag-handle h-full z-10 group shadow overflow-auto",
-              selected && color,
+              color,
             )}
           >
             {children}

@@ -4,10 +4,11 @@ import { BiRefresh } from "react-icons/bi";
 export const Refetcher = (props: { refetch: () => Promise<any> }) => {
   const [refetching, setRefetching] = useState(false);
 
-  const onClick = async () => {
+  const onClick = () => {
     setRefetching(true);
-    await props.refetch();
-    setRefetching(false);
+    props.refetch().then(() => {
+      setRefetching(false);
+    });
   };
 
   return (

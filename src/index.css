@@ -4,10 +4,10 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 222.2 39% 97%;
     --foreground: 222.2 84% 4.9%;
     --middleground: 222.2 39% 90%;
-    --seperator: 222.2 39% 90%;
+    --seperator: 222.2 39% 88%;
 
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;

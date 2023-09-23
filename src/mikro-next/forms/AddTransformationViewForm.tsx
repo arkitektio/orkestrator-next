@@ -15,6 +15,7 @@ import {
 } from "@/components/dialog/FormDialog";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import { DialogFooter } from "@/components/ui/dialog";
+import { useView } from "@/providers/view/ViewContext";
 
 export const toAffineMatrix = (data: {
   positionX: number;
@@ -50,6 +51,8 @@ export const AddTransformationViewForm = (props: { image: string }) => {
       scaleZ: 1,
     },
   });
+
+
 
   return (
     <>

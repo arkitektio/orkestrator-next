@@ -50,12 +50,7 @@ export type IDProps = {
 
 const buildSelfActions = (model: Identifier) => {
   return ({ ...props }: IDProps) => {
-    return (
-      <>
-        {" "}
-        Not implemeneted yet {model} {props.id}
-      </>
-    );
+    return <></>;
   };
 };
 

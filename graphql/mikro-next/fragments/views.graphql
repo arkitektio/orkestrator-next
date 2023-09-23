@@ -1,4 +1,12 @@
 fragment View on View {
+  xMin
+  xMax
+  yMin
+  yMax
+  tMin
+  tMax
+  cMin
+  cMax
   zMin
   zMax
 }
@@ -76,4 +84,22 @@ fragment LabelView on LabelView {
   secondaryAntibody {
     ...Antibody
   }
+}
+
+fragment WellPositionView on WellPositionView {
+  ...View
+  id
+  column
+  row
+  well {
+    id
+    rows
+    columns
+  }
+}
+
+fragment ContinousScanView on ContinousScanView {
+  ...View
+  id
+  direction
 }

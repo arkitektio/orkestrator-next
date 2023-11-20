@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import {
   useAutoCreateFluorophoreMutation,
   useCreateLabelViewMutation,
-  useFluorophoreOptionsLazyQuery
+  useFluorophoreOptionsLazyQuery,
 } from "../api/graphql";
 
 export const AddLabelViewForm = (props: { image: string }) => {
@@ -25,7 +25,6 @@ export const AddLabelViewForm = (props: { image: string }) => {
       primaryAntibody: "",
       secondaryAntibody: "",
     },
-
   });
 
   return (

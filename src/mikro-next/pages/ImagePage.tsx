@@ -41,6 +41,7 @@ import { UpdateImageForm } from "../forms/UpdateImageForm";
 import { Komments } from "@/lok-next/components/komments/Komments";
 import { TwoDViewProvider, ViewProvider } from "@/providers/view/ViewProvider";
 import { TwoDViewController } from "../components/render/Controller";
+import AcquisitionViewCard from "../components/cards/AcquisitionViewCard";
 
 export type IRepresentationScreenProps = {};
 
@@ -75,13 +76,16 @@ const ImagePage: React.FC<IRepresentationScreenProps> = () => {
       }
     >
       <TwoDViewProvider initialC={0} initialT={0} initialZ={0}>
-        <Tabs defaultValue="raw" className="relative overflow-y-scroll">
-          <div className="flex @2xl:flex-row-reverse flex-col rounded-md gap-4 mt-2 overflow-scroll">
+        <Tabs defaultValue="raw" className="relative">
+          <div className="flex @2xl:flex-row-reverse flex-col rounded-md gap-4 mt-2">
+           
             <div className="flex-1  overflow-hidden ">
               <AspectRatio
                 ratio={aspectRatio}
-                className="overflow-hidden rounded rounded-md shadow shadow-xl"
+                className=" group overflow-hidden rounded rounded-md shadow shadow-xl relative"
               >
+
+       
                 <TabsContent
                   value="raw"
                   className={"h-full w-full mt-0 rounded rounded-md "}
@@ -92,7 +96,12 @@ const ImagePage: React.FC<IRepresentationScreenProps> = () => {
                       colormap={"viridis"}
                     />
                   )}
+
+                  
                 </TabsContent>
+                <div className="absolute top-0 right-0">
+                    <TwoDViewController zSize={z} tSize={t} cSize={c} />
+                </div>
                 {data?.image?.renders?.map((render, index) => (
                   <TabsContent key={index} value={render.id}>
                     {render.__typename == "Snapshot" && (
@@ -105,7 +114,7 @@ const ImagePage: React.FC<IRepresentationScreenProps> = () => {
                 ))}
               </AspectRatio>
             </div>
-            <DetailPane className="flex-1 @container overflow-scroll">
+            <DetailPane className="flex-1 @container ">
               <DetailPaneHeader>
                 <DetailPaneTitle
                   actions={
@@ -132,7 +141,7 @@ const ImagePage: React.FC<IRepresentationScreenProps> = () => {
                 </DetailPaneTitle>
               </DetailPaneHeader>
 
-              <TwoDViewController zSize={z} tSize={t} cSize={c}/>
+             
 
               <DetailPaneContent>
                 {data?.image?.dataset && (
@@ -207,6 +216,9 @@ const ImagePage: React.FC<IRepresentationScreenProps> = () => {
                         {view.__typename == "RGBView" && (
                           <RGBViewCard view={view} key={index} />
                         )}
+                        {view.__typename == "AcquisitionView" && (
+                          <AcquisitionViewCard view={view} key={index} />
+                        )}
                       </>
                     ))}
                     {data?.image && (
@@ -214,6 +226,9 @@ const ImagePage: React.FC<IRepresentationScreenProps> = () => {
                         <CardContent className="grid place-items-center w-full h-full">
                           <FormDialog
                             trigger={<PlusIcon className="text-xl" />}
+                            onSubmit={async (data) => {
+                              await refetch();
+                            }}
                           >
                             <AddImageViewForm image={data?.image.id} />
                           </FormDialog>

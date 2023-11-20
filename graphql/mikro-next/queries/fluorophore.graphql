@@ -4,7 +4,10 @@ query GetFluorophore($id: ID!) {
   }
 }
 
-query GetFluorophores($filters: FluorophoreFilter, $pagination: OffsetPaginationInput) {
+query GetFluorophores(
+  $filters: FluorophoreFilter
+  $pagination: OffsetPaginationInput
+) {
   fluorophores(filters: $filters, pagination: $pagination) {
     ...Fluorophore
   }

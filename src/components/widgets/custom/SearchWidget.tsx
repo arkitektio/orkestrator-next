@@ -30,6 +30,8 @@ export const SearchWidget = (
         query: query,
         variables: { ...searching, ...values },
       });
+
+      console.log(options)
       return options;
     },
     [theward, query, values],

@@ -16,9 +16,7 @@ const BreadCrumbs: React.FunctionComponent<IBreadCrumbsProps> = (props) => {
               to={match.pathname}
               className={({ isActive }) =>
                 "font-semibold text-md mb-2 cursor-pointer " +
-                (isActive
-                  ? "text-primary dark:text-primary"
-                  : "text-primary dark:text-primary-100")
+                "text-foreground dark:text-foreground"
               }
             >
               {breadcrumb}

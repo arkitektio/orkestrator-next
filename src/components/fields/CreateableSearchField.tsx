@@ -59,13 +59,12 @@ export const ButtonLabel = (props: {
 
 export type SearchOptions = { search?: string; values?: (string | number)[] };
 
-
 export type SearchFunction = (
   searching: SearchOptions,
-) => Promise<(Option | null | undefined)[]>
+) => Promise<(Option | null | undefined)[]>;
 
 // Should create a new option following the input and should return the value (will then cause a new search)
-export type CreateFunction = (input: string) => Promise<(string | number)>;
+export type CreateFunction = (input: string) => Promise<string | number>;
 
 export type CreatableSearchFieldProps = {
   name: string;
@@ -114,13 +113,13 @@ export const CreateableSearchField = ({
   }, [debouncedQuery]);
 
   const createValue = (input: string) => {
-    console.log("creating", input)
+    console.log("creating", input);
     create(input).then((value) => {
-    return form.setValue(name, value, {
-      shouldValidate: false,
+      return form.setValue(name, value, {
+        shouldValidate: false,
+      });
     });
-  });
-  }
+  };
 
   useEffect(() => {
     search({})
@@ -201,7 +200,9 @@ export const CreateableSearchField = ({
                       </CommandItem>
                     ))}
                   </CommandGroup>
-                  <CommandItem onSelect={() => createValue(latestQuery)}>Create {latestQuery} </CommandItem>
+                  <CommandItem onSelect={() => createValue(latestQuery)}>
+                    Create {latestQuery}{" "}
+                  </CommandItem>
                 </Command>
               </PopoverContent>
             </Popover>

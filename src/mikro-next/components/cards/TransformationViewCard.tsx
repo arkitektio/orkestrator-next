@@ -33,11 +33,7 @@ export const AffineInformation = ({ matrix }: { matrix: number[][] }) => {
 };
 
 const CardItem = ({ view, mates }: Props) => {
-
-
-
-  const deleteMate = useDeleteAffineTransformationViewMate()
-
+  const deleteMate = useDeleteAffineTransformationViewMate();
 
   return (
     <MikroAffineTransformationView.Smart object={view?.id} mates={[deleteMate]}>

@@ -1,14 +1,24 @@
 import { useCallback } from "react";
 import { Option, SearchField, SearchFieldProps } from "./SearchField";
-import { CreatableSearchFieldProps, CreateableSearchField } from "./CreateableSearchField";
+import {
+  CreatableSearchFieldProps,
+  CreateableSearchField,
+} from "./CreateableSearchField";
 
-export type GraphQLSearchFieldProps = Omit<CreatableSearchFieldProps, "search" | "create"> & {
+export type GraphQLSearchFieldProps = Omit<
+  CreatableSearchFieldProps,
+  "search" | "create"
+> & {
   searchQuery: (x: {
     variables: { search?: string | undefined; values?: string[] };
   }) => Promise<{ data?: { options: Option[] }; errors?: any }>;
-  createMutation: (x: {
-    variables: { input: string };
-  }) => Promise<{ data?: { result?: {value?: string | number} | null | undefined } | null | undefined, errors?: any}>;
+  createMutation: (x: { variables: { input: string } }) => Promise<{
+    data?:
+      | { result?: { value?: string | number } | null | undefined }
+      | null
+      | undefined;
+    errors?: any;
+  }>;
 };
 
 export const GraphQLCreatableSearchField: React.FC<GraphQLSearchFieldProps> = ({
@@ -22,7 +32,10 @@ export const GraphQLCreatableSearchField: React.FC<GraphQLSearchFieldProps> = ({
       values?: (string | number)[] | undefined;
     }) => {
       let queryResult = await searchQuery({
-        variables: { search: x.search, values: x.values?.map( x => x.toString()) },
+        variables: {
+          search: x.search,
+          values: x.values?.map((x) => x.toString()),
+        },
       });
       if (queryResult?.errors) {
         throw new Error(queryResult.errors[0].message);

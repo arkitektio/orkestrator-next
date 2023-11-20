@@ -40,9 +40,9 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
           <ArkitektLogo
             width={"4rem"}
             height={"4rem"}
-            cubeColor={"hsl(var(--accent))"}
-            aColor={"hsl(var(--primary))"}
-            strokeColor={"hsl(var(--primary))"}
+            cubeColor={"hsl(var(--primary))"}
+            aColor={"hsl(var(--foreground))"}
+            strokeColor={"hsl(var(--foreground))"}
           />
         </Link>
       </div>

@@ -13,6 +13,7 @@ fragment Image on Image {
     ...LabelView
     ...TimepointView
     ...OpticsView
+    ...AcquisitionView
     ...RGBView
   }
   pinned

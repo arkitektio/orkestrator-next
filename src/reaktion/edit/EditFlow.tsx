@@ -58,6 +58,7 @@ import {
   edges_to_flowedges,
   flowEdgeToInput,
   flowNodeToInput,
+  globalToInput,
   listPortToSingle,
   nodeIdBuilder,
   nodes_to_flownodes,
@@ -117,7 +118,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
     useUndoable<ValidationResult>({
       nodes: nodes_to_flownodes(flow.graph?.nodes),
       edges: edges_to_flowedges(flow.graph?.edges),
-      globals: [],
+      globals: flow.graph.globals || [],
       remainingErrors: [],
       solvedErrors: [],
       valid: true,
@@ -470,20 +471,13 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
   const globals = useMemo(() => state.globals, [state]);
 
   const save = () => {
-    const nodes = (reactFlowInstance?.getNodes() as FlowNode[]) || [];
-    const edges = (reactFlowInstance?.getEdges() as FlowEdge[]) || [];
-
-    const validated = validateState({
-      nodes: nodes,
-      edges: edges,
-      globals: [],
-    });
+    const validated = state;
 
     if (validated.valid) {
       const graph: GraphInput = {
         nodes: validated.nodes.map((n) => flowNodeToInput(n)),
         edges: validated.edges.map((e) => flowEdgeToInput(e)),
-        globals: [],
+        globals: validated.globals.map((g) => globalToInput(g)),
       };
       console.log("Saving", graph);
       onSave && onSave(graph);
@@ -663,8 +657,6 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
               </Card>
             </div>
           )}
-          {hasRemainingErrors ||
-            (hasSolvedErrors && (
               <div className="absolute top-0 right-0  mr-3 mt-5 z-50">
                 <Card>
                   <CardHeader>
@@ -705,7 +697,6 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                   </CardContent>
                 </Card>
               </div>
-            ))}
           {isOver && (
             <div className="absolute top-[50%] left-[50%]">Drop me {":D"} </div>
           )}

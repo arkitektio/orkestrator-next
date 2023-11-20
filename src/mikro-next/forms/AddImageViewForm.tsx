@@ -6,8 +6,6 @@ import { useView } from "@/providers/view/ViewContext";
 import { AddContinousScanViewForm } from "./AddContinousScanViewForm";
 
 export const AddImageViewForm = (props: { image: string }) => {
-
-
   return (
     <div className="mt-2">
       <Tabs defaultValue="affine" className="relative">
@@ -22,7 +20,7 @@ export const AddImageViewForm = (props: { image: string }) => {
           value="affine"
           className={"h-full w-full mt-0 rounded rounded-md "}
         >
-          <AddTransformationViewForm {...props}  />
+          <AddTransformationViewForm {...props} />
         </TabsContent>
         <TabsContent
           value="rgb"

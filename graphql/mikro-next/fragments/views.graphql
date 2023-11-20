@@ -86,6 +86,17 @@ fragment LabelView on LabelView {
   }
 }
 
+fragment AcquisitionView on AcquisitionView {
+  ...View
+  id
+  description
+  acquiredAt
+  operator {
+    sub
+  }
+}
+
+
 fragment WellPositionView on WellPositionView {
   ...View
   id

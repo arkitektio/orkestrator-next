@@ -5,31 +5,28 @@ export interface ViewProviderProps {
   children: React.ReactNode;
   initialView?: View;
   persistKey?: string;
-
 }
 
-export const ViewProvider: React.FC<ViewProviderProps> = ({initialView = {}, ...props}) => {
+export const ViewProvider: React.FC<ViewProviderProps> = ({
+  initialView = {},
+  ...props
+}) => {
   const [activeView, setActiveView] = useState<View>(initialView);
 
-
-    useEffect(() => {
-        if (props.persistKey) {
-        localStorage.setItem(props.persistKey, JSON.stringify(activeView));
-        }
+  useEffect(() => {
+    if (props.persistKey) {
+      localStorage.setItem(props.persistKey, JSON.stringify(activeView));
     }
-    , [activeView]);
+  }, [activeView]);
 
-
-    useEffect(() => {
-        if (props.persistKey) {
-        let view = localStorage.getItem(props.persistKey);
-        if (view) {
-            setActiveView(JSON.parse(view));
-        }
-        }
+  useEffect(() => {
+    if (props.persistKey) {
+      let view = localStorage.getItem(props.persistKey);
+      if (view) {
+        setActiveView(JSON.parse(view));
+      }
     }
-    , [props.persistKey]);
-
+  }, [props.persistKey]);
 
   const extendToInclude = useCallback(
     (view: View) => {
@@ -62,28 +59,23 @@ export const ViewProvider: React.FC<ViewProviderProps> = ({initialView = {}, ...
 };
 
 export type TwoDViewProviderProps = ViewProviderProps & {
-    initialC: number;
-    initialT: number;
-    initialZ: number;
-}
+  initialC: number;
+  initialT: number;
+  initialZ: number;
+};
 
 export const TwoDViewProvider: React.FC<TwoDViewProviderProps> = (props) => {
-
-
-
-
-    return (
-        <ViewProvider
-            initialView={{
-                cMin: props.initialC,
-                cMax: props.initialC,
-                tMin: props.initialT,
-                tMax: props.initialT,
-                zMin: props.initialZ,
-                zMax: props.initialZ,
-            }}
-            {...props}
-        />
-    );
-}
-
+  return (
+    <ViewProvider
+      initialView={{
+        cMin: props.initialC,
+        cMax: props.initialC,
+        tMin: props.initialT,
+        tMax: props.initialT,
+        zMin: props.initialZ,
+        zMax: props.initialZ,
+      }}
+      {...props}
+    />
+  );
+};

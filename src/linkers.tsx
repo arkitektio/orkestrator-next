@@ -44,6 +44,11 @@ export const MikroLabelView = buildSmart(
   "mikronext/labelviews",
 );
 
+export const MikroAcquisitionView = buildSmart(
+  "@mikronext/acquisitionview",
+  "mikronext/acquisitionviews",
+);
+
 export const MikroFluorophore = buildSmart(
   "@mikronext/fluorophore",
   "mikronext/fluorophores",

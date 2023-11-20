@@ -10,30 +10,17 @@ mutation CreateAffineTransformationView(
   }
 }
 
-mutation DeleteAffineTransformationView(
-  $id: ID!
-) {
-  deleteAffineTransformationView(
-    input: { id: $id }
-  ) 
+mutation DeleteAffineTransformationView($id: ID!) {
+  deleteAffineTransformationView(input: { id: $id })
 }
 
-mutation DeleteRGBView(
-  $id: ID!
-) {
-  deleteRgbView(
-    input: { id: $id }
-  )
+mutation DeleteRGBView($id: ID!) {
+  deleteRgbView(input: { id: $id })
 }
 
-mutation DeleteChannelView(
-  $id: ID!
-) {
-  deleteChannelView(
-    input: { id: $id }
-  ) 
+mutation DeleteChannelView($id: ID!) {
+  deleteChannelView(input: { id: $id })
 }
-
 
 mutation CreateRGBView(
   $image: ID!
@@ -55,7 +42,6 @@ mutation CreateRGBView(
   }
 }
 
-
 mutation CreateLabelView(
   $image: ID!
   $fluorophore: ID
@@ -74,22 +60,14 @@ mutation CreateLabelView(
   }
 }
 
-mutation CreateWellPositionView(
-  $input: WellPositionViewInput!
-) {
-  createWellPositionView(
-    input: $input
-  ) {
+mutation CreateWellPositionView($input: WellPositionViewInput!) {
+  createWellPositionView(input: $input) {
     ...WellPositionView
   }
 }
 
-mutation CreateContinousScanView(
-  $input: ContinousScanViewInput!
-) {
-  createContinousScanView(
-    input: $input
-  ) {
+mutation CreateContinousScanView($input: ContinousScanViewInput!) {
+  createContinousScanView(input: $input) {
     ...ContinousScanView
   }
 }

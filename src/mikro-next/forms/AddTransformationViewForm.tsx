@@ -52,8 +52,6 @@ export const AddTransformationViewForm = (props: { image: string }) => {
     },
   });
 
-
-
   return (
     <>
       <Form {...form}>

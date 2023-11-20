@@ -24,7 +24,10 @@ export const GraphQLSearchField: React.FC<GraphQLListSearchFieldProps> = ({
       values?: (string | number)[] | undefined;
     }) => {
       let queryResult = await searchQuery({
-        variables: { search: x.search, values: x.values?.map( x => x.toString()) },
+        variables: {
+          search: x.search,
+          values: x.values?.map((x) => x.toString()),
+        },
       });
       if (queryResult?.errors) {
         throw new Error(queryResult.errors[0].message);

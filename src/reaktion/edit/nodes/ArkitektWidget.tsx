@@ -56,8 +56,8 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
       id={id}
       color={cn(
         data.nodeKind == NodeKind.Generator
-          ? "border-pink-500 shadow-pink-500/10 dark:border-pink-200 dark:shadow-pink-200/20 shadow-xl"
-          : "border-pink-500 shadow-pink-500/10 dark:border-pink-200 dark:shadow-pink-200/20 shadow-xl",
+          ? "border-accent shadow-accent/10 dark:border-accent dark:shadow-accent/20 shadow-xl"
+          : "border-accent shadow-accent/10 dark:border-accent dark:shadow-accent/20 shadow-xl",
       )}
       selected={selected}
       contextMenu={

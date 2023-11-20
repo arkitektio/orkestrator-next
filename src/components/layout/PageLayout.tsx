@@ -21,7 +21,9 @@ export const PageLayout = ({
           <div className="flex-shrink">
             <BreadCrumbs />
           </div>
-          <ScrollArea className="flex-grow @container overflow-y-scroll">{children}</ScrollArea>
+          <ScrollArea className="flex-grow @container overflow-y-auto">
+            {children}
+          </ScrollArea>
           <Actionbar>{actions}</Actionbar>
         </div>
       </Panel>
@@ -33,7 +35,9 @@ export const PageLayout = ({
             defaultSize={20}
             className="border-l-2 border-gray-900 bg-middleground"
           >
+            <ScrollArea className="flex flex-col h-full overflow-y-auto">
             {sidebars}
+            </ScrollArea>
           </Panel>
         </>
       )}

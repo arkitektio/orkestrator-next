@@ -77,10 +77,8 @@ export type FlowEdgeData<T = GraphEdgeFragment> = Omit<
   T & BaseGraphEdgeFragment,
   FlowEdgeInherent
 >;
-export type FlowNode<T = GraphNodeFragment> = Node<
-  FlowNodeData<T>,
-  NodeTypeUnion
->;
+export type FlowNode<T extends BaseGraphNodeFragment = BaseGraphNodeFragment> =
+  Node<FlowNodeData<T>, NodeTypeUnion>;
 export type FlowEdge<T = GraphEdgeFragment> = Edge<FlowEdgeData<T>>;
 
 export type VanillaEdgeProps = EdgeProps<VanillaEdgeFragment>;

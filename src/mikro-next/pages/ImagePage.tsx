@@ -26,6 +26,7 @@ import FileCard from "../components/cards/FileCard";
 import ImageMetricCard from "../components/cards/ImageMetricCard";
 import LabelViewCard from "../components/cards/LabelViewCard";
 import OpticsViewCard from "../components/cards/OpticsViewCard";
+import WellPositionViewCard from "../components/cards/WellPositionViewCard";
 import TransformationViewCard from "../components/cards/TransformationViewCard";
 import SnapshotPanel from "../components/panels/SnapshotPanel";
 import VideoPanel from "../components/panels/VideoPanel";
@@ -78,14 +79,11 @@ const ImagePage: React.FC<IRepresentationScreenProps> = () => {
       <TwoDViewProvider initialC={0} initialT={0} initialZ={0}>
         <Tabs defaultValue="raw" className="relative">
           <div className="flex @2xl:flex-row-reverse flex-col rounded-md gap-4 mt-2">
-           
             <div className="flex-1  overflow-hidden ">
               <AspectRatio
                 ratio={aspectRatio}
                 className=" group overflow-hidden rounded rounded-md shadow shadow-xl relative"
               >
-
-       
                 <TabsContent
                   value="raw"
                   className={"h-full w-full mt-0 rounded rounded-md "}
@@ -96,11 +94,9 @@ const ImagePage: React.FC<IRepresentationScreenProps> = () => {
                       colormap={"viridis"}
                     />
                   )}
-
-                  
                 </TabsContent>
                 <div className="absolute top-0 right-0">
-                    <TwoDViewController zSize={z} tSize={t} cSize={c} />
+                  <TwoDViewController zSize={z} tSize={t} cSize={c} />
                 </div>
                 {data?.image?.renders?.map((render, index) => (
                   <TabsContent key={index} value={render.id}>
@@ -140,8 +136,6 @@ const ImagePage: React.FC<IRepresentationScreenProps> = () => {
                   {data?.image?.name}
                 </DetailPaneTitle>
               </DetailPaneHeader>
-
-             
 
               <DetailPaneContent>
                 {data?.image?.dataset && (
@@ -218,6 +212,9 @@ const ImagePage: React.FC<IRepresentationScreenProps> = () => {
                         )}
                         {view.__typename == "AcquisitionView" && (
                           <AcquisitionViewCard view={view} key={index} />
+                        )}
+                        {view.__typename == "WellPositionView" && (
+                          <WellPositionViewCard view={view} key={index} />
                         )}
                       </>
                     ))}

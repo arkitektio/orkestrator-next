@@ -9,6 +9,7 @@ import { Connection, XYPosition } from "reactflow";
 import { FlowEdge, FlowNode, FlowNodeData } from "../types";
 import {
   handleToStream,
+  listPortToSingle,
   nodeIdBuilder,
   singleToList,
   streamToReadable,
@@ -23,6 +24,7 @@ import {
   ValidationResult,
 } from "./types";
 import {
+  isChunkTransformable,
   isNullTransformable,
   isSameStream,
   islistTransformable,
@@ -93,6 +95,8 @@ export const onlyValid = (
     if (isSameStream(event.stream, data.ins.at(event.index))) return {}; // No change needed
     if (islistTransformable(event.stream, data.ins.at(event.index)))
       return { needsTransform: "to_list" }; // No change needed// No change needed
+    if (isChunkTransformable(event.stream, data.ins.at(event.index)))
+      return { needsTransform: "from_list" }; // No change needed// No change needed
     if (isNullTransformable(event.stream, data.ins.at(event.index)))
       return { needsTransform: "ensure" };
     throw new Error("Ports do not match");
@@ -107,6 +111,7 @@ export const argIsValid = (
   event: ChangeEvent,
 ): ChangeOutcome => {
   if (event.type == "source") {
+    console.log("Arg is challenged as a Source");
     return {
       data: {
         ...data,
@@ -142,13 +147,18 @@ export const propagateChange = (
   data: FlowNodeData<GraphNodeFragment>,
   event: ChangeEvent,
 ): ChangeOutcome => {
+  console.log("Propagating change", data, event);
+  if (!data.kind) {
+    return { denied: "Kind not found" };
+  }
+
   try {
-    if (data.__typename == "ReactiveNode") {
+    if (data.kind == GraphNodeKind.Reactive) {
       if (data.implementation == ReactiveImplementation.Zip)
         return changeZip(data, event);
     }
-    if (data.__typename == "ArgNode") return argIsValid(data, event);
-    if (data.__typename == "ReturnNode") return returnIsValid(data, event);
+    if (data.kind == GraphNodeKind.Args) return argIsValid(data, event);
+    if (data.kind == GraphNodeKind.Returns) return returnIsValid(data, event);
     return onlyValid(data, event);
   } catch (e) {
     if ((e as Error).message) {
@@ -192,7 +202,6 @@ export const getTransform = (
       type: "ReactiveNode",
       position: position,
       data: {
-        __typename: "ReactiveNode",
         globalsMap: {},
         title: "To List",
         description: "Transforms a stream into a list",
@@ -206,13 +215,33 @@ export const getTransform = (
     };
   }
 
+  if (transform == "from_list") {
+    return {
+      id: nodeIdBuilder(),
+      type: "ReactiveNode",
+      position: position,
+      data: {
+        globalsMap: {},
+        title: "Chunk",
+        description: "Transforms a stream into an item of chunks",
+        kind: GraphNodeKind.Reactive,
+        ins: [instream],
+        constantsMap: {},
+        outs: [
+          instream.map((p, index) => listPortToSingle(p, "Chunked" + p.key)),
+        ],
+        constants: [],
+        implementation: ReactiveImplementation.ToList,
+      },
+    };
+  }
+
   if (transform == "ensure") {
     return {
       id: nodeIdBuilder(),
       type: "ReactiveNode",
       position: position,
       data: {
-        __typename: "ReactiveNode",
         globalsMap: {},
         title: "Ensure",
         description:
@@ -446,6 +475,7 @@ export const transitionOrCut = (
   }
 
   if (outcome.denied) {
+    console.log("Denied", outcome.denied);
     removeEdgeAndSolve(state, options.edgeID, outcome.denied);
     return;
   }
@@ -535,6 +565,14 @@ export const transitionOrCut = (
 };
 
 // Can throw errors
+/**
+ * Validates and integrates a connection into the flow state.
+ *
+ * @param state - The current flow state.
+ * @param connection - The connection to integrate.
+ * @returns The updated flow state after integration.
+ * @throws Error if source ID or target ID is not found, or if source or target node is not found, or if source or target handle is not found, or if source or target stream is not found.
+ */
 export const integrate = (
   state: FlowState,
   connection: Connection,
@@ -607,6 +645,9 @@ export const integrate = (
     allowTransforms: true,
   };
 
+  // This will recursively transition nodes leaving the initial node
+  // and add all the edges that are needed to the state to account
+  // for the new connection
   transitionOrCut(validatableChangeRightState, transitionRightOptions);
 
   let validatableChangeLeftState = { ...initialState };
@@ -625,12 +666,16 @@ export const integrate = (
   transitionOrCut(validatableChangeLeftState, transitionLeftOptions);
   console.log(transitionLeftOptions, transitionRightOptions);
 
+  // Lets find out which one is better
   const edgeIsInLeft = validatableChangeLeftState.edges.find(
     (e) => e.id == newID,
   );
+
   const edgeIsInRight = validatableChangeRightState.edges.find(
     (e) => e.id == newID,
   );
+
+  console.log(validatableChangeRightState, validatableChangeLeftState);
 
   if (edgeIsInLeft && edgeIsInRight) {
     // Find out which one is better

@@ -17,9 +17,7 @@ export const ControlButton = (props: {
       {props.children}
     </button>
   );
-}
-
-
+};
 
 export const TwoDViewController = (props: {
   zSize: number;
@@ -31,82 +29,105 @@ export const TwoDViewController = (props: {
   return (
     <>
       <div className="flex flex-row gap-2 text-xs text-black gap-2 bg-gray-300 rounded-l pr-2 ">
-          <ControlButton
-            onClick={() => {
-              setWith({
-                zMin: (activeView.zMin || 0) + 1,
-                zMax: (activeView.zMin || 0) + 1,
-              });
-            }}
-            disabled={activeView.zMin == undefined || activeView.zMin == null || activeView.zMin >= props.zSize - 1}
-          >
-            {" "}
-            Z+{" "}
-          </ControlButton>
-          z: {activeView.zMin}{" "}
-          <ControlButton
-                onClick={() => {
-                  setWith({
-                    zMin: (activeView.zMin || 1) - 1,
-                    zMax: (activeView.zMin || 1) - 1,
-                  });
-                }}
-                disabled={activeView.zMin == undefined || activeView.zMin == null || activeView.zMin  == 0 }
-              >
-                {" "}
-                Z-{" "}
-          </ControlButton>
-          <ControlButton
-              onClick={() => {
-                setWith({
-                  tMin: (activeView.tMin || 0) + 1,
-                  tMax: (activeView.tMin || 0) + 1,
-                });
-              }}
-              disabled={activeView.tMin == undefined || activeView.tMin == null || activeView.tMin >= props.tSize - 1}
-            >
-              {" "}
-              T+{" "}
-            </ControlButton>
-            t: {activeView.tMin}{" "}
         <ControlButton
-              onClick={() => {
-                setWith({
-                  tMin: (activeView.tMin || 1) - 1,
-                  tMax: (activeView.tMin || 1) - 1,
-                });
-              }}
-              disabled={activeView.tMin == undefined || activeView.tMin == null || activeView.tMin == 0 }
-            >
-              {" "}
-              T-{" "}
-            </ControlButton>
+          onClick={() => {
+            setWith({
+              zMin: (activeView.zMin || 0) + 1,
+              zMax: (activeView.zMin || 0) + 1,
+            });
+          }}
+          disabled={
+            activeView.zMin == undefined ||
+            activeView.zMin == null ||
+            activeView.zMin >= props.zSize - 1
+          }
+        >
+          {" "}
+          Z+{" "}
+        </ControlButton>
+        z: {activeView.zMin}{" "}
         <ControlButton
-              onClick={() => {
-                setWith({
-                  cMin: (activeView.cMin || 0) + 1,
-                  cMax: (activeView.cMin || 0) + 1,
-                });
-              }}
-              disabled={activeView.cMin == undefined || activeView.cMin == null || activeView.cMin >= props.cSize - 1}
-            >
-              {" "}
-              C+{" "}
-            </ControlButton>
-            c: {activeView.cMin}{" "}
-          
+          onClick={() => {
+            setWith({
+              zMin: (activeView.zMin || 1) - 1,
+              zMax: (activeView.zMin || 1) - 1,
+            });
+          }}
+          disabled={
+            activeView.zMin == undefined ||
+            activeView.zMin == null ||
+            activeView.zMin == 0
+          }
+        >
+          {" "}
+          Z-{" "}
+        </ControlButton>
         <ControlButton
-              onClick={() => {
-                setWith({
-                  cMin: (activeView.cMin || 1) - 1,
-                  cMax: (activeView.cMin || 1) - 1,
-                });
-              }}
-              disabled={activeView.cMin == undefined || activeView.cMin == null || activeView.cMin == 0 }
-            >
-              {" "}
-              C-{" "}
-            </ControlButton>
+          onClick={() => {
+            setWith({
+              tMin: (activeView.tMin || 0) + 1,
+              tMax: (activeView.tMin || 0) + 1,
+            });
+          }}
+          disabled={
+            activeView.tMin == undefined ||
+            activeView.tMin == null ||
+            activeView.tMin >= props.tSize - 1
+          }
+        >
+          {" "}
+          T+{" "}
+        </ControlButton>
+        t: {activeView.tMin}{" "}
+        <ControlButton
+          onClick={() => {
+            setWith({
+              tMin: (activeView.tMin || 1) - 1,
+              tMax: (activeView.tMin || 1) - 1,
+            });
+          }}
+          disabled={
+            activeView.tMin == undefined ||
+            activeView.tMin == null ||
+            activeView.tMin == 0
+          }
+        >
+          {" "}
+          T-{" "}
+        </ControlButton>
+        <ControlButton
+          onClick={() => {
+            setWith({
+              cMin: (activeView.cMin || 0) + 1,
+              cMax: (activeView.cMin || 0) + 1,
+            });
+          }}
+          disabled={
+            activeView.cMin == undefined ||
+            activeView.cMin == null ||
+            activeView.cMin >= props.cSize - 1
+          }
+        >
+          {" "}
+          C+{" "}
+        </ControlButton>
+        c: {activeView.cMin}{" "}
+        <ControlButton
+          onClick={() => {
+            setWith({
+              cMin: (activeView.cMin || 1) - 1,
+              cMax: (activeView.cMin || 1) - 1,
+            });
+          }}
+          disabled={
+            activeView.cMin == undefined ||
+            activeView.cMin == null ||
+            activeView.cMin == 0
+          }
+        >
+          {" "}
+          C-{" "}
+        </ControlButton>
       </div>
     </>
   );

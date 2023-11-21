@@ -1,4 +1,5 @@
 import {
+  ArkitektFilterGraphNodeFragment,
   ArkitektGraphNodeFragment,
   BindsFragment,
   BindsInput,
@@ -111,20 +112,29 @@ export const flowNodeToInput = (node: FlowNode): NodeInput => {
     type,
     position,
     parentNode,
-    data: { outs, constants, ins, binds, ...rest },
+    data: { outs, constants, ins, binds, voids,  ...rest },
   } = node;
+  try {
   const node_: NodeInput = {
     ins: ins.map((s) => s.map(convertPortToInput)),
     outs: outs.map((s) => s.map(convertPortToInput)),
     constants: constants.map(convertPortToInput),
+    voids: voids.map(convertPortToInput),
     id,
     position: { x: position.x, y: position.y },
     parentNode: parentNode,
     binds: binds && bindsToInput(binds),
     ...rest,
   };
+
   return node_;
-};
+}
+  catch (e) {
+    console.log("Error converting node to input",node)
+    console.error(e);
+    throw e;
+  };
+}
 
 export const globalToInput = (node: GlobalFragment): GlobalArgInput => {
   const { __typename, port, ...rest } = node;
@@ -155,8 +165,9 @@ export const flowEdgeToInput = (edge: FlowEdge): EdgeInput => {
     target: target,
     targetHandle: targetHandle,
     stream: stream?.map(streamItemToInput) || [],
-    ...cleaned,
+    kind: data.kind,
   };
+
   return edge_;
 };
 
@@ -190,6 +201,7 @@ export const arkitektNodeToFlowNode = (
         node.args.filter((x) => !x?.nullable && x?.default == undefined), // by default, all nullable and default values are optional so not part of stream
       ],
       outs: [node?.returns],
+      voids: [],
       constants: node.args.filter(
         (x) => x?.nullable || x?.default != undefined,
       ),
@@ -213,6 +225,46 @@ export const arkitektNodeToFlowNode = (
   return node_;
 };
 
+export const predicateNodeToFlowNode = (
+  node: GraphNodeNodeFragment,
+  position: { x: number; y: number },
+): FlowNode<ArkitektFilterGraphNodeFragment> => {
+  let nodeId = "arkfilter-" + uuidv4();
+
+  console.log(nodeId);
+  let node_: FlowNode<ArkitektFilterGraphNodeFragment> = {
+    id: nodeId,
+    type: "ArkitektFilterGraphNode",
+    dragHandle: ".custom-drag-handle",
+    data: {
+      ins: [
+        node.args.filter((x) => !x?.nullable && x?.default == undefined), // by default, all nullable and default values are optional so not part of stream
+      ],
+      outs: [node.args.filter((x) => !x?.nullable && x?.default == undefined), []], // by default, all nullable and default values are optional so not part of stream],
+      constants: node.args.filter(
+        (x) => x?.nullable || x?.default != undefined,
+      ),
+      voids: [],
+      title: node?.name || "no-name",
+      description: node.description || "",
+      mapStrategy: MapStrategy.Map,
+      allowLocalExecution: true,
+      nextTimeout: 100000,
+      retries: 3,
+      retryDelay: 2000,
+      hash: node.hash,
+      kind: GraphNodeKind.Arkitekt,
+      globalsMap: {},
+      binds: { templates: [] },
+      constantsMap: portToDefaults(node.args, {}),
+      nodeKind: node.kind || NodeKind.Function,
+    },
+    position: position,
+  };
+
+  return node_;
+};
+
 export const reactiveTemplateToFlowNode = (
   node: ReactiveTemplateFragment,
   position: { x: number; y: number },
@@ -227,6 +279,7 @@ export const reactiveTemplateToFlowNode = (
       ins: node.ins,
       implementation: node.implementation,
       outs: node.outs,
+      voids: [],
       kind: GraphNodeKind.Reactive,
       constants: node.constants,
       constantsMap: portToDefaults(node.constants, {}),
@@ -293,16 +346,16 @@ export const portToReadble = (
   if (port.nullable) answer += "?";
   if (port.kind == PortKind.List) {
     answer +=
-      "[" +
+      "[ " +
       portToReadble(port.child as ChildPortFragment, withLocalDisclaimer) +
-      "]";
+      " ]";
   }
 
   if (port.kind == PortKind.Dict) {
     answer +=
-      "{" +
+      "{ " +
       portToReadble(port.child as ChildPortFragment, withLocalDisclaimer) +
-      "}";
+      " }";
   }
 
   if (port.kind == PortKind.Int) {
@@ -349,10 +402,12 @@ export const streamToReactNode = (
   stream: PortFragment[] | undefined,
   withLocalDisclaimer?: boolean,
 ): JSX.Element => {
-  if (!stream) return <div className="text-red-400">undefinedStream</div>;
+  if (!stream)
+    return <div className="text-red-400 stream-edge">undefinedStream</div>;
   return (
-    <div className="flex flex-row flex-wrap ">
-      {stream.map((p) => (
+    <div className="flex flex-row flex-wrap stream-edge ">
+      {stream.length == 0 ? <div className="font-bold">Event</div> :
+      stream.map((p) => (
         <div className="flex-1">
           {portToReadble(p, withLocalDisclaimer == true)}
         </div>

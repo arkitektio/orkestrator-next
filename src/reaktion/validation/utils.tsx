@@ -29,6 +29,22 @@ export const islistTransformable = (
   return true;
 };
 
+export const isChunkTransformable = (
+  challenging: PortFragment[] | undefined,
+  having: PortFragment[] | undefined,
+): boolean => {
+  if (challenging == undefined || having == undefined) return false;
+  if (challenging.length != having.length) return false;
+  for (let i = 0; i < having.length; i++) {
+    if (challenging[i].kind != PortKind.List) return false;
+    if (challenging[i].child == undefined) return false;
+    if (challenging[i].child?.kind != having[i].kind) return false;
+    if (challenging[i].child?.identifier != having[i].identifier) return false;
+  }
+
+  return true;
+};
+
 export const isNullTransformable = (
   challenging: PortFragment[] | undefined,
   having: PortFragment[] | undefined,
@@ -64,3 +80,6 @@ export const reduceStream = (streams: PortFragment[][]): PortFragment[] => {
   }
   return reduced;
 };
+
+
+const nodeErros = (is)

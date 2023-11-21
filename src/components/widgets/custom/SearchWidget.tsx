@@ -31,7 +31,7 @@ export const SearchWidget = (
         variables: { ...searching, ...values },
       });
 
-      console.log(options)
+      console.log(options);
       return options;
     },
     [theward, query, values],

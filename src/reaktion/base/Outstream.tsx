@@ -1,19 +1,12 @@
-import { Card } from "@/components/ui/card";
-import { PortFragment } from "@/rekuest/api/graphql";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Handle, Position } from "reactflow";
-import { PopoverAnchor } from "@radix-ui/react-popover";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { PortFragment } from "@/rekuest/api/graphql";
+import { portToLabel } from "@jhnnsrs/rekuest-next";
 import { useState } from "react";
+import { Handle, Position } from "reactflow";
 
 export const OutStream: React.FC<{
   stream: PortFragment[];
@@ -60,7 +53,7 @@ export const OutStream: React.FC<{
                     <div className="ml-auto text-right">
                       <h4 className="font-medium leading-none">{s?.key}</h4>
                       <p className="text-sm text-muted-foreground inline">
-                        {s?.identifier || s.kind}
+                        {portToLabel(s)}
                       </p>
                       <div className="text-xs mt-0"> {s?.description}</div>
                     </div>

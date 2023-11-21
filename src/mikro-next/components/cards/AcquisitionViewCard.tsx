@@ -29,19 +29,17 @@ const TheCard = ({ view, mates }: Props) => {
                 >
                   {view.operator?.sub}
                 </LokUser.DetailLink>
-                
               </>
             )}
             <div className="">
-                  <div className="text-xs text-muted">Acquired</div><Timestamp date={view.acquiredAt} relative/>
-                </div>
-
-
-                  <div className="mt-1 flex flex-row gap-1 text-xs">
-                    <div className="text-muted-foreground flex flex-row gap-1">
-                      {view.description}
-                    </div>
-                </div>
+              <div className="text-xs text-muted">Acquired</div>
+              <Timestamp date={view.acquiredAt} relative />
+            </div>
+            <div className="mt-1 flex flex-row gap-1 text-xs">
+              <div className="text-muted-foreground flex flex-row gap-1">
+                {view.description}
+              </div>
+            </div>
           </CardTitle>
         </CardHeader>
       </ViewCard>

@@ -4,6 +4,7 @@ import { AddRGBViewForm } from "./AddRGBViewForm";
 import { AddLabelViewForm } from "./AddLabelViewForm";
 import { useView } from "@/providers/view/ViewContext";
 import { AddContinousScanViewForm } from "./AddContinousScanViewForm";
+import { AddMultiPositionViewForm } from "./AddMultiPositionViewForm";
 
 export const AddImageViewForm = (props: { image: string }) => {
   return (
@@ -14,6 +15,7 @@ export const AddImageViewForm = (props: { image: string }) => {
           <TabsTrigger value="rgb">RGB</TabsTrigger>
           <TabsTrigger value="label">Label</TabsTrigger>
           <TabsTrigger value="scan">Scan</TabsTrigger>
+          <TabsTrigger value="multiposition">Multi position</TabsTrigger>
         </TabsList>
 
         <TabsContent
@@ -39,6 +41,12 @@ export const AddImageViewForm = (props: { image: string }) => {
           className={"h-full w-full mt-0 rounded rounded-md "}
         >
           <AddContinousScanViewForm {...props} />
+        </TabsContent>
+        <TabsContent
+          value="multiposition"
+          className={"h-full w-full mt-0 rounded rounded-md "}
+        >
+          <AddMultiPositionViewForm {...props} />
         </TabsContent>
       </Tabs>
     </div>

@@ -208,29 +208,38 @@ const useSmartExtension = <T extends string>(identifier?: T) => {
   };
 };
 
-export const FilteredCommands = (props: { actions: RegisteredAction[] | undefined, heading: string}) => {
+export const FilteredCommands = (props: {
+  actions: RegisteredAction[] | undefined;
+  heading: string;
+}) => {
   const { query } = useExtension();
 
-  const filtered = props.actions?.filter((action) => {
-    return query && query.length > 0 && action.label.toLowerCase().includes(query.toLowerCase());
-  }) || [];
+  const filtered =
+    props.actions?.filter((action) => {
+      return (
+        query &&
+        query.length > 0 &&
+        action.label.toLowerCase().includes(query.toLowerCase())
+      );
+    }) || [];
 
   if (filtered.length == 0) {
     return <></>;
   }
 
   return (
-    <><CommandGroup heading={props.heading}>
-      {filtered.map((action) => (
-        <CommandItem
-          key={action.key}
-          value={action.key}
-          onSelect={() => action.run()}
-        >
-          {action.label}
-        </CommandItem>
-      ))}
-    </CommandGroup>
+    <>
+      <CommandGroup heading={props.heading}>
+        {filtered.map((action) => (
+          <CommandItem
+            key={action.key}
+            value={action.key}
+            onSelect={() => action.run()}
+          >
+            {action.label}
+          </CommandItem>
+        ))}
+      </CommandGroup>
     </>
   );
 };
@@ -241,21 +250,21 @@ export const OneNodeExtensions = () => {
   return (
     <>
       {modifiers.map((modifier) => (
-          <FilteredCommands
-            heading={modifier.label || "Node"}
-            actions={[
-              {
-                key: "node:delete",
-                label: "Reserve " + modifier.label,
-                run: async () => alert("Reserve"),
-              },
-              {
-                key: "node:edit",
-                label: "Edit " + modifier.label,
-                run: async () => alert("Edit"),
-              },
-            ]}
-          />
+        <FilteredCommands
+          heading={modifier.label || "Node"}
+          actions={[
+            {
+              key: "node:delete",
+              label: "Reserve " + modifier.label,
+              run: async () => alert("Reserve"),
+            },
+            {
+              key: "node:edit",
+              label: "Edit " + modifier.label,
+              run: async () => alert("Edit"),
+            },
+          ]}
+        />
       ))}
     </>
   );
@@ -277,7 +286,9 @@ export const LocalActionExtensions = () => {
                 className="flex-row items-center justify-between"
               >
                 {action.label}
-                {action.description && <div className="text-xs ml-1">{action.description}</div>}
+                {action.description && (
+                  <div className="text-xs ml-1">{action.description}</div>
+                )}
               </CommandItem>
             );
           })}
@@ -287,24 +298,24 @@ export const LocalActionExtensions = () => {
   );
 };
 
-
 export const ReservationExtensions = () => {
-  const { settings} = useSettings()
+  const { settings } = useSettings();
   const { data } = withRekuest(useReservationsQuery)({
     variables: {
       instanceId: settings.instanceId,
-    }
+    },
   });
 
   return (
     <>
-      
-          <FilteredCommands actions={data?.myreservations.map(x => ({
-            key: "assign:" + x.id,
-            label: "Assign to " + x.title ,
-            run: async () => alert("Assign"),
-          }))} heading="Assign"/>
-    
+      <FilteredCommands
+        actions={data?.myreservations.map((x) => ({
+          key: "assign:" + x.id,
+          label: "Assign to " + x.title,
+          run: async () => alert("Assign"),
+        }))}
+        heading="Assign"
+      />
     </>
   );
 };

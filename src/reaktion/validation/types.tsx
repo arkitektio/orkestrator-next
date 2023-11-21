@@ -13,7 +13,7 @@ export type Compare = {
 };
 
 export type ValidationError = {
-  type: "node" | "edge";
+  type: "node" | "edge" | "global" | "graph";
   level: "critical" | "warning";
   comparing?: Compare;
   path?: string; // only for node where the error occured

@@ -1,4 +1,5 @@
 fragment BaseGraphNode on GraphNode {
+  __typename
   ins {
     ...Port
   }
@@ -6,6 +7,9 @@ fragment BaseGraphNode on GraphNode {
     ...Port
   }
   constants {
+    ...Port
+  }
+  voids {
     ...Port
   }
   globalsMap
@@ -25,6 +29,20 @@ fragment AssignableNode on AssignableNode {
 }
 
 fragment ArkitektGraphNode on ArkitektGraphNode {
+  ...BaseGraphNode
+  ...RetriableNode
+  ...AssignableNode
+  __typename
+  hash
+  mapStrategy
+  allowLocalExecution
+  binds {
+    ...Binds
+  }
+  nodeKind
+}
+
+fragment ArkitektFilterGraphNode on ArkitektFilterGraphNode {
   ...BaseGraphNode
   ...RetriableNode
   ...AssignableNode
@@ -62,6 +80,7 @@ fragment GraphNode on GraphNode {
     y
   }
   parentNode
+  ...ArkitektFilterGraphNode
   ...ArkitektGraphNode
   ...ReactiveNode
   ...ArgNode

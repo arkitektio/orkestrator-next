@@ -36,7 +36,7 @@ export const PageLayout = ({
             className="border-l-2 border-gray-900 bg-middleground"
           >
             <ScrollArea className="flex flex-col h-full overflow-y-auto">
-            {sidebars}
+              {sidebars}
             </ScrollArea>
           </Panel>
         </>

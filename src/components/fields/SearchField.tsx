@@ -89,7 +89,7 @@ export const SearchField = ({
   const query = (string: string) => {
     search({ search: string })
       .then((res) => {
-        console.log(res)
+        console.log(res);
         setOptions(res);
         setError(null);
       })

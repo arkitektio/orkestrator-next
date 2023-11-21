@@ -48,7 +48,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                         <ShadnWigets />
                       </RekuestGuard>
                       <MikroNextGuard>
-                        <MikroNextWard key="mikro_new"/>
+                        <MikroNextWard key="mikro_new" />
                       </MikroNextGuard>
                       <ThemeProvider
                         defaultTheme="dark"

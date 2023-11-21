@@ -5,6 +5,9 @@ import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { NodeShowLayout } from "@/reaktion/base/NodeShow";
 import { InStream } from "@/reaktion/base/Instream";
 import { OutStream } from "@/reaktion/base/Outstream";
+import { portToLabel } from "@jhnnsrs/rekuest-next";
+import { useEditNodeErrors } from "../../context";
+import { cn } from "@/lib/utils";
 
 export const ArgTrackNodeWidget: React.FC<ArgNodeProps> = ({
   data: { outs, ins },
@@ -14,10 +17,15 @@ export const ArgTrackNodeWidget: React.FC<ArgNodeProps> = ({
   const [show, setShow] = useState(false);
   const [isSmall, setIsSmall] = useState(true);
 
+  const errors = useEditNodeErrors(id);
   return (
     <>
       <NodeShowLayout
-        color="border-blue-500 shadow-blue-500/50 dark:border-blue-200 dark:shadow-blue-200/10  shadow-xxl"
+        className={cn(
+          errors.length > 0
+            ? "border-destructive/40 shadow-destructive/30 dark:border-destructive dark:shadow-destructive/20 shadow-xl"
+            : "border-blue-400/40 shadow-blue-400/20 dark:border-blue-300 dark:shadow-blue/20 shadow-xl",
+        )}
         id={id}
         selected={selected}
       >
@@ -28,7 +36,7 @@ export const ArgTrackNodeWidget: React.FC<ArgNodeProps> = ({
           <CardDescription>
             {outs
               .at(0)
-              ?.map((o) => o?.identifier)
+              ?.map((o) => portToLabel(o))
               .join(" | ")}
           </CardDescription>
         </CardHeader>

@@ -7,6 +7,7 @@ import {
   ValidationResult,
 } from "./types";
 import { ValidationError as YupValidationError } from "yup";
+import { GraphNodeKind } from "@/rekuest/api/graphql";
 
 const validateNoEdgeWithItself = (
   previous: ValidationResult,
@@ -45,7 +46,7 @@ const validateMatchingPorts = (
   previous: ValidationResult,
 ): Partial<ValidationResult> => {
   let validatedEdges: FlowEdge[] = [];
-  let solvedErrors: SolvedError[] = [];
+  let solvedErrors: SolvedError[] = previous.solvedErrors;
   let remain: ValidationError[] = [];
 
   for (let edge of previous.edges) {
@@ -138,7 +139,132 @@ const validateMatchingPorts = (
   };
 };
 
-const validators = [validateNoEdgeWithItself, validateMatchingPorts];
+const validateNoUnconnectedNodes = (
+  previous: ValidationResult,
+): Partial<ValidationResult> => {
+  let remain: ValidationError[] = previous.remainingErrors;
+
+  for (let node of previous.nodes) {
+    const targetEdge = previous.edges.find((n) => n.target == node.id);
+    const sourceEdge = previous.edges.find((n) => n.source == node.id);
+
+    if (targetEdge == undefined && sourceEdge == undefined) {
+      console.log("Node with no ins and outs", node);
+      remain.push({
+        type: "node",
+        id: node.id,
+        level: "critical",
+        message: "Node with no ins and outs. This is bad",
+      });
+      continue;
+    }
+  }
+
+  return {
+    ...previous,
+    remainingErrors: remain,
+  };
+};
+
+function validateGraphIsConnected(previous: ValidationResult) {
+  let remain: ValidationError[] = previous.remainingErrors;
+  const nodes = previous.nodes;
+  const edges = previous.edges;
+
+  const adjacencyList: { [key: string]: string[] } = {};
+
+  // Initialize adjacency list with empty arrays for each node
+  nodes.forEach((node) => {
+    adjacencyList[node.id] = [];
+  });
+
+  // Populate adjacency list with edges
+  edges.forEach((edge) => {
+    adjacencyList[edge.source].push(edge.target);
+    // If it's an undirected graph, add the edge in the reverse direction as well
+    adjacencyList[edge.target].push(edge.source);
+  });
+
+  // Depth-First Search to check for connectivity
+  function dfs(visited: Set<string>, nodeId: string): void {
+    visited.add(nodeId);
+    adjacencyList[nodeId].forEach((neighbor) => {
+      if (!visited.has(neighbor)) {
+        dfs(visited, neighbor);
+      }
+    });
+  }
+
+  const visited = new Set<string>();
+  dfs(visited, nodes[0].id); // Start DFS from the first node
+
+  // If the number of visited nodes is the same as the number of nodes, the graph is connected
+  if (visited.size !== nodes.length) {
+    remain.push({
+      type: "graph",
+      id: "",
+      level: "critical",
+      message:
+        "Subgraphs exist. Please create at least one connection between all nodes",
+    });
+  }
+
+  return {
+    ...previous,
+    remainingErrors: remain,
+  };
+}
+
+function atLeastOneNode(previous: ValidationResult) {
+  let remain: ValidationError[] = previous.remainingErrors;
+  const nodes = previous.nodes;
+  // If the number of visited nodes is the same as the number of nodes, the graph is connected
+  if (!nodes.find((n) => n.data.kind == GraphNodeKind.Args)) {
+    remain.push({
+      type: "graph",
+      id: "",
+      level: "critical",
+      message: "You need an Args node",
+    });
+  }
+
+  if (!nodes.find((n) => n.data.kind == GraphNodeKind.Returns)) {
+    remain.push({
+      type: "graph",
+      id: "",
+      level: "critical",
+      message: "You need an Return node",
+    });
+  }
+
+  if (
+    nodes.filter(
+      (n) =>
+        n.data.kind != GraphNodeKind.Returns &&
+        n.data.kind != GraphNodeKind.Args,
+    ).length == 0
+  ) {
+    remain.push({
+      type: "graph",
+      id: "",
+      level: "critical",
+      message: "Very funny. You need at least one node",
+    });
+  }
+
+  return {
+    ...previous,
+    remainingErrors: remain,
+  };
+}
+
+const validators = [
+  validateNoEdgeWithItself,
+  validateMatchingPorts,
+  validateNoUnconnectedNodes,
+  validateGraphIsConnected,
+  atLeastOneNode,
+];
 
 export const validateNodeConstants = (
   state: ValidationResult,
@@ -179,20 +305,15 @@ export const validateNodeConstants = (
 
 export type ValidationOptions = {
   validateNodeDefaults: boolean;
+  validateNoUnconnectedNodes: boolean;
 };
 
 export const validateState = (
-  state: FlowState,
+  initial: ValidationResult,
   options?: ValidationOptions,
 ): ValidationResult => {
-  if (options == undefined) options = { validateNodeDefaults: true };
-
-  let initial: ValidationResult = {
-    ...state,
-    valid: true,
-    solvedErrors: [],
-    remainingErrors: [],
-  };
+  if (options == undefined)
+    options = { validateNodeDefaults: true, validateNoUnconnectedNodes: true };
 
   console.log("Validation initial", initial);
   for (let validator of validators) {

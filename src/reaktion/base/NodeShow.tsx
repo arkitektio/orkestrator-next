@@ -8,10 +8,11 @@ import {
 } from "@/components/ui/context-menu";
 import { NodeResizer, NodeResizeControl } from "reactflow";
 import { cn } from "@/lib/utils";
+import { useEditNodeErrors, useEditRiver } from "../edit/context";
 
 type NodeProps = {
   children: React.ReactNode;
-  color?: string;
+  className?: string;
   id: string;
   selected?: boolean;
   minWidth?: number;
@@ -27,9 +28,9 @@ const controlStyle = {
 };
 
 export const NodeShowLayout: React.FC<NodeProps> = ({
-  children,
   id,
-  color = "pink",
+  children,
+  className,
   selected,
   contextMenu,
   minWidth = 100,
@@ -37,17 +38,31 @@ export const NodeShowLayout: React.FC<NodeProps> = ({
   maxWidth = 700,
   maxHeight = 700,
 }) => {
+  const { showNodeErrors } = useEditRiver();
+
+  const errors = useEditNodeErrors(id);
+
   return (
     <>
       <ContextMenu>
         <ContextMenuTrigger>
           <Card
             className={cn(
-              "custom-drag-handle h-full z-10 group shadow overflow-auto",
-              color,
+              "custom-drag-handle h-full z-10 group shadow relative border ",
+              className,
             )}
           >
             {children}
+
+            {errors.length > 0 && showNodeErrors && (
+              <div className="absolute translate-y-[-100%] top-0 left-[50%] translate-x-[-50%] pb-3 flex flex-col gap-2">
+                {errors.map((e) => (
+                  <Card className="p-2 border-destructive text-xs max-w-md  animate-pulse">
+                    {e.message}
+                  </Card>
+                ))}
+              </div>
+            )}
           </Card>
         </ContextMenuTrigger>
         <ContextMenuContent>{contextMenu}</ContextMenuContent>
@@ -63,7 +78,7 @@ export const NodeShowLayout: React.FC<NodeProps> = ({
         <div
           className={`${
             !selected && "hidden"
-          }  absolute  bottom-0 right-0 w-3 h-3 z-10 translate-x-[-1/2] translate-y-[-1/2] bg-white rounded-full shadow-md border-2 border-white dark:border-gray-800 dark:bg-gray-800 dark:shadow-none/0`}
+          }  absolute bottom-0 right-0 w-3 h-3 z-10 translate-x-[-1/2] translate-y-[-1/2] bg-white rounded-full shadow-md border-2 border-white dark:border-gray-800 dark:bg-gray-800 dark:shadow-none/0`}
         >
           <svg
             width="15"

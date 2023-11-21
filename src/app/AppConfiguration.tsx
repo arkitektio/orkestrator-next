@@ -9,7 +9,9 @@ export const AppConfiguration = () => {
       <LokNextAutoConfigure />
       <RekuestNextAutoConfigure />
       <MikroNextAutoConfigure />
-      <AutoConfiguration wellKnownEndpoints={["100.91.169.37:8010", "127.0.0.1:8010"]} />
+      <AutoConfiguration
+        wellKnownEndpoints={["100.91.169.37:8010", "127.0.0.1:8010"]}
+      />
     </>
   );
 };

@@ -10,7 +10,6 @@ import { useForm } from "react-hook-form";
 export const CreateWorkspaceForm = (props: {}) => {
   const [add] = withRekuest(useCreateWorkspaceMutation)();
 
-
   const dialog = useGraphQlFormDialog(add);
 
   const form = useForm({
@@ -35,12 +34,11 @@ export const CreateWorkspaceForm = (props: {}) => {
           })}
         >
           <div className="grid grid-cols-2 gap-2">
-
-              <StringField
-                label="The name of the workspace"
-                name="name"
-                description="The name of the workspace"
-              />
+            <StringField
+              label="The name of the workspace"
+              name="name"
+              description="The name of the workspace"
+            />
           </div>
 
           <DialogFooter className="mt-2">

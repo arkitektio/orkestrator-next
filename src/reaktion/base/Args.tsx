@@ -5,6 +5,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { portToLabel } from "@jhnnsrs/rekuest-next";
+
+portToLabel;
 
 export const Args = ({
   stream,
@@ -47,7 +50,7 @@ export const Args = ({
                 </Button>
               </TooltipTrigger>
               <TooltipContent className="bg-background text-foreground border border-1 border-foreground">
-                <p className="text-sm inline">{s?.identifier || s.kind}</p>
+                <p className="text-sm inline">{portToLabel(s)}</p>
                 <div className="text-xs mt-0"> {s?.description}</div>
                 {s.scope == PortScope.Local && s.nullable == false && (
                   <div className="text-xs mt-0 text-muted-foreground ">

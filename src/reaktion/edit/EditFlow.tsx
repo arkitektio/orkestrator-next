@@ -42,6 +42,8 @@ import {
   EdgeChange,
   NodeChange,
   Controls,
+  OnConnectStartParams,
+  OnConnectEnd,
 } from "reactflow";
 import { Graph } from "../base/Graph";
 import {
@@ -59,9 +61,11 @@ import {
   flowEdgeToInput,
   flowNodeToInput,
   globalToInput,
+  handleToStream,
   listPortToSingle,
   nodeIdBuilder,
   nodes_to_flownodes,
+  predicateNodeToFlowNode,
   reactiveTemplateToFlowNode,
 } from "../utils";
 import { EditRiverContext } from "./context";
@@ -77,21 +81,34 @@ import {
   ValidationResult,
 } from "../validation/types";
 import { validateState } from "../validation/validate";
-import { integrate } from "../validation/integrate";
+import { createVanillaTransformEdge, integrate } from "../validation/integrate";
 import useUndoable, { MutationBehavior } from "use-undoable";
 import { RemainingErrorRender, SolvedErrorRender } from "./ErrorRender";
 import {
   DoubleArrowLeftIcon,
   DoubleArrowRightIcon,
+  EyeOpenIcon,
   LetterCaseToggleIcon,
+  QuestionMarkIcon,
 } from "@radix-ui/react-icons";
 import { cn } from "@/lib/utils";
 import { isValid, set } from "date-fns";
 import { ArgsContainer, Constants } from "../base/Constants";
 import { X } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ArkitektFilterNodeWidget } from "./nodes/ArkitektFilterWidget";
 
 const nodeTypes: NodeTypes = {
   ArkitektGraphNode: ArkitektTrackNodeWidget,
+  ArkitektFilterGraphNode: ArkitektFilterNodeWidget,
   ReactiveNode: ReactiveTrackNodeWidget,
   ArgNode: ArgTrackNodeWidget,
   ReturnNode: ReturnTrackNodeWidget,
@@ -111,8 +128,12 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
   const { client: arkitektapi } = useRekuest();
   const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
   const [showEdgeLabels, setShowEdgeLabels] = useState(false);
+  const [showNodeErrors, setShowNodeErrors] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [reactFlowInstance, setReactFlowInstance] =
     useState<ReactFlowInstance | null>(null);
+
+  const connectingStart = useRef<OnConnectStartParams | undefined>(undefined);
 
   const [state, setState, { redo, undo, canRedo, canUndo }] =
     useUndoable<ValidationResult>({
@@ -133,11 +154,23 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       // To prevent a mismatch of state updates,
       // we'll use the value passed into this
       // function instead of the state directly.
+      if (ignoreAction) {
+        setState(
+          (e) => ({
+            ...e,
+            nodes: v,
+          }),
+          mutation,
+          ignoreAction,
+        );
+      }
+
       setState(
-        (e) => ({
-          ...e,
-          nodes: v,
-        }),
+        (e) =>
+          validateState({
+            ...e,
+            nodes: v,
+          }),
         mutation,
         ignoreAction,
       );
@@ -154,11 +187,24 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       // To prevent a mismatch of state updates,
       // we'll use the value passed into this
       // function instead of the state directly.
+
+      if (ignoreAction) {
+        setState(
+          (e) => ({
+            ...e,
+            edges: v,
+          }),
+          mutation,
+          ignoreAction,
+        );
+      }
+
       setState(
-        (e) => ({
-          ...e,
-          edges: v,
-        }),
+        (e) =>
+          validateState({
+            ...e,
+            edges: v,
+          }),
         mutation,
         ignoreAction,
       );
@@ -217,9 +263,10 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
     [triggerEdgeUpdate, state.edges],
   );
 
-  const updateNodeData = (data: Partial<ArkitektNodeData>, id: string) => {
+  const updateNodeData = (data: Partial<NodeData>, id: string) => {
     setState((state) =>
       validateState({
+        ...state,
         nodes: state.nodes.map((n) => {
           if (n.id === id) {
             n.data = { ...n.data, ...data };
@@ -228,8 +275,6 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
           }
           return n;
         }),
-        edges: state.edges,
-        globals: [],
       }),
     );
   };
@@ -276,6 +321,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       };
 
       return validateState({
+        ...state,
         nodes: state.nodes.map((n) => {
           if (n.id === nodeId) {
             n.data = new_data;
@@ -284,8 +330,104 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
           }
           return n;
         }),
-        edges: state.edges,
-        globals: state.globals,
+      });
+    });
+  };
+
+  const moveVoidtoOutstream = (
+    nodeId: string,
+    voidindex: number,
+    outstream: number,
+  ) => {
+    setState((state) => {
+      const node = state.nodes.find((n) => n.id == nodeId);
+      if (!node) {
+        console.log("Could not find node", nodeId);
+        return state;
+      }
+
+      const thevoid = node.data.voids.at(voidindex);
+      if (!thevoid) {
+        console.log("Could not find void", voidindex);
+        return state;
+      }
+
+      let new_outstream = node.data.outs.map((s, index) => {
+        if (index == outstream) {
+          return [...s, thevoid];
+        }
+        return s;
+      });
+
+      console.log("new_instream", new_outstream);
+
+      let new_voids = node.data.voids.filter(
+        (i, index) => index != voidindex,
+      );
+
+      console.log("ne_voids", new_voids);
+
+      let new_data = {
+        ...node.data,
+        outs: new_outstream, //TODO: This is not correct
+        voids: new_voids,
+      };
+
+      return validateState({
+        ...state,
+        nodes: state.nodes.map((n) => {
+          if (n.id === nodeId) {
+            n.data = new_data;
+            console.log("found node", n);
+            return n;
+          }
+          return n;
+        }),
+      });
+    });
+  };
+
+  const moveOutStreamToVoid = (
+    nodeId: string,
+    streamIndex: number,
+    streamItem: number,
+  ) => {
+    setState((state) => {
+      const node = state.nodes.find((n) => n.id == nodeId);
+      if (!node) {
+        console.log("Could not find node", nodeId);
+        return state;
+      }
+
+      const streamitem = node.data.outs.at(streamIndex)?.at(streamItem);
+      if (!streamitem) {
+        console.log("Could not find streamitem", streamitem);
+        return state;
+      }
+
+      let new_outstream = node.data.outs.map((s, index) => {
+        if (index == streamIndex) {
+          return s.filter((i, index) => index != streamItem);
+        }
+        return s;
+      });
+
+      let new_data = {
+        ...node.data,
+        outs: new_outstream, //TODO: This is not correct
+        voids: [...node.data.voids, streamitem],
+      };
+
+      return validateState({
+        ...state,
+        nodes: state.nodes.map((n) => {
+          if (n.id === nodeId) {
+            n.data = new_data;
+            console.log("found node", n);
+            return n;
+          }
+          return n;
+        }),
       });
     });
   };
@@ -326,6 +468,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       };
 
       return validateState({
+        ...state,
         nodes: state.nodes.map((n) => {
           if (n.id === nodeId) {
             n.data = new_data;
@@ -334,8 +477,6 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
           }
           return n;
         }),
-        edges: state.edges,
-        globals: state.globals,
       });
     });
   };
@@ -379,6 +520,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       };
 
       return validateState({
+        ...state,
         nodes: state.nodes.map((n) => {
           if (n.id === nodeId) {
             n.data = new_data;
@@ -387,7 +529,6 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
           }
           return n;
         }),
-        edges: state.edges,
         globals: new_globals,
       });
     });
@@ -408,51 +549,9 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       });
 
       return validateState({
+        ...state,
         nodes: nodes,
-        edges: state.edges,
         globals: state.globals.filter((g) => g.key != globalkey),
-      });
-    });
-  };
-
-  const movePortToConstants = (
-    nodeId: string,
-    port: PortFragment,
-    instream: number,
-  ) => {
-    setState((state) => {
-      const node = state.nodes.find((n) => n.id == nodeId);
-      if (!node) {
-        console.log("Could not find node", nodeId);
-        return state;
-      }
-
-      let new_instream = node.data.ins.map((s, index) => {
-        if (index == instream) {
-          return [...s.filter((i) => i.key != port.key), port];
-        }
-        return s.filter((i) => i.key != port.key);
-      });
-
-      let new_data = {
-        ...node.data,
-        ins: new_instream, //TODO: This is not correct
-        constants:
-          node.data.constants.filter((i, index) => i.key != port.key) || [],
-        globalsMap: { ...node.data.globalsMap, [port.key]: undefined },
-      };
-
-      return validateState({
-        nodes: state.nodes.map((n) => {
-          if (n.id === nodeId) {
-            n.data = new_data;
-            console.log("found node", n);
-            return n;
-          }
-          return n;
-        }),
-        edges: state.edges,
-        globals: [],
       });
     });
   };
@@ -461,8 +560,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
     console.log("setGlobals", globals);
     setState((state) =>
       validateState({
-        nodes: state.nodes,
-        edges: state.edges,
+        ...state,
         globals: globals,
       }),
     );
@@ -487,28 +585,17 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
   };
 
   const addNode = (node: FlowNode) => {
-    setState((e) => ({ ...e, nodes: [...e.nodes, node] }));
+    setState((e) => validateState({ ...e, nodes: [...e.nodes, node] }));
   };
 
-  const validate = (newState?: Partial<FlowState> | undefined) => {
-    const nodes = (reactFlowInstance?.getNodes() as FlowNode[]) || [];
-    const edges = (reactFlowInstance?.getEdges() as FlowEdge[]) || [];
+  const removeEdge = (id: string) => {
+    setState((e) =>
+      validateState({ ...e, edges: e.edges.filter((el) => el.id !== id) }),
+    );
+  };
 
-    if (!newState) {
-      newState = { nodes: nodes, edges: edges, globals: [] };
-    } else {
-      newState = {
-        nodes: newState.nodes || nodes,
-        edges: newState.edges || edges,
-        globals: newState.globals || [],
-      };
-    }
-
-    console.log(newState);
-    const validated = validateState(newState as FlowState);
-
-    console.log(validated);
-
+  const validate = () => {
+    const validated = validateState(state);
     setState(validated);
   };
 
@@ -519,21 +606,140 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
     const edges = (reactFlowInstance?.getEdges() as FlowEdge[]) || [];
 
     const stagingState = integrate(
-      { nodes: nodes, edges: edges, globals: [] },
+      { nodes: nodes, edges: edges, globals: globals },
       connection,
     );
 
-    const validatedState = validateState(stagingState as FlowState);
-    setState(validatedState);
+    const validated = validateState(stagingState);
+
+    setState(validated);
   };
 
-  const hasRemainingErrors = useMemo(
-    () => state.remainingErrors.length > 0,
-    [state],
+  const onConnectStart = useCallback(
+    (event: any, params: OnConnectStartParams) => {
+      connectingStart.current = params;
+    },
+    [],
   );
-  const hasSolvedErrors = useMemo(() => state.solvedErrors.length > 0, [state]);
 
-  const [{ isOver, canDrop, type }, dropref] = useDrop(() => {
+  const onConnectEnd: OnConnectEnd = useCallback(
+    (event) => {
+      const target = event.target as HTMLElement;
+      console.log("onConnectEnd", event, target);
+      const targetEdgeId = target.dataset?.edgeid;
+
+      let connectionParams = connectingStart.current;
+
+      if (reactFlowInstance && connectionParams && targetEdgeId) {
+        // we need to remove the wrapper bounds, in order to get the correct position
+        if (!connectionParams.nodeId || !connectionParams.handleId) {
+          console.log("no nodeId found and handleid found");
+          return;
+        }
+
+        let node = reactFlowInstance.getNode(connectionParams.nodeId);
+        let edge = reactFlowInstance.getEdge(targetEdgeId);
+
+        if (!node || !edge) {
+          console.log("no node or edge found");
+          return;
+        }
+
+        if (connectionParams.handleType == "source") {
+          // We are dealing with a scenario were a stream should be zipped
+          let stagingSourceId = node.id;
+          let stagingSourceHandle = connectionParams.handleId;
+          let stagingSourceStreamID = handleToStream(connectionParams.handleId);
+
+          let oldEdgeId = edge?.id;
+          let oldEdgeSourceId = edge?.source;
+          let oldEdgeSourceHandle = edge?.sourceHandle;
+          let oldEdgeTargetId = edge?.target;
+          let oldEdgeTargetHandle = edge?.targetHandle;
+          let oldEdgeSourceStreamID = handleToStream(oldEdgeSourceHandle);
+
+          let oldNode = reactFlowInstance.getNode(oldEdgeSourceId);
+          if (!oldNode) {
+            console.log("no old node found");
+            return;
+          }
+
+          let newState = { ...state };
+          newState.edges = newState.edges.filter((e) => e.id != oldEdgeId); // Remove the old edge
+
+          // Create a Zip Node
+
+          let stagingOutstream = node.data.outs.at(stagingSourceStreamID);
+          let oldOutstream = oldNode.data.outs.at(oldEdgeSourceStreamID);
+
+          let order =
+            node.position.x < oldNode.position.x
+              ? [stagingOutstream, oldOutstream]
+              : [oldOutstream, stagingOutstream];
+
+          let zipNodeInstream = order;
+
+          const reactFlowBounds =
+            reactFlowWrapper?.current?.getBoundingClientRect();
+
+          let position = reactFlowInstance.project({
+            x: event.clientX - (reactFlowBounds.left || 0),
+            y: event.clientY - (reactFlowBounds.top || 0),
+          });
+
+          let zipNode: FlowNode = {
+            id: nodeIdBuilder(),
+            type: "ReactiveNode",
+            position: position,
+            data: {
+              globalsMap: {},
+              title: "Zips together two streams into one stream.",
+              description: "Zips together two streams into one stream.",
+              kind: GraphNodeKind.Reactive,
+              ins: zipNodeInstream,
+              constantsMap: {},
+              outs: [stagingOutstream.concat(oldOutstream)],
+              constants: [],
+              implementation: ReactiveImplementation.Zip,
+            },
+          };
+
+          newState.nodes = newState.nodes.concat(zipNode);
+
+          // Adding the new edges
+          newState.edges = newState.edges.concat(
+            createVanillaTransformEdge(
+              nodeIdBuilder(),
+              stagingSourceId,
+              stagingSourceStreamID,
+              zipNode.id,
+              node.position.x < oldNode.position.x ? 0 : 1,
+            ),
+            createVanillaTransformEdge(
+              nodeIdBuilder(),
+              oldEdgeSourceId,
+              oldEdgeSourceStreamID,
+              zipNode.id,
+              position.x < oldNode.position.x ? 1 : 0,
+            ),
+          );
+          
+          // This is the edge that connects the zip node to the old edge target, it will need to undergo validation
+          let integratedState = integrate(newState, {
+            source: zipNode.id,
+            sourceHandle: "return_0",
+            target: oldEdgeTargetId,
+            targetHandle: oldEdgeTargetHandle,
+          });
+
+          setState((e) => integratedState);
+        }
+      }
+    },
+    [reactFlowInstance, state, setState],
+  );
+
+  const [{ isOver, canDrop, type, position }, dropref] = useDrop(() => {
     return {
       accept: [SMART_MODEL_DROP_TYPE],
 
@@ -575,11 +781,21 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                   .then(async (event) => {
                     console.log(event);
                     if (event.data?.node) {
-                      const flowNode = arkitektNodeToFlowNode(
-                        event.data?.node,
-                        position,
-                      );
-                      addNode(flowNode);
+                      if (event.data.node.protocols.find(p => p.name == "predicate")){
+                        const flowNode = predicateNodeToFlowNode(
+                          event.data?.node,
+                          position,
+                        );
+                        addNode(flowNode);
+                      }
+                      else {
+                        const flowNode = arkitektNodeToFlowNode(
+                          event.data?.node,
+                          position,
+                        );
+                        addNode(flowNode);
+                      }
+                      
                     }
                   });
             }
@@ -609,6 +825,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       },
       collect: (monitor) => ({
         isOver: !!monitor.isOver(),
+        position: monitor.getClientOffset(),
         type: monitor.getItemType(),
         canDrop: !!monitor.canDrop(),
       }),
@@ -624,6 +841,10 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         moveConstantToGlobals,
         moveStreamToConstants,
         moveConstantToStream,
+        moveVoidtoOutstream,
+        moveOutStreamToVoid,
+        removeEdge: removeEdge,
+        showNodeErrors: showNodeErrors,
         removeGlobal,
         state: state,
         showEdgeLabels: showEdgeLabels,
@@ -635,7 +856,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         data-disableselect
       >
         <div ref={dropref} className="flex flex-grow h-full w-full relative">
-          {state.valid && (
+          {state.remainingErrors.length == 0 && (
             <div className="absolute bottom-0 right-0  mr-3 mb-5 z-50">
               <Button onClick={() => save()}> Save </Button>
             </div>
@@ -643,11 +864,16 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
 
           {globals.length > 0 && (
             <div className="absolute  top-0 left-0  ml-3 mt-5 z-50">
-              <Card>
+              <Card className="max-w-md">
                 <CardHeader>
                   <CardDescription>Globals </CardDescription>
                 </CardHeader>
                 <CardContent>
+                  <CardDescription className="text-xs text-muted-foreground ">
+                    {" "}
+                    These are global variables that will be constants to the
+                    whole workflow and are mapping to the following ports:{" "}
+                  </CardDescription>
                   <Constants
                     ports={globals.map((x) => ({ ...x.port, key: x.key }))}
                     overwrites={{}}
@@ -657,54 +883,55 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
               </Card>
             </div>
           )}
-              <div className="absolute top-0 right-0  mr-3 mt-5 z-50">
-                <Card>
-                  <CardHeader>
-                    <CardDescription>For your information </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {state.remainingErrors.length > 0 && (
-                      <>
-                        <CardDescription> Remaining Errors </CardDescription>
-                        {state.remainingErrors.map((e) => (
-                          <RemainingErrorRender
-                            error={e}
-                            onClick={(e) =>
-                              onNodesChange([
-                                { type: "select", id: e.id, selected: true },
-                              ])
-                            }
-                          />
-                        ))}
+          <div className="absolute top-0 right-0  mr-3 mt-5 z-50">
+            <Card>
+              <CardHeader>
+                <CardDescription>For your information </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {state.remainingErrors.length > 0 && (
+                  <>
+                    <CardDescription> Remaining Errors </CardDescription>
+                    {state.remainingErrors.map((e) => (
+                      <RemainingErrorRender
+                        error={e}
+                        onClick={(e) =>
+                          onNodesChange([
+                            { type: "select", id: e.id, selected: true },
+                          ])
+                        }
+                      />
+                    ))}
 
-                        <Button onClick={() => validate()}>
-                          {" "}
-                          Revalidate all{" "}
-                        </Button>
-                      </>
-                    )}
-                    {state.solvedErrors.length > 0 && (
-                      <>
-                        <CardDescription>
-                          {" "}
-                          We just solved these Errors{" "}
-                        </CardDescription>
-                        {state.solvedErrors.map((e) => (
-                          <SolvedErrorRender error={e} />
-                        ))}
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
+                    <Button onClick={() => validate()}> Revalidate all </Button>
+                  </>
+                )}
+                {state.solvedErrors.length > 0 && (
+                  <>
+                    <CardDescription>
+                      {" "}
+                      We just solved these Errors{" "}
+                    </CardDescription>
+                    {state.solvedErrors.map((e) => (
+                      <SolvedErrorRender error={e} />
+                    ))}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </div>
           {isOver && (
-            <div className="absolute top-[50%] left-[50%]">Drop me {":D"} </div>
+            <div className="absolute w-full h-full bg-white opacity-10 z-10">
+              {" "}
+            </div>
           )}
           <Graph
             nodes={state.nodes}
             edges={state.edges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
+            onConnectStart={onConnectStart}
+            onConnectEnd={onConnectEnd}
             onConnect={onConnect}
             elementsSelectable={true}
             nodeTypes={nodeTypes}
@@ -719,7 +946,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                 disabled={!canUndo}
                 className={cn(
                   " hover:bg-primary",
-                  "text-muted disabled:text-gray-200",
+                  "text-muted disabled:text-gray-400",
                 )}
               >
                 <DoubleArrowLeftIcon />{" "}
@@ -729,7 +956,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                 disabled={!canRedo}
                 className={cn(
                   " hover:bg-primary",
-                  "text-muted disabled:text-gray-200",
+                  "text-muted disabled:text-gray-400",
                 )}
               >
                 <DoubleArrowRightIcon />{" "}
@@ -738,11 +965,39 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                 onClick={() => setShowEdgeLabels(!showEdgeLabels)}
                 className={cn(
                   " hover:bg-primary",
-                  showEdgeLabels ? "text-muted" : "text-black",
+                  showEdgeLabels ? "text-muted" : "text-gray-400",
                 )}
               >
                 <LetterCaseToggleIcon />{" "}
               </button>
+              <button
+                onClick={() => setShowNodeErrors(!showNodeErrors)}
+                className={cn(
+                  " hover:bg-primary",
+                  showNodeErrors ? "text-muted" : "text-gray-400",
+                )}
+              >
+                <QuestionMarkIcon />{" "}
+              </button>
+              <Sheet>
+                <SheetTrigger
+                  className={cn(
+                    " hover:bg-primary",
+                    "text-muted disabled:text-gray-200",
+                  )}
+                >
+                  <EyeOpenIcon />{" "}
+                </SheetTrigger>
+                <SheetContent>
+                  <SheetHeader>
+                    <SheetTitle>Debug Screen</SheetTitle>
+                    <SheetDescription></SheetDescription>
+                  </SheetHeader>
+                  <ScrollArea className="h-full">
+                    <pre>{JSON.stringify(state, null, 2)}</pre>
+                  </ScrollArea>
+                </SheetContent>
+              </Sheet>
             </Controls>
           </Graph>
         </div>

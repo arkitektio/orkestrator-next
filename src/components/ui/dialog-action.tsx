@@ -17,7 +17,6 @@ export const DialogAction: React.FC<ActionButtonProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
 
-
   useAction({
     run: async (state) => {
       console.log("run");
@@ -27,23 +26,16 @@ export const DialogAction: React.FC<ActionButtonProps> = ({
   });
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={setOpen}
-    >
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger>
-        <Button className={cn("flex flex-row items-center justify-center", className)}>
+        <Button
+          className={cn("flex flex-row items-center justify-center", className)}
+        >
           {props.label}
         </Button>
       </DialogTrigger>
 
-      <DialogContent>
-        {children}
-
-      </DialogContent>
+      <DialogContent>{children}</DialogContent>
     </Dialog>
   );
 };
-
-
-

@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { ArkitektNodeData } from "../types";
+import { ArkitektNodeData, NodeData } from "../types";
 import {
   FlowFragment,
   GlobalArg,
@@ -9,9 +9,10 @@ import { ValidationResult } from "../validation/types";
 
 export type ShowRiverContextType = {
   flow?: FlowFragment | null;
-  updateData: (data: Partial<ArkitektNodeData>, id: string) => void;
+  updateData: (data: Partial<NodeData>, id: string) => void;
   setGlobals: (data: GlobalArgFragment[]) => void;
   removeGlobal: (key: string) => void;
+  removeEdge: (id: string) => void;
   moveConstantToGlobals: (
     nodeId: string,
     conindex: number,
@@ -27,8 +28,19 @@ export type ShowRiverContextType = {
     conindex: number,
     streamIndex: number,
   ) => void;
+  moveOutStreamToVoid: (
+    nodeId: string,
+    conindex: number,
+    streamIndex: number,
+  ) => void;
+  moveVoidtoOutstream: (
+    nodeId: string,
+    conindex: number,
+    streamIndex: number,
+  ) => void;
   state: ValidationResult;
   showEdgeLabels: boolean;
+  showNodeErrors: boolean;
 };
 
 export const EditRiverContext = React.createContext<ShowRiverContextType>({
@@ -44,9 +56,18 @@ export const EditRiverContext = React.createContext<ShowRiverContextType>({
   },
   showEdgeLabels: false,
   removeGlobal: () => {},
+  removeEdge: () => {},
   moveConstantToGlobals: () => {},
   moveStreamToConstants: () => {},
   moveConstantToStream: () => {},
+  moveOutStreamToVoid: () => {},
+  moveVoidtoOutstream: () => {},
+  showNodeErrors: true,
 });
 
 export const useEditRiver = () => useContext(EditRiverContext);
+
+export const useEditNodeErrors = (id: string) => {
+  const { state } = useEditRiver();
+  return state.remainingErrors.filter((e) => e.id == id && e.type == "node");
+};

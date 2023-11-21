@@ -15,4 +15,7 @@ fragment GraphNodeNode on Node {
     name
   }
   ...Ports
+  protocols {
+    name
+  }
 }

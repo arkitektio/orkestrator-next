@@ -21,6 +21,8 @@ export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
     sourceY,
     targetX,
     targetY,
+    target,
+    source,
     style,
     markerStart,
     markerEnd,
@@ -36,11 +38,9 @@ export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
     targetY,
   });
 
-  const { showEdgeLabels } = useEditRiver();
+  const { showEdgeLabels, removeEdge } = useEditRiver();
 
-  const node = useNodes().find((n) => n.id == data?.target) as
-    | FlowNode
-    | undefined;
+  const node = useNodes().find((n) => n.id == target) as FlowNode | undefined;
 
   return (
     <>
@@ -50,34 +50,35 @@ export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
           ...style,
           strokeWidth: 1,
         }}
-        className={`react-flow__edge-path transition-colors duration-300 bg-gradient-to-r from-${color}-500 to-${color}-300 dark:from-${color}-200 dark:to-${color}-500`}
+        className={`react-flow__edge-path stream-edge transition-colors duration-300 bg-gradient-to-r from-${color}-500 to-${color}-300 dark:from-${color}-200 dark:to-${color}-500 group`}
         d={edgePath}
       />
-      <text>
-        <textPath
-          href={`#${id}`}
-          style={{ fontSize: "13px", fill: "white" }}
-          startOffset="50%"
-          textAnchor="middle"
-          className="group"
-        ></textPath>
-      </text>
-      {showEdgeLabels && (
-        <EdgeLabelRenderer>
-          <Card
-            style={{
-              position: "absolute",
-              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-              pointerEvents: "all",
-            }}
-            className="p-2 text-white max-w-[200px] overflow-hidden ellipsis truncate text-xs"
+      <EdgeLabelRenderer>
+        <Card
+          style={{
+            position: "absolute",
+            transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+            pointerEvents: "all",
+          }}
+          data-edgeid={id}
+          className="stream-edge p-2 dark:text-white max-w-[200px] overflow-hidden ellipsis truncate text-xs flex flex-row gap-2 items-center justify-center group border border-gray-400"
+        >
+          {showEdgeLabels && (
+            <>
+              {streamToReactNode(
+                node?.data?.ins.at(handleToStream(targetHandleId)),
+              )}
+            </>
+          )}
+          <button
+            onClick={() => removeEdge(id)}
+            className="group-hover:text-red-300 font-bold stream-edge"
+            data-edgeid={id}
           >
-            {streamToReactNode(
-              node?.data?.ins.at(handleToStream(targetHandleId)),
-            )}
-          </Card>
-        </EdgeLabelRenderer>
-      )}
+            X
+          </button>
+        </Card>
+      </EdgeLabelRenderer>
     </>
   );
 };

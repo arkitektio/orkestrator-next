@@ -129,16 +129,16 @@ export const TwoDViewCanvas = ({
 
   return (
     <XArrayProvider>
-        <div ref={ref} className={cn("w-full h-full relative", className)}>
-      <Canvas
-        colormap={colormap}
-        store={store}
-        width={bounds.width}
-        height={bounds.height}
-        c={activeView.cMin || 0}
-        t={activeView.tMin || 0}
-        z={activeView.zMin || 0}
-      />
+      <div ref={ref} className={cn("w-full h-full relative", className)}>
+        <Canvas
+          colormap={colormap}
+          store={store}
+          width={bounds.width}
+          height={bounds.height}
+          c={activeView.cMin || 0}
+          t={activeView.tMin || 0}
+          z={activeView.zMin || 0}
+        />
       </div>
     </XArrayProvider>
   );

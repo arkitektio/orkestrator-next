@@ -14,6 +14,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { portToLabel } from "@jhnnsrs/rekuest-next";
 
 export const InStream: React.FC<{
   stream: PortFragment[];
@@ -29,7 +30,7 @@ export const InStream: React.FC<{
         onMouseEnter={() => setPopoverOpen(true)}
         onMouseLeave={() => setPopoverOpen(false)}
         id={"arg_" + id}
-        className="group-hover:opacity-100 opacity-0 transition-opacity duration-300 bg-gray-200"
+        className="group-hover:opacity-100 opacity-0 transition-opacity duration-300"
         style={{
           top: `calc(50% + ${(100 / (length - 1)) * id - 50}%)`,
           left: "-10px",
@@ -37,7 +38,9 @@ export const InStream: React.FC<{
           height: "20px",
           width: "18px",
           borderRadius: "3px",
-          border: "10px solid hsl(var(--secondary))",
+          border: "1px solid hsl(var(--secondary))",
+          padding: "4px",
+          zIndex: 1,
 
           //boxShadow: "0px 0px 10px #ff1493",
         }}
@@ -47,7 +50,7 @@ export const InStream: React.FC<{
           <TooltipContent
             side="top"
             sideOffset={25}
-            className="bg-background text-foreground border border-1 border-foreground"
+            className="bg-background text-foreground border border-1 border-foreground border-gray-300"
           >
             <div className="grid grid-cols-1 gap-4">
               {stream.length > 0 ? (
@@ -56,7 +59,7 @@ export const InStream: React.FC<{
                     <div className="ml-auto text-right">
                       <h4 className="font-medium leading-none">{s?.key}</h4>
                       <p className="text-sm text-muted-foreground inline">
-                        {s?.identifier || s.kind}
+                        {portToLabel(s)}
                       </p>
                       <div className="text-xs mt-0"> {s?.description}</div>
                     </div>

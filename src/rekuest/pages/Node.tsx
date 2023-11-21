@@ -15,10 +15,12 @@ import {
   DetailPaneHeader,
   DetailPaneTitle,
 } from "@/components/ui/pane";
-import { useConstantNodeQuery } from "@/rekuest/api/graphql";
-import { usePostman, withRekuest } from "@jhnnsrs/rekuest-next";
+import { NodeKind, useConstantNodeQuery } from "@/rekuest/api/graphql";
+import { portToLabel, usePostman, withRekuest } from "@jhnnsrs/rekuest-next";
+import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
+import { ClipboardIcon } from "@radix-ui/react-icons";
 
 export const ReserveForm = (props: { node: string }) => {
   const { reserve } = usePostman();
@@ -52,13 +54,51 @@ export const NodeInfo = (props: { id: string }) => {
     },
   });
 
+  const copyHashToClipboard = useCallback(() => {
+    navigator.clipboard.writeText(data?.node?.hash || "");
+  }, [data?.node?.hash]);
+
   return (
     <ModelPageLayout identifier="@rekuest/node" object={props.id}>
       <DetailPane>
         <DetailPaneHeader>
-          <DetailPaneTitle>{data?.node?.name}</DetailPaneTitle>
+          <DetailPaneTitle
+            actions={
+              <Button
+                variant={"outline"}
+                onClick={copyHashToClipboard}
+                title="Copy to clipboard"
+              >
+                <ClipboardIcon />
+              </Button>
+            }
+          >
+            {data?.node?.name}
+          </DetailPaneTitle>
           <DetailPaneDescription>
             {data?.node?.description}
+            <div className="rounded shadow-md mt-2">
+              {data?.node?.args && data?.node.args.length > 0 && (
+                <div className="font-light mb-1"> Arguments </div>
+              )}
+              <div className="flex flex-col gap-2">
+                {data?.node?.args?.map(portToLabel)}
+              </div>
+              {data?.node?.returns && data?.node.returns.length > 0 && (
+                <div className="font-light mt-3 mb-1">
+                  {" "}
+                  {data?.node?.kind == NodeKind.Function
+                    ? "Returns"
+                    : "Streams"}{" "}
+                </div>
+              )}
+              <div className="flex flex-col gap-2">
+                {data?.node?.returns?.map(portToLabel)}
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+                {data?.node?.protocols?.map(p => p.name)}
+              </div>
           </DetailPaneDescription>
         </DetailPaneHeader>
 

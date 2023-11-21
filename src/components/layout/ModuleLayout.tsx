@@ -15,7 +15,7 @@ export const ModuleLayout = ({ pane, children }: ModuleLayoutProps) => {
             defaultSize={10}
             className="border-r border-gray-500 bg-background"
           >
-            <ScrollArea className="flex flex-col h-full overflow-y-auto">
+            <ScrollArea className="flex flex-col h-full overflow-y-hidden">
               {pane}
             </ScrollArea>
           </Panel>

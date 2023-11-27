@@ -24,6 +24,7 @@ import { TbDashboard } from "react-icons/tb";
 import { GoWorkflow } from "react-icons/go";
 import { ModeToggle } from "../ModeToggle";
 import { ArkitektLogo } from "../logos/ArkitektLogo";
+import { OmeroArkGuard } from "@jhnnsrs/omero-ark";
 
 export type INavigationBarProps = {
   children?: React.ReactNode;
@@ -73,6 +74,15 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
               )}
             </DroppableNavLink>
           </MikroNextGuard>
+          <OmeroArkGuard>
+            <DroppableNavLink key={"Dashboard"} to={"omero-ark"}>
+              {({ isActive }) => (
+                <NavigationMenuLink active={isActive}>
+                  <PiDatabaseLight />
+                </NavigationMenuLink>
+              )}
+            </DroppableNavLink>
+          </OmeroArkGuard>
           <RekuestGuard>
             <DroppableNavLink key={"Reaktion"} to={"reaktion"}>
               {({ isActive }) => (
@@ -82,6 +92,13 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
               )}
             </DroppableNavLink>
           </RekuestGuard>
+          <DroppableNavLink key={"Settings"} to={"settings"}>
+              {({ isActive }) => (
+                <NavigationMenuLink active={isActive}>
+                  <GoWorkflow />
+                </NavigationMenuLink>
+              )}
+            </DroppableNavLink>
         </div>
 
         <DropdownMenu>

@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "rekuest": "graphql-codegen --config rekuest.yml",
     "mikro": "graphql-codegen --config mikro.yml",
+    "omero-ark": "graphql-codegen --config omero-ark.yml",
     "lok": "graphql-codegen --config lok.yml"
   },
   "dependencies": {
@@ -23,6 +24,7 @@
     "@jhnnsrs/herre": "^0.0.12",
     "@jhnnsrs/lok-next": "^0.0.1",
     "@jhnnsrs/mikro-next": "^0.0.2",
+    "@jhnnsrs/omero-ark": "^0.0.1",
     "@jhnnsrs/rekuest": "^0.0.15",
     "@jhnnsrs/rekuest-next": "^0.0.3",
     "@radix-ui/react-aspect-ratio": "^1.0.3",

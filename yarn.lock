@@ -1410,6 +1410,11 @@
     apollo-upload-client "^17.0.0"
     subscriptions-transport-ws "^0.11.0"
 
+"@jhnnsrs/omero-ark@^0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@jhnnsrs/omero-ark/-/omero-ark-0.0.1.tgz#92f509da22eab13be465bfbcbc701ae99a5ebe53"
+  integrity sha512-LpA/JPwQQ0zQGpQU0qpTqb33PR4hG2p/OttxOItOATQ3v53wHrfyzUGJO2rOCsZL2El+6Pv/CTJHXx1uf/rpeA==
+
 "@jhnnsrs/rekuest-next@^0.0.3":
   version "0.0.3"
   resolved "https://registry.yarnpkg.com/@jhnnsrs/rekuest-next/-/rekuest-next-0.0.3.tgz#e58c4403320a28a1664b648ba7c77ca2db0726b1"

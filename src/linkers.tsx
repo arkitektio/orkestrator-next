@@ -29,6 +29,23 @@ export const MikroDataset = buildSmart(
   "mikronext/datasets",
 );
 
+export const OmeroArkProject = buildSmart(
+  "@omero-ark/project",
+  "omero-ark/projects",
+);
+
+export const OmeroArkDataset = buildSmart(
+  "@omero-ark/dataset",
+  "omero-ark/datasets",
+);
+
+export const OmeroArkImage = buildSmart(
+  "@omero-ark/image",
+  "omero-ark/images",
+);
+
+
+
 export const MikroHistory = buildSmart(
   "@mikronext/history",
   "mikronext/history",
@@ -91,6 +108,7 @@ export const MikroInstrument = buildSmart(
 export const RekuestModuleLink = buildModuleLink("rekuestnext");
 export const MikroModuleLink = buildModuleLink("mikronext");
 export const ReaktionModuleLink = buildModuleLink("reaktion");
+export const OmeroArkModuleLink = buildModuleLink("omero-ark");
 
 export const LokUser = buildSmart("@loknext/user", "lok/users");
 export const LokGroup = buildSmart("@lokgroup/group", "lok/groups");

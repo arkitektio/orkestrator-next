@@ -6,6 +6,12 @@ export type INavigationBarProps = {
   children?: React.ReactNode;
 };
 
+/**
+ * 
+ *  The public navigation bar is the main navigation bar of the application.
+ *  @todo: This component should be replaced with amore useful component for the public application.
+ */
+
 const PublicNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
   return (
     <div className="dark:text-white flex sm:flex-col h-full flex-row bg-slate-900 sm:pt-0 shadow-element overflow-hidden ">

@@ -1,3 +1,13 @@
+
+
+/**
+ * 
+ * The Arkitekt logo is a custom logo that is used in the Arkitekt application.
+ * It renders a svg logo that is used in the Arkitekt application.
+ * @todo: The a doesnt get rendered in firexfox, this needs to be fixed.
+ */
+
+
 export const ArkitektLogo = ({
   strokeColor = "#000",
   cubeColor = "#5CDECE",

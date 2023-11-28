@@ -32,6 +32,10 @@ const displayRegistry = {
   "@rekuest/node": NodeDisplay,
 };
 
+// The AppProvider is the root component of the application.
+// It is responsible for providing all the context providers that are used in the application.
+// It wraps the Easy Provider, which allows for the configuration of an Easy App through Arkitekt,
+// Additionally, it wraps the DisplayProvider, which allows for the configuration of the display registry.
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <EasyProvider manifest={manifest}>
@@ -46,7 +50,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                     <CommandMenu />
                     <PostmanProvider>
                       <RekuestGuard fallback={<></>}>
+                        {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
                         <GraphQLPostman instanceId="main" />
+                        {/* We register the Shadn powered widgets to the widget registry. */}
                         <ShadnWigets />
                       </RekuestGuard>
                       <MikroNextGuard>
@@ -61,7 +67,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                             <ReserveResolver />
                             <TooltipProvider>
                               <Toaster />
-                              <AppConfiguration />
+                              <AppConfiguration /> {/* This is where we configure the application automatically based on facts */}
                               <BrowserRouter>{children}</BrowserRouter>
                             </TooltipProvider>
                           </ReserverProvider>

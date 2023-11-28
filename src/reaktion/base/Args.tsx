@@ -7,10 +7,9 @@ import {
 } from "@/components/ui/tooltip";
 import { portToLabel } from "@jhnnsrs/rekuest-next";
 
-portToLabel;
 
 export const Args = ({
-  stream,
+  instream,
   onClick,
   id,
 }: {
@@ -22,8 +21,8 @@ export const Args = ({
   return (
     <>
       <div className="flex flex-row gap-2">
-        {stream.length > 0 ? (
-          stream?.map((s, index) => (
+        {instream.length > 0 ? (
+          instream?.map((s, index) => (
             <Tooltip delayDuration={100}>
               <TooltipTrigger>
                 <Button

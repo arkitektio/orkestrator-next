@@ -2,323 +2,24 @@ import { Badge } from "@/components/ui/badge";
 import {
   Command,
   CommandEmpty,
-  CommandGroup,
   CommandInput,
-  CommandItem,
-  CommandList,
+  CommandList
 } from "@/components/ui/command";
 import { Dialog } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { useGlobalSearchLazyQuery } from "@/mikro-next/api/graphql";
-import {
-  RegisteredAction,
-  useCommand,
-} from "@/providers/command/CommandContext";
 import { useDisplayComponent } from "@/providers/display/DisplayContext";
-import { useSettings } from "@/providers/settings/SettingsContext";
-import {
-  ListNodeFragment,
-  useNodeSearchLazyQuery,
-  useReservationsQuery,
-} from "@/rekuest/api/graphql";
-import { withMikroNext } from "@jhnnsrs/mikro-next";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { DialogPortal } from "@radix-ui/react-dialog";
 import { Cross2Icon } from "@radix-ui/react-icons";
 import { useDebounce } from "@uidotdev/usehooks";
-import React, { Suspense, useContext, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { Context, ExtensionContext, Modifier, useSmartExtension } from "./ExtensionContext";
+import { LocalActionExtensions } from "./extensions/LocalActionExtension";
+import { NodeActionExtension } from "./extensions/NodeActionExtension";
+import { NodeExtensions } from "./extensions/NodeExtension";
+import { ReservationExtensions } from "./extensions/ReservationActionExtension";
+import { SearchExtensions } from "./extensions/SearchExtensions";
 
-export type SmartModifier<I extends string = string> = {
-  type: "smart";
-  identifier: I;
-  id: string;
-  label?: string;
-};
-
-export type SearchModifier = {
-  type: "search";
-};
-
-export type Modifier = SmartModifier | SearchModifier;
-
-export type Context = {
-  open: boolean;
-  query: string;
-  modifiers: Modifier[];
-};
-
-export type ExtensionContextType = Context & {
-  activateModifier: (modifier: Modifier) => void;
-  removeModifier: (index: number) => void;
-};
-
-export const ExtensionContext = React.createContext<ExtensionContextType>({
-  open: false,
-  query: "",
-  activateModifier: (modifier: Modifier) => {},
-  removeModifier: (index: number) => {},
-  modifiers: [],
-});
-
-const useExtension = () => useContext(ExtensionContext);
-
-const selectSmarts = <T extends string>(
-  modifiers: Modifier[],
-  identifier?: T,
-): SmartModifier<T>[] => {
-  return modifiers.filter(
-    (c) =>
-      c.type === "smart" &&
-      (identifier == undefined || c.identifier == identifier),
-  ) as SmartModifier<T>[];
-};
-
-export const NodeExtensions = () => {
-  const { query, activateModifier, modifiers } = useExtension();
-
-  const [nodes, setNodes] = useState<ListNodeFragment[]>([]);
-
-  const [searchNodes] = withRekuest(useNodeSearchLazyQuery)();
-
-  useEffect(() => {
-    if (
-      query == undefined ||
-      query == "" ||
-      modifiers.find(
-        (c) => c.type === "smart" && c.identifier === "@rekuest/node",
-      )
-    ) {
-      setNodes([]);
-      return;
-    } else {
-      searchNodes({ variables: { filters: { search: query } } })
-        .then((res) => {
-          setNodes(res.data?.nodes || []);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    }
-  }, [query, modifiers]);
-
-  return (
-    <>
-      {nodes.length > 0 && (
-        <CommandGroup heading="Nodes">
-          {nodes?.map((node) => {
-            return (
-              <CommandItem
-                key={node.id}
-                value={node.id}
-                onSelect={() =>
-                  activateModifier({
-                    type: "smart",
-                    identifier: "@rekuest/node",
-                    id: node.id,
-                    label: node.name,
-                  })
-                }
-              >
-                {node.name}
-              </CommandItem>
-            );
-          })}
-        </CommandGroup>
-      )}
-    </>
-  );
-};
-
-export const SmartCommandItem = (props: {
-  identifier: string;
-  id: string;
-  label?: string;
-}) => {
-  const { activateModifier } = useExtension();
-
-  return (
-    <CommandItem
-      key={props.identifier + ":" + props.id}
-      value={props.identifier + ":" + props.id}
-      onSelect={() =>
-        activateModifier({
-          type: "smart",
-          identifier: props.identifier,
-          id: props.id,
-          label: props.label,
-        })
-      }
-    >
-      {props.label}
-    </CommandItem>
-  );
-};
-
-export const SearchExtensions = () => {
-  const { query, activateModifier, modifiers } = useExtension();
-
-  const [searchGlobal, { data }] = withMikroNext(useGlobalSearchLazyQuery)();
-
-  useEffect(() => {
-    if (query != undefined) {
-      searchGlobal({
-        variables: {
-          search: query,
-          noImages: false,
-          noFiles: false,
-          pagination: { limit: 10 },
-        },
-      }).catch((err) => {
-        console.log(err);
-      });
-    }
-  }, [query, modifiers]);
-
-  return (
-    <>
-      {data && query && (
-        <>
-          {data?.images.length > 0 && (
-            <CommandGroup heading="Images">
-              {data?.images.map((image) => {
-                return (
-                  <SmartCommandItem
-                    identifier={"@mikro-next/image"}
-                    id={image.id}
-                    label={image.name}
-                  />
-                );
-              })}
-            </CommandGroup>
-          )}
-        </>
-      )}
-    </>
-  );
-};
-
-const useSmartExtension = <T extends string>(identifier?: T) => {
-  const { modifiers } = useExtension();
-  const meModifiers = selectSmarts(modifiers, identifier);
-  return {
-    modifiers: meModifiers,
-    multiple: meModifiers.length > 1,
-    active: meModifiers.length > 0,
-  };
-};
-
-export const FilteredCommands = (props: {
-  actions: RegisteredAction[] | undefined;
-  heading: string;
-}) => {
-  const { query } = useExtension();
-
-  const filtered =
-    props.actions?.filter((action) => {
-      return (
-        query &&
-        query.length > 0 &&
-        action.label.toLowerCase().includes(query.toLowerCase())
-      );
-    }) || [];
-
-  if (filtered.length == 0) {
-    return <></>;
-  }
-
-  return (
-    <>
-      <CommandGroup heading={props.heading}>
-        {filtered.map((action) => (
-          <CommandItem
-            key={action.key}
-            value={action.key}
-            onSelect={() => action.run()}
-          >
-            {action.label}
-          </CommandItem>
-        ))}
-      </CommandGroup>
-    </>
-  );
-};
-
-export const OneNodeExtensions = () => {
-  const { modifiers, multiple } = useSmartExtension("@rekuest/node");
-
-  return (
-    <>
-      {modifiers.map((modifier) => (
-        <FilteredCommands
-          heading={modifier.label || "Node"}
-          actions={[
-            {
-              key: "node:delete",
-              label: "Reserve " + modifier.label,
-              run: async () => alert("Reserve"),
-            },
-            {
-              key: "node:edit",
-              label: "Edit " + modifier.label,
-              run: async () => alert("Edit"),
-            },
-          ]}
-        />
-      ))}
-    </>
-  );
-};
-
-export const LocalActionExtensions = () => {
-  const { actions } = useCommand();
-
-  return (
-    <>
-      {actions.length > 0 && (
-        <CommandGroup heading="Local Actions">
-          {actions?.map((action) => {
-            return (
-              <CommandItem
-                key={action.key}
-                value={action.key}
-                onSelect={() => action.run()}
-                className="flex-row items-center justify-between"
-              >
-                {action.label}
-                {action.description && (
-                  <div className="text-xs ml-1">{action.description}</div>
-                )}
-              </CommandItem>
-            );
-          })}
-        </CommandGroup>
-      )}
-    </>
-  );
-};
-
-export const ReservationExtensions = () => {
-  const { settings } = useSettings();
-  const { data } = withRekuest(useReservationsQuery)({
-    variables: {
-      instanceId: settings.instanceId,
-    },
-  });
-
-  return (
-    <>
-      <FilteredCommands
-        actions={data?.myreservations.map((x) => ({
-          key: "assign:" + x.id,
-          label: "Assign to " + x.title,
-          run: async () => alert("Assign"),
-        }))}
-        heading="Assign"
-      />
-    </>
-  );
-};
 
 export const DisplayWidget = (props: {
   identifier: string;
@@ -371,13 +72,20 @@ export const ModifierRender = (props: { modifier: Modifier }) => {
   return <>Unknown Modifier</>;
 };
 
+
+/**
+ * A custom Command Menu a la VSCode.
+ * This renders and filters the commands that are *currently* registered in the command provider.
+ * And allows for the execution of these commands.
+ * 
+ **/
 export const CommandMenu = () => {
   const [context, setContext] = useState<Context>({
     open: false,
     query: "",
     modifiers: [],
   });
-  const debouncedContext = useDebounce(context, 100);
+  const debouncedContext = useDebounce(context, 100); // Debounce the context to prevent too many rerenders.
 
   const updateQuery = (query: string) => {
     setContext((c) => ({ ...c, query }));
@@ -400,11 +108,11 @@ export const CommandMenu = () => {
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
-      if (e.key === "m" && (e.metaKey || e.ctrlKey)) {
+      if (e.key === "m" && (e.metaKey || e.ctrlKey)) { // Open the command menu with cmd+m
         e.preventDefault();
         setContext((c) => ({ ...c, open: !c.open }));
       }
-      if (e.key === "," && (e.metaKey || e.ctrlKey)) {
+      if (e.key === "," && (e.metaKey || e.ctrlKey)) { // Open a fresh command menu with cmd+,, without any modifiers.
         e.preventDefault();
         setContext((c) => ({ ...c, open: !c.open, query: "", modifiers: [] }));
       }
@@ -451,10 +159,7 @@ export const CommandMenu = () => {
           )}
 
           <div className="flex flex-row justify-between items-center relative gap-4 border bg-background shadow-lg sm:rounded-lg md:w-full">
-            <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-              <Cross2Icon className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </DialogPrimitive.Close>
+            
             <Command
               shouldFilter={false}
               className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5"
@@ -464,7 +169,12 @@ export const CommandMenu = () => {
                 onValueChange={updateQuery}
                 value={context.query}
                 className=""
+                capture={true}
               />
+              <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+              <Cross2Icon className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </DialogPrimitive.Close>
 
               <CommandList>
                 {context.query && <CommandEmpty>No results found</CommandEmpty>}
@@ -476,7 +186,7 @@ export const CommandMenu = () => {
                   }}
                 >
                   <NodeExtensions />
-                  <OneNodeExtensions />
+                  <NodeActionExtension />
                   <LocalActionExtensions />
                   <SearchExtensions />
                   <ReservationExtensions />

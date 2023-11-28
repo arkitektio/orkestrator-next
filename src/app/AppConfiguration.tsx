@@ -3,7 +3,11 @@ import { MikroNextAutoConfigure } from "@/app/config/MikroNextAutoConfigure";
 import { LokNextAutoConfigure } from "@/app/config/LokNextAutoConfigure";
 import { AutoConfiguration } from "@jhnnsrs/arkitekt";
 import { OmeroArkAutoConfigure } from "./config/OmeroArkAutoConfigure";
+import { WELL_KNOWN_ENDPOINTS } from "@/constants";
 
+// In the App Configuration we mount all the auto configuration components that are used in the application.
+// Autoconfiguration components are used to configure their respective providers, based on the "fakts" received
+// from the fakts provider
 export const AppConfiguration = () => {
   return (
     <>
@@ -12,7 +16,7 @@ export const AppConfiguration = () => {
       <MikroNextAutoConfigure />
       <OmeroArkAutoConfigure/>
       <AutoConfiguration
-        wellKnownEndpoints={["100.91.169.37:8010", "127.0.0.1:8010"]}
+        wellKnownEndpoints={WELL_KNOWN_ENDPOINTS} // this configures fakts to use the well known endpoints in order to discover the other services
       />
     </>
   );

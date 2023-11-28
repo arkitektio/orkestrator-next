@@ -9,7 +9,11 @@ import Workspace from "./pages/Workspace";
 import Home from "./pages/Home";
 
 interface Props {}
-
+/**
+ * 
+ * The Rekuest Module is the entrypoint to all specfic rekuest functionality.
+ * It provides the routes for the rekuest module.
+ */
 const Module: React.FC<Props> = (props) => {
   return (
     <RekuestGuard fallback={<>Loading</>}>

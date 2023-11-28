@@ -30,6 +30,13 @@ export type INavigationBarProps = {
   children?: React.ReactNode;
 };
 
+/**
+ * The private navigation bar is the main navigation bar of the application.
+ * It is only visible to authenticated users.
+ * It contains links to the different applications of the Arkitekt platform.
+ * All links to respective modules should be wrapped in their respective guards, so that
+ * only modules that are available to the user are shown. See the example below.
+ */
 const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
   return (
     <NavigationMenu

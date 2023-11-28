@@ -102,7 +102,7 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
         </CardDescription>
         {expanded &&<div>
         <div className="text-xs text-muted-foreground inline ">Args</div>
-        <Args stream={ins.at(0) || []} id={0} onClick={onClickIn} />
+        <Args instream={ins.at(0) || []} id={0} onClick={onClickIn} constream={[]}/>
 
         <div className="text-xs text-muted-foreground inline ">Constants</div>
         <Constants

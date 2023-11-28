@@ -5,6 +5,8 @@ import PublicRouter from "./routers/PublicRouter";
 import PrivateRouter from "./routers/PrivateRouter";
 import { LogoutButton, UnconnectButton } from "@jhnnsrs/arkitekt";
 
+// Entrypoint of the application.
+// We provide two main routers, one for the public routes, and one for the private routes.
 function App() {
   return (
     <AppProvider>

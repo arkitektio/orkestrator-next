@@ -1,5 +1,16 @@
 import { buildModuleLink, buildSmart } from "@/providers/smart/builder";
 
+// Linkers for the smart models
+// Linkers represent ways to reference a smart model consistently in the ui, and
+// can be used to create links to the smart model, details pages, etc.
+// When building a smart model, we automate the creation of a few components:
+// - `Smart`, a card like drag-n-drop component that can be used to wrap a react component
+// - `Actions` a component that can be used to render actions for the smart model (like nodes that have registed this smart model as an input)
+// - `DetailLink` a component that can be used to link to the detail page of the smart model
+// - `ListLink` a component that can be used to link to the list page of the smart model
+// - `linkBuilder` a function that can be used to build links to the smart model
+
+
 export const RekuestAssignation = buildSmart(
   "@rekuest-next/assignation",
   "rekuest/assignation",

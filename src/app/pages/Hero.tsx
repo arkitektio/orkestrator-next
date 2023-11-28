@@ -1,9 +1,13 @@
-import { Card } from "@/components/ui/card";
 import { RekuestModuleLink } from "@/linkers";
-import { SmartModel } from "@/providers/smart/SmartModel";
 import { EasyGuard } from "@jhnnsrs/arkitekt";
 import { RekuestGuard } from "@jhnnsrs/rekuest-next";
 
+
+
+/**
+ * This is the hero component, which is the main page of the public appliccation.
+ * @todo: This component should be replaced with amore useful component for the public application.
+ */
 function Page() {
   return (
     <>

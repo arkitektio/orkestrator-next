@@ -9,6 +9,15 @@ import SearchPane from "./panes/SearchPane";
 
 interface Props {}
 
+
+/**
+ * The Reaktion Module is the entrypoint to all stream workflow related functionality
+ * It provides the routes for the reaktion module.
+ * 
+ * 
+ * @returns 
+ */
+
 const Module: React.FC<Props> = (props) => {
   return (
     <RekuestGuard fallback={<>Loading</>}>

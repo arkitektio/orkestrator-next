@@ -1,4 +1,8 @@
-import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "../ui/resizable";
 import BreadCrumbs from "../navigation/BreadCrumbs";
 import { ScrollArea } from "../ui/scroll-area";
 import { Actionbar } from "./Actionbar";
@@ -15,8 +19,8 @@ export const PageLayout = ({
   actions,
 }: PageLayoutProps) => {
   return (
-    <PanelGroup autoSaveId="page" direction="horizontal">
-      <Panel className="" defaultSize={80}>
+    <ResizablePanelGroup autoSaveId="page" direction="horizontal">
+      <ResizablePanel className="" defaultSize={80}>
         <div className="h-full flex flex-col p-2 relative">
           <div className="flex-shrink">
             <BreadCrumbs />
@@ -26,11 +30,11 @@ export const PageLayout = ({
           </ScrollArea>
           <Actionbar>{actions}</Actionbar>
         </div>
-      </Panel>
+      </ResizablePanel>
       {sidebars && (
         <>
-          <PanelResizeHandle className="h-full w-1 opacity-0 hover:opacity-80 bg-seperator" />
-          <Panel
+          <ResizableHandle className="h-full w-1 opacity-0 hover:opacity-80 bg-seperator" />
+          <ResizablePanel
             minSize={10}
             defaultSize={20}
             className="border-l-2 border-gray-900 bg-middleground"
@@ -38,9 +42,9 @@ export const PageLayout = ({
             <ScrollArea className="flex flex-col h-full overflow-y-auto">
               {sidebars}
             </ScrollArea>
-          </Panel>
+          </ResizablePanel>
         </>
       )}
-    </PanelGroup>
+    </ResizablePanelGroup>
   );
 };

@@ -1,6 +1,30 @@
 import { RekuestModuleLink } from "@/linkers";
-import { EasyGuard } from "@jhnnsrs/arkitekt";
+import { EasyGuard, useArkitektConnect, useArkitektLogin } from "@jhnnsrs/arkitekt";
 import { RekuestGuard } from "@jhnnsrs/rekuest-next";
+
+
+
+export const ConnectButton = () => {
+  const {registeredEndpoints, load} = useArkitektConnect()
+
+
+
+  return <> 
+  {registeredEndpoints.map((endpoint) => {
+    return <button onClick={() => load({endpoint})}>Connect to {endpoint.name}</button>
+  })}
+  </>
+}
+
+
+export const LoginButton = () => {
+  const { login} = useArkitektLogin()
+
+
+  return <button onClick={() => login()}>Login</button>
+
+}
+
 
 
 
@@ -11,7 +35,7 @@ import { RekuestGuard } from "@jhnnsrs/rekuest-next";
 function Page() {
   return (
     <>
-      <EasyGuard>
+      <EasyGuard notConnectedFallback={<ConnectButton/> } notLoggedInFallback={<LoginButton/>}>
         <RekuestGuard>
           <RekuestModuleLink>Dashboard</RekuestModuleLink>
         </RekuestGuard>

@@ -1,13 +1,13 @@
 import { gql } from "@apollo/client";
-import { useMikroNext } from "@jhnnsrs/mikro-next";
+import { usePort } from "@jhnnsrs/port-next";
 import { useWidgetRegistry } from "@jhnnsrs/rekuest-next";
 import { useEffect } from "react";
 
-export const MikroNextWard: React.FC<{
+export const PortNextWard: React.FC<{
   key?: string;
   fallback?: React.ReactNode;
 }> = ({ key, fallback }) => {
-  const { client } = useMikroNext();
+  const { client } = usePort();
   const { registry } = useWidgetRegistry();
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export const MikroNextWard: React.FC<{
           });
       };
 
-      registry?.registerWard(key || "mikro_new", {
+      registry?.registerWard(key || "port_next", {
         search: runFunc,
       });
     }

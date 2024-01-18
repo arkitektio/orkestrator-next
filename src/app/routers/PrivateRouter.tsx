@@ -9,6 +9,7 @@ import { EasyGuard } from "@jhnnsrs/arkitekt";
 import LokNextModule from "@/lok-next/LokNextModule";
 import OmeroArkModule from "@/omero-ark/OmeroArkModule";
 import SettingsModule from "@/settings/SettingsModule";
+import PortNextModule from "@/port-next/PortNextModule";
 interface Props {}
 
 export const PrivateRouter: React.FC<Props> = (props) => {
@@ -19,6 +20,7 @@ export const PrivateRouter: React.FC<Props> = (props) => {
           <Route path="mikronext/*" element={<MikroNextModule />} />
           <Route path="rekuest/*" element={<RekuestNextModule />} />
           <Route path="reaktion/*" element={<ReaktionModule />} />
+          <Route path="port-next/*" element={<PortNextModule />} />
           <Route path="omero-ark/*" element={<OmeroArkModule />} />
           <Route path="lok/*" element={<LokNextModule />} />
           <Route path="settings/*" element={<SettingsModule />} />

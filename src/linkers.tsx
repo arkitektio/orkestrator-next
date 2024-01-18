@@ -45,6 +45,12 @@ export const OmeroArkProject = buildSmart(
   "omero-ark/projects",
 );
 
+export const PortPod = buildSmart(
+  "@port-next/pod",
+  "port-next/pod",
+);
+
+
 export const OmeroArkDataset = buildSmart(
   "@omero-ark/dataset",
   "omero-ark/datasets",

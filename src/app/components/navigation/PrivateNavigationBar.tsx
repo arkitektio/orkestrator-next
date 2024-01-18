@@ -12,7 +12,7 @@ import {
   NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
 import { Me } from "@/lok-next/components/Me";
-import { LogoutButton, UnconnectButton } from "@jhnnsrs/arkitekt";
+import { useArkitektConnect, useArkitektLogin } from "@jhnnsrs/arkitekt";
 import { LokNextGuard } from "@jhnnsrs/lok-next";
 import { MikroNextGuard } from "@jhnnsrs/mikro-next";
 import { RekuestGuard } from "@jhnnsrs/rekuest-next";
@@ -25,6 +25,7 @@ import { GoWorkflow } from "react-icons/go";
 import { ModeToggle } from "../ModeToggle";
 import { ArkitektLogo } from "../logos/ArkitektLogo";
 import { OmeroArkGuard } from "@jhnnsrs/omero-ark";
+import { PortGuard } from "@jhnnsrs/port-next";
 
 export type INavigationBarProps = {
   children?: React.ReactNode;
@@ -38,6 +39,17 @@ export type INavigationBarProps = {
  * only modules that are available to the user are shown. See the example below.
  */
 const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
+
+
+  const {logout} = useArkitektLogin()
+  const {remove} = useArkitektConnect()
+
+
+
+
+
+
+
   return (
     <NavigationMenu
       className="flex flex-grow sm:flex-col flex-row gap-8  items-center justify-start h-full bg-background dark:bg-background"
@@ -90,6 +102,15 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
               )}
             </DroppableNavLink>
           </OmeroArkGuard>
+          <PortGuard>
+            <DroppableNavLink key={"Dashboard"} to={"port-next"}>
+              {({ isActive }) => (
+                <NavigationMenuLink active={isActive}>
+                  <PiDatabaseLight />
+                </NavigationMenuLink>
+              )}
+            </DroppableNavLink>
+          </PortGuard>
           <RekuestGuard>
             <DroppableNavLink key={"Reaktion"} to={"reaktion"}>
               {({ isActive }) => (
@@ -132,13 +153,10 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
             </DropdownMenuGroup>
 
             <div className="flex flex-row gap-2">
-              <LogoutButton>
-                <Button>Logout</Button>{" "}
-              </LogoutButton>
-              <UnconnectButton>
+                <Button onClick={() => logout()}>Logout</Button>{" "}
+              
                 {" "}
-                <Button>Unconnect</Button>{" "}
-              </UnconnectButton>
+                <Button onClick={() => remove()}>Unconnect</Button>{" "}
               <ModeToggle />
             </div>
           </DropdownMenuContent>

@@ -32,29 +32,26 @@ export const ExtensionContext = React.createContext<ExtensionContextType>({
   modifiers: [],
 });
 
-
 export const useExtension = () => useContext(ExtensionContext);
 
 export const selectSmarts = <T extends string>(
-    modifiers: Modifier[],
-    identifier?: T,
-  ): SmartModifier<T>[] => {
-    return modifiers.filter(
-      (c) =>
-        c.type === "smart" &&
-        (identifier == undefined || c.identifier == identifier),
-    ) as SmartModifier<T>[];
-  };
+  modifiers: Modifier[],
+  identifier?: T,
+): SmartModifier<T>[] => {
+  return modifiers.filter(
+    (c) =>
+      c.type === "smart" &&
+      (identifier == undefined || c.identifier == identifier),
+  ) as SmartModifier<T>[];
+};
 
-  /** Extensions that work on Smart Models */
+/** Extensions that work on Smart Models */
 export const useSmartExtension = <T extends string>(identifier?: T) => {
-    const { modifiers } = useExtension();
-    const meModifiers = selectSmarts(modifiers, identifier);
-    return {
-      modifiers: meModifiers,
-      multiple: meModifiers.length > 1,
-      active: meModifiers.length > 0,
-    };
+  const { modifiers } = useExtension();
+  const meModifiers = selectSmarts(modifiers, identifier);
+  return {
+    modifiers: meModifiers,
+    multiple: meModifiers.length > 1,
+    active: meModifiers.length > 0,
   };
-  
-
+};

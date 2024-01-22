@@ -361,9 +361,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
 
       console.log("new_instream", new_outstream);
 
-      let new_voids = node.data.voids.filter(
-        (i, index) => index != voidindex,
-      );
+      let new_voids = node.data.voids.filter((i, index) => index != voidindex);
 
       console.log("ne_voids", new_voids);
 
@@ -723,7 +721,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
               position.x < oldNode.position.x ? 1 : 0,
             ),
           );
-          
+
           // This is the edge that connects the zip node to the old edge target, it will need to undergo validation
           let integratedState = integrate(newState, {
             source: zipNode.id,
@@ -781,21 +779,23 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                   .then(async (event) => {
                     console.log(event);
                     if (event.data?.node) {
-                      if (event.data.node.protocols.find(p => p.name == "predicate")){
+                      if (
+                        event.data.node.protocols.find(
+                          (p) => p.name == "predicate",
+                        )
+                      ) {
                         const flowNode = predicateNodeToFlowNode(
                           event.data?.node,
                           position,
                         );
                         addNode(flowNode);
-                      }
-                      else {
+                      } else {
                         const flowNode = arkitektNodeToFlowNode(
                           event.data?.node,
                           position,
                         );
                         addNode(flowNode);
                       }
-                      
                     }
                   });
             }

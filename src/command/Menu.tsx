@@ -3,7 +3,7 @@ import {
   Command,
   CommandEmpty,
   CommandInput,
-  CommandList
+  CommandList,
 } from "@/components/ui/command";
 import { Dialog } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -13,13 +13,17 @@ import { DialogPortal } from "@radix-ui/react-dialog";
 import { Cross2Icon } from "@radix-ui/react-icons";
 import { useDebounce } from "@uidotdev/usehooks";
 import { Suspense, useEffect, useState } from "react";
-import { Context, ExtensionContext, Modifier, useSmartExtension } from "./ExtensionContext";
+import {
+  Context,
+  ExtensionContext,
+  Modifier,
+  useSmartExtension,
+} from "./ExtensionContext";
 import { LocalActionExtensions } from "./extensions/LocalActionExtension";
 import { NodeActionExtension } from "./extensions/NodeActionExtension";
 import { NodeExtensions } from "./extensions/NodeExtension";
 import { ReservationExtensions } from "./extensions/ReservationActionExtension";
 import { SearchExtensions } from "./extensions/SearchExtensions";
-
 
 export const DisplayWidget = (props: {
   identifier: string;
@@ -72,12 +76,11 @@ export const ModifierRender = (props: { modifier: Modifier }) => {
   return <>Unknown Modifier</>;
 };
 
-
 /**
  * A custom Command Menu a la VSCode.
  * This renders and filters the commands that are *currently* registered in the command provider.
  * And allows for the execution of these commands.
- * 
+ *
  **/
 export const CommandMenu = () => {
   const [context, setContext] = useState<Context>({
@@ -108,11 +111,13 @@ export const CommandMenu = () => {
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
-      if (e.key === "m" && (e.metaKey || e.ctrlKey)) { // Open the command menu with cmd+m
+      if (e.key === "m" && (e.metaKey || e.ctrlKey)) {
+        // Open the command menu with cmd+m
         e.preventDefault();
         setContext((c) => ({ ...c, open: !c.open }));
       }
-      if (e.key === "," && (e.metaKey || e.ctrlKey)) { // Open a fresh command menu with cmd+,, without any modifiers.
+      if (e.key === "," && (e.metaKey || e.ctrlKey)) {
+        // Open a fresh command menu with cmd+,, without any modifiers.
         e.preventDefault();
         setContext((c) => ({ ...c, open: !c.open, query: "", modifiers: [] }));
       }
@@ -159,7 +164,6 @@ export const CommandMenu = () => {
           )}
 
           <div className="flex flex-row justify-between items-center relative gap-4 border bg-background shadow-lg sm:rounded-lg md:w-full">
-            
             <Command
               shouldFilter={false}
               className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5"
@@ -172,9 +176,9 @@ export const CommandMenu = () => {
                 capture={true}
               />
               <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-              <Cross2Icon className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </DialogPrimitive.Close>
+                <Cross2Icon className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </DialogPrimitive.Close>
 
               <CommandList>
                 {context.query && <CommandEmpty>No results found</CommandEmpty>}

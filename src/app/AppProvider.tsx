@@ -45,44 +45,44 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
           <SmartProvider>
             <RekuestProvider>
               <PortProvider>
-              <MikroNextProvider>
-                <OmeroArkProvider>
-                <LokNextProvider>
-                  <WidgetRegistryProvider>
-                    <CommandMenu />
-                    <PostmanProvider>
-                      <RekuestGuard fallback={<></>}>
-                        {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
-                        <GraphQLPostman instanceId="main" />
-                        {/* We register the Shadn powered widgets to the widget registry. */}
-                        <ShadnWigets />
-                      </RekuestGuard>
-                      <MikroNextGuard>
-                        <MikroNextWard key="mikro_new" />
-                      </MikroNextGuard>
-                      <ThemeProvider
-                        defaultTheme="dark"
-                        storageKey="vite-ui-theme"
-                      >
-                        <RequesterProvider>
-                          <ReserverProvider>
-                            <ReserveResolver />
-                            <TooltipProvider>
-                              <Toaster />
-                              <AppConfiguration /> {/* This is where we configure the application automatically based on facts */}
-                              <BrowserRouter>{children}</BrowserRouter>
-                            </TooltipProvider>
-                          </ReserverProvider>
-                        </RequesterProvider>
-                      </ThemeProvider>
-                    </PostmanProvider>
-                  </WidgetRegistryProvider>
-                </LokNextProvider>
-                </OmeroArkProvider>
-              </MikroNextProvider>
+                <MikroNextProvider>
+                  <OmeroArkProvider>
+                    <LokNextProvider>
+                      <WidgetRegistryProvider>
+                        <CommandMenu />
+                        <PostmanProvider>
+                          <RekuestGuard fallback={<></>}>
+                            {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
+                            <GraphQLPostman instanceId="main" />
+                            {/* We register the Shadn powered widgets to the widget registry. */}
+                            <ShadnWigets />
+                          </RekuestGuard>
+                          <MikroNextGuard>
+                            <MikroNextWard key="mikro_new" />
+                          </MikroNextGuard>
+                          <ThemeProvider
+                            defaultTheme="dark"
+                            storageKey="vite-ui-theme"
+                          >
+                            <RequesterProvider>
+                              <ReserverProvider>
+                                <ReserveResolver />
+                                <TooltipProvider>
+                                  <Toaster />
+                                  <AppConfiguration />{" "}
+                                  {/* This is where we configure the application automatically based on facts */}
+                                  <BrowserRouter>{children}</BrowserRouter>
+                                </TooltipProvider>
+                              </ReserverProvider>
+                            </RequesterProvider>
+                          </ThemeProvider>
+                        </PostmanProvider>
+                      </WidgetRegistryProvider>
+                    </LokNextProvider>
+                  </OmeroArkProvider>
+                </MikroNextProvider>
               </PortProvider>
             </RekuestProvider>
-
           </SmartProvider>
         </CommandProvider>
       </DisplayProvider>

@@ -80,4 +80,3 @@ export const reduceStream = (streams: PortFragment[][]): PortFragment[] => {
   }
   return reduced;
 };
-

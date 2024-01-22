@@ -1,8 +1,8 @@
 query Me {
-    me {
-      omeroUser {
-        id 
-        omeroUsername
-      }
+  me {
+    omeroUser {
+      id
+      omeroUsername
     }
+  }
 }

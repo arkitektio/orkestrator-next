@@ -10,7 +10,7 @@ import {
 import { useTheme } from "@/providers/ThemeProvider";
 /**
  * A component that allows the user to toggle between light and dark mode.
- * 
+ *
  */
 export function ModeToggle() {
   const { setTheme } = useTheme();

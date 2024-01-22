@@ -1,10 +1,9 @@
 fragment ListPod on Pod {
-    id
-    podId
+  id
+  podId
 }
 
-
 fragment Pod on Pod {
-     id
-    podId
+  id
+  podId
 }

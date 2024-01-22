@@ -10,9 +10,7 @@ import { MikroDataset } from "@/linkers";
 import { withOmeroArk } from "@jhnnsrs/omero-ark";
 import React from "react";
 import { useParams } from "react-router";
-import {
-  useGetProjectQuery
-} from "../api/graphql";
+import { useGetProjectQuery } from "../api/graphql";
 import DatasetCard from "../components/cards/DatasetCard";
 import { Komments } from "@/lok-next/components/komments/Komments";
 
@@ -23,20 +21,17 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   if (!id) return <></>;
 
   const { data } = withOmeroArk(useGetProjectQuery)({
-      variables: {id},
-    },
-  );
+    variables: { id },
+  });
 
   return (
-    <PageLayout actions={<MikroDataset.Actions id={id} />}  sidebars={<Komments identifier="@omero-ark/project" object={id} />}>
+    <PageLayout
+      actions={<MikroDataset.Actions id={id} />}
+      sidebars={<Komments identifier="@omero-ark/project" object={id} />}
+    >
       <DetailPane className="p-3 @container">
         <DetailPaneHeader>
-          <DetailPaneTitle
-            actions={
-              <>
-              </>
-            }
-          >
+          <DetailPaneTitle actions={<></>}>
             {data?.project?.name}
           </DetailPaneTitle>
         </DetailPaneHeader>
@@ -53,10 +48,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
             ))}
           </div>
         </div>
-        <ListRender
-          title="Contained Dataset"
-          array={data?.project?.datasets}
-        >
+        <ListRender title="Contained Dataset" array={data?.project?.datasets}>
           {(item, index) => <DatasetCard dataset={item} key={index} />}
         </ListRender>
       </DetailPane>

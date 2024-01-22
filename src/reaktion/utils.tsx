@@ -112,29 +112,28 @@ export const flowNodeToInput = (node: FlowNode): NodeInput => {
     type,
     position,
     parentNode,
-    data: { outs, constants, ins, binds, voids,  ...rest },
+    data: { outs, constants, ins, binds, voids, ...rest },
   } = node;
   try {
-  const node_: NodeInput = {
-    ins: ins.map((s) => s.map(convertPortToInput)),
-    outs: outs.map((s) => s.map(convertPortToInput)),
-    constants: constants.map(convertPortToInput),
-    voids: voids.map(convertPortToInput),
-    id,
-    position: { x: position.x, y: position.y },
-    parentNode: parentNode,
-    binds: binds && bindsToInput(binds),
-    ...rest,
-  };
+    const node_: NodeInput = {
+      ins: ins.map((s) => s.map(convertPortToInput)),
+      outs: outs.map((s) => s.map(convertPortToInput)),
+      constants: constants.map(convertPortToInput),
+      voids: voids.map(convertPortToInput),
+      id,
+      position: { x: position.x, y: position.y },
+      parentNode: parentNode,
+      binds: binds && bindsToInput(binds),
+      ...rest,
+    };
 
-  return node_;
-}
-  catch (e) {
-    console.log("Error converting node to input",node)
+    return node_;
+  } catch (e) {
+    console.log("Error converting node to input", node);
     console.error(e);
     throw e;
-  };
-}
+  }
+};
 
 export const globalToInput = (node: GlobalFragment): GlobalArgInput => {
   const { __typename, port, ...rest } = node;
@@ -240,7 +239,10 @@ export const predicateNodeToFlowNode = (
       ins: [
         node.args.filter((x) => !x?.nullable && x?.default == undefined), // by default, all nullable and default values are optional so not part of stream
       ],
-      outs: [node.args.filter((x) => !x?.nullable && x?.default == undefined), []], // by default, all nullable and default values are optional so not part of stream],
+      outs: [
+        node.args.filter((x) => !x?.nullable && x?.default == undefined),
+        [],
+      ], // by default, all nullable and default values are optional so not part of stream],
       constants: node.args.filter(
         (x) => x?.nullable || x?.default != undefined,
       ),
@@ -406,12 +408,15 @@ export const streamToReactNode = (
     return <div className="text-red-400 stream-edge">undefinedStream</div>;
   return (
     <div className="flex flex-row flex-wrap stream-edge ">
-      {stream.length == 0 ? <div className="font-bold">Event</div> :
-      stream.map((p) => (
-        <div className="flex-1">
-          {portToReadble(p, withLocalDisclaimer == true)}
-        </div>
-      ))}
+      {stream.length == 0 ? (
+        <div className="font-bold">Event</div>
+      ) : (
+        stream.map((p) => (
+          <div className="flex-1">
+            {portToReadble(p, withLocalDisclaimer == true)}
+          </div>
+        ))
+      )}
     </div>
   );
 };

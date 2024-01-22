@@ -26,8 +26,13 @@ export const ArkitektFilterNodeWidget: React.FC<ArkitektNodeProps> = ({
   id,
   selected,
 }) => {
-  const { moveConstantToGlobals, moveConstantToStream, moveStreamToConstants, moveOutStreamToVoid, moveVoidtoOutstream} =
-    useEditRiver();
+  const {
+    moveConstantToGlobals,
+    moveConstantToStream,
+    moveStreamToConstants,
+    moveOutStreamToVoid,
+    moveVoidtoOutstream,
+  } = useEditRiver();
 
   const [expanded, setExpanded] = React.useState(false);
 
@@ -58,7 +63,6 @@ export const ArkitektFilterNodeWidget: React.FC<ArkitektNodeProps> = ({
   return (
     <NodeShowLayout
       id={id}
-
       className={cn(
         errors.length > 0
           ? "border-destructive/40 shadow-destructive/30 dark:border-destructive dark:shadow-destructive/20 shadow-xl"
@@ -77,7 +81,9 @@ export const ArkitektFilterNodeWidget: React.FC<ArkitektNodeProps> = ({
       <CardHeader className="p-4">
         <CardTitle onDoubleClick={() => setExpanded(!expanded)}>
           <div className="flex justify-between">
-            <div className="text-xl font-bold"><b>If</b> {data?.title}</div>
+            <div className="text-xl font-bold">
+              <b>If</b> {data?.title}
+            </div>
             <Sheet>
               <SheetTrigger className="group-hover:opacity-100 opacity-0 transition-all duration-3000">
                 <GearIcon />
@@ -100,18 +106,27 @@ export const ArkitektFilterNodeWidget: React.FC<ArkitektNodeProps> = ({
             variables={data.constantsMap}
           />
         </CardDescription>
-        {expanded && <div>
-          <div className="text-xs text-muted-foreground inline ">Args</div>
-          <Args instream={ins.at(0) || []} id={0} onClick={onClickIn} constream={[]} />
+        {expanded && (
+          <div>
+            <div className="text-xs text-muted-foreground inline ">Args</div>
+            <Args
+              instream={ins.at(0) || []}
+              id={0}
+              onClick={onClickIn}
+              constream={[]}
+            />
 
-          <div className="text-xs text-muted-foreground inline ">Constants</div>
-          <Constants
-            ports={constants.filter((x) => !(x.key in data.globalsMap))}
-            overwrites={data.constantsMap}
-            onToArg={onToArg}
-            onToGlobal={onToGlobal}
-          />
-        </div>}
+            <div className="text-xs text-muted-foreground inline ">
+              Constants
+            </div>
+            <Constants
+              ports={constants.filter((x) => !(x.key in data.globalsMap))}
+              overwrites={data.constantsMap}
+              onToArg={onToArg}
+              onToGlobal={onToGlobal}
+            />
+          </div>
+        )}
       </CardHeader>
       {outs.map((s, index) => (
         <OutStream stream={s} id={index} length={outs.length} />

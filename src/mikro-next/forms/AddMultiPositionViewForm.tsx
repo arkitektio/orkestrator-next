@@ -10,20 +10,17 @@ import {
   useAutoCreateMultiWellPlateMutation,
   useCreateMultiWellPlateMutation,
   useCreateWellPositionViewMutation,
-  useMultiWellPlateOptionsLazyQuery
+  useMultiWellPlateOptionsLazyQuery,
 } from "../api/graphql";
 import { yupResolver } from "@hookform/resolvers/yup";
-import * as yup from "yup"
+import * as yup from "yup";
 import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
-
 
 export const AddMultiPositionViewForm = (props: { image: string }) => {
   const [add] = withMikroNext(useCreateWellPositionViewMutation)();
 
   const [search] = withMikroNext(useMultiWellPlateOptionsLazyQuery)();
   const [create] = withMikroNext(useAutoCreateMultiWellPlateMutation)();
-
-
 
   const dialog = useGraphQlFormDialog(add);
 
@@ -33,13 +30,14 @@ export const AddMultiPositionViewForm = (props: { image: string }) => {
       row: 0,
       column: 0,
     },
-    resolver: yupResolver(yup.object().shape({
-      row: yup.number().required(),
-      column: yup.number().required(),
-      image: yup.string().required(),
-      well: yup.string().required(),
-    })),
-    
+    resolver: yupResolver(
+      yup.object().shape({
+        row: yup.number().required(),
+        column: yup.number().required(),
+        image: yup.string().required(),
+        well: yup.string().required(),
+      }),
+    ),
   });
 
   return (
@@ -51,28 +49,26 @@ export const AddMultiPositionViewForm = (props: { image: string }) => {
               variables: {
                 input: {
                   ...data,
-
-                }
-                
+                },
               },
             });
           })}
         >
           <div className="grid grid-cols-2 gap-2">
             <GraphQLCreatableSearchField
-                name="well"
-                label="Well"
-                searchQuery={search}
-                createMutation={create}
-                description="Which stage for the well?"
-                placeholder="Fluorophore"
-              />
+              name="well"
+              label="Well"
+              searchQuery={search}
+              createMutation={create}
+              description="Which stage for the well?"
+              placeholder="Fluorophore"
+            />
             <div className="col-span-2">
               <IntField
-                  label="Row"
-                  name="row"
-                  description="The wor of the well"
-                />
+                label="Row"
+                name="row"
+                description="The wor of the well"
+              />
               <IntField
                 label="Col"
                 name="column"

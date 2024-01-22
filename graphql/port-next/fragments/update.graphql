@@ -1,0 +1,5 @@
+fragment FlavourUpdate on FlavourUpdate {
+  id
+  status
+  progress
+}

@@ -33,7 +33,6 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
 
   const [expanded, setExpanded] = React.useState(false);
 
-
   const onClickIn = (stream_index: number, onposition: number) => {
     moveStreamToConstants(id, stream_index, onposition);
   };
@@ -75,7 +74,7 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
         <InStream stream={s} id={index} length={ins.length} />
       ))}
       <CardHeader className="p-4">
-        <CardTitle  onDoubleClick={() => setExpanded(!expanded)}>
+        <CardTitle onDoubleClick={() => setExpanded(!expanded)}>
           <div className="flex justify-between">
             {data?.title}
             <Sheet>
@@ -100,18 +99,27 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
             variables={data.constantsMap}
           />
         </CardDescription>
-        {expanded &&<div>
-        <div className="text-xs text-muted-foreground inline ">Args</div>
-        <Args instream={ins.at(0) || []} id={0} onClick={onClickIn} constream={[]}/>
+        {expanded && (
+          <div>
+            <div className="text-xs text-muted-foreground inline ">Args</div>
+            <Args
+              instream={ins.at(0) || []}
+              id={0}
+              onClick={onClickIn}
+              constream={[]}
+            />
 
-        <div className="text-xs text-muted-foreground inline ">Constants</div>
-        <Constants
-          ports={constants.filter((x) => !(x.key in data.globalsMap))}
-          overwrites={data.constantsMap}
-          onToArg={onToArg}
-          onToGlobal={onToGlobal}
-        />
-        </div>}
+            <div className="text-xs text-muted-foreground inline ">
+              Constants
+            </div>
+            <Constants
+              ports={constants.filter((x) => !(x.key in data.globalsMap))}
+              overwrites={data.constantsMap}
+              onToArg={onToArg}
+              onToGlobal={onToGlobal}
+            />
+          </div>
+        )}
       </CardHeader>
       {outs.map((s, index) => (
         <OutStream stream={s} id={index} length={outs.length} />

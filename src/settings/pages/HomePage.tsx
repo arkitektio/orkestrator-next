@@ -6,12 +6,8 @@ import React from "react";
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
-
-
-    const { settings} = useSettings();
-    const {fakts} = useFakts()
-
-
+  const { settings } = useSettings();
+  const { fakts } = useFakts();
 
   return (
     <PageLayout actions={<></>}>

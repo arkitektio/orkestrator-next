@@ -1,21 +1,15 @@
+import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { FloatField } from "@/components/fields/FloatField";
+import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
+import { Button } from "@/components/ui/button";
+import { DialogFooter } from "@/components/ui/dialog";
+import { Form } from "@/components/ui/form";
+import { withMikroNext } from "@jhnnsrs/mikro-next";
 import { useForm } from "react-hook-form";
 import {
   useCreateAffineTransformationViewMutation,
   useStageOptionsLazyQuery,
 } from "../api/graphql";
-import { withMikroNext } from "@jhnnsrs/mikro-next";
-import { Form } from "@/components/ui/form";
-import { FloatField } from "@/components/fields/FloatField";
-import { SearchField } from "@/components/fields/SearchField";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
-import { Button } from "@/components/ui/button";
-import {
-  useFormDialog,
-  useGraphQlFormDialog,
-} from "@/components/dialog/FormDialog";
-import { DialogTitle } from "@radix-ui/react-dialog";
-import { DialogFooter } from "@/components/ui/dialog";
-import { useView } from "@/providers/view/ViewContext";
 
 export const toAffineMatrix = (data: {
   positionX: number;

@@ -39,16 +39,8 @@ export type INavigationBarProps = {
  * only modules that are available to the user are shown. See the example below.
  */
 const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
-
-
-  const {logout} = useArkitektLogin()
-  const {remove} = useArkitektConnect()
-
-
-
-
-
-
+  const { logout } = useArkitektLogin();
+  const { remove } = useArkitektConnect();
 
   return (
     <NavigationMenu
@@ -121,12 +113,12 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
             </DroppableNavLink>
           </RekuestGuard>
           <DroppableNavLink key={"Settings"} to={"settings"}>
-              {({ isActive }) => (
-                <NavigationMenuLink active={isActive}>
-                  <GoWorkflow />
-                </NavigationMenuLink>
-              )}
-            </DroppableNavLink>
+            {({ isActive }) => (
+              <NavigationMenuLink active={isActive}>
+                <GoWorkflow />
+              </NavigationMenuLink>
+            )}
+          </DroppableNavLink>
         </div>
 
         <DropdownMenu>
@@ -153,11 +145,8 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
             </DropdownMenuGroup>
 
             <div className="flex flex-row gap-2">
-                <Button onClick={() => logout()}>Logout</Button>{" "}
-              
-                {" "}
-                <Button onClick={() => remove()}>Unconnect</Button>{" "}
-              <ModeToggle />
+              <Button onClick={() => logout()}>Logout</Button>{" "}
+              <Button onClick={() => remove()}>Unconnect</Button> <ModeToggle />
             </div>
           </DropdownMenuContent>
         </DropdownMenu>

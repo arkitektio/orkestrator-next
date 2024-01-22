@@ -1,0 +1,5 @@
+mutation PullFlavour($id: ID!) {
+  pullFlavour(input: { id: $id }) {
+    id
+  }
+}

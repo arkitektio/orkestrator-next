@@ -15,8 +15,8 @@ export const AppConfiguration = () => {
       <LokNextAutoConfigure />
       <RekuestNextAutoConfigure />
       <MikroNextAutoConfigure />
-      <OmeroArkAutoConfigure/>
-      <PortAutoConfigure/>
+      <OmeroArkAutoConfigure />
+      <PortAutoConfigure />
       <AutoConfiguration
         wellKnownEndpoints={WELL_KNOWN_ENDPOINTS} // this configures fakts to use the well known endpoints in order to discover the other services
       />

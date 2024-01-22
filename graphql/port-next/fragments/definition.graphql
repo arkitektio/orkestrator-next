@@ -1,0 +1,16 @@
+fragment Definition on Definition {
+  id
+  name
+  hash
+  description
+  args {
+    kind
+  }
+}
+
+fragment ListDefinition on Definition {
+  id
+  name
+  hash
+  description
+}

@@ -12,7 +12,8 @@ export const PublicRouter: React.FC<Props> = (props) => {
   return (
     <AppLayout navigationBar={<PublicNavigationBar />}>
       <Routes>
-        <Route path="callback" element={<Callback />} /> {/* This is the callback route for the herre provider, and needs to be publicalyl available. (Represents Oauth2 Callback)*/}
+        <Route path="callback" element={<Callback />} />{" "}
+        {/* This is the callback route for the herre provider, and needs to be publicalyl available. (Represents Oauth2 Callback)*/}
         <Route index element={<Hero />} />
       </Routes>
     </AppLayout>

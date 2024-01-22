@@ -10,14 +10,18 @@ import { useNavigate } from "react-router-dom";
 import { RekuestWorkspace } from "@/linkers";
 
 const Page = () => {
-
   const navigate = useNavigate();
 
   return (
     <PageLayout
       actions={
         <>
-          <FormDialogAction label="Create" onSubmit={(id) => {navigate(RekuestWorkspace.linkBuilder(id))}}>
+          <FormDialogAction
+            label="Create"
+            onSubmit={(id) => {
+              navigate(RekuestWorkspace.linkBuilder(id));
+            }}
+          >
             <CreateWorkspaceForm />
           </FormDialogAction>
         </>

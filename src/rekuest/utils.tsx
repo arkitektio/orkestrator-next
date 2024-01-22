@@ -42,10 +42,13 @@ export const assignWidgetToInput = (
     ...rest,
     kind: assignWidgetTypeToKind(widget.__typename),
   };
-  if (input.choices) [
-    input.choices = input.choices.map((c) => ({ ...c, __typename: undefined })),
-  ]
-
+  if (input.choices)
+    [
+      (input.choices = input.choices.map((c) => ({
+        ...c,
+        __typename: undefined,
+      }))),
+    ];
 
   return input;
 };
@@ -73,9 +76,13 @@ export const returnWidgetToInput = (
     ...rest,
     kind: returnWidgetTypeToKind(widget.__typename),
   };
-  if (input.choices) [
-    input.choices = input.choices.map((c) => ({ ...c, __typename: undefined })),
-  ]
+  if (input.choices)
+    [
+      (input.choices = input.choices.map((c) => ({
+        ...c,
+        __typename: undefined,
+      }))),
+    ];
 
   return input;
 };

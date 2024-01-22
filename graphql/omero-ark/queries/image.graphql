@@ -4,7 +4,6 @@ query ListImages {
   }
 }
 
-
 query GetImage($id: ID!) {
   image(id: $id) {
     ...Image

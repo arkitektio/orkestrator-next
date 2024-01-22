@@ -9,9 +9,7 @@ import { OmeroArkDataset } from "@/linkers";
 import { withOmeroArk } from "@jhnnsrs/omero-ark";
 import React from "react";
 import { useParams } from "react-router";
-import {
-  useGetDatasetQuery
-} from "../api/graphql";
+import { useGetDatasetQuery } from "../api/graphql";
 import ImageCard from "../components/cards/ImageCard";
 import { Komments } from "@/lok-next/components/komments/Komments";
 
@@ -22,20 +20,17 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   if (!id) return <></>;
 
   const { data } = withOmeroArk(useGetDatasetQuery)({
-      variables: {id},
-    },
-  );
+    variables: { id },
+  });
 
   return (
-    <PageLayout actions={<OmeroArkDataset.Actions id={id} />}  sidebars={<Komments identifier="@omero-ark/dataset" object={id} />}>
+    <PageLayout
+      actions={<OmeroArkDataset.Actions id={id} />}
+      sidebars={<Komments identifier="@omero-ark/dataset" object={id} />}
+    >
       <DetailPane className="p-3 @container">
         <DetailPaneHeader>
-          <DetailPaneTitle
-            actions={
-              <>
-              </>
-            }
-          >
+          <DetailPaneTitle actions={<></>}>
             {data?.dataset?.name}
           </DetailPaneTitle>
         </DetailPaneHeader>
@@ -52,10 +47,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
             ))}
           </div>
         </div>
-        <ListRender
-          title="Contained Images"
-          array={data?.dataset?.images}
-        >
+        <ListRender title="Contained Images" array={data?.dataset?.images}>
           {(item, index) => <ImageCard image={item} key={index} />}
         </ListRender>
       </DetailPane>

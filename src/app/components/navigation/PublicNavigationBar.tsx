@@ -7,7 +7,7 @@ export type INavigationBarProps = {
 };
 
 /**
- * 
+ *
  *  The public navigation bar is the main navigation bar of the application.
  *  @todo: This component should be replaced with amore useful component for the public application.
  */

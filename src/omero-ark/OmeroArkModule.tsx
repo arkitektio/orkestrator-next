@@ -14,13 +14,13 @@ export const OmeroArkModule: React.FC<Props> = (props) => {
     <OmeroArkGuard fallback={<>Loading</>}>
       <ModuleLayout>
         <ConnectedGuard>
-        <Routes>
-          <Route index element={<HomePage />} />
-          <Route path="projects/:id" element={<ProjectPage/>} />
-          <Route path="datasets/:id" element={<DatasetPage/>} />
-          <Route path="images/:id" element={<ImagePage/>} />
-          <Route path="*" element={<> NOTHING</>} />
-        </Routes>
+          <Routes>
+            <Route index element={<HomePage />} />
+            <Route path="projects/:id" element={<ProjectPage />} />
+            <Route path="datasets/:id" element={<DatasetPage />} />
+            <Route path="images/:id" element={<ImagePage />} />
+            <Route path="*" element={<> NOTHING</>} />
+          </Routes>
         </ConnectedGuard>
       </ModuleLayout>
     </OmeroArkGuard>

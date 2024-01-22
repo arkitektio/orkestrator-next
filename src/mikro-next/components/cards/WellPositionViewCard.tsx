@@ -1,4 +1,8 @@
-import { MikroFluorophore, MikroLabelView, MikroMultiPositionView } from "@/linkers";
+import {
+  MikroFluorophore,
+  MikroLabelView,
+  MikroMultiPositionView,
+} from "@/linkers";
 import { MateFinder } from "../../../mates/types";
 import { LabelViewFragment, WellPositionViewFragment } from "../../api/graphql";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,7 +39,7 @@ const TheCard = ({ view, mates }: Props) => {
                       {view.row} nm
                     </div>
                     <div className="text-muted-foreground flex flex-row gap-1">
-                      <ArrowUpIcon /> {view.column} 
+                      <ArrowUpIcon /> {view.column}
                     </div>
                   </div>
                 </div>

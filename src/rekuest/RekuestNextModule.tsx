@@ -10,7 +10,7 @@ import Home from "./pages/Home";
 
 interface Props {}
 /**
- * 
+ *
  * The Rekuest Module is the entrypoint to all specfic rekuest functionality.
  * It provides the routes for the rekuest module.
  */

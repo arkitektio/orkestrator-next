@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/tooltip";
 import { portToLabel } from "@jhnnsrs/rekuest-next";
 
-
 export const Args = ({
   instream,
   onClick,

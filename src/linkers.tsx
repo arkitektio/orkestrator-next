@@ -10,7 +10,6 @@ import { buildModuleLink, buildSmart } from "@/providers/smart/builder";
 // - `ListLink` a component that can be used to link to the list page of the smart model
 // - `linkBuilder` a function that can be used to build links to the smart model
 
-
 export const RekuestAssignation = buildSmart(
   "@rekuest-next/assignation",
   "rekuest/assignation",
@@ -45,23 +44,14 @@ export const OmeroArkProject = buildSmart(
   "omero-ark/projects",
 );
 
-export const PortPod = buildSmart(
-  "@port-next/pod",
-  "port-next/pod",
-);
-
+export const PortPod = buildSmart("@port-next/pod", "port-next/pod");
 
 export const OmeroArkDataset = buildSmart(
   "@omero-ark/dataset",
   "omero-ark/datasets",
 );
 
-export const OmeroArkImage = buildSmart(
-  "@omero-ark/image",
-  "omero-ark/images",
-);
-
-
+export const OmeroArkImage = buildSmart("@omero-ark/image", "omero-ark/images");
 
 export const MikroHistory = buildSmart(
   "@mikronext/history",

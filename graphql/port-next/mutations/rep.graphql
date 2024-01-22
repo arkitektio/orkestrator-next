@@ -1,0 +1,17 @@
+mutation CreateGithubRepo(
+  $user: String!
+  $repo: String!
+  $branch: String!
+  $name: String!
+) {
+  createGithubRepo(
+    input: { user: $user, repo: $repo, branch: $branch, name: $name }
+  ) {
+    id
+  }
+}
+mutation RescanRepos {
+  rescanRepos {
+    id
+  }
+}

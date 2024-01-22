@@ -22,12 +22,12 @@ export const PageLayout = ({
     <ResizablePanelGroup autoSaveId="page" direction="horizontal">
       <ResizablePanel className="" defaultSize={80}>
         <div className="h-full flex flex-col p-2 relative">
-          <div className="flex-shrink">
+          <div className="px-3 flex-shrink">
             <BreadCrumbs />
           </div>
-          <ScrollArea className="flex-grow @container overflow-y-auto">
+          <div className="p-3 flex-grow @container flex flex-col">
             {children}
-          </ScrollArea>
+          </div>
           <Actionbar>{actions}</Actionbar>
         </div>
       </ResizablePanel>

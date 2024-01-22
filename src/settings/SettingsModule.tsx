@@ -7,12 +7,12 @@ interface Props {}
 
 export const SettingsModule: React.FC<Props> = (props) => {
   return (
-      <ModuleLayout>
-        <Routes>
-          <Route index element={<HomePage />} />
-          <Route path="*" element={<> NOTHING</>} />
-        </Routes>
-      </ModuleLayout>
+    <ModuleLayout>
+      <Routes>
+        <Route index element={<HomePage />} />
+        <Route path="*" element={<> NOTHING</>} />
+      </Routes>
+    </ModuleLayout>
   );
 };
 

@@ -97,8 +97,8 @@ export const NodeInfo = (props: { id: string }) => {
               </div>
             </div>
             <div className="flex flex-col gap-2">
-                {data?.node?.protocols?.map(p => p.name)}
-              </div>
+              {data?.node?.protocols?.map((p) => p.name)}
+            </div>
           </DetailPaneDescription>
         </DetailPaneHeader>
 

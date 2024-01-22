@@ -1,0 +1,5 @@
+query ListReleases {
+  releases {
+    ...ListRelease
+  }
+}

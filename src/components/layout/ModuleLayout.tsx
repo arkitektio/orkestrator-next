@@ -1,5 +1,9 @@
 import { ScrollArea } from "@radix-ui/react-scroll-area";
-import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "../ui/resizable";
 
 export type ModuleLayoutProps = {
   children: React.ReactNode;
@@ -8,22 +12,22 @@ export type ModuleLayoutProps = {
 
 export const ModuleLayout = ({ pane, children }: ModuleLayoutProps) => {
   return (
-    <PanelGroup autoSaveId="module" direction="horizontal">
+    <ResizablePanelGroup autoSaveId="module" direction="horizontal">
       {pane && (
         <>
-          <Panel
+          <ResizablePanel
             defaultSize={10}
             className="border-r border-gray-500 bg-background"
           >
             <ScrollArea className="flex flex-col h-full overflow-y-hidden">
               {pane}
             </ScrollArea>
-          </Panel>
-          <PanelResizeHandle className="h-full w-1 opacity-0 hover:opacity-80 bg-accent translate-x-[-50%]" />
+          </ResizablePanel>
+          <ResizableHandle className="h-full w-1 opacity-0 hover:opacity-80 bg-accent translate-x-[-50%]" />
         </>
       )}
 
-      <Panel defaultSize={90}>{children}</Panel>
-    </PanelGroup>
+      <ResizablePanel defaultSize={90}>{children}</ResizablePanel>
+    </ResizablePanelGroup>
   );
 };

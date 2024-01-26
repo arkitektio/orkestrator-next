@@ -1,5 +1,6 @@
 import React from "react";
 import PodList from "../components/lists/PodList";
+import DefinitionList from "../components/lists/DefinitionList";
 import { PageLayout } from "@/components/layout/PageLayout";
 import ReleaseCarousel from "../components/carousels/ReleaseCarousel";
 import { withPort } from "@jhnnsrs/port-next";
@@ -56,6 +57,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       </div>
       <div className="flex-1">
         <PodList />
+        <DefinitionList/>
       </div>
     </PageLayout>
   );

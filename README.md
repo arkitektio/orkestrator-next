@@ -1,27 +1,79 @@
-# React + TypeScript + Vite
+[![codecov](https://codecov.io/gh/arkitektio/lok-server-next/branch/main/graph/badge.svg?token=UGXEA2THBV)](https://codecov.io/gh/arkitektio/orkestrator-next)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/arkitektio/orkestrator-next/)
+![Maintainer](https://img.shields.io/badge/maintainer-jhnnsrs-blue)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# Orkestrator (Next)
 
-Currently, two official plugins are available:
+This repository includes the Next version of Orkestrator frontend 
+for the arkitekt platform. It is currently under development and not ready for production. 
+If you are looking for the current version of Orkestrator, you can find it [here](https://github.com/arkitektio/orkestrator).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Roadmap
 
-## Expanding the ESLint configuration
+Before the new version of Orkestrator can be merged into the main repository, the following features need to be implemented:
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## General Next Features
 
-- Configure the top-level `parserOptions` property like this:
+- [x] Build around arkitekt-ts (instead of custom graphql clients)
+- [x] Move Basic UI to Shadcn/UI
+- [x] Move to Vite
+- [x] Move to React 18
+- [x] Move to new GraphQL Protocols (subscriptions based on graphql-ws, standardized error and param handling (pagination(filter))
+- [ ] Basic UI Testing
+- [ ] User Stories (e.g. documentation for specific user stories)
+- [ ] Documentation, Documentation, Documentation
+- [ ] Move to React Query (suggested)
+- [ ] Move to React TanStack Router (suggested)
+- [ ] Move to Tauri 2.0 when it is released (suggested)
+- [x] Lazy Load Modules (only if corresponding service in Deployment)
+- [ ] Hosted Deployment (e.g. on Vercel)
 
-```js
-   parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-   },
-```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+## Service Specific Next Features
+
+### Lok
+
+- [x] User Management
+- [ ] Advanced App and Config Management (around Fakts)
+
+### Mikro
+
+- [x] Move to Mikro Next
+- [ ] Establish "Views" as central concept
+- [ ] Deprecated OMERO metadata support
+
+### Fluss
+
+- [x] Establish new Workflow UI + Engine (typesafe, wizard, ...) (looks nice)
+- [ ] Move to Fluss Next
+- [x] More tighlty integrate Schedulers in UI
+- [ ] Allow Resource Management in UI ( provisional UI for resource management)
+
+### Rekuest
+
+- [x] Move to Rekuest Next
+- [ ] Build UI for scheduled tasks, and task management
+- [ ] Hookify Rekuest (useNode, useTemplate, ...)
+
+### Kabinet
+
+- [x] Establish Kabinet
+- [ ] Create App Store like Feature
+- [ ] Create App Store UI
+
+### Omero-Ark
+
+- [ ] Improve Omero UI
+- [ ] Allow metadata editing in UI
+
+### Port
+
+- [x] Build deprecated Port UI (Port will be replaced by Kabinet)
+
+### Kluster
+
+- [ ] Build Kluster UI
+- [ ] Elaborate on Dask-Cluster integration
+- [ ] Provide support for other cluster 
+ 
+

@@ -1,9 +1,7 @@
-import { RekuestGuard } from "@jhnnsrs/rekuest-next";
+import { Route, Routes } from "react-router-dom";
 import { AppProvider } from "./AppProvider";
-import { Routes, Route } from "react-router-dom";
-import PublicRouter from "./routers/PublicRouter";
 import PrivateRouter from "./routers/PrivateRouter";
-import { LogoutButton, UnconnectButton } from "@jhnnsrs/arkitekt";
+import PublicRouter from "./routers/PublicRouter";
 
 // Entrypoint of the application.
 // We provide two main routers, one for the public routes, and one for the private routes.

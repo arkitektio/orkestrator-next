@@ -12,13 +12,21 @@ import { FieldProps } from "./types";
 
 export const IntField = (props: FieldProps & { placeholder?: string }) => {
   const form = useFormContext();
+
+  console.log("Reanderer");
   return (
     <FormField
       control={form.control}
+      rules={{
+        validate: (v, values) => {
+          console.log("Validating", values);
+          return v < 1 || "Value must be greater than 3";
+        },
+      }}
       name={props.name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{props.name ? props.label : props.name}</FormLabel>
+          <FormLabel>{props.label ? props.label : props.name}</FormLabel>
           <FormControl>
             <Input
               placeholder={

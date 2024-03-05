@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { RekuestModuleLink } from "@/linkers";
 import {
   EasyGuard,
@@ -7,25 +8,32 @@ import {
 import { RekuestGuard } from "@jhnnsrs/rekuest-next";
 
 export const ConnectButton = () => {
-  const { registeredEndpoints, load } = useArkitektConnect();
+  const { registeredEndpoints, load, remove } = useArkitektConnect();
 
   return (
     <>
       {registeredEndpoints.map((endpoint) => {
         return (
-          <button onClick={() => load({ endpoint })}>
+          <Button onClick={() => load({ endpoint })}>
             Connect to {endpoint.name}
-          </button>
+          </Button>
         );
       })}
+      Rendered
     </>
   );
 };
 
 export const LoginButton = () => {
   const { login } = useArkitektLogin();
+  const { remove } = useArkitektConnect();
 
-  return <button onClick={() => login()}>Login</button>;
+  return (
+    <>
+      <Button onClick={() => remove()}>Remove</Button>
+      <Button onClick={() => login()}>Login</Button>
+    </>
+  );
 };
 
 /**

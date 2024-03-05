@@ -15,6 +15,7 @@ import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { CollapsibleTrigger } from "@radix-ui/react-collapsible";
 import { Button } from "@/components/ui/button";
 import { ChevronUpIcon, DoubleArrowUpIcon } from "@radix-ui/react-icons";
+import { useForm } from "react-hook-form";
 
 export type FilledGroup = PortGroup & {
   ports: Port[];
@@ -153,7 +154,7 @@ export const Constants = (props: {
   });
 
   function onSubmit(data: any) {
-    console.log(data);
+    console.log("submiting", data);
   }
 
   const { registry } = useWidgetRegistry();
@@ -168,6 +169,44 @@ export const Constants = (props: {
             onToArg={props.onToArg}
             onToGlobal={props.onToGlobal}
           />
+          <button type="submit" className="btn">
+            {" "}
+            Submit{" "}
+          </button>
+        </form>
+      </Form>
+    </>
+  );
+};
+
+export const TestConstants = (props: {
+  ports: PortFragment[];
+  overwrites: { [key: string]: any };
+  onToArg?: (port: PortFragment) => void;
+  onToGlobal?: (port: PortFragment, key?: string | undefined) => void;
+}) => {
+  const form = useForm({});
+
+  function onSubmit(data: any) {
+    console.log("submiting", data);
+  }
+
+  const { registry } = useWidgetRegistry();
+
+  return (
+    <>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
+          <ArgsContainer
+            registry={registry}
+            ports={props.ports}
+            onToArg={props.onToArg}
+            onToGlobal={props.onToGlobal}
+          />
+          <button type="submit" className="btn">
+            {" "}
+            Submit{" "}
+          </button>
         </form>
       </Form>
     </>

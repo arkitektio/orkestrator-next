@@ -12,4 +12,8 @@ export const manifest: Manifest = {
 export const SMART_MODEL_DROP_TYPE = "smart";
 
 // Which endpoints should be used to discover the fakts services
-export const WELL_KNOWN_ENDPOINTS = ["127.0.0.1:8010", "127.0.0.1:8000"];
+export const WELL_KNOWN_ENDPOINTS = [
+  "127.0.0.1:8010",
+  "127.0.0.1:8000",
+  "127.0.0.1:12000",
+];

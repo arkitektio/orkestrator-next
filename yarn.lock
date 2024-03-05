@@ -5810,6 +5810,11 @@ setimmediate@^1.0.5:
   resolved "https://registry.yarnpkg.com/setimmediate/-/setimmediate-1.0.5.tgz#290cbb232e306942d7d7ea9b83732ab7856f8285"
   integrity sha512-MATJdZp8sLqDl/68LfQmbP8zKPLQNV6BIZoIgrscFDQ+RsvK/BxeDQOgyxKKoh0y/8h3BqVFnCqQ/gd+reiIXA==
 
+shadowrealm-api@^0.8.3:
+  version "0.8.3"
+  resolved "https://registry.yarnpkg.com/shadowrealm-api/-/shadowrealm-api-0.8.3.tgz#69e1a8edb85d43e659d90822a1e5108d2e200acf"
+  integrity sha512-9m694bB4qhvM+GiEjOeXY228bK54TQutEAo94PiDkxAMN3Kz/2UWMTRKL7ytEHJ1eHVFD2rUuTj8CifXF3U1mA==
+
 shebang-command@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/shebang-command/-/shebang-command-2.0.0.tgz#ccd0af4f8835fbdc265b82461aaf0c36663f34ea"

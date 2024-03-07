@@ -17,7 +17,7 @@ import {
 import { Constants } from "@/reaktion/base/Constants";
 import { InStream } from "@/reaktion/base/Instream";
 import { OutStream } from "@/reaktion/base/Outstream";
-import { ReactiveImplementation } from "@/rekuest/api/graphql";
+import { ReactiveImplementation } from "@/reaktion/api/graphql";
 import React from "react";
 import { ReactiveNodeData, ReactiveNodeProps } from "../../types";
 import { portToLabel } from "@jhnnsrs/rekuest-next";

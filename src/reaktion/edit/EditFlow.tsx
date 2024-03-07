@@ -8,8 +8,6 @@ import {
 } from "@/components/ui/card";
 import { SMART_MODEL_DROP_TYPE } from "@/constants";
 import {
-  ConstantNodeDocument,
-  ConstantNodeQuery,
   FlowFragment,
   GlobalArg,
   GlobalArgFragment,
@@ -21,7 +19,7 @@ import {
   ReactiveImplementation,
   ReactiveTemplateDocument,
   ReactiveTemplateQuery,
-} from "@/rekuest/api/graphql";
+} from "@/reaktion/api/graphql";
 import { portToDefaults, useRekuest } from "@jhnnsrs/rekuest-next";
 import React, {
   useCallback,
@@ -56,7 +54,6 @@ import {
   NodeTypes,
 } from "../types";
 import {
-  arkitektNodeToFlowNode,
   edges_to_flowedges,
   flowEdgeToInput,
   flowNodeToInput,
@@ -65,9 +62,9 @@ import {
   listPortToSingle,
   nodeIdBuilder,
   nodes_to_flownodes,
-  predicateNodeToFlowNode,
   reactiveTemplateToFlowNode,
 } from "../utils";
+import {arkitektNodeToFlowNode, predicateNodeToFlowNode} from "../plugins/rekuest";
 import { EditRiverContext } from "./context";
 import { LabeledShowEdge } from "./edges/LabeledShowEdge";
 import { ArkitektTrackNodeWidget } from "./nodes/ArkitektWidget";
@@ -105,6 +102,7 @@ import {
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArkitektFilterNodeWidget } from "./nodes/ArkitektFilterWidget";
+import { ConstantNodeDocument, ConstantNodeQuery } from "@/rekuest/api/graphql";
 
 const nodeTypes: NodeTypes = {
   ArkitektGraphNode: ArkitektTrackNodeWidget,

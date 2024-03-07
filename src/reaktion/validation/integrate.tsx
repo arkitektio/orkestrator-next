@@ -4,7 +4,7 @@ import {
   GraphNodeKind,
   PortFragment,
   ReactiveImplementation,
-} from "@/rekuest/api/graphql";
+} from "@/reaktion/api/graphql";
 import { Connection, XYPosition } from "reactflow";
 import { FlowEdge, FlowNode, FlowNodeData } from "../types";
 import {

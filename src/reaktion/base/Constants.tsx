@@ -185,7 +185,10 @@ export const TestConstants = (props: {
   onToArg?: (port: PortFragment) => void;
   onToGlobal?: (port: PortFragment, key?: string | undefined) => void;
 }) => {
-  const form = useForm({});
+  const form = usePortForm({
+    ports: props.ports,
+    overwrites: props.overwrites,
+  });
 
   function onSubmit(data: any) {
     console.log("submiting", data);

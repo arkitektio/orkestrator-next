@@ -17,7 +17,7 @@ export const usePortForm = (props: {
 }) => {
   const hash = portHash(props.ports);
 
-  const defaultValues = useCallback(() => {
+  const defaultValues = useCallback(async () => {
     return portToDefaults(props.ports, props.overwrites || {});
   }, [hash, props.overwrites]);
 

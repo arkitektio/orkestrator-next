@@ -27,6 +27,7 @@ import NodeDisplay from "@/rekuest/components/displays/NodeDisplay";
 import { MikroNextWard } from "@/mikro-next/MikroNextWard";
 import { OmeroArkProvider } from "@jhnnsrs/omero-ark";
 import { PortProvider } from "@jhnnsrs/port-next";
+import { FlussProvider } from "@jhnnsrs/fluss-next";
 
 const displayRegistry = {
   "@mikro-next/image": ImageDisplay,
@@ -44,6 +45,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         <CommandProvider>
           <SmartProvider>
             <RekuestProvider>
+              <FlussProvider>
               <PortProvider>
                 <MikroNextProvider>
                   <OmeroArkProvider>
@@ -82,6 +84,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                   </OmeroArkProvider>
                 </MikroNextProvider>
               </PortProvider>
+              </FlussProvider>
             </RekuestProvider>
           </SmartProvider>
         </CommandProvider>

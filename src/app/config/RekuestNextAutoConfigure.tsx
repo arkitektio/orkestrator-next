@@ -10,11 +10,11 @@ export const RekuestNextAutoConfigure: React.FC<{}> = (props) => {
   const { fakts } = useFakts();
 
   useEffect(() => {
-    if (token && fakts && fakts.rekuest) {
+    if (token && fakts && fakts.rekuest_next) {
       configure({
-        secure: fakts.rekuest.secure,
-        wsEndpointUrl: fakts.rekuest.ws_endpoint_url,
-        endpointUrl: fakts.rekuest.endpoint_url,
+        secure: fakts.rekuest_next.secure,
+        wsEndpointUrl: fakts.rekuest_next.ws_endpoint_url,
+        endpointUrl: fakts.rekuest_next.endpoint_url,
         possibleTypes: result.possibleTypes,
         retrieveToken: () => token,
       });

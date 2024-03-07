@@ -1390,6 +1390,11 @@
   dependencies:
     any-signal "^4.1.1"
 
+"@jhnnsrs/fluss-next@^0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@jhnnsrs/fluss-next/-/fluss-next-0.0.1.tgz#1d9f83168cafdddb077fb1b059be5e746001b148"
+  integrity sha512-MfM2kQdNIiZaED6K4Vz9Dp3XY0H4loqKleBaAM0jaQLFlMdDlhRucyZ2kJZU2qMxEcM9G0ImsDuz6GxwFBHDXg==
+
 "@jhnnsrs/fluss@^0.0.2":
   version "0.0.2"
   resolved "https://registry.npmjs.org/@jhnnsrs/fluss/-/fluss-0.0.2.tgz"

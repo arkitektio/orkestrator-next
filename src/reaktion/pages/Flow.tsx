@@ -1,10 +1,10 @@
+import { useFlowQuery } from "@/reaktion/api/graphql";
 import { EditFlow } from "@/reaktion/edit/EditFlow";
-import { useFlowQuery } from "@/rekuest/api/graphql";
-import { RekuestGuard, withRekuest } from "@jhnnsrs/rekuest-next";
+import { FlussGuard, withFluss } from "@jhnnsrs/fluss";
 import { useParams } from "react-router-dom";
 
 export const FlowDetail = (props: { id: string }) => {
-  const { data, error } = withRekuest(useFlowQuery)({
+  const { data, error } = withFluss(useFlowQuery)({
     variables: {
       id: props.id,
     },
@@ -23,9 +23,9 @@ function Page() {
 
   return (
     <>
-      <RekuestGuard>
+      <FlussGuard>
         <FlowDetail id={id} />
-      </RekuestGuard>
+      </FlussGuard>
     </>
   );
 }

@@ -1,11 +1,11 @@
 overwrite: true
-schema: "http://127.0.0.1:8020/graphql"
-documents: "graphql/rekuest-next/**/*.graphql"
+schema: "http://127.0.0.1:10070/graphql"
+documents: "graphql/fluss-next/**/*.graphql"
 generates:
-  src/rekuest/api/fragments.ts:
+  src/reaktion/api/fragments.ts:
     plugins:
       - "fragment-matcher"
-  src/rekuest/api/graphql.ts:
+  src/reaktion/api/graphql.ts:
     plugins:
       - "typescript"
       - "typescript-operations"
@@ -13,8 +13,6 @@ generates:
     config:
       withHooks: true
       reactApolloVersion: 3
-      arrayInputCoercion: false
-
-  src/rekuest/api/graphql.schema.json:
+  src/reaktion/graphql.schema.json:
     plugins:
       - "introspection"

@@ -1,20 +1,19 @@
-import { EditFlow } from "@/reaktion/edit/EditFlow";
 import {
-  useFlowQuery,
   useUpdateWorkspaceMutation,
-  useWorkspaceQuery,
-} from "@/rekuest/api/graphql";
-import { RekuestGuard, withRekuest } from "@jhnnsrs/rekuest-next";
+  useWorkspaceQuery
+} from "@/reaktion/api/graphql";
+import { EditFlow } from "@/reaktion/edit/EditFlow";
+import { withFluss } from "@jhnnsrs/fluss";
 import { useParams } from "react-router-dom";
 
 export const WorkspaceDetail = (props: { id: string }) => {
-  const { data, error } = withRekuest(useWorkspaceQuery)({
+  const { data, error } = withFluss(useWorkspaceQuery)({
     variables: {
       id: props.id,
     },
   });
 
-  const [saveFlow] = withRekuest(useUpdateWorkspaceMutation)();
+  const [saveFlow] = withFluss(useUpdateWorkspaceMutation)();
 
   console.log(error?.message, data);
 

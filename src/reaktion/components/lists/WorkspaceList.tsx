@@ -1,10 +1,10 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { MikroDataset, RekuestWorkspace } from "@/linkers";
+import { RekuestWorkspace } from "@/linkers";
 import {
   OffsetPaginationInput,
   useWorkspacesQuery,
-} from "@/rekuest/api/graphql";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
+} from "@/reaktion/api/graphql";
+import { withFluss } from "@jhnnsrs/fluss";
 import WorkspaceCard from "../cards/WorkspaceCard";
 
 export type Props = {
@@ -12,7 +12,7 @@ export type Props = {
 };
 
 const List = ({ pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = withRekuest(
+  const { data, error, subscribeToMore, refetch } = withFluss(
     useWorkspacesQuery,
   )({
     variables: { pagination },

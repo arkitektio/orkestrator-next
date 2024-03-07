@@ -11,6 +11,7 @@
     "rekuest": "graphql-codegen --config rekuest.yml",
     "mikro": "graphql-codegen --config mikro.yml",
     "omero-ark": "graphql-codegen --config omero-ark.yml",
+    "fluss": "graphql-codegen --config fluss.yml",
     "port": "graphql-codegen --config port-next.yml",
     "lok": "graphql-codegen --config lok.yml"
   },
@@ -22,6 +23,7 @@
     "@jhnnsrs/arkitekt": "^0.1.11",
     "@jhnnsrs/fakts": "^0.0.24",
     "@jhnnsrs/fluss": "^0.0.2",
+    "@jhnnsrs/fluss-next": "^0.0.1",
     "@jhnnsrs/herre": "^0.0.19",
     "@jhnnsrs/lok-next": "^0.0.1",
     "@jhnnsrs/mikro-next": "^0.0.2",

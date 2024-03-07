@@ -3,23 +3,16 @@ import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { useCreateWorkspaceMutation } from "@/rekuest/api/graphql";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
+import { useCreateWorkspaceMutation } from "@/reaktion/api/graphql";
+import { withFluss } from "@jhnnsrs/fluss";
 import { useForm } from "react-hook-form";
 
 export const CreateWorkspaceForm = (props: {}) => {
-  const [add] = withRekuest(useCreateWorkspaceMutation)();
+  const [add] = withFluss(useCreateWorkspaceMutation)();
 
   const dialog = useGraphQlFormDialog(add);
 
-  const form = useForm({
-    defaultValues: {
-      context: undefined,
-      rScale: 1,
-      gScale: 0,
-      bScale: 0,
-    },
-  });
+  const form = useForm({});
 
   return (
     <>

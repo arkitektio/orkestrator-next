@@ -1,5 +1,5 @@
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
-import { RekuestGuard } from "@jhnnsrs/rekuest-next";
+import { FlussGuard } from "@jhnnsrs/fluss-next";
 import React from "react";
 import { Route, Routes } from "react-router";
 import Flow from "./pages/Flow";
@@ -19,7 +19,7 @@ interface Props {}
 
 const Module: React.FC<Props> = (props) => {
   return (
-    <RekuestGuard fallback={<>Loading</>}>
+    <FlussGuard fallback={<>Loading</>}>
       <ModuleLayout
         pane={
           <>
@@ -33,7 +33,7 @@ const Module: React.FC<Props> = (props) => {
           <Route path="flows/:id" element={<Flow />} />
         </Routes>
       </ModuleLayout>
-    </RekuestGuard>
+    </FlussGuard>
   );
 };
 

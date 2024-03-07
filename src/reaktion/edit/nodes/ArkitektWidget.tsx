@@ -1,17 +1,4 @@
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { Args } from "@/reaktion/base/Args";
-import { Constants } from "@/reaktion/base/Constants";
-import { Constream } from "@/reaktion/base/Constream";
-import { InStream } from "@/reaktion/base/Instream";
-import { NodeShowLayout } from "@/reaktion/base/NodeShow";
-import { OutStream } from "@/reaktion/base/Outstream";
-import { NodeKind, PortFragment } from "@/rekuest/api/graphql";
-import { NodeDescription } from "@jhnnsrs/rekuest-next";
-import React from "react";
-import { ArkitektNodeProps } from "../../types";
-import { useEditNodeErrors, useEditRiver } from "../context";
-import { Returns } from "@/reaktion/base/Returns";
 import { ContextMenuItem } from "@/components/ui/context-menu";
 import {
   Sheet,
@@ -21,7 +8,18 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+import { Args } from "@/reaktion/base/Args";
+import { Constants } from "@/reaktion/base/Constants";
+import { InStream } from "@/reaktion/base/Instream";
+import { NodeShowLayout } from "@/reaktion/base/NodeShow";
+import { OutStream } from "@/reaktion/base/Outstream";
+import { PortFragment } from "@/rekuest/api/graphql";
+import { useNodeDescription } from "@jhnnsrs/rekuest-next";
 import { GearIcon } from "@radix-ui/react-icons";
+import React from "react";
+import { ArkitektNodeProps } from "../../types";
+import { useEditNodeErrors, useEditRiver } from "../context";
 
 export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
   data: { ins, outs, constants, ...data },
@@ -54,6 +52,9 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
   };
 
   const errors = useEditNodeErrors(id);
+
+  
+  const description = useNodeDescription({description: data.description, variables: data.constantsMap})
 
   return (
     <NodeShowLayout
@@ -94,10 +95,7 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
           </div>
         </CardTitle>
         <CardDescription>
-          <NodeDescription
-            description={data.description}
-            variables={data.constantsMap}
-          />
+          {description}
         </CardDescription>
         {expanded && (
           <div>

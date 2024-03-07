@@ -10,16 +10,16 @@ import {
 import { yupResolver } from "@hookform/resolvers/yup";
 import { EasyGuard } from "@jhnnsrs/arkitekt";
 import {
-  NodeDescription,
   Port,
   PortGroup,
   RekuestGuard,
   argDictToArgs,
   portToDefaults,
+  useNodeDescription,
   usePostman,
   useWidgetRegistry,
   withRekuest,
-  yupSchemaBuilder,
+  yupSchemaBuilder
 } from "@jhnnsrs/rekuest-next";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -95,9 +95,12 @@ export const PortForm = (props: {
     });
   }
 
+  
+  const description = useNodeDescription({description: props.description, variables: argDict})
+
   return (
     <>
-      <NodeDescription description={props.description} variables={argDict} />
+      {description}
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit, () => {

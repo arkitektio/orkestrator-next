@@ -25,6 +25,7 @@ import { cn, notEmpty } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { useDebounce } from "@uidotdev/usehooks";
+import { FieldProps } from "./types";
 
 export type Option = {
   label: string;
@@ -75,13 +76,15 @@ export type CreatableSearchFieldProps = {
   noOptionFoundPlaceholder?: string;
   search: SearchFunction;
   create: CreateFunction;
-};
+} & FieldProps;
 
 export const CreateableSearchField = ({
   name,
   label,
   create,
+  validate,
   search,
+  
   placeholder = "Please Select",
   commandPlaceholder = "Search...",
   noOptionFoundPlaceholder = "No options found",
@@ -136,6 +139,7 @@ export const CreateableSearchField = ({
     <FormField
       control={form.control}
       name={name}
+      rules={{validate}}
       render={({ field }) => (
         <>
           <FormItem className="flex flex-col">

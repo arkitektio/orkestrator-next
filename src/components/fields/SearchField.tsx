@@ -24,6 +24,7 @@ import {
 import { cn, notEmpty } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
+import { FieldProps } from "./types";
 
 export type Option = {
   label: string;
@@ -62,7 +63,7 @@ export type SearchFunction = (
   searching: SearchOptions,
 ) => Promise<(Option | null | undefined)[]>;
 
-export type SearchFieldProps = {
+export type SearchFieldProps  = {
   name: string;
   label?: string;
   description?: string;
@@ -70,11 +71,12 @@ export type SearchFieldProps = {
   commandPlaceholder?: string;
   noOptionFoundPlaceholder?: string;
   search: SearchFunction;
-};
+} & FieldProps;
 
 export const SearchField = ({
   name,
   label,
+  validate,
   search,
   placeholder = "Please Select",
   commandPlaceholder = "Search...",
@@ -113,6 +115,7 @@ export const SearchField = ({
     <FormField
       control={form.control}
       name={name}
+      rules={{validate: validate}}
       render={({ field }) => (
         <>
           <FormItem className="flex flex-col">

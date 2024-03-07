@@ -25,6 +25,7 @@ import { cn, notEmpty } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { Badge } from "../ui/badge";
+import { FieldProps } from "./types";
 
 export type Option = {
   label: string;
@@ -92,11 +93,12 @@ export type ListSearchFieldProps = {
   commandPlaceholder?: string;
   noOptionFoundPlaceholder?: string;
   search: SearchFunction;
-};
+} & FieldProps;
 
 export const ListSearchField = ({
   name,
   label,
+  validate,
   search,
   placeholder = "Please Select",
   commandPlaceholder = "Search...",
@@ -132,6 +134,7 @@ export const ListSearchField = ({
     <FormField
       control={form.control}
       name={name}
+      rules={{ validate: validate }}
       render={({ field }) => (
         <>
           <FormItem className="flex flex-col">

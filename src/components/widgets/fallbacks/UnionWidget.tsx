@@ -2,6 +2,7 @@ import { SearchField, SearchOptions } from "@/components/fields/SearchField";
 import { Form, FormField } from "@/components/ui/form";
 import { notEmpty } from "@/lib/utils";
 import { ChildPortFragment } from "@/rekuest/api/graphql";
+import { usePortValidate } from "@/rekuest/hooks/usePortValidator";
 import {
   InputWidgetProps,
   Port,
@@ -96,11 +97,12 @@ const SubForm = ({
 
 const UnionWidget: React.FC<InputWidgetProps> = ({ port, widget }) => {
   const form = useFormContext();
-
+  const validate = usePortValidate(port)
   return (
     <FormField
       control={form.control}
       name={port.key}
+      rules={{validate: validate}}
       render={({ field }) => (
         <SubForm
           variants={port.variants?.filter(notEmpty) || []}

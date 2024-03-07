@@ -101,8 +101,7 @@ export const ArgsContainer = ({
               })}
             </CollapsibleContent>
           </Collapsible>
-        );
-        <NanaContainer />;
+        )
       })}
     </div>
   );

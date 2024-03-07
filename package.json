@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@air/react-drag-to-select": "^5.0.8",
-    "@apollo/client": "^3.8.1",
+    "@apollo/client": "^3.9.6",
     "@formkit/auto-animate": "^0.7.0",
     "@hookform/resolvers": "^3.3.0",
     "@jhnnsrs/arkitekt": "^0.1.11",
@@ -28,7 +28,7 @@
     "@jhnnsrs/omero-ark": "^0.0.1",
     "@jhnnsrs/port-next": "^0.0.1",
     "@jhnnsrs/rekuest": "^0.0.15",
-    "@jhnnsrs/rekuest-next": "^0.0.3",
+    "@jhnnsrs/rekuest-next": "^0.0.6",
     "@radix-ui/react-aspect-ratio": "^1.0.3",
     "@radix-ui/react-avatar": "^1.0.3",
     "@radix-ui/react-collapsible": "^1.0.3",

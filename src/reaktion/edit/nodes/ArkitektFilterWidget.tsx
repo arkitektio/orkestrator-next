@@ -15,7 +15,7 @@ import { InStream } from "@/reaktion/base/Instream";
 import { NodeShowLayout } from "@/reaktion/base/NodeShow";
 import { OutStream } from "@/reaktion/base/Outstream";
 import { PortFragment } from "@/rekuest/api/graphql";
-import { NodeDescription } from "@jhnnsrs/rekuest-next";
+import { useNodeDescription } from "@jhnnsrs/rekuest-next";
 import { GearIcon } from "@radix-ui/react-icons";
 import React from "react";
 import { ArkitektNodeProps } from "../../types";
@@ -60,6 +60,8 @@ export const ArkitektFilterNodeWidget: React.FC<ArkitektNodeProps> = ({
 
   const errors = useEditNodeErrors(id);
 
+  const description = useNodeDescription({description: data.description, variables: data.constantsMap})
+
   return (
     <NodeShowLayout
       id={id}
@@ -101,10 +103,7 @@ export const ArkitektFilterNodeWidget: React.FC<ArkitektNodeProps> = ({
           </div>
         </CardTitle>
         <CardDescription>
-          <NodeDescription
-            description={data.description}
-            variables={data.constantsMap}
-          />
+          {description}
         </CardDescription>
         {expanded && (
           <div>

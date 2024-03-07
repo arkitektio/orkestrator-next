@@ -25,6 +25,7 @@ export const DateField = (props: FieldProps) => {
     <FormField
       control={form.control}
       name={props.name}
+      rules={{validate: props.validate}}
       render={({ field }) => (
         <FormItem className="flex flex-col">
           <FormLabel>{props.label ? props.label : props.name}</FormLabel>

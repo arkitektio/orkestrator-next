@@ -57,7 +57,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                             {/* We register the Shadn powered widgets to the widget registry. */}
                             <ShadnWigets />
                           </RekuestGuard>
-                          <MikroNextGuard>
+                          <MikroNextGuard fallback={<></>}>
                             <MikroNextWard key="mikro_new" />
                           </MikroNextGuard>
                           <ThemeProvider

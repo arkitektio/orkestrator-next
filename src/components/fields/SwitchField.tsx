@@ -16,6 +16,7 @@ export const SwitchField = (props: FieldProps & { placeholder?: string }) => {
     <FormField
       control={form.control}
       name={props.name}
+      rules={{validate: props.validate}}
       render={({ field }) => (
         <FormItem className="flex flex-row items-center justify-between rounded-lg  shadow-sm">
           <div className="space-y-0.5">

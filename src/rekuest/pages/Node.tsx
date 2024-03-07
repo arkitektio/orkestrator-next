@@ -17,12 +17,14 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   DetailPane,
   DetailPaneDescription,
   DetailPaneHeader,
   DetailPaneTitle,
 } from "@/components/ui/pane";
+import { TestConstants } from "@/reaktion/base/Constants";
 import { NodeKind, useConstantNodeQuery } from "@/rekuest/api/graphql";
 import {
   portToLabel,
@@ -30,13 +32,10 @@ import {
   useWidgetRegistry,
   withRekuest,
 } from "@jhnnsrs/rekuest-next";
+import { ClipboardIcon } from "@radix-ui/react-icons";
 import { useCallback } from "react";
 import { useForm, useFormContext } from "react-hook-form";
 import { useParams } from "react-router-dom";
-import { ClipboardIcon } from "@radix-ui/react-icons";
-import { ArgsContainer } from "@/components/widgets/ArgsContainer";
-import { Constants, TestConstants } from "@/reaktion/base/Constants";
-import { Input } from "@/components/ui/input";
 
 import ShadowRealm from "shadowrealm-api";
 export const ReserveForm = (props: { node: string }) => {

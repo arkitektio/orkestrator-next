@@ -156,6 +156,7 @@ fragment Port on Port {
   default
   nullable
   groups
+  validators
 }
 
 fragment CustomReturnWidget on CustomReturnWidget {

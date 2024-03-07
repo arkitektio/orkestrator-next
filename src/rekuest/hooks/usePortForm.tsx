@@ -1,6 +1,5 @@
-import { yupResolver } from "@hookform/resolvers/yup";
-import { Port, portToDefaults, yupSchemaBuilder } from "@jhnnsrs/rekuest-next";
-import { useCallback, useEffect, useMemo } from "react";
+import { Port, portToDefaults, } from "@jhnnsrs/rekuest-next";
+import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 export const portHash = (port: Port[]) => {
@@ -13,26 +12,19 @@ export const usePortForm = (props: {
   ports: Port[];
   overwrites?: { [key: string]: any };
   doNotAutoReset?: boolean;
+  mode?: "onChange" | "onBlur" | "onSubmit" | "onTouched" | "all";
+  reValidateMode?: "onChange" | "onBlur" | "onSubmit" ;
 }) => {
   const hash = portHash(props.ports);
 
-  const schema = useMemo(() => yupSchemaBuilder(props.ports), [hash]);
-  const resolver = useCallback(
-    async (data: any, context: any, options: any) => {
-      console.log(data);
-      return await yupResolver(schema)(data, context, options);
-    },
-    [hash, schema],
-  );
-
-  const defaultValues = useCallback(async () => {
+  const defaultValues = useCallback(() => {
     return portToDefaults(props.ports, props.overwrites || {});
   }, [hash, props.overwrites]);
 
   const form = useForm({
     defaultValues: defaultValues,
-    resolver: resolver,
-    reValidateMode: "onChange",
+    reValidateMode: props.reValidateMode || "onChange",
+    mode: props.mode || "onBlur",
   });
 
   useEffect(() => {

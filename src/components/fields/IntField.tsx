@@ -17,12 +17,7 @@ export const IntField = (props: FieldProps & { placeholder?: string }) => {
   return (
     <FormField
       control={form.control}
-      rules={{
-        validate: (v, values) => {
-          console.log("Validating", values);
-          return v < 1 || "Value must be greater than 3";
-        },
-      }}
+      rules={{validate: props.validate}}
       name={props.name}
       render={({ field }) => (
         <FormItem>

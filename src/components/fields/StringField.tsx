@@ -16,6 +16,7 @@ export const StringField = (props: FieldProps & { placeholder?: string }) => {
     <FormField
       control={form.control}
       name={props.name}
+      rules={{validate: props.validate}}
       render={({ field }) => (
         <FormItem>
           <FormLabel>{props.label ? props.label : props.name}</FormLabel>

@@ -26,6 +26,7 @@ import { ModeToggle } from "../ModeToggle";
 import { ArkitektLogo } from "../logos/ArkitektLogo";
 import { OmeroArkGuard } from "@jhnnsrs/omero-ark";
 import { PortGuard } from "@jhnnsrs/port-next";
+import { LucideLayoutDashboard } from "lucide-react";
 
 export type INavigationBarProps = {
   children?: React.ReactNode;
@@ -66,17 +67,17 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
         }}
       >
         <div className="flex-grow  flex-col flex gap-8 ">
-          <RekuestGuard>
+          <RekuestGuard fallback={<></>}>
             <DroppableNavLink key={"Dashboard"} to={"rekuest"}>
               {({ isActive }) => (
                 <NavigationMenuLink active={isActive}>
-                  <HomeIcon className="w-8 h-8 mx-auto " />
+                  <LucideLayoutDashboard className="w-8 h-8 mx-auto " />
                 </NavigationMenuLink>
               )}
             </DroppableNavLink>
           </RekuestGuard>
 
-          <MikroNextGuard>
+          <MikroNextGuard fallback={<></>}>
             <DroppableNavLink key={"Dashboard"} to={"mikronext"}>
               {({ isActive }) => (
                 <NavigationMenuLink active={isActive}>
@@ -85,7 +86,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
               )}
             </DroppableNavLink>
           </MikroNextGuard>
-          <OmeroArkGuard>
+          <OmeroArkGuard fallback={<></>}>
             <DroppableNavLink key={"Dashboard"} to={"omero-ark"}>
               {({ isActive }) => (
                 <NavigationMenuLink active={isActive}>
@@ -94,7 +95,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
               )}
             </DroppableNavLink>
           </OmeroArkGuard>
-          <PortGuard>
+          <PortGuard fallback={<></>}>
             <DroppableNavLink key={"Dashboard"} to={"port-next"}>
               {({ isActive }) => (
                 <NavigationMenuLink active={isActive}>
@@ -103,7 +104,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
               )}
             </DroppableNavLink>
           </PortGuard>
-          <RekuestGuard>
+          <RekuestGuard fallback={<></>}>
             <DroppableNavLink key={"Reaktion"} to={"reaktion"}>
               {({ isActive }) => (
                 <NavigationMenuLink active={isActive}>

@@ -18,8 +18,9 @@ const Page = () => {
         <>
           <FormDialogAction
             label="Create"
-            onSubmit={(id) => {
-              navigate(RekuestWorkspace.linkBuilder(id));
+            onSubmit={(item) => {
+              console.log(item);
+              navigate(RekuestWorkspace.linkBuilder(item.createWorkspace.id));
             }}
           >
             <CreateWorkspaceForm />

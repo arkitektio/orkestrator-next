@@ -1,0 +1,10 @@
+fragment DetailComposition on Composition {
+    name
+    instances {
+        service {
+            key
+            identifier
+        }
+        backend
+    }
+}

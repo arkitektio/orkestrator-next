@@ -24,6 +24,8 @@ import { NodeActionExtension } from "./extensions/NodeActionExtension";
 import { NodeExtensions } from "./extensions/NodeExtension";
 import { ReservationExtensions } from "./extensions/ReservationActionExtension";
 import { SearchExtensions } from "./extensions/SearchExtensions";
+import { RekuestGuard } from "@jhnnsrs/rekuest-next";
+import { MikroNextGuard } from "@jhnnsrs/mikro-next";
 
 export const DisplayWidget = (props: {
   identifier: string;
@@ -188,12 +190,17 @@ export const CommandMenu = () => {
                     activateModifier,
                     removeModifier,
                   }}
-                >
-                  <NodeExtensions />
-                  <NodeActionExtension />
+                > 
+                  <RekuestGuard>
+                    <NodeExtensions />
+                    <NodeActionExtension />
+                    
+                    <ReservationExtensions />
+                  </RekuestGuard>
                   <LocalActionExtensions />
-                  <SearchExtensions />
-                  <ReservationExtensions />
+                  <MikroNextGuard fallback={<></>}>
+                    <SearchExtensions />
+                  </MikroNextGuard>
                 </ExtensionContext.Provider>
               </CommandList>
             </Command>

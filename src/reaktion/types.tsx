@@ -15,9 +15,8 @@ import {
   PortFragment,
   ReactiveNodeFragment,
   ReturnNodeFragment,
-  StreamItemFragment,
   VanillaEdgeFragment,
-} from "@/rekuest/api/graphql";
+} from "@/reaktion/api/graphql";
 import { Connection, Edge, EdgeProps, Node, NodeProps } from "reactflow";
 
 export type DataEnhancer<T, L = {}> = T & { extras?: L };

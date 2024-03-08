@@ -4,7 +4,7 @@ import { Manifest } from "@jhnnsrs/fakts";
 
 export const manifest: Manifest = {
   version: "0.0.1",
-  identifier: "github.io.jhnnsrs.orkestrator",
+  identifier: "github.io.jhnnsrs.fff",
   scopes: ["openid"],
 };
 

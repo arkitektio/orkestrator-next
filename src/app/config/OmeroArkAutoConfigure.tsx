@@ -1,4 +1,4 @@
-import result from "@/lok-next/api/fragments";
+import result from "@/omero-ark/api/fragments";
 import { useFakts } from "@jhnnsrs/fakts";
 import { useHerre } from "@jhnnsrs/herre";
 import { useOmeroArk } from "@jhnnsrs/omero-ark";

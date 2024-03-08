@@ -1452,10 +1452,10 @@
   dependencies:
     subscriptions-transport-ws "^0.11.0"
 
-"@jhnnsrs/rekuest-next@^0.0.6":
-  version "0.0.6"
-  resolved "https://registry.yarnpkg.com/@jhnnsrs/rekuest-next/-/rekuest-next-0.0.6.tgz#a3e171165306357edb6cde8ad08db4516122e06f"
-  integrity sha512-qs2hgG/kzWQTWvuYvcTJHJa0UhGSiTX6D4LmMCcOvwePz2poKTto2/Dy/V0m4WZYQyVxTbqQNFMvnF4dFXN47A==
+"@jhnnsrs/rekuest-next@^0.0.9":
+  version "0.0.9"
+  resolved "https://registry.yarnpkg.com/@jhnnsrs/rekuest-next/-/rekuest-next-0.0.9.tgz#16a36d6007d20f6708a17260ea5bd69549faac6f"
+  integrity sha512-D/4qA0ShZuamtW4YStF0PPhplaLlQEE3mDF2G0poS0siolXkX1fHFbSnMv12D9y2w0AXXqVa9Hwz83gO/ytySw==
   dependencies:
     handlebars "^4.7.8"
     yup "^1.2.0"

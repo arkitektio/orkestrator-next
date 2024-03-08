@@ -14,7 +14,7 @@ export const ConnectButton = () => {
     <>
       {registeredEndpoints.map((endpoint) => {
         return (
-          <Button onClick={() => load({ endpoint })}>
+          <Button onClick={() => load({ endpoint, requestedClientType: "desktop" })}>
             Connect to {endpoint.name}
           </Button>
         );

@@ -1,5 +1,5 @@
-query Clients {
-  clients {
+query Clients($filters: ClientFilter, $pagination: OffsetPaginationInput) {
+  clients(filters: $filters, pagination: $pagination) {
     ...ListClient
   }
 }

@@ -1,27 +1,36 @@
 import { useCallback } from "react";
 import ShadowRealm from "shadowrealm-api";
-import { PortFragment, PortKind } from "../api/graphql";
+import { PortFragment, PortKind, ValidatorFragment } from "../api/graphql";
 
-const buildValidators = (validators: string[]) => {
+const buildValidators = (validators: ValidatorFragment[]) => {
     let ream = new ShadowRealm();
-    let buildValidators: Validator[] = [];
+    let buildValidators: ValidatorFunction[] = [];
 
 
 
     for (let validator of validators) {
         let wrappedValidatorFunc = `(v, values) => {
-            const func = ${validator};
+            const func = ${validator.function};
 
             let json_values = JSON.stringify(values);
 
             return func(v, json_values);
         }`;
 
-        let func = ream.evaluate(wrappedValidatorFunc) as (v: any, value: any) => any;
+        let func = ream.evaluate(wrappedValidatorFunc) as (v: any, ...value: any) => any;
 
         const wrappedValidator = (v: any, values: any) => {
-            let json_values = JSON.stringify(values);
-            return func(v, json_values);
+
+            let params = validator.dependencies?.map((param) => values[param]);
+            if (params?.every(predicate => predicate != undefined)) {
+                console.log("Calling validator with params", params)
+                return func(v, ...params);
+            }
+            else {
+                return undefined;
+            }
+
+
         }
 
         buildValidators.push(wrappedValidator);
@@ -31,13 +40,13 @@ const buildValidators = (validators: string[]) => {
   };
 
 
-export type Validator = (v: any, x: {[key: string]: any}) => string | undefined
+export type ValidatorFunction = (v: any, x: {[key: string]: any}) => string | undefined
 
 
-export const usePortValidate = <T extends {kind: PortKind, nullable: boolean, validators?: (string)[] | null, key: string}>(port: T)  => useCallback(
+export const usePortValidate = <T extends {kind: PortKind, nullable: boolean, validators?: (ValidatorFragment)[] | null, key: string}>(port: T)  => useCallback(
     (v: any, values: any) => {
 
-        let validators: Validator[] = []
+        let validators: ValidatorFunction[] = []
 
         if (!port.nullable) {
             validators.push((v) => v != undefined ? undefined : `${port.key} is required`);

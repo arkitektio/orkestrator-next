@@ -15,7 +15,6 @@ export const AppLayout = ({ children, navigationBar }: AppLayoutProps) => {
       <div className="flex-initial px-2 z-10 w-19 shadow shadow-xl border-r border-gray-500 overflow-x-auto">
         {navigationBar}
       </div>
-      hallo
       <div className="flex-grow flex overflow-y-auto z-2">{children}</div>
     </div>
   );

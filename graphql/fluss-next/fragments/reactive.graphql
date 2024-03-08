@@ -1,13 +1,13 @@
 fragment ReactiveTemplate on ReactiveTemplate {
   id
   ins {
-    ...Port
+    ...FlussPort
   }
   outs {
-    ...Port
+    ...FlussPort
   }
   constants {
-    ...Port
+    ...FlussPort
   }
   implementation
   title

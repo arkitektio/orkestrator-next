@@ -1,31 +1,31 @@
-fragment StringAssignWidget on StringAssignWidget {
+fragment FlussStringAssignWidget on StringAssignWidget {
   __typename
   kind
   placeholder
   asParagraph
 }
 
-fragment SliderAssignWidget on SliderAssignWidget {
+fragment FlussSliderAssignWidget on SliderAssignWidget {
   __typename
   kind
   min
   max
 }
 
-fragment SearchAssignWidget on SearchAssignWidget {
+fragment FlussSearchAssignWidget on SearchAssignWidget {
   __typename
   kind
   query
   ward
 }
 
-fragment CustomAssignWidget on CustomAssignWidget {
+fragment FlussCustomAssignWidget on CustomAssignWidget {
   __typename
   ward
   hook
 }
 
-fragment ChoiceAssignWidget on ChoiceAssignWidget {
+fragment FlussChoiceAssignWidget on ChoiceAssignWidget {
   __typename
   kind
   choices {
@@ -35,7 +35,17 @@ fragment ChoiceAssignWidget on ChoiceAssignWidget {
   }
 }
 
-fragment ChildPortNested on ChildPort {
+fragment FlussAssignWidget on AssignWidget {
+  __typename
+  kind
+  ...FlussStringAssignWidget
+  ...FlussSearchAssignWidget
+  ...FlussSliderAssignWidget
+  ...FlussChoiceAssignWidget
+  ...FlussCustomAssignWidget
+}
+
+fragment FlussChildPortNested on ChildPort {
   __typename
   kind
   identifier
@@ -44,10 +54,10 @@ fragment ChildPortNested on ChildPort {
     identifier
     scope
     assignWidget {
-      ...AssignWidget
+      ...FlussAssignWidget
     }
     returnWidget {
-      ...ReturnWidget
+      ...FlussReturnWidget
     }
   }
   variants {
@@ -55,81 +65,86 @@ fragment ChildPortNested on ChildPort {
     identifier
     scope
     assignWidget {
-      ...AssignWidget
+      ...FlussAssignWidget
     }
     returnWidget {
-      ...ReturnWidget
+      ...FlussReturnWidget
     }
   }
   scope
   assignWidget {
-    ...AssignWidget
+    ...FlussAssignWidget
   }
   returnWidget {
-    ...ReturnWidget
+    ...FlussReturnWidget
   }
 }
 
-fragment ChildPort on ChildPort {
+fragment FlussChildPort on ChildPort {
   __typename
   kind
   identifier
   scope
   child {
-    ...ChildPortNested
+    ...FlussChildPortNested
   }
   variants {
-    ...ChildPortNested
+    ...FlussChildPortNested
   }
   assignWidget {
-    ...AssignWidget
+    ...FlussAssignWidget
   }
   returnWidget {
-    ...ReturnWidget
+    ...FlussReturnWidget
   }
   nullable
 }
 
-fragment EffectDependency on EffectDependency {
+fragment FlussEffectDependency on EffectDependency {
   key
   condition
   value
 }
 
-fragment CustomEffect on CustomEffect {
+fragment FlussCustomEffect on CustomEffect {
   __typename
   kind
   hook
   ward
 }
 
-fragment MessageEffect on MessageEffect {
+fragment FlussMessageEffect on MessageEffect {
   __typename
   kind
   message
 }
 
-fragment PortEffect on Effect {
+fragment FlussPortEffect on Effect {
   __typename
   kind
   dependencies {
-    ...EffectDependency
+    ...FlussEffectDependency
   }
-  ...CustomEffect
-  ...MessageEffect
+  ...FlussCustomEffect
+  ...FlussMessageEffect
 }
 
 fragment AssignWidget on AssignWidget {
   __typename
   kind
-  ...StringAssignWidget
-  ...SearchAssignWidget
-  ...SliderAssignWidget
-  ...ChoiceAssignWidget
-  ...CustomAssignWidget
+  ...FlussStringAssignWidget
+  ...FlussSearchAssignWidget
+  ...FlussSliderAssignWidget
+  ...FlussChoiceAssignWidget
+  ...FlussCustomAssignWidget
 }
 
-fragment Port on Port {
+fragment Validator on Validator {
+  function
+  dependencies
+}
+
+fragment FlussPort on Port {
   __typename
   key
   label
@@ -137,36 +152,39 @@ fragment Port on Port {
   description
   scope
   effects {
-    ...PortEffect
+    ...FlussPortEffect
   }
   assignWidget {
-    ...AssignWidget
+    ...FlussAssignWidget
   }
   returnWidget {
-    ...ReturnWidget
+    ...FlussReturnWidget
   }
   kind
   identifier
   child {
-    ...ChildPort
+    ...FlussChildPort
   }
   variants {
-    ...ChildPort
+    ...FlussChildPort
   }
   default
   nullable
   groups
-  validators
+  validators {
+    ...Validator
+  
+  }
 }
 
-fragment CustomReturnWidget on CustomReturnWidget {
+fragment FlussCustomReturnWidget on CustomReturnWidget {
   __typename
   kind
   hook
   ward
 }
 
-fragment ChoiceReturnWidget on ChoiceReturnWidget {
+fragment FlussChoiceReturnWidget on ChoiceReturnWidget {
   __typename
   choices {
     label
@@ -175,10 +193,10 @@ fragment ChoiceReturnWidget on ChoiceReturnWidget {
   }
 }
 
-fragment ReturnWidget on ReturnWidget {
+fragment FlussReturnWidget on ReturnWidget {
   __typename
   kind
-  ...CustomReturnWidget
-  ...ChoiceReturnWidget
+  ...FlussCustomReturnWidget
+  ...FlussChoiceReturnWidget
 }
 

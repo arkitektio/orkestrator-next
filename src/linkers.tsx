@@ -120,4 +120,5 @@ export const ReaktionModuleLink = buildModuleLink("reaktion");
 export const OmeroArkModuleLink = buildModuleLink("omero-ark");
 
 export const LokUser = buildSmart("@loknext/user", "lok/users");
-export const LokGroup = buildSmart("@lokgroup/group", "lok/groups");
+export const LokGroup = buildSmart("@lok/group", "lok/groups");
+export const LokClient = buildSmart("@lok/client", "lok/clients");

@@ -1,16 +1,16 @@
 fragment BaseGraphNode on GraphNode {
   __typename
   ins {
-    ...Port
+    ...FlussPort
   }
   outs {
-    ...Port
+    ...FlussPort
   }
   constants {
-    ...Port
+    ...FlussPort
   }
   voids {
-    ...Port
+    ...FlussPort
   }
   globalsMap
   constantsMap
@@ -19,7 +19,7 @@ fragment BaseGraphNode on GraphNode {
   kind
 }
 
-fragment Binds on Binds {
+fragment FlussBinds on Binds {
   templates
 }
 
@@ -41,7 +41,7 @@ fragment ArkitektGraphNode on ArkitektGraphNode {
   mapStrategy
   allowLocalExecution
   binds {
-    ...Binds
+    ...FlussBinds
   }
   nodeKind
 }
@@ -55,7 +55,7 @@ fragment ArkitektFilterGraphNode on ArkitektFilterGraphNode {
   mapStrategy
   allowLocalExecution
   binds {
-    ...Binds
+    ...FlussBinds
   }
   nodeKind
 }
@@ -127,7 +127,7 @@ fragment StreamItem on StreamItem {
 fragment GlobalArg on GlobalArg {
   key
   port {
-    ...Port
+    ...FlussPort
   }
 }
 

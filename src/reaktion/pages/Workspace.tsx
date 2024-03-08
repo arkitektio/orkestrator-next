@@ -3,7 +3,7 @@ import {
   useWorkspaceQuery
 } from "@/reaktion/api/graphql";
 import { EditFlow } from "@/reaktion/edit/EditFlow";
-import { withFluss } from "@jhnnsrs/fluss";
+import { withFluss } from "@jhnnsrs/fluss-next";
 import { useParams } from "react-router-dom";
 
 export const WorkspaceDetail = (props: { id: string }) => {

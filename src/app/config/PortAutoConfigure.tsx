@@ -1,4 +1,4 @@
-import result from "@/lok-next/api/fragments";
+import result from "@/port-next/api/fragments";
 import { useFakts } from "@jhnnsrs/fakts";
 import { useHerre } from "@jhnnsrs/herre";
 import { usePort } from "@jhnnsrs/port-next";

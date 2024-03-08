@@ -3,24 +3,37 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardHeader,
-  CardTitle,
+  CardHeader
 } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { SMART_MODEL_DROP_TYPE } from "@/constants";
+import { cn } from "@/lib/utils";
 import {
   FlowFragment,
-  GlobalArg,
   GlobalArgFragment,
-  GraphEdgeKind,
   GraphInput,
-  GraphNodeFragment,
   GraphNodeKind,
-  PortFragment,
   ReactiveImplementation,
   ReactiveTemplateDocument,
-  ReactiveTemplateQuery,
+  ReactiveTemplateQuery
 } from "@/reaktion/api/graphql";
-import { portToDefaults, useRekuest } from "@jhnnsrs/rekuest-next";
+import { ConstantNodeDocument, ConstantNodeQuery } from "@/rekuest/api/graphql";
+import { useRekuest } from "@jhnnsrs/rekuest-next";
+import {
+  DoubleArrowLeftIcon,
+  DoubleArrowRightIcon,
+  EyeOpenIcon,
+  LetterCaseToggleIcon,
+  QuestionMarkIcon,
+} from "@radix-ui/react-icons";
 import React, {
   useCallback,
   useEffect,
@@ -31,27 +44,25 @@ import React, {
 import { useDrop } from "react-dnd";
 import {
   Connection,
-  ReactFlowInstance,
-  XYPosition,
-  useEdgesState,
-  applyEdgeChanges,
-  applyNodeChanges,
-  useNodesState,
+  Controls,
   EdgeChange,
   NodeChange,
-  Controls,
-  OnConnectStartParams,
   OnConnectEnd,
+  OnConnectStartParams,
+  ReactFlowInstance,
+  applyEdgeChanges,
+  applyNodeChanges
 } from "reactflow";
+import useUndoable, { MutationBehavior } from "use-undoable";
+import { Constants } from "../base/Constants";
 import { Graph } from "../base/Graph";
+import { arkitektNodeToFlowNode, predicateNodeToFlowNode } from "../plugins/rekuest";
 import {
-  ArkitektNodeData,
   EdgeTypes,
   FlowEdge,
   FlowNode,
-  FlowNodeData,
   NodeData,
-  NodeTypes,
+  NodeTypes
 } from "../types";
 import {
   edges_to_flowedges,
@@ -59,50 +70,23 @@ import {
   flowNodeToInput,
   globalToInput,
   handleToStream,
-  listPortToSingle,
   nodeIdBuilder,
   nodes_to_flownodes,
-  reactiveTemplateToFlowNode,
+  reactiveTemplateToFlowNode
 } from "../utils";
-import {arkitektNodeToFlowNode, predicateNodeToFlowNode} from "../plugins/rekuest";
+import { createVanillaTransformEdge, integrate } from "../validation/integrate";
+import {
+  ValidationResult
+} from "../validation/types";
+import { validateState } from "../validation/validate";
+import { RemainingErrorRender, SolvedErrorRender } from "./ErrorRender";
 import { EditRiverContext } from "./context";
 import { LabeledShowEdge } from "./edges/LabeledShowEdge";
+import { ArkitektFilterNodeWidget } from "./nodes/ArkitektFilterWidget";
 import { ArkitektTrackNodeWidget } from "./nodes/ArkitektWidget";
 import { ReactiveTrackNodeWidget } from "./nodes/ReactiveWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
-import {
-  FlowState,
-  SolvedError,
-  ValidationError,
-  ValidationResult,
-} from "../validation/types";
-import { validateState } from "../validation/validate";
-import { createVanillaTransformEdge, integrate } from "../validation/integrate";
-import useUndoable, { MutationBehavior } from "use-undoable";
-import { RemainingErrorRender, SolvedErrorRender } from "./ErrorRender";
-import {
-  DoubleArrowLeftIcon,
-  DoubleArrowRightIcon,
-  EyeOpenIcon,
-  LetterCaseToggleIcon,
-  QuestionMarkIcon,
-} from "@radix-ui/react-icons";
-import { cn } from "@/lib/utils";
-import { isValid, set } from "date-fns";
-import { ArgsContainer, Constants } from "../base/Constants";
-import { X } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArkitektFilterNodeWidget } from "./nodes/ArkitektFilterWidget";
-import { ConstantNodeDocument, ConstantNodeQuery } from "@/rekuest/api/graphql";
 
 const nodeTypes: NodeTypes = {
   ArkitektGraphNode: ArkitektTrackNodeWidget,
@@ -123,6 +107,8 @@ export type Props = {
 };
 
 export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
+  console.log("THE FLOW", flow)
+
   const { client: arkitektapi } = useRekuest();
   const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
   const [showEdgeLabels, setShowEdgeLabels] = useState(false);
@@ -876,6 +862,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                     ports={globals.map((x) => ({ ...x.port, key: x.key }))}
                     overwrites={{}}
                     onToArg={(e) => removeGlobal(e.key)}
+                    onSubmit={() => alert("setting values here has no impact")}
                   />
                 </CardContent>
               </Card>

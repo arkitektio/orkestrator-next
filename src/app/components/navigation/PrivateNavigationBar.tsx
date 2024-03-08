@@ -27,6 +27,7 @@ import { ArkitektLogo } from "../logos/ArkitektLogo";
 import { OmeroArkGuard } from "@jhnnsrs/omero-ark";
 import { PortGuard } from "@jhnnsrs/port-next";
 import { LucideLayoutDashboard } from "lucide-react";
+import { FlussGuard } from "@jhnnsrs/fluss-next";
 
 export type INavigationBarProps = {
   children?: React.ReactNode;
@@ -104,7 +105,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
               )}
             </DroppableNavLink>
           </PortGuard>
-          <RekuestGuard fallback={<></>}>
+          <FlussGuard fallback={<></>}>
             <DroppableNavLink key={"Reaktion"} to={"reaktion"}>
               {({ isActive }) => (
                 <NavigationMenuLink active={isActive}>
@@ -112,7 +113,16 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
                 </NavigationMenuLink>
               )}
             </DroppableNavLink>
-          </RekuestGuard>
+          </FlussGuard>
+          <LokNextGuard fallback={<></>}>
+            <DroppableNavLink key={"Lok"} to={"lok"}>
+              {({ isActive }) => (
+                <NavigationMenuLink active={isActive}>
+                  <GoWorkflow />
+                </NavigationMenuLink>
+              )}
+            </DroppableNavLink>
+          </LokNextGuard>
           <DroppableNavLink key={"Settings"} to={"settings"}>
             {({ isActive }) => (
               <NavigationMenuLink active={isActive}>

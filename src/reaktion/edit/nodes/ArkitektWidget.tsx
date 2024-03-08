@@ -20,13 +20,14 @@ import { GearIcon } from "@radix-ui/react-icons";
 import React from "react";
 import { ArkitektNodeProps } from "../../types";
 import { useEditNodeErrors, useEditRiver } from "../context";
+import { updateCamera } from "@react-three/fiber/dist/declarations/src/core/utils";
 
 export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
   data: { ins, outs, constants, ...data },
   id,
   selected,
 }) => {
-  const { moveConstantToGlobals, moveConstantToStream, moveStreamToConstants } =
+  const { moveConstantToGlobals, moveConstantToStream, moveStreamToConstants, updateData} =
     useEditRiver();
 
   const [expanded, setExpanded] = React.useState(false);
@@ -115,6 +116,7 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
               overwrites={data.constantsMap}
               onToArg={onToArg}
               onToGlobal={onToGlobal}
+              onSubmit={(values) => updateData({constantsMap: values}, id)}
             />
           </div>
         )}

@@ -1,21 +1,18 @@
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Form } from "@/components/ui/form";
-import { toast } from "@/components/ui/use-toast";
+import { notEmpty } from "@/lib/utils";
 import { PortFragment } from "@/rekuest/api/graphql";
 import { usePortForm } from "@/rekuest/hooks/usePortForm";
-import { useWidgetRegistry } from "@jhnnsrs/rekuest-next";
-import { notEmpty } from "@/lib/utils";
 import {
   ArgsContainerProps,
   EffectWrapper,
   Port,
-  PortGroup,
+  PortGroup, useWidgetRegistry
 } from "@jhnnsrs/rekuest-next";
-import { useMemo } from "react";
-import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { CollapsibleTrigger } from "@radix-ui/react-collapsible";
-import { Button } from "@/components/ui/button";
 import { ChevronUpIcon, DoubleArrowUpIcon } from "@radix-ui/react-icons";
-import { useForm } from "react-hook-form";
+import { useEffect, useMemo } from "react";
 
 export type FilledGroup = PortGroup & {
   ports: Port[];
@@ -144,35 +141,42 @@ export const ArgsContainer = ({
 
 export const Constants = (props: {
   ports: PortFragment[];
+  onSubmit: (data: any) => void;
   overwrites: { [key: string]: any };
   onToArg?: (port: PortFragment) => void;
   onToGlobal?: (port: PortFragment, key?: string | undefined) => void;
+
 }) => {
   const form = usePortForm({
     ports: props.ports,
     overwrites: props.overwrites,
   });
 
-  function onSubmit(data: any) {
-    console.log("submiting", data);
-  }
+  const { formState,  formState: { isValidating }, watch } = form;
+
+  const data = watch();
+
+  useEffect(() => {
+    if (formState.isValid && !isValidating) {
+      props.onSubmit(data);
+    }
+  }, [formState, data, isValidating]);
+
+
 
   const { registry } = useWidgetRegistry();
 
   return (
     <>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
+        <form onSubmit={form.handleSubmit(props.onSubmit)} className="space-y-6 mt-4">
           <ArgsContainer
             registry={registry}
             ports={props.ports}
             onToArg={props.onToArg}
             onToGlobal={props.onToGlobal}
           />
-          <button type="submit" className="btn">
-            {" "}
-            Submit{" "}
-          </button>
+
         </form>
       </Form>
     </>

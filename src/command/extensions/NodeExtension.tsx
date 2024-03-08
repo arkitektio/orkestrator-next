@@ -3,9 +3,9 @@ import {
   useNodeSearchLazyQuery,
 } from "@/rekuest/api/graphql";
 import { withRekuest } from "@jhnnsrs/rekuest-next";
-import { CommandGroup, CommandItem } from "cmdk";
 import { useState, useEffect } from "react";
 import { useExtension } from "../ExtensionContext";
+import { CommandGroup, CommandItem } from "@/components/ui/command";
 
 export const NodeExtensions = () => {
   const { query, activateModifier, modifiers } = useExtension();
@@ -53,7 +53,7 @@ export const NodeExtensions = () => {
                   })
                 }
               >
-                {node.name}
+                {node.name} ({node.id})
               </CommandItem>
             );
           })}

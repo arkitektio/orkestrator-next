@@ -129,6 +129,11 @@ fragment AssignWidget on AssignWidget {
   ...CustomAssignWidget
 }
 
+fragment Validator on Validator {
+  function
+  dependencies
+}
+
 fragment Port on Port {
   __typename
   key
@@ -156,7 +161,9 @@ fragment Port on Port {
   default
   nullable
   groups
-  validators
+  validators {
+    ...Validator
+  }
 }
 
 fragment CustomReturnWidget on CustomReturnWidget {

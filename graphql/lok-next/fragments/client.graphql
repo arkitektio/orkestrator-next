@@ -12,6 +12,9 @@ fragment DetailClient on Client {
     authorizationGrantType
     redirectUris
   }
+  composition {
+    ...DetailComposition
+  }
 }
 
 fragment ListClient on Client {
@@ -28,5 +31,8 @@ fragment ListClient on Client {
       identifier
       logo
     }
+  }
+  composition {
+    id
   }
 }

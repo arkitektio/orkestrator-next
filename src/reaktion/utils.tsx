@@ -1,20 +1,15 @@
 import {
-  ArkitektFilterGraphNodeFragment,
-  ArkitektGraphNodeFragment,
   BindsFragment,
   BindsInput,
   ChildPortFragment,
   GlobalArgInput,
   GraphNodeKind,
-  GraphNodeFragment,
-  MapStrategy,
-  NodeKind,
   PortFragment,
   PortKind,
   PortScope,
   ReactiveNodeFragment,
   ReactiveTemplateFragment,
-  StreamItemInput,
+  StreamItemInput
 } from "@/reaktion/api/graphql";
 import { convertPortToInput } from "@/rekuest/utils";
 import { portToDefaults } from "@jhnnsrs/rekuest-next";
@@ -52,6 +47,9 @@ export function keyInObject(
 }
 
 export const nodes_to_flownodes = (nodes: NodeFragment[]): FlowNode[] => {
+
+  console.log("nodes_to_flownodes", nodes)
+
   const nodes_ =
     nodes
       ?.map((node) => {

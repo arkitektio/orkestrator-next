@@ -10,11 +10,11 @@ export const FlussNextAutoConfigure: React.FC<{}> = (props) => {
   const { fakts } = useFakts();
 
   useEffect(() => {
-    if (token && fakts && fakts.fluss_next) {
+    if (token && fakts && fakts.fluss) {
       configure({
-        secure: fakts.fluss_next.secure,
-        wsEndpointUrl: fakts.fluss_next.ws_endpoint_url,
-        endpointUrl: fakts.fluss_next.endpoint_url,
+        secure: fakts.fluss.secure,
+        wsEndpointUrl: fakts.fluss.ws_endpoint_url,
+        endpointUrl: fakts.fluss.endpoint_url,
         possibleTypes: result.possibleTypes,
         retrieveToken: () => token,
       });

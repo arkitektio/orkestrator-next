@@ -21,7 +21,7 @@ const buildBaseLink = (to: string) => {
 const buildModelLink = (to: string) => {
   return ({ children, ...props }: ModelLinkProps) => {
     return (
-      <NavLink {...props} to={`/user/${to}/${props.object}`} title="Open">
+      <NavLink {...props} to={`/${to}/${props.object}`} title="Open">
         {children}
       </NavLink>
     );
@@ -81,7 +81,7 @@ export type Smart = ReturnType<typeof buildSmart>;
 export const buildModuleLink = (module: string) => {
   return ({ children, ...props }: OmitedNavLinkProps) => {
     return (
-      <NavLink {...props} to={`/user/${module}`}>
+      <NavLink {...props} to={`/${module}`}>
         {children}
       </NavLink>
     );

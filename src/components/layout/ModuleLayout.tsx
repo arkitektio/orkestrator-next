@@ -4,6 +4,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "../ui/resizable";
+import { useSearchParams } from "react-router-dom";
 
 export type ModuleLayoutProps = {
   children: React.ReactNode;
@@ -11,9 +12,14 @@ export type ModuleLayoutProps = {
 };
 
 export const ModuleLayout = ({ pane, children }: ModuleLayoutProps) => {
+  const showPane = useSearchParams({ showPane: "true" })
+
+
+
+
   return (
     <ResizablePanelGroup autoSaveId="module" direction="horizontal">
-      {pane && (
+      {pane &&(
         <>
           <ResizablePanel
             defaultSize={10}

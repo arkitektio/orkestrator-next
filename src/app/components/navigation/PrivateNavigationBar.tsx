@@ -28,10 +28,38 @@ import { OmeroArkGuard } from "@jhnnsrs/omero-ark";
 import { PortGuard } from "@jhnnsrs/port-next";
 import { LucideLayoutDashboard } from "lucide-react";
 import { FlussGuard } from "@jhnnsrs/fluss-next";
+import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
+import { TooltipTrigger } from "@radix-ui/react-tooltip";
 
 export type INavigationBarProps = {
   children?: React.ReactNode;
 };
+
+
+
+export const matchIcon = (key: string) => {
+  switch (key) {
+
+  case "rekuest":
+    return <LucideLayoutDashboard className="w-8 h-8 mx-auto " />;
+  case "mikronext":
+    return <PiDatabaseLight className="w-8 h-8 mx-auto " />;
+  case "omero-ark":
+    return <PiDatabaseLight className="w-8 h-8 mx-auto " />;
+  case "port-next":
+    return <PiDatabaseLight className="w-8 h-8 mx-auto "  />;
+  case "reaktion":
+    return <GoWorkflow className="w-8 h-8 mx-auto " />;
+  case "lok":
+    return <GoWorkflow className="w-8 h-8 mx-auto " />;
+  case "settings":
+    return <GoWorkflow className="w-8 h-8 mx-auto " />;
+  default:
+    return <HomeIcon className="w-8 h-8 mx-auto " />;
+  }
+}
+
+
 
 /**
  * The private navigation bar is the main navigation bar of the application.
@@ -41,25 +69,27 @@ export type INavigationBarProps = {
  * only modules that are available to the user are shown. See the example below.
  */
 const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
-  const { logout } = useArkitektLogin();
-  const { remove } = useArkitektConnect();
+  const { logout, } = useArkitektLogin();
+  const { remove, fakts } = useArkitektConnect();
+
+
+  const linkChildren = fakts && Object.keys(fakts).map((key) => {
+    const faktsValue = fakts[key]
+    return <DroppableNavLink key={key} to={`/${key}`}>{({ isActive }) => (
+      <Tooltip>
+      <TooltipTrigger><NavigationMenuLink active={isActive}>
+       {matchIcon(key)}
+      </NavigationMenuLink></TooltipTrigger>
+      <TooltipContent side="right">{faktsValue.name || key}</TooltipContent>
+      </Tooltip>
+    )}</DroppableNavLink>
+}) || []
 
   return (
     <NavigationMenu
-      className="flex flex-grow sm:flex-col flex-row gap-8  items-center justify-start h-full bg-background dark:bg-background"
-      orientation="vertical"
+    className="mx-auto px-1 max-w-[40px] mt-3 flex flex-grow sm:flex-col flex-row gap-8  items-center justify-start h-full "
+    orientation="vertical"
     >
-      <div className="hidden flex-initial mt-2  font-light text-xl md:block  border-b-gray-600 ">
-        <Link to={"/"}>
-          <ArkitektLogo
-            width={"4rem"}
-            height={"4rem"}
-            cubeColor={"hsl(var(--primary))"}
-            aColor={"hsl(var(--foreground))"}
-            strokeColor={"hsl(var(--foreground))"}
-          />
-        </Link>
-      </div>
 
       <IconContext.Provider
         value={{
@@ -68,6 +98,9 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
         }}
       >
         <div className="flex-grow  flex-col flex gap-8 ">
+          {linkChildren}
+
+
           <RekuestGuard fallback={<></>}>
             <DroppableNavLink key={"Dashboard"} to={"rekuest"}>
               {({ isActive }) => (

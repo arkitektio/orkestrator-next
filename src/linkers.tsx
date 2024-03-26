@@ -20,10 +20,10 @@ export const RekuestTemplate = buildSmart(
   "@rekuest-next/template",
   "rekuest/templates",
 );
-export const RekuestFlow = buildSmart("@rekuest-next/flow", "reaktion/flows");
+export const RekuestFlow = buildSmart("@fluss/flow", "fluss/flows");
 export const RekuestWorkspace = buildSmart(
-  "@rekuest-next/workspace",
-  "reaktion/workspaces",
+  "@fluss/workspace",
+  "fluss/workspaces",
 );
 export const RekuestReservation = buildSmart(
   "@rekuest-next/reservation",
@@ -116,7 +116,7 @@ export const MikroInstrument = buildSmart(
 
 export const RekuestModuleLink = buildModuleLink("rekuestnext");
 export const MikroModuleLink = buildModuleLink("mikronext");
-export const ReaktionModuleLink = buildModuleLink("reaktion");
+export const ReaktionModuleLink = buildModuleLink("fluss");
 export const OmeroArkModuleLink = buildModuleLink("omero-ark");
 
 export const LokUser = buildSmart("@loknext/user", "lok/users");

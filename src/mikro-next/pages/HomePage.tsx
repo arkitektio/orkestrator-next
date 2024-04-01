@@ -8,7 +8,7 @@ export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
   return (
-    <PageLayout actions={<></>}>
+    <PageLayout actions={<></>} title="Data">
       <ImageList pagination={{ limit: 30 }} />
       <DatasetList pagination={{ limit: 30 }} />
       <StageList pagination={{ limit: 30 }} />

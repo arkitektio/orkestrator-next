@@ -14,6 +14,7 @@ const Page = () => {
 
   return (
     <PageLayout
+      title="Fluss Home"
       actions={
         <>
           <FormDialogAction

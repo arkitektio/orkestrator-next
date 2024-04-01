@@ -26,7 +26,7 @@ import { ModeToggle } from "../ModeToggle";
 import { ArkitektLogo } from "../logos/ArkitektLogo";
 import { OmeroArkGuard } from "@jhnnsrs/omero-ark";
 import { PortGuard } from "@jhnnsrs/port-next";
-import { LucideLayoutDashboard } from "lucide-react";
+import { Database, LucideAlbum, LucideLayoutDashboard, Podcast, Settings, ShoppingBasket, UserSquare, Users2, Workflow } from "lucide-react";
 import { FlussGuard } from "@jhnnsrs/fluss-next";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
@@ -41,21 +41,23 @@ export const matchIcon = (key: string) => {
   switch (key) {
 
   case "rekuest":
-    return <LucideLayoutDashboard className="w-8 h-8 mx-auto " />;
-  case "mikronext":
-    return <PiDatabaseLight className="w-8 h-8 mx-auto " />;
+    return <Podcast className="w-8 h-8 mx-auto text-foreground" />;
+  case "mikro":
+    return <Database className="w-8 h-8 mx-auto  text-foreground" />;
   case "omero-ark":
-    return <PiDatabaseLight className="w-8 h-8 mx-auto " />;
+    return <PiDatabaseLight className="w-8 h-8 mx-auto  text-foreground" />;
   case "port-next":
-    return <PiDatabaseLight className="w-8 h-8 mx-auto "  />;
-  case "reaktion":
-    return <GoWorkflow className="w-8 h-8 mx-auto " />;
+    return <PiDatabaseLight className="w-8 h-8 mx-auto  text-foreground "  />;
+  case "fluss":
+    return <Workflow className="w-8 h-8 mx-auto  text-foreground" />;
   case "lok":
-    return <GoWorkflow className="w-8 h-8 mx-auto " />;
+    return <Users2 className="w-8 h-8 mx-auto  text-foreground" />;
   case "settings":
-    return <GoWorkflow className="w-8 h-8 mx-auto " />;
+    return <GoWorkflow className="w-8 h-8 mx-auto  text-foreground" />;
+  case "kabinet":
+      return <ShoppingBasket className="w-8 h-8 mx-auto  text-foreground" />;
   default:
-    return <HomeIcon className="w-8 h-8 mx-auto " />;
+    return <HomeIcon className="w-8 h-8 mx-auto  text-foreground" />;
   }
 }
 
@@ -74,102 +76,52 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
 
 
   const linkChildren = fakts && Object.keys(fakts).map((key) => {
+    if (key == "self") return null;
     const faktsValue = fakts[key]
     return <DroppableNavLink key={key} to={`/${key}`}>{({ isActive }) => (
       <Tooltip>
       <TooltipTrigger><NavigationMenuLink active={isActive}>
        {matchIcon(key)}
       </NavigationMenuLink></TooltipTrigger>
-      <TooltipContent side="right">{faktsValue.name || key}</TooltipContent>
+      <TooltipContent side="right">{key}</TooltipContent>
       </Tooltip>
     )}</DroppableNavLink>
 }) || []
 
   return (
     <NavigationMenu
-    className="mx-auto px-1 max-w-[40px] mt-3 flex flex-grow sm:flex-col flex-row gap-8  items-center justify-start h-full "
+    className="mx-auto px-1 max-w-[40px] mt-3 flex flex-grow sm:flex-col flex-row gap-8  items-center justify-start h-full py-3"
     orientation="vertical"
     >
 
       <IconContext.Provider
         value={{
           size: "2em",
-          style: { stroke: "0.3px", color: "hsl(var(--primary))" },
+          style: { stroke: "0.3px", },
         }}
       >
+
         <div className="flex-grow  flex-col flex gap-8 ">
+          <div className="flex-grow"></div>
           {linkChildren}
-
-
-          <RekuestGuard fallback={<></>}>
-            <DroppableNavLink key={"Dashboard"} to={"rekuest"}>
-              {({ isActive }) => (
-                <NavigationMenuLink active={isActive}>
-                  <LucideLayoutDashboard className="w-8 h-8 mx-auto " />
-                </NavigationMenuLink>
-              )}
-            </DroppableNavLink>
-          </RekuestGuard>
-
-          <MikroNextGuard fallback={<></>}>
-            <DroppableNavLink key={"Dashboard"} to={"mikronext"}>
-              {({ isActive }) => (
-                <NavigationMenuLink active={isActive}>
-                  <PiDatabaseLight />
-                </NavigationMenuLink>
-              )}
-            </DroppableNavLink>
-          </MikroNextGuard>
-          <OmeroArkGuard fallback={<></>}>
-            <DroppableNavLink key={"Dashboard"} to={"omero-ark"}>
-              {({ isActive }) => (
-                <NavigationMenuLink active={isActive}>
-                  <PiDatabaseLight />
-                </NavigationMenuLink>
-              )}
-            </DroppableNavLink>
-          </OmeroArkGuard>
-          <PortGuard fallback={<></>}>
-            <DroppableNavLink key={"Dashboard"} to={"port-next"}>
-              {({ isActive }) => (
-                <NavigationMenuLink active={isActive}>
-                  <PiDatabaseLight />
-                </NavigationMenuLink>
-              )}
-            </DroppableNavLink>
-          </PortGuard>
-          <FlussGuard fallback={<></>}>
-            <DroppableNavLink key={"Reaktion"} to={"reaktion"}>
-              {({ isActive }) => (
-                <NavigationMenuLink active={isActive}>
-                  <GoWorkflow />
-                </NavigationMenuLink>
-              )}
-            </DroppableNavLink>
-          </FlussGuard>
-          <LokNextGuard fallback={<></>}>
-            <DroppableNavLink key={"Lok"} to={"lok"}>
-              {({ isActive }) => (
-                <NavigationMenuLink active={isActive}>
-                  <GoWorkflow />
-                </NavigationMenuLink>
-              )}
-            </DroppableNavLink>
-          </LokNextGuard>
-          <DroppableNavLink key={"Settings"} to={"settings"}>
-            {({ isActive }) => (
-              <NavigationMenuLink active={isActive}>
-                <GoWorkflow />
-              </NavigationMenuLink>
-            )}
-          </DroppableNavLink>
+          <div className="flex-grow"></div>
         </div>
 
+        <DroppableNavLink key={"Settings"} to={"settings"}>
+            {({ isActive }) => (
+              <NavigationMenuLink active={isActive}>
+                <Settings />
+              </NavigationMenuLink>
+            )}
+        </DroppableNavLink>
+        
+        <LokNextGuard fallback={<></>}>
         <DropdownMenu>
+          
           <DropdownMenuTrigger className="mb-2">
-            <LokNextGuard>
+          
               <Me />
-            </LokNextGuard>
+            
           </DropdownMenuTrigger>
           <DropdownMenuContent
             side="right"
@@ -194,6 +146,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
             </div>
           </DropdownMenuContent>
         </DropdownMenu>
+        </LokNextGuard>
       </IconContext.Provider>
     </NavigationMenu>
   );

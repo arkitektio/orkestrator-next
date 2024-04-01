@@ -6,6 +6,32 @@ export const manifest: Manifest = {
   version: "0.0.1",
   identifier: "github.io.jhnnsrs.wiiibboo",
   scopes: ["openid"],
+  requirements: {
+    lok: {
+      key: "lok",
+      service: "live.arkitekt.lok"
+    },  
+    rekuest: {
+      key: "rekuest",
+      service: "live.arkitekt.rekuest",
+      optional: false
+    },  
+    mikro: {
+      key: "mikro",
+      service: "live.arkitekt.mikro",
+      optional: true
+    },
+    fluss: {
+      key: "fluss",
+      service: "live.arkitekt.fluss",
+      optional: true
+    },
+    kabinet: {
+      key: "kabinet",
+      service: "live.arkitekt.kabinet",
+      optional: true
+    },
+  }
 };
 
 // The type of the smart model, used by the smart model and react-dnd

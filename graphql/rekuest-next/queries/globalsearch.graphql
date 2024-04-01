@@ -1,5 +1,12 @@
-query NodeSearch($filters: NodeFilter, $pagination: OffsetPaginationInput) {
-  nodes: nodes(filters: $filters, pagination: $pagination) {
+query GlobalSearch(
+  $search: String
+  $noNodes: Boolean!
+  $pagination: OffsetPaginationInput
+) {
+  nodes: nodes(
+    filters: { search: $search }
+    pagination: $pagination
+  ) @skip(if: $noNodes) {
     ...ListNode
   }
 }

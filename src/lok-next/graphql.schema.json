@@ -672,8 +672,8 @@
             "deprecationReason": null
           },
           {
-            "name": "instances",
-            "description": "The instances of the composition. An instance is a configured instance of a service that will be used to send to the client as a configuration. It should never contain sensitive information.",
+            "name": "mappings",
+            "description": "The mappings of the composition. A mapping is a mapping of a service to a service instance. This is used to configure the composition.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -686,7 +686,7 @@
                   "name": null,
                   "ofType": {
                     "kind": "OBJECT",
-                    "name": "ServiceInstance",
+                    "name": "ServiceInstanceMapping",
                     "ofType": null
                   }
                 }
@@ -1157,6 +1157,16 @@
         "possibleTypes": null
       },
       {
+        "kind": "SCALAR",
+        "name": "Fakt",
+        "description": "The `Fakt` scalar type represents a reference to a fakt",
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "OBJECT",
         "name": "GenericAccount",
         "description": "\nThe Generic Account is a Social Account that maps to a generic account. It provides information about the\nuser that is specific to the provider. This includes untyped extra data.\n\n",
@@ -1557,6 +1567,65 @@
       },
       {
         "kind": "INPUT_OBJECT",
+        "name": "LinkingRequestInput",
+        "description": null,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "host",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "isSecure",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "defaultValue": "false",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "port",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
         "name": "ManifestInput",
         "description": null,
         "fields": null,
@@ -1824,6 +1893,39 @@
             "deprecationReason": null
           },
           {
+            "name": "render",
+            "description": null,
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "RenderInput",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Fakt",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "replyTo",
             "description": null,
             "args": [
@@ -1883,6 +1985,39 @@
               "ofType": {
                 "kind": "OBJECT",
                 "name": "Comment",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "scan",
+            "description": null,
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "ScanBackendInput",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
                 "ofType": null
               }
             },
@@ -3301,6 +3436,69 @@
       },
       {
         "kind": "INPUT_OBJECT",
+        "name": "RenderInput",
+        "description": null,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "client",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "ID",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "composition",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "manifest",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "ManifestInput",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "request",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "LinkingRequestInput",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
         "name": "ReplyToCommentInput",
         "description": null,
         "fields": null,
@@ -3389,6 +3587,29 @@
               "ofType": null
             },
             "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "ScanBackendInput",
+        "description": null,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "backend",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -3627,6 +3848,22 @@
             "deprecationReason": null
           },
           {
+            "name": "identifier",
+            "description": "The identifier of the instance. This is a unique string that identifies the instance. It is used to identify the instance in the code and in the database.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "name",
             "description": "The name of the instance. This is a human readable name of the instance.",
             "args": [],
@@ -3652,6 +3889,81 @@
               "ofType": {
                 "kind": "OBJECT",
                 "name": "Service",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "ServiceInstanceMapping",
+        "description": "A ServiceInstance is a configured instance of a Service. It will be configured by a configuration backend and will be used to send to the client as a configuration. It should never contain sensitive information.",
+        "fields": [
+          {
+            "name": "composition",
+            "description": "The composition that this instance belongs to.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "Composition",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "id",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "ID",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "instance",
+            "description": "The service that this instance belongs to.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "ServiceInstance",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "key",
+            "description": "The key of the instance. This is a unique string that identifies the instance. It is used to identify the instance in the code and in the database.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
                 "ofType": null
               }
             },

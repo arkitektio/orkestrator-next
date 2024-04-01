@@ -28,17 +28,17 @@ export const ConnectButton = () => {
 
 
   return (
-    <div className="flex flex-col w-full h-full">
-    <div className="px-3 py-16 flex-1">
+    <div className="flex flex-col w-full h-full flex items-center justify-center">
         <div className="flex flex-col">
           <div className="space-y-4">
-            <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">Arkitekt. Your Server. Your Control.</h1>
+            <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl text-foreground">Hi Stranger :)</h1>
+            <h2 className="text-2xl font-light tracking-tighter sm:text-3xl md:text-4xl text-foreground">Welcome to Arkitekt.</h2>
             <p className="max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-              The open-source platform for deploying, managing, and scaling bioimage applications. In Order to get started, you need to connect to an Arkitekt
+              The open-source platform for deploying, managing, and scaling bioimage applications. In order to get you started, you need to connect to an Arkitekt
               Server.
             </p>
           
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 text-foreground">
                 Discovered Endpoints
             </div>
 
@@ -96,7 +96,6 @@ export const ConnectButton = () => {
         </div>
       </div>
    
-      </div>
   );
 };
 
@@ -106,27 +105,11 @@ export const LoginButton = () => {
 
   return (
     <>
-    <div className="flex flex-col w-full h-full">
-    <div className="px-3 py-16 flex-1">
+    <div className="flex flex-col w-full h-full flex items-center justify-center">
         <div className="flex flex-col">
           <div className="space-y-4">
-            <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl"> Welcome to {fakts?.self?.name}.</h1>
-            <p className="max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-              {fakts?.self?.welcomeMessage || "You are now logged in to your local server. You can now access all the features of your server."}
-            </p>
-          
-            
-            <div className="flex items-center space-x-2">
-            <Button onClick={() => login()} className="w-60">Login</Button>
-
-            <Button onClick={() => remove()} variant={"ghost"}>Remove</Button>
-          
-            </div>
-
-
-                
-              <Sheet>
-      <SheetTrigger asChild><Button variant={"ghost"} className="mt-30"> Advanced Info</Button></SheetTrigger>
+            <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl  text-foreground"> Welcome to  <Sheet>
+      <SheetTrigger asChild><div className="text-4xl sm:text-5xl md:text-6xl text-primary cursor-pointer inline"> {fakts?.self?.deployment_name}</div></SheetTrigger>
       <SheetContent>
         <SheetHeader>
           <SheetTitle>Debug Info</SheetTitle>
@@ -149,13 +132,31 @@ export const LoginButton = () => {
           </SheetDescription>
         </SheetHeader>
       </SheetContent>
-</Sheet>      
+</Sheet> </h1>
+            {fakts?.self?.welcome_message && <p className="max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
+              {fakts?.self?.welcome_message}
+            </p>}
+          
+            <p className="max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
+              You need to login to access the features of this server.
+
+            </p>
+            
+            <div className="flex items-center space-x-2">
+            <Button onClick={() => login()} className="w-60">Login</Button>
+
+            <Button onClick={() => {; remove()}} variant={"ghost"} className="text-foreground">Disconnect form server</Button>
+          
+            </div>
+
+
+                
+             
 
 </div>
         </div>
       </div>
    
-      </div>
 
 
     </>
@@ -267,18 +268,17 @@ export const ServicesInfo = () => {
 
 
 export const Home = () => {
-  const { login, user } = useArkitektLogin();
+  const { login, user, logout } = useArkitektLogin();
   const { remove, fakts } = useArkitektConnect();
 
   return (
     <>
-    <div className="flex flex-col w-full h-full">
-    <div className="px-3 py-16 flex-1">
+    <div className="flex flex-col w-full h-full flex items-center justify-center">
         <div className="flex flex-col">
           <div className="space-y-4">
-            <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl"> Hi {user?.preferred_username}</h1>
+            <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl text-foreground"> Hi {user?.preferred_username} :)</h1>
             <p className="max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-              You are currently logged in to {fakts?.self?.name}. You can now access all the features of your server.
+              You are currently logged in to {fakts?.self?.deployment_name}. You can now access all the features of your server.
             </p>
 
 
@@ -286,11 +286,14 @@ export const Home = () => {
           
             
             <div className="flex items-center space-x-2">
-            <Button onClick={() => login()} className="w-60">Login</Button>
+            {!user ? <Button onClick={() => login()} className="w-60">Login</Button> : <Button onClick={() => logout()} className="w-60">Logout</Button>}
 
-            <Button onClick={() => remove()} variant={"ghost"}>Remove</Button>
+            <Button onClick={() => {logout(); remove()}} variant={"ghost"} className="text-foreground">Disconnect form server</Button>
           
             </div>
+
+
+            <div className="flex-grow"/>
 
 
             
@@ -298,28 +301,10 @@ export const Home = () => {
 
 
 
-                
-              <Sheet>
-      <SheetTrigger asChild><Button variant={"ghost"} className="mt-30"> Advanced Info</Button></SheetTrigger>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>Debug Info</SheetTitle>
-          <SheetDescription>
-
-          <ServicesInfo/>
-                <pre className="space-y-4">
-                  {JSON.stringify(fakts, null, 2)}
-                </pre>
-          </SheetDescription>
-        </SheetHeader>
-      </SheetContent>
-</Sheet>      
-
 </div>
         </div>
       </div>
    
-      </div>
 
 
     </>

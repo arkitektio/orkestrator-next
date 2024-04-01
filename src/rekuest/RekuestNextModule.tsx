@@ -5,6 +5,7 @@ import { Route, Routes } from "react-router";
 import Node from "./pages/Node";
 import Reservation from "./pages/Reservation";
 import Home from "./pages/Home";
+import Standardpane from "./panes/StandardPane";
 
 interface Props {}
 /**
@@ -15,7 +16,7 @@ interface Props {}
 const Module: React.FC<Props> = (props) => {
   return (
     <RekuestGuard fallback={<>Loading</>} key={"rekuest"}>
-      <ModuleLayout pane={<></>}>
+      <ModuleLayout pane={<Standardpane/>}>
         <Routes>
           <Route index element={<Home />} />
           <Route path="nodes/:id" element={<Node />} />

@@ -5,12 +5,13 @@ import UserPage from "./pages/UserPage";
 import { MikroNextGuard } from "@jhnnsrs/mikro-next";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { LokNextGuard } from "@jhnnsrs/lok-next";
+import StandardPane from "./panes/StandardPane";
 interface Props {}
 
 export const LokNextModule: React.FC<Props> = (props) => {
   return (
     <LokNextGuard fallback={<>Loading</>}>
-      <ModuleLayout>
+      <ModuleLayout pane={<StandardPane/>}>
         <Routes>
           <Route path="users/:id" element={<UserPage />} />
           <Route path="*" element={<HomePage/>} />

@@ -35,18 +35,20 @@ const Filter: React.FC<FilterProps> = ({ onFilterChanged, defaultValue }) => {
             name={"search"}
             render={({ field }) => (
               <PopoverAnchor asChild>
-                <FormItem className="w-full px-3 relative">
+                <FormItem className="h-full w-full relative flex-row flex relative">
                   <FormControl>
                     <Input
                       placeholder={"Search...."}
                       {...field}
                       type="string"
-                      className="flex-grow bg-background py-4"
+                      className="flex-grow h-full bg-background text-foreground w-full"
                     />
                   </FormControl>
-                  <PopoverTrigger className="absolute right-5 bottom-2">
-                    <ArrowDown />
+
+                <PopoverTrigger className="absolute right-1 top-1 text-foreground">
+                    <ArrowDown/>
                   </PopoverTrigger>
+                 
                 </FormItem>
               </PopoverAnchor>
             )}
@@ -60,7 +62,6 @@ const Filter: React.FC<FilterProps> = ({ onFilterChanged, defaultValue }) => {
           </PopoverContent>
         </Popover>
       </div>
-      <div></div>
     </Form>
   );
 };

@@ -31,7 +31,7 @@ function App() {
           <Route path="callback" element={<Callback />} />{" "}
           {/* This is the callback route for the herre provider, and needs to be publicalyl available. (Represents Oauth2 Callback)*/}
           <Route index element={<Hero />} />
-          <Route path="mikronext/*" element={protect(<MikroNextModule />)} />
+          <Route path="mikro/*" element={protect(<MikroNextModule />)} />
           <Route path="rekuest/*" element={protect(<RekuestNextModule />)} />
           <Route path="fluss/*" element={protect(<ReaktionModule />)} />
           <Route path="port-next/*" element={protect(<PortNextModule />)} />

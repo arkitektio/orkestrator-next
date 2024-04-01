@@ -1105,13 +1105,14 @@ export type AssignationsQueryVariables = Exact<{
 
 export type AssignationsQuery = { __typename?: 'Query', assignations: Array<{ __typename?: 'Assignation', id: string, status: AssignationStatus, args: any, reference?: string | null }> };
 
-export type NodeSearchQueryVariables = Exact<{
-  filters?: InputMaybe<NodeFilter>;
+export type GlobalSearchQueryVariables = Exact<{
+  search?: InputMaybe<Scalars['String']['input']>;
+  noNodes: Scalars['Boolean']['input'];
   pagination?: InputMaybe<OffsetPaginationInput>;
 }>;
 
 
-export type NodeSearchQuery = { __typename?: 'Query', nodes: Array<{ __typename?: 'Node', id: string, name: string, description?: string | null }> };
+export type GlobalSearchQuery = { __typename?: 'Query', nodes: Array<{ __typename?: 'Node', id: string, name: string, description?: string | null }> };
 
 export type ConstantNodeQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1142,6 +1143,14 @@ export type AllNodesQueryVariables = Exact<{
 
 
 export type AllNodesQuery = { __typename?: 'Query', nodes: Array<{ __typename?: 'Node', id: string, name: string, description?: string | null }> };
+
+export type NodeSearchQueryVariables = Exact<{
+  filters?: InputMaybe<NodeFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+}>;
+
+
+export type NodeSearchQuery = { __typename?: 'Query', nodes: Array<{ __typename?: 'Node', id: string, name: string, description?: string | null }> };
 
 export type ReservationsQueryVariables = Exact<{
   instanceId: Scalars['InstanceId']['input'];
@@ -1699,42 +1708,43 @@ export function useAssignationsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptio
 export type AssignationsQueryHookResult = ReturnType<typeof useAssignationsQuery>;
 export type AssignationsLazyQueryHookResult = ReturnType<typeof useAssignationsLazyQuery>;
 export type AssignationsQueryResult = Apollo.QueryResult<AssignationsQuery, AssignationsQueryVariables>;
-export const NodeSearchDocument = gql`
-    query NodeSearch($filters: NodeFilter, $pagination: OffsetPaginationInput) {
-  nodes: nodes(filters: $filters, pagination: $pagination) {
+export const GlobalSearchDocument = gql`
+    query GlobalSearch($search: String, $noNodes: Boolean!, $pagination: OffsetPaginationInput) {
+  nodes: nodes(filters: {search: $search}, pagination: $pagination) @skip(if: $noNodes) {
     ...ListNode
   }
 }
     ${ListNodeFragmentDoc}`;
 
 /**
- * __useNodeSearchQuery__
+ * __useGlobalSearchQuery__
  *
- * To run a query within a React component, call `useNodeSearchQuery` and pass it any options that fit your needs.
- * When your component renders, `useNodeSearchQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGlobalSearchQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGlobalSearchQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useNodeSearchQuery({
+ * const { data, loading, error } = useGlobalSearchQuery({
  *   variables: {
- *      filters: // value for 'filters'
+ *      search: // value for 'search'
+ *      noNodes: // value for 'noNodes'
  *      pagination: // value for 'pagination'
  *   },
  * });
  */
-export function useNodeSearchQuery(baseOptions?: Apollo.QueryHookOptions<NodeSearchQuery, NodeSearchQueryVariables>) {
+export function useGlobalSearchQuery(baseOptions: Apollo.QueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<NodeSearchQuery, NodeSearchQueryVariables>(NodeSearchDocument, options);
+        return Apollo.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
       }
-export function useNodeSearchLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<NodeSearchQuery, NodeSearchQueryVariables>) {
+export function useGlobalSearchLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<NodeSearchQuery, NodeSearchQueryVariables>(NodeSearchDocument, options);
+          return Apollo.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
         }
-export type NodeSearchQueryHookResult = ReturnType<typeof useNodeSearchQuery>;
-export type NodeSearchLazyQueryHookResult = ReturnType<typeof useNodeSearchLazyQuery>;
-export type NodeSearchQueryResult = Apollo.QueryResult<NodeSearchQuery, NodeSearchQueryVariables>;
+export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>;
+export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>;
+export type GlobalSearchQueryResult = Apollo.QueryResult<GlobalSearchQuery, GlobalSearchQueryVariables>;
 export const ConstantNodeDocument = gql`
     query ConstantNode($id: ID!) {
   node(id: $id) {
@@ -1881,6 +1891,42 @@ export function useAllNodesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<A
 export type AllNodesQueryHookResult = ReturnType<typeof useAllNodesQuery>;
 export type AllNodesLazyQueryHookResult = ReturnType<typeof useAllNodesLazyQuery>;
 export type AllNodesQueryResult = Apollo.QueryResult<AllNodesQuery, AllNodesQueryVariables>;
+export const NodeSearchDocument = gql`
+    query NodeSearch($filters: NodeFilter, $pagination: OffsetPaginationInput) {
+  nodes: nodes(filters: $filters, pagination: $pagination) {
+    ...ListNode
+  }
+}
+    ${ListNodeFragmentDoc}`;
+
+/**
+ * __useNodeSearchQuery__
+ *
+ * To run a query within a React component, call `useNodeSearchQuery` and pass it any options that fit your needs.
+ * When your component renders, `useNodeSearchQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useNodeSearchQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *      pagination: // value for 'pagination'
+ *   },
+ * });
+ */
+export function useNodeSearchQuery(baseOptions?: Apollo.QueryHookOptions<NodeSearchQuery, NodeSearchQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<NodeSearchQuery, NodeSearchQueryVariables>(NodeSearchDocument, options);
+      }
+export function useNodeSearchLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<NodeSearchQuery, NodeSearchQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<NodeSearchQuery, NodeSearchQueryVariables>(NodeSearchDocument, options);
+        }
+export type NodeSearchQueryHookResult = ReturnType<typeof useNodeSearchQuery>;
+export type NodeSearchLazyQueryHookResult = ReturnType<typeof useNodeSearchLazyQuery>;
+export type NodeSearchQueryResult = Apollo.QueryResult<NodeSearchQuery, NodeSearchQueryVariables>;
 export const ReservationsDocument = gql`
     query Reservations($instanceId: InstanceId!) {
   myreservations(instanceId: $instanceId) {

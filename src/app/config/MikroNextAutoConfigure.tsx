@@ -10,11 +10,11 @@ export const MikroNextAutoConfigure: React.FC<{}> = (props) => {
   const { fakts } = useFakts();
 
   useEffect(() => {
-    if (token && fakts && fakts.mikro_next) {
+    if (token && fakts && fakts.mikro) {
       configure({
-        secure: fakts.mikro_next.secure,
-        wsEndpointUrl: fakts.mikro_next.ws_endpoint_url,
-        endpointUrl: fakts.mikro_next.endpoint_url,
+        secure: fakts.mikro.secure,
+        wsEndpointUrl: fakts.mikro.ws_endpoint_url,
+        endpointUrl: fakts.mikro.endpoint_url,
         possibleTypes: result.possibleTypes,
         retrieveToken: () => token,
       });

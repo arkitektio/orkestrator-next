@@ -1,3 +1,4 @@
+import { PageLayout } from "@/components/layout/PageLayout";
 import {
   useUpdateWorkspaceMutation,
   useWorkspaceQuery
@@ -18,7 +19,7 @@ export const WorkspaceDetail = (props: { id: string }) => {
   console.log(error?.message, data);
 
   return (
-    <>
+    <PageLayout title={data?.workspace.latestFlow.title || "No title"}>
       {data?.workspace.latestFlow && (
         <EditFlow
           flow={data?.workspace.latestFlow}
@@ -39,7 +40,7 @@ export const WorkspaceDetail = (props: { id: string }) => {
           }}
         />
       )}
-    </>
+    </PageLayout>
   );
 };
 

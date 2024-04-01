@@ -868,18 +868,16 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
               </Card>
             </div>
           )}
+          {state.remainingErrors.length != 0 &&
           <div className="absolute top-0 right-0  mr-3 mt-5 z-50">
-            <Card>
-              <CardHeader>
-                <CardDescription>For your information </CardDescription>
-              </CardHeader>
+            <Card className="bg-sidebar py-2">
               <CardContent>
                 {state.remainingErrors.length > 0 && (
                   <>
-                    <CardDescription> Remaining Errors </CardDescription>
                     {state.remainingErrors.map((e) => (
                       <RemainingErrorRender
                         error={e}
+                        
                         onClick={(e) =>
                           onNodesChange([
                             { type: "select", id: e.id, selected: true },
@@ -887,8 +885,6 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                         }
                       />
                     ))}
-
-                    <Button onClick={() => validate()}> Revalidate all </Button>
                   </>
                 )}
                 {state.solvedErrors.length > 0 && (
@@ -905,6 +901,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
               </CardContent>
             </Card>
           </div>
+          }
           {isOver && (
             <div className="absolute w-full h-full bg-white opacity-10 z-10">
               {" "}

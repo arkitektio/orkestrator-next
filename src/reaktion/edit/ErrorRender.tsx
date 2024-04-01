@@ -16,7 +16,7 @@ export const RemainingErrorRender = ({
   onClick: (error: ValidationError) => void;
 }) => {
   return (
-    <div className="text-xs" onClick={() => onClick(error)}>
+    <div className="text-xs cursor-pointer hover:text-foreground" onClick={() => onClick(error)}>
       {error.message} {error.path}
     </div>
   );

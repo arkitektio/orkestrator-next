@@ -12,7 +12,7 @@ export type ModuleLayoutProps = {
 };
 
 export const ModuleLayout = ({ pane, children }: ModuleLayoutProps) => {
-  const showPane = useSearchParams({ showPane: "true" })
+  const [showPane, setShowPane] = useSearchParams({ showPane: "true" })
 
 
 
@@ -23,13 +23,13 @@ export const ModuleLayout = ({ pane, children }: ModuleLayoutProps) => {
         <>
           <ResizablePanel
             defaultSize={10}
-            className="border-r border-gray-500 bg-background"
+            className="border-r dark:border-gray-700 bg-sidebar"
           >
             <ScrollArea className="flex flex-col h-full overflow-y-hidden">
               {pane}
             </ScrollArea>
           </ResizablePanel>
-          <ResizableHandle className="h-full w-1 opacity-0 hover:opacity-80 bg-accent translate-x-[-50%]" />
+          <ResizableHandle className="h-full opacity-0 hover:opacity-80 bg-accent translate-x-[-50%]" />
         </>
       )}
 

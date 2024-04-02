@@ -20,8 +20,8 @@ export const RekuestTemplate = buildSmart(
   "@rekuest-next/template",
   "rekuest/templates",
 );
-export const RekuestFlow = buildSmart("@fluss/flow", "fluss/flows");
-export const RekuestWorkspace = buildSmart(
+export const FlussFlow = buildSmart("@fluss/flow", "fluss/flows");
+export const FlussWorkspace = buildSmart(
   "@fluss/workspace",
   "fluss/workspaces",
 );
@@ -122,3 +122,5 @@ export const OmeroArkModuleLink = buildModuleLink("omero-ark");
 export const LokUser = buildSmart("@loknext/user", "lok/users");
 export const LokGroup = buildSmart("@lok/group", "lok/groups");
 export const LokClient = buildSmart("@lok/client", "lok/clients");
+export const LokMapping = buildSmart("@lok/mapping", "lok/mappings");
+export const LokComposition = buildSmart("@lok/composition", "lok/composition");

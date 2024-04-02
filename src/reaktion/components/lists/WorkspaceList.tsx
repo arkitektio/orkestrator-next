@@ -1,5 +1,5 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { RekuestWorkspace } from "@/linkers";
+import { FlussWorkspace } from "@/linkers";
 import {
   OffsetPaginationInput,
   useWorkspacesQuery,
@@ -22,9 +22,9 @@ const List = ({ pagination }: Props) => {
     <ListRender
       array={data?.workspaces}
       title={
-        <RekuestWorkspace.ListLink className="flex-0">
+        <FlussWorkspace.ListLink className="flex-0">
           Workspaces
-        </RekuestWorkspace.ListLink>
+        </FlussWorkspace.ListLink>
       }
       refetch={refetch}
     >

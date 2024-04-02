@@ -39,7 +39,7 @@ export type FlowState = {
 
 export type PortType = "source" | "target";
 
-export type Transform = "to_list" | "from_list" | "ensure";
+export type Transform = "to_list" | "from_list" | "ensure" | "round_float" | "to_float";
 
 export type ChangeEvent = {
   stream: PortFragment[];

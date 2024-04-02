@@ -20,16 +20,17 @@ import { HomeIcon } from "@radix-ui/react-icons";
 import React from "react";
 import { IconContext } from "react-icons/lib";
 import { PiDatabaseLight } from "react-icons/pi";
-import { TbDashboard } from "react-icons/tb";
+import { TbBugOff, TbDashboard } from "react-icons/tb";
 import { GoWorkflow } from "react-icons/go";
 import { ModeToggle } from "../ModeToggle";
 import { ArkitektLogo } from "../logos/ArkitektLogo";
 import { OmeroArkGuard } from "@jhnnsrs/omero-ark";
 import { PortGuard } from "@jhnnsrs/port-next";
-import { Database, LucideAlbum, LucideLayoutDashboard, Podcast, Settings, ShoppingBasket, UserSquare, Users2, Workflow } from "lucide-react";
+import { Bug, Database, LucideAlbum, LucideLayoutDashboard, Podcast, Settings, ShoppingBasket, UserSquare, Users2, Workflow } from "lucide-react";
 import { FlussGuard } from "@jhnnsrs/fluss-next";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
+import { useDebug } from "@/providers/debug/DebugContext";
 
 export type INavigationBarProps = {
   children?: React.ReactNode;
@@ -73,6 +74,7 @@ export const matchIcon = (key: string) => {
 const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
   const { logout, } = useArkitektLogin();
   const { remove, fakts } = useArkitektConnect();
+  const { debug, setDebug} = useDebug();
 
 
   const linkChildren = fakts && Object.keys(fakts).map((key) => {
@@ -105,9 +107,13 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
           <div className="flex-grow"></div>
           {linkChildren}
           <div className="flex-grow"></div>
+
         </div>
 
-        <DroppableNavLink key={"Settings"} to={"settings"}>
+        <Button variant="ghost" className="text-foreground" onClick={() => setDebug(!debug)}>{debug ? <Bug/> : <TbBugOff/>}</Button>
+       
+
+        <DroppableNavLink key={"Settings"} to={"settings"} className={"text-foreground"}>
             {({ isActive }) => (
               <NavigationMenuLink active={isActive}>
                 <Settings />
@@ -147,6 +153,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
           </DropdownMenuContent>
         </DropdownMenu>
         </LokNextGuard>
+       
       </IconContext.Provider>
     </NavigationMenu>
   );

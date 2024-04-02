@@ -4,7 +4,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { RekuestWorkspace } from "@/linkers";
+import { FlussWorkspace } from "@/linkers";
 import { MateFinder } from "@/mates/types";
 import { ListWorkspaceFragment } from "@/rekuest/api/graphql";
 import Timestamp from "react-timestamp";
@@ -16,7 +16,7 @@ interface Props {
 
 const TheCard = ({ workspace, mates }: Props) => {
   return (
-    <RekuestWorkspace.Smart
+    <FlussWorkspace.Smart
       object={workspace?.id}
       dragClassName={({ isOver, canDrop, isSelected, isDragging }) =>
         `relative rounded group text-white bg-center bg-back-999 shadow-lg h-20  hover:bg-back-800 transition-all ease-in-out duration-200 group ${
@@ -29,9 +29,9 @@ const TheCard = ({ workspace, mates }: Props) => {
       <Card>
         <CardHeader>
           <CardTitle>
-            <RekuestWorkspace.DetailLink object={workspace.id}>
+            <FlussWorkspace.DetailLink object={workspace.id}>
               {workspace.title}
-            </RekuestWorkspace.DetailLink>
+            </FlussWorkspace.DetailLink>
           </CardTitle>
           <CardDescription>
             {workspace.description || "No description"}
@@ -42,7 +42,7 @@ const TheCard = ({ workspace, mates }: Props) => {
           </CardDescription>
         </CardHeader>
       </Card>
-    </RekuestWorkspace.Smart>
+    </FlussWorkspace.Smart>
   );
 };
 

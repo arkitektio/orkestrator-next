@@ -1,4 +1,4 @@
-import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ContextMenuItem } from "@/components/ui/context-menu";
 import {
   Sheet,
@@ -32,6 +32,7 @@ export const ArkitektFilterNodeWidget: React.FC<ArkitektNodeProps> = ({
     moveStreamToConstants,
     moveOutStreamToVoid,
     moveVoidtoOutstream,
+    updateData
   } = useEditRiver();
 
   const [expanded, setExpanded] = React.useState(false);
@@ -82,9 +83,10 @@ export const ArkitektFilterNodeWidget: React.FC<ArkitektNodeProps> = ({
       ))}
       <CardHeader className="p-4">
         <CardTitle onDoubleClick={() => setExpanded(!expanded)}>
+          <Card className="absolute top-0 left-[50%] translate-x-[-50%] px-3 translate-y-[-50%] text-sm ">Conditional</Card >
           <div className="flex justify-between">
             <div className="text-xl font-bold">
-              <b>If</b> {data?.title}
+               {data?.title}
             </div>
             <Sheet>
               <SheetTrigger className="group-hover:opacity-100 opacity-0 transition-all duration-3000">
@@ -123,6 +125,7 @@ export const ArkitektFilterNodeWidget: React.FC<ArkitektNodeProps> = ({
               overwrites={data.constantsMap}
               onToArg={onToArg}
               onToGlobal={onToGlobal}
+              onSubmit={(values) => updateData({constantsMap: values}, id)}
             />
           </div>
         )}

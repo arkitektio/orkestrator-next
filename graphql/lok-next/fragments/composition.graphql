@@ -1,12 +1,6 @@
 fragment DetailComposition on Composition {
     name
     mappings {
-        key
-        instance {
-            service {
-                identifier
-            }
-            backend
-        }
+        ...ListServiceInstanceMapping
     }
 }

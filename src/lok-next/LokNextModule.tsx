@@ -6,6 +6,7 @@ import { MikroNextGuard } from "@jhnnsrs/mikro-next";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { LokNextGuard } from "@jhnnsrs/lok-next";
 import StandardPane from "./panes/StandardPane";
+import ClientPage from "./pages/ClientPage";
 interface Props {}
 
 export const LokNextModule: React.FC<Props> = (props) => {
@@ -14,6 +15,7 @@ export const LokNextModule: React.FC<Props> = (props) => {
       <ModuleLayout pane={<StandardPane/>}>
         <Routes>
           <Route path="users/:id" element={<UserPage />} />
+          <Route path="clients/:id" element={<ClientPage />} />
           <Route path="*" element={<HomePage/>} />
         </Routes>
       </ModuleLayout>

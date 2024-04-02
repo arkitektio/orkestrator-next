@@ -68,7 +68,7 @@ export const arkitektNodeToFlowNode = (
         ],
         outs: [
           node.args.filter((x) => !x?.nullable && x?.default == undefined),
-          [],
+          node.args.filter((x) => !x?.nullable && x?.default == undefined),
         ], // by default, all nullable and default values are optional so not part of stream],
         constants: node.args.filter(
           (x) => x?.nullable || x?.default != undefined,

@@ -10,6 +10,7 @@ import { Structure } from "@/types";
 import { composeMates } from "@/mates/compose";
 import { Card } from "@/components/ui/card";
 import { useMySelection } from "../selection/SelectionContext";
+import { Button } from "@/components/ui/button";
 
 export const SmartModel = ({
   showSelfMates = true,
@@ -80,10 +81,14 @@ export const SmartModel = ({
 
   const [{ isDragging }, drag, preview] = useDrag(
     () => ({
-      type: NativeTypes.TEXT,
-      collect: (monitor) => ({
+      type: SMART_MODEL_DROP_TYPE,
+      item: [self],
+      collect: (monitor) => {
+        console.log("Draging")
+        
+        return {
         isDragging: monitor.isDragging(),
-      }),
+      }},
     }),
     [self],
   );
@@ -92,6 +97,8 @@ export const SmartModel = ({
     isSelected,
   } = useMySelection({ identifier: props.identifier, id: props.object });
 
+
+  
 
   const dragClassNameFunc = props.dragClassName || (({}) => "");
 
@@ -152,6 +159,7 @@ export const SmartModel = ({
           }}
         >
           {isSelected && <Card className="border-2 absolute border-solid border-primary" />}{props.children}
+          {isDragging && <Button>hallo</Button>}
         </PopoverAnchor>
       </Popover>
     </div>

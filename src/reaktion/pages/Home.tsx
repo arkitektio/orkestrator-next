@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { CreateWorkspaceForm } from "../components/forms/CreateWorkspaceForm";
 import { FormDialogAction } from "@/components/ui/form-dialog-action";
 import { useNavigate } from "react-router-dom";
-import { RekuestWorkspace } from "@/linkers";
+import { FlussWorkspace } from "@/linkers";
 
 const Page = () => {
   const navigate = useNavigate();
@@ -21,7 +21,7 @@ const Page = () => {
             label="Create"
             onSubmit={(item) => {
               console.log(item);
-              navigate(RekuestWorkspace.linkBuilder(item.createWorkspace.id));
+              navigate(FlussWorkspace.linkBuilder(item.createWorkspace.id));
             }}
           >
             <CreateWorkspaceForm />

@@ -9,12 +9,11 @@ import { withLokNext } from "@jhnnsrs/lok-next";
 import React from "react";
 import { useParams } from "react-router";
 import { useUserQuery } from "../api/graphql";
+import { DetailRouteProps, asDetailRoute } from "@/app/routes/DetailRoute";
 
 export type IRepresentationScreenProps = {};
 
-const Page: React.FC<IRepresentationScreenProps> = () => {
-  const { id } = useParams<{ id: string }>();
-  if (!id) return <></>;
+const Page = ({id}: DetailRouteProps) => {
 
   const { data } = withLokNext(useUserQuery)({
     variables: {
@@ -23,7 +22,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   });
 
   return (
-    <PageLayout actions={<MikroDataset.Actions id={id} />}>
+    <PageLayout actions={<MikroDataset.Actions id={id} />} title={data?.user?.username}>
       <DetailPane className="p-3 @container">
         <DetailPaneHeader>
           <DetailPaneTitle>{data?.user?.username}</DetailPaneTitle>
@@ -33,4 +32,4 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   );
 };
 
-export default Page;
+export default asDetailRoute(Page);

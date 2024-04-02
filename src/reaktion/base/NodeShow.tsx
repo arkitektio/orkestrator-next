@@ -55,7 +55,7 @@ export const NodeShowLayout: React.FC<NodeProps> = ({
             {children}
 
             {errors.length > 0 && showNodeErrors && (
-              <div className="absolute translate-y-[-100%] top-0 left-[50%] translate-x-[-50%] pb-3 flex flex-col gap-2">
+              <div className="absolute translate-y-[-100%] top-0 left-[50%] translate-x-[-50%] pb-3 flex flex-col gap-2 min-w-[200px]">
                 {errors.map((e) => (
                   <Card className="p-2 border-destructive text-xs max-w-md  animate-pulse">
                     {e.message}

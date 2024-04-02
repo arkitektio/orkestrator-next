@@ -12,18 +12,20 @@ export type ModelPageLayoutProps = {
   children: React.ReactNode;
   identifier: Identifier;
   object: string;
+  title: string;
   sidebars?: React.ReactNode;
   actions?: React.ReactNode;
 };
 
 export const ModelPageLayout = ({
   sidebars,
+  title,
   children,
   identifier,
   object,
 }: ModelPageLayoutProps) => {
   return (
-    <PageLayout title={"identifier"} sidebars={<><Komments identifier={identifier} object={object} />
+    <PageLayout title={title} sidebars={<><Komments identifier={identifier} object={object} />
     {sidebars}</>}>
       {children}
     </PageLayout>

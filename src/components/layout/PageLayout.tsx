@@ -10,7 +10,7 @@ import { Button } from "../ui/button";
 import { useCallback } from "react";
 
 export type PageLayoutProps = {
-  title: string;
+  title: string | undefined;
   children: React.ReactNode;
   sidebars?: React.ReactNode;
   actions?: React.ReactNode;
@@ -21,7 +21,7 @@ export type PageLayoutProps = {
 
 
 export const PageLayout = ({
-  title = "No Title Provided",
+  title = "Loading...",
   sidebars,
   children,
   actions,

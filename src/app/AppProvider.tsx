@@ -29,6 +29,7 @@ import { OmeroArkProvider } from "@jhnnsrs/omero-ark";
 import { PortProvider } from "@jhnnsrs/port-next";
 import { FlussProvider } from "@jhnnsrs/fluss-next";
 import { SelectionProvider } from "@/providers/selection/SelectionProvider";
+import { DebugProvider } from "@/providers/debug/DebugProvider";
 
 const displayRegistry = {
   "@mikro-next/image": ImageDisplay,
@@ -41,6 +42,7 @@ const displayRegistry = {
 // Additionally, it wraps the DisplayProvider, which allows for the configuration of the display registry.
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   return (
+    <DebugProvider>
     <EasyProvider manifest={manifest}>
       <DisplayProvider registry={displayRegistry}>
         <SelectionProvider>
@@ -93,5 +95,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         </SelectionProvider>
       </DisplayProvider>
     </EasyProvider>
+    </DebugProvider>
   );
 };

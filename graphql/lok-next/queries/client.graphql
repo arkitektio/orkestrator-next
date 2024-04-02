@@ -4,8 +4,8 @@ query Clients($filters: ClientFilter, $pagination: OffsetPaginationInput) {
   }
 }
 
-query DetailClient($clientId: ID, $id: ID) {
-  client(clientId: $clientId, id: $id) {
+query DetailClient($id: ID!) {
+  client(id: $id) {
     ...DetailClient
   }
 }

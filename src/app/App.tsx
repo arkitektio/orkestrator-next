@@ -1,7 +1,5 @@
-import { Route, RouteProps, Routes } from "react-router-dom";
+import { Route, RouteProps, Routes,  } from "react-router-dom";
 import { AppProvider } from "./AppProvider";
-import PrivateRouter from "./routers/PrivateRouter";
-import PublicRouter from "./routers/PublicRouter";
 import { PrivateNavigationBar } from "./components/navigation/PrivateNavigationBar";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Hero from "@/app/pages/Hero";
@@ -14,12 +12,20 @@ import OmeroArkModule from "@/omero-ark/OmeroArkModule";
 import SettingsModule from "@/settings/SettingsModule";
 import PortNextModule from "@/port-next/PortNextModule";
 import React from "react";
+import { NotFound } from "./components/fallbacks/NotFound";
+import { NotLoggedIn } from "./components/fallbacks/NotLoggedIn";
+import { NotConnected } from "./components/fallbacks/NotConnected";
 // Entrypoint of the application.
 // We provide two main routers, one for the public routes, and one for the private routes.
 export const protect = (component: React.ReactNode) => {
-  return <EasyGuard>{component}</EasyGuard>;
+  return <EasyGuard notLoggedInFallback={<NotLoggedIn/>} notConnectedFallback={<NotConnected/>}>{component}</EasyGuard>;
 };
 
+
+export const Fallback = () => {
+
+  return <div> Puh this doesnt exist really</div>;
+}
 
 
 
@@ -38,6 +44,7 @@ function App() {
           <Route path="omero-ark/*" element={protect(<OmeroArkModule />)} />
           <Route path="lok/*" element={protect(<LokNextModule />)} />
           <Route path="settings/*" element={protect(<SettingsModule />)} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
     </AppLayout>
     </AppProvider>

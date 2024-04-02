@@ -1,3 +1,4 @@
+import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
 import { Button } from "@/components/ui/button";
 import {
@@ -55,20 +56,14 @@ export const ReserveForm = (props: { node: string }) => {
 };
 
 
-export const NodeInfo = (props: { id: string }) => {
-  const { data } = withRekuest(useConstantNodeQuery)({
-    variables: {
-      id: props.id,
-    },
-  });
-
-
+export default asDetailQueryRoute (withRekuest(useConstantNodeQuery), ({data}) => {
+  
   const copyHashToClipboard = useCallback(() => {
     navigator.clipboard.writeText(data?.node?.hash || "");
   }, [data?.node?.hash]);
 
   return (
-    <ModelPageLayout identifier="@rekuest/node" object={props.id}>
+    <ModelPageLayout identifier="@rekuest/node" title={data.node.name} object={data.node.id}>
       <DetailPane>
         <DetailPaneHeader>
           <DetailPaneTitle
@@ -121,26 +116,12 @@ export const NodeInfo = (props: { id: string }) => {
                 This action cannot be undone. This will permanently delete your
                 account and remove your data from our servers.
               </DialogDescription>
-              <ReserveForm node={props.id} />
+              <ReserveForm node={data.node.id} />
             </DialogHeader>
           </DialogContent>
         </Dialog>
       </DetailPane>
     </ModelPageLayout>
   );
-};
+});
 
-function Page() {
-  const { id } = useParams<{ id: string }>();
-  if (!id) {
-    return <div>Missing id</div>;
-  }
-
-  return (
-    <>
-      <NodeInfo id={id} />
-    </>
-  );
-}
-
-export default Page;

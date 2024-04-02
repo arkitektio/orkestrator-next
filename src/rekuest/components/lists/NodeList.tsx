@@ -1,5 +1,5 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { MikroDataset } from "@/linkers";
+import { MikroDataset, RekuestNode } from "@/linkers";
 import {
   NodeFilter,
   OffsetPaginationInput,
@@ -25,9 +25,9 @@ const List = ({ filters, pagination }: Props) => {
     <ListRender
       array={data?.nodes}
       title={
-        <MikroDataset.ListLink className="flex-0">
-          Datasets
-        </MikroDataset.ListLink>
+        <RekuestNode.ListLink className="flex-0">
+          Nodes
+        </RekuestNode.ListLink>
       }
       refetch={refetch}
     >

@@ -2,6 +2,7 @@ fragment ListNode on Node {
   id
   name
   description
+  hash
 }
 
 fragment GraphNodeNode on Node {

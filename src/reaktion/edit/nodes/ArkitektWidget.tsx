@@ -20,7 +20,6 @@ import { GearIcon } from "@radix-ui/react-icons";
 import React from "react";
 import { ArkitektNodeProps } from "../../types";
 import { useEditNodeErrors, useEditRiver } from "../context";
-import { updateCamera } from "@react-three/fiber/dist/declarations/src/core/utils";
 
 export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
   data: { ins, outs, constants, ...data },

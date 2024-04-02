@@ -11,6 +11,7 @@ fragment PostmanReservation on Reservation {
     ...Ports
     name
     description
+    hash
   }
   binds {
     ...Binds

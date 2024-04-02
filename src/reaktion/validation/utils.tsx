@@ -29,6 +29,34 @@ export const islistTransformable = (
   return true;
 };
 
+export const isFloatTransformable = (
+  challenging: PortFragment[] | undefined,
+  having: PortFragment[] | undefined,
+): boolean => {
+  if (challenging == undefined || having == undefined) return false;
+  if (challenging.length != having.length) return false;
+  for (let i = 0; i < challenging.length; i++) {
+    if (having[i].kind != PortKind.Int) return false;
+    if (challenging[i].kind != PortKind.Float) return false;
+  }
+
+  return true;
+};
+
+export const isIntTransformable = (
+  challenging: PortFragment[] | undefined,
+  having: PortFragment[] | undefined,
+): boolean => {
+  if (challenging == undefined || having == undefined) return false;
+  if (challenging.length != having.length) return false;
+  for (let i = 0; i < challenging.length; i++) {
+    if (having[i].kind != PortKind.Float) return false;
+    if (challenging[i].kind != PortKind.Int) return false;
+  }
+
+  return true;
+};
+
 export const isChunkTransformable = (
   challenging: PortFragment[] | undefined,
   having: PortFragment[] | undefined,

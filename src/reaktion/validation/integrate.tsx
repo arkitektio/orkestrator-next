@@ -3,6 +3,7 @@ import {
   GraphNodeFragment,
   GraphNodeKind,
   PortFragment,
+  PortKind,
   ReactiveImplementation,
 } from "@/reaktion/api/graphql";
 import { Connection, XYPosition } from "reactflow";
@@ -25,6 +26,8 @@ import {
 } from "./types";
 import {
   isChunkTransformable,
+  isFloatTransformable,
+  isIntTransformable,
   isNullTransformable,
   isSameStream,
   islistTransformable,
@@ -99,6 +102,12 @@ export const onlyValid = (
       return { needsTransform: "from_list" }; // No change needed// No change needed
     if (isNullTransformable(event.stream, data.ins.at(event.index)))
       return { needsTransform: "ensure" };
+    if (isFloatTransformable(event.stream, data.ins.at(event.index)))
+      return {needsTransform: "round_float"}
+    if (isIntTransformable(event.stream, data.ins.at(event.index)))
+      return {needsTransform: "to_float"}
+
+
     throw new Error("Ports do not match");
   } else {
     if (isSameStream(data.outs.at(event.index), event.stream)) return {};
@@ -209,6 +218,44 @@ export const getTransform = (
         ins: [instream],
         constantsMap: {},
         outs: [instream.map((p, index) => singleToList(p))],
+        constants: [],
+        implementation: ReactiveImplementation.ToList,
+      },
+    };
+  }
+
+  if (transform == "round_float") {
+    return {
+      id: nodeIdBuilder(),
+      type: "ReactiveNode",
+      position: position,
+      data: {
+        globalsMap: {},
+        title: "Round",
+        description: "Round a flout to the nearest int",
+        kind: GraphNodeKind.Reactive,
+        ins: [instream],
+        constantsMap: {},
+        outs: [instream.map((p, index) => ({...p,  kind: PortKind.Int }))],
+        constants: [],
+        implementation: ReactiveImplementation.ToList,
+      },
+    };
+  }
+
+  if (transform == "to_float") {
+    return {
+      id: nodeIdBuilder(),
+      type: "ReactiveNode",
+      position: position,
+      data: {
+        globalsMap: {},
+        title: "Convert to Float",
+        description: "Round a int to a float",
+        kind: GraphNodeKind.Reactive,
+        ins: [instream],
+        constantsMap: {},
+        outs: [instream.map((p, index) => ({...p,  kind: PortKind.Float }))],
         constants: [],
         implementation: ReactiveImplementation.ToList,
       },

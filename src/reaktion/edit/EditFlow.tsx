@@ -87,6 +87,7 @@ import { ArkitektTrackNodeWidget } from "./nodes/ArkitektWidget";
 import { ReactiveTrackNodeWidget } from "./nodes/ReactiveWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
+import { useSmartDrop } from "@/providers/smart/hooks";
 
 const nodeTypes: NodeTypes = {
   ArkitektGraphNode: ArkitektTrackNodeWidget,
@@ -112,7 +113,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
   const { client: arkitektapi } = useRekuest();
   const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
   const [showEdgeLabels, setShowEdgeLabels] = useState(false);
-  const [showNodeErrors, setShowNodeErrors] = useState(false);
+  const [showNodeErrors, setShowNodeErrors] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const [reactFlowInstance, setReactFlowInstance] =
     useState<ReactFlowInstance | null>(null);
@@ -721,11 +722,9 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
     [reactFlowInstance, state, setState],
   );
 
-  const [{ isOver, canDrop, type, position }, dropref] = useDrop(() => {
-    return {
-      accept: [SMART_MODEL_DROP_TYPE],
+  const [{ isOver, canDrop }, dropref] = useSmartDrop((items, monitor) => {
+        console.log("Dropping On Edit?")
 
-      drop: (items: { id: string; identifier: string }[], monitor) => {
         if (!monitor.didDrop()) {
           console.log("Ommitting Parent Drop");
         }
@@ -806,15 +805,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         });
 
         return {};
-      },
-      collect: (monitor) => ({
-        isOver: !!monitor.isOver(),
-        position: monitor.getClientOffset(),
-        type: monitor.getItemType(),
-        canDrop: !!monitor.canDrop(),
-      }),
-    };
-  }, [reactFlowInstance, reactFlowWrapper, addNode]);
+      },[reactFlowInstance, reactFlowWrapper, addNode]);
 
   return (
     <EditRiverContext.Provider
@@ -874,7 +865,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
               <CardContent>
                 {state.remainingErrors.length > 0 && (
                   <>
-                    {state.remainingErrors.map((e) => (
+                    {state.remainingErrors.filter(e => e.type == "graph").map((e) => (
                       <RemainingErrorRender
                         error={e}
                         

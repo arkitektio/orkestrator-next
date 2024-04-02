@@ -29,7 +29,7 @@ const buildModelLink = (to: string) => {
 };
 
 const linkBuilder = (to: string) => (object: string) => {
-  return `/user/${to}/${object}`;
+  return `/${to}/${object}`;
 };
 
 export const buildSmartModel = (
@@ -73,6 +73,7 @@ export const buildSmart = (model: Identifier, to: string) => {
     Smart: buildSmartModel(model),
     Actions: buildSelfActions(model),
     Komments: buildKomments(model),
+    identifier: model
   };
 };
 

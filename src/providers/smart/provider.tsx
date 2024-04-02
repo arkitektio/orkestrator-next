@@ -24,7 +24,7 @@ const MyPreview = () => {
   const { itemType, item, style } = preview;
   return (
     <Card className="item-list__item" style={style}>
-      {item.map((x) => x.identifier)}
+      hallo
     </Card>
   );
 };

@@ -118,6 +118,8 @@ export const SelectionProvider: React.FC<ArkitektProps> = ({ children }) => {
     }
   };
 
+  
+
   const { DragSelection } = useSelectionContainer({
     onSelectionChange: handleSelectionChange,
     shouldStartSelecting: (target) => {
@@ -139,10 +141,10 @@ export const SelectionProvider: React.FC<ArkitektProps> = ({ children }) => {
     },
     selectionProps: {
       style: {
-        border: "2px rgb(var(--color-primary-400))",
+        border: "2px hsl(var(--primary))",
         borderRadius: 4,
-        backgroundColor: "rgb(var(--color-primary-300))",
-        opacity: 0.5,
+        backgroundColor: "hsl(var(--primary))",
+        opacity: 0.,
       },
     },
   });

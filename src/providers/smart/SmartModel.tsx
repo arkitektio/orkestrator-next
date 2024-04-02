@@ -3,12 +3,13 @@ import { SMART_MODEL_DROP_TYPE } from "@/constants";
 import { PopoverAnchor } from "@radix-ui/react-popover";
 import React, { useEffect, useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
-import { getEmptyImage } from "react-dnd-html5-backend";
+import { NativeTypes, getEmptyImage } from "react-dnd-html5-backend";
 import { SmartModelProps } from "./types";
 import { Mates } from "./Mates";
 import { Structure } from "@/types";
 import { composeMates } from "@/mates/compose";
 import { Card } from "@/components/ui/card";
+import { useMySelection } from "../selection/SelectionContext";
 
 export const SmartModel = ({
   showSelfMates = true,
@@ -47,7 +48,7 @@ export const SmartModel = ({
 
   const [{ isOver, canDrop, overItems }, drop] = useDrop(() => {
     return {
-      accept: [SMART_MODEL_DROP_TYPE],
+      accept: [NativeTypes.TEXT],
       drop: (item, monitor) => {
         if (!monitor.didDrop()) {
           console.log("Ommitting Parent Drop");
@@ -55,10 +56,22 @@ export const SmartModel = ({
         return {};
       },
       collect: (monitor) => {
+        let text = monitor.getItem()?.text;
+        if (text) {
+          let structure: Structure = JSON.parse(text);
+          return {
+            isOver: monitor.isOver(),
+            canDrop: monitor.canDrop(),
+            overItems: [structure],
+          };
+        }
+
+
         let item = monitor.getItem() as Structure[] | null;
+        console.log(item);
         return {
           isOver: !!monitor.isOver(),
-          overItems: item,
+          overItems: [],
           canDrop: !!monitor.canDrop(),
         };
       },
@@ -67,8 +80,7 @@ export const SmartModel = ({
 
   const [{ isDragging }, drag, preview] = useDrag(
     () => ({
-      type: SMART_MODEL_DROP_TYPE,
-      item: [self],
+      type: NativeTypes.TEXT,
       collect: (monitor) => ({
         isDragging: monitor.isDragging(),
       }),
@@ -76,11 +88,10 @@ export const SmartModel = ({
     [self],
   );
 
-  useEffect(() => {
-    preview(getEmptyImage(), {
-      captureDraggingState: true,
-    });
-  }, []);
+  const {
+    isSelected,
+  } = useMySelection({ identifier: props.identifier, id: props.object });
+
 
   const dragClassNameFunc = props.dragClassName || (({}) => "");
 
@@ -140,7 +151,7 @@ export const SmartModel = ({
             e.dataTransfer.setData("text", JSON.stringify(self));
           }}
         >
-          {props.children}
+          {isSelected && <Card className="border-2 absolute border-solid border-primary" />}{props.children}
         </PopoverAnchor>
       </Popover>
     </div>

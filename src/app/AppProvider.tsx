@@ -28,6 +28,7 @@ import { MikroNextWard } from "@/mikro-next/MikroNextWard";
 import { OmeroArkProvider } from "@jhnnsrs/omero-ark";
 import { PortProvider } from "@jhnnsrs/port-next";
 import { FlussProvider } from "@jhnnsrs/fluss-next";
+import { SelectionProvider } from "@/providers/selection/SelectionProvider";
 
 const displayRegistry = {
   "@mikro-next/image": ImageDisplay,
@@ -42,6 +43,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <EasyProvider manifest={manifest}>
       <DisplayProvider registry={displayRegistry}>
+        <SelectionProvider>
         <CommandProvider>
           <SmartProvider>
             <RekuestProvider>
@@ -88,6 +90,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
             </RekuestProvider>
           </SmartProvider>
         </CommandProvider>
+        </SelectionProvider>
       </DisplayProvider>
     </EasyProvider>
   );

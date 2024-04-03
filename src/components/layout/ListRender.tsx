@@ -6,6 +6,7 @@ import { ContainerGrid } from "./ContainerGrid";
 
 export type ListRenderProps<T> = {
   title?: React.ReactNode;
+
   loading?: boolean;
   fitLength?: number;
   loader?: React.ReactNode;

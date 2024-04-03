@@ -98,7 +98,7 @@
     "react-three-fiber": "^6.0.13",
     "react-timestamp": "^6.0.0",
     "react-use-measure": "^2.1.1",
-    "reactflow": "^11.8.3",
+    "reactflow": "^11.10.4",
     "shadowrealm-api": "^0.8.3",
     "slate": "^0.94.1",
     "slate-react": "^0.98.3",

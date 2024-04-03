@@ -12,14 +12,11 @@ export type ModuleLayoutProps = {
 };
 
 export const ModuleLayout = ({ pane, children }: ModuleLayoutProps) => {
-  const [showPane, setShowPane] = useSearchParams({ showPane: "true" })
-
-
-
+  const [params, setParams] = useSearchParams({ sidebar: "true" });
 
   return (
     <ResizablePanelGroup autoSaveId="module" direction="horizontal">
-      {pane &&(
+      {pane && params.get("sidebar") == "true" && (
         <>
           <ResizablePanel
             defaultSize={10}

@@ -1,5 +1,12 @@
 import React, { useContext } from "react";
-import { ArkitektNodeData, NodeData } from "../types";
+import {
+  ArkitektNodeData,
+  ClickContextualParams,
+  ConnectContextualParams,
+  DropContextualParams,
+  FlowNode,
+  NodeData,
+} from "../types";
 import {
   FlowFragment,
   GlobalArg,
@@ -41,6 +48,12 @@ export type ShowRiverContextType = {
   state: ValidationResult;
   showEdgeLabels: boolean;
   showNodeErrors: boolean;
+  addContextualNode: (node: FlowNode, params: DropContextualParams) => void;
+  addClickNode: (node: FlowNode, params: ClickContextualParams) => void;
+  addConnectContextualNode: (
+    node: FlowNode,
+    params: ConnectContextualParams,
+  ) => void;
 };
 
 export const EditRiverContext = React.createContext<ShowRiverContextType>({
@@ -63,6 +76,11 @@ export const EditRiverContext = React.createContext<ShowRiverContextType>({
   moveOutStreamToVoid: () => {},
   moveVoidtoOutstream: () => {},
   showNodeErrors: true,
+  addContextualNode: () => {},
+  addClickNode: () => {},
+  addConnectContextualNode(node, params) {
+    console.log(node, params);
+  },
 });
 
 export const useEditRiver = () => useContext(EditRiverContext);

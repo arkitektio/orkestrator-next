@@ -17,7 +17,14 @@ import {
   ReturnNodeFragment,
   VanillaEdgeFragment,
 } from "@/reaktion/api/graphql";
-import { Connection, Edge, EdgeProps, Node, NodeProps } from "reactflow";
+import {
+  Connection,
+  Edge,
+  EdgeProps,
+  Node,
+  NodeProps,
+  OnConnectStartParams,
+} from "reactflow";
 
 export type DataEnhancer<T, L = {}> = T & { extras?: L };
 
@@ -141,3 +148,26 @@ export type NodeFragment = GraphNodeFragment;
 export type EdgeFragement = GraphEdgeFragment;
 export type GlobalFragment = GlobalArgFragment;
 export type StreamItemFragment = StreamItemFragment;
+
+export type DropContextualParams = {
+  handleType: "source" | "target";
+  causingNode: FlowNode;
+  causingStream: number;
+  position: { x: number; y: number };
+  event: MouseEvent | TouchEvent;
+  connectionParams: OnConnectStartParams;
+};
+
+export type ClickContextualParams = {
+  position: { x: number; y: number };
+  event: MouseEvent | TouchEvent;
+};
+
+export type ConnectContextualParams = {
+  connection: Connection;
+  leftNode: FlowNode;
+  leftStream: number;
+  rightNode: FlowNode;
+  rightStream: number;
+  position: { x: number; y: number };
+};

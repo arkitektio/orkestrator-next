@@ -38,6 +38,7 @@ export const ListOffsetter = ({
 export const ListTitle = (props: {
   children: React.ReactNode;
   right?: React.ReactNode;
+  className?: string;
   onClick?: () => void;
 }) => {
   return (

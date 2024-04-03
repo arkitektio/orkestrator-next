@@ -35,7 +35,7 @@ export const NodeShowLayout: React.FC<NodeProps> = ({
   contextMenu,
   minWidth = 100,
   minHeight = 30,
-  maxWidth = 700,
+  maxWidth = 400,
   maxHeight = 700,
 }) => {
   const { showNodeErrors } = useEditRiver();

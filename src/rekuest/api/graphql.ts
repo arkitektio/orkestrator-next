@@ -283,6 +283,11 @@ export type DefinitionInput = {
   returns?: InputMaybe<Array<PortInput>>;
 };
 
+export enum DemandKind {
+  Args = 'ARGS',
+  Returns = 'RETURNS'
+}
+
 export type DependencyInput = {
   binds?: InputMaybe<BindsInput>;
   hash?: InputMaybe<Scalars['NodeHash']['input']>;
@@ -422,6 +427,13 @@ export type NodeIsTestForArgs = {
 };
 
 
+export type NodeProtocolsArgs = {
+  filters?: InputMaybe<ProtocolFilter>;
+  order?: InputMaybe<ProtocolOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type NodeTemplatesArgs = {
   filters?: InputMaybe<TemplateFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -437,8 +449,10 @@ export type NodeTestsArgs = {
 export type NodeFilter = {
   AND?: InputMaybe<NodeFilter>;
   OR?: InputMaybe<NodeFilter>;
+  demands?: InputMaybe<Array<PortDemandInput>>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   name?: InputMaybe<StrFilterLookup>;
+  protocols?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -487,6 +501,13 @@ export type Port = {
   variants?: Maybe<Array<ChildPort>>;
 };
 
+export type PortDemandInput = {
+  forceLength?: InputMaybe<Scalars['Int']['input']>;
+  forceNonNullableLength?: InputMaybe<Scalars['Int']['input']>;
+  kind: DemandKind;
+  matches?: InputMaybe<Array<PortMatchInput>>;
+};
+
 export type PortGroup = {
   __typename?: 'PortGroup';
   hidden: Scalars['Boolean']['output'];
@@ -528,6 +549,16 @@ export enum PortKind {
   Union = 'UNION'
 }
 
+export type PortMatchInput = {
+  at?: InputMaybe<Scalars['Int']['input']>;
+  child?: InputMaybe<PortDemandInput>;
+  identifier?: InputMaybe<Scalars['String']['input']>;
+  key?: InputMaybe<Scalars['String']['input']>;
+  kind?: InputMaybe<PortKind>;
+  nullable?: InputMaybe<Scalars['Boolean']['input']>;
+  variants?: InputMaybe<Array<PortDemandInput>>;
+};
+
 export enum PortScope {
   Global = 'GLOBAL',
   Local = 'LOCAL'
@@ -545,6 +576,18 @@ export type ProtocolNodesArgs = {
   filters?: InputMaybe<NodeFilter>;
   order?: InputMaybe<NodeOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+export type ProtocolFilter = {
+  AND?: InputMaybe<ProtocolFilter>;
+  OR?: InputMaybe<ProtocolFilter>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ProtocolOrder = {
+  name?: InputMaybe<Ordering>;
 };
 
 export type Provision = {
@@ -603,6 +646,7 @@ export type Query = {
   myreservations: Array<Reservation>;
   node: Node;
   nodes: Array<Node>;
+  protocols: Array<Protocol>;
   provision: Provision;
   provisions: Array<Provision>;
   reservation: Reservation;
@@ -649,6 +693,13 @@ export type QueryNodeArgs = {
 export type QueryNodesArgs = {
   filters?: InputMaybe<NodeFilter>;
   order?: InputMaybe<NodeOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryProtocolsArgs = {
+  filters?: InputMaybe<ProtocolFilter>;
+  order?: InputMaybe<ProtocolOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1151,6 +1202,14 @@ export type NodeSearchQueryVariables = Exact<{
 
 
 export type NodeSearchQuery = { __typename?: 'Query', nodes: Array<{ __typename?: 'Node', id: string, name: string, description?: string | null, hash: any }> };
+
+export type ProtocolOptionsQueryVariables = Exact<{
+  search?: InputMaybe<Scalars['String']['input']>;
+  values?: InputMaybe<Array<Scalars['ID']['input']>>;
+}>;
+
+
+export type ProtocolOptionsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Protocol', value: string, label: string }> };
 
 export type ReservationsQueryVariables = Exact<{
   instanceId: Scalars['InstanceId']['input'];
@@ -1929,6 +1988,46 @@ export function useNodeSearchLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
 export type NodeSearchQueryHookResult = ReturnType<typeof useNodeSearchQuery>;
 export type NodeSearchLazyQueryHookResult = ReturnType<typeof useNodeSearchLazyQuery>;
 export type NodeSearchQueryResult = Apollo.QueryResult<NodeSearchQuery, NodeSearchQueryVariables>;
+export const ProtocolOptionsDocument = gql`
+    query ProtocolOptions($search: String, $values: [ID!]) {
+  options: protocols(
+    filters: {search: $search, ids: $values}
+    pagination: {limit: 10}
+  ) {
+    value: id
+    label: name
+  }
+}
+    `;
+
+/**
+ * __useProtocolOptionsQuery__
+ *
+ * To run a query within a React component, call `useProtocolOptionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useProtocolOptionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useProtocolOptionsQuery({
+ *   variables: {
+ *      search: // value for 'search'
+ *      values: // value for 'values'
+ *   },
+ * });
+ */
+export function useProtocolOptionsQuery(baseOptions?: Apollo.QueryHookOptions<ProtocolOptionsQuery, ProtocolOptionsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ProtocolOptionsQuery, ProtocolOptionsQueryVariables>(ProtocolOptionsDocument, options);
+      }
+export function useProtocolOptionsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ProtocolOptionsQuery, ProtocolOptionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ProtocolOptionsQuery, ProtocolOptionsQueryVariables>(ProtocolOptionsDocument, options);
+        }
+export type ProtocolOptionsQueryHookResult = ReturnType<typeof useProtocolOptionsQuery>;
+export type ProtocolOptionsLazyQueryHookResult = ReturnType<typeof useProtocolOptionsLazyQuery>;
+export type ProtocolOptionsQueryResult = Apollo.QueryResult<ProtocolOptionsQuery, ProtocolOptionsQueryVariables>;
 export const ReservationsDocument = gql`
     query Reservations($instanceId: InstanceId!) {
   myreservations(instanceId: $instanceId) {

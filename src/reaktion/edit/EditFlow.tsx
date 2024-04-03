@@ -3,7 +3,7 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardHeader
+  CardHeader,
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -23,8 +23,11 @@ import {
   GraphNodeKind,
   ReactiveImplementation,
   ReactiveTemplateDocument,
-  ReactiveTemplateQuery
+  ReactiveTemplateQuery,
 } from "@/reaktion/api/graphql";
+import { DropContextual } from "@/reaktion/edit/components/DropContextual";
+import { ClickContextual } from "@/reaktion/edit/components/ClickContextual";
+import { ConnectContextual } from "@/reaktion/edit/components/ConnectContextual";
 import { ConstantNodeDocument, ConstantNodeQuery } from "@/rekuest/api/graphql";
 import { useRekuest } from "@jhnnsrs/rekuest-next";
 import {
@@ -49,20 +52,28 @@ import {
   NodeChange,
   OnConnectEnd,
   OnConnectStartParams,
+  Position,
   ReactFlowInstance,
   applyEdgeChanges,
-  applyNodeChanges
+  applyNodeChanges,
 } from "reactflow";
 import useUndoable, { MutationBehavior } from "use-undoable";
 import { Constants } from "../base/Constants";
 import { Graph } from "../base/Graph";
-import { arkitektNodeToFlowNode, predicateNodeToFlowNode } from "../plugins/rekuest";
+import {
+  arkitektNodeToFlowNode,
+  arkitektNodeToMatchingFlowNode,
+  predicateNodeToFlowNode,
+} from "../plugins/rekuest";
 import {
   EdgeTypes,
   FlowEdge,
   FlowNode,
   NodeData,
-  NodeTypes
+  NodeTypes,
+  DropContextualParams,
+  ClickContextualParams,
+  ConnectContextualParams,
 } from "../types";
 import {
   edges_to_flowedges,
@@ -72,12 +83,14 @@ import {
   handleToStream,
   nodeIdBuilder,
   nodes_to_flownodes,
-  reactiveTemplateToFlowNode
+  reactiveTemplateToFlowNode,
 } from "../utils";
-import { createVanillaTransformEdge, integrate } from "../validation/integrate";
 import {
-  ValidationResult
-} from "../validation/types";
+  createVanillaTransformEdge,
+  integrate,
+  istriviallyIntegratable,
+} from "../validation/integrate";
+import { ValidationResult } from "../validation/types";
 import { validateState } from "../validation/validate";
 import { RemainingErrorRender, SolvedErrorRender } from "./ErrorRender";
 import { EditRiverContext } from "./context";
@@ -107,14 +120,36 @@ export type Props = {
   onSave?: (graph: GraphInput) => void;
 };
 
+function calculateMidpoint(
+  p1: { x: number; y: number },
+  p2: { x: number; y: number },
+) {
+  return {
+    x: (p1.x + p2.x) / 2,
+    y: (p1.y + p2.y) / 2,
+  };
+}
+
 export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
-  console.log("THE FLOW", flow)
+  console.log("THE FLOW", flow);
 
   const { client: arkitektapi } = useRekuest();
   const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
   const [showEdgeLabels, setShowEdgeLabels] = useState(false);
   const [showNodeErrors, setShowNodeErrors] = useState(true);
-  const [isDragging, setIsDragging] = useState(false);
+
+  const [showContextual, setShowContextual] = useState<
+    undefined | DropContextualParams
+  >();
+  const [showClickContextual, setShowClickContextual] = useState<
+    undefined | ClickContextualParams
+  >();
+  const [showConnectContextual, setShowConnectContextual] = useState<
+    undefined | ConnectContextualParams
+  >();
+
+  const connectingNodeId = useRef(null);
+
   const [reactFlowInstance, setReactFlowInstance] =
     useState<ReactFlowInstance | null>(null);
 
@@ -539,6 +574,49 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
     });
   };
 
+  const onPaneClick = (event: React.MouseEvent) => {
+    console.log("onPaneClick", event);
+    // If we have a contextual menu open, we should close it
+    if (showContextual) {
+      if (Math.abs(showContextual.event.timeStamp - event.timeStamp) > 0.001) {
+        setShowContextual(undefined);
+        console.log("Click Hide Event");
+        return;
+      } else {
+        console.log("Contextual Post Event");
+        return;
+      }
+    }
+
+    if (showConnectContextual) {
+      setShowConnectContextual(undefined);
+    }
+
+    if (showClickContextual) {
+      console.log("Click Hide Event");
+      setShowClickContextual(undefined);
+      return;
+    }
+
+    const reactFlowBounds = reactFlowWrapper?.current?.getBoundingClientRect();
+    console.log("reactFlowBounds", reactFlowBounds);
+    if (reactFlowInstance && reactFlowBounds) {
+      let position = {
+        x: event.clientX - (reactFlowBounds?.left || 0),
+        y: event.clientY - (reactFlowBounds?.top || 0),
+      };
+
+      console.log("onPaneClick", position);
+
+      setShowClickContextual({
+        event: event,
+        position: position,
+      });
+
+      console.log("showClickContextual", showClickContextual);
+    }
+  };
+
   const setGlobals = (globals: GlobalArgFragment[]) => {
     console.log("setGlobals", globals);
     setState((state) =>
@@ -585,17 +663,67 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
   const onConnect = (connection: Connection) => {
     console.log("onConnect", connection);
 
+    // Once we have a connection we resset the
+
+    connectingStart.current = undefined;
+
     const nodes = (reactFlowInstance?.getNodes() as FlowNode[]) || [];
     const edges = (reactFlowInstance?.getEdges() as FlowEdge[]) || [];
 
-    const stagingState = integrate(
-      { nodes: nodes, edges: edges, globals: globals },
-      connection,
-    );
+    if (
+      istriviallyIntegratable(
+        { nodes: nodes, edges: edges, globals: globals },
+        connection,
+      )
+    ) {
+      // Trivially integrate the edge
+      const stagingState = integrate(
+        { nodes: nodes, edges: edges, globals: globals },
+        connection,
+      );
 
-    const validated = validateState(stagingState);
+      const validated = validateState(stagingState);
 
-    setState(validated);
+      // Check if validated Edge is valid
+
+      setState(validated);
+    } else {
+      // We need to show the contextual menu
+      let leftNode = nodes.find((n) => n.id == connection.source);
+      let rightNode = nodes.find((n) => n.id == connection.target);
+
+      if (!leftNode || !rightNode || !reactFlowInstance) {
+        console.log("no left or right node found");
+        return;
+      }
+
+      console.log(leftNode.positionAbsolute);
+      console.log(rightNode.positionAbsolute);
+      console.log(leftNode.position);
+      console.log(rightNode.position);
+
+      // Calcluate to Screen Position
+      let screenposition = reactFlowInstance.flowToScreenPosition(
+        calculateMidpoint(leftNode.position, rightNode.position),
+      );
+
+      const reactFlowBounds =
+        reactFlowWrapper?.current?.getBoundingClientRect();
+
+      let position = {
+        x: screenposition.x - (reactFlowBounds?.left || 0),
+        y: screenposition.y - (reactFlowBounds?.top || 0),
+      };
+
+      setShowConnectContextual({
+        leftNode: leftNode,
+        rightNode: rightNode,
+        leftStream: handleToStream(connection.sourceHandle),
+        rightStream: handleToStream(connection.targetHandle),
+        connection: connection,
+        position: position,
+      });
+    }
   };
 
   const onConnectStart = useCallback(
@@ -605,6 +733,162 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
     [],
   );
 
+  const addClickNode = (
+    stagingNode: FlowNode,
+    params: ClickContextualParams,
+  ) => {
+    if (!reactFlowInstance) {
+      console.log("no reactFlowInstance found");
+      return;
+    }
+
+    let newState = { ...state };
+
+    let event = params.event;
+
+    // Create a Zip Node
+
+    const reactFlowBounds = reactFlowWrapper?.current?.getBoundingClientRect();
+
+    let position = reactFlowInstance.project({
+      x: event.clientX - (reactFlowBounds?.left || 0),
+      y: event.clientY - (reactFlowBounds?.top || 0),
+    });
+
+    newState.nodes = newState.nodes.concat({ ...stagingNode, position });
+
+    setState((e) => newState);
+    setShowClickContextual(undefined);
+  };
+
+  const addConnectContextualNode = (
+    stagingNode: FlowNode,
+    params: ConnectContextualParams,
+  ) => {
+    if (!reactFlowInstance) {
+      console.log("no reactFlowInstance found");
+      return;
+    }
+
+    let oldNodeSourceId = params.connection.source;
+    let oldNodeSourceStreamID = handleToStream(params.connection.sourceHandle);
+
+    let targetNodeSourceStreamID = handleToStream(
+      params.connection.targetHandle,
+    );
+    let targetNodeSourceId = params.connection.target;
+
+    let newState = { ...state };
+
+    let leftNodeDims = { width: 200, height: 100 };
+    let rightNodeDims = { width: 200, height: 100 };
+    // Create a Zip Node
+
+    const centerLeft = {
+      x: params.leftNode.position.x + leftNodeDims.width / 2,
+      y: params.leftNode.position.y + leftNodeDims.height / 2,
+    };
+    const centerRight = {
+      x: params.rightNode.position.x + rightNodeDims.width / 2,
+      y: params.rightNode.position.y + rightNodeDims.height / 2,
+    };
+
+    const position = calculateMidpoint(centerLeft, centerRight);
+
+    newState.nodes = newState.nodes.concat({ ...stagingNode, position });
+
+    if (!oldNodeSourceId) return console.log("no oldNodeSourceId found");
+    if (!targetNodeSourceId) return console.log("no targertNodeID found");
+
+    // Adding the new edges
+    newState.edges = newState.edges.concat(
+      createVanillaTransformEdge(
+        nodeIdBuilder(),
+        oldNodeSourceId,
+        oldNodeSourceStreamID,
+        stagingNode.id,
+        0,
+      ),
+      createVanillaTransformEdge(
+        nodeIdBuilder(),
+        stagingNode.id,
+        0,
+        targetNodeSourceId,
+        targetNodeSourceStreamID,
+      ),
+    );
+
+    setState((e) => newState);
+    setShowConnectContextual(undefined);
+  };
+
+  const addContextualNode = (
+    stagingNode: FlowNode,
+    params: DropContextualParams,
+  ) => {
+    if (!reactFlowInstance) {
+      console.log("no reactFlowInstance found");
+      return;
+    }
+
+    if (!params.connectionParams.nodeId || !params.connectionParams.handleId) {
+      console.log("no nodeId found and handleid found");
+      return;
+    }
+
+    let oldNode = reactFlowInstance.getNode(params.connectionParams.nodeId);
+
+    if (!oldNode) {
+      console.log("no node");
+      return;
+    }
+
+    let connectionParams = params.connectionParams;
+    let event = params.event;
+
+    if (params.connectionParams.handleType == "source") {
+      // We are dealing with a scenario were a new node should be added
+      let oldNodeSourceId = oldNode.id;
+      let oldNodeSourceStreamID = handleToStream(connectionParams.handleId);
+
+      let newState = { ...state };
+
+      // Create a Zip Node
+
+      const reactFlowBounds =
+        reactFlowWrapper?.current?.getBoundingClientRect();
+
+      let position = reactFlowInstance.project({
+        x: event.clientX - (reactFlowBounds?.left || 0),
+        y: event.clientY - (reactFlowBounds?.top || 0),
+      });
+
+      newState.nodes = newState.nodes.concat({ ...stagingNode, position });
+
+      // Adding the new edges
+      newState.edges = newState.edges.concat(
+        createVanillaTransformEdge(
+          nodeIdBuilder(),
+          oldNodeSourceId,
+          oldNodeSourceStreamID,
+          stagingNode.id,
+          0,
+        ),
+      );
+
+      // This is the edge that connects the zip node to the old edge target, it will need to undergo validation
+      let integratedState = integrate(newState, {
+        source: oldNodeSourceId,
+        sourceHandle: connectionParams.handleId,
+        target: stagingNode.id,
+        targetHandle: "args_0",
+      });
+
+      setState((e) => integratedState);
+      setShowContextual(undefined);
+    }
+  };
+
   const onConnectEnd: OnConnectEnd = useCallback(
     (event) => {
       const target = event.target as HTMLElement;
@@ -612,6 +896,34 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       const targetEdgeId = target.dataset?.edgeid;
 
       let connectionParams = connectingStart.current;
+      const targetIsPane = target.classList.contains("react-flow__pane");
+
+      if (targetIsPane && reactFlowInstance && connectionParams) {
+        const reactFlowBounds =
+          reactFlowWrapper?.current?.getBoundingClientRect();
+
+        if (connectionParams.nodeId && connectionParams.handleId) {
+          let node = reactFlowInstance.getNode(connectionParams.nodeId);
+
+          let position = {
+            x: event.clientX - (reactFlowBounds?.left || 0),
+            y: event.clientY - (reactFlowBounds?.top || 0),
+          };
+
+          if (node && connectionParams.handleType) {
+            setShowContextual({
+              handleType: connectionParams.handleType,
+              causingNode: node as FlowNode,
+              causingStream: handleToStream(connectionParams.handleId),
+              connectionParams: connectionParams,
+              position: position,
+              event: event,
+            });
+          } else {
+            console.error("no node or handleType found");
+          }
+        }
+      }
 
       if (reactFlowInstance && connectionParams && targetEdgeId) {
         // we need to remove the wrapper bounds, in order to get the correct position
@@ -722,90 +1034,81 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
     [reactFlowInstance, state, setState],
   );
 
-  const [{ isOver, canDrop }, dropref] = useSmartDrop((items, monitor) => {
-        console.log("Dropping On Edit?")
+  const [{ isOver, canDrop }, dropref] = useSmartDrop(
+    (items, monitor) => {
+      console.log("Dropping On Edit?");
 
-        if (!monitor.didDrop()) {
-          console.log("Ommitting Parent Drop");
-        }
+      if (!monitor.didDrop()) {
+        console.log("Ommitting Parent Drop");
+      }
 
-        console.log("hallo");
+      console.log("hallo");
 
-        const reactFlowBounds =
-          reactFlowWrapper?.current?.getBoundingClientRect();
+      const reactFlowBounds =
+        reactFlowWrapper?.current?.getBoundingClientRect();
 
-        let x = monitor && monitor.getClientOffset()?.x;
-        let y = monitor && monitor.getClientOffset()?.y;
+      let x = monitor && monitor.getClientOffset()?.x;
+      let y = monitor && monitor.getClientOffset()?.y;
 
-        const flowInstance = reactFlowInstance;
+      const flowInstance = reactFlowInstance;
 
-        items.map((i, index) => {
-          const id = i.id;
+      items.map((i, index) => {
+        const id = i.id;
 
-          const type = i.identifier;
+        const type = i.identifier;
 
-          console.log(id, flowInstance, reactFlowBounds, x, y);
+        console.log(id, flowInstance, reactFlowBounds, x, y);
 
-          if (id && reactFlowInstance && reactFlowBounds && x && y && type) {
-            const position = reactFlowInstance.project({
-              x: x - reactFlowBounds.left,
-              y: y - reactFlowBounds.top + index * 100,
-            });
+        if (id && reactFlowInstance && reactFlowBounds && x && y && type) {
+          const position = reactFlowInstance.project({
+            x: x - reactFlowBounds.left,
+            y: y - reactFlowBounds.top + index * 100,
+          });
 
-            if (type == "@rekuest-next/node") {
-              arkitektapi &&
-                arkitektapi
-                  .query<ConstantNodeQuery>({
-                    query: ConstantNodeDocument,
-                    variables: { id: id },
-                  })
-                  .then(async (event) => {
-                    console.log(event);
-                    if (event.data?.node) {
-                      if (
-                        event.data.node.protocols.find(
-                          (p) => p.name == "predicate",
-                        )
-                      ) {
-                        const flowNode = predicateNodeToFlowNode(
-                          event.data?.node,
-                          position,
-                        );
-                        addNode(flowNode);
-                      } else {
-                        const flowNode = arkitektNodeToFlowNode(
-                          event.data?.node,
-                          position,
-                        );
-                        addNode(flowNode);
-                      }
-                    }
-                  });
-            }
-
-            if (type == "@rekuest-next/reactive-template") {
-              arkitektapi &&
-                arkitektapi
-                  .query<ReactiveTemplateQuery>({
-                    query: ReactiveTemplateDocument,
-                    variables: { id: id },
-                  })
-                  .then(async (event) => {
-                    console.log(event);
-                    if (event.data?.reactiveTemplate) {
-                      const flowNode = reactiveTemplateToFlowNode(
-                        event.data?.reactiveTemplate,
-                        position,
-                      );
-                      addNode(flowNode);
-                    }
-                  });
-            }
+          if (type == "@rekuest-next/node") {
+            arkitektapi &&
+              arkitektapi
+                .query<ConstantNodeQuery>({
+                  query: ConstantNodeDocument,
+                  variables: { id: id },
+                })
+                .then(async (event) => {
+                  console.log(event);
+                  if (event.data?.node) {
+                    let flownode = arkitektNodeToMatchingFlowNode(
+                      event.data?.node,
+                      position,
+                    );
+                    addNode(flownode);
+                  }
+                });
           }
-        });
 
-        return {};
-      },[reactFlowInstance, reactFlowWrapper, addNode]);
+          if (type == "@rekuest-next/reactive-template") {
+            arkitektapi &&
+              arkitektapi
+                .query<ReactiveTemplateQuery>({
+                  query: ReactiveTemplateDocument,
+                  variables: { id: id },
+                })
+                .then(async (event) => {
+                  console.log(event);
+                  if (event.data?.reactiveTemplate) {
+                    const flowNode = reactiveTemplateToFlowNode(
+                      event.data?.reactiveTemplate,
+                      position,
+                    );
+                    addNode(flowNode);
+                  }
+                });
+          }
+        }
+      });
+
+      return {};
+    },
+    [reactFlowInstance, reactFlowWrapper, addNode],
+  );
 
   return (
     <EditRiverContext.Provider
@@ -818,8 +1121,11 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         moveConstantToStream,
         moveVoidtoOutstream,
         moveOutStreamToVoid,
+        addClickNode,
         removeEdge: removeEdge,
         showNodeErrors: showNodeErrors,
+        addContextualNode: addContextualNode,
+        addConnectContextualNode,
         removeGlobal,
         state: state,
         showEdgeLabels: showEdgeLabels,
@@ -859,44 +1165,54 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
               </Card>
             </div>
           )}
-          {state.remainingErrors.length != 0 &&
-          <div className="absolute top-0 right-0  mr-3 mt-5 z-50">
-            <Card className="bg-sidebar py-2">
-              <CardContent>
-                {state.remainingErrors.length > 0 && (
-                  <>
-                    {state.remainingErrors.filter(e => e.type == "graph").map((e) => (
-                      <RemainingErrorRender
-                        error={e}
-                        
-                        onClick={(e) =>
-                          onNodesChange([
-                            { type: "select", id: e.id, selected: true },
-                          ])
-                        }
-                      />
-                    ))}
-                  </>
-                )}
-                {state.solvedErrors.length > 0 && (
-                  <>
-                    <CardDescription>
-                      {" "}
-                      We just solved these Errors{" "}
-                    </CardDescription>
-                    {state.solvedErrors.map((e) => (
-                      <SolvedErrorRender error={e} />
-                    ))}
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-          }
+          {state.remainingErrors.length != 0 && (
+            <div className="absolute top-0 right-0  mr-3 mt-5 z-50 ">
+              <Card className="bg-sidebar py-2 max-w-[200px]">
+                <CardContent>
+                  {state.remainingErrors.length > 0 && (
+                    <>
+                      {state.remainingErrors
+                        .filter((e) => e.type == "graph")
+                        .map((e) => (
+                          <RemainingErrorRender
+                            error={e}
+                            onClick={(e) =>
+                              onNodesChange([
+                                { type: "select", id: e.id, selected: true },
+                              ])
+                            }
+                          />
+                        ))}
+                    </>
+                  )}
+                  {state.solvedErrors.length > 0 && (
+                    <>
+                      <CardDescription>
+                        {" "}
+                        We just solved these Errors{" "}
+                      </CardDescription>
+                      {state.solvedErrors.map((e) => (
+                        <SolvedErrorRender error={e} />
+                      ))}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
           {isOver && (
             <div className="absolute w-full h-full bg-white opacity-10 z-10">
               {" "}
             </div>
+          )}
+          {showContextual && connectingStart && (
+            <DropContextual params={showContextual} />
+          )}
+          {showClickContextual && (
+            <ClickContextual params={showClickContextual} />
+          )}
+          {showConnectContextual && (
+            <ConnectContextual params={showConnectContextual} />
           )}
           <Graph
             nodes={state.nodes}
@@ -906,6 +1222,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
             onConnectStart={onConnectStart}
             onConnectEnd={onConnectEnd}
             onConnect={onConnect}
+            onPaneClick={onPaneClick}
             elementsSelectable={true}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}

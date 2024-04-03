@@ -103,10 +103,9 @@ export const onlyValid = (
     if (isNullTransformable(event.stream, data.ins.at(event.index)))
       return { needsTransform: "ensure" };
     if (isFloatTransformable(event.stream, data.ins.at(event.index)))
-      return {needsTransform: "round_float"}
+      return { needsTransform: "round_float" };
     if (isIntTransformable(event.stream, data.ins.at(event.index)))
-      return {needsTransform: "to_float"}
-
+      return { needsTransform: "to_float" };
 
     throw new Error("Ports do not match");
   } else {
@@ -236,7 +235,7 @@ export const getTransform = (
         kind: GraphNodeKind.Reactive,
         ins: [instream],
         constantsMap: {},
-        outs: [instream.map((p, index) => ({...p,  kind: PortKind.Int }))],
+        outs: [instream.map((p, index) => ({ ...p, kind: PortKind.Int }))],
         constants: [],
         implementation: ReactiveImplementation.ToList,
       },
@@ -255,7 +254,7 @@ export const getTransform = (
         kind: GraphNodeKind.Reactive,
         ins: [instream],
         constantsMap: {},
-        outs: [instream.map((p, index) => ({...p,  kind: PortKind.Float }))],
+        outs: [instream.map((p, index) => ({ ...p, kind: PortKind.Float }))],
         constants: [],
         implementation: ReactiveImplementation.ToList,
       },
@@ -609,6 +608,28 @@ export const transitionOrCut = (
     state.edges = state.edges.filter((e) => !removedEdges.includes(e));
     state.solvedErrors = [...state.solvedErrors, ...solvedErrors];
   }
+};
+
+export const istriviallyIntegratable = (
+  state: FlowState,
+  connection: Connection,
+): boolean => {
+  const sourceNode = state.nodes.find((n) => n.id == connection.source);
+  const targetNode = state.nodes.find((n) => n.id == connection.target);
+
+  const sourceStreamIndex = handleToStream(connection.sourceHandle);
+  const targetStreamIndex = handleToStream(connection.targetHandle);
+
+  const sourceStream = sourceNode?.data.outs.at(sourceStreamIndex);
+  const targetStream = targetNode?.data.ins.at(targetStreamIndex);
+
+  if (sourceStream == undefined || targetStream == undefined) return false;
+
+  // Args and Returns are always trivially integratable
+  if (sourceNode?.type == "ArgNode") return true;
+  if (targetNode?.type == "ReturnNode") return true;
+
+  return isSameStream(sourceStream, targetStream);
 };
 
 // Can throw errors

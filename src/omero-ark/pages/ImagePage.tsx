@@ -13,6 +13,7 @@ import { useGetImageQuery } from "../api/graphql";
 import DatasetCard from "../components/cards/DatasetCard";
 import { Komments } from "@/lok-next/components/komments/Komments";
 import AuthorizedImage from "../components/Thumbnail";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
 
 export type IRepresentationScreenProps = {};
 
@@ -26,8 +27,9 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
 
   return (
     <PageLayout
+      title={data?.image?.name}
       actions={<MikroDataset.Actions id={id} />}
-      sidebars={<Komments identifier="@omero-ark/image" object={id} />}
+      sidebars={<MultiSidebar map={{Comments: <Komments identifier="@omero-ark/image" object={id}/>}} />}
     >
       <div className="flex @2xl:flex-row-reverse flex-col rounded-md gap-4 mt-2 w-full">
         <div className="flex-1 overflow-hidden ">

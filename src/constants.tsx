@@ -31,6 +31,11 @@ export const manifest: Manifest = {
       service: "live.arkitekt.kabinet",
       optional: true
     },
+    datalayer: {
+      key: "datalayer",
+      service: "live.arkitekt.datalayer",
+      optional: true
+    },
   }
 };
 

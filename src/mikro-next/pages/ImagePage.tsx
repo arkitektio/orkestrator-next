@@ -43,6 +43,8 @@ import { Komments } from "@/lok-next/components/komments/Komments";
 import { TwoDViewProvider, ViewProvider } from "@/providers/view/ViewProvider";
 import { TwoDViewController } from "../components/render/Controller";
 import AcquisitionViewCard from "../components/cards/AcquisitionViewCard";
+import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
 
 export type IRepresentationScreenProps = {};
 
@@ -67,13 +69,13 @@ const ImagePage: React.FC<IRepresentationScreenProps> = () => {
   const [pinImage] = withMikroNext(usePinImageMutation)();
 
   return (
-    <PageLayout
+    <ModelPageLayout
+      title={data?.image?.name}
+      identifier="@mikro/image"
+      object={id}
       actions={<MikroImage.Actions id={id} />}
       sidebars={
-        <div className="p-3">
-          <ProvenanceSidebar items={data?.image.history} />
-          <Komments identifier="@mikro/image" object={id} />
-        </div>
+        <MultiSidebar map={{Comments: <Komments identifier="@omero-ark/image" object={id}/>, Provenance: <ProvenanceSidebar items={data?.image.history} />}} />
       }
     >
       <TwoDViewProvider initialC={0} initialT={0} initialZ={0}>
@@ -251,7 +253,7 @@ const ImagePage: React.FC<IRepresentationScreenProps> = () => {
           </div>
         </Tabs>
       </TwoDViewProvider>
-    </PageLayout>
+    </ModelPageLayout>
   );
 };
 

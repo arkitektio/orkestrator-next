@@ -160,14 +160,14 @@ export const ClickContextual = (props: { params: ClickContextualParams }) => {
       }}
       data-found={data?.nodes?.length != 0}
     >
-      <div className="text-xs text-muted-foreground inline relative mx-auto mb-2  ">
+      <div className="text-xs text-muted-foreground inline relative mx-auto mb-2  mt">
         All Nodes
       </div>
       <SearchForm onSubmit={onSubmit} />
 
       <Separator />
       {data?.nodes?.length == 0 && (
-        <div className="my-auto ">No matching nodes found</div>
+        <div className="my-auto mt-2 mx-auto">No matching nodes found</div>
       )}
       <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
         {data?.nodes.map((node) => (

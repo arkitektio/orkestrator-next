@@ -15,6 +15,7 @@ import {
   ZarrStoreFragment,
 } from "@/mikro-next/api/graphql";
 import { useDatalayer } from "@jhnnsrs/datalayer";
+import { useFakts } from "@jhnnsrs/fakts";
 export const available_color_maps = [
   "jet",
   "hot",
@@ -66,13 +67,16 @@ export const XArrayProvider: React.FC<{
   children: React.ReactNode;
 }> = (props) => {
   const { client } = useMikroNext();
-  const { s3resolve } = useDatalayer();
+  const { fakts} = useFakts();
 
   const getSelectionAsImageView = async (
     zarrStore: ZarrStoreFragment,
     selection: ArraySelection,
   ) => {
-    let path = s3resolve(zarrStore.bucket + "/" + zarrStore.key);
+    if (fakts?.datalayer?.endpoint_url === undefined) {
+      throw Error("No datalayer found");
+    }
+    let path = fakts.datalayer.endpoint_url + "/" + zarrStore.bucket + "/" + zarrStore.key;
 
     let x = await client?.mutate<
       RequestAccessMutation,

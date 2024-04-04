@@ -7,7 +7,6 @@ export const ProvenanceSidebar = (props: {
 }) => {
   return (
     <div className="p-3">
-      <h2 className="text-xl">Latest Provenance</h2>
       <ListRender array={props.items}>
         {(item, i) => <HistoryCard history={item} key={i} />}
       </ListRender>

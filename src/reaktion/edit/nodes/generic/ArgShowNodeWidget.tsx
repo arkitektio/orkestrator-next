@@ -24,7 +24,7 @@ export const ArgTrackNodeWidget: React.FC<ArgNodeProps> = ({
         className={cn(
           errors.length > 0
             ? "border-destructive/40 shadow-destructive/30 dark:border-destructive dark:shadow-destructive/20 shadow-xl"
-            : "border-blue-400/40 shadow-blue-400/20 dark:border-blue-300 dark:shadow-blue/20 shadow-xl",
+            : "border-blue-400/40 shadow-blue-400/10 dark:border-blue-300 dark:shadow-blue/20 shadow-xl",
         )}
         id={id}
         selected={selected}

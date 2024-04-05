@@ -48,7 +48,7 @@ export const NodeShowLayout: React.FC<NodeProps> = ({
         <ContextMenuTrigger>
           <Card
             className={cn(
-              "custom-drag-handle h-full z-10 group shadow relative border bg-sidebar",
+              "custom-drag-handle h-full z-10 group shadow relative border bg-sidebar ",
               className,
             )}
           >

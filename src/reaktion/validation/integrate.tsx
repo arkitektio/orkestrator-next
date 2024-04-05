@@ -34,6 +34,7 @@ import {
   reduceStream,
   withNewStream,
 } from "./utils";
+import { PortScope } from "@/rekuest/api/graphql";
 
 export const changeZip = (
   data: FlowNodeData,
@@ -114,6 +115,13 @@ export const onlyValid = (
   }
 };
 
+export const streamContainsNonLocal = (stream: PortFragment[]): boolean => {
+  for (let port of stream) {
+    if (port.scope == PortScope.Local) return true;
+  }
+  return false;
+};
+
 export const argIsValid = (
   data: FlowNodeData,
   event: ChangeEvent,
@@ -138,6 +146,10 @@ export const returnIsValid = (
   event: ChangeEvent,
 ): ChangeOutcome => {
   if (event.type == "target") {
+    if (streamContainsNonLocal(event.stream)) {
+      return { denied: "Return cannot have non-local ports" };
+    }
+
     return {
       data: {
         ...data,

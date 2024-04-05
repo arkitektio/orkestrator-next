@@ -1,4 +1,6 @@
+import { Tooltip } from "@radix-ui/react-tooltip";
 import { SolvedError, ValidationError } from "../validation/types";
+import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const SolvedErrorRender = ({ error }: { error: SolvedError }) => {
   return (
@@ -16,11 +18,19 @@ export const RemainingErrorRender = ({
   onClick: (error: ValidationError) => void;
 }) => {
   return (
-    <li
-      className="text-xs cursor-pointer hover:text-foreground"
-      onClick={() => onClick(error)}
-    >
-      {error.message} {error.path}
-    </li>
+    <Tooltip>
+      <TooltipTrigger asChild onClick={() => onClick(error)}>
+        <div className="text-xs cursor-pointer hover:text-foreground">
+          {error.message}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="left">
+        <div className="bg-background p-2 rounded-md">
+          <div className="text-xs">
+            {error.message} {error.path}
+          </div>
+        </div>
+      </TooltipContent>
+    </Tooltip>
   );
 };

@@ -21,6 +21,7 @@ import {
   ConstantNodeDocument,
   ConstantNodeQuery,
   DemandKind,
+  NodeScope,
   useAllNodesQuery,
   useProtocolOptionsLazyQuery,
 } from "@/rekuest/api/graphql";
@@ -42,6 +43,7 @@ import {
   nodeIdBuilder,
   streamToReadable,
 } from "@/reaktion/utils";
+import clsx from "clsx";
 
 export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   const form = useForm({
@@ -247,13 +249,27 @@ export const SourceDropContextual = (props: {
         {data?.nodes.map((node) => (
           <Tooltip>
             <TooltipTrigger>
-              <Card onClick={() => onNodeClick(node.id)} className="px-2 py-1">
+              <Card
+                onClick={() => onNodeClick(node.id)}
+                className={clsx(
+                  "px-2 py-1 border",
+                  node.scope == NodeScope.Global ? "" : "dark:border-blue-200",
+                )}
+              >
                 {node.name}
               </Card>
             </TooltipTrigger>
             <TooltipContent align="center">
               {node.description && (
                 <NodeDescription description={node.description} />
+              )}
+
+              {node.scope == NodeScope.Global ? (
+                " "
+              ) : (
+                <div className="text-blue-200 mt-2">
+                  This Node will bind this workflow to specific apps
+                </div>
               )}
             </TooltipContent>
           </Tooltip>

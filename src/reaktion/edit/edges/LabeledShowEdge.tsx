@@ -1,5 +1,11 @@
 import React, { useEffect } from "react";
-import { EdgeLabelRenderer, getSmoothStepPath, useNodes } from "reactflow";
+import {
+  BaseEdge,
+  EdgeLabelRenderer,
+  getSmoothStepPath,
+  useNodes,
+  useStore,
+} from "reactflow";
 import { FlowNode, VanillaEdgeProps } from "../../types";
 import { Card } from "@/components/ui/card";
 import {
@@ -8,6 +14,9 @@ import {
   streamToReadable,
 } from "@/reaktion/utils";
 import { useEditRiver } from "../context";
+import { MergeIcon, X } from "lucide-react";
+
+const connectionNodeIdSelector = (state: any) => state.connectionNodeId;
 
 export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
   const color = "rgb(30 58 138)";
@@ -38,46 +47,54 @@ export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
     targetY,
   });
 
+  const connectionNodeId = useStore(connectionNodeIdSelector);
+
+  const isConnecting = !!connectionNodeId;
+
   const { showEdgeLabels, removeEdge } = useEditRiver();
 
   const node = useNodes().find((n) => n.id == target) as FlowNode | undefined;
 
   return (
     <>
-      <path
+      <BaseEdge
         id={id}
         style={{
           ...style,
           strokeWidth: 1,
         }}
-        className={`react-flow__edge-path stream-edge transition-colors duration-300 bg-gradient-to-r from-${color}-500 to-${color}-300 dark:from-${color}-200 dark:to-${color}-500 group`}
-        d={edgePath}
+        path={edgePath}
+        markerEnd={markerEnd}
       />
       <EdgeLabelRenderer>
-        <Card
-          style={{
-            position: "absolute",
-            transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-            pointerEvents: "all",
-          }}
-          data-edgeid={id}
-          className="stream-edge p-2 dark:text-white max-w-[200px] overflow-hidden ellipsis truncate text-xs flex flex-row gap-2 items-center justify-center group border border-gray-400"
-        >
-          {showEdgeLabels && (
-            <>
-              {streamToReactNode(
-                node?.data?.ins.at(handleToStream(targetHandleId)),
-              )}
-            </>
-          )}
-          <button
-            onClick={() => removeEdge(id)}
-            className="group-hover:text-red-300 font-bold stream-edge"
+        {(isConnecting || showEdgeLabels) && (
+          <div
+            style={{
+              position: "absolute",
+              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+              pointerEvents: "all",
+            }}
             data-edgeid={id}
+            className="nodrag nopan rounded group rounded-md border:bg-slate-400 border bg-gray-800 dark:bg-sidebar dark:text-gray-800 text-gray-200 py-0 px-1 hover:px-4 transition-all duration-300 group-hover:opacity-100 stream-edge-label z-50 text-xs"
           >
-            X
-          </button>
-        </Card>
+            {isConnecting && (
+              <MergeIcon
+                className="rotate-90 text-foreground w-3 h-4 group-hover:h-8  group-hover:w-8 transition-all duration-300 group-hover:opacity-100"
+                data-edgeid={id}
+              />
+            )}
+            {showEdgeLabels && (
+              <div
+                className="flex flex-row gap-2 text-xs font-light"
+                data-edgeid={id}
+              >
+                {streamToReactNode(
+                  node?.data?.ins.at(handleToStream(targetHandleId)),
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </EdgeLabelRenderer>
     </>
   );

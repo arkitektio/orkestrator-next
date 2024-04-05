@@ -26,8 +26,12 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
   id,
   selected,
 }) => {
-  const { moveConstantToGlobals, moveConstantToStream, moveStreamToConstants, updateData} =
-    useEditRiver();
+  const {
+    moveConstantToGlobals,
+    moveConstantToStream,
+    moveStreamToConstants,
+    updateData,
+  } = useEditRiver();
 
   const [expanded, setExpanded] = React.useState(false);
 
@@ -53,8 +57,10 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
 
   const errors = useEditNodeErrors(id);
 
-  
-  const description = useNodeDescription({description: data.description, variables: data.constantsMap})
+  const description = useNodeDescription({
+    description: data.description,
+    variables: data.constantsMap,
+  });
 
   return (
     <NodeShowLayout
@@ -62,7 +68,7 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
       className={cn(
         errors.length > 0
           ? "border-destructive/40 shadow-destructive/30 dark:border-destructive dark:shadow-destructive/20 shadow-xl"
-          : "border-gray-800/40 shadow-accent/30 dark:border-accent dark:shadow-accent/20 shadow-xl",
+          : "border-blue-400/40 shadow-blue-400/10 dark:border-blue-300 dark:shadow-blue/20 shadow-xl",
       )}
       selected={selected}
       contextMenu={
@@ -94,18 +100,22 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
             </Sheet>
           </div>
         </CardTitle>
-        <CardDescription>
-          {description}
-        </CardDescription>
+        <CardDescription>{description}</CardDescription>
         {expanded && (
           <div>
-            <div className="text-xs text-muted-foreground inline ">Args</div>
-            <Args
-              instream={ins.at(0) || []}
-              id={0}
-              onClick={onClickIn}
-              constream={[]}
-            />
+            {ins.at(0) && ins.at(0).length > 0 && (
+              <>
+                <div className="text-xs text-muted-foreground inline ">
+                  Args
+                </div>
+                <Args
+                  instream={ins.at(0) || []}
+                  id={0}
+                  onClick={onClickIn}
+                  constream={[]}
+                />
+              </>
+            )}
 
             <div className="text-xs text-muted-foreground inline ">
               Constants
@@ -115,7 +125,7 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
               overwrites={data.constantsMap}
               onToArg={onToArg}
               onToGlobal={onToGlobal}
-              onSubmit={(values) => updateData({constantsMap: values}, id)}
+              onSubmit={(values) => updateData({ constantsMap: values }, id)}
             />
           </div>
         )}

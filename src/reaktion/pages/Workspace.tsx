@@ -3,16 +3,19 @@ import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
 import { FlussWorkspace } from "@/linkers";
 import {
   useUpdateWorkspaceMutation,
-  useWorkspaceQuery
+  useWorkspaceQuery,
 } from "@/reaktion/api/graphql";
 import { EditFlow } from "@/reaktion/edit/EditFlow";
 import { withFluss } from "@jhnnsrs/fluss-next";
 
-export default asDetailQueryRoute(withFluss(useWorkspaceQuery), ({data}) => {
-  
+export default asDetailQueryRoute(withFluss(useWorkspaceQuery), ({ data }) => {
   const [saveFlow] = withFluss(useUpdateWorkspaceMutation)();
   return (
-    <ModelPageLayout title={data?.workspace.latestFlow?.title || "No title"} object={data.workspace.id} identifier={FlussWorkspace.identifier}>
+    <ModelPageLayout
+      title={data?.workspace.latestFlow?.title || "No title"}
+      object={data.workspace.id}
+      identifier={FlussWorkspace.identifier}
+    >
       {data?.workspace.latestFlow && (
         <EditFlow
           flow={data?.workspace.latestFlow}
@@ -36,5 +39,3 @@ export default asDetailQueryRoute(withFluss(useWorkspaceQuery), ({data}) => {
     </ModelPageLayout>
   );
 });
-
-

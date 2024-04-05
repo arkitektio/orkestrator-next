@@ -637,9 +637,11 @@ export const istriviallyIntegratable = (
 
   if (sourceStream == undefined || targetStream == undefined) return false;
 
-  // Args and Returns are always trivially integratable
-  if (sourceNode?.type == "ArgNode") return true;
-  if (targetNode?.type == "ReturnNode") return true;
+  // Args and Returns are always trivially integratable if they have no connections
+  if (sourceNode?.type == "ArgNode")
+    return state.edges.find((e) => e.source == sourceNode.id) == undefined;
+  if (targetNode?.type == "ReturnNode")
+    return state.edges.find((e) => e.target == targetNode.id) == undefined;
 
   return isSameStream(sourceStream, targetStream);
 };

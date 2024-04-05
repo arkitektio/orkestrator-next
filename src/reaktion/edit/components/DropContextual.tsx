@@ -122,8 +122,16 @@ export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   );
 };
 
-const reactiveNodes = (ports: FlussPortFragment[]): FlowNode[] => {
-  const nodes: FlowNode[] = [];
+export type ReactiveNodeSuggestions = {
+  node: FlowNode;
+  title: string;
+  description: string;
+};
+
+const reactiveNodes = (
+  ports: FlussPortFragment[],
+): ReactiveNodeSuggestions[] => {
+  const nodes: ReactiveNodeSuggestions[] = [];
 
   if (!ports) {
     return [];
@@ -131,22 +139,85 @@ const reactiveNodes = (ports: FlussPortFragment[]): FlowNode[] => {
 
   if (ports.every((port) => port.kind === PortKind.List)) {
     nodes.push({
+      node: {
+        id: nodeIdBuilder(),
+        type: "ReactiveNode",
+        position: { x: 0, y: 0 },
+        data: {
+          globalsMap: {},
+          title: "Chunk",
+          description: "Transforms a stream into an item of chunks",
+          kind: GraphNodeKind.Reactive,
+          ins: [ports],
+          constantsMap: {},
+          outs: [
+            ports.map((p, index) => listPortToSingle(p, "Chunked" + p.key)),
+          ],
+          constants: [],
+          implementation: ReactiveImplementation.ToList,
+        },
+      },
+      title: "Chunk",
+      description: "Transforms a stream into an item of chunks",
+    });
+  }
+
+  if (ports && ports.length > 1) {
+    for (let i = 0; i < ports.length; i++) {
+      nodes.push({
+        node: {
+          id: nodeIdBuilder(),
+          type: "ReactiveNode",
+          position: { x: 0, y: 0 },
+          data: {
+            globalsMap: {},
+            title: `Only`,
+            description: "Transforms a stream into an item of chunks",
+            kind: GraphNodeKind.Reactive,
+            ins: [ports],
+            constantsMap: {
+              i: i,
+            },
+            outs: [[ports.at(i)]],
+            constants: [
+              {
+                key: "index",
+                kind: PortKind.Int,
+                description: "Which Item to select",
+                nullable: false,
+                default: i,
+              },
+            ],
+            voids: ports,
+            implementation: ReactiveImplementation.Select,
+          },
+        },
+        title: `Only ${ports.at(i)?.key}`,
+        description: "Transforms a stream into an item of chunks",
+      });
+    }
+  }
+
+  nodes.push({
+    node: {
       id: nodeIdBuilder(),
       type: "ReactiveNode",
       position: { x: 0, y: 0 },
       data: {
         globalsMap: {},
-        title: "Chunk",
+        title: `Zip`,
         description: "Transforms a stream into an item of chunks",
         kind: GraphNodeKind.Reactive,
-        ins: [ports],
-        constantsMap: {},
-        outs: [ports.map((p, index) => listPortToSingle(p, "Chunked" + p.key))],
+        ins: [ports, []],
+        outs: [[ports]],
         constants: [],
-        implementation: ReactiveImplementation.ToList,
+        voids: ports,
+        implementation: ReactiveImplementation.Zip,
       },
-    });
-  }
+    },
+    title: `Zip with ...`,
+    description: "Transforms a stream into an item of chunks",
+  });
 
   return nodes;
 };
@@ -276,19 +347,17 @@ export const SourceDropContextual = (props: {
         ))}
       </div>
       <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
-        {calculatedNodes.map((node) => (
+        {calculatedNodes.map((sug) => (
           <Tooltip>
             <TooltipTrigger>
               <Card
-                onClick={() => addContextualNode(node, props.params)}
+                onClick={() => addContextualNode(sug.node, props.params)}
                 className="px-2 py-1 border-dashed border-2 border-accent"
               >
-                {node.data.title}
+                {sug.title}
               </Card>
             </TooltipTrigger>
-            <TooltipContent align="center">
-              {node.data.description}
-            </TooltipContent>
+            <TooltipContent align="center">{sug.description}</TooltipContent>
           </Tooltip>
         ))}
       </div>

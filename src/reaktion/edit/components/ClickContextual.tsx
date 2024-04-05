@@ -12,22 +12,32 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { arkitektNodeToMatchingFlowNode } from "@/reaktion/plugins/rekuest";
 import {
+  AllNodesQueryVariables,
   ConstantNodeDocument,
   ConstantNodeQuery,
   NodeScope,
+  PortKind,
+  PortScope,
   useAllNodesQuery,
   useProtocolOptionsLazyQuery,
 } from "@/rekuest/api/graphql";
 import { useRekuest, withRekuest } from "@jhnnsrs/rekuest-next";
 import { ArrowDown } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { ClickContextualParams } from "../../types";
+import { ClickContextualParams, FlowNode } from "../../types";
 import { useEditRiver } from "../context";
 import { Tooltip } from "@radix-ui/react-tooltip";
 import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { NodeDescription } from "@jhnnsrs/rekuest";
 import clsx from "clsx";
+import {
+  FlussPortFragment,
+  GraphNodeKind,
+  ReactiveImplementation,
+} from "@/reaktion/api/graphql";
+import { useState } from "react";
+import { nodeIdBuilder } from "@/reaktion/utils";
 
 export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   const form = useForm({
@@ -60,7 +70,7 @@ export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(props.onSubmit)} className="">
-        <div className="w-full">
+        <div className="w-full mb-1">
           <Popover>
             <FormField
               control={form.control}
@@ -106,32 +116,156 @@ export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   );
 };
 
-export const ClickContextual = (props: { params: ClickContextualParams }) => {
+export type ReactiveNodeSuggestions = {
+  node: FlowNode;
+  title: string;
+  description: string;
+};
+
+const clickReactiveNodes = (search: string): ReactiveNodeSuggestions[] => {
+  const nodes: ReactiveNodeSuggestions[] = [];
+
+  // TODO - Add more nodes here
+
+  const filtered_nodes = nodes.filter((node) =>
+    node.data.title.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  if (search.length === 0) {
+    return filtered_nodes;
+  }
+
+  let isInt = !isNaN(parseInt(search));
+
+  if (isInt) {
+    filtered_nodes.push({
+      node: {
+        id: nodeIdBuilder(),
+        type: "ReactiveNode",
+        position: { x: 0, y: 0 },
+        data: {
+          globalsMap: {},
+          title: "Just",
+          description: "Just an Int",
+          kind: GraphNodeKind.Reactive,
+          ins: [[]],
+          constantsMap: {
+            value: parseInt(search),
+          },
+          outs: [
+            [
+              {
+                scope: PortScope.Global,
+                description: "Just an Int",
+                key: "the_int",
+                kind: PortKind.Int,
+              },
+            ],
+          ],
+          constants: [],
+          implementation: ReactiveImplementation.Just,
+        },
+      },
+      title: `Just ${search} (Int)`,
+      description: "Just an Int",
+    });
+  }
+
+  filtered_nodes.push({
+    node: {
+      id: nodeIdBuilder(),
+      type: "ReactiveNode",
+      position: { x: 0, y: 0 },
+      data: {
+        globalsMap: {},
+        title: "Just",
+        description: "Just a String",
+        kind: GraphNodeKind.Reactive,
+        ins: [[]],
+        constantsMap: {
+          value: search,
+        },
+        outs: [
+          [
+            {
+              scope: PortScope.Global,
+              description: "Just a String",
+              key: "string",
+              kind: PortKind.String,
+            },
+          ],
+        ],
+        constants: [],
+        implementation: ReactiveImplementation.Just,
+      },
+    },
+    title: `Just ${search} (String)`,
+    description: "Create the string Hallo on Invocation",
+  });
+
+  return filtered_nodes;
+};
+
+export const useClickReactiveNodes = (search: string) => {
+  return useMemo(() => clickReactiveNodes(search), [search]);
+};
+
+const ClickReactiveNodes = (props: {
+  search: string | undefined;
+  params: ClickContextualParams;
+}) => {
+  const nodes = useClickReactiveNodes(props.search || "");
+
   const { addClickNode } = useEditRiver();
 
-  const { client } = useRekuest();
+  return (
+    <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
+      {nodes.map((sug) => (
+        <Tooltip>
+          <TooltipTrigger>
+            <Card
+              onClick={() => addClickNode(sug.node, props.params)}
+              className="px-2 py-1 border-solid border-2 border-accent"
+            >
+              {sug.title}
+            </Card>
+          </TooltipTrigger>
+          <TooltipContent align="center">{sug.description}</TooltipContent>
+        </Tooltip>
+      ))}
+    </div>
+  );
+};
 
-  const onSubmit = (data: any) => {
-    refetch({
-      ...variables,
+const ClickArkitektNodes = (props: {
+  search: string | undefined;
+  params: ClickContextualParams;
+}) => {
+  const { data, refetch } = withRekuest(useAllNodesQuery)({
+    variables: {
       filters: {
-        ...variables.filters,
-        protocols: data?.protocol && [data.protocol],
-        search: data.search,
+        search: props.search,
+        protocols: [],
+      },
+      pagination: {
+        limit: displayLimit,
+      },
+    },
+  });
+
+  useEffect(() => {
+    refetch({
+      pagination: {
+        limit: displayLimit,
+      },
+      filters: {
+        search: props.search,
       },
     });
-  };
+  }, [props.search]);
 
-  const variables = {
-    filters: {},
-    pagination: {
-      limit: 6,
-    },
-  };
-
-  const { data, refetch } = withRekuest(useAllNodesQuery)({
-    variables: variables,
-  });
+  const { addClickNode } = useEditRiver();
+  const { client } = useRekuest();
 
   const onNodeClick = (id: string) => {
     client &&
@@ -154,13 +288,40 @@ export const ClickContextual = (props: { params: ClickContextualParams }) => {
   };
 
   return (
+    <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
+      {data?.nodes.map((node) => (
+        <Tooltip>
+          <TooltipTrigger>
+            <Card
+              onClick={() => onNodeClick(node.id)}
+              className="px-2 py-1 border-solid border-2 border-accent"
+            >
+              {node.name}
+            </Card>
+          </TooltipTrigger>
+          <TooltipContent align="center">{node.description}</TooltipContent>
+        </Tooltip>
+      ))}
+    </div>
+  );
+};
+
+const displayLimit = 5;
+
+export const ClickContextual = (props: { params: ClickContextualParams }) => {
+  const [search, setSearch] = useState(undefined);
+
+  const onSubmit = (data: any) => {
+    setSearch(data.search);
+  };
+
+  return (
     <Card
-      className="absolute translate-x-[-50%] z-50 p-2 max-w-[200px] text-xs bg-sidebar flex flex-col opacity-50 data-[found=true]:opacity-100 shadow-xl shadow-xl dark:shadow-xl dark:shadow-xl"
+      className="absolute translate-x-[-50%] z-50 p-2 max-w-[200px] text-xs bg-sidebar flex flex-col opacity-100 shadow-xl shadow-xl dark:shadow-xl dark:shadow-xl"
       style={{
         left: props.params.position.x,
         top: props.params.position.y,
       }}
-      data-found={data?.nodes?.length != 0}
     >
       <div className="text-xs text-muted-foreground inline relative mx-auto mb-2  ">
         All Nodes
@@ -168,37 +329,12 @@ export const ClickContextual = (props: { params: ClickContextualParams }) => {
       <SearchForm onSubmit={onSubmit} />
 
       <Separator />
-      {data?.nodes?.length == 0 && (
-        <div className="my-auto ">No matching nodes found</div>
-      )}
-      <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
-        {data?.nodes.map((node) => (
-          <Tooltip>
-            <TooltipTrigger>
-              <Card
-                onClick={() => onNodeClick(node.id)}
-                className={clsx(
-                  "px-2 py-1 border",
-                  node.scope == NodeScope.Global ? "" : "dark:border-blue-200",
-                )}
-              >
-                {node.name}
-              </Card>
-            </TooltipTrigger>
-            <TooltipContent align="center">
-              {node.description && (
-                <NodeDescription description={node.description} />
-              )}
-              {node.scope == NodeScope.Global ? (
-                " "
-              ) : (
-                <div className="text-blue-200 mt-2">
-                  This Node will bind this workflow to specific apps
-                </div>
-              )}
-            </TooltipContent>
-          </Tooltip>
-        ))}
+      <div className="flex flex-row gap-1 my-auto flex-wrap  mb-1">
+        <ClickArkitektNodes search={search} params={props.params} />
+      </div>
+      <Separator />
+      <div className="flex flex-row gap-1 my-auto flex-wrap ">
+        <ClickReactiveNodes search={search} params={props.params} />
       </div>
     </Card>
   );

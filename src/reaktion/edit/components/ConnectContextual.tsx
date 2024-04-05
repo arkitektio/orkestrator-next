@@ -201,50 +201,48 @@ export const ConnectContextual = (props: {
 
   const { client } = useRekuest();
 
-  const onSubmit = (data: any) => {
-    refetch({
-      ...variables,
-      filters: { ...variables.filters },
-    });
-  };
-
   const leftPorts = props.params.leftNode.data.outs[props.params.leftStream];
   const rightPorts = props.params.rightNode.data.ins[props.params.rightStream];
 
-  const variables = {
-    filters: {
-      demands: [
-        {
-          kind: DemandKind.Args,
-          matches:
-            leftPorts.map((port, index) => ({
-              at: index,
-              kind: port.kind,
-              identifier: port.identifier,
-            })) || [],
-          forceNonNullableLength: leftPorts.length || 0,
-        },
-        {
-          kind: DemandKind.Returns,
-          matches:
-            rightPorts.map((port, index) => ({
-              at: index,
-              kind: port.kind,
-              identifier: port.identifier,
-            })) || [],
-          forceNonNullableLength: rightPorts.length || 0,
-        },
-      ],
+  const { data, refetch, variables } = withRekuest(useAllNodesQuery)({
+    variables: {
+      filters: {
+        demands: [
+          {
+            kind: DemandKind.Args,
+            matches:
+              leftPorts.map((port, index) => ({
+                at: index,
+                kind: port.kind,
+                identifier: port.identifier,
+              })) || [],
+            forceNonNullableLength: leftPorts.length || 0,
+          },
+          {
+            kind: DemandKind.Returns,
+            matches:
+              rightPorts.map((port, index) => ({
+                at: index,
+                kind: port.kind,
+                identifier: port.identifier,
+              })) || [],
+            forceNonNullableLength: rightPorts.length || 0,
+          },
+        ],
+      },
+      pagination: {
+        limit: 2,
+      },
     },
-    pagination: {
-      limit: 2,
-    },
-  };
-
-  const { data, refetch } = withRekuest(useAllNodesQuery)({
-    variables: variables,
     fetchPolicy: "network-only",
   });
+
+  const onSubmit = (data: any) => {
+    refetch({
+      ...variables,
+      filters: { ...variables?.filters },
+    });
+  };
 
   const [searchProtocol] = withRekuest(useProtocolOptionsLazyQuery)();
 

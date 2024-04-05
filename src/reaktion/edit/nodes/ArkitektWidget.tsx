@@ -20,6 +20,7 @@ import { GearIcon } from "@radix-ui/react-icons";
 import React from "react";
 import { ArkitektNodeProps } from "../../types";
 import { useEditNodeErrors, useEditRiver } from "../context";
+import { NodeDescription } from "@jhnnsrs/rekuest";
 
 export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
   data: { ins, outs, constants, ...data },
@@ -100,7 +101,9 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
             </Sheet>
           </div>
         </CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardDescription>
+          <NodeDescription description={description} />
+        </CardDescription>
         {expanded && (
           <div>
             {ins.at(0) && ins.at(0).length > 0 && (

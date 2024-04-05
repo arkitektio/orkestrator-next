@@ -139,6 +139,41 @@ export const Just = ({ data }: ShapeProps) => {
   );
 };
 
+export const Reorder = ({ data }: ShapeProps) => {
+  return (
+    <>
+      <Card className="rounded-md border-blue-400/40 shadow-blue-400/20 dark:border-blue-300 dark:shadow-blue/20 shadow-xl">
+        <CardHeader className="p-1">
+          <Tooltip>
+            <TooltipTrigger>
+              <>
+              <CardTitle className="text-sm font-light">
+                Reorders 
+              </CardTitle>
+              <CardDescription>
+              {data.constantsMap.map && <>
+              
+              
+              {Object.keys(data.constantsMap.map).map((key) => (
+                <div className="text-xs"> {data.ins.at(0).at(key)?.kind} to {data.outs.at(0).at(data.constantsMap.map[key])?.kind}</div>
+              ))}
+              </>}
+              </CardDescription>
+              
+              </>
+            </TooltipTrigger>
+            <TooltipContent>
+              <CardDescription className="text-xs">
+                Just a 
+              </CardDescription>
+            </TooltipContent>
+          </Tooltip>
+        </CardHeader>
+      </Card>
+    </>
+  );
+};
+
 export const ToList = ({ data }: ShapeProps) => {
   let firstItem = data?.ins?.at(0)?.at(0);
   let outItem = data?.outs?.at(0)?.at(0);
@@ -248,6 +283,8 @@ const contextMenuMap: {
   [ReactiveImplementation.Multiply]: DefaultContext,
   [ReactiveImplementation.Suffix]: DefaultContext,
   [ReactiveImplementation.Select]: DefaultContext,
+  [ReactiveImplementation.Just]: DefaultContext,
+  [ReactiveImplementation.Reorder]: DefaultContext,
 };
 
 const shapeMap: { [key in ReactiveImplementation]: React.FC<ShapeProps> } = {
@@ -279,6 +316,7 @@ const shapeMap: { [key in ReactiveImplementation]: React.FC<ShapeProps> } = {
   [ReactiveImplementation.Suffix]: Default,
   [ReactiveImplementation.Select]: Select,
   [ReactiveImplementation.Just]: Just,
+  [ReactiveImplementation.Reorder]: Reorder,
 };
 
 const shapeForImplementation = (

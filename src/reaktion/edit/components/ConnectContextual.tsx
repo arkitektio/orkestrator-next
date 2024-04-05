@@ -23,6 +23,7 @@ import {
   NodeKind,
   NodeScope,
   PortKind,
+  PortsFragment,
   useAllNodesQuery,
   useProtocolOptionsLazyQuery,
 } from "@/rekuest/api/graphql";
@@ -135,6 +136,40 @@ export const allandone = <T extends any>(
   );
 };
 
+
+
+
+function isMatch(item1: FlussPortFragment, item2: FlussPortFragment): boolean {
+  return item1.kind === item2.kind &&
+         (item1.kind !== PortKind.Structure || item1.identifier === item2.identifier);
+}
+
+function findMappings(list1: FlussPortFragment[], list2: FlussPortFragment[], index1 = 0, currentMapping: Map<number, number> = new Map(), allMappings: Map<number, number>[] = []): void {
+  if (index1 === list1.length) {
+    // If we've processed all items in list1, store the current mapping clone
+    allMappings.push(new Map(currentMapping));
+    return;
+  }
+
+  for (let index2 = 0; index2 < list2.length; index2++) {
+    // If item at index2 in list2 is not already mapped and items match
+    if (!Array.from(currentMapping.values()).includes(index2) && isMatch(list1[index1], list2[index2])) {
+      currentMapping.set(index1, index2);
+      findMappings(list1, list2, index1 + 1, currentMapping, allMappings);
+      currentMapping.delete(index1); // Backtrack
+    }
+  }
+}
+
+function generateAllMappings(list1: FlussPortFragment[], list2: FlussPortFragment[]): {[key: number]: number}[] {
+  const allMappings: Map<number, number>[] = [];
+  findMappings(list1, list2, 0, new Map(), allMappings);
+  return allMappings.map(mapping => Object.fromEntries(mapping.entries()));
+}
+
+
+// 
+
 const connectReactiveNodes = (
   leftPorts: FlussPortFragment[],
   rightPorts: FlussPortFragment[],
@@ -187,6 +222,29 @@ const connectReactiveNodes = (
         outs: [[]],
         constants: [],
         implementation: ReactiveImplementation.Omit,
+      },
+    });
+  }
+
+
+  for (let mapping of generateAllMappings(leftPorts, rightPorts)) {
+
+    nodes.push({
+      id: nodeIdBuilder(),
+      type: "ReactiveNode",
+      position: { x: 0, y: 0 },
+      data: {
+        globalsMap: {},
+        title: "Reorder",
+        description: "Reorder the stream",
+        kind: GraphNodeKind.Reactive,
+        ins: [leftPorts],
+        constantsMap: {
+          map: mapping,
+        },
+        outs: [rightPorts],
+        constants: [],
+        implementation: ReactiveImplementation.Reorder,
       },
     });
   }

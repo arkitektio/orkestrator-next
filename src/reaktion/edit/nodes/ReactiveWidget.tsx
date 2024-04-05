@@ -29,6 +29,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useEditRiver } from "../context";
 import { useReactFlow, useUpdateNodeInternals } from "reactflow";
+import { NodeDescription } from "@jhnnsrs/rekuest";
 
 export type ShapeProps = {
   implementation: ReactiveImplementation;
@@ -67,11 +68,68 @@ export const Default = ({ data }: ShapeProps) => {
         <CardHeader className="p-1">
           <Tooltip>
             <TooltipTrigger>
-              <CardTitle className="text-sm font-light">{data.title}</CardTitle>
+              <CardTitle className="text-sm font-light">
+                <NodeDescription
+                  description={data.title}
+                  variables={{ ...data.constantsMap, __ports: data.ins }}
+                />
+              </CardTitle>
             </TooltipTrigger>
             <TooltipContent>
               <CardDescription className="text-xs">
-                {data.description}
+                <NodeDescription
+                  description={data.description}
+                  variables={data.constantsMap}
+                />
+              </CardDescription>
+            </TooltipContent>
+          </Tooltip>
+        </CardHeader>
+      </Card>
+    </>
+  );
+};
+
+export const Select = ({ data }: ShapeProps) => {
+  return (
+    <>
+      <Card className="rounded-md border-blue-400/40 shadow-blue-400/20 dark:border-blue-300 dark:shadow-blue/20 shadow-xl">
+        <CardHeader className="p-1">
+          <Tooltip>
+            <TooltipTrigger>
+              <CardTitle className="text-sm font-light">
+                Select {data.voids.at(data.constantsMap.i)?.key}
+              </CardTitle>
+            </TooltipTrigger>
+            <TooltipContent>
+              <CardDescription className="text-xs">
+                <NodeDescription
+                  description={data.description}
+                  variables={data.constantsMap}
+                />
+              </CardDescription>
+            </TooltipContent>
+          </Tooltip>
+        </CardHeader>
+      </Card>
+    </>
+  );
+};
+
+export const Just = ({ data }: ShapeProps) => {
+  return (
+    <>
+      <Card className="rounded-md border-blue-400/40 shadow-blue-400/20 dark:border-blue-300 dark:shadow-blue/20 shadow-xl">
+        <CardHeader className="p-1">
+          <Tooltip>
+            <TooltipTrigger>
+              <CardTitle className="text-sm font-light">
+                Just <pre>{data.constantsMap.value}</pre>
+              </CardTitle>
+            </TooltipTrigger>
+            <TooltipContent>
+              <CardDescription className="text-xs">
+                Just a {data.constantsMap.value}
               </CardDescription>
             </TooltipContent>
           </Tooltip>
@@ -189,6 +247,7 @@ const contextMenuMap: {
   [ReactiveImplementation.Subtract]: DefaultContext,
   [ReactiveImplementation.Multiply]: DefaultContext,
   [ReactiveImplementation.Suffix]: DefaultContext,
+  [ReactiveImplementation.Select]: DefaultContext,
 };
 
 const shapeMap: { [key in ReactiveImplementation]: React.FC<ShapeProps> } = {
@@ -218,6 +277,8 @@ const shapeMap: { [key in ReactiveImplementation]: React.FC<ShapeProps> } = {
   [ReactiveImplementation.Subtract]: Default,
   [ReactiveImplementation.Multiply]: Default,
   [ReactiveImplementation.Suffix]: Default,
+  [ReactiveImplementation.Select]: Select,
+  [ReactiveImplementation.Just]: Just,
 };
 
 const shapeForImplementation = (
@@ -236,6 +297,8 @@ export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({
   data,
   id,
 }) => {
+  const { updateData } = useEditRiver();
+
   const Shape = shapeForImplementation(data.implementation);
   const ContextMenuImplementatoin = contextMenuForImplementation(
     data.implementation,
@@ -263,6 +326,9 @@ export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({
                   <Constants
                     ports={data.constants}
                     overwrites={data.constantsMap}
+                    onSubmit={(values) =>
+                      updateData({ constantsMap: values }, id)
+                    }
                   />
                 ) : (
                   "No configuration needed"

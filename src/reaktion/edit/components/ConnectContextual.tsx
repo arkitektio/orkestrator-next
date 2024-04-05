@@ -20,6 +20,8 @@ import {
   ConstantNodeDocument,
   ConstantNodeQuery,
   DemandKind,
+  NodeKind,
+  NodeScope,
   PortKind,
   useAllNodesQuery,
   useProtocolOptionsLazyQuery,
@@ -42,6 +44,7 @@ import {
 } from "@/components/ui/tooltip";
 import { NodeDescription } from "@jhnnsrs/rekuest";
 import { nodeIdBuilder, streamToReadable } from "@/reaktion/utils";
+import clsx from "clsx";
 
 export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   const form = useForm({
@@ -120,6 +123,18 @@ export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   );
 };
 
+export const allandone = <T extends any>(
+  left: T[],
+  right: T[],
+  predicate: (l: T, r: T) => boolean,
+) => {
+  return (
+    left.every((l) => right.some((r) => predicate(l, r))) &&
+    left.length == right.length &&
+    right.length > 0
+  );
+};
+
 const connectReactiveNodes = (
   leftPorts: FlussPortFragment[],
   rightPorts: FlussPortFragment[],
@@ -131,8 +146,7 @@ const connectReactiveNodes = (
   }
 
   if (
-    leftPorts.every((port) => port.kind === PortKind.Float) &&
-    rightPorts.every((port) => port.kind === PortKind.Int)
+    allandone(leftPorts, rightPorts, (port) => port.kind === PortKind.Float)
   ) {
     nodes.push({
       id: nodeIdBuilder(),
@@ -158,6 +172,25 @@ const connectReactiveNodes = (
     });
   }
 
+  if (rightPorts.length == 0) {
+    nodes.push({
+      id: nodeIdBuilder(),
+      type: "ReactiveNode",
+      position: { x: 0, y: 0 },
+      data: {
+        globalsMap: {},
+        title: "Omit",
+        description: "Discard the stream an just send an event",
+        kind: GraphNodeKind.Reactive,
+        ins: [leftPorts],
+        constantsMap: {},
+        outs: [[]],
+        constants: [],
+        implementation: ReactiveImplementation.Omit,
+      },
+    });
+  }
+
   return nodes;
 };
 
@@ -168,50 +201,48 @@ export const ConnectContextual = (props: {
 
   const { client } = useRekuest();
 
-  const onSubmit = (data: any) => {
-    refetch({
-      ...variables,
-      filters: { ...variables.filters },
-    });
-  };
-
   const leftPorts = props.params.leftNode.data.outs[props.params.leftStream];
   const rightPorts = props.params.rightNode.data.ins[props.params.rightStream];
 
-  const variables = {
-    filters: {
-      demands: [
-        {
-          kind: DemandKind.Args,
-          matches:
-            leftPorts.map((port, index) => ({
-              at: index,
-              kind: port.kind,
-              identifier: port.identifier,
-            })) || [],
-          forceNonNullableLength: leftPorts.length || 0,
-        },
-        {
-          kind: DemandKind.Returns,
-          matches:
-            rightPorts.map((port, index) => ({
-              at: index,
-              kind: port.kind,
-              identifier: port.identifier,
-            })) || [],
-          forceNonNullableLength: rightPorts.length || 0,
-        },
-      ],
+  const { data, refetch, variables } = withRekuest(useAllNodesQuery)({
+    variables: {
+      filters: {
+        demands: [
+          {
+            kind: DemandKind.Args,
+            matches:
+              leftPorts.map((port, index) => ({
+                at: index,
+                kind: port.kind,
+                identifier: port.identifier,
+              })) || [],
+            forceNonNullableLength: leftPorts.length || 0,
+          },
+          {
+            kind: DemandKind.Returns,
+            matches:
+              rightPorts.map((port, index) => ({
+                at: index,
+                kind: port.kind,
+                identifier: port.identifier,
+              })) || [],
+            forceNonNullableLength: rightPorts.length || 0,
+          },
+        ],
+      },
+      pagination: {
+        limit: 2,
+      },
     },
-    pagination: {
-      limit: 2,
-    },
-  };
-
-  const { data, refetch } = withRekuest(useAllNodesQuery)({
-    variables: variables,
     fetchPolicy: "network-only",
   });
+
+  const onSubmit = (data: any) => {
+    refetch({
+      ...variables,
+      filters: { ...variables?.filters },
+    });
+  };
 
   const [searchProtocol] = withRekuest(useProtocolOptionsLazyQuery)();
 
@@ -261,13 +292,26 @@ export const ConnectContextual = (props: {
         {data?.nodes.map((node) => (
           <Tooltip>
             <TooltipTrigger>
-              <Card onClick={() => onNodeClick(node.id)} className="px-2 py-1">
+              <Card
+                onClick={() => onNodeClick(node.id)}
+                className={clsx(
+                  "px-2 py-1 border",
+                  node.scope == NodeScope.Global ? "" : "dark:border-blue-200",
+                )}
+              >
                 {node.name}
               </Card>
             </TooltipTrigger>
             <TooltipContent align="center">
               {node.description && (
                 <NodeDescription description={node.description} />
+              )}
+              {node.scope == NodeScope.Global ? (
+                " "
+              ) : (
+                <div className="text-blue-200 mt-2">
+                  This Node will bind this workflow to specific apps
+                </div>
               )}
             </TooltipContent>
           </Tooltip>

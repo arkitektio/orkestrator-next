@@ -3,6 +3,8 @@ fragment ListNode on Node {
   name
   description
   hash
+  kind
+  scope
 }
 
 fragment GraphNodeNode on Node {

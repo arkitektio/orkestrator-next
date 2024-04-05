@@ -17,6 +17,9 @@ import {
 import { SMART_MODEL_DROP_TYPE } from "@/constants";
 import { cn } from "@/lib/utils";
 import {
+  ArkitektGraphNode,
+  ArkitektGraphNodeFragment,
+  BaseGraphNodeFragment,
   FlowFragment,
   GlobalArgFragment,
   GraphInput,
@@ -28,7 +31,13 @@ import {
 import { DropContextual } from "@/reaktion/edit/components/DropContextual";
 import { ClickContextual } from "@/reaktion/edit/components/ClickContextual";
 import { ConnectContextual } from "@/reaktion/edit/components/ConnectContextual";
-import { ConstantNodeDocument, ConstantNodeQuery } from "@/rekuest/api/graphql";
+import { BoundNodesBox } from "@/reaktion/edit/components/boxes/BoundNodesBox";
+import { ErrorBox } from "@/reaktion/edit/components/boxes/ErrorBox";
+import {
+  ConstantNodeDocument,
+  ConstantNodeQuery,
+  PortScope,
+} from "@/rekuest/api/graphql";
 import { useRekuest } from "@jhnnsrs/rekuest-next";
 import {
   DoubleArrowLeftIcon,
@@ -130,6 +139,19 @@ function calculateMidpoint(
   };
 }
 
+const hasBoundPort = (node: FlowNode<BaseGraphNodeFragment>): boolean => {
+  return (
+    node.data.ins?.find(
+      (s) => s && s.length && s.find((i) => i.scope == PortScope.Local),
+    ) ||
+    node.data.outs?.find(
+      (s) => s && s.length && s.find((i) => i.scope == PortScope.Local),
+    ) ||
+    node.data.voids?.find((i) => i.scope == PortScope.Local) ||
+    node.data.constants?.find((i) => i.scope == PortScope.Local)
+  );
+};
+
 export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
   console.log("THE FLOW", flow);
 
@@ -164,6 +186,10 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       solvedErrors: [],
       valid: true,
     });
+
+  const boundNodes = useMemo(() => {
+    return state.nodes.filter(hasBoundPort);
+  }, [state.nodes]);
 
   const triggerNodepdate = useCallback(
     (
@@ -1159,47 +1185,21 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                     ports={globals.map((x) => ({ ...x.port, key: x.key }))}
                     overwrites={{}}
                     onToArg={(e) => removeGlobal(e.key)}
-                    onSubmit={() => alert("setting values here has no impact")}
+                    onSubmit={() =>
+                      console.log("setting values here has no impact")
+                    }
                   />
                 </CardContent>
               </Card>
             </div>
           )}
-          {state.remainingErrors.length != 0 && (
-            <div className="absolute top-0 right-0  mr-3 mt-5 z-50 ">
-              <Card className="bg-sidebar py-2 max-w-[200px]">
-                <CardContent>
-                  {state.remainingErrors.length > 0 && (
-                    <>
-                      {state.remainingErrors
-                        .filter((e) => e.type == "graph")
-                        .map((e) => (
-                          <RemainingErrorRender
-                            error={e}
-                            onClick={(e) =>
-                              onNodesChange([
-                                { type: "select", id: e.id, selected: true },
-                              ])
-                            }
-                          />
-                        ))}
-                    </>
-                  )}
-                  {state.solvedErrors.length > 0 && (
-                    <>
-                      <CardDescription>
-                        {" "}
-                        We just solved these Errors{" "}
-                      </CardDescription>
-                      {state.solvedErrors.map((e) => (
-                        <SolvedErrorRender error={e} />
-                      ))}
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          )}
+
+          <div className="absolute top-0 right-0  mr-3 mt-5 z-50 max-w-xs gap-1 flex flex-col ">
+            {state.remainingErrors.length != 0 && (
+              <ErrorBox errors={state.remainingErrors} />
+            )}
+            {boundNodes.length > 0 && <BoundNodesBox nodes={boundNodes} />}
+          </div>
           {isOver && (
             <div className="absolute w-full h-full bg-white opacity-10 z-10">
               {" "}

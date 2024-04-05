@@ -1,0 +1,11 @@
+fragment Client on App {
+  id
+  name
+  clientId
+}
+
+fragment ListClient on App {
+  id
+  name
+  clientId
+}

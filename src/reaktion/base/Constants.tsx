@@ -8,7 +8,8 @@ import {
   ArgsContainerProps,
   EffectWrapper,
   Port,
-  PortGroup, useWidgetRegistry
+  PortGroup,
+  useWidgetRegistry,
 } from "@jhnnsrs/rekuest-next";
 import { CollapsibleTrigger } from "@radix-ui/react-collapsible";
 import { ChevronUpIcon, DoubleArrowUpIcon } from "@radix-ui/react-icons";
@@ -145,14 +146,17 @@ export const Constants = (props: {
   overwrites: { [key: string]: any };
   onToArg?: (port: PortFragment) => void;
   onToGlobal?: (port: PortFragment, key?: string | undefined) => void;
-
 }) => {
   const form = usePortForm({
     ports: props.ports,
     overwrites: props.overwrites,
   });
 
-  const { formState,  formState: { isValidating }, watch } = form;
+  const {
+    formState,
+    formState: { isValidating },
+    watch,
+  } = form;
 
   const data = watch();
 
@@ -162,21 +166,21 @@ export const Constants = (props: {
     }
   }, [formState, data, isValidating]);
 
-
-
   const { registry } = useWidgetRegistry();
 
   return (
     <>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(props.onSubmit)} className="space-y-6 mt-4">
+        <form
+          onSubmit={form.handleSubmit(props.onSubmit)}
+          className="space-y-1"
+        >
           <ArgsContainer
             registry={registry}
             ports={props.ports}
             onToArg={props.onToArg}
             onToGlobal={props.onToGlobal}
           />
-
         </form>
       </Form>
     </>

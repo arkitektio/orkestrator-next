@@ -635,6 +635,10 @@ export const istriviallyIntegratable = (
   const sourceStream = sourceNode?.data.outs.at(sourceStreamIndex);
   const targetStream = targetNode?.data.ins.at(targetStreamIndex);
 
+  if (targetNode?.type == "ReactiveNode") {
+    return state.edges.find((e) => e.source == targetNode.id) == undefined; // We can always connect to a reactive node if it has not outgoing edges
+  }
+
   if (sourceStream == undefined || targetStream == undefined) return false;
 
   // Args and Returns are always trivially integratable if they have no connections

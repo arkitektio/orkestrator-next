@@ -130,6 +130,7 @@ export type ReactiveNodeSuggestions = {
 
 const reactiveNodes = (
   ports: FlussPortFragment[],
+  params: DropContextualParams,
 ): ReactiveNodeSuggestions[] => {
   const nodes: ReactiveNodeSuggestions[] = [];
 
@@ -208,7 +209,11 @@ const reactiveNodes = (
         title: `Zip`,
         description: "Transforms a stream into an item of chunks",
         kind: GraphNodeKind.Reactive,
-        ins: [ports, []],
+        ins:
+          params.relativePosition == "topleft" ||
+          params.relativePosition == "topright"
+            ? [[], ports]
+            : [ports, []],
         outs: [[ports]],
         constants: [],
         voids: ports,
@@ -296,7 +301,9 @@ export const SourceDropContextual = (props: {
     data.nodes.length < displayLimit &&
     variables.filters?.search == undefined;
 
-  const calculatedNodes = props.ports ? reactiveNodes(props.ports) : [];
+  const calculatedNodes = props.ports
+    ? reactiveNodes(props.ports, props.params)
+    : [];
 
   return (
     <Card

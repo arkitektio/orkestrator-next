@@ -149,10 +149,17 @@ export type EdgeFragement = GraphEdgeFragment;
 export type GlobalFragment = GlobalArgFragment;
 export type StreamItemFragment = StreamItemFragment;
 
+export type RelativePosition =
+  | "bottomright"
+  | "bottomleft"
+  | "topright"
+  | "topleft";
+
 export type DropContextualParams = {
   handleType: "source" | "target";
   causingNode: FlowNode;
   causingStream: number;
+  relativePosition: RelativePosition;
   position: { x: number; y: number };
   event: MouseEvent | TouchEvent;
   connectionParams: OnConnectStartParams;

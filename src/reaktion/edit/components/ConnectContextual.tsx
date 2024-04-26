@@ -136,15 +136,20 @@ export const allandone = <T extends any>(
   );
 };
 
-
-
-
 function isMatch(item1: FlussPortFragment, item2: FlussPortFragment): boolean {
-  return item1.kind === item2.kind &&
-         (item1.kind !== PortKind.Structure || item1.identifier === item2.identifier);
+  return (
+    item1.kind === item2.kind &&
+    (item1.kind !== PortKind.Structure || item1.identifier === item2.identifier)
+  );
 }
 
-function findMappings(list1: FlussPortFragment[], list2: FlussPortFragment[], index1 = 0, currentMapping: Map<number, number> = new Map(), allMappings: Map<number, number>[] = []): void {
+function findMappings(
+  list1: FlussPortFragment[],
+  list2: FlussPortFragment[],
+  index1 = 0,
+  currentMapping: Map<number, number> = new Map(),
+  allMappings: Map<number, number>[] = [],
+): void {
   if (index1 === list1.length) {
     // If we've processed all items in list1, store the current mapping clone
     allMappings.push(new Map(currentMapping));
@@ -153,7 +158,10 @@ function findMappings(list1: FlussPortFragment[], list2: FlussPortFragment[], in
 
   for (let index2 = 0; index2 < list2.length; index2++) {
     // If item at index2 in list2 is not already mapped and items match
-    if (!Array.from(currentMapping.values()).includes(index2) && isMatch(list1[index1], list2[index2])) {
+    if (
+      !Array.from(currentMapping.values()).includes(index2) &&
+      isMatch(list1[index1], list2[index2])
+    ) {
       currentMapping.set(index1, index2);
       findMappings(list1, list2, index1 + 1, currentMapping, allMappings);
       currentMapping.delete(index1); // Backtrack
@@ -161,14 +169,17 @@ function findMappings(list1: FlussPortFragment[], list2: FlussPortFragment[], in
   }
 }
 
-function generateAllMappings(list1: FlussPortFragment[], list2: FlussPortFragment[]): {[key: number]: number}[] {
+function generateAllMappings(
+  list1: FlussPortFragment[],
+  list2: FlussPortFragment[],
+): { [key: number]: number }[] {
   const allMappings: Map<number, number>[] = [];
+  if (list1.length !== list2.length) return [];
   findMappings(list1, list2, 0, new Map(), allMappings);
-  return allMappings.map(mapping => Object.fromEntries(mapping.entries()));
+  return allMappings.map((mapping) => Object.fromEntries(mapping.entries()));
 }
 
-
-// 
+//
 
 const connectReactiveNodes = (
   leftPorts: FlussPortFragment[],
@@ -226,9 +237,7 @@ const connectReactiveNodes = (
     });
   }
 
-
   for (let mapping of generateAllMappings(leftPorts, rightPorts)) {
-
     nodes.push({
       id: nodeIdBuilder(),
       type: "ReactiveNode",

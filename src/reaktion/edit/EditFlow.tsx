@@ -83,6 +83,7 @@ import {
   DropContextualParams,
   ClickContextualParams,
   ConnectContextualParams,
+  RelativePosition,
 } from "../types";
 import {
   edges_to_flowedges,
@@ -931,10 +932,39 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         if (connectionParams.nodeId && connectionParams.handleId) {
           let node = reactFlowInstance.getNode(connectionParams.nodeId);
 
+          if (!node) {
+            console.log("no node found");
+            return;
+          }
+
           let position = {
             x: event.clientX - (reactFlowBounds?.left || 0),
             y: event.clientY - (reactFlowBounds?.top || 0),
           };
+
+          // Calculate relative positoin (upright downetight form event to node)
+
+          let node_position = reactFlowInstance.flowToScreenPosition(
+            node?.position,
+          );
+
+          let relativePosition: RelativePosition | null = null;
+
+          if (node_position.x < position.x) {
+            if (node_position.y < position.y) {
+              relativePosition = "bottomright";
+            }
+            if (node_position.y > position.y) {
+              relativePosition = "topright";
+            }
+          } else {
+            if (node_position.y < position.y) {
+              relativePosition = "bottomleft";
+            }
+            if (node_position.y > position.y) {
+              relativePosition = "topleft";
+            }
+          }
 
           if (node && connectionParams.handleType) {
             setShowContextual({
@@ -943,6 +973,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
               causingStream: handleToStream(connectionParams.handleId),
               connectionParams: connectionParams,
               position: position,
+              relativePosition: relativePosition,
               event: event,
             });
           } else {

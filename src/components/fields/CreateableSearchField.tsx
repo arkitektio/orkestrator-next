@@ -7,6 +7,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList,
 } from "@/components/ui/command";
 import {
   FormControl,
@@ -84,7 +85,7 @@ export const CreateableSearchField = ({
   create,
   validate,
   search,
-  
+
   placeholder = "Please Select",
   commandPlaceholder = "Search...",
   noOptionFoundPlaceholder = "No options found",
@@ -139,7 +140,7 @@ export const CreateableSearchField = ({
     <FormField
       control={form.control}
       name={name}
-      rules={{validate}}
+      rules={{ validate }}
       render={({ field }) => (
         <>
           <FormItem className="flex flex-col">
@@ -173,40 +174,41 @@ export const CreateableSearchField = ({
                       setLatestQuery(e);
                     }}
                   />
-
-                  <CommandEmpty>{noOptionFoundPlaceholder}</CommandEmpty>
-                  {error && (
-                    <CommandGroup heading="Error">
-                      {error && <CommandItem>{error}</CommandItem>}
+                  <CommandList>
+                    <CommandEmpty>{noOptionFoundPlaceholder}</CommandEmpty>
+                    {error && (
+                      <CommandGroup heading="Error">
+                        {error && <CommandItem>{error}</CommandItem>}
+                      </CommandGroup>
+                    )}
+                    <CommandGroup>
+                      {options.filter(notEmpty).map((option) => (
+                        <CommandItem
+                          value={option.value}
+                          key={option.value}
+                          onSelect={() => {
+                            console.log(option.value);
+                            form.setValue(name, option.value, {
+                              shouldValidate: true,
+                            });
+                          }}
+                        >
+                          {option.label}
+                          <CheckIcon
+                            className={cn(
+                              "ml-auto h-4 w-4",
+                              option.value === field.value
+                                ? "opacity-100"
+                                : "opacity-0",
+                            )}
+                          />
+                        </CommandItem>
+                      ))}
                     </CommandGroup>
-                  )}
-                  <CommandGroup>
-                    {options.filter(notEmpty).map((option) => (
-                      <CommandItem
-                        value={option.value}
-                        key={option.value}
-                        onSelect={() => {
-                          console.log(option.value);
-                          form.setValue(name, option.value, {
-                            shouldValidate: true,
-                          });
-                        }}
-                      >
-                        {option.label}
-                        <CheckIcon
-                          className={cn(
-                            "ml-auto h-4 w-4",
-                            option.value === field.value
-                              ? "opacity-100"
-                              : "opacity-0",
-                          )}
-                        />
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                  <CommandItem onSelect={() => createValue(latestQuery)}>
-                    Create {latestQuery}{" "}
-                  </CommandItem>
+                    <CommandItem onSelect={() => createValue(latestQuery)}>
+                      Create {latestQuery}{" "}
+                    </CommandItem>
+                  </CommandList>
                 </Command>
               </PopoverContent>
             </Popover>

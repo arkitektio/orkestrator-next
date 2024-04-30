@@ -7,6 +7,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList,
 } from "@/components/ui/command";
 import {
   FormControl,
@@ -175,51 +176,59 @@ export const ListSearchField = ({
                       query(e);
                     }}
                   />
-                  <CommandEmpty>{noOptionFoundPlaceholder}</CommandEmpty>
-                  {options.length > 0 && (
-                    <CommandGroup heading="Search">
-                      {options.filter(notEmpty).map((option) => (
-                        <CommandItem
-                          value={option.value}
-                          key={option.value}
-                          onSelect={() => {
-                            console.log(option.value);
-                            if (field.value == undefined) {
-                              field.onChange([option.value]);
-                            } else {
-                              if (field.value.includes(option.value)) {
-                                form.setValue(
-                                  name,
-                                  field.value.filter(
-                                    (v: string) => v !== option.value,
-                                  ),
-                                  { shouldValidate: true },
-                                );
+                  <CommandList>
+                    <CommandEmpty>{noOptionFoundPlaceholder}</CommandEmpty>
+                    {error && (
+                      <CommandGroup heading="Error">
+                        {error && <CommandItem>{error}</CommandItem>}
+                      </CommandGroup>
+                    )}
+                    {options.length > 0 && (
+                      <CommandGroup heading="Search">
+                        {options.filter(notEmpty).map((option) => (
+                          <CommandItem
+                            value={option.value}
+                            key={option.value}
+                            onSelect={() => {
+                              console.log(option.value);
+                              if (field.value == undefined) {
+                                field.onChange([option.value]);
                               } else {
-                                form.setValue(
-                                  name,
-                                  [...field.value, option.value].filter(
-                                    notEmpty,
-                                  ),
-                                  { shouldValidate: true },
-                                );
+                                if (field.value.includes(option.value)) {
+                                  form.setValue(
+                                    name,
+                                    field.value.filter(
+                                      (v: string) => v !== option.value,
+                                    ),
+                                    { shouldValidate: true },
+                                  );
+                                } else {
+                                  form.setValue(
+                                    name,
+                                    [...field.value, option.value].filter(
+                                      notEmpty,
+                                    ),
+                                    { shouldValidate: true },
+                                  );
+                                }
                               }
-                            }
-                          }}
-                        >
-                          {option.label}
-                          <CheckIcon
-                            className={cn(
-                              "ml-auto h-4 w-4",
-                              field.value && field.value.includes(option.value)
-                                ? "opacity-100"
-                                : "opacity-0",
-                            )}
-                          />
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  )}
+                            }}
+                          >
+                            {option.label}
+                            <CheckIcon
+                              className={cn(
+                                "ml-auto h-4 w-4",
+                                field.value &&
+                                  field.value.includes(option.value)
+                                  ? "opacity-100"
+                                  : "opacity-0",
+                              )}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
+                  </CommandList>
                 </Command>
               </PopoverContent>
             </Popover>

@@ -1,0 +1,9 @@
+query Agents(
+  $pagination: OffsetPaginationInput
+  $filters: AgentFilter
+  $order: AgentOrder
+) {
+  agents(order: $order, pagination: $pagination, filters: $filters) {
+    ...ListAgent
+  }
+}

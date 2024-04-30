@@ -1,5 +1,14 @@
+import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { ListRender } from "@/components/layout/ListRender";
+import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
+import {
+  DetailPane,
+  DetailPaneDescription,
+  DetailPaneHeader,
+  DetailPaneTitle,
+} from "@/components/ui/pane";
 import { toast } from "@/components/ui/use-toast";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 import { notEmpty } from "@/lib/utils";
@@ -19,11 +28,13 @@ import {
   usePostman,
   useWidgetRegistry,
   withRekuest,
-  yupSchemaBuilder
+  yupSchemaBuilder,
 } from "@jhnnsrs/rekuest-next";
+import { ClipboardIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
+import ProvisionCard from "../components/cards/ProvisionCard";
 
 export const portHash = (port: Port[]) => {
   return port
@@ -95,8 +106,10 @@ export const PortForm = (props: {
     });
   }
 
-  
-  const description = useNodeDescription({description: props.description, variables: argDict})
+  const description = useNodeDescription({
+    description: props.description,
+    variables: argDict,
+  });
 
   return (
     <>
@@ -161,4 +174,39 @@ function Page() {
   );
 }
 
-export default Page;
+export default asDetailQueryRoute(
+  withRekuest(useDetailReservationQuery),
+  ({ data }) => {
+    return (
+      <ModelPageLayout
+        identifier="@rekuest/reservation"
+        title={data.reservation.reference}
+        object={data.reservation.id}
+      >
+        <DetailPane>
+          <DetailPaneHeader>
+            <DetailPaneTitle
+              actions={
+                <Button variant={"outline"} title="Copy to clipboard">
+                  <ClipboardIcon />
+                </Button>
+              }
+            >
+              {data?.reservation?.reference}
+            </DetailPaneTitle>
+            <DetailPaneDescription>
+              {data?.reservation?.node?.description}
+
+              <ListRender
+                array={data?.reservation?.provisions}
+                title="Provisions"
+              >
+                {(item, key) => <ProvisionCard item={item} key={key} />}
+              </ListRender>
+            </DetailPaneDescription>
+          </DetailPaneHeader>
+        </DetailPane>
+      </ModelPageLayout>
+    );
+  },
+);

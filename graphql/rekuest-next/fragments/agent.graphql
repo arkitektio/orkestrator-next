@@ -1,0 +1,11 @@
+fragment Agent on Agent {
+  id
+  instanceId
+  status
+}
+
+fragment ListAgent on Agent {
+  id
+  instanceId
+  status
+}

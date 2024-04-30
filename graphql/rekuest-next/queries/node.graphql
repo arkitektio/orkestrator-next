@@ -35,3 +35,9 @@ query NodeSearch($filters: NodeFilter, $pagination: OffsetPaginationInput) {
     ...ListNode
   }
 }
+
+query DetailNode($id: ID!) {
+  node(id: $id) {
+    ...DetailNode
+  }
+}

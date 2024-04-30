@@ -1,4 +1,12 @@
 fragment DetailTemplate on Template {
   id
   interface
+  dependencies {
+    ...ListDependency
+  }
+}
+
+fragment ListTemplate on Template {
+  id
+  interface
 }

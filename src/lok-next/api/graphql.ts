@@ -445,6 +445,7 @@ export type Query = {
   myManagedClients: Client;
   myMentions: Comment;
   mygroups: Array<Group>;
+  redeemTokens: Array<RedeemToken>;
   release: Release;
   releases: Array<Release>;
   scopes: Array<Scope>;
@@ -499,6 +500,12 @@ export type QueryMyManagedClientsArgs = {
 };
 
 
+export type QueryRedeemTokensArgs = {
+  filters?: InputMaybe<RedeemTokenFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryReleaseArgs = {
   clientId?: InputMaybe<Scalars['ID']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
@@ -515,6 +522,38 @@ export type QueryUserArgs = {
 export type QueryUsersArgs = {
   filters?: InputMaybe<UserFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+/**
+ * A redeem token is a token that can be used to redeed the rights to create
+ * a client. It is used to give the recipient the right to create a client.
+ *
+ * If the token is not redeemed within the expires_at time, it will be invalid.
+ * If the token has been redeemed, but the manifest has changed, the token will be invalid.
+ */
+export type RedeemToken = {
+  __typename?: 'RedeemToken';
+  /** The client that this redeem token belongs to. */
+  client?: Maybe<Client>;
+  id: Scalars['ID']['output'];
+  /** The token of the redeem token */
+  token: Scalars['String']['output'];
+  /** The user that this redeem token belongs to. */
+  user: User;
+};
+
+/**
+ * A redeem token is a token that can be used to redeed the rights to create
+ * a client. It is used to give the recipient the right to create a client.
+ *
+ * If the token is not redeemed within the expires_at time, it will be invalid.
+ * If the token has been redeemed, but the manifest has changed, the token will be invalid.
+ */
+export type RedeemTokenFilter = {
+  AND?: InputMaybe<RedeemTokenFilter>;
+  OR?: InputMaybe<RedeemTokenFilter>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** A Release is a version of an app. Releases might change over time. E.g. a release might be updated to fix a bug, and the release might be updated to add a new feature. This is why they are the home for `scopes` and `requirements`, which might change over the release cycle. */
@@ -797,6 +836,8 @@ export type DetailGroupFragment = { __typename?: 'Group', id: string, name: stri
 
 export type ListGroupFragment = { __typename?: 'Group', id: string, name: string };
 
+export type ListRedeemTokenFragment = { __typename?: 'RedeemToken', id: string, token: string, user: { __typename?: 'User', id: string, email?: string | null }, client?: { __typename?: 'Client', id: string, release: { __typename?: 'Release', version: any, app: { __typename?: 'App', identifier: any } } } | null };
+
 export type DetailReleaseFragment = { __typename?: 'Release', id: string, version: any, logo?: string | null, app: { __typename?: 'App', id: string, identifier: any, logo?: string | null }, clients: Array<{ __typename?: 'Client', id: string, kind: ClientKind, user?: { __typename?: 'User', username: string } | null, release: { __typename?: 'Release', version: any, logo?: string | null, app: { __typename?: 'App', id: string, identifier: any, logo?: string | null } }, composition: { __typename?: 'Composition', id: string } }> };
 
 export type ListReleaseFragment = { __typename?: 'Release', id: string, version: any, logo?: string | null, app: { __typename?: 'App', id: string, identifier: any, logo?: string | null } };
@@ -914,6 +955,14 @@ export type DetailGroupQueryVariables = Exact<{
 
 export type DetailGroupQuery = { __typename?: 'Query', group: { __typename?: 'Group', id: string, name: string, users: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }> } };
 
+export type RedeemTokensQueryVariables = Exact<{
+  filters?: InputMaybe<RedeemTokenFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+}>;
+
+
+export type RedeemTokensQuery = { __typename?: 'Query', redeemTokens: Array<{ __typename?: 'RedeemToken', id: string, token: string, user: { __typename?: 'User', id: string, email?: string | null }, client?: { __typename?: 'Client', id: string, release: { __typename?: 'Release', version: any, app: { __typename?: 'App', identifier: any } } } | null }> };
+
 export type ReleasesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -947,7 +996,7 @@ export type GlobalSearchQueryVariables = Exact<{
 }>;
 
 
-export type GlobalSearchQuery = { __typename?: 'Query', users: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, groups: Array<{ __typename?: 'Group', id: string, name: string }> };
+export type GlobalSearchQuery = { __typename?: 'Query', users?: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, groups?: Array<{ __typename?: 'Group', id: string, name: string }> };
 
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1223,6 +1272,25 @@ export const ListGroupFragmentDoc = gql`
     fragment ListGroup on Group {
   id
   name
+}
+    `;
+export const ListRedeemTokenFragmentDoc = gql`
+    fragment ListRedeemToken on RedeemToken {
+  id
+  token
+  user {
+    id
+    email
+  }
+  client {
+    id
+    release {
+      version
+      app {
+        identifier
+      }
+    }
+  }
 }
     `;
 export const ListClientFragmentDoc = gql`
@@ -1778,6 +1846,42 @@ export function useDetailGroupLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
 export type DetailGroupQueryHookResult = ReturnType<typeof useDetailGroupQuery>;
 export type DetailGroupLazyQueryHookResult = ReturnType<typeof useDetailGroupLazyQuery>;
 export type DetailGroupQueryResult = Apollo.QueryResult<DetailGroupQuery, DetailGroupQueryVariables>;
+export const RedeemTokensDocument = gql`
+    query RedeemTokens($filters: RedeemTokenFilter, $pagination: OffsetPaginationInput) {
+  redeemTokens(filters: $filters, pagination: $pagination) {
+    ...ListRedeemToken
+  }
+}
+    ${ListRedeemTokenFragmentDoc}`;
+
+/**
+ * __useRedeemTokensQuery__
+ *
+ * To run a query within a React component, call `useRedeemTokensQuery` and pass it any options that fit your needs.
+ * When your component renders, `useRedeemTokensQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useRedeemTokensQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *      pagination: // value for 'pagination'
+ *   },
+ * });
+ */
+export function useRedeemTokensQuery(baseOptions?: Apollo.QueryHookOptions<RedeemTokensQuery, RedeemTokensQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<RedeemTokensQuery, RedeemTokensQueryVariables>(RedeemTokensDocument, options);
+      }
+export function useRedeemTokensLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<RedeemTokensQuery, RedeemTokensQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<RedeemTokensQuery, RedeemTokensQueryVariables>(RedeemTokensDocument, options);
+        }
+export type RedeemTokensQueryHookResult = ReturnType<typeof useRedeemTokensQuery>;
+export type RedeemTokensLazyQueryHookResult = ReturnType<typeof useRedeemTokensLazyQuery>;
+export type RedeemTokensQueryResult = Apollo.QueryResult<RedeemTokensQuery, RedeemTokensQueryVariables>;
 export const ReleasesDocument = gql`
     query Releases {
   releases {

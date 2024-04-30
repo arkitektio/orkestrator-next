@@ -10,10 +10,8 @@ export const SearchWidget = (
   const form = useFormContext();
   const { registry } = useWidgetRegistry();
 
-  console.log(props.widget?.ward);
   let query = props?.widget?.query || "";
   let wardKey = props.widget?.ward;
-  console.log(query, wardKey);
 
   const theward = useMemo(
     () => registry.getWard(wardKey || "default"),
@@ -21,10 +19,10 @@ export const SearchWidget = (
   );
 
   const values = useMemo(() => form.getValues(), [form.formState]);
-  console.log(values);
 
   const search = useCallback(
     async (searching: SearchOptions) => {
+      console.log("searching", searching);
       if (!theward.search) throw new Error("Ward does not support search");
       let options = await theward.search({
         query: query,

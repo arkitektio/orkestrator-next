@@ -1,0 +1,54 @@
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { RekuestNode, RekuestProvision, RekuestReservation } from "@/linkers";
+import { useRequestMate } from "@/mates/request/useRequestMate";
+import { useReserveMate } from "@/mates/reserve/useReserveMate";
+import { MateFinder } from "@/mates/types";
+import {
+  ListNodeFragment,
+  ListProvisionFragment,
+  PostmanReservationFragment,
+  useActivateMutation,
+  useDeactivateMutation,
+} from "@/rekuest/api/graphql";
+import { withRekuest } from "@jhnnsrs/rekuest-next";
+
+interface Props {
+  item: ListProvisionFragment;
+  mates?: MateFinder[];
+}
+
+const TheCard = ({ item, mates }: Props) => {
+  const requestMate = useRequestMate();
+
+  const [activate] = withRekuest(useActivateMutation)();
+  const [deactive] = withRekuest(useDeactivateMutation)();
+
+  return (
+    <RekuestProvision.Smart object={item?.id} mates={[requestMate]}>
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <RekuestProvision.DetailLink object={item?.id}>
+              {" "}
+              {item.agent.id}
+              {item.status}
+            </RekuestProvision.DetailLink>
+          </CardTitle>
+          <Button
+            onClick={() => activate({ variables: { provision: item.id } })}
+          >
+            Activate
+          </Button>
+          <Button
+            onClick={() => deactive({ variables: { provision: item.id } })}
+          >
+            Deactuve
+          </Button>
+        </CardHeader>
+      </Card>
+    </RekuestProvision.Smart>
+  );
+};
+
+export default TheCard;

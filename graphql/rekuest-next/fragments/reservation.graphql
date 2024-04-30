@@ -27,3 +27,30 @@ fragment ReservationEvent on ReservationEvent {
   }
   createdAt
 }
+
+fragment ListReservation on Reservation {
+  id
+  title
+  status
+  reference
+  node {
+    name
+    description
+    hash
+  }
+}
+
+fragment DetailReservation on Reservation {
+  ...PostmanReservation
+  events {
+    ...ReservationEvent
+  }
+  provisions {
+    ...ListProvision
+  }
+  node {
+    name
+    description
+    ...Ports
+  }
+}

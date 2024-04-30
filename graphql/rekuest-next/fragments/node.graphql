@@ -22,3 +22,14 @@ fragment GraphNodeNode on Node {
     name
   }
 }
+
+fragment DetailNode on Node {
+  ...GraphNodeNode
+  templates {
+    id
+    interface
+  }
+  reservations {
+    ...ListReservation
+  }
+}

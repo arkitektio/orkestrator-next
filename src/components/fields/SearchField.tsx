@@ -25,6 +25,7 @@ import { cn, notEmpty } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { FieldProps } from "./types";
+import { CommandList } from "cmdk";
 
 export type Option = {
   label: string;
@@ -63,7 +64,7 @@ export type SearchFunction = (
   searching: SearchOptions,
 ) => Promise<(Option | null | undefined)[]>;
 
-export type SearchFieldProps  = {
+export type SearchFieldProps = {
   name: string;
   label?: string;
   description?: string;
@@ -91,31 +92,34 @@ export const SearchField = ({
   const query = (string: string) => {
     search({ search: string })
       .then((res) => {
-        console.log(res);
-        setOptions(res);
+        setOptions(res || []);
         setError(null);
       })
       .catch((err) => {
         setError(err.message);
+        setOptions([]);
       });
   };
 
   useEffect(() => {
     search({})
       .then((res) => {
-        setOptions(res);
+        setOptions(res || []);
         setError(null);
       })
       .catch((err) => {
-        setError(err.message);
+        setError(err.message || "Error");
+        setOptions([]);
       });
   }, [name, search]);
+
+  console.log("Option", options);
 
   return (
     <FormField
       control={form.control}
       name={name}
-      rules={{validate: validate}}
+      rules={{ validate: validate }}
       render={({ field }) => (
         <>
           <FormItem className="flex flex-col">
@@ -149,36 +153,38 @@ export const SearchField = ({
                       query(e);
                     }}
                   />
-                  <CommandEmpty>{noOptionFoundPlaceholder}</CommandEmpty>
-                  {error && (
-                    <CommandGroup heading="Error">
-                      {error && <CommandItem>{error}</CommandItem>}
+                  <CommandList>
+                    <CommandEmpty>{noOptionFoundPlaceholder}</CommandEmpty>
+                    {error && (
+                      <CommandGroup heading="Error">
+                        {error && <CommandItem>{error}</CommandItem>}
+                      </CommandGroup>
+                    )}
+                    <CommandGroup>
+                      {options.filter(notEmpty).map((option) => (
+                        <CommandItem
+                          value={option.value}
+                          key={option.value}
+                          onSelect={() => {
+                            console.log(option.value);
+                            form.setValue(name, option.value, {
+                              shouldValidate: true,
+                            });
+                          }}
+                        >
+                          {option.label}
+                          <CheckIcon
+                            className={cn(
+                              "ml-auto h-4 w-4",
+                              option.value === field.value
+                                ? "opacity-100"
+                                : "opacity-0",
+                            )}
+                          />
+                        </CommandItem>
+                      ))}
                     </CommandGroup>
-                  )}
-                  <CommandGroup>
-                    {options.filter(notEmpty).map((option) => (
-                      <CommandItem
-                        value={option.value}
-                        key={option.value}
-                        onSelect={() => {
-                          console.log(option.value);
-                          form.setValue(name, option.value, {
-                            shouldValidate: true,
-                          });
-                        }}
-                      >
-                        {option.label}
-                        <CheckIcon
-                          className={cn(
-                            "ml-auto h-4 w-4",
-                            option.value === field.value
-                              ? "opacity-100"
-                              : "opacity-0",
-                          )}
-                        />
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
+                  </CommandList>
                 </Command>
               </PopoverContent>
             </Popover>

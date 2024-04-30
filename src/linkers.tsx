@@ -20,6 +20,10 @@ export const RekuestTemplate = buildSmart(
   "@rekuest-next/template",
   "rekuest/templates",
 );
+export const RekuestDependency = buildSmart(
+  "@rekuest-next/dependency",
+  "rekuest/dependencies",
+);
 export const FlussFlow = buildSmart("@fluss/flow", "fluss/flows");
 export const FlussWorkspace = buildSmart(
   "@fluss/workspace",
@@ -30,14 +34,17 @@ export const RekuestReservation = buildSmart(
   "rekuest/reservations",
 );
 
+export const RekuestProvision = buildSmart(
+  "@rekuest-next/reservation",
+  "rekuest/provisions",
+);
+export const RekuestAgent = buildSmart("@rekuest-next/agent", "rekuest/agents");
+
 export const MikroImage = buildSmart("@mikronext/image", "mikro/images");
 
 export const MikroMetric = buildSmart("@mikronext/metric", "mikro/metrics");
 
-export const MikroDataset = buildSmart(
-  "@mikronext/dataset",
-  "mikro/datasets",
-);
+export const MikroDataset = buildSmart("@mikronext/dataset", "mikro/datasets");
 
 export const OmeroArkProject = buildSmart(
   "@omero-ark/project",
@@ -45,8 +52,10 @@ export const OmeroArkProject = buildSmart(
 );
 
 export const PortPod = buildSmart("@port-next/pod", "port-next/pod");
-export const PortDefinition = buildSmart("@port-next/definition", "port-next/definition");
-
+export const PortDefinition = buildSmart(
+  "@port-next/definition",
+  "port-next/definition",
+);
 
 export const OmeroArkDataset = buildSmart(
   "@omero-ark/dataset",
@@ -55,10 +64,7 @@ export const OmeroArkDataset = buildSmart(
 
 export const OmeroArkImage = buildSmart("@omero-ark/image", "omero-ark/images");
 
-export const MikroHistory = buildSmart(
-  "@mikronext/history",
-  "mikro/history",
-);
+export const MikroHistory = buildSmart("@mikronext/history", "mikro/history");
 
 export const MikroAffineTransformationView = buildSmart(
   "@mikronext/affinetransformationview",
@@ -94,10 +100,7 @@ export const MikroChannelView = buildSmart(
   "mikro/channelviews",
 );
 
-export const MikroRGBView = buildSmart(
-  "@mikronext/rgbview",
-  "mikro/rgbviews",
-);
+export const MikroRGBView = buildSmart("@mikronext/rgbview", "mikro/rgbviews");
 
 export const MikroRGBContext = buildSmart(
   "@mikronext/rgbcontext",
@@ -119,7 +122,8 @@ export const MikroModuleLink = buildModuleLink("mikro");
 export const ReaktionModuleLink = buildModuleLink("fluss");
 export const OmeroArkModuleLink = buildModuleLink("omero-ark");
 
-export const LokUser = buildSmart("@loknext/user", "lok/users");
+export const LokUser = buildSmart("@lok/user", "lok/users");
+export const LokRedeemToken = buildSmart("@lok/redeem_token", "lok/users");
 export const LokGroup = buildSmart("@lok/group", "lok/groups");
 export const LokClient = buildSmart("@lok/client", "lok/clients");
 export const LokMapping = buildSmart("@lok/mapping", "lok/mappings");

@@ -1,0 +1,41 @@
+fragment ListProvision on Provision {
+  id
+  template {
+    id
+  }
+  agent {
+    id
+  }
+  status
+}
+
+fragment DetailProvision on Provision {
+  id
+  template {
+    id
+    interface
+  }
+  agent {
+    id
+    registry {
+      app {
+        id
+      }
+      user {
+        id
+      }
+    }
+  }
+  status
+  causedReservations {
+    id
+    causingDependency {
+      id
+      reference
+      node {
+        id
+        name
+      }
+    }
+  }
+}

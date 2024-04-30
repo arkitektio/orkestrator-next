@@ -29,7 +29,7 @@ export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
 }) => {
   const {
     moveConstantToGlobals,
-    moveConstantToStream,cd 
+    moveConstantToStream,
     moveStreamToConstants,
     updateData,
   } = useEditRiver();

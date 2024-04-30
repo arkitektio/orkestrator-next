@@ -1,0 +1,20 @@
+fragment DetailDependency on Dependency {
+  id
+  reference
+  initialHash
+  node {
+    id
+    name
+    hash
+  }
+}
+
+fragment ListDependency on Dependency {
+  id
+  initialHash
+  node {
+    id
+    name
+    hash
+  }
+}

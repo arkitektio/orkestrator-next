@@ -9,34 +9,34 @@ export const manifest: Manifest = {
   requirements: {
     lok: {
       key: "lok",
-      service: "live.arkitekt.lok"
-    },  
+      service: "live.arkitekt.lok",
+    },
     rekuest: {
       key: "rekuest",
       service: "live.arkitekt.rekuest",
-      optional: false
-    },  
+      optional: false,
+    },
     mikro: {
       key: "mikro",
       service: "live.arkitekt.mikro",
-      optional: true
+      optional: false,
     },
     fluss: {
       key: "fluss",
       service: "live.arkitekt.fluss",
-      optional: true
+      optional: false,
     },
     kabinet: {
       key: "kabinet",
       service: "live.arkitekt.kabinet",
-      optional: true
+      optional: true,
     },
     datalayer: {
       key: "datalayer",
       service: "live.arkitekt.datalayer",
-      optional: true
+      optional: false,
     },
-  }
+  },
 };
 
 // The type of the smart model, used by the smart model and react-dnd

@@ -6,6 +6,9 @@ import Node from "./pages/Node";
 import Reservation from "./pages/Reservation";
 import Home from "./pages/Home";
 import Standardpane from "./panes/StandardPane";
+import Template from "./pages/Template";
+import Dependency from "./pages/Dependency";
+import Provision from "./pages/Provision";
 
 interface Props {}
 /**
@@ -16,11 +19,14 @@ interface Props {}
 const Module: React.FC<Props> = (props) => {
   return (
     <RekuestGuard fallback={<>Loading</>} key={"rekuest"}>
-      <ModuleLayout pane={<Standardpane/>}>
+      <ModuleLayout pane={<Standardpane />}>
         <Routes>
           <Route index element={<Home />} />
           <Route path="nodes/:id" element={<Node />} />
           <Route path="reservations/:id" element={<Reservation />} />
+          <Route path="dependencies/:id" element={<Dependency />} />
+          <Route path="templates/:id" element={<Template />} />
+          <Route path="provisions/:id" element={<Provision />} />
         </Routes>
       </ModuleLayout>
     </RekuestGuard>

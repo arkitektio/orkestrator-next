@@ -1,85 +1,90 @@
-import { DocumentNode, OperationVariables, QueryHookOptions, QueryResult, TypedDocumentNode, useQuery } from "@apollo/client"
-import React from "react"
-import { useParams } from "react-router-dom"
-import { ErrorPage } from "../components/fallbacks/ErrorPage"
-import { DebugPage } from "../components/fallbacks/DebugPage"
-import { useDebug } from "@/providers/debug/DebugContext"
+import {
+  ApolloQueryResult,
+  DocumentNode,
+  OperationVariables,
+  QueryHookOptions,
+  QueryResult,
+  TypedDocumentNode,
+  useQuery,
+} from "@apollo/client";
+import React from "react";
+import { useParams } from "react-router-dom";
+import { ErrorPage } from "../components/fallbacks/ErrorPage";
+import { DebugPage } from "../components/fallbacks/DebugPage";
+import { useDebug } from "@/providers/debug/DebugContext";
 
-
-
-
-export type DetailVariables  = {
-    id: string
-} & OperationVariables
-
-
+export type DetailVariables = {
+  id: string;
+} & OperationVariables;
 
 export type DetailRoute = {
-    fallback: React.ReactNode
-}
+  fallback: React.ReactNode;
+};
 
 export type DetailRouteProps<T> = {
-    data: QueryResult<T, DetailVariables>
-}
+  data: QueryResult<T, DetailVariables>;
+};
 
-
-
-export type HookFunction<T> = (options: QueryHookOptions<T, DetailVariables>) => QueryResult<T, DetailVariables>
-
+export type HookFunction<T, Y extends DetailVariables> = (
+  options: QueryHookOptions<T, Y>,
+) => QueryResult<T, Y>;
 
 export const DetailRoute: React.FC<{}> = () => {
-  
-
-
   return (
     <div>
       <h1>DetailRoute</h1>
     </div>
   );
-}
+};
 
+export const PassedDownComponent = <T extends DocumentNode>(props: {
+  component: React.FC<{ data: T }>;
+  document: T;
+  modifier: (query: any) => any;
+  variables: { id: string };
+}) => {
+  const { data, errors } = props.modifier(useQuery(props.document))({
+    variables: props.variables,
+  });
 
-export const PassedDownComponent = <T extends DocumentNode>(props: {component: React.FC<{data: T}>, document: T, modifier: (query: any) => any,   variables: {id: string}}) => {
+  return errors ? <>{errors}</> : props.component({ data: data });
+};
 
-    const { data, errors} = props.modifier(useQuery(props.document))({
-        variables: props.variables,
-      });
+export const asDetailQueryRoute = <T extends any, Y extends DetailVariables>(
+  hook: HookFunction<T, Y>,
+  Component: React.FC<{
+    data: T;
+    refetch: (
+      variables?: Partial<Y> | undefined,
+    ) => Promise<ApolloQueryResult<T>>;
+  }>,
+  fallback?: React.ReactNode | undefined,
+) => {
+  return () => {
+    const { debug } = useDebug();
+    const { id } = useParams<{ id: string }>();
+    if (!id) {
+      if (fallback) {
+        return fallback;
+      } else {
+        return <> This route is illconfigured</>;
+      }
+    }
 
-    return errors ? <>{errors}</> : props.component({data: data});
-}
+    const { data, error, refetch } = hook({ variables: { id: id } });
 
+    if (error) {
+      return <ErrorPage error={error} />;
+    }
 
-export const asDetailQueryRoute = <T extends any>(hook: HookFunction<T>, Component:  React.FC<{data: T}>,  fallback?: React.ReactNode | undefined) => {
+    if (data) {
+      if (debug) {
+        return <DebugPage data={data} />;
+      }
 
+      return <Component data={data} refetch={refetch} />;
+    }
 
-    return () => {
-
-        const {debug} = useDebug();
-        const { id } = useParams<{id: string}>();
-        if (!id) {
-            if (fallback) {
-                return fallback;
-            } else {
-                return <> This route is illconfigured</>
-            }
-        }
-
-        const {data, error} = hook({variables: {id: id}});
-
-        if (error) {
-            return <ErrorPage error={error}/>
-        }
-        
-        if (data) {
-            if (debug) {
-                return <DebugPage data={data} />;
-            }
-
-            
-            return <Component data={data}/>;
-        }
-
-        return <> Loadding ...</>
-
-    };
-}
+    return <> Loadding ...</>;
+  };
+};

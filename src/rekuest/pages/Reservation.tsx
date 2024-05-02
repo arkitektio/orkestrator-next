@@ -35,6 +35,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
 import ProvisionCard from "../components/cards/ProvisionCard";
+import { DependencyGraphFlow } from "../components/dependencyGraph/DependencyGraph";
 
 export const portHash = (port: Port[]) => {
   return port
@@ -176,11 +177,11 @@ function Page() {
 
 export default asDetailQueryRoute(
   withRekuest(useDetailReservationQuery),
-  ({ data }) => {
+  ({ data, refetch }) => {
     return (
       <ModelPageLayout
         identifier="@rekuest/reservation"
-        title={data.reservation.reference}
+        title={data?.reservation?.title || data?.reservation.node?.name}
         object={data.reservation.id}
       >
         <DetailPane>
@@ -192,19 +193,22 @@ export default asDetailQueryRoute(
                 </Button>
               }
             >
-              {data?.reservation?.reference}
+              {data?.reservation?.title || data?.reservation.node?.name}
             </DetailPaneTitle>
             <DetailPaneDescription>
               {data?.reservation?.node?.description}
 
-              <ListRender
-                array={data?.reservation?.provisions}
-                title="Provisions"
-              >
-                {(item, key) => <ProvisionCard item={item} key={key} />}
-              </ListRender>
+              {JSON.stringify(data?.reservation?.binds)}
             </DetailPaneDescription>
           </DetailPaneHeader>
+          {data?.reservation?.dependencyGraph && (
+            <>
+              <DependencyGraphFlow
+                graph={data?.reservation?.dependencyGraph}
+                refetch={refetch}
+              />
+            </>
+          )}
         </DetailPane>
       </ModelPageLayout>
     );

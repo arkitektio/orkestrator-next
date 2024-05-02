@@ -30,6 +30,7 @@ import { useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
 import TemplateCard from "../components/cards/TemplateCard";
 import ReservationCard from "../components/cards/ReservationCard";
+import { DependencyGraphFlow } from "../components/dependencyGraph/DependencyGraph";
 
 export const ReserveForm = (props: { node: string }) => {
   const { reserve } = usePostman();
@@ -58,7 +59,7 @@ export const ReserveForm = (props: { node: string }) => {
 
 export default asDetailQueryRoute(
   withRekuest(useDetailNodeQuery),
-  ({ data }) => {
+  ({ data, refetch }) => {
     const copyHashToClipboard = useCallback(() => {
       navigator.clipboard.writeText(data?.node?.hash || "");
     }, [data?.node?.hash]);
@@ -110,12 +111,18 @@ export default asDetailQueryRoute(
               </div>
             </DetailPaneDescription>
             <TestConstants ports={data?.node?.args || []} overwrites={{}} />
-            <ListRender array={data?.node?.templates} title="Implementations">
-              {(template, key) => <TemplateCard item={template} key={key} />}
-            </ListRender>
+
             <ListRender array={data?.node?.reservations} title="Reservations">
               {(item, key) => <ReservationCard item={item} key={key} />}
             </ListRender>
+            {data?.node?.dependencyGraph && (
+              <>
+                <DependencyGraphFlow
+                  graph={data?.node?.dependencyGraph}
+                  refetch={refetch}
+                />
+              </>
+            )}
           </DetailPaneHeader>
 
           <Dialog>

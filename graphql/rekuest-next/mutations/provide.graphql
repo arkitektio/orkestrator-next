@@ -1,0 +1,20 @@
+mutation Provide($template: ID!) {
+  provide(input: { template: $template }) {
+    ...DetailProvision
+  }
+}
+
+mutation Unprovide($provision: ID!) {
+  unprovide(input: { provision: $provision })
+}
+mutation Link($provision: ID!, $reservation: ID!) {
+  link(input: { provision: $provision, reservation: $reservation }) {
+    ...DetailProvision
+  }
+}
+
+mutation Unlink($provision: ID!, $reservation: ID!) {
+  unlink(input: { provision: $provision, reservation: $reservation }) {
+    ...DetailProvision
+  }
+}

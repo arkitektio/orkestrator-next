@@ -53,4 +53,7 @@ fragment DetailReservation on Reservation {
     description
     ...Ports
   }
+  dependencyGraph {
+    ...DependencyGraph
+  }
 }

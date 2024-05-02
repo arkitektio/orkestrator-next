@@ -73,6 +73,7 @@
     "clsx": "^2.0.0",
     "cmdk": "^1.0.0",
     "colormap": "^2.3.2",
+    "dagre": "^0.8.5",
     "date-fns": "^3.6.0",
     "debounce": "^1.2.1",
     "embla-carousel-react": "^8.0.0",

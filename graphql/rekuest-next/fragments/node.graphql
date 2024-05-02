@@ -32,4 +32,7 @@ fragment DetailNode on Node {
   reservations {
     ...ListReservation
   }
+  dependencyGraph {
+    ...DependencyGraph
+  }
 }

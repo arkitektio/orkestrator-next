@@ -9,6 +9,7 @@ import {
 import { NodeResizer, NodeResizeControl } from "reactflow";
 import { cn } from "@/lib/utils";
 import { useEditNodeErrors, useEditRiver } from "../edit/context";
+import { motion, AnimatePresence } from "framer-motion";
 
 type NodeProps = {
   children: React.ReactNode;
@@ -46,8 +47,12 @@ export const NodeShowLayout: React.FC<NodeProps> = ({
     <>
       <ContextMenu>
         <ContextMenuTrigger>
-          <Card
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             className={cn(
+              "rounded-xl border bg-card text-card-foreground shadow dark:border-gray-700 border-gray-400",
               "custom-drag-handle h-full z-10 group shadow relative border bg-sidebar ",
               className,
             )}
@@ -63,7 +68,7 @@ export const NodeShowLayout: React.FC<NodeProps> = ({
                 ))}
               </div>
             )}
-          </Card>
+          </motion.div>
         </ContextMenuTrigger>
         <ContextMenuContent>{contextMenu}</ContextMenuContent>
       </ContextMenu>

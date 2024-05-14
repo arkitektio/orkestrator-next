@@ -8,6 +8,7 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { FlowEdge, FlowNode, NodeTypes } from "../types";
+import { AnimatePresence } from "framer-motion";
 
 type Props = {
   edgeTypes: EdgeTypes;
@@ -39,8 +40,10 @@ export const Graph: React.FC<Props> = ({
       attributionPosition="top-right"
       {...props}
     >
-      <Background />
-      {children}
+      <AnimatePresence>
+        <Background />
+        {children}
+      </AnimatePresence>
     </ReactFlow>
   );
 };

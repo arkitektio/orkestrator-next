@@ -3,13 +3,17 @@ import {
   BindsInput,
   ChildPortFragment,
   GlobalArgInput,
+  GraphNodeFragment,
   GraphNodeKind,
   PortFragment,
   PortKind,
   PortScope,
   ReactiveNodeFragment,
   ReactiveTemplateFragment,
-  StreamItemInput
+  RekuestFilterNodeFragment,
+  RekuestMapNodeFragment,
+  RekuestNodeFragment,
+  StreamItemInput,
 } from "@/reaktion/api/graphql";
 import { convertPortToInput } from "@/rekuest/utils";
 import { portToDefaults } from "@jhnnsrs/rekuest-next";
@@ -47,8 +51,7 @@ export function keyInObject(
 }
 
 export const nodes_to_flownodes = (nodes: NodeFragment[]): FlowNode[] => {
-
-  console.log("nodes_to_flownodes", nodes)
+  console.log("nodes_to_flownodes", nodes);
 
   const nodes_ =
     nodes
@@ -104,7 +107,9 @@ export const edges_to_flowedges = (edges: EdgeFragement[]): FlowEdge[] => {
   return flowedges;
 };
 
-export const flowNodeToInput = (node: FlowNode): NodeInput => {
+export const flowNodeToInput = (
+  node: FlowNode<GraphNodeFragment & { binds?: BindsFragment }>,
+): NodeInput => {
   const {
     id,
     type,
@@ -181,8 +186,6 @@ export const globals_to_inputglobals = (
 ): GlobalInput[] => {
   return globals.map(globalToInput);
 };
-
-
 
 export const reactiveTemplateToFlowNode = (
   node: ReactiveTemplateFragment,

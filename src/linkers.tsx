@@ -12,7 +12,7 @@ import { buildModuleLink, buildSmart } from "@/providers/smart/builder";
 
 export const RekuestAssignation = buildSmart(
   "@rekuest-next/assignation",
-  "rekuest/assignation",
+  "rekuest/assignations",
 );
 
 export const RekuestNode = buildSmart("@rekuest-next/node", "rekuest/nodes");

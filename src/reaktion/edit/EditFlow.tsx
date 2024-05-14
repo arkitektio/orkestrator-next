@@ -14,11 +14,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { SMART_MODEL_DROP_TYPE } from "@/constants";
 import { cn } from "@/lib/utils";
+import { useSmartDrop } from "@/providers/smart/hooks";
 import {
-  ArkitektGraphNode,
-  ArkitektGraphNodeFragment,
   BaseGraphNodeFragment,
   FlowFragment,
   GlobalArgFragment,
@@ -28,9 +26,9 @@ import {
   ReactiveTemplateDocument,
   ReactiveTemplateQuery,
 } from "@/reaktion/api/graphql";
-import { DropContextual } from "@/reaktion/edit/components/DropContextual";
 import { ClickContextual } from "@/reaktion/edit/components/ClickContextual";
 import { ConnectContextual } from "@/reaktion/edit/components/ConnectContextual";
+import { DropContextual } from "@/reaktion/edit/components/DropContextual";
 import { BoundNodesBox } from "@/reaktion/edit/components/boxes/BoundNodesBox";
 import { ErrorBox } from "@/reaktion/edit/components/boxes/ErrorBox";
 import {
@@ -53,7 +51,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useDrop } from "react-dnd";
 import {
   Connection,
   Controls,
@@ -61,7 +58,6 @@ import {
   NodeChange,
   OnConnectEnd,
   OnConnectStartParams,
-  Position,
   ReactFlowInstance,
   applyEdgeChanges,
   applyNodeChanges,
@@ -69,20 +65,16 @@ import {
 import useUndoable, { MutationBehavior } from "use-undoable";
 import { Constants } from "../base/Constants";
 import { Graph } from "../base/Graph";
+import { rekuestNodeToMatchingNode } from "../plugins/rekuest";
 import {
-  arkitektNodeToFlowNode,
-  arkitektNodeToMatchingFlowNode,
-  predicateNodeToFlowNode,
-} from "../plugins/rekuest";
-import {
+  ClickContextualParams,
+  ConnectContextualParams,
+  DropContextualParams,
   EdgeTypes,
   FlowEdge,
   FlowNode,
   NodeData,
   NodeTypes,
-  DropContextualParams,
-  ClickContextualParams,
-  ConnectContextualParams,
   RelativePosition,
 } from "../types";
 import {
@@ -102,19 +94,19 @@ import {
 } from "../validation/integrate";
 import { ValidationResult } from "../validation/types";
 import { validateState } from "../validation/validate";
-import { RemainingErrorRender, SolvedErrorRender } from "./ErrorRender";
 import { EditRiverContext } from "./context";
 import { LabeledShowEdge } from "./edges/LabeledShowEdge";
-import { ArkitektFilterNodeWidget } from "./nodes/ArkitektFilterWidget";
-import { ArkitektTrackNodeWidget } from "./nodes/ArkitektWidget";
 import { ReactiveTrackNodeWidget } from "./nodes/ReactiveWidget";
+import { RekuestFilterWidget } from "./nodes/RekuestFilterWidget";
+import { RekuestMapWidget } from "./nodes/RekuestMapWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
-import { useSmartDrop } from "@/providers/smart/hooks";
+import { AnimatePresence } from "framer-motion";
+import { toast } from "@/components/ui/use-toast";
 
 const nodeTypes: NodeTypes = {
-  ArkitektGraphNode: ArkitektTrackNodeWidget,
-  ArkitektFilterGraphNode: ArkitektFilterNodeWidget,
+  RekuestFilterNode: RekuestFilterWidget,
+  RekuestMapNode: RekuestMapWidget,
   ReactiveNode: ReactiveTrackNodeWidget,
   ArgNode: ArgTrackNodeWidget,
   ReturnNode: ReturnTrackNodeWidget,
@@ -659,7 +651,9 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
   const save = () => {
     const validated = state;
 
-    if (validated.valid) {
+    console.log("Validated", validated);
+
+    if (validated.remainingErrors.length == 0) {
       const graph: GraphInput = {
         nodes: validated.nodes.map((n) => flowNodeToInput(n)),
         edges: validated.edges.map((e) => flowEdgeToInput(e)),
@@ -668,6 +662,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       console.log("Saving", graph);
       onSave && onSave(graph);
     } else {
+      toast("error", "There are still errors in the graph");
       console.log("not valid");
     }
   };
@@ -1132,7 +1127,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                 .then(async (event) => {
                   console.log(event);
                   if (event.data?.node) {
-                    let flownode = arkitektNodeToMatchingFlowNode(
+                    let flownode = rekuestNodeToMatchingNode(
                       event.data?.node,
                       position,
                     );
@@ -1194,57 +1189,60 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         data-disableselect
       >
         <div ref={dropref} className="flex flex-grow h-full w-full relative">
-          {state.remainingErrors.length == 0 && (
-            <div className="absolute bottom-0 right-0  mr-3 mb-5 z-50">
-              <Button onClick={() => save()}> Save </Button>
-            </div>
-          )}
-
-          {globals.length > 0 && (
-            <div className="absolute  top-0 left-0  ml-3 mt-5 z-50">
-              <Card className="max-w-md">
-                <CardHeader>
-                  <CardDescription>Globals </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-xs text-muted-foreground ">
-                    {" "}
-                    These are global variables that will be constants to the
-                    whole workflow and are mapping to the following ports:{" "}
-                  </CardDescription>
-                  <Constants
-                    ports={globals.map((x) => ({ ...x.port, key: x.key }))}
-                    overwrites={{}}
-                    onToArg={(e) => removeGlobal(e.key)}
-                    onSubmit={() =>
-                      console.log("setting values here has no impact")
-                    }
-                  />
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          <div className="absolute top-0 right-0  mr-3 mt-5 z-50 max-w-xs gap-1 flex flex-col ">
-            {state.remainingErrors.length != 0 && (
-              <ErrorBox errors={state.remainingErrors} />
+          <AnimatePresence>
+            {state.remainingErrors.length == 0 && (
+              <div className="absolute bottom-0 right-0  mr-3 mb-5 z-50">
+                <Button onClick={() => save()}> Save </Button>
+              </div>
             )}
-            {boundNodes.length > 0 && <BoundNodesBox nodes={boundNodes} />}
-          </div>
-          {isOver && (
-            <div className="absolute w-full h-full bg-white opacity-10 z-10">
-              {" "}
+
+            {globals.length > 0 && (
+              <div className="absolute  top-0 left-0  ml-3 mt-5 z-50">
+                <Card className="max-w-md">
+                  <CardHeader>
+                    <CardDescription>Globals </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="text-xs text-muted-foreground ">
+                      {" "}
+                      These are global variables that will be constants to the
+                      whole workflow and are mapping to the following ports:{" "}
+                    </CardDescription>
+                    <Constants
+                      ports={globals.map((x) => ({ ...x.port, key: x.key }))}
+                      overwrites={{}}
+                      onToArg={(e) => removeGlobal(e.key)}
+                      onSubmit={() =>
+                        console.log("setting values here has no impact")
+                      }
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            <div className="absolute top-0 right-0  mr-3 mt-5 z-50 max-w-xs gap-1 flex flex-col ">
+              {state.remainingErrors.length != 0 && (
+                <ErrorBox errors={state.remainingErrors} />
+              )}
+              {boundNodes.length > 0 && <BoundNodesBox nodes={boundNodes} />}
             </div>
-          )}
-          {showContextual && connectingStart && (
-            <DropContextual params={showContextual} />
-          )}
-          {showClickContextual && (
-            <ClickContextual params={showClickContextual} />
-          )}
-          {showConnectContextual && (
-            <ConnectContextual params={showConnectContextual} />
-          )}
+            {isOver && (
+              <div className="absolute w-full h-full bg-white opacity-10 z-10">
+                {" "}
+              </div>
+            )}
+
+            {showContextual && connectingStart && (
+              <DropContextual params={showContextual} />
+            )}
+            {showClickContextual && (
+              <ClickContextual params={showClickContextual} />
+            )}
+            {showConnectContextual && (
+              <ConnectContextual params={showConnectContextual} />
+            )}
+          </AnimatePresence>
           <Graph
             nodes={state.nodes}
             edges={state.edges}

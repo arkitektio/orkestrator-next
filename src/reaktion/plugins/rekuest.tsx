@@ -1,6 +1,6 @@
 import {
-  ArkitektFilterGraphNodeFragment,
-  ArkitektGraphNodeFragment,
+  RekuestFilterNodeFragment,
+  RekuestMapNodeFragment,
   GraphNodeFragment,
   GraphNodeKind,
   MapStrategy,
@@ -14,16 +14,16 @@ import {
 } from "@/rekuest/api/graphql";
 import { v4 as uuidv4 } from "uuid";
 
-export const arkitektNodeToFlowNode = (
+export const rekuestNodeToMapNode = (
   node: GraphNodeNodeFragment,
   position: { x: number; y: number },
-): FlowNode<ArkitektGraphNodeFragment> => {
+): FlowNode<RekuestMapNodeFragment> => {
   let nodeId = "ark-" + uuidv4();
 
   console.log(nodeId);
-  let node_: FlowNode<ArkitektGraphNodeFragment> = {
+  let node_: FlowNode<RekuestMapNodeFragment> = {
     id: nodeId,
-    type: "ArkitektGraphNode",
+    type: "RekuestMapNode",
     dragHandle: ".custom-drag-handle",
     data: {
       ins: [
@@ -42,7 +42,7 @@ export const arkitektNodeToFlowNode = (
       retries: 3,
       retryDelay: 2000,
       hash: node.hash,
-      kind: GraphNodeKind.Arkitekt,
+      kind: GraphNodeKind.Rekuest,
       globalsMap: {},
       binds: { templates: [] },
       constantsMap: portToDefaults(node.args, {}),
@@ -54,27 +54,27 @@ export const arkitektNodeToFlowNode = (
   return node_;
 };
 
-export const arkitektNodeToMatchingFlowNode = (
+export const rekuestNodeToMatchingNode = (
   node: ConstantNodeQuery["node"],
   position: { x: number; y: number },
 ) => {
   if (node.protocols.find((p) => p.name == "predicate")) {
-    return predicateNodeToFlowNode(node, position);
+    return rekuestNodeToFilterNode(node, position);
   } else {
-    return arkitektNodeToFlowNode(node, position);
+    return rekuestNodeToMapNode(node, position);
   }
 };
 
-export const predicateNodeToFlowNode = (
+export const rekuestNodeToFilterNode = (
   node: GraphNodeNodeFragment,
   position: { x: number; y: number },
-): FlowNode<ArkitektFilterGraphNodeFragment> => {
+): FlowNode<RekuestFilterNodeFragment> => {
   let nodeId = "arkfilter-" + uuidv4();
 
   console.log(nodeId);
-  let node_: FlowNode<ArkitektFilterGraphNodeFragment> = {
+  let node_: FlowNode<RekuestFilterNodeFragment> = {
     id: nodeId,
-    type: "ArkitektFilterGraphNode",
+    type: "RekuestFilterNode",
     dragHandle: ".custom-drag-handle",
     data: {
       ins: [
@@ -96,7 +96,7 @@ export const predicateNodeToFlowNode = (
       retries: 3,
       retryDelay: 2000,
       hash: node.hash,
-      kind: GraphNodeKind.Arkitekt,
+      kind: GraphNodeKind.RekuestFilter,
       globalsMap: {},
       binds: { templates: [] },
       constantsMap: portToDefaults(node.args, {}),

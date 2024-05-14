@@ -16,6 +16,11 @@ fragment PostmanReservation on Reservation {
   binds {
     ...Binds
   }
+  events {
+    ...ReservationEvent
+  }
+  viable
+  happy
 }
 
 fragment ReservationEvent on ReservationEvent {
@@ -42,9 +47,6 @@ fragment ListReservation on Reservation {
 
 fragment DetailReservation on Reservation {
   ...PostmanReservation
-  events {
-    ...ReservationEvent
-  }
   provisions {
     ...ListProvision
   }

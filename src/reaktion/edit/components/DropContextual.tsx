@@ -15,7 +15,7 @@ import {
   PortKind,
   ReactiveImplementation,
 } from "@/reaktion/api/graphql";
-import { arkitektNodeToMatchingFlowNode } from "@/reaktion/plugins/rekuest";
+import { rekuestNodeToMatchingNode } from "@/reaktion/plugins/rekuest";
 import {
   AllNodesQueryVariables,
   ConstantNodeDocument,
@@ -44,6 +44,7 @@ import {
   streamToReadable,
 } from "@/reaktion/utils";
 import clsx from "clsx";
+import { ContextualContainer } from "./ContextualContainer";
 
 export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   const form = useForm({
@@ -286,7 +287,7 @@ export const SourceDropContextual = (props: {
         .then(async (event) => {
           console.log(event);
           if (event.data?.node) {
-            let flownode = arkitektNodeToMatchingFlowNode(event.data?.node, {
+            let flownode = rekuestNodeToMatchingNode(event.data?.node, {
               x: 0,
               y: 0,
             });
@@ -306,13 +307,12 @@ export const SourceDropContextual = (props: {
     : [];
 
   return (
-    <Card
-      className="absolute translate-x-[-50%] z-50 p-2 max-w-[200px] text-xs bg-sidebar flex flex-col opacity-70 data-[found=true]:opacity-100 shadow-xl shadow-xl dark:shadow-xl dark:shadow-xl"
+    <ContextualContainer
+      active={data?.nodes?.length != 0}
       style={{
         left: props.params.position.x,
         top: props.params.position.y,
       }}
-      data-found={data?.nodes?.length != 0}
     >
       <div className="text-xs text-muted-foreground inline relative mx-auto mb-2  ">
         Contextual Nodes
@@ -368,7 +368,7 @@ export const SourceDropContextual = (props: {
           </Tooltip>
         ))}
       </div>
-    </Card>
+    </ContextualContainer>
   );
 };
 
@@ -377,15 +377,15 @@ export const TargetDropContextual = (props: {
   ports: FlussPortFragment[];
 }) => {
   return (
-    <Card
-      className="absolute translate-x-[-50%] z-50"
+    <ContextualContainer
+      active={true}
       style={{
         left: props.params.position.x,
         top: props.params.position.y,
       }}
     >
       Target Action Right Here
-    </Card>
+    </ContextualContainer>
   );
 };
 

@@ -67,9 +67,7 @@ export const SmartModel = ({
           };
         }
 
-
         let item = monitor.getItem() as Structure[] | null;
-        console.log(item);
         return {
           isOver: !!monitor.isOver(),
           overItems: [],
@@ -84,21 +82,18 @@ export const SmartModel = ({
       type: SMART_MODEL_DROP_TYPE,
       item: [self],
       collect: (monitor) => {
-        console.log("Draging")
-        
         return {
-        isDragging: monitor.isDragging(),
-      }},
+          isDragging: monitor.isDragging(),
+        };
+      },
     }),
     [self],
   );
 
-  const {
-    isSelected,
-  } = useMySelection({ identifier: props.identifier, id: props.object });
-
-
-  
+  const { isSelected } = useMySelection({
+    identifier: props.identifier,
+    id: props.object,
+  });
 
   const dragClassNameFunc = props.dragClassName || (({}) => "");
 
@@ -158,7 +153,10 @@ export const SmartModel = ({
             e.dataTransfer.setData("text", JSON.stringify(self));
           }}
         >
-          {isSelected && <Card className="border-2 absolute border-solid border-primary" />}{props.children}
+          {isSelected && (
+            <Card className="border-2 absolute border-solid border-primary" />
+          )}
+          {props.children}
           {isDragging && <Button>hallo</Button>}
         </PopoverAnchor>
       </Popover>

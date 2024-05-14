@@ -1,10 +1,11 @@
 query Assignations($instanceId: InstanceId!) {
-  assignations(
-    filters: {
-      status: [DONE, CRITICAL, CANCELLED]
-      reservation: { waiter: { instanceId: $instanceId } }
-    }
-  ) {
+  assignations(instanceId: $instanceId) {
     ...PostmanAssignation
+  }
+}
+
+query DetailAssignation($id: ID!) {
+  assignation(id: $id) {
+    ...DetailAssignation
   }
 }

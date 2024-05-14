@@ -15,6 +15,7 @@ fragment TemplateNode on TemplateNode {
   reservationId
   linked
   status
+  active
 }
 
 fragment InvalidNode on InvalidNode {

@@ -2,7 +2,7 @@ import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { RekuestNode, RekuestTemplate } from "@/linkers";
+import { RekuestNode, RekuestReservation, RekuestTemplate } from "@/linkers";
 import { useAppQuery } from "@/lok-next/api/graphql";
 import {
   DependencyEdge,
@@ -14,6 +14,8 @@ import {
   ProvisionStatus,
   ReservationStatus,
   TemplateNodeFragment,
+  useDetailProvisionQuery,
+  useDetailReservationQuery,
   useLinkMutation,
   useProvideMutation,
   useUnlinkMutation,
@@ -166,8 +168,8 @@ export const ImplementationEdgeWidget: React.FC<
   );
 };
 
-const nodeWidth = 200;
-const nodeHeight = 100;
+const nodeWidth = 400;
+const nodeHeight = 150;
 
 const getLayoutedElements = (
   nodes: Node[],
@@ -228,6 +230,55 @@ const buildDagraph = (graph: DependencyGraphFragment, direction = "LR") => {
   return getLayoutedElements(nodes, edges, direction);
 };
 
+export const ReservationStatusWidget = (props: { id: string }) => {
+  const { data } = withRekuest(useDetailReservationQuery)({
+    variables: {
+      id: props.id,
+    },
+  });
+
+  return (
+    <>
+      {data?.reservation.viable ? "Viable" : "Not viable"}
+      {data?.reservation.viable ? "Viable" : "Not viable"}
+    </>
+  );
+};
+
+export const ReservationNodeWidget = (
+  props: NodeProps<NodeNodeFragment & { reservationId: string }>,
+) => {
+  const { data } = withRekuest(useDetailReservationQuery)({
+    variables: {
+      id: props.data.reservationId,
+    },
+  });
+
+  return (
+    <div
+      style={{ width: nodeWidth, height: nodeHeight }}
+      className={cn(
+        "h-full w-full flex justify-center items-center border border-gray-300 rounded-md relative group",
+        data?.reservation.viable ? "border-green-100 " : "border-red-600",
+      )}
+    >
+      <CardHeader className="inset-0 flex flex-col justify-between text-center ">
+        <RekuestReservation.DetailLink object={props.data.reservationId}>
+          <div className="text-3xl">{data?.reservation.title}</div>
+        </RekuestReservation.DetailLink>
+      </CardHeader>
+
+      {(!data?.reservation.viable || !data.reservation.happy) && (
+        <div className="absolute flex flex-row top-0 left-[50%] translate-x-[-50%] translate-y-[-50%]  bg-black z-10 px-3 py-1 rounded rounded-md border-red-600 border text-xs max-w-[90%]">
+          {!data?.reservation.happy &&
+            "Reservation is not happy and could use more links"}
+          {!data?.reservation.viable && "Reservation is not viable"}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const NodeNodeWidget = (props: NodeProps<NodeNodeFragment>) => {
   const direction = useOrientation();
   return (
@@ -235,30 +286,34 @@ export const NodeNodeWidget = (props: NodeProps<NodeNodeFragment>) => {
       <Handle
         type="target"
         position={direction === "LR" ? Position.Left : Position.Top}
-        style={{ background: "#555" }}
+        style={{ opacity: 0 }}
       />
-      <div
-        style={{ width: nodeWidth, height: nodeHeight }}
-        className={cn(
-          "h-full w-full flex justify-center items-center border border-gray-300 rounded-md relative",
-          props.data.status == ReservationStatus.Inactive &&
-            "border-red-600 bg-red-600",
-          props.data.status == ReservationStatus.Happy &&
-            "border-greeb-600 bg-green-600",
-        )}
-      >
-        <RekuestNode.DetailLink object={props.data.nodeId}>
-          <CardHeader className="h-full flex flex-col justify-between my-auto mx-auto text-center">
-            <div className="text-xs">{props.data.name}</div>
+      {props.data.reservationId ? (
+        <ReservationNodeWidget {...props} />
+      ) : (
+        <div
+          style={{ width: nodeWidth, height: nodeHeight }}
+          className={cn(
+            "h-full w-full flex justify-center items-center border border-gray-300 rounded-md relative",
+            props.data.status == ReservationStatus.Inactive &&
+              "border-red-600 bg-red-600",
+            props.data.status == ReservationStatus.Happy &&
+              "border-greeb-600 bg-green-600",
+          )}
+        >
+          <RekuestNode.DetailLink object={props.data.nodeId}>
+            <CardHeader className="h-full flex flex-col justify-between my-auto mx-auto text-center">
+              <div className="text-xs">{props.data.name}</div>
 
-            {props.data.status}
-          </CardHeader>
-        </RekuestNode.DetailLink>
-      </div>
+              {props.data.status}
+            </CardHeader>
+          </RekuestNode.DetailLink>
+        </div>
+      )}
       <Handle
         type="source"
         position={direction === "LR" ? Position.Right : Position.Bottom}
-        style={{ background: "#555" }}
+        style={{ opacity: 0 }}
       />
     </>
   );
@@ -267,22 +322,14 @@ export const NodeNodeWidget = (props: NodeProps<NodeNodeFragment>) => {
 export const InvalidNodeWidget = (props: NodeProps<InvalidNodeFragment>) => {
   return (
     <>
-      <Handle
-        type="target"
-        position={Position.Left}
-        style={{ background: "#555" }}
-      />
+      <Handle type="target" position={Position.Left} style={{ opacity: 0 }} />
       <Card
         style={{ width: nodeWidth, height: nodeHeight }}
         className="h-full w-full flex justify-center items-center"
       >
         <CardHeader>{props.data.initialHash}</CardHeader>
       </Card>
-      <Handle
-        type="source"
-        position={Position.Right}
-        style={{ background: "#555" }}
-      />
+      <Handle type="source" position={Position.Right} style={{ opacity: 0 }} />
     </>
   );
 };
@@ -350,14 +397,20 @@ export const LinkButtons = (props: {
 };
 
 export const ProvideButtons = (props: {
-  templateId: string;
-  provisionId?: string | undefined | null;
+  active: boolean | undefined;
+  provisionId: string;
 }) => {
+  const { data } = withRekuest(useDetailProvisionQuery)({
+    variables: {
+      id: props.provisionId,
+    },
+  });
+
   const refetch = useActiveReservation();
 
   const [provide, _] = withRekuest(useProvideMutation)({
     variables: {
-      template: props.templateId,
+      provision: props.provisionId,
     },
     onCompleted: () => {
       refetch();
@@ -372,7 +425,7 @@ export const ProvideButtons = (props: {
 
   return (
     <>
-      {!props.provisionId ? (
+      {!props.active ? (
         <Button variant={"outline"} size={"sm"} onClick={() => provide()}>
           Provide
         </Button>
@@ -392,51 +445,131 @@ export const ProvideButtons = (props: {
   );
 };
 
+export const NonProvisionedNodeWidget = (
+  props: NodeProps<TemplateNodeFragment & { provisionId: undefined }>,
+) => {
+  return (
+    <div
+      style={{ width: nodeWidth, height: nodeHeight }}
+      className={cn(
+        "h-full w-full flex justify-center items-center border border-gray-300 rounded-md relative group",
+        !props.data.linked && "opacity-50",
+        props.data.active && "border-green-100 bg-green-200",
+      )}
+    >
+      <CardHeader className="h-full flex flex-col justify-between text-center ">
+        <RekuestTemplate.DetailLink object={props.data.templateId}>
+          <div className="text-xl">{props.data.interface}</div>
+        </RekuestTemplate.DetailLink>
+        <LokNextGuard>
+          <AppInformation clientId={props.data.clientId} />
+        </LokNextGuard>
+      </CardHeader>
+
+      <div className="flex flex-row gap-2 absolute w-full h-full bg-black bg-opacity-80  justify-center items-center">
+        {props.data.provisionId && (
+          <ProvideButtons
+            provisionId={props.data.provisionId}
+            active={props.data.active}
+          />
+        )}
+
+        {props.data.provisionId && props.data.reservationId && (
+          <LinkButtons
+            provisionId={props.data.provisionId}
+            reservationId={props.data.reservationId}
+            linked={props.data.linked}
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+export const ProvisionedNodeWidget = (
+  props: NodeProps<TemplateNodeFragment & { provisionId: string }>,
+) => {
+  const { data } = withRekuest(useDetailProvisionQuery)({
+    variables: {
+      id: props.data.provisionId,
+    },
+  });
+
+  return (
+    <div
+      style={{ width: nodeWidth, height: nodeHeight }}
+      className={cn(
+        "h-full w-full flex justify-center items-center border border-gray-300 rounded-md relative group",
+        !props.data.linked && "opacity-50",
+        data?.provision.provided ? "border-green-100 " : "border-red-600",
+      )}
+    >
+      <CardHeader className="inset-0 flex flex-col justify-between text-center ">
+        <RekuestTemplate.DetailLink object={props.data.templateId}>
+          <div className="text-3xl">{props.data.interface}</div>
+        </RekuestTemplate.DetailLink>
+        <LokNextGuard>
+          <AppInformation clientId={props.data.clientId} />
+        </LokNextGuard>
+      </CardHeader>
+
+      {!data?.provision.dependenciesMet && (
+        <div className="absolute top-0 left-[50%] translate-x-[-50%] translate-y[-50%]">
+          Dependencies not met
+        </div>
+      )}
+
+      {!data?.provision.provided && (
+        <div className="absolute flex flex-row top-0 left-[50%] translate-x-[-50%] translate-y-[-50%]  bg-black z-10 px-3 py-1 rounded rounded-md border-red-600 border text-xs max-w-[90%]">
+          App is not providing. Please Start
+        </div>
+      )}
+
+      {!data?.provision.active && (
+        <div className="absolute flex flex-row top-0 left-[50%] translate-x-[-50%] translate-y-[-50%]  bg-black z-10 px-3 py-1 rounded rounded-md border-red-600 border text-xs max-w-[90%]">
+          You need to active the provision
+        </div>
+      )}
+
+      <div className="flex flex-row gap-2 absolute w-full h-full group-hover:flex hidden  bg-black bg-opacity-80  justify-center items-center">
+        {props.data.provisionId && (
+          <ProvideButtons
+            provisionId={props.data.provisionId}
+            active={props.data.active}
+          />
+        )}
+
+        {props.data.provisionId && props.data.reservationId && (
+          <LinkButtons
+            provisionId={props.data.provisionId}
+            reservationId={props.data.reservationId}
+            linked={props.data.linked}
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const TemplateNodeWidget = (props: NodeProps<TemplateNodeFragment>) => {
   const direction = useOrientation();
+
   return (
     <>
       <Handle
         type="target"
         position={direction === "LR" ? Position.Left : Position.Top}
-        style={{ background: "#555" }}
+        style={{ opacity: 0 }}
       />
-      <div
-        style={{ width: nodeWidth, height: nodeHeight }}
-        className={cn(
-          "h-full w-full flex justify-center items-center border border-gray-300 rounded-md relative group",
-          !props.data.linked && "opacity-50",
-          props.data.status == ProvisionStatus.Active && "border-green-100",
-        )}
-      >
-        <CardHeader className="h-full flex flex-col justify-between text-center ">
-          <RekuestTemplate.DetailLink object={props.data.templateId}>
-            <div className="text-xs">{props.data.interface}</div>
-            {props.data.status}
-          </RekuestTemplate.DetailLink>
-          <LokNextGuard>
-            <AppInformation clientId={props.data.clientId} />
-          </LokNextGuard>
-        </CardHeader>
-        <div className="flex flex-row gap-2 absolute w-full h-full bg-black bg-opacity-80 group-hover:flex hidden justify-center items-center">
-          <ProvideButtons
-            provisionId={props.data.provisionId}
-            templateId={props.data.templateId}
-          />
-
-          {props.data.provisionId && props.data.reservationId && (
-            <LinkButtons
-              provisionId={props.data.provisionId}
-              reservationId={props.data.reservationId}
-              linked={props.data.linked}
-            />
-          )}
-        </div>
-      </div>
+      {props.data.provisionId ? (
+        <ProvisionedNodeWidget {...props} />
+      ) : (
+        <NonProvisionedNodeWidget {...props} />
+      )}
       <Handle
         type="source"
         position={direction === "LR" ? Position.Right : Position.Bottom}
-        style={{ background: "#555" }}
+        style={{ opacity: 0 }}
       />
     </>
   );

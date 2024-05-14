@@ -7,6 +7,9 @@ fragment ListProvision on Provision {
     id
   }
   status
+  provided
+  active
+  dependenciesMet
 }
 
 fragment DetailProvision on Provision {
@@ -26,6 +29,9 @@ fragment DetailProvision on Provision {
       }
     }
   }
+  provided
+  active
+  dependenciesMet
   status
   causedReservations {
     id

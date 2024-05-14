@@ -1,5 +1,5 @@
-mutation Provide($template: ID!) {
-  provide(input: { template: $template }) {
+mutation Provide($provision: ID!) {
+  provide(input: { provision: $provision }) {
     ...DetailProvision
   }
 }

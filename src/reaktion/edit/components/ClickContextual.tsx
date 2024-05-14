@@ -10,7 +10,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
-import { arkitektNodeToMatchingFlowNode } from "@/reaktion/plugins/rekuest";
+import { rekuestNodeToMatchingNode } from "@/reaktion/plugins/rekuest";
 import {
   AllNodesQueryVariables,
   ConstantNodeDocument,
@@ -38,6 +38,7 @@ import {
 } from "@/reaktion/api/graphql";
 import { useState } from "react";
 import { nodeIdBuilder } from "@/reaktion/utils";
+import { ContextualContainer } from "./ContextualContainer";
 
 export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   const form = useForm({
@@ -277,7 +278,7 @@ const ClickArkitektNodes = (props: {
         .then(async (event) => {
           console.log(event);
           if (event.data?.node) {
-            let flownode = arkitektNodeToMatchingFlowNode(event.data?.node, {
+            let flownode = rekuestNodeToMatchingNode(event.data?.node, {
               x: 0,
               y: 0,
             });
@@ -316,12 +317,12 @@ export const ClickContextual = (props: { params: ClickContextualParams }) => {
   };
 
   return (
-    <Card
-      className="absolute translate-x-[-50%] z-50 p-2 max-w-[200px] text-xs bg-sidebar flex flex-col opacity-100 shadow-xl shadow-xl dark:shadow-xl dark:shadow-xl"
+    <ContextualContainer
       style={{
         left: props.params.position.x,
         top: props.params.position.y,
       }}
+      active={true}
     >
       <div className="text-xs text-muted-foreground inline relative mx-auto mb-2  mt">
         All Nodes
@@ -336,6 +337,6 @@ export const ClickContextual = (props: { params: ClickContextualParams }) => {
       <div className="flex flex-row gap-1 my-auto flex-wrap ">
         <ClickReactiveNodes search={search} params={props.params} />
       </div>
-    </Card>
+    </ContextualContainer>
   );
 };

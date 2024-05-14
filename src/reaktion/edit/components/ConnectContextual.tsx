@@ -15,7 +15,7 @@ import {
   GraphNodeKind,
   ReactiveImplementation,
 } from "@/reaktion/api/graphql";
-import { arkitektNodeToMatchingFlowNode } from "@/reaktion/plugins/rekuest";
+import { rekuestNodeToMatchingNode } from "@/reaktion/plugins/rekuest";
 import {
   ConstantNodeDocument,
   ConstantNodeQuery,
@@ -46,6 +46,7 @@ import {
 import { NodeDescription } from "@jhnnsrs/rekuest";
 import { nodeIdBuilder, streamToReadable } from "@/reaktion/utils";
 import clsx from "clsx";
+import { ContextualContainer } from "./ContextualContainer";
 
 export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   const form = useForm({
@@ -323,7 +324,7 @@ export const ConnectContextual = (props: {
         .then(async (event) => {
           console.log(event);
           if (event.data?.node) {
-            let flownode = arkitektNodeToMatchingFlowNode(event.data?.node, {
+            let flownode = rekuestNodeToMatchingNode(event.data?.node, {
               x: 0,
               y: 0,
             });
@@ -337,13 +338,12 @@ export const ConnectContextual = (props: {
     leftPorts && rightPorts ? connectReactiveNodes(leftPorts, rightPorts) : [];
 
   return (
-    <Card
-      className="absolute  z-50 p-2 max-w-[200px] text-xs bg-sidebar flex flex-col opacity-70 data-[found=true]:opacity-100 shadow-xl shadow-xl dark:shadow-xl dark:shadow-xl "
+    <ContextualContainer
       style={{
         left: props.params.position.x,
         top: props.params.position.y,
       }}
-      data-found={data?.nodes?.length != 0}
+      active={data?.nodes?.length != 0}
     >
       <div className="text-xs text-muted-foreground inline relative mx-auto mb-2  ">
         {streamToReadable(leftPorts)} to {streamToReadable(rightPorts)}
@@ -401,7 +401,7 @@ export const ConnectContextual = (props: {
           </Tooltip>
         ))}
       </div>
-    </Card>
+    </ContextualContainer>
   );
 };
 

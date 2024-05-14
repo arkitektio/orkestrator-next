@@ -1,6 +1,7 @@
 import {
   ArgNodeFragment,
-  ArkitektGraphNodeFragment,
+  RekuestFilterNodeFragment,
+  RekuestMapNodeFragment,
   BaseGraphEdgeFragment,
   BaseGraphNodeFragment,
   GlobalArg,
@@ -12,7 +13,8 @@ import {
   GraphNodeFragment,
   GraphNodeInput,
   LoggingEdgeFragment,
-  PortFragment,
+  FlussPortFragment,
+  StreamItemFragment as FlussStreamItemFragment,
   ReactiveNodeFragment,
   ReturnNodeFragment,
   VanillaEdgeFragment,
@@ -30,20 +32,23 @@ export type DataEnhancer<T, L = {}> = T & { extras?: L };
 
 export type ArgNodeData = DataEnhancer<ArgNodeFragment>;
 export type ReturnNodeData = DataEnhancer<ReturnNodeFragment>;
-export type ArkitektNodeData = DataEnhancer<ArkitektGraphNodeFragment>;
+export type RekuestMapNodeData = DataEnhancer<RekuestMapNodeFragment>;
+export type RekuestFilterNodeData = DataEnhancer<RekuestFilterNodeFragment>;
 export type ReactiveNodeData = DataEnhancer<ReactiveNodeFragment>;
 
 export type NodeData =
   | ArgNodeData
   | ReturnNodeData
-  | ArkitektNodeData
+  | RekuestMapNodeData
+  | RekuestFilterNodeData
   | ReactiveNodeData;
 
 export type ArgNodeProps = NodeProps<ArgNodeData>;
 export type ReturnNodeProps = NodeProps<ReturnNodeData>;
 export type IONodeProps = ArgNodeProps | ReturnNodeProps;
 
-export type ArkitektNodeProps = NodeProps<ArkitektNodeData>;
+export type RekuestMapNodeProps = NodeProps<RekuestMapNodeData>;
+export type RekuestFilterNodeProps = NodeProps<RekuestFilterNodeData>;
 export type ReactiveNodeProps = NodeProps<ReactiveNodeData>;
 
 export type Elements = Element[];
@@ -112,14 +117,14 @@ export type Connector<
   params: Connection;
   sourceNode: FlowNode<X>;
   targetNode: FlowNode<Y>;
-  sourcePort: PortFragment[];
-  targetPort: PortFragment[];
+  sourcePort: FlussPortFragment[];
+  targetPort: FlussPortFragment[];
   sourceTypes: string[];
   targetTypes: string[];
   nodes: FlowNode[];
   edges: FlowEdge[];
-  args: (PortFragment | null)[];
-  returns: (PortFragment | null)[];
+  args: (FlussPortFragment | null)[];
+  returns: (FlussPortFragment | null)[];
 }) => ConnectionUpdate;
 
 export enum RiverMode {
@@ -147,7 +152,7 @@ export type GlobalInput = GlobalArgInput;
 export type NodeFragment = GraphNodeFragment;
 export type EdgeFragement = GraphEdgeFragment;
 export type GlobalFragment = GlobalArgFragment;
-export type StreamItemFragment = StreamItemFragment;
+export type StreamItemFragment = FlussStreamItemFragment;
 
 export type RelativePosition =
   | "bottomright"

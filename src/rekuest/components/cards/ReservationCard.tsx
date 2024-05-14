@@ -1,4 +1,5 @@
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { HoverBorderGradient } from "@/components/ui/hover-button";
 import { RekuestNode, RekuestReservation } from "@/linkers";
 import { useRequestMate } from "@/mates/request/useRequestMate";
 import { useReserveMate } from "@/mates/reserve/useReserveMate";

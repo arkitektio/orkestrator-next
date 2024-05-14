@@ -3,6 +3,16 @@ fragment PostmanAssignation on Assignation {
   status
   args
   reference
+  events {
+    ...AssignationEvent
+  }
+  reservation {
+    id
+    title
+    node {
+      name
+    }
+  }
 }
 
 fragment AssignationEvent on AssignationEvent {
@@ -14,4 +24,9 @@ fragment AssignationEvent on AssignationEvent {
     id
   }
   createdAt
+  message
+}
+
+fragment DetailAssignation on Assignation {
+  ...PostmanAssignation
 }

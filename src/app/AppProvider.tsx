@@ -1,5 +1,4 @@
 import { CommandMenu } from "@/command/Menu";
-import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ShadnWigets } from "@/components/widgets/ShadnWigets";
 import { ThemeProvider } from "@/providers/ThemeProvider";
@@ -27,9 +26,13 @@ import NodeDisplay from "@/rekuest/components/displays/NodeDisplay";
 import { MikroNextWard } from "@/mikro-next/MikroNextWard";
 import { OmeroArkProvider } from "@jhnnsrs/omero-ark";
 import { PortProvider } from "@jhnnsrs/port-next";
-import { FlussProvider } from "@jhnnsrs/fluss-next";
+import { FlussGuard, FlussProvider } from "@jhnnsrs/fluss-next";
 import { SelectionProvider } from "@/providers/selection/SelectionProvider";
 import { DebugProvider } from "@/providers/debug/DebugProvider";
+import { FlussWard } from "@/reaktion/FlussWard";
+import { AssignationUpdater } from "@/rekuest/components/functional/AssignationUpdater";
+import { Toaster } from "@/components/ui/sonner";
+import { ReservationUpdater } from "@/rekuest/components/functional/ReservationUpdater";
 
 const displayRegistry = {
   "@mikro-next/image": ImageDisplay,
@@ -43,58 +46,65 @@ const displayRegistry = {
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <DebugProvider>
-    <EasyProvider manifest={manifest}>
-      <DisplayProvider registry={displayRegistry}>
-        <SelectionProvider>
-        <CommandProvider>
-          <SmartProvider>
-            <RekuestProvider>
-              <FlussProvider>
-              <PortProvider>
-                <MikroNextProvider>
-                  <OmeroArkProvider>
-                    <LokNextProvider>
-                      <WidgetRegistryProvider>
-                        <CommandMenu />
-                        <PostmanProvider>
-                          <RekuestGuard fallback={<></>}>
-                            {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
-                            <GraphQLPostman instanceId="main" />
-                            {/* We register the Shadn powered widgets to the widget registry. */}
-                            <ShadnWigets />
-                          </RekuestGuard>
-                          <MikroNextGuard fallback={<></>}>
-                            <MikroNextWard key="mikro_new" />
-                          </MikroNextGuard>
-                          <ThemeProvider
-                            defaultTheme="dark"
-                            storageKey="vite-ui-theme"
-                          >
-                            <RequesterProvider>
-                              <ReserverProvider>
-                                <ReserveResolver />
-                                <TooltipProvider>
-                                  <Toaster />
-                                  <AppConfiguration />{" "}
-                                  {/* This is where we configure the application automatically based on facts */}
-                                  <BrowserRouter>{children}</BrowserRouter>
-                                </TooltipProvider>
-                              </ReserverProvider>
-                            </RequesterProvider>
-                          </ThemeProvider>
-                        </PostmanProvider>
-                      </WidgetRegistryProvider>
-                    </LokNextProvider>
-                  </OmeroArkProvider>
-                </MikroNextProvider>
-              </PortProvider>
-              </FlussProvider>
-            </RekuestProvider>
-          </SmartProvider>
-        </CommandProvider>
-        </SelectionProvider>
-      </DisplayProvider>
-    </EasyProvider>
+      <EasyProvider manifest={manifest}>
+        <DisplayProvider registry={displayRegistry}>
+          <SelectionProvider>
+            <CommandProvider>
+              <SmartProvider>
+                <RekuestProvider>
+                  <FlussProvider>
+                    <PortProvider>
+                      <MikroNextProvider>
+                        <OmeroArkProvider>
+                          <LokNextProvider>
+                            <WidgetRegistryProvider>
+                              <Toaster />
+                              <CommandMenu />
+                              <PostmanProvider>
+                                <RekuestGuard fallback={<></>}>
+                                  {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
+                                  <AssignationUpdater />
+                                  <ReservationUpdater />
+                                  {/* We register the Shadn powered widgets to the widget registry. */}
+                                  <ShadnWigets />
+                                </RekuestGuard>
+                                <MikroNextGuard fallback={<></>}>
+                                  <MikroNextWard key="mikro" />
+                                </MikroNextGuard>
+                                <FlussGuard fallback={<></>}>
+                                  <FlussWard key="fluss" />
+                                </FlussGuard>
+                                <ThemeProvider
+                                  defaultTheme="dark"
+                                  storageKey="vite-ui-theme"
+                                >
+                                  <RequesterProvider>
+                                    <ReserverProvider>
+                                      <ReserveResolver />
+                                      <TooltipProvider>
+                                        <Toaster />
+                                        <AppConfiguration />{" "}
+                                        {/* This is where we configure the application automatically based on facts */}
+                                        <BrowserRouter>
+                                          {children}
+                                        </BrowserRouter>
+                                      </TooltipProvider>
+                                    </ReserverProvider>
+                                  </RequesterProvider>
+                                </ThemeProvider>
+                              </PostmanProvider>
+                            </WidgetRegistryProvider>
+                          </LokNextProvider>
+                        </OmeroArkProvider>
+                      </MikroNextProvider>
+                    </PortProvider>
+                  </FlussProvider>
+                </RekuestProvider>
+              </SmartProvider>
+            </CommandProvider>
+          </SelectionProvider>
+        </DisplayProvider>
+      </EasyProvider>
     </DebugProvider>
   );
 };

@@ -1,4 +1,9 @@
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { ContextMenuItem } from "@/components/ui/context-menu";
 import {
   Sheet,
@@ -18,10 +23,10 @@ import { PortFragment } from "@/rekuest/api/graphql";
 import { useNodeDescription } from "@jhnnsrs/rekuest-next";
 import { GearIcon } from "@radix-ui/react-icons";
 import React from "react";
-import { ArkitektNodeProps } from "../../types";
+import { RekuestFilterNodeProps } from "../../types";
 import { useEditNodeErrors, useEditRiver } from "../context";
 
-export const ArkitektFilterNodeWidget: React.FC<ArkitektNodeProps> = ({
+export const RekuestFilterWidget: React.FC<RekuestFilterNodeProps> = ({
   data: { ins, outs, constants, ...data },
   id,
   selected,
@@ -32,7 +37,7 @@ export const ArkitektFilterNodeWidget: React.FC<ArkitektNodeProps> = ({
     moveStreamToConstants,
     moveOutStreamToVoid,
     moveVoidtoOutstream,
-    updateData
+    updateData,
   } = useEditRiver();
 
   const [expanded, setExpanded] = React.useState(false);
@@ -61,7 +66,10 @@ export const ArkitektFilterNodeWidget: React.FC<ArkitektNodeProps> = ({
 
   const errors = useEditNodeErrors(id);
 
-  const description = useNodeDescription({description: data.description, variables: data.constantsMap})
+  const description = useNodeDescription({
+    description: data.description,
+    variables: data.constantsMap,
+  });
 
   return (
     <NodeShowLayout
@@ -83,11 +91,11 @@ export const ArkitektFilterNodeWidget: React.FC<ArkitektNodeProps> = ({
       ))}
       <CardHeader className="p-4">
         <CardTitle onDoubleClick={() => setExpanded(!expanded)}>
-          <Card className="absolute top-0 left-[50%] translate-x-[-50%] px-3 translate-y-[-50%] text-sm ">Conditional</Card >
+          <Card className="absolute top-0 left-[50%] translate-x-[-50%] px-3 translate-y-[-50%] text-sm ">
+            Conditional
+          </Card>
           <div className="flex justify-between">
-            <div className="text-xl font-bold">
-               {data?.title}
-            </div>
+            <div className="text-xl font-bold">{data?.title}</div>
             <Sheet>
               <SheetTrigger className="group-hover:opacity-100 opacity-0 transition-all duration-3000">
                 <GearIcon />
@@ -104,9 +112,7 @@ export const ArkitektFilterNodeWidget: React.FC<ArkitektNodeProps> = ({
             </Sheet>
           </div>
         </CardTitle>
-        <CardDescription>
-          {description}
-        </CardDescription>
+        <CardDescription>{description}</CardDescription>
         {expanded && (
           <div>
             <div className="text-xs text-muted-foreground inline ">Args</div>
@@ -125,7 +131,7 @@ export const ArkitektFilterNodeWidget: React.FC<ArkitektNodeProps> = ({
               overwrites={data.constantsMap}
               onToArg={onToArg}
               onToGlobal={onToGlobal}
-              onSubmit={(values) => updateData({constantsMap: values}, id)}
+              onSubmit={(values) => updateData({ constantsMap: values }, id)}
             />
           </div>
         )}

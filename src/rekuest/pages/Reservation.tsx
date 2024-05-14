@@ -14,6 +14,7 @@ import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 import { notEmpty } from "@/lib/utils";
 import {
   PostmanReservationFragment,
+  useAssignMutation,
   useDetailReservationQuery,
 } from "@/rekuest/api/graphql";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -33,9 +34,11 @@ import {
 import { ClipboardIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import ProvisionCard from "../components/cards/ProvisionCard";
 import { DependencyGraphFlow } from "../components/dependencyGraph/DependencyGraph";
+import { TestConstants } from "@/reaktion/base/Constants";
+import { RekuestAssignation } from "@/linkers";
 
 export const portHash = (port: Port[]) => {
   return port
@@ -178,6 +181,10 @@ function Page() {
 export default asDetailQueryRoute(
   withRekuest(useDetailReservationQuery),
   ({ data, refetch }) => {
+    const [assign, _] = withRekuest(useAssignMutation)();
+
+    const navigate = useNavigate();
+
     return (
       <ModelPageLayout
         identifier="@rekuest/reservation"
@@ -209,6 +216,41 @@ export default asDetailQueryRoute(
               />
             </>
           )}
+        </DetailPane>
+        <DetailPane className="mt-2">
+          <DetailPaneHeader>Assign</DetailPaneHeader>
+          <TestConstants
+            ports={data?.reservation.node?.args || []}
+            overwrites={{}}
+            onSubmit={(e) => {
+              console.log("submit", e);
+              assign({
+                variables: {
+                  reservation: data.reservation.id,
+                  args:
+                    data?.reservation?.node?.args.map(
+                      (arg) => e[arg.key] || null,
+                    ) || [],
+                },
+              })
+                .then((res) => {
+                  toast({
+                    title: "Assigned",
+                    description: "The reservation has been assigned",
+                  });
+                  res.data?.assign.id &&
+                    navigate(
+                      RekuestAssignation.linkBuilder(res.data?.assign.id),
+                    );
+                })
+                .catch((e) => {
+                  toast({
+                    title: "Error",
+                    description: e.message,
+                  });
+                });
+            }}
+          />
         </DetailPane>
       </ModelPageLayout>
     );

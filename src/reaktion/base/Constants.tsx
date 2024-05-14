@@ -192,6 +192,7 @@ export const TestConstants = (props: {
   overwrites: { [key: string]: any };
   onToArg?: (port: PortFragment) => void;
   onToGlobal?: (port: PortFragment, key?: string | undefined) => void;
+  onSubmit?: (data: any) => void;
 }) => {
   const form = usePortForm({
     ports: props.ports,
@@ -199,7 +200,9 @@ export const TestConstants = (props: {
   });
 
   function onSubmit(data: any) {
-    console.log("submiting", data);
+    if (props.onSubmit) {
+      props.onSubmit(data);
+    }
   }
 
   const { registry } = useWidgetRegistry();
@@ -214,10 +217,12 @@ export const TestConstants = (props: {
             onToArg={props.onToArg}
             onToGlobal={props.onToGlobal}
           />
-          <button type="submit" className="btn">
-            {" "}
-            Submit{" "}
-          </button>
+          {props.onSubmit && (
+            <button type="submit" className="btn">
+              {" "}
+              Submit{" "}
+            </button>
+          )}
         </form>
       </Form>
     </>

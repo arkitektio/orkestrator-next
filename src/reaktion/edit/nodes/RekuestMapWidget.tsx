@@ -22,7 +22,7 @@ import { ArkitektNodeProps } from "../../types";
 import { useEditNodeErrors, useEditRiver } from "../context";
 import { NodeDescription } from "@jhnnsrs/rekuest";
 
-export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
+export const RekuestMapWidget: React.FC<ArkitektNodeProps> = ({
   data: { ins, outs, constants, ...data },
   id,
   selected,

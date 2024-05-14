@@ -32,11 +32,7 @@ fragment AssignableNode on AssignableNode {
   nextTimeout
 }
 
-fragment ArkitektGraphNode on ArkitektGraphNode {
-  ...BaseGraphNode
-  ...RetriableNode
-  ...AssignableNode
-  __typename
+fragment RekuestNode on RekuestNode {
   hash
   mapStrategy
   allowLocalExecution
@@ -46,18 +42,22 @@ fragment ArkitektGraphNode on ArkitektGraphNode {
   nodeKind
 }
 
-fragment ArkitektFilterGraphNode on ArkitektFilterGraphNode {
+fragment RekuestMapNode on RekuestMapNode {
   ...BaseGraphNode
   ...RetriableNode
   ...AssignableNode
+  ...RekuestNode
   __typename
-  hash
-  mapStrategy
-  allowLocalExecution
-  binds {
-    ...FlussBinds
-  }
-  nodeKind
+  hello
+}
+
+fragment RekuestFilterNode on RekuestFilterNode {
+  ...BaseGraphNode
+  ...RetriableNode
+  ...AssignableNode
+  ...RekuestNode
+  __typename
+  path
 }
 
 fragment ReactiveNode on ReactiveNode {
@@ -84,8 +84,8 @@ fragment GraphNode on GraphNode {
     y
   }
   parentNode
-  ...ArkitektFilterGraphNode
-  ...ArkitektGraphNode
+  ...RekuestFilterNode
+  ...RekuestMapNode
   ...ReactiveNode
   ...ArgNode
   ...ReturnNode

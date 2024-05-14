@@ -3,25 +3,27 @@ import { MikroDataset } from "@/linkers";
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { useReservationsQuery } from "@/rekuest/api/graphql";
 import { withRekuest } from "@jhnnsrs/rekuest-next";
-import ReservationCard from "../cards/ReservationCard";
-import { useReservations } from "@/rekuest/hooks/useReservations";
+import AssignationCard from "../cards/AssignationCard";
+import { useAssignations } from "@/rekuest/hooks/useAssignations";
 
 export type Props = {};
 
 const List = ({}: Props) => {
-  const { settings } = useSettings();
-  const { data, error, subscribeToMore, refetch } = useReservations();
+  const { data } = useAssignations();
+
   return (
     <>
       <ListRender
-        array={data?.reservations}
+        array={data?.assignations}
         title={
           <MikroDataset.ListLink className="flex-0">
-            Reservations
+            Assignations
           </MikroDataset.ListLink>
         }
       >
-        {(ex, index) => <ReservationCard key={index} item={ex} mates={[]} />}
+        {(ex, index) => (
+          <AssignationCard key={index} assignation={ex} mates={[]} />
+        )}
       </ListRender>
     </>
   );

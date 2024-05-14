@@ -1,13 +1,14 @@
 import { gql } from "@apollo/client";
+import { useFluss } from "@jhnnsrs/fluss-next";
 import { useMikroNext } from "@jhnnsrs/mikro-next";
 import { useWidgetRegistry } from "@jhnnsrs/rekuest-next";
 import { useEffect } from "react";
 
-export const MikroNextWard: React.FC<{
+export const FlussWard: React.FC<{
   key?: string;
   fallback?: React.ReactNode;
 }> = ({ key, fallback }) => {
-  const { client } = useMikroNext();
+  const { client } = useFluss();
   const { registry } = useWidgetRegistry();
 
   useEffect(() => {
@@ -25,7 +26,7 @@ export const MikroNextWard: React.FC<{
           });
       };
 
-      registry?.registerWard(key || "mikro", {
+      registry?.registerWard(key || "fluss", {
         search: runFunc,
       });
     }

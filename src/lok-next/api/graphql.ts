@@ -25,6 +25,11 @@ export type Scalars = {
   Version: { input: any; output: any; }
 };
 
+export type AddItemToStashInput = {
+  items: Array<StashItemInput>;
+  stash: Scalars['ID']['input'];
+};
+
 /** An App is the Arkitekt equivalent of a Software Application. It is a collection of `Releases` that can be all part of the same application. E.g the App `Napari` could have the releases `0.1.0` and `0.2.0`. */
 export type App = {
   __typename?: 'App';
@@ -167,8 +172,21 @@ export type CreateCommentInput = {
   parent?: InputMaybe<Scalars['ID']['input']>;
 };
 
+export type CreateStashInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type CreateUserInput = {
   name: Scalars['String']['input'];
+};
+
+export type DeleteStashInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeleteStashItems = {
+  items: Array<Scalars['ID']['input']>;
 };
 
 /** A descendant of a comment. Descendend are used to render rich text in the frontend. */
@@ -295,13 +313,27 @@ export type MentionDescendant = Descendant & {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  /** Add items to a stash */
+  addItemsToStash: Array<StashItem>;
   createComment: Comment;
   createDevelopmentalClient: Scalars['String']['output'];
+  /** Create a new stash */
+  createStash: Stash;
   createUser: User;
+  deleteStash: Stash;
+  /** Delete items from a stash */
+  deleteStashItems: Array<Scalars['ID']['output']>;
   render: Scalars['Fakt']['output'];
   replyTo: Comment;
   resolveComment: Comment;
   scan: Scalars['String']['output'];
+  /** Update a stash */
+  updateStash: Stash;
+};
+
+
+export type MutationAddItemsToStashArgs = {
+  input: AddItemToStashInput;
 };
 
 
@@ -315,8 +347,23 @@ export type MutationCreateDevelopmentalClientArgs = {
 };
 
 
+export type MutationCreateStashArgs = {
+  input: CreateStashInput;
+};
+
+
 export type MutationCreateUserArgs = {
   input: CreateUserInput;
+};
+
+
+export type MutationDeleteStashArgs = {
+  input: DeleteStashInput;
+};
+
+
+export type MutationDeleteStashItemsArgs = {
+  input: DeleteStashItems;
 };
 
 
@@ -337,6 +384,11 @@ export type MutationResolveCommentArgs = {
 
 export type MutationScanArgs = {
   input: ScanBackendInput;
+};
+
+
+export type MutationUpdateStashArgs = {
+  input: UpdateStashInput;
 };
 
 /** Application(id, client_id, user, redirect_uris, post_logout_redirect_uris, client_type, authorization_grant_type, client_secret, name, skip_authorization, created, updated, algorithm) */
@@ -444,11 +496,16 @@ export type Query = {
   me: User;
   myManagedClients: Client;
   myMentions: Comment;
+  myStashes: Array<Stash>;
   mygroups: Array<Group>;
   redeemTokens: Array<RedeemToken>;
   release: Release;
   releases: Array<Release>;
   scopes: Array<Scope>;
+  stash: Stash;
+  stashItem: StashItem;
+  stashItems: Array<StashItem>;
+  stashes: Array<Stash>;
   user: User;
   users: Array<User>;
 };
@@ -511,6 +568,28 @@ export type QueryReleaseArgs = {
   id?: InputMaybe<Scalars['ID']['input']>;
   identifier?: InputMaybe<Scalars['AppIdentifier']['input']>;
   version?: InputMaybe<Scalars['Version']['input']>;
+};
+
+
+export type QueryStashArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryStashItemArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryStashItemsArgs = {
+  filters?: InputMaybe<StashItemFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryStashesArgs = {
+  filters?: InputMaybe<StashFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -686,6 +765,74 @@ export type SocialAccountFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+/**
+ *
+ * A Stash
+ *
+ */
+export type Stash = {
+  __typename?: 'Stash';
+  createdAt: Scalars['DateTime']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  isActive: Scalars['Boolean']['output'];
+  items: Array<StashItem>;
+  name: Scalars['String']['output'];
+  /** The number of items in the stash */
+  owner: User;
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+
+/**
+ *
+ * A Stash
+ *
+ */
+export type StashItemsArgs = {
+  filters?: InputMaybe<StashItemFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+/** __doc__ */
+export type StashFilter = {
+  AND?: InputMaybe<StashFilter>;
+  OR?: InputMaybe<StashFilter>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+/**
+ *
+ * A stashed item
+ *
+ */
+export type StashItem = {
+  __typename?: 'StashItem';
+  addedAt: Scalars['DateTime']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  identifier: Scalars['String']['output'];
+  object: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+/** StashItem(id, stash, identifier, object, added_by, added_at, updated_at) */
+export type StashItemFilter = {
+  AND?: InputMaybe<StashItemFilter>;
+  OR?: InputMaybe<StashItemFilter>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  stashes?: InputMaybe<Array<Scalars['ID']['input']>>;
+  username?: InputMaybe<StrFilterLookup>;
+};
+
+export type StashItemInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  identifier: Scalars['String']['input'];
+  object: Scalars['String']['input'];
+};
+
 export type StrFilterLookup = {
   contains?: InputMaybe<Scalars['String']['input']>;
   endsWith?: InputMaybe<Scalars['String']['input']>;
@@ -732,6 +879,12 @@ export type Subscription = {
 
 export type SubscriptionCommunicationsArgs = {
   channels: Array<Scalars['ID']['input']>;
+};
+
+export type UpdateStashInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  stash: Scalars['ID']['input'];
 };
 
 /**
@@ -844,6 +997,12 @@ export type ListReleaseFragment = { __typename?: 'Release', id: string, version:
 
 export type ListServiceInstanceMappingFragment = { __typename?: 'ServiceInstanceMapping', id: string, key: string, instance: { __typename?: 'ServiceInstance', backend: BackendType, service: { __typename?: 'Service', identifier: any } } };
 
+export type StashFragment = { __typename?: 'Stash', id: string, name: string, description?: string | null, createdAt: any, updatedAt: any, owner: { __typename?: 'User', id: string, username: string } };
+
+export type ListStashFragment = { __typename?: 'Stash', id: string, name: string, description?: string | null, createdAt: any, updatedAt: any, items: Array<{ __typename?: 'StashItem', id: string, identifier: string, object: string }>, owner: { __typename?: 'User', id: string, username: string } };
+
+export type StashItemFragment = { __typename?: 'StashItem', id: string, identifier: string, object: string };
+
 export type ListUserFragment = { __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string };
 
 export type DetailUserFragment = { __typename?: 'User', id: string, username: string, email?: string | null, firstName?: string | null, lastName?: string | null, avatar?: string | null, groups: Array<{ __typename?: 'Group', id: string, name: string }> };
@@ -885,6 +1044,29 @@ export type ResolveCommentMutationVariables = Exact<{
 
 export type ResolveCommentMutation = { __typename?: 'Mutation', resolveComment: { __typename?: 'Comment', resolved: boolean, id: string, createdAt: any, user: { __typename?: 'User', id: string, username: string, avatar?: string | null }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null }>, resolvedBy?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null, children: Array<{ __typename?: 'Comment', createdAt: any, user: { __typename?: 'User', id: string, username: string, avatar?: string | null }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null }> }> } };
 
+export type CreateStashMutationVariables = Exact<{
+  name?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type CreateStashMutation = { __typename?: 'Mutation', createStash: { __typename?: 'Stash', id: string, name: string, description?: string | null, createdAt: any, updatedAt: any, items: Array<{ __typename?: 'StashItem', id: string, identifier: string, object: string }>, owner: { __typename?: 'User', id: string, username: string } } };
+
+export type AddItemsToStashMutationVariables = Exact<{
+  stash: Scalars['ID']['input'];
+  items: Array<StashItemInput> | StashItemInput;
+}>;
+
+
+export type AddItemsToStashMutation = { __typename?: 'Mutation', addItemsToStash: Array<{ __typename?: 'StashItem', id: string, identifier: string, object: string }> };
+
+export type DeleteStashItemsMutationVariables = Exact<{
+  items: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
+}>;
+
+
+export type DeleteStashItemsMutation = { __typename?: 'Mutation', deleteStashItems: Array<string> };
+
 export type AppsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -920,6 +1102,13 @@ export type MyManagedClientsQueryVariables = Exact<{
 
 
 export type MyManagedClientsQuery = { __typename?: 'Query', myManagedClients: { __typename?: 'Client', id: string, kind: ClientKind, user?: { __typename?: 'User', username: string } | null, release: { __typename?: 'Release', version: any, logo?: string | null, app: { __typename?: 'App', id: string, identifier: any, logo?: string | null } }, composition: { __typename?: 'Composition', id: string } } };
+
+export type ClientQueryVariables = Exact<{
+  clientId: Scalars['ID']['input'];
+}>;
+
+
+export type ClientQuery = { __typename?: 'Query', client: { __typename?: 'Client', id: string, token: string, kind: ClientKind, user?: { __typename?: 'User', username: string } | null, release: { __typename?: 'Release', id: string, version: any, logo?: string | null, app: { __typename?: 'App', id: string, identifier: any, logo?: string | null } }, oauth2Client: { __typename?: 'Oauth2Client', authorizationGrantType: string, redirectUris: string }, composition: { __typename?: 'Composition', name: string, mappings: Array<{ __typename?: 'ServiceInstanceMapping', id: string, key: string, instance: { __typename?: 'ServiceInstance', backend: BackendType, service: { __typename?: 'Service', identifier: any } } }> } } };
 
 export type CommentsForQueryVariables = Exact<{
   object: Scalars['ID']['input'];
@@ -997,6 +1186,13 @@ export type GlobalSearchQueryVariables = Exact<{
 
 
 export type GlobalSearchQuery = { __typename?: 'Query', users?: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, groups?: Array<{ __typename?: 'Group', id: string, name: string }> };
+
+export type MyStashesQueryVariables = Exact<{
+  pagination?: InputMaybe<OffsetPaginationInput>;
+}>;
+
+
+export type MyStashesQuery = { __typename?: 'Query', stashes: Array<{ __typename?: 'Stash', id: string, name: string, description?: string | null, createdAt: any, updatedAt: any, items: Array<{ __typename?: 'StashItem', id: string, identifier: string, object: string }>, owner: { __typename?: 'User', id: string, username: string } }> };
 
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1328,6 +1524,35 @@ export const DetailReleaseFragmentDoc = gql`
 }
     ${ListAppFragmentDoc}
 ${ListClientFragmentDoc}`;
+export const StashFragmentDoc = gql`
+    fragment Stash on Stash {
+  id
+  name
+  description
+  createdAt
+  updatedAt
+  owner {
+    id
+    username
+  }
+}
+    `;
+export const StashItemFragmentDoc = gql`
+    fragment StashItem on StashItem {
+  id
+  identifier
+  object
+}
+    `;
+export const ListStashFragmentDoc = gql`
+    fragment ListStash on Stash {
+  ...Stash
+  items {
+    ...StashItem
+  }
+}
+    ${StashFragmentDoc}
+${StashItemFragmentDoc}`;
 export const DetailUserFragmentDoc = gql`
     fragment DetailUser on User {
   id
@@ -1493,6 +1718,105 @@ export function useResolveCommentMutation(baseOptions?: Apollo.MutationHookOptio
 export type ResolveCommentMutationHookResult = ReturnType<typeof useResolveCommentMutation>;
 export type ResolveCommentMutationResult = Apollo.MutationResult<ResolveCommentMutation>;
 export type ResolveCommentMutationOptions = Apollo.BaseMutationOptions<ResolveCommentMutation, ResolveCommentMutationVariables>;
+export const CreateStashDocument = gql`
+    mutation CreateStash($name: String, $description: String = "") {
+  createStash(input: {name: $name, description: $description}) {
+    ...ListStash
+  }
+}
+    ${ListStashFragmentDoc}`;
+export type CreateStashMutationFn = Apollo.MutationFunction<CreateStashMutation, CreateStashMutationVariables>;
+
+/**
+ * __useCreateStashMutation__
+ *
+ * To run a mutation, you first call `useCreateStashMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateStashMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createStashMutation, { data, loading, error }] = useCreateStashMutation({
+ *   variables: {
+ *      name: // value for 'name'
+ *      description: // value for 'description'
+ *   },
+ * });
+ */
+export function useCreateStashMutation(baseOptions?: Apollo.MutationHookOptions<CreateStashMutation, CreateStashMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateStashMutation, CreateStashMutationVariables>(CreateStashDocument, options);
+      }
+export type CreateStashMutationHookResult = ReturnType<typeof useCreateStashMutation>;
+export type CreateStashMutationResult = Apollo.MutationResult<CreateStashMutation>;
+export type CreateStashMutationOptions = Apollo.BaseMutationOptions<CreateStashMutation, CreateStashMutationVariables>;
+export const AddItemsToStashDocument = gql`
+    mutation AddItemsToStash($stash: ID!, $items: [StashItemInput!]!) {
+  addItemsToStash(input: {stash: $stash, items: $items}) {
+    ...StashItem
+  }
+}
+    ${StashItemFragmentDoc}`;
+export type AddItemsToStashMutationFn = Apollo.MutationFunction<AddItemsToStashMutation, AddItemsToStashMutationVariables>;
+
+/**
+ * __useAddItemsToStashMutation__
+ *
+ * To run a mutation, you first call `useAddItemsToStashMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddItemsToStashMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addItemsToStashMutation, { data, loading, error }] = useAddItemsToStashMutation({
+ *   variables: {
+ *      stash: // value for 'stash'
+ *      items: // value for 'items'
+ *   },
+ * });
+ */
+export function useAddItemsToStashMutation(baseOptions?: Apollo.MutationHookOptions<AddItemsToStashMutation, AddItemsToStashMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddItemsToStashMutation, AddItemsToStashMutationVariables>(AddItemsToStashDocument, options);
+      }
+export type AddItemsToStashMutationHookResult = ReturnType<typeof useAddItemsToStashMutation>;
+export type AddItemsToStashMutationResult = Apollo.MutationResult<AddItemsToStashMutation>;
+export type AddItemsToStashMutationOptions = Apollo.BaseMutationOptions<AddItemsToStashMutation, AddItemsToStashMutationVariables>;
+export const DeleteStashItemsDocument = gql`
+    mutation DeleteStashItems($items: [ID!]!) {
+  deleteStashItems(input: {items: $items})
+}
+    `;
+export type DeleteStashItemsMutationFn = Apollo.MutationFunction<DeleteStashItemsMutation, DeleteStashItemsMutationVariables>;
+
+/**
+ * __useDeleteStashItemsMutation__
+ *
+ * To run a mutation, you first call `useDeleteStashItemsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteStashItemsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteStashItemsMutation, { data, loading, error }] = useDeleteStashItemsMutation({
+ *   variables: {
+ *      items: // value for 'items'
+ *   },
+ * });
+ */
+export function useDeleteStashItemsMutation(baseOptions?: Apollo.MutationHookOptions<DeleteStashItemsMutation, DeleteStashItemsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteStashItemsMutation, DeleteStashItemsMutationVariables>(DeleteStashItemsDocument, options);
+      }
+export type DeleteStashItemsMutationHookResult = ReturnType<typeof useDeleteStashItemsMutation>;
+export type DeleteStashItemsMutationResult = Apollo.MutationResult<DeleteStashItemsMutation>;
+export type DeleteStashItemsMutationOptions = Apollo.BaseMutationOptions<DeleteStashItemsMutation, DeleteStashItemsMutationVariables>;
 export const AppsDocument = gql`
     query Apps {
   apps {
@@ -1670,6 +1994,41 @@ export function useMyManagedClientsLazyQuery(baseOptions?: Apollo.LazyQueryHookO
 export type MyManagedClientsQueryHookResult = ReturnType<typeof useMyManagedClientsQuery>;
 export type MyManagedClientsLazyQueryHookResult = ReturnType<typeof useMyManagedClientsLazyQuery>;
 export type MyManagedClientsQueryResult = Apollo.QueryResult<MyManagedClientsQuery, MyManagedClientsQueryVariables>;
+export const ClientDocument = gql`
+    query Client($clientId: ID!) {
+  client(clientId: $clientId) {
+    ...DetailClient
+  }
+}
+    ${DetailClientFragmentDoc}`;
+
+/**
+ * __useClientQuery__
+ *
+ * To run a query within a React component, call `useClientQuery` and pass it any options that fit your needs.
+ * When your component renders, `useClientQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useClientQuery({
+ *   variables: {
+ *      clientId: // value for 'clientId'
+ *   },
+ * });
+ */
+export function useClientQuery(baseOptions: Apollo.QueryHookOptions<ClientQuery, ClientQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ClientQuery, ClientQueryVariables>(ClientDocument, options);
+      }
+export function useClientLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ClientQuery, ClientQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ClientQuery, ClientQueryVariables>(ClientDocument, options);
+        }
+export type ClientQueryHookResult = ReturnType<typeof useClientQuery>;
+export type ClientLazyQueryHookResult = ReturnType<typeof useClientLazyQuery>;
+export type ClientQueryResult = Apollo.QueryResult<ClientQuery, ClientQueryVariables>;
 export const CommentsForDocument = gql`
     query CommentsFor($object: ID!, $identifier: Identifier!) {
   commentsFor(identifier: $identifier, object: $object) {
@@ -2072,6 +2431,41 @@ export function useGlobalSearchLazyQuery(baseOptions?: Apollo.LazyQueryHookOptio
 export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>;
 export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>;
 export type GlobalSearchQueryResult = Apollo.QueryResult<GlobalSearchQuery, GlobalSearchQueryVariables>;
+export const MyStashesDocument = gql`
+    query MyStashes($pagination: OffsetPaginationInput) {
+  stashes(pagination: $pagination) {
+    ...ListStash
+  }
+}
+    ${ListStashFragmentDoc}`;
+
+/**
+ * __useMyStashesQuery__
+ *
+ * To run a query within a React component, call `useMyStashesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMyStashesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMyStashesQuery({
+ *   variables: {
+ *      pagination: // value for 'pagination'
+ *   },
+ * });
+ */
+export function useMyStashesQuery(baseOptions?: Apollo.QueryHookOptions<MyStashesQuery, MyStashesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<MyStashesQuery, MyStashesQueryVariables>(MyStashesDocument, options);
+      }
+export function useMyStashesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<MyStashesQuery, MyStashesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<MyStashesQuery, MyStashesQueryVariables>(MyStashesDocument, options);
+        }
+export type MyStashesQueryHookResult = ReturnType<typeof useMyStashesQuery>;
+export type MyStashesLazyQueryHookResult = ReturnType<typeof useMyStashesLazyQuery>;
+export type MyStashesQueryResult = Apollo.QueryResult<MyStashesQuery, MyStashesQueryVariables>;
 export const MeDocument = gql`
     query Me {
   me {

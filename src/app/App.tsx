@@ -1,4 +1,4 @@
-import { Route, RouteProps, Routes,  } from "react-router-dom";
+import { Route, RouteProps, Routes } from "react-router-dom";
 import { AppProvider } from "./AppProvider";
 import { PrivateNavigationBar } from "./components/navigation/PrivateNavigationBar";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -6,7 +6,7 @@ import Hero from "@/app/pages/Hero";
 import MikroNextModule from "@/mikro-next/MikroNextModule";
 import RekuestNextModule from "@/rekuest/RekuestNextModule";
 import ReaktionModule from "@/reaktion/ReaktionModule";
-import { Callback, EasyGuard, } from "@jhnnsrs/arkitekt";
+import { Callback, EasyGuard } from "@jhnnsrs/arkitekt";
 import LokNextModule from "@/lok-next/LokNextModule";
 import OmeroArkModule from "@/omero-ark/OmeroArkModule";
 import SettingsModule from "@/settings/SettingsModule";
@@ -15,19 +15,23 @@ import React from "react";
 import { NotFound } from "./components/fallbacks/NotFound";
 import { NotLoggedIn } from "./components/fallbacks/NotLoggedIn";
 import { NotConnected } from "./components/fallbacks/NotConnected";
+import { Stash } from "@/lok-next/components/stash/Stash";
 // Entrypoint of the application.
 // We provide two main routers, one for the public routes, and one for the private routes.
 export const protect = (component: React.ReactNode) => {
-  return <EasyGuard notLoggedInFallback={<NotLoggedIn/>} notConnectedFallback={<NotConnected/>}>{component}</EasyGuard>;
+  return (
+    <EasyGuard
+      notLoggedInFallback={<NotLoggedIn />}
+      notConnectedFallback={<NotConnected />}
+    >
+      {component}
+    </EasyGuard>
+  );
 };
 
-
 export const Fallback = () => {
-
   return <div> Puh this doesnt exist really</div>;
-}
-
-
+};
 
 function App() {
   return (
@@ -46,7 +50,8 @@ function App() {
           <Route path="settings/*" element={protect(<SettingsModule />)} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-    </AppLayout>
+        <Stash />
+      </AppLayout>
     </AppProvider>
   );
 }

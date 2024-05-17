@@ -3,26 +3,32 @@ import { Structure } from "@/types";
 import { DropTargetMonitor, useDrop } from "react-dnd";
 import { NativeTypes } from "react-dnd-html5-backend";
 
-
-export const useSmartDrop = (callback: (structures: Structure[], monitor: DropTargetMonitor<unknown, unknown>) => void, deps?: any[]) => useDrop(() => {
+export const useSmartDrop = (
+  callback: (
+    structures: Structure[],
+    monitor: DropTargetMonitor<unknown, unknown>,
+  ) => void,
+  deps?: any[],
+) =>
+  useDrop(() => {
     return {
-      accept: [NativeTypes.TEXT, SMART_MODEL_DROP_TYPE],
+      accept: [SMART_MODEL_DROP_TYPE],
       drop: (item, monitor) => {
         if (item && Array.isArray(item)) {
-            // We are dealing with a Smart model in the same window
-            return callback(item as Structure[],  monitor)
-
+          // We are dealing with a Smart model in the same window
+          return callback(item as Structure[], monitor);
         }
 
+        console.log("fff");
 
         // We might be dealing with a remote window object
 
         let text = monitor.getItem()?.text;
-        
-        console.log("External drop", text)
+
+        console.log("External drop", text);
         if (text) {
           let structure: Structure = JSON.parse(text);
-          return callback([structure], monitor)
+          return callback([structure], monitor);
         }
         return {};
       },
@@ -37,7 +43,6 @@ export const useSmartDrop = (callback: (structures: Structure[], monitor: DropTa
             position: monitor.getClientOffset(),
           };
         }
-
 
         let item = monitor.getItem() as Structure[] | null;
         console.log(item);

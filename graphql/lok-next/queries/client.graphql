@@ -15,3 +15,9 @@ query MyManagedClients($kind: ClientKind!) {
     ...ListClient
   }
 }
+
+query Client($clientId: ID!) {
+  client(clientId: $clientId) {
+    ...DetailClient
+  }
+}

@@ -3,6 +3,7 @@ import DatasetList from "../components/lists/DatasetList";
 import ImageList from "../components/lists/ImageList";
 import StageList from "../components/lists/StageList";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { Stash } from "@/lok-next/components/stash/Stash";
 
 export type IRepresentationScreenProps = {};
 

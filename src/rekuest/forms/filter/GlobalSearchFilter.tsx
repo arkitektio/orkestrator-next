@@ -1,9 +1,7 @@
 import { ToggleField } from "@/components/fields/ToggleField";
 import { AutoSubmitter } from "@/components/form/AutoSubmitter";
-import {
-  Form, FormControl, FormField,
-  FormItem
-} from "@/components/ui/form";
+import { FancyInput } from "@/components/ui/fancy-input";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
   Popover,
@@ -44,7 +42,7 @@ const Filter: React.FC<FilterProps> = ({ onFilterChanged, defaultValue }) => {
               <PopoverAnchor asChild>
                 <FormItem className="h-full w-full relative flex-row flex relative">
                   <FormControl>
-                    <Input
+                    <FancyInput
                       placeholder={"Search...."}
                       {...field}
                       type="string"
@@ -52,10 +50,9 @@ const Filter: React.FC<FilterProps> = ({ onFilterChanged, defaultValue }) => {
                     />
                   </FormControl>
 
-                <PopoverTrigger className="absolute right-1 top-1 text-foreground">
-                    <ArrowDown/>
+                  <PopoverTrigger className="absolute right-1 top-1 text-foreground">
+                    <ArrowDown />
                   </PopoverTrigger>
-                 
                 </FormItem>
               </PopoverAnchor>
             )}

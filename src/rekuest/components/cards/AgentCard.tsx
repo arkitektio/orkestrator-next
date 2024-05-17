@@ -1,5 +1,6 @@
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { RekuestReservation } from "@/linkers";
+import { cn } from "@/lib/utils";
+import { RekuestAgent, RekuestReservation } from "@/linkers";
 import { useRequestMate } from "@/mates/request/useRequestMate";
 import { MateFinder } from "@/mates/types";
 import { ListAgentFragment } from "@/rekuest/api/graphql";
@@ -11,19 +12,19 @@ interface Props {
 
 const TheCard = ({ item, mates }: Props) => {
   return (
-    <RekuestReservation.Smart object={item?.id}>
-      <Card>
+    <RekuestAgent.Smart object={item?.id}>
+      <Card className={cn(item.connected && "dark:border-green-300 border")}>
         <CardHeader>
           <CardTitle>
-            <RekuestReservation.DetailLink object={item?.id}>
+            <RekuestAgent.DetailLink object={item?.id}>
               {" "}
               {item.instanceId}
               {item.status}
-            </RekuestReservation.DetailLink>
+            </RekuestAgent.DetailLink>
           </CardTitle>
         </CardHeader>
       </Card>
-    </RekuestReservation.Smart>
+    </RekuestAgent.Smart>
   );
 };
 

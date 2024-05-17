@@ -9,6 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useFormContext } from "react-hook-form";
 import { FieldProps } from "./types";
+import { FancyInput } from "../ui/fancy-input";
 
 export const StringField = (props: FieldProps & { placeholder?: string }) => {
   const form = useFormContext();
@@ -16,7 +17,7 @@ export const StringField = (props: FieldProps & { placeholder?: string }) => {
     <FormField
       control={form.control}
       name={props.name}
-      rules={{validate: props.validate}}
+      rules={{ validate: props.validate }}
       render={({ field }) => (
         <FormItem>
           <FormLabel>{props.label ? props.label : props.name}</FormLabel>

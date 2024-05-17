@@ -7,6 +7,11 @@ import {
   ModelLinkProps,
   OmitedNavLinkProps,
 } from "./types";
+import {
+  ModelPageLayout,
+  ModelPageLayoutProps,
+} from "@/components/layout/ModelPageLayout";
+import { Komments } from "@/lok-next/components/komments/Komments";
 
 const buildBaseLink = (to: string) => {
   return ({ children, ...props }: BaseLinkProps) => {
@@ -44,23 +49,30 @@ export const buildSmartModel = (
   };
 };
 
-export type IDProps = {
-  id: string;
+export type ObjectProps = {
+  object: string;
 };
 
 const buildSelfActions = (model: Identifier) => {
-  return ({ ...props }: IDProps) => {
+  return ({ ...props }: ObjectProps) => {
     return <></>;
   };
 };
 
 const buildKomments = (model: Identifier) => {
-  return ({ ...props }: IDProps) => {
+  return ({ ...props }: ObjectProps) => {
+    return <Komments identifier={model} object={props.object} />;
+  };
+};
+
+export type SmartModelPage = Omit<ModelPageLayoutProps, "identifier">;
+
+const buildModelPage = (model: Identifier) => {
+  return ({ ...props }: SmartModelPage) => {
     return (
-      <>
-        {" "}
-        Not implemeneted yet {model} {props.id}
-      </>
+      <ModelPageLayout identifier={model} {...props}>
+        {props.children}
+      </ModelPageLayout>
     );
   };
 };
@@ -73,7 +85,8 @@ export const buildSmart = (model: Identifier, to: string) => {
     Smart: buildSmartModel(model),
     Actions: buildSelfActions(model),
     Komments: buildKomments(model),
-    identifier: model
+    identifier: model,
+    ModelPage: buildModelPage(model),
   };
 };
 

@@ -13,7 +13,7 @@
       {
         "kind": "OBJECT",
         "name": "AccessCredentials",
-        "description": null,
+        "description": "Temporary Credentials for a file download that can be used by a Client (e.g. in a python datalayer)",
         "fields": [
           {
             "name": "accessKey",
@@ -1210,8 +1210,24 @@
       {
         "kind": "OBJECT",
         "name": "App",
-        "description": null,
+        "description": "An app.",
         "fields": [
+          {
+            "name": "clientId",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "id",
             "description": null,
@@ -1222,6 +1238,22 @@
               "ofType": {
                 "kind": "SCALAR",
                 "name": "ID",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "name",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
                 "ofType": null
               }
             },
@@ -2975,7 +3007,7 @@
       {
         "kind": "OBJECT",
         "name": "Credentials",
-        "description": null,
+        "description": "Temporary Credentials for a file upload that can be used by a Client (e.g. in a python datalayer)",
         "fields": [
           {
             "name": "accessKey",
@@ -5733,7 +5765,7 @@
         "fields": [
           {
             "name": "affineTransformationViews",
-            "description": null,
+            "description": "The affine transformation views of the image.",
             "args": [
               {
                 "name": "filters",
@@ -6387,7 +6419,7 @@
           },
           {
             "name": "store",
-            "description": null,
+            "description": "The store where the image data is stored.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10894,7 +10926,7 @@
           },
           {
             "name": "requestAccess",
-            "description": null,
+            "description": "Request upload credentials for a given key",
             "args": [
               {
                 "name": "input",
@@ -18892,7 +18924,7 @@
       {
         "kind": "OBJECT",
         "name": "User",
-        "description": null,
+        "description": "A user.",
         "fields": [
           {
             "name": "email",
@@ -20176,7 +20208,7 @@
         "fields": [
           {
             "name": "bucket",
-            "description": null,
+            "description": "The bucket where the data is stored.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -20192,7 +20224,7 @@
           },
           {
             "name": "chunks",
-            "description": null,
+            "description": "The chunks of the data.",
             "args": [],
             "type": {
               "kind": "LIST",
@@ -20212,7 +20244,7 @@
           },
           {
             "name": "dtype",
-            "description": null,
+            "description": "The dtype of the data.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -20240,7 +20272,7 @@
           },
           {
             "name": "key",
-            "description": null,
+            "description": "The key where the data is stored.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -20256,23 +20288,19 @@
           },
           {
             "name": "path",
-            "description": null,
+            "description": "The path to the data. Relative to the bucket.",
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
             "name": "populated",
-            "description": null,
+            "description": "Whether the zarr store was populated (e.g. was a dataset created).",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -20288,7 +20316,7 @@
           },
           {
             "name": "shape",
-            "description": null,
+            "description": "The shape of the data.",
             "args": [],
             "type": {
               "kind": "LIST",
@@ -21297,7 +21325,11 @@
         "name": "include",
         "description": "Directs the executor to include this field or fragment only when the `if` argument is true.",
         "isRepeatable": false,
-        "locations": ["FIELD", "FRAGMENT_SPREAD", "INLINE_FRAGMENT"],
+        "locations": [
+          "FIELD",
+          "FRAGMENT_SPREAD",
+          "INLINE_FRAGMENT"
+        ],
         "args": [
           {
             "name": "if",
@@ -21321,7 +21353,9 @@
         "name": "relation",
         "description": "Make get stuff uppercase",
         "isRepeatable": false,
-        "locations": ["FIELD"],
+        "locations": [
+          "FIELD"
+        ],
         "args": [
           {
             "name": "on",
@@ -21345,7 +21379,9 @@
         "name": "replace",
         "description": null,
         "isRepeatable": false,
-        "locations": ["FIELD"],
+        "locations": [
+          "FIELD"
+        ],
         "args": [
           {
             "name": "new",
@@ -21385,7 +21421,11 @@
         "name": "skip",
         "description": "Directs the executor to skip this field or fragment when the `if` argument is true.",
         "isRepeatable": false,
-        "locations": ["FIELD", "FRAGMENT_SPREAD", "INLINE_FRAGMENT"],
+        "locations": [
+          "FIELD",
+          "FRAGMENT_SPREAD",
+          "INLINE_FRAGMENT"
+        ],
         "args": [
           {
             "name": "if",
@@ -21409,7 +21449,9 @@
         "name": "specifiedBy",
         "description": "Exposes a URL that specifies the behaviour of this scalar.",
         "isRepeatable": false,
-        "locations": ["SCALAR"],
+        "locations": [
+          "SCALAR"
+        ],
         "args": [
           {
             "name": "url",
@@ -21433,7 +21475,9 @@
         "name": "upper",
         "description": "Make string uppercase",
         "isRepeatable": false,
-        "locations": ["FIELD"],
+        "locations": [
+          "FIELD"
+        ],
         "args": []
       }
     ]

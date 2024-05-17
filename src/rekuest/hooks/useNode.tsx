@@ -32,6 +32,7 @@ export const useUsage = (options: {
         variables: {
           instanceId: settings.instanceId,
           node: options.hash,
+          template: options.template,
         },
       });
     } else {

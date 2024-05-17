@@ -33,6 +33,7 @@ import { FlussWard } from "@/reaktion/FlussWard";
 import { AssignationUpdater } from "@/rekuest/components/functional/AssignationUpdater";
 import { Toaster } from "@/components/ui/sonner";
 import { ReservationUpdater } from "@/rekuest/components/functional/ReservationUpdater";
+import { Stash } from "@/lok-next/components/stash/Stash";
 
 const displayRegistry = {
   "@mikro-next/image": ImageDisplay,

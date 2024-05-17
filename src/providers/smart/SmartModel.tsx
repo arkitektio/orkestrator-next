@@ -21,7 +21,7 @@ export const SmartModel = ({
 }: SmartModelProps) => {
   const self: Structure = {
     identifier: props.identifier,
-    id: props.object,
+    object: props.object,
   };
 
   const [progress, setProgress] = useState<number | undefined>(undefined);
@@ -49,7 +49,7 @@ export const SmartModel = ({
 
   const [{ isOver, canDrop, overItems }, drop] = useDrop(() => {
     return {
-      accept: [NativeTypes.TEXT],
+      accept: [SMART_MODEL_DROP_TYPE],
       drop: (item, monitor) => {
         if (!monitor.didDrop()) {
           console.log("Ommitting Parent Drop");
@@ -68,6 +68,12 @@ export const SmartModel = ({
         }
 
         let item = monitor.getItem() as Structure[] | null;
+        console.log(
+          "monitor",
+          props.identifier,
+          props.object,
+          monitor.isOver(),
+        );
         return {
           isOver: !!monitor.isOver(),
           overItems: [],
@@ -92,7 +98,7 @@ export const SmartModel = ({
 
   const { isSelected } = useMySelection({
     identifier: props.identifier,
-    id: props.object,
+    object: props.object,
   });
 
   const dragClassNameFunc = props.dragClassName || (({}) => "");

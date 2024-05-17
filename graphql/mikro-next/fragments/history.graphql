@@ -5,6 +5,9 @@ fragment History on History {
   user {
     sub
   }
+  app {
+    clientId
+  }
   date
   effectiveChanges {
     field

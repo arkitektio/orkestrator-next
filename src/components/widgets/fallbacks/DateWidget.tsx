@@ -1,11 +1,9 @@
 import { DateField } from "@/components/fields/DateField";
 import { usePortValidate } from "@/rekuest/hooks/usePortValidator";
-import { InputWidgetProps } from "@jhnnsrs/rekuest-next";
+import { InputWidgetProps } from "@/rekuest/widgets/types";
 
 export const DateWidget = (props: InputWidgetProps) => {
-
-  const validate = usePortValidate(props.port)
-
+  const validate = usePortValidate(props.port);
 
   return (
     <DateField

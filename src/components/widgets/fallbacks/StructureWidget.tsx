@@ -2,10 +2,10 @@ import { StringField } from "@/components/fields/StringField";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PortScope } from "@/rekuest/api/graphql";
 import { usePortValidate } from "@/rekuest/hooks/usePortValidator";
-import { InputWidgetProps } from "@jhnnsrs/rekuest-next";
+import { InputWidgetProps } from "@/rekuest/widgets/types";
 
 export const StructureWidget = (props: InputWidgetProps) => {
-  const validate = usePortValidate(props.port)
+  const validate = usePortValidate(props.port);
 
   return (
     <>

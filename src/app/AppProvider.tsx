@@ -13,7 +13,6 @@ import {
   PostmanProvider,
   RekuestGuard,
   RekuestProvider,
-  WidgetRegistryProvider,
 } from "@jhnnsrs/rekuest-next";
 import { BrowserRouter } from "react-router-dom";
 import { AppConfiguration } from "./AppConfiguration";
@@ -34,6 +33,7 @@ import { AssignationUpdater } from "@/rekuest/components/functional/AssignationU
 import { Toaster } from "@/components/ui/sonner";
 import { ReservationUpdater } from "@/rekuest/components/functional/ReservationUpdater";
 import { Stash } from "@/lok-next/components/stash/Stash";
+import { WidgetRegistryProvider } from "@/rekuest/widgets/WidgetsProvider";
 
 const displayRegistry = {
   "@mikro-next/image": ImageDisplay,

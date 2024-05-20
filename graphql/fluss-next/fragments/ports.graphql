@@ -47,20 +47,11 @@ fragment FlussAssignWidget on AssignWidget {
 
 fragment FlussChildPortNested on ChildPort {
   __typename
+  key
   kind
   identifier
-  child {
-    kind
-    identifier
-    scope
-    assignWidget {
-      ...FlussAssignWidget
-    }
-    returnWidget {
-      ...FlussReturnWidget
-    }
-  }
-  variants {
+  children {
+    key
     kind
     identifier
     scope
@@ -85,10 +76,8 @@ fragment FlussChildPort on ChildPort {
   kind
   identifier
   scope
-  child {
-    ...FlussChildPortNested
-  }
-  variants {
+  key
+  children {
     ...FlussChildPortNested
   }
   assignWidget {
@@ -162,10 +151,7 @@ fragment FlussPort on Port {
   }
   kind
   identifier
-  child {
-    ...FlussChildPort
-  }
-  variants {
+  children {
     ...FlussChildPort
   }
   default
@@ -173,7 +159,6 @@ fragment FlussPort on Port {
   groups
   validators {
     ...Validator
-  
   }
 }
 
@@ -199,4 +184,3 @@ fragment FlussReturnWidget on ReturnWidget {
   ...FlussCustomReturnWidget
   ...FlussChoiceReturnWidget
 }
-

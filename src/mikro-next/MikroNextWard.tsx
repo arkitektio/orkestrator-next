@@ -1,6 +1,6 @@
+import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { gql } from "@apollo/client";
 import { useMikroNext } from "@jhnnsrs/mikro-next";
-import { useWidgetRegistry } from "@jhnnsrs/rekuest-next";
 import { useEffect } from "react";
 
 export const MikroNextWard: React.FC<{

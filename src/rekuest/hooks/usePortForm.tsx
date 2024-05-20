@@ -1,6 +1,7 @@
-import { Port, portToDefaults, } from "@jhnnsrs/rekuest-next";
 import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { portToDefaults } from "../widgets/utils";
+import { Port } from "../widgets/types";
 
 export const portHash = (port: Port[]) => {
   return port
@@ -13,7 +14,7 @@ export const usePortForm = (props: {
   overwrites?: { [key: string]: any };
   doNotAutoReset?: boolean;
   mode?: "onChange" | "onBlur" | "onSubmit" | "onTouched" | "all";
-  reValidateMode?: "onChange" | "onBlur" | "onSubmit" ;
+  reValidateMode?: "onChange" | "onBlur" | "onSubmit";
 }) => {
   const hash = portHash(props.ports);
 

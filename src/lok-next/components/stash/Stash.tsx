@@ -12,9 +12,15 @@ import {
   useAddItemsToStashMutation,
   useCreateStashMutation,
   useDeleteStashItemsMutation,
+  useDeleteStashMutation,
   useMyStashesQuery,
 } from "@/lok-next/api/graphql";
 import { Button } from "@/components/ui/button";
+import { GripVertical, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { BsBookmarkX } from "react-icons/bs";
+import { ContainerGrid } from "@/components/layout/ContainerGrid";
+import { ConditionalStructureRender } from "./InfoTainer";
 
 export const StashItem = (props: { item: StashItemFragment }) => {
   const [deleteItems] = withLokNext(useDeleteStashItemsMutation)({
@@ -35,17 +41,33 @@ export const StashItem = (props: { item: StashItemFragment }) => {
           isDragging: monitor.isDragging(),
         };
       },
+      end: (item, monitor) => {
+        if (monitor.didDrop()) {
+          if (monitor.getDropResult()?.stash) {
+            deleteItems({ variables: { items: props.item.id } });
+          }
+        }
+      },
     }),
     [self],
   );
 
   return (
-    <Card className="p-2" ref={drag}>
-      {props.item.object} {props.item.identifier}
+    <Card className="p-2 relative group flex flex-row" ref={drag}>
+      <div className="flex-grow my-auto">
+        <ConditionalStructureRender
+          object={props.item.object}
+          identifier={props.item.identifier}
+        />
+      </div>
+
       <Button
         onClick={() => deleteItems({ variables: { items: props.item.id } })}
+        size={"sm"}
+        variant={"outline"}
+        className="transition transition-all duration-300 text-xs my-auto hover:bg-red-500 hover:text-white my-auto "
       >
-        Delete
+        <X />
       </Button>
     </Card>
   );
@@ -57,6 +79,10 @@ export const StashZone = (props: { item: ListStashFragment }) => {
   });
 
   const [deleteItems] = withLokNext(useDeleteStashItemsMutation)({
+    refetchQueries: ["MyStashes"],
+  });
+
+  const [deleteStash] = withLokNext(useDeleteStashMutation)({
     refetchQueries: ["MyStashes"],
   });
 
@@ -89,7 +115,7 @@ export const StashZone = (props: { item: ListStashFragment }) => {
           });
         }
 
-        return {};
+        return { stash: props.item.id };
       },
       collect: (monitor) => {
         let text = monitor.getItem()?.text;
@@ -115,14 +141,56 @@ export const StashZone = (props: { item: ListStashFragment }) => {
     };
   });
 
+  const allItems = props.item.items.map((item) => {
+    return {
+      identifier: item.identifier,
+      object: item.object,
+    };
+  });
+
+  const [{ isDragging }, drag, preview] = useDrag(
+    () => ({
+      type: SMART_MODEL_DROP_TYPE,
+      item: allItems,
+      collect: (monitor) => {
+        return {
+          isDragging: monitor.isDragging(),
+        };
+      },
+    }),
+    [allItems],
+  );
+
   return (
     <Card
       ref={drop}
-      className="p-2 transition transition-all duration-300"
+      className={cn(
+        "transition transition-all duration-300 bg-sidebar",
+        isDragging ? "animate-pulse" : "text-slate-300",
+      )}
       data-disableselect
     >
       <CardHeader>
-        <CardTitle>{props.item.name}</CardTitle>
+        <CardTitle
+          ref={drag}
+          data-disableselect
+          className="cursor-pointer flex flex-row gap-2 "
+        >
+          <div className="flex-grow my-auto">{props.item.name}</div>
+          <div className="flex flex-row gap-2">
+            <GripVertical ref={drag} className={cn("w-6 h-6 cursor-pointer")} />
+            <Button
+              onClick={() =>
+                deleteStash({ variables: { stash: props.item.id } })
+              }
+              variant={"outline"}
+              size={"icon"}
+              className="text-xs my-auto hover:bg-red-500 hover:text-white"
+            >
+              <X />
+            </Button>
+          </div>
+        </CardTitle>
       </CardHeader>
 
       <CardContent>
@@ -139,7 +207,10 @@ export const StashZone = (props: { item: ListStashFragment }) => {
               {overItems &&
                 overItems.map((item) => (
                   <Card className="p-2">
-                    {item.object} {item.identifier}
+                    <ConditionalStructureRender
+                      object={item.object}
+                      identifier={item.identifier}
+                    />
                   </Card>
                 ))}
             </motion.div>
@@ -161,16 +232,27 @@ export const StashDropZone = () => {
 
   return (
     <Card
-      className="p-3  transition transition-all duration-300"
+      className="p-3  transition transition-all duration-300 @container w-[500px] w-max-xl h-min-xl h-max-xl bg-background text-white shadow-lg rounded-xl"
       data-disableselect
     >
-      <div className="flex flex-row justify-between gap-2">
+      {data?.stashes.length === 0 && (
+        <div className="text-center text-lg text-slate-300">
+          You have not created any stashes yet.
+          <div className="text-sm text-slate-300">
+            Create a new stash to start organizing your items.
+          </div>
+        </div>
+      )}
+      <ContainerGrid fitLength={data?.stashes.length}>
         {data?.stashes.map((stash) => <StashZone item={stash} />)}
+      </ContainerGrid>
+      <div className="justify-center items-center w-full flex mt-2">
         <Button
           onClick={() => createStash({ variables: {} })}
-          className="h-full my-auto"
+          className="text-xs my-auto"
+          size={"sm"}
         >
-          +
+          New Stash
         </Button>
       </div>
     </Card>

@@ -4,13 +4,9 @@ import { Form } from "@/components/ui/form";
 import { notEmpty } from "@/lib/utils";
 import { PortFragment } from "@/rekuest/api/graphql";
 import { usePortForm } from "@/rekuest/hooks/usePortForm";
-import {
-  ArgsContainerProps,
-  EffectWrapper,
-  Port,
-  PortGroup,
-  useWidgetRegistry,
-} from "@jhnnsrs/rekuest-next";
+import { EffectWrapper } from "@/rekuest/widgets/EffectWrapper";
+import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
+
 import { CollapsibleTrigger } from "@radix-ui/react-collapsible";
 import { ChevronUpIcon, DoubleArrowUpIcon } from "@radix-ui/react-icons";
 import { useEffect, useMemo } from "react";

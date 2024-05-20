@@ -1644,13 +1644,21 @@
             "deprecationReason": null
           },
           {
-            "name": "child",
+            "name": "children",
             "description": null,
             "args": [],
             "type": {
-              "kind": "OBJECT",
-              "name": "ChildPort",
-              "ofType": null
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "ChildPort",
+                  "ofType": null
+                }
+              }
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -1675,6 +1683,22 @@
               "kind": "SCALAR",
               "name": "Identifier",
               "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "key",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -1750,26 +1774,6 @@
             },
             "isDeprecated": false,
             "deprecationReason": null
-          },
-          {
-            "name": "variants",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "LIST",
-              "name": null,
-              "ofType": {
-                "kind": "NON_NULL",
-                "name": null,
-                "ofType": {
-                  "kind": "OBJECT",
-                  "name": "ChildPort",
-                  "ofType": null
-                }
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
           }
         ],
         "inputFields": null,
@@ -1796,12 +1800,20 @@
             "deprecationReason": null
           },
           {
-            "name": "child",
+            "name": "children",
             "description": null,
             "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "ChildPortInput",
-              "ofType": null
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "ChildPortInput",
+                  "ofType": null
+                }
+              }
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -1860,6 +1872,22 @@
               "ofType": null
             },
             "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "key",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -1932,26 +1960,6 @@
               }
             },
             "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "variants",
-            "description": null,
-            "type": {
-              "kind": "LIST",
-              "name": null,
-              "ofType": {
-                "kind": "NON_NULL",
-                "name": null,
-                "ofType": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "ChildPortInput",
-                  "ofType": null
-                }
-              }
-            },
-            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -5822,13 +5830,21 @@
             "deprecationReason": null
           },
           {
-            "name": "child",
+            "name": "children",
             "description": null,
             "args": [],
             "type": {
-              "kind": "OBJECT",
-              "name": "ChildPort",
-              "ofType": null
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "ChildPort",
+                  "ofType": null
+                }
+              }
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -6010,26 +6026,6 @@
                 "ofType": {
                   "kind": "OBJECT",
                   "name": "Validator",
-                  "ofType": null
-                }
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "variants",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "LIST",
-              "name": null,
-              "ofType": {
-                "kind": "NON_NULL",
-                "name": null,
-                "ofType": {
-                  "kind": "OBJECT",
-                  "name": "ChildPort",
                   "ofType": null
                 }
               }
@@ -6219,12 +6215,20 @@
             "deprecationReason": null
           },
           {
-            "name": "child",
+            "name": "children",
             "description": null,
             "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "ChildPortInput",
-              "ofType": null
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "ChildPortInput",
+                  "ofType": null
+                }
+              }
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -6413,26 +6417,6 @@
             "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
-          },
-          {
-            "name": "variants",
-            "description": null,
-            "type": {
-              "kind": "LIST",
-              "name": null,
-              "ofType": {
-                "kind": "NON_NULL",
-                "name": null,
-                "ofType": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "ChildPortInput",
-                  "ofType": null
-                }
-              }
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
           }
         ],
         "interfaces": null,
@@ -6479,6 +6463,12 @@
           },
           {
             "name": "LIST",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "MODEL",
             "description": null,
             "isDeprecated": false,
             "deprecationReason": null

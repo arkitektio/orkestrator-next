@@ -38,19 +38,9 @@ fragment ChoiceAssignWidget on ChoiceAssignWidget {
 fragment ChildPortNested on ChildPort {
   __typename
   kind
+  key
   identifier
-  child {
-    kind
-    identifier
-    scope
-    assignWidget {
-      ...AssignWidget
-    }
-    returnWidget {
-      ...ReturnWidget
-    }
-  }
-  variants {
+  children {
     kind
     identifier
     scope
@@ -73,12 +63,10 @@ fragment ChildPortNested on ChildPort {
 fragment ChildPort on ChildPort {
   __typename
   kind
+  key
   identifier
   scope
-  child {
-    ...ChildPortNested
-  }
-  variants {
+  children {
     ...ChildPortNested
   }
   assignWidget {
@@ -152,10 +140,7 @@ fragment Port on Port {
   }
   kind
   identifier
-  child {
-    ...ChildPort
-  }
-  variants {
+  children {
     ...ChildPort
   }
   default

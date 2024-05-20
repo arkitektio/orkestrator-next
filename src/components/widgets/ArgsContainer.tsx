@@ -75,7 +75,11 @@ export const ArgsContainer = ({
     >
       {filledGroups.map((group, index) => {
         return (
-          <Collapsible defaultOpen={!group.hidden} key={index}>
+          <Collapsible
+            defaultOpen={!group.hidden}
+            key={index}
+            className="@container"
+          >
             {group.key != "default" && (
               <CollapsibleTrigger>{group.key}</CollapsibleTrigger>
             )}
@@ -101,7 +105,7 @@ export const ArgsContainer = ({
               })}
             </CollapsibleContent>
           </Collapsible>
-        )
+        );
       })}
     </div>
   );

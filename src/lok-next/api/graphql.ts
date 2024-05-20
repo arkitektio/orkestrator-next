@@ -182,7 +182,7 @@ export type CreateUserInput = {
 };
 
 export type DeleteStashInput = {
-  id: Scalars['String']['input'];
+  stash: Scalars['ID']['input'];
 };
 
 export type DeleteStashItems = {
@@ -320,7 +320,7 @@ export type Mutation = {
   /** Create a new stash */
   createStash: Stash;
   createUser: User;
-  deleteStash: Stash;
+  deleteStash: Scalars['ID']['output'];
   /** Delete items from a stash */
   deleteStashItems: Array<Scalars['ID']['output']>;
   render: Scalars['Fakt']['output'];
@@ -1066,6 +1066,13 @@ export type DeleteStashItemsMutationVariables = Exact<{
 
 
 export type DeleteStashItemsMutation = { __typename?: 'Mutation', deleteStashItems: Array<string> };
+
+export type DeleteStashMutationVariables = Exact<{
+  stash: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteStashMutation = { __typename?: 'Mutation', deleteStash: string };
 
 export type AppsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1817,6 +1824,37 @@ export function useDeleteStashItemsMutation(baseOptions?: Apollo.MutationHookOpt
 export type DeleteStashItemsMutationHookResult = ReturnType<typeof useDeleteStashItemsMutation>;
 export type DeleteStashItemsMutationResult = Apollo.MutationResult<DeleteStashItemsMutation>;
 export type DeleteStashItemsMutationOptions = Apollo.BaseMutationOptions<DeleteStashItemsMutation, DeleteStashItemsMutationVariables>;
+export const DeleteStashDocument = gql`
+    mutation DeleteStash($stash: ID!) {
+  deleteStash(input: {stash: $stash})
+}
+    `;
+export type DeleteStashMutationFn = Apollo.MutationFunction<DeleteStashMutation, DeleteStashMutationVariables>;
+
+/**
+ * __useDeleteStashMutation__
+ *
+ * To run a mutation, you first call `useDeleteStashMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteStashMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteStashMutation, { data, loading, error }] = useDeleteStashMutation({
+ *   variables: {
+ *      stash: // value for 'stash'
+ *   },
+ * });
+ */
+export function useDeleteStashMutation(baseOptions?: Apollo.MutationHookOptions<DeleteStashMutation, DeleteStashMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteStashMutation, DeleteStashMutationVariables>(DeleteStashDocument, options);
+      }
+export type DeleteStashMutationHookResult = ReturnType<typeof useDeleteStashMutation>;
+export type DeleteStashMutationResult = Apollo.MutationResult<DeleteStashMutation>;
+export type DeleteStashMutationOptions = Apollo.BaseMutationOptions<DeleteStashMutation, DeleteStashMutationVariables>;
 export const AppsDocument = gql`
     query Apps {
   apps {

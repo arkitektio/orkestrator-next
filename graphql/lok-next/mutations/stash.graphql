@@ -13,3 +13,7 @@ mutation AddItemsToStash($stash: ID!, $items: [StashItemInput!]!) {
 mutation DeleteStashItems($items: [ID!]!) {
   deleteStashItems(input: { items: $items })
 }
+
+mutation DeleteStash($stash: ID!) {
+  deleteStash(input: { stash: $stash })
+}

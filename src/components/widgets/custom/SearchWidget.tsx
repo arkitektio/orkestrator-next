@@ -1,6 +1,8 @@
 import { SearchField, SearchOptions } from "@/components/fields/SearchField";
 import { SearchAssignWidgetFragment } from "@/rekuest/api/graphql";
-import { InputWidgetProps, useWidgetRegistry } from "@jhnnsrs/rekuest-next";
+import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
+import { InputWidgetProps } from "@/rekuest/widgets/types";
+
 import { useCallback, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 

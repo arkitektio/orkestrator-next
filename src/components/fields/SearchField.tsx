@@ -7,6 +7,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList,
 } from "@/components/ui/command";
 import {
   FormControl,
@@ -25,7 +26,6 @@ import { cn, notEmpty } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { FieldProps } from "./types";
-import { CommandList } from "cmdk";
 
 export type Option = {
   label: string;

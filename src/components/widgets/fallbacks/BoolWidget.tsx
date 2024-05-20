@@ -1,12 +1,9 @@
 import { SwitchField } from "@/components/fields/SwitchField";
 import { usePortValidate } from "@/rekuest/hooks/usePortValidator";
-import { InputWidgetProps } from "@jhnnsrs/rekuest-next";
+import { InputWidgetProps } from "@/rekuest/widgets/types";
 
 export const BoolWidget = (props: InputWidgetProps) => {
-
-  const validate = usePortValidate(props.port)
-
-
+  const validate = usePortValidate(props.port);
 
   return (
     <SwitchField

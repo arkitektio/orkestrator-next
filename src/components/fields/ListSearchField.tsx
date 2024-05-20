@@ -138,9 +138,10 @@ export const ListSearchField = ({
       rules={{ validate: validate }}
       render={({ field }) => (
         <>
-          <FormItem className="flex flex-col">
-            <FormLabel>{label ? label : name}</FormLabel>
-            <Popover>
+          <Popover>
+            <FormItem className="flex flex-col">
+              <FormLabel>{label ? label : name}</FormLabel>
+
               <PopoverTrigger asChild>
                 <FormControl>
                   <Button
@@ -167,74 +168,72 @@ export const ListSearchField = ({
                   </Button>
                 </FormControl>
               </PopoverTrigger>
-              <PopoverContent className="w-[400px] p-0">
-                <Command shouldFilter={false}>
-                  <CommandInput
-                    placeholder={commandPlaceholder}
-                    className="h-9"
-                    onValueChange={(e) => {
-                      query(e);
-                    }}
-                  />
-                  <CommandList>
-                    <CommandEmpty>{noOptionFoundPlaceholder}</CommandEmpty>
-                    {error && (
-                      <CommandGroup heading="Error">
-                        {error && <CommandItem>{error}</CommandItem>}
-                      </CommandGroup>
-                    )}
-                    {options.length > 0 && (
-                      <CommandGroup heading="Search">
-                        {options.filter(notEmpty).map((option) => (
-                          <CommandItem
-                            value={option.value}
-                            key={option.value}
-                            onSelect={() => {
-                              console.log(option.value);
-                              if (field.value == undefined) {
-                                field.onChange([option.value]);
+
+              {description && <FormDescription>{description}</FormDescription>}
+              <FormMessage />
+            </FormItem>
+            <PopoverContent className="w-[400px] p-0">
+              <Command shouldFilter={false} disablePointerSelection={false}>
+                <CommandInput
+                  placeholder={commandPlaceholder}
+                  className="h-9"
+                  onValueChange={(e) => {
+                    query(e);
+                  }}
+                />
+                <CommandEmpty>{noOptionFoundPlaceholder}</CommandEmpty>
+                <CommandList className="z-50 pointer-events-auto">
+                  {options.length > 0 && (
+                    <>
+                      {options.filter(notEmpty).map((option) => (
+                        <CommandItem
+                          value={option.value}
+                          key={option.value}
+                          onSelect={() => {
+                            console.log(option.value);
+                            if (field.value == undefined) {
+                              field.onChange([option.value]);
+                            } else {
+                              if (field.value.includes(option.value)) {
+                                form.setValue(
+                                  name,
+                                  field.value.filter(
+                                    (v: string) => v !== option.value,
+                                  ),
+                                  { shouldValidate: true },
+                                );
                               } else {
-                                if (field.value.includes(option.value)) {
-                                  form.setValue(
-                                    name,
-                                    field.value.filter(
-                                      (v: string) => v !== option.value,
-                                    ),
-                                    { shouldValidate: true },
-                                  );
-                                } else {
-                                  form.setValue(
-                                    name,
-                                    [...field.value, option.value].filter(
-                                      notEmpty,
-                                    ),
-                                    { shouldValidate: true },
-                                  );
-                                }
+                                form.setValue(
+                                  name,
+                                  [...field.value, option.value].filter(
+                                    notEmpty,
+                                  ),
+                                  { shouldValidate: true },
+                                );
                               }
-                            }}
-                          >
-                            {option.label}
-                            <CheckIcon
-                              className={cn(
-                                "ml-auto h-4 w-4",
-                                field.value &&
-                                  field.value.includes(option.value)
-                                  ? "opacity-100"
-                                  : "opacity-0",
-                              )}
-                            />
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    )}
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-            {description && <FormDescription>{description}</FormDescription>}
-            <FormMessage />
-          </FormItem>
+                            }
+                          }}
+                          onClick={() => {
+                            console.log(option.value);
+                          }}
+                        >
+                          {option.label}ff
+                          <CheckIcon
+                            className={cn(
+                              "ml-auto h-4 w-4",
+                              field.value && field.value.includes(option.value)
+                                ? "opacity-100"
+                                : "opacity-0",
+                            )}
+                          />
+                        </CommandItem>
+                      ))}
+                    </>
+                  )}
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </>
       )}
     />

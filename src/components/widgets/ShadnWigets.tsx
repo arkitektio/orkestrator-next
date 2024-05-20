@@ -1,5 +1,4 @@
 import { PortKind } from "@/rekuest/api/graphql";
-import { useWidgetRegistry } from "@jhnnsrs/rekuest-next";
 import { useEffect } from "react";
 import { IntWidget } from "./fallbacks/IntWidget";
 import { SearchWidget } from "./custom/SearchWidget";
@@ -14,6 +13,9 @@ import { IntReturnWidget } from "./returns/fallbacks/IntReturnWidget";
 import { StringReturnWidget } from "./returns/fallbacks/StringReturnWidget";
 import { BoolReturnWidget } from "./returns/fallbacks/BoolReturnWidget";
 import { StructureWidget } from "./fallbacks/StructureWidget";
+import { ModelWidget } from "./fallbacks/ModelWidget";
+import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
+import { DictWidget } from "./fallbacks/DictWidget";
 
 export const ShadnWigets = () => {
   const { registry } = useWidgetRegistry();
@@ -26,6 +28,11 @@ export const ShadnWigets = () => {
     let union = registry.registerInputWidgetFallback(
       PortKind.Union,
       UnionWidget,
+    );
+    let dict = registry.registerInputWidgetFallback(PortKind.Dict, DictWidget);
+    let model = registry.registerInputWidgetFallback(
+      PortKind.Model,
+      ModelWidget,
     );
     let float = registry.registerInputWidgetFallback(
       PortKind.Float,
@@ -60,6 +67,7 @@ export const ShadnWigets = () => {
       union();
       choices();
       structure();
+      model();
     };
   }, []);
 

@@ -1,7 +1,7 @@
 import { SearchField, SearchOptions } from "@/components/fields/SearchField";
 import { notEmpty } from "@/lib/utils";
 import { ChoiceAssignWidgetFragment } from "@/rekuest/api/graphql";
-import { InputWidgetProps } from "@jhnnsrs/rekuest-next";
+import { InputWidgetProps } from "@/rekuest/widgets/types";
 import { useCallback } from "react";
 import { useFormContext } from "react-hook-form";
 

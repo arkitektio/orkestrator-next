@@ -6,10 +6,12 @@ import { PortFragment } from "@/rekuest/api/graphql";
 import { usePortForm } from "@/rekuest/hooks/usePortForm";
 import { EffectWrapper } from "@/rekuest/widgets/EffectWrapper";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
+import { ArgsContainerProps } from "@/rekuest/widgets/tailwind";
+import { submittedDataToRekuestFormat } from "@/rekuest/widgets/utils";
 
 import { CollapsibleTrigger } from "@radix-ui/react-collapsible";
 import { ChevronUpIcon, DoubleArrowUpIcon } from "@radix-ui/react-icons";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export type FilledGroup = PortGroup & {
   ports: Port[];
@@ -36,6 +38,7 @@ export const ArgsContainer = ({
   onToArg,
   onToGlobal,
   registry,
+  path
 }: ArgsContainerProps & {
   onToArg?: (port: PortFragment) => void;
   onToGlobal?: (port: PortFragment, key?: string | undefined) => void;
@@ -101,6 +104,7 @@ export const ArgsContainer = ({
                           port={port}
                           widget={port.assignWidget}
                           options={options}
+                          path={path.concat(port.key)}
                         />
                       </div>
                       <div className="my-auto flex-col flex">
@@ -138,11 +142,13 @@ export const ArgsContainer = ({
 
 export const Constants = (props: {
   ports: PortFragment[];
+  path: string[];
   onSubmit: (data: any) => void;
   overwrites: { [key: string]: any };
   onToArg?: (port: PortFragment) => void;
   onToGlobal?: (port: PortFragment, key?: string | undefined) => void;
 }) => {
+
   const form = usePortForm({
     ports: props.ports,
     overwrites: props.overwrites,
@@ -156,11 +162,20 @@ export const Constants = (props: {
 
   const data = watch();
 
+  const onSubmit = (data: any) => {
+    props.onSubmit(data);
+  }
+
+
   useEffect(() => {
     if (formState.isValid && !isValidating) {
-      props.onSubmit(data);
+      if (props.onSubmit) {
+
+        props.onSubmit(submittedDataToRekuestFormat(data, props.ports));
+      }
     }
-  }, [formState, data, isValidating]);
+  }, [formState, data, isValidating]); 
+
 
   const { registry } = useWidgetRegistry();
 
@@ -168,7 +183,7 @@ export const Constants = (props: {
     <>
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(props.onSubmit)}
+          onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-1"
         >
           <ArgsContainer
@@ -176,6 +191,7 @@ export const Constants = (props: {
             ports={props.ports}
             onToArg={props.onToArg}
             onToGlobal={props.onToGlobal}
+            path={props.path}
           />
         </form>
       </Form>
@@ -193,6 +209,7 @@ export const TestConstants = (props: {
   const form = usePortForm({
     ports: props.ports,
     overwrites: props.overwrites,
+
   });
 
   function onSubmit(data: any) {
@@ -200,6 +217,17 @@ export const TestConstants = (props: {
       props.onSubmit(data);
     }
   }
+
+  const {
+    formState,
+    formState: { isValidating, isValid, errors },
+    
+    watch,
+  } = form;
+
+
+
+
 
   const { registry } = useWidgetRegistry();
 
@@ -212,13 +240,15 @@ export const TestConstants = (props: {
             ports={props.ports}
             onToArg={props.onToArg}
             onToGlobal={props.onToGlobal}
+            path={[]}
           />
-          {props.onSubmit && (
+          {isValid && <div>{props.onSubmit && (
             <button type="submit" className="btn">
               {" "}
               Submit{" "}
             </button>
-          )}
+          )}</div>}
+          {errors && <div>{JSON.stringify(errors)}</div>}
         </form>
       </Form>
     </>

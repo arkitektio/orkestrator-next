@@ -26,133 +26,78 @@ import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { Button } from "@/components/ui/button";
 import { Plus, X } from "lucide-react";
 import { TooltipButton } from "@/components/ui/tooltip-button";
+import { isScalarPort, pathToName } from "@/rekuest/widgets/utils";
 
 const RenderDownWidget = ({
   port,
-  name,
+  path,
 }: {
   port: ChildPortFragment;
-  name: string;
+  path: string[]
 }) => {
   const { registry } = useWidgetRegistry();
   const Widget = registry.getInputWidgetForPort(port);
 
   console.log(port);
-
   return (
     <div className="mt-2">
       <Widget
         port={
-          { ...port, key: name, label: "The Value", __typename: "Port" } as Port
+          { ...port,  __typename: "Port" } as Port
         }
         parentKind={PortKind.List}
         widget={port.assignWidget}
+        path={path}
       />
     </div>
   );
 };
 
-const SubForm = ({
-  valuetype,
-  field,
-}: {
-  valuetype: ChildPortFragment;
-  field: ControllerRenderProps<FieldValues, string>;
-}) => {
-  const form = useForm({
-    defaultValues: field.value,
-  });
-
-  const {
-    register,
-    control,
-    handleSubmit,
-    reset,
-    trigger,
-    setError,
-    watch,
-    ...props
-  } = form;
-
-  const use = watch("use");
-
-  function onSubmit(data: any) {
-    console.log(data);
-    console.log("Changing");
-
-    field.onChange({});
-  }
-
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "__values",
-  });
-
-  useEffect(() => {
-    // TypeScript users
-    // const subscription = watch(() => handleSubmit(onSubmit)())
-    const subscription = watch(handleSubmit(onSubmit));
-    return () => subscription.unsubscribe();
-  }, [handleSubmit, watch]);
-
-  return (
-    <>
-      <Form {...form}>
-        <ContainerGrid fitLength={fields.length}>
-          {fields.map((item, index) => (
-            <Card key={item.id} className="p-3">
-              <RenderDownWidget
-                name={`__values.${index}.value`}
-                port={valuetype}
-              />
-              <Button
-                variant="outline"
-                size={"icon"}
-                className="absolute top-0 right-0 mr-2 mt-2"
-                onClick={() => remove(index)}
-              >
-                <X />
-              </Button>
-            </Card>
-          ))}
-        </ContainerGrid>
-
-        <TooltipButton
-          variant="outline"
-          size="icon"
-          onClick={() => append({ value: undefined })}
-          tooltip="Add new item"
-        >
-          <Plus />
-        </TooltipButton>
-      </Form>
-    </>
-  );
-};
 
 export const SideBySideWidget = ({
   port,
   valuetype,
+  path
 }: InputWidgetProps & { valuetype: ChildPortFragment }) => {
-  const form = useFormContext();
-  const validate = usePortValidate(port);
+
+  const control = useFormContext().control;
+
+  console.log("THE PATH", path)
+
+
+  const { fields, append, remove, } = useFieldArray({
+    control,
+    name: pathToName(path),
+  });
 
   return (
-    <FormField
-      control={form.control}
-      name={port.key}
-      rules={{ validate: validate }}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>{port.label ? port.label : port.key}</FormLabel>
-          <FormControl>
-            <SubForm valuetype={valuetype || []} field={field} />
-          </FormControl>
-          <FormDescription>{port.description}</FormDescription>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+    <ContainerGrid fitLength={fields.length}>
+    {fields.map((item, index) => (
+      <Card key={item.id} className="p-3">
+        <RenderDownWidget
+          port={valuetype}
+          path={path.concat(index.toString(), "__value")}
+        />
+        <Button
+          variant="outline"
+          size={"icon"}
+          className="absolute top-0 right-0 mr-2 mt-2"
+          onClick={() => remove(index)}
+        >
+          <X />
+        </Button>
+
+      </Card>
+    ))}
+     <TooltipButton
+          variant="outline"
+          size="icon"
+          onClick={() => append({__value: undefined})}
+          tooltip="Add new item"
+        >
+          <Plus />
+        </TooltipButton>
+  </ContainerGrid>
   );
 };
 

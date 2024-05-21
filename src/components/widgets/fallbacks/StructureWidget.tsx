@@ -3,9 +3,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PortScope } from "@/rekuest/api/graphql";
 import { usePortValidate } from "@/rekuest/hooks/usePortValidator";
 import { InputWidgetProps } from "@/rekuest/widgets/types";
+import { pathToName } from "@/rekuest/widgets/utils";
 
 export const StructureWidget = (props: InputWidgetProps) => {
-  const validate = usePortValidate(props.port);
 
   return (
     <>
@@ -16,7 +16,7 @@ export const StructureWidget = (props: InputWidgetProps) => {
         </Alert>
       ) : (
         <StringField
-          name={props.port.key}
+          name={pathToName(props.path)}
           label={props.port.label || undefined}
           description={props.port.description || undefined}
         />

@@ -14,6 +14,7 @@ export interface InputWidgetProps<
   widget?: W | null;
   options?: PortOptions;
   parentKind?: PortKind;
+  path: string[];
 }
 
 export type Returns =
@@ -92,6 +93,7 @@ export type LabellablePort = {
 export type PortablePort = LabellablePort & {
   key: string;
   default?: any | null | undefined;
+  validators?: PortFragment["validators"];
 };
 
 export interface WidgetRegistryType {

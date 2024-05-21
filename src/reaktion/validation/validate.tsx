@@ -2,7 +2,8 @@ import { GraphNodeKind } from "@/reaktion/api/graphql";
 import { ValidationError as YupValidationError } from "yup";
 import { FlowEdge, FlowNode } from "../types";
 import { SolvedError, ValidationError, ValidationResult } from "./types";
-import { yupSchemaBuilder } from "@/rekuest/widgets/utils";
+import { buildZodSchema, portToZod, yupSchemaBuilder } from "@/rekuest/widgets/utils";
+import { ZodError } from "zod";
 
 const validateNoEdgeWithItself = (
   previous: ValidationResult,
@@ -266,25 +267,26 @@ export const validateNodeConstants = (
   node: FlowNode,
 ): ValidationResult => {
   console.log("Validating node constants");
-  const schema = yupSchemaBuilder(
+  const schema = buildZodSchema(
     node.data.constants.filter((k) => !(k.key in node.data.globalsMap)),
   ); // Only validate non global constants
   try {
-    schema.validateSync(node.data.constantsMap, { abortEarly: false });
+    
+    schema.parse(node.data.constantsMap);
     return state;
   } catch (e) {
-    console.log("Validation error", e);
-    let validationError = e as YupValidationError;
+    console.log("Validation error", e, node.data.constantsMap);
+    let validationError = e as ZodError;
 
     let newRemainingErrors: ValidationError[] = [];
 
-    validationError.inner.forEach((element) => {
+    validationError.issues.forEach((element) => {
       const path = element.path;
 
       newRemainingErrors.push({
         type: "node",
         id: node.id,
-        path: path,
+        path: path.at(0) || "",
         level: "critical",
         message: element.message,
       });
@@ -316,7 +318,7 @@ export const validateState = (
     initial = { ...initial, ...validated };
   }
 
-  if (options.validateNodeDefaults) {
+  if (options.validateNodeDefaults && false) {
     for (let node of initial.nodes) {
       let validated = validateNodeConstants(initial, node);
       initial = { ...initial, ...validated };

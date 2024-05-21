@@ -129,6 +129,7 @@ export const RekuestMapWidget: React.FC<ArkitektNodeProps> = ({
               onToArg={onToArg}
               onToGlobal={onToGlobal}
               onSubmit={(values) => updateData({ constantsMap: values }, id)}
+              path={[]}
             />
           </div>
         )}

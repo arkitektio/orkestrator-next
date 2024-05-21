@@ -113,7 +113,6 @@ export const SearchField = ({
       });
   }, [name, search]);
 
-  console.log("Option", options);
 
   return (
     <FormField

@@ -132,6 +132,7 @@ export const RekuestFilterWidget: React.FC<RekuestFilterNodeProps> = ({
               onToArg={onToArg}
               onToGlobal={onToGlobal}
               onSubmit={(values) => updateData({ constantsMap: values }, id)}
+              path={[]}
             />
           </div>
         )}

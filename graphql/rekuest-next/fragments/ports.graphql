@@ -59,6 +59,7 @@ fragment ChildPortNested on ChildPort {
     ...ReturnWidget
   }
   description
+  nullable
 }
 
 fragment ChildPort on ChildPort {
@@ -122,6 +123,8 @@ fragment AssignWidget on AssignWidget {
 fragment Validator on Validator {
   function
   dependencies
+  label
+  errorMessage
 }
 
 fragment Port on Port {

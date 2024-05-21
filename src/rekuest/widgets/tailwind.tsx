@@ -14,6 +14,7 @@ export type ArgsContainerProps = {
   ports: (Port | null | undefined)[];
   groups?: (PortGroup | null | undefined)[] | undefined;
   options?: PortOptions | undefined;
+  path: string[];
 };
 
 export type InputContainer = (props: ArgsContainerProps) => JSX.Element;

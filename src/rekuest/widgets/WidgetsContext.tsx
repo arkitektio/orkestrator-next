@@ -36,6 +36,23 @@ const fakeWidgetRegistry: WidgetRegistryType = {
     throw new Error("No registry set");
   },
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 export type WidgetRegistryContextType = {
   registry: WidgetRegistryType;
   setRegistry: (postman: WidgetRegistryType) => void;

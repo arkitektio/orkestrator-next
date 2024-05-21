@@ -96,6 +96,7 @@ export const ArgsContainer = ({
                       port={port}
                       widget={port.assignWidget}
                       options={options}
+                      path={[]}
                     />
                   </EffectWrapper>
                 );

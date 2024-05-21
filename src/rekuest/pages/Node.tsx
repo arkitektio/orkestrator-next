@@ -25,7 +25,7 @@ import {
 } from "@/rekuest/api/graphql";
 import { usePostman, withRekuest } from "@jhnnsrs/rekuest-next";
 import { ClipboardIcon } from "@radix-ui/react-icons";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
 import TemplateCard from "../components/cards/TemplateCard";
@@ -64,6 +64,9 @@ export default asDetailQueryRoute(
     const copyHashToClipboard = useCallback(() => {
       navigator.clipboard.writeText(data?.node?.hash || "");
     }, [data?.node?.hash]);
+
+    const [formData , setFormData] = useState({})
+
 
     return (
       <ModelPageLayout
@@ -111,11 +114,13 @@ export default asDetailQueryRoute(
                 {data?.node?.protocols?.map((p) => p.name)}
               </div>
             </DetailPaneDescription>
-            <TestConstants ports={data?.node?.args || []} overwrites={{}} />
+            <TestConstants ports={data?.node?.args || []} overwrites={{}} onSubmit={setFormData} />
 
             <ListRender array={data?.node?.reservations} title="Reservations">
               {(item, key) => <ReservationCard item={item} key={key} />}
             </ListRender>
+              {JSON.stringify(formData)}
+
             {data?.node?.dependencyGraph && (
               <>
                 <DependencyGraphFlow

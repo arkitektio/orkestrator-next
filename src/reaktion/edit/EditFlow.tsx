@@ -203,16 +203,19 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
           ignoreAction,
         );
       }
+      else {
+        console.log("triggerNodepdate", v);
 
-      setState(
-        (e) =>
-          validateState({
-            ...e,
-            nodes: v,
-          }),
-        mutation,
-        ignoreAction,
-      );
+        setState(
+          (e) =>
+            validateState({
+              ...e,
+              nodes: v,
+            }),
+          mutation,
+          ignoreAction,
+        );
+      }
     },
     [setState],
   );
@@ -237,6 +240,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
           ignoreAction,
         );
       }
+      else {
 
       setState(
         (e) =>
@@ -247,6 +251,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         mutation,
         ignoreAction,
       );
+    }
     },
     [setState],
   );
@@ -280,17 +285,20 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         changes.length == 1 &&
         (changes[0].type == "position" || changes[0].type == "dimensions")
       ) {
+        console.log("Position Change", changes[0]);
         triggerNodepdate(
           applyNodeChanges(changes, state.nodes) as FlowNode[],
           undefined,
           true,
         );
       }
-      triggerNodepdate(
-        applyNodeChanges(changes, state.nodes) as FlowNode[],
-        undefined,
-        false,
-      );
+      else {
+        triggerNodepdate(
+          applyNodeChanges(changes, state.nodes) as FlowNode[],
+          undefined,
+          false,
+        );
+      }
     },
     [triggerNodepdate, state.nodes],
   );
@@ -1215,6 +1223,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                       onSubmit={() =>
                         console.log("setting values here has no impact")
                       }
+                      path={["globals"]}
                     />
                   </CardContent>
                 </Card>
@@ -1312,7 +1321,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                     <SheetTitle>Debug Screen</SheetTitle>
                     <SheetDescription></SheetDescription>
                   </SheetHeader>
-                  <ScrollArea className="h-full">
+                  <ScrollArea className="h-full dark:text-white">
                     <pre>{JSON.stringify(state, null, 2)}</pre>
                   </ScrollArea>
                 </SheetContent>

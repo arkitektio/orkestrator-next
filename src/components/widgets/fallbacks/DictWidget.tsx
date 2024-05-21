@@ -2,7 +2,7 @@ import { InputWidgetProps, Port } from "@/rekuest/widgets/types";
 import { ListChoicesWidget } from "../custom/ListChoicesWidget";
 import { ListSearchWidget } from "../custom/ListSearchWidget";
 import { usePortValidate } from "@/rekuest/hooks/usePortValidator";
-import { ChildPortFragment } from "@/rekuest/api/graphql";
+import { ChildPortFragment, PortKind } from "@/rekuest/api/graphql";
 import { Form, FormField } from "@/components/ui/form";
 import {
   ControllerRenderProps,
@@ -12,142 +12,95 @@ import {
   useFormContext,
 } from "react-hook-form";
 import { useCallback, useEffect } from "react";
-import { portToLabel } from "@/rekuest/widgets/utils";
+import { pathToName, portToLabel } from "@/rekuest/widgets/utils";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { Input } from "@/components/ui/input";
 import { ContainerGrid } from "@/components/layout/ContainerGrid";
 import { Card } from "@/components/ui/card";
 import { StringField } from "@/components/fields/StringField";
+import { Button } from "@/components/ui/button";
+import { TooltipButton } from "@/components/ui/tooltip-button";
+import { Plus, X } from "lucide-react";
+
+
 
 const RenderDownWidget = ({
   port,
-  name,
+  path,
 }: {
   port: ChildPortFragment;
-  name: string;
+  path: string[]
 }) => {
   const { registry } = useWidgetRegistry();
   const Widget = registry.getInputWidgetForPort(port);
 
   console.log(port);
-
   return (
     <div className="mt-2">
       <Widget
         port={
-          { ...port, key: name, label: "The Value", __typename: "Port" } as Port
+          { ...port,  __typename: "Port" } as Port
         }
+        parentKind={PortKind.Dict}
         widget={port.assignWidget}
+        path={path}
       />
     </div>
   );
 };
 
-const SubForm = ({
-  valuetype,
-  field,
-}: {
-  valuetype: ChildPortFragment;
-  field: ControllerRenderProps<FieldValues, string>;
-}) => {
-  const form = useForm({
-    defaultValues: field.value,
-  });
-
-  const {
-    register,
-    control,
-    handleSubmit,
-    reset,
-    trigger,
-    setError,
-    watch,
-    ...props
-  } = form;
-
-  const use = watch("use");
-
-  function onSubmit(data: any) {
-    console.log(data);
-    console.log("Changing");
-
-    field.onChange({});
-  }
-
-  const { fields, append, remove } = useFieldArray<{
-    key: string;
-    value: string;
-  }>({
-    control,
-    name: "__values",
-  });
-
-  useEffect(() => {
-    // TypeScript users
-    // const subscription = watch(() => handleSubmit(onSubmit)())
-    const subscription = watch(handleSubmit(onSubmit));
-    return () => subscription.unsubscribe();
-  }, [handleSubmit, watch]);
-
-  return (
-    <>
-      <Form {...form}>
-        <ContainerGrid fitLength={fields.length}>
-          {fields.map((item, index) => (
-            <Card key={item.id} className="p-4">
-              <StringField
-                name={`__values.${index}.key`}
-                label="The Key"
-                description="The key of this entry"
-                validate={(v) => {
-                  if (!v) {
-                    return "Key is required";
-                  }
-                  console.log(v);
-                  if (fields.filter((f) => f.key === v).length > 1) {
-                    return "Key must be unique";
-                  }
-                }}
-              />
-
-              <RenderDownWidget
-                name={`__values.${index}.value`}
-                label="The Value"
-                port={valuetype}
-                description="The value of this entry"
-              />
-              <button type="button" onClick={() => remove(index)}>
-                Delete
-              </button>
-            </Card>
-          ))}
-        </ContainerGrid>
-        <button type="button" onClick={() => append({ key: "newkey" })}>
-          append
-        </button>
-      </Form>
-    </>
-  );
-};
 
 export const SideBySideWidget = ({
   port,
   valuetype,
+  path
 }: InputWidgetProps & { valuetype: ChildPortFragment }) => {
-  const form = useFormContext();
-  const validate = usePortValidate(port);
+
+  const control = useFormContext().control;
+
+
+
+  const { fields, append, remove, } = useFieldArray({
+    control,
+    name: pathToName(path),
+  });
 
   return (
-    <FormField
-      control={form.control}
-      name={port.key}
-      rules={{ validate: validate }}
-      render={({ field }) => (
-        <SubForm valuetype={valuetype || []} field={field} />
-      )}
-    />
+    <ContainerGrid fitLength={fields.length}>
+    {fields.map((item, index) => (
+      <Card key={item.id} className="p-3">
+        <StringField
+          name={pathToName(path.concat(index.toString(), "__key"))}
+          label="The Key"
+          description="The key of this entry"
+        />
+        <RenderDownWidget
+          port={valuetype}
+          path={path.concat(index.toString(), "__value")}
+        />
+        <Button
+          variant="outline"
+          size={"icon"}
+          className="absolute top-0 right-0 mr-2 mt-2"
+          onClick={() => remove(index)}
+        >
+          <X />
+        </Button>
+
+      </Card>
+    ))}
+     <TooltipButton
+          variant="outline"
+          size="icon"
+          onClick={() => append({__value: undefined})}
+          tooltip="Add new item"
+        >
+          <Plus />
+        </TooltipButton>
+  </ContainerGrid>
   );
 };
+
 
 export const DictWidget = (props: InputWidgetProps) => {
   const validate = usePortValidate(props.port);

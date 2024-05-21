@@ -113,14 +113,12 @@ export const portEffectToInput = (widget: PortEffectFragment): EffectInput => {
 //
 
 export const cleanChild = (port: ChildPortFragment): ChildPortInput => {
-  const { __typename, child, variants, assignWidget, returnWidget, ...rest } =
-    port;
+  const { __typename, children, assignWidget, returnWidget, ...rest } = port;
 
   const input: ChildPortInput = {
     ...rest,
-    variants:
-      variants && variants.map((c) => cleanChild(c as ChildPortFragment)),
-    child: child && cleanChild(child as ChildPortFragment),
+    children:
+      children && children.map((c) => cleanChild(c as ChildPortFragment)),
     assignWidget: assignWidget && assignWidgetToInput(assignWidget),
     returnWidget: returnWidget && returnWidgetToInput(returnWidget),
   };
@@ -129,13 +127,12 @@ export const cleanChild = (port: ChildPortFragment): ChildPortInput => {
 };
 
 export const convertPortToInput = (port: PortFragment): PortInput => {
-  const { __typename, child, variants, assignWidget, returnWidget, ...rest } =
-    port;
+  const { __typename, children, assignWidget, returnWidget, ...rest } = port;
 
   const input: PortInput = {
     ...rest,
     effects: rest.effects?.map(portEffectToInput),
-    child: child && cleanChild(child),
+    children: children && children.map((c) => cleanChild(c)),
     assignWidget: assignWidget && assignWidgetToInput(assignWidget),
     returnWidget: returnWidget && returnWidgetToInput(returnWidget),
   };

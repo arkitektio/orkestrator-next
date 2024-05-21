@@ -13,6 +13,7 @@ export interface InputWidgetProps<
   port: PortFragment;
   widget?: W | null;
   options?: PortOptions;
+  parentKind?: PortKind;
 }
 
 export type Returns =
@@ -81,6 +82,7 @@ export interface Ward {
 }
 
 export type LabellablePort = {
+  key: string;
   kind: PortKind;
   identifier?: string;
   nullable?: boolean;

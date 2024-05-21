@@ -16,7 +16,6 @@ import {
   StreamItemInput,
 } from "@/reaktion/api/graphql";
 import { convertPortToInput } from "@/rekuest/utils";
-import { portToDefaults } from "@jhnnsrs/rekuest-next";
 import { v4 as uuidv4 } from "uuid";
 import {
   EdgeFragement,

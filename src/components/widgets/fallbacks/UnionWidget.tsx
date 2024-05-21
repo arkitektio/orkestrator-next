@@ -1,5 +1,6 @@
 import { SearchField, SearchOptions } from "@/components/fields/SearchField";
 import { Form, FormField } from "@/components/ui/form";
+import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { notEmpty } from "@/lib/utils";
 import { ChildPortFragment } from "@/rekuest/api/graphql";
 import { usePortValidate } from "@/rekuest/hooks/usePortValidator";
@@ -27,7 +28,7 @@ const RenderDownWidget = ({ port }: { port: ChildPortFragment }) => {
 
   return (
     <Widget
-      port={{ ...port, key: "value" } as unknown}
+      port={{ ...port, key: "value", label: "" } as unknown}
       widget={port.assignWidget}
     />
   );
@@ -85,7 +86,17 @@ const SubForm = ({
   return (
     <>
       <Form {...form}>
-        <SearchField name="use" search={search} />
+        <div className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground w-full mb-1">
+          {choices.map((c) => (
+            <div
+              className="cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow"
+              data-state={use == c.value && "active"}
+              onClick={() => form.setValue("use", c.value)}
+            >
+              {c.label}
+            </div>
+          ))}
+        </div>
         {chosenVariant && <RenderDownWidget port={chosenVariant} />}
       </Form>
     </>

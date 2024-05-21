@@ -144,7 +144,7 @@ export const CreateableSearchField = ({
       render={({ field }) => (
         <>
           <FormItem className="flex flex-col">
-            <FormLabel>{label ? label : name}</FormLabel>
+            <FormLabel>{label != undefined ? label : name}</FormLabel>
             <Popover>
               <PopoverTrigger asChild>
                 <FormControl>

@@ -30,6 +30,18 @@ export const portToLabel = (port: LabellablePort): string => {
 
 import * as Yup from "yup";
 
+export const buildModelSchema = (ports: LabellablePort[]) => {
+  return Yup.object(
+    ports.reduce(
+      (prev, curr) => {
+        prev[curr.key] = portToValidation(curr);
+        return prev;
+      },
+      {} as { [key: string]: any },
+    ),
+  );
+};
+
 export const portToValidation = (port: LabellablePort): Yup.AnySchema => {
   let baseType;
   switch (port?.kind) {
@@ -65,14 +77,23 @@ export const portToValidation = (port: LabellablePort): Yup.AnySchema => {
     case PortKind.List:
       let child = port.children?.at(0);
       if (!child) {
-        baseType = Yup.array().typeError("Please provide a valid list");
+        baseType = Yup.array().typeError(
+          "This port is not configured correctly",
+        );
         break;
       }
 
       baseType = Yup.array()
         .of(portToValidation(child))
-        .typeError("Please provide a valid list");
+        .typeError("The list is not valid");
       break;
+    case PortKind.Date:
+      baseType = Yup.date().typeError("Please provide a valid date");
+      break;
+    case PortKind.Model:
+      baseType = buildModelSchema(port.children?.filter(notEmpty) || []);
+      break;
+
     default:
       baseType = Yup.string();
       break;

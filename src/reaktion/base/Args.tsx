@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { portToLabel } from "@jhnnsrs/rekuest-next";
+import { portToLabel } from "@/rekuest/widgets/utils";
 
 export const Args = ({
   instream,

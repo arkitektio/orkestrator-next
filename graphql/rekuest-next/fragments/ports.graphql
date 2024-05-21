@@ -58,6 +58,7 @@ fragment ChildPortNested on ChildPort {
   returnWidget {
     ...ReturnWidget
   }
+  description
 }
 
 fragment ChildPort on ChildPort {
@@ -76,6 +77,7 @@ fragment ChildPort on ChildPort {
     ...ReturnWidget
   }
   nullable
+  description
 }
 
 fragment EffectDependency on EffectDependency {

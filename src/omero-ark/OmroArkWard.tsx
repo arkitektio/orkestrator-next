@@ -1,6 +1,6 @@
+import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { gql } from "@apollo/client";
 import { useOmeroArk } from "@jhnnsrs/omero-ark";
-import { useWidgetRegistry } from "@jhnnsrs/rekuest-next";
 import { useEffect } from "react";
 
 export const OmeroArkWard: React.FC<{

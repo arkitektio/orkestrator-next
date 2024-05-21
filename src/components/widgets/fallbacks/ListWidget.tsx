@@ -2,7 +2,15 @@ import { InputWidgetProps, Port } from "@/rekuest/widgets/types";
 import { ListChoicesWidget } from "../custom/ListChoicesWidget";
 import { ListSearchWidget } from "../custom/ListSearchWidget";
 import { usePortValidate } from "@/rekuest/hooks/usePortValidator";
-import { Form, FormField } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import {
   ControllerRenderProps,
   FieldValues,
@@ -10,11 +18,14 @@ import {
   useForm,
   useFormContext,
 } from "react-hook-form";
-import { ChildPortFragment } from "@/rekuest/api/graphql";
+import { ChildPortFragment, PortKind } from "@/rekuest/api/graphql";
 import { ContainerGrid } from "@/components/layout/ContainerGrid";
 import { Card } from "@/components/ui/card";
 import { useEffect } from "react";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
+import { Button } from "@/components/ui/button";
+import { Plus, X } from "lucide-react";
+import { TooltipButton } from "@/components/ui/tooltip-button";
 
 const RenderDownWidget = ({
   port,
@@ -34,6 +45,7 @@ const RenderDownWidget = ({
         port={
           { ...port, key: name, label: "The Value", __typename: "Port" } as Port
         }
+        parentKind={PortKind.List}
         widget={port.assignWidget}
       />
     </div>
@@ -88,20 +100,31 @@ const SubForm = ({
       <Form {...form}>
         <ContainerGrid fitLength={fields.length}>
           {fields.map((item, index) => (
-            <Card key={item.id} className="p-4">
+            <Card key={item.id} className="p-3">
               <RenderDownWidget
                 name={`__values.${index}.value`}
                 port={valuetype}
               />
-              <button type="button" onClick={() => remove(index)}>
-                Delete
-              </button>
+              <Button
+                variant="outline"
+                size={"icon"}
+                className="absolute top-0 right-0 mr-2 mt-2"
+                onClick={() => remove(index)}
+              >
+                <X />
+              </Button>
             </Card>
           ))}
         </ContainerGrid>
-        <button type="button" onClick={() => append({ value: undefined })}>
-          append
-        </button>
+
+        <TooltipButton
+          variant="outline"
+          size="icon"
+          onClick={() => append({ value: undefined })}
+          tooltip="Add new item"
+        >
+          <Plus />
+        </TooltipButton>
       </Form>
     </>
   );
@@ -120,7 +143,14 @@ export const SideBySideWidget = ({
       name={port.key}
       rules={{ validate: validate }}
       render={({ field }) => (
-        <SubForm valuetype={valuetype || []} field={field} />
+        <FormItem>
+          <FormLabel>{port.label ? port.label : port.key}</FormLabel>
+          <FormControl>
+            <SubForm valuetype={valuetype || []} field={field} />
+          </FormControl>
+          <FormDescription>{port.description}</FormDescription>
+          <FormMessage />
+        </FormItem>
       )}
     />
   );

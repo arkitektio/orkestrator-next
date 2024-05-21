@@ -2,7 +2,11 @@ import { SearchField, SearchOptions } from "@/components/fields/SearchField";
 import { Card } from "@/components/ui/card";
 import { Form, FormField } from "@/components/ui/form";
 import { notEmpty } from "@/lib/utils";
-import { ChildPortFragment, PortFragment } from "@/rekuest/api/graphql";
+import {
+  ChildPortFragment,
+  PortFragment,
+  PortKind,
+} from "@/rekuest/api/graphql";
 import { usePortValidate } from "@/rekuest/hooks/usePortValidator";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { InputWidgetProps } from "@/rekuest/widgets/types";
@@ -46,10 +50,12 @@ const SubForm = ({
   port,
   children,
   field,
+  parentKind,
 }: {
   port: PortFragment | ChildPortFragment;
   children: ChildPortFragment[];
   field: ControllerRenderProps<FieldValues, string>;
+  parentKind?: PortKind;
 }) => {
   const form = useForm({
     defaultValues: field.value,
@@ -82,19 +88,31 @@ const SubForm = ({
   return (
     <>
       <Form {...form}>
-        <Card className="p-4">
-          <h3 className="text-lg font-semibold">{port.label || port.key}</h3>
+        {parentKind !== PortKind.List ? (
+          <Card className="p-4">
+            <h3 className="text-lg font-semibold">{port.label || port.key}</h3>
 
-          {children.map((port, i) => (
-            <RenderDownWidget port={port} key={i} />
-          ))}
-        </Card>
+            {children.map((port, i) => (
+              <RenderDownWidget port={port} key={i} />
+            ))}
+          </Card>
+        ) : (
+          <>
+            {children.map((port, i) => (
+              <RenderDownWidget port={port} key={i} />
+            ))}
+          </>
+        )}
       </Form>
     </>
   );
 };
 
-const ModelWidget: React.FC<InputWidgetProps> = ({ port, widget }) => {
+const ModelWidget: React.FC<InputWidgetProps> = ({
+  port,
+  widget,
+  parentKind,
+}) => {
   const form = useFormContext();
   const validate = usePortValidate(port);
 
@@ -108,6 +126,7 @@ const ModelWidget: React.FC<InputWidgetProps> = ({ port, widget }) => {
           port={port}
           children={port.children?.filter(notEmpty) || []}
           field={field}
+          parentKind={parentKind}
         />
       )}
     />

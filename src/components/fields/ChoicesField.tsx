@@ -42,10 +42,12 @@ export const ChoicesField = (props: FieldProps & { options: Option[] }) => {
     <FormField
       control={form.control}
       name={props.name}
-      rules={{validate: props.validate}}
+      rules={{ validate: props.validate }}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{props.name ? props.label : props.name}</FormLabel>
+          <FormLabel>
+            {props.label != undefined ? props.label : props.name}
+          </FormLabel>
           <FormControl>
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>

@@ -1,7 +1,4 @@
-import { Input } from "@/components/ui/input";
-import { InputWidgetProps, ReturnWidgetProps } from "@jhnnsrs/rekuest-next";
 import {
-  Form,
   FormControl,
   FormDescription,
   FormField,
@@ -9,6 +6,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { useFormContext } from "react-hook-form";
 import { FieldProps } from "./types";
 
@@ -18,10 +16,12 @@ export const FloatField = (props: FieldProps & { placeholder?: string }) => {
     <FormField
       control={form.control}
       name={props.name}
-      rules={{validate: props.validate}}
+      rules={{ validate: props.validate }}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{props.name ? props.label : props.name}</FormLabel>
+          <FormLabel>
+            {props.label != undefined ? props.label : props.name}
+          </FormLabel>
           <FormControl>
             <Input
               placeholder={

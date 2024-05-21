@@ -17,11 +17,13 @@ export const IntField = (props: FieldProps & { placeholder?: string }) => {
   return (
     <FormField
       control={form.control}
-      rules={{validate: props.validate}}
+      rules={{ validate: props.validate }}
       name={props.name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{props.label ? props.label : props.name}</FormLabel>
+          <FormLabel>
+            {props.label != undefined ? props.label : props.name}
+          </FormLabel>
           <FormControl>
             <Input
               placeholder={

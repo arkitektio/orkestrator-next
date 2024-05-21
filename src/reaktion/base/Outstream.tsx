@@ -4,7 +4,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { PortFragment } from "@/rekuest/api/graphql";
-import { portToLabel } from "@jhnnsrs/rekuest-next";
+import { portToLabel } from "@/rekuest/widgets/utils";
 import { useState } from "react";
 import { Handle, Position } from "reactflow";
 

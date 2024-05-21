@@ -20,7 +20,6 @@ import { OutStream } from "@/reaktion/base/Outstream";
 import { ReactiveImplementation } from "@/reaktion/api/graphql";
 import React from "react";
 import { ReactiveNodeData, ReactiveNodeProps } from "../../types";
-import { portToLabel } from "@jhnnsrs/rekuest-next";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -30,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { useEditRiver } from "../context";
 import { useReactFlow, useUpdateNodeInternals } from "reactflow";
 import { NodeDescription } from "@jhnnsrs/rekuest";
+import { portToLabel } from "@/rekuest/widgets/utils";
 
 export type ShapeProps = {
   implementation: ReactiveImplementation;
@@ -147,25 +147,24 @@ export const Reorder = ({ data }: ShapeProps) => {
           <Tooltip>
             <TooltipTrigger>
               <>
-              <CardTitle className="text-sm font-light">
-                Reorders 
-              </CardTitle>
-              <CardDescription>
-              {data.constantsMap.map && <>
-              
-              
-              {Object.keys(data.constantsMap.map).map((key) => (
-                <div className="text-xs"> {data.ins.at(0).at(key)?.kind} to {data.outs.at(0).at(data.constantsMap.map[key])?.kind}</div>
-              ))}
-              </>}
-              </CardDescription>
-              
+                <CardTitle className="text-sm font-light">Reorders</CardTitle>
+                <CardDescription>
+                  {data.constantsMap.map && (
+                    <>
+                      {Object.keys(data.constantsMap.map).map((key) => (
+                        <div className="text-xs">
+                          {" "}
+                          {data.ins.at(0).at(key)?.kind} to{" "}
+                          {data.outs.at(0).at(data.constantsMap.map[key])?.kind}
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </CardDescription>
               </>
             </TooltipTrigger>
             <TooltipContent>
-              <CardDescription className="text-xs">
-                Just a 
-              </CardDescription>
+              <CardDescription className="text-xs">Just a</CardDescription>
             </TooltipContent>
           </Tooltip>
         </CardHeader>

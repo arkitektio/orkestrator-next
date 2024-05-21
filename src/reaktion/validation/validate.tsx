@@ -1,12 +1,8 @@
 import { GraphNodeKind } from "@/reaktion/api/graphql";
-import { yupSchemaBuilder } from "@jhnnsrs/rekuest-next";
 import { ValidationError as YupValidationError } from "yup";
 import { FlowEdge, FlowNode } from "../types";
-import {
-  SolvedError,
-  ValidationError,
-  ValidationResult
-} from "./types";
+import { SolvedError, ValidationError, ValidationResult } from "./types";
+import { yupSchemaBuilder } from "@/rekuest/widgets/utils";
 
 const validateNoEdgeWithItself = (
   previous: ValidationResult,

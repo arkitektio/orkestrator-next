@@ -16,10 +16,12 @@ export const TimeField = (props: FieldProps & { placeholder?: string }) => {
     <FormField
       control={form.control}
       name={props.name}
-      rules={{validate: props.validate}}
+      rules={{ validate: props.validate }}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{props.name ? props.label : props.name}</FormLabel>
+          <FormLabel>
+            {props.label != undefined ? props.label : props.name}
+          </FormLabel>
           <FormControl>
             <Input
               placeholder={props.placeholder ? props.placeholder : "Enter Time"}

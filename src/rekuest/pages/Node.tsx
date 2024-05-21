@@ -23,7 +23,7 @@ import {
   useConstantNodeQuery,
   useDetailNodeQuery,
 } from "@/rekuest/api/graphql";
-import { portToLabel, usePostman, withRekuest } from "@jhnnsrs/rekuest-next";
+import { usePostman, withRekuest } from "@jhnnsrs/rekuest-next";
 import { ClipboardIcon } from "@radix-ui/react-icons";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
@@ -31,6 +31,7 @@ import { useParams } from "react-router-dom";
 import TemplateCard from "../components/cards/TemplateCard";
 import ReservationCard from "../components/cards/ReservationCard";
 import { DependencyGraphFlow } from "../components/dependencyGraph/DependencyGraph";
+import { portToLabel } from "../widgets/utils";
 
 export const ReserveForm = (props: { node: string }) => {
   const { reserve } = usePostman();

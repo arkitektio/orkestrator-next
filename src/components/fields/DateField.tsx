@@ -25,10 +25,12 @@ export const DateField = (props: FieldProps) => {
     <FormField
       control={form.control}
       name={props.name}
-      rules={{validate: props.validate}}
+      rules={{ validate: props.validate }}
       render={({ field }) => (
         <FormItem className="flex flex-col">
-          <FormLabel>{props.label ? props.label : props.name}</FormLabel>
+          <FormLabel>
+            {props.label != undefined ? props.label : props.name}
+          </FormLabel>
           <Popover>
             <PopoverTrigger asChild>
               <FormControl>

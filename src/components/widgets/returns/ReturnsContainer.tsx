@@ -1,4 +1,6 @@
-import { Port, PortGroup, ReturnContainerProps } from "@jhnnsrs/rekuest-next";
+import { Port } from "@/port-next/api/graphql";
+import { ReturnContainerProps } from "@/rekuest/widgets/tailwind";
+import { PortGroup } from "@/rekuest/widgets/types";
 
 export type FilledGroup = PortGroup & {
   ports: Port[];

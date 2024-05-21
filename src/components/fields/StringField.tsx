@@ -20,7 +20,9 @@ export const StringField = (props: FieldProps & { placeholder?: string }) => {
       rules={{ validate: props.validate }}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{props.label ? props.label : props.name}</FormLabel>
+          <FormLabel>
+            {props.label != undefined ? props.label : props.name}
+          </FormLabel>
           <FormControl>
             <Input
               placeholder={props.placeholder ? props.placeholder : "Enter.."}

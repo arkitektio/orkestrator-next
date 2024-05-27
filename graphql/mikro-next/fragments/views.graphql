@@ -36,9 +36,16 @@ fragment RGBView on RGBView {
     id
     name
   }
-  rScale
-  gScale
-  bScale
+  image {
+    id
+    store {
+      ...ZarrStore
+    }
+  }
+  colorMap
+  contrastLimitMin
+  contrastLimitMax
+  gamma
   fullColour
 }
 

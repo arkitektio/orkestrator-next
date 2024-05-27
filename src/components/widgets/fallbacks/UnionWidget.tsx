@@ -9,7 +9,7 @@ import React from "react";
 import {
   ControllerRenderProps,
   FieldValues,
-  useFormContext
+  useFormContext,
 } from "react-hook-form";
 
 export type UnionValue = {
@@ -22,7 +22,7 @@ const RenderDownWidget = ({
   path,
 }: {
   port: ChildPortFragment;
-  path: string[]
+  path: string[];
 }) => {
   const { registry } = useWidgetRegistry();
   const Widget = registry.getInputWidgetForPort(port);
@@ -31,9 +31,7 @@ const RenderDownWidget = ({
   return (
     <div className="mt-2">
       <Widget
-        port={
-          { ...port,  __typename: "Port" } as Port
-        }
+        port={{ ...port, __typename: "Port" } as Port}
         parentKind={PortKind.Union}
         widget={port.assignWidget}
         path={path}
@@ -42,17 +40,15 @@ const RenderDownWidget = ({
   );
 };
 
-
 const SubForm = ({
   variants,
   field,
-  path
+  path,
 }: {
   variants: ChildPortFragment[];
   field: ControllerRenderProps<FieldValues, string>;
   path: string[];
 }) => {
-
   const form = useFormContext();
 
   const chosenVariant = field.value && variants[field.value.__use];
@@ -64,23 +60,27 @@ const SubForm = ({
     value: i.toString(),
   }));
 
-
   return (
     <>
-        <div className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground w-full mb-1">
-          {chosenVariant ? portToLabel(chosenVariant) : "Choose a variant"}
-          
-          {choices.map((c) => (
-            <div
-              className="cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow"
-              data-state={field.value == c.value && "active"}
-              onClick={() => form.setValue(pathToName(path), {__use: c.value, __value: undefined})}
-            >
-              {c.label} {c.value}
-            </div>
-          ))}
-        </div>
-        {chosenVariant && <RenderDownWidget port={chosenVariant} path={path.concat("__value")} />}
+      <div className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground w-full mb-1">
+        {choices.map((c) => (
+          <div
+            className="cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow"
+            data-state={field.value && field.value.__use == c.value && "active"}
+            onClick={() =>
+              form.setValue(pathToName(path), {
+                __use: c.value,
+                __value: undefined,
+              })
+            }
+          >
+            {c.label}
+          </div>
+        ))}
+      </div>
+      {chosenVariant && (
+        <RenderDownWidget port={chosenVariant} path={path.concat("__value")} />
+      )}
     </>
   );
 };

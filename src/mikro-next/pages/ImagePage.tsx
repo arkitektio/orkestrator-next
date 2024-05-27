@@ -46,6 +46,7 @@ import AcquisitionViewCard from "../components/cards/AcquisitionViewCard";
 import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { TwoDRGBRender } from "../components/render/TwoDRGBRender";
 
 export type IRepresentationScreenProps = {};
 
@@ -83,6 +84,9 @@ export default asDetailQueryRoute(
                   ratio={aspectRatio}
                   className=" group overflow-hidden rounded rounded-md shadow shadow-xl relative"
                 >
+                  <div className="absolute top-0 right-0">
+                    <TwoDViewController zSize={z} tSize={t} cSize={c} />
+                  </div>
                   <TabsContent
                     value="raw"
                     className={"h-full w-full mt-0 rounded rounded-md "}
@@ -94,9 +98,6 @@ export default asDetailQueryRoute(
                       />
                     )}
                   </TabsContent>
-                  <div className="absolute top-0 right-0">
-                    <TwoDViewController zSize={z} tSize={t} cSize={c} />
-                  </div>
                   {data?.image?.renders?.map((render, index) => (
                     <TabsContent key={index} value={render.id}>
                       {render.__typename == "Snapshot" && (
@@ -105,6 +106,15 @@ export default asDetailQueryRoute(
                       {render.__typename == "Video" && (
                         <VideoPanel video={render} />
                       )}
+                    </TabsContent>
+                  ))}
+                  {data?.image?.rgbContexts?.map((context, index) => (
+                    <TabsContent
+                      key={index}
+                      value={"context" + context.id}
+                      className={"h-full w-full mt-0 rounded rounded-md "}
+                    >
+                      <TwoDRGBRender context={context} />
                     </TabsContent>
                   ))}
                 </AspectRatio>
@@ -158,6 +168,11 @@ export default asDetailQueryRoute(
                     {data?.image?.renders?.map((render, i) => (
                       <TabsTrigger key={i} value={render.id}>
                         {render.__typename}
+                      </TabsTrigger>
+                    ))}
+                    {data?.image?.rgbContexts?.map((context, i) => (
+                      <TabsTrigger key={i} value={"context" + context.id}>
+                        {context.name}
                       </TabsTrigger>
                     ))}
                   </TabsList>

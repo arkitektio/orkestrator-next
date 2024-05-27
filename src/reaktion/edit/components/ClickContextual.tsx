@@ -26,7 +26,11 @@ import { Tooltip } from "@radix-ui/react-tooltip";
 import { ArrowDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { ClickContextualParams, FlowNode } from "../../types";
+import {
+  ClickContextualParams,
+  FlowNode,
+  ReactiveNodeSuggestions,
+} from "../../types";
 import { useEditRiver } from "../context";
 import { ContextualContainer } from "./ContextualContainer";
 
@@ -105,12 +109,6 @@ export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
       </form>
     </Form>
   );
-};
-
-export type ReactiveNodeSuggestions = {
-  node: FlowNode;
-  title: string;
-  description: string;
 };
 
 const clickReactiveNodes = (search: string): ReactiveNodeSuggestions[] => {

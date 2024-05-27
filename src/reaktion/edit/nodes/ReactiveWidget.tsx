@@ -139,6 +139,29 @@ export const Just = ({ data }: ShapeProps) => {
   );
 };
 
+export const Add = ({ data }: ShapeProps) => {
+  return (
+    <>
+      <Card className="rounded-md border-blue-400/40 shadow-blue-400/20 dark:border-blue-300 dark:shadow-blue/20 shadow-xl">
+        <CardHeader className="p-1">
+          <Tooltip>
+            <TooltipTrigger>
+              <CardTitle className="text-sm font-light">
+                Add <pre>{data.constantsMap.value}</pre>
+              </CardTitle>
+            </TooltipTrigger>
+            <TooltipContent>
+              <CardDescription className="text-xs">
+                Just add {data.constantsMap.value}
+              </CardDescription>
+            </TooltipContent>
+          </Tooltip>
+        </CardHeader>
+      </Card>
+    </>
+  );
+};
+
 export const Reorder = ({ data }: ShapeProps) => {
   return (
     <>
@@ -297,7 +320,7 @@ const shapeMap: { [key in ReactiveImplementation]: React.FC<ShapeProps> } = {
   [ReactiveImplementation.BufferComplete]: Default,
   [ReactiveImplementation.Chunk]: Default,
   [ReactiveImplementation.Omit]: Default,
-  [ReactiveImplementation.Add]: Default,
+  [ReactiveImplementation.Add]: Add,
   [ReactiveImplementation.All]: Default,
   [ReactiveImplementation.And]: Default,
   [ReactiveImplementation.BufferUntil]: Default,

@@ -67,7 +67,7 @@ export const XArrayProvider: React.FC<{
   children: React.ReactNode;
 }> = (props) => {
   const { client } = useMikroNext();
-  const { fakts} = useFakts();
+  const { fakts } = useFakts();
 
   const getSelectionAsImageView = async (
     zarrStore: ZarrStoreFragment,
@@ -76,7 +76,12 @@ export const XArrayProvider: React.FC<{
     if (fakts?.datalayer?.endpoint_url === undefined) {
       throw Error("No datalayer found");
     }
-    let path = fakts.datalayer.endpoint_url + "/" + zarrStore.bucket + "/" + zarrStore.key;
+    let path =
+      fakts.datalayer.endpoint_url +
+      "/" +
+      zarrStore.bucket +
+      "/" +
+      zarrStore.key;
 
     let x = await client?.mutate<
       RequestAccessMutation,
@@ -103,7 +108,8 @@ export const XArrayProvider: React.FC<{
     let array = (await group.getItem("data")) as ZarrArray;
 
     let indexer = new BasicIndexer(selection, array);
-    const outShape = indexer.shape;
+    const outShape = indexer.shape.filter((x) => x !== 1) as number[];
+    console.log("THE OUTSHAPE", outShape);
     if (outShape.length !== 2) {
       throw Error(
         `Only 2D selections are supported, got ${outShape.length}D selection.`,
@@ -116,7 +122,7 @@ export const XArrayProvider: React.FC<{
     }
 
     const outDtype = array.dtype;
-    const outSize = indexer.shape.reduce((x, y) => x * y, 1);
+    const outSize = outShape.reduce((x, y) => x * y, 1);
 
     const out = new NestedArray(null, outShape, outDtype);
     if (outSize === 0) {
@@ -167,6 +173,7 @@ export const XArrayProvider: React.FC<{
     colormap: AvailableColormap,
     cmin?: number,
     cmax?: number,
+    alpha?: number,
   ) => {
     let data = view.data;
     let imgwidth = view.width;
@@ -178,7 +185,7 @@ export const XArrayProvider: React.FC<{
       nshades: 256,
       colormap: colormap,
       format: "rgba",
-      alpha: 255,
+      alpha: alpha || 1,
     });
 
     let iData = new Array(imgwidth * imgheight * 4);
@@ -201,7 +208,7 @@ export const XArrayProvider: React.FC<{
         iData[z] = color[0];
         iData[z + 1] = color[1];
         iData[z + 2] = color[2];
-        iData[z + 3] = 255;
+        iData[z + 3] = color[3];
         z += 4;
       }
     }

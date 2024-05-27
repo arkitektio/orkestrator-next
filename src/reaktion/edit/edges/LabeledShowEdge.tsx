@@ -65,6 +65,7 @@ export const LabeledShowEdge: React.FC<VanillaEdgeProps> = (props) => {
         }}
         path={edgePath}
         markerEnd={markerEnd}
+        interactionWidth={20}
       />
       <EdgeLabelRenderer>
         {(isConnecting || showEdgeLabels) && (

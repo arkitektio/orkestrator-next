@@ -4,6 +4,7 @@ import {
   ClickContextualParams,
   ConnectContextualParams,
   DropContextualParams,
+  EdgeContextualParams,
   FlowNode,
   NodeData,
 } from "../types";
@@ -54,6 +55,7 @@ export type ShowRiverContextType = {
     node: FlowNode,
     params: ConnectContextualParams,
   ) => void;
+  addEdgeContextualNode: (node: FlowNode, params: EdgeContextualParams) => void;
 };
 
 export const EditRiverContext = React.createContext<ShowRiverContextType>({
@@ -77,6 +79,7 @@ export const EditRiverContext = React.createContext<ShowRiverContextType>({
   moveVoidtoOutstream: () => {},
   showNodeErrors: true,
   addContextualNode: () => {},
+  addEdgeContextualNode: () => {},
   addClickNode: () => {},
   addConnectContextualNode(node, params) {
     console.log(node, params);

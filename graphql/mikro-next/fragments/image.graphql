@@ -43,6 +43,9 @@ fragment Image on Image {
   fileOrigins {
     ...ListFile
   }
+  rgbContexts {
+    ...ListRGBContext
+  }
 }
 
 fragment ListImage on Image {

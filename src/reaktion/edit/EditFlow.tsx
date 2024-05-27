@@ -55,6 +55,7 @@ import {
   Connection,
   Controls,
   EdgeChange,
+  Node,
   NodeChange,
   OnConnectEnd,
   OnConnectStartParams,
@@ -70,6 +71,7 @@ import {
   ClickContextualParams,
   ConnectContextualParams,
   DropContextualParams,
+  EdgeContextualParams,
   EdgeTypes,
   FlowEdge,
   FlowNode,
@@ -103,6 +105,7 @@ import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "@/components/ui/use-toast";
+import { EdgeContextual } from "./components/EdgeContextual";
 
 const nodeTypes: NodeTypes = {
   RekuestFilterNode: RekuestFilterWidget,
@@ -159,6 +162,9 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
   const [showClickContextual, setShowClickContextual] = useState<
     undefined | ClickContextualParams
   >();
+  const [showEdgeContextual, setShowEdgeContextual] = useState<
+    undefined | EdgeContextualParams
+  >();
   const [showConnectContextual, setShowConnectContextual] = useState<
     undefined | ConnectContextualParams
   >();
@@ -202,8 +208,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
           mutation,
           ignoreAction,
         );
-      }
-      else {
+      } else {
         console.log("triggerNodepdate", v);
 
         setState(
@@ -239,19 +244,17 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
           mutation,
           ignoreAction,
         );
+      } else {
+        setState(
+          (e) =>
+            validateState({
+              ...e,
+              edges: v,
+            }),
+          mutation,
+          ignoreAction,
+        );
       }
-      else {
-
-      setState(
-        (e) =>
-          validateState({
-            ...e,
-            edges: v,
-          }),
-        mutation,
-        ignoreAction,
-      );
-    }
     },
     [setState],
   );
@@ -291,8 +294,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
           undefined,
           true,
         );
-      }
-      else {
+      } else {
         triggerNodepdate(
           applyNodeChanges(changes, state.nodes) as FlowNode[],
           undefined,
@@ -619,6 +621,10 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       setShowConnectContextual(undefined);
     }
 
+    if (showEdgeContextual) {
+      setShowEdgeContextual(undefined);
+    }
+
     if (showClickContextual) {
       console.log("Click Hide Event");
       setShowClickContextual(undefined);
@@ -641,6 +647,62 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       });
 
       console.log("showClickContextual", showClickContextual);
+    }
+  };
+
+  const onEdgeClick = (event: React.MouseEvent, edge: Edge) => {
+    console.log("onEdgeClick", event);
+    // If we have a contextual menu open, we should close it
+    if (showContextual) {
+      if (Math.abs(showContextual.event.timeStamp - event.timeStamp) > 0.001) {
+        setShowContextual(undefined);
+        console.log("Click Hide Event");
+        return;
+      } else {
+        console.log("Contextual Post Event");
+        return;
+      }
+    }
+
+    if (showConnectContextual) {
+      setShowConnectContextual(undefined);
+    }
+
+    if (showClickContextual) {
+      console.log("Click Hide Event");
+      setShowClickContextual(undefined);
+      return;
+    }
+
+    const reactFlowBounds = reactFlowWrapper?.current?.getBoundingClientRect();
+    console.log("reactFlowBounds", reactFlowBounds);
+    if (reactFlowInstance && reactFlowBounds) {
+      let position = {
+        x: event.clientX - (reactFlowBounds?.left || 0),
+        y: event.clientY - (reactFlowBounds?.top || 0),
+      };
+
+      console.log("onPaneClick", position);
+
+      let leftNode = reactFlowInstance.getNode(edge.source);
+      let rightNode = reactFlowInstance.getNode(edge.target);
+
+      if (!leftNode || !rightNode) {
+        console.log("no left or right node found");
+        return;
+      }
+
+      setShowEdgeContextual({
+        edgeId: edge.id,
+        event: event,
+        position: position,
+        leftNode: leftNode,
+        leftStream: handleToStream(edge.sourceHandle),
+        rightNode: rightNode,
+        rightStream: handleToStream(edge.targetHandle),
+      });
+
+      console.log("showClickContextual", showEdgeContextual);
     }
   };
 
@@ -680,6 +742,12 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
   };
 
   const removeEdge = (id: string) => {
+    if (showEdgeContextual) {
+      if (showEdgeContextual.edgeId == id) {
+        setShowEdgeContextual(undefined);
+      }
+    }
+
     setState((e) =>
       validateState({ ...e, edges: e.edges.filter((el) => el.id !== id) }),
     );
@@ -850,6 +918,58 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
 
     setState((e) => newState);
     setShowConnectContextual(undefined);
+  };
+
+  const addEdgeContextualNode = (
+    stagingNode: FlowNode,
+    params: EdgeContextualParams,
+  ) => {
+    if (!reactFlowInstance) {
+      console.log("no reactFlowInstance found");
+      return;
+    }
+
+    let newState = { ...state };
+
+    let leftNodeDims = { width: 200, height: 100 };
+    let rightNodeDims = { width: 200, height: 100 };
+    // Create a Zip Node
+
+    const centerLeft = {
+      x: params.leftNode.position.x + leftNodeDims.width / 2,
+      y: params.leftNode.position.y + leftNodeDims.height / 2,
+    };
+    const centerRight = {
+      x: params.rightNode.position.x + rightNodeDims.width / 2,
+      y: params.rightNode.position.y + rightNodeDims.height / 2,
+    };
+
+    const position = calculateMidpoint(centerLeft, centerRight);
+
+    newState.nodes = newState.nodes.concat({ ...stagingNode, position });
+
+    // Adding the new edges
+    newState.edges = newState.edges.concat(
+      createVanillaTransformEdge(
+        nodeIdBuilder(),
+        params.leftNode.id,
+        params.leftStream,
+        stagingNode.id,
+        0,
+      ),
+      createVanillaTransformEdge(
+        nodeIdBuilder(),
+        stagingNode.id,
+        0,
+        params.rightNode.id,
+        params.rightStream,
+      ),
+    );
+
+    newState.edges = newState.edges.filter((e) => e.id != params.edgeId);
+
+    setState((e) => newState);
+    setShowEdgeContextual(undefined);
   };
 
   const addContextualNode = (
@@ -1113,7 +1233,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       const flowInstance = reactFlowInstance;
 
       items.map((i, index) => {
-        const id = i.id;
+        const id = i.object;
 
         const type = i.identifier;
 
@@ -1186,6 +1306,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         showNodeErrors: showNodeErrors,
         addContextualNode: addContextualNode,
         addConnectContextualNode,
+        addEdgeContextualNode,
         removeGlobal,
         state: state,
         showEdgeLabels: showEdgeLabels,
@@ -1251,6 +1372,9 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
             {showConnectContextual && (
               <ConnectContextual params={showConnectContextual} />
             )}
+            {showEdgeContextual && (
+              <EdgeContextual params={showEdgeContextual} />
+            )}
           </AnimatePresence>
           <Graph
             nodes={state.nodes}
@@ -1261,6 +1385,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
             onConnectEnd={onConnectEnd}
             onConnect={onConnect}
             onPaneClick={onPaneClick}
+            onEdgeClick={onEdgeClick}
             elementsSelectable={true}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}

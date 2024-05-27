@@ -28,6 +28,7 @@ export type XArrayContextType = {
     colormap: AvailableColormap,
     cmin?: number,
     cmax?: number,
+    alpha?: number,
   ) => Promise<ImageData>;
 };
 

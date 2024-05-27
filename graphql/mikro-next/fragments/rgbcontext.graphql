@@ -10,4 +10,7 @@ fragment RGBContext on RGBContext {
 fragment ListRGBContext on RGBContext {
   id
   name
+  views {
+    ...RGBView
+  }
 }

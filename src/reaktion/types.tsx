@@ -175,6 +175,16 @@ export type ClickContextualParams = {
   event: MouseEvent | TouchEvent;
 };
 
+export type EdgeContextualParams = {
+  edgeId: string;
+  position: { x: number; y: number };
+  event: MouseEvent | TouchEvent;
+  leftNode: FlowNode;
+  leftStream: number;
+  rightNode: FlowNode;
+  rightStream: number;
+};
+
 export type ConnectContextualParams = {
   connection: Connection;
   leftNode: FlowNode;
@@ -182,4 +192,10 @@ export type ConnectContextualParams = {
   rightNode: FlowNode;
   rightStream: number;
   position: { x: number; y: number };
+};
+
+export type ReactiveNodeSuggestions = {
+  node: FlowNode;
+  title: string;
+  description: string;
 };

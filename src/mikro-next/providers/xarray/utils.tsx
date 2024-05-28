@@ -12,6 +12,8 @@ import { ChunkProjection } from "zarr/types/core/types";
 import { DtypeString } from "zarr/types/types";
 import { isContiguousSelection, isTotalSlice } from "./indexing";
 import { joinUrlParts } from "./store";
+import { getItem } from "localforage";
+import { getBufferFromCache, addBufferToCache } from "./cache";
 
 addCodec(Blosc.codecId, () => Blosc);
 
@@ -136,12 +138,32 @@ export function getTypedArrayCtr(dtype: DtypeString) {
   return ctr;
 }
 
+const processChunk = (array: ZarrArray, buffer: ArrayBuffer): TypedArray => {
+  let meta = array.meta;
+  let dtype = array.dtype;
+  let out = ensureByteArray(buffer);
+
+  if (dtype.includes(">")) {
+    byteSwapInplace(new (getTypedArrayCtr(dtype))(out.buffer));
+  }
+
+  return new (getTypedArrayCtr(dtype))(out.buffer);
+};
+
 export const downloadChunk = async (
   client: AwsClient,
   url: string,
   array: ZarrArray,
-) => {
-  //console.log(x);
+): Promise<TypedArray> => {
+  const cacheKey = url;
+  let cachedData = await getBufferFromCache(cacheKey);
+
+  if (cachedData) {
+    console.log("Loaded chunk from cache");
+    return processChunk(array, cachedData);
+  }
+
+  console.log("Downloading chunk from URL");
   let data = await client.fetch(url);
   let out = ensureByteArray(await data.arrayBuffer());
   let meta = array.meta;
@@ -157,7 +179,10 @@ export const downloadChunk = async (
     // We flip bytes in-place to avoid creating an extra copy of the decoded buffer.
     byteSwapInplace(new (getTypedArrayCtr(dtype))(out.buffer));
   }
-  //console.log(out);
+
+  // Cache the ArrayBuffer
+  await addBufferToCache(cacheKey, out.buffer);
+
   return new (getTypedArrayCtr(dtype))(out.buffer);
 };
 

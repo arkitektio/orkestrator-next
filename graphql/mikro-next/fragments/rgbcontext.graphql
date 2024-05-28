@@ -5,6 +5,7 @@ fragment RGBContext on RGBContext {
   }
   pinned
   name
+  blending
 }
 
 fragment ListRGBContext on RGBContext {
@@ -13,4 +14,5 @@ fragment ListRGBContext on RGBContext {
   views {
     ...RGBView
   }
+  blending
 }

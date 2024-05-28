@@ -46,6 +46,8 @@ fragment RGBView on RGBView {
   contrastLimitMin
   contrastLimitMax
   gamma
+  rescale
+  active
   fullColour
 }
 

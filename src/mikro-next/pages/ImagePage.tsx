@@ -47,6 +47,7 @@ import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { TwoDRGBRender } from "../components/render/TwoDRGBRender";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
 export type IRepresentationScreenProps = {};
 
@@ -77,7 +78,14 @@ export default asDetailQueryRoute(
         }
       >
         <TwoDViewProvider initialC={0} initialT={0} initialZ={0}>
-          <Tabs defaultValue="raw" className="relative">
+          <Tabs
+            defaultValue={
+              data?.image?.rgbContexts?.at(0)?.id
+                ? "context" + data?.image?.rgbContexts?.at(0)?.id
+                : "raw"
+            }
+            className="relative"
+          >
             <div className="flex @2xl:flex-row-reverse flex-col rounded-md gap-4 mt-2">
               <div className="flex-1  overflow-hidden ">
                 <AspectRatio
@@ -114,7 +122,18 @@ export default asDetailQueryRoute(
                       value={"context" + context.id}
                       className={"h-full w-full mt-0 rounded rounded-md "}
                     >
-                      <TwoDRGBRender context={context} />
+                      <Dialog>
+                        <DialogTrigger>Do it</DialogTrigger>
+                        <TwoDRGBRender context={context} />
+                        <DialogContent className="p-3 min-w-[90vw] min-h-[90vh] max-w-[90vw] max-h-[90vh]">
+                          <AspectRatio
+                            ratio={aspectRatio}
+                            className=" group overflow-hidden rounded rounded-md shadow shadow-xl relative"
+                          >
+                            <TwoDRGBRender context={context} />
+                          </AspectRatio>
+                        </DialogContent>
+                      </Dialog>
                     </TabsContent>
                   ))}
                 </AspectRatio>

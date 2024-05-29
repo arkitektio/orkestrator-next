@@ -1,0 +1,13 @@
+
+
+query RenderTree($id: ID!) {
+  renderTree(id: $id) {
+    ...RenderTree
+  }
+}
+
+query RenderTrees($filters: RenderTreeFilter, $pagination: OffsetPaginationInput) {
+  renderTrees(filters: $filters, pagination: $pagination) {
+    ...ListRenderTree
+  }
+}

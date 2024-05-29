@@ -10,6 +10,8 @@ import StagesPage from "./pages/StagesPage";
 import StandardPane from "./panes/StandardPane";
 import { MikroNextGuard } from "@jhnnsrs/mikro-next";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import RenderTreePage from "./pages/RenderTreePage";
+import RenderTreesPage from "./pages/RenderTreesPage";
 interface Props {}
 
 export const MikroNextModule: React.FC<Props> = (props) => {
@@ -23,6 +25,8 @@ export const MikroNextModule: React.FC<Props> = (props) => {
           <Route path="datasets/:id" element={<DatasetPage />} />
           <Route path="datasets" element={<DatasetsPage />} />
           <Route path="stages/:id" element={<StagePage />} />
+          <Route path="rendertrees/:id" element={<RenderTreePage />} />
+          <Route path="rendertrees" element={<RenderTreesPage />} />
           <Route path="stages" element={<StagesPage />} />
           <Route path="*" element={<> NOTHING</>} />
         </Routes>

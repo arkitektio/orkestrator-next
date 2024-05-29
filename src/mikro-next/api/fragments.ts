@@ -20,6 +20,11 @@
       "Snapshot",
       "Video"
     ],
+    "RenderNode": [
+      "ContextNode",
+      "GridNode",
+      "OverlayNode"
+    ],
     "View": [
       "AcquisitionView",
       "AffineTransformationView",

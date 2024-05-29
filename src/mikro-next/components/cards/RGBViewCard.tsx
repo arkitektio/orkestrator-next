@@ -15,16 +15,7 @@ const TheCard = ({ view, mates }: Props) => {
       <ViewCard view={view}>
         <CardHeader>
           <CardTitle>
-            {" "}
-            <MikroRGBContext.DetailLink
-              className={({ isActive } /*  */) =>
-                "z-10 font-bold text-md mb-2 cursor-pointer " +
-                (isActive ? "text-primary-300" : "")
-              }
-              object={view.context.id}
-            >
-              {view.context.name}
-            </MikroRGBContext.DetailLink>
+            {view.name}
           </CardTitle>
           <div
             className="w-2 h-2 rounded rounded-full"

@@ -46,8 +46,10 @@ import AcquisitionViewCard from "../components/cards/AcquisitionViewCard";
 import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { TwoDRGBRender } from "../components/render/TwoDRGBRender";
+import { TwoDRGBRender, TwoDRGBRenderDetail } from "../components/render/TwoDRGBRender";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 
 export type IRepresentationScreenProps = {};
 
@@ -84,6 +86,7 @@ export default asDetailQueryRoute(
                 ? "context" + data?.image?.rgbContexts?.at(0)?.id
                 : "raw"
             }
+            id={data?.image?.id}
             className="relative"
           >
             <div className="flex @2xl:flex-row-reverse flex-col rounded-md gap-4 mt-2">
@@ -120,18 +123,16 @@ export default asDetailQueryRoute(
                     <TabsContent
                       key={index}
                       value={"context" + context.id}
-                      className={"h-full w-full mt-0 rounded rounded-md "}
+                      className={"h-full w-full mt-0 rounded rounded-md relative"}
                     >
                       <Dialog>
-                        <DialogTrigger>Do it</DialogTrigger>
                         <TwoDRGBRender context={context} />
+                        <DialogTrigger className="absolute top-1 right-1 text-white" asChild>
+                          <Button variant={"outline"} size={"icon"}><X /></Button>
+                        </DialogTrigger>
                         <DialogContent className="p-3 min-w-[90vw] min-h-[90vh] max-w-[90vw] max-h-[90vh]">
-                          <AspectRatio
-                            ratio={aspectRatio}
-                            className=" group overflow-hidden rounded rounded-md shadow shadow-xl relative"
-                          >
-                            <TwoDRGBRender context={context} />
-                          </AspectRatio>
+                          
+                            <TwoDRGBRenderDetail context={context} />
                         </DialogContent>
                       </Dialog>
                     </TabsContent>

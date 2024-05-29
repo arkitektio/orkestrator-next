@@ -1,0 +1,6 @@
+
+mutation CreateRGBContext($input: CreateRGBContextInput!) {
+  createRgbContext(input: $input) {
+   ...RGBContext
+  }
+}

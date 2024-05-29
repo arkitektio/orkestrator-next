@@ -3,12 +3,24 @@ fragment RGBContext on RGBContext {
   views {
     ...RGBView
   }
+  image {
+    id
+    store {
+      ...ZarrStore
+    }
+  }
   pinned
   name
   blending
 }
 
 fragment ListRGBContext on RGBContext {
+  image {
+    id
+    store {
+      ...ZarrStore
+    }
+  }
   id
   name
   views {

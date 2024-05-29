@@ -32,10 +32,11 @@ fragment AffineTransformationView on AffineTransformationView {
 fragment RGBView on RGBView {
   ...View
   id
-  context {
+  contexts {
     id
     name
   }
+  name
   image {
     id
     store {

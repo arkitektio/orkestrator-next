@@ -17,7 +17,7 @@ export const Image = ({ src, blurhash, style, className }: ImageProps) => {
     if (blurhash) {
       const decoded = decode(blurhash, 32, 32);
 
-      const canvas = document.createElement("canvas");
+      const canvas = document.createElement("canvas")
       canvas.width = 32;
       canvas.height = 32;
       const ctx = canvas.getContext("2d");

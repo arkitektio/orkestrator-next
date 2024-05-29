@@ -3,6 +3,7 @@ import { MateFinder } from "../../../mates/types";
 import { ListImageFragment } from "../../api/graphql";
 import { MikroImage } from "@/linkers";
 import { Image } from "@/components/ui/image";
+import { useResolve } from "@/datalayer/hooks/useResolve";
 
 interface ImageCardProps {
   image: ListImageFragment;
@@ -10,7 +11,7 @@ interface ImageCardProps {
 }
 
 const ImageCard = ({ image, mates }: ImageCardProps) => {
-  const { s3resolve } = useDatalayer();
+  const resolve = useResolve();
 
   return (
     <MikroImage.Smart
@@ -26,12 +27,12 @@ const ImageCard = ({ image, mates }: ImageCardProps) => {
     >
       {image.latestSnapshot?.store.presignedUrl && (
         <Image
-          src={s3resolve(image.latestSnapshot?.store.presignedUrl)}
+          src={resolve(image.latestSnapshot?.store.presignedUrl)}
           style={{ filter: "brightness(0.7)" }}
           className="object-cover h-full w-full absolute top-0 left-0 rounded"
         />
       )}
-      <div className="px-2 py-2 h-full w-full absolute top-0 left-0 bg-opacity-20 bg-background hover:bg-opacity-10 transition-all ease-in-out duration-200 truncate">
+      <div className="px-2 py-2 h-full w-full absolute top-0 left-0 bg-opacity-20  hover:bg-opacity-10 transition-all ease-in-out duration-200 truncate">
         <MikroImage.DetailLink
           className={({ isActive } /*  */) =>
             "z-10 font-bold text-md mb-2 cursor-pointer " +
@@ -40,6 +41,10 @@ const ImageCard = ({ image, mates }: ImageCardProps) => {
           object={image.id}
         >
           {image?.name}
+
+      {image.latestSnapshot && (
+        <> Has snapshot</>
+      )}
         </MikroImage.DetailLink>
       </div>
     </MikroImage.Smart>

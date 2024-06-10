@@ -41,10 +41,6 @@ const ImageCard = ({ image, mates }: ImageCardProps) => {
           object={image.id}
         >
           {image?.name}
-
-      {image.latestSnapshot && (
-        <> Has snapshot</>
-      )}
         </MikroImage.DetailLink>
       </div>
     </MikroImage.Smart>

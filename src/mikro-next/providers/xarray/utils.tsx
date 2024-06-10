@@ -14,6 +14,7 @@ import { isContiguousSelection, isTotalSlice } from "./indexing";
 import { joinUrlParts } from "./store";
 import { getItem } from "localforage";
 import { getBufferFromCache, addBufferToCache } from "./cache";
+import { tr } from "date-fns/locale";
 
 addCodec(Blosc.codecId, () => Blosc);
 
@@ -154,6 +155,7 @@ export const downloadChunk = async (
   client: AwsClient,
   url: string,
   array: ZarrArray,
+  abo?: AbortSignal,
 ): Promise<TypedArray> => {
   const cacheKey = url;
   let cachedData = await getBufferFromCache(cacheKey);
@@ -164,7 +166,7 @@ export const downloadChunk = async (
   }
 
   console.log("Downloading chunk from URL");
-  let data = await client.fetch(url);
+  let data = await client.fetch(url, { signal: abo });
   let out = ensureByteArray(await data.arrayBuffer());
   let meta = array.meta;
   let dtype = array.dtype;
@@ -179,6 +181,9 @@ export const downloadChunk = async (
     // We flip bytes in-place to avoid creating an extra copy of the decoded buffer.
     byteSwapInplace(new (getTypedArrayCtr(dtype))(out.buffer));
   }
+  if (abo?.aborted) {
+    throw new Error("Download aborted");
+  }
 
   // Cache the ArrayBuffer
   await addBufferToCache(cacheKey, out.buffer);
@@ -191,13 +196,14 @@ export const getChunk = async (
   chunkCoords: number[],
   array: ZarrArray,
   path: string,
+  abo?: AbortSignal,
 ) => {
   const url = joinUrlParts(
     path,
     array.keyPrefix + chunkCoords.join(array.meta.dimension_separator ?? "."),
   );
 
-  return await downloadChunk(aws, url, array);
+  return await downloadChunk(aws, url, array, abo);
 };
 
 export const getChunkItem = async (
@@ -205,8 +211,15 @@ export const getChunkItem = async (
   proj: ChunkProjection,
   array: ZarrArray,
   path: string,
+  abortSignal?: AbortSignal,
 ) => {
-  const rawChunk = await getChunk(aws, proj.chunkCoords, array, path);
+  const rawChunk = await getChunk(
+    aws,
+    proj.chunkCoords,
+    array,
+    path,
+    abortSignal,
+  );
   const decodedChunk = new NestedArray(
     rawChunk,
     array.meta.chunks,

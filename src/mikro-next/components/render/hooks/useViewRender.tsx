@@ -53,7 +53,7 @@ export const downloadSelectionFromStore = async (
     service: "s3",
   });
 
-  console.log(await aws.fetch(path + "/.zattrs"));
+  console.log(await aws.fetch(path + "/.zattrs", { signal: abortSignal }));
 
   let store = new S3Store(path, aws);
 
@@ -76,7 +76,7 @@ export const downloadSelectionFromStore = async (
   let promises = [];
 
   for (const proj of indexer.iter()) {
-    promises.push(getChunkItem(aws, proj, array, path));
+    promises.push(getChunkItem(aws, proj, array, path, abortSignal));
   }
 
   let chunkPairs = await Promise.all(promises);
@@ -236,6 +236,7 @@ const downloadView = async (
   t: number,
   z: number,
   view: RgbViewFragment,
+  signal?: AbortSignal,
 ) => {
   let endpoint_url = (fakts?.datalayer as any)?.endpoint_url;
   if (endpoint_url === undefined) {
@@ -248,6 +249,7 @@ const downloadView = async (
   >({
     mutation: RequestAccessDocument,
     variables: { store: view.image.store.id },
+    context: { fetchOptions: { signal } },
   });
   let data = x?.data;
 
@@ -255,7 +257,7 @@ const downloadView = async (
     throw Error("No credentials loaded");
   }
 
-  return await renderView(data.requestAccess, endpoint_url, view, t, z);
+  return await renderView(data.requestAccess, endpoint_url, view, t, z, signal);
 };
 
 export const useViewRenderFunction = () => {
@@ -263,9 +265,14 @@ export const useViewRenderFunction = () => {
   const { fakts } = useFakts();
 
   const renderView = useCallback(
-    async (view: RgbViewFragment, t: number, z: number) => {
+    async (
+      view: RgbViewFragment,
+      t: number,
+      z: number,
+      signal?: AbortSignal,
+    ) => {
       const cacheKey = `renderedView-${view.image.store.id}(${slicesToString(viewToSlices(view, t, z))})-rescale:${view.rescale}-${view.colorMap}$`;
-      let cachedImageData = await getImageDataFromCache(cacheKey);
+      let cachedImageData = await getImageDataFromCache(cacheKey, signal);
 
       if (cachedImageData) {
         console.log("Loaded rendered view from cache");
@@ -280,7 +287,7 @@ export const useViewRenderFunction = () => {
         throw Error("No fakts found");
       }
 
-      const imageData = await downloadView(client, fakts, t, z, view);
+      const imageData = await downloadView(client, fakts, t, z, view, signal);
       await addImageDataToCache(cacheKey, imageData);
 
       return imageData;

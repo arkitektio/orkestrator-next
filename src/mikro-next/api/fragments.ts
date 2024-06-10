@@ -23,7 +23,8 @@
     "RenderNode": [
       "ContextNode",
       "GridNode",
-      "OverlayNode"
+      "OverlayNode",
+      "SplitNode"
     ],
     "View": [
       "AcquisitionView",

@@ -9,8 +9,11 @@ import {
 import { useFormContext } from "react-hook-form";
 import { Switch } from "../ui/switch";
 import { FieldProps } from "./types";
+import { cn } from "@/lib/utils";
 
-export const SwitchField = (props: FieldProps & { placeholder?: string }) => {
+export const SwitchField = (
+  props: FieldProps & { placeholder?: string; className?: string },
+) => {
   const form = useFormContext();
   return (
     <FormField
@@ -19,8 +22,13 @@ export const SwitchField = (props: FieldProps & { placeholder?: string }) => {
       rules={{ validate: props.validate }}
       render={({ field }) => (
         <FormItem>
-          <div className="flex flex-row items-center justify-between w-full">
-            <FormLabel>
+          <div
+            className={cn(
+              "flex flex-row items-center justify-between w-full",
+              props.className,
+            )}
+          >
+            <FormLabel className="mr-2">
               {props.label != undefined ? props.label : props.name}
             </FormLabel>
 

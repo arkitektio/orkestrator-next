@@ -1,25 +1,60 @@
-import { ReactNode, createContext } from "react";
-import { useContext } from "react-resizable-panels/dist/declarations/src/vendor/react";
+import {
+  ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { App } from "./types";
+import { ApolloClient } from "@apollo/client";
+import { Manifest, useFakts } from "@jhnnsrs/fakts";
+import { useHerre } from "@jhnnsrs/herre";
+import { createKabinetClient } from "@/kabinet/lib/KabinetClient";
+import possibleTypes from "@/kabinet/api/fragments";
 
 export type AppContext = {
-  app: App;
+  manifest: Manifest;
+  clients: { [key: string]: ApolloClient<any> };
 };
 
 export const ArkitektContext = createContext<AppContext>({
-  app: undefined as unknown as App,
+  manifest: undefined as unknown as Manifest,
+  clients: {},
 });
 export const useArkitekt = () => useContext(ArkitektContext);
 
 export const ArkitektProvider = ({
   children,
-  app,
+  manifest,
 }: {
   children: ReactNode;
-  app: App;
+  manifest: Manifest;
 }) => {
+  const { fakts } = useFakts();
+
+  const { token } = useHerre();
+
+  const [context, setContext] = useState<AppContext>({
+    manifest: manifest,
+    clients: {},
+  });
+
+  useEffect(() => {
+    if (fakts && token && fakts.kabinet) {
+      let x = createKabinetClient({
+        endpointUrl: fakts.kabinet.endpoint_url,
+        wsEndpointUrl: fakts.kabinet.ws_endpoint_url,
+        retrieveToken: () => token,
+        possibleTypes: possibleTypes.possibleTypes,
+        secure: false,
+      });
+
+      setContext({ manifest: manifest, clients: { kabinet: x } });
+    }
+  }, [fakts, token]);
+
   return (
-    <ArkitektContext.Provider value={{ app: app }}>
+    <ArkitektContext.Provider value={context}>
       {children}
     </ArkitektContext.Provider>
   );

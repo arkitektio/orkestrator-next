@@ -5,12 +5,6 @@ fragment Release on Release {
     identifier
   }
   scopes
-  setups {
-    id
-    flavour {
-      ...ListFlavour
-    }
-  }
   colour
   description
 }

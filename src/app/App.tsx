@@ -16,6 +16,7 @@ import { NotFound } from "./components/fallbacks/NotFound";
 import { NotLoggedIn } from "./components/fallbacks/NotLoggedIn";
 import { NotConnected } from "./components/fallbacks/NotConnected";
 import { Stash } from "@/lok-next/components/stash/Stash";
+import KabinetModule from "@/kabinet/KabinetModule";
 // Entrypoint of the application.
 // We provide two main routers, one for the public routes, and one for the private routes.
 export const protect = (component: React.ReactNode) => {
@@ -44,6 +45,7 @@ function App() {
           <Route path="mikro/*" element={protect(<MikroNextModule />)} />
           <Route path="rekuest/*" element={protect(<RekuestNextModule />)} />
           <Route path="fluss/*" element={protect(<ReaktionModule />)} />
+          <Route path="kabinet/*" element={protect(<KabinetModule />)} />
           <Route path="port-next/*" element={protect(<PortNextModule />)} />
           <Route path="omero-ark/*" element={protect(<OmeroArkModule />)} />
           <Route path="lok/*" element={protect(<LokNextModule />)} />

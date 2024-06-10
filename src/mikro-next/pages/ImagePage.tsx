@@ -1,59 +1,44 @@
+import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
-import {
-  ContainerGrid,
-  ResponsiveContainerGrid,
-} from "@/components/layout/ContainerGrid";
+import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
 import { ListRender } from "@/components/layout/ListRender";
-import { PageLayout } from "@/components/layout/PageLayout";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import {
   DetailPane,
   DetailPaneContent,
   DetailPaneHeader,
   DetailPaneTitle,
 } from "@/components/ui/pane";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MikroDataset, MikroImage } from "@/linkers";
 import { UserInfo } from "@/lok-next/components/protected/UserInfo";
+import { TwoDViewProvider } from "@/providers/view/ViewProvider";
 import { withMikroNext } from "@jhnnsrs/mikro-next";
-import React from "react";
-import { useParams } from "react-router";
+import { HobbyKnifeIcon, PlusIcon } from "@radix-ui/react-icons";
 import Timestamp from "react-timestamp";
 import { useGetImageQuery, usePinImageMutation } from "../api/graphql";
+import AcquisitionViewCard from "../components/cards/AcquisitionViewCard";
 import ChannelViewCard from "../components/cards/ChannelViewCard";
 import FileCard from "../components/cards/FileCard";
 import ImageMetricCard from "../components/cards/ImageMetricCard";
 import LabelViewCard from "../components/cards/LabelViewCard";
 import OpticsViewCard from "../components/cards/OpticsViewCard";
-import WellPositionViewCard from "../components/cards/WellPositionViewCard";
+import RGBViewCard from "../components/cards/RGBViewCard";
 import TransformationViewCard from "../components/cards/TransformationViewCard";
+import WellPositionViewCard from "../components/cards/WellPositionViewCard";
 import SnapshotPanel from "../components/panels/SnapshotPanel";
 import VideoPanel from "../components/panels/VideoPanel";
-import { TwoDOffcanvas, TwoDViewCanvas } from "../components/render/TwoDRender";
+import { TwoDViewController } from "../components/render/Controller";
+import { TwoDViewCanvas } from "../components/render/TwoDRender";
+import { RGBD, TwoDRGBThreeRenderDetail } from "../components/render/TwoDThree";
 import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { PinToggle } from "../components/ui/PinToggle";
 import { AddImageViewForm } from "../forms/AddImageViewForm";
-import RGBViewCard from "../components/cards/RGBViewCard";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { HobbyKnifeIcon, PlusIcon } from "@radix-ui/react-icons";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
-import { Komments } from "@/lok-next/components/komments/Komments";
-import { TwoDViewProvider, ViewProvider } from "@/providers/view/ViewProvider";
-import { TwoDViewController } from "../components/render/Controller";
-import AcquisitionViewCard from "../components/cards/AcquisitionViewCard";
-import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import {
-  TwoDRGBRender,
-  TwoDRGBRenderDetail,
-} from "../components/render/TwoDRGBRender";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
-import { RGBD, TwoDRGBThreeRenderDetail } from "../components/render/TwoDThree";
 
 export type IRepresentationScreenProps = {};
 
@@ -102,27 +87,6 @@ export default asDetailQueryRoute(
                   <div className="absolute top-0 right-0">
                     <TwoDViewController zSize={z} tSize={t} cSize={c} />
                   </div>
-                  <TabsContent
-                    value="raw"
-                    className={"h-full w-full mt-0 rounded rounded-md "}
-                  >
-                    {data?.image?.store && (
-                      <TwoDViewCanvas
-                        store={data?.image?.store}
-                        colormap={"viridis"}
-                      />
-                    )}
-                  </TabsContent>
-                  {data?.image?.renders?.map((render, index) => (
-                    <TabsContent key={index} value={render.id}>
-                      {render.__typename == "Snapshot" && (
-                        <SnapshotPanel image={render} />
-                      )}
-                      {render.__typename == "Video" && (
-                        <VideoPanel video={render} />
-                      )}
-                    </TabsContent>
-                  ))}
                   {data?.image?.rgbContexts?.map((context, index) => (
                     <TabsContent
                       key={index}
@@ -135,7 +99,7 @@ export default asDetailQueryRoute(
                         <DialogTrigger className="w-full h-full">
                           <RGBD context={context} rois={data.image.rois} />
                         </DialogTrigger>
-                        <DialogContent className="p-3 min-w-[90vw] min-h-[90vh] max-w-[90vw] max-h-[90vh]">
+                        <DialogContent className="p-3 min-w-[100vw] min-h-[100vh] max-w-[100vw] max-h-[100vh] border-0 bg-black text-white">
                           <TwoDRGBThreeRenderDetail
                             context={context}
                             rois={data.image.rois}
@@ -192,12 +156,6 @@ export default asDetailQueryRoute(
 
                   <div className="font-light mt-2 ">Show</div>
                   <TabsList className="flex-wrap items-start">
-                    <TabsTrigger value="raw">Raw</TabsTrigger>
-                    {data?.image?.renders?.map((render, i) => (
-                      <TabsTrigger key={i} value={render.id}>
-                        {render.__typename}
-                      </TabsTrigger>
-                    ))}
                     {data?.image?.rgbContexts?.map((context, i) => (
                       <TabsTrigger key={i} value={"context" + context.id}>
                         {context.name}

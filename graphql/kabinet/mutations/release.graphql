@@ -1,5 +1,0 @@
-mutation CreateSetup($release: ID!, $faktsToken: String!) {
-  createSetup(input: { release: $release, faktsToken: $faktsToken }) {
-    id
-  }
-}

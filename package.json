@@ -12,6 +12,7 @@
     "mikro": "graphql-codegen --config mikro.yml",
     "omero-ark": "graphql-codegen --config omero-ark.yml",
     "fluss": "graphql-codegen --config fluss.yml",
+    "kabinet": "graphql-codegen --config kabinet.yml",
     "port": "graphql-codegen --config port-next.yml",
     "lok": "graphql-codegen --config lok.yml"
   },

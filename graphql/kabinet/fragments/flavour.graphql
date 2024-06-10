@@ -1,11 +1,4 @@
 fragment ListFlavour on Flavour {
   id
-  latestUpdate {
-    ...FlavourUpdate
-  }
   name
-  setups {
-    id
-  }
-  pulled
 }

@@ -34,6 +34,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ReservationUpdater } from "@/rekuest/components/functional/ReservationUpdater";
 import { Stash } from "@/lok-next/components/stash/Stash";
 import { WidgetRegistryProvider } from "@/rekuest/widgets/WidgetsProvider";
+import { Arkitekt } from "@/arkitekt";
 
 const displayRegistry = {
   "@mikro-next/image": ImageDisplay,
@@ -48,63 +49,65 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <DebugProvider>
       <EasyProvider manifest={manifest}>
-        <DisplayProvider registry={displayRegistry}>
-          <SelectionProvider>
-            <CommandProvider>
-              <SmartProvider>
-                <RekuestProvider>
-                  <FlussProvider>
-                    <PortProvider>
-                      <MikroNextProvider>
-                        <OmeroArkProvider>
-                          <LokNextProvider>
-                            <WidgetRegistryProvider>
-                              <Toaster />
-                              <CommandMenu />
-                              <PostmanProvider>
-                                <RekuestGuard fallback={<></>}>
-                                  {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
-                                  <AssignationUpdater />
-                                  <ReservationUpdater />
-                                  {/* We register the Shadn powered widgets to the widget registry. */}
-                                  <ShadnWigets />
-                                </RekuestGuard>
-                                <MikroNextGuard fallback={<></>}>
-                                  <MikroNextWard key="mikro" />
-                                </MikroNextGuard>
-                                <FlussGuard fallback={<></>}>
-                                  <FlussWard key="fluss" />
-                                </FlussGuard>
-                                <ThemeProvider
-                                  defaultTheme="dark"
-                                  storageKey="vite-ui-theme"
-                                >
-                                  <RequesterProvider>
-                                    <ReserverProvider>
-                                      <ReserveResolver />
-                                      <TooltipProvider>
-                                        <Toaster />
-                                        <AppConfiguration />{" "}
-                                        {/* This is where we configure the application automatically based on facts */}
-                                        <BrowserRouter>
-                                          {children}
-                                        </BrowserRouter>
-                                      </TooltipProvider>
-                                    </ReserverProvider>
-                                  </RequesterProvider>
-                                </ThemeProvider>
-                              </PostmanProvider>
-                            </WidgetRegistryProvider>
-                          </LokNextProvider>
-                        </OmeroArkProvider>
-                      </MikroNextProvider>
-                    </PortProvider>
-                  </FlussProvider>
-                </RekuestProvider>
-              </SmartProvider>
-            </CommandProvider>
-          </SelectionProvider>
-        </DisplayProvider>
+        <Arkitekt.Provider manifest={manifest}>
+          <DisplayProvider registry={displayRegistry}>
+            <SelectionProvider>
+              <CommandProvider>
+                <SmartProvider>
+                  <RekuestProvider>
+                    <FlussProvider>
+                      <PortProvider>
+                        <MikroNextProvider>
+                          <OmeroArkProvider>
+                            <LokNextProvider>
+                              <WidgetRegistryProvider>
+                                <Toaster />
+                                <CommandMenu />
+                                <PostmanProvider>
+                                  <RekuestGuard fallback={<></>}>
+                                    {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
+                                    <AssignationUpdater />
+                                    <ReservationUpdater />
+                                    {/* We register the Shadn powered widgets to the widget registry. */}
+                                    <ShadnWigets />
+                                  </RekuestGuard>
+                                  <MikroNextGuard fallback={<></>}>
+                                    <MikroNextWard key="mikro" />
+                                  </MikroNextGuard>
+                                  <FlussGuard fallback={<></>}>
+                                    <FlussWard key="fluss" />
+                                  </FlussGuard>
+                                  <ThemeProvider
+                                    defaultTheme="dark"
+                                    storageKey="vite-ui-theme"
+                                  >
+                                    <RequesterProvider>
+                                      <ReserverProvider>
+                                        <ReserveResolver />
+                                        <TooltipProvider>
+                                          <Toaster />
+                                          <AppConfiguration />{" "}
+                                          {/* This is where we configure the application automatically based on facts */}
+                                          <BrowserRouter>
+                                            {children}
+                                          </BrowserRouter>
+                                        </TooltipProvider>
+                                      </ReserverProvider>
+                                    </RequesterProvider>
+                                  </ThemeProvider>
+                                </PostmanProvider>
+                              </WidgetRegistryProvider>
+                            </LokNextProvider>
+                          </OmeroArkProvider>
+                        </MikroNextProvider>
+                      </PortProvider>
+                    </FlussProvider>
+                  </RekuestProvider>
+                </SmartProvider>
+              </CommandProvider>
+            </SelectionProvider>
+          </DisplayProvider>
+        </Arkitekt.Provider>
       </EasyProvider>
     </DebugProvider>
   );

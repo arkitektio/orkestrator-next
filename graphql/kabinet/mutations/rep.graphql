@@ -10,8 +10,3 @@ mutation CreateGithubRepo(
     id
   }
 }
-mutation RescanRepos {
-  rescanRepos {
-    id
-  }
-}

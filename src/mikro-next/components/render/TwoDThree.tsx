@@ -31,7 +31,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 
 export interface RGBDProps {
   context: ListRgbContextFragment;
@@ -325,7 +325,6 @@ export const TwoDRGBThreeRenderDetail = ({
     update({
       variables: {
         input: {
-          name: "New View",
           id: context.id,
           thumbnail: thumbnail,
           views: data.views.map((view) => {
@@ -366,88 +365,116 @@ export const TwoDRGBThreeRenderDetail = ({
             onSubmit={handleSubmit(onSubmit)}
             className="flex h-full w-full"
           >
-            <Card className="flex-initial p-3 flex flex-col gap-1">
-              {zSize > 1 && (
-                <SliderField
-                  name={`z`}
-                  label="Z"
-                  min={0}
-                  max={zSize - 1}
-                  throttle={1000}
-                />
-              )}
-              {tSize > 1 && (
-                <SliderField
-                  name={`t`}
-                  label="T"
-                  min={0}
-                  max={tSize}
-                  throttle={1000}
-                />
-              )}
-              <div className="flex flex-col gap-1 h-full">
-                {fields.map((field, index) => (
-                  <Card
-                    key={field.id}
-                    className="flex-initial p-3 data-[active=false]:opacity-50 opacity-100 transition-opacity"
-                    data-active={watch(`views.${index}.active`)}
-                  >
-                    <ChoicesField
-                      name={`views.${index}.colorMap`}
-                      options={colorMapOptions}
-                      label="Color Map"
-                    />
-                    <SwitchField
-                      name={`views.${index}.active`}
-                      label="Active"
-                    />
-                    <SwitchField
-                      name={`views.${index}.rescale`}
-                      label="Rescale"
-                    />
+            <div className="flex-initial p-3 flex flex-col justify-between h-full gap-1r">
+              <Card className="flex-initial p-3 flex flex-col gap-1 bg-black  border-gray-800 border">
+                {zSize > 1 && (
+                  <SliderField
+                    name={`z`}
+                    label="Z"
+                    min={0}
+                    max={zSize - 1}
+                    throttle={1000}
+                  />
+                )}
+                {tSize > 1 && (
+                  <SliderField
+                    name={`t`}
+                    label="T"
+                    min={0}
+                    max={tSize}
+                    throttle={1000}
+                  />
+                )}
+                <div className="flex flex-col gap-1 h-full">
+                  {fields.map((field, index) => (
+                    <Card
+                      key={field.id}
+                      className="flex-initial p-3 data-[active=false]:opacity-50 opacity-100 transition-opacity flex flex-row gap-2 group relative bg-black border-gray-800 border"
+                      data-active={watch(`views.${index}.active`)}
+                    >
+                      <div className="flex flex-col gap-2 w-full">
+                        <ChoicesField
+                          name={`views.${index}.colorMap`}
+                          options={colorMapOptions}
+                          label="Color Map"
+                        />
+                        <div className="flex flex-row gap-2 w-full">
+                          <SwitchField
+                            name={`views.${index}.active`}
+                            label="Active"
+                            className="flex-1"
+                          />
+                          <SwitchField
+                            name={`views.${index}.rescale`}
+                            label="Rescale"
+                            className="flex-1"
+                          />
+                        </div>
+                        <div className="">
+                          <Button
+                            onClick={() => remove(index)}
+                            variant={"outline"}
+                            size={"icon"}
+                            className="h-full text-white "
+                            disabled={fields.length === 1}
+                          >
+                            <X className="w-8" />
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
 
-                    {fields.length > 1 && (
-                      <Button onClick={() => remove(index)}>Remove</Button>
-                    )}
-                  </Card>
-                ))}
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant={"outline"}>
-                      <Plus />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    {cArray.map((x, i) => (
-                      <DropdownMenuItem
-                        onSelect={() => {
-                          append({
-                            id: "FAKE_ID",
-                            colorMap: ColorMap.Viridis,
-                            cMax: i + 1,
-                            cMin: i,
-                            active: true,
-                            rescale: false,
-                            image: image,
-                            fullColour: "rgb(0,0,0)",
-                          });
-                        }}
-                      >
-                        Render Channel {i}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <div className="flex-grow"></div>
-                <div className="flex gap-2">
-                  <Button type="submit">Submit</Button>
-                  <Button onClick={() => updateView(data)}>Update</Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant={"outline"}>
+                        <Plus />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      {cArray.map((x, i) => (
+                        <DropdownMenuItem
+                          onSelect={() => {
+                            append({
+                              id: "FAKE_ID",
+                              colorMap: ColorMap.Viridis,
+                              cMax: i + 1,
+                              cMin: i,
+                              active: true,
+                              rescale: false,
+                              image: image,
+                              fullColour: "rgb(0,0,0)",
+                            });
+                          }}
+                        >
+                          Render Channel {i}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <div className="flex-grow"></div>
                 </div>
+              </Card>
+              <div className="flex gap-2 w-full text-white">
+                <Button type="submit" variant={"outline"} className="flex-1 m">
+                  <Plus className="mr-2" /> New
+                </Button>
+                <Button
+                  onClick={() => updateView(data)}
+                  variant={"outline"}
+                  className="flex-1"
+                >
+                  Save
+                </Button>
               </div>
-            </Card>
+            </div>
 
-            <div className={cn("flex-1 w-full overflow-hidden", className)}>
+            <div
+              className={cn(
+                "flex-1 w-full overflow-hidden border-1 rounded rounded-md border-gray-800 border m-3 p-3",
+                className,
+              )}
+            >
               <RGBD context={data} rois={rois} />
             </div>
           </form>

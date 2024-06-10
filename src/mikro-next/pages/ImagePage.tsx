@@ -46,10 +46,14 @@ import AcquisitionViewCard from "../components/cards/AcquisitionViewCard";
 import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { TwoDRGBRender, TwoDRGBRenderDetail } from "../components/render/TwoDRGBRender";
+import {
+  TwoDRGBRender,
+  TwoDRGBRenderDetail,
+} from "../components/render/TwoDRGBRender";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { RGBD, TwoDRGBThreeRenderDetail } from "../components/render/TwoDThree";
 
 export type IRepresentationScreenProps = {};
 
@@ -123,16 +127,19 @@ export default asDetailQueryRoute(
                     <TabsContent
                       key={index}
                       value={"context" + context.id}
-                      className={"h-full w-full mt-0 rounded rounded-md relative"}
+                      className={
+                        "h-full w-full mt-0 rounded rounded-md relative"
+                      }
                     >
                       <Dialog>
-                        <TwoDRGBRender context={context} />
-                        <DialogTrigger className="absolute top-1 right-1 text-white" asChild>
-                          <Button variant={"outline"} size={"icon"}><X /></Button>
+                        <DialogTrigger className="w-full h-full">
+                          <RGBD context={context} rois={data.image.rois} />
                         </DialogTrigger>
                         <DialogContent className="p-3 min-w-[90vw] min-h-[90vh] max-w-[90vw] max-h-[90vh]">
-                          
-                            <TwoDRGBRenderDetail context={context} />
+                          <TwoDRGBThreeRenderDetail
+                            context={context}
+                            rois={data.image.rois}
+                          />
                         </DialogContent>
                       </Dialog>
                     </TabsContent>
@@ -182,6 +189,7 @@ export default asDetailQueryRoute(
                       </div>
                     </>
                   )}
+
                   <div className="font-light mt-2 ">Show</div>
                   <TabsList className="flex-wrap items-start">
                     <TabsTrigger value="raw">Raw</TabsTrigger>

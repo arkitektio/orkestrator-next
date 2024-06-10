@@ -8,6 +8,7 @@ import {
   RgbViewFragment,
   ZarrStoreFragment,
   useCreateRgbContextMutation,
+  useUpdateRgbContextMutation,
 } from "@/mikro-next/api/graphql";
 import { ImageView, useXarray } from "@/mikro-next/providers/xarray/context";
 import {
@@ -275,7 +276,7 @@ export const ContextForm = ({
   );
 };
 
-const viewHasher = (view: RgbViewFragment) => {
+export const viewHasher = (view: RgbViewFragment) => {
   return `${view.colorMap}-${view.active}-${view.rescale}`;
 };
 
@@ -292,15 +293,18 @@ export const TestImageDataBlending = ({
   const { renderView } = useViewRenderFunction();
   const { deleteCache } = useDeleteCache();
   const [imageData, setImageData] = useState<ImageBitmap | null>(null);
-  const [cachedDims, setCachedDims] = useState<{ width: number; height: number }>({
+  const [cachedDims, setCachedDims] = useState<{
+    width: number;
+    height: number;
+  }>({
     width: 0,
     height: 0,
   });
 
-
   const calculateImageData = async () => {
     // Sequentially render each view to ensure proper blending
     // Fetch all ImageData objects for the views
+
     const imageDataArray = await Promise.all(
       context.views
         .filter((v) => v.active)
@@ -315,14 +319,18 @@ export const TestImageDataBlending = ({
     let bitmap = await createImageBitmap(blendedImageData);
 
     setImageData(bitmap);
-  }
+  };
 
   useEffect(() => {
     calculateImageData();
   }, context.views.map(viewHasher));
 
-
-  const renderLayers = async (canvas: HTMLCanvasElement, bitmap: ImageBitmap, width: number, height: number) => {
+  const renderLayers = async (
+    canvas: HTMLCanvasElement,
+    bitmap: ImageBitmap,
+    width: number,
+    height: number,
+  ) => {
     const ctx = canvas.getContext("2d");
     if (ctx) {
       // Clear the canvas
@@ -340,16 +348,19 @@ export const TestImageDataBlending = ({
         height,
       );
     }
-    setCachedDims({ width, height })
+    setCachedDims({ width, height });
   };
 
   useEffect(() => {
-    if (imageData && layerRef.current && cachedDims.height !== height && cachedDims.width !== width) {
-      
-        renderLayers(layerRef.current, imageData, width, height);
+    if (
+      imageData &&
+      layerRef.current &&
+      cachedDims.height !== height &&
+      cachedDims.width !== width
+    ) {
+      renderLayers(layerRef.current, imageData, width, height);
     }
   }, [layerRef.current, imageData, width, height]);
-
 
   return (
     <>
@@ -394,15 +405,11 @@ export const TestImageDataDetail = ({
 
   const activeViews = watch("views");
 
-
-
   const calculateImageData = async (activeViews: RgbViewFragment[]) => {
     // Sequentially render each view to ensure proper blending
     // Fetch all ImageData objects for the views
     const imageDataArray = await Promise.all(
-      activeViews
-        .filter((v) => v.active)
-        .map((view) => renderView(view, 0, 0)),
+      activeViews.filter((v) => v.active).map((view) => renderView(view, 0, 0)),
     );
 
     // Additively blend the ImageData objects
@@ -413,15 +420,19 @@ export const TestImageDataDetail = ({
     let bitmap = await createImageBitmap(blendedImageData);
 
     setImageData(bitmap);
-  }
+  };
 
   useEffect(() => {
     console.log("Calculating image data", activeViews.map(viewHasher));
     calculateImageData(activeViews);
   }, activeViews.map(viewHasher));
 
-
-  const renderLayers = async (canvas: HTMLCanvasElement, bitmap: ImageBitmap, width: number, height: number) => {
+  const renderLayers = async (
+    canvas: HTMLCanvasElement,
+    bitmap: ImageBitmap,
+    width: number,
+    height: number,
+  ) => {
     const ctx = canvas.getContext("2d");
     if (ctx) {
       // Clear the canvas
@@ -443,12 +454,9 @@ export const TestImageDataDetail = ({
 
   useEffect(() => {
     if (imageData && layerRef.current) {
-      
-        renderLayers(layerRef.current, imageData, width, height);
+      renderLayers(layerRef.current, imageData, width, height);
     }
   }, [layerRef.current, imageData, width, height]);
-
-  
 
   return (
     <>
@@ -460,15 +468,27 @@ export const TestImageDataDetail = ({
         ref={layerRef}
         className="absolute top-0 left-0"
       ></canvas>
-     
     </>
   );
 };
 
-export const CanvasRender = ({image, width, height}: { image?: ImageBitmap | null , width: number, height: number }) => {
+export const CanvasRender = ({
+  image,
+  width,
+  height,
+}: {
+  image?: ImageBitmap | null;
+  width: number;
+  height: number;
+}) => {
   const layerRef = useRef<HTMLCanvasElement>(null);
 
-  const renderLayers = async (canvas: HTMLCanvasElement, bitmap: ImageBitmap, width: number, height: number) => {
+  const renderLayers = async (
+    canvas: HTMLCanvasElement,
+    bitmap: ImageBitmap,
+    width: number,
+    height: number,
+  ) => {
     const ctx = canvas.getContext("2d");
     if (ctx) {
       // Clear the canvas
@@ -490,8 +510,7 @@ export const CanvasRender = ({image, width, height}: { image?: ImageBitmap | nul
 
   useEffect(() => {
     if (image && layerRef.current) {
-      
-        renderLayers(layerRef.current, image, width, height);
+      renderLayers(layerRef.current, image, width, height);
     }
   }, [layerRef.current, image, width, height]);
 
@@ -506,24 +525,25 @@ export const CanvasRender = ({image, width, height}: { image?: ImageBitmap | nul
       ></canvas>
     </>
   );
+};
 
-
-}
-
-
-export const DynamicCanvasRenderer = (props: { image?: ImageBitmap | null }) => {
+export const DynamicCanvasRenderer = (props: {
+  image?: ImageBitmap | null;
+}) => {
   const [ref, bounds] = useMeasure({
     debounce: 100,
   });
 
   return (
     <div ref={ref} className="w-full h-full relative">
-     <CanvasRender image={props.image} width={bounds.width} height={bounds.height} />
+      <CanvasRender
+        image={props.image}
+        width={bounds.width}
+        height={bounds.height}
+      />
     </div>
   );
-}
-
-
+};
 
 export const TwoDRGBRender = ({
   context,
@@ -555,30 +575,29 @@ export const TwoDRGBRender = ({
   );
 };
 
-
-function bitmapToBlob(bitmap: ImageBitmap) {
+export function bitmapToBlob(bitmap: ImageBitmap) {
   return new Promise<Blob>((resolve, reject) => {
-      // Create a canvas element
-      const canvas = document.createElement('canvas');
-      canvas.width = bitmap.width;
-      canvas.height = bitmap.height;
+    // Create a canvas element
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
 
-      // Draw the bitmap onto the canvas
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        reject(new Error('Could not get canvas context'));
-        return
+    // Draw the bitmap onto the canvas
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      reject(new Error("Could not get canvas context"));
+      return;
+    }
+    ctx.drawImage(bitmap, 0, 0);
+
+    // Convert the canvas content to a blob
+    canvas.toBlob((blob) => {
+      if (blob) {
+        resolve(blob);
+      } else {
+        reject(new Error("Conversion to Blob failed."));
       }
-      ctx.drawImage(bitmap, 0, 0);
-
-      // Convert the canvas content to a blob
-      canvas.toBlob((blob) => {
-          if (blob) {
-              resolve(blob);
-          } else {
-              reject(new Error('Conversion to Blob failed.'));
-          }
-      }, 'image/png'); // You can specify the image format here
+    }, "image/png"); // You can specify the image format here
   });
 }
 
@@ -587,7 +606,6 @@ export const TwoDRGBRenderDetail = ({
   className,
   follow = "width",
 }: RGBDProps) => {
-
   const { renderView } = useViewRenderFunction();
   const { deleteCache } = useDeleteCache();
   const [imageData, setImageData] = useState<ImageBitmap | null>(null);
@@ -595,19 +613,20 @@ export const TwoDRGBRenderDetail = ({
 
   const causeUpload = useUpload();
 
-  const [create, _] = withMikroNext(useCreateRgbContextMutation)();
+  const [create] = withMikroNext(useCreateRgbContextMutation)();
+  const [update] = withMikroNext(useUpdateRgbContextMutation)();
 
-
-  const createNewView =  async (data: ListRgbContextFragment) => {
-
+  const createNewView = async (data: ListRgbContextFragment) => {
     if (!imageData) {
       return;
     }
 
     const blob = await bitmapToBlob(imageData);
-    const file = new File([blob], `context-${context.image.id}-thumbnail.png`, { type: 'image/png' });
+    const file = new File([blob], `context-${context.image.id}-thumbnail.png`, {
+      type: "image/png",
+    });
 
-    let thumbnail =await causeUpload(file);
+    let thumbnail = await causeUpload(file);
 
     create({
       variables: {
@@ -627,13 +646,38 @@ export const TwoDRGBRenderDetail = ({
         },
       },
     });
-  }
+  };
 
+  const updateNewView = async (data: ListRgbContextFragment) => {
+    if (!imageData) {
+      return;
+    }
 
+    const blob = await bitmapToBlob(imageData);
+    const file = new File([blob], `context-${context.image.id}-thumbnail.png`, {
+      type: "image/png",
+    });
 
+    let thumbnail = await causeUpload(file);
 
-
-
+    update({
+      variables: {
+        input: {
+          id: context.id,
+          thumbnail: thumbnail,
+          views: data.views.map((view) => {
+            return {
+              colorMap: view.colorMap,
+              cMax: view.cMax || 1,
+              cMin: view.cMin || 0,
+              active: view.active,
+              rescale: view.rescale,
+            };
+          }),
+        },
+      },
+    });
+  };
 
   const myform = useForm<ListRgbContextFragment>({
     defaultValues: context,
@@ -651,14 +695,8 @@ export const TwoDRGBRenderDetail = ({
   const activeViews = watch("views");
 
   const onSubmit = (data: ListRgbContextFragment) => {
-
-
-
-
     createNewView(data);
-  }
-
-
+  };
 
   const calculateImageData = async (activeViews: RgbViewFragment[]) => {
     // Sequentially render each view to ensure proper blending
@@ -666,9 +704,7 @@ export const TwoDRGBRenderDetail = ({
     setIsRendering(true);
 
     const imageDataArray = await Promise.all(
-      activeViews
-        .filter((v) => v.active)
-        .map((view) => renderView(view, 0, 0)),
+      activeViews.filter((v) => v.active).map((view) => renderView(view, 0, 0)),
     );
 
     // Additively blend the ImageData objects
@@ -680,7 +716,7 @@ export const TwoDRGBRenderDetail = ({
 
     setImageData(bitmap);
     setIsRendering(false);
-  }
+  };
 
   useEffect(() => {
     calculateImageData(activeViews);
@@ -703,9 +739,9 @@ export const TwoDRGBRenderDetail = ({
   return (
     <div>
       <div className="flex flex-row w-full h-full p-3 gap-2">
-      <Card className="flex-initial p-3 flex flex-col gap-1">
-        <Form {...myform}>
-          <form onSubmit={handleSubmit(onSubmit)} className="flex h-full">
+        <Card className="flex-initial p-3 flex flex-col gap-1">
+          <Form {...myform}>
+            <form onSubmit={handleSubmit(onSubmit)} className="flex h-full">
               <div className="flex flex-col gap-1 h-full">
                 {fields.map((field, index) => (
                   <Card
@@ -733,46 +769,49 @@ export const TwoDRGBRenderDetail = ({
                 ))}
                 <div className="flex-grow"></div>
                 {availableImages.map((image) => {
-                let cSize = image.store.shape?.at(0) || 0;
+                  let cSize = image.store.shape?.at(0) || 0;
 
-                let array = new Array(cSize).fill(0);
+                  let array = new Array(cSize).fill(0);
 
-                return (
-                  <Card key={image.id} className="p-3">
-                    {array.map((x, i) => (
-                      <Button
-                        type="button"
-                        onClick={() => {
-                          append({
-                            id: "FAKE_ID",
-                            colorMap: ColorMap.Viridis,
-                            cMax: i + 1,
-                            cMin: i,
-                            active: false,
-                            rescale: false,
-                            image: image,
-                            fullColour: "rgb(0,0,0)",
-                          });
-                        }}
-                      >
-                        Add View for {i}
-                      </Button>
-                    ))}
-                  </Card>
-                );
-              })}
-              <Button type="submit" disabled={isRendering}>Submit</Button>
+                  return (
+                    <Card key={image.id} className="p-3">
+                      {array.map((x, i) => (
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            append({
+                              id: "FAKE_ID",
+                              colorMap: ColorMap.Viridis,
+                              cMax: i + 1,
+                              cMin: i,
+                              active: false,
+                              rescale: false,
+                              image: image,
+                              fullColour: "rgb(0,0,0)",
+                            });
+                          }}
+                        >
+                          Add View for {i}
+                        </Button>
+                      ))}
+                    </Card>
+                  );
+                })}
+                <Button type="submit" disabled={isRendering}>
+                  Submit
+                </Button>
+                <Button onClick={() => updateNewView(myform.getValues())}>
+                  Update
+                </Button>
               </div>
-          </form>
-        </Form>
-      </Card>
-
+            </form>
+          </Form>
+        </Card>
 
         <div className={cn("flex-1 w-full overflow-hidden", className)}>
-          <DynamicCanvasRenderer image={imageData}/>
+          <DynamicCanvasRenderer image={imageData} />
         </div>
       </div>
     </div>
   );
 };
-

@@ -46,6 +46,9 @@ fragment Image on Image {
   rgbContexts {
     ...ListRGBContext
   }
+  rois {
+    ...ListROI
+  }
 }
 
 fragment ListImage on Image {

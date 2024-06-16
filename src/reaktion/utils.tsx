@@ -1,11 +1,11 @@
 import {
-  BindsFragment,
+  FlussBindsFragment as BindsFragment,
   BindsInput,
-  ChildPortFragment,
+  FlussChildPortFragment as ChildPortFragment,
   GlobalArgInput,
   GraphNodeFragment,
   GraphNodeKind,
-  PortFragment,
+  FlussPortFragment as PortFragment,
   PortKind,
   PortScope,
   ReactiveNodeFragment,
@@ -13,6 +13,7 @@ import {
   StreamItemInput,
 } from "@/reaktion/api/graphql";
 import { convertPortToInput } from "@/rekuest/utils";
+import { portToDefaults } from "@/rekuest/widgets/utils";
 import { v4 as uuidv4 } from "uuid";
 import {
   EdgeFragement,
@@ -216,15 +217,15 @@ export const listPortToSingle = (
   key: string,
 ): PortFragment => {
   if (port.kind != PortKind.List) throw new Error("Port is not a list");
-  if (!port.child) throw new Error("Port has no child");
+  let listChild = port.children.at(0);
+  if (!listChild) throw new Error("Port has no children");
 
-  const { __typename, child, variants, ...rest } = port.child;
+  const { __typename, children, ...rest } = listChild;
   return {
     ...rest,
     key: key,
     __typename: "Port",
-    child: child as ChildPortFragment | undefined,
-    variants: variants as ChildPortFragment[] | undefined,
+    children: children as ChildPortFragment[] | undefined,
   };
 };
 
@@ -236,7 +237,7 @@ export const singleToList = (port: PortFragment): PortFragment => {
     scope: PortScope.Global,
     key: key,
     __typename: "Port",
-    child: rest as ChildPortFragment | undefined,
+    children: [rest],
   };
 };
 
@@ -265,14 +266,20 @@ export const portToReadble = (
   if (port.kind == PortKind.List) {
     answer +=
       "[ " +
-      portToReadble(port.child as ChildPortFragment, withLocalDisclaimer) +
+      portToReadble(
+        port.children?.at(0) as ChildPortFragment,
+        withLocalDisclaimer,
+      ) +
       " ]";
   }
 
   if (port.kind == PortKind.Dict) {
     answer +=
       "{ " +
-      portToReadble(port.child as ChildPortFragment, withLocalDisclaimer) +
+      portToReadble(
+        port.children?.at(0) as ChildPortFragment,
+        withLocalDisclaimer,
+      ) +
       " }";
   }
 
@@ -293,8 +300,8 @@ export const portToReadble = (
   }
 
   if (port.kind == PortKind.Union) {
-    if (!port.variants) throw new Error("Union has no variants");
-    answer += port.variants
+    if (!port.children) throw new Error("Union has no variants");
+    answer += port.children
       .map((p) => portToReadble(p as ChildPortFragment, withLocalDisclaimer))
       .join(" | ");
   }

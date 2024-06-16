@@ -2,7 +2,7 @@ import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { InStream } from "@/reaktion/base/Instream";
 import { NodeShowLayout } from "@/reaktion/base/NodeShow";
-import { portToLabel } from "@jhnnsrs/rekuest-next";
+import { portToLabel } from "@/rekuest/widgets/utils";
 import React, { useState } from "react";
 import { ReturnNodeProps } from "../../../types";
 import { useEditNodeErrors } from "../../context";

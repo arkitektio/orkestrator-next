@@ -185,7 +185,7 @@ export const buildZodSchema = (ports: PortablePort[], path: string[] = []) => {
           let func = ream.evaluate(wrappedValidatorFunc) as (
             v: any,
             ...value: any
-          ) => any;
+          ) => boolean;
 
           let params = validator.dependencies?.map((dep) => values[dep]);
           console.log("Params", params);
@@ -206,7 +206,7 @@ export const buildZodSchema = (ports: PortablePort[], path: string[] = []) => {
           },
           {
             message: validator.errorMessage || "Validation failed",
-            path: pathToName([...path, port.key]),
+            path: [pathToName([...path, port.key])],
           },
         );
 

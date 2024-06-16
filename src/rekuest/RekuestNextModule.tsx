@@ -18,7 +18,7 @@ interface Props {}
  * The Rekuest Module is the entrypoint to all specfic rekuest functionality.
  * It provides the routes for the rekuest module.
  */
-const Module: React.FC<Props> = (props) => {
+const Module: React.FC<Props> = () => {
   return (
     <RekuestGuard fallback={<>Loading</>} key={"rekuest"}>
       <ModuleLayout pane={<Standardpane />}>

@@ -1,6 +1,6 @@
+import { useUserQuery } from "@/lok-next/api/graphql";
 import { withLokNext } from "@jhnnsrs/lok-next";
 import { ElementRenderProps } from "../types";
-import { useUserQuery } from "@/lok-next/api/graphql";
 
 export const MentionEdit = ({
   attributes,

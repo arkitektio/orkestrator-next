@@ -1,6 +1,6 @@
+import CancelablePromise from "cancelable-promise";
 import React, { ComponentType } from "react";
 import { Submit } from "./DialogProvider";
-import CancelablePromise from "cancelable-promise";
 
 export type ConfirmContextType = {
   ask: <T extends {}, P>(

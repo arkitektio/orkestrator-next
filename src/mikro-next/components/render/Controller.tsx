@@ -1,5 +1,4 @@
-import { Button } from "@/components/ui/button";
-import { View, useView } from "@/providers/view/ViewContext";
+import { useView } from "@/providers/view/ViewContext";
 
 export const ControlButton = (props: {
   onClick: () => void;

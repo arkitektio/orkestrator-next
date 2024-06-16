@@ -1,13 +1,11 @@
-import React, { memo, useState } from "react";
-import { Handle, Position } from "reactflow";
-import { ArgNodeProps } from "../../../types";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { NodeShowLayout } from "@/reaktion/base/NodeShow";
-import { InStream } from "@/reaktion/base/Instream";
 import { OutStream } from "@/reaktion/base/Outstream";
 import { portToLabel } from "@jhnnsrs/rekuest-next";
+import React, { useState } from "react";
+import { ArgNodeProps } from "../../../types";
 import { useEditNodeErrors } from "../../context";
-import { cn } from "@/lib/utils";
 
 export const ArgTrackNodeWidget: React.FC<ArgNodeProps> = ({
   data: { outs, ins },

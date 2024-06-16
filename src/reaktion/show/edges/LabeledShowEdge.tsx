@@ -1,6 +1,5 @@
 import { Card } from "@/components/ui/card";
 import { VanillaEdgeProps } from "@/reaktion/types";
-import { PortKind } from "@/rekuest/api/graphql";
 import React from "react";
 import { EdgeLabelRenderer, getSmoothStepPath } from "reactflow";
 

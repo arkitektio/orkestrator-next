@@ -14,6 +14,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { toast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 import { useSmartDrop } from "@/providers/smart/hooks";
 import {
@@ -44,6 +45,7 @@ import {
   LetterCaseToggleIcon,
   QuestionMarkIcon,
 } from "@radix-ui/react-icons";
+import { AnimatePresence } from "framer-motion";
 import React, {
   useCallback,
   useEffect,
@@ -55,7 +57,6 @@ import {
   Connection,
   Controls,
   EdgeChange,
-  Node,
   NodeChange,
   OnConnectEnd,
   OnConnectStartParams,
@@ -96,6 +97,7 @@ import {
 } from "../validation/integrate";
 import { ValidationResult } from "../validation/types";
 import { validateState } from "../validation/validate";
+import { EdgeContextual } from "./components/EdgeContextual";
 import { EditRiverContext } from "./context";
 import { LabeledShowEdge } from "./edges/LabeledShowEdge";
 import { ReactiveTrackNodeWidget } from "./nodes/ReactiveWidget";
@@ -103,9 +105,6 @@ import { RekuestFilterWidget } from "./nodes/RekuestFilterWidget";
 import { RekuestMapWidget } from "./nodes/RekuestMapWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
-import { AnimatePresence } from "framer-motion";
-import { toast } from "@/components/ui/use-toast";
-import { EdgeContextual } from "./components/EdgeContextual";
 
 const nodeTypes: NodeTypes = {
   RekuestFilterNode: RekuestFilterWidget,

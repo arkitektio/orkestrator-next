@@ -11,7 +11,7 @@ import { submittedDataToRekuestFormat } from "@/rekuest/widgets/utils";
 
 import { CollapsibleTrigger } from "@radix-ui/react-collapsible";
 import { ChevronUpIcon, DoubleArrowUpIcon } from "@radix-ui/react-icons";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 
 export type FilledGroup = PortGroup & {
   ports: Port[];
@@ -38,7 +38,7 @@ export const ArgsContainer = ({
   onToArg,
   onToGlobal,
   registry,
-  path
+  path,
 }: ArgsContainerProps & {
   onToArg?: (port: PortFragment) => void;
   onToGlobal?: (port: PortFragment, key?: string | undefined) => void;
@@ -148,7 +148,6 @@ export const Constants = (props: {
   onToArg?: (port: PortFragment) => void;
   onToGlobal?: (port: PortFragment, key?: string | undefined) => void;
 }) => {
-
   const form = usePortForm({
     ports: props.ports,
     overwrites: props.overwrites,
@@ -164,28 +163,22 @@ export const Constants = (props: {
 
   const onSubmit = (data: any) => {
     props.onSubmit(data);
-  }
-
+  };
 
   useEffect(() => {
     if (formState.isValid && !isValidating) {
       if (props.onSubmit) {
-
         props.onSubmit(submittedDataToRekuestFormat(data, props.ports));
       }
     }
-  }, [formState, data, isValidating]); 
-
+  }, [formState, data, isValidating]);
 
   const { registry } = useWidgetRegistry();
 
   return (
     <>
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-1"
-        >
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-1">
           <ArgsContainer
             registry={registry}
             ports={props.ports}
@@ -209,7 +202,6 @@ export const TestConstants = (props: {
   const form = usePortForm({
     ports: props.ports,
     overwrites: props.overwrites,
-
   });
 
   function onSubmit(data: any) {
@@ -221,13 +213,9 @@ export const TestConstants = (props: {
   const {
     formState,
     formState: { isValidating, isValid, errors },
-    
+
     watch,
   } = form;
-
-
-
-
 
   const { registry } = useWidgetRegistry();
 
@@ -242,12 +230,16 @@ export const TestConstants = (props: {
             onToGlobal={props.onToGlobal}
             path={[]}
           />
-          {isValid && <div>{props.onSubmit && (
-            <button type="submit" className="btn">
-              {" "}
-              Submit{" "}
-            </button>
-          )}</div>}
+          {isValid && (
+            <div>
+              {props.onSubmit && (
+                <button type="submit" className="btn">
+                  {" "}
+                  Submit{" "}
+                </button>
+              )}
+            </div>
+          )}
           {errors && <div>{JSON.stringify(errors)}</div>}
         </form>
       </Form>

@@ -2,12 +2,11 @@ import { SMART_MODEL_DROP_TYPE } from "@/constants";
 import { useEffect } from "react";
 import { useDrop } from "react-dnd";
 import {
+  LinkProps,
   NavLink,
+  NavLinkProps,
   Link as RouterLink,
   useNavigate,
-  useNavigationType,
-  LinkProps,
-  NavLinkProps,
 } from "react-router-dom";
 
 export const Link = ({ to, children }: LinkProps) => {

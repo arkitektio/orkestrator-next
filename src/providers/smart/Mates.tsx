@@ -1,8 +1,7 @@
+import { Mate, MateFinder } from "@/mates/types";
+import { Structure } from "@/types";
 import { useEffect, useState } from "react";
 import { MateRender } from "./MateRender";
-import { Structure } from "@/types";
-import { Mate, MateFinder } from "@/mates/types";
-import { Card } from "@/components/ui/card";
 
 export interface SelfMatesProps {
   overItems: Structure[];

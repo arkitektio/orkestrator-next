@@ -1,16 +1,15 @@
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Popover, PopoverContent } from "@/components/ui/popover";
 import { SMART_MODEL_DROP_TYPE } from "@/constants";
-import { PopoverAnchor } from "@radix-ui/react-popover";
-import React, { useEffect, useState } from "react";
-import { useDrag, useDrop } from "react-dnd";
-import { NativeTypes, getEmptyImage } from "react-dnd-html5-backend";
-import { SmartModelProps } from "./types";
-import { Mates } from "./Mates";
-import { Structure } from "@/types";
 import { composeMates } from "@/mates/compose";
-import { Card } from "@/components/ui/card";
+import { Structure } from "@/types";
+import { PopoverAnchor } from "@radix-ui/react-popover";
+import { useEffect, useState } from "react";
+import { useDrag, useDrop } from "react-dnd";
 import { useMySelection } from "../selection/SelectionContext";
-import { Button } from "@/components/ui/button";
+import { Mates } from "./Mates";
+import { SmartModelProps } from "./types";
 
 export const SmartModel = ({
   showSelfMates = true,

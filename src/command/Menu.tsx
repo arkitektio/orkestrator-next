@@ -8,6 +8,8 @@ import {
 import { Dialog } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useDisplayComponent } from "@/providers/display/DisplayContext";
+import { MikroNextGuard } from "@jhnnsrs/mikro-next";
+import { RekuestGuard } from "@jhnnsrs/rekuest-next";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { DialogPortal } from "@radix-ui/react-dialog";
 import { Cross2Icon } from "@radix-ui/react-icons";
@@ -24,8 +26,6 @@ import { NodeActionExtension } from "./extensions/NodeActionExtension";
 import { NodeExtensions } from "./extensions/NodeExtension";
 import { ReservationExtensions } from "./extensions/ReservationActionExtension";
 import { SearchExtensions } from "./extensions/SearchExtensions";
-import { RekuestGuard } from "@jhnnsrs/rekuest-next";
-import { MikroNextGuard } from "@jhnnsrs/mikro-next";
 
 export const DisplayWidget = (props: {
   identifier: string;
@@ -190,11 +190,11 @@ export const CommandMenu = () => {
                     activateModifier,
                     removeModifier,
                   }}
-                > 
+                >
                   <RekuestGuard>
                     <NodeExtensions />
                     <NodeActionExtension />
-                    
+
                     <ReservationExtensions />
                   </RekuestGuard>
                   <LocalActionExtensions />

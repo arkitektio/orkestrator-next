@@ -8,7 +8,7 @@ export const IntWidget = (props: InputWidgetProps) => {
   return (
     <IntField
       name={pathToName(props.path)}
-      label={props.port.label|| props.port.key}
+      label={props.port.label || props.port.key}
       description={props.port.description || undefined}
       validate={validate}
     />

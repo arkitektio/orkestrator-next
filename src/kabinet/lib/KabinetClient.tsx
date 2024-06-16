@@ -6,9 +6,9 @@ import {
   split,
 } from "@apollo/client";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
-import { createClient } from "graphql-ws";
 import { getMainDefinition } from "@apollo/client/utilities";
 import { RekuestConfig } from "@jhnnsrs/rekuest";
+import { createClient } from "graphql-ws";
 
 export const createKabinetClient = (config: RekuestConfig) => {
   let token = config.retrieveToken();

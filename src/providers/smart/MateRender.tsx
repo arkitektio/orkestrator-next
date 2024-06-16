@@ -1,11 +1,11 @@
+import { Button } from "@/components/ui/button";
+import { Mate, MateOptions } from "@/mates/types";
+import { Structure } from "@/types";
 import React, { useEffect } from "react";
 import { useDrop } from "react-dnd";
 import { NativeTypes } from "react-dnd-html5-backend";
 import { SMART_MODEL_DROP_TYPE } from "../../constants";
-import { Mate, MateOptions } from "@/mates/types";
-import { Structure } from "@/types";
 import { useSelection } from "../selection/SelectionContext";
-import { Button } from "@/components/ui/button";
 
 export interface MateProps {
   mate: Mate;

@@ -8,11 +8,11 @@ import {
   DetailPaneHeader,
   DetailPaneTitle,
 } from "@/components/ui/pane";
-import { useDependencyQuery, useTemplateQuery } from "@/rekuest/api/graphql";
+import { RekuestNode } from "@/linkers";
+import { useDependencyQuery } from "@/rekuest/api/graphql";
 import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { ClipboardIcon } from "@radix-ui/react-icons";
 import DependencyCard from "../components/cards/DependencyCard";
-import { RekuestNode } from "@/linkers";
 
 export default asDetailQueryRoute(
   withRekuest(useDependencyQuery),

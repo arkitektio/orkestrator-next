@@ -1,7 +1,6 @@
-import { useDatalayer } from "@jhnnsrs/datalayer";
+import { MikroFile } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
 import { ListFileFragment } from "../../api/graphql";
-import { MikroFile } from "@/linkers";
 
 interface Props {
   file: ListFileFragment;

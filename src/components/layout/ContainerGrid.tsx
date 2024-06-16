@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from "react";
+import { cn, notEmpty } from "@/lib/utils";
 import { useSelection } from "@/providers/selection/SelectionContext";
 import autoAnimate from "@formkit/auto-animate";
-import { cn, notEmpty } from "@/lib/utils";
+import React, { useEffect, useRef } from "react";
 
 export type FittingResponsiveGridProps = {
   children?: React.ReactNode;

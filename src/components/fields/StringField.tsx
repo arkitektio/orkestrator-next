@@ -9,7 +9,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { useFormContext } from "react-hook-form";
 import { FieldProps } from "./types";
-import { FancyInput } from "../ui/fancy-input";
 
 export const StringField = (props: FieldProps & { placeholder?: string }) => {
   const form = useFormContext();

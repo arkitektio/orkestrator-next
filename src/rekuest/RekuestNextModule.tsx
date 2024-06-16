@@ -2,15 +2,15 @@ import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RekuestGuard } from "@jhnnsrs/rekuest-next";
 import React from "react";
 import { Route, Routes } from "react-router";
-import Node from "./pages/Node";
-import Reservation from "./pages/Reservation";
-import Home from "./pages/Home";
-import Standardpane from "./panes/StandardPane";
-import Template from "./pages/Template";
-import Dependency from "./pages/Dependency";
-import Provision from "./pages/Provision";
-import Assignation from "./pages/Assignation";
 import Agent from "./pages/Agent";
+import Assignation from "./pages/Assignation";
+import Dependency from "./pages/Dependency";
+import Home from "./pages/Home";
+import Node from "./pages/Node";
+import Provision from "./pages/Provision";
+import Reservation from "./pages/Reservation";
+import Template from "./pages/Template";
+import Standardpane from "./panes/StandardPane";
 
 interface Props {}
 /**

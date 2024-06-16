@@ -1,12 +1,6 @@
-import React, { useCallback, useState } from "react";
-import {
-  Action,
-  Extension,
-  CommandContext,
-  Modifier,
-  RegisteredAction,
-} from "./CommandContext";
-import { v4 as uuidv4, v4 } from "uuid";
+import React, { useState } from "react";
+import { v4 } from "uuid";
+import { Action, CommandContext, RegisteredAction } from "./CommandContext";
 
 export interface GenerarMenuProviderProps {
   children: React.ReactNode;

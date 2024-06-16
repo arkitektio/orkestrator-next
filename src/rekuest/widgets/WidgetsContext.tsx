@@ -1,5 +1,4 @@
 import React, { useContext } from "react";
-import { WidgetRegistry } from "./Registry";
 import { WidgetRegistryType } from "./types";
 
 export type Ward = (...args: any[]) => Promise<any | undefined>;
@@ -37,22 +36,6 @@ const fakeWidgetRegistry: WidgetRegistryType = {
   },
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 export type WidgetRegistryContextType = {
   registry: WidgetRegistryType;
   setRegistry: (postman: WidgetRegistryType) => void;
@@ -63,7 +46,7 @@ export const WidgetRegistryContext =
     registry: fakeWidgetRegistry,
     setRegistry: (postman: WidgetRegistryType) => {
       throw new Error(
-        "Set registry is not implemented. Do you have a Registry provider?"
+        "Set registry is not implemented. Do you have a Registry provider?",
       );
     },
   });

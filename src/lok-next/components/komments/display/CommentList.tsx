@@ -1,5 +1,5 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ListCommentType, ReplyToFunc } from "../types";
+import { ListCommentType } from "../types";
 import { Comment } from "./Comment";
 
 export const CommentList: React.FunctionComponent<{

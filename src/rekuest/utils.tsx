@@ -1,17 +1,17 @@
 import {
   AssignWidgetFragment,
+  AssignWidgetInput,
   AssignWidgetKind,
   ChildPortFragment,
   ChildPortInput,
+  EffectInput,
+  EffectKind,
+  PortEffectFragment,
   PortFragment,
-  AssignWidgetInput,
-  ReturnWidgetInput,
   PortInput,
   ReturnWidgetFragment,
+  ReturnWidgetInput,
   ReturnWidgetKind,
-  EffectInput,
-  PortEffectFragment,
-  EffectKind,
 } from "./api/graphql";
 
 export type AssignWidgetTypeNames = AssignWidgetFragment["__typename"];

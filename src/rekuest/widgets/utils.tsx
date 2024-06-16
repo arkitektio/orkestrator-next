@@ -1,8 +1,8 @@
 import { notEmpty } from "@/lib/utils";
-import { PortKind, ValidatorFragment } from "../api/graphql";
-import { LabellablePort, PortablePort } from "./types";
-import { z, ZodType } from "zod"; // Add new import
 import ShadowRealm from "shadowrealm-api";
+import { z } from "zod"; // Add new import
+import { PortKind } from "../api/graphql";
+import { LabellablePort, PortablePort } from "./types";
 
 export const pathToName = (path: string[]): string => {
   return path.join(".");

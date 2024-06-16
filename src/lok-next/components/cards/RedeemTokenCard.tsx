@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LokRedeemToken } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
 import { ListRedeemTokenFragment } from "../../api/graphql";

@@ -1,15 +1,14 @@
-import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   ContextMenu,
   ContextMenuContent,
-  ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { NodeResizer, NodeResizeControl } from "reactflow";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import React from "react";
+import { NodeResizeControl } from "reactflow";
 import { useEditNodeErrors, useEditRiver } from "../edit/context";
-import { motion, AnimatePresence } from "framer-motion";
 
 type NodeProps = {
   children: React.ReactNode;

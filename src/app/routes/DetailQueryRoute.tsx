@@ -1,17 +1,16 @@
+import { useDebug } from "@/providers/debug/DebugContext";
 import {
   ApolloQueryResult,
   DocumentNode,
   OperationVariables,
   QueryHookOptions,
   QueryResult,
-  TypedDocumentNode,
   useQuery,
 } from "@apollo/client";
 import React from "react";
 import { useParams } from "react-router-dom";
-import { ErrorPage } from "../components/fallbacks/ErrorPage";
 import { DebugPage } from "../components/fallbacks/DebugPage";
-import { useDebug } from "@/providers/debug/DebugContext";
+import { ErrorPage } from "../components/fallbacks/ErrorPage";
 
 export type DetailVariables = {
   id: string;

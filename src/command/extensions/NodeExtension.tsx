@@ -1,11 +1,11 @@
+import { CommandGroup, CommandItem } from "@/components/ui/command";
 import {
   ListNodeFragment,
   useNodeSearchLazyQuery,
 } from "@/rekuest/api/graphql";
 import { withRekuest } from "@jhnnsrs/rekuest-next";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useExtension } from "../ExtensionContext";
-import { CommandGroup, CommandItem } from "@/components/ui/command";
 
 export const NodeExtensions = () => {
   const { query, activateModifier, modifiers } = useExtension();

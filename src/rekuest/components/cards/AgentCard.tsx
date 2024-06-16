@@ -1,7 +1,6 @@
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { RekuestAgent, RekuestReservation } from "@/linkers";
-import { useRequestMate } from "@/mates/request/useRequestMate";
+import { RekuestAgent } from "@/linkers";
 import { MateFinder } from "@/mates/types";
 import { ListAgentFragment } from "@/rekuest/api/graphql";
 

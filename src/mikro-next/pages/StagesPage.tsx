@@ -1,6 +1,6 @@
+import { PageLayout } from "@/components/layout/PageLayout";
 import React from "react";
 import ImageList from "../components/lists/ImageList";
-import { PageLayout } from "@/components/layout/PageLayout";
 
 export type IRepresentationScreenProps = {};
 

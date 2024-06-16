@@ -1,10 +1,9 @@
-import { MikroFluorophore, MikroAcquisitionView, LokUser } from "@/linkers";
+import { CardHeader, CardTitle } from "@/components/ui/card";
+import { LokUser, MikroAcquisitionView } from "@/linkers";
+import Timestamp from "react-timestamp";
 import { MateFinder } from "../../../mates/types";
 import { AcquisitionViewFragment } from "../../api/graphql";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowDownIcon, ArrowUpIcon } from "@radix-ui/react-icons";
 import { ViewCard } from "./meta/ViewCard";
-import Timestamp from "react-timestamp";
 
 interface Props {
   view: AcquisitionViewFragment;

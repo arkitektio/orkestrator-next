@@ -2,11 +2,11 @@ import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { OmeroArkGuard } from "@jhnnsrs/omero-ark";
 import React from "react";
 import { Route, Routes } from "react-router";
-import HomePage from "./pages/HomePage";
-import ProjectPage from "./pages/ProjectPage";
-import DatasetPage from "./pages/DatasetPage";
-import ImagePage from "./pages/ImagePage";
 import { ConnectedGuard } from "./ConnectedGuard";
+import DatasetPage from "./pages/DatasetPage";
+import HomePage from "./pages/HomePage";
+import ImagePage from "./pages/ImagePage";
+import ProjectPage from "./pages/ProjectPage";
 interface Props {}
 
 export const OmeroArkModule: React.FC<Props> = (props) => {

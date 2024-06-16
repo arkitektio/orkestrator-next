@@ -1,3 +1,17 @@
+import { ChoicesField } from "@/components/fields/ChoicesField";
+import { SliderField } from "@/components/fields/SliderField";
+import { SwitchField } from "@/components/fields/SwitchField";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Form } from "@/components/ui/form";
+import { useUpload } from "@/datalayer/hooks/useUpload";
+import { cn } from "@/lib/utils";
 import {
   ColorMap,
   ListRgbContextFragment,
@@ -5,33 +19,15 @@ import {
   useCreateRgbContextMutation,
   useUpdateRgbContextMutation,
 } from "@/mikro-next/api/graphql";
-import { Canvas, ThreeElements, useFrame } from "@react-three/fiber";
-import { useEffect, useRef, useState } from "react";
-import * as THREE from "three";
-import { TextureLoader } from "three/src/loaders/TextureLoader";
-import { useViewRenderFunction } from "./hooks/useViewRender";
-import { additiveBlending, bitmapToBlob, viewHasher } from "./TwoDRGBRender";
-import { OrbitControls, OrthographicCamera } from "@react-three/drei";
-import { cn } from "@/lib/utils";
-import { Card } from "@/components/ui/card";
-import { Form } from "@/components/ui/form";
-import { ChoicesField } from "@/components/fields/ChoicesField";
-import { SwitchField } from "@/components/fields/SwitchField";
-import { Button } from "@/components/ui/button";
-import { useFieldArray, useForm } from "react-hook-form";
 import { withMikroNext } from "@jhnnsrs/mikro-next";
-import { useUpload } from "@/datalayer/hooks/useUpload";
-import { Slider } from "@radix-ui/react-slider";
-import { SliderField } from "@/components/fields/SliderField";
-import { z } from "zod";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { OrbitControls, OrthographicCamera } from "@react-three/drei";
+import { Canvas, ThreeElements, useFrame } from "@react-three/fiber";
 import { Plus, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import * as THREE from "three";
+import { additiveBlending, bitmapToBlob, viewHasher } from "./TwoDRGBRender";
+import { useViewRenderFunction } from "./hooks/useViewRender";
 
 export interface RGBDProps {
   context: ListRgbContextFragment;

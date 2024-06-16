@@ -4,7 +4,6 @@ import { ChoiceAssignWidgetFragment } from "@/rekuest/api/graphql";
 import { InputWidgetProps } from "@/rekuest/widgets/types";
 import { pathToName } from "@/rekuest/widgets/utils";
 import { useCallback } from "react";
-import { useFormContext } from "react-hook-form";
 
 export const ChoicesWidget = (
   props: InputWidgetProps<ChoiceAssignWidgetFragment>,

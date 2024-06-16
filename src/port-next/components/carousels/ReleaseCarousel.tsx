@@ -1,30 +1,12 @@
-import { ListRender } from "@/components/layout/ListRender";
-import { PortPod } from "@/linkers";
-import {
-  useListPodQuery,
-  useListReleasesQuery,
-  usePullFlavourMutation,
-} from "@/port-next/api/graphql";
-import { withPort } from "@jhnnsrs/port-next";
-import PodCard from "../cards/PodCard";
+import { FormDialog } from "@/components/dialog/FormDialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
-  CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { FormDialog } from "@/components/dialog/FormDialog";
-import InstallForm from "../forms/InstallForm";
-import { PlusIcon } from "lucide-react";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-} from "@/components/ui/context-menu";
-import { ContextMenuTrigger } from "@radix-ui/react-context-menu";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,7 +14,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
+import {
+  useListReleasesQuery,
+  usePullFlavourMutation,
+} from "@/port-next/api/graphql";
+import { withPort } from "@jhnnsrs/port-next";
 import { DropdownMenuIcon, PlusCircledIcon } from "@radix-ui/react-icons";
+import InstallForm from "../forms/InstallForm";
 
 const Wrapper = () => {
   const { data, error, subscribeToMore, refetch } = withPort(
@@ -75,7 +63,9 @@ const Wrapper = () => {
                         <div className="flex flex-row items-end">
                           <DropdownMenu>
                             <DropdownMenuTrigger>
-                              <Button variant={"ghost"}><DropdownMenuIcon/></Button>
+                              <Button variant={"ghost"}>
+                                <DropdownMenuIcon />
+                              </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
                               {item.flavours.map((flavour) => (
@@ -101,19 +91,22 @@ const Wrapper = () => {
                             </DropdownMenuContent>
                           </DropdownMenu>
                           <FormDialog
-                          trigger={<Button variant={"ghost"}><PlusCircledIcon/></Button>}
-                          onSubmit={async () => {
-                            await refetch();
-                          }}
-                        >
-                          <InstallForm release={item} />
-                        </FormDialog>
+                            trigger={
+                              <Button variant={"ghost"}>
+                                <PlusCircledIcon />
+                              </Button>
+                            }
+                            onSubmit={async () => {
+                              await refetch();
+                            }}
+                          >
+                            <InstallForm release={item} />
+                          </FormDialog>
                         </div>
                       </div>
                       {item.flavours
                         .filter(
-                          (flavour) =>
-                            flavour.latestUpdate.status != "Pulled",
+                          (flavour) => flavour.latestUpdate.status != "Pulled",
                         )
                         .map((flavour) => (
                           <>
@@ -126,9 +119,7 @@ const Wrapper = () => {
                         ))}
                     </div>
 
-                    <div className="group-hover:block hidden absolute bottom-4 right-4">
-                     
-                    </div>
+                    <div className="group-hover:block hidden absolute bottom-4 right-4"></div>
                   </CardContent>
                 </Card>
               </CarouselItem>

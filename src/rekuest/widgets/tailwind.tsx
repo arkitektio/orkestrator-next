@@ -1,3 +1,4 @@
+import { notEmpty } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { EffectWrapper } from "./EffectWrapper";
 import {
@@ -7,7 +8,6 @@ import {
   Returns,
   WidgetRegistryType,
 } from "./types";
-import { notEmpty } from "@/lib/utils";
 
 export type ArgsContainerProps = {
   registry: WidgetRegistryType;

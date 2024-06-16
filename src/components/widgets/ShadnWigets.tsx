@@ -1,21 +1,21 @@
 import { PortKind } from "@/rekuest/api/graphql";
+import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { useEffect } from "react";
-import { IntWidget } from "./fallbacks/IntWidget";
-import { SearchWidget } from "./custom/SearchWidget";
-import { ListWidget } from "./fallbacks/ListWidget";
-import { StringWidget } from "./fallbacks/StringWidget";
 import { ChoicesWidget } from "./custom/ChoicesWidget";
+import { SearchWidget } from "./custom/SearchWidget";
 import { BoolWidget } from "./fallbacks/BoolWidget";
 import { DateWidget } from "./fallbacks/DateWidget";
+import { DictWidget } from "./fallbacks/DictWidget";
 import { FloatWidget } from "./fallbacks/FloatWidget";
+import { IntWidget } from "./fallbacks/IntWidget";
+import { ListWidget } from "./fallbacks/ListWidget";
+import { ModelWidget } from "./fallbacks/ModelWidget";
+import { StringWidget } from "./fallbacks/StringWidget";
+import { StructureWidget } from "./fallbacks/StructureWidget";
 import { UnionWidget } from "./fallbacks/UnionWidget";
+import { BoolReturnWidget } from "./returns/fallbacks/BoolReturnWidget";
 import { IntReturnWidget } from "./returns/fallbacks/IntReturnWidget";
 import { StringReturnWidget } from "./returns/fallbacks/StringReturnWidget";
-import { BoolReturnWidget } from "./returns/fallbacks/BoolReturnWidget";
-import { StructureWidget } from "./fallbacks/StructureWidget";
-import { ModelWidget } from "./fallbacks/ModelWidget";
-import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
-import { DictWidget } from "./fallbacks/DictWidget";
 
 export const ShadnWigets = () => {
   const { registry } = useWidgetRegistry();

@@ -5,8 +5,8 @@ import {
 } from "@air/react-drag-to-select";
 import React, { useEffect, useState } from "react";
 import { Structure } from "../../types";
-import { Selectable } from "./types";
 import { SelectionContext } from "./SelectionContext";
+import { Selectable } from "./types";
 export type ArkitektProps = { children: React.ReactNode };
 
 export const SelectionProvider: React.FC<ArkitektProps> = ({ children }) => {
@@ -118,8 +118,6 @@ export const SelectionProvider: React.FC<ArkitektProps> = ({ children }) => {
     }
   };
 
-  
-
   const { DragSelection } = useSelectionContainer({
     onSelectionChange: handleSelectionChange,
     shouldStartSelecting: (target) => {
@@ -144,7 +142,7 @@ export const SelectionProvider: React.FC<ArkitektProps> = ({ children }) => {
         border: "2px hsl(var(--primary))",
         borderRadius: 4,
         backgroundColor: "hsl(var(--primary))",
-        opacity: 0.,
+        opacity: 0,
       },
     },
   });

@@ -1,6 +1,6 @@
+import { useSettings } from "@/providers/settings/SettingsContext";
 import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { useAssignationsQuery } from "../api/graphql";
-import { useSettings } from "@/providers/settings/SettingsContext";
 
 export const useAssignations = () => {
   const { settings } = useSettings();

@@ -1,3 +1,4 @@
+import { DetailRouteProps, asDetailRoute } from "@/app/routes/DetailRoute";
 import { PageLayout } from "@/components/layout/PageLayout";
 import {
   DetailPane,
@@ -6,15 +7,11 @@ import {
 } from "@/components/ui/pane";
 import { MikroDataset } from "@/linkers";
 import { withLokNext } from "@jhnnsrs/lok-next";
-import React from "react";
-import { useParams } from "react-router";
 import { useUserQuery } from "../api/graphql";
-import { DetailRouteProps, asDetailRoute } from "@/app/routes/DetailRoute";
 
 export type IRepresentationScreenProps = {};
 
-const Page = ({id}: DetailRouteProps) => {
-
+const Page = ({ id }: DetailRouteProps) => {
   const { data } = withLokNext(useUserQuery)({
     variables: {
       id: id,
@@ -22,7 +19,10 @@ const Page = ({id}: DetailRouteProps) => {
   });
 
   return (
-    <PageLayout actions={<MikroDataset.Actions id={id} />} title={data?.user?.username}>
+    <PageLayout
+      actions={<MikroDataset.Actions id={id} />}
+      title={data?.user?.username}
+    >
       <DetailPane className="p-3 @container">
         <DetailPaneHeader>
           <DetailPaneTitle>{data?.user?.username}</DetailPaneTitle>

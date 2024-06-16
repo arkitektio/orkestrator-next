@@ -1,9 +1,9 @@
 import {
   ArgNodeFragment,
-  RekuestFilterNodeFragment,
-  RekuestMapNodeFragment,
   BaseGraphEdgeFragment,
   BaseGraphNodeFragment,
+  FlussPortFragment,
+  StreamItemFragment as FlussStreamItemFragment,
   GlobalArg,
   GlobalArgFragment,
   GlobalArgInput,
@@ -13,9 +13,9 @@ import {
   GraphNodeFragment,
   GraphNodeInput,
   LoggingEdgeFragment,
-  FlussPortFragment,
-  StreamItemFragment as FlussStreamItemFragment,
   ReactiveNodeFragment,
+  RekuestFilterNodeFragment,
+  RekuestMapNodeFragment,
   ReturnNodeFragment,
   VanillaEdgeFragment,
 } from "@/reaktion/api/graphql";

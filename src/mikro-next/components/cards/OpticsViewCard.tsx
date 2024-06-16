@@ -1,7 +1,7 @@
-import { MikroOpticsView, MikroInstrument } from "@/linkers";
+import { CardHeader, CardTitle } from "@/components/ui/card";
+import { MikroInstrument, MikroOpticsView } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
 import { OpticsViewFragment } from "../../api/graphql";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { ViewCard } from "./meta/ViewCard";
 
 interface Props {

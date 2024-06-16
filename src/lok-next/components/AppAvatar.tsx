@@ -1,10 +1,5 @@
 import { withLokNext } from "@jhnnsrs/lok-next";
-import {
-  useClientQuery,
-  useDetailClientQuery,
-  useUserQuery,
-} from "../api/graphql";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useClientQuery } from "../api/graphql";
 
 export const AppAvatar = (props: { clientId: string }) => {
   const { data } = withLokNext(useClientQuery)({

@@ -1,12 +1,10 @@
 import { StringField } from "@/components/fields/StringField";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PortScope } from "@/rekuest/api/graphql";
-import { usePortValidate } from "@/rekuest/hooks/usePortValidator";
 import { InputWidgetProps } from "@/rekuest/widgets/types";
 import { pathToName } from "@/rekuest/widgets/utils";
 
 export const StructureWidget = (props: InputWidgetProps) => {
-
   return (
     <>
       {props.port.scope == PortScope.Local ? (

@@ -1,11 +1,9 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { LokRedeemToken, MikroDataset } from "@/linkers";
+import { LokRedeemToken } from "@/linkers";
 
 import {
-  ClientFilter,
   OffsetPaginationInput,
   RedeemTokenFilter,
-  useClientsQuery,
   useRedeemTokensQuery,
 } from "@/lok-next/api/graphql";
 import { withLokNext } from "@jhnnsrs/lok-next";

@@ -1,6 +1,4 @@
-import { MikroHistory, RekuestAssignation } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
-import { HistoryFragment, HistoryKind } from "../../api/graphql";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -8,10 +6,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { MikroHistory, RekuestAssignation } from "@/linkers";
+import { AppInfo } from "@/lok-next/components/protected/AppInfo";
 import { UserInfo } from "@/lok-next/components/protected/UserInfo";
 import Timestamp from "react-timestamp";
-import { Badge } from "@/components/ui/badge";
-import { AppInfo } from "@/lok-next/components/protected/AppInfo";
+import { MateFinder } from "../../../mates/types";
+import { HistoryFragment, HistoryKind } from "../../api/graphql";
 
 interface HistoryCardProps {
   history: HistoryFragment;

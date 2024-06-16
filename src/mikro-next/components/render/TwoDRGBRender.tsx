@@ -1,10 +1,13 @@
-import { SaveParentSize } from "@/components/layout/SaveParentSize";
+import { ChoicesField } from "@/components/fields/ChoicesField";
+import { SwitchField } from "@/components/fields/SwitchField";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
+import { useUpload } from "@/datalayer/hooks/useUpload";
 import { cn } from "@/lib/utils";
 import {
   ColorMap,
   ListRgbContextFragment,
-  RgbContext,
-  RgbContextFragment,
   RgbViewFragment,
   ZarrStoreFragment,
   useCreateRgbContextMutation,
@@ -15,24 +18,12 @@ import {
   AvailableColormap,
   XArrayProvider,
 } from "@/mikro-next/providers/xarray/provider";
-import { useView } from "@/providers/view/ViewContext";
-import { ar, vi } from "date-fns/locale";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import useMeasure from "react-use-measure";
-import { useImageArray, useTwoDContext, useViewRender } from "./hooks/useArray";
-import { context } from "react-three-fiber";
-import { useDeleteCache, useViewRenderFunction } from "./hooks/useViewRender";
-import { useFieldArray, useForm } from "react-hook-form";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { StringField } from "@/components/fields/StringField";
-import { Form } from "@/components/ui/form";
-import { ChoicesField } from "@/components/fields/ChoicesField";
-import { SwitchField } from "@/components/fields/SwitchField";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { withMikroNext } from "@jhnnsrs/mikro-next";
-import { useUpload } from "@/datalayer/hooks/useUpload";
+import React, { useEffect, useRef, useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import useMeasure from "react-use-measure";
+import { useImageArray, useTwoDContext } from "./hooks/useArray";
+import { useDeleteCache, useViewRenderFunction } from "./hooks/useViewRender";
 
 export interface RGBDProps {
   context: ListRgbContextFragment;

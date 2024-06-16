@@ -1,4 +1,6 @@
-import React, { useEffect } from "react";
+import { handleToStream, streamToReactNode } from "@/reaktion/utils";
+import { MergeIcon } from "lucide-react";
+import React from "react";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -7,14 +9,7 @@ import {
   useStore,
 } from "reactflow";
 import { FlowNode, VanillaEdgeProps } from "../../types";
-import { Card } from "@/components/ui/card";
-import {
-  handleToStream,
-  streamToReactNode,
-  streamToReadable,
-} from "@/reaktion/utils";
 import { useEditRiver } from "../context";
-import { MergeIcon, X } from "lucide-react";
 
 const connectionNodeIdSelector = (state: any) => state.connectionNodeId;
 

@@ -1,12 +1,9 @@
-import { Card } from "@/components/ui/card";
-import { PortFragment } from "@/rekuest/api/graphql";
 import {
   Popover,
-  PopoverTrigger,
   PopoverContent,
+  PopoverTrigger,
 } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Handle, Position } from "reactflow";
+import { PortFragment } from "@/rekuest/api/graphql";
 import { Constants } from "./Constants";
 
 export const Constream: React.FC<{

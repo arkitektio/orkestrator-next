@@ -28,12 +28,12 @@ export const CreateWorkspaceForm = (props: {}) => {
           })}
         >
           <DialogHeader>
-              <h1>Create a new Workspace</h1>
+            <h1>Create a new Workspace</h1>
           </DialogHeader>
 
           <DialogDescription className="font-light text-sm mt-2">
-            A workspace is way for you to work on a workflow and its various versions
-            over time.
+            A workspace is way for you to work on a workflow and its various
+            versions over time.
           </DialogDescription>
           <div className="grid grid-cols-2 gap-2 mt-2">
             <StringField

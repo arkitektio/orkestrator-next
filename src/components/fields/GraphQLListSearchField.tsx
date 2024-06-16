@@ -1,8 +1,8 @@
 import { useCallback } from "react";
 import {
-  Option,
   ListSearchField,
   ListSearchFieldProps,
+  Option,
 } from "./ListSearchField";
 
 export type GraphQLListSearchFieldProps = Omit<

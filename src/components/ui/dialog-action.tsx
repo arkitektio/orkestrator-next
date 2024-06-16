@@ -1,7 +1,7 @@
-import { Action, useAction } from "@/providers/command/CommandContext";
-import React, { useCallback, useState } from "react";
-import { Button } from "./button";
 import { cn } from "@/lib/utils";
+import { Action, useAction } from "@/providers/command/CommandContext";
+import React, { useState } from "react";
+import { Button } from "./button";
 import { Dialog, DialogContent, DialogTrigger } from "./dialog";
 
 export interface ActionButtonProps extends Omit<Action, "run"> {

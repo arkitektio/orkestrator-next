@@ -1,7 +1,6 @@
 import { SMART_MODEL_DROP_TYPE } from "@/constants";
 import { Structure } from "@/types";
 import { DropTargetMonitor, useDrop } from "react-dnd";
-import { NativeTypes } from "react-dnd-html5-backend";
 
 export const useSmartDrop = (
   callback: (

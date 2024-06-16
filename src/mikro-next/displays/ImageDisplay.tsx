@@ -1,15 +1,15 @@
-import { DisplayComponentProps } from "@/providers/display/DisplayContext";
-import { withMikroNext } from "@jhnnsrs/mikro-next";
-import { useGetImageQuery } from "../api/graphql";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 import {
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DisplayComponentProps } from "@/providers/display/DisplayContext";
 import { TwoDViewProvider } from "@/providers/view/ViewProvider";
+import { withMikroNext } from "@jhnnsrs/mikro-next";
+import { useGetImageQuery } from "../api/graphql";
 import { TwoDViewCanvas } from "../components/render/TwoDRender";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 const Display = (props: DisplayComponentProps) => {
   const { data } = withMikroNext(useGetImageQuery)({

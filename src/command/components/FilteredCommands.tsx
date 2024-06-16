@@ -1,7 +1,7 @@
 import { RegisteredAction } from "@/providers/command/CommandContext";
 
-import { useExtension } from "../ExtensionContext";
 import { CommandGroup, CommandItem } from "@/components/ui/command";
+import { useExtension } from "../ExtensionContext";
 
 export const FilteredCommands = (props: {
   actions: RegisteredAction[] | undefined;

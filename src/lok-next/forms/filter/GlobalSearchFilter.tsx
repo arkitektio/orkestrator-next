@@ -1,9 +1,6 @@
 import { ToggleField } from "@/components/fields/ToggleField";
 import { AutoSubmitter } from "@/components/form/AutoSubmitter";
-import {
-  Form, FormControl, FormField,
-  FormItem
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
   Popover,
@@ -52,10 +49,9 @@ const Filter: React.FC<FilterProps> = ({ onFilterChanged, defaultValue }) => {
                     />
                   </FormControl>
 
-                <PopoverTrigger className="absolute right-1 top-1 text-foreground">
-                    <ArrowDown/>
+                  <PopoverTrigger className="absolute right-1 top-1 text-foreground">
+                    <ArrowDown />
                   </PopoverTrigger>
-                 
                 </FormItem>
               </PopoverAnchor>
             )}

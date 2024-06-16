@@ -35,7 +35,7 @@ export const ListSearchWidget = (
   return (
     <ListSearchField
       name={pathToName(props.path)}
-      label={props.port.label  || props.port.key}
+      label={props.port.label || props.port.key}
       search={search}
       description={props.port.description || undefined}
       noOptionFoundPlaceholder="No options found"

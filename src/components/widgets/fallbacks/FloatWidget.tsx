@@ -8,7 +8,7 @@ export const FloatWidget = (props: InputWidgetProps) => {
   return (
     <FloatField
       name={pathToName(props.path)}
-      label={props.port.label  || props.port.key}
+      label={props.port.label || props.port.key}
       description={props.port.description || undefined}
       validate={validate}
     />

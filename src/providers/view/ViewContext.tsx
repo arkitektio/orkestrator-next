@@ -1,5 +1,5 @@
 import { ViewFragment } from "@/mikro-next/api/graphql";
-import React, { useContext, useEffect } from "react";
+import React, { useContext } from "react";
 
 export type View = Omit<ViewFragment, "__typename">;
 

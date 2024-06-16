@@ -1,14 +1,8 @@
+import { AnimatePresence } from "framer-motion";
 import React from "react";
-import ReactFlow, {
-  Background,
-  Controls,
-  EdgeTypes,
-  ReactFlowProps,
-  ReactFlowProvider,
-} from "reactflow";
+import ReactFlow, { Background, EdgeTypes, ReactFlowProps } from "reactflow";
 import "reactflow/dist/style.css";
 import { FlowEdge, FlowNode, NodeTypes } from "../types";
-import { AnimatePresence } from "framer-motion";
 
 type Props = {
   edgeTypes: EdgeTypes;

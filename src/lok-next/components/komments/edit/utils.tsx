@@ -1,3 +1,4 @@
+import { DescendantKind } from "@/lok-next/api/graphql";
 import ReactDOM from "react-dom";
 import { Transforms } from "slate";
 import {
@@ -7,7 +8,6 @@ import {
   LeafRenderProps,
 } from "../types";
 import { MentionEdit } from "./MentionEdit";
-import { DescendantKind } from "@/lok-next/api/graphql";
 
 export const withMentions = (editor: KommentEditor) => {
   const { isInline, isVoid } = editor;

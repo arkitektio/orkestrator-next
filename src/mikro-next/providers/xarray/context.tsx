@@ -1,8 +1,8 @@
+import { ZarrStoreFragment } from "@/mikro-next/api/graphql";
 import React, { useContext } from "react";
 import { ArraySelection } from "zarr/types/core/types";
 import { DtypeString } from "zarr/types/types";
 import { AvailableColormap } from "./provider";
-import { ZarrStoreFragment } from "@/mikro-next/api/graphql";
 
 export type ImageView = {
   data: Array<number>;

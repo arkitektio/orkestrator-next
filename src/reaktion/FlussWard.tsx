@@ -1,7 +1,6 @@
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { gql } from "@apollo/client";
 import { useFluss } from "@jhnnsrs/fluss-next";
-import { useMikroNext } from "@jhnnsrs/mikro-next";
 import { useEffect } from "react";
 
 export const FlussWard: React.FC<{

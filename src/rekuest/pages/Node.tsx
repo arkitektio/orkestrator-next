@@ -18,17 +18,11 @@ import {
   DetailPaneTitle,
 } from "@/components/ui/pane";
 import { TestConstants } from "@/reaktion/base/Constants";
-import {
-  NodeKind,
-  useConstantNodeQuery,
-  useDetailNodeQuery,
-} from "@/rekuest/api/graphql";
+import { NodeKind, useDetailNodeQuery } from "@/rekuest/api/graphql";
 import { usePostman, withRekuest } from "@jhnnsrs/rekuest-next";
 import { ClipboardIcon } from "@radix-ui/react-icons";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useParams } from "react-router-dom";
-import TemplateCard from "../components/cards/TemplateCard";
 import ReservationCard from "../components/cards/ReservationCard";
 import { DependencyGraphFlow } from "../components/dependencyGraph/DependencyGraph";
 import { portToLabel } from "../widgets/utils";
@@ -65,8 +59,7 @@ export default asDetailQueryRoute(
       navigator.clipboard.writeText(data?.node?.hash || "");
     }, [data?.node?.hash]);
 
-    const [formData , setFormData] = useState({})
-
+    const [formData, setFormData] = useState({});
 
     return (
       <ModelPageLayout
@@ -114,12 +107,16 @@ export default asDetailQueryRoute(
                 {data?.node?.protocols?.map((p) => p.name)}
               </div>
             </DetailPaneDescription>
-            <TestConstants ports={data?.node?.args || []} overwrites={{}} onSubmit={setFormData} />
+            <TestConstants
+              ports={data?.node?.args || []}
+              overwrites={{}}
+              onSubmit={setFormData}
+            />
 
             <ListRender array={data?.node?.reservations} title="Reservations">
               {(item, key) => <ReservationCard item={item} key={key} />}
             </ListRender>
-              {JSON.stringify(formData)}
+            {JSON.stringify(formData)}
 
             {data?.node?.dependencyGraph && (
               <>

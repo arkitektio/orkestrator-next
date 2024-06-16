@@ -1,13 +1,8 @@
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { HoverBorderGradient } from "@/components/ui/hover-button";
-import { RekuestNode, RekuestReservation } from "@/linkers";
+import { RekuestReservation } from "@/linkers";
 import { useRequestMate } from "@/mates/request/useRequestMate";
-import { useReserveMate } from "@/mates/reserve/useReserveMate";
 import { MateFinder } from "@/mates/types";
-import {
-  ListNodeFragment,
-  PostmanReservationFragment,
-} from "@/rekuest/api/graphql";
+import { PostmanReservationFragment } from "@/rekuest/api/graphql";
 
 interface Props {
   item: PostmanReservationFragment;

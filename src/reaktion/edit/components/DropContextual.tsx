@@ -1,5 +1,4 @@
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -9,6 +8,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   FlussPortFragment,
   GraphNodeKind,
@@ -16,6 +21,7 @@ import {
   ReactiveImplementation,
 } from "@/reaktion/api/graphql";
 import { rekuestNodeToMatchingNode } from "@/reaktion/plugins/rekuest";
+import { listPortToSingle, nodeIdBuilder } from "@/reaktion/utils";
 import {
   AllNodesQueryVariables,
   ConstantNodeDocument,
@@ -25,25 +31,14 @@ import {
   useAllNodesQuery,
   useProtocolOptionsLazyQuery,
 } from "@/rekuest/api/graphql";
+import { NodeDescription } from "@jhnnsrs/rekuest";
 import { useRekuest, withRekuest } from "@jhnnsrs/rekuest-next";
-import { ArrowDown, ListFilterIcon } from "lucide-react";
+import clsx from "clsx";
+import { ArrowDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { DropContextualParams, FlowNode } from "../../types";
 import { useEditRiver } from "../context";
-import { Separator } from "@/components/ui/separator";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { NodeDescription } from "@jhnnsrs/rekuest";
-import {
-  listPortToSingle,
-  nodeIdBuilder,
-  streamToReadable,
-} from "@/reaktion/utils";
-import clsx from "clsx";
 import { ContextualContainer } from "./ContextualContainer";
 
 export const SearchForm = (props: { onSubmit: (data: any) => void }) => {

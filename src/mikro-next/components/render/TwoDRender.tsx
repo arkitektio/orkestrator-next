@@ -1,4 +1,3 @@
-import { SaveParentSize } from "@/components/layout/SaveParentSize";
 import { cn } from "@/lib/utils";
 import { ZarrStoreFragment } from "@/mikro-next/api/graphql";
 import { ImageView, useXarray } from "@/mikro-next/providers/xarray/context";
@@ -7,7 +6,7 @@ import {
   XArrayProvider,
 } from "@/mikro-next/providers/xarray/provider";
 import { useView } from "@/providers/view/ViewContext";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import useMeasure from "react-use-measure";
 
 export interface TwoDProps {

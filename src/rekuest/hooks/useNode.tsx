@@ -1,4 +1,5 @@
-import { Reservation, usePostman } from "@jhnnsrs/rekuest-next";
+import { useSettings } from "@/providers/settings/SettingsContext";
+import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { useCallback } from "react";
 import {
   PostmanReservationFragment,
@@ -6,8 +7,6 @@ import {
   useReserveMutation,
   useUnreserveMutation,
 } from "../api/graphql";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
-import { useSettings } from "@/providers/settings/SettingsContext";
 
 export const useUsage = (options: {
   hash?: string;

@@ -1,3 +1,5 @@
+import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import { MikroNextGuard } from "@jhnnsrs/mikro-next";
 import React from "react";
 import { Route, Routes } from "react-router";
 import DatasetPage from "./pages/DatasetPage";
@@ -5,13 +7,11 @@ import DatasetsPage from "./pages/DatasetsPage";
 import HomePage from "./pages/HomePage";
 import ImagePage from "./pages/ImagePage";
 import ImagesPage from "./pages/ImagesPage";
+import RenderTreePage from "./pages/RenderTreePage";
+import RenderTreesPage from "./pages/RenderTreesPage";
 import StagePage from "./pages/StagePage";
 import StagesPage from "./pages/StagesPage";
 import StandardPane from "./panes/StandardPane";
-import { MikroNextGuard } from "@jhnnsrs/mikro-next";
-import { ModuleLayout } from "@/components/layout/ModuleLayout";
-import RenderTreePage from "./pages/RenderTreePage";
-import RenderTreesPage from "./pages/RenderTreesPage";
 interface Props {}
 
 export const MikroNextModule: React.FC<Props> = (props) => {

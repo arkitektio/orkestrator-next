@@ -1,8 +1,8 @@
 import { Action, useAction } from "@/providers/command/CommandContext";
 import React, { useCallback, useState } from "react";
 import { FormDialogContext } from "../dialog/FormDialog";
-import { Dialog, DialogContent, DialogTrigger } from "./dialog";
 import { Button, ButtonProps } from "./button";
+import { Dialog, DialogContent, DialogTrigger } from "./dialog";
 
 export type FormDialogActionProps = Omit<Action, "run"> &
   ButtonProps & {

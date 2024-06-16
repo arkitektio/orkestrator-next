@@ -10,11 +10,9 @@ import {
 } from "zarr";
 import { ChunkProjection } from "zarr/types/core/types";
 import { DtypeString } from "zarr/types/types";
+import { addBufferToCache, getBufferFromCache } from "./cache";
 import { isContiguousSelection, isTotalSlice } from "./indexing";
 import { joinUrlParts } from "./store";
-import { getItem } from "localforage";
-import { getBufferFromCache, addBufferToCache } from "./cache";
-import { tr } from "date-fns/locale";
 
 addCodec(Blosc.codecId, () => Blosc);
 

@@ -1,20 +1,19 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
 import { IntField } from "@/components/fields/IntField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { withMikroNext } from "@jhnnsrs/mikro-next";
 import { useForm } from "react-hook-form";
+import * as yup from "yup";
 import {
   WellPositionViewInput,
   useAutoCreateMultiWellPlateMutation,
-  useCreateMultiWellPlateMutation,
   useCreateWellPositionViewMutation,
   useMultiWellPlateOptionsLazyQuery,
 } from "../api/graphql";
-import { yupResolver } from "@hookform/resolvers/yup";
-import * as yup from "yup";
-import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
 
 export const AddMultiPositionViewForm = (props: { image: string }) => {
   const [add] = withMikroNext(useCreateWellPositionViewMutation)();

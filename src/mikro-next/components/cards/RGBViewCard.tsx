@@ -1,7 +1,7 @@
-import { MikroChannelView, MikroRGBContext, MikroRGBView } from "@/linkers";
-import { RgbViewFragment } from "../../api/graphql";
+import { CardHeader, CardTitle } from "@/components/ui/card";
+import { MikroRGBView } from "@/linkers";
 import { MateFinder } from "@/mates/types";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { RgbViewFragment } from "../../api/graphql";
 import { ViewCard } from "./meta/ViewCard";
 
 interface Props {
@@ -14,9 +14,7 @@ const TheCard = ({ view, mates }: Props) => {
     <MikroRGBView.Smart object={view?.id}>
       <ViewCard view={view}>
         <CardHeader>
-          <CardTitle>
-            {view.name}
-          </CardTitle>
+          <CardTitle>{view.name}</CardTitle>
           <div
             className="w-2 h-2 rounded rounded-full"
             style={{ backgroundColor: view.fullColour }}

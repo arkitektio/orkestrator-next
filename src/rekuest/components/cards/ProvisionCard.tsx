@@ -1,13 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { RekuestNode, RekuestProvision, RekuestReservation } from "@/linkers";
+import { RekuestProvision } from "@/linkers";
 import { useRequestMate } from "@/mates/request/useRequestMate";
-import { useReserveMate } from "@/mates/reserve/useReserveMate";
 import { MateFinder } from "@/mates/types";
 import {
-  ListNodeFragment,
   ListProvisionFragment,
-  PostmanReservationFragment,
   useActivateMutation,
   useDeactivateMutation,
 } from "@/rekuest/api/graphql";

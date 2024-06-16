@@ -1,5 +1,3 @@
-import { v4 as uuidv4 } from "uuid";
-
 const dbName = "RenderCacheDB";
 const storeName = "renderCacheStore";
 const maxCacheSize = 100; // Adjust the cache size as needed

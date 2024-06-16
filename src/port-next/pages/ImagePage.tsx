@@ -1,4 +1,3 @@
-import { ListRender } from "@/components/layout/ListRender";
 import { PageLayout } from "@/components/layout/PageLayout";
 import {
   DetailPane,
@@ -6,12 +5,11 @@ import {
   DetailPaneTitle,
 } from "@/components/ui/pane";
 import { MikroDataset } from "@/linkers";
+import { Komments } from "@/lok-next/components/komments/Komments";
 import { withOmeroArk } from "@jhnnsrs/omero-ark";
 import React from "react";
 import { useParams } from "react-router";
 import { useGetImageQuery } from "../api/graphql";
-import DatasetCard from "../components/cards/DatasetCard";
-import { Komments } from "@/lok-next/components/komments/Komments";
 import AuthorizedImage from "../components/Thumbnail";
 
 export type IRepresentationScreenProps = {};

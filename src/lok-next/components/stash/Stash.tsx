@@ -1,11 +1,8 @@
-import { SMART_MODEL_DROP_TYPE } from "@/constants";
-import { Structure } from "@/types";
-import { useEffect, useState } from "react";
-import { useDrag, useDrop } from "react-dnd";
-import { NativeTypes } from "react-dnd-html5-backend";
-import { motion } from "framer-motion";
+import { ContainerGrid } from "@/components/layout/ContainerGrid";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { withLokNext } from "@jhnnsrs/lok-next";
+import { SMART_MODEL_DROP_TYPE } from "@/constants";
+import { cn } from "@/lib/utils";
 import {
   ListStashFragment,
   StashItemFragment,
@@ -15,11 +12,12 @@ import {
   useDeleteStashMutation,
   useMyStashesQuery,
 } from "@/lok-next/api/graphql";
-import { Button } from "@/components/ui/button";
+import { Structure } from "@/types";
+import { withLokNext } from "@jhnnsrs/lok-next";
+import { motion } from "framer-motion";
 import { GripVertical, X } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { BsBookmarkX } from "react-icons/bs";
-import { ContainerGrid } from "@/components/layout/ContainerGrid";
+import { useEffect, useState } from "react";
+import { useDrag, useDrop } from "react-dnd";
 import { ConditionalStructureRender } from "./InfoTainer";
 
 export const StashItem = (props: { item: StashItemFragment }) => {

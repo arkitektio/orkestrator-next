@@ -1,10 +1,9 @@
-import { MikroStage, MikroAffineTransformationView } from "@/linkers";
+import { CardHeader, CardTitle } from "@/components/ui/card";
+import { MikroAffineTransformationView, MikroStage } from "@/linkers";
+import { useDeleteAffineTransformationViewMate } from "@/mikro-next/mates/transformationview";
 import { MateFinder } from "../../../mates/types";
 import { AffineTransformationViewFragment } from "../../api/graphql";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { useMatchedView } from "@/providers/view/ViewContext";
 import { ViewCard } from "./meta/ViewCard";
-import { useDeleteAffineTransformationViewMate } from "@/mikro-next/mates/transformationview";
 
 interface Props {
   view: AffineTransformationViewFragment;

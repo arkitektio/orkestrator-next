@@ -8,33 +8,32 @@ export type UnionValue = {
   value: any;
 };
 
-
-
 const ModelWidget: React.FC<InputWidgetProps> = ({
   port,
   path,
   widget,
   parentKind,
 }) => {
-
-
   return (
-      <>
-        {port.children?.map((port) => {
+    <>
+      {port.children?.map((port) => {
+        const Widget = useWidgetRegistry().registry.getInputWidgetForPort(port);
 
-          const Widget = useWidgetRegistry().registry.getInputWidgetForPort(port);
-
-          return  <Widget
-                  port={{
-                    ...port,
-                    __typename: "Port"
-                  } as Port}
-                  path={path.concat(port.key)}
-                  widget={port.assignWidget}
-                  parentKind={PortKind.Model}
+        return (
+          <Widget
+            port={
+              {
+                ...port,
+                __typename: "Port",
+              } as Port
+            }
+            path={path.concat(port.key)}
+            widget={port.assignWidget}
+            parentKind={PortKind.Model}
           />
-})}
-      </>
+        );
+      })}
+    </>
   );
 };
 

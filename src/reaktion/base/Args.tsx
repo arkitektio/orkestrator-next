@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { PortFragment, PortScope } from "@/rekuest/api/graphql";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { PortFragment, PortScope } from "@/rekuest/api/graphql";
 import { portToLabel } from "@/rekuest/widgets/utils";
 
 export const Args = ({

@@ -1,18 +1,17 @@
 import {
-  RekuestFilterNodeFragment,
-  RekuestMapNodeFragment,
-  GraphNodeFragment,
   GraphNodeKind,
   MapStrategy,
   NodeKind,
+  RekuestFilterNodeFragment,
+  RekuestMapNodeFragment,
 } from "@/reaktion/api/graphql";
-import { FlowNode } from "../types";
-import { portToDefaults } from "@jhnnsrs/rekuest-next";
 import {
   ConstantNodeQuery,
   GraphNodeNodeFragment,
 } from "@/rekuest/api/graphql";
+import { portToDefaults } from "@jhnnsrs/rekuest-next";
 import { v4 as uuidv4 } from "uuid";
+import { FlowNode } from "../types";
 
 export const rekuestNodeToMapNode = (
   node: GraphNodeNodeFragment,

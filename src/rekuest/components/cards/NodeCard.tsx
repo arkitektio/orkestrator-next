@@ -3,7 +3,7 @@ import {
   Card,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import { RekuestNode } from "@/linkers";
 import { useReserveMate } from "@/mates/reserve/useReserveMate";
@@ -20,23 +20,29 @@ interface Props {
 const TheCard = ({ node, mates }: Props) => {
   const reserveMate = useReserveMate();
 
-  const [isUsed, toggle] = useUsage({hash: node.hash})
+  const [isUsed, toggle] = useUsage({ hash: node.hash });
 
   return (
     <RekuestNode.Smart object={node?.id} mates={[reserveMate]}>
       <Card className="group">
         <CardHeader className="flex flex-row justify-between">
           <div>
-          <CardTitle>
-            <RekuestNode.DetailLink object={node?.id}>
-              {" "}
-              {node.name}
-            </RekuestNode.DetailLink>
-          </CardTitle>
-          <CardDescription>{node?.description && <NodeDescription description={node?.description}/>}</CardDescription>
+            <CardTitle>
+              <RekuestNode.DetailLink object={node?.id}>
+                {" "}
+                {node.name}
+              </RekuestNode.DetailLink>
+            </CardTitle>
+            <CardDescription>
+              {node?.description && (
+                <NodeDescription description={node?.description} />
+              )}
+            </CardDescription>
           </div>
           <CardTitle>
-          <Button onClick={() => toggle()}  variant={"ghost"}>{isUsed ? "Stop Using" : "Use"}</Button>
+            <Button onClick={() => toggle()} variant={"ghost"}>
+              {isUsed ? "Stop Using" : "Use"}
+            </Button>
           </CardTitle>
         </CardHeader>
       </Card>

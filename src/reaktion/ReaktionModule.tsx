@@ -3,8 +3,8 @@ import { FlussGuard } from "@jhnnsrs/fluss-next";
 import React from "react";
 import { Route, Routes } from "react-router";
 import Flow from "./pages/Flow";
-import Workspace from "./pages/Workspace";
 import Home from "./pages/Home";
+import Workspace from "./pages/Workspace";
 import SearchPane from "./panes/SearchPane";
 
 interface Props {}

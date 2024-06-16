@@ -1,21 +1,17 @@
-import React from "react";
-import { Handle, Position } from "reactflow";
-import { ArkitektNodeProps } from "../../types";
 import {
   Card,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Popover, PopoverTrigger } from "@/components/ui/popover";
-import { PopoverContent } from "@radix-ui/react-popover";
-import { NodeKind } from "@/rekuest/api/graphql";
+import { Tooltip } from "@/components/ui/tooltip";
 import { NodeShowLayout } from "@/reaktion/base/NodeShow";
+import { NodeKind } from "@/rekuest/api/graphql";
+import { PopoverContent } from "@radix-ui/react-popover";
+import React from "react";
+import { Handle, Position } from "reactflow";
+import { ArkitektNodeProps } from "../../types";
 
 export const ArkitektTrackNodeWidget: React.FC<ArkitektNodeProps> = ({
   data,

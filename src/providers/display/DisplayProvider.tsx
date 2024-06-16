@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useState } from "react";
 import { DisplayComponent, DisplayContext } from "./DisplayContext";
 
 export interface DisplayProviderProps {

@@ -1,7 +1,7 @@
 import { useSettings } from "@/providers/settings/SettingsContext";
-import { FilteredCommands } from "../components/FilteredCommands";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { useReservationsQuery } from "@/rekuest/api/graphql";
+import { withRekuest } from "@jhnnsrs/rekuest-next";
+import { FilteredCommands } from "../components/FilteredCommands";
 
 export const ReservationExtensions = () => {
   const { settings } = useSettings();

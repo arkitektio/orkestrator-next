@@ -1,8 +1,8 @@
-import React, { useEffect } from "react";
-import { useFakts } from "@jhnnsrs/fakts";
-import { useHerre } from "@jhnnsrs/herre";
 import result from "@/reaktion/api/fragments";
+import { useFakts } from "@jhnnsrs/fakts";
 import { useFluss } from "@jhnnsrs/fluss-next";
+import { useHerre } from "@jhnnsrs/herre";
+import React, { useEffect } from "react";
 
 export const FlussNextAutoConfigure: React.FC<{}> = (props) => {
   const { configure } = useFluss();

@@ -5,7 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { RekuestDependency, RekuestTemplate } from "@/linkers";
+import { RekuestDependency } from "@/linkers";
 import { useReserveMate } from "@/mates/reserve/useReserveMate";
 import { MateFinder } from "@/mates/types";
 import { ListDependencyFragment } from "@/rekuest/api/graphql";

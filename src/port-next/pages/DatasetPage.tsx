@@ -6,12 +6,12 @@ import {
   DetailPaneTitle,
 } from "@/components/ui/pane";
 import { OmeroArkDataset } from "@/linkers";
+import { Komments } from "@/lok-next/components/komments/Komments";
 import { withOmeroArk } from "@jhnnsrs/omero-ark";
 import React from "react";
 import { useParams } from "react-router";
 import { useGetDatasetQuery } from "../api/graphql";
 import ImageCard from "../components/cards/ImageCard";
-import { Komments } from "@/lok-next/components/komments/Komments";
 
 export type IRepresentationScreenProps = {};
 

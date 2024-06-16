@@ -1,6 +1,6 @@
+import { Button } from "@/components/ui/button";
 import { withOmeroArk } from "@jhnnsrs/omero-ark";
 import { useEnsureOmeroUserMutation, useMeQuery } from "./api/graphql";
-import { Button } from "@/components/ui/button";
 
 export const EnsureMeButton = () => {
   const [setMe, data] = withOmeroArk(useEnsureOmeroUserMutation)({

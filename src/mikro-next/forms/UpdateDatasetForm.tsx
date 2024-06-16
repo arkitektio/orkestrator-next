@@ -5,11 +5,7 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { withMikroNext } from "@jhnnsrs/mikro-next";
 import { useForm } from "react-hook-form";
-import {
-  DatasetFragment,
-  StageFragment,
-  useUpdateImageMutation,
-} from "../api/graphql";
+import { DatasetFragment, useUpdateImageMutation } from "../api/graphql";
 
 export const UpdateDatasetForm = (props: { dataset: DatasetFragment }) => {
   const [add] = withMikroNext(useUpdateImageMutation)();

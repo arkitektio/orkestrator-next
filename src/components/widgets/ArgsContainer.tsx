@@ -1,13 +1,13 @@
 import { notEmpty } from "@/lib/utils";
+import { EffectWrapper } from "@/rekuest/widgets/EffectWrapper";
+import { ArgsContainerProps } from "@/rekuest/widgets/tailwind";
+import { Port, PortGroup } from "@/rekuest/widgets/types";
 import { useMemo } from "react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "../ui/collapsible";
-import { Port, PortGroup } from "@/rekuest/widgets/types";
-import { ArgsContainerProps } from "@/rekuest/widgets/tailwind";
-import { EffectWrapper } from "@/rekuest/widgets/EffectWrapper";
 
 export type FilledGroup = PortGroup & {
   ports: Port[];

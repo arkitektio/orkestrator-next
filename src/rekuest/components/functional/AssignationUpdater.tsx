@@ -1,5 +1,8 @@
+import { useSettings } from "@/providers/settings/SettingsContext";
+import { useAssignations } from "@/rekuest/hooks/useAssignations";
 import { useRekuest } from "@jhnnsrs/rekuest-next";
 import { useEffect } from "react";
+import { toast } from "sonner";
 import {
   AssignationsDocument,
   AssignationsQuery,
@@ -10,9 +13,6 @@ import {
   WatchAssignationsDocument,
   WatchAssignationsSubscription,
 } from "../../api/graphql";
-import { useSettings } from "@/providers/settings/SettingsContext";
-import { toast } from "sonner";
-import { useAssignations } from "@/rekuest/hooks/useAssignations";
 
 export const AssignationToaster = (props: { id: string }) => {
   const { data } = useAssignations();

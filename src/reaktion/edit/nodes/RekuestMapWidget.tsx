@@ -15,12 +15,12 @@ import { InStream } from "@/reaktion/base/Instream";
 import { NodeShowLayout } from "@/reaktion/base/NodeShow";
 import { OutStream } from "@/reaktion/base/Outstream";
 import { PortFragment } from "@/rekuest/api/graphql";
+import { NodeDescription } from "@jhnnsrs/rekuest";
 import { useNodeDescription } from "@jhnnsrs/rekuest-next";
 import { GearIcon } from "@radix-ui/react-icons";
 import React from "react";
 import { ArkitektNodeProps } from "../../types";
 import { useEditNodeErrors, useEditRiver } from "../context";
-import { NodeDescription } from "@jhnnsrs/rekuest";
 
 export const RekuestMapWidget: React.FC<ArkitektNodeProps> = ({
   data: { ins, outs, constants, ...data },

@@ -1,3 +1,8 @@
+import {
+  DescendantKind,
+  useUserOptionsLazyQuery,
+} from "@/lok-next/api/graphql";
+import { withLokNext } from "@jhnnsrs/lok-next";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BiBold, BiCode, BiItalic, BiUnderline } from "react-icons/bi";
 import { TiTick } from "react-icons/ti";
@@ -5,18 +10,12 @@ import { Editor, Node, Range, Transforms, createEditor } from "slate";
 import { Editable, ReactEditor, Slate, useSlate, withReact } from "slate-react";
 import { CreateCommentFunc, KommentEditor } from "../types";
 import {
-  DescendantKind,
-  useUserOptionsLazyQuery,
-} from "@/lok-next/api/graphql";
-import {
   KommentElement,
   KommentLeaf,
   Portal,
   insertMention,
   withMentions,
 } from "./utils";
-import { withLokNext } from "@jhnnsrs/lok-next";
-import { Textarea } from "@/components/ui/textarea";
 
 export type ICommentEditProps<T> = {
   id: string;

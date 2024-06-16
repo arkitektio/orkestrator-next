@@ -1,16 +1,16 @@
-import React from "react";
-import PodList from "../components/lists/PodList";
-import DefinitionList from "../components/lists/DefinitionList";
 import { PageLayout } from "@/components/layout/PageLayout";
-import ReleaseCarousel from "../components/carousels/ReleaseCarousel";
+import { FormDialogAction } from "@/components/ui/form-dialog-action";
 import { withPort } from "@jhnnsrs/port-next";
+import React from "react";
 import {
   FlavourUpdateFragmentDoc,
   useFlavoursUpdatesSubscription,
 } from "../api/graphql";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
+import ReleaseCarousel from "../components/carousels/ReleaseCarousel";
 import AddRepoForm from "../components/forms/AddRepoForm";
 import RescanRepoForm from "../components/forms/RescanRepoForm";
+import DefinitionList from "../components/lists/DefinitionList";
+import PodList from "../components/lists/PodList";
 
 export type IRepresentationScreenProps = {};
 
@@ -57,7 +57,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       </div>
       <div className="flex-1">
         <PodList />
-        <DefinitionList/>
+        <DefinitionList />
       </div>
     </PageLayout>
   );

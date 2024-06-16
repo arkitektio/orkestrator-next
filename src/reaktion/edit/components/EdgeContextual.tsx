@@ -1,6 +1,4 @@
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
-import { Button } from "@/components/ui/button";
-import React, { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -10,46 +8,39 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  FlussPortFragment,
-  GraphNodeKind,
-  ReactiveImplementation,
-} from "@/reaktion/api/graphql";
-import { rekuestNodeToMatchingNode } from "@/reaktion/plugins/rekuest";
-import {
-  ConstantNodeDocument,
-  ConstantNodeQuery,
-  DemandKind,
-  NodeKind,
-  NodeScope,
-  PortKind,
-  PortsFragment,
-  useAllNodesQuery,
-  useProtocolOptionsLazyQuery,
-} from "@/rekuest/api/graphql";
-import { useRekuest, withRekuest } from "@jhnnsrs/rekuest-next";
-import { ArrowDown, ListFilterIcon, X } from "lucide-react";
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import {
-  ConnectContextualParams,
-  DropContextualParams,
-  EdgeContextualParams,
-  FlowNode,
-  ReactiveNodeSuggestions,
-} from "../../types";
-import { useEditRiver } from "../context";
 import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { NodeDescription } from "@jhnnsrs/rekuest";
-import { nodeIdBuilder, streamToReadable } from "@/reaktion/utils";
-import clsx from "clsx";
-import { ContextualContainer } from "./ContextualContainer";
 import { TooltipButton } from "@/components/ui/tooltip-button";
+import {
+  FlussPortFragment,
+  GraphNodeKind,
+  ReactiveImplementation,
+} from "@/reaktion/api/graphql";
+import { rekuestNodeToMatchingNode } from "@/reaktion/plugins/rekuest";
+import { nodeIdBuilder } from "@/reaktion/utils";
+import {
+  ConstantNodeDocument,
+  ConstantNodeQuery,
+  DemandKind,
+  PortKind,
+  useAllNodesQuery,
+  useProtocolOptionsLazyQuery,
+} from "@/rekuest/api/graphql";
+import { useRekuest, withRekuest } from "@jhnnsrs/rekuest-next";
+import { ArrowDown, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import {
+  DropContextualParams,
+  EdgeContextualParams,
+  ReactiveNodeSuggestions,
+} from "../../types";
+import { useEditRiver } from "../context";
+import { ContextualContainer } from "./ContextualContainer";
 
 export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   const form = useForm({

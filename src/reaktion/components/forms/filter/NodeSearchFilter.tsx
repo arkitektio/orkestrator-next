@@ -7,7 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { NodeFilter, NodeSearchQueryVariables } from "@/rekuest/api/graphql";
+import { NodeFilter } from "@/rekuest/api/graphql";
 import { PopoverAnchor } from "@radix-ui/react-popover";
 import { ArrowDown } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -45,10 +45,9 @@ const Filter: React.FC<FilterProps> = ({ onFilterChanged, defaultValue }) => {
                     />
                   </FormControl>
 
-                <PopoverTrigger className="absolute right-1 top-1 text-foreground">
-                    <ArrowDown/>
+                  <PopoverTrigger className="absolute right-1 top-1 text-foreground">
+                    <ArrowDown />
                   </PopoverTrigger>
-                 
                 </FormItem>
               </PopoverAnchor>
             )}

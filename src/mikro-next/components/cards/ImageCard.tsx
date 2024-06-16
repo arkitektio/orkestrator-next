@@ -1,9 +1,8 @@
-import { useDatalayer } from "@jhnnsrs/datalayer";
-import { MateFinder } from "../../../mates/types";
-import { ListImageFragment } from "../../api/graphql";
-import { MikroImage } from "@/linkers";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
+import { MikroImage } from "@/linkers";
+import { MateFinder } from "../../../mates/types";
+import { ListImageFragment } from "../../api/graphql";
 
 interface ImageCardProps {
   image: ListImageFragment;

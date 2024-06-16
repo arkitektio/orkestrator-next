@@ -26,11 +26,7 @@ import { Tooltip } from "@radix-ui/react-tooltip";
 import { ArrowDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import {
-  ClickContextualParams,
-  FlowNode,
-  ReactiveNodeSuggestions,
-} from "../../types";
+import { ClickContextualParams, ReactiveNodeSuggestions } from "../../types";
 import { useEditRiver } from "../context";
 import { ContextualContainer } from "./ContextualContainer";
 

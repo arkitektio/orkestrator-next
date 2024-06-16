@@ -5,13 +5,11 @@ import { cn } from "@/lib/utils";
 import { RekuestNode, RekuestReservation, RekuestTemplate } from "@/linkers";
 import { useAppQuery } from "@/lok-next/api/graphql";
 import {
-  DependencyEdge,
   DependencyEdgeFragment,
   DependencyGraphFragment,
   ImplementationEdgeFragment,
   InvalidNodeFragment,
   NodeNodeFragment,
-  ProvisionStatus,
   ReservationStatus,
   TemplateNodeFragment,
   useDetailProvisionQuery,
@@ -24,7 +22,6 @@ import {
 import { LokNextGuard, withLokNext } from "@jhnnsrs/lok-next";
 import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { Avatar } from "@radix-ui/react-avatar";
-import { dir } from "console";
 import dagre from "dagre";
 import React, { useMemo } from "react";
 import ReactFlow, {

@@ -1,17 +1,7 @@
-import { MikroChannelView, RekuestAssignation } from "@/linkers";
-import {
-  PostmanAssignationFragment,
-  WatchAssignationEventsDocument,
-  WatchAssignationEventsSubscription,
-  WatchAssignationEventsSubscriptionVariables,
-  useDetailAssignationQuery,
-} from "../../api/graphql";
-import { MateFinder } from "@/mates/types";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { AnimatePresence } from "framer-motion";
-import { motion } from "framer-motion";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
-import { useEffect } from "react";
+import { RekuestAssignation } from "@/linkers";
+import { MateFinder } from "@/mates/types";
+import { PostmanAssignationFragment } from "../../api/graphql";
 interface Props {
   assignation: PostmanAssignationFragment;
   mates?: MateFinder[];

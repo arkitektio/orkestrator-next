@@ -1,9 +1,15 @@
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import {
   Popover,
   PopoverContent,
@@ -14,22 +20,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ReactiveImplementation } from "@/reaktion/api/graphql";
 import { Constants } from "@/reaktion/base/Constants";
 import { InStream } from "@/reaktion/base/Instream";
 import { OutStream } from "@/reaktion/base/Outstream";
-import { ReactiveImplementation } from "@/reaktion/api/graphql";
-import React from "react";
-import { ReactiveNodeData, ReactiveNodeProps } from "../../types";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import { Button } from "@/components/ui/button";
-import { useEditRiver } from "../context";
-import { useReactFlow, useUpdateNodeInternals } from "reactflow";
-import { NodeDescription } from "@jhnnsrs/rekuest";
 import { portToLabel } from "@/rekuest/widgets/utils";
+import { NodeDescription } from "@jhnnsrs/rekuest";
+import React from "react";
+import { useUpdateNodeInternals } from "reactflow";
+import { ReactiveNodeData, ReactiveNodeProps } from "../../types";
+import { useEditRiver } from "../context";
 
 export type ShapeProps = {
   implementation: ReactiveImplementation;

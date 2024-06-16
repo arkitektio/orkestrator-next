@@ -1,15 +1,14 @@
-import { withLokNext } from "@jhnnsrs/lok-next";
-import { KommentProps } from "./types";
+import { Card } from "@/components/ui/card";
 import {
   CommentsForDocument,
   CommentsForQuery,
   useCommentsForQuery,
   useCreateCommentMutation,
-  useReplyToMutation,
 } from "@/lok-next/api/graphql";
-import { CommentEdit } from "./edit/CommentEdit";
+import { withLokNext } from "@jhnnsrs/lok-next";
 import { CommentList } from "./display/CommentList";
-import { Card } from "@/components/ui/card";
+import { CommentEdit } from "./edit/CommentEdit";
+import { KommentProps } from "./types";
 
 export const Komments = ({ identifier, object }: KommentProps) => {
   const { data } = withLokNext(useCommentsForQuery)({
@@ -42,14 +41,14 @@ export const Komments = ({ identifier, object }: KommentProps) => {
   return (
     <div className="flex flex-col ">
       <div className="flex-grow flex flex-col gap-2 p-3 direct @container">
-      <Card>
-      <CommentEdit
-        identifier={identifier}
-        object={object}
-        createComment={createComment}
-      />
-      </Card>
-      {data?.commentsFor && <CommentList comments={data?.commentsFor} />}
+        <Card>
+          <CommentEdit
+            identifier={identifier}
+            object={object}
+            createComment={createComment}
+          />
+        </Card>
+        {data?.commentsFor && <CommentList comments={data?.commentsFor} />}
       </div>
     </div>
   );

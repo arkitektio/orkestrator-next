@@ -1,10 +1,10 @@
+import { LokUser } from "@/linkers";
 import { useDatalayer } from "@jhnnsrs/datalayer";
 import { useState } from "react";
 import Timestamp from "react-timestamp";
+import { CommentEdit } from "../edit/CommentEdit";
 import { DescendantType, LeafType, ListCommentType } from "../types";
 import { Mention } from "./Mention";
-import { LokUser } from "@/linkers";
-import { CommentEdit } from "../edit/CommentEdit";
 
 export const renderLeaf = (x: LeafType) => {
   if (x.italic) {

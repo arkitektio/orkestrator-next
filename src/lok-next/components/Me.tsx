@@ -1,6 +1,6 @@
-import { withLokNext } from "@jhnnsrs/lok-next";
-import { useMeQuery, useUserQuery } from "../api/graphql";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { withLokNext } from "@jhnnsrs/lok-next";
+import { useMeQuery } from "../api/graphql";
 
 export const Me = () => {
   const { data } = withLokNext(useMeQuery)();

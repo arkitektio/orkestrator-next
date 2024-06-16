@@ -1,8 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ValidationError } from "@/reaktion/validation/types";
-import React from "react";
-import { RemainingErrorRender } from "../../ErrorRender";
 import { Ban } from "lucide-react";
+import { RemainingErrorRender } from "../../ErrorRender";
 
 export const ErrorBox = (props: { errors: ValidationError[] }) => {
   return (

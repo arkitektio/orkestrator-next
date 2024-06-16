@@ -1,13 +1,12 @@
 import { ListRender } from "@/components/layout/ListRender";
+import { MikroRenderTree } from "@/linkers";
+import { withMikroNext } from "@jhnnsrs/mikro-next";
 import {
   ImageFilter,
   OffsetPaginationInput,
-  useGetImagesQuery,
   useRenderTreesQuery,
 } from "../../api/graphql";
 import RenderTreeCard from "../cards/RenderTreeCard";
-import { MikroImage, MikroRenderTree } from "@/linkers";
-import { withMikroNext } from "@jhnnsrs/mikro-next";
 
 export type Props = {
   filters?: ImageFilter;
@@ -25,7 +24,9 @@ const List = ({ filters, pagination }: Props) => {
     <ListRender
       array={data?.renderTrees}
       title={
-        <MikroRenderTree.ListLink className="flex-0">Renders</MikroRenderTree.ListLink>
+        <MikroRenderTree.ListLink className="flex-0">
+          Renders
+        </MikroRenderTree.ListLink>
       }
       refetch={refetch}
     >

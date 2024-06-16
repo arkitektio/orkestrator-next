@@ -1,6 +1,6 @@
+import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tooltip } from "@radix-ui/react-tooltip";
 import { SolvedError, ValidationError } from "../validation/types";
-import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const SolvedErrorRender = ({ error }: { error: SolvedError }) => {
   return (

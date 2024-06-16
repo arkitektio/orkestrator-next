@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { ActiveView, View, ViewContext } from "./ViewContext";
+import { View, ViewContext } from "./ViewContext";
 
 export interface ViewProviderProps {
   children: React.ReactNode;

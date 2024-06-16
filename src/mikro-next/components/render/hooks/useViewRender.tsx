@@ -9,20 +9,18 @@ import {
 import { BasicIndexer } from "@/mikro-next/providers/xarray/indexing";
 import { S3Store } from "@/mikro-next/providers/xarray/store";
 import { getChunkItem } from "@/mikro-next/providers/xarray/utils";
+import { useFakts } from "@jhnnsrs/fakts";
+import { MikroNextClient, useMikroNext } from "@jhnnsrs/mikro-next";
 import { AwsClient } from "aws4fetch";
+import { useCallback } from "react";
 import { NestedArray, TypedArray, ZarrArray, openGroup } from "zarr";
 import { ArraySelection, Slice } from "zarr/types/core/types";
-import { colorMapperMap, mapDTypeToMinMax } from "./useArray";
-import { useCallback } from "react";
-import { MikroNextClient, useMikroNext } from "@jhnnsrs/mikro-next";
-import { useFakts } from "@jhnnsrs/fakts";
-import { ApolloClient } from "@apollo/client";
 import {
   addImageDataToCache,
   deleteRenderCache,
   getImageDataFromCache,
 } from "./renderCache";
-import c from "colormap";
+import { colorMapperMap, mapDTypeToMinMax } from "./useArray";
 
 export type DownloadedArray = {
   shape: [number, number, number, number, number];

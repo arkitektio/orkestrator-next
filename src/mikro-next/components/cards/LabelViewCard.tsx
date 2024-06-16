@@ -1,8 +1,8 @@
+import { CardHeader, CardTitle } from "@/components/ui/card";
 import { MikroFluorophore, MikroLabelView } from "@/linkers";
+import { ArrowDownIcon, ArrowUpIcon } from "@radix-ui/react-icons";
 import { MateFinder } from "../../../mates/types";
 import { LabelViewFragment } from "../../api/graphql";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowDownIcon, ArrowUpIcon } from "@radix-ui/react-icons";
 import { ViewCard } from "./meta/ViewCard";
 
 interface Props {

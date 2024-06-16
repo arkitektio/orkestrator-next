@@ -13,12 +13,12 @@ export type Settings = {
 
 export type DebugContextType = {
   debug: boolean;
-setDebug: React.Dispatch<React.SetStateAction<boolean>>;
+  setDebug: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 export const DebugContext = React.createContext<DebugContextType>({
   debug: false,
-setDebug: () => {},
+  setDebug: () => {},
 });
 
 export const useDebug = () => useContext(DebugContext);

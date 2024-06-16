@@ -1,6 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
-import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
 import { Button } from "@/components/ui/button";
 import {
   DetailPane,
@@ -8,13 +7,12 @@ import {
   DetailPaneHeader,
   DetailPaneTitle,
 } from "@/components/ui/pane";
-import { useAgentQuery, useTemplateQuery } from "@/rekuest/api/graphql";
+import { RekuestAgent } from "@/linkers";
+import { useAgentQuery } from "@/rekuest/api/graphql";
 import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { ClipboardIcon } from "@radix-ui/react-icons";
 import ProvisionCard from "../components/cards/ProvisionCard";
 import TemplateCard from "../components/cards/TemplateCard";
-import { DependencyGraphFlow } from "../components/dependencyGraph/DependencyGraph";
-import { RekuestAgent } from "@/linkers";
 
 export default asDetailQueryRoute(
   withRekuest(useAgentQuery),

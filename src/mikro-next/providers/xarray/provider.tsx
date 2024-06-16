@@ -1,3 +1,11 @@
+import {
+  RequestAccessDocument,
+  RequestAccessMutation,
+  RequestAccessMutationVariables,
+  ZarrStoreFragment,
+} from "@/mikro-next/api/graphql";
+import { useFakts } from "@jhnnsrs/fakts";
+import { useMikroNext } from "@jhnnsrs/mikro-next";
 import { AwsClient } from "aws4fetch";
 import c from "colormap";
 import React from "react";
@@ -7,15 +15,6 @@ import { ImageView, XArrayContext } from "./context";
 import { BasicIndexer } from "./indexing";
 import { S3Store } from "./store";
 import { getChunkItem } from "./utils";
-import { useMikroNext, withMikroNext } from "@jhnnsrs/mikro-next";
-import {
-  RequestAccessDocument,
-  RequestAccessMutation,
-  RequestAccessMutationVariables,
-  ZarrStoreFragment,
-} from "@/mikro-next/api/graphql";
-import { useDatalayer } from "@jhnnsrs/datalayer";
-import { useFakts } from "@jhnnsrs/fakts";
 export const available_color_maps = [
   "jet",
   "hot",

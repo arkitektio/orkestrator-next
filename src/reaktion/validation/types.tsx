@@ -1,8 +1,4 @@
-import {
-  GlobalArg,
-  GlobalArgFragment,
-  PortFragment,
-} from "@/rekuest/api/graphql";
+import { GlobalArgFragment, PortFragment } from "@/rekuest/api/graphql";
 import { FlowEdge, FlowNode, FlowNodeData, NodeData } from "../types";
 
 export type Compare = {
@@ -39,7 +35,12 @@ export type FlowState = {
 
 export type PortType = "source" | "target";
 
-export type Transform = "to_list" | "from_list" | "ensure" | "round_float" | "to_float";
+export type Transform =
+  | "to_list"
+  | "from_list"
+  | "ensure"
+  | "round_float"
+  | "to_float";
 
 export type ChangeEvent = {
   stream: PortFragment[];

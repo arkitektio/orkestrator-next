@@ -10,9 +10,9 @@ import {
   useCreateContinousScanViewMutation,
 } from "../api/graphql";
 
-import { useEffect, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { useRef } from "react";
 
 export const calculateIndex = (
   currentIndex: number,

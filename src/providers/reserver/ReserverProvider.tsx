@@ -1,16 +1,14 @@
 import {
-  Assignation,
   Reservation,
-  UnassignVariables,
   UnreserveVariables,
   usePostman,
 } from "@jhnnsrs/rekuest-next";
 import React, { useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
 import {
+  Defered,
   ReserveRequest,
   ReserveRequestVariables,
-  Defered,
   ReserverContext,
   ResolvedReserveRequest,
 } from "./ReserverContext";

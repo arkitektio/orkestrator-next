@@ -1,8 +1,8 @@
-import React, { useEffect } from "react";
+import result from "@/rekuest/api/fragments";
 import { useFakts } from "@jhnnsrs/fakts";
 import { useHerre } from "@jhnnsrs/herre";
-import result from "@/rekuest/api/fragments";
 import { useRekuest } from "@jhnnsrs/rekuest-next";
+import React, { useEffect } from "react";
 
 export const RekuestNextAutoConfigure: React.FC<{}> = (props) => {
   const { configure } = useRekuest();

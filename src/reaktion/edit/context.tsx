@@ -1,6 +1,6 @@
+import { FlowFragment, GlobalArgFragment } from "@/rekuest/api/graphql";
 import React, { useContext } from "react";
 import {
-  ArkitektNodeData,
   ClickContextualParams,
   ConnectContextualParams,
   DropContextualParams,
@@ -8,11 +8,6 @@ import {
   FlowNode,
   NodeData,
 } from "../types";
-import {
-  FlowFragment,
-  GlobalArg,
-  GlobalArgFragment,
-} from "@/rekuest/api/graphql";
 import { ValidationResult } from "../validation/types";
 
 export type ShowRiverContextType = {

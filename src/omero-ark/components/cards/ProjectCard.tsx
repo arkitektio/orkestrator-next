@@ -1,7 +1,6 @@
-import { useDatalayer } from "@jhnnsrs/datalayer";
-import { ListProjectFragment } from "../../api/graphql";
-import { MikroDataset, OmeroArkProject } from "@/linkers";
+import { OmeroArkProject } from "@/linkers";
 import { MateFinder } from "@/mates/types";
+import { ListProjectFragment } from "../../api/graphql";
 
 interface Props {
   project: ListProjectFragment;

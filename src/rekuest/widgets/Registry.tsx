@@ -5,7 +5,6 @@ import {
   InputWidgetProps,
   InputWidgetTypes,
   MappablePort,
-  Port,
   PortEffectTypes,
   ReturnWidgetProps,
   ReturnWidgetTypes,
@@ -87,7 +86,7 @@ export class WidgetRegistry {
   constructor(
     unknownInputWidget: React.FC<InputWidgetProps>,
     unknownReturnWidget: React.FC<ReturnWidgetProps>,
-    unknownEffectWidget: React.FC<EffectWidgetProps>
+    unknownEffectWidget: React.FC<EffectWidgetProps>,
   ) {
     this.portTypeInputFallbackMap = {};
     this.typeInputWidgetMap = {};
@@ -103,7 +102,7 @@ export class WidgetRegistry {
 
   public registerInputWidgetFallback(
     port_type: PortKind,
-    widget: React.FC<InputWidgetProps>
+    widget: React.FC<InputWidgetProps>,
   ): () => void {
     this.portTypeInputFallbackMap[port_type] = widget;
     return () => {
@@ -124,7 +123,7 @@ export class WidgetRegistry {
 
   public registerInputWidget(
     widget_type: InputWidgetTypes,
-    widget: React.FC<InputWidgetProps<any>>
+    widget: React.FC<InputWidgetProps<any>>,
   ): () => void {
     this.typeInputWidgetMap[widget_type || "Unkown"] = widget;
     return () => {
@@ -138,7 +137,7 @@ export class WidgetRegistry {
 
   public getInputWidgetForPort(
     port: MappablePort,
-    allowFallback: boolean = true
+    allowFallback: boolean = true,
   ): React.FC<InputWidgetProps> {
     if (!port?.assignWidget?.__typename) {
       let widget =
@@ -160,7 +159,7 @@ export class WidgetRegistry {
 
   public registerReturnWidgetFallback(
     port_type: PortKind,
-    widget: React.FC<ReturnWidgetProps<any>>
+    widget: React.FC<ReturnWidgetProps<any>>,
   ): () => void {
     this.portTypeReturnFallbackMap[port_type] = widget;
     return () => {
@@ -170,7 +169,7 @@ export class WidgetRegistry {
 
   public registerReturnWidget(
     widget_type: ReturnWidgetTypes,
-    widget: React.FC<ReturnWidgetProps<any>>
+    widget: React.FC<ReturnWidgetProps<any>>,
   ): () => void {
     this.typeReturnWidgetMap[widget_type || "Unknown"] = widget;
     return () => {
@@ -180,7 +179,7 @@ export class WidgetRegistry {
 
   public registerEffectWidget(
     effect_type: PortEffectTypes,
-    widget: React.FC<EffectWidgetProps>
+    widget: React.FC<EffectWidgetProps>,
   ): () => void {
     this.effectWidgetMap[effect_type] = widget;
     return () => {
@@ -190,7 +189,7 @@ export class WidgetRegistry {
 
   public getReturnWidgetForPort(
     port: MappablePort,
-    allowFallback: boolean = true
+    allowFallback: boolean = true,
   ): React.FC<ReturnWidgetProps<any>> {
     if (!port?.returnWidget?.__typename) {
       return (

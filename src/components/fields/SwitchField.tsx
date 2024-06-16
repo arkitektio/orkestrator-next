@@ -6,10 +6,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { cn } from "@/lib/utils";
 import { useFormContext } from "react-hook-form";
 import { Switch } from "../ui/switch";
 import { FieldProps } from "./types";
-import { cn } from "@/lib/utils";
 
 export const SwitchField = (
   props: FieldProps & { placeholder?: string; className?: string },

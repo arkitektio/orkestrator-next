@@ -1,9 +1,11 @@
-import result from "@/mikro-next/api/fragments";
-import { useFakts } from "@jhnnsrs/fakts";
+import {
+  RequestAccessDocument,
+  RequestAccessMutation,
+} from "@/mikro-next/api/graphql";
 import { useDatalayer } from "@jhnnsrs/datalayer";
+import { useFakts } from "@jhnnsrs/fakts";
 import { useMikroNext } from "@jhnnsrs/mikro-next";
 import React, { useEffect } from "react";
-import { RequestAccessDocument, RequestAccessMutation } from "@/mikro-next/api/graphql";
 
 export const MikroNextAutoConfigure: React.FC<{}> = (props) => {
   const { configure } = useDatalayer();

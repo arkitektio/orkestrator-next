@@ -1,4 +1,4 @@
-import { ListRender } from "@/components/layout/ListRender";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { PageLayout } from "@/components/layout/PageLayout";
 import {
   DetailPane,
@@ -6,14 +6,12 @@ import {
   DetailPaneTitle,
 } from "@/components/ui/pane";
 import { MikroDataset } from "@/linkers";
+import { Komments } from "@/lok-next/components/komments/Komments";
 import { withOmeroArk } from "@jhnnsrs/omero-ark";
 import React from "react";
 import { useParams } from "react-router";
 import { useGetImageQuery } from "../api/graphql";
-import DatasetCard from "../components/cards/DatasetCard";
-import { Komments } from "@/lok-next/components/komments/Komments";
 import AuthorizedImage from "../components/Thumbnail";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
 
 export type IRepresentationScreenProps = {};
 
@@ -29,7 +27,13 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
     <PageLayout
       title={data?.image?.name}
       actions={<MikroDataset.Actions id={id} />}
-      sidebars={<MultiSidebar map={{Comments: <Komments identifier="@omero-ark/image" object={id}/>}} />}
+      sidebars={
+        <MultiSidebar
+          map={{
+            Comments: <Komments identifier="@omero-ark/image" object={id} />,
+          }}
+        />
+      }
     >
       <div className="flex @2xl:flex-row-reverse flex-col rounded-md gap-4 mt-2 w-full">
         <div className="flex-1 overflow-hidden ">

@@ -1,7 +1,7 @@
+import { CardHeader, CardTitle } from "@/components/ui/card";
 import { MikroChannelView } from "@/linkers";
-import { ChannelViewFragment } from "../../api/graphql";
 import { MateFinder } from "@/mates/types";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChannelViewFragment } from "../../api/graphql";
 import { ViewCard } from "./meta/ViewCard";
 
 interface Props {

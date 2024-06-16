@@ -1,23 +1,20 @@
+import { GearIcon } from "@radix-ui/react-icons";
+import { useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
+import BreadCrumbs from "../navigation/BreadCrumbs";
+import { Button } from "../ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "../ui/resizable";
-import BreadCrumbs from "../navigation/BreadCrumbs";
-import { ScrollArea } from "../ui/scroll-area";
 import { Actionbar } from "./Actionbar";
-import { Button } from "../ui/button";
-import { useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
-import { GearIcon } from "@radix-ui/react-icons";
 
 export type PageLayoutProps = {
   title: string | undefined;

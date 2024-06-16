@@ -1,3 +1,8 @@
+import possibleTypes from "@/kabinet/api/fragments";
+import { createKabinetClient } from "@/kabinet/lib/KabinetClient";
+import { ApolloClient } from "@apollo/client";
+import { Manifest, useFakts } from "@jhnnsrs/fakts";
+import { useHerre } from "@jhnnsrs/herre";
 import {
   ReactNode,
   createContext,
@@ -5,12 +10,6 @@ import {
   useEffect,
   useState,
 } from "react";
-import { App } from "./types";
-import { ApolloClient } from "@apollo/client";
-import { Manifest, useFakts } from "@jhnnsrs/fakts";
-import { useHerre } from "@jhnnsrs/herre";
-import { createKabinetClient } from "@/kabinet/lib/KabinetClient";
-import possibleTypes from "@/kabinet/api/fragments";
 
 export type AppContext = {
   manifest: Manifest;

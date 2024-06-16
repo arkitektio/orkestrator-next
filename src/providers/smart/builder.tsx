@@ -1,3 +1,8 @@
+import {
+  ModelPageLayout,
+  ModelPageLayoutProps,
+} from "@/components/layout/ModelPageLayout";
+import { Komments } from "@/lok-next/components/komments/Komments";
 import { NavLink } from "react-router-dom";
 import { SmartModel } from "./SmartModel";
 import {
@@ -7,11 +12,6 @@ import {
   ModelLinkProps,
   OmitedNavLinkProps,
 } from "./types";
-import {
-  ModelPageLayout,
-  ModelPageLayoutProps,
-} from "@/components/layout/ModelPageLayout";
-import { Komments } from "@/lok-next/components/komments/Komments";
 
 const buildBaseLink = (to: string) => {
   return ({ children, ...props }: BaseLinkProps) => {

@@ -1,28 +1,16 @@
-import { Form } from "@/components/ui/form";
+import { ToggleField } from "@/components/fields/ToggleField";
+import { AutoSubmitter } from "@/components/form/AutoSubmitter";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { GlobalSearchQueryVariables } from "@/mikro-next/api/graphql";
-import { useForm, useWatch } from "react-hook-form";
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { useFormContext } from "react-hook-form";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ArrowDown } from "lucide-react";
+import { GlobalSearchQueryVariables } from "@/mikro-next/api/graphql";
 import { PopoverAnchor } from "@radix-ui/react-popover";
-import { SwitchField } from "@/components/fields/SwitchField";
-import { ToggleField } from "@/components/fields/ToggleField";
-import debounce from "debounce";
-import { useEffect } from "react";
-import { AutoSubmitter } from "@/components/form/AutoSubmitter";
+import { ArrowDown } from "lucide-react";
+import { useForm } from "react-hook-form";
 
 interface FilterProps {
   onFilterChanged: (values: GlobalSearchQueryVariables) => any;
@@ -61,10 +49,9 @@ const Filter: React.FC<FilterProps> = ({ onFilterChanged, defaultValue }) => {
                     />
                   </FormControl>
 
-                <PopoverTrigger className="absolute right-1 top-1 text-foreground">
-                    <ArrowDown/>
+                  <PopoverTrigger className="absolute right-1 top-1 text-foreground">
+                    <ArrowDown />
                   </PopoverTrigger>
-                 
                 </FormItem>
               </PopoverAnchor>
             )}

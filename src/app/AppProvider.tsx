@@ -1,40 +1,38 @@
+import { Arkitekt } from "@/arkitekt";
 import { CommandMenu } from "@/command/Menu";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ShadnWigets } from "@/components/widgets/ShadnWigets";
+import { manifest } from "@/constants";
+import { MikroNextWard } from "@/mikro-next/MikroNextWard";
+import ImageDisplay from "@/mikro-next/displays/ImageDisplay";
 import { ThemeProvider } from "@/providers/ThemeProvider";
+import { CommandProvider } from "@/providers/command/CommandProvider";
+import { DebugProvider } from "@/providers/debug/DebugProvider";
+import { DisplayProvider } from "@/providers/display/DisplayProvider";
 import { RequesterProvider } from "@/providers/requester/RequesterProvider";
 import { ReserverProvider } from "@/providers/reserver/ReserverProvider";
+import { SelectionProvider } from "@/providers/selection/SelectionProvider";
 import { SmartProvider } from "@/providers/smart/provider";
+import { FlussWard } from "@/reaktion/FlussWard";
+import NodeDisplay from "@/rekuest/components/displays/NodeDisplay";
+import { AssignationUpdater } from "@/rekuest/components/functional/AssignationUpdater";
+import { ReservationUpdater } from "@/rekuest/components/functional/ReservationUpdater";
+import { ReserveResolver } from "@/rekuest/components/global/ReserverResolver";
+import { WidgetRegistryProvider } from "@/rekuest/widgets/WidgetsProvider";
 import { EasyProvider } from "@jhnnsrs/arkitekt";
-import { MikroNextGuard, MikroNextProvider } from "@jhnnsrs/mikro-next";
+import { FlussGuard, FlussProvider } from "@jhnnsrs/fluss-next";
 import { LokNextProvider } from "@jhnnsrs/lok-next";
+import { MikroNextGuard, MikroNextProvider } from "@jhnnsrs/mikro-next";
+import { OmeroArkProvider } from "@jhnnsrs/omero-ark";
+import { PortProvider } from "@jhnnsrs/port-next";
 import {
-  GraphQLPostman,
   PostmanProvider,
   RekuestGuard,
   RekuestProvider,
 } from "@jhnnsrs/rekuest-next";
 import { BrowserRouter } from "react-router-dom";
 import { AppConfiguration } from "./AppConfiguration";
-import { manifest } from "@/constants";
-import { ReserveResolver } from "@/rekuest/components/global/ReserverResolver";
-import { CommandProvider } from "@/providers/command/CommandProvider";
-import { DisplayProvider } from "@/providers/display/DisplayProvider";
-import ImageDisplay from "@/mikro-next/displays/ImageDisplay";
-import NodeDisplay from "@/rekuest/components/displays/NodeDisplay";
-import { MikroNextWard } from "@/mikro-next/MikroNextWard";
-import { OmeroArkProvider } from "@jhnnsrs/omero-ark";
-import { PortProvider } from "@jhnnsrs/port-next";
-import { FlussGuard, FlussProvider } from "@jhnnsrs/fluss-next";
-import { SelectionProvider } from "@/providers/selection/SelectionProvider";
-import { DebugProvider } from "@/providers/debug/DebugProvider";
-import { FlussWard } from "@/reaktion/FlussWard";
-import { AssignationUpdater } from "@/rekuest/components/functional/AssignationUpdater";
-import { Toaster } from "@/components/ui/sonner";
-import { ReservationUpdater } from "@/rekuest/components/functional/ReservationUpdater";
-import { Stash } from "@/lok-next/components/stash/Stash";
-import { WidgetRegistryProvider } from "@/rekuest/widgets/WidgetsProvider";
-import { Arkitekt } from "@/arkitekt";
 
 const displayRegistry = {
   "@mikro-next/image": ImageDisplay,

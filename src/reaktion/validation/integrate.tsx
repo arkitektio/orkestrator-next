@@ -6,6 +6,7 @@ import {
   PortKind,
   ReactiveImplementation,
 } from "@/reaktion/api/graphql";
+import { PortScope } from "@/rekuest/api/graphql";
 import { Connection, XYPosition } from "reactflow";
 import { FlowEdge, FlowNode, FlowNodeData } from "../types";
 import {
@@ -34,7 +35,6 @@ import {
   reduceStream,
   withNewStream,
 } from "./utils";
-import { PortScope } from "@/rekuest/api/graphql";
 
 export const changeZip = (
   data: FlowNodeData,

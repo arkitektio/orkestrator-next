@@ -1,6 +1,3 @@
-import { ApolloCache } from "@apollo/client";
-import { Manifest } from "@jhnnsrs/fakts";
-
 export const buildApp = <T extends ServiceMap>(serviceMap: T): App<T> => {
   return {
     services: serviceMap,

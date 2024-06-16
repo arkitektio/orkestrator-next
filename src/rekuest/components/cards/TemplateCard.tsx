@@ -5,12 +5,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { RekuestNode, RekuestTemplate } from "@/linkers";
+import { RekuestTemplate } from "@/linkers";
 import { useReserveMate } from "@/mates/reserve/useReserveMate";
 import { MateFinder } from "@/mates/types";
-import { ListNodeFragment, ListTemplateFragment } from "@/rekuest/api/graphql";
+import { ListTemplateFragment } from "@/rekuest/api/graphql";
 import { useUsage } from "@/rekuest/hooks/useNode";
-import { NodeDescription } from "@jhnnsrs/rekuest";
 
 interface Props {
   item: ListTemplateFragment;

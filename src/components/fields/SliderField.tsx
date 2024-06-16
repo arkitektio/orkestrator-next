@@ -7,9 +7,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useFormContext } from "react-hook-form";
-import { Switch } from "../ui/switch";
-import { FieldProps } from "./types";
 import { Slider } from "../ui/slider";
+import { FieldProps } from "./types";
 
 function throttle<T extends (...args: any[]) => void>(
   fn: T,

@@ -1,8 +1,4 @@
-import { LokNextGuard, withLokNext } from "@jhnnsrs/lok-next";
-import { useUserQuery } from "../../api/graphql";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
-import { User } from "lucide-react";
-import { UserAvatar } from "../UserAvatar";
+import { LokNextGuard } from "@jhnnsrs/lok-next";
 import { AppAvatar } from "../AppAvatar";
 
 export const AppInfo = (props: { clientId: string | undefined }) => {

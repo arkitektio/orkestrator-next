@@ -1,7 +1,11 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { MikroDataset } from "@/linkers";
 
-import { ClientFilter, OffsetPaginationInput, useClientsQuery } from "@/lok-next/api/graphql";
+import {
+  ClientFilter,
+  OffsetPaginationInput,
+  useClientsQuery,
+} from "@/lok-next/api/graphql";
 import { withLokNext } from "@jhnnsrs/lok-next";
 import ClientCard from "../cards/ClientCard";
 

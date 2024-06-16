@@ -21,9 +21,10 @@ export const islistTransformable = (
   if (challenging.length != having.length) return false;
   for (let i = 0; i < challenging.length; i++) {
     if (having[i].kind != PortKind.List) return false;
-    if (having[i].child == undefined) return false;
-    if (having[i].child?.kind != challenging[i].kind) return false;
-    if (having[i].child?.identifier != challenging[i].identifier) return false;
+    if (having[i].children?.at(0) == undefined) return false;
+    if (having[i].children?.at(0)?.kind != challenging[i].kind) return false;
+    if (having[i].children?.at(0)?.identifier != challenging[i].identifier)
+      return false;
   }
 
   return true;

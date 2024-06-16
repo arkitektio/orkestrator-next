@@ -1,12 +1,12 @@
 import { ListRender } from "@/components/layout/ListRender";
+import { MikroImage } from "@/linkers";
+import { withMikroNext } from "@jhnnsrs/mikro-next";
 import {
   ImageFilter,
   OffsetPaginationInput,
   useGetImagesQuery,
 } from "../../api/graphql";
 import ImageCard from "../cards/ImageCard";
-import { MikroImage } from "@/linkers";
-import { withMikroNext } from "@jhnnsrs/mikro-next";
 
 export type Props = {
   filters?: ImageFilter;

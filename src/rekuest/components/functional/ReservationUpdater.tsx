@@ -1,17 +1,10 @@
+import { useSettings } from "@/providers/settings/SettingsContext";
 import { useRekuest } from "@jhnnsrs/rekuest-next";
 import { useEffect } from "react";
 import {
-  AssignationsDocument,
-  AssignationsQuery,
-  PostmanAssignationFragmentDoc,
   PostmanReservationFragmentDoc,
   ReservationsDocument,
   ReservationsQuery,
-  WatchAssignationEventsDocument,
-  WatchAssignationEventsSubscription,
-  WatchAssignationEventsSubscriptionVariables,
-  WatchAssignationsDocument,
-  WatchAssignationsSubscription,
   WatchReservationEventsDocument,
   WatchReservationEventsSubscription,
   WatchReservationEventsSubscriptionVariables,
@@ -19,9 +12,6 @@ import {
   WatchReservationsSubscription,
   WatchReservationsSubscriptionVariables,
 } from "../../api/graphql";
-import { useSettings } from "@/providers/settings/SettingsContext";
-import { toast } from "sonner";
-import { useAssignations } from "@/rekuest/hooks/useAssignations";
 
 export const ReservationUpdater = (props: {}) => {
   const { settings } = useSettings();

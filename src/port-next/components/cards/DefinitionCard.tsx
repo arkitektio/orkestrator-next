@@ -1,6 +1,6 @@
 import { PortDefinition } from "@/linkers";
 import { MateFinder } from "@/mates/types";
-import { ListDefinitionFragment, ListPodFragment } from "../../api/graphql";
+import { ListDefinitionFragment } from "../../api/graphql";
 
 interface Props {
   definition: ListDefinitionFragment;

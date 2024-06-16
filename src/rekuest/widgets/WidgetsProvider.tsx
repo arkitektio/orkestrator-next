@@ -24,10 +24,7 @@ export const UnknownInputWidget: React.FC<InputWidgetProps> = ({ port }) => {
   );
 };
 
-export const UnknownReturnWidget: React.FC<ReturnWidgetProps> = ({
-  port,
-  value,
-}) => {
+export const UnknownReturnWidget: React.FC<ReturnWidgetProps> = ({ port }) => {
   return (
     <div className="text-xl bg-red-200">
       Registry error! No assign Widget registered for: {port.kind} and{" "}
@@ -60,8 +57,8 @@ export const WidgetRegistryProvider: React.FC<WidgetRegistryProviderProps> = ({
       new WidgetRegistry(
         unknownInputWidget,
         unknownReturnWidget,
-        unknownEffectWidget
-      )
+        unknownEffectWidget,
+      ),
   );
 
   return (

@@ -1,18 +1,17 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { DropZone } from "@/components/ui/dropzone";
 import {
   DetailPane,
   DetailPaneHeader,
   DetailPaneTitle,
 } from "@/components/ui/pane";
 import { MikroDataset } from "@/linkers";
+import { Komments } from "@/lok-next/components/komments/Komments";
 import { withOmeroArk } from "@jhnnsrs/omero-ark";
 import React from "react";
 import { useParams } from "react-router";
 import { useGetProjectQuery } from "../api/graphql";
 import DatasetCard from "../components/cards/DatasetCard";
-import { Komments } from "@/lok-next/components/komments/Komments";
 
 export type IRepresentationScreenProps = {};
 

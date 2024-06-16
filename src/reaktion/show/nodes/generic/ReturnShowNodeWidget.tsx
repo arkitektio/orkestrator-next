@@ -1,4 +1,4 @@
-import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { NodeShowLayout } from "@/reaktion/base/NodeShow";
 import { ReturnNodeProps } from "@/reaktion/types";
 import React, { useState } from "react";

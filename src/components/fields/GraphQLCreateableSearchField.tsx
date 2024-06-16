@@ -1,9 +1,9 @@
 import { useCallback } from "react";
-import { Option, SearchField, SearchFieldProps } from "./SearchField";
 import {
   CreatableSearchFieldProps,
   CreateableSearchField,
 } from "./CreateableSearchField";
+import { Option } from "./SearchField";
 
 export type GraphQLSearchFieldProps = Omit<
   CreatableSearchFieldProps,

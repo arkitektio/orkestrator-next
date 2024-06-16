@@ -1,7 +1,7 @@
+import { cn } from "@/lib/utils";
 import { Action, useAction } from "@/providers/command/CommandContext";
 import React, { useCallback, useState } from "react";
 import { Button } from "./button";
-import { cn } from "@/lib/utils";
 
 export interface ActionButtonProps extends Action {
   children: React.ReactNode;

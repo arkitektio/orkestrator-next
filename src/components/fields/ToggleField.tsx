@@ -1,7 +1,4 @@
-import {
-  FormControl,
-  FormField
-} from "@/components/ui/form";
+import { FormControl, FormField } from "@/components/ui/form";
 import { ReactNode } from "react";
 import { useFormContext } from "react-hook-form";
 import { Toggle } from "../ui/toggle";
@@ -15,7 +12,7 @@ export const ToggleField = (
     <FormField
       control={form.control}
       name={props.name}
-      rules={{validate: props.validate}}
+      rules={{ validate: props.validate }}
       render={({ field }) => (
         <FormControl>
           <Toggle pressed={field.value} onPressedChange={field.onChange}>

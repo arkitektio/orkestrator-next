@@ -1,8 +1,7 @@
+import { Arkitekt } from "@/arkitekt";
 import { PageLayout } from "@/components/layout/PageLayout";
 import React from "react";
 import { useListPodQuery } from "../api/graphql";
-import { Arkitekt } from "@/arkitekt";
-import { da } from "date-fns/locale";
 
 export type IRepresentationScreenProps = {};
 

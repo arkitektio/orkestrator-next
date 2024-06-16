@@ -113,7 +113,6 @@ export const SearchField = ({
       });
   }, [name, search]);
 
-
   return (
     <FormField
       control={form.control}

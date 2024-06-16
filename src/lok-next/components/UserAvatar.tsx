@@ -1,6 +1,6 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { withLokNext } from "@jhnnsrs/lok-next";
 import { useUserQuery } from "../api/graphql";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export const UserAvatar = (props: { sub: string }) => {
   const { data } = withLokNext(useUserQuery)({

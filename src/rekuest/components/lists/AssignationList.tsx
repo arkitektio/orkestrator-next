@@ -1,10 +1,7 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { MikroDataset } from "@/linkers";
-import { useSettings } from "@/providers/settings/SettingsContext";
-import { useReservationsQuery } from "@/rekuest/api/graphql";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
-import AssignationCard from "../cards/AssignationCard";
 import { useAssignations } from "@/rekuest/hooks/useAssignations";
+import AssignationCard from "../cards/AssignationCard";
 
 export type Props = {};
 

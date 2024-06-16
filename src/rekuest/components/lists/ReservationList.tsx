@@ -1,10 +1,8 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { MikroDataset } from "@/linkers";
 import { useSettings } from "@/providers/settings/SettingsContext";
-import { useReservationsQuery } from "@/rekuest/api/graphql";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
-import ReservationCard from "../cards/ReservationCard";
 import { useReservations } from "@/rekuest/hooks/useReservations";
+import ReservationCard from "../cards/ReservationCard";
 
 export type Props = {};
 

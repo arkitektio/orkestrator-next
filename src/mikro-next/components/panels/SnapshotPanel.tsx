@@ -1,9 +1,8 @@
-import { useDatalayer } from "@jhnnsrs/datalayer";
-import { SnapshotFragment } from "../../api/graphql";
 import { useResolve } from "@/datalayer/hooks/useResolve";
+import { SnapshotFragment } from "../../api/graphql";
 
 const SnapshotPanel = ({ image }: { image: SnapshotFragment }) => {
-  const s3resolve  = useResolve();
+  const s3resolve = useResolve();
 
   return (
     <>

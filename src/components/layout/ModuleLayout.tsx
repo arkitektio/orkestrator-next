@@ -1,10 +1,10 @@
 import { ScrollArea } from "@radix-ui/react-scroll-area";
+import { useSearchParams } from "react-router-dom";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "../ui/resizable";
-import { useSearchParams } from "react-router-dom";
 
 export type ModuleLayoutProps = {
   children: React.ReactNode;

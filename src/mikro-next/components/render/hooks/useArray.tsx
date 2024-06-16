@@ -1,30 +1,26 @@
 import {
   Blending,
   ColorMap,
-  Image,
   ListRgbContextFragment,
   RequestAccessDocument,
   RequestAccessMutation,
-  RgbContextFilter,
-  RgbContextFragment,
+  RequestAccessMutationVariables,
   RgbViewFragment,
-  ZarrStore,
   ZarrStoreFragment,
 } from "@/mikro-next/api/graphql";
+import { BasicIndexer } from "@/mikro-next/providers/xarray/indexing";
+import { AvailableColormap } from "@/mikro-next/providers/xarray/provider";
+import { S3Store } from "@/mikro-next/providers/xarray/store";
+import { getChunkItem } from "@/mikro-next/providers/xarray/utils";
 import { useFakts } from "@jhnnsrs/fakts";
 import { useMikroNext } from "@jhnnsrs/mikro-next";
 import { AwsClient } from "aws4fetch";
-import { NestedArray, TypedArray, ZarrArray, openGroup } from "zarr";
-import { v4 as uuid4 } from "uuid";
-import { RequestAccessMutationVariables } from "@/mikro-next/api/graphql";
-import { ArraySelection, Slice } from "zarr/types/core/types";
-import { S3Store } from "@/mikro-next/providers/xarray/store";
-import { BasicIndexer } from "@/mikro-next/providers/xarray/indexing";
-import { getChunkItem } from "@/mikro-next/providers/xarray/utils";
-import { useCallback, useEffect, useState } from "react";
-import { DtypeString } from "zarr/types/types";
-import { AvailableColormap } from "@/mikro-next/providers/xarray/provider";
 import c from "colormap";
+import { useCallback, useEffect, useState } from "react";
+import { v4 as uuid4 } from "uuid";
+import { NestedArray, TypedArray, ZarrArray, openGroup } from "zarr";
+import { ArraySelection, Slice } from "zarr/types/core/types";
+import { DtypeString } from "zarr/types/types";
 export const available_color_maps = [
   "jet",
   "hot",

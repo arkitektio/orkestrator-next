@@ -9,7 +9,7 @@ export const DateWidget = (props: InputWidgetProps) => {
   return (
     <DateField
       name={pathToName(props.path)}
-      label={props.port.label  || props.port.key}
+      label={props.port.label || props.port.key}
       description={props.port.description || undefined}
       validate={validate}
     />

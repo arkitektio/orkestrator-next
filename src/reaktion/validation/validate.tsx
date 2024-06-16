@@ -1,9 +1,8 @@
 import { GraphNodeKind } from "@/reaktion/api/graphql";
-import { ValidationError as YupValidationError } from "yup";
+import { buildZodSchema } from "@/rekuest/widgets/utils";
+import { ZodError } from "zod";
 import { FlowEdge, FlowNode } from "../types";
 import { SolvedError, ValidationError, ValidationResult } from "./types";
-import { buildZodSchema, portToZod, yupSchemaBuilder } from "@/rekuest/widgets/utils";
-import { ZodError } from "zod";
 
 const validateNoEdgeWithItself = (
   previous: ValidationResult,
@@ -271,7 +270,6 @@ export const validateNodeConstants = (
     node.data.constants.filter((k) => !(k.key in node.data.globalsMap)),
   ); // Only validate non global constants
   try {
-    
     schema.parse(node.data.constantsMap);
     return state;
   } catch (e) {

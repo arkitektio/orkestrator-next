@@ -1,9 +1,8 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { MikroDataset, OmeroArkProject } from "@/linkers";
-import { withMikroNext } from "@jhnnsrs/mikro-next";
-import ProjectCard from "../cards/ProjectCard";
-import { withOmeroArk } from "@jhnnsrs/omero-ark";
+import { OmeroArkProject } from "@/linkers";
 import { useListProjectsQuery } from "@/omero-ark/api/graphql";
+import { withOmeroArk } from "@jhnnsrs/omero-ark";
+import ProjectCard from "../cards/ProjectCard";
 
 const List = () => {
   const { data, error, subscribeToMore, refetch } = withOmeroArk(

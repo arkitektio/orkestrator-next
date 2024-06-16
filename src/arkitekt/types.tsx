@@ -1,4 +1,4 @@
-import { ApolloCache, ApolloClient } from "@apollo/client";
+import { ApolloCache } from "@apollo/client";
 import { Manifest } from "@jhnnsrs/fakts";
 
 export type Service = {

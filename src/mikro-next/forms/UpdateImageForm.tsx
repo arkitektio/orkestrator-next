@@ -1,6 +1,5 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { FloatField } from "@/components/fields/FloatField";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
+import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
@@ -8,11 +7,9 @@ import { withMikroNext } from "@jhnnsrs/mikro-next";
 import { useForm } from "react-hook-form";
 import {
   ImageFragment,
-  useCreateRgbViewMutation,
   useRgbContextOptionsLazyQuery,
   useUpdateImageMutation,
 } from "../api/graphql";
-import { StringField } from "@/components/fields/StringField";
 
 export const UpdateImageForm = (props: { image: ImageFragment }) => {
   const [add] = withMikroNext(useUpdateImageMutation)();

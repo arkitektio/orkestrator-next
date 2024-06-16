@@ -1,6 +1,6 @@
+import { MikroStage } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
 import { ListStageFragment } from "../../api/graphql";
-import { MikroStage } from "@/linkers";
 
 interface Props {
   stage: ListStageFragment;

@@ -1,22 +1,22 @@
-import { Route, RouteProps, Routes } from "react-router-dom";
-import { AppProvider } from "./AppProvider";
-import { PrivateNavigationBar } from "./components/navigation/PrivateNavigationBar";
-import { AppLayout } from "@/components/layout/AppLayout";
 import Hero from "@/app/pages/Hero";
-import MikroNextModule from "@/mikro-next/MikroNextModule";
-import RekuestNextModule from "@/rekuest/RekuestNextModule";
-import ReaktionModule from "@/reaktion/ReaktionModule";
-import { Callback, EasyGuard } from "@jhnnsrs/arkitekt";
+import { AppLayout } from "@/components/layout/AppLayout";
+import KabinetModule from "@/kabinet/KabinetModule";
 import LokNextModule from "@/lok-next/LokNextModule";
+import { Stash } from "@/lok-next/components/stash/Stash";
+import MikroNextModule from "@/mikro-next/MikroNextModule";
 import OmeroArkModule from "@/omero-ark/OmeroArkModule";
-import SettingsModule from "@/settings/SettingsModule";
 import PortNextModule from "@/port-next/PortNextModule";
+import ReaktionModule from "@/reaktion/ReaktionModule";
+import RekuestNextModule from "@/rekuest/RekuestNextModule";
+import SettingsModule from "@/settings/SettingsModule";
+import { Callback, EasyGuard } from "@jhnnsrs/arkitekt";
 import React from "react";
+import { Route, Routes } from "react-router-dom";
+import { AppProvider } from "./AppProvider";
+import { NotConnected } from "./components/fallbacks/NotConnected";
 import { NotFound } from "./components/fallbacks/NotFound";
 import { NotLoggedIn } from "./components/fallbacks/NotLoggedIn";
-import { NotConnected } from "./components/fallbacks/NotConnected";
-import { Stash } from "@/lok-next/components/stash/Stash";
-import KabinetModule from "@/kabinet/KabinetModule";
+import { PrivateNavigationBar } from "./components/navigation/PrivateNavigationBar";
 // Entrypoint of the application.
 // We provide two main routers, one for the public routes, and one for the private routes.
 export const protect = (component: React.ReactNode) => {

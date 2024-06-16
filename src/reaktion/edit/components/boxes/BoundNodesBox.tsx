@@ -1,22 +1,14 @@
-import React, { useMemo } from "react";
-import { FlowNode } from "../../../types";
-import {
-  Card,
-  CardHeader,
-  CardDescription,
-  CardContent,
-  CardTitle,
-} from "@/components/ui/card";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
-import { useClientsQuery } from "@/rekuest/api/graphql";
-import { Ban, CheckCheck, HelpCircle, HelpCircleIcon } from "lucide-react";
-import { Tooltip } from "@radix-ui/react-tooltip";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
+import { useClientsQuery } from "@/rekuest/api/graphql";
+import { withRekuest } from "@jhnnsrs/rekuest-next";
+import { Ban, CheckCheck, HelpCircle } from "lucide-react";
+import { useMemo } from "react";
+import { FlowNode } from "../../../types";
 
 export const BoundNodesBox = (props: { nodes: FlowNode[] }) => {
   const hashes = useMemo(

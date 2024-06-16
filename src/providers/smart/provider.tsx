@@ -1,9 +1,9 @@
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { usePreview } from "react-dnd-preview";
 
-import { DndProvider, MouseTransition } from "react-dnd-multi-backend";
 import { Card } from "@/components/ui/card";
 import { Structure } from "@/types";
+import { DndProvider, MouseTransition } from "react-dnd-multi-backend";
 
 export const HTML5toTouch = {
   backends: [

@@ -104,6 +104,7 @@ export const portEffectToInput = (widget: PortEffectFragment): EffectInput => {
   const { __typename, dependencies, ...rest } = widget;
   const input: EffectInput = {
     ...rest,
+    label: widget.label || widget.key,
     dependencies: dependencies?.map(({ __typename, ...d }) => d) || [],
     kind: effectTypeToKind(widget.__typename),
   };

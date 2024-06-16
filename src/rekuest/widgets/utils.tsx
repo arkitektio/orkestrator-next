@@ -95,7 +95,7 @@ export const portToZod = (port: LabellablePort): any => {
       baseType = z.string();
       break;
     case PortKind.Union:
-      let variants = port.children;
+      let variants = port.children?.filter(notEmpty);
       if (!variants) {
         throw new Error("Union port is not defined");
         break;

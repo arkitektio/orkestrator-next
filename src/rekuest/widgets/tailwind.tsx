@@ -156,6 +156,7 @@ export const ArgsContainer: InputContainer = ({
                 registry={registry}
               >
                 <Widget
+                  path={[]}
                   key={index}
                   port={port}
                   widget={port.assignWidget}

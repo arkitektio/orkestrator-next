@@ -4,7 +4,7 @@ import { Route, Routes } from "react-router";
 import HomePage from "./pages/HomePage";
 interface Props {}
 
-export const SettingsModule: React.FC<Props> = (props) => {
+export const SettingsModule: React.FC<Props> = () => {
   return (
     <ModuleLayout>
       <Routes>

@@ -2,7 +2,7 @@ import {
   GraphEdgeKind,
   GraphNodeFragment,
   GraphNodeKind,
-  PortFragment,
+  FlussPortFragment as PortFragment,
   PortKind,
   ReactiveImplementation,
 } from "@/reaktion/api/graphql";

@@ -66,9 +66,10 @@ export const isChunkTransformable = (
   if (challenging.length != having.length) return false;
   for (let i = 0; i < having.length; i++) {
     if (challenging[i].kind != PortKind.List) return false;
-    if (challenging[i].child == undefined) return false;
-    if (challenging[i].child?.kind != having[i].kind) return false;
-    if (challenging[i].child?.identifier != having[i].identifier) return false;
+    if (challenging[i].children?.at(0) == undefined) return false;
+    if (challenging[i].children?.at(0)?.kind != having[i].kind) return false;
+    if (challenging[i].children?.at(0)?.identifier != having[i].identifier)
+      return false;
   }
 
   return true;

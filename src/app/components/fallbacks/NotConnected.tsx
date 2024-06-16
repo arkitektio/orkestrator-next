@@ -22,7 +22,7 @@ import { useForm } from "react-hook-form";
 import { useLocation } from "react-router-dom";
 
 export const NotConnected = () => {
-  const { registeredEndpoints, load, remove } = Orkestrator.useConnect();
+  const { registeredEndpoints, load } = Orkestrator.useConnect();
   const location = useLocation();
 
   const form = useForm({
@@ -74,7 +74,7 @@ export const NotConnected = () => {
                     {endpoint.name}
                   </CardTitle>
                   <CardDescription className="text-gray-500">
-                    {endpoint?.description}
+                    {endpoint?.description || "No description"}
                   </CardDescription>
                 </CardHeader>
 

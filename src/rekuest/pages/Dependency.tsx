@@ -20,7 +20,7 @@ export default asDetailQueryRoute(
     return (
       <ModelPageLayout
         identifier="@rekuest/template"
-        title={data.dependency.reference}
+        title={data.dependency.reference || "Dependency"}
         object={data.dependency.id}
       >
         <DetailPane>

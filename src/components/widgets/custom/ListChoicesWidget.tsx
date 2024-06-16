@@ -5,13 +5,10 @@ import { InputWidgetProps } from "@/rekuest/widgets/types";
 import { pathToName } from "@/rekuest/widgets/utils";
 
 import { useCallback } from "react";
-import { useFormContext } from "react-hook-form";
 
 export const ListChoicesWidget = (
   props: InputWidgetProps<ChoiceAssignWidgetFragment>,
 ) => {
-  const form = useFormContext();
-
   console.log(props.widget?.choices);
   const choices = props.widget?.choices || [];
 

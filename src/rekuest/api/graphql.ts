@@ -1,5 +1,5 @@
-import * as Apollo from '@apollo/client';
 import { gql } from '@apollo/client';
+import * as Apollo from '@apollo/client';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -755,12 +755,11 @@ export enum PortKind {
 
 export type PortMatchInput = {
   at?: InputMaybe<Scalars['Int']['input']>;
-  child?: InputMaybe<PortDemandInput>;
+  children?: InputMaybe<Array<PortMatchInput>>;
   identifier?: InputMaybe<Scalars['String']['input']>;
   key?: InputMaybe<Scalars['String']['input']>;
   kind?: InputMaybe<PortKind>;
   nullable?: InputMaybe<Scalars['Boolean']['input']>;
-  variants?: InputMaybe<Array<PortDemandInput>>;
 };
 
 export enum PortScope {

@@ -279,6 +279,11 @@ export const ConnectContextual = (props: {
                 at: index,
                 kind: port.kind,
                 identifier: port.identifier,
+                children: port.children?.map((port, index) => ({
+                  at: index,
+                  kind: port.kind,
+                  identifier: port.identifier,
+                })),
               })) || [],
             forceNonNullableLength: leftPorts.length || 0,
           },
@@ -289,6 +294,11 @@ export const ConnectContextual = (props: {
                 at: index,
                 kind: port.kind,
                 identifier: port.identifier,
+                children: port.children?.map((port, index) => ({
+                  at: index,
+                  kind: port.kind,
+                  identifier: port.identifier,
+                })),
               })) || [],
             forceNonNullableLength: rightPorts.length || 0,
           },

@@ -242,6 +242,11 @@ export const SourceDropContextual = (props: {
               at: index,
               kind: port.kind,
               identifier: port.identifier,
+              children: port.children?.map((port, index) => ({
+                at: index,
+                kind: port.kind,
+                identifier: port.identifier,
+              })),
             })) || [],
           forceNonNullableLength: props.ports?.length || 0,
         },

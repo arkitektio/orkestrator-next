@@ -6525,12 +6525,20 @@
             "deprecationReason": null
           },
           {
-            "name": "child",
+            "name": "children",
             "description": null,
             "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "PortDemandInput",
-              "ofType": null
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "PortMatchInput",
+                  "ofType": null
+                }
+              }
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -6579,26 +6587,6 @@
               "kind": "SCALAR",
               "name": "Boolean",
               "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "variants",
-            "description": null,
-            "type": {
-              "kind": "LIST",
-              "name": null,
-              "ofType": {
-                "kind": "NON_NULL",
-                "name": null,
-                "ofType": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "PortDemandInput",
-                  "ofType": null
-                }
-              }
             },
             "defaultValue": "null",
             "isDeprecated": false,

@@ -16,7 +16,7 @@ export type Scalars = {
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
   AnyDefault: { input: any; output: any; }
-  Arg: { input: any; output: any; }
+  Args: { input: any; output: any; }
   DateTime: { input: any; output: any; }
   Identifier: { input: any; output: any; }
   InstanceId: { input: any; output: any; }
@@ -105,12 +105,16 @@ export type AppOrder = {
 };
 
 export type AssignInput = {
-  args: Array<InputMaybe<Scalars['Arg']['input']>>;
+  args: Scalars['Args']['input'];
   cached?: Scalars['Boolean']['input'];
+  hooks?: InputMaybe<Array<HookInput>>;
+  isHook?: Scalars['Boolean']['input'];
   log?: Scalars['Boolean']['input'];
+  node?: InputMaybe<Scalars['ID']['input']>;
   parent?: InputMaybe<Scalars['ID']['input']>;
   reference?: InputMaybe<Scalars['String']['input']>;
-  reservation: Scalars['ID']['input'];
+  reservation?: InputMaybe<Scalars['ID']['input']>;
+  template?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type AssignWidget = {
@@ -279,6 +283,7 @@ export type CreateHardwareRecordInput = {
 export type CreateTemplateInput = {
   definition: DefinitionInput;
   dependencies?: InputMaybe<Array<DependencyInput>>;
+  dynamic?: Scalars['Boolean']['input'];
   extension: Scalars['String']['input'];
   instanceId?: InputMaybe<Scalars['InstanceId']['input']>;
   interface: Scalars['String']['input'];
@@ -432,6 +437,16 @@ export type HardwareRecordFilter = {
   cpuVendorName?: InputMaybe<Scalars['String']['input']>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
+
+export type HookInput = {
+  hash: Scalars['String']['input'];
+  kind: HookKind;
+};
+
+export enum HookKind {
+  Cleanup = 'CLEANUP',
+  Init = 'INIT'
+}
 
 export type ImplementationEdge = {
   __typename?: 'ImplementationEdge';
@@ -1120,6 +1135,7 @@ export enum ReservationStrategy {
 }
 
 export type ReserveInput = {
+  assignationId?: InputMaybe<Scalars['String']['input']>;
   binds?: InputMaybe<BindsInput>;
   hash?: InputMaybe<Scalars['NodeHash']['input']>;
   instanceId: Scalars['InstanceId']['input'];
@@ -1493,8 +1509,10 @@ export type AcknowledgeMutationVariables = Exact<{
 export type AcknowledgeMutation = { __typename?: 'Mutation', ack: { __typename?: 'Assignation', id: string, status: AssignationEventKind, args: any, reference?: string | null, events: Array<{ __typename?: 'AssignationEvent', id: string, kind: AssignationEventKind, level?: LogLevel | null, returns?: any | null, createdAt: any, message?: string | null, assignation: { __typename?: 'Assignation', id: string } }>, reservation: { __typename?: 'Reservation', id: string, title?: string | null, node: { __typename?: 'Node', name: string } } } };
 
 export type AssignMutationVariables = Exact<{
-  reservation: Scalars['ID']['input'];
-  args: Array<InputMaybe<Scalars['Arg']['input']>>;
+  reservation?: InputMaybe<Scalars['ID']['input']>;
+  node?: InputMaybe<Scalars['ID']['input']>;
+  template?: InputMaybe<Scalars['ID']['input']>;
+  args: Scalars['Args']['input'];
 }>;
 
 
@@ -2357,8 +2375,10 @@ export type AcknowledgeMutationHookResult = ReturnType<typeof useAcknowledgeMuta
 export type AcknowledgeMutationResult = Apollo.MutationResult<AcknowledgeMutation>;
 export type AcknowledgeMutationOptions = Apollo.BaseMutationOptions<AcknowledgeMutation, AcknowledgeMutationVariables>;
 export const AssignDocument = gql`
-    mutation Assign($reservation: ID!, $args: [Arg]!) {
-  assign(input: {reservation: $reservation, args: $args}) {
+    mutation Assign($reservation: ID, $node: ID, $template: ID, $args: Args!) {
+  assign(
+    input: {reservation: $reservation, node: $node, template: $template, args: $args}
+  ) {
     ...PostmanAssignation
   }
 }
@@ -2379,6 +2399,8 @@ export type AssignMutationFn = Apollo.MutationFunction<AssignMutation, AssignMut
  * const [assignMutation, { data, loading, error }] = useAssignMutation({
  *   variables: {
  *      reservation: // value for 'reservation'
+ *      node: // value for 'node'
+ *      template: // value for 'template'
  *      args: // value for 'args'
  *   },
  * });

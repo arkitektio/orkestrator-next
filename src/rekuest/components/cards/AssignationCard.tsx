@@ -14,7 +14,7 @@ const TheCard = ({ assignation, mates }: Props) => {
         <CardHeader>
           <CardTitle>
             <RekuestAssignation.DetailLink object={assignation.id}>
-              {assignation.reservation.node.name}
+              {assignation.node.name}
             </RekuestAssignation.DetailLink>
             {assignation.events.at(0)?.kind}
           </CardTitle>

@@ -1,10 +1,19 @@
-mutation Assign($reservation: ID, $node: ID, $template: ID, $args: Args!) {
+mutation Assign(
+  $reservation: ID
+  $node: ID
+  $template: ID
+  $args: Args!
+  $instanceId: InstanceId!
+  $hooks: [HookInput!]!
+) {
   assign(
     input: {
       reservation: $reservation
       node: $node
       template: $template
       args: $args
+      instanceId: $instanceId
+      hooks: $hooks
     }
   ) {
     ...PostmanAssignation

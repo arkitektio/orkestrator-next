@@ -5,6 +5,7 @@ import { PortKind } from "../api/graphql";
 import { LabellablePort, PortablePort } from "./types";
 
 export const pathToName = (path: string[]): string => {
+  console.log(path);
   return path.join(".");
 };
 
@@ -355,6 +356,7 @@ export const submittedDataToRekuestFormat = (
   data: any,
   ports: PortablePort[],
 ): any => {
+  console.log("Parsing", data);
   return ports.reduce(
     (prev, curr) => {
       prev[curr.key] = recursiveExtract(data[curr.key], curr);

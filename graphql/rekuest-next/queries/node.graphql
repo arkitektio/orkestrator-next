@@ -4,11 +4,17 @@ query ConstantNode($id: ID!) {
   }
 }
 
-query AssignNode($reservation: ID!) {
-  node(reservation: $reservation) {
+query AssignNode($reservation: ID, $template: ID, $id: ID, $hash: NodeHash) {
+  node(reservation: $reservation, template: $template, id: $id, hash: $hash) {
     name
+    id
     description
     ...Ports
+    templates {
+      id
+      interface
+    }
+    hash
   }
 }
 

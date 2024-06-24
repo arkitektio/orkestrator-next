@@ -32,6 +32,7 @@ export const ArgsContainer = ({
   groups,
   options,
   registry,
+  path,
 }: ArgsContainerProps) => {
   let hash = portHash(ports.filter(notEmpty));
 
@@ -96,7 +97,7 @@ export const ArgsContainer = ({
                       port={port}
                       widget={port.assignWidget}
                       options={options}
-                      path={[]}
+                      path={[...path, port.key]}
                     />
                   </EffectWrapper>
                 );

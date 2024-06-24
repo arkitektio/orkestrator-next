@@ -17,7 +17,6 @@ export const IntField = (props: FieldProps & { placeholder?: string }) => {
   return (
     <FormField
       control={form.control}
-      rules={{ validate: props.validate }}
       name={props.name}
       render={({ field }) => (
         <FormItem>
@@ -31,6 +30,7 @@ export const IntField = (props: FieldProps & { placeholder?: string }) => {
               }
               {...field}
               onChange={(e) => {
+                console.log("Changing", props.name, "XX", e);
                 field.onChange(e);
               }}
               type="number"

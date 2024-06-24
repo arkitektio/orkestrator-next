@@ -2,10 +2,14 @@ import { useSettings } from "@/providers/settings/SettingsContext";
 import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { useCallback, useMemo } from "react";
 import {
+  AssignMutationVariables,
+  AssignNodeQuery,
   AssignationEventKind,
   PostmanAssignationFragment,
   PostmanReservationFragment,
+  ReserveMutationVariables,
   useAssignMutation,
+  useAssignNodeQuery,
   useAssignationsQuery,
   useCancelMutation,
   useReservationsQuery,
@@ -52,34 +56,41 @@ export const useUsage = (options: {
   return [isUsed, toggle];
 };
 
+export type ActionReserveVariables = Omit<
+  ReserveMutationVariables,
+  "instanceId"
+>;
+export type ActionAssignVariables = Omit<AssignMutationVariables, "instanceId">;
+
 export type useActionReturn<T> = {
-  latestAssignation?: PostmanAssignationFragment;
-  latestReservation?: PostmanReservationFragment;
-  reservations?: PostmanReservationFragment[];
-  assignations?: PostmanAssignationFragment[];
-  assign: (variables: T) => Promise<PostmanAssignationFragment>;
+  node?: AssignNodeQuery["node"];
+  assign: (
+    variables: ActionAssignVariables,
+  ) => Promise<PostmanAssignationFragment>;
   reassign: () => Promise<PostmanAssignationFragment>;
   cancel: () => void;
-  reserve: () => Promise<PostmanReservationFragment>;
-  unreserve: () => void;
+  assignations?: PostmanAssignationFragment[];
+  latestAssignation?: PostmanAssignationFragment;
 };
 
 export type useActionOptions<T> = {
   hash?: string;
   template?: string;
+  reservation?: string;
 };
 
 export const useAction = <T extends any>(
   options: useActionOptions<T>,
 ): useActionReturn<T> => {
   const { settings } = useSettings();
-  const { data } = withRekuest(useReservationsQuery)({
+
+  const { data } = withRekuest(useAssignNodeQuery)({
     variables: {
-      instanceId: settings.instanceId,
+      ...options,
     },
   });
 
-  const { data: assigndata } = withRekuest(useAssignationsQuery)({
+  const { data: assignations_data } = withRekuest(useAssignationsQuery)({
     variables: {
       instanceId: settings.instanceId,
     },
@@ -88,96 +99,26 @@ export const useAction = <T extends any>(
   const [postAssign] = withRekuest(useAssignMutation)({});
   const [cancelAssign] = withRekuest(useCancelMutation)({});
 
-  const [postReserve, _] = withRekuest(useReserveMutation)();
-  const [postUnreserve, __] = withRekuest(useUnreserveMutation)();
-
-  const reservations = data?.reservations.filter(
-    (r) => r.node.hash == options.hash,
-  );
-
-  const latestReservation = reservations?.at(0);
-
-  const assignations = assigndata?.assignations.filter((a) =>
-    reservations?.map((r) => r.id).includes(a.reservation?.id),
+  let assignations = assignations_data?.assignations.filter(
+    (x) => x.node.hash == data?.node.hash,
   );
 
   const latestAssignation = assignations?.at(0);
 
-  const toggle = useCallback(() => {
-    console.log(latestReservation ? "Unreserving" : "Reserving");
-    if (!latestReservation) {
-      reserve({
-        variables: {
-          instanceId: settings.instanceId,
-          node: options.hash,
-          template: options.template,
-        },
-      });
-    } else {
-      unreserve({
-        variables: {
-          reservation: latestReservation.id,
-        },
-      });
-    }
-  }, [options.hash, latestReservation]);
-
-  const reserve = useCallback(async () => {
-    let mutation = await postReserve({
-      variables: {
-        instanceId: settings.instanceId,
-        node: options.hash,
-        template: options.template,
-      },
-    });
-
-    let reservation = mutation.data?.reserve;
-    if (!reservation) {
-      throw Error("Fuck all of that");
-    }
-    return reservation;
-  }, [postReserve]);
-
-  const unreserve = useCallback(async () => {
-    if (!latestReservation) {
-      throw Error("Nothing reserved");
-    }
-    let mutation = await postUnreserve({
-      variables: {
-        reservation: latestReservation.id,
-      },
-    });
-
-    let unresrf = mutation.data?.unreserve;
-    if (!unresrf) {
-      throw Error("Fuck all of that");
-    }
-    return unresrf;
-  }, [postReserve]);
-
-  let ports = data?.reservations.at(0)?.node.args;
-
-  const schema = useMemo(() => {
-    return ports && buildZodSchema(ports);
-  }, [data]);
-
   const assign = useCallback(
-    async (vars: T) => {
-      if (!schema) {
-        throw Error("No schema specificied, Maybe no Resrevation active");
-      }
-      if (!latestReservation) {
-        throw Error("No active resrevation");
-      }
-
-      let result = await schema.parseAsync(vars);
+    async (vars: ActionAssignVariables) => {
+      console.log("Assigning", vars);
 
       let mutation = await postAssign({
         variables: {
-          args: ports?.map((p) => result[p.key]) || [],
-          reservation: latestReservation.id,
+          ...vars,
+          args: vars.args,
+          instanceId: settings.instanceId,
+          hooks: [],
         },
       });
+
+      console.log(mutation);
 
       let assignation = mutation.data?.assign;
 
@@ -188,16 +129,20 @@ export const useAction = <T extends any>(
 
       return assignation;
     },
-    [postAssign, schema, latestReservation],
+    [postAssign, settings],
   );
 
   const reassign = useCallback(() => {
+    console.log("Not");
     if (!latestAssignation) {
-      throw Error("Cannot Reassign");
+      throw Error("No latest assignation");
     }
-
-    return assign(latestAssignation.args);
-  }, [assign, latestAssignation]);
+    return assign({
+      args: latestAssignation.args,
+      node: latestAssignation?.node.id,
+      hooks: [],
+    });
+  }, [assign]);
 
   const cancel = useCallback(async () => {
     if (!latestAssignation) {
@@ -225,14 +170,11 @@ export const useAction = <T extends any>(
   }, [cancelAssign, latestAssignation]);
 
   return {
-    reserve,
-    unreserve,
     assign,
     reassign,
     latestAssignation,
-    latestReservation,
     cancel,
-    reservations,
     assignations,
+    node: data?.node,
   };
 };

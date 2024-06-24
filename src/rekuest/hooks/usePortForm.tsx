@@ -33,7 +33,7 @@ export const usePortForm = (props: {
 
   const { handleSubmit, ...form } = useForm({
     defaultValues: defaultValues,
-    reValidateMode: props.reValidateMode || "onBlur",
+    reValidateMode: props.reValidateMode || "onChange",
     resolver: myResolver(),
   });
 

@@ -96,6 +96,7 @@ export const ArgsContainer: InputContainer = ({
   ports,
   groups,
   options,
+  path,
   registry,
 }) => {
   const [filledGroups, setFilledGroups] = useState<FilledGroup[]>([]);
@@ -156,7 +157,7 @@ export const ArgsContainer: InputContainer = ({
                 registry={registry}
               >
                 <Widget
-                  path={[]}
+                  path={path}
                   key={index}
                   port={port}
                   widget={port.assignWidget}

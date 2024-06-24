@@ -6,12 +6,21 @@ fragment PostmanAssignation on Assignation {
   events {
     ...AssignationEvent
   }
+  node {
+    hash
+    id
+    name
+  }
   reservation {
     id
     title
     node {
       name
     }
+  }
+  template {
+    id
+    interface
   }
 }
 

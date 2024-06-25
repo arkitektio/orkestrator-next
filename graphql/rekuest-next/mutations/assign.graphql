@@ -1,33 +1,17 @@
-mutation Assign(
-  $reservation: ID
-  $node: ID
-  $template: ID
-  $args: Args!
-  $instanceId: InstanceId!
-  $hooks: [HookInput!]!
-) {
-  assign(
-    input: {
-      reservation: $reservation
-      node: $node
-      template: $template
-      args: $args
-      instanceId: $instanceId
-      hooks: $hooks
-    }
-  ) {
+mutation assign($input: AssignInput!) {
+  assign(input: $input) {
     ...PostmanAssignation
   }
 }
 
-mutation Cancel($assignation: ID!) {
-  cancel(input: { assignation: $assignation }) {
-    id
+mutation cancel($input: CancelInput!) {
+  cancel(input: $input) {
+    ...PostmanAssignation
   }
 }
 
-mutation Interrupt($assignation: ID!) {
-  interrupt(input: { assignation: $assignation }) {
-    id
+mutation interrupt($input: InterruptInput!) {
+  interrupt(input: $input) {
+    ...PostmanAssignation
   }
 }

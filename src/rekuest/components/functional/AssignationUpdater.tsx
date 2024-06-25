@@ -40,47 +40,6 @@ export const AssignationUpdater = (props: {}) => {
       console.log("Subscribing to Postman Assignation");
       const subscription = client
         ?.subscribe<
-          WatchAssignationEventsSubscription,
-          WatchAssignationEventsSubscriptionVariables
-        >({
-          query: WatchAssignationEventsDocument,
-          variables: {
-            instanceId: settings.instanceId,
-          },
-        })
-        .subscribe((res) => {
-          console.log(res);
-
-          let update = res.data?.assignationEvents;
-
-          if (update) {
-            client.cache.updateFragment(
-              {
-                id: `Assignation:${update.assignation.id}`,
-                fragment: PostmanAssignationFragmentDoc,
-                fragmentName: "PostmanAssignation",
-              },
-              (data) => {
-                if (!data) return;
-                console.log("Update Fragment", data);
-                return {
-                  ...data,
-                  events: data.events ? [...data.events, update] : [update],
-                };
-              },
-            );
-          }
-        });
-
-      return () => subscription.unsubscribe();
-    }
-  }, [client]);
-
-  useEffect(() => {
-    if (client) {
-      console.log("Subscribing to Postman Assignation");
-      const subscription = client
-        ?.subscribe<
           WatchAssignationsSubscription,
           WatchAssignationEventsSubscriptionVariables
         >({
@@ -90,11 +49,12 @@ export const AssignationUpdater = (props: {}) => {
           },
         })
         .subscribe((res) => {
-          console.log(res);
+          console.log("Received assignation update", res);
 
-          let update = res.data?.assignations;
+          let event = res.data?.assignations.event;
+          let create = res?.data?.assignations.create;
 
-          if (update) {
+          if (event) {
             let old = client.cache.readQuery<AssignationsQuery>({
               query: AssignationsDocument,
               variables: {
@@ -110,11 +70,36 @@ export const AssignationUpdater = (props: {}) => {
                 instanceId: settings.instanceId,
               },
               data: {
-                assignations: old?.assignations.concat([update]) || [update],
+                assignations: (old?.assignations || []).map((ass) =>
+                  ass.reference == event.reference
+                    ? { ...ass, events: ass.events.concat([event]) }
+                    : ass,
+                ),
+              },
+            });
+          }
+
+          if (create) {
+            let old = client.cache.readQuery<AssignationsQuery>({
+              query: AssignationsDocument,
+              variables: {
+                instanceId: settings.instanceId,
               },
             });
 
-            toast(<AssignationToaster id={update.id} />);
+            console.log(old);
+
+            client.cache.writeQuery<AssignationsQuery>({
+              query: AssignationsDocument,
+              variables: {
+                instanceId: settings.instanceId,
+              },
+              data: {
+                assignations: old?.assignations.concat([create]) || [create],
+              },
+            });
+
+            toast(<AssignationToaster id={create.id} />);
           }
         });
 

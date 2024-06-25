@@ -6,6 +6,6 @@ subscription WatchAssignationEvents($instanceId: InstanceId!) {
 
 subscription WatchAssignations($instanceId: InstanceId!) {
   assignations(instanceId: $instanceId) {
-    ...PostmanAssignation
+    ...AssignationChangeEvent
   }
 }

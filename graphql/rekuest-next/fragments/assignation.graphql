@@ -10,6 +10,7 @@ fragment PostmanAssignation on Assignation {
     hash
     id
     name
+    ...Ports
   }
   reservation {
     id
@@ -24,6 +25,10 @@ fragment PostmanAssignation on Assignation {
   }
 }
 
+fragment DetailAssignation on Assignation {
+  ...PostmanAssignation
+}
+
 fragment AssignationEvent on AssignationEvent {
   id
   kind
@@ -32,10 +37,15 @@ fragment AssignationEvent on AssignationEvent {
   assignation {
     id
   }
+  reference
   createdAt
   message
 }
-
-fragment DetailAssignation on Assignation {
-  ...PostmanAssignation
+fragment AssignationChangeEvent on AssignationChangeEvent {
+  create {
+    ...PostmanAssignation
+  }
+  event {
+    ...AssignationEvent
+  }
 }

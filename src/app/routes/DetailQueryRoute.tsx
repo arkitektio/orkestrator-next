@@ -5,6 +5,7 @@ import {
   OperationVariables,
   QueryHookOptions,
   QueryResult,
+  SubscribeToMoreOptions,
   useQuery,
 } from "@apollo/client";
 import React from "react";
@@ -49,13 +50,23 @@ export const PassedDownComponent = <T extends DocumentNode>(props: {
   return errors ? <>{errors}</> : props.component({ data: data });
 };
 
-export const asDetailQueryRoute = <T extends any, Y extends DetailVariables>(
-  hook: HookFunction<T, Y>,
+export const asDetailQueryRoute = <T extends any>(
+  hook: HookFunction<T, DetailVariables>,
   Component: React.FC<{
     data: T;
     refetch: (
-      variables?: Partial<Y> | undefined,
+      variables?: Partial<DetailVariables> | undefined,
     ) => Promise<ApolloQueryResult<T>>;
+    subscribeToMore: <
+      TSubscriptionData = T,
+      TSubscriptionVariables extends OperationVariables = DetailVariables,
+    >(
+      options: SubscribeToMoreOptions<
+        T,
+        TSubscriptionVariables,
+        TSubscriptionData
+      >,
+    ) => () => void;
   }>,
   fallback?: React.ReactNode | undefined,
 ) => {
@@ -70,7 +81,9 @@ export const asDetailQueryRoute = <T extends any, Y extends DetailVariables>(
       }
     }
 
-    const { data, error, refetch } = hook({ variables: { id: id } });
+    const { data, error, refetch, subscribeToMore } = hook({
+      variables: { id: id },
+    });
 
     if (error) {
       return <ErrorPage error={error} />;
@@ -81,7 +94,13 @@ export const asDetailQueryRoute = <T extends any, Y extends DetailVariables>(
         return <DebugPage data={data} />;
       }
 
-      return <Component data={data} refetch={refetch} />;
+      return (
+        <Component
+          data={data}
+          refetch={refetch}
+          subscribeToMore={subscribeToMore}
+        />
+      );
     }
 
     return <> Loadding ...</>;

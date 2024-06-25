@@ -1,0 +1,5 @@
+subscription WatchTemplate($template: ID!) {
+  templateChange(template: $template) {
+    ...DetailTemplate
+  }
+}

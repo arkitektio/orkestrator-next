@@ -15,6 +15,7 @@ import {
 import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { ClipboardIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { AssignationTimeline } from "../components/AssignationTimeline";
 
 export default asDetailQueryRoute(
   withRekuest(useDetailAssignationQuery),
@@ -43,28 +44,24 @@ export default asDetailQueryRoute(
             </DetailPaneTitle>
             <DetailPaneDescription></DetailPaneDescription>
           </DetailPaneHeader>
-          {data?.assignation?.events && (
-            <div className="mt-1">
-              {data.assignation.events.map((event) => (
-                <div key={event.id}>
-                  {event.kind} {event.returns && JSON.stringify(event.returns)}
-                </div>
-              ))}
-            </div>
-          )}
+          <AssignationTimeline events={data.assignation.events} />
         </DetailPane>
         <DetailPane className="mt-2">
           <DetailPaneHeader>Assign</DetailPaneHeader>
           <Button
             onClick={() =>
-              cancel({ variables: { assignation: data.assignation.id } })
+              cancel({
+                variables: { input: { assignation: data.assignation.id } },
+              })
             }
           >
             Cancel
           </Button>
           <Button
             onClick={() =>
-              interrupt({ variables: { assignation: data.assignation.id } })
+              interrupt({
+                variables: { input: { assignation: data.assignation.id } },
+              })
             }
           >
             Interrupt

@@ -7,6 +7,9 @@ fragment DetailTemplate on Template {
   dependencyGraph {
     ...DependencyGraph
   }
+  node {
+    ...DetailNode
+  }
 }
 
 fragment ListTemplate on Template {

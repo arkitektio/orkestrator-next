@@ -16,20 +16,12 @@ import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 import { RekuestNode } from "@/linkers";
 import { useReserveMate } from "@/mates/reserve/useReserveMate";
 import { MateFinder } from "@/mates/types";
-import {
-  AssignNodeQuery,
-  ListNodeFragment,
-  useDetailNodeQuery,
-} from "@/rekuest/api/graphql";
-import {
-  ActionAssignVariables,
-  useAction,
-  useUsage,
-} from "@/rekuest/hooks/useNode";
+import { AssignNodeQuery, ListNodeFragment } from "@/rekuest/api/graphql";
+import { useHashAction } from "@/rekuest/hooks/useHashActions";
 import { usePortForm } from "@/rekuest/hooks/usePortForm";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { NodeDescription } from "@jhnnsrs/rekuest";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
+import { Play } from "lucide-react";
 
 interface Props {
   node: ListNodeFragment;
@@ -83,7 +75,7 @@ export const DoForm = (props: {
 };
 
 export const ActionButton = (props: { node: ListNodeFragment }) => {
-  const { assign, latestAssignation, cancel, node } = useAction({
+  const { assign, latestAssignation, cancel, node } = useHashAction({
     hash: props.node.hash,
   });
 
@@ -92,7 +84,9 @@ export const ActionButton = (props: { node: ListNodeFragment }) => {
       <>
         <Dialog>
           <DialogTrigger asChild>
-            <Button> Do </Button>
+            <Button size="icon" variant={"outline"}>
+              <Play className="w-3" />
+            </Button>
           </DialogTrigger>
           <DialogContent className="text-white">
             {node && <DoForm node={node} assign={assign} />}

@@ -6,6 +6,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -26,6 +27,11 @@ import { useForm } from "react-hook-form";
 import ReservationCard from "../components/cards/ReservationCard";
 import { DependencyGraphFlow } from "../components/dependencyGraph/DependencyGraph";
 import { portToLabel } from "../widgets/utils";
+import { usePortForm } from "../hooks/usePortForm";
+import { useHashAction } from "../hooks/useHashActions";
+import { useWidgetRegistry } from "../widgets/WidgetsContext";
+import { useNodeAction } from "../hooks/useNodeAction";
+import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 
 export const ReserveForm = (props: { node: string }) => {
   const { reserve } = usePostman();
@@ -46,6 +52,48 @@ export const ReserveForm = (props: { node: string }) => {
           className="space-y-6"
         >
           <Button type="submit">Reserve</Button>
+        </form>
+      </Form>
+    </>
+  );
+};
+
+export const DoNodeForm = (props: { id: string }) => {
+  const { assign, latestAssignation, cancel, node } = useNodeAction({
+    id: props.id,
+  });
+
+  const form = usePortForm({
+    ports: node?.args || [],
+  });
+
+  const onSubmit = (data: any) => {
+    console.log("Submitting");
+    console.log(data);
+    assign({
+      node: props.id,
+      args: data,
+      hooks: [],
+    });
+  };
+
+  const { registry } = useWidgetRegistry();
+
+  return (
+    <>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
+          <ArgsContainer
+            registry={registry}
+            ports={node?.args || []}
+            path={[]}
+          />
+          <DialogFooter>
+            <Button type="submit" className="btn">
+              {" "}
+              Submit{" "}
+            </Button>
+          </DialogFooter>
         </form>
       </Form>
     </>
@@ -107,25 +155,11 @@ export default asDetailQueryRoute(
                 {data?.node?.protocols?.map((p) => p.name)}
               </div>
             </DetailPaneDescription>
-            <TestConstants
-              ports={data?.node?.args || []}
-              overwrites={{}}
-              onSubmit={setFormData}
-            />
+            <DoNodeForm id={data.node.id} />
 
             <ListRender array={data?.node?.reservations} title="Reservations">
               {(item, key) => <ReservationCard item={item} key={key} />}
             </ListRender>
-            {JSON.stringify(formData)}
-
-            {data?.node?.dependencyGraph && (
-              <>
-                <DependencyGraphFlow
-                  graph={data?.node?.dependencyGraph}
-                  refetch={refetch}
-                />
-              </>
-            )}
           </DetailPaneHeader>
 
           <Dialog>
@@ -134,10 +168,8 @@ export default asDetailQueryRoute(
               <DialogHeader>
                 <DialogTitle>Reserve</DialogTitle>
                 <DialogDescription>
-                  This action cannot be undone. This will permanently delete
-                  your account and remove your data from our servers.
+                  <ReserveForm node={data.node.id} />
                 </DialogDescription>
-                <ReserveForm node={data.node.id} />
               </DialogHeader>
             </DialogContent>
           </Dialog>

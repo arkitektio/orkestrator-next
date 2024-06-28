@@ -14,7 +14,7 @@ export const ReservationExtensions = () => {
   return (
     <>
       <FilteredCommands
-        actions={data?.myreservations.map((x) => ({
+        actions={data?.reservations.map((x) => ({
           key: "assign:" + x.id,
           label: "Assign to " + x.title,
           run: async () => alert("Assign"),

@@ -44,7 +44,7 @@ export default asDetailQueryRoute(
             </DetailPaneTitle>
             <DetailPaneDescription></DetailPaneDescription>
           </DetailPaneHeader>
-          <AssignationTimeline events={data.assignation.events} />
+          <AssignationTimeline assignation={data.assignation} />
         </DetailPane>
         <DetailPane className="mt-2">
           <DetailPaneHeader>Assign</DetailPaneHeader>

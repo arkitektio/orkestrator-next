@@ -1,27 +1,28 @@
 "use client";
 
-import React from "react";
 import {
   Timeline,
-  TimelineItem,
   TimelineConnector,
-  TimelineHeader,
-  TimelineTitle,
-  TimelineIcon,
-  TimelineDescription,
   TimelineContent,
-  TimelineTime,
+  TimelineDescription,
+  TimelineHeader,
+  TimelineIcon,
+  TimelineItem,
+  TimelineTitle,
 } from "@/components/timeline/timeline";
-import { AssignationEventFragment } from "../api/graphql";
+import { ReturnsContainer } from "@/components/widgets/returns/ReturnsContainer";
 import Timestamp from "react-timestamp";
+import { PostmanAssignationFragment } from "../api/graphql";
+import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
 interface TimelineLayoutProps {
-  events: AssignationEventFragment[]; // Replace any[] with the actual type of items.
+  assignation: PostmanAssignationFragment;
 }
-export const AssignationTimeline = ({ events }: TimelineLayoutProps) => {
+export const AssignationTimeline = ({ assignation }: TimelineLayoutProps) => {
+  const { registry } = useWidgetRegistry();
   return (
     <Timeline className="w-full">
-      {events.map((e) => (
+      {assignation.events.map((e) => (
         <TimelineItem>
           <TimelineConnector />
           <TimelineHeader>
@@ -32,7 +33,13 @@ export const AssignationTimeline = ({ events }: TimelineLayoutProps) => {
             <TimelineDescription>
               <Timestamp date={e.createdAt} relative />
               <br />
-              {e.returns && JSON.stringify(e.returns)}
+              {e.returns && (
+                <ReturnsContainer
+                  ports={assignation.node.returns}
+                  values={e.returns}
+                  registry={registry}
+                />
+              )}
             </TimelineDescription>
           </TimelineContent>
         </TimelineItem>

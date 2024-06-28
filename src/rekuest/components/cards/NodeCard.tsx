@@ -5,21 +5,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Form } from "@/components/ui/form";
-import { ArgsContainer } from "@/components/widgets/ArgsContainer";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { RekuestNode } from "@/linkers";
 import { useReserveMate } from "@/mates/reserve/useReserveMate";
 import { MateFinder } from "@/mates/types";
-import { AssignNodeQuery, ListNodeFragment } from "@/rekuest/api/graphql";
-import { useHashAction } from "@/rekuest/hooks/useHashActions";
-import { usePortForm } from "@/rekuest/hooks/usePortForm";
-import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
+import { ListNodeFragment } from "@/rekuest/api/graphql";
+import { NodeActionButton } from "@/rekuest/buttons/NodeActionButton";
 import { NodeDescription } from "@jhnnsrs/rekuest";
 import { Play } from "lucide-react";
 
@@ -28,57 +19,7 @@ interface Props {
   mates?: MateFinder[];
 }
 
-export const DoForm = (props: {
-  node: AssignNodeQuery["node"];
-  assign: (data: ActionAssignVariables) => void;
-}) => {
-  const form = usePortForm({
-    ports: props.node.args || [],
-  });
-
-  const { formState, watch } = form;
-
-  const thedata = watch();
-
-  const onSubmit = (data: any) => {
-    console.log("Submitting");
-    console.log(data);
-    props.assign({
-      node: props.node.id,
-      args: data,
-      hooks: [],
-    });
-  };
-
-  const { registry } = useWidgetRegistry();
-
-  return (
-    <>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
-          <ArgsContainer
-            registry={registry}
-            ports={props.node.args || []}
-            path={[]}
-          />
-          <DialogFooter>
-            <Button type="submit" className="btn">
-              {" "}
-              Submit{" "}
-            </Button>
-          </DialogFooter>
-          {JSON.stringify(thedata)}
-        </form>
-      </Form>
-    </>
-  );
-};
-
 export const ActionButton = (props: { node: ListNodeFragment }) => {
-  const { assign, latestAssignation, cancel, node } = useHashAction({
-    hash: props.node.hash,
-  });
-
   return (
     <>
       <>
@@ -118,7 +59,11 @@ const TheCard = ({ node, mates }: Props) => {
             </CardDescription>
           </div>
           <CardTitle>
-            <ActionButton node={node} />
+            <NodeActionButton id={node.id}>
+              <Button variant="outline" size="sm">
+                Assign
+              </Button>
+            </NodeActionButton>
           </CardTitle>
         </CardHeader>
       </Card>

@@ -6,9 +6,6 @@ import { toast } from "sonner";
 import {
   AssignationsDocument,
   AssignationsQuery,
-  PostmanAssignationFragmentDoc,
-  WatchAssignationEventsDocument,
-  WatchAssignationEventsSubscription,
   WatchAssignationEventsSubscriptionVariables,
   WatchAssignationsDocument,
   WatchAssignationsSubscription,
@@ -17,16 +14,11 @@ import {
 export const AssignationToaster = (props: { id: string }) => {
   const { data } = useAssignations();
 
+  const events = data?.assignations.find((a) => a.id === props.id)?.events;
+
   return (
     <div className="">
-      {data?.assignations
-        .find((a) => a.id === props.id)
-        ?.events.map((e, i) => (
-          <div key={i} className="">
-            <h3 className="text-lg font-semibold">{e.kind}</h3>
-            <p>{e.message}</p>
-          </div>
-        ))}
+      {events?.map((e) => <div className="">{e.kind}</div>)}
     </div>
   );
 };

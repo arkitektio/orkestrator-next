@@ -1,9 +1,9 @@
 import { ContainerGrid } from "@/components/layout/ContainerGrid";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { FormControl, FormItem, FormLabel } from "@/components/ui/form";
 import { TooltipButton } from "@/components/ui/tooltip-button";
 import { ChildPortFragment, PortKind } from "@/rekuest/api/graphql";
-import { usePortValidate } from "@/rekuest/hooks/usePortValidator";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { InputWidgetProps, Port } from "@/rekuest/widgets/types";
 import { pathToName } from "@/rekuest/widgets/utils";
@@ -50,38 +50,41 @@ export const SideBySideWidget = ({
   });
 
   return (
-    <ContainerGrid fitLength={fields.length}>
-      {fields.map((item, index) => (
-        <Card key={item.id} className="p-3">
-          <RenderDownWidget
-            port={valuetype}
-            path={path.concat(index.toString(), "__value")}
-          />
-          <Button
+    <FormItem>
+      <FormLabel>{port.label || port.key}</FormLabel>
+      <FormControl>
+        <ContainerGrid fitLength={fields.length}>
+          {fields.map((item, index) => (
+            <Card key={item.id} className="p-3">
+              <RenderDownWidget
+                port={valuetype}
+                path={path.concat(index.toString(), "__value")}
+              />
+              <Button
+                variant="outline"
+                size={"icon"}
+                className="absolute top-0 right-0 mr-2 mt-2"
+                onClick={() => remove(index)}
+              >
+                <X />
+              </Button>
+            </Card>
+          ))}
+          <TooltipButton
             variant="outline"
-            size={"icon"}
-            className="absolute top-0 right-0 mr-2 mt-2"
-            onClick={() => remove(index)}
+            size="icon"
+            onClick={() => append({ __value: undefined })}
+            tooltip="Add new item"
           >
-            <X />
-          </Button>
-        </Card>
-      ))}
-      <TooltipButton
-        variant="outline"
-        size="icon"
-        onClick={() => append({ __value: undefined })}
-        tooltip="Add new item"
-      >
-        <Plus />
-      </TooltipButton>
-    </ContainerGrid>
+            <Plus />
+          </TooltipButton>
+        </ContainerGrid>
+      </FormControl>
+    </FormItem>
   );
 };
 
 export const ListWidget = (props: InputWidgetProps) => {
-  const validate = usePortValidate(props.port);
-
   if (!props.port.children) {
     return <>Faulty port config. no children</>;
   }

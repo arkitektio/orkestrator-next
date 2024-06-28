@@ -136,7 +136,7 @@ export const ListSearchField = ({
       name={name}
       rules={{ validate: validate }}
       render={({ field }) => (
-        <>
+        <FormItem>
           <Popover>
             <FormItem className="flex flex-col">
               <FormLabel>{label ? label : name}</FormLabel>
@@ -172,7 +172,7 @@ export const ListSearchField = ({
               <FormMessage />
             </FormItem>
             <PopoverContent className="w-[400px] p-0">
-              <Command shouldFilter={false} disablePointerSelection={false}>
+              <Command shouldFilter={false}>
                 <CommandInput
                   placeholder={commandPlaceholder}
                   className="h-9"
@@ -233,7 +233,7 @@ export const ListSearchField = ({
               </Command>
             </PopoverContent>
           </Popover>
-        </>
+        </FormItem>
       )}
     />
   );

@@ -32,7 +32,7 @@ export const ReturnsContainer = ({
             {port.key}
             <Widget
               key={index}
-              value={values.at(index)}
+              value={values[port.key]}
               port={port}
               widget={port.returnWidget}
               options={options}
@@ -40,6 +40,7 @@ export const ReturnsContainer = ({
           </>
         );
       })}
+      {JSON.stringify(values)}
     </div>
   );
 };

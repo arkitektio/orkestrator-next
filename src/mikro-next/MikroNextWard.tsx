@@ -4,7 +4,6 @@ import { useMikroNext } from "@jhnnsrs/mikro-next";
 import { useEffect } from "react";
 
 export const MikroNextWard: React.FC<{
-  key?: string;
   fallback?: React.ReactNode;
 }> = ({ key, fallback }) => {
   const { client } = useMikroNext();
@@ -25,7 +24,7 @@ export const MikroNextWard: React.FC<{
           });
       };
 
-      registry?.registerWard(key || "mikro", {
+      registry?.registerWard("mikro", {
         search: runFunc,
       });
     }

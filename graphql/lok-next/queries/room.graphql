@@ -1,0 +1,13 @@
+query DetailRoom($id: ID!){
+    room(id: $id){
+        id
+        title
+    }
+}
+
+query Rooms {
+    rooms {
+        id
+        title
+    }
+}

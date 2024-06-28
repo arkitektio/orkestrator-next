@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ShadnWigets } from "@/components/widgets/ShadnWigets";
 import { manifest } from "@/constants";
+import { SystemMessageDisplay } from "@/lok-next/SystemMessage";
 import { MikroNextWard } from "@/mikro-next/MikroNextWard";
 import ImageDisplay from "@/mikro-next/displays/ImageDisplay";
 import { ThemeProvider } from "@/providers/ThemeProvider";
@@ -22,7 +23,7 @@ import { ReserveResolver } from "@/rekuest/components/global/ReserverResolver";
 import { WidgetRegistryProvider } from "@/rekuest/widgets/WidgetsProvider";
 import { EasyProvider } from "@jhnnsrs/arkitekt";
 import { FlussGuard, FlussProvider } from "@jhnnsrs/fluss-next";
-import { LokNextProvider } from "@jhnnsrs/lok-next";
+import { LokNextGuard, LokNextProvider } from "@jhnnsrs/lok-next";
 import { MikroNextGuard, MikroNextProvider } from "@jhnnsrs/mikro-next";
 import { OmeroArkProvider } from "@jhnnsrs/omero-ark";
 import { PortProvider } from "@jhnnsrs/port-next";
@@ -95,6 +96,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                                   </ThemeProvider>
                                 </PostmanProvider>
                               </WidgetRegistryProvider>
+                              <LokNextGuard fallback={<></>}>
+                                <SystemMessageDisplay />
+                              </LokNextGuard>
                             </LokNextProvider>
                           </OmeroArkProvider>
                         </MikroNextProvider>

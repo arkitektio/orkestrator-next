@@ -1,0 +1,7 @@
+
+mutation AcknowledgeMessage($id: ID!, $ack: Boolean!){
+ acknowledgeMessage(input: {id: $id, acknowledged: $ack}){
+     id
+    id
+ }
+}

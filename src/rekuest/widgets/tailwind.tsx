@@ -1,13 +1,7 @@
 import { notEmpty } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { EffectWrapper } from "./EffectWrapper";
-import {
-  Port,
-  PortGroup,
-  PortOptions,
-  Returns,
-  WidgetRegistryType,
-} from "./types";
+import { Port, PortGroup, PortOptions, WidgetRegistryType } from "./types";
 
 export type ArgsContainerProps = {
   registry: WidgetRegistryType;
@@ -22,7 +16,7 @@ export type InputContainer = (props: ArgsContainerProps) => JSX.Element;
 export type ReturnContainerProps = {
   registry: WidgetRegistryType;
   ports: Port[];
-  values: Returns[];
+  values: { [key: string]: any | null | undefined };
   options?: PortOptions | undefined;
 };
 

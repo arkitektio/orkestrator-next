@@ -14,26 +14,28 @@ export const SystemMessageDisplay = (props: {}) => {
   console.log("yyst", data, error);
   return (
     <>
-      <div className="absolute top-0 right-0 h-screen w-screen ">
-        {data?.myActiveMessages.map((message) => (
-          <div
-            key={message.id}
-            className="p-2 rounded shadow-md bg-black opacity-99 p-2 text-white absolute w-full h-full z-100"
-          >
-            <div className="max-h-lg max-w-lg top-[50%] left-[50%] translate-x-[50%] translate-y-[50%] text-white  items-center align-center flex flex-col justify-between ">
-              <div className="font-bold">{message.title}</div>
-              <div>{message.message}</div>
-              <Button
-                onClick={() =>
-                  ack({ variables: { id: message.id, ack: true } })
-                }
-              >
-                Acknowledge
-              </Button>
+      {(data?.myActiveMessages?.length || 0) > 0 && (
+        <div className="absolute top-0 right-0 h-screen w-screen ">
+          {data?.myActiveMessages.map((message) => (
+            <div
+              key={message.id}
+              className="p-2 rounded shadow-md bg-black opacity-99 p-2 text-white absolute w-full h-full z-100"
+            >
+              <div className="top-[50%] left-[50%] translate-x-[-50%] translate-y-[50%] text-white w-100 ">
+                <div className="font-bold">{message.title}</div>
+                <div>{message.message}</div>
+                <Button
+                  onClick={() =>
+                    ack({ variables: { id: message.id, ack: true } })
+                  }
+                >
+                  Acknowledge
+                </Button>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </>
   );
 };

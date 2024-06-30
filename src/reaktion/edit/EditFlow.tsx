@@ -1319,8 +1319,9 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         <div ref={dropref} className="flex flex-grow h-full w-full relative">
           <AnimatePresence>
             {state.remainingErrors.length == 0 && (
-              <div className="absolute bottom-0 right-0  mr-3 mb-5 z-50">
+              <div className="absolute bottom-0 right-0  mr-3 mb-5 z-50 flex flex-row gap-2">
                 <Button onClick={() => save()}> Save </Button>
+                <Button onClick={() => save()}> Deploy </Button>
               </div>
             )}
 

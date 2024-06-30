@@ -1,17 +1,49 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { Arkitekt } from "@/arkitekt";
 import { ChatLayout } from "@/components/chat/chat-layout";
 import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { LokRoom } from "@/linkers";
 import { Komments } from "@/lok-next/components/komments/Komments";
-import { withLokNext } from "@jhnnsrs/lok-next";
-import { useDetailRoomQuery } from "../api/graphql";
+import { useEffect } from "react";
+import {
+  WatchMessagesDocument,
+  WatchMessagesSubscription,
+  WatchMessagesSubscriptionVariables,
+  useDetailRoomQuery,
+} from "../api/graphql";
 
 export type IRepresentationScreenProps = {};
 
 export default asDetailQueryRoute(
-  withLokNext(useDetailRoomQuery),
-  ({ data }) => {
+  Arkitekt.withLok(useDetailRoomQuery),
+  ({ data, subscribeToMore }) => {
+    useEffect(() => {
+      console.log("RUning subscription");
+      return subscribeToMore<
+        WatchMessagesSubscription,
+        WatchMessagesSubscriptionVariables
+      >({
+        document: WatchMessagesDocument,
+        variables: {
+          room: data.room.id,
+          agentId: "default",
+        },
+        updateQuery: (prev, options) => {
+          let message = options.subscriptionData.data.room.message;
+          if (!message) {
+            return prev;
+          }
+          return {
+            room: {
+              ...prev.room,
+              messages: prev.room.messages.concat([message]),
+            },
+          };
+        },
+      });
+    }, [subscribeToMore]);
+
     return (
       <ModelPageLayout
         title={data?.room?.title}
@@ -28,7 +60,7 @@ export default asDetailQueryRoute(
           />
         }
       >
-        <ChatLayout navCollapsedSize={200} />
+        <ChatLayout navCollapsedSize={200} room={data.room} />
       </ModelPageLayout>
     );
   },

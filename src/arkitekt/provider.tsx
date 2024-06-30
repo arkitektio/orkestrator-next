@@ -1,5 +1,6 @@
 import possibleTypes from "@/kabinet/api/fragments";
 import { createKabinetClient } from "@/kabinet/lib/KabinetClient";
+import { createLokClient } from "@/lok-next/lib/LokClient";
 import { ApolloClient } from "@apollo/client";
 import { Manifest, useFakts } from "@jhnnsrs/fakts";
 import { useHerre } from "@jhnnsrs/herre";
@@ -48,7 +49,14 @@ export const ArkitektProvider = ({
         secure: false,
       });
 
-      setContext({ manifest: manifest, clients: { kabinet: x } });
+      let lok = createLokClient({
+        endpointUrl: fakts.lok.endpoint_url,
+        wsEndpointUrl: fakts.lok.ws_endpoint_url,
+        retrieveToken: () => token,
+        possibleTypes: possibleTypes.possibleTypes,
+      });
+
+      setContext({ manifest: manifest, clients: { kabinet: x, lok } });
     }
   }, [fakts, token]);
 

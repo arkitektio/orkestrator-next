@@ -14,10 +14,9 @@ import { EmojiPicker } from "../emoji-picker";
 import { Button, buttonVariants } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Textarea } from "../ui/textarea";
-import { Message, loggedInUserData } from "./data";
 
 interface ChatBottombarProps {
-  sendMessage: (newMessage: Message) => void;
+  sendMessage: (text: string) => void;
   isMobile: boolean;
 }
 
@@ -35,25 +34,13 @@ export default function ChatBottombar({
   };
 
   const handleThumbsUp = () => {
-    const newMessage: Message = {
-      id: message.length + 1,
-      name: loggedInUserData.name,
-      avatar: loggedInUserData.avatar,
-      message: "👍",
-    };
-    sendMessage(newMessage);
+    sendMessage("👍");
     setMessage("");
   };
 
   const handleSend = () => {
     if (message.trim()) {
-      const newMessage: Message = {
-        id: message.length + 1,
-        name: loggedInUserData.name,
-        avatar: loggedInUserData.avatar,
-        message: message.trim(),
-      };
-      sendMessage(newMessage);
+      sendMessage(message.trim());
       setMessage("");
 
       if (inputRef.current) {

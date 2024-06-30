@@ -1,0 +1,8 @@
+fragment DetailRoom on Room {
+    id
+    title
+    description
+    messages {
+        ...ListMessage
+    }
+}

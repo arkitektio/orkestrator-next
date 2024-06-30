@@ -1,20 +1,22 @@
-import { Message, UserData } from "@/app/data";
 import { cn } from "@/lib/utils";
+import { ListMessageFragment } from "@/lok-next/api/graphql";
+import { PortKind, PortScope } from "@/rekuest/api/graphql";
 import { AnimatePresence, motion } from "framer-motion";
 import React, { useRef } from "react";
 import { Avatar, AvatarImage } from "../ui/avatar";
+import { DelegatingStructureWidget } from "../widgets/returns/DelegatingStructureWidget";
 import ChatBottombar from "./chat-bottombar";
 
 interface ChatListProps {
-  messages?: Message[];
-  selectedUser: UserData;
-  sendMessage: (newMessage: Message) => void;
+  messages?: ListMessageFragment[];
+  agent: { id: string };
+  sendMessage: (message: string) => void;
   isMobile: boolean;
 }
 
 export function ChatList({
   messages,
-  selectedUser,
+  agent,
   sendMessage,
   isMobile,
 }: ChatListProps) {
@@ -55,35 +57,46 @@ export function ChatList({
               }}
               className={cn(
                 "flex flex-col gap-2 p-4 whitespace-pre-wrap dark:text-white",
-                message.name !== selectedUser.name
-                  ? "items-end"
-                  : "items-start",
+                message.agent.id !== agent.id ? "items-end" : "items-start",
               )}
             >
               <div className="flex gap-3 items-center">
-                {message.name === selectedUser.name && (
+                {message.agent.id !== agent.id && (
                   <Avatar className="flex justify-center items-center">
                     <AvatarImage
-                      src={message.avatar}
-                      alt={message.name}
+                      src={message.id}
+                      alt={message.id}
                       width={6}
                       height={6}
                     />
                   </Avatar>
                 )}
                 <span className=" bg-accent p-3 rounded-md max-w-xs">
-                  {message.message}
+                  {message.text}
                 </span>
-                {message.name !== selectedUser.name && (
+                {message.agent.id !== agent.id && (
                   <Avatar className="flex justify-center items-center">
                     <AvatarImage
-                      src={message.avatar}
-                      alt={message.name}
+                      src={message.id}
+                      alt={message.id}
                       width={6}
                       height={6}
                     />
                   </Avatar>
                 )}
+                {message.attachedStructures.map((s, index) => (
+                  <DelegatingStructureWidget
+                    port={{
+                      kind: PortKind.Structure,
+                      identifier: s.identifier,
+                      __typename: "Port",
+                      key: index.toString(),
+                      nullable: false,
+                      scope: PortScope.Global,
+                    }}
+                    value={s.object}
+                  />
+                ))}
               </div>
             </motion.div>
           ))}

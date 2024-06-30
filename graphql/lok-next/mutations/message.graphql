@@ -5,3 +5,8 @@ mutation AcknowledgeMessage($id: ID!, $ack: Boolean!){
     id
  }
 }
+mutation SendMessage($text: String!, $room: ID!, $agentId: String!){
+    send(input: {text: $text, room: $room, agentId: $agentId}){
+        ...Message
+    }
+}

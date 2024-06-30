@@ -1,7 +1,6 @@
 query DetailRoom($id: ID!){
     room(id: $id){
-        id
-        title
+        ...DetailRoom
     }
 }
 
@@ -9,5 +8,6 @@ query Rooms {
     rooms {
         id
         title
+
     }
 }

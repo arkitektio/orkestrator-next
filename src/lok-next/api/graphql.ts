@@ -35,6 +35,13 @@ export type AddItemToStashInput = {
   stash: Scalars['ID']['input'];
 };
 
+/** Agent(id, room, name, app, user) */
+export type Agent = {
+  __typename?: 'Agent';
+  id: Scalars['ID']['output'];
+  room: Room;
+};
+
 /** An App is the Arkitekt equivalent of a Software Application. It is a collection of `Releases` that can be all part of the same application. E.g the App `Napari` could have the releases `0.1.0` and `0.2.0`. */
 export type App = {
   __typename?: 'App';
@@ -177,6 +184,11 @@ export type CreateCommentInput = {
   parent?: InputMaybe<Scalars['ID']['input']>;
 };
 
+export type CreateRoomInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type CreateStashInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
@@ -316,6 +328,18 @@ export type MentionDescendant = Descendant & {
   user?: Maybe<User>;
 };
 
+/** Message represent the message of an agent on a room */
+export type Message = {
+  __typename?: 'Message';
+  /** The user that created this comment */
+  agent: Agent;
+  attachedStructures: Array<Structure>;
+  id: Scalars['ID']['output'];
+  /** A clear text representation of the rich comment */
+  text: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   acknowledgeMessage: SystemMessage;
@@ -323,6 +347,7 @@ export type Mutation = {
   addItemsToStash: Array<StashItem>;
   createComment: Comment;
   createDevelopmentalClient: Scalars['String']['output'];
+  createRoom: Room;
   /** Create a new stash */
   createStash: Stash;
   createUser: User;
@@ -333,6 +358,7 @@ export type Mutation = {
   replyTo: Comment;
   resolveComment: Comment;
   scan: Scalars['String']['output'];
+  send: Message;
   /** Update a stash */
   updateStash: Stash;
 };
@@ -355,6 +381,11 @@ export type MutationCreateCommentArgs = {
 
 export type MutationCreateDevelopmentalClientArgs = {
   input: DevelopmentClientInput;
+};
+
+
+export type MutationCreateRoomArgs = {
+  input: CreateRoomInput;
 };
 
 
@@ -395,6 +426,11 @@ export type MutationResolveCommentArgs = {
 
 export type MutationScanArgs = {
   input: ScanBackendInput;
+};
+
+
+export type MutationSendArgs = {
+  input: SendMessageInput;
 };
 
 
@@ -708,9 +744,18 @@ export type ResolveCommentInput = {
 /** Room(id, title, description, creator) */
 export type Room = {
   __typename?: 'Room';
+  description: Scalars['String']['output'];
   id: Scalars['ID']['output'];
+  messages: Array<Message>;
   /** The Title of the Room */
   title: Scalars['String']['output'];
+};
+
+export type RoomEvent = {
+  __typename?: 'RoomEvent';
+  join?: Maybe<Agent>;
+  leave?: Maybe<Agent>;
+  message?: Maybe<Message>;
 };
 
 export type ScanBackendInput = {
@@ -726,6 +771,15 @@ export type Scope = {
   label: Scalars['String']['output'];
   /** The value of the scope. This is the value that is used in the OAuth2 flow. */
   value: Scalars['String']['output'];
+};
+
+export type SendMessageInput = {
+  agentId: Scalars['String']['input'];
+  attachStructures?: InputMaybe<Array<StructureInput>>;
+  notify?: InputMaybe<Scalars['Boolean']['input']>;
+  parent?: InputMaybe<Scalars['ID']['input']>;
+  room: Scalars['ID']['input'];
+  text: Scalars['String']['input'];
 };
 
 /** A Service is a Webservice that a Client might want to access. It is not the configured instance of the service, but the service itself. */
@@ -903,15 +957,38 @@ export type StrFilterLookup = {
   startsWith?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Structure(id, identifier, object) */
+export type Structure = {
+  __typename?: 'Structure';
+  id: Scalars['ID']['output'];
+  /** The identifier of the object. Consult the documentation for the format */
+  identifier: Scalars['String']['output'];
+  /** The object id of the object, on its associated service */
+  object: Scalars['ID']['output'];
+};
+
+export type StructureInput = {
+  identifier: Scalars['String']['input'];
+  object: Scalars['ID']['input'];
+};
+
 export type Subscription = {
   __typename?: 'Subscription';
   communications: Communication;
   mentions: Comment;
+  room: RoomEvent;
 };
 
 
 export type SubscriptionCommunicationsArgs = {
   channels: Array<Scalars['ID']['input']>;
+};
+
+
+export type SubscriptionRoomArgs = {
+  agentId: Scalars['ID']['input'];
+  filterOwn?: Scalars['Boolean']['input'];
+  room: Scalars['ID']['input'];
 };
 
 /**
@@ -1041,11 +1118,17 @@ export type DetailGroupFragment = { __typename?: 'Group', id: string, name: stri
 
 export type ListGroupFragment = { __typename?: 'Group', id: string, name: string };
 
+export type MessageFragment = { __typename?: 'Message', id: string, text: string, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> };
+
+export type ListMessageFragment = { __typename?: 'Message', id: string, text: string, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> };
+
 export type ListRedeemTokenFragment = { __typename?: 'RedeemToken', id: string, token: string, user: { __typename?: 'User', id: string, email?: string | null }, client?: { __typename?: 'Client', id: string, release: { __typename?: 'Release', version: any, app: { __typename?: 'App', identifier: any } } } | null };
 
 export type DetailReleaseFragment = { __typename?: 'Release', id: string, version: any, logo?: string | null, app: { __typename?: 'App', id: string, identifier: any, logo?: string | null }, clients: Array<{ __typename?: 'Client', id: string, kind: ClientKind, user?: { __typename?: 'User', username: string } | null, release: { __typename?: 'Release', version: any, logo?: string | null, app: { __typename?: 'App', id: string, identifier: any, logo?: string | null } }, composition: { __typename?: 'Composition', id: string } }> };
 
 export type ListReleaseFragment = { __typename?: 'Release', id: string, version: any, logo?: string | null, app: { __typename?: 'App', id: string, identifier: any, logo?: string | null } };
+
+export type DetailRoomFragment = { __typename?: 'Room', id: string, title: string, description: string, messages: Array<{ __typename?: 'Message', id: string, text: string, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> }> };
 
 export type ListServiceInstanceMappingFragment = { __typename?: 'ServiceInstanceMapping', id: string, key: string, instance: { __typename?: 'ServiceInstance', backend: BackendType, service: { __typename?: 'Service', identifier: any } } };
 
@@ -1103,6 +1186,15 @@ export type AcknowledgeMessageMutationVariables = Exact<{
 
 
 export type AcknowledgeMessageMutation = { __typename?: 'Mutation', acknowledgeMessage: { __typename?: 'SystemMessage', id: string } };
+
+export type SendMessageMutationVariables = Exact<{
+  text: Scalars['String']['input'];
+  room: Scalars['ID']['input'];
+  agentId: Scalars['String']['input'];
+}>;
+
+
+export type SendMessageMutation = { __typename?: 'Mutation', send: { __typename?: 'Message', id: string, text: string, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> } };
 
 export type CreateStashMutationVariables = Exact<{
   name?: InputMaybe<Scalars['String']['input']>;
@@ -1244,7 +1336,7 @@ export type DetailRoomQueryVariables = Exact<{
 }>;
 
 
-export type DetailRoomQuery = { __typename?: 'Query', room: { __typename?: 'Room', id: string, title: string } };
+export type DetailRoomQuery = { __typename?: 'Query', room: { __typename?: 'Room', id: string, title: string, description: string, messages: Array<{ __typename?: 'Message', id: string, text: string, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> }> } };
 
 export type RoomsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1313,6 +1405,14 @@ export type WatchMentionsSubscriptionVariables = Exact<{ [key: string]: never; }
 
 
 export type WatchMentionsSubscription = { __typename?: 'Subscription', mentions: { __typename?: 'Comment', id: string, createdAt: any, resolved: boolean, object: string, identifier: any, user: { __typename?: 'User', id: string, username: string, avatar?: string | null }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null }>, children: Array<{ __typename?: 'Comment', createdAt: any, user: { __typename?: 'User', id: string, username: string, avatar?: string | null }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null }> }>, mentions: Array<{ __typename?: 'User', id: string, username: string, avatar?: string | null }>, resolvedBy?: { __typename?: 'User', id: string, username: string, avatar?: string | null } | null } };
+
+export type WatchMessagesSubscriptionVariables = Exact<{
+  room: Scalars['ID']['input'];
+  agentId: Scalars['ID']['input'];
+}>;
+
+
+export type WatchMessagesSubscription = { __typename?: 'Subscription', room: { __typename?: 'RoomEvent', message?: { __typename?: 'Message', id: string, text: string, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> } | null } };
 
 export const ListAppFragmentDoc = gql`
     fragment ListApp on App {
@@ -1554,6 +1654,19 @@ export const ListGroupFragmentDoc = gql`
   name
 }
     `;
+export const MessageFragmentDoc = gql`
+    fragment Message on Message {
+  id
+  text
+  agent {
+    id
+  }
+  attachedStructures {
+    identifier
+    object
+  }
+}
+    `;
 export const ListRedeemTokenFragmentDoc = gql`
     fragment ListRedeemToken on RedeemToken {
   id
@@ -1608,6 +1721,29 @@ export const DetailReleaseFragmentDoc = gql`
 }
     ${ListAppFragmentDoc}
 ${ListClientFragmentDoc}`;
+export const ListMessageFragmentDoc = gql`
+    fragment ListMessage on Message {
+  id
+  text
+  agent {
+    id
+  }
+  attachedStructures {
+    identifier
+    object
+  }
+}
+    `;
+export const DetailRoomFragmentDoc = gql`
+    fragment DetailRoom on Room {
+  id
+  title
+  description
+  messages {
+    ...ListMessage
+  }
+}
+    ${ListMessageFragmentDoc}`;
 export const StashFragmentDoc = gql`
     fragment Stash on Stash {
   id
@@ -1837,6 +1973,41 @@ export function useAcknowledgeMessageMutation(baseOptions?: Apollo.MutationHookO
 export type AcknowledgeMessageMutationHookResult = ReturnType<typeof useAcknowledgeMessageMutation>;
 export type AcknowledgeMessageMutationResult = Apollo.MutationResult<AcknowledgeMessageMutation>;
 export type AcknowledgeMessageMutationOptions = Apollo.BaseMutationOptions<AcknowledgeMessageMutation, AcknowledgeMessageMutationVariables>;
+export const SendMessageDocument = gql`
+    mutation SendMessage($text: String!, $room: ID!, $agentId: String!) {
+  send(input: {text: $text, room: $room, agentId: $agentId}) {
+    ...Message
+  }
+}
+    ${MessageFragmentDoc}`;
+export type SendMessageMutationFn = Apollo.MutationFunction<SendMessageMutation, SendMessageMutationVariables>;
+
+/**
+ * __useSendMessageMutation__
+ *
+ * To run a mutation, you first call `useSendMessageMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSendMessageMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [sendMessageMutation, { data, loading, error }] = useSendMessageMutation({
+ *   variables: {
+ *      text: // value for 'text'
+ *      room: // value for 'room'
+ *      agentId: // value for 'agentId'
+ *   },
+ * });
+ */
+export function useSendMessageMutation(baseOptions?: Apollo.MutationHookOptions<SendMessageMutation, SendMessageMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SendMessageMutation, SendMessageMutationVariables>(SendMessageDocument, options);
+      }
+export type SendMessageMutationHookResult = ReturnType<typeof useSendMessageMutation>;
+export type SendMessageMutationResult = Apollo.MutationResult<SendMessageMutation>;
+export type SendMessageMutationOptions = Apollo.BaseMutationOptions<SendMessageMutation, SendMessageMutationVariables>;
 export const CreateStashDocument = gql`
     mutation CreateStash($name: String, $description: String = "") {
   createStash(input: {name: $name, description: $description}) {
@@ -2508,11 +2679,10 @@ export type ReleaseQueryResult = Apollo.QueryResult<ReleaseQuery, ReleaseQueryVa
 export const DetailRoomDocument = gql`
     query DetailRoom($id: ID!) {
   room(id: $id) {
-    id
-    title
+    ...DetailRoom
   }
 }
-    `;
+    ${DetailRoomFragmentDoc}`;
 
 /**
  * __useDetailRoomQuery__
@@ -2927,3 +3097,36 @@ export function useWatchMentionsSubscription(baseOptions?: Apollo.SubscriptionHo
       }
 export type WatchMentionsSubscriptionHookResult = ReturnType<typeof useWatchMentionsSubscription>;
 export type WatchMentionsSubscriptionResult = Apollo.SubscriptionResult<WatchMentionsSubscription>;
+export const WatchMessagesDocument = gql`
+    subscription WatchMessages($room: ID!, $agentId: ID!) {
+  room(room: $room, agentId: $agentId, filterOwn: false) {
+    message {
+      ...ListMessage
+    }
+  }
+}
+    ${ListMessageFragmentDoc}`;
+
+/**
+ * __useWatchMessagesSubscription__
+ *
+ * To run a query within a React component, call `useWatchMessagesSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useWatchMessagesSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useWatchMessagesSubscription({
+ *   variables: {
+ *      room: // value for 'room'
+ *      agentId: // value for 'agentId'
+ *   },
+ * });
+ */
+export function useWatchMessagesSubscription(baseOptions: Apollo.SubscriptionHookOptions<WatchMessagesSubscription, WatchMessagesSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<WatchMessagesSubscription, WatchMessagesSubscriptionVariables>(WatchMessagesDocument, options);
+      }
+export type WatchMessagesSubscriptionHookResult = ReturnType<typeof useWatchMessagesSubscription>;
+export type WatchMessagesSubscriptionResult = Apollo.SubscriptionResult<WatchMessagesSubscription>;

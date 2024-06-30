@@ -1,5 +1,6 @@
 "use client";
 
+import { DetailRoomFragment } from "@/lok-next/api/graphql";
 import React, { useEffect, useState } from "react";
 import { Chat } from "./chat";
 import { userData } from "./data";
@@ -8,10 +9,12 @@ interface ChatLayoutProps {
   defaultLayout?: number[] | undefined;
   defaultCollapsed?: boolean;
   navCollapsedSize: number;
+  room: DetailRoomFragment;
 }
 
 export function ChatLayout({
   defaultLayout = [320, 480],
+  room,
   defaultCollapsed = false,
   navCollapsedSize,
 }: ChatLayoutProps) {
@@ -41,6 +44,7 @@ export function ChatLayout({
       messages={selectedUser.messages}
       selectedUser={selectedUser}
       isMobile={isMobile}
+      room={room}
     />
   );
 }

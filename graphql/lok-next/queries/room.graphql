@@ -5,9 +5,13 @@ query DetailRoom($id: ID!){
 }
 
 query Rooms {
-    rooms {
+    rooms(pagination: {limit: 10}) {
         id
         title
+        description
+        messages(pagination: {limit: 4}) {
+            ...ListMessage
+        }
 
     }
 }

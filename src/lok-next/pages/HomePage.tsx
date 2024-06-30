@@ -4,6 +4,7 @@ import {
   DetailPaneHeader,
   DetailPaneTitle,
 } from "@/components/ui/pane";
+import { PopularCarousel } from "@/lok-next/components/PopularCarousel";
 import React from "react";
 import ClientList from "../components/lists/ClientList";
 import RedeemTokenList from "../components/lists/RedeemTokenList";
@@ -13,6 +14,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   return (
     <PageLayout title="Lok">
       <DetailPane className="p-3 @container">
+        <PopularCarousel />
         <DetailPaneHeader>
           <DetailPaneTitle>Hi</DetailPaneTitle>
           <ClientList />

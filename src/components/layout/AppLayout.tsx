@@ -8,7 +8,7 @@ export type AppLayoutProps = {
 
 export const AppLayout = ({ children, navigationBar }: AppLayoutProps) => {
   return (
-    <div className="flex flex-col h-screen sm:flex-row bg-background">
+    <div className="flex flex-col h-screen sm:flex-row bg-background  dark:text-white">
       <div className="flex-initial flex flex-col mt-1 z-10 w-19 shadow shadow-xl bg-background">
         <div className="flex-initial h-12 border-b-gray-600 mt-2">
           <Link to={"/"}>

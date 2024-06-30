@@ -13,4 +13,15 @@ fragment ListDefinition on Definition {
   name
   hash
   description
+  flavours {
+    id
+    name
+    release {
+      id
+      version
+      app {
+        identifier
+      }
+    }
+  }
 }

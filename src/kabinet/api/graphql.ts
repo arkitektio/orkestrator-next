@@ -214,7 +214,19 @@ export type Definition = {
  *
  * See online Documentation
  */
+export type DefinitionFlavoursArgs = {
+  filters?: InputMaybe<FlavourFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/**
+ * Nodes are abstraction of RPC Tasks. They provide a common API to deal with creating tasks.
+ *
+ * See online Documentation
+ */
 export type DefinitionIsTestForArgs = {
+  filters?: InputMaybe<GithubRepoFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -225,6 +237,7 @@ export type DefinitionIsTestForArgs = {
  * See online Documentation
  */
 export type DefinitionTestsArgs = {
+  filters?: InputMaybe<GithubRepoFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -287,7 +300,14 @@ export type Flavour = {
 
 /** A user of the bridge server. Maps to an authentikate user */
 export type FlavourDefinitionsArgs = {
+  filters?: InputMaybe<GithubRepoFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+/** Filter for Dask Clusters */
+export type FlavourFilter = {
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** A user of the bridge server. Maps to an authentikate user */
@@ -299,6 +319,13 @@ export type GithubRepo = {
   name: Scalars['String']['output'];
   repo: Scalars['String']['output'];
   user: Scalars['String']['output'];
+};
+
+
+/** A user of the bridge server. Maps to an authentikate user */
+export type GithubRepoFlavoursArgs = {
+  filters?: InputMaybe<FlavourFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 /** Filter for Dask Clusters */
@@ -509,6 +536,7 @@ export type QueryDefinitionArgs = {
 
 
 export type QueryDefinitionsArgs = {
+  filters?: InputMaybe<GithubRepoFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -520,6 +548,12 @@ export type QueryDeploymentArgs = {
 
 export type QueryFlavourArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryFlavoursArgs = {
+  filters?: InputMaybe<FlavourFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -568,6 +602,13 @@ export type Release = {
   originalLogo?: Maybe<Scalars['String']['output']>;
   scopes: Array<Scalars['String']['output']>;
   version: Scalars['String']['output'];
+};
+
+
+/** A user of the bridge server. Maps to an authentikate user */
+export type ReleaseFlavoursArgs = {
+  filters?: InputMaybe<FlavourFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 export type ReturnWidget = {
@@ -659,7 +700,7 @@ export type Validator = {
 
 export type DefinitionFragment = { __typename?: 'Definition', id: string, name: string, hash: any, description?: string | null, args: Array<{ __typename?: 'Port', kind: PortKind }> };
 
-export type ListDefinitionFragment = { __typename?: 'Definition', id: string, name: string, hash: any, description?: string | null };
+export type ListDefinitionFragment = { __typename?: 'Definition', id: string, name: string, hash: any, description?: string | null, flavours: Array<{ __typename?: 'Flavour', id: string, name: string, release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } }> };
 
 export type ListFlavourFragment = { __typename?: 'Flavour', id: string, name: string };
 
@@ -684,7 +725,7 @@ export type CreateGithubRepoMutation = { __typename?: 'Mutation', createGithubRe
 export type ListDefinitionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ListDefinitionsQuery = { __typename?: 'Query', definitions: Array<{ __typename?: 'Definition', id: string, name: string, hash: any, description?: string | null }> };
+export type ListDefinitionsQuery = { __typename?: 'Query', definitions: Array<{ __typename?: 'Definition', id: string, name: string, hash: any, description?: string | null, flavours: Array<{ __typename?: 'Flavour', id: string, name: string, release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } }> }> };
 
 export type ListPodQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -695,6 +736,14 @@ export type ListReleasesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type ListReleasesQuery = { __typename?: 'Query', releases: Array<{ __typename?: 'Release', id: string, version: string, installed: boolean, scopes: Array<string>, colour: string, description: string, app: { __typename?: 'App', identifier: string }, flavours: Array<{ __typename?: 'Flavour', id: string, name: string }> }> };
+
+export type GlobalSearchQueryVariables = Exact<{
+  search?: InputMaybe<Scalars['String']['input']>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+}>;
+
+
+export type GlobalSearchQuery = { __typename?: 'Query', definitions: Array<{ __typename?: 'Definition', id: string, name: string, hash: any, description?: string | null, flavours: Array<{ __typename?: 'Flavour', id: string, name: string, release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } }> }>, flavours: Array<{ __typename?: 'Flavour', id: string, name: string }> };
 
 export const DefinitionFragmentDoc = gql`
     fragment Definition on Definition {
@@ -713,6 +762,17 @@ export const ListDefinitionFragmentDoc = gql`
   name
   hash
   description
+  flavours {
+    id
+    name
+    release {
+      id
+      version
+      app {
+        identifier
+      }
+    }
+  }
 }
     `;
 export const ListPodFragmentDoc = gql`
@@ -901,3 +961,43 @@ export function useListReleasesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptio
 export type ListReleasesQueryHookResult = ReturnType<typeof useListReleasesQuery>;
 export type ListReleasesLazyQueryHookResult = ReturnType<typeof useListReleasesLazyQuery>;
 export type ListReleasesQueryResult = Apollo.QueryResult<ListReleasesQuery, ListReleasesQueryVariables>;
+export const GlobalSearchDocument = gql`
+    query GlobalSearch($search: String, $pagination: OffsetPaginationInput) {
+  definitions: definitions(filters: {search: $search}, pagination: $pagination) {
+    ...ListDefinition
+  }
+  flavours: flavours(filters: {search: $search}, pagination: $pagination) {
+    ...ListFlavour
+  }
+}
+    ${ListDefinitionFragmentDoc}
+${ListFlavourFragmentDoc}`;
+
+/**
+ * __useGlobalSearchQuery__
+ *
+ * To run a query within a React component, call `useGlobalSearchQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGlobalSearchQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGlobalSearchQuery({
+ *   variables: {
+ *      search: // value for 'search'
+ *      pagination: // value for 'pagination'
+ *   },
+ * });
+ */
+export function useGlobalSearchQuery(baseOptions?: Apollo.QueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
+      }
+export function useGlobalSearchLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
+        }
+export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>;
+export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>;
+export type GlobalSearchQueryResult = Apollo.QueryResult<GlobalSearchQuery, GlobalSearchQueryVariables>;

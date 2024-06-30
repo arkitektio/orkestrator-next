@@ -3,12 +3,13 @@ import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import React from "react";
 import { Route, Routes } from "react-router";
 import HomePage from "./pages/HomePage";
+import StandardPane from "./panes/StandardPane";
 interface Props {}
 
 export const KabinetModule: React.FC<Props> = (props) => {
   return (
     <Arkitekt.KabinetGuard fallback={<>Loading</>}>
-      <ModuleLayout>
+      <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route path="*" element={<HomePage />} />
         </Routes>

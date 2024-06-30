@@ -340,6 +340,20 @@ export type Message = {
   title: Scalars['String']['output'];
 };
 
+
+/** Message represent the message of an agent on a room */
+export type MessageAttachedStructuresArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+/** Message represent the message of an agent on a room */
+export type MessageFilter = {
+  AND?: InputMaybe<MessageFilter>;
+  OR?: InputMaybe<MessageFilter>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   acknowledgeMessage: SystemMessage;
@@ -632,6 +646,12 @@ export type QueryRoomArgs = {
 };
 
 
+export type QueryRoomsArgs = {
+  filters?: InputMaybe<RoomFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryStashArgs = {
   id: Scalars['ID']['input'];
 };
@@ -751,11 +771,26 @@ export type Room = {
   title: Scalars['String']['output'];
 };
 
+
+/** Room(id, title, description, creator) */
+export type RoomMessagesArgs = {
+  filters?: InputMaybe<MessageFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 export type RoomEvent = {
   __typename?: 'RoomEvent';
   join?: Maybe<Agent>;
   leave?: Maybe<Agent>;
   message?: Maybe<Message>;
+};
+
+/** Room(id, title, description, creator) */
+export type RoomFilter = {
+  AND?: InputMaybe<RoomFilter>;
+  OR?: InputMaybe<RoomFilter>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ScanBackendInput = {
@@ -1341,7 +1376,7 @@ export type DetailRoomQuery = { __typename?: 'Query', room: { __typename?: 'Room
 export type RoomsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type RoomsQuery = { __typename?: 'Query', rooms: Array<{ __typename?: 'Room', id: string, title: string }> };
+export type RoomsQuery = { __typename?: 'Query', rooms: Array<{ __typename?: 'Room', id: string, title: string, description: string, messages: Array<{ __typename?: 'Message', id: string, text: string, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> }> }> };
 
 export type ScopesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -2713,12 +2748,16 @@ export type DetailRoomLazyQueryHookResult = ReturnType<typeof useDetailRoomLazyQ
 export type DetailRoomQueryResult = Apollo.QueryResult<DetailRoomQuery, DetailRoomQueryVariables>;
 export const RoomsDocument = gql`
     query Rooms {
-  rooms {
+  rooms(pagination: {limit: 10}) {
     id
     title
+    description
+    messages(pagination: {limit: 4}) {
+      ...ListMessage
+    }
   }
 }
-    `;
+    ${ListMessageFragmentDoc}`;
 
 /**
  * __useRoomsQuery__

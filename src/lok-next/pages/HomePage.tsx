@@ -5,9 +5,8 @@ import {
   DetailPaneTitle,
 } from "@/components/ui/pane";
 import { PopularCarousel } from "@/lok-next/components/PopularCarousel";
+import { Separator } from "@radix-ui/react-dropdown-menu";
 import React from "react";
-import ClientList from "../components/lists/ClientList";
-import RedeemTokenList from "../components/lists/RedeemTokenList";
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
@@ -15,12 +14,14 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
     <PageLayout title="Lok">
       <DetailPane className="p-3 @container">
         <PopularCarousel />
-        <DetailPaneHeader>
-          <DetailPaneTitle>Hi</DetailPaneTitle>
-          <ClientList />
-          <RedeemTokenList />
-        </DetailPaneHeader>
+        <DetailPaneHeader></DetailPaneHeader>
       </DetailPane>
+
+      <Separator />
+
+      <div className="p-3 @container">
+        <DetailPaneTitle>Hi</DetailPaneTitle>
+      </div>
     </PageLayout>
   );
 };

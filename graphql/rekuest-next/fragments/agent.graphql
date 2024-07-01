@@ -8,6 +8,14 @@ fragment Agent on Agent {
   templates {
     ...ListTemplate
   }
+  registry {
+    app {
+      clientId
+    }
+    user {
+      id
+    }
+  }
   active
   connected
   lastSeen
@@ -20,4 +28,12 @@ fragment ListAgent on Agent {
   active
   connected
   lastSeen
+  registry {
+    app {
+      clientId
+    }
+    user {
+      id
+    }
+  }
 }

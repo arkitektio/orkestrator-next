@@ -138,3 +138,8 @@ export const KabinetDefinition = buildSmart(
   "@kabinet/definition",
   "kabinet/definitions",
 );
+
+export const KabinetRelease = buildSmart(
+  "@kabinet/release",
+  "kabinet/releases",
+);

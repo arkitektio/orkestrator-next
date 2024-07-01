@@ -3,7 +3,7 @@ import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import * as React from "react";
 import { useGlobalSearchQuery } from "../api/graphql";
-import DefinitionCard from "../components/cards/DefinitionCard";
+import DefinitionCard from "../components/cards/ReleaseCard";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
 
 interface IDataSidebarProps {}

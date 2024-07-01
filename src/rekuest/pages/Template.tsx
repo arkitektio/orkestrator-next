@@ -27,6 +27,7 @@ import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 import { DialogFooter } from "@/components/ui/dialog";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 import { useTemplateAction } from "../hooks/useTemplateAction";
+import { NodeDescription } from "@jhnnsrs/rekuest";
 
 export const DoForm = (props: { id: string }) => {
   const { assign, latestAssignation, cancel, template } = useTemplateAction({
@@ -53,6 +54,12 @@ export const DoForm = (props: { id: string }) => {
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
+          {template?.node?.description && (
+            <NodeDescription
+              description={template.node.description}
+              variables={form.watch()}
+            />
+          )}
           <ArgsContainer
             registry={registry}
             ports={template?.node.args || []}

@@ -83,14 +83,11 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                                     <RequesterProvider>
                                       <ReserverProvider>
                                         <ReserveResolver />
-                                        <TooltipProvider>
-                                          <Toaster />
-                                          <AppConfiguration />{" "}
-                                          {/* This is where we configure the application automatically based on facts */}
-                                          <BrowserRouter>
-                                            {children}
-                                          </BrowserRouter>
-                                        </TooltipProvider>
+                                        <AppConfiguration />{" "}
+                                        {/* This is where we configure the application automatically based on facts */}
+                                        <BrowserRouter>
+                                          {children}
+                                        </BrowserRouter>
                                       </ReserverProvider>
                                     </RequesterProvider>
                                   </ThemeProvider>

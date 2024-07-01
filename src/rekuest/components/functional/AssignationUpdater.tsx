@@ -10,6 +10,8 @@ import {
   WatchAssignationsDocument,
   WatchAssignationsSubscription,
 } from "../../api/graphql";
+import { RekuestAssignation } from "@/linkers";
+import { NavLink } from "react-router-dom";
 
 export const AssignationToaster = (props: { id: string }) => {
   const { data } = useAssignations();
@@ -17,8 +19,13 @@ export const AssignationToaster = (props: { id: string }) => {
   const events = data?.assignations.find((a) => a.id === props.id)?.events;
 
   return (
-    <div className="">
-      {events?.map((e) => <div className="">{e.kind}</div>)}
+    <div>
+      <a to="" className="">
+        <>
+          <h1>Assignation Created</h1>
+          {events?.map((e) => <div className="">{e.kind}</div>)}
+        </>
+      </a>
     </div>
   );
 };

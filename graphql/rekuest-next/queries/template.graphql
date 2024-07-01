@@ -3,3 +3,9 @@ query Template($id: ID!) {
     ...DetailTemplate
   }
 }
+
+query Templates($filters: TemplateFilter, $pagination: OffsetPaginationInput) {
+  templates(filters: $filters, pagination: $pagination) {
+    ...DetailTemplate
+  }
+}

@@ -3,6 +3,7 @@ import { Separator } from "@/components/ui/separator";
 import React from "react";
 import { PopularCarousel } from "../components/PopularCarousel";
 import DefinitionList from "../components/lists/DefinitionList";
+import ReleasesList from "../components/lists/ReleasesList";
 
 export type IRepresentationScreenProps = {};
 
@@ -15,6 +16,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
         <Separator className="mt-8 mb-2" />
 
         <DefinitionList />
+        <ReleasesList />
       </div>
     </PageLayout>
   );

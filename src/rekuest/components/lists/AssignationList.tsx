@@ -14,7 +14,7 @@ const List = ({}: Props) => {
         array={data?.assignations}
         title={
           <MikroDataset.ListLink className="flex-0">
-            Assignations
+            Latest Tasks
           </MikroDataset.ListLink>
         }
       >

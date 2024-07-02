@@ -17,6 +17,8 @@ import { NotConnected } from "./components/fallbacks/NotConnected";
 import { NotFound } from "./components/fallbacks/NotFound";
 import { NotLoggedIn } from "./components/fallbacks/NotLoggedIn";
 import { PrivateNavigationBar } from "./components/navigation/PrivateNavigationBar";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
 // Entrypoint of the application.
 // We provide two main routers, one for the public routes, and one for the private routes.
 export const protect = (component: React.ReactNode) => {
@@ -37,23 +39,26 @@ export const Fallback = () => {
 function App() {
   return (
     <AppProvider>
-      <AppLayout navigationBar={<PrivateNavigationBar />}>
-        <Routes>
-          <Route path="callback" element={<Callback />} />{" "}
-          {/* This is the callback route for the herre provider, and needs to be publicalyl available. (Represents Oauth2 Callback)*/}
-          <Route index element={<Hero />} />
-          <Route path="mikro/*" element={protect(<MikroNextModule />)} />
-          <Route path="rekuest/*" element={protect(<RekuestNextModule />)} />
-          <Route path="fluss/*" element={protect(<ReaktionModule />)} />
-          <Route path="kabinet/*" element={protect(<KabinetModule />)} />
-          <Route path="port-next/*" element={protect(<PortNextModule />)} />
-          <Route path="omero-ark/*" element={protect(<OmeroArkModule />)} />
-          <Route path="lok/*" element={protect(<LokNextModule />)} />
-          <Route path="settings/*" element={protect(<SettingsModule />)} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <Stash />
-      </AppLayout>
+      <TooltipProvider>
+        <AppLayout navigationBar={<PrivateNavigationBar />}>
+          <Toaster />
+          <Routes>
+            <Route path="callback" element={<Callback />} />{" "}
+            {/* This is the callback route for the herre provider, and needs to be publicalyl available. (Represents Oauth2 Callback)*/}
+            <Route index element={<Hero />} />
+            <Route path="mikro/*" element={protect(<MikroNextModule />)} />
+            <Route path="rekuest/*" element={protect(<RekuestNextModule />)} />
+            <Route path="fluss/*" element={protect(<ReaktionModule />)} />
+            <Route path="kabinet/*" element={protect(<KabinetModule />)} />
+            <Route path="port-next/*" element={protect(<PortNextModule />)} />
+            <Route path="omero-ark/*" element={protect(<OmeroArkModule />)} />
+            <Route path="lok/*" element={protect(<LokNextModule />)} />
+            <Route path="settings/*" element={protect(<SettingsModule />)} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Stash />
+        </AppLayout>
+      </TooltipProvider>
     </AppProvider>
   );
 }

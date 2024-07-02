@@ -5,6 +5,12 @@ fragment ListNode on Node {
   hash
   kind
   scope
+  templates {
+    id
+    agent {
+      id
+    }
+  }
 }
 
 fragment GraphNodeNode on Node {

@@ -15,6 +15,8 @@ import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { ArrowRightIcon, ClipboardIcon } from "@radix-ui/react-icons";
 import { BellIcon } from "lucide-react";
 import { TemplateActionButton } from "../buttons/TemplateActionButton";
+import { ListRender } from "@/components/layout/ListRender";
+import TemplateCard from "../components/cards/TemplateCard";
 
 export const sizer = (length: number, index: number): string => {
   const divider = 3;
@@ -98,18 +100,9 @@ export default asDetailQueryRoute(
             <DetailPaneDescription></DetailPaneDescription>
           </DetailPaneHeader>
         </DetailPane>
-        <ScrollArea>
-          <BentoGrid className="lg:grid-rows-3 grid-cols-3 grid-rows-4 mt-2 w-full h-[500px]">
-            {data?.agent?.templates.map((x, index) => {
-              return (
-                <TemplateBentoCard
-                  template={x}
-                  className={sizer(data?.agent.templates.length || 0, index)}
-                />
-              );
-            })}
-          </BentoGrid>
-        </ScrollArea>
+        <ListRender array={data.agent.templates}>
+          {(item) => <TemplateCard item={item} />}
+        </ListRender>
       </RekuestAgent.ModelPage>
     );
   },

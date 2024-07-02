@@ -1,0 +1,4 @@
+mutation CreateForeignTemplate($input: CreateForeignTemplateInput!) {
+  createForeignTemplate(input: $input) {
+    id
+}

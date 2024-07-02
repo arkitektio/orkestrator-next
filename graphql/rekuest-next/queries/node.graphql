@@ -47,3 +47,29 @@ query DetailNode($id: ID!) {
     ...DetailNode
   }
 }
+
+query PrimaryNodes(
+  $pagination: OffsetPaginationInput
+  $identifier: String
+  $order: NodeOrder
+) {
+  nodes(
+    order: $order
+    pagination: $pagination
+    filters: {
+      demands: [
+        {
+          kind: ARGS
+          matches: [{ at: 0, kind: STRUCTURE, identifier: $identifier }]
+        }
+      ]
+    }
+  ) {
+    id
+    name
+    templates {
+      id
+      interface
+    }
+  }
+}

@@ -23,6 +23,7 @@ fragment PostmanAssignation on Assignation {
     id
     interface
   }
+  createdAt
 }
 
 fragment DetailAssignation on Assignation {
@@ -37,6 +38,7 @@ fragment AssignationEvent on AssignationEvent {
   assignation {
     id
   }
+  progress
   reference
   createdAt
   message

@@ -2,6 +2,7 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { RekuestAssignation } from "@/linkers";
 import { MateFinder } from "@/mates/types";
 import { PostmanAssignationFragment } from "../../api/graphql";
+import Timestamp from "react-timestamp";
 interface Props {
   assignation: PostmanAssignationFragment;
   mates?: MateFinder[];
@@ -16,7 +17,9 @@ const TheCard = ({ assignation, mates }: Props) => {
             <RekuestAssignation.DetailLink object={assignation.id}>
               {assignation.node.name}
             </RekuestAssignation.DetailLink>
-            {assignation.events.at(0)?.kind}
+            <div className="text-muted-foreground font-light mt-2">
+              <Timestamp date={assignation.createdAt} relative />
+            </div>
           </CardTitle>
         </CardHeader>
       </Card>

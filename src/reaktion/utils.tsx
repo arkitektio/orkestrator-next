@@ -2,6 +2,7 @@ import {
   FlussBindsFragment as BindsFragment,
   BindsInput,
   FlussChildPortFragment as ChildPortFragment,
+  FlowFragment,
   GlobalArgInput,
   GraphNodeFragment,
   GraphNodeKind,
@@ -26,6 +27,11 @@ import {
   NodeInput,
   StreamItemFragment,
 } from "./types";
+import {
+  DefinitionInput,
+  DependencyInput,
+  NodeKind,
+} from "@/rekuest/api/graphql";
 
 export const globalArgKey = (id: string, key: string) => {
   return `${id}.${key}`;
@@ -342,4 +348,40 @@ export const streamToReactNode = (
       )}
     </div>
   );
+};
+
+export const flowToDefinition = (flow: FlowFragment): DefinitionInput => {
+  let args =
+    flow.graph?.nodes
+      ?.find((arg) => arg.__typename == "ArgNode")
+      ?.outs.at(0)
+      ?.map((p) => convertPortToInput(p)) || [];
+  let returns =
+    flow.graph?.nodes
+      ?.find((arg) => arg.__typename == "ReturnNode")
+      ?.ins.at(0)
+      ?.map((p) => convertPortToInput(p)) || [];
+
+  return {
+    kind: NodeKind.Function,
+    args: args,
+    returns: returns,
+    name: flow.title,
+    description: flow.description,
+  };
+};
+
+export const flowToDependencies = (flow: FlowFragment): DependencyInput[] => {
+  let hashes =
+    flow.graph?.nodes
+      ?.filter(
+        (node) =>
+          node.__typename == "RekuestFilterNode" ||
+          node.__typename == "RekuestMapNode",
+      )
+      .map((x) => x.hash) || [];
+
+  return hashes.map((x) => {
+    return { hash: x };
+  });
 };

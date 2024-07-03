@@ -28,6 +28,14 @@ fragment PostmanAssignation on Assignation {
 
 fragment DetailAssignation on Assignation {
   ...PostmanAssignation
+  provision {
+    template {
+      id
+      interface
+      params
+      extension
+    }
+  }
 }
 
 fragment AssignationEvent on AssignationEvent {

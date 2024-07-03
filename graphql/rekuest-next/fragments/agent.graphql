@@ -5,7 +5,10 @@ fragment Agent on Agent {
   provisions {
     ...ListProvision
   }
-  templates {
+  defaults: templates(filters: { extension: "default" }) {
+    ...ListTemplate
+  }
+  workflows: templates(filters: { extension: "reaktion" }) {
     ...ListTemplate
   }
   registry {

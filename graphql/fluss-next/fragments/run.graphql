@@ -1,0 +1,6 @@
+fragment DetailRun on Run {
+  id
+  flow {
+    id
+  }
+}

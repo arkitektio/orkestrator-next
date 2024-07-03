@@ -1,4 +1,9 @@
 mutation CreateForeignTemplate($input: CreateForeignTemplateInput!) {
   createForeignTemplate(input: $input) {
     id
+  }
+}
+
+mutation DeleteTemplate($id: ID!) {
+  deleteTemplate(input: { template: $id })
 }

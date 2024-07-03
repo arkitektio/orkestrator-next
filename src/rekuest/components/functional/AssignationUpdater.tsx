@@ -12,6 +12,7 @@ import {
 } from "../../api/graphql";
 import { RekuestAssignation } from "@/linkers";
 import { NavLink } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
 
 export const AssignationToaster = (props: { id: string }) => {
   const { data } = useAssignations();
@@ -33,7 +34,6 @@ export const AssignationToaster = (props: { id: string }) => {
 export const AssignationUpdater = (props: {}) => {
   const { settings } = useSettings();
   const { client } = useRekuest();
-
   useEffect(() => {
     if (client) {
       console.log("Subscribing to Postman Assignation");

@@ -119,7 +119,7 @@ fragment FlussPortEffect on Effect {
   ...FlussMessageEffect
 }
 
-fragment AssignWidget on AssignWidget {
+fragment FlussAssignWidget on AssignWidget {
   __typename
   kind
   ...FlussStringAssignWidget

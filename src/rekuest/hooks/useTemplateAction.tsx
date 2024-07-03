@@ -12,7 +12,7 @@ import {
   useCancelMutation,
   useTemplateQuery,
 } from "../api/graphql";
-import { withRekuest } from "@jhnnsrs/rekuest";
+import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { useCallback } from "react";
 
 export type ActionReserveVariables = Omit<

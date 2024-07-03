@@ -2,32 +2,35 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
 import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
 import { Button } from "@/components/ui/button";
+import { DialogFooter } from "@/components/ui/dialog";
+import { Form } from "@/components/ui/form";
 import {
   DetailPane,
   DetailPaneDescription,
   DetailPaneHeader,
   DetailPaneTitle,
 } from "@/components/ui/pane";
+import { ArgsContainer } from "@/components/widgets/ArgsContainer";
+import { RekuestAssignation } from "@/linkers";
+import { useFlowQuery } from "@/reaktion/api/graphql";
+import { ShowFlow } from "@/reaktion/show/ShowFlow";
 import {
-  DetailNodeFragment,
   WatchTemplateDocument,
   WatchTemplateSubscription,
   WatchTemplateSubscriptionVariables,
   useTemplateQuery,
 } from "@/rekuest/api/graphql";
+import { withFluss } from "@jhnnsrs/fluss-next";
+import { NodeDescription } from "@jhnnsrs/rekuest";
 import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { ClipboardIcon } from "@radix-ui/react-icons";
-import DependencyCard from "../components/cards/DependencyCard";
-import { DependencyGraphFlow } from "../components/dependencyGraph/DependencyGraph";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import DependencyCard from "../components/cards/DependencyCard";
 import { usePortForm } from "../hooks/usePortForm";
-import { ActionAssignVariables } from "../hooks/useNode";
-import { Form } from "@/components/ui/form";
-import { ArgsContainer } from "@/components/widgets/ArgsContainer";
-import { DialogFooter } from "@/components/ui/dialog";
-import { useWidgetRegistry } from "../widgets/WidgetsContext";
 import { useTemplateAction } from "../hooks/useTemplateAction";
-import { NodeDescription } from "@jhnnsrs/rekuest";
+import { useWidgetRegistry } from "../widgets/WidgetsContext";
+import { toast } from "sonner";
 
 export const DoForm = (props: { id: string }) => {
   const { assign, latestAssignation, cancel, template } = useTemplateAction({
@@ -38,6 +41,8 @@ export const DoForm = (props: { id: string }) => {
     ports: template?.node.args || [],
   });
 
+  const navigate = useNavigate();
+
   const onSubmit = (data: any) => {
     console.log("Submitting");
     console.log(data);
@@ -45,7 +50,15 @@ export const DoForm = (props: { id: string }) => {
       template: props.id,
       args: data,
       hooks: [],
-    });
+    }).then(
+      (result) => {
+        console.log("Result", result);
+        navigate(RekuestAssignation.linkBuilder(result.id));
+      },
+      (error) => {
+        toast.error(error.message);
+      },
+    );
   };
 
   const { registry } = useWidgetRegistry();
@@ -75,6 +88,16 @@ export const DoForm = (props: { id: string }) => {
       </Form>
     </>
   );
+};
+
+export const TemplateFlow = (props: { id: string }) => {
+  const { data } = withFluss(useFlowQuery)({
+    variables: {
+      id: props.id,
+    },
+  });
+
+  return <>{data?.flow && <ShowFlow flow={data?.flow} />}</>;
 };
 
 export default asDetailQueryRoute(
@@ -112,6 +135,12 @@ export default asDetailQueryRoute(
             >
               {data?.template?.interface}
             </DetailPaneTitle>
+
+            <div className="w-full h-[500px]">
+              {data?.template?.extension === "reaktion" && (
+                <TemplateFlow id={data.template.params["flow"]} />
+              )}
+            </div>
             <DetailPaneDescription>
               <DoForm id={data.template.id} />
             </DetailPaneDescription>

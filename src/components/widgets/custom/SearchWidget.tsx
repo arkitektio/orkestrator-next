@@ -10,6 +10,7 @@ import { useFormContext } from "react-hook-form";
 export const SearchWidget = (
   props: InputWidgetProps<SearchAssignWidgetFragment>,
 ) => {
+  console.log("SearchWidget", props);
   const form = useFormContext();
   const { registry } = useWidgetRegistry();
 
@@ -25,7 +26,7 @@ export const SearchWidget = (
 
   const search = useCallback(
     async (searching: SearchOptions) => {
-      console.log("searching", searching);
+      console.log("searching", searching, theward, wardKey, query);
       if (!theward.search) throw new Error("Ward does not support search");
       let options = await theward.search({
         query: query,

@@ -1,0 +1,5 @@
+query RunForAssignation($id: ID!) {
+  runForAssignation(id: $id) {
+    ...DetailRun
+  }
+}

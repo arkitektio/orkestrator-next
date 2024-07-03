@@ -34,6 +34,7 @@ import {
 } from "@jhnnsrs/rekuest-next";
 import { BrowserRouter } from "react-router-dom";
 import { AppConfiguration } from "./AppConfiguration";
+import { RekuestNextWard } from "@/rekuest/RekuestNextWard";
 
 const displayRegistry = {
   "@mikro-next/image": ImageDisplay,
@@ -68,6 +69,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                                     <AssignationUpdater />
                                     <ReservationUpdater />
                                     {/* We register the Shadn powered widgets to the widget registry. */}
+                                    <RekuestNextWard />
                                     <ShadnWigets />
                                   </RekuestGuard>
                                   <MikroNextGuard fallback={<></>}>

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -8,8 +9,13 @@ import {
 import { RekuestTemplate } from "@/linkers";
 import { useReserveMate } from "@/mates/reserve/useReserveMate";
 import { MateFinder } from "@/mates/types";
-import { ListTemplateFragment } from "@/rekuest/api/graphql";
+import {
+  ListTemplateFragment,
+  useDeleteTemplateMutation,
+} from "@/rekuest/api/graphql";
 import { useUsage } from "@/rekuest/hooks/useNode";
+import { withRekuest } from "@jhnnsrs/rekuest-next";
+import { template } from "lodash";
 
 interface Props {
   item: ListTemplateFragment;
@@ -18,6 +24,11 @@ interface Props {
 
 const TheCard = ({ item, mates }: Props) => {
   const reserveMate = useReserveMate();
+  const [deleteTemplate, _] = withRekuest(useDeleteTemplateMutation)({
+    variables: {
+      id: item.id,
+    },
+  });
 
   const [isUsed, toggle] = useUsage({ template: item.id });
 
@@ -34,12 +45,17 @@ const TheCard = ({ item, mates }: Props) => {
             </CardTitle>
             <CardDescription></CardDescription>
           </div>
-          <CardTitle>
-            <Button onClick={() => toggle()} variant={"ghost"}>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-row gap-2">
+            <Button onClick={() => toggle()} variant={"outline"}>
               {isUsed ? "Stop Using" : "Use"}
             </Button>
-          </CardTitle>
-        </CardHeader>
+            <Button onClick={() => deleteTemplate()} variant={"outline"}>
+              Del
+            </Button>
+          </div>
+        </CardContent>
       </Card>
     </RekuestTemplate.Smart>
   );

@@ -1,11 +1,13 @@
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { InStream } from "@/reaktion/base/Instream";
 import { NodeShowLayout } from "@/reaktion/base/NodeShow";
-import { ReturnNodeProps } from "@/reaktion/types";
+import { portToLabel } from "@/rekuest/widgets/utils";
 import React, { useState } from "react";
-import { Handle, Position } from "reactflow";
+import { ReturnNodeProps } from "../../../types";
 
 export const ReturnTrackNodeWidget: React.FC<ReturnNodeProps> = ({
-  data: { ins, outs },
+  data: { ins },
   id,
   selected,
 }) => {
@@ -14,24 +16,29 @@ export const ReturnTrackNodeWidget: React.FC<ReturnNodeProps> = ({
 
   return (
     <>
-      <NodeShowLayout color="red" id={id} selected={selected}>
-        <CardHeader className="p-4">
+      <NodeShowLayout
+        className={cn(
+          "border-blue-400/40 shadow-blue-400/10 dark:border-blue-300 dark:shadow-blue/20 shadow-xl",
+        )}
+        id={id}
+        selected={selected}
+      >
+        <CardHeader className="p-4 group">
           <CardTitle onDoubleClick={() => setIsSmall(!isSmall)}>
-            Inputs{" "}
+            Outputs{" "}
           </CardTitle>
           <CardDescription>
-            {ins[0]?.map((o) => o?.identifier).join(" | ")}
+            {ins
+              .at(0)
+              ?.map((o) => portToLabel(o))
+              .join(" | ")}
           </CardDescription>
         </CardHeader>
+
+        {ins.map((s, index) => (
+          <InStream stream={s} id={index} length={ins.length} />
+        ))}
       </NodeShowLayout>
-      {outs.map((s, index) => (
-        <Handle
-          type="target"
-          position={Position.Left}
-          id={"arg_" + index}
-          style={{ background: "#555" }}
-        />
-      ))}
     </>
   );
 };

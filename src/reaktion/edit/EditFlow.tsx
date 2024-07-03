@@ -105,6 +105,7 @@ import { RekuestFilterWidget } from "./nodes/RekuestFilterWidget";
 import { RekuestMapWidget } from "./nodes/RekuestMapWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
+import { DeployInterfaceButton } from "./components/buttons/DeployButton";
 
 const nodeTypes: NodeTypes = {
   RekuestFilterNode: RekuestFilterWidget,
@@ -1321,7 +1322,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
             {state.remainingErrors.length == 0 && (
               <div className="absolute bottom-0 right-0  mr-3 mb-5 z-50 flex flex-row gap-2">
                 <Button onClick={() => save()}> Save </Button>
-                <Button onClick={() => save()}> Deploy </Button>
+                {flow.id && <DeployInterfaceButton flow={flow} />}
               </div>
             )}
 

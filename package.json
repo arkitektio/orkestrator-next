@@ -31,7 +31,6 @@
     "@jhnnsrs/mikro-next": "^0.0.2",
     "@jhnnsrs/omero-ark": "^0.0.1",
     "@jhnnsrs/port-next": "^0.0.1",
-    "@jhnnsrs/rekuest": "^0.0.15",
     "@jhnnsrs/rekuest-next": "^0.0.10",
     "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-alert-dialog": "^1.0.5",

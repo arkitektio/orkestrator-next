@@ -9,3 +9,9 @@ query Templates($filters: TemplateFilter, $pagination: OffsetPaginationInput) {
     ...DetailTemplate
   }
 }
+
+query TemplateAt($agent: ID!, $extension: String!, $interface: String!) {
+  templateAt(agent: $agent, extension: $extension, interface: $interface) {
+    ...DetailTemplate
+  }
+}

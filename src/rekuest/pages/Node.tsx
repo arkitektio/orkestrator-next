@@ -32,6 +32,8 @@ import { useHashAction } from "../hooks/useHashActions";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 import { useNodeAction } from "../hooks/useNodeAction";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
+import { toast } from "sonner";
+import { useToast } from "@/components/ui/use-toast";
 
 export const ReserveForm = (props: { node: string }) => {
   const { reserve } = usePostman();
@@ -68,13 +70,21 @@ export const DoNodeForm = (props: { id: string }) => {
   });
 
   const onSubmit = (data: any) => {
-    console.log("Submitting");
+    console.log("Submiftting");
     console.log(data);
     assign({
       node: props.id,
       args: data,
       hooks: [],
-    });
+    }).then(
+      (v) => {
+        console.log("Result", v);
+      },
+      (error) => {
+        console.log("Error", error);
+        toast.error(error.message);
+      },
+    );
   };
 
   const { registry } = useWidgetRegistry();

@@ -8,6 +8,7 @@ import {
   DetailPaneTitle,
 } from "@/components/ui/pane";
 import {
+  DetailAssignationFragment,
   useCancelMutation,
   useDetailAssignationQuery,
   useInterruptMutation,
@@ -16,6 +17,35 @@ import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { ClipboardIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AssignationTimeline } from "../components/AssignationTimeline";
+import { withFluss } from "@jhnnsrs/fluss-next";
+import {
+  useFlowQuery,
+  useRunForAssignationQuery,
+} from "@/reaktion/api/graphql";
+import { ShowFlow } from "@/reaktion/show/ShowFlow";
+
+export const AssignationFlow = (props: {
+  id: string;
+  assignation: DetailAssignationFragment;
+}) => {
+  const { data } = withFluss(useFlowQuery)({
+    variables: {
+      id: props.id,
+    },
+  });
+
+  const { data: rundata } = withFluss(useRunForAssignationQuery)({
+    variables: {
+      id: props.assignation.id,
+    },
+  });
+
+  return (
+    <>
+      {data?.flow && <ShowFlow flow={data?.flow} />} {JSON.stringify(rundata)}
+    </>
+  );
+};
 
 export default asDetailQueryRoute(
   withRekuest(useDetailAssignationQuery),
@@ -44,7 +74,15 @@ export default asDetailQueryRoute(
             </DetailPaneTitle>
             <DetailPaneDescription></DetailPaneDescription>
           </DetailPaneHeader>
-          <AssignationTimeline assignation={data.assignation} />
+          <div className="w-full h-[500px] overflow-y-scroll">
+            {data?.assignation?.provision?.template?.extension ===
+              "reaktion" && (
+              <AssignationFlow
+                id={data?.assignation?.provision.template?.params["flow"]}
+                assignation={data.assignation}
+              />
+            )}
+          </div>
         </DetailPane>
         <DetailPane className="mt-2">
           <DetailPaneHeader>Assign</DetailPaneHeader>

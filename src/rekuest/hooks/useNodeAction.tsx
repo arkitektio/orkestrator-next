@@ -9,8 +9,9 @@ import {
   useAssignNodeQuery,
   useAssignationsQuery,
   useCancelMutation,
+  useDetailNodeQuery,
 } from "../api/graphql";
-import { withRekuest } from "@jhnnsrs/rekuest";
+import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { useCallback } from "react";
 
 export type ActionReserveVariables = Omit<
@@ -31,7 +32,7 @@ export type useActionReturn<T> = {
 };
 
 export type useActionOptions<T> = {
-  id?: string;
+  id: string;
 };
 
 export const useNodeAction = <T extends any>(
@@ -39,11 +40,13 @@ export const useNodeAction = <T extends any>(
 ): useActionReturn<T> => {
   const { settings } = useSettings();
 
-  const { data } = withRekuest(useAssignNodeQuery)({
+  const { data } = withRekuest(useDetailNodeQuery)({
     variables: {
-      ...options,
+      id: options.id,
     },
   });
+
+  console.log("Assign node", data?.node);
 
   const { data: assignations_data } = withRekuest(useAssignationsQuery)({
     variables: {

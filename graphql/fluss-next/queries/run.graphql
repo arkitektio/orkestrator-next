@@ -1,5 +1,23 @@
+query Snapshots {
+  snapshots {
+    ...ListSnapshot
+  }
+}
+
+query DetailSnapshot($id: ID!) {
+  snapshot(id: $id) {
+    ...Snapshot
+  }
+}
+
 query RunForAssignation($id: ID!) {
   runForAssignation(id: $id) {
     ...DetailRun
+  }
+}
+
+query EventsBetween($id: ID!, $min: Int, $max: Int) {
+  eventsBetween(run: $id, min: $min, max: $max) {
+    ...RunEvent
   }
 }

@@ -1,0 +1,6 @@
+mutation CreateRoom {
+  createRoom(input: { title: "Room 1" }) {
+    id
+    title
+  }
+}

@@ -29,7 +29,6 @@ export const ReturnsContainer = ({
 
         return (
           <>
-            {port.key}
             <Widget
               key={index}
               value={values[port.key]}
@@ -40,7 +39,6 @@ export const ReturnsContainer = ({
           </>
         );
       })}
-      {JSON.stringify(values)}
     </div>
   );
 };

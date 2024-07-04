@@ -7,42 +7,27 @@ import {
   DetailPaneHeader,
   DetailPaneTitle,
 } from "@/components/ui/pane";
+import { useRunForAssignationQuery } from "@/reaktion/api/graphql";
+import { TrackFlow } from "@/reaktion/track/TrackFlow";
 import {
   DetailAssignationFragment,
   useCancelMutation,
   useDetailAssignationQuery,
   useInterruptMutation,
 } from "@/rekuest/api/graphql";
+import { withFluss } from "@jhnnsrs/fluss-next";
 import { withRekuest } from "@jhnnsrs/rekuest-next";
+import { error } from "console";
 import { ClipboardIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { AssignationTimeline } from "../components/AssignationTimeline";
-import { withFluss } from "@jhnnsrs/fluss-next";
-import {
-  useFlowQuery,
-  useRunForAssignationQuery,
-} from "@/reaktion/api/graphql";
-import { ShowFlow } from "@/reaktion/show/ShowFlow";
 
 export const AssignationFlow = (props: {
   id: string;
   assignation: DetailAssignationFragment;
 }) => {
-  const { data } = withFluss(useFlowQuery)({
-    variables: {
-      id: props.id,
-    },
-  });
-
-  const { data: rundata } = withFluss(useRunForAssignationQuery)({
-    variables: {
-      id: props.assignation.id,
-    },
-  });
-
   return (
     <>
-      {data?.flow && <ShowFlow flow={data?.flow} />} {JSON.stringify(rundata)}
+      <TrackFlow assignation={props.assignation} />
     </>
   );
 };

@@ -100,10 +100,10 @@ export default asDetailQueryRoute(
             <DetailPaneDescription></DetailPaneDescription>
           </DetailPaneHeader>
         </DetailPane>
-        <ListRender array={data.agent.defaults}>
+        <ListRender array={data.agent.defaults} title="Functions">
           {(item) => <TemplateCard item={item} />}
         </ListRender>
-        <ListRender array={data.agent.workflows}>
+        <ListRender array={data.agent.workflows} title="Workflows">
           {(item) => <TemplateCard item={item} />}
         </ListRender>
       </RekuestAgent.ModelPage>

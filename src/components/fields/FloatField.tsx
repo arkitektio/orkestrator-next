@@ -29,7 +29,7 @@ export const FloatField = (props: FieldProps & { placeholder?: string }) => {
               }
               {...field}
               onChange={(e) => {
-                field.onChange(parseFloat(e.target.value));
+                field.onChange(e);
               }}
               type="number"
             />

@@ -3,6 +3,9 @@ import {
   ModelPageLayoutProps,
 } from "@/components/layout/ModelPageLayout";
 import { Komments } from "@/lok-next/components/komments/Komments";
+import { usePrimaryNodesQuery } from "@/rekuest/api/graphql";
+import { ObjectButton, ObjectButtonProps } from "@/rekuest/buttons/ObjectButton";
+import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { NavLink } from "react-router-dom";
 import { SmartModel } from "./SmartModel";
 import {
@@ -77,6 +80,23 @@ const buildModelPage = (model: Identifier) => {
   };
 };
 
+const buildUseNodesQuery = (model: Identifier) => {
+  return withRekuest(usePrimaryNodesQuery)({
+    variables: {
+      identifier: model,
+    },
+  });
+  
+};
+
+export type SmartObjectButtonProps = Omit<ObjectButtonProps, "identifier">;
+
+const buildObjectButton = (model: Identifier) => {
+  return ({ ...props }: SmartObjectButtonProps) => {
+    return <ObjectButton identifier={model} object={props.object} />;
+  };
+}
+
 export const buildSmart = (model: Identifier, to: string) => {
   return {
     DetailLink: buildModelLink(to),
@@ -87,6 +107,8 @@ export const buildSmart = (model: Identifier, to: string) => {
     Komments: buildKomments(model),
     identifier: model,
     ModelPage: buildModelPage(model),
+    useNodes: () => buildUseNodesQuery(model),
+    ObjectButton: buildObjectButton(model)
   };
 };
 

@@ -40,15 +40,15 @@ export const RekuestProvision = buildSmart(
 );
 export const RekuestAgent = buildSmart("@rekuest-next/agent", "rekuest/agents");
 
-export const MikroImage = buildSmart("@mikronext/image", "mikro/images");
+export const MikroImage = buildSmart("@mikro/image", "mikro/images");
 export const MikroRenderTree = buildSmart(
   "@mikronext/rendertree",
   "mikro/rendertrees",
 );
 
-export const MikroMetric = buildSmart("@mikronext/metric", "mikro/metrics");
+export const MikroMetric = buildSmart("@mikro/metric", "mikro/metrics");
 
-export const MikroDataset = buildSmart("@mikronext/dataset", "mikro/datasets");
+export const MikroDataset = buildSmart("@mikro/dataset", "mikro/datasets");
 
 export const OmeroArkProject = buildSmart(
   "@omero-ark/project",
@@ -68,56 +68,56 @@ export const OmeroArkDataset = buildSmart(
 
 export const OmeroArkImage = buildSmart("@omero-ark/image", "omero-ark/images");
 
-export const MikroHistory = buildSmart("@mikronext/history", "mikro/history");
+export const MikroHistory = buildSmart("@mikro/history", "mikro/history");
 
 export const MikroAffineTransformationView = buildSmart(
-  "@mikronext/affinetransformationview",
+  "@mikro/affinetransformationview",
   "mikro/affinetransformationviews",
 );
 
 export const MikroLabelView = buildSmart(
-  "@mikronext/labelview",
+  "@mikro/labelview",
   "mikro/labelviews",
 );
 
 export const MikroMultiPositionView = buildSmart(
-  "@mikronext/multipositionview",
+  "@mikro/multipositionview",
   "mikro/multipositionviews",
 );
 
 export const MikroAcquisitionView = buildSmart(
-  "@mikronext/acquisitionview",
+  "@mikro/acquisitionview",
   "mikro/acquisitionviews",
 );
 
 export const MikroFluorophore = buildSmart(
-  "@mikronext/fluorophore",
+  "@mikro/fluorophore",
   "mikro/fluorophores",
 );
 
-export const MikroFile = buildSmart("@mikronext/file", "mikro/files");
+export const MikroFile = buildSmart("@mikro/file", "mikro/files");
 
-export const MikroStage = buildSmart("@mikronext/stage", "mikro/stages");
+export const MikroStage = buildSmart("@mikro/stage", "mikro/stages");
 
 export const MikroChannelView = buildSmart(
-  "@mikronext/channelview",
+  "@mikro/channelview",
   "mikro/channelviews",
 );
 
 export const MikroRGBView = buildSmart("@mikronext/rgbview", "mikro/rgbviews");
 
 export const MikroRGBContext = buildSmart(
-  "@mikronext/rgbcontext",
+  "@mikro/rgbcontext",
   "mikro/rgbcontexts",
 );
 
 export const MikroOpticsView = buildSmart(
-  "@mikronext/opticsview",
+  "@mikro/opticsview",
   "mikro/opticsviews",
 );
 
 export const MikroInstrument = buildSmart(
-  "@mikronext/instrument",
+  "@mikro/instrument",
   "mikro/instruments",
 );
 
@@ -154,4 +154,10 @@ export const KabinetPod = buildSmart(
 export const KabinetRelease = buildSmart(
   "@kabinet/release",
   "kabinet/releases",
+);
+
+
+export const FlussRun = buildSmart(
+  "@fluss/run",
+  "fluss/runs",
 );

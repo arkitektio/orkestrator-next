@@ -1,12 +1,12 @@
-import { Button } from "@/components/ui/button";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { KabinetPod } from "@/linkers";
+import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 import { MateFinder } from "../../../mates/types";
 import { ListPodFragment } from "../../api/graphql";
 
@@ -15,7 +15,12 @@ interface Props {
   mates?: MateFinder[];
 }
 
+
+
 const TheCard = ({ item, mates }: Props) => {
+
+
+
   return (
     <KabinetPod.Smart object={item?.id} mates={mates}>
       <Card className="group">
@@ -35,13 +40,8 @@ const TheCard = ({ item, mates }: Props) => {
           
         </CardHeader>
         <CardContent  className="flex flex-row gap-2">
-            <Button variant="outline" size="sm">
-              Stop
-            </Button>
-            <Button variant="outline" size="sm">
-              Start
-            </Button>
-          </CardContent>
+          <ObjectButton object={item.id} identifier="@kabinet/pod"/>
+        </CardContent>
       </Card>
     </KabinetPod.Smart>
   );

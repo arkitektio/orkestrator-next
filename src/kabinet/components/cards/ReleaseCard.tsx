@@ -103,13 +103,13 @@ const InstallDialog = (props: { item: ListReleaseFragment }) => {
   });
 
   return (
-    <>
+    <div className="flex flex-row gap-2">
       {data?.nodes
         .at(0)
         ?.templates.map((t) => (
           <AssignButton id={t.id} release={props.item.id} />
         ))}
-    </>
+    </div>
   );
 };
 

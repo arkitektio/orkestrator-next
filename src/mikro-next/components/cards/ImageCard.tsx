@@ -41,6 +41,7 @@ const ImageCard = ({ image, mates }: ImageCardProps) => {
         >
           {image?.name}
         </MikroImage.DetailLink>
+        <MikroImage.ObjectButton object={image.id} className="ml-3 my-auto"/>
       </div>
     </MikroImage.Smart>
   );

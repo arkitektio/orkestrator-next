@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { BentoGrid } from "@/components/bento/bento-grid";
+import { ListRender } from "@/components/layout/ListRender";
 import { Button } from "@/components/ui/button";
 import {
   DetailPane,
@@ -7,7 +7,6 @@ import {
   DetailPaneHeader,
   DetailPaneTitle,
 } from "@/components/ui/pane";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { RekuestAgent } from "@/linkers";
 import { ListTemplateFragment, useAgentQuery } from "@/rekuest/api/graphql";
@@ -15,7 +14,6 @@ import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { ArrowRightIcon, ClipboardIcon } from "@radix-ui/react-icons";
 import { BellIcon } from "lucide-react";
 import { TemplateActionButton } from "../buttons/TemplateActionButton";
-import { ListRender } from "@/components/layout/ListRender";
 import TemplateCard from "../components/cards/TemplateCard";
 
 export const sizer = (length: number, index: number): string => {
@@ -83,7 +81,7 @@ export default asDetailQueryRoute(
   ({ data, refetch }) => {
     return (
       <RekuestAgent.ModelPage
-        title={data.agent.instanceId}
+        title={data.agent.name}
         object={data.agent.id}
       >
         <DetailPane>
@@ -95,8 +93,15 @@ export default asDetailQueryRoute(
                 </Button>
               }
             >
-              {data?.agent?.instanceId}
+               <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+                    {data?.agent.name}
+                  </h1>
+                  
+              
             </DetailPaneTitle>
+            <p className="mt-3 text-xl text-muted-foreground">
+           Is running as {data?.agent?.instanceId}
+                  </p>
             <DetailPaneDescription></DetailPaneDescription>
           </DetailPaneHeader>
         </DetailPane>

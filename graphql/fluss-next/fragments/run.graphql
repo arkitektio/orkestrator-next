@@ -52,3 +52,14 @@ fragment DetailRun on Run {
     ...Flow
   }
 }
+
+fragment ListRun on Run {
+  id
+  assignation
+  createdAt
+  flow {
+    workspace {
+      title
+    }
+  }
+}

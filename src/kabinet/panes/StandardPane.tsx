@@ -11,7 +11,7 @@ import {
 import React from "react";
 import { FaDocker } from "react-icons/fa";
 import { useGlobalSearchQuery, useListBackendsQuery } from "../api/graphql";
-import DefinitionCard from "../components/cards/ReleaseCard";
+import DefinitionCard from "../components/cards/DefinitionCard";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
 
 
@@ -57,9 +57,9 @@ export const NavigationPane = (props: { }) => {
               </div>
   
               <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
-                Manage
+                Manage All
               </div>
-              <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-4">
+              <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-5">
               <DroppableNavLink
                 to="/kabinet/pods"
                 className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
@@ -68,8 +68,8 @@ export const NavigationPane = (props: { }) => {
                 Pods
               </DroppableNavLink>
               </div>
-              <div className="text-muted-foreground text-xs font-semibold uppercase mb-3">
-                Backends
+              <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
+                Engines
               </div>
               <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
               {data?.backends.map((backend, index) => <KabinetBackend.DetailLink object={backend.id} key={index} className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"

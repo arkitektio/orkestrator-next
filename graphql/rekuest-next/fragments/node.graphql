@@ -42,3 +42,20 @@ fragment DetailNode on Node {
     ...DependencyGraph
   }
 }
+
+
+fragment PrimaryNode on Node {
+
+  id
+    name
+    templates {
+      id
+      interface
+    }
+    args {
+      key
+      identifier
+      kind
+    }
+    description
+}

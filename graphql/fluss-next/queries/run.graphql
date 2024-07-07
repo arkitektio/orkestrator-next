@@ -21,3 +21,9 @@ query EventsBetween($id: ID!, $min: Int, $max: Int) {
     ...RunEvent
   }
 }
+
+query ListRuns {
+  runs {
+    ...ListRun
+  }
+}

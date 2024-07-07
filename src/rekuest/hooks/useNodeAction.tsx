@@ -1,4 +1,6 @@
 import { useSettings } from "@/providers/settings/SettingsContext";
+import { withRekuest } from "@jhnnsrs/rekuest-next";
+import { useCallback } from "react";
 import {
   AssignInput,
   AssignNodeQuery,
@@ -6,13 +8,9 @@ import {
   PostmanAssignationFragment,
   ReserveMutationVariables,
   useAssignMutation,
-  useAssignNodeQuery,
   useAssignationsQuery,
-  useCancelMutation,
-  useDetailNodeQuery,
+  useCancelMutation
 } from "../api/graphql";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
-import { useCallback } from "react";
 
 export type ActionReserveVariables = Omit<
   ReserveMutationVariables,
@@ -40,13 +38,6 @@ export const useNodeAction = <T extends any>(
 ): useActionReturn<T> => {
   const { settings } = useSettings();
 
-  const { data } = withRekuest(useDetailNodeQuery)({
-    variables: {
-      id: options.id,
-    },
-  });
-
-  console.log("Assign node", data?.node);
 
   const { data: assignations_data } = withRekuest(useAssignationsQuery)({
     variables: {
@@ -58,7 +49,7 @@ export const useNodeAction = <T extends any>(
   const [cancelAssign] = withRekuest(useCancelMutation)({});
 
   let assignations = assignations_data?.assignations.filter(
-    (x) => x.node.hash == data?.node.hash,
+    (x) => x.node.id == options.id,
   );
 
   const latestAssignation = assignations?.at(0);
@@ -135,6 +126,5 @@ export const useNodeAction = <T extends any>(
     latestAssignation,
     cancel,
     assignations,
-    node: data?.node,
   };
 };

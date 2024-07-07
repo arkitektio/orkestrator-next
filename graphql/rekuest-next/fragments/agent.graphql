@@ -19,6 +19,7 @@ fragment Agent on Agent {
       id
     }
   }
+  name
   active
   connected
   lastSeen
@@ -30,6 +31,7 @@ fragment ListAgent on Agent {
   status
   active
   connected
+  name
   lastSeen
   registry {
     app {

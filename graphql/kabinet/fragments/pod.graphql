@@ -1,9 +1,61 @@
 fragment ListPod on Pod {
   id
   podId
+  backend {
+    user {
+      id
+    }
+    client {
+      id
+    }
+    name
+  }
+  deployment {
+    id 
+    flavour {
+      release {
+        id
+        version 
+        app {
+          identifier
+        }
+      }
+    }
+
+
+  }
+  status
 }
 
 fragment Pod on Pod {
   id
   podId
+  backend {
+    user {
+      id
+    }
+    client {
+      id
+    }
+    name
+  }
+  status
+  latestLogDump {
+    logs
+    createdAt
+  }
+  deployment {
+    id 
+    flavour {
+      release {
+        id
+        version 
+        app {
+          identifier
+        }
+      }
+    }
+
+
+  }
 }

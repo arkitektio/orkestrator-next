@@ -139,6 +139,18 @@ export const KabinetDefinition = buildSmart(
   "kabinet/definitions",
 );
 
+export const KabinetBackend = buildSmart(
+  "@kabinet/backend",
+  "kabinet/backends",
+);
+
+
+export const KabinetPod = buildSmart(
+  "@kabinet/pod",
+  "kabinet/pods",
+);
+
+
 export const KabinetRelease = buildSmart(
   "@kabinet/release",
   "kabinet/releases",

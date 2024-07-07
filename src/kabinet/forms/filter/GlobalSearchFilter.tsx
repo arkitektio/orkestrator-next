@@ -29,9 +29,15 @@ const Filter: React.FC<FilterProps> = ({ onFilterChanged, defaultValue }) => {
     mode: "onChange",
   });
 
+  const onSubmit = (values: GlobalSearchQueryVariables) => {
+    onFilterChanged(values);
+    console.log(values);
+  }
+
+
   return (
     <Form {...form}>
-      <AutoSubmitter onSubmit={onFilterChanged} debounce={200} />
+      <AutoSubmitter onSubmit={onSubmit} debounce={200} />
       <div className="w-full flex flex-row">
         <Popover>
           <FormField

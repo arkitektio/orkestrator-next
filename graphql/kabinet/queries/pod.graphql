@@ -3,3 +3,10 @@ query ListPod {
     ...ListPod
   }
 }
+
+
+query GetPod($id: ID!) {
+  pod(id: $id) {
+    ...Pod
+  }
+}

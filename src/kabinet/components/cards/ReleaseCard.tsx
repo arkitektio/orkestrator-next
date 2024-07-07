@@ -5,31 +5,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { KabinetDefinition, KabinetRelease } from "@/linkers";
-import { NodeDescription, usePostman } from "@jhnnsrs/rekuest";
-import { MateFinder } from "../../../mates/types";
-import { ListReleaseFragment, PortKind } from "../../api/graphql";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
+import { KabinetRelease } from "@/linkers";
 import {
   AssignationEventKind,
-  DemandKind,
-  useAllNodesQuery,
   useAssignMutation,
-  usePrimaryNodesQuery,
-  useTemplatesQuery,
+  usePrimaryNodesQuery
 } from "@/rekuest/api/graphql";
 import { useAssignations } from "@/rekuest/hooks/useAssignations";
-import { Arkitekt } from "@/arkitekt";
 import { useInstancId } from "@/rekuest/hooks/useInstanceId";
-import { BorderBeam } from "@/components/ui/border-beam";
-import RadialProgressButton from "@/components/ui/progress-button";
-import ProgressButton from "@/components/ui/progress-button";
+import { NodeDescription } from "@jhnnsrs/rekuest";
+import { withRekuest } from "@jhnnsrs/rekuest-next";
+import { MateFinder } from "../../../mates/types";
+import { ListReleaseFragment, PortKind } from "../../api/graphql";
 
 interface Props {
   item: ListReleaseFragment;

@@ -1,0 +1,24 @@
+fragment ListBackend on Backend {
+  id
+  user {
+    id
+  }
+  client {
+    id
+  }
+
+  name
+  kind
+}
+
+fragment Backend on Backend {
+  id
+  user {
+    id
+  }
+  client {
+    id
+  }
+  name
+  kind
+}

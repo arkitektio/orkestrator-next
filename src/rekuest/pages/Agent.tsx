@@ -1,17 +1,11 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
 import { Button } from "@/components/ui/button";
-import {
-  DetailPane,
-  DetailPaneDescription,
-  DetailPaneHeader,
-  DetailPaneTitle,
-} from "@/components/ui/pane";
 import { cn } from "@/lib/utils";
 import { RekuestAgent } from "@/linkers";
 import { ListTemplateFragment, useAgentQuery } from "@/rekuest/api/graphql";
 import { withRekuest } from "@jhnnsrs/rekuest-next";
-import { ArrowRightIcon, ClipboardIcon } from "@radix-ui/react-icons";
+import { ArrowRightIcon } from "@radix-ui/react-icons";
 import { BellIcon } from "lucide-react";
 import { TemplateActionButton } from "../buttons/TemplateActionButton";
 import TemplateCard from "../components/cards/TemplateCard";
@@ -84,30 +78,16 @@ export default asDetailQueryRoute(
         title={data.agent.name}
         object={data.agent.id}
       >
-        <DetailPane>
-          <DetailPaneHeader>
-            <DetailPaneTitle
-              actions={
-                <Button variant={"outline"} title="Copy to clipboard">
-                  <ClipboardIcon />
-                </Button>
-              }
-            >
                <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
                     {data?.agent.name}
-                  </h1>
+                </h1>
                   
-              
-            </DetailPaneTitle>
             <p className="mt-3 text-xl text-muted-foreground">
            Is running as {data?.agent?.instanceId}
                   </p>
                   <p className="mt-3 text-xl text-muted-foreground">
            {data?.agent?.extensions.map((ext) => ext).join(", ")}
                   </p>
-            <DetailPaneDescription></DetailPaneDescription>
-          </DetailPaneHeader>
-        </DetailPane>
         <ListRender array={data.agent.defaults} title="Registered Functions">
           {(item) => <TemplateCard item={item} />}
         </ListRender>

@@ -27,3 +27,9 @@ query ListRuns {
     ...ListRun
   }
 }
+
+query GetRun($id: ID!) {
+  run(id: $id) {
+    ...DetailRun
+  }
+}

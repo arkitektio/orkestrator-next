@@ -1,9 +1,3 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-} from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sheet,
@@ -15,25 +9,22 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import {
-  DetailRunFragment,
   GraphInput,
-  useRunForAssignationQuery,
+  useRunForAssignationQuery
 } from "@/reaktion/api/graphql";
+import { withFluss } from "@jhnnsrs/fluss-next";
 import {
-  DoubleArrowLeftIcon,
-  DoubleArrowRightIcon,
   EyeOpenIcon,
   LetterCaseToggleIcon,
-  QuestionMarkIcon,
+  QuestionMarkIcon
 } from "@radix-ui/react-icons";
 import { AnimatePresence } from "framer-motion";
 import React, { useRef, useState } from "react";
 import { Controls } from "reactflow";
-import useUndoable from "use-undoable";
 import { Graph } from "../base/Graph";
 import { EdgeTypes, FlowNode, NodeTypes } from "../types";
 import { edges_to_flowedges, nodes_to_flownodes } from "../utils";
-import { ValidationResult } from "../validation/types";
+import { RangeTracker } from "./components/tracker/RangeTracker";
 import { TrackRiverContext } from "./context";
 import { LabeledShowEdge } from "./edges/LabeledShowEdge";
 import { ReactiveTrackNodeWidget } from "./nodes/ReactiveWidget";
@@ -42,9 +33,6 @@ import { RekuestMapWidget } from "./nodes/RekuestMapWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
 import { RunState } from "./types";
-import { DetailAssignationFragment } from "@/rekuest/api/graphql";
-import { withFluss } from "@jhnnsrs/fluss-next";
-import { RangeTracker } from "./components/tracker/RangeTracker";
 
 const nodeTypes: NodeTypes = {
   RekuestFilterNode: RekuestFilterWidget,
@@ -60,7 +48,7 @@ const edgeTypes: EdgeTypes = {
 };
 
 export type Props = {
-  assignation: DetailAssignationFragment;
+  assignation: {id: string};
   onSave?: (graph: GraphInput) => void;
 };
 

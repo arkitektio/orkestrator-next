@@ -4,6 +4,7 @@ import React from "react";
 import { Route, Routes } from "react-router";
 import Flow from "./pages/Flow";
 import Home from "./pages/Home";
+import Run from "./pages/Run";
 import Workspace from "./pages/Workspace";
 import SearchPane from "./panes/SearchPane";
 
@@ -31,6 +32,7 @@ const Module: React.FC<Props> = (props) => {
           <Route index element={<Home />} />
           <Route path="workspaces/:id" element={<Workspace />} />
           <Route path="flows/:id" element={<Flow />} />
+          <Route path="runs/:id" element={<Run />} />
         </Routes>
       </ModuleLayout>
     </FlussGuard>

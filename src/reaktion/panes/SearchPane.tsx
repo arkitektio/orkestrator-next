@@ -43,9 +43,9 @@ export const NavigationPane = (props: { }) => {
               <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-5">
               {rundata?.runs.map((run, index) => <FlussWorkspace.DetailLink object={run.id} key={index} className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
               >
-                <CubeIcon className="h-4 w-4" />
+                <CubeIcon className="h-4 w-4 my-auto" />
                 {run.flow.workspace.title}
-                <Timestamp date={run.createdAt} relative/>
+                <div className="text-muted-foreground text-xs my-auto"><Timestamp date={run.createdAt} relative/></div>
                 </FlussWorkspace.DetailLink>)}
               </div>
               <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">

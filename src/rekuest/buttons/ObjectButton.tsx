@@ -1,16 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { CaretDownIcon } from "@radix-ui/react-icons";
 import React from "react";
 import { toast } from "sonner";
 import { PrimaryNodeFragment, usePrimaryNodesQuery } from "../api/graphql";
+import { useAssignProgress } from "../hooks/useAssignProgress";
 import { useNodeAction } from "../hooks/useNodeAction";
 
 
-export const AssignButton = (props: { object: string; node: PrimaryNodeFragment, children: React.ReactNode}) => {
+export const AssignButton = (props: { object: string; node: PrimaryNodeFragment, children: React.ReactNode, identifier: string}) => {
   const {assign, latestAssignation} = useNodeAction({id: props.node.id});
 
   const objectAssign = async () => {
@@ -33,17 +33,21 @@ export const AssignButton = (props: { object: string; node: PrimaryNodeFragment,
     }
   };
 
+  const progress = useAssignProgress({
+    identifier: props.identifier,
+    object: props.object,
+    node: props.node.id,
+  })
+
   return (
-    <Tooltip >
-      <TooltipTrigger asChild>
-    <Button onClick={objectAssign} variant={"outline"} size="sm" className="flex-1">
+    <Button onClick={objectAssign} variant={"outline"} size="sm" className="flex-1" style={{
+        backgroundSize: `${progress?.progress || 0}% 100%`,
+        backgroundImage: `linear-gradient(to right, #10b981 ${progress?.progress}%, #10b981 ${progress?.progress}%)`,
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "left center",
+      }} >
       {props.children}
     </Button>
-    </TooltipTrigger>
-    <TooltipContent>
-      {props.node.description}
-    </TooltipContent>
-    </Tooltip>
   );
 };
 
@@ -60,8 +64,8 @@ export const ApplicableNodes = (props: {
     })
 
 
-    return <div className="flex flex-row gap-2 w-full ">
-    {data?.nodes.map(x => <AssignButton node={x} object={props.object}>{x.name}</AssignButton>)}
+    return <div className="grid grid-cols-1 w-full gap-2 ">
+    {data?.nodes.map(x => <AssignButton node={x} object={props.object} identifier={props.identifier}>{x.name}</AssignButton>)}
     
     </div>
 
@@ -81,7 +85,8 @@ export const ObjectButton = (props: ObjectButtonProps ) => {
       <>
         <Popover>
           <PopoverTrigger asChild>{props.children || <Button size={"icon"} variant={"outline"} className="w-4 h-4"><CaretDownIcon className={cn("w-3 h-3", props.className)}/></Button>}</PopoverTrigger>
-          <PopoverContent className="text-white border-gray-800 px-1 py-1">
+          <PopoverContent className="text-white border-gray-800 px-2 py-2 items-center">
+            <div className="text-xs text-muted-foreground mx-auto mb-2">Assign to</div>
             <ApplicableNodes object={props.object} identifier={props.identifier}/>
           </PopoverContent>
         </Popover>

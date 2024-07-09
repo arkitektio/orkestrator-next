@@ -7,65 +7,22 @@ import {
 } from "@/components/ui/card";
 import { KabinetRelease } from "@/linkers";
 import {
-  AssignationEventKind,
   useAssignMutation,
   usePrimaryNodesQuery
 } from "@/rekuest/api/graphql";
-import { useAssignations } from "@/rekuest/hooks/useAssignations";
+import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
 import { useInstancId } from "@/rekuest/hooks/useInstanceId";
 import { NodeDescription } from "@jhnnsrs/rekuest";
 import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { MateFinder } from "../../../mates/types";
-import { ListReleaseFragment, PortKind } from "../../api/graphql";
+import { ListReleaseFragment } from "../../api/graphql";
 
 interface Props {
   item: ListReleaseFragment;
   mates?: MateFinder[];
 }
 
-export const useAssignProgress = (options: {
-  identifier: string;
-  object: string;
-  node?: string;
-}) => {
-  const { data } = useAssignations();
 
-  const assignations = data?.assignations.filter((a) => {
-    if (a.status == AssignationEventKind.Done) {
-      return false;
-    }
-    if (options.node) {
-      if (a.node?.id != options.node) {
-        return false;
-      }
-    }
-    let matches = false;
-    for (const port of a.node.args) {
-      if (
-        port.kind == PortKind.Structure &&
-        port.identifier == options.identifier
-      ) {
-        if (a.args[port.key] == options.object) {
-          matches = true;
-          break;
-        }
-      }
-    }
-
-    return matches;
-  });
-
-  const latestProgress = assignations
-    ?.at(0)
-    ?.events.filter(
-      (e) =>
-        e.kind == AssignationEventKind.Progress ||
-        e.kind == AssignationEventKind.Done,
-    )
-    .at(-1);
-
-  return latestProgress;
-};
 
 export const AssignButton = (props: { id: string; release: string }) => {
   const [postAssign, _] = withRekuest(useAssignMutation)();

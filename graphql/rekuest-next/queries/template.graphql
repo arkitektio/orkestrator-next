@@ -15,3 +15,10 @@ query TemplateAt($agent: ID!, $extension: String!, $interface: String!) {
     ...DetailTemplate
   }
 }
+
+
+query MyTemplateAt($instanceId: String!, $interface: String, $nodeId: ID){
+  myTemplateAt(instanceId: $instanceId, interface: $interface, nodeId: $nodeId){
+    ...DetailTemplate
+  }
+}

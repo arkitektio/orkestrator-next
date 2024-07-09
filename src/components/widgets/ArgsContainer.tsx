@@ -59,7 +59,7 @@ export const ArgsContainer = ({
     return argGroups;
   }, [ports, hash]);
 
-  let len = ports.length;
+  let len = 1;
 
   let lg_size = len < 2 ? len : 2;
   let xl_size = len < 3 ? len : 3;

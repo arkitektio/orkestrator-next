@@ -13,9 +13,9 @@ import {
   ListTemplateFragment,
   useDeleteTemplateMutation,
 } from "@/rekuest/api/graphql";
-import { useUsage } from "@/rekuest/hooks/useNode";
+import { TemplateActionButton } from "@/rekuest/buttons/TemplateActionButton";
+import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
 import { withRekuest } from "@jhnnsrs/rekuest-next";
-import { template } from "lodash";
 
 interface Props {
   item: ListTemplateFragment;
@@ -30,17 +30,26 @@ const TheCard = ({ item, mates }: Props) => {
     },
   });
 
-  const [isUsed, toggle] = useUsage({ template: item.id });
+  const progress = useAssignProgress({
+    assignedTemplate: item.id
+  });
+
 
   return (
     <RekuestTemplate.Smart object={item?.id} mates={[reserveMate]}>
-      <Card className="group">
+      <Card className="group" style={{
+        backgroundSize: `${progress?.progress || 0}% 100%`,
+        backgroundImage: `linear-gradient(to right, #10b981 ${progress?.progress}%, #10b981 ${progress?.progress}%)`,
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "left center",
+      }} >
         <CardHeader className="flex flex-row justify-between">
           <div>
+            <p className="text-xs text-gray-500">{item.interface}</p>
             <CardTitle>
               <RekuestTemplate.DetailLink object={item?.id}>
                 {" "}
-                {item.interface}
+                {item.node.name}
               </RekuestTemplate.DetailLink>
             </CardTitle>
             <CardDescription></CardDescription>
@@ -48,12 +57,11 @@ const TheCard = ({ item, mates }: Props) => {
         </CardHeader>
         <CardContent>
           <div className="flex flex-row gap-2">
-            <Button onClick={() => toggle()} variant={"outline"}>
-              {isUsed ? "Stop Using" : "Use"}
-            </Button>
-            <Button onClick={() => deleteTemplate()} variant={"outline"}>
-              Del
-            </Button>
+            <TemplateActionButton id={item.id}>
+              <Button variant="outline" size="sm">
+                Assign
+              </Button>
+            </TemplateActionButton>
           </div>
         </CardContent>
       </Card>

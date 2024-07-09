@@ -41,6 +41,10 @@ fragment DetailNode on Node {
   dependencyGraph {
     ...DependencyGraph
   }
+  testCases {
+    ...ListTestCase
+  
+  }
 }
 
 

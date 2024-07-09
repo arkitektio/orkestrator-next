@@ -102,13 +102,16 @@ export default asDetailQueryRoute(
             <p className="mt-3 text-xl text-muted-foreground">
            Is running as {data?.agent?.instanceId}
                   </p>
+                  <p className="mt-3 text-xl text-muted-foreground">
+           {data?.agent?.extensions.map((ext) => ext).join(", ")}
+                  </p>
             <DetailPaneDescription></DetailPaneDescription>
           </DetailPaneHeader>
         </DetailPane>
-        <ListRender array={data.agent.defaults} title="Functions">
+        <ListRender array={data.agent.defaults} title="Registered Functions">
           {(item) => <TemplateCard item={item} />}
         </ListRender>
-        <ListRender array={data.agent.workflows} title="Workflows">
+        <ListRender array={data.agent.workflows} title="Registered Workflows">
           {(item) => <TemplateCard item={item} />}
         </ListRender>
       </RekuestAgent.ModelPage>

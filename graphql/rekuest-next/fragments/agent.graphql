@@ -8,7 +8,7 @@ fragment Agent on Agent {
   defaults: templates(filters: { extension: "default" }) {
     ...ListTemplate
   }
-  workflows: templates(filters: { extension: "reaktion" }) {
+  workflows: templates(filters: { extension: "reaktion_next" }) {
     ...ListTemplate
   }
   registry {
@@ -19,6 +19,7 @@ fragment Agent on Agent {
       id
     }
   }
+  extensions
   name
   active
   connected

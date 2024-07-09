@@ -26,11 +26,11 @@ import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { ClipboardIcon } from "@radix-ui/react-icons";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import DependencyCard from "../components/cards/DependencyCard";
 import { usePortForm } from "../hooks/usePortForm";
 import { useTemplateAction } from "../hooks/useTemplateAction";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
-import { toast } from "sonner";
 
 export const DoForm = (props: { id: string }) => {
   const { assign, latestAssignation, cancel, template } = useTemplateAction({
@@ -137,7 +137,7 @@ export default asDetailQueryRoute(
             </DetailPaneTitle>
 
             <div className="w-full h-[500px]">
-              {data?.template?.extension === "reaktion" && (
+              {data?.template?.extension === "reaktion_next" && (
                 <TemplateFlow id={data.template.params["flow"]} />
               )}
             </div>

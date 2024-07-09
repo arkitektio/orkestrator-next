@@ -3,8 +3,8 @@ import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { DroppableNavLink } from "@/components/ui/link";
 import { RekuestAgent } from "@/linkers";
 import { withRekuest } from "@jhnnsrs/rekuest-next";
-import { CubeIcon } from "@radix-ui/react-icons";
-import { Home } from "lucide-react";
+import { CardStackIcon, CubeIcon } from "@radix-ui/react-icons";
+import { FunctionSquare, Home } from "lucide-react";
 import * as React from "react";
 import { AgentStatus, GlobalSearchQueryVariables, useAgentsQuery, useGlobalSearchQuery } from "../api/graphql";
 import NodeCard from "../components/cards/NodeCard";
@@ -44,14 +44,21 @@ export const NavigationPane = (props: { }) => {
                 <CubeIcon className="h-4 w-4" />
                 Reservations
               </DroppableNavLink>
+              <DroppableNavLink
+                to="/rekuest/nodes"
+                className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
+              >
+                <FunctionSquare className="h-4 w-4" />
+                Nodes
+              </DroppableNavLink>
               </div>
               <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
-                Apps
+                My Apps
               </div>
               <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
               {data?.agents.map((agent, index) => <RekuestAgent.DetailLink object={agent.id} key={index} className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
               >
-                <CubeIcon className="h-4 w-4" />
+                <CardStackIcon className="h-4 w-4" />
                 {agent.name}
                 <div className="w-3 h-3 rounded rounded-full my-auto animate-pulse" style={{backgroundColor: agent.status == AgentStatus.Active ? "#00FF00": "#FF0000"}}/>
               </RekuestAgent.DetailLink>)}

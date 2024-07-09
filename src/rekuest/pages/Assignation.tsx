@@ -7,7 +7,6 @@ import {
   DetailPaneHeader,
   DetailPaneTitle,
 } from "@/components/ui/pane";
-import { useRunForAssignationQuery } from "@/reaktion/api/graphql";
 import { TrackFlow } from "@/reaktion/track/TrackFlow";
 import {
   DetailAssignationFragment,
@@ -15,9 +14,7 @@ import {
   useDetailAssignationQuery,
   useInterruptMutation,
 } from "@/rekuest/api/graphql";
-import { withFluss } from "@jhnnsrs/fluss-next";
 import { withRekuest } from "@jhnnsrs/rekuest-next";
-import { error } from "console";
 import { ClipboardIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -61,7 +58,7 @@ export default asDetailQueryRoute(
           </DetailPaneHeader>
           <div className="w-full h-[500px] overflow-y-scroll">
             {data?.assignation?.provision?.template?.extension ===
-              "reaktion" && (
+              "reaktion_next" && (
               <AssignationFlow
                 id={data?.assignation?.provision.template?.params["flow"]}
                 assignation={data.assignation}

@@ -19,6 +19,12 @@ fragment PostmanAssignation on Assignation {
       name
     }
   }
+  provision {
+    id 
+    template {
+      id
+    }
+  }
   template {
     id
     interface

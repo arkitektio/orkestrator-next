@@ -5,6 +5,7 @@ import {
 import { Komments } from "@/lok-next/components/komments/Komments";
 import { usePrimaryNodesQuery } from "@/rekuest/api/graphql";
 import { ObjectButton, ObjectButtonProps } from "@/rekuest/buttons/ObjectButton";
+import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
 import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { NavLink } from "react-router-dom";
 import { SmartModel } from "./SmartModel";
@@ -89,6 +90,15 @@ const buildUseNodesQuery = (model: Identifier) => {
   
 };
 
+const buildUseProgress = (model: Identifier, object: string) => {
+  return useAssignProgress({
+    identifier: model,
+    object: object,
+  });
+  
+};
+
+
 export type SmartObjectButtonProps = Omit<ObjectButtonProps, "identifier">;
 
 const buildObjectButton = (model: Identifier) => {
@@ -108,7 +118,8 @@ export const buildSmart = (model: Identifier, to: string) => {
     identifier: model,
     ModelPage: buildModelPage(model),
     useNodes: () => buildUseNodesQuery(model),
-    ObjectButton: buildObjectButton(model)
+    ObjectButton: buildObjectButton(model),
+    useProgress: ({object}: {object: string}) => buildUseProgress(model, object),
   };
 };
 

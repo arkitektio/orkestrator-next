@@ -6,7 +6,7 @@ export type IRepresentationScreenProps = {};
 
 const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
   return (
-    <PageLayout actions={<></>}>
+    <PageLayout title="Images" actions={<></>}>
       <ImageList pagination={{ limit: 30 }} />
     </PageLayout>
   );

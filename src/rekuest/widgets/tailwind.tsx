@@ -18,6 +18,7 @@ export type ReturnContainerProps = {
   ports: Port[];
   values: { [key: string]: any | null | undefined };
   options?: PortOptions | undefined;
+  showKeys?: boolean;
 };
 
 export type OutputContainer = (props: ReturnContainerProps) => JSX.Element;
@@ -26,6 +27,7 @@ export const ReturnsContainer: OutputContainer = ({
   ports,
   values,
   registry,
+  showKeys = false,
 }) => {
   let len = ports.length;
 
@@ -39,20 +41,20 @@ export const ReturnsContainer: OutputContainer = ({
     <div
       className={`grid @lg:grid-cols-${lg_size} @xl-grid-cols-${xl_size} @2xl:grid-cols-${xxl_size}  @3xl:grid-cols-${xxxl_size}   @5xl:grid-cols-${xxxxl_size} gap-4`}
     >
-      {values.map((r: any, index) => {
-        let port = ports[index];
+      {Object.keys(values).map((key, index) => {
+        let port = ports.find(p => p.key === key)
         if (!port) return <>No Port</>;
 
         const Widget = registry.getReturnWidgetForPort(port);
 
         return (
-          <div className="@container flex flex-col rounded rounded-md bg-gray-900 p-2 border-gray-800 border border-1">
-            <label
+          <div className="@container flex flex-col rounded rounded-md border-1">
+            {showKeys && <label
               className="flex-initial font-light text-slate-200 mb-2"
               htmlFor={port.key}
             >
               {port.label || port.key}
-            </label>
+            </label>}
             <div className="flex-grow bg-gray-800 rounded rounded-md max-h-[300px]">
               <EffectWrapper
                 effects={port.effects || []}
@@ -63,7 +65,7 @@ export const ReturnsContainer: OutputContainer = ({
                   key={index}
                   port={port}
                   widget={port.returnWidget}
-                  value={r}
+                  value={values[key]}
                 />
               </EffectWrapper>
             </div>

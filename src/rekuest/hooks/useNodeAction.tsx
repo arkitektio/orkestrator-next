@@ -3,7 +3,6 @@ import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { useCallback } from "react";
 import {
   AssignInput,
-  AssignNodeQuery,
   AssignationEventKind,
   PostmanAssignationFragment,
   ReserveMutationVariables,
@@ -19,7 +18,6 @@ export type ActionReserveVariables = Omit<
 export type ActionAssignVariables = Omit<AssignInput, "instanceId">;
 
 export type useActionReturn<T> = {
-  node?: AssignNodeQuery["node"];
   assign: (
     variables: ActionAssignVariables,
   ) => Promise<PostmanAssignationFragment>;
@@ -52,7 +50,7 @@ export const useNodeAction = <T extends any>(
     (x) => x.node.id == options.id,
   );
 
-  const latestAssignation = assignations?.at(0);
+  const latestAssignation = assignations?.at(-1);
 
   const assign = useCallback(
     async (vars: ActionAssignVariables) => {

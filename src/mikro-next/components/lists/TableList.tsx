@@ -1,11 +1,11 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { MikroDataset } from "@/linkers";
+import { MikroTable } from "@/linkers";
 import {
   DatasetFilter,
   OffsetPaginationInput,
-  useGetDatasetsQuery,
+  useGetTablesQuery,
 } from "../../api/graphql";
-import DatasetCard from "../cards/DatasetCard";
+import TableCard from "../cards/TableCard";
 
 export type Props = {
   filters?: DatasetFilter;
@@ -13,21 +13,19 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useGetDatasetsQuery({
+  const { data, error, subscribeToMore, refetch } = useGetTablesQuery({
     variables: { filters, pagination },
   });
 
   return (
     <ListRender
-      array={data?.datasets}
+      array={data?.tables}
       title={
-        <MikroDataset.ListLink className="flex-0">
-          Datasets
-        </MikroDataset.ListLink>
+        <MikroTable.ListLink className="flex-0">Datasets</MikroTable.ListLink>
       }
       refetch={refetch}
     >
-      {(ex, index) => <DatasetCard key={index} dataset={ex} mates={[]} />}
+      {(ex, index) => <TableCard key={index} item={ex} mates={[]} />}
     </ListRender>
   );
 };

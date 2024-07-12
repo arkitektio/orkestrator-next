@@ -8,3 +8,7 @@ fragment Table on Table {
     ...ParquetStore
   }
 }
+
+fragment ListTable on Table {
+  ...Table
+}

@@ -62,7 +62,7 @@ export const PageLayout = ({
     <ResizablePanelGroup autoSaveId="page" direction="horizontal">
       <ResizablePanel className="" defaultSize={80}>
         <div className="h-full w-full flex flex-col  relative">
-          <div className="h-16 flex-row flex justify-between f-exinitial border-b dark:border-gray-700 px-2 py-2">
+          <div className="h-16 flex-row flex justify-between flex-initial border-b dark:border-gray-700 px-2 py-2 items-center">
             <div className="flex flex flex-col">
               <h1 className="text-2xl font-semibold text-foreground">
                 {title}
@@ -71,7 +71,9 @@ export const PageLayout = ({
                 <BreadCrumbs />
               </div>
             </div>
-            <div className="flex-shrink text-foreground ">
+            <div className="flex-shrink text-foreground flex flex-row items-center">
+              {pageActions}
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant={"ghost"}>

@@ -1,22 +1,6 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
 import { GraphInput, useRunForAssignationQuery } from "@/reaktion/api/graphql";
-import {
-  EyeOpenIcon,
-  LetterCaseToggleIcon,
-  QuestionMarkIcon,
-} from "@radix-ui/react-icons";
 import { AnimatePresence } from "framer-motion";
 import React, { useRef, useState } from "react";
-import { Controls } from "reactflow";
 import { Graph } from "../base/Graph";
 import { EdgeTypes, FlowNode, NodeTypes } from "../types";
 import { edges_to_flowedges, nodes_to_flownodes } from "../utils";
@@ -87,15 +71,12 @@ export const TrackFlow: React.FC<Props> = ({ assignation, onSave }) => {
         setLive,
       }}
     >
-      <div ref={reactFlowWrapper} className="h-full w-full" data-disableselect>
-        <div className="flex flex-grow h-full w-full relative">
-          <AnimatePresence>
-            <div className="absolute  top-0 left-0  w-full ml-3 mt-5 z-50">
-              {data?.runForAssignation && (
-                <RangeTracker run={data?.runForAssignation} />
-              )}
-            </div>
-          </AnimatePresence>
+      <div
+        ref={reactFlowWrapper}
+        className="h-full w-full flex flex-col"
+        data-disableselect
+      >
+        <div className="flex flex-grow h-full w-full">
           <Graph
             nodes={state.nodes}
             edges={state.edges}
@@ -104,48 +85,15 @@ export const TrackFlow: React.FC<Props> = ({ assignation, onSave }) => {
             edgeTypes={edgeTypes}
             fitView
             attributionPosition="bottom-right"
-          >
-            <Controls className="flex flex-row bg-white gap-2 rounded rounded-md overflow-hidden px-2">
-              <button
-                onClick={() => setShowEdgeLabels(!showEdgeLabels)}
-                className={cn(
-                  " hover:bg-primary",
-                  showEdgeLabels ? "text-muted" : "text-gray-400",
-                )}
-              >
-                <LetterCaseToggleIcon />{" "}
-              </button>
-              <button
-                onClick={() => setShowNodeErrors(!showNodeErrors)}
-                className={cn(
-                  " hover:bg-primary",
-                  showNodeErrors ? "text-muted" : "text-gray-400",
-                )}
-              >
-                <QuestionMarkIcon />{" "}
-              </button>
-              <Sheet>
-                <SheetTrigger
-                  className={cn(
-                    " hover:bg-primary",
-                    "text-muted disabled:text-gray-200",
-                  )}
-                >
-                  <EyeOpenIcon />{" "}
-                </SheetTrigger>
-                <SheetContent>
-                  <SheetHeader>
-                    <SheetTitle>Debug Screen</SheetTitle>
-                    <SheetDescription></SheetDescription>
-                  </SheetHeader>
-                  <ScrollArea className="h-full dark:text-white">
-                    <pre>{JSON.stringify(state, null, 2)}</pre>
-                  </ScrollArea>
-                </SheetContent>
-              </Sheet>
-            </Controls>
-          </Graph>
+          ></Graph>
         </div>
+        <AnimatePresence>
+          <div className=" w-full flex-initial ">
+            {data?.runForAssignation && (
+              <RangeTracker run={data?.runForAssignation} />
+            )}
+          </div>
+        </AnimatePresence>
       </div>
     </TrackRiverContext.Provider>
   );

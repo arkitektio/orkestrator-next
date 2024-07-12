@@ -1,4 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { PageLayout } from "@/components/layout/PageLayout";
 import { useFlowQuery, useGetRunQuery } from "@/reaktion/api/graphql";
 import { EditFlow } from "@/reaktion/edit/EditFlow";
 import { TrackFlow } from "../track/TrackFlow";
@@ -17,8 +18,8 @@ export const FlowDetail = (props: { id: string }) => {
 
 export default asDetailQueryRoute(useGetRunQuery, ({ data, refetch }) => {
   return (
-    <>
+    <PageLayout title={data.run.assignation}>
       <TrackFlow assignation={{ id: data.run.assignation }} />
-    </>
+    </PageLayout>
   );
 });

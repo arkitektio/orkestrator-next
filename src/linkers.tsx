@@ -98,6 +98,7 @@ export const MikroFluorophore = buildSmart(
 export const MikroFile = buildSmart("@mikro/file", "mikro/files");
 
 export const MikroStage = buildSmart("@mikro/stage", "mikro/stages");
+export const MikroTable = buildSmart("@mikro/table", "mikro/tables");
 
 export const MikroChannelView = buildSmart(
   "@mikro/channelview",
@@ -144,20 +145,11 @@ export const KabinetBackend = buildSmart(
   "kabinet/backends",
 );
 
-
-export const KabinetPod = buildSmart(
-  "@kabinet/pod",
-  "kabinet/pods",
-);
-
+export const KabinetPod = buildSmart("@kabinet/pod", "kabinet/pods");
 
 export const KabinetRelease = buildSmart(
   "@kabinet/release",
   "kabinet/releases",
 );
 
-
-export const FlussRun = buildSmart(
-  "@fluss/run",
-  "fluss/runs",
-);
+export const FlussRun = buildSmart("@fluss/run", "fluss/runs");

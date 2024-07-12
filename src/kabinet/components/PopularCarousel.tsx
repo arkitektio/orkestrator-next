@@ -14,8 +14,7 @@ export const Test = () => {
 };
 
 export const PopularCarousel = ({}) => {
-  const { data, error, subscribeToMore, refetch } = useListDefinitionsQuery;
-  ({
+  const { data, error, subscribeToMore, refetch } = useListDefinitionsQuery({
     variables: {},
   });
 

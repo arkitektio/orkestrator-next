@@ -13,8 +13,7 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useGetImagesQuery;
-  ({
+  const { data, error, subscribeToMore, refetch } = useGetImagesQuery({
     variables: { filters, pagination },
   });
 

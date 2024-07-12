@@ -3,3 +3,10 @@ query GetTable($id: ID!) {
     ...Table
   }
 }
+
+
+query GetTables($filters: TableFilter, $pagination: OffsetPaginationInput) {
+  tables(filters: $filters, pagination: $pagination) {
+    ...ListTable
+  }
+}

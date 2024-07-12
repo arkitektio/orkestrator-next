@@ -1981,6 +1981,7 @@ export type QueryMysnapshotsArgs = {
 
 
 export type QueryMytablesArgs = {
+  filters?: InputMaybe<TableFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2041,6 +2042,7 @@ export type QueryTableArgs = {
 
 
 export type QueryTablesArgs = {
+  filters?: InputMaybe<TableFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2440,6 +2442,13 @@ export type TableOriginsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+export type TableFilter = {
+  AND?: InputMaybe<TableFilter>;
+  OR?: InputMaybe<TableFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
 export type TimepointView = View & {
   __typename?: 'TimepointView';
   /** The accessor */
@@ -2779,6 +2788,8 @@ export type ParquetStoreFragment = { __typename?: 'ParquetStore', id: string, ke
 export type BigFileStoreFragment = { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string };
 
 export type TableFragment = { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string } };
+
+export type ListTableFragment = { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string } };
 
 export type VideoFragment = { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } };
 
@@ -3455,6 +3466,14 @@ export type GetTableQueryVariables = Exact<{
 
 export type GetTableQuery = { __typename?: 'Query', table: { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string } } };
 
+export type GetTablesQueryVariables = Exact<{
+  filters?: InputMaybe<TableFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+}>;
+
+
+export type GetTablesQuery = { __typename?: 'Query', tables: Array<{ __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string } }> };
+
 export const CameraFragmentDoc = gql`
     fragment Camera on Camera {
   sensorSizeX
@@ -4067,6 +4086,11 @@ export const TableFragmentDoc = gql`
   }
 }
     ${ParquetStoreFragmentDoc}`;
+export const ListTableFragmentDoc = gql`
+    fragment ListTable on Table {
+  ...Table
+}
+    ${TableFragmentDoc}`;
 export const ContinousScanViewFragmentDoc = gql`
     fragment ContinousScanView on ContinousScanView {
   ...View
@@ -6879,3 +6903,39 @@ export function useGetTableLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHoo
 export type GetTableQueryHookResult = ReturnType<typeof useGetTableQuery>;
 export type GetTableLazyQueryHookResult = ReturnType<typeof useGetTableLazyQuery>;
 export type GetTableQueryResult = Apollo.QueryResult<GetTableQuery, GetTableQueryVariables>;
+export const GetTablesDocument = gql`
+    query GetTables($filters: TableFilter, $pagination: OffsetPaginationInput) {
+  tables(filters: $filters, pagination: $pagination) {
+    ...ListTable
+  }
+}
+    ${ListTableFragmentDoc}`;
+
+/**
+ * __useGetTablesQuery__
+ *
+ * To run a query within a React component, call `useGetTablesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetTablesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetTablesQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *      pagination: // value for 'pagination'
+ *   },
+ * });
+ */
+export function useGetTablesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetTablesQuery, GetTablesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetTablesQuery, GetTablesQueryVariables>(GetTablesDocument, options);
+      }
+export function useGetTablesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetTablesQuery, GetTablesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetTablesQuery, GetTablesQueryVariables>(GetTablesDocument, options);
+        }
+export type GetTablesQueryHookResult = ReturnType<typeof useGetTablesQuery>;
+export type GetTablesLazyQueryHookResult = ReturnType<typeof useGetTablesLazyQuery>;
+export type GetTablesQueryResult = Apollo.QueryResult<GetTablesQuery, GetTablesQueryVariables>;

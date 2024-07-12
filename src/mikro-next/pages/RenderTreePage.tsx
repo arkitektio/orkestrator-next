@@ -2,7 +2,6 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MikroRenderTree } from "@/linkers";
-import { withMikroNext } from "@jhnnsrs/mikro-next";
 import { AspectRatio } from "@radix-ui/react-aspect-ratio";
 import {
   ContextNodeFragment,
@@ -81,27 +80,24 @@ export const TreeRenderer = ({ tree }: { tree: TreeFragment }) => {
   );
 };
 
-export default asDetailQueryRoute(
-  withMikroNext(useRenderTreeQuery),
-  ({ data, refetch }) => {
-    const [pinImage] = withMikroNext(usePinImageMutation)();
+export default asDetailQueryRoute(useRenderTreeQuery, ({ data, refetch }) => {
+  const [pinImage] = usePinImageMutation();
 
-    return (
-      <MikroRenderTree.ModelPage
-        title={data?.renderTree?.name}
-        object={data?.renderTree?.id}
-        sidebars={
-          <MultiSidebar
-            map={{
-              Comments: (
-                <MikroRenderTree.Komments object={data?.renderTree?.id} />
-              ),
-            }}
-          />
-        }
-      >
-        <TreeRenderer tree={data?.renderTree?.tree} />
-      </MikroRenderTree.ModelPage>
-    );
-  },
-);
+  return (
+    <MikroRenderTree.ModelPage
+      title={data?.renderTree?.name}
+      object={data?.renderTree?.id}
+      sidebars={
+        <MultiSidebar
+          map={{
+            Comments: (
+              <MikroRenderTree.Komments object={data?.renderTree?.id} />
+            ),
+          }}
+        />
+      }
+    >
+      <TreeRenderer tree={data?.renderTree?.tree} />
+    </MikroRenderTree.ModelPage>
+  );
+});

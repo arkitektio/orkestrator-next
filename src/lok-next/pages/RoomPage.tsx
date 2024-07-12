@@ -1,5 +1,4 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { Arkitekt } from "@/arkitekt";
 import { ChatLayout } from "@/components/chat/chat-layout";
 import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
@@ -16,7 +15,7 @@ import {
 export type IRepresentationScreenProps = {};
 
 export default asDetailQueryRoute(
-  Arkitekt.withLok(useDetailRoomQuery),
+  useDetailRoomQuery,
   ({ data, subscribeToMore }) => {
     useEffect(() => {
       console.log("RUning subscription");

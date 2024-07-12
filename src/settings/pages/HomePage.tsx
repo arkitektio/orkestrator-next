@@ -1,11 +1,11 @@
+import { Arkitekt } from "@/arkitekt";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { useFakts } from "@jhnnsrs/fakts";
 import React from "react";
 
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
-  const { fakts } = useFakts();
+  const { fakts } = Arkitekt.useFakts();
 
   return (
     <PageLayout actions={<></>} title="Home">

@@ -1,4 +1,4 @@
-import { ReturnWidgetProps } from "@jhnnsrs/rekuest-next";
+import { ReturnWidgetProps } from "@/rekuest/widgets/types";
 import React from "react";
 
 const BoolReturnWidget: React.FC<ReturnWidgetProps> = ({

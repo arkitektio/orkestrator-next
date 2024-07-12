@@ -13,6 +13,8 @@ generates:
     config:
       withHooks: true
       reactApolloVersion: 3
+      apolloReactHooksImportFrom: "@/lib/mikro/funcs"
+
   src/mikro-next/graphql.schema.json:
     plugins:
       - "introspection"

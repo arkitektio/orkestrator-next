@@ -55,7 +55,7 @@ export const ListRender = <T extends any>({
                       step={limit}
                     />
                     <Refetcher
-                      onClick={() =>
+                      refetch={() =>
                         refetch({
                           pagination: { limit: limit, offset: offset },
                         })

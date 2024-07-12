@@ -13,6 +13,11 @@ import {
   ReactiveTemplateFragment,
   StreamItemInput,
 } from "@/reaktion/api/graphql";
+import {
+  DefinitionInput,
+  DependencyInput,
+  NodeKind,
+} from "@/rekuest/api/graphql";
 import { convertPortToInput } from "@/rekuest/utils";
 import { portToDefaults } from "@/rekuest/widgets/utils";
 import { v4 as uuidv4 } from "uuid";
@@ -27,11 +32,6 @@ import {
   NodeInput,
   StreamItemFragment,
 } from "./types";
-import {
-  DefinitionInput,
-  DependencyInput,
-  NodeKind,
-} from "@/rekuest/api/graphql";
 
 export const globalArgKey = (id: string, key: string) => {
   return `${id}.${key}`;
@@ -223,7 +223,7 @@ export const listPortToSingle = (
   key: string,
 ): PortFragment => {
   if (port.kind != PortKind.List) throw new Error("Port is not a list");
-  let listChild = port.children.at(0);
+  let listChild = port.children?.at(0);
   if (!listChild) throw new Error("Port has no children");
 
   const { __typename, children, ...rest } = listChild;

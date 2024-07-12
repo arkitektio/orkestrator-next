@@ -1,10 +1,9 @@
 import { useGetImageQuery } from "@/mikro-next/api/graphql";
 import { RGBD } from "@/mikro-next/components/render/TwoDThree";
 import { ReturnWidgetProps } from "@/rekuest/widgets/types";
-import { withMikroNext } from "@jhnnsrs/mikro-next";
 
 export const ImageWidget = (props: ReturnWidgetProps) => {
-  const { data } = withMikroNext(useGetImageQuery)({
+  const { data } = useGetImageQuery({
     variables: {
       id: props.value,
     },

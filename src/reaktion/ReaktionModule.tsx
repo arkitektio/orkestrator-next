@@ -1,5 +1,5 @@
+import { Guard } from "@/arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
-import { FlussGuard } from "@jhnnsrs/fluss-next";
 import React from "react";
 import { Route, Routes } from "react-router";
 import Flow from "./pages/Flow";
@@ -20,7 +20,7 @@ interface Props {}
 
 const Module: React.FC<Props> = (props) => {
   return (
-    <FlussGuard fallback={<>Loading</>}>
+    <Guard.Fluss fallback={<>Loading</>}>
       <ModuleLayout
         pane={
           <>
@@ -35,7 +35,7 @@ const Module: React.FC<Props> = (props) => {
           <Route path="runs/:id" element={<Run />} />
         </Routes>
       </ModuleLayout>
-    </FlussGuard>
+    </Guard.Fluss>
   );
 };
 

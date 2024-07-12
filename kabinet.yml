@@ -13,6 +13,7 @@ generates:
     config:
       withHooks: true
       reactApolloVersion: 3
+      apolloReactHooksImportFrom: "@/lib/kabinet/hooks"
   src/kabinet/graphql.schema.json:
     plugins:
       - "introspection"

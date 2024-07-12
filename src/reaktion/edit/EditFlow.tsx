@@ -1,3 +1,4 @@
+import { useService } from "@/arkitekt/hooks";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -37,7 +38,6 @@ import {
   ConstantNodeQuery,
   PortScope,
 } from "@/rekuest/api/graphql";
-import { useRekuest } from "@jhnnsrs/rekuest-next";
 import {
   DoubleArrowLeftIcon,
   DoubleArrowRightIcon,
@@ -98,6 +98,7 @@ import {
 import { ValidationResult } from "../validation/types";
 import { validateState } from "../validation/validate";
 import { EdgeContextual } from "./components/EdgeContextual";
+import { DeployInterfaceButton } from "./components/buttons/DeployButton";
 import { EditRiverContext } from "./context";
 import { LabeledShowEdge } from "./edges/LabeledShowEdge";
 import { ReactiveTrackNodeWidget } from "./nodes/ReactiveWidget";
@@ -105,7 +106,6 @@ import { RekuestFilterWidget } from "./nodes/RekuestFilterWidget";
 import { RekuestMapWidget } from "./nodes/RekuestMapWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
-import { DeployInterfaceButton } from "./components/buttons/DeployButton";
 
 const nodeTypes: NodeTypes = {
   RekuestFilterNode: RekuestFilterWidget,
@@ -151,7 +151,7 @@ const hasBoundPort = (node: FlowNode<BaseGraphNodeFragment>): boolean => {
 export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
   console.log("THE FLOW", flow);
 
-  const { client: arkitektapi } = useRekuest();
+  const arkitektapi = useService("rekuest");
   const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
   const [showEdgeLabels, setShowEdgeLabels] = useState(false);
   const [showNodeErrors, setShowNodeErrors] = useState(true);

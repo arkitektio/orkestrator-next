@@ -1,4 +1,5 @@
 import { useSettings } from "@/providers/settings/SettingsContext";
+import { useCallback } from "react";
 import {
   AssignInput,
   AssignNodeQuery,
@@ -10,8 +11,6 @@ import {
   useAssignationsQuery,
   useCancelMutation,
 } from "../api/graphql";
-import { withRekuest } from "@jhnnsrs/rekuest";
-import { useCallback } from "react";
 
 export type ActionReserveVariables = Omit<
   ReserveMutationVariables,
@@ -39,20 +38,20 @@ export const useHashAction = <T extends any>(
 ): useActionReturn<T> => {
   const { settings } = useSettings();
 
-  const { data } = withRekuest(useAssignNodeQuery)({
+  const { data } = useAssignNodeQuery({
     variables: {
       ...options,
     },
   });
 
-  const { data: assignations_data } = withRekuest(useAssignationsQuery)({
+  const { data: assignations_data } = useAssignationsQuery({
     variables: {
       instanceId: settings.instanceId,
     },
   });
 
-  const [postAssign] = withRekuest(useAssignMutation)({});
-  const [cancelAssign] = withRekuest(useCancelMutation)({});
+  const [postAssign] = useAssignMutation({});
+  const [cancelAssign] = useCancelMutation({});
 
   let assignations = assignations_data?.assignations.filter(
     (x) => x.node.hash == data?.node.hash,

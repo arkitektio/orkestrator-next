@@ -13,14 +13,13 @@ import {
   useCreateForeignTemplateMutation,
   useTemplateAtQuery,
 } from "@/rekuest/api/graphql";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { useNavigate } from "react-router-dom";
 
 export const DeployButton = (props: {
   flow: FlowFragment;
   agent: ListAgentFragment;
 }) => {
-  const { data } = withRekuest(useTemplateAtQuery)({
+  const { data } = useTemplateAtQuery({
     variables: {
       agent: props.agent.id,
       extension: "reaktion_next",
@@ -28,7 +27,7 @@ export const DeployButton = (props: {
     },
   });
 
-  const [deploy] = withRekuest(useCreateForeignTemplateMutation)({
+  const [deploy] = useCreateForeignTemplateMutation({
     variables: {
       input: {
         agent: props.agent.id,
@@ -69,7 +68,7 @@ export const DeployButton = (props: {
 };
 
 export const DeployInterfaceButton = (props: { flow: FlowFragment }) => {
-  const { data } = withRekuest(useAgentsQuery)({
+  const { data } = useAgentsQuery({
     variables: {
       filters: {
         extensions: ["reaktion_next"],

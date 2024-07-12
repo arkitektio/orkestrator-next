@@ -1,11 +1,14 @@
+import { Arkitekt } from "@/arkitekt";
+import { useService } from "@/arkitekt/hooks";
 import {
   PresignedPostCredentialsFragment,
+  RequestFileUploadPresignedDocument,
+  RequestFileUploadPresignedMutation,
+  RequestFileUploadPresignedMutationVariables,
   RequestMediaUploadDocument,
   RequestMediaUploadMutation,
   RequestMediaUploadMutationVariables,
 } from "@/mikro-next/api/graphql";
-import { useFakts } from "@jhnnsrs/fakts";
-import { useMikroNext } from "@jhnnsrs/mikro-next";
 import { useCallback } from "react";
 
 export const uploadFetch = (
@@ -38,8 +41,8 @@ export const uploadFetch = (
       });
     }
 
-    if (xhr.upload && options?.onProgress) {
-      xhr.upload.onprogress = options.onProgress;
+    if (options?.onProgress) {
+      xhr.upload.addEventListener("progress", options.onProgress);
     }
 
     if (options?.signal) {
@@ -62,6 +65,7 @@ export type ExtraRequest = RequestInit & {
 
 const customFetch = (uri: any, options: ExtraRequest) => {
   if (options.onProgress) {
+    console.log("uploadFetch", uri, options);
     return uploadFetch(uri, options);
   }
   return fetch(uri, options);
@@ -103,12 +107,13 @@ const uploadToStore = async (
   });
 
   await x;
+  console.log("done", x, z.store);
   return `${z.store}`;
 };
 
-export const useUpload = () => {
-  const { client } = useMikroNext();
-  const { fakts } = useFakts();
+export const useMediaUpload = () => {
+  const client = useService("mikro");
+  const fakts = Arkitekt.useFakts();
 
   const upload = useCallback(
     async (file: File) => {
@@ -137,7 +142,53 @@ export const useUpload = () => {
 
       let z = data.data.requestMediaUpload;
 
-      return await uploadToStore(file, endPointUrl, z);
+      return await uploadToStore(file, endPointUrl, z, {});
+    },
+    [client, fakts],
+  );
+
+  return upload;
+};
+
+export type FileUploadOptions = {
+  signal?: AbortSignal;
+  onProgress?: (ev: ProgressEvent) => void;
+};
+
+export const useBigFileUpload = () => {
+  const client = useService("mikro");
+  const fakts = Arkitekt.useFakts();
+
+  const upload = useCallback(
+    async (file: File, options: FileUploadOptions) => {
+      if (!client) {
+        throw Error("No client configured");
+      }
+      const endPointUrl = fakts?.datalayer?.endpoint_url;
+      if (!endPointUrl) {
+        throw Error("No client configured");
+      }
+
+      console.log("uploading", file, options);
+
+      let data = await client.mutate<
+        RequestFileUploadPresignedMutation,
+        RequestFileUploadPresignedMutationVariables
+      >({
+        mutation: RequestFileUploadPresignedDocument,
+        variables: {
+          key: file.name,
+          datalayer: "default",
+        },
+      });
+
+      if (!data.data?.requestFileUploadPresigned) {
+        throw Error("Failed to request upload");
+      }
+
+      let z = data.data.requestFileUploadPresigned;
+
+      return await uploadToStore(file, endPointUrl, z, options);
     },
     [client, fakts],
   );

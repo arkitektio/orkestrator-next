@@ -14,6 +14,7 @@ generates:
       withHooks: true
       reactApolloVersion: 3
       arrayInputCoercion: false
+      apolloReactHooksImportFrom: "@/lib/rekuest/hooks"
 
   src/rekuest/api/graphql.schema.json:
     plugins:

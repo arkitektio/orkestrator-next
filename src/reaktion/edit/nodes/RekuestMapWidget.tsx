@@ -8,21 +8,23 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  NodeDescription,
+  useNodeDescription,
+} from "@/lib/rekuest/NodeDescription";
 import { cn } from "@/lib/utils";
 import { Args } from "@/reaktion/base/Args";
 import { Constants } from "@/reaktion/base/Constants";
 import { InStream } from "@/reaktion/base/Instream";
 import { NodeShowLayout } from "@/reaktion/base/NodeShow";
 import { OutStream } from "@/reaktion/base/Outstream";
+import { RekuestMapNodeProps } from "@/reaktion/types";
 import { PortFragment } from "@/rekuest/api/graphql";
-import { NodeDescription } from "@jhnnsrs/rekuest";
-import { useNodeDescription } from "@jhnnsrs/rekuest-next";
 import { GearIcon } from "@radix-ui/react-icons";
 import React from "react";
-import { ArkitektNodeProps } from "../../types";
 import { useEditNodeErrors, useEditRiver } from "../context";
 
-export const RekuestMapWidget: React.FC<ArkitektNodeProps> = ({
+export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
   data: { ins, outs, constants, ...data },
   id,
   selected,

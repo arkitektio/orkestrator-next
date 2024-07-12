@@ -1,3 +1,5 @@
+import { Arkitekt } from "@/arkitekt";
+import { useService } from "@/arkitekt/hooks";
 import {
   Blending,
   ColorMap,
@@ -12,8 +14,6 @@ import { BasicIndexer } from "@/mikro-next/providers/xarray/indexing";
 import { AvailableColormap } from "@/mikro-next/providers/xarray/provider";
 import { S3Store } from "@/mikro-next/providers/xarray/store";
 import { getChunkItem } from "@/mikro-next/providers/xarray/utils";
-import { useFakts } from "@jhnnsrs/fakts";
-import { useMikroNext } from "@jhnnsrs/mikro-next";
 import { AwsClient } from "aws4fetch";
 import c from "colormap";
 import { useCallback, useEffect, useState } from "react";
@@ -227,8 +227,8 @@ export type Overwrites = {
 };
 
 export const useImageViewDownload = () => {
-  const { client } = useMikroNext();
-  const { fakts } = useFakts();
+  const client = useService("mikro");
+  const fakts = Arkitekt.useFakts();
 
   const downloadImage = useCallback(
     async (store: ZarrStoreFragment, selection: ArraySelection) => {

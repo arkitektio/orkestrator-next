@@ -7,7 +7,6 @@ import {
   DetailPaneTitle,
 } from "@/components/ui/pane";
 import { MikroImage } from "@/linkers";
-import { withMikroNext } from "@jhnnsrs/mikro-next";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import React from "react";
 import { useParams } from "react-router";
@@ -22,13 +21,13 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   const { id } = useParams<{ id: string }>();
   if (!id) return <></>;
 
-  const { data, refetch } = withMikroNext(useGetStageQuery)({
+  const { data, refetch } = useGetStageQuery({
     variables: {
       id: id,
     },
   });
 
-  const [pinStage] = withMikroNext(usePinStageMutation)();
+  const [pinStage] = usePinStageMutation();
 
   return (
     <ModelPageLayout

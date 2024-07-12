@@ -3,7 +3,7 @@ import { SwitchField } from "@/components/fields/SwitchField";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
-import { useUpload } from "@/datalayer/hooks/useUpload";
+import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import { cn } from "@/lib/utils";
 import {
   ColorMap,
@@ -18,7 +18,6 @@ import {
   AvailableColormap,
   XArrayProvider,
 } from "@/mikro-next/providers/xarray/provider";
-import { withMikroNext } from "@jhnnsrs/mikro-next";
 import React, { useEffect, useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import useMeasure from "react-use-measure";
@@ -602,10 +601,10 @@ export const TwoDRGBRenderDetail = ({
   const [imageData, setImageData] = useState<ImageBitmap | null>(null);
   const [isRendering, setIsRendering] = useState(false);
 
-  const causeUpload = useUpload();
+  const causeUpload = useMediaUpload();
 
-  const [create] = withMikroNext(useCreateRgbContextMutation)();
-  const [update] = withMikroNext(useUpdateRgbContextMutation)();
+  const [create] = useCreateRgbContextMutation();
+  const [update] = useUpdateRgbContextMutation();
 
   const createNewView = async (data: ListRgbContextFragment) => {
     if (!imageData) {

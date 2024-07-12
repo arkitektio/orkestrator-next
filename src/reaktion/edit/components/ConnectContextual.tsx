@@ -1,3 +1,4 @@
+import { useService } from "@/arkitekt/hooks";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Card } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
@@ -14,6 +15,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { NodeDescription } from "@/lib/rekuest/NodeDescription";
 import {
   FlussPortFragment,
   GraphNodeKind,
@@ -30,8 +32,6 @@ import {
   useAllNodesQuery,
   useProtocolOptionsLazyQuery,
 } from "@/rekuest/api/graphql";
-import { NodeDescription } from "@jhnnsrs/rekuest";
-import { useRekuest, withRekuest } from "@jhnnsrs/rekuest-next";
 import clsx from "clsx";
 import { ArrowDown } from "lucide-react";
 import { useEffect } from "react";
@@ -70,7 +70,7 @@ export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
     }
   }, [formState, formdata, isValidating]);
 
-  const [searchProtocol] = withRekuest(useProtocolOptionsLazyQuery)();
+  const [searchProtocol] = useProtocolOptionsLazyQuery();
 
   return (
     <Form {...form}>
@@ -263,12 +263,12 @@ export const ConnectContextual = (props: {
 }) => {
   const { addConnectContextualNode } = useEditRiver();
 
-  const { client } = useRekuest();
+  const client = useService("rekuest");
 
   const leftPorts = props.params.leftNode.data.outs[props.params.leftStream];
   const rightPorts = props.params.rightNode.data.ins[props.params.rightStream];
 
-  const { data, refetch, variables } = withRekuest(useAllNodesQuery)({
+  const { data, refetch, variables } = useAllNodesQuery({
     variables: {
       filters: {
         demands: [
@@ -318,7 +318,7 @@ export const ConnectContextual = (props: {
     });
   };
 
-  const [searchProtocol] = withRekuest(useProtocolOptionsLazyQuery)();
+  const [searchProtocol] = useProtocolOptionsLazyQuery();
 
   const onNodeClick = (id: string) => {
     client &&

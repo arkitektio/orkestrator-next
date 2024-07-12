@@ -6,13 +6,12 @@ import {
   DetailPaneTitle,
 } from "@/components/ui/pane";
 import { MikroDataset } from "@/linkers";
-import { withLokNext } from "@jhnnsrs/lok-next";
 import { useUserQuery } from "../api/graphql";
 
 export type IRepresentationScreenProps = {};
 
 const Page = ({ id }: DetailRouteProps) => {
-  const { data } = withLokNext(useUserQuery)({
+  const { data } = useUserQuery({
     variables: {
       id: id,
     },

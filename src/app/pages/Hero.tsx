@@ -1,3 +1,4 @@
+import { Arkitekt } from "@/arkitekt";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,16 +18,11 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { manifest } from "@/constants";
-import {
-  EasyGuard,
-  useArkitektConnect,
-  useArkitektLogin,
-} from "@jhnnsrs/arkitekt";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 export const ConnectButton = () => {
-  const { registeredEndpoints, load, remove } = useArkitektConnect();
+  const { registeredEndpoints, load, remove } = Arkitekt.useConnect();
 
   const form = useForm({
     defaultValues: {
@@ -125,8 +121,8 @@ export const ConnectButton = () => {
 };
 
 export const LoginButton = () => {
-  const { login } = useArkitektLogin();
-  const { remove, fakts } = useArkitektConnect();
+  const { login } = Arkitekt.useLogin();
+  const { remove, fakts } = Arkitekt.useConnect();
 
   return (
     <>
@@ -281,7 +277,7 @@ export const ServiceInfo = (props: {
 };
 
 export const ServicesInfo = () => {
-  const { fakts } = useArkitektConnect();
+  const fakts = Arkitekt.useFakts();
 
   const listedServices = fakts
     ? Object.keys(fakts)
@@ -305,8 +301,8 @@ export const ServicesInfo = () => {
 };
 
 export const Home = () => {
-  const { login, user, logout } = useArkitektLogin();
-  const { remove, fakts } = useArkitektConnect();
+  const { login, user, logout } = Arkitekt.useLogin();
+  const { remove, fakts } = Arkitekt.useConnect();
 
   return (
     <>
@@ -360,12 +356,12 @@ export const Home = () => {
 function Page() {
   return (
     <>
-      <EasyGuard
+      <Arkitekt.Guard
         notConnectedFallback={<ConnectButton />}
         notLoggedInFallback={<LoginButton />}
       >
         <Home />
-      </EasyGuard>
+      </Arkitekt.Guard>
     </>
   );
 }

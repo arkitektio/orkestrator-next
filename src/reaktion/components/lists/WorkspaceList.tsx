@@ -4,7 +4,6 @@ import {
   OffsetPaginationInput,
   useWorkspacesQuery,
 } from "@/reaktion/api/graphql";
-import { withFluss } from "@jhnnsrs/fluss";
 import WorkspaceCard from "../cards/WorkspaceCard";
 
 export type Props = {
@@ -12,9 +11,8 @@ export type Props = {
 };
 
 const List = ({ pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = withFluss(
-    useWorkspacesQuery,
-  )({
+  const { data, error, subscribeToMore, refetch } = useWorkspacesQuery;
+  ({
     variables: { pagination },
   });
 

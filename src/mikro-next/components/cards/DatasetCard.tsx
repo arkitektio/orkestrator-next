@@ -1,6 +1,6 @@
+import { useResolve } from "@/datalayer/hooks/useResolve";
 import { MikroDataset } from "@/linkers";
 import { MateFinder } from "@/mates/types";
-import { useDatalayer } from "@jhnnsrs/datalayer";
 import { ListDatasetFragment } from "../../api/graphql";
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
 }
 
 const Card = ({ dataset, mates }: Props) => {
-  const { s3resolve } = useDatalayer();
+  const s3resolve = useResolve();
 
   return (
     <MikroDataset.Smart

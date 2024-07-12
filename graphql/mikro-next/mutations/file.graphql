@@ -17,6 +17,13 @@ mutation RequestFileUpload($key: String!, $datalayer: String!) {
   }
 }
 
+mutation RequestFileUploadPresigned($key: String!, $datalayer: String!) {
+  requestFileUploadPresigned(input: { key: $key, datalayer: $datalayer }) {
+    ...PresignedPostCredentials
+  }
+}
+
+
 mutation RequestFileAccess($store: ID!, $duration: Int) {
   requestFileAccess(input: { store: $store, duration: $duration }) {
     ...AccessCredentials

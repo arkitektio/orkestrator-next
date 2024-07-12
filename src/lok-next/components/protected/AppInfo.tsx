@@ -1,10 +1,10 @@
-import { LokNextGuard } from "@jhnnsrs/lok-next";
+import { Guard } from "@/arkitekt";
 import { AppAvatar } from "../AppAvatar";
 
 export const AppInfo = (props: { clientId: string | undefined }) => {
   return (
-    <LokNextGuard fallback="No userinfo available">
+    <Guard.Lok fallback="No userinfo available">
       {props.clientId && <AppAvatar clientId={props.clientId} />}
-    </LokNextGuard>
+    </Guard.Lok>
   );
 };

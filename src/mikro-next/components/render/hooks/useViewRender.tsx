@@ -1,3 +1,5 @@
+import { Arkitekt } from "@/arkitekt";
+import { useService } from "@/arkitekt/hooks";
 import {
   AccessCredentialsFragment,
   RequestAccessDocument,
@@ -9,8 +11,7 @@ import {
 import { BasicIndexer } from "@/mikro-next/providers/xarray/indexing";
 import { S3Store } from "@/mikro-next/providers/xarray/store";
 import { getChunkItem } from "@/mikro-next/providers/xarray/utils";
-import { useFakts } from "@jhnnsrs/fakts";
-import { MikroNextClient, useMikroNext } from "@jhnnsrs/mikro-next";
+import { ApolloClient } from "@apollo/client";
 import { AwsClient } from "aws4fetch";
 import { useCallback } from "react";
 import { NestedArray, TypedArray, ZarrArray, openGroup } from "zarr";
@@ -229,7 +230,7 @@ export const renderView = async (
 };
 
 const downloadView = async (
-  client: MikroNextClient,
+  client: ApolloClient<any> | undefined,
   fakts: any,
   t: number,
   z: number,
@@ -259,8 +260,8 @@ const downloadView = async (
 };
 
 export const useViewRenderFunction = () => {
-  const { client } = useMikroNext();
-  const { fakts } = useFakts();
+  const client = useService("mikro");
+  const fakts = Arkitekt.useFakts();
 
   const renderView = useCallback(
     async (

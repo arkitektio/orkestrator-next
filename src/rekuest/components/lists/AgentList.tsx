@@ -5,7 +5,6 @@ import {
   OffsetPaginationInput,
   useAgentsQuery,
 } from "@/rekuest/api/graphql";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
 import AgentCard from "../cards/AgentCard";
 
 export type Props = {
@@ -14,11 +13,9 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = withRekuest(useAgentsQuery)(
-    {
-      variables: { filters, pagination },
-    },
-  );
+  const { data, error, subscribeToMore, refetch } = useAgentsQuery({
+    variables: { filters, pagination },
+  });
 
   return (
     <ListRender

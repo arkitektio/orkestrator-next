@@ -13,7 +13,6 @@ import {
   useMyStashesQuery,
 } from "@/lok-next/api/graphql";
 import { Structure } from "@/types";
-import { withLokNext } from "@jhnnsrs/lok-next";
 import { motion } from "framer-motion";
 import { GripVertical, X } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -21,7 +20,7 @@ import { useDrag, useDrop } from "react-dnd";
 import { ConditionalStructureRender } from "./InfoTainer";
 
 export const StashItem = (props: { item: StashItemFragment }) => {
-  const [deleteItems] = withLokNext(useDeleteStashItemsMutation)({
+  const [deleteItems] = useDeleteStashItemsMutation({
     refetchQueries: ["MyStashes"],
   });
 
@@ -72,15 +71,15 @@ export const StashItem = (props: { item: StashItemFragment }) => {
 };
 
 export const StashZone = (props: { item: ListStashFragment }) => {
-  const [addItems] = withLokNext(useAddItemsToStashMutation)({
+  const [addItems] = useAddItemsToStashMutation({
     refetchQueries: ["MyStashes"],
   });
 
-  const [deleteItems] = withLokNext(useDeleteStashItemsMutation)({
+  const [deleteItems] = useDeleteStashItemsMutation({
     refetchQueries: ["MyStashes"],
   });
 
-  const [deleteStash] = withLokNext(useDeleteStashMutation)({
+  const [deleteStash] = useDeleteStashMutation({
     refetchQueries: ["MyStashes"],
   });
 
@@ -220,9 +219,9 @@ export const StashZone = (props: { item: ListStashFragment }) => {
 };
 
 export const StashDropZone = () => {
-  const { data, refetch } = withLokNext(useMyStashesQuery)();
+  const { data, refetch } = useMyStashesQuery();
 
-  const [createStash] = withLokNext(useCreateStashMutation)({
+  const [createStash] = useCreateStashMutation({
     onCompleted: () => {
       refetch();
     },

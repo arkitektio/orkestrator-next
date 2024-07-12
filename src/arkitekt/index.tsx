@@ -1,4 +1,29 @@
-import { ArkitektProvider, useArkitekt } from "./provider";
+import { manifest } from "@/constants";
+import kabinetResult from "@/kabinet/api/fragments";
+import { FaktsGuard, FaktsProps, Manifest, useFakts } from "@/lib/fakts";
+import { createFlussClient } from "@/lib/fluss/client";
+import { HerreGuard, HerreProps, useHerre } from "@/lib/herre";
+import { createKabinetClient } from "@/lib/kabinet/client";
+import { createMikroClient } from "@/lib/mikro/client";
+import { createRekuestClient } from "@/lib/rekuest/client";
+import lokResult from "@/lok-next/api/fragments";
+import mikroResult from "@/mikro-next/api/fragments";
+import omeroArkResult from "@/omero-ark/api/fragments";
+import flussResult from "@/reaktion/api/fragments";
+import rekuestResult from "@/rekuest/api/fragments";
+
+import { createOmeroArkClient } from "@/lib/omero-ark/client";
+import { createLokClient } from "@/lok-next/lib/LokClient";
+import { open } from "@tauri-apps/plugin-shell";
+import { buildArkitektConnect, useArkitektLogin } from "./hooks";
+import {
+  buildArkitektProvider,
+  ServiceBuilderMap,
+  useArkitekt,
+} from "./provider";
+// When using the Tauri API npm package:
+
+import { invoke } from "@tauri-apps/api/core";
 
 export function withKabinet<T extends (options: any) => any>(func: T): T {
   const Wrapped = (nana: any) => {
@@ -53,10 +78,171 @@ export const buildWith =
     return Wrapped as T;
   };
 
-export const Arkitekt = {
-  Provider: ArkitektProvider,
-  withKabinet: withKabinet,
-  withLok: buildWith("lok"),
-  KabinetGuard: KabinetGuard,
-  LokNextGuard: buildGuard("lok"),
+export type ArkitektGuardProps = {
+  noAppFallback?: React.ReactNode;
+  notConnectedFallback?: React.ReactNode;
+  notLoggedInFallback?: React.ReactNode;
+  children: React.ReactNode;
+};
+
+export const ArkitektGuard = ({
+  notConnectedFallback = "Not Connected",
+  notLoggedInFallback = "Not Logged In",
+  children,
+}: ArkitektGuardProps) => {
+  return (
+    <FaktsGuard fallback={notConnectedFallback}>
+      <HerreGuard fallback={notLoggedInFallback}>{children}</HerreGuard>
+    </FaktsGuard>
+  );
+};
+
+export const useArkitektFakts = (key?: undefined | string) => {
+  const { fakts } = useFakts();
+
+  if (key) {
+    if (key.includes(".")) {
+      let keys = key.split(".");
+      let result = fakts;
+      for (let k of keys) {
+        try {
+          result = (result as any)[k];
+        } catch (e) {
+          throw new Error(`Missing fakts.${key}`);
+        }
+      }
+
+      return result;
+    }
+
+    if ((fakts as any)[key]) {
+      throw new Error(`Missing fakts.${key}`);
+    }
+    return (fakts as any)[key];
+  }
+
+  return fakts;
+};
+
+export const buildArkitekt = ({
+  manifest,
+  serviceBuilderMap,
+  faktsProps,
+  herreProps,
+}: {
+  manifest: Manifest;
+  serviceBuilderMap: ServiceBuilderMap;
+  faktsProps?: Partial<FaktsProps>;
+  herreProps?: Partial<HerreProps>;
+}) => {
+  return {
+    Provider: buildArkitektProvider({
+      manifest,
+      serviceBuilderMap,
+      faktsProps,
+      herreProps,
+    }),
+    Guard: ArkitektGuard,
+    useLogin: useArkitektLogin,
+    useFakts: useArkitektFakts,
+    useToken: () => useHerre().token,
+    useConnect: buildArkitektConnect(manifest),
+  };
+};
+
+export const serviceMap: ServiceBuilderMap = {
+  lok: (manifest, fakts: any, token) => {
+    return createLokClient({
+      wsEndpointUrl: fakts.lok.ws_endpoint_url,
+      endpointUrl: fakts.lok.endpoint_url,
+      possibleTypes: lokResult.possibleTypes,
+      retrieveToken: () => token,
+    });
+  },
+  kabinet: (manifest, fakts: any, token) => {
+    return createKabinetClient({
+      wsEndpointUrl: fakts.kabinet.ws_endpoint_url,
+      endpointUrl: fakts.kabinet.endpoint_url,
+      possibleTypes: kabinetResult.possibleTypes,
+      retrieveToken: () => token,
+    });
+  },
+  rekuest: (manifest, fakts: any, token) => {
+    return createRekuestClient({
+      wsEndpointUrl: fakts.rekuest.ws_endpoint_url,
+      endpointUrl: fakts.rekuest.endpoint_url,
+      possibleTypes: rekuestResult.possibleTypes,
+      retrieveToken: () => token,
+    });
+  },
+  fluss: (manifest, fakts: any, token) => {
+    return createFlussClient({
+      wsEndpointUrl: fakts.fluss.ws_endpoint_url,
+      endpointUrl: fakts.fluss.endpoint_url,
+      possibleTypes: flussResult.possibleTypes,
+      retrieveToken: () => token,
+    });
+  },
+  mikro: (manifest, fakts: any, token) => {
+    return createMikroClient({
+      wsEndpointUrl: fakts.mikro.ws_endpoint_url,
+      endpointUrl: fakts.mikro.endpoint_url,
+      possibleTypes: mikroResult.possibleTypes,
+      retrieveToken: () => token,
+    });
+  },
+  omero_ark: (manifest, fakts: any, token) => {
+    return createOmeroArkClient({
+      wsEndpointUrl: fakts.omero_ark.ws_endpoint_url,
+      endpointUrl: fakts.omero_ark.endpoint_url,
+      possibleTypes: omeroArkResult.possibleTypes,
+      retrieveToken: () => token,
+    });
+  },
+};
+
+export const tauriRedirect = async (
+  url: string,
+  abortController: AbortController,
+) => {
+  let win = open(url).then((x) => x);
+
+  while (!abortController.signal.aborted) {
+    let rawUrl: string = await invoke("oauth_check");
+
+    console.log("rawUrl", rawUrl);
+    if (rawUrl) {
+      console.log("url", rawUrl);
+      // Parse the URL
+      let url = new URL(rawUrl);
+      // Get the code
+      let code = url.searchParams.get("code");
+
+      console.log("code", code);
+      await invoke("oauth_cancel", {});
+      return code;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+
+  await invoke("oauth_cancel", {});
+};
+// Check if running in tauri
+
+export const Arkitekt = window.__TAURI__
+  ? buildArkitekt({
+      manifest,
+      serviceBuilderMap: serviceMap,
+      herreProps: { doRedirect: tauriRedirect },
+    })
+  : buildArkitekt({ manifest, serviceBuilderMap: serviceMap });
+
+export const Guard = {
+  Lok: buildGuard("lok"),
+  Mikro: buildGuard("mikro"),
+  Fluss: buildGuard("fluss"),
+  Rekuest: buildGuard("rekuest"),
+  Kabinet: buildGuard("kabinet"),
+  OmeroArk: buildGuard("omero_ark"),
 };

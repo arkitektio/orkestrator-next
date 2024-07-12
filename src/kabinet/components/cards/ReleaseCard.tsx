@@ -5,15 +5,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { NodeDescription } from "@/lib/rekuest/NodeDescription";
 import { KabinetRelease } from "@/linkers";
-import {
-  useAssignMutation,
-  usePrimaryNodesQuery
-} from "@/rekuest/api/graphql";
+import { useAssignMutation, usePrimaryNodesQuery } from "@/rekuest/api/graphql";
 import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
 import { useInstancId } from "@/rekuest/hooks/useInstanceId";
-import { NodeDescription } from "@jhnnsrs/rekuest";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { MateFinder } from "../../../mates/types";
 import { ListReleaseFragment } from "../../api/graphql";
 
@@ -22,10 +18,8 @@ interface Props {
   mates?: MateFinder[];
 }
 
-
-
 export const AssignButton = (props: { id: string; release: string }) => {
-  const [postAssign, _] = withRekuest(useAssignMutation)();
+  const [postAssign, _] = useAssignMutation();
 
   const instanceId = useInstancId();
 
@@ -53,7 +47,7 @@ export const AssignButton = (props: { id: string; release: string }) => {
 };
 
 const InstallDialog = (props: { item: ListReleaseFragment }) => {
-  const { data } = withRekuest(usePrimaryNodesQuery)({
+  const { data } = usePrimaryNodesQuery({
     variables: {
       identifier: "@kabinet/release",
     },

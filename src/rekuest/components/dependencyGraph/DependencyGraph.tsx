@@ -19,8 +19,6 @@ import {
   useUnlinkMutation,
   useUnprovideMutation,
 } from "@/rekuest/api/graphql";
-import { LokNextGuard, withLokNext } from "@jhnnsrs/lok-next";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { Avatar } from "@radix-ui/react-avatar";
 import dagre from "dagre";
 import React, { useMemo } from "react";
@@ -228,7 +226,7 @@ const buildDagraph = (graph: DependencyGraphFragment, direction = "LR") => {
 };
 
 export const ReservationStatusWidget = (props: { id: string }) => {
-  const { data } = withRekuest(useDetailReservationQuery)({
+  const { data } = useDetailReservationQuery({
     variables: {
       id: props.id,
     },
@@ -245,7 +243,7 @@ export const ReservationStatusWidget = (props: { id: string }) => {
 export const ReservationNodeWidget = (
   props: NodeProps<NodeNodeFragment & { reservationId: string }>,
 ) => {
-  const { data } = withRekuest(useDetailReservationQuery)({
+  const { data } = useDetailReservationQuery({
     variables: {
       id: props.data.reservationId,
     },
@@ -332,7 +330,7 @@ export const InvalidNodeWidget = (props: NodeProps<InvalidNodeFragment>) => {
 };
 
 export const AppInformation = (props: { clientId: string }) => {
-  const { data } = withLokNext(useAppQuery)({
+  const { data } = useAppQuery({
     variables: {
       clientId: props.clientId,
     },
@@ -358,7 +356,7 @@ export const LinkButtons = (props: {
 }) => {
   const refetch = useActiveReservation();
 
-  const [link, _] = withRekuest(useLinkMutation)({
+  const [link, _] = useLinkMutation({
     variables: {
       reservation: props.reservationId,
       provision: props.provisionId,
@@ -368,7 +366,7 @@ export const LinkButtons = (props: {
     },
   });
 
-  const [unlink, __] = withRekuest(useUnlinkMutation)({
+  const [unlink, __] = useUnlinkMutation({
     variables: {
       reservation: props.reservationId,
       provision: props.provisionId,
@@ -397,7 +395,7 @@ export const ProvideButtons = (props: {
   active: boolean | undefined;
   provisionId: string;
 }) => {
-  const { data } = withRekuest(useDetailProvisionQuery)({
+  const { data } = useDetailProvisionQuery({
     variables: {
       id: props.provisionId,
     },
@@ -405,7 +403,7 @@ export const ProvideButtons = (props: {
 
   const refetch = useActiveReservation();
 
-  const [provide, _] = withRekuest(useProvideMutation)({
+  const [provide, _] = useProvideMutation({
     variables: {
       provision: props.provisionId,
     },
@@ -414,7 +412,7 @@ export const ProvideButtons = (props: {
     },
   });
 
-  const [unprovide, __] = withRekuest(useUnprovideMutation)({
+  const [unprovide, __] = useUnprovideMutation({
     onCompleted: () => {
       refetch();
     },
@@ -486,7 +484,7 @@ export const NonProvisionedNodeWidget = (
 export const ProvisionedNodeWidget = (
   props: NodeProps<TemplateNodeFragment & { provisionId: string }>,
 ) => {
-  const { data } = withRekuest(useDetailProvisionQuery)({
+  const { data } = useDetailProvisionQuery({
     variables: {
       id: props.data.provisionId,
     },

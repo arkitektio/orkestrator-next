@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { withMikroNext } from "@jhnnsrs/mikro-next";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import {
@@ -16,10 +15,10 @@ import {
 } from "../api/graphql";
 
 export const AddMultiPositionViewForm = (props: { image: string }) => {
-  const [add] = withMikroNext(useCreateWellPositionViewMutation)();
+  const [add] = useCreateWellPositionViewMutation();
 
-  const [search] = withMikroNext(useMultiWellPlateOptionsLazyQuery)();
-  const [create] = withMikroNext(useAutoCreateMultiWellPlateMutation)();
+  const [search] = useMultiWellPlateOptionsLazyQuery();
+  const [create] = useAutoCreateMultiWellPlateMutation();
 
   const dialog = useGraphQlFormDialog(add);
 

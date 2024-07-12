@@ -1,3 +1,4 @@
+import { Arkitekt } from "@/arkitekt";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,12 +18,11 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { manifest } from "@/constants";
-import { Orkestrator } from "@/root";
 import { useForm } from "react-hook-form";
 import { useLocation } from "react-router-dom";
 
 export const NotConnected = () => {
-  const { registeredEndpoints, load } = Orkestrator.useConnect();
+  const { registeredEndpoints, load } = Arkitekt.useConnect();
   const location = useLocation();
 
   const form = useForm({

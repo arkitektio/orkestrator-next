@@ -1,5 +1,4 @@
 import { useSettings } from "@/providers/settings/SettingsContext";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { useCallback } from "react";
 import {
   AssignInput,
@@ -8,7 +7,7 @@ import {
   ReserveMutationVariables,
   useAssignMutation,
   useAssignationsQuery,
-  useCancelMutation
+  useCancelMutation,
 } from "../api/graphql";
 
 export type ActionReserveVariables = Omit<
@@ -36,15 +35,14 @@ export const useNodeAction = <T extends any>(
 ): useActionReturn<T> => {
   const { settings } = useSettings();
 
-
-  const { data: assignations_data } = withRekuest(useAssignationsQuery)({
+  const { data: assignations_data } = useAssignationsQuery({
     variables: {
       instanceId: settings.instanceId,
     },
   });
 
-  const [postAssign] = withRekuest(useAssignMutation)({});
-  const [cancelAssign] = withRekuest(useCancelMutation)({});
+  const [postAssign] = useAssignMutation({});
+  const [cancelAssign] = useCancelMutation({});
 
   let assignations = assignations_data?.assignations.filter(
     (x) => x.node.id == options.id,

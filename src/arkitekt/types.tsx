@@ -1,5 +1,5 @@
+import { Manifest } from "@/lib/fakts";
 import { ApolloCache } from "@apollo/client";
-import { Manifest } from "@jhnnsrs/fakts";
 
 export type Service = {
   key: string;

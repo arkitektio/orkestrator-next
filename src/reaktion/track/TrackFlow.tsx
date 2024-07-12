@@ -8,15 +8,11 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import {
-  GraphInput,
-  useRunForAssignationQuery
-} from "@/reaktion/api/graphql";
-import { withFluss } from "@jhnnsrs/fluss-next";
+import { GraphInput, useRunForAssignationQuery } from "@/reaktion/api/graphql";
 import {
   EyeOpenIcon,
   LetterCaseToggleIcon,
-  QuestionMarkIcon
+  QuestionMarkIcon,
 } from "@radix-ui/react-icons";
 import { AnimatePresence } from "framer-motion";
 import React, { useRef, useState } from "react";
@@ -48,14 +44,14 @@ const edgeTypes: EdgeTypes = {
 };
 
 export type Props = {
-  assignation: {id: string};
+  assignation: { id: string };
   onSave?: (graph: GraphInput) => void;
 };
 
 export const TrackFlow: React.FC<Props> = ({ assignation, onSave }) => {
   console.log("THE FLOW", assignation);
 
-  const { data, error } = withFluss(useRunForAssignationQuery)({
+  const { data, error } = useRunForAssignationQuery({
     variables: {
       id: assignation.id,
     },

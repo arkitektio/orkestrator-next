@@ -2,7 +2,6 @@ import {
   DescendantKind,
   useUserOptionsLazyQuery,
 } from "@/lok-next/api/graphql";
-import { withLokNext } from "@jhnnsrs/lok-next";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BiBold, BiCode, BiItalic, BiUnderline } from "react-icons/bi";
 import { TiTick } from "react-icons/ti";
@@ -86,7 +85,7 @@ export const CommentEdit = ({
 }: CommentEditProps) => {
   const [editor] = useState(() => withMentions(withReact(createEditor())));
 
-  const [searchUser, data] = withLokNext(useUserOptionsLazyQuery)();
+  const [searchUser, data] = useUserOptionsLazyQuery();
 
   const ref = useRef<HTMLDivElement>(null);
   const [target, setTarget] = useState<Range | undefined>();

@@ -1,4 +1,3 @@
-import { Arkitekt } from "@/arkitekt";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Carousel,
@@ -15,9 +14,7 @@ export const Test = () => {
 };
 
 export const PopularCarousel = ({}) => {
-  const { data, error, subscribeToMore, refetch } = Arkitekt.withLok(
-    useRoomsQuery,
-  )({
+  const { data, error, subscribeToMore, refetch } = useRoomsQuery({
     variables: {},
   });
 

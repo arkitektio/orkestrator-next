@@ -13,6 +13,7 @@ generates:
     config:
       withHooks: true
       reactApolloVersion: 3
+      apolloReactHooksImportFrom: "@/lib/lok/hooks"
   src/lok-next/graphql.schema.json:
     plugins:
       - "introspection"

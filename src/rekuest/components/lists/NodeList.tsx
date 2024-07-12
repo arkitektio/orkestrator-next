@@ -5,7 +5,6 @@ import {
   OffsetPaginationInput,
   useAllNodesQuery,
 } from "@/rekuest/api/graphql";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
 import NodeCard from "../cards/NodeCard";
 
 export type Props = {
@@ -14,9 +13,8 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = withRekuest(
-    useAllNodesQuery,
-  )({
+  const { data, error, subscribeToMore, refetch } = useAllNodesQuery;
+  ({
     variables: { filters, pagination },
   });
 

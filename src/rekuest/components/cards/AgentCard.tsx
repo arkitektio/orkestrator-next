@@ -1,8 +1,7 @@
-import { Arkitekt } from "@/arkitekt";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { RekuestAgent } from "@/linkers";
-import { useClientQuery, useDetailClientQuery } from "@/lok-next/api/graphql";
+import { useClientQuery } from "@/lok-next/api/graphql";
 import { MateFinder } from "@/mates/types";
 import { ListAgentFragment } from "@/rekuest/api/graphql";
 
@@ -12,7 +11,7 @@ interface Props {
 }
 
 const TheCard = ({ item, mates }: Props) => {
-  const { data } = Arkitekt.withLok(useClientQuery)({
+  const { data } = useClientQuery({
     variables: {
       clientId: item.registry.app.clientId,
     },

@@ -1,3 +1,4 @@
+import { Arkitekt, Guard } from "@/arkitekt";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,8 +15,6 @@ import {
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { Me } from "@/lok-next/components/Me";
 import { useDebug } from "@/providers/debug/DebugContext";
-import { useArkitektConnect, useArkitektLogin } from "@jhnnsrs/arkitekt";
-import { LokNextGuard } from "@jhnnsrs/lok-next";
 import { HomeIcon } from "@radix-ui/react-icons";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import {
@@ -69,8 +68,8 @@ export const matchIcon = (key: string) => {
  * only modules that are available to the user are shown. See the example below.
  */
 const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
-  const { logout } = useArkitektLogin();
-  const { remove, fakts } = useArkitektConnect();
+  const { logout } = Arkitekt.useLogin();
+  const { remove, fakts } = Arkitekt.useConnect();
   const { debug, setDebug } = useDebug();
 
   const linkChildren =
@@ -132,7 +131,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
           )}
         </DroppableNavLink>
 
-        <LokNextGuard fallback={<></>}>
+        <Guard.Lok fallback={<></>}>
           <DropdownMenu>
             <DropdownMenuTrigger className="mb-2">
               <Me />
@@ -161,7 +160,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
-        </LokNextGuard>
+        </Guard.Lok>
       </IconContext.Provider>
     </NavigationMenu>
   );

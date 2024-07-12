@@ -1,5 +1,5 @@
+import { Guard } from "@/arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
-import { OmeroArkGuard } from "@jhnnsrs/omero-ark";
 import React from "react";
 import { Route, Routes } from "react-router";
 import { ConnectedGuard } from "./ConnectedGuard";
@@ -11,7 +11,7 @@ interface Props {}
 
 export const OmeroArkModule: React.FC<Props> = (props) => {
   return (
-    <OmeroArkGuard fallback={<>Loading</>}>
+    <Guard.OmeroArk fallback={<>Loading</>}>
       <ModuleLayout>
         <ConnectedGuard>
           <Routes>
@@ -23,7 +23,7 @@ export const OmeroArkModule: React.FC<Props> = (props) => {
           </Routes>
         </ConnectedGuard>
       </ModuleLayout>
-    </OmeroArkGuard>
+    </Guard.OmeroArk>
   );
 };
 

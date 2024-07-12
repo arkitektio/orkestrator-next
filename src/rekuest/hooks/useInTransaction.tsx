@@ -1,4 +1,3 @@
-import { withRekuest } from "@jhnnsrs/rekuest-next";
 import {
   PostmanAssignationFragment,
   useAssignationsQuery,
@@ -19,7 +18,7 @@ export const useInTransaction = (
 ): InTransactionReturn => {
   const id = useInstancId();
 
-  const { data: assignations_data } = withRekuest(useAssignationsQuery)({
+  const { data: assignations_data } = useAssignationsQuery({
     variables: {
       instanceId: id,
     },

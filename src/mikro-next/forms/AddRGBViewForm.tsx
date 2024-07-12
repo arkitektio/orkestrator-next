@@ -4,7 +4,6 @@ import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { withMikroNext } from "@jhnnsrs/mikro-next";
 import { useForm } from "react-hook-form";
 import {
   useCreateRgbViewMutation,
@@ -12,9 +11,9 @@ import {
 } from "../api/graphql";
 
 export const AddRGBViewForm = (props: { image: string }) => {
-  const [add] = withMikroNext(useCreateRgbViewMutation)();
+  const [add] = useCreateRgbViewMutation();
 
-  const [searchStage] = withMikroNext(useRgbContextOptionsLazyQuery)();
+  const [searchStage] = useRgbContextOptionsLazyQuery();
 
   const dialog = useGraphQlFormDialog(add);
 

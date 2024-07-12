@@ -30,7 +30,6 @@ import {
   useAllNodesQuery,
   useProtocolOptionsLazyQuery,
 } from "@/rekuest/api/graphql";
-import { useRekuest, withRekuest } from "@jhnnsrs/rekuest-next";
 import { ArrowDown, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -68,7 +67,7 @@ export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
     }
   }, [formState, formdata, isValidating]);
 
-  const [searchProtocol] = withRekuest(useProtocolOptionsLazyQuery)();
+  const [searchProtocol] = useProtocolOptionsLazyQuery();
 
   return (
     <Form {...form}>
@@ -328,7 +327,7 @@ export const EdgeContextualRekuestNode = (props: {
   const leftPorts = props.params.leftNode.data.outs[props.params.leftStream];
   const rightPorts = props.params.rightNode.data.ins[props.params.rightStream];
 
-  const { data, refetch, variables } = withRekuest(useAllNodesQuery)({
+  const { data, refetch, variables } = useAllNodesQuery({
     variables: {
       filters: {
         demands: [

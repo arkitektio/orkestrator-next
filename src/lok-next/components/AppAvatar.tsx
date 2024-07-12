@@ -1,8 +1,7 @@
-import { withLokNext } from "@jhnnsrs/lok-next";
 import { useClientQuery } from "../api/graphql";
 
 export const AppAvatar = (props: { clientId: string }) => {
-  const { data } = withLokNext(useClientQuery)({
+  const { data } = useClientQuery({
     variables: {
       clientId: props.clientId,
     },

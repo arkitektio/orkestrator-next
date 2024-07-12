@@ -1,4 +1,4 @@
-import { Arkitekt } from "@/arkitekt";
+import { Guard } from "@/arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import React from "react";
 import { Route, Routes } from "react-router";
@@ -11,16 +11,16 @@ interface Props {}
 
 export const KabinetModule: React.FC<Props> = (props) => {
   return (
-    <Arkitekt.KabinetGuard fallback={<>Loading</>}>
+    <Guard.Kabinet fallback={<>Loading</>}>
       <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route path="pods" element={<PodsPage />} />
-          <Route path="pods/:id" element={<PodPage/>} />
-          <Route path="backends/:id" element={<BackendPage/>} />
+          <Route path="pods/:id" element={<PodPage />} />
+          <Route path="backends/:id" element={<BackendPage />} />
           <Route path="*" element={<HomePage />} />
         </Routes>
       </ModuleLayout>
-    </Arkitekt.KabinetGuard>
+    </Guard.Kabinet>
   );
 };
 

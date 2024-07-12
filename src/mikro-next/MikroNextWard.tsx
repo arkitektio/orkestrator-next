@@ -1,12 +1,12 @@
+import { useService } from "@/arkitekt/hooks";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { gql } from "@apollo/client";
-import { useMikroNext } from "@jhnnsrs/mikro-next";
 import { useEffect } from "react";
 
 export const MikroNextWard: React.FC<{
   fallback?: React.ReactNode;
 }> = ({ key, fallback }) => {
-  const { client } = useMikroNext();
+  const client = useService("mikro");
   const { registry } = useWidgetRegistry();
 
   useEffect(() => {

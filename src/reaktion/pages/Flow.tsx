@@ -1,10 +1,10 @@
+import { Guard } from "@/arkitekt";
 import { useFlowQuery } from "@/reaktion/api/graphql";
 import { EditFlow } from "@/reaktion/edit/EditFlow";
-import { FlussGuard, withFluss } from "@jhnnsrs/fluss";
 import { useParams } from "react-router-dom";
 
 export const FlowDetail = (props: { id: string }) => {
-  const { data, error } = withFluss(useFlowQuery)({
+  const { data, error } = useFlowQuery({
     variables: {
       id: props.id,
     },
@@ -23,9 +23,9 @@ function Page() {
 
   return (
     <>
-      <FlussGuard>
+      <Guard.Fluss>
         <FlowDetail id={id} />
-      </FlussGuard>
+      </Guard.Fluss>
     </>
   );
 }

@@ -1,16 +1,14 @@
-import React from "react";
 import { useEffect, useState } from "react";
 import { FiPlay } from "react-icons/fi";
 import { RiStopLine } from "react-icons/ri";
 import ReactSlider from "react-slider";
 import Timestamp from "react-timestamp";
-import { useTrackRiver } from "../../context";
 import {
   DetailRunFragment,
   RunEventFragment,
   useEventsBetweenLazyQuery,
 } from "../../../api/graphql";
-import { withFluss } from "@jhnnsrs/fluss-next";
+import { useTrackRiver } from "../../context";
 
 export const RangeTracker = ({ run }: { run: DetailRunFragment }) => {
   const { setRunState } = useTrackRiver();
@@ -25,7 +23,7 @@ export const RangeTracker = ({ run }: { run: DetailRunFragment }) => {
     (RunEventFragment | null | undefined)[]
   >([]);
 
-  const [fetchInbetweenEvents] = withFluss(useEventsBetweenLazyQuery)();
+  const [fetchInbetweenEvents] = useEventsBetweenLazyQuery();
 
   useEffect(() => {
     let newEvents = rangeEvents?.reduce((prev, event) => {

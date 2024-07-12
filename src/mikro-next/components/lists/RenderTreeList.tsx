@@ -1,6 +1,5 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { MikroRenderTree } from "@/linkers";
-import { withMikroNext } from "@jhnnsrs/mikro-next";
 import {
   ImageFilter,
   OffsetPaginationInput,
@@ -14,9 +13,8 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = withMikroNext(
-    useRenderTreesQuery,
-  )({
+  const { data, error, subscribeToMore, refetch } = useRenderTreesQuery;
+  ({
     variables: { filters, pagination },
   });
 

@@ -14,7 +14,6 @@ import {
   useDetailAssignationQuery,
   useInterruptMutation,
 } from "@/rekuest/api/graphql";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { ClipboardIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -30,10 +29,10 @@ export const AssignationFlow = (props: {
 };
 
 export default asDetailQueryRoute(
-  withRekuest(useDetailAssignationQuery),
+  useDetailAssignationQuery,
   ({ data, refetch }) => {
-    const [cancel, _] = withRekuest(useCancelMutation)();
-    const [interrupt, __] = withRekuest(useInterruptMutation)();
+    const [cancel, _] = useCancelMutation();
+    const [interrupt, __] = useInterruptMutation();
 
     const navigate = useNavigate();
 

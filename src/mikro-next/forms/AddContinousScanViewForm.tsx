@@ -3,7 +3,6 @@ import { ChoicesField } from "@/components/fields/ChoicesField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { withMikroNext } from "@jhnnsrs/mikro-next";
 import { useForm } from "react-hook-form";
 import {
   ScanDirection,
@@ -115,7 +114,7 @@ function PixelatedCube({
 }
 
 export const AddContinousScanViewForm = (props: { image: string }) => {
-  const [add] = withMikroNext(useCreateContinousScanViewMutation)();
+  const [add] = useCreateContinousScanViewMutation();
 
   const dialog = useGraphQlFormDialog(add);
 

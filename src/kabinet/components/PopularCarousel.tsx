@@ -1,4 +1,3 @@
-import { Arkitekt } from "@/arkitekt";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Carousel,
@@ -7,7 +6,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { NodeDescription } from "@jhnnsrs/rekuest";
+import { NodeDescription } from "@/lib/rekuest/NodeDescription";
 import { useListDefinitionsQuery } from "../api/graphql";
 
 export const Test = () => {
@@ -15,9 +14,8 @@ export const Test = () => {
 };
 
 export const PopularCarousel = ({}) => {
-  const { data, error, subscribeToMore, refetch } = Arkitekt.withKabinet(
-    useListDefinitionsQuery,
-  )({
+  const { data, error, subscribeToMore, refetch } = useListDefinitionsQuery;
+  ({
     variables: {},
   });
 

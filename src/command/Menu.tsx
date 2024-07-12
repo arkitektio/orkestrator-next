@@ -1,3 +1,4 @@
+import { Guard } from "@/arkitekt";
 import { Badge } from "@/components/ui/badge";
 import {
   Command,
@@ -8,8 +9,6 @@ import {
 import { Dialog } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useDisplayComponent } from "@/providers/display/DisplayContext";
-import { MikroNextGuard } from "@jhnnsrs/mikro-next";
-import { RekuestGuard } from "@jhnnsrs/rekuest-next";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { DialogPortal } from "@radix-ui/react-dialog";
 import { Cross2Icon } from "@radix-ui/react-icons";
@@ -191,16 +190,16 @@ export const CommandMenu = () => {
                     removeModifier,
                   }}
                 >
-                  <RekuestGuard>
+                  <Guard.Rekuest>
                     <NodeExtensions />
                     <NodeActionExtension />
 
                     <ReservationExtensions />
-                  </RekuestGuard>
+                  </Guard.Rekuest>
                   <LocalActionExtensions />
-                  <MikroNextGuard fallback={<></>}>
+                  <Guard.Mikro fallback={<></>}>
                     <SearchExtensions />
-                  </MikroNextGuard>
+                  </Guard.Mikro>
                 </ExtensionContext.Provider>
               </CommandList>
             </Command>

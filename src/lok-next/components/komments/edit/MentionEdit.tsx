@@ -1,5 +1,4 @@
 import { useUserQuery } from "@/lok-next/api/graphql";
-import { withLokNext } from "@jhnnsrs/lok-next";
 import { ElementRenderProps } from "../types";
 
 export const MentionEdit = ({
@@ -12,7 +11,7 @@ export const MentionEdit = ({
   }
   console.log(element);
 
-  const { data, error } = withLokNext(useUserQuery)({
+  const { data, error } = useUserQuery({
     variables: { id: element.user },
   });
 

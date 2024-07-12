@@ -1,12 +1,19 @@
-import possibleTypes from "@/kabinet/api/fragments";
-import { createKabinetClient } from "@/kabinet/lib/KabinetClient";
-import { createLokClient } from "@/lok-next/lib/LokClient";
-import { ApolloClient } from "@apollo/client";
-import { Manifest, useFakts } from "@jhnnsrs/fakts";
-import { useHerre } from "@jhnnsrs/herre";
 import {
-  ReactNode,
+  buildFailsafeDemander,
+  buildRemoteGrant,
+  demandDeviceToken,
+  demandRetrieve,
+  Fakts,
+  FaktsProps,
+  FaktsProvider,
+  Manifest,
+  useFakts,
+} from "@/lib/fakts";
+import { HerreProps, HerreProvider, Token, useHerre } from "@/lib/herre";
+import { ApolloClient } from "@apollo/client";
+import {
   createContext,
+  ReactNode,
   useContext,
   useEffect,
   useState,
@@ -23,12 +30,14 @@ export const ArkitektContext = createContext<AppContext>({
 });
 export const useArkitekt = () => useContext(ArkitektContext);
 
-export const ArkitektProvider = ({
+export const ServiceProvier = ({
   children,
   manifest,
+  serviceBuilderMap,
 }: {
   children: ReactNode;
   manifest: Manifest;
+  serviceBuilderMap: ServiceBuilderMap;
 }) => {
   const { fakts } = useFakts();
 
@@ -40,25 +49,21 @@ export const ArkitektProvider = ({
   });
 
   useEffect(() => {
-    if (fakts && token && fakts.kabinet) {
-      let x = createKabinetClient({
-        endpointUrl: fakts.kabinet.endpoint_url,
-        wsEndpointUrl: fakts.kabinet.ws_endpoint_url,
-        retrieveToken: () => token,
-        possibleTypes: possibleTypes.possibleTypes,
-        secure: false,
-      });
+    if (fakts && token) {
+      let clients: { [key: string]: ApolloClient<any> } = {};
 
-      let lok = createLokClient({
-        endpointUrl: fakts.lok.endpoint_url,
-        wsEndpointUrl: fakts.lok.ws_endpoint_url,
-        retrieveToken: () => token,
-        possibleTypes: possibleTypes.possibleTypes,
-      });
+      for (let key in serviceBuilderMap) {
+        let builder = serviceBuilderMap[key];
+        try {
+          clients[key] = builder(manifest, fakts, token);
+        } catch (e) {
+          console.error(`Failed to build client for ${key}`, e);
+        }
+      }
 
-      setContext({ manifest: manifest, clients: { kabinet: x, lok } });
+      setContext({ manifest: manifest, clients });
     }
-  }, [fakts, token]);
+  }, [fakts, token, serviceBuilderMap]);
 
   return (
     <ArkitektContext.Provider value={context}>
@@ -66,3 +71,43 @@ export const ArkitektProvider = ({
     </ArkitektContext.Provider>
   );
 };
+
+const defaultFaktsProps: Partial<FaktsProps> = {
+  grant: buildRemoteGrant({
+    demand: buildFailsafeDemander(demandRetrieve, demandDeviceToken),
+  }),
+};
+
+export type ServiceBuilder = (
+  manifest: Manifest,
+  fakts: Fakts,
+  token: Token,
+) => ApolloClient<any>;
+
+export type ServiceBuilderMap = {
+  [key: string]: ServiceBuilder;
+};
+
+export type ArkitektBuilderOptions = {
+  manifest: Manifest;
+  serviceBuilderMap: ServiceBuilderMap;
+  faktsProps?: Partial<FaktsProps>;
+  herreProps?: Partial<HerreProps>;
+};
+
+export const buildArkitektProvider =
+  (options: ArkitektBuilderOptions) =>
+  ({ children }: { children: ReactNode }) => {
+    return (
+      <FaktsProvider {...options.faktsProps}>
+        <HerreProvider {...options.herreProps}>
+          <ServiceProvier
+            manifest={options.manifest}
+            serviceBuilderMap={options.serviceBuilderMap}
+          >
+            {children}
+          </ServiceProvier>
+        </HerreProvider>
+      </FaktsProvider>
+    );
+  };

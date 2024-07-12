@@ -13,8 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
-import { NodeDescription } from "@jhnnsrs/rekuest";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
+import { NodeDescription } from "@/lib/rekuest/NodeDescription";
 import { ChevronsUpDown } from "lucide-react";
 import { useHooksSearchLazyQuery } from "../api/graphql";
 import { useNodeAction } from "../hooks/useNodeAction";
@@ -22,7 +21,7 @@ import { usePortForm } from "../hooks/usePortForm";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
 export const SelectHooks = (props: {}) => {
-  const [search, _] = withRekuest(useHooksSearchLazyQuery)();
+  const [search, _] = useHooksSearchLazyQuery();
 
   return <GraphQLSearchField name="hooks" searchQuery={search} />;
 };

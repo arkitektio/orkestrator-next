@@ -1,3 +1,4 @@
+import { Arkitekt } from "@/arkitekt";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -7,11 +8,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Orkestrator } from "@/root";
 
 export const NotLoggedIn = () => {
-  const { login } = Orkestrator.useLogin();
-  const { remove, fakts } = Orkestrator.useConnect();
+  const { login } = Arkitekt.useLogin();
+  const { remove, fakts } = Arkitekt.useConnect();
 
   return (
     <>

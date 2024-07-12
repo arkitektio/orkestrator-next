@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { RekuestAgent } from "@/linkers";
 import { ListTemplateFragment, useAgentQuery } from "@/rekuest/api/graphql";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { ArrowRightIcon } from "@radix-ui/react-icons";
 import { BellIcon } from "lucide-react";
 import { TemplateActionButton } from "../buttons/TemplateActionButton";
@@ -70,31 +69,25 @@ const TemplateBentoCard = ({
   </div>
 );
 
-export default asDetailQueryRoute(
-  withRekuest(useAgentQuery),
-  ({ data, refetch }) => {
-    return (
-      <RekuestAgent.ModelPage
-        title={data.agent.name}
-        object={data.agent.id}
-      >
-               <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-                    {data?.agent.name}
-                </h1>
-                  
-            <p className="mt-3 text-xl text-muted-foreground">
-           Is running as {data?.agent?.instanceId}
-                  </p>
-                  <p className="mt-3 text-xl text-muted-foreground">
-           {data?.agent?.extensions.map((ext) => ext).join(", ")}
-                  </p>
-        <ListRender array={data.agent.defaults} title="Registered Functions">
-          {(item) => <TemplateCard item={item} />}
-        </ListRender>
-        <ListRender array={data.agent.workflows} title="Registered Workflows">
-          {(item) => <TemplateCard item={item} />}
-        </ListRender>
-      </RekuestAgent.ModelPage>
-    );
-  },
-);
+export default asDetailQueryRoute(useAgentQuery, ({ data, refetch }) => {
+  return (
+    <RekuestAgent.ModelPage title={data.agent.name} object={data.agent.id}>
+      <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+        {data?.agent.name}
+      </h1>
+
+      <p className="mt-3 text-xl text-muted-foreground">
+        Is running as {data?.agent?.instanceId}
+      </p>
+      <p className="mt-3 text-xl text-muted-foreground">
+        {data?.agent?.extensions.map((ext) => ext).join(", ")}
+      </p>
+      <ListRender array={data.agent.defaults} title="Registered Functions">
+        {(item) => <TemplateCard item={item} />}
+      </ListRender>
+      <ListRender array={data.agent.workflows} title="Registered Workflows">
+        {(item) => <TemplateCard item={item} />}
+      </ListRender>
+    </RekuestAgent.ModelPage>
+  );
+});

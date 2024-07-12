@@ -1,3 +1,4 @@
+import { useService } from "@/arkitekt/hooks";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Card } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
@@ -21,7 +22,6 @@ import {
   useAllNodesQuery,
   useProtocolOptionsLazyQuery,
 } from "@/rekuest/api/graphql";
-import { useRekuest, withRekuest } from "@jhnnsrs/rekuest-next";
 import { Tooltip } from "@radix-ui/react-tooltip";
 import { ArrowDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -56,7 +56,7 @@ export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
     }
   }, [formState, formdata, isValidating]);
 
-  const [searchProtocol] = withRekuest(useProtocolOptionsLazyQuery)();
+  const [searchProtocol] = useProtocolOptionsLazyQuery();
 
   return (
     <Form {...form}>
@@ -226,7 +226,7 @@ const ClickArkitektNodes = (props: {
   search: string | undefined;
   params: ClickContextualParams;
 }) => {
-  const { data, refetch } = withRekuest(useAllNodesQuery)({
+  const { data, refetch } = useAllNodesQuery({
     variables: {
       filters: {
         search: props.search,
@@ -250,7 +250,7 @@ const ClickArkitektNodes = (props: {
   }, [props.search]);
 
   const { addClickNode } = useEditRiver();
-  const { client } = useRekuest();
+  const client = useService("rekuest");
 
   const onNodeClick = (id: string) => {
     client &&

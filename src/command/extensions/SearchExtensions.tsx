@@ -1,6 +1,5 @@
 import { CommandGroup } from "@/components/ui/command";
 import { useGlobalSearchLazyQuery } from "@/mikro-next/api/graphql";
-import { withMikroNext } from "@jhnnsrs/mikro-next";
 import { useEffect } from "react";
 import { useExtension } from "../ExtensionContext";
 import { SmartCommandItem } from "../components/SmartCommandItem";
@@ -8,7 +7,7 @@ import { SmartCommandItem } from "../components/SmartCommandItem";
 export const SearchExtensions = () => {
   const { query, activateModifier, modifiers } = useExtension();
 
-  const [searchGlobal, { data }] = withMikroNext(useGlobalSearchLazyQuery)();
+  const [searchGlobal, { data }] = useGlobalSearchLazyQuery();
 
   useEffect(() => {
     if (query != undefined) {

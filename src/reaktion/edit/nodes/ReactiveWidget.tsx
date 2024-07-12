@@ -20,12 +20,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { NodeDescription } from "@/lib/rekuest/NodeDescription";
 import { ReactiveImplementation } from "@/reaktion/api/graphql";
 import { Constants } from "@/reaktion/base/Constants";
 import { InStream } from "@/reaktion/base/Instream";
 import { OutStream } from "@/reaktion/base/Outstream";
 import { portToLabel } from "@/rekuest/widgets/utils";
-import { NodeDescription } from "@jhnnsrs/rekuest";
 import React from "react";
 import { useUpdateNodeInternals } from "reactflow";
 import { ReactiveNodeData, ReactiveNodeProps } from "../../types";

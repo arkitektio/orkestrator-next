@@ -1,3 +1,4 @@
+import { useService } from "@/arkitekt/hooks";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Card } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
@@ -14,6 +15,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { NodeDescription } from "@/lib/rekuest/NodeDescription";
 import {
   FlussPortFragment,
   GraphNodeKind,
@@ -31,8 +33,6 @@ import {
   useAllNodesQuery,
   useProtocolOptionsLazyQuery,
 } from "@/rekuest/api/graphql";
-import { NodeDescription } from "@jhnnsrs/rekuest";
-import { useRekuest, withRekuest } from "@jhnnsrs/rekuest-next";
 import clsx from "clsx";
 import { ArrowDown } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -67,7 +67,7 @@ export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
     }
   }, [formState, formdata, isValidating]);
 
-  const [searchProtocol] = withRekuest(useProtocolOptionsLazyQuery)();
+  const [searchProtocol] = useProtocolOptionsLazyQuery();
 
   return (
     <Form {...form}>
@@ -231,7 +231,7 @@ export const SourceDropContextual = (props: {
 }) => {
   const { addContextualNode } = useEditRiver();
 
-  const { client } = useRekuest();
+  const client = useService("rekuest");
   const [variables, setVariables] = useState<AllNodesQueryVariables>({
     filters: {
       demands: [
@@ -272,7 +272,7 @@ export const SourceDropContextual = (props: {
     }));
   };
 
-  const { data, refetch } = withRekuest(useAllNodesQuery)({
+  const { data, refetch } = useAllNodesQuery({
     variables: variables,
     fetchPolicy: "network-only",
   });

@@ -1,11 +1,11 @@
+import { Arkitekt } from "@/arkitekt";
+import { useService } from "@/arkitekt/hooks";
 import {
   RequestAccessDocument,
   RequestAccessMutation,
   RequestAccessMutationVariables,
   ZarrStoreFragment,
 } from "@/mikro-next/api/graphql";
-import { useFakts } from "@jhnnsrs/fakts";
-import { useMikroNext } from "@jhnnsrs/mikro-next";
 import { AwsClient } from "aws4fetch";
 import c from "colormap";
 import React from "react";
@@ -65,8 +65,8 @@ export type AvailableColormap = (typeof available_color_maps)[number];
 export const XArrayProvider: React.FC<{
   children: React.ReactNode;
 }> = (props) => {
-  const { client } = useMikroNext();
-  const { fakts } = useFakts();
+  const client = useService("mikro");
+  const fakts = Arkitekt.useFakts();
 
   const getSelectionAsImageView = async (
     zarrStore: ZarrStoreFragment,

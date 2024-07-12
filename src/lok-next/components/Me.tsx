@@ -1,9 +1,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { withLokNext } from "@jhnnsrs/lok-next";
 import { useMeQuery } from "../api/graphql";
 
 export const Me = () => {
-  const { data } = withLokNext(useMeQuery)();
+  const { data } = useMeQuery();
 
   return (
     <Avatar className="border border-1 border-seperator">

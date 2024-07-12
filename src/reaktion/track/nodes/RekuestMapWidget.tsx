@@ -1,6 +1,10 @@
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ContextMenuItem } from "@/components/ui/context-menu";
 import { ReturnsContainer } from "@/components/widgets/returns/ReturnsContainer";
+import {
+  NodeDescription,
+  useNodeDescription,
+} from "@/lib/rekuest/NodeDescription";
 import { cn } from "@/lib/utils";
 import { RunEventKind } from "@/reaktion/api/graphql";
 import { InStream } from "@/reaktion/base/Instream";
@@ -8,8 +12,6 @@ import { NodeShowLayout } from "@/reaktion/base/NodeShow";
 import { OutStream } from "@/reaktion/base/Outstream";
 import { RekuestMapNodeProps } from "@/reaktion/types";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
-import { NodeDescription } from "@jhnnsrs/rekuest";
-import { useNodeDescription } from "@jhnnsrs/rekuest-next";
 import React from "react";
 import { useLatestNodeEvent } from "../hooks/useLatestNodeEvent";
 

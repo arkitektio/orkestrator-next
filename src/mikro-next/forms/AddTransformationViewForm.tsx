@@ -4,7 +4,6 @@ import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { withMikroNext } from "@jhnnsrs/mikro-next";
 import { useForm } from "react-hook-form";
 import {
   useCreateAffineTransformationViewMutation,
@@ -28,9 +27,9 @@ export const toAffineMatrix = (data: {
 };
 
 export const AddTransformationViewForm = (props: { image: string }) => {
-  const [add] = withMikroNext(useCreateAffineTransformationViewMutation)();
+  const [add] = useCreateAffineTransformationViewMutation();
 
-  const [searchStage] = withMikroNext(useStageOptionsLazyQuery)();
+  const [searchStage] = useStageOptionsLazyQuery();
 
   const dialog = useGraphQlFormDialog(add);
 

@@ -1,10 +1,9 @@
 import { useSettings } from "@/providers/settings/SettingsContext";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { useAssignationsQuery } from "../api/graphql";
 
 export const useAssignations = () => {
   const { settings } = useSettings();
-  const queryResult = withRekuest(useAssignationsQuery)({
+  const queryResult = useAssignationsQuery({
     variables: {
       instanceId: settings.instanceId,
     },

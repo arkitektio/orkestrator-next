@@ -1,6 +1,6 @@
 // Constants used in the app
 
-import { Manifest } from "@jhnnsrs/fakts";
+import { Manifest } from "./lib/fakts";
 
 export const manifest: Manifest = {
   version: "0.0.1",

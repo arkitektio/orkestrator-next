@@ -5,19 +5,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { NodeDescription } from "@/lib/rekuest/NodeDescription";
 import { RekuestNode } from "@/linkers";
 import { useReserveMate } from "@/mates/reserve/useReserveMate";
 import { MateFinder } from "@/mates/types";
 import { ListNodeFragment } from "@/rekuest/api/graphql";
 import { NodeActionButton } from "@/rekuest/buttons/NodeActionButton";
-import { NodeDescription } from "@jhnnsrs/rekuest";
 
 interface Props {
   node: ListNodeFragment;
   mates?: MateFinder[];
 }
-
-
 
 const TheCard = ({ node, mates }: Props) => {
   const reserveMate = useReserveMate();

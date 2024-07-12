@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/pane";
 import { MikroDataset } from "@/linkers";
 import { Komments } from "@/lok-next/components/komments/Komments";
-import { withOmeroArk } from "@jhnnsrs/omero-ark";
 import React from "react";
 import { useParams } from "react-router";
 import { useGetImageQuery } from "../api/graphql";
@@ -19,7 +18,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   const { id } = useParams<{ id: string }>();
   if (!id) return <></>;
 
-  const { data } = withOmeroArk(useGetImageQuery)({
+  const { data } = useGetImageQuery({
     variables: { id },
   });
 

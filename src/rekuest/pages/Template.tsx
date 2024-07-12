@@ -11,6 +11,7 @@ import {
   DetailPaneTitle,
 } from "@/components/ui/pane";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
+import { NodeDescription } from "@/lib/rekuest/NodeDescription";
 import { RekuestAssignation } from "@/linkers";
 import { useFlowQuery } from "@/reaktion/api/graphql";
 import { ShowFlow } from "@/reaktion/show/ShowFlow";
@@ -20,9 +21,6 @@ import {
   WatchTemplateSubscriptionVariables,
   useTemplateQuery,
 } from "@/rekuest/api/graphql";
-import { withFluss } from "@jhnnsrs/fluss-next";
-import { NodeDescription } from "@jhnnsrs/rekuest";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { ClipboardIcon } from "@radix-ui/react-icons";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -91,7 +89,7 @@ export const DoForm = (props: { id: string }) => {
 };
 
 export const TemplateFlow = (props: { id: string }) => {
-  const { data } = withFluss(useFlowQuery)({
+  const { data } = useFlowQuery({
     variables: {
       id: props.id,
     },
@@ -101,7 +99,7 @@ export const TemplateFlow = (props: { id: string }) => {
 };
 
 export default asDetailQueryRoute(
-  withRekuest(useTemplateQuery),
+  useTemplateQuery,
   ({ data, refetch, subscribeToMore }) => {
     useEffect(() => {
       return subscribeToMore<

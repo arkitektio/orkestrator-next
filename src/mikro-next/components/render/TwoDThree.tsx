@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Form } from "@/components/ui/form";
-import { useUpload } from "@/datalayer/hooks/useUpload";
+import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import { cn } from "@/lib/utils";
 import {
   ColorMap,
@@ -19,7 +19,6 @@ import {
   useCreateRgbContextMutation,
   useUpdateRgbContextMutation,
 } from "@/mikro-next/api/graphql";
-import { withMikroNext } from "@jhnnsrs/mikro-next";
 import { OrbitControls, OrthographicCamera } from "@react-three/drei";
 import { Canvas, ThreeElements, useFrame } from "@react-three/fiber";
 import { Plus, X } from "lucide-react";
@@ -233,10 +232,10 @@ export const TwoDRGBThreeRenderDetail = ({
   className,
   follow = "width",
 }: RGBDProps) => {
-  const causeUpload = useUpload();
+  const causeUpload = useMediaUpload();
 
-  const [create, _] = withMikroNext(useCreateRgbContextMutation)();
-  const [update, _d] = withMikroNext(useUpdateRgbContextMutation)();
+  const [create, _] = useCreateRgbContextMutation();
+  const [update, _d] = useUpdateRgbContextMutation();
 
   const myform = useForm<ListRgbContextFragment>({
     defaultValues: context,

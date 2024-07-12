@@ -1,9 +1,9 @@
-import { useDatalayer } from "@jhnnsrs/datalayer";
+import { useResolve } from "@/datalayer/hooks/useResolve";
 import ReactPlayer from "react-player";
 import { VideoFragment } from "../../api/graphql";
 
 const VideoPanel = ({ video }: { video: VideoFragment }) => {
-  const { s3resolve } = useDatalayer();
+  const s3resolve = useResolve();
 
   return (
     <>

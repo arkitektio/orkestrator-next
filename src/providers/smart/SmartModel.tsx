@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Popover, PopoverContent } from "@/components/ui/popover";
 import { SMART_MODEL_DROP_TYPE } from "@/constants";
@@ -67,12 +66,7 @@ export const SmartModel = ({
         }
 
         let item = monitor.getItem() as Structure[] | null;
-        console.log(
-          "monitor",
-          props.identifier,
-          props.object,
-          monitor.isOver(),
-        );
+
         return {
           isOver: !!monitor.isOver(),
           overItems: [],
@@ -162,7 +156,6 @@ export const SmartModel = ({
             <Card className="border-2 absolute border-solid border-primary" />
           )}
           {props.children}
-          {isDragging && <Button>hallo</Button>}
         </PopoverAnchor>
       </Popover>
     </div>

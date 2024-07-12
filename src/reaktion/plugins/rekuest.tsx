@@ -9,7 +9,7 @@ import {
   ConstantNodeQuery,
   GraphNodeNodeFragment,
 } from "@/rekuest/api/graphql";
-import { portToDefaults } from "@jhnnsrs/rekuest-next";
+import { portToDefaults } from "@/rekuest/widgets/utils";
 import { v4 as uuidv4 } from "uuid";
 import { FlowNode } from "../types";
 

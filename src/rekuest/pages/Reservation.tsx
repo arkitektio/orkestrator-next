@@ -19,19 +19,6 @@ import {
   useDetailReservationQuery,
 } from "@/rekuest/api/graphql";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { EasyGuard } from "@jhnnsrs/arkitekt";
-import {
-  Port,
-  PortGroup,
-  RekuestGuard,
-  argDictToArgs,
-  portToDefaults,
-  useNodeDescription,
-  usePostman,
-  useWidgetRegistry,
-  withRekuest,
-  yupSchemaBuilder,
-} from "@jhnnsrs/rekuest-next";
 import { ClipboardIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -130,6 +117,7 @@ export const PortForm = (props: {
             registry={registry}
             ports={props.ports}
             groups={props.groups}
+            path={[]}
           />
         </form>
         <Button type="submit">Assign</Button>
@@ -139,7 +127,7 @@ export const PortForm = (props: {
 };
 
 export const Assigner = (props: { id: string }) => {
-  const { data } = withRekuest(useDetailReservationQuery)({
+  const { data } = useDetailReservationQuery({
     variables: {
       id: props.id,
     },
@@ -177,9 +165,9 @@ function Page() {
 }
 
 export default asDetailQueryRoute(
-  withRekuest(useDetailReservationQuery),
+  useDetailReservationQuery,
   ({ data, refetch }) => {
-    const [assign, _] = withRekuest(useAssignMutation)();
+    const [assign, _] = useAssignMutation();
 
     const navigate = useNavigate();
 

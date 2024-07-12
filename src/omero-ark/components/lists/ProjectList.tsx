@@ -1,13 +1,10 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { OmeroArkProject } from "@/linkers";
 import { useListProjectsQuery } from "@/omero-ark/api/graphql";
-import { withOmeroArk } from "@jhnnsrs/omero-ark";
 import ProjectCard from "../cards/ProjectCard";
 
 const List = () => {
-  const { data, error, subscribeToMore, refetch } = withOmeroArk(
-    useListProjectsQuery,
-  )({
+  const { data, error, subscribeToMore, refetch } = useListProjectsQuery({
     variables: {},
   });
 

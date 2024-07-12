@@ -1,3 +1,4 @@
+import { Config } from "@/lib/fluss/client";
 import {
   ApolloClient,
   ApolloLink,
@@ -7,10 +8,9 @@ import {
 } from "@apollo/client";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { getMainDefinition } from "@apollo/client/utilities";
-import { RekuestConfig } from "@jhnnsrs/rekuest";
 import { createClient } from "graphql-ws";
 
-export const createKabinetClient = (config: RekuestConfig) => {
+export const createKabinetClient = (config: Config) => {
   let token = config.retrieveToken();
 
   const httpLink = createHttpLink({

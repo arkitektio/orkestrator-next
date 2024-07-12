@@ -1,5 +1,5 @@
+import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokUser } from "@/linkers";
-import { useDatalayer } from "@jhnnsrs/datalayer";
 import { useState } from "react";
 import Timestamp from "react-timestamp";
 import { CommentEdit } from "../edit/CommentEdit";
@@ -41,7 +41,7 @@ export const renderDescendant = (x: DescendantType) => {
 
 export const Comment = ({ comment }: { comment: ListCommentType }) => {
   const [showReply, setShowReply] = useState(false);
-  const { s3resolve } = useDatalayer();
+  const s3resolve = useResolve();
   return (
     <>
       <div className="flex flex-row rounded rounded-md p-2 group">

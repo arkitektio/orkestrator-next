@@ -1,9 +1,9 @@
-import { Arkitekt } from "@/arkitekt";
+import { Arkitekt, Guard } from "@/arkitekt";
 import { CommandMenu } from "@/command/Menu";
 import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { ShadnWigets } from "@/components/widgets/ShadnWigets";
-import { manifest } from "@/constants";
+import { WELL_KNOWN_ENDPOINTS } from "@/constants";
+import { WellKnownDiscovery } from "@/lib/fakts";
 import { SystemMessageDisplay } from "@/lok-next/SystemMessage";
 import { MikroNextWard } from "@/mikro-next/MikroNextWard";
 import ImageDisplay from "@/mikro-next/displays/ImageDisplay";
@@ -11,34 +11,52 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import { CommandProvider } from "@/providers/command/CommandProvider";
 import { DebugProvider } from "@/providers/debug/DebugProvider";
 import { DisplayProvider } from "@/providers/display/DisplayProvider";
-import { RequesterProvider } from "@/providers/requester/RequesterProvider";
-import { ReserverProvider } from "@/providers/reserver/ReserverProvider";
 import { SelectionProvider } from "@/providers/selection/SelectionProvider";
 import { SmartProvider } from "@/providers/smart/provider";
 import { FlussWard } from "@/reaktion/FlussWard";
+import { RekuestNextWard } from "@/rekuest/RekuestNextWard";
 import NodeDisplay from "@/rekuest/components/displays/NodeDisplay";
 import { AssignationUpdater } from "@/rekuest/components/functional/AssignationUpdater";
 import { ReservationUpdater } from "@/rekuest/components/functional/ReservationUpdater";
-import { ReserveResolver } from "@/rekuest/components/global/ReserverResolver";
 import { WidgetRegistryProvider } from "@/rekuest/widgets/WidgetsProvider";
-import { EasyProvider } from "@jhnnsrs/arkitekt";
-import { FlussGuard, FlussProvider } from "@jhnnsrs/fluss-next";
-import { LokNextGuard, LokNextProvider } from "@jhnnsrs/lok-next";
-import { MikroNextGuard, MikroNextProvider } from "@jhnnsrs/mikro-next";
-import { OmeroArkProvider } from "@jhnnsrs/omero-ark";
-import { PortProvider } from "@jhnnsrs/port-next";
-import {
-  PostmanProvider,
-  RekuestGuard,
-  RekuestProvider,
-} from "@jhnnsrs/rekuest-next";
-import { BrowserRouter } from "react-router-dom";
-import { AppConfiguration } from "./AppConfiguration";
-import { RekuestNextWard } from "@/rekuest/RekuestNextWard";
+import { ErrorBoundary, FallbackProps } from "react-error-boundary";
+import { BrowserRouter, useNavigate } from "react-router-dom";
 
 const displayRegistry = {
   "@mikro-next/image": ImageDisplay,
   "@rekuest/node": NodeDisplay,
+};
+
+function fallbackRender({ error, resetErrorBoundary }: FallbackProps) {
+  // Call resetErrorBoundary() to reset the error boundary and retry the render.
+
+  return (
+    <div role="alert">
+      <p>Something went wrong:</p>
+      <pre style={{ color: "red" }}>{error.message}</pre>
+      <button onClick={resetErrorBoundary}>Go back again</button>
+    </div>
+  );
+}
+
+export const BackNavigationErrorCatcher = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  const navigate = useNavigate();
+
+  return (
+    <ErrorBoundary
+      fallbackRender={fallbackRender}
+      onReset={() => {
+        console.log("Resetting error boundary");
+        navigate(-1);
+      }}
+    >
+      {children}
+    </ErrorBoundary>
+  );
 };
 
 // The AppProvider is the root component of the application.
@@ -48,68 +66,51 @@ const displayRegistry = {
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <DebugProvider>
-      <EasyProvider manifest={manifest}>
-        <Arkitekt.Provider manifest={manifest}>
-          <DisplayProvider registry={displayRegistry}>
-            <SelectionProvider>
-              <CommandProvider>
-                <SmartProvider>
-                  <RekuestProvider>
-                    <FlussProvider>
-                      <PortProvider>
-                        <MikroNextProvider>
-                          <OmeroArkProvider>
-                            <LokNextProvider>
-                              <WidgetRegistryProvider>
-                                <Toaster />
-                                <CommandMenu />
-                                <PostmanProvider>
-                                  <RekuestGuard fallback={<></>}>
-                                    {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
-                                    <AssignationUpdater />
-                                    <ReservationUpdater />
-                                    {/* We register the Shadn powered widgets to the widget registry. */}
-                                    <RekuestNextWard />
-                                    <ShadnWigets />
-                                  </RekuestGuard>
-                                  <MikroNextGuard fallback={<></>}>
-                                    <MikroNextWard key="mikro" />
-                                  </MikroNextGuard>
-                                  <FlussGuard fallback={<></>}>
-                                    <FlussWard key="fluss" />
-                                  </FlussGuard>
-                                  <ThemeProvider
-                                    defaultTheme="dark"
-                                    storageKey="vite-ui-theme"
-                                  >
-                                    <RequesterProvider>
-                                      <ReserverProvider>
-                                        <ReserveResolver />
-                                        <AppConfiguration />{" "}
-                                        {/* This is where we configure the application automatically based on facts */}
-                                        <BrowserRouter>
-                                          {children}
-                                        </BrowserRouter>
-                                      </ReserverProvider>
-                                    </RequesterProvider>
-                                  </ThemeProvider>
-                                </PostmanProvider>
-                              </WidgetRegistryProvider>
-                              <LokNextGuard fallback={<></>}>
-                                <SystemMessageDisplay />
-                              </LokNextGuard>
-                            </LokNextProvider>
-                          </OmeroArkProvider>
-                        </MikroNextProvider>
-                      </PortProvider>
-                    </FlussProvider>
-                  </RekuestProvider>
-                </SmartProvider>
-              </CommandProvider>
-            </SelectionProvider>
-          </DisplayProvider>
-        </Arkitekt.Provider>
-      </EasyProvider>
+      <BrowserRouter>
+        <BackNavigationErrorCatcher>
+          <Arkitekt.Provider>
+            <DisplayProvider registry={displayRegistry}>
+              <WellKnownDiscovery
+                endpoints={WELL_KNOWN_ENDPOINTS} // this configures fakts to use the well known endpoints in order to discover the other services
+              />
+              <SelectionProvider>
+                <CommandProvider>
+                  <SmartProvider>
+                    <WidgetRegistryProvider>
+                      <Toaster />
+                      <CommandMenu />
+                      <Guard.Rekuest fallback={<></>}>
+                        {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
+                        <AssignationUpdater />
+                        <ReservationUpdater />
+                        {/* We register the Shadn powered widgets to the widget registry. */}
+                        <RekuestNextWard />
+                        <ShadnWigets />
+                      </Guard.Rekuest>
+                      <Guard.Mikro fallback={<></>}>
+                        <MikroNextWard key="mikro" />
+                      </Guard.Mikro>
+                      <Guard.Fluss fallback={<></>}>
+                        <FlussWard key="fluss" />
+                      </Guard.Fluss>
+                      <ThemeProvider
+                        defaultTheme="dark"
+                        storageKey="vite-ui-theme"
+                      >
+                        {/* This is where we configure the application automatically based on facts */}
+                        {children}
+                      </ThemeProvider>
+                    </WidgetRegistryProvider>
+                    <Guard.Lok fallback={<></>}>
+                      <SystemMessageDisplay />
+                    </Guard.Lok>
+                  </SmartProvider>
+                </CommandProvider>
+              </SelectionProvider>
+            </DisplayProvider>
+          </Arkitekt.Provider>
+        </BackNavigationErrorCatcher>
+      </BrowserRouter>
     </DebugProvider>
   );
 };

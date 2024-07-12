@@ -4,12 +4,11 @@ import { Button } from "@/components/ui/button";
 import { DialogFooter, DialogHeader } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useCreateWorkspaceMutation } from "@/reaktion/api/graphql";
-import { withFluss } from "@jhnnsrs/fluss";
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { useForm } from "react-hook-form";
 
 export const CreateWorkspaceForm = (props: {}) => {
-  const [add] = withFluss(useCreateWorkspaceMutation)();
+  const [add] = useCreateWorkspaceMutation();
 
   const dialog = useGraphQlFormDialog(add);
 

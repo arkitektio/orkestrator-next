@@ -8,7 +8,6 @@ import {
   useActivateMutation,
   useDeactivateMutation,
 } from "@/rekuest/api/graphql";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
 
 interface Props {
   item: ListProvisionFragment;
@@ -18,8 +17,8 @@ interface Props {
 const TheCard = ({ item, mates }: Props) => {
   const requestMate = useRequestMate();
 
-  const [activate] = withRekuest(useActivateMutation)();
-  const [deactive] = withRekuest(useDeactivateMutation)();
+  const [activate] = useActivateMutation();
+  const [deactive] = useDeactivateMutation();
 
   return (
     <RekuestProvision.Smart object={item?.id} mates={[requestMate]}>

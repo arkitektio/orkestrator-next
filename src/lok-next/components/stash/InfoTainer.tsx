@@ -1,8 +1,7 @@
-import { useGetDatasetQuery, useGetImageQuery } from "@/mikro-next/api/graphql";
-import { withMikroNext } from "@jhnnsrs/mikro-next";
+import { useGetDatasetQuery } from "@/mikro-next/api/graphql";
 
 export const ImageRender = (props: { object: string }) => {
-  const { data } = withMikroNext(useGetImageQuery)({
+  const { data } = useGetImageQuery({
     variables: {
       id: props.object,
     },
@@ -12,7 +11,7 @@ export const ImageRender = (props: { object: string }) => {
 };
 
 export const DatasetRender = (props: { object: string }) => {
-  const { data } = withMikroNext(useGetDatasetQuery)({
+  const { data } = useGetDatasetQuery({
     variables: {
       id: props.object,
     },

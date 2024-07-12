@@ -1,11 +1,10 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { useFlowQuery, useGetRunQuery } from "@/reaktion/api/graphql";
 import { EditFlow } from "@/reaktion/edit/EditFlow";
-import { withFluss } from "@jhnnsrs/fluss";
 import { TrackFlow } from "../track/TrackFlow";
 
 export const FlowDetail = (props: { id: string }) => {
-  const { data, error } = withFluss(useFlowQuery)({
+  const { data, error } = useFlowQuery({
     variables: {
       id: props.id,
     },
@@ -16,14 +15,10 @@ export const FlowDetail = (props: { id: string }) => {
   return <>{data?.flow && <EditFlow flow={data.flow} />}</>;
 };
 
-export default asDetailQueryRoute(
-  withFluss(useGetRunQuery),
-  ({ data, refetch }) => {
-
+export default asDetailQueryRoute(useGetRunQuery, ({ data, refetch }) => {
   return (
     <>
-      <TrackFlow assignation={{id: data.run.assignation}} />
+      <TrackFlow assignation={{ id: data.run.assignation }} />
     </>
   );
 });
-

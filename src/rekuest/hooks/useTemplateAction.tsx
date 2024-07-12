@@ -1,19 +1,16 @@
 import { useSettings } from "@/providers/settings/SettingsContext";
+import { useCallback } from "react";
 import {
   AssignInput,
-  AssignNodeQuery,
   AssignationEventKind,
   DetailTemplateFragment,
   PostmanAssignationFragment,
   ReserveMutationVariables,
   useAssignMutation,
-  useAssignNodeQuery,
   useAssignationsQuery,
   useCancelMutation,
   useTemplateQuery,
 } from "../api/graphql";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
-import { useCallback } from "react";
 
 export type ActionReserveVariables = Omit<
   ReserveMutationVariables,
@@ -41,20 +38,20 @@ export const useTemplateAction = <T extends any>(
 ): UseTemplateActionReturn<T> => {
   const { settings } = useSettings();
 
-  const { data } = withRekuest(useTemplateQuery)({
+  const { data } = useTemplateQuery({
     variables: {
       ...options,
     },
   });
 
-  const { data: assignations_data } = withRekuest(useAssignationsQuery)({
+  const { data: assignations_data } = useAssignationsQuery({
     variables: {
       instanceId: settings.instanceId,
     },
   });
 
-  const [postAssign] = withRekuest(useAssignMutation)({});
-  const [cancelAssign] = withRekuest(useCancelMutation)({});
+  const [postAssign] = useAssignMutation({});
+  const [cancelAssign] = useCancelMutation({});
 
   let assignations = assignations_data?.assignations.filter(
     (x) => x.template?.id == data?.template.id,

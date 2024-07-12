@@ -3,12 +3,11 @@ import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { withMikroNext } from "@jhnnsrs/mikro-next";
 import { useForm } from "react-hook-form";
 import { StageFragment, useUpdateImageMutation } from "../api/graphql";
 
 export const UpdateStageForm = (props: { stage: StageFragment }) => {
-  const [add] = withMikroNext(useUpdateImageMutation)();
+  const [add] = useUpdateImageMutation();
 
   const dialog = useGraphQlFormDialog(add);
 

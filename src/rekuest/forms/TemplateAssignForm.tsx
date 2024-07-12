@@ -2,8 +2,8 @@ import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
+import { useNodeDescription } from "@/lib/rekuest/NodeDescription";
 import { ApolloError } from "@apollo/client";
-import { useNodeDescription } from "@jhnnsrs/rekuest-next";
 import { toast } from "sonner";
 import { usePortForm } from "../hooks/usePortForm";
 import { useTemplateAction } from "../hooks/useTemplateAction";
@@ -14,7 +14,9 @@ export const TemplateAssignForm = (props: { id: string }) => {
     id: props.id,
   });
 
-  const description = useNodeDescription({ description: template?.node.description || ""});
+  const description = useNodeDescription({
+    description: template?.node.description || "",
+  });
 
   const form = usePortForm({
     ports: template?.node.args || [],
@@ -29,8 +31,7 @@ export const TemplateAssignForm = (props: { id: string }) => {
         args: data,
         hooks: [],
       });
-    }
-    catch (e) {
+    } catch (e) {
       let message = (e as ApolloError).message;
       if (!message) {
         toast.error("No key found");
@@ -44,8 +45,10 @@ export const TemplateAssignForm = (props: { id: string }) => {
 
   return (
     <>
-      <h1 className="text-lg font-semibold mb-1">{template?.node.name} <p className="text-muted-foreground text-xs">@ {template?.interface}</p></h1>
-      
+      <h1 className="text-lg font-semibold mb-1">
+        {template?.node.name}{" "}
+        <p className="text-muted-foreground text-xs">@ {template?.interface}</p>
+      </h1>
 
       <p className="text-mutated">{description}</p>
       <Form {...form}>

@@ -1,8 +1,8 @@
-import { Orkestrator } from "@/root";
+import { Arkitekt } from "@/arkitekt";
 import { NavLink } from "react-router-dom";
 
 export const NotFound = () => {
-  const { user } = Orkestrator.useLogin();
+  const { user } = Arkitekt.useLogin();
 
   return (
     <div className="flex flex-col w-full h-full flex items-center justify-center">

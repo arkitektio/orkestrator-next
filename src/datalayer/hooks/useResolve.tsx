@@ -1,4 +1,4 @@
-import { useFakts } from "@jhnnsrs/fakts";
+import { Arkitekt } from "@/arkitekt";
 import { useCallback } from "react";
 
 const s3resolveWithEndpoint = (endpointUrl: string, key: string) => {
@@ -16,7 +16,7 @@ const s3resolveWithEndpoint = (endpointUrl: string, key: string) => {
 };
 
 export const useResolve = () => {
-  const { fakts } = useFakts();
+  const fakts = Arkitekt.useFakts();
 
   const s3resolve = useCallback(
     (key: string) => {

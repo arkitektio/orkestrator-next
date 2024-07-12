@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/pane";
 import { MikroDataset } from "@/linkers";
 import { Komments } from "@/lok-next/components/komments/Komments";
-import { withOmeroArk } from "@jhnnsrs/omero-ark";
 import React from "react";
 import { useParams } from "react-router";
 import { useGetProjectQuery } from "../api/graphql";
@@ -19,12 +18,13 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   const { id } = useParams<{ id: string }>();
   if (!id) return <></>;
 
-  const { data } = withOmeroArk(useGetProjectQuery)({
+  const { data } = useGetProjectQuery({
     variables: { id },
   });
 
   return (
     <PageLayout
+      title={data?.project?.name}
       actions={<MikroDataset.Actions id={id} />}
       sidebars={<Komments identifier="@omero-ark/project" object={id} />}
     >

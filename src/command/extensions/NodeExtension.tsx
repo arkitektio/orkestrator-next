@@ -3,7 +3,6 @@ import {
   ListNodeFragment,
   useNodeSearchLazyQuery,
 } from "@/rekuest/api/graphql";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { useEffect, useState } from "react";
 import { useExtension } from "../ExtensionContext";
 
@@ -12,7 +11,7 @@ export const NodeExtensions = () => {
 
   const [nodes, setNodes] = useState<ListNodeFragment[]>([]);
 
-  const [searchNodes] = withRekuest(useNodeSearchLazyQuery)();
+  const [searchNodes] = useNodeSearchLazyQuery();
 
   useEffect(() => {
     if (

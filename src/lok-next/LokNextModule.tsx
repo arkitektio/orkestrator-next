@@ -1,5 +1,5 @@
+import { Guard } from "@/arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
-import { LokNextGuard } from "@jhnnsrs/lok-next";
 import React from "react";
 import { Route, Routes } from "react-router";
 import ClientPage from "./pages/ClientPage";
@@ -11,7 +11,7 @@ interface Props {}
 
 export const LokNextModule: React.FC<Props> = (props) => {
   return (
-    <LokNextGuard fallback={<>Loading</>}>
+    <Guard.Lok fallback={<>Loading</>}>
       <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route path="users/:id" element={<UserPage />} />
@@ -20,7 +20,7 @@ export const LokNextModule: React.FC<Props> = (props) => {
           <Route path="*" element={<HomePage />} />
         </Routes>
       </ModuleLayout>
-    </LokNextGuard>
+    </Guard.Lok>
   );
 };
 

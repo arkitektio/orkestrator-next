@@ -1,6 +1,5 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { MikroStage } from "@/linkers";
-import { withMikroNext } from "@jhnnsrs/mikro-next";
 import {
   DatasetFilter,
   OffsetPaginationInput,
@@ -14,9 +13,8 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = withMikroNext(
-    useGetStagesQuery,
-  )({
+  const { data, error, subscribeToMore, refetch } = useGetStagesQuery;
+  ({
     variables: { filters, pagination },
   });
 

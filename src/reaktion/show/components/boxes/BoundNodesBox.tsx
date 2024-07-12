@@ -5,7 +5,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useClientsQuery } from "@/rekuest/api/graphql";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { Ban, CheckCheck, HelpCircle } from "lucide-react";
 import { useMemo } from "react";
 import { FlowNode } from "../../../types";
@@ -16,7 +15,7 @@ export const BoundNodesBox = (props: { nodes: FlowNode[] }) => {
     [props.nodes],
   );
 
-  const { data, error } = withRekuest(useClientsQuery)({
+  const { data, error } = useClientsQuery({
     variables: {
       filters: {
         hasTemplatesFor: hashes,

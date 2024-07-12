@@ -1,12 +1,12 @@
+import { useService } from "@/arkitekt/hooks";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { gql } from "@apollo/client";
-import { useRekuest } from "@jhnnsrs/rekuest-next";
 import { useEffect } from "react";
 
 export const RekuestNextWard: React.FC<{
   fallback?: React.ReactNode;
 }> = ({ key, fallback }) => {
-  const { client } = useRekuest();
+  const client = useService("rekuest");
   const { registry } = useWidgetRegistry();
 
   useEffect(() => {

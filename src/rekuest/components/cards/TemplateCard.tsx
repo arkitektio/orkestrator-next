@@ -15,7 +15,6 @@ import {
 } from "@/rekuest/api/graphql";
 import { TemplateActionButton } from "@/rekuest/buttons/TemplateActionButton";
 import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
 
 interface Props {
   item: ListTemplateFragment;
@@ -24,25 +23,27 @@ interface Props {
 
 const TheCard = ({ item, mates }: Props) => {
   const reserveMate = useReserveMate();
-  const [deleteTemplate, _] = withRekuest(useDeleteTemplateMutation)({
+  const [deleteTemplate, _] = useDeleteTemplateMutation({
     variables: {
       id: item.id,
     },
   });
 
   const progress = useAssignProgress({
-    assignedTemplate: item.id
+    assignedTemplate: item.id,
   });
-
 
   return (
     <RekuestTemplate.Smart object={item?.id} mates={[reserveMate]}>
-      <Card className="group" style={{
-        backgroundSize: `${progress?.progress || 0}% 100%`,
-        backgroundImage: `linear-gradient(to right, #10b981 ${progress?.progress}%, #10b981 ${progress?.progress}%)`,
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "left center",
-      }} >
+      <Card
+        className="group"
+        style={{
+          backgroundSize: `${progress?.progress || 0}% 100%`,
+          backgroundImage: `linear-gradient(to right, #10b981 ${progress?.progress}%, #10b981 ${progress?.progress}%)`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "left center",
+        }}
+      >
         <CardHeader className="flex flex-row justify-between">
           <div>
             <p className="text-xs text-gray-500">{item.interface}</p>

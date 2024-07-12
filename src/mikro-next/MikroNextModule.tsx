@@ -1,5 +1,5 @@
+import { Guard } from "@/arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
-import { MikroNextGuard } from "@jhnnsrs/mikro-next";
 import React from "react";
 import { Route, Routes } from "react-router";
 import DatasetPage from "./pages/DatasetPage";
@@ -16,7 +16,7 @@ interface Props {}
 
 export const MikroNextModule: React.FC<Props> = (props) => {
   return (
-    <MikroNextGuard fallback={<>Loading</>}>
+    <Guard.Mikro fallback={<>Loading</>}>
       <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route index element={<HomePage />} />
@@ -31,7 +31,7 @@ export const MikroNextModule: React.FC<Props> = (props) => {
           <Route path="*" element={<> NOTHING</>} />
         </Routes>
       </ModuleLayout>
-    </MikroNextGuard>
+    </Guard.Mikro>
   );
 };
 

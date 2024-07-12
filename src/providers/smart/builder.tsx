@@ -4,9 +4,11 @@ import {
 } from "@/components/layout/ModelPageLayout";
 import { Komments } from "@/lok-next/components/komments/Komments";
 import { usePrimaryNodesQuery } from "@/rekuest/api/graphql";
-import { ObjectButton, ObjectButtonProps } from "@/rekuest/buttons/ObjectButton";
+import {
+  ObjectButton,
+  ObjectButtonProps,
+} from "@/rekuest/buttons/ObjectButton";
 import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { NavLink } from "react-router-dom";
 import { SmartModel } from "./SmartModel";
 import {
@@ -82,12 +84,11 @@ const buildModelPage = (model: Identifier) => {
 };
 
 const buildUseNodesQuery = (model: Identifier) => {
-  return withRekuest(usePrimaryNodesQuery)({
+  return usePrimaryNodesQuery({
     variables: {
       identifier: model,
     },
   });
-  
 };
 
 const buildUseProgress = (model: Identifier, object: string) => {
@@ -95,9 +96,7 @@ const buildUseProgress = (model: Identifier, object: string) => {
     identifier: model,
     object: object,
   });
-  
 };
-
 
 export type SmartObjectButtonProps = Omit<ObjectButtonProps, "identifier">;
 
@@ -105,7 +104,7 @@ const buildObjectButton = (model: Identifier) => {
   return ({ ...props }: SmartObjectButtonProps) => {
     return <ObjectButton identifier={model} object={props.object} />;
   };
-}
+};
 
 export const buildSmart = (model: Identifier, to: string) => {
   return {
@@ -119,7 +118,8 @@ export const buildSmart = (model: Identifier, to: string) => {
     ModelPage: buildModelPage(model),
     useNodes: () => buildUseNodesQuery(model),
     ObjectButton: buildObjectButton(model),
-    useProgress: ({object}: {object: string}) => buildUseProgress(model, object),
+    useProgress: ({ object }: { object: string }) =>
+      buildUseProgress(model, object),
   };
 };
 

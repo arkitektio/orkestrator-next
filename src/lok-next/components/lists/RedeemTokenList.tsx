@@ -6,7 +6,6 @@ import {
   RedeemTokenFilter,
   useRedeemTokensQuery,
 } from "@/lok-next/api/graphql";
-import { withLokNext } from "@jhnnsrs/lok-next";
 import RedeemTokenCard from "../cards/RedeemTokenCard";
 
 export type Props = {
@@ -15,9 +14,7 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = withLokNext(
-    useRedeemTokensQuery,
-  )({
+  const { data, error, subscribeToMore, refetch } = useRedeemTokensQuery({
     variables: { filters, pagination },
   });
 

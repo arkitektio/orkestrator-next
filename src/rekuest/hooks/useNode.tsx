@@ -1,5 +1,4 @@
 import { useSettings } from "@/providers/settings/SettingsContext";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { useCallback } from "react";
 import {
   PostmanReservationFragment,
@@ -13,14 +12,14 @@ export const useUsage = (options: {
   template?: string;
 }): [PostmanReservationFragment | undefined, () => void] => {
   const { settings } = useSettings();
-  const { data } = withRekuest(useReservationsQuery)({
+  const { data } = useReservationsQuery({
     variables: {
       instanceId: settings.instanceId,
     },
   });
 
-  const [reserve, _] = withRekuest(useReserveMutation)();
-  const [unreserve, __] = withRekuest(useUnreserveMutation)();
+  const [reserve, _] = useReserveMutation();
+  const [unreserve, __] = useUnreserveMutation();
 
   const isUsed = data?.reservations.find((r) => r.node.hash == options.hash);
 

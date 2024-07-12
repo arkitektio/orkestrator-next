@@ -1,11 +1,10 @@
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { useReservationsQuery } from "@/rekuest/api/graphql";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
 import { FilteredCommands } from "../components/FilteredCommands";
 
 export const ReservationExtensions = () => {
   const { settings } = useSettings();
-  const { data } = withRekuest(useReservationsQuery)({
+  const { data } = useReservationsQuery({
     variables: {
       instanceId: settings.instanceId,
     },

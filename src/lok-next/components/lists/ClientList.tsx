@@ -6,7 +6,6 @@ import {
   OffsetPaginationInput,
   useClientsQuery,
 } from "@/lok-next/api/graphql";
-import { withLokNext } from "@jhnnsrs/lok-next";
 import ClientCard from "../cards/ClientCard";
 
 export type Props = {
@@ -15,9 +14,7 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = withLokNext(
-    useClientsQuery,
-  )({
+  const { data, error, subscribeToMore, refetch } = useClientsQuery({
     variables: { filters, pagination },
   });
 

@@ -1,5 +1,4 @@
-import { useFakts } from "@jhnnsrs/fakts";
-import { useHerre } from "@jhnnsrs/herre";
+import { Arkitekt } from "@/arkitekt";
 import React from "react";
 
 type ImageWithAuthProps = {
@@ -14,8 +13,8 @@ const apiUrlFromImageID = (id: string, fakts: any) => {
 };
 
 const AuthorizedImage: React.FC<ImageWithAuthProps> = (props) => {
-  const { fakts } = useFakts();
-  const { token } = useHerre();
+  const fakts = Arkitekt.useFakts();
+  const token = Arkitekt.useToken();
 
   // Components refs
   const img: React.Ref<HTMLImageElement> = React.createRef();

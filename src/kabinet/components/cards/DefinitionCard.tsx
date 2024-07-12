@@ -5,8 +5,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { NodeDescription } from "@/lib/rekuest/NodeDescription";
 import { KabinetDefinition } from "@/linkers";
-import { NodeDescription } from "@jhnnsrs/rekuest";
 import { MateFinder } from "../../../mates/types";
 import { ListDefinitionFragment } from "../../api/graphql";
 

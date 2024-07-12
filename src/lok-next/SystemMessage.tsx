@@ -1,13 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { withLokNext } from "@jhnnsrs/lok-next";
 import {
   useAcknowledgeMessageMutation,
   useMyActiveMessagesQuery,
 } from "./api/graphql";
 
 export const SystemMessageDisplay = (props: {}) => {
-  const { data, error } = withLokNext(useMyActiveMessagesQuery)();
-  const [ack] = withLokNext(useAcknowledgeMessageMutation)({
+  const { data, error } = useMyActiveMessagesQuery();
+  const [ack] = useAcknowledgeMessageMutation({
     refetchQueries: ["MyActiveMessages"],
   });
 

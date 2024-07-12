@@ -1,10 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { RekuestTemplate } from "@/linkers";
 import { FlowFragment } from "@/reaktion/api/graphql";
 import { flowToDefinition, flowToDependencies } from "@/reaktion/utils";
@@ -14,8 +9,6 @@ import {
   useCreateForeignTemplateMutation,
   useTemplateAtQuery,
 } from "@/rekuest/api/graphql";
-import { withRekuest } from "@jhnnsrs/rekuest-next";
-import { set } from "date-fns";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -23,7 +16,7 @@ export const DeployButton = (props: {
   flow: FlowFragment;
   agent: ListAgentFragment;
 }) => {
-  const { data } = withRekuest(useTemplateAtQuery)({
+  const { data } = useTemplateAtQuery({
     variables: {
       agent: props.agent.id,
       extension: "reaktion",
@@ -31,7 +24,7 @@ export const DeployButton = (props: {
     },
   });
 
-  const [deploy, tdata] = withRekuest(useCreateForeignTemplateMutation)({
+  const [deploy, tdata] = useCreateForeignTemplateMutation({
     variables: {
       input: {
         agent: props.agent.id,
@@ -89,7 +82,7 @@ export const DeployButton = (props: {
 };
 
 export const DeployPane = (props: { flow: FlowFragment }) => {
-  const { data } = withRekuest(useAgentsQuery)({
+  const { data } = useAgentsQuery({
     variables: {
       filters: {
         extensions: ["reaktion"],

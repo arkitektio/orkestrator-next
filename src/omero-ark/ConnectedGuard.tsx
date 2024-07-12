@@ -1,9 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { withOmeroArk } from "@jhnnsrs/omero-ark";
 import { useEnsureOmeroUserMutation, useMeQuery } from "./api/graphql";
 
 export const EnsureMeButton = () => {
-  const [setMe, data] = withOmeroArk(useEnsureOmeroUserMutation)({
+  const [setMe, data] = useEnsureOmeroUserMutation({
     refetchQueries: ["me"],
   });
 
@@ -20,7 +19,7 @@ export const EnsureMeButton = () => {
 };
 
 export const ConnectedGuard = ({ children }: { children: React.ReactNode }) => {
-  const { data, errors } = withOmeroArk(useMeQuery)();
+  const { data, errors } = useMeQuery();
 
   if (errors) {
     return <> Couldn't request user data. </>;

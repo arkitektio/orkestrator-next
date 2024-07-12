@@ -13,6 +13,7 @@ generates:
     config:
       withHooks: true
       reactApolloVersion: 3
+      apolloReactHooksImportFrom: "@/lib/fluss/hooks"
   src/reaktion/graphql.schema.json:
     plugins:
       - "introspection"

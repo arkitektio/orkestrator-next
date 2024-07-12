@@ -1,8 +1,7 @@
+import { Arkitekt } from "@/arkitekt";
 import { OmeroArkImage } from "@/linkers";
 import { MateFinder } from "@/mates/types";
 import { ListImageFragment } from "@/omero-ark/api/graphql";
-import { useFakts } from "@jhnnsrs/fakts";
-import { useHerre } from "@jhnnsrs/herre";
 import React from "react";
 
 interface Props {
@@ -18,8 +17,8 @@ const apiUrlFromImageID = (id: string, fakts: any) => {
 };
 
 const Card = ({ image, mates }: Props) => {
-  const { fakts } = useFakts();
-  const { token } = useHerre();
+  const fakts = Arkitekt.useFakts();
+  const token = Arkitekt.useToken();
 
   // Components refs
   const ref: React.Ref<HTMLImageElement> = React.createRef();

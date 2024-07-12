@@ -1,5 +1,5 @@
+import { useService } from "@/arkitekt/hooks";
 import { useSettings } from "@/providers/settings/SettingsContext";
-import { useRekuest } from "@jhnnsrs/rekuest-next";
 import { useEffect } from "react";
 import {
   PostmanReservationFragmentDoc,
@@ -15,7 +15,7 @@ import {
 
 export const ReservationUpdater = (props: {}) => {
   const { settings } = useSettings();
-  const { client } = useRekuest();
+  const client = useService("rekuest");
 
   useEffect(() => {
     if (client) {

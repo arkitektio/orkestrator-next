@@ -1,6 +1,6 @@
+import { useService } from "@/arkitekt/hooks";
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { useAssignations } from "@/rekuest/hooks/useAssignations";
-import { useRekuest } from "@jhnnsrs/rekuest-next";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import {
@@ -10,9 +10,6 @@ import {
   WatchAssignationsDocument,
   WatchAssignationsSubscription,
 } from "../../api/graphql";
-import { RekuestAssignation } from "@/linkers";
-import { NavLink } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
 
 export const AssignationToaster = (props: { id: string }) => {
   const { data } = useAssignations();
@@ -33,7 +30,7 @@ export const AssignationToaster = (props: { id: string }) => {
 
 export const AssignationUpdater = (props: {}) => {
   const { settings } = useSettings();
-  const { client } = useRekuest();
+  const client = useService("rekuest");
   useEffect(() => {
     if (client) {
       console.log("Subscribing to Postman Assignation");

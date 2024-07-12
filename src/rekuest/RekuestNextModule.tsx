@@ -1,5 +1,5 @@
+import { Guard } from "@/arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
-import { RekuestGuard } from "@jhnnsrs/rekuest-next";
 import React from "react";
 import { Route, Routes } from "react-router";
 import Agent from "./pages/Agent";
@@ -22,7 +22,7 @@ interface Props {}
  */
 const Module: React.FC<Props> = () => {
   return (
-    <RekuestGuard fallback={<>Loading</>} key={"rekuest"}>
+    <Guard.Rekuest fallback={<>Loading</>} key={"rekuest"}>
       <ModuleLayout pane={<Standardpane />}>
         <Routes>
           <Route index element={<Home />} />
@@ -37,7 +37,7 @@ const Module: React.FC<Props> = () => {
           <Route path="assignations/:id" element={<Assignation />} />
         </Routes>
       </ModuleLayout>
-    </RekuestGuard>
+    </Guard.Rekuest>
   );
 };
 

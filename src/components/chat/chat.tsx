@@ -2,7 +2,6 @@ import {
   DetailRoomFragment,
   useSendMessageMutation,
 } from "@/lok-next/api/graphql";
-import { withLokNext } from "@jhnnsrs/lok-next";
 import { ChatList } from "./chat-list";
 import { Message, UserData } from "./data";
 
@@ -14,7 +13,7 @@ interface ChatProps {
 }
 
 export function Chat({ messages, selectedUser, isMobile, room }: ChatProps) {
-  const [send] = withLokNext(useSendMessageMutation)({
+  const [send] = useSendMessageMutation({
     refetchQueries: ["DetailRoom"],
   });
 

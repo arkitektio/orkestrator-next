@@ -3,7 +3,6 @@ import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateab
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { withMikroNext } from "@jhnnsrs/mikro-next";
 import { useForm } from "react-hook-form";
 import {
   useAutoCreateFluorophoreMutation,
@@ -12,10 +11,10 @@ import {
 } from "../api/graphql";
 
 export const AddLabelViewForm = (props: { image: string }) => {
-  const [add] = withMikroNext(useCreateLabelViewMutation)();
+  const [add] = useCreateLabelViewMutation();
 
-  const [searchFluorophoes] = withMikroNext(useFluorophoreOptionsLazyQuery)();
-  const [createFluorophore] = withMikroNext(useAutoCreateFluorophoreMutation)();
+  const [searchFluorophoes] = useFluorophoreOptionsLazyQuery();
+  const [createFluorophore] = useAutoCreateFluorophoreMutation();
 
   const dialog = useGraphQlFormDialog(add);
 

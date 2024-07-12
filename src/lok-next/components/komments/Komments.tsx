@@ -5,17 +5,16 @@ import {
   useCommentsForQuery,
   useCreateCommentMutation,
 } from "@/lok-next/api/graphql";
-import { withLokNext } from "@jhnnsrs/lok-next";
 import { CommentList } from "./display/CommentList";
 import { CommentEdit } from "./edit/CommentEdit";
 import { KommentProps } from "./types";
 
 export const Komments = ({ identifier, object }: KommentProps) => {
-  const { data } = withLokNext(useCommentsForQuery)({
+  const { data } = useCommentsForQuery({
     variables: { identifier, object },
   });
 
-  const [createComment] = withLokNext(useCreateCommentMutation)({
+  const [createComment] = useCreateCommentMutation({
     update(cache, result) {
       cache.updateQuery<CommentsForQuery>(
         {

@@ -5,27 +5,12 @@ import { KabinetBackend } from "@/linkers";
 import { CubeIcon } from "@radix-ui/react-icons";
 import { Home, ShoppingCart } from "lucide-react";
 import React from "react";
-import { FaDocker } from "react-icons/fa";
 import { useGlobalSearchQuery, useListBackendsQuery } from "../api/graphql";
 import DefinitionCard from "../components/cards/DefinitionCard";
+import { IconForBackendKind } from "../components/IconForBackendKind";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
 
 interface IDataSidebarProps {}
-
-const IconForType = ({
-  kind,
-  ...props
-}: {
-  kind: string;
-  className?: string;
-}) => {
-  switch (kind) {
-    case "docker":
-      return <FaDocker {...props} />;
-    default:
-      return <CubeIcon {...props} />;
-  }
-};
 
 export const NavigationPane = (props: {}) => {
   const { data, refetch, variables } = useListBackendsQuery();
@@ -75,7 +60,7 @@ export const NavigationPane = (props: {}) => {
               key={index}
               className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
             >
-              <IconForType kind={backend.kind} className="h-4 w-4" />
+              <IconForBackendKind kind={backend.kind} className="h-4 w-4" />
               {backend.name}
             </KabinetBackend.DetailLink>
           ))}

@@ -1,6 +1,7 @@
 import { GraphInput, useRunForAssignationQuery } from "@/reaktion/api/graphql";
 import { AnimatePresence } from "framer-motion";
 import React, { useRef, useState } from "react";
+import { useNodesState } from "reactflow";
 import { Graph } from "../base/Graph";
 import { EdgeTypes, FlowNode, NodeTypes } from "../types";
 import { edges_to_flowedges, nodes_to_flownodes } from "../utils";
@@ -48,14 +49,13 @@ export const TrackFlow: React.FC<Props> = ({ assignation, onSave }) => {
   const [runState, setRunState] = useState<RunState>({ t: 0 });
   const [live, setLive] = useState<boolean>(true);
 
-  const state = {
-    nodes: nodes_to_flownodes(data?.runForAssignation?.flow.graph?.nodes || []),
-    edges: edges_to_flowedges(data?.runForAssignation?.flow.graph?.edges || []),
-    globals: data?.runForAssignation?.flow.graph.globals || [],
-    remainingErrors: [],
-    solvedErrors: [],
-    valid: true,
-  };
+  const [nodes, setNodes, onNodesChange] = useNodesState(
+    nodes_to_flownodes(data?.runForAssignation?.flow.graph?.nodes || []) || [],
+  );
+  const edges = edges_to_flowedges(
+    data?.runForAssignation?.flow.graph?.edges || [],
+  );
+  const globals = data?.runForAssignation?.flow.graph.globals || [];
 
   const [selectedNode, setSelectedNode] = useState<FlowNode | null>(null);
 
@@ -78,10 +78,11 @@ export const TrackFlow: React.FC<Props> = ({ assignation, onSave }) => {
       >
         <div className="flex flex-grow h-full w-full">
           <Graph
-            nodes={state.nodes}
-            edges={state.edges}
+            nodes={nodes}
+            edges={edges}
             elementsSelectable={true}
             nodeTypes={nodeTypes}
+            onNodesChange={onNodesChange}
             edgeTypes={edgeTypes}
             fitView
             attributionPosition="bottom-right"

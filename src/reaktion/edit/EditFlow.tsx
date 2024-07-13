@@ -1031,7 +1031,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         source: oldNodeSourceId,
         sourceHandle: connectionParams.handleId,
         target: stagingNode.id,
-        targetHandle: "args_0",
+        targetHandle: "arg_0",
       });
 
       setState((e) => integratedState);

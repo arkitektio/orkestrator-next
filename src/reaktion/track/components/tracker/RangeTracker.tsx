@@ -57,15 +57,12 @@ export const RangeTracker = ({ run }: { run: DetailRunFragment }) => {
   useEffect(() => {
     let array = run?.snapshots?.map((snapshot) => snapshot.t) || [0, 100];
     console.log("Snapshots", array);
-    if (true) {
-      setRange({ min: 0, max: 100, marks: [0] });
-    } else {
-      setRange({
-        min: Math.min(...array),
-        max: Math.max(...array),
-        marks: array,
-      });
-    }
+
+    setRange({
+      min: Math.min(...array),
+      max: Math.max(...array),
+      marks: array,
+    });
   }, [run?.snapshots]);
 
   useEffect(() => {

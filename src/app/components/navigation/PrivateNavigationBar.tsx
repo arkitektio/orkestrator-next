@@ -76,6 +76,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
     (fakts &&
       Object.keys(fakts).map((key) => {
         if (key == "self") return null;
+        if (key == "datalayer") return null;
         const faktsValue = fakts[key];
         return (
           <DroppableNavLink key={key} to={`/${key}`}>

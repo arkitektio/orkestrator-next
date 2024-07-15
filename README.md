@@ -18,13 +18,15 @@ Before the new version of Orkestrator can be merged into the main repository, th
 - [x] Move Basic UI to Shadcn/UI
 - [x] Move to Vite
 - [x] Move to React 18
+- [x] Move to Electron (Allows us to finally use SSL on the network)
+- [x] New Workflow Engine (Fluss)
+- [x] Integrate Kabinet App Store 
 - [x] Move to new GraphQL Protocols (subscriptions based on graphql-ws, standardized error and param handling (pagination(filter))
 - [ ] Basic UI Testing
 - [ ] User Stories (e.g. documentation for specific user stories)
 - [ ] Documentation, Documentation, Documentation
 - [ ] Move to React Query (suggested)
 - [ ] Move to React TanStack Router (suggested)
-- [ ] Move to Tauri 2.0 when it is released (suggested)
 - [x] Lazy Load Modules (only if corresponding service in Deployment)
 - [ ] Hosted Deployment (e.g. on Vercel)
 

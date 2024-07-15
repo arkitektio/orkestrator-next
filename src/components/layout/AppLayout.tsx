@@ -1,5 +1,6 @@
 import { ArkitektLogo } from "@/app/components/logos/ArkitektLogo";
-import { Link } from "react-router-dom";
+import { BackLogo } from "@/app/components/logos/BackLogo";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 export type AppLayoutProps = {
   navigationBar: React.ReactNode;
@@ -7,19 +8,40 @@ export type AppLayoutProps = {
 };
 
 export const AppLayout = ({ children, navigationBar }: AppLayoutProps) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const onClick = () => {
+    if (window.electron) {
+      navigate(-1);
+    } else {
+      navigate("/");
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen sm:flex-row bg-background  dark:text-white">
       <div className="flex-initial flex flex-col mt-1 z-10 w-[60px] shadow shadow-xl bg-background">
         <div className="flex-initial h-12 border-b-gray-600 mt-2">
-          <Link to={"/"}>
-            <ArkitektLogo
-              width={"100%"}
-              height={"100%"}
-              cubeColor={"hsl(var(--primary))"}
-              aColor={"hsl(var(--foreground))"}
-              strokeColor={"hsl(var(--foreground))"}
-            />
-          </Link>
+          <div onClick={onClick} className="cursor-pointer">
+            {location.pathname == "/" ? (
+              <ArkitektLogo
+                width={"100%"}
+                height={"100%"}
+                cubeColor={"hsl(var(--primary))"}
+                aColor={"hsl(var(--foreground))"}
+                strokeColor={"hsl(var(--foreground))"}
+              />
+            ) : (
+              <BackLogo
+                width={"100%"}
+                height={"100%"}
+                cubeColor={"hsl(var(--primary))"}
+                aColor={"hsl(var(--foreground))"}
+                strokeColor={"hsl(var(--foreground))"}
+              />
+            )}
+          </div>
         </div>
         {navigationBar}
       </div>

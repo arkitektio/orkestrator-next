@@ -1,8 +1,9 @@
 import { Arkitekt } from "@/arkitekt";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 
 export const NotFound = () => {
   const { user } = Arkitekt.useLogin();
+  const location = useLocation();
 
   return (
     <div className="flex flex-col w-full h-full flex items-center justify-center">
@@ -13,6 +14,7 @@ export const NotFound = () => {
           </h1>
           <h2 className="text-2xl font-light tracking-tighter sm:text-3xl md:text-4xl text-foreground">
             This route does not exist
+            {location.pathname}
           </h2>
           <p className="max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
             Try another one

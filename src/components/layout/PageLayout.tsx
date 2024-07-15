@@ -1,6 +1,6 @@
 import { GearIcon } from "@radix-ui/react-icons";
 import { useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useRoutes, useSearchParams } from "react-router-dom";
 import BreadCrumbs from "../navigation/BreadCrumbs";
 import { Button } from "../ui/button";
 import {
@@ -36,12 +36,11 @@ export const PageLayout = ({
     sidebar: "true",
   });
 
+  const location = useLocation();
+
   const popOut = useCallback(() => {
-    window.open(
-      window.location.href,
-      "_blank",
-      "toolbar=no,scrollbars=yes,resizable=yes,top=500,left=500,width=1000,height=400",
-    );
+    console.log(location.pathname);
+    window.api.openSecondWindow(location.pathname);
   }, []);
 
   const togglePageSidebar = useCallback(() => {

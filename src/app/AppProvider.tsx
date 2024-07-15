@@ -20,7 +20,7 @@ import { AssignationUpdater } from "@/rekuest/components/functional/AssignationU
 import { ReservationUpdater } from "@/rekuest/components/functional/ReservationUpdater";
 import { WidgetRegistryProvider } from "@/rekuest/widgets/WidgetsProvider";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
-import { BrowserRouter, useNavigate } from "react-router-dom";
+import { BrowserRouter, HashRouter, useNavigate } from "react-router-dom";
 
 const displayRegistry = {
   "@mikro-next/image": ImageDisplay,
@@ -66,7 +66,7 @@ export const BackNavigationErrorCatcher = ({
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <DebugProvider>
-      <BrowserRouter>
+      <HashRouter>
         <BackNavigationErrorCatcher>
           <Arkitekt.Provider>
             <DisplayProvider registry={displayRegistry}>
@@ -110,7 +110,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
             </DisplayProvider>
           </Arkitekt.Provider>
         </BackNavigationErrorCatcher>
-      </BrowserRouter>
+      </HashRouter>
     </DebugProvider>
   );
 };

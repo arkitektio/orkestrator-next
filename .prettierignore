@@ -1,4 +1,6 @@
-src/mikro-next/api/**
-src/rekuest/api/**
-src/reaktion/api/**
-src/lok-next/api/**
+out
+dist
+pnpm-lock.yaml
+LICENSE.md
+tsconfig.json
+tsconfig.*.json

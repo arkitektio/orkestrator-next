@@ -1,0 +1,311 @@
+import {
+  app,
+  shell,
+  BrowserWindow,
+  ipcMain,
+  IpcMainEvent,
+  dialog,
+} from "electron";
+import { join, resolve } from "path";
+import { electronApp, optimizer, is } from "@electron-toolkit/utils";
+import icon from "../../resources/icon.png?asset";
+import { writeFileSync } from "fs";
+
+let mainWindow: BrowserWindow | null = null;
+
+function createWindow(): BrowserWindow {
+  // Create the browser window.
+  mainWindow = new BrowserWindow({
+    width: 900,
+    height: 670,
+    show: false,
+    title: "Orkestrator",
+    autoHideMenuBar: true,
+    ...(process.platform === "linux" ? { icon } : {}),
+    webPreferences: {
+      preload: join(__dirname, "../preload/index.js"),
+      sandbox: false,
+    },
+  });
+
+  mainWindow.on("ready-to-show", () => {
+    mainWindow?.show();
+  });
+
+  mainWindow.webContents.setWindowOpenHandler((details) => {
+    let url = new URL(details.url);
+
+    console.log(url.hash);
+
+    openSecondaryWindow(url.hash.split("#")[1]);
+    return { action: "deny" };
+  });
+
+  // HMR for renderer base on electron-vite cli.
+  // Load the remote URL for development or the local html file for production.
+  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
+    mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
+  } else {
+    mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
+  }
+  return mainWindow;
+}
+
+if (process.defaultApp) {
+  if (process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient("orkestrator", process.execPath, [
+      resolve(process.argv[1]),
+    ]);
+  }
+} else {
+  app.setAsDefaultProtocolClient("orkestrator");
+}
+
+function createFaktsWindow(url: string): void {
+  // Create the browser window.
+  const faktsWindows = new BrowserWindow({
+    width: 900,
+    height: 670,
+    show: false,
+    autoHideMenuBar: true,
+    ...(process.platform === "linux" ? { icon } : {}),
+  });
+
+  faktsWindows.on("ready-to-show", () => {
+    faktsWindows.show();
+  });
+
+  faktsWindows.webContents.setWindowOpenHandler((details) => {
+    shell.openExternal(details.url);
+    return { action: "deny" };
+  });
+
+  const baseUrl = new URL(url);
+
+  const {
+    session: { webRequest },
+  } = faktsWindows.webContents;
+
+  const filter = {
+    urls: [`${baseUrl.origin}/f/success*`, `${baseUrl.origin}/f/failure*`],
+  };
+
+  webRequest.onBeforeRequest(filter, async ({ url }, callback) => {
+    const parsedUrl = new URL(url);
+
+    console.log("URL", parsedUrl);
+
+    faktsWindows.close();
+    callback({});
+  });
+
+  // HMR for renderer base on electron-vite cli.
+  // Load the remote URL for development or the local html file for production.
+  faktsWindows.loadURL(url);
+}
+
+ipcMain.on("ondragstart", (event, structure) => {
+  writeFileSync(join(__dirname, "structure.md"), structure);
+  event.sender.startDrag({
+    file: join(__dirname, "structure.md"),
+    icon: icon,
+  });
+});
+
+function openJitsiWindow(): void {
+  // Create the browser window.
+  const jitsiWindow = new BrowserWindow({
+    width: 900,
+    height: 670,
+    show: false,
+
+    autoHideMenuBar: true,
+    ...(process.platform === "linux" ? { icon } : {}),
+  });
+
+  jitsiWindow.on("ready-to-show", () => {
+    jitsiWindow.show();
+  });
+
+  jitsiWindow.webContents.setWindowOpenHandler((details) => {
+    let url = new URL(details.url);
+
+    openSecondaryWindow(url.pathname);
+    return { action: "deny" };
+  });
+
+  // HMR for renderer base on electron-vite cli.
+  // Load the remote URL for development or the local html file for production.
+  jitsiWindow.loadURL("https://localhost:8443/WorthyRailsStabilizeWorse");
+}
+
+function openSecondaryWindow(path): void {
+  // Create the browser window.
+  const secondaryWindow = new BrowserWindow({
+    width: 900,
+    height: 670,
+    show: false,
+    autoHideMenuBar: true,
+    ...(process.platform === "linux" ? { icon } : {}),
+  });
+
+  secondaryWindow.on("ready-to-show", () => {
+    secondaryWindow.show();
+  });
+
+  secondaryWindow.webContents.setWindowOpenHandler((details) => {
+    shell.openExternal(details.url);
+    return { action: "deny" };
+  });
+
+  // HMR for renderer base on electron-vite cli.
+  // Load the remote URL for development or the local html file for production.
+  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
+    secondaryWindow.loadURL(process.env["ELECTRON_RENDERER_URL"] + "#" + path);
+  } else {
+    secondaryWindow.loadFile(
+      join(__dirname, "../renderer/index.html", "#" + path),
+    );
+  }
+}
+
+function createAuthWindow(url: string): void {
+  // Create the browser window.
+
+  console.log("Creating auth window");
+  const authWindow = new BrowserWindow({
+    width: 900,
+    height: 670,
+    autoHideMenuBar: true,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+    ...(process.platform === "linux" ? { icon } : {}),
+  });
+
+  authWindow.on("ready-to-show", () => {
+    authWindow.show();
+  });
+
+  const callback = "http://127.0.0.1:9999/callback";
+
+  const redirect_url = new URL(url);
+  redirect_url.searchParams.set("redirect_uri", callback);
+  authWindow.loadURL(redirect_url.toString());
+
+  console.log("Loading auth window", redirect_url);
+
+  const {
+    session: { webRequest },
+  } = authWindow.webContents;
+  const filter = { urls: [`${callback}*`] };
+  webRequest.onBeforeRequest(filter, async ({ url }) => {
+    const parsedUrl = new URL(url);
+
+    const code = parsedUrl.searchParams.get("code");
+    if (!code) {
+      mainWindow?.webContents.send("oauth-error", "No code in the response");
+    }
+    // Do the rest of the authorization flow with the code.
+    else {
+      mainWindow?.webContents.send("oauth-response", code);
+    }
+
+    authWindow.close();
+  });
+}
+
+if (process.platform == "darwin") {
+  // This method will be called when Electron has finished
+  // initialization and is ready to create browser windows.
+  // Some APIs can only be used after this event occurs.
+
+  // Handle the protocol. In this case, we choose to show an Error Box.
+  app.on("open-url", (event, url) => {
+    dialog.showErrorBox("Welcome Back", `You arrived from: ${url}`);
+  });
+}
+
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on("second-instance", (event, commandLine, workingDirectory) => {
+    // Someone tried to run a second instance, we should focus our window.
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+    // the commandLine is array of strings in which last element is deep link url
+    dialog.showErrorBox(
+      "Welcome Back",
+      `You arrived from: ${commandLine.pop()}`,
+    );
+  });
+
+  // Create mainWindow, load the rest of the app, etc...
+  app.whenReady().then(() => {
+    createWindow();
+  });
+}
+
+// This method will be called when Electron has finished
+// initialization and is ready to create browser windows.
+// Some APIs can only be used after this event occurs.
+app.whenReady().then(() => {
+  // Set app user model id for windows
+  electronApp.setAppUserModelId("com.electron");
+
+  // Default open or close DevTools by F12 in development
+  // and ignore CommandOrControl + R in production.
+  // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
+  app.on("browser-window-created", (_, window) => {
+    optimizer.watchWindowShortcuts(window);
+  });
+
+  mainWindow = createWindow();
+
+  // IPC test
+  ipcMain.on("ping", () => console.log("pong"));
+
+  ipcMain.on("fakts-start", (event: IpcMainEvent, msg) =>
+    createFaktsWindow(msg),
+  );
+  ipcMain.on("oauth-start", (event: IpcMainEvent, url) =>
+    createAuthWindow(url),
+  );
+  ipcMain.on("jitsi", (event: IpcMainEvent, url) => openJitsiWindow());
+  ipcMain.on("open-second-window", (event: IpcMainEvent, path) =>
+    openSecondaryWindow(path),
+  );
+
+  app.on("activate", function () {
+    // On macOS it's common to re-create a window in the app when the
+    // dock icon is clicked and there are no other windows open.
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
+
+app.on(
+  "certificate-error",
+  (event, webContents, url, error, certificate, callback) => {
+    // Prevent having error
+    event.preventDefault();
+    // and continue
+    callback(true);
+  },
+);
+
+// Quit when all windows are closed, except on macOS. There, it's common
+// for applications and their menu bar to stay active until the user quits
+// explicitly with Cmd + Q.
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
+    app.quit();
+  }
+});
+
+// In this file you can include the rest of your app"s specific main process
+// code. You can also put them in separate files and require them here.

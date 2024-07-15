@@ -13,8 +13,7 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useAllNodesQuery;
-  ({
+  const { data, error, subscribeToMore, refetch } = useAllNodesQuery({
     variables: { filters, pagination },
   });
 

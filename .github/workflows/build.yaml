@@ -3,7 +3,7 @@ name: Build and Release Electron App
 on:
   push:
     branches:
-      - master # This triggers the workflow on pushes to the master branch
+      - main # This triggers the workflow on pushes to the main branch
 
 jobs:
   build:

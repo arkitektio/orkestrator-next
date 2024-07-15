@@ -11,6 +11,9 @@ import { toast } from "sonner";
 import { PrimaryNodeFragment, usePrimaryNodesQuery } from "../api/graphql";
 import { useAssignProgress } from "../hooks/useAssignProgress";
 import { useNodeAction } from "../hooks/useNodeAction";
+import { App } from "@/arkitekt/types";
+import { Action, ActionState, defaultRegistry } from "@/app/action-registry";
+import { useArkitekt } from "@/arkitekt/provider";
 
 export const AssignButton = (props: {
   object: string;
@@ -87,6 +90,96 @@ export const ApplicableNodes = (props: {
   );
 };
 
+export const useAction = (props: { action: Action; state: ActionState }) => {
+  const [progress, setProgress] = React.useState<number | undefined>(0);
+  const [controller, setController] = React.useState<AbortController | null>(
+    null,
+  );
+  const app = useArkitekt();
+
+  const assign = async () => {
+    if (controller) {
+      controller.abort();
+      return;
+    }
+    let newController = new AbortController();
+
+    setController(newController);
+
+    try {
+      await props.action.execute({
+        onProgress: (p) => {
+          setProgress(p);
+        },
+        abortSignal: newController.signal,
+        services: app.clients,
+        state: props.state,
+      });
+      setController(null);
+      setProgress(undefined);
+    } catch (e) {
+      setProgress(undefined);
+      setController(null);
+      console.error(e);
+    }
+  };
+
+  return {
+    progress,
+    assign,
+  };
+};
+
+export const useActions = (props: { state: ActionState }) => {
+  return defaultRegistry.getActionsForState(props.state);
+};
+
+export const LocalActionButton = (props: {
+  action: Action;
+  state: ActionState;
+}) => {
+  const { assign, progress } = useAction(props);
+
+  return (
+    <Button
+      onClick={assign}
+      variant={"outline"}
+      className="flex-1"
+      style={{
+        backgroundSize: `${progress || 0}% 100%`,
+        backgroundImage: `linear-gradient(to right, #10b981 ${progress}%, #10b981 ${progress}%)`,
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "left center",
+      }}
+    >
+      {props.action.name}
+    </Button>
+  );
+};
+
+export const Actions = (props: { state: ActionState }) => {
+  const actions = useActions(props);
+
+  return (
+    <div className="grid grid-cols-1 w-full gap-2 ">
+      {actions.map((x) => (
+        <LocalActionButton action={x} state={props.state} />
+      ))}
+    </div>
+  );
+};
+
+export const ApplicableActions = (props: {
+  object: string;
+  identifier: string;
+}) => {
+  return (
+    <div className="grid grid-cols-1 w-full gap-2 ">
+      <Actions state={{ left: [props], isCommand: false }} />
+    </div>
+  );
+};
+
 export type ObjectButtonProps = {
   object: string;
   identifier: string;
@@ -111,6 +204,10 @@ export const ObjectButton = (props: ObjectButtonProps) => {
               Assign to
             </div>
             <ApplicableNodes
+              object={props.object}
+              identifier={props.identifier}
+            />
+            <ApplicableActions
               object={props.object}
               identifier={props.identifier}
             />

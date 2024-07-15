@@ -88,6 +88,10 @@ export type ServiceBuilderMap = {
   [key: string]: ServiceBuilder;
 };
 
+export type ServiceMap = {
+  [key: string]: ApolloClient<any>;
+};
+
 export type ArkitektBuilderOptions = {
   manifest: Manifest;
   serviceBuilderMap: ServiceBuilderMap;

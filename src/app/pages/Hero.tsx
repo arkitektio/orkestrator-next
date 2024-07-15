@@ -18,6 +18,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { manifest } from "@/constants";
+import { introspectUrl } from "@/lib/fakts";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -29,6 +30,19 @@ export const ConnectButton = () => {
       url: "",
     },
   });
+
+  const onSubmit = (data: any) => {
+    console.log(data);
+
+    introspectUrl(data.url, 2000, new AbortController()).then((endpoint) => {
+      load({
+        endpoint,
+        manifest: manifest,
+        requestedClientType: "desktop",
+        requestPublic: true,
+      });
+    });
+  };
 
   return (
     <div className="flex flex-col w-full h-full flex items-center justify-center">
@@ -95,19 +109,21 @@ export const ConnectButton = () => {
                       server.
                     </p>
                     <Form {...form}>
-                      <div className="grid w-full max-w-sm gap-2">
-                        <StringField
-                          name="url"
-                          description="The local server url"
-                        />
-                        <Button
-                          className="w-full"
-                          type="submit"
-                          variant={"secondary"}
-                        >
-                          Connect
-                        </Button>
-                      </div>
+                      <form onSubmit={form.handleSubmit(onSubmit)}>
+                        <div className="grid w-full max-w-sm gap-2">
+                          <StringField
+                            name="url"
+                            description="The local server url"
+                          />
+                          <Button
+                            className="w-full"
+                            type="submit"
+                            variant={"secondary"}
+                          >
+                            Connect
+                          </Button>
+                        </div>
+                      </form>
                     </Form>
                   </div>
                 </SheetDescription>

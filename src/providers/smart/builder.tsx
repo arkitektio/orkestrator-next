@@ -102,7 +102,7 @@ export type SmartObjectButtonProps = Omit<ObjectButtonProps, "identifier">;
 
 const buildObjectButton = (model: Identifier) => {
   return ({ ...props }: SmartObjectButtonProps) => {
-    return <ObjectButton identifier={model} object={props.object} />;
+    return <ObjectButton identifier={model} {...props} />;
   };
 };
 

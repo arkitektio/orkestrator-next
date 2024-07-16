@@ -8,8 +8,15 @@ import { toast } from "sonner";
 import { usePortForm } from "../hooks/usePortForm";
 import { useTemplateAction } from "../hooks/useTemplateAction";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
+import { PostmanAssignationFragment } from "../api/graphql";
 
-export const TemplateAssignForm = (props: { id: string }) => {
+export type TemplateAssignFormProps = {
+  id: string;
+  onAssign?: (assignation: PostmanAssignationFragment) => void;
+  onError?: (error: any) => void;
+};
+
+export const TemplateAssignForm = (props: TemplateAssignFormProps) => {
   const { assign, latestAssignation, cancel, template } = useTemplateAction({
     id: props.id,
   });
@@ -26,18 +33,24 @@ export const TemplateAssignForm = (props: { id: string }) => {
     console.log("Submitting");
     console.log(data);
     try {
-      await assign({
+      let assignation = await assign({
         template: props.id,
         args: data,
         hooks: [],
       });
+
+      props.onAssign?.(assignation);
     } catch (e) {
       let message = (e as ApolloError).message;
-      if (!message) {
-        toast.error("No key found");
-        return;
+      if (props.onError) {
+        props.onError?.(e);
+      } else {
+        if (!message) {
+          toast.error("No key found");
+          return;
+        }
+        toast.error(message);
       }
-      toast.error(message);
     }
   };
 

@@ -11,8 +11,7 @@ export type Props = {
 };
 
 const List = ({ pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useWorkspacesQuery;
-  ({
+  const { data, error, subscribeToMore, refetch } = useWorkspacesQuery({
     variables: { pagination },
   });
 

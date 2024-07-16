@@ -1,23 +1,17 @@
 import { FlowFragment } from "@/reaktion/api/graphql";
 import React, { useContext } from "react";
 import { ValidationResult } from "../validation/types";
+import { DetailTemplateFragment } from "@/rekuest/api/graphql";
 
 export type ShowRiverContextType = {
   flow?: FlowFragment | null;
-  state: ValidationResult;
+  template?: DetailTemplateFragment | null;
   showEdgeLabels: boolean;
   showNodeErrors: boolean;
 };
 
 export const ShowRiverContext = React.createContext<ShowRiverContextType>({
-  state: {
-    valid: true,
-    remainingErrors: [],
-    solvedErrors: [],
-    nodes: [],
-    edges: [],
-    globals: [],
-  },
+  template: null,
   showEdgeLabels: false,
   showNodeErrors: true,
 });

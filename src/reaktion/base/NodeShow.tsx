@@ -52,7 +52,7 @@ export const NodeShowLayout: React.FC<NodeProps> = ({
             exit={{ opacity: 0 }}
             key={id}
             className={cn(
-              "rounded-xl border bg-card text-card-foreground shadow dark:border-gray-700 border-gray-400",
+              "rounded-xl border bg-card text-card-foreground shadow dark:border-gray-700 border-gray-400 max-w-[300px] w-full",
               "custom-drag-handle h-full z-10 group shadow relative border bg-sidebar ",
               className,
             )}

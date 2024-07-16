@@ -14,6 +14,7 @@
         "kind": "INPUT_OBJECT",
         "name": "AckInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -41,6 +42,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ActivateInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -68,6 +70,7 @@
         "kind": "OBJECT",
         "name": "Agent",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "active",
@@ -386,6 +389,7 @@
         "kind": "INPUT_OBJECT",
         "name": "AgentFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -473,6 +477,7 @@
         "kind": "INPUT_OBJECT",
         "name": "AgentInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -532,6 +537,7 @@
         "kind": "INPUT_OBJECT",
         "name": "AgentOrder",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -555,6 +561,7 @@
         "kind": "ENUM",
         "name": "AgentStatus",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -590,6 +597,7 @@
         "kind": "SCALAR",
         "name": "AnyDefault",
         "description": "The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -600,6 +608,7 @@
         "kind": "OBJECT",
         "name": "App",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "clientId",
@@ -659,6 +668,7 @@
         "kind": "INPUT_OBJECT",
         "name": "AppFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -758,6 +768,7 @@
         "kind": "INPUT_OBJECT",
         "name": "AppOrder",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -781,6 +792,7 @@
         "kind": "SCALAR",
         "name": "Args",
         "description": "The `Args` scalar type represents a Dictionary of arguments",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -791,6 +803,7 @@
         "kind": "INPUT_OBJECT",
         "name": "AssignInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -962,6 +975,7 @@
         "kind": "INTERFACE",
         "name": "AssignWidget",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "kind",
@@ -1015,6 +1029,7 @@
         "kind": "INPUT_OBJECT",
         "name": "AssignWidgetInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -1158,6 +1173,7 @@
         "kind": "ENUM",
         "name": "AssignWidgetKind",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -1199,6 +1215,7 @@
         "kind": "OBJECT",
         "name": "Assignation",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "args",
@@ -1434,6 +1451,7 @@
         "kind": "OBJECT",
         "name": "AssignationChangeEvent",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "create",
@@ -1469,6 +1487,7 @@
         "kind": "OBJECT",
         "name": "AssignationEvent",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "assignation",
@@ -1624,6 +1643,7 @@
         "kind": "ENUM",
         "name": "AssignationEventKind",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -1713,6 +1733,7 @@
         "kind": "OBJECT",
         "name": "Binds",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "clients",
@@ -1788,6 +1809,7 @@
         "kind": "INPUT_OBJECT",
         "name": "BindsInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -1855,6 +1877,7 @@
         "kind": "SCALAR",
         "name": "Boolean",
         "description": "The `Boolean` scalar type represents `true` or `false`.",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -1865,6 +1888,7 @@
         "kind": "INPUT_OBJECT",
         "name": "CancelInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -1892,6 +1916,7 @@
         "kind": "OBJECT",
         "name": "ChildPort",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "assignWidget",
@@ -2059,6 +2084,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ChildPortInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -2246,6 +2272,7 @@
         "kind": "OBJECT",
         "name": "Choice",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "description",
@@ -2301,6 +2328,7 @@
         "kind": "OBJECT",
         "name": "ChoiceAssignWidget",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "choices",
@@ -2354,6 +2382,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ChoiceInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -2409,6 +2438,7 @@
         "kind": "OBJECT",
         "name": "ChoiceReturnWidget",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "choices",
@@ -2462,6 +2492,7 @@
         "kind": "OBJECT",
         "name": "Collection",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "id",
@@ -2566,6 +2597,7 @@
         "kind": "INPUT_OBJECT",
         "name": "CreateForeignTemplateInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -2625,6 +2657,7 @@
         "kind": "INPUT_OBJECT",
         "name": "CreateHardwareRecordInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -2684,6 +2717,7 @@
         "kind": "INPUT_OBJECT",
         "name": "CreateTemplateInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -2743,6 +2777,7 @@
         "kind": "INPUT_OBJECT",
         "name": "CreateTestCaseInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -2810,6 +2845,7 @@
         "kind": "INPUT_OBJECT",
         "name": "CreateTestResultInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -2897,6 +2933,7 @@
         "kind": "OBJECT",
         "name": "CustomAssignWidget",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "hook",
@@ -2962,6 +2999,7 @@
         "kind": "OBJECT",
         "name": "CustomEffect",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "dependencies",
@@ -3051,6 +3089,7 @@
         "kind": "OBJECT",
         "name": "CustomReturnWidget",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "hook",
@@ -3116,6 +3155,7 @@
         "kind": "SCALAR",
         "name": "DateTime",
         "description": "Date with time (isoformat)",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -3126,6 +3166,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DeActivateInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -3153,6 +3194,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DefinitionInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -3368,6 +3410,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DeleteTemplateInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -3395,6 +3438,7 @@
         "kind": "ENUM",
         "name": "DemandKind",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -3418,7 +3462,20 @@
         "kind": "OBJECT",
         "name": "Dependency",
         "description": null,
+        "isOneOf": null,
         "fields": [
+          {
+            "name": "binds",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Binds",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "hash",
             "description": null,
@@ -3508,6 +3565,22 @@
             "deprecationReason": null
           },
           {
+            "name": "resolvable",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "template",
             "description": null,
             "args": [],
@@ -3533,6 +3606,7 @@
         "kind": "OBJECT",
         "name": "DependencyEdge",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "depId",
@@ -3636,6 +3710,7 @@
         "kind": "UNION",
         "name": "DependencyEdgeImplementationEdge",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -3657,6 +3732,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DependencyFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -3712,6 +3788,7 @@
         "kind": "OBJECT",
         "name": "DependencyGraph",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "edges",
@@ -3771,6 +3848,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DependencyInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -3846,6 +3924,7 @@
         "kind": "INTERFACE",
         "name": "Effect",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "dependencies",
@@ -3908,6 +3987,7 @@
         "kind": "OBJECT",
         "name": "EffectDependency",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "condition",
@@ -3967,6 +4047,7 @@
         "kind": "INPUT_OBJECT",
         "name": "EffectDependencyInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -4026,6 +4107,7 @@
         "kind": "INPUT_OBJECT",
         "name": "EffectInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -4105,6 +4187,7 @@
         "kind": "ENUM",
         "name": "EffectKind",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -4128,6 +4211,7 @@
         "kind": "SCALAR",
         "name": "Float",
         "description": "The `Float` scalar type represents signed double-precision fractional values as specified by [IEEE 754](https://en.wikipedia.org/wiki/IEEE_floating_point).",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -4138,6 +4222,7 @@
         "kind": "OBJECT",
         "name": "HardwareRecord",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "agent",
@@ -4245,6 +4330,7 @@
         "kind": "INPUT_OBJECT",
         "name": "HardwareRecordFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -4312,6 +4398,7 @@
         "kind": "INPUT_OBJECT",
         "name": "HookInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -4355,6 +4442,7 @@
         "kind": "ENUM",
         "name": "HookKind",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -4378,6 +4466,7 @@
         "kind": "SCALAR",
         "name": "ID",
         "description": "The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `\"4\"`) or integer (such as `4`) input value will be accepted as an ID.",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -4388,6 +4477,7 @@
         "kind": "SCALAR",
         "name": "Identifier",
         "description": "The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -4398,6 +4488,7 @@
         "kind": "OBJECT",
         "name": "ImplementationEdge",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "id",
@@ -4485,6 +4576,7 @@
         "kind": "SCALAR",
         "name": "InstanceId",
         "description": "The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -4495,6 +4587,7 @@
         "kind": "SCALAR",
         "name": "Int",
         "description": "The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1.",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -4505,6 +4598,7 @@
         "kind": "INPUT_OBJECT",
         "name": "InterruptInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -4532,6 +4626,7 @@
         "kind": "OBJECT",
         "name": "InvalidNode",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "id",
@@ -4575,6 +4670,7 @@
         "kind": "INPUT_OBJECT",
         "name": "LinkInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -4618,6 +4714,7 @@
         "kind": "ENUM",
         "name": "LogLevel",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -4659,6 +4756,7 @@
         "kind": "ENUM",
         "name": "LogicalCondition",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -4688,6 +4786,7 @@
         "kind": "OBJECT",
         "name": "MessageEffect",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "dependencies",
@@ -4761,6 +4860,7 @@
         "kind": "OBJECT",
         "name": "Mutation",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "ack",
@@ -5473,6 +5573,7 @@
         "kind": "OBJECT",
         "name": "Node",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "args",
@@ -6042,6 +6143,7 @@
         "kind": "INPUT_OBJECT",
         "name": "NodeFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -6173,6 +6275,7 @@
         "kind": "SCALAR",
         "name": "NodeHash",
         "description": "The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -6183,6 +6286,7 @@
         "kind": "ENUM",
         "name": "NodeKind",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -6206,6 +6310,7 @@
         "kind": "OBJECT",
         "name": "NodeNode",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "id",
@@ -6289,6 +6394,7 @@
         "kind": "UNION",
         "name": "NodeNodeInvalidNodeTemplateNode",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -6315,6 +6421,7 @@
         "kind": "INPUT_OBJECT",
         "name": "NodeOrder",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -6338,6 +6445,7 @@
         "kind": "ENUM",
         "name": "NodeScope",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -6373,6 +6481,7 @@
         "kind": "INPUT_OBJECT",
         "name": "OffsetPaginationInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -6416,6 +6525,7 @@
         "kind": "ENUM",
         "name": "Ordering",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -6439,6 +6549,7 @@
         "kind": "OBJECT",
         "name": "Port",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "assignWidget",
@@ -6666,6 +6777,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PortDemandInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -6737,6 +6849,7 @@
         "kind": "OBJECT",
         "name": "PortGroup",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "hidden",
@@ -6780,6 +6893,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PortGroupInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -6823,6 +6937,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PortInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -7050,6 +7165,7 @@
         "kind": "ENUM",
         "name": "PortKind",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -7121,6 +7237,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PortMatchInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -7212,6 +7329,7 @@
         "kind": "ENUM",
         "name": "PortScope",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -7235,6 +7353,7 @@
         "kind": "OBJECT",
         "name": "Protocol",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "id",
@@ -7339,6 +7458,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ProtocolFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -7418,6 +7538,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ProtocolOrder",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -7441,6 +7562,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ProvideInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -7468,6 +7590,7 @@
         "kind": "OBJECT",
         "name": "Provision",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "active",
@@ -7656,6 +7779,7 @@
         "kind": "OBJECT",
         "name": "ProvisionEvent",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "createdAt",
@@ -7743,6 +7867,7 @@
         "kind": "ENUM",
         "name": "ProvisionEventKind",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -7856,6 +7981,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ProvisionFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -7943,6 +8069,7 @@
         "kind": "ENUM",
         "name": "ProvisionStatus",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -8038,6 +8165,7 @@
         "kind": "OBJECT",
         "name": "Query",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "agent",
@@ -9182,6 +9310,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ReInitInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -9205,6 +9334,7 @@
         "kind": "OBJECT",
         "name": "Registry",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "agents",
@@ -9325,6 +9455,7 @@
         "kind": "OBJECT",
         "name": "Reservation",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "binds",
@@ -9633,6 +9764,7 @@
         "kind": "OBJECT",
         "name": "ReservationEvent",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "createdAt",
@@ -9720,6 +9852,7 @@
         "kind": "ENUM",
         "name": "ReservationEventKind",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -9803,6 +9936,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ReservationFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -9890,6 +10024,7 @@
         "kind": "ENUM",
         "name": "ReservationStatus",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -9937,6 +10072,7 @@
         "kind": "ENUM",
         "name": "ReservationStrategy",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -9984,6 +10120,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ReserveInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -10095,6 +10232,7 @@
         "kind": "INTERFACE",
         "name": "ReturnWidget",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "kind",
@@ -10133,6 +10271,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ReturnWidgetInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -10264,6 +10403,7 @@
         "kind": "ENUM",
         "name": "ReturnWidgetKind",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -10287,6 +10427,7 @@
         "kind": "OBJECT",
         "name": "SearchAssignWidget",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "kind",
@@ -10352,6 +10493,7 @@
         "kind": "SCALAR",
         "name": "SearchQuery",
         "description": "The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -10362,6 +10504,7 @@
         "kind": "INPUT_OBJECT",
         "name": "SetExtensionTemplatesInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -10445,6 +10588,7 @@
         "kind": "OBJECT",
         "name": "SliderAssignWidget",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "kind",
@@ -10502,6 +10646,7 @@
         "kind": "INPUT_OBJECT",
         "name": "StrFilterLookup",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -10953,6 +11098,7 @@
         "kind": "SCALAR",
         "name": "String",
         "description": "The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -10963,6 +11109,7 @@
         "kind": "OBJECT",
         "name": "StringAssignWidget",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "asParagraph",
@@ -11028,6 +11175,7 @@
         "kind": "OBJECT",
         "name": "Subscription",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "assignationEvents",
@@ -11270,6 +11418,7 @@
         "kind": "OBJECT",
         "name": "Template",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "agent",
@@ -11503,6 +11652,7 @@
         "kind": "INPUT_OBJECT",
         "name": "TemplateFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -11606,6 +11756,7 @@
         "kind": "INPUT_OBJECT",
         "name": "TemplateInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -11713,6 +11864,7 @@
         "kind": "OBJECT",
         "name": "TemplateNode",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "active",
@@ -11856,6 +12008,7 @@
         "kind": "OBJECT",
         "name": "TestCase",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "description",
@@ -12012,6 +12165,7 @@
         "kind": "INPUT_OBJECT",
         "name": "TestCaseFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -12079,6 +12233,7 @@
         "kind": "OBJECT",
         "name": "TestResult",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "case",
@@ -12202,6 +12357,7 @@
         "kind": "INPUT_OBJECT",
         "name": "TestResultFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -12269,6 +12425,7 @@
         "kind": "INPUT_OBJECT",
         "name": "UnProvideInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -12296,6 +12453,7 @@
         "kind": "INPUT_OBJECT",
         "name": "UnlinkInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -12339,6 +12497,7 @@
         "kind": "INPUT_OBJECT",
         "name": "UnreserveInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -12366,6 +12525,7 @@
         "kind": "OBJECT",
         "name": "User",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "id",
@@ -12393,6 +12553,7 @@
         "kind": "OBJECT",
         "name": "Validator",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "dependencies",
@@ -12464,6 +12625,7 @@
         "kind": "SCALAR",
         "name": "ValidatorFunction",
         "description": "\n    The `Validator` scalar represents a javascript function that should execute on the client side (inside a shadow realm)\n      to validate a value (or a set of values) before it is sent to the server.  The function has two parameters (value, otherValues) and should return a string if the value is invalid and undefined if the value is valid.\n        The otherValues parameter is an object with the other values in the form {fieldName: value}.",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -12474,6 +12636,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ValidatorInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -12545,6 +12708,7 @@
         "kind": "OBJECT",
         "name": "Waiter",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "id",
@@ -12604,6 +12768,7 @@
         "kind": "INPUT_OBJECT",
         "name": "WaiterFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -12675,6 +12840,7 @@
         "kind": "OBJECT",
         "name": "__Directive",
         "description": "A Directive provides a way to describe alternate runtime execution and type validation behavior in a GraphQL document.\n\nIn some cases, you need to provide options to alter GraphQL's execution behavior in ways field arguments will not suffice, such as conditionally including or skipping a field. Directives provide this by describing additional information to the executor.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "name",
@@ -12791,6 +12957,7 @@
         "kind": "ENUM",
         "name": "__DirectiveLocation",
         "description": "A Directive can be adjacent to many parts of the GraphQL language, a __DirectiveLocation describes one such possible adjacencies.",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -12916,6 +13083,7 @@
         "kind": "OBJECT",
         "name": "__EnumValue",
         "description": "One possible value for a given Enum. Enum values are unique values, not a placeholder for a string or numeric value. However an Enum value is returned in a JSON response as a string.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "name",
@@ -12983,6 +13151,7 @@
         "kind": "OBJECT",
         "name": "__Field",
         "description": "Object and Interface types are described by a list of Fields, each of which has a name, potentially a list of arguments, and a return type.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "name",
@@ -13103,6 +13272,7 @@
         "kind": "OBJECT",
         "name": "__InputValue",
         "description": "Arguments provided to Fields or Directives and the input fields of an InputObject are represented as Input Values which describe their type and optionally a default value.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "name",
@@ -13198,6 +13368,7 @@
         "kind": "OBJECT",
         "name": "__Schema",
         "description": "A GraphQL Schema defines the capabilities of a GraphQL server. It exposes all available types and directives on the server, as well as the entry points for query, mutation, and subscription operations.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "description",
@@ -13309,6 +13480,7 @@
         "kind": "OBJECT",
         "name": "__Type",
         "description": "The fundamental unit of any GraphQL Schema is the type. There are many kinds of types in GraphQL as represented by the `__TypeKind` enum.\n\nDepending on the kind of a type, certain fields describe information about that type. Scalar types provide no information beyond a name, description and optional `specifiedByURL`, while Enum types provide their values. Object and Interface types provide the fields they describe. Abstract types, Union and Interface, provide the Object types possible at runtime. List and NonNull types compose other types.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "kind",
@@ -13512,6 +13684,18 @@
             },
             "isDeprecated": false,
             "deprecationReason": null
+          },
+          {
+            "name": "isOneOf",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
           }
         ],
         "inputFields": null,
@@ -13523,6 +13707,7 @@
         "kind": "ENUM",
         "name": "__TypeKind",
         "description": "An enum describing what kind of type a given `__Type` is.",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,

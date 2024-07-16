@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogTrigger } from "./dialog";
 export type FormDialogActionProps = Omit<Action, "run"> &
   ButtonProps & {
     children: React.ReactNode;
+    buttonChildren?: React.ReactNode;
     onSubmit?: (v: any) => void;
     onError?: (err: any) => void;
   };
@@ -92,7 +93,7 @@ export const FormDialogAction: React.FC<FormDialogActionProps> = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button {...props}>{props.label}</Button>
+        <Button {...props}>{props.buttonChildren || props.label}</Button>
       </DialogTrigger>
       <DialogContent className="border-gray-700 text-foreground">
         <FormDialogContext.Provider

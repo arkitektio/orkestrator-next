@@ -132,10 +132,11 @@ export type CreateDeploymentInput = {
 /** Create a new Github repository input */
 export type CreateGithupRepoInput = {
   autoScan?: InputMaybe<Scalars['Boolean']['input']>;
-  branch: Scalars['String']['input'];
-  name: Scalars['String']['input'];
-  repo: Scalars['String']['input'];
-  user: Scalars['String']['input'];
+  branch?: InputMaybe<Scalars['String']['input']>;
+  identifier?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  repo?: InputMaybe<Scalars['String']['input']>;
+  user?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** Create a new Github repository input */
@@ -757,10 +758,7 @@ export type ReleaseFragment = { __typename?: 'Release', id: string, version: str
 export type ListReleaseFragment = { __typename?: 'Release', id: string, version: string, installed: boolean, scopes: Array<string>, colour: string, description: string, app: { __typename?: 'App', identifier: string }, flavours: Array<{ __typename?: 'Flavour', id: string, name: string }> };
 
 export type CreateGithubRepoMutationVariables = Exact<{
-  user: Scalars['String']['input'];
-  repo: Scalars['String']['input'];
-  branch: Scalars['String']['input'];
-  name: Scalars['String']['input'];
+  identifier: Scalars['String']['input'];
 }>;
 
 
@@ -959,10 +957,8 @@ export const ListReleaseFragmentDoc = gql`
 }
     ${ListFlavourFragmentDoc}`;
 export const CreateGithubRepoDocument = gql`
-    mutation CreateGithubRepo($user: String!, $repo: String!, $branch: String!, $name: String!) {
-  createGithubRepo(
-    input: {user: $user, repo: $repo, branch: $branch, name: $name}
-  ) {
+    mutation CreateGithubRepo($identifier: String!) {
+  createGithubRepo(input: {identifier: $identifier}) {
     id
   }
 }
@@ -982,10 +978,7 @@ export type CreateGithubRepoMutationFn = Apollo.MutationFunction<CreateGithubRep
  * @example
  * const [createGithubRepoMutation, { data, loading, error }] = useCreateGithubRepoMutation({
  *   variables: {
- *      user: // value for 'user'
- *      repo: // value for 'repo'
- *      branch: // value for 'branch'
- *      name: // value for 'name'
+ *      identifier: // value for 'identifier'
  *   },
  * });
  */

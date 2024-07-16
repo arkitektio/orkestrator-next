@@ -4,9 +4,6 @@ fragment DetailTemplate on Template {
   dependencies {
     ...ListDependency
   }
-  dependencyGraph {
-    ...DependencyGraph
-  }
   node {
     ...DetailNode
   }

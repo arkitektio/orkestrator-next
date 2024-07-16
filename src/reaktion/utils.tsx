@@ -372,16 +372,16 @@ export const flowToDefinition = (flow: FlowFragment): DefinitionInput => {
 };
 
 export const flowToDependencies = (flow: FlowFragment): DependencyInput[] => {
-  let hashes =
+  let hashes: DependencyInput[] =
     flow.graph?.nodes
       ?.filter(
         (node) =>
           node.__typename == "RekuestFilterNode" ||
           node.__typename == "RekuestMapNode",
       )
-      .map((x) => x.hash) || [];
+      .map((x) => ({ hash: x.hash, reference: x.id })) || [];
 
-  return hashes.map((x) => {
-    return { hash: x };
-  });
+  console.log("hashes", hashes);
+
+  return hashes;
 };

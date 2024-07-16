@@ -8,13 +8,14 @@ import {
 import { PopularCarousel } from "@/lok-next/components/PopularCarousel";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import React from "react";
-import { useCreateRoomMutation } from "../api/graphql";
+import { useCreateRoomMutation, useMeQuery } from "../api/graphql";
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
   const [createRoom] = useCreateRoomMutation({
     refetchQueries: ["Rooms"],
   });
+  const { data } = useMeQuery();
 
   return (
     <PageLayout
@@ -27,15 +28,15 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
         </>
       }
     >
-      <DetailPane className="p-3 @container">
-        <PopularCarousel />
-        <DetailPaneHeader></DetailPaneHeader>
-      </DetailPane>
+      <PopularCarousel />
+      <DetailPaneHeader></DetailPaneHeader>
 
       <Separator />
 
       <div className="p-3 @container">
-        <DetailPaneTitle>Hi</DetailPaneTitle>
+        <DetailPaneTitle>
+          Hi {data?.me.firstName || data?.me.username}
+        </DetailPaneTitle>
       </div>
     </PageLayout>
   );

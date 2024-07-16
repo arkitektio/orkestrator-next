@@ -16,6 +16,9 @@ import {
 import GroupCard from "../components/cards/GroupCard";
 import UserCard from "../components/cards/UserCard";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
+import { Tree } from "@/components/explorer/Tree";
+import { SubTreeTitle } from "@/components/explorer/SubTreeTitle";
+import { SubTree } from "@/components/explorer/SubTree";
 
 interface IDataSidebarProps {}
 
@@ -27,76 +30,71 @@ export const NavigationPane = (props: {}) => {
   const { data, refetch, variables } = useRoomsQuery();
 
   return (
-    <div className="flex-1 flex-col">
-      <nav className="grid items-start px-1 text-sm font-medium lg:px-2">
-        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
-          Explore
-        </div>
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-4">
-          <DroppableNavLink
-            to="/lok"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <Home className="h-4 w-4" />
-            Home
-          </DroppableNavLink>
-          <DroppableNavLink
-            to="/lok/me"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <RiProfileFill className="h-4 w-4" />
-            Me
-          </DroppableNavLink>
-        </div>
+    <Tree>
+      <SubTreeTitle>Explore</SubTreeTitle>
+      <SubTree>
+        <DroppableNavLink
+          to="/lok"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <Home className="h-4 w-4" />
+          Home
+        </DroppableNavLink>
+        <DroppableNavLink
+          to="/lok/me"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <RiProfileFill className="h-4 w-4" />
+          Me
+        </DroppableNavLink>
+      </SubTree>
 
-        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
+      <SubTreeTitle>Users</SubTreeTitle>
+      <SubTree>
+        <DroppableNavLink
+          to="/lok/groups"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <Group className="h-4 w-4" />
+          Groups
+        </DroppableNavLink>
+        <DroppableNavLink
+          to="/lok/users"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <User className="h-4 w-4" />
           Users
-        </div>
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-5">
-          <DroppableNavLink
-            to="/lok/groups"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <Group className="h-4 w-4" />
-            Groups
-          </DroppableNavLink>
-          <DroppableNavLink
-            to="/lok/users"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <User className="h-4 w-4" />
-            Users
-          </DroppableNavLink>
-          <DroppableNavLink
-            to="/lok/rooms"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        </DroppableNavLink>
+        <DroppableNavLink
+          to="/lok/rooms"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <CubeIcon className="h-4 w-4" />
+          Rooms
+        </DroppableNavLink>
+      </SubTree>
+      <SubTreeTitle
+        action={
+          <Button onClick={() => createRoom()} variant={"ghost"} size={"icon"}>
+            <PlusIcon className="h-3 w-3" />
+          </Button>
+        }
+      >
+        Recent Rooms
+      </SubTreeTitle>
+      <SubTree>
+        {data?.rooms.map((room, index) => (
+          <LokRoom.DetailLink
+            object={room.id}
+            key={index}
+            className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
           >
             <CubeIcon className="h-4 w-4" />
-            Rooms
-          </DroppableNavLink>
-        </div>
-        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4 flex w-full">
-          Recent Rooms
-          <div className="ml-auto">
-            <Button onClick={() => createRoom()} variant={"ghost"}>
-              <PlusIcon className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
-          {data?.rooms.map((room, index) => (
-            <LokRoom.DetailLink
-              object={room.id}
-              key={index}
-              className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
-            >
-              <CubeIcon className="h-4 w-4" />
-              {room.title}
-            </LokRoom.DetailLink>
-          ))}
-        </div>
-      </nav>
-    </div>
+            {room.title}
+          </LokRoom.DetailLink>
+        ))}
+      </SubTree>
+    </Tree>
   );
 };
 

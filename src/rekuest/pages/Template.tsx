@@ -16,6 +16,7 @@ import { RekuestAssignation } from "@/linkers";
 import { useFlowQuery } from "@/reaktion/api/graphql";
 import { ShowFlow } from "@/reaktion/show/ShowFlow";
 import {
+  DetailTemplateFragment,
   WatchTemplateDocument,
   WatchTemplateSubscription,
   WatchTemplateSubscriptionVariables,
@@ -88,14 +89,53 @@ export const DoForm = (props: { id: string }) => {
   );
 };
 
-export const TemplateFlow = (props: { id: string }) => {
+export const TemplateFlow = (props: { template: DetailTemplateFragment }) => {
   const { data } = useFlowQuery({
     variables: {
-      id: props.id,
+      id: props.template.params.flow,
     },
   });
 
-  return <>{data?.flow && <ShowFlow flow={data?.flow} />}</>;
+  return (
+    <>
+      {data?.flow && <ShowFlow flow={data?.flow} template={props.template} />}
+    </>
+  );
+};
+
+export const DefaultRenderer = (props: {
+  template: DetailTemplateFragment;
+}) => {
+  return (
+    <DetailPane>
+      <DetailPaneHeader>
+        <DetailPaneTitle
+          actions={
+            <Button variant={"outline"} title="Copy to clipboard">
+              <ClipboardIcon />
+            </Button>
+          }
+        >
+          {props?.template?.interface}
+        </DetailPaneTitle>
+
+        <DetailPaneDescription>
+          <DoForm id={props.template.id} />
+        </DetailPaneDescription>
+      </DetailPaneHeader>
+      <ListRender array={props?.template?.dependencies}>
+        {(template, key) => <DependencyCard item={template} key={key} />}
+      </ListRender>
+    </DetailPane>
+  );
+};
+
+export const FlowRender = (props: { template: DetailTemplateFragment }) => {
+  return (
+    <div className="w-full h-full">
+      <TemplateFlow template={props.template} />
+    </div>
+  );
 };
 
 export default asDetailQueryRoute(
@@ -122,31 +162,11 @@ export default asDetailQueryRoute(
         title={data.template.interface}
         object={data.template.id}
       >
-        <DetailPane>
-          <DetailPaneHeader>
-            <DetailPaneTitle
-              actions={
-                <Button variant={"outline"} title="Copy to clipboard">
-                  <ClipboardIcon />
-                </Button>
-              }
-            >
-              {data?.template?.interface}
-            </DetailPaneTitle>
-
-            <div className="w-full h-[500px]">
-              {data?.template?.extension === "reaktion_next" && (
-                <TemplateFlow id={data.template.params["flow"]} />
-              )}
-            </div>
-            <DetailPaneDescription>
-              <DoForm id={data.template.id} />
-            </DetailPaneDescription>
-          </DetailPaneHeader>
-          <ListRender array={data?.template?.dependencies}>
-            {(template, key) => <DependencyCard item={template} key={key} />}
-          </ListRender>
-        </DetailPane>
+        {data.template?.params?.flow ? (
+          <FlowRender template={data.template} />
+        ) : (
+          <DefaultRenderer template={data.template} />
+        )}
       </ModelPageLayout>
     );
   },

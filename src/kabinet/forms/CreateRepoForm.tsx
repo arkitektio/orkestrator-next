@@ -6,10 +6,11 @@ import { Form } from "@/components/ui/form";
 import { useCreateWorkspaceMutation } from "@/reaktion/api/graphql";
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { useForm } from "react-hook-form";
+import { useCreateGithubRepoMutation } from "../api/graphql";
 
-export const CreateWorkspaceForm = (props: {}) => {
-  const [add] = useCreateWorkspaceMutation({
-    refetchQueries: ["Workspaces"],
+export const CreateRepoForm = (props: {}) => {
+  const [add] = useCreateGithubRepoMutation({
+    refetchQueries: ["GithubRepos"],
   });
 
   const dialog = useGraphQlFormDialog(add);
@@ -23,13 +24,13 @@ export const CreateWorkspaceForm = (props: {}) => {
           onSubmit={form.handleSubmit(async (data) => {
             dialog({
               variables: {
-                ...data,
+                identifier: data.identifier,
               },
             });
           })}
         >
           <DialogHeader>
-            <h1>Create a new Workspace</h1>
+            <h1>Add a new Github Repo</h1>
           </DialogHeader>
 
           <DialogDescription className="font-light text-sm mt-2">
@@ -39,7 +40,7 @@ export const CreateWorkspaceForm = (props: {}) => {
           <div className="grid grid-cols-2 gap-2 mt-2">
             <StringField
               label="Lets give it a name"
-              name="name"
+              name="identifier"
               description="The name of the workspace"
             />
           </div>

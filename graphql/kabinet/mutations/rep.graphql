@@ -1,12 +1,5 @@
-mutation CreateGithubRepo(
-  $user: String!
-  $repo: String!
-  $branch: String!
-  $name: String!
-) {
-  createGithubRepo(
-    input: { user: $user, repo: $repo, branch: $branch, name: $name }
-  ) {
+mutation CreateGithubRepo($identifier: String!) {
+  createGithubRepo(input: { identifier: $identifier }) {
     id
   }
 }

@@ -22,8 +22,8 @@ query EventsBetween($id: ID!, $min: Int, $max: Int) {
   }
 }
 
-query ListRuns {
-  runs {
+query ListRuns($filters: RunFilter, $pagination: OffsetPaginationInput) {
+  runs(filters: $filters, pagination: $pagination) {
     ...ListRun
   }
 }

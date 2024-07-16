@@ -11,14 +11,20 @@ import {
 } from "../../../api/graphql";
 import { useTrackRiver } from "../../context";
 
-export const RangeTracker = ({ run }: { run: DetailRunFragment }) => {
+export const RelativeTracker = ({ run }: { run: DetailRunFragment }) => {
   const { setRunState } = useTrackRiver();
 
-  const [t, setT] = useState(0);
+  const [t, setT] = useState<Date | undefined>();
   const [play, setPlay] = useState(false);
   const [triggerRange, setTriggerRange] = useState({ min: 0, max: 10 });
 
-  const [range, setRange] = useState({ min: 0, max: 100, marks: [0] });
+  const [range, setRange] = useState<{ min: Date; max: Date; marks: Date[] }>(
+    () => ({
+      min: new Date(),
+      max: new Date(),
+      marks: [],
+    }),
+  );
 
   const [rangeEvents, setRangeEvents] = useState<
     (RunEventFragment | null | undefined)[]
@@ -28,7 +34,7 @@ export const RangeTracker = ({ run }: { run: DetailRunFragment }) => {
 
   useEffect(() => {
     let newEvents = rangeEvents?.reduce((prev, event) => {
-      if (event && event.t <= t) {
+      if (t && event && new Date(event.createdAt) <= t) {
         let prev_node = prev?.find((i) => i.source === event?.source);
         if (prev_node) {
           if (prev_node.t <= event.t) {
@@ -55,14 +61,19 @@ export const RangeTracker = ({ run }: { run: DetailRunFragment }) => {
   }, [play, range]);
 
   useEffect(() => {
-    let array = run?.snapshots?.map((snapshot) => snapshot.t) || [0, 100];
+    let array = run?.snapshots
+      ?.map((snapshot) => new Date(snapshot.createdAt))
+      .sort((a, b) => (a > b ? 1 : 0)) || [0, 100];
     console.log("Snapshots", array);
 
     setRange({
-      min: Math.min(...array),
-      max: Math.max(...array),
+      min: array.at(0),
+      max: array.at(-1),
       marks: array,
     });
+    if (!t) {
+      setT(array.at(-1));
+    }
   }, [run?.snapshots]);
 
   useEffect(() => {
@@ -120,9 +131,11 @@ export const RangeTracker = ({ run }: { run: DetailRunFragment }) => {
             className="text-xs dark:text-white my-auto mx-auto"
           />
         </Card>
+        {range.max - range.min}
+        {range.marks.length}
         <Slider
-          max={range.max}
-          min={range.min}
+          max={Math.abs(range.max - range.min)}
+          min={0}
           className={"w-full transition-all cursor-pointer"}
           onValueChange={(val) => {
             setT(val[0]), setPlay(false);

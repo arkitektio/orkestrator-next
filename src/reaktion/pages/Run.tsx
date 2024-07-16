@@ -18,8 +18,8 @@ export const FlowDetail = (props: { id: string }) => {
 
 export default asDetailQueryRoute(useGetRunQuery, ({ data, refetch }) => {
   return (
-    <PageLayout title={data.run.assignation}>
-      <TrackFlow assignation={{ id: data.run.assignation }} />
+    <PageLayout title={"Run for " + data.run.flow.title}>
+      <TrackFlow run={data.run} />
     </PageLayout>
   );
 });

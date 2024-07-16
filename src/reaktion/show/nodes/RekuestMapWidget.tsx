@@ -19,6 +19,8 @@ import { OutStream } from "@/reaktion/base/Outstream";
 import { RekuestMapNodeProps } from "@/reaktion/types";
 import { GearIcon } from "@radix-ui/react-icons";
 import React from "react";
+import { useShowRiver } from "../context";
+import { useDependency, useResolvable } from "../hooks/useDependency";
 
 export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
   data: { ins, outs, constants, ...data },
@@ -27,16 +29,22 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
 }) => {
   const [expanded, setExpanded] = React.useState(false);
 
+  const { template } = useShowRiver();
+
   const description = useNodeDescription({
     description: data.description,
     variables: data.constantsMap,
   });
 
+  const dependency = useDependency(id);
+
   return (
     <NodeShowLayout
       id={id}
       className={cn(
-        "border-blue-400/40 shadow-blue-400/10 dark:border-blue-300 dark:shadow-blue/20 shadow-xl",
+        !dependency?.resolvable
+          ? "border-destructive/40 shadow-destructive/30 dark:border-destructive dark:shadow-destructive/20 shadow-xl"
+          : "border-blue-400/40 shadow-blue-400/10 dark:border-blue-300 dark:shadow-blue/20 shadow-xl",
       )}
       selected={selected}
       contextMenu={
@@ -71,7 +79,7 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
         <CardDescription>
           <NodeDescription description={description} />
         </CardDescription>
-        {expanded && <div>Not implemented yet</div>}
+        {expanded && <div className="x">{JSON.stringify(dependency)}</div>}
       </CardHeader>
       {outs.map((s, index) => (
         <OutStream stream={s} id={index} length={outs.length} />

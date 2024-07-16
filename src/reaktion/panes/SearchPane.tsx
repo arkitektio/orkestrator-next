@@ -4,7 +4,7 @@ import { DroppableNavLink } from "@/components/ui/link";
 import { FlussRun, FlussWorkspace } from "@/linkers";
 import { NodeSearchQueryVariables } from "@/rekuest/api/graphql";
 import { CubeIcon } from "@radix-ui/react-icons";
-import { Home } from "lucide-react";
+import { Home, PlusIcon } from "lucide-react";
 import * as React from "react";
 import Timestamp from "react-timestamp";
 import {
@@ -15,64 +15,82 @@ import {
 } from "../api/graphql";
 import WorkspaceCard from "../components/cards/WorkspaceCard";
 import NodeSearchFilter from "../components/forms/filter/NodeSearchFilter";
+import { Tree } from "@/components/explorer/Tree";
+import { SubTreeTitle } from "@/components/explorer/SubTreeTitle";
+import { SubTree } from "@/components/explorer/SubTree";
+import { FormDialogAction } from "@/components/ui/form-dialog-action";
+import { CreateWorkspaceForm } from "../components/forms/CreateWorkspaceForm";
 
 interface IDataSidebarProps {}
 
 export const NavigationPane = (props: {}) => {
   const { data, refetch, variables } = useWorkspacesQuery();
-  const { data: rundata } = useListRunsQuery();
+  const { data: rundata } = useListRunsQuery({
+    variables: {
+      pagination: {
+        limit: 5,
+      },
+    },
+  });
 
   return (
-    <div className="flex-1 flex-col">
-      <nav className="grid items-start px-1 text-sm font-medium lg:px-2">
-        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
-          Explore
-        </div>
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-4">
-          <DroppableNavLink
-            to="/rekuest"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <Home className="h-4 w-4" />
-            Dashboard
-          </DroppableNavLink>
-        </div>
+    <Tree>
+      <SubTreeTitle>Explore</SubTreeTitle>
+      <SubTree>
+        <DroppableNavLink
+          to="/fluss"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <Home className="h-4 w-4" />
+          Dashboard
+        </DroppableNavLink>
+      </SubTree>
 
-        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
-          Runs
-        </div>
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-5">
-          {rundata?.runs.map((run, index) => (
-            <FlussRun.DetailLink
-              object={run.id}
-              key={index}
-              className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
-            >
-              <CubeIcon className="h-4 w-4 my-auto" />
-              {run.flow.workspace.title}
-              <div className="text-muted-foreground text-xs my-auto">
-                <Timestamp date={run.createdAt} relative />
-              </div>
-            </FlussRun.DetailLink>
-          ))}
-        </div>
-        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
-          Workspaces
-        </div>
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
-          {data?.workspaces.map((workspace, index) => (
-            <FlussWorkspace.DetailLink
-              object={workspace.id}
-              key={index}
-              className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
-            >
-              <CubeIcon className="h-4 w-4" />
-              {workspace.title}
-            </FlussWorkspace.DetailLink>
-          ))}
-        </div>
-      </nav>
-    </div>
+      <SubTreeTitle>Runs</SubTreeTitle>
+      <SubTree>
+        {rundata?.runs.map((run, index) => (
+          <FlussRun.DetailLink
+            object={run.id}
+            key={index}
+            className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
+          >
+            <CubeIcon className="h-4 w-4 my-auto" />
+            {run.flow.workspace.title}
+            <div className="text-muted-foreground text-xs my-auto">
+              <Timestamp date={run.createdAt} relative />
+            </div>
+          </FlussRun.DetailLink>
+        ))}
+      </SubTree>
+      <SubTreeTitle
+        action={
+          <FormDialogAction
+            label="Create"
+            variant={"ghost"}
+            buttonChildren={<PlusIcon className="h-4 w-4" />}
+            onSubmit={(item) => {
+              console.log(item);
+            }}
+          >
+            <CreateWorkspaceForm />
+          </FormDialogAction>
+        }
+      >
+        Workspaces
+      </SubTreeTitle>
+      <SubTree>
+        {data?.workspaces.map((workspace, index) => (
+          <FlussWorkspace.DetailLink
+            object={workspace.id}
+            key={index}
+            className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
+          >
+            <CubeIcon className="h-4 w-4" />
+            {workspace.title}
+          </FlussWorkspace.DetailLink>
+        ))}
+      </SubTree>
+    </Tree>
   );
 };
 

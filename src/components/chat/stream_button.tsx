@@ -1,5 +1,6 @@
 import {
   DetailRoomFragment,
+  EnsuredStreamFragment,
   StreamFragment,
   useCreateStreamMutation,
 } from "@/lok-next/api/graphql";
@@ -7,28 +8,24 @@ import { Button } from "../ui/button";
 import RoomPage from "@/lok-next/pages/RoomPage";
 import { Popover, PopoverContent } from "../ui/popover";
 import { PopoverTrigger } from "@radix-ui/react-popover";
-import { LiveKitRoom } from "@livekit/components-react";
+import { LiveKitRoom, ParticipantTile } from "@livekit/components-react";
 import { useLivekit } from "@/arkitekt";
 
 import { Track } from "livekit-client";
 import { useTracks, VideoTrack } from "@livekit/components-react";
+import { GridLayout } from "@livekit/components-react";
 
 function VideoRenderer() {
   const trackRefs = useTracks([Track.Source.Camera]);
-  const tokyoCamTrackRef = trackRefs.find((trackRef) => trackRef);
 
   return (
-    <>
-      {tokyoCamTrackRef ? (
-        <VideoTrack trackRef={tokyoCamTrackRef} />
-      ) : (
-        <div>Tokyo is offline</div>
-      )}
-    </>
+    <GridLayout tracks={trackRefs}>
+      <ParticipantTile />
+    </GridLayout>
   );
 }
 
-export const VideoStream = ({ stream }: { stream: StreamFragment }) => {
+export const VideoStream = ({ stream }: { stream: EnsuredStreamFragment }) => {
   const { url } = useLivekit();
 
   console.log("Stream", stream, url);

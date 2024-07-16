@@ -871,6 +871,16 @@ export type StringAssignWidget = AssignWidget & {
   placeholder: Scalars['String']['output'];
 };
 
+export type Subscription = {
+  __typename?: 'Subscription';
+  events: RunEvent;
+};
+
+
+export type SubscriptionEventsArgs = {
+  run: Scalars['ID']['input'];
+};
+
 export type TrackInput = {
   causedBy?: Array<Scalars['ID']['input']>;
   handle?: InputMaybe<Scalars['String']['input']>;
@@ -1157,7 +1167,10 @@ export type EventsBetweenQueryVariables = Exact<{
 
 export type EventsBetweenQuery = { __typename?: 'Query', eventsBetween: Array<{ __typename?: 'RunEvent', id: string, source: string, handle: string, kind: RunEventKind, createdAt: any, value: any, t: number, causedBy: Array<string> }> };
 
-export type ListRunsQueryVariables = Exact<{ [key: string]: never; }>;
+export type ListRunsQueryVariables = Exact<{
+  filters?: InputMaybe<RunFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+}>;
 
 
 export type ListRunsQuery = { __typename?: 'Query', runs: Array<{ __typename?: 'Run', id: string, assignation: string, createdAt: any, flow: { __typename?: 'Flow', workspace: { __typename?: 'Workspace', title: string } } }> };
@@ -1190,6 +1203,13 @@ export type WorkspacesQueryVariables = Exact<{
 
 
 export type WorkspacesQuery = { __typename?: 'Query', workspaces: Array<{ __typename?: 'Workspace', id: string, title: string, description?: string | null, latestFlow?: { __typename?: 'Flow', id: string, title: string, createdAt: any, workspace: { __typename?: 'Workspace', id: string } } | null }> };
+
+export type EventsSubscriptionVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type EventsSubscription = { __typename?: 'Subscription', events: { __typename?: 'RunEvent', id: string, source: string, handle: string, kind: RunEventKind, createdAt: any, value: any, t: number, causedBy: Array<string> } };
 
 export const ListFlowFragmentDoc = gql`
     fragment ListFlow on Flow {
@@ -2066,8 +2086,8 @@ export type EventsBetweenQueryHookResult = ReturnType<typeof useEventsBetweenQue
 export type EventsBetweenLazyQueryHookResult = ReturnType<typeof useEventsBetweenLazyQuery>;
 export type EventsBetweenQueryResult = Apollo.QueryResult<EventsBetweenQuery, EventsBetweenQueryVariables>;
 export const ListRunsDocument = gql`
-    query ListRuns {
-  runs {
+    query ListRuns($filters: RunFilter, $pagination: OffsetPaginationInput) {
+  runs(filters: $filters, pagination: $pagination) {
     ...ListRun
   }
 }
@@ -2085,6 +2105,8 @@ export const ListRunsDocument = gql`
  * @example
  * const { data, loading, error } = useListRunsQuery({
  *   variables: {
+ *      filters: // value for 'filters'
+ *      pagination: // value for 'pagination'
  *   },
  * });
  */
@@ -2240,3 +2262,33 @@ export function useWorkspacesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryH
 export type WorkspacesQueryHookResult = ReturnType<typeof useWorkspacesQuery>;
 export type WorkspacesLazyQueryHookResult = ReturnType<typeof useWorkspacesLazyQuery>;
 export type WorkspacesQueryResult = Apollo.QueryResult<WorkspacesQuery, WorkspacesQueryVariables>;
+export const EventsDocument = gql`
+    subscription Events($id: ID!) {
+  events(run: $id) {
+    ...RunEvent
+  }
+}
+    ${RunEventFragmentDoc}`;
+
+/**
+ * __useEventsSubscription__
+ *
+ * To run a query within a React component, call `useEventsSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useEventsSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useEventsSubscription({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useEventsSubscription(baseOptions: ApolloReactHooks.SubscriptionHookOptions<EventsSubscription, EventsSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useSubscription<EventsSubscription, EventsSubscriptionVariables>(EventsDocument, options);
+      }
+export type EventsSubscriptionHookResult = ReturnType<typeof useEventsSubscription>;
+export type EventsSubscriptionResult = Apollo.SubscriptionResult<EventsSubscription>;

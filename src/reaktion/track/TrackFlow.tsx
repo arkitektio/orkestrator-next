@@ -1,4 +1,8 @@
-import { GraphInput, useRunForAssignationQuery } from "@/reaktion/api/graphql";
+import {
+  DetailRunFragment,
+  GraphInput,
+  useRunForAssignationQuery,
+} from "@/reaktion/api/graphql";
 import { AnimatePresence } from "framer-motion";
 import React, { useRef, useState } from "react";
 import { useNodesState } from "reactflow";
@@ -14,6 +18,12 @@ import { RekuestMapWidget } from "./nodes/RekuestMapWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
 import { RunState } from "./types";
+import {
+  AssignationEventKind,
+  DetailAssignationFragment,
+} from "@/rekuest/api/graphql";
+import { LiveTracker } from "./components/tracker/LiveTracker";
+import { RelativeTracker } from "./components/tracker/RelativeTracker";
 
 const nodeTypes: NodeTypes = {
   RekuestFilterNode: RekuestFilterWidget,
@@ -29,18 +39,15 @@ const edgeTypes: EdgeTypes = {
 };
 
 export type Props = {
-  assignation: { id: string };
+  run: DetailRunFragment;
+  assignation?: DetailAssignationFragment;
   onSave?: (graph: GraphInput) => void;
 };
 
-export const TrackFlow: React.FC<Props> = ({ assignation, onSave }) => {
-  console.log("THE FLOW", assignation);
+export const TrackFlow: React.FC<Props> = ({ run, assignation, onSave }) => {
+  console.log("THE FLOW", run);
 
-  const { data, error } = useRunForAssignationQuery({
-    variables: {
-      id: assignation.id,
-    },
-  });
+  console.log;
 
   const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
   const [showEdgeLabels, setShowEdgeLabels] = useState(false);
@@ -50,23 +57,21 @@ export const TrackFlow: React.FC<Props> = ({ assignation, onSave }) => {
   const [live, setLive] = useState<boolean>(true);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(
-    nodes_to_flownodes(data?.runForAssignation?.flow.graph?.nodes || []) || [],
+    nodes_to_flownodes(run.flow.graph?.nodes || []) || [],
   );
-  const edges = edges_to_flowedges(
-    data?.runForAssignation?.flow.graph?.edges || [],
-  );
-  const globals = data?.runForAssignation?.flow.graph.globals || [];
+  const edges = edges_to_flowedges(run.flow.graph?.edges || []);
+  const globals = run.flow.graph.globals || [];
 
   const [selectedNode, setSelectedNode] = useState<FlowNode | null>(null);
 
   return (
     <TrackRiverContext.Provider
       value={{
-        flow: data?.runForAssignation?.flow,
+        flow: run.flow,
         runState: runState,
         selectedNode,
         setRunState: setRunState,
-        run: data?.runForAssignation,
+        run: run,
         live,
         setLive,
       }}
@@ -90,8 +95,10 @@ export const TrackFlow: React.FC<Props> = ({ assignation, onSave }) => {
         </div>
         <AnimatePresence>
           <div className=" w-full flex-initial ">
-            {data?.runForAssignation && (
-              <RangeTracker run={data?.runForAssignation} />
+            {assignation?.status != AssignationEventKind.Done ? (
+              <LiveTracker run={run} startT={run?.latestSnapshot?.t || 0} />
+            ) : (
+              <RangeTracker run={run} />
             )}
           </div>
         </AnimatePresence>

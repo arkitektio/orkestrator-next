@@ -805,11 +805,19 @@ export type ResolveCommentInput = {
 /** Room(id, title, description, creator) */
 export type Room = {
   __typename?: 'Room';
+  agents: Array<Agent>;
   description: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   messages: Array<Message>;
+  streams: Array<Stream>;
   /** The Title of the Room */
   title: Scalars['String']['output'];
+};
+
+
+/** Room(id, title, description, creator) */
+export type RoomAgentsArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -1215,7 +1223,7 @@ export type DetailReleaseFragment = { __typename?: 'Release', id: string, versio
 
 export type ListReleaseFragment = { __typename?: 'Release', id: string, version: any, logo?: string | null, app: { __typename?: 'App', id: string, identifier: any, logo?: string | null } };
 
-export type DetailRoomFragment = { __typename?: 'Room', id: string, title: string, description: string, messages: Array<{ __typename?: 'Message', id: string, text: string, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> }> };
+export type DetailRoomFragment = { __typename?: 'Room', id: string, title: string, description: string, messages: Array<{ __typename?: 'Message', id: string, text: string, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> }>, streams: Array<{ __typename?: 'Stream', id: string, title: string }> };
 
 export type ListServiceInstanceMappingFragment = { __typename?: 'ServiceInstanceMapping', id: string, key: string, instance: { __typename?: 'ServiceInstance', backend: BackendType, service: { __typename?: 'Service', identifier: any } } };
 
@@ -1225,7 +1233,9 @@ export type ListStashFragment = { __typename?: 'Stash', id: string, name: string
 
 export type StashItemFragment = { __typename?: 'StashItem', id: string, identifier: string, object: string };
 
-export type StreamFragment = { __typename?: 'Stream', id: string, title: string, token: string };
+export type StreamFragment = { __typename?: 'Stream', id: string, title: string };
+
+export type EnsuredStreamFragment = { __typename?: 'Stream', id: string, title: string, token: string };
 
 export type ListUserFragment = { __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string };
 
@@ -1437,7 +1447,7 @@ export type DetailRoomQueryVariables = Exact<{
 }>;
 
 
-export type DetailRoomQuery = { __typename?: 'Query', room: { __typename?: 'Room', id: string, title: string, description: string, messages: Array<{ __typename?: 'Message', id: string, text: string, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> }> } };
+export type DetailRoomQuery = { __typename?: 'Query', room: { __typename?: 'Room', id: string, title: string, description: string, messages: Array<{ __typename?: 'Message', id: string, text: string, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> }>, streams: Array<{ __typename?: 'Stream', id: string, title: string }> } };
 
 export type RoomsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1835,6 +1845,12 @@ export const ListMessageFragmentDoc = gql`
   }
 }
     `;
+export const StreamFragmentDoc = gql`
+    fragment Stream on Stream {
+  id
+  title
+}
+    `;
 export const DetailRoomFragmentDoc = gql`
     fragment DetailRoom on Room {
   id
@@ -1843,8 +1859,12 @@ export const DetailRoomFragmentDoc = gql`
   messages {
     ...ListMessage
   }
+  streams {
+    ...Stream
+  }
 }
-    ${ListMessageFragmentDoc}`;
+    ${ListMessageFragmentDoc}
+${StreamFragmentDoc}`;
 export const StashFragmentDoc = gql`
     fragment Stash on Stash {
   id
@@ -1874,8 +1894,8 @@ export const ListStashFragmentDoc = gql`
 }
     ${StashFragmentDoc}
 ${StashItemFragmentDoc}`;
-export const StreamFragmentDoc = gql`
-    fragment Stream on Stream {
+export const EnsuredStreamFragmentDoc = gql`
+    fragment EnsuredStream on Stream {
   id
   title
   token
@@ -2282,10 +2302,10 @@ export type DeleteStashMutationOptions = Apollo.BaseMutationOptions<DeleteStashM
 export const CreateStreamDocument = gql`
     mutation CreateStream($input: CreateStreamInput!) {
   createStream(input: $input) {
-    ...Stream
+    ...EnsuredStream
   }
 }
-    ${StreamFragmentDoc}`;
+    ${EnsuredStreamFragmentDoc}`;
 export type CreateStreamMutationFn = Apollo.MutationFunction<CreateStreamMutation, CreateStreamMutationVariables>;
 
 /**

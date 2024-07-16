@@ -29,6 +29,7 @@ import { useForm } from "react-hook-form";
 import { ClickContextualParams, ReactiveNodeSuggestions } from "../../types";
 import { useEditRiver } from "../context";
 import { ContextualContainer } from "./ContextualContainer";
+import { useRekuest } from "@/arkitekt";
 
 export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   const form = useForm({
@@ -250,7 +251,7 @@ const ClickArkitektNodes = (props: {
   }, [props.search]);
 
   const { addClickNode } = useEditRiver();
-  const client = useService("rekuest");
+  const client = useRekuest();
 
   const onNodeClick = (id: string) => {
     client &&

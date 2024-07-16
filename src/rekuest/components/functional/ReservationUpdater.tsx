@@ -12,10 +12,11 @@ import {
   WatchReservationsSubscription,
   WatchReservationsSubscriptionVariables,
 } from "../../api/graphql";
+import { useRekuest } from "@/arkitekt";
 
 export const ReservationUpdater = (props: {}) => {
   const { settings } = useSettings();
-  const client = useService("rekuest");
+  const client = useRekuest();
 
   useEffect(() => {
     if (client) {

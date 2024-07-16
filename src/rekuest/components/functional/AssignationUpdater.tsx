@@ -10,6 +10,7 @@ import {
   WatchAssignationsDocument,
   WatchAssignationsSubscription,
 } from "../../api/graphql";
+import { useRekuest } from "@/arkitekt";
 
 export const AssignationToaster = (props: { id: string }) => {
   const { data } = useAssignations();
@@ -30,7 +31,7 @@ export const AssignationToaster = (props: { id: string }) => {
 
 export const AssignationUpdater = (props: {}) => {
   const { settings } = useSettings();
-  const client = useService("rekuest");
+  const client = useRekuest();
   useEffect(() => {
     if (client) {
       console.log("Subscribing to Postman Assignation");

@@ -1,3 +1,4 @@
+import { useFluss } from "@/arkitekt";
 import { useService } from "@/arkitekt/hooks";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { gql } from "@apollo/client";
@@ -7,7 +8,7 @@ export const FlussWard: React.FC<{
   key?: string;
   fallback?: React.ReactNode;
 }> = ({ key, fallback }) => {
-  const client = useService("fluss");
+  const client = useFluss();
   const { registry } = useWidgetRegistry();
 
   useEffect(() => {

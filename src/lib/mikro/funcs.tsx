@@ -1,3 +1,4 @@
+import { useMikro } from "@/arkitekt";
 import { useArkitekt } from "@/arkitekt/provider";
 import {
   LazyQueryHookOptions,
@@ -23,41 +24,25 @@ export type {
 };
 
 export const useMutation: MutationFuncType = (doc, options) => {
-  const { clients } = useArkitekt();
+  const mikro = useMikro();
 
-  if (!clients["mikro"]) {
-    throw new Error("Lok client not available");
-  }
-
-  return useApolloMutation(doc, { ...options, client: clients["mikro"] });
+  return useApolloMutation(doc, { ...options, client: mikro });
 };
 
 export const useQuery: QueryFuncType = (doc, options) => {
-  const { clients } = useArkitekt();
+  const mikro = useMikro();
 
-  if (!clients["mikro"]) {
-    throw new Error("Lok client not available");
-  }
-
-  return useApolloQuery(doc, { ...options, client: clients["mikro"] });
+  return useApolloQuery(doc, { ...options, client: mikro });
 };
 
 export const useSubscription: SubscriptionFuncType = (doc, options) => {
-  const { clients } = useArkitekt();
+  const mikro = useMikro();
 
-  if (!clients["mikro"]) {
-    throw new Error("Lok client not available");
-  }
-
-  return useApolloSubscription(doc, { ...options, client: clients["mikro"] });
+  return useApolloSubscription(doc, { ...options, client: mikro });
 };
 
 export const useLazyQuery: LazyQueryFuncType = (doc, options) => {
-  const { clients } = useArkitekt();
+  const mikro = useMikro();
 
-  if (!clients["mikro"]) {
-    throw new Error("Lok client not available");
-  }
-
-  return useApolloLazyQuery(doc, { ...options, client: clients["mikro"] });
+  return useApolloLazyQuery(doc, { ...options, client: mikro });
 };

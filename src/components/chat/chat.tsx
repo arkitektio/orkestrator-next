@@ -34,6 +34,7 @@ export function Chat({ messages, selectedUser, isMobile, room }: ChatProps) {
         agent={{ id: "1" }}
         sendMessage={sendMessage}
         isMobile={isMobile}
+        room={room}
       />
     </div>
   );

@@ -1,3 +1,4 @@
+import { useFluss, useOmeroArk } from "@/arkitekt";
 import { useArkitekt } from "@/arkitekt/provider";
 import {
   LazyQueryHookOptions,
@@ -23,41 +24,25 @@ export type {
 };
 
 export const useMutation: MutationFuncType = (doc, options) => {
-  const { clients } = useArkitekt();
+  const fluss = useOmeroArk();
 
-  if (!clients["fluss"]) {
-    throw new Error("Lok client not available");
-  }
-
-  return useApolloMutation(doc, { ...options, client: clients["fluss"] });
+  return useApolloMutation(doc, { ...options, client: fluss });
 };
 
 export const useQuery: QueryFuncType = (doc, options) => {
-  const { clients } = useArkitekt();
+  const fluss = useOmeroArk();
 
-  if (!clients["fluss"]) {
-    throw new Error("Lok client not available");
-  }
-
-  return useApolloQuery(doc, { ...options, client: clients["fluss"] });
+  return useApolloQuery(doc, { ...options, client: fluss });
 };
 
 export const useSubscription: SubscriptionFuncType = (doc, options) => {
-  const { clients } = useArkitekt();
+  const fluss = useOmeroArk();
 
-  if (!clients["fluss"]) {
-    throw new Error("Lok client not available");
-  }
-
-  return useApolloSubscription(doc, { ...options, client: clients["fluss"] });
+  return useApolloSubscription(doc, { ...options, client: fluss });
 };
 
 export const useLazyQuery: LazyQueryFuncType = (doc, options) => {
-  const { clients } = useArkitekt();
+  const fluss = useOmeroArk();
 
-  if (!clients["fluss"]) {
-    throw new Error("Lok client not available");
-  }
-
-  return useApolloLazyQuery(doc, { ...options, client: clients["fluss"] });
+  return useApolloLazyQuery(doc, { ...options, client: fluss });
 };

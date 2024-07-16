@@ -14,6 +14,7 @@
         "kind": "INPUT_OBJECT",
         "name": "AcknowledgeMessageInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -57,6 +58,7 @@
         "kind": "INPUT_OBJECT",
         "name": "AddItemToStashInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -108,6 +110,7 @@
         "kind": "OBJECT",
         "name": "Agent",
         "description": "Agent(id, room, name, app, user)",
+        "isOneOf": null,
         "fields": [
           {
             "name": "id",
@@ -151,6 +154,7 @@
         "kind": "OBJECT",
         "name": "App",
         "description": "An App is the Arkitekt equivalent of a Software Application. It is a collection of `Releases` that can be all part of the same application. E.g the App `Napari` could have the releases `0.1.0` and `0.2.0`.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "id",
@@ -246,6 +250,7 @@
         "kind": "SCALAR",
         "name": "AppIdentifier",
         "description": "The App identifier is a unique identifier for an app. It is used to identify the app in the database and in the code. We encourage you to use the reverse domain name notation. E.g. `com.example.myapp`",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -256,6 +261,7 @@
         "kind": "ENUM",
         "name": "BackendType",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -279,6 +285,7 @@
         "kind": "SCALAR",
         "name": "Boolean",
         "description": "The `Boolean` scalar type represents `true` or `false`.",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -289,6 +296,7 @@
         "kind": "OBJECT",
         "name": "Client",
         "description": "A client is a way of authenticating users with a release.\n The strategy of authentication is defined by the kind of client. And allows for different authentication flow. \n E.g a client can be a DESKTOP app, that might be used by multiple users, or a WEBSITE that wants to connect to a user's account, \n but also a DEVELOPMENT client that is used by a developer to test the app. The client model thinly wraps the oauth2 client model, which is used to authenticate users.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "composition",
@@ -440,6 +448,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ClientFilter",
         "description": "Client(id, composition, release, oauth2_client, kind, public, token, client_id, client_secret, tenant, user, created_at)",
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -507,6 +516,7 @@
         "kind": "ENUM",
         "name": "ClientKind",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -536,6 +546,7 @@
         "kind": "OBJECT",
         "name": "Comment",
         "description": "Comments represent the comments of a user on a specific data item \ntart are identified by the unique combination of `identifier` and `object`.\nE.g a comment for an Image on the Mikro services would be serverd as\n`@mikro/image:imageID`. \n\nComments always belong to the user that created it. Comments in threads\nget a parent attribute set, that points to the immediate parent.\n\nEach comment contains multiple descendents, that make up a *rich* representation\nof the underlying comment data including potential mentions, or links, or \nparagraphs.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "children",
@@ -764,6 +775,7 @@
         "kind": "OBJECT",
         "name": "Communication",
         "description": "A Communication",
+        "isOneOf": null,
         "fields": [
           {
             "name": "channel",
@@ -791,6 +803,7 @@
         "kind": "OBJECT",
         "name": "Composition",
         "description": "A template for a configuration",
+        "isOneOf": null,
         "fields": [
           {
             "name": "id",
@@ -874,6 +887,7 @@
         "kind": "INPUT_OBJECT",
         "name": "CreateCommentInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -965,6 +979,7 @@
         "kind": "INPUT_OBJECT",
         "name": "CreateRoomInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -1000,6 +1015,7 @@
         "kind": "INPUT_OBJECT",
         "name": "CreateStashInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -1033,8 +1049,61 @@
       },
       {
         "kind": "INPUT_OBJECT",
+        "name": "CreateStreamInput",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "agentId",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "room",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "ID",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "title",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
         "name": "CreateUserInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -1062,6 +1131,7 @@
         "kind": "SCALAR",
         "name": "DateTime",
         "description": "Date with time (isoformat)",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -1072,6 +1142,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DeleteStashInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -1099,6 +1170,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DeleteStashItems",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -1134,6 +1206,7 @@
         "kind": "INTERFACE",
         "name": "Descendant",
         "description": "A descendant of a comment. Descendend are used to render rich text in the frontend.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "children",
@@ -1217,6 +1290,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DescendantInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -1324,6 +1398,7 @@
         "kind": "ENUM",
         "name": "DescendantKind",
         "description": "The Kind of a Descendant",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -1353,6 +1428,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DevelopmentClientInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -1416,6 +1492,7 @@
         "kind": "OBJECT",
         "name": "DjangoModelType",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "pk",
@@ -1443,6 +1520,7 @@
         "kind": "SCALAR",
         "name": "ExtraData",
         "description": "The `ArrayLike` scalasr typsse represents a reference to a store previously created by the user n a datalayer",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -1453,6 +1531,7 @@
         "kind": "SCALAR",
         "name": "Fakt",
         "description": "The `Fakt` scalar type represents a reference to a fakt",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -1463,6 +1542,7 @@
         "kind": "OBJECT",
         "name": "GenericAccount",
         "description": "\nThe Generic Account is a Social Account that maps to a generic account. It provides information about the\nuser that is specific to the provider. This includes untyped extra data.\n\n",
+        "isOneOf": null,
         "fields": [
           {
             "name": "extraData",
@@ -1528,6 +1608,7 @@
         "kind": "OBJECT",
         "name": "Group",
         "description": "\nA Group is the base unit of Role Based Access Control. A Group can have many users and many permissions. A user can have many groups. A user with a group that has a permission can perform the action that the permission allows.\nGroups are propagated to the respecting subservices. Permissions are not. Each subservice has to define its own permissions and mappings to groups.\n",
+        "isOneOf": null,
         "fields": [
           {
             "name": "id",
@@ -1620,6 +1701,7 @@
         "kind": "INPUT_OBJECT",
         "name": "GroupFilter",
         "description": "__doc__",
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -1699,6 +1781,7 @@
         "kind": "SCALAR",
         "name": "ID",
         "description": "The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `\"4\"`) or integer (such as `4`) input value will be accepted as an ID.",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -1709,6 +1792,7 @@
         "kind": "SCALAR",
         "name": "Identifier",
         "description": "The `Identifier` scalasr typsse represents a reference to a store previously created by the user n a datalayer",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -1719,8 +1803,37 @@
         "kind": "SCALAR",
         "name": "Int",
         "description": "The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1.",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "JoinStreamInput",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "id",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "ID",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
         "interfaces": null,
         "enumValues": null,
         "possibleTypes": null
@@ -1729,6 +1842,7 @@
         "kind": "OBJECT",
         "name": "LeafDescendant",
         "description": "A leaf of text. This is the most basic descendant and always ends a tree.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "bold",
@@ -1860,8 +1974,37 @@
       },
       {
         "kind": "INPUT_OBJECT",
+        "name": "LeaveStreamInput",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "id",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "ID",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
         "name": "LinkingRequestInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -1921,6 +2064,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ManifestInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -2000,6 +2144,7 @@
         "kind": "OBJECT",
         "name": "MentionDescendant",
         "description": "A mention of a user",
+        "isOneOf": null,
         "fields": [
           {
             "name": "children",
@@ -2085,6 +2230,7 @@
         "kind": "OBJECT",
         "name": "Message",
         "description": "Message represent the message of an agent on a room",
+        "isOneOf": null,
         "fields": [
           {
             "name": "agent",
@@ -2197,6 +2343,7 @@
         "kind": "INPUT_OBJECT",
         "name": "MessageFilter",
         "description": "Message represent the message of an agent on a room",
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -2264,6 +2411,7 @@
         "kind": "OBJECT",
         "name": "Mutation",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "acknowledgeMessage",
@@ -2472,6 +2620,39 @@
             "deprecationReason": null
           },
           {
+            "name": "createStream",
+            "description": null,
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "CreateStreamInput",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "Stream",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "createUser",
             "description": null,
             "args": [
@@ -2573,6 +2754,72 @@
                     "ofType": null
                   }
                 }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "joinStream",
+            "description": null,
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "JoinStreamInput",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "Stream",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "leaveStream",
+            "description": null,
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "LeaveStreamInput",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "Stream",
+                "ofType": null
               }
             },
             "isDeprecated": false,
@@ -2786,6 +3033,7 @@
         "kind": "OBJECT",
         "name": "Oauth2Client",
         "description": "Application(id, client_id, user, redirect_uris, post_logout_redirect_uris, client_type, authorization_grant_type, client_secret, name, skip_authorization, created, updated, algorithm)",
+        "isOneOf": null,
         "fields": [
           {
             "name": "algorithm",
@@ -2909,6 +3157,7 @@
         "kind": "INPUT_OBJECT",
         "name": "OffsetPaginationInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -2952,6 +3201,7 @@
         "kind": "OBJECT",
         "name": "OrcidAccount",
         "description": "\nAn ORCID Account is a Social Account that maps to an ORCID Account. It provides information about the\nuser that is specific to the ORCID service. This includes the ORCID Identifier, the ORCID Preferences and\nthe ORCID Person. The ORCID Person contains information about the user that is specific to the ORCID service.\nThis includes the ORCID Activities, the ORCID Researcher URLs and the ORCID Addresses.\n\n",
+        "isOneOf": null,
         "fields": [
           {
             "name": "extraData",
@@ -3045,6 +3295,7 @@
         "kind": "OBJECT",
         "name": "OrcidIdentifier",
         "description": "The ORCID Identifier of a user. This is a unique identifier that is used to identify a user on the ORCID service. It is composed of a uri, a path and a host.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "host",
@@ -3104,6 +3355,7 @@
         "kind": "OBJECT",
         "name": "OrcidPerson",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "addresses",
@@ -3163,6 +3415,7 @@
         "kind": "OBJECT",
         "name": "ParagraphDescendant",
         "description": "A Paragraph of text",
+        "isOneOf": null,
         "fields": [
           {
             "name": "children",
@@ -3248,6 +3501,7 @@
         "kind": "OBJECT",
         "name": "Profile",
         "description": "\nA Profile of a User. A Profile can be used to display personalied information about a user.\n\n\n\n\n",
+        "isOneOf": null,
         "fields": [
           {
             "name": "bio",
@@ -3291,6 +3545,7 @@
         "kind": "ENUM",
         "name": "ProviderType",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -3308,6 +3563,7 @@
         "kind": "OBJECT",
         "name": "Query",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "app",
@@ -4382,6 +4638,7 @@
         "kind": "OBJECT",
         "name": "RedeemToken",
         "description": "A redeem token is a token that can be used to redeed the rights to create\na client. It is used to give the recipient the right to create a client.\n\nIf the token is not redeemed within the expires_at time, it will be invalid.\nIf the token has been redeemed, but the manifest has changed, the token will be invalid.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "client",
@@ -4453,6 +4710,7 @@
         "kind": "INPUT_OBJECT",
         "name": "RedeemTokenFilter",
         "description": "A redeem token is a token that can be used to redeed the rights to create\na client. It is used to give the recipient the right to create a client.\n\nIf the token is not redeemed within the expires_at time, it will be invalid.\nIf the token has been redeemed, but the manifest has changed, the token will be invalid.",
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -4520,6 +4778,7 @@
         "kind": "OBJECT",
         "name": "Release",
         "description": "A Release is a version of an app. Releases might change over time. E.g. a release might be updated to fix a bug, and the release might be updated to add a new feature. This is why they are the home for `scopes` and `requirements`, which might change over the release cycle.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "app",
@@ -4704,6 +4963,7 @@
         "kind": "INPUT_OBJECT",
         "name": "RenderInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -4767,6 +5027,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ReplyToCommentInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -4826,6 +5087,7 @@
         "kind": "INPUT_OBJECT",
         "name": "Requirement",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -4897,6 +5159,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ResolveCommentInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -4936,6 +5199,7 @@
         "kind": "OBJECT",
         "name": "Room",
         "description": "Room(id, title, description, creator)",
+        "isOneOf": null,
         "fields": [
           {
             "name": "description",
@@ -5044,6 +5308,7 @@
         "kind": "OBJECT",
         "name": "RoomEvent",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "join",
@@ -5091,6 +5356,7 @@
         "kind": "INPUT_OBJECT",
         "name": "RoomFilter",
         "description": "Room(id, title, description, creator)",
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -5158,6 +5424,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ScanBackendInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -5181,6 +5448,7 @@
         "kind": "OBJECT",
         "name": "Scope",
         "description": "A scope that can be assigned to a client. Scopes are used to limit the access of a client to a user's data. They represent app-level permissions.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "description",
@@ -5240,6 +5508,7 @@
         "kind": "INPUT_OBJECT",
         "name": "SendMessageInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -5343,6 +5612,7 @@
         "kind": "OBJECT",
         "name": "Service",
         "description": "A Service is a Webservice that a Client might want to access. It is not the configured instance of the service, but the service itself.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "description",
@@ -5450,6 +5720,7 @@
         "kind": "SCALAR",
         "name": "ServiceIdentifier",
         "description": "The Service identifier is a unique identifier for a service. It is used to identify the service in the database and in the code. We encourage you to use the reverse domain name notation. E.g. `com.example.myservice`",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -5460,6 +5731,7 @@
         "kind": "OBJECT",
         "name": "ServiceInstance",
         "description": "A ServiceInstance is a configured instance of a Service. It will be configured by a configuration backend and will be used to send to the client as a configuration. It should never contain sensitive information.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "backend",
@@ -5567,6 +5839,7 @@
         "kind": "OBJECT",
         "name": "ServiceInstanceMapping",
         "description": "A ServiceInstance is a configured instance of a Service. It will be configured by a configuration backend and will be used to send to the client as a configuration. It should never contain sensitive information.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "composition",
@@ -5642,6 +5915,7 @@
         "kind": "INTERFACE",
         "name": "SocialAccount",
         "description": "\nA Social Account is an account that is associated with a user. It can be used to authenticate the user with external services. It\ncan be used to store extra data about the user that is specific to the provider. We provide typed access to the extra data for\nsome providers. For others we provide a generic json field that can be used to store arbitrary data. Generic accounts are\nalways available, but typed accounts are only available for some providers.\n",
+        "isOneOf": null,
         "fields": [
           {
             "name": "extraData",
@@ -5712,6 +5986,7 @@
         "kind": "INPUT_OBJECT",
         "name": "SocialAccountFilter",
         "description": "SocialAccount(id, user, provider, uid, last_login, date_joined, extra_data)",
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -5791,6 +6066,7 @@
         "kind": "OBJECT",
         "name": "Stash",
         "description": "\nA Stash\n",
+        "isOneOf": null,
         "fields": [
           {
             "name": "createdAt",
@@ -5959,6 +6235,7 @@
         "kind": "INPUT_OBJECT",
         "name": "StashFilter",
         "description": "__doc__",
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -6026,6 +6303,7 @@
         "kind": "OBJECT",
         "name": "StashItem",
         "description": "\nA stashed item\n",
+        "isOneOf": null,
         "fields": [
           {
             "name": "addedAt",
@@ -6129,6 +6407,7 @@
         "kind": "INPUT_OBJECT",
         "name": "StashItemFilter",
         "description": "StashItem(id, stash, identifier, object, added_by, added_at, updated_at)",
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -6228,6 +6507,7 @@
         "kind": "INPUT_OBJECT",
         "name": "StashItemInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -6283,6 +6563,7 @@
         "kind": "INPUT_OBJECT",
         "name": "StrFilterLookup",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -6731,9 +7012,86 @@
         "possibleTypes": null
       },
       {
+        "kind": "OBJECT",
+        "name": "Stream",
+        "description": "Stream(id, agent, title, token)",
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "agent",
+            "description": "The agent that created this stream",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "Agent",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "id",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "ID",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "title",
+            "description": "The Title of the Stream",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "token",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "SCALAR",
         "name": "String",
         "description": "The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -6744,6 +7102,7 @@
         "kind": "OBJECT",
         "name": "Structure",
         "description": "Structure(id, identifier, object)",
+        "isOneOf": null,
         "fields": [
           {
             "name": "id",
@@ -6803,6 +7162,7 @@
         "kind": "INPUT_OBJECT",
         "name": "StructureInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -6846,6 +7206,7 @@
         "kind": "OBJECT",
         "name": "Subscription",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "communications",
@@ -6979,6 +7340,7 @@
         "kind": "OBJECT",
         "name": "SystemMessage",
         "description": "\nA System Message is a message that is sent to a user. \nIt can be used to notify the user of important events or to request their attention.\nSystem messages can use Rekuest Hooks as actions to allow the user to interact with the message.\n\n\n",
+        "isOneOf": null,
         "fields": [
           {
             "name": "action",
@@ -7070,6 +7432,7 @@
         "kind": "SCALAR",
         "name": "UnsafeChild",
         "description": "The `Identifier` scalasr typsse represents a reference to a store previously created by the user n a datalayer",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -7080,6 +7443,7 @@
         "kind": "INPUT_OBJECT",
         "name": "UpdateStashInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -7135,6 +7499,7 @@
         "kind": "OBJECT",
         "name": "User",
         "description": "\nA User is a person that can log in to the system. They are uniquely identified by their username.\nAnd can have an email address associated with them (but don't have to).\n\nA user can be assigned to groups and has a profile that can be used to display information about them.\nDetail information about a user can be found in the profile.\n\nAll users can have social accounts associated with them. These are used to authenticate the user with external services,\nsuch as ORCID or GitHub.\n\n",
+        "isOneOf": null,
         "fields": [
           {
             "name": "avatar",
@@ -7339,6 +7704,7 @@
         "kind": "INPUT_OBJECT",
         "name": "UserFilter",
         "description": "A User of the System\n\nLok Users are the main users of the system. They can be assigned to groups and have profiles, that can be used to display information about them.\nEach user is identifier by a unique username, and can have an email address associated with them.",
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -7430,6 +7796,7 @@
         "kind": "SCALAR",
         "name": "Version",
         "description": "The `Version` represents a semver version string",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -7440,6 +7807,7 @@
         "kind": "OBJECT",
         "name": "__Directive",
         "description": "A Directive provides a way to describe alternate runtime execution and type validation behavior in a GraphQL document.\n\nIn some cases, you need to provide options to alter GraphQL's execution behavior in ways field arguments will not suffice, such as conditionally including or skipping a field. Directives provide this by describing additional information to the executor.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "name",
@@ -7556,6 +7924,7 @@
         "kind": "ENUM",
         "name": "__DirectiveLocation",
         "description": "A Directive can be adjacent to many parts of the GraphQL language, a __DirectiveLocation describes one such possible adjacencies.",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -7681,6 +8050,7 @@
         "kind": "OBJECT",
         "name": "__EnumValue",
         "description": "One possible value for a given Enum. Enum values are unique values, not a placeholder for a string or numeric value. However an Enum value is returned in a JSON response as a string.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "name",
@@ -7748,6 +8118,7 @@
         "kind": "OBJECT",
         "name": "__Field",
         "description": "Object and Interface types are described by a list of Fields, each of which has a name, potentially a list of arguments, and a return type.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "name",
@@ -7868,6 +8239,7 @@
         "kind": "OBJECT",
         "name": "__InputValue",
         "description": "Arguments provided to Fields or Directives and the input fields of an InputObject are represented as Input Values which describe their type and optionally a default value.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "name",
@@ -7963,6 +8335,7 @@
         "kind": "OBJECT",
         "name": "__Schema",
         "description": "A GraphQL Schema defines the capabilities of a GraphQL server. It exposes all available types and directives on the server, as well as the entry points for query, mutation, and subscription operations.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "description",
@@ -8074,6 +8447,7 @@
         "kind": "OBJECT",
         "name": "__Type",
         "description": "The fundamental unit of any GraphQL Schema is the type. There are many kinds of types in GraphQL as represented by the `__TypeKind` enum.\n\nDepending on the kind of a type, certain fields describe information about that type. Scalar types provide no information beyond a name, description and optional `specifiedByURL`, while Enum types provide their values. Object and Interface types provide the fields they describe. Abstract types, Union and Interface, provide the Object types possible at runtime. List and NonNull types compose other types.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "kind",
@@ -8277,6 +8651,18 @@
             },
             "isDeprecated": false,
             "deprecationReason": null
+          },
+          {
+            "name": "isOneOf",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
           }
         ],
         "inputFields": null,
@@ -8288,6 +8674,7 @@
         "kind": "ENUM",
         "name": "__TypeKind",
         "description": "An enum describing what kind of type a given `__Type` is.",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,

@@ -1,3 +1,4 @@
+import { useOmeroArk } from "@/arkitekt";
 import { useService } from "@/arkitekt/hooks";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { gql } from "@apollo/client";
@@ -7,7 +8,7 @@ export const OmeroArkWard: React.FC<{
   key?: string;
   fallback?: React.ReactNode;
 }> = ({ key, fallback }) => {
-  const client = useService("omero_ark");
+  const client = useOmeroArk();
   const { registry } = useWidgetRegistry();
 
   useEffect(() => {

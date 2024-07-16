@@ -106,6 +106,7 @@ import { RekuestFilterWidget } from "./nodes/RekuestFilterWidget";
 import { RekuestMapWidget } from "./nodes/RekuestMapWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
+import { useRekuest } from "@/arkitekt";
 
 const nodeTypes: NodeTypes = {
   RekuestFilterNode: RekuestFilterWidget,
@@ -151,7 +152,7 @@ const hasBoundPort = (node: FlowNode<BaseGraphNodeFragment>): boolean => {
 export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
   console.log("THE FLOW", flow);
 
-  const arkitektapi = useService("rekuest");
+  const arkitektapi = useRekuest();
   const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
   const [showEdgeLabels, setShowEdgeLabels] = useState(false);
   const [showNodeErrors, setShowNodeErrors] = useState(true);

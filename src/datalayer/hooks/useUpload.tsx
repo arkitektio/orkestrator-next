@@ -1,4 +1,4 @@
-import { Arkitekt } from "@/arkitekt";
+import { Arkitekt, useMikro } from "@/arkitekt";
 import { useService } from "@/arkitekt/hooks";
 import {
   PresignedPostCredentialsFragment,
@@ -112,7 +112,7 @@ const uploadToStore = async (
 };
 
 export const useMediaUpload = () => {
-  const client = useService("mikro");
+  const client = useMikro();
   const fakts = Arkitekt.useFakts();
 
   const upload = useCallback(
@@ -156,7 +156,7 @@ export type FileUploadOptions = {
 };
 
 export const useBigFileUpload = () => {
-  const client = useService("mikro");
+  const client = useMikro();
   const fakts = Arkitekt.useFakts();
 
   const upload = useCallback(

@@ -195,6 +195,12 @@ export type CreateStashInput = {
   name?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type CreateStreamInput = {
+  agentId?: InputMaybe<Scalars['String']['input']>;
+  room: Scalars['ID']['input'];
+  title?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type CreateUserInput = {
   name: Scalars['String']['input'];
 };
@@ -293,6 +299,10 @@ export type GroupFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type JoinStreamInput = {
+  id: Scalars['ID']['input'];
+};
+
 /** A leaf of text. This is the most basic descendant and always ends a tree. */
 export type LeafDescendant = Descendant & {
   __typename?: 'LeafDescendant';
@@ -305,6 +315,10 @@ export type LeafDescendant = Descendant & {
   underline?: Maybe<Scalars['Boolean']['output']>;
   /** Unsafe children are not typed and fall back to json. This is a workaround if queries get too complex. */
   unsafeChildren?: Maybe<Array<Scalars['UnsafeChild']['output']>>;
+};
+
+export type LeaveStreamInput = {
+  id: Scalars['ID']['input'];
 };
 
 export type LinkingRequestInput = {
@@ -366,10 +380,13 @@ export type Mutation = {
   createRoom: Room;
   /** Create a new stash */
   createStash: Stash;
+  createStream: Stream;
   createUser: User;
   deleteStash: Scalars['ID']['output'];
   /** Delete items from a stash */
   deleteStashItems: Array<Scalars['ID']['output']>;
+  joinStream: Stream;
+  leaveStream: Stream;
   render: Scalars['Fakt']['output'];
   replyTo: Comment;
   resolveComment: Comment;
@@ -410,6 +427,11 @@ export type MutationCreateStashArgs = {
 };
 
 
+export type MutationCreateStreamArgs = {
+  input: CreateStreamInput;
+};
+
+
 export type MutationCreateUserArgs = {
   input: CreateUserInput;
 };
@@ -422,6 +444,16 @@ export type MutationDeleteStashArgs = {
 
 export type MutationDeleteStashItemsArgs = {
   input: DeleteStashItems;
+};
+
+
+export type MutationJoinStreamArgs = {
+  input: JoinStreamInput;
+};
+
+
+export type MutationLeaveStreamArgs = {
+  input: LeaveStreamInput;
 };
 
 
@@ -1001,6 +1033,17 @@ export type StrFilterLookup = {
   startsWith?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Stream(id, agent, title, token) */
+export type Stream = {
+  __typename?: 'Stream';
+  /** The agent that created this stream */
+  agent: Agent;
+  id: Scalars['ID']['output'];
+  /** The Title of the Stream */
+  title: Scalars['String']['output'];
+  token: Scalars['String']['output'];
+};
+
 /** Structure(id, identifier, object) */
 export type Structure = {
   __typename?: 'Structure';
@@ -1182,6 +1225,8 @@ export type ListStashFragment = { __typename?: 'Stash', id: string, name: string
 
 export type StashItemFragment = { __typename?: 'StashItem', id: string, identifier: string, object: string };
 
+export type StreamFragment = { __typename?: 'Stream', id: string, title: string, token: string };
+
 export type ListUserFragment = { __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string };
 
 export type DetailUserFragment = { __typename?: 'User', id: string, username: string, email?: string | null, firstName?: string | null, lastName?: string | null, avatar?: string | null, groups: Array<{ __typename?: 'Group', id: string, name: string }> };
@@ -1274,6 +1319,13 @@ export type DeleteStashMutationVariables = Exact<{
 
 
 export type DeleteStashMutation = { __typename?: 'Mutation', deleteStash: string };
+
+export type CreateStreamMutationVariables = Exact<{
+  input: CreateStreamInput;
+}>;
+
+
+export type CreateStreamMutation = { __typename?: 'Mutation', createStream: { __typename?: 'Stream', id: string, title: string, token: string } };
 
 export type AppsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1822,6 +1874,13 @@ export const ListStashFragmentDoc = gql`
 }
     ${StashFragmentDoc}
 ${StashItemFragmentDoc}`;
+export const StreamFragmentDoc = gql`
+    fragment Stream on Stream {
+  id
+  title
+  token
+}
+    `;
 export const DetailUserFragmentDoc = gql`
     fragment DetailUser on User {
   id
@@ -2220,6 +2279,39 @@ export function useDeleteStashMutation(baseOptions?: ApolloReactHooks.MutationHo
 export type DeleteStashMutationHookResult = ReturnType<typeof useDeleteStashMutation>;
 export type DeleteStashMutationResult = Apollo.MutationResult<DeleteStashMutation>;
 export type DeleteStashMutationOptions = Apollo.BaseMutationOptions<DeleteStashMutation, DeleteStashMutationVariables>;
+export const CreateStreamDocument = gql`
+    mutation CreateStream($input: CreateStreamInput!) {
+  createStream(input: $input) {
+    ...Stream
+  }
+}
+    ${StreamFragmentDoc}`;
+export type CreateStreamMutationFn = Apollo.MutationFunction<CreateStreamMutation, CreateStreamMutationVariables>;
+
+/**
+ * __useCreateStreamMutation__
+ *
+ * To run a mutation, you first call `useCreateStreamMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateStreamMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createStreamMutation, { data, loading, error }] = useCreateStreamMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateStreamMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateStreamMutation, CreateStreamMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateStreamMutation, CreateStreamMutationVariables>(CreateStreamDocument, options);
+      }
+export type CreateStreamMutationHookResult = ReturnType<typeof useCreateStreamMutation>;
+export type CreateStreamMutationResult = Apollo.MutationResult<CreateStreamMutation>;
+export type CreateStreamMutationOptions = Apollo.BaseMutationOptions<CreateStreamMutation, CreateStreamMutationVariables>;
 export const AppsDocument = gql`
     query Apps {
   apps {

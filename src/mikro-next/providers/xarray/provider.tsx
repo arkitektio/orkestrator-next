@@ -1,4 +1,4 @@
-import { Arkitekt } from "@/arkitekt";
+import { Arkitekt, useMikro } from "@/arkitekt";
 import { useService } from "@/arkitekt/hooks";
 import {
   RequestAccessDocument,
@@ -65,7 +65,7 @@ export type AvailableColormap = (typeof available_color_maps)[number];
 export const XArrayProvider: React.FC<{
   children: React.ReactNode;
 }> = (props) => {
-  const client = useService("mikro");
+  const client = useMikro();
   const fakts = Arkitekt.useFakts();
 
   const getSelectionAsImageView = async (

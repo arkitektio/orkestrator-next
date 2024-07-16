@@ -40,6 +40,7 @@ import { useForm } from "react-hook-form";
 import { DropContextualParams, FlowNode } from "../../types";
 import { useEditRiver } from "../context";
 import { ContextualContainer } from "./ContextualContainer";
+import { useRekuest } from "@/arkitekt";
 
 export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   const form = useForm({
@@ -231,7 +232,7 @@ export const SourceDropContextual = (props: {
 }) => {
   const { addContextualNode } = useEditRiver();
 
-  const client = useService("rekuest");
+  const client = useRekuest();
   const [variables, setVariables] = useState<AllNodesQueryVariables>({
     filters: {
       demands: [

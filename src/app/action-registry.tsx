@@ -88,6 +88,10 @@ export class ActionRegistry {
 
 export const defaultRegistry = new ActionRegistry();
 
+export const get_action_registry = () => {
+  return defaultRegistry;
+};
+
 defaultRegistry.registerAction({
   name: "delete-file",
   description: "Delete the File",

@@ -10,6 +10,7 @@ import {
   useFakts,
 } from "@/lib/fakts";
 import { HerreProps, HerreProvider, Token, useHerre } from "@/lib/herre";
+import { Ward } from "@/rekuest/widgets/WidgetsContext";
 import { ApolloClient } from "@apollo/client";
 import {
   createContext,
@@ -21,7 +22,7 @@ import {
 
 export type AppContext = {
   manifest: Manifest;
-  clients: { [key: string]: ApolloClient<any> };
+  clients: ServiceMap;
 };
 
 export const ArkitektContext = createContext<AppContext>({
@@ -50,14 +51,19 @@ export const ServiceProvier = ({
 
   useEffect(() => {
     if (fakts && token) {
-      let clients: { [key: string]: ApolloClient<any> } = {};
+      let clients: { [key: string]: Service<any> } = {};
+
+      console.log("Building clients for", fakts);
 
       for (let key in serviceBuilderMap) {
-        let builder = serviceBuilderMap[key];
+        let definition = serviceBuilderMap[key];
         try {
-          clients[key] = builder(manifest, fakts, token);
+          clients[key] = definition.builder(manifest, fakts, token);
         } catch (e) {
           console.error(`Failed to build client for ${key}`, e);
+          if (!definition.optional) {
+            throw e;
+          }
         }
       }
 
@@ -78,18 +84,30 @@ const defaultFaktsProps: Partial<FaktsProps> = {
   }),
 };
 
-export type ServiceBuilder = (
+export type Service<T extends any = any> = {
+  ward?: Ward;
+  client: T;
+};
+
+export type ServiceBuilder<T> = (
   manifest: Manifest,
   fakts: Fakts,
   token: Token,
-) => ApolloClient<any>;
+) => Service<T>;
+
+export type ServiceDefinition<T extends any = any> = {
+  builder: ServiceBuilder<T>;
+  key: string;
+  service: string;
+  optional: boolean;
+};
 
 export type ServiceBuilderMap = {
-  [key: string]: ServiceBuilder;
+  [key: string]: ServiceDefinition<any>;
 };
 
 export type ServiceMap = {
-  [key: string]: ApolloClient<any>;
+  [key: string]: Service<any>;
 };
 
 export type ArkitektBuilderOptions = {

@@ -1,4 +1,4 @@
-import { Arkitekt } from "@/arkitekt";
+import { Arkitekt, useMikro } from "@/arkitekt";
 import { useService } from "@/arkitekt/hooks";
 import {
   Blending,
@@ -227,7 +227,7 @@ export type Overwrites = {
 };
 
 export const useImageViewDownload = () => {
-  const client = useService("mikro");
+  const client = useMikro();
   const fakts = Arkitekt.useFakts();
 
   const downloadImage = useCallback(

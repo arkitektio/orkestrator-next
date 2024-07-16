@@ -14,10 +14,14 @@ import { EmojiPicker } from "../emoji-picker";
 import { Button, buttonVariants } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Textarea } from "../ui/textarea";
+import { Arkitekt, Guard } from "@/arkitekt";
+import { StreamButton } from "./stream_button";
+import { DetailRoomFragment } from "@/lok-next/api/graphql";
 
 interface ChatBottombarProps {
   sendMessage: (text: string) => void;
   isMobile: boolean;
+  room: DetailRoomFragment;
 }
 
 export const BottombarIcons = [{ icon: FileImage }, { icon: Paperclip }];
@@ -25,6 +29,7 @@ export const BottombarIcons = [{ icon: FileImage }, { icon: Paperclip }];
 export default function ChatBottombar({
   sendMessage,
   isMobile,
+  room,
 }: ChatBottombarProps) {
   const [message, setMessage] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -201,6 +206,9 @@ export default function ChatBottombar({
             <ThumbsUp size={20} className="text-muted-foreground" />
           </Link>
         )}
+        <Guard.Livekit fallback={""}>
+          <StreamButton room={room} />
+        </Guard.Livekit>
       </AnimatePresence>
     </div>
   );

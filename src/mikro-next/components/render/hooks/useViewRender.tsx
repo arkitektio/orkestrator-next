@@ -1,4 +1,4 @@
-import { Arkitekt } from "@/arkitekt";
+import { Arkitekt, useMikro } from "@/arkitekt";
 import { useService } from "@/arkitekt/hooks";
 import {
   AccessCredentialsFragment,
@@ -260,7 +260,7 @@ const downloadView = async (
 };
 
 export const useViewRenderFunction = () => {
-  const client = useService("mikro");
+  const client = useMikro();
   const fakts = Arkitekt.useFakts();
 
   const renderView = useCallback(

@@ -1,5 +1,5 @@
 overwrite: true
-schema: "http://localhost/mikro/graphql"
+schema: "http://jhnnsrs-lab/mikro/graphql"
 documents: "graphql/mikro-next/**/*.graphql"
 generates:
   src/mikro-next/api/fragments.ts:

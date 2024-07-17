@@ -2,6 +2,13 @@ fragment Stage on Stage {
   id
   affineViews {
     ...AffineTransformationView
+    image {
+      id
+      store {
+        shape
+      }
+      name
+    }
   }
   pinned
   name

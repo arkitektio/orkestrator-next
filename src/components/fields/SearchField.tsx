@@ -120,7 +120,7 @@ export const SearchField = ({
       rules={{ validate: validate }}
       render={({ field }) => (
         <>
-          <FormItem className="flex flex-col">
+          <FormItem className="flex flex-col dark:text-white">
             <FormLabel>{label ? label : name}</FormLabel>
             <Popover>
               <PopoverTrigger asChild>

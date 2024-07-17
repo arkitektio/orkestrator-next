@@ -29,14 +29,14 @@ import OpticsViewCard from "../components/cards/OpticsViewCard";
 import RGBViewCard from "../components/cards/RGBViewCard";
 import TransformationViewCard from "../components/cards/TransformationViewCard";
 import WellPositionViewCard from "../components/cards/WellPositionViewCard";
+import SnapshotPanel from "../components/panels/SnapshotPanel";
+import VideoPanel from "../components/panels/VideoPanel";
 import { TwoDViewController } from "../components/render/Controller";
-import { RGBD, TwoDRGBThreeRenderDetail } from "../components/render/TwoDThree";
+import { TwoDRGBThreeRenderDetail } from "../components/render/TwoDThree";
 import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { PinToggle } from "../components/ui/PinToggle";
 import { AddImageViewForm } from "../forms/AddImageViewForm";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
-import SnapshotPanel from "../components/panels/SnapshotPanel";
-import VideoPanel from "../components/panels/VideoPanel";
 
 export type IRepresentationScreenProps = {};
 
@@ -202,7 +202,7 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                   ))}
                 </div>
                 <div className="font-light">Views</div>
-                <ScrollArea>
+                <ScrollArea className="mt-2">
                   <ResponsiveContainerGrid className="gap-3">
                     {data?.image.views?.map((view, index) => (
                       <>

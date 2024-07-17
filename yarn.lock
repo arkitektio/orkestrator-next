@@ -4079,6 +4079,11 @@ cmdk@^1.0.0:
     "@radix-ui/react-dialog" "1.0.5"
     "@radix-ui/react-primitive" "1.0.3"
 
+color-2-name@^1.4.4:
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/color-2-name/-/color-2-name-1.4.4.tgz#a53b1f1e63f4ff23977bad1c0bf13a42a77ad1fc"
+  integrity sha512-CSF+PANU5YSZYviiU88GJBeJADD4g9mydxLRMYtMEqVxhcLyl72b6PkMQnvomZyUZZLbPhfXs42QZcR0We4JOA==
+
 color-convert@^1.9.0:
   version "1.9.3"
   resolved "https://registry.yarnpkg.com/color-convert/-/color-convert-1.9.3.tgz#bb71850690e1f136567de629d2d5471deda4c1e8"

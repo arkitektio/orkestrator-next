@@ -12,7 +12,7 @@ export const ViewCard = ({ view, className, ...props }: ViewCardProps) => {
 
   return (
     <Card
-      data-viewactive={active}
+      data-viewactive={true}
       className={cn(
         "data-[viewactive=true]:border-accent data-[viewactive=false]:opacity-20 cursor-pointer @container ",
         className,

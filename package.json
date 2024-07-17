@@ -76,6 +76,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "cmdk": "^1.0.0",
+    "color-2-name": "^1.4.4",
     "colormap": "^2.3.2",
     "crpyto-js": "^0.0.1-security",
     "crypto-js": "^4.2.0",

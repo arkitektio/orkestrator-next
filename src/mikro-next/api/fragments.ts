@@ -12,10 +12,6 @@
     "IntMetric": [
       "ImageIntMetric"
     ],
-    "ROI": [
-      "PathROI",
-      "RectangleROI"
-    ],
     "Render": [
       "Snapshot",
       "Video"

@@ -1,12 +1,12 @@
 import { CardHeader, CardTitle } from "@/components/ui/card";
-import { MikroAffineTransformationView, MikroStage } from "@/linkers";
+import { MikroAffineTransformationView, MikroImage } from "@/linkers";
 import { useDeleteAffineTransformationViewMate } from "@/mikro-next/mates/transformationview";
 import { MateFinder } from "../../../mates/types";
-import { AffineTransformationViewFragment } from "../../api/graphql";
+import { StageFragment } from "../../api/graphql";
 import { ViewCard } from "./meta/ViewCard";
 
 interface Props {
-  view: AffineTransformationViewFragment;
+  view: StageFragment["affineViews"][0];
   mates?: MateFinder[];
 }
 
@@ -41,15 +41,15 @@ const CardItem = ({ view, mates }: Props) => {
         <CardHeader>
           <CardTitle className="truncate">
             {" "}
-            <MikroStage.DetailLink
+            <MikroImage.DetailLink
               className={({ isActive } /*  */) =>
                 "z-10 font-bold text-md mb-2 cursor-pointer w-full  " +
                 (isActive ? "text-primary-300" : "")
               }
-              object={view.stage.id}
+              object={view.image.id}
             >
-              {view.stage.name}
-            </MikroStage.DetailLink>
+              {view.image.name}
+            </MikroImage.DetailLink>
           </CardTitle>
 
           <AffineInformation matrix={view.affineMatrix} />

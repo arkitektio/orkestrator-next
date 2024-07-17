@@ -13,8 +13,7 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useGetStagesQuery;
-  ({
+  const { data, error, subscribeToMore, refetch } = useGetStagesQuery({
     variables: { filters, pagination },
   });
 
@@ -22,7 +21,7 @@ const List = ({ filters, pagination }: Props) => {
     <ListRender
       array={data?.stages}
       title={
-        <MikroStage.ListLink className="flex-0">Stages</MikroStage.ListLink>
+        <MikroStage.ListLink className="flex-0">Stagess</MikroStage.ListLink>
       }
       refetch={refetch}
     >

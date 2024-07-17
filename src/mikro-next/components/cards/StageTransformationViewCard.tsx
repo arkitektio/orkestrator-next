@@ -10,7 +10,13 @@ interface Props {
   mates?: MateFinder[];
 }
 
-export const AffineInformation = ({ matrix }: { matrix: number[][] }) => {
+export const AffineInformation = ({
+  matrix,
+  shape,
+}: {
+  matrix: number[][];
+  shape: number[] | undefined;
+}) => {
   const x = matrix[0][3];
   const y = matrix[0][3];
   const z = matrix[0][3];
@@ -19,14 +25,22 @@ export const AffineInformation = ({ matrix }: { matrix: number[][] }) => {
   const yScale = matrix[1][1];
   const zScale = matrix[2][2];
 
+  const xSize = (shape?.at(4) || 1) * xScale;
+  const ySize = (shape?.at(3) || 1) * yScale;
+  const zSize = (shape?.at(2) || 1) * zScale;
+
   return (
     <>
       <div className="text-muted-foreground text-xs">
         x: {x.toPrecision(2)} y: {y.toPrecision(2)} z: {z.toPrecision(2)}
       </div>
       <div className="text-muted-foreground text-xs">
-        xp: {xScale.toPrecision(2)} yp: {yScale.toPrecision(2)} zp:{" "}
+        xScale: {xScale.toPrecision(2)} yScale: {yScale.toPrecision(2)} zScale:{" "}
         {zScale.toPrecision(2)}
+      </div>
+      <div className="text-muted-foreground text-xs">
+        xSize: {xSize.toPrecision(4)} µm ySize: {ySize.toPrecision(4)} µm zSize:{" "}
+        {zSize.toPrecision(4)} µm
       </div>
     </>
   );
@@ -52,7 +66,10 @@ const CardItem = ({ view, mates }: Props) => {
             </MikroImage.DetailLink>
           </CardTitle>
 
-          <AffineInformation matrix={view.affineMatrix} />
+          <AffineInformation
+            matrix={view.affineMatrix}
+            shape={view.image.store.shape}
+          />
         </CardHeader>
       </ViewCard>
     </MikroAffineTransformationView.Smart>

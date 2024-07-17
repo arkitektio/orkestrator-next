@@ -165,7 +165,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
         </ListRender>
       </DetailPane>
 
-      <div className="w-full h-full bg-gray-100">
+      <div className="w-full h-full">
         <MyCanvasComponent data={data} />
       </div>
     </ModelPageLayout>

@@ -1,14 +1,14 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import React from "react";
-import ImageList from "../components/lists/ImageList";
+import StageList from "../components/lists/StageList";
 
 export type IRepresentationScreenProps = {};
 
 const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
   return (
-    <PageLayout actions={<></>}>
+    <PageLayout actions={<></>} title="Stages">
       haahah
-      <ImageList pagination={{ limit: 30 }} />
+      <StageList pagination={{ limit: 30 }} />
     </PageLayout>
   );
 };

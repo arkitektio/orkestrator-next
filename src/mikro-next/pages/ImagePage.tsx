@@ -40,6 +40,8 @@ import { UpdateImageForm } from "../forms/UpdateImageForm";
 
 export type IRepresentationScreenProps = {};
 
+export const dimensionOrder = ["c", "t", "z", "y", "x"];
+
 export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
   const x = data?.image?.store?.shape?.at(3);
   const y = data?.image?.store?.shape?.at(4);
@@ -188,7 +190,7 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                       <span className="font-semibold">{val}</span>{" "}
                       <span className="text-xs font-light mr-1 ml-1 my-auto">
                         {" "}
-                        x
+                        {dimensionOrder[index]}
                       </span>
                     </div>
                   ))}

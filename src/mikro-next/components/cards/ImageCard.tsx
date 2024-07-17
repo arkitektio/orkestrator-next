@@ -41,6 +41,7 @@ const ImageCard = ({ image, mates }: ImageCardProps) => {
           backgroundPosition: "left center",
         }}
       >
+        <MikroImage.ObjectButton object={image.id} className="ml-3 my-auto" />
         <MikroImage.DetailLink
           className={({ isActive } /*  */) =>
             "z-10 font-bold text-md mb-2 cursor-pointer " +
@@ -50,7 +51,6 @@ const ImageCard = ({ image, mates }: ImageCardProps) => {
         >
           {image?.name}
         </MikroImage.DetailLink>
-        <MikroImage.ObjectButton object={image.id} className="ml-3 my-auto" />
       </div>
     </MikroImage.Smart>
   );

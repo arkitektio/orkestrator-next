@@ -38,11 +38,11 @@ const CardItem = ({ view, mates }: Props) => {
     <MikroAffineTransformationView.Smart object={view?.id} mates={[deleteMate]}>
       <ViewCard view={view}>
         <CardHeader>
-          <CardTitle>
+          <CardTitle className="truncate">
             {" "}
             <MikroStage.DetailLink
               className={({ isActive } /*  */) =>
-                "z-10 font-bold text-md mb-2 cursor-pointer " +
+                "z-10 font-bold text-md mb-2 cursor-pointer w-full  " +
                 (isActive ? "text-primary-300" : "")
               }
               object={view.stage.id}

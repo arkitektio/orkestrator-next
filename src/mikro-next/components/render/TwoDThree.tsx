@@ -329,6 +329,7 @@ export const TwoDRGBThreeRenderDetail = ({
               cMin: view.cMin || 0,
               active: view.active,
               rescale: view.rescale,
+              baseColor: view.baseColor,
             };
           }),
         },
@@ -381,44 +382,50 @@ export const TwoDRGBThreeRenderDetail = ({
                   />
                 )}
                 <div className="flex flex-col gap-1 h-full">
-                  {fields.map((field, index) => (
-                    <Card
-                      key={field.id}
-                      className="flex-initial p-3 data-[active=false]:opacity-50 opacity-100 transition-opacity flex flex-row gap-2 group relative bg-black border-gray-800 border"
-                      data-active={watch(`views.${index}.active`)}
-                    >
-                      <div className="flex flex-col gap-2 w-full">
-                        <ChoicesField
-                          name={`views.${index}.colorMap`}
-                          options={colorMapOptions}
-                          label="Color Map"
-                        />
-                        <div className="flex flex-row gap-2 w-full">
-                          <SwitchField
-                            name={`views.${index}.active`}
-                            label="Active"
-                            className="flex-1"
+                  {fields.map((field, index) => {
+                    let active = watch(`views.${index}.active`);
+                    let map = watch(`views.${index}.baseColor`);
+
+                    return (
+                      <Card
+                        key={field.id}
+                        className="flex-initial p-3 data-[active=false]:opacity-50 opacity-100 transition-opacity flex flex-row gap-2 group relative bg-black border-gray-800 border"
+                        data-active={active}
+                      >
+                        <div className="flex flex-col gap-2 w-full">
+                          <ChoicesField
+                            name={`views.${index}.colorMap`}
+                            options={colorMapOptions}
+                            label="Color Map"
                           />
-                          <SwitchField
-                            name={`views.${index}.rescale`}
-                            label="Rescale"
-                            className="flex-1"
-                          />
+                          <div className="flex flex-row gap-2 w-full">
+                            <SwitchField
+                              name={`views.${index}.active`}
+                              label="Active"
+                              className="flex-1"
+                            />
+                            <SwitchField
+                              name={`views.${index}.rescale`}
+                              label="Rescale"
+                              className="flex-1"
+                            />
+                          </div>
+                          {JSON.stringify(map)}
+                          <div className="">
+                            <Button
+                              onClick={() => remove(index)}
+                              variant={"outline"}
+                              size={"icon"}
+                              className="h-full text-white "
+                              disabled={fields.length === 1}
+                            >
+                              <X className="w-8" />
+                            </Button>
+                          </div>
                         </div>
-                        <div className="">
-                          <Button
-                            onClick={() => remove(index)}
-                            variant={"outline"}
-                            size={"icon"}
-                            className="h-full text-white "
-                            disabled={fields.length === 1}
-                          >
-                            <X className="w-8" />
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
+                      </Card>
+                    );
+                  })}
 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

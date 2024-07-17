@@ -22,23 +22,29 @@ mutation DeleteChannelView($id: ID!) {
   deleteChannelView(input: { id: $id })
 }
 
-mutation CreateRGBView(
+mutation CreateRgbView(
   $image: ID!
-  $rScale: Float!
-  $gScale: Float!
-  $bScale: Float!
-  $context: ID
+  $context: ID!
+  $gamma: Float
+  $contrastLimitMax: Float
+  $contrastLimitMin: Float
+  $rescale: Boolean
+  $active: Boolean
+  $colorMap: ColorMap
 ) {
   createRgbView(
     input: {
       image: $image
-      rScale: $rScale
-      gScale: $gScale
-      bScale: $bScale
       context: $context
+      gamma: $gamma
+      contrastLimitMax: $contrastLimitMax
+      contrastLimitMin: $contrastLimitMin
+      rescale: $rescale
+      active: $active
+      colorMap: $colorMap
     }
   ) {
-    ...RGBView
+    id
   }
 }
 

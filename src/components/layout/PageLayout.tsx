@@ -63,7 +63,7 @@ export const PageLayout = ({
         <div className="h-full w-full flex flex-col  relative">
           <div className="h-16 flex-row flex justify-between flex-initial border-b dark:border-gray-700 px-2 py-2 items-center">
             <div className="flex flex flex-col">
-              <h1 className="scroll-m-20 text-2xl font-extrabold tracking-tight lg:text-2xl">
+              <h1 className="scroll-m-20 text-2xl font-extrabold tracking-tight lg:text-2xl truncate">
                 {title}
               </h1>
               <div className="flex-shrink ">

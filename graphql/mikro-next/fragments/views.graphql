@@ -50,6 +50,7 @@ fragment RGBView on RGBView {
   rescale
   active
   fullColour
+  baseColor
 }
 
 fragment TimepointView on TimepointView {

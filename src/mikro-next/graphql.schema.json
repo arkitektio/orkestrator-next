@@ -14,6 +14,7 @@
         "kind": "OBJECT",
         "name": "AccessCredentials",
         "description": "Temporary Credentials for a file download that can be used by a Client (e.g. in a python datalayer)",
+        "isOneOf": null,
         "fields": [
           {
             "name": "accessKey",
@@ -121,6 +122,7 @@
         "kind": "OBJECT",
         "name": "AcquisitionView",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "accessor",
@@ -366,6 +368,7 @@
         "kind": "OBJECT",
         "name": "AffineTransformationView",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "accessor",
@@ -671,6 +674,7 @@
         "kind": "INPUT_OBJECT",
         "name": "AffineTransformationViewFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -754,6 +758,7 @@
         "kind": "INPUT_OBJECT",
         "name": "AffineTransformationViewInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -941,6 +946,7 @@
         "kind": "OBJECT",
         "name": "Antibody",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "epitope",
@@ -1081,6 +1087,7 @@
         "kind": "INPUT_OBJECT",
         "name": "AntibodyFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -1172,6 +1179,7 @@
         "kind": "INPUT_OBJECT",
         "name": "AntibodyInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -1211,6 +1219,7 @@
         "kind": "OBJECT",
         "name": "App",
         "description": "An app.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "clientId",
@@ -1270,6 +1279,7 @@
         "kind": "SCALAR",
         "name": "ArrayLike",
         "description": "The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -1280,6 +1290,7 @@
         "kind": "INPUT_OBJECT",
         "name": "AssociateInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -1331,6 +1342,7 @@
         "kind": "OBJECT",
         "name": "BigFileStore",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "bucket",
@@ -1422,6 +1434,7 @@
         "kind": "ENUM",
         "name": "Blending",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -1445,6 +1458,7 @@
         "kind": "SCALAR",
         "name": "Boolean",
         "description": "The `Boolean` scalar type represents `true` or `false`.",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -1455,6 +1469,7 @@
         "kind": "OBJECT",
         "name": "Camera",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "bitDepth",
@@ -1684,6 +1699,7 @@
         "kind": "INPUT_OBJECT",
         "name": "CameraFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -1755,6 +1771,7 @@
         "kind": "INPUT_OBJECT",
         "name": "CameraInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -1878,6 +1895,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ChangeDatasetInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -1921,6 +1939,7 @@
         "kind": "OBJECT",
         "name": "Channel",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "acquisitionMode",
@@ -2036,6 +2055,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ChannelInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -2063,6 +2083,7 @@
         "kind": "OBJECT",
         "name": "ChannelView",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "accessor",
@@ -2288,6 +2309,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ChannelViewInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -2463,6 +2485,7 @@
         "kind": "ENUM",
         "name": "ColorFormat",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -2486,6 +2509,7 @@
         "kind": "ENUM",
         "name": "ColorMap",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -2504,6 +2528,12 @@
           },
           {
             "name": "INFERNO",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "INTENSITY",
             "description": null,
             "isDeprecated": false,
             "deprecationReason": null
@@ -2539,6 +2569,7 @@
         "kind": "OBJECT",
         "name": "ContextNode",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "context",
@@ -2600,6 +2631,7 @@
         "kind": "ENUM",
         "name": "ContinousScanDirection",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -2647,6 +2679,7 @@
         "kind": "OBJECT",
         "name": "ContinousScanView",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "accessor",
@@ -2872,6 +2905,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ContinousScanViewFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -2943,6 +2977,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ContinousScanViewInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -3118,6 +3153,7 @@
         "kind": "INPUT_OBJECT",
         "name": "CreateDatasetInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -3145,6 +3181,7 @@
         "kind": "INPUT_OBJECT",
         "name": "CreateRGBContextInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -3222,7 +3259,7 @@
                 "name": null,
                 "ofType": {
                   "kind": "INPUT_OBJECT",
-                  "name": "RGBContextViewInput",
+                  "name": "PartialRGBViewInput",
                   "ofType": null
                 }
               }
@@ -3252,6 +3289,7 @@
         "kind": "OBJECT",
         "name": "Credentials",
         "description": "Temporary Credentials for a file upload that can be used by a Client (e.g. in a python datalayer)",
+        "isOneOf": null,
         "fields": [
           {
             "name": "accessKey",
@@ -3391,6 +3429,7 @@
         "kind": "OBJECT",
         "name": "Dataset",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "children",
@@ -3726,6 +3765,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DatasetFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -3797,6 +3837,7 @@
         "kind": "SCALAR",
         "name": "DateTime",
         "description": "Date with time (isoformat)",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -3807,6 +3848,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DeleteAntibodyInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -3834,6 +3876,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DeleteCameraInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -3861,6 +3904,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DeleteChannelInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -3888,6 +3932,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DeleteDatasetInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -3915,6 +3960,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DeleteEraInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -3942,6 +3988,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DeleteFluorophoreInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -3969,6 +4016,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DeleteInstrumentInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -3996,6 +4044,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DeleteMultiWellInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -4023,6 +4072,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DeleteObjectiveInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -4050,6 +4100,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DeleteRGBContextInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -4077,6 +4128,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DeleteSnaphotInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -4104,6 +4156,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DeleteStageInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -4131,6 +4184,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DeleteViewCollectionInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -4158,6 +4212,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DeleteViewInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -4185,6 +4240,7 @@
         "kind": "INPUT_OBJECT",
         "name": "DesociateInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -4236,6 +4292,7 @@
         "kind": "OBJECT",
         "name": "Era",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "begin",
@@ -4377,6 +4434,7 @@
         "kind": "INPUT_OBJECT",
         "name": "EraFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -4448,6 +4506,7 @@
         "kind": "INPUT_OBJECT",
         "name": "EraInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -4487,6 +4546,7 @@
         "kind": "OBJECT",
         "name": "File",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "id",
@@ -4607,6 +4667,7 @@
         "kind": "INPUT_OBJECT",
         "name": "FileFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -4646,6 +4707,26 @@
             "deprecationReason": null
           },
           {
+            "name": "ids",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "ID",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "name",
             "description": null,
             "type": {
@@ -4668,6 +4749,18 @@
             "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
+          },
+          {
+            "name": "search",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
           }
         ],
         "interfaces": null,
@@ -4678,6 +4771,7 @@
         "kind": "SCALAR",
         "name": "FileLike",
         "description": "The `FileLike` scalar type represents a reference to a big file storage previously created by the user n a datalayer",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -4688,6 +4782,7 @@
         "kind": "SCALAR",
         "name": "FiveDVector",
         "description": "The `Vector` scalar type represents a matrix values as specified by",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -4698,6 +4793,7 @@
         "kind": "SCALAR",
         "name": "Float",
         "description": "The `Float` scalar type represents signed double-precision fractional values as specified by [IEEE 754](https://en.wikipedia.org/wiki/IEEE_floating_point).",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -4708,6 +4804,7 @@
         "kind": "INPUT_OBJECT",
         "name": "FloatFilterLookup",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -5159,6 +5256,7 @@
         "kind": "OBJECT",
         "name": "Fluorophore",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "emissionWavelength",
@@ -5287,6 +5385,7 @@
         "kind": "INPUT_OBJECT",
         "name": "FluorophoreFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -5402,6 +5501,7 @@
         "kind": "INPUT_OBJECT",
         "name": "FluorophoreInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -5453,6 +5553,7 @@
         "kind": "SCALAR",
         "name": "FourByFourMatrix",
         "description": "The `FourByFourMatrix` scalar type represents a matrix values as specified by",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -5463,6 +5564,7 @@
         "kind": "INPUT_OBJECT",
         "name": "FromArrayLikeInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -5528,6 +5630,26 @@
               "kind": "SCALAR",
               "name": "ID",
               "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "fileOrigins",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "ID",
+                  "ofType": null
+                }
+              }
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -5630,6 +5752,26 @@
             "deprecationReason": null
           },
           {
+            "name": "roiOrigins",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "ID",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "tags",
             "description": null,
             "type": {
@@ -5698,6 +5840,7 @@
         "kind": "INPUT_OBJECT",
         "name": "FromFileLike",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -5773,6 +5916,7 @@
         "kind": "INPUT_OBJECT",
         "name": "FromParquetLike",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -5848,6 +5992,7 @@
         "kind": "OBJECT",
         "name": "GridNode",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "children",
@@ -5929,6 +6074,7 @@
         "kind": "OBJECT",
         "name": "History",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "app",
@@ -6048,6 +6194,7 @@
         "kind": "ENUM",
         "name": "HistoryKind",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -6077,6 +6224,7 @@
         "kind": "SCALAR",
         "name": "ID",
         "description": "The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `\"4\"`) or integer (such as `4`) input value will be accepted as an ID.",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -6087,6 +6235,7 @@
         "kind": "OBJECT",
         "name": "Image",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "affineTransformationViews",
@@ -6984,6 +7133,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ImageFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -7111,6 +7261,7 @@
         "kind": "OBJECT",
         "name": "ImageIntMetric",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "createdAt",
@@ -7209,6 +7360,7 @@
         "kind": "INTERFACE",
         "name": "ImageMetric",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "createdAt",
@@ -7270,6 +7422,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ImageOrder",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -7293,6 +7446,7 @@
         "kind": "OBJECT",
         "name": "Instrument",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "id",
@@ -7425,6 +7579,7 @@
         "kind": "INPUT_OBJECT",
         "name": "InstrumentFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -7496,6 +7651,7 @@
         "kind": "INPUT_OBJECT",
         "name": "InstrumentInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -7559,6 +7715,7 @@
         "kind": "SCALAR",
         "name": "Int",
         "description": "The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1.",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -7569,6 +7726,7 @@
         "kind": "INPUT_OBJECT",
         "name": "IntFilterLookup",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -8020,6 +8178,7 @@
         "kind": "INTERFACE",
         "name": "IntMetric",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "value",
@@ -8053,6 +8212,7 @@
         "kind": "OBJECT",
         "name": "LabelView",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "accessor",
@@ -8310,6 +8470,7 @@
         "kind": "INPUT_OBJECT",
         "name": "LabelViewInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -8505,6 +8666,7 @@
         "kind": "OBJECT",
         "name": "MediaStore",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "bucket",
@@ -8609,6 +8771,7 @@
         "kind": "SCALAR",
         "name": "Micrometers",
         "description": "The `Micrometers` scalar type represents a matrix valuesas specified by",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -8619,6 +8782,7 @@
         "kind": "SCALAR",
         "name": "Milliseconds",
         "description": "The `Matrix` scalar type represents a matrix values as specified by",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -8629,6 +8793,7 @@
         "kind": "OBJECT",
         "name": "ModelChange",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "field",
@@ -8688,6 +8853,7 @@
         "kind": "OBJECT",
         "name": "MultiWellPlate",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "columns",
@@ -8812,6 +8978,7 @@
         "kind": "INPUT_OBJECT",
         "name": "MultiWellPlateFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -8903,6 +9070,7 @@
         "kind": "INPUT_OBJECT",
         "name": "MultiWellPlateInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -8954,6 +9122,7 @@
         "kind": "OBJECT",
         "name": "Mutation",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "createAffineTransformationView",
@@ -11770,6 +11939,7 @@
         "kind": "OBJECT",
         "name": "Objective",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "id",
@@ -11914,6 +12084,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ObjectiveFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -11985,6 +12156,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ObjectiveInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -12060,6 +12232,7 @@
         "kind": "INPUT_OBJECT",
         "name": "OffsetPaginationInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -12103,6 +12276,7 @@
         "kind": "OBJECT",
         "name": "OpticsView",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "accessor",
@@ -12348,6 +12522,7 @@
         "kind": "INPUT_OBJECT",
         "name": "OpticsViewFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -12443,6 +12618,7 @@
         "kind": "INPUT_OBJECT",
         "name": "OpticsViewInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -12638,6 +12814,7 @@
         "kind": "ENUM",
         "name": "Ordering",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -12661,6 +12838,7 @@
         "kind": "OBJECT",
         "name": "OverlayNode",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "children",
@@ -12730,6 +12908,7 @@
         "kind": "SCALAR",
         "name": "ParquetLike",
         "description": "The `ParquetLike` scalar type represents a reference to a parquet objected stored previously created by the user on a datalayer",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -12740,6 +12919,7 @@
         "kind": "OBJECT",
         "name": "ParquetStore",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "bucket",
@@ -12815,6 +12995,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PartialAcquisitionViewInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -12994,6 +13175,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PartialAffineTransformationViewInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -13165,6 +13347,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PartialChannelViewInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -13324,6 +13507,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PartialLabelViewInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -13503,6 +13687,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PartialOpticsViewInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -13682,21 +13867,30 @@
         "kind": "INPUT_OBJECT",
         "name": "PartialRGBViewInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
-            "name": "bScale",
+            "name": "active",
             "description": null,
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Float",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
             },
-            "defaultValue": null,
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "baseColor",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "RGBAColor",
+              "ofType": null
+            },
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -13737,6 +13931,18 @@
             "deprecationReason": null
           },
           {
+            "name": "colorMap",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "ColorMap",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "context",
             "description": null,
             "type": {
@@ -13749,34 +13955,62 @@
             "deprecationReason": null
           },
           {
-            "name": "gScale",
+            "name": "contrastLimitMax",
             "description": null,
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Float",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
-            "defaultValue": null,
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
-            "name": "rScale",
+            "name": "contrastLimitMin",
             "description": null,
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Float",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
-            "defaultValue": null,
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "gamma",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "rescale",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "scale",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -13885,6 +14119,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PartialTimepointViewInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -14064,6 +14299,7 @@
         "kind": "OBJECT",
         "name": "PathROI",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "id",
@@ -14145,6 +14381,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PinAntibodyInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -14188,6 +14425,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PinCameraInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -14231,6 +14469,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PinChannelInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -14274,6 +14513,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PinDatasetInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -14317,6 +14557,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PinEraInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -14360,6 +14601,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PinFluorophoreInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -14403,6 +14645,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PinImageInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -14446,6 +14689,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PinInstrumentInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -14489,6 +14733,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PinObjectiveInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -14532,6 +14777,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PinSnapshotInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -14575,6 +14821,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PinStageInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -14618,6 +14865,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PinViewCollectionInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -14661,6 +14909,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PinViewInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -14704,6 +14953,7 @@
         "kind": "INPUT_OBJECT",
         "name": "PintMultiWellPlateInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -14747,6 +14997,7 @@
         "kind": "OBJECT",
         "name": "PresignedPostCredentials",
         "description": "Temporary Credentials for a file upload that can be used by a Client (e.g. in a python datalayer)",
+        "isOneOf": null,
         "fields": [
           {
             "name": "bucket",
@@ -14902,6 +15153,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ProvenanceFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -14949,6 +15201,7 @@
         "kind": "OBJECT",
         "name": "Query",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "acquisitionViews",
@@ -16732,9 +16985,21 @@
         "possibleTypes": null
       },
       {
+        "kind": "SCALAR",
+        "name": "RGBAColor",
+        "description": "The Color scalar type represents a color as a list of 4 values RGBA",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "OBJECT",
         "name": "RGBContext",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "blending",
@@ -16947,6 +17212,7 @@
         "kind": "INPUT_OBJECT",
         "name": "RGBContextFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -17035,136 +17301,10 @@
         "possibleTypes": null
       },
       {
-        "kind": "INPUT_OBJECT",
-        "name": "RGBContextViewInput",
-        "description": null,
-        "fields": null,
-        "inputFields": [
-          {
-            "name": "active",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Boolean",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "cMax",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Int",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "cMin",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Int",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "colorMap",
-            "description": null,
-            "type": {
-              "kind": "ENUM",
-              "name": "ColorMap",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "contrastLimitMax",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Float",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "contrastLimitMin",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Float",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "gamma",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Float",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "rescale",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Boolean",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "scale",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Float",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "interfaces": null,
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
         "kind": "OBJECT",
         "name": "RGBView",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "accessor",
@@ -17201,6 +17341,26 @@
                 "kind": "SCALAR",
                 "name": "Boolean",
                 "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "baseColor",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "Int",
+                  "ofType": null
+                }
               }
             },
             "isDeprecated": false,
@@ -17569,21 +17729,30 @@
         "kind": "INPUT_OBJECT",
         "name": "RGBViewInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
-            "name": "bScale",
+            "name": "active",
             "description": null,
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Float",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
             },
-            "defaultValue": null,
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "baseColor",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "RGBAColor",
+              "ofType": null
+            },
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -17624,11 +17793,11 @@
             "deprecationReason": null
           },
           {
-            "name": "context",
+            "name": "colorMap",
             "description": null,
             "type": {
-              "kind": "SCALAR",
-              "name": "ID",
+              "kind": "ENUM",
+              "name": "ColorMap",
               "ofType": null
             },
             "defaultValue": "null",
@@ -17636,18 +17805,54 @@
             "deprecationReason": null
           },
           {
-            "name": "gScale",
+            "name": "context",
             "description": null,
             "type": {
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
                 "kind": "SCALAR",
-                "name": "Float",
+                "name": "ID",
                 "ofType": null
               }
             },
             "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "contrastLimitMax",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "contrastLimitMin",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "gamma",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -17668,18 +17873,26 @@
             "deprecationReason": null
           },
           {
-            "name": "rScale",
+            "name": "rescale",
             "description": null,
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Float",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
             },
-            "defaultValue": null,
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "scale",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -17788,6 +18001,7 @@
         "kind": "INTERFACE",
         "name": "ROI",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "id",
@@ -17858,6 +18072,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ROIFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -17917,6 +18132,7 @@
         "kind": "OBJECT",
         "name": "RectangleROI",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "depth",
@@ -18030,6 +18246,7 @@
         "kind": "INPUT_OBJECT",
         "name": "RelateToDatasetInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -18073,6 +18290,7 @@
         "kind": "INTERFACE",
         "name": "Render",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "createdAt",
@@ -18123,6 +18341,7 @@
         "kind": "ENUM",
         "name": "RenderKind",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -18146,6 +18365,7 @@
         "kind": "INTERFACE",
         "name": "RenderNode",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "kind",
@@ -18194,6 +18414,7 @@
         "kind": "ENUM",
         "name": "RenderNodeKind",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -18229,6 +18450,7 @@
         "kind": "OBJECT",
         "name": "RenderTree",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "id",
@@ -18337,6 +18559,7 @@
         "kind": "INPUT_OBJECT",
         "name": "RenderTreeFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -18396,6 +18619,7 @@
         "kind": "INPUT_OBJECT",
         "name": "RenderTreeInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -18439,6 +18663,7 @@
         "kind": "INPUT_OBJECT",
         "name": "RenderTreeOrder",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -18462,6 +18687,7 @@
         "kind": "INPUT_OBJECT",
         "name": "RequestAccessInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -18501,6 +18727,7 @@
         "kind": "INPUT_OBJECT",
         "name": "RequestFileAccessInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -18540,6 +18767,7 @@
         "kind": "INPUT_OBJECT",
         "name": "RequestFileUploadInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -18583,6 +18811,7 @@
         "kind": "INPUT_OBJECT",
         "name": "RequestMediaUploadInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -18626,6 +18855,7 @@
         "kind": "INPUT_OBJECT",
         "name": "RequestTableAccessInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -18665,6 +18895,7 @@
         "kind": "INPUT_OBJECT",
         "name": "RequestTableUploadInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -18708,6 +18939,7 @@
         "kind": "INPUT_OBJECT",
         "name": "RequestUploadInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -18751,6 +18983,7 @@
         "kind": "INPUT_OBJECT",
         "name": "RevertInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -18794,6 +19027,7 @@
         "kind": "INPUT_OBJECT",
         "name": "RoiInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -18857,6 +19091,7 @@
         "kind": "ENUM",
         "name": "RoiKind",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -18964,6 +19199,7 @@
         "kind": "ENUM",
         "name": "ScanDirection",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -19011,6 +19247,7 @@
         "kind": "INPUT_OBJECT",
         "name": "SnaphotInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -19054,6 +19291,7 @@
         "kind": "OBJECT",
         "name": "Snapshot",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "createdAt",
@@ -19147,6 +19385,7 @@
         "kind": "INPUT_OBJECT",
         "name": "SnapshotFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -19214,6 +19453,7 @@
         "kind": "OBJECT",
         "name": "SplitNode",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "children",
@@ -19283,6 +19523,7 @@
         "kind": "OBJECT",
         "name": "Stage",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "affineViews",
@@ -19440,6 +19681,7 @@
         "kind": "INPUT_OBJECT",
         "name": "StageFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -19555,6 +19797,7 @@
         "kind": "INPUT_OBJECT",
         "name": "StageInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -19594,6 +19837,7 @@
         "kind": "INPUT_OBJECT",
         "name": "StrFilterLookup",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -20045,6 +20289,7 @@
         "kind": "SCALAR",
         "name": "String",
         "description": "The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -20055,6 +20300,7 @@
         "kind": "OBJECT",
         "name": "Subscription",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "historyEvents",
@@ -20099,6 +20345,7 @@
         "kind": "OBJECT",
         "name": "Table",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "id",
@@ -20219,6 +20466,7 @@
         "kind": "INPUT_OBJECT",
         "name": "TableFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -20286,6 +20534,7 @@
         "kind": "SCALAR",
         "name": "ThreeDVector",
         "description": "The `Vector` scalar type represents a matrix values as specified by",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -20296,6 +20545,7 @@
         "kind": "OBJECT",
         "name": "TimepointView",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "accessor",
@@ -20545,6 +20795,7 @@
         "kind": "INPUT_OBJECT",
         "name": "TimepointViewFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -20640,6 +20891,7 @@
         "kind": "INPUT_OBJECT",
         "name": "TimepointViewInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -20835,6 +21087,7 @@
         "kind": "OBJECT",
         "name": "Tree",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "children",
@@ -20870,6 +21123,7 @@
         "kind": "INPUT_OBJECT",
         "name": "TreeInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -20917,6 +21171,7 @@
         "kind": "INPUT_OBJECT",
         "name": "TreeNodeInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -21000,6 +21255,7 @@
         "kind": "INPUT_OBJECT",
         "name": "UpdateImageInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -21059,6 +21315,7 @@
         "kind": "INPUT_OBJECT",
         "name": "UpdateRGBContextInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -21136,7 +21393,7 @@
                 "name": null,
                 "ofType": {
                   "kind": "INPUT_OBJECT",
-                  "name": "RGBContextViewInput",
+                  "name": "PartialRGBViewInput",
                   "ofType": null
                 }
               }
@@ -21166,6 +21423,7 @@
         "kind": "SCALAR",
         "name": "Upload",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -21176,6 +21434,7 @@
         "kind": "OBJECT",
         "name": "User",
         "description": "A user.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "email",
@@ -21267,6 +21526,7 @@
         "kind": "OBJECT",
         "name": "Video",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "createdAt",
@@ -21360,6 +21620,7 @@
         "kind": "INTERFACE",
         "name": "View",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "accessor",
@@ -21593,6 +21854,7 @@
         "kind": "OBJECT",
         "name": "ViewCollection",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "affineTransformationViews",
@@ -21794,6 +22056,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ViewCollectionInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -21821,6 +22084,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ViewFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -21880,6 +22144,7 @@
         "kind": "ENUM",
         "name": "ViewKind",
         "description": null,
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -21921,6 +22186,7 @@
         "kind": "OBJECT",
         "name": "WellPositionView",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "accessor",
@@ -22166,6 +22432,7 @@
         "kind": "INPUT_OBJECT",
         "name": "WellPositionViewFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -22261,6 +22528,7 @@
         "kind": "INPUT_OBJECT",
         "name": "WellPositionViewInput",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -22456,6 +22724,7 @@
         "kind": "OBJECT",
         "name": "ZarrStore",
         "description": null,
+        "isOneOf": null,
         "fields": [
           {
             "name": "bucket",
@@ -22595,6 +22864,7 @@
         "kind": "INPUT_OBJECT",
         "name": "ZarrStoreFilter",
         "description": null,
+        "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
@@ -22642,6 +22912,7 @@
         "kind": "OBJECT",
         "name": "__Directive",
         "description": "A Directive provides a way to describe alternate runtime execution and type validation behavior in a GraphQL document.\n\nIn some cases, you need to provide options to alter GraphQL's execution behavior in ways field arguments will not suffice, such as conditionally including or skipping a field. Directives provide this by describing additional information to the executor.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "name",
@@ -22758,6 +23029,7 @@
         "kind": "ENUM",
         "name": "__DirectiveLocation",
         "description": "A Directive can be adjacent to many parts of the GraphQL language, a __DirectiveLocation describes one such possible adjacencies.",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,
@@ -22883,6 +23155,7 @@
         "kind": "OBJECT",
         "name": "__EnumValue",
         "description": "One possible value for a given Enum. Enum values are unique values, not a placeholder for a string or numeric value. However an Enum value is returned in a JSON response as a string.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "name",
@@ -22950,6 +23223,7 @@
         "kind": "OBJECT",
         "name": "__Field",
         "description": "Object and Interface types are described by a list of Fields, each of which has a name, potentially a list of arguments, and a return type.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "name",
@@ -23070,6 +23344,7 @@
         "kind": "OBJECT",
         "name": "__InputValue",
         "description": "Arguments provided to Fields or Directives and the input fields of an InputObject are represented as Input Values which describe their type and optionally a default value.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "name",
@@ -23165,6 +23440,7 @@
         "kind": "OBJECT",
         "name": "__Schema",
         "description": "A GraphQL Schema defines the capabilities of a GraphQL server. It exposes all available types and directives on the server, as well as the entry points for query, mutation, and subscription operations.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "description",
@@ -23276,6 +23552,7 @@
         "kind": "OBJECT",
         "name": "__Type",
         "description": "The fundamental unit of any GraphQL Schema is the type. There are many kinds of types in GraphQL as represented by the `__TypeKind` enum.\n\nDepending on the kind of a type, certain fields describe information about that type. Scalar types provide no information beyond a name, description and optional `specifiedByURL`, while Enum types provide their values. Object and Interface types provide the fields they describe. Abstract types, Union and Interface, provide the Object types possible at runtime. List and NonNull types compose other types.",
+        "isOneOf": null,
         "fields": [
           {
             "name": "kind",
@@ -23479,6 +23756,18 @@
             },
             "isDeprecated": false,
             "deprecationReason": null
+          },
+          {
+            "name": "isOneOf",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
           }
         ],
         "inputFields": null,
@@ -23490,6 +23779,7 @@
         "kind": "ENUM",
         "name": "__TypeKind",
         "description": "An enum describing what kind of type a given `__Type` is.",
+        "isOneOf": null,
         "fields": null,
         "inputFields": null,
         "interfaces": null,

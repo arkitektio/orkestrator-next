@@ -35,6 +35,8 @@ import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { PinToggle } from "../components/ui/PinToggle";
 import { AddImageViewForm } from "../forms/AddImageViewForm";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
+import SnapshotPanel from "../components/panels/SnapshotPanel";
+import VideoPanel from "../components/panels/VideoPanel";
 
 export type IRepresentationScreenProps = {};
 
@@ -89,7 +91,20 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                   >
                     <Dialog>
                       <DialogTrigger className="w-full h-full">
-                        <RGBD context={context} rois={data.image.rois} />
+                        {data?.image.renders.length == 0 && (
+                          <Card className="w-full h-full items-center flex justify-center flex-col">
+                            No render yet
+                            <p className="text-xs">How do i render an Image?</p>
+                          </Card>
+                        )}
+                        {data?.image?.renders?.map((x) => {
+                          if (x.__typename == "Snapshot") {
+                            return <SnapshotPanel image={x} />;
+                          }
+                          if (x.__typename == "Video") {
+                            return <VideoPanel video={x} />;
+                          }
+                        })}
                       </DialogTrigger>
                       <DialogContent className="p-3 min-w-[100vw] min-h-[100vh] max-w-[100vw] max-h-[100vh] border-0 bg-black text-white">
                         <TwoDRGBThreeRenderDetail
@@ -147,7 +162,11 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                 <div className="font-light mt-2 ">Show</div>
                 <TabsList className="flex-wrap items-start">
                   {data?.image?.rgbContexts?.map((context, i) => (
-                    <TabsTrigger key={i} value={"context" + context.id}>
+                    <TabsTrigger
+                      key={i}
+                      value={"context" + context.id}
+                      className="max-w-[200px] truncate items-center"
+                    >
                       {context.name}
                     </TabsTrigger>
                   ))}

@@ -30,7 +30,10 @@ export const DetailPaneTitle = ({
   return (
     <CardTitle
       {...props}
-      className={cn("flex text-xl flex-row justify-between w-full", className)}
+      className={cn(
+        "flex text-xl flex-row justify-between w-full truncate ellipsis",
+        className,
+      )}
     >
       <div className="flex-grow">{children}</div>
       <div>{actions}</div>

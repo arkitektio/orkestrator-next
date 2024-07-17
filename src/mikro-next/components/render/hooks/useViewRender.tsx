@@ -151,7 +151,7 @@ export const renderSelectionViaView = async (
         channelValues.push(val);
       }
 
-      let color = mapper(channelValues);
+      let color = mapper(channelValues, view.baseColor);
       iData[z] = color[0];
       iData[z + 1] = color[1];
       iData[z + 2] = color[2];

@@ -5,6 +5,9 @@ on:
     branches:
       - main # This triggers the workflow on pushes to the main branch
 
+permissions:
+  contents: write # This is necessary for creating releases and uploading release assets
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -58,4 +61,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/*deb
+          asset_path: ./dist/*.deb

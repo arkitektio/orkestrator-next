@@ -21,7 +21,7 @@ const List = ({ filters, pagination }: Props) => {
     <ListRender
       array={data?.stages}
       title={
-        <MikroStage.ListLink className="flex-0">Stagess</MikroStage.ListLink>
+        <MikroStage.ListLink className="flex-0">Stages</MikroStage.ListLink>
       }
       refetch={refetch}
     >

@@ -50,8 +50,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: release-${{ github.ref }}
-          release_name: Release for ${{ github.ref }}
+          tag_name: release-${{ github.run_id }}
+          release_name: Release for ${{ github.run_id	f }}
           draft: false
           prerelease: false
 
@@ -62,5 +62,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./dist/*.deb
-          asset_name: "orkestrator-${{ github.ref }}.deb"
+          asset_name: "orkestrator-${{ github.run_id }}.deb"
           asset_content_type: application/vnd.debian.binary-package

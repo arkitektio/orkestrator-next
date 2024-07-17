@@ -62,3 +62,4 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./dist/*.deb
+          asset_name: "orkestrator.deb"

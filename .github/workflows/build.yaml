@@ -2,8 +2,9 @@ name: Build and Release Electron App
 
 on:
   push:
-    branches:
-      - main # This triggers the workflow on pushes to the main branch
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
 permissions:
   contents: write # This is necessary for creating releases and uploading release assets

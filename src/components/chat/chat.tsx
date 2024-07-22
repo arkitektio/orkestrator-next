@@ -38,7 +38,6 @@ export function Chat({ messages, selectedUser, isMobile, room }: ChatProps) {
         isMobile={isMobile}
         room={room}
       />
-      {room.hasStreams}
 
       <LokRoom.ObjectButton object={room.id} />
     </div>

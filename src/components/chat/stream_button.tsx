@@ -31,7 +31,11 @@ export const VideoStream = ({ stream }: { stream: EnsuredStreamFragment }) => {
   console.log("Stream", stream, url);
 
   return (
-    <LiveKitRoom token={stream.token} serverUrl={url} connect={true}>
+    <LiveKitRoom
+      token={stream.token}
+      serverUrl={"https://localhost:7880"}
+      connect={true}
+    >
       <VideoRenderer />
     </LiveKitRoom>
   );

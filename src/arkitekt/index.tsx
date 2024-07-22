@@ -146,7 +146,7 @@ export const buildArkitekt = ({
     useLogin: useArkitektLogin,
     useFakts: useArkitektFakts,
     useToken: () => useHerre().token,
-    useConnect: buildArkitektConnect(manifest),
+    useConnect: buildArkitektConnect(manifest, serviceBuilderMap),
   };
 };
 
@@ -256,7 +256,7 @@ export const serviceMap: ServiceBuilderMap = {
   },
   datalayer: {
     key: "datalayer",
-    service: "live.arkitekt.datalayer",
+    service: "live.arkitekt.s3",
     optional: false,
     builder(manifest, fakts: any, token) {
       return {

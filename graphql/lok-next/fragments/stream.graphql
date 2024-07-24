@@ -7,4 +7,20 @@ fragment EnsuredStream on Stream {
   id
   title
   token
+  agent {
+    room {
+      id
+    }
+  }
+}
+
+fragment DetailStream on Stream {
+  id
+  title
+  token
+  agent {
+    room {
+      id
+    }
+  }
 }

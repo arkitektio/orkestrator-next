@@ -249,7 +249,7 @@ export const serviceMap: ServiceBuilderMap = {
       console.log("Creating livekit client", fakts);
       return {
         client: createLivekitClient({
-          url: fakts.livekit.endpoint_url,
+          url: fakts.livekit.https_endpoint,
         }),
       };
     },

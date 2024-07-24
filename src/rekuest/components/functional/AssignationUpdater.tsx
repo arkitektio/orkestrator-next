@@ -52,50 +52,53 @@ export const AssignationUpdater = (props: {}) => {
           let create = res?.data?.assignations.create;
 
           if (event) {
-            let old = client.cache.readQuery<AssignationsQuery>({
-              query: AssignationsDocument,
-              variables: {
-                instanceId: settings.instanceId,
+            client.cache.updateQuery<AssignationsQuery>(
+              {
+                query: AssignationsDocument,
+                variables: {
+                  instanceId: settings.instanceId,
+                },
               },
-            });
+              (data) => {
+                let assignation = data?.assignations.find(
+                  (a) => a.id === event.assignation.id,
+                );
 
-            console.log(old);
+                if (!assignation) {
+                  console.error(
+                    "Assignation not found",
+                    event.assignation.id,
+                    data?.assignations,
+                  );
+                }
 
-            client.cache.writeQuery<AssignationsQuery>({
-              query: AssignationsDocument,
-              variables: {
-                instanceId: settings.instanceId,
+                return {
+                  assignations: (data?.assignations || []).map((ass) =>
+                    ass.id == event.assignation.id
+                      ? { ...ass, events: [event, ...ass.events] }
+                      : ass,
+                  ),
+                };
               },
-              data: {
-                assignations: (old?.assignations || []).map((ass) =>
-                  ass.reference == event.reference
-                    ? { ...ass, events: ass.events.concat([event]) }
-                    : ass,
-                ),
-              },
-            });
+            );
           }
 
           if (create) {
-            let old = client.cache.readQuery<AssignationsQuery>({
-              query: AssignationsDocument,
-              variables: {
-                instanceId: settings.instanceId,
+            client.cache.updateQuery<AssignationsQuery>(
+              {
+                query: AssignationsDocument,
+                variables: {
+                  instanceId: settings.instanceId,
+                },
               },
-            });
-
-            console.log(old);
-
-            client.cache.writeQuery<AssignationsQuery>({
-              query: AssignationsDocument,
-              variables: {
-                instanceId: settings.instanceId,
+              (data) => {
+                return {
+                  assignations: data?.assignations.concat([create]) || [create],
+                };
               },
-              data: {
-                assignations: old?.assignations.concat([create]) || [create],
-              },
-            });
+            );
 
+            console.error("Added assignation", create.reference);
             toast(<AssignationToaster id={create.id} />);
           }
         });

@@ -11,6 +11,9 @@ fragment Agent on Agent {
   workflows: templates(filters: { extension: "reaktion_next" }) {
     ...ListTemplate
   }
+  state: template(interface: "__state__") {
+    ...DetailTemplate
+  }
   registry {
     app {
       clientId

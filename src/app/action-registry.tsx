@@ -44,6 +44,7 @@ export type SetAction = ActionState;
 
 export type Action = {
   name: string;
+  title: string;
   description: string;
   conditions: Conditions[];
   execute: (action: ActionParams) => Promise<ActionState | void>;
@@ -94,6 +95,7 @@ export const get_action_registry = () => {
 
 defaultRegistry.registerAction({
   name: "delete-file",
+  title: "Delete File",
   description: "Delete the File",
   conditions: [{ type: "identifier", identifier: "@mikro/file" }],
   execute: async ({ services, onProgress, abortSignal }) => {

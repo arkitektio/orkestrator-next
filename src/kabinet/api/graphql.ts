@@ -237,7 +237,8 @@ export type DefinitionFlavoursArgs = {
  * See online Documentation
  */
 export type DefinitionIsTestForArgs = {
-  filters?: InputMaybe<GithubRepoFilter>;
+  filters?: InputMaybe<DefinitionFilter>;
+  order?: InputMaybe<DefinitionOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -248,9 +249,29 @@ export type DefinitionIsTestForArgs = {
  * See online Documentation
  */
 export type DefinitionTestsArgs = {
-  filters?: InputMaybe<GithubRepoFilter>;
+  filters?: InputMaybe<DefinitionFilter>;
+  order?: InputMaybe<DefinitionOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
+/** Filter for Dask Clusters */
+export type DefinitionFilter = {
+  AND?: InputMaybe<DefinitionFilter>;
+  NOT?: InputMaybe<DefinitionFilter>;
+  OR?: InputMaybe<DefinitionFilter>;
+  demands?: InputMaybe<Array<PortDemandInput>>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type DefinitionOrder = {
+  definedAt?: InputMaybe<Ordering>;
+};
+
+export enum DemandKind {
+  Args = 'ARGS',
+  Returns = 'RETURNS'
+}
 
 /** A user of the bridge server. Maps to an authentikate user */
 export type Deployment = {
@@ -319,7 +340,8 @@ export type Flavour = {
 
 /** A user of the bridge server. Maps to an authentikate user */
 export type FlavourDefinitionsArgs = {
-  filters?: InputMaybe<GithubRepoFilter>;
+  filters?: InputMaybe<DefinitionFilter>;
+  order?: InputMaybe<DefinitionOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -459,6 +481,11 @@ export type OffsetPaginationInput = {
   offset?: Scalars['Int']['input'];
 };
 
+export enum Ordering {
+  Asc = 'ASC',
+  Desc = 'DESC'
+}
+
 /** A user of the bridge server. Maps to an authentikate user */
 export type Pod = {
   __typename?: 'Pod';
@@ -507,6 +534,13 @@ export type Port = {
   validators?: Maybe<Array<Validator>>;
 };
 
+export type PortDemandInput = {
+  forceLength?: InputMaybe<Scalars['Int']['input']>;
+  forceNonNullableLength?: InputMaybe<Scalars['Int']['input']>;
+  kind: DemandKind;
+  matches?: InputMaybe<Array<PortMatchInput>>;
+};
+
 export enum PortKind {
   Bool = 'BOOL',
   Date = 'DATE',
@@ -519,6 +553,15 @@ export enum PortKind {
   Structure = 'STRUCTURE',
   Union = 'UNION'
 }
+
+export type PortMatchInput = {
+  at?: InputMaybe<Scalars['Int']['input']>;
+  children?: InputMaybe<Array<PortMatchInput>>;
+  identifier?: InputMaybe<Scalars['String']['input']>;
+  key?: InputMaybe<Scalars['String']['input']>;
+  kind?: InputMaybe<PortKind>;
+  nullable?: InputMaybe<Scalars['Boolean']['input']>;
+};
 
 export enum PortScope {
   Global = 'GLOBAL',
@@ -577,7 +620,8 @@ export type QueryDefinitionArgs = {
 
 
 export type QueryDefinitionsArgs = {
-  filters?: InputMaybe<GithubRepoFilter>;
+  filters?: InputMaybe<DefinitionFilter>;
+  order?: InputMaybe<DefinitionOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -780,6 +824,15 @@ export type ListDefinitionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type ListDefinitionsQuery = { __typename?: 'Query', definitions: Array<{ __typename?: 'Definition', id: string, name: string, hash: any, description?: string | null, flavours: Array<{ __typename?: 'Flavour', id: string, name: string, release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } }> }> };
+
+export type PrimaryDefinitionsQueryVariables = Exact<{
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  identifier?: InputMaybe<Scalars['String']['input']>;
+  order?: InputMaybe<DefinitionOrder>;
+}>;
+
+
+export type PrimaryDefinitionsQuery = { __typename?: 'Query', definitions: Array<{ __typename?: 'Definition', id: string, name: string, hash: any, description?: string | null, flavours: Array<{ __typename?: 'Flavour', id: string, name: string, release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } }> }> };
 
 export type ListPodQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1092,6 +1145,47 @@ export function useListDefinitionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQ
 export type ListDefinitionsQueryHookResult = ReturnType<typeof useListDefinitionsQuery>;
 export type ListDefinitionsLazyQueryHookResult = ReturnType<typeof useListDefinitionsLazyQuery>;
 export type ListDefinitionsQueryResult = Apollo.QueryResult<ListDefinitionsQuery, ListDefinitionsQueryVariables>;
+export const PrimaryDefinitionsDocument = gql`
+    query PrimaryDefinitions($pagination: OffsetPaginationInput, $identifier: String, $order: DefinitionOrder) {
+  definitions(
+    order: $order
+    pagination: $pagination
+    filters: {demands: [{kind: ARGS, matches: [{at: 0, kind: STRUCTURE, identifier: $identifier}]}]}
+  ) {
+    ...ListDefinition
+  }
+}
+    ${ListDefinitionFragmentDoc}`;
+
+/**
+ * __usePrimaryDefinitionsQuery__
+ *
+ * To run a query within a React component, call `usePrimaryDefinitionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `usePrimaryDefinitionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = usePrimaryDefinitionsQuery({
+ *   variables: {
+ *      pagination: // value for 'pagination'
+ *      identifier: // value for 'identifier'
+ *      order: // value for 'order'
+ *   },
+ * });
+ */
+export function usePrimaryDefinitionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<PrimaryDefinitionsQuery, PrimaryDefinitionsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<PrimaryDefinitionsQuery, PrimaryDefinitionsQueryVariables>(PrimaryDefinitionsDocument, options);
+      }
+export function usePrimaryDefinitionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<PrimaryDefinitionsQuery, PrimaryDefinitionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<PrimaryDefinitionsQuery, PrimaryDefinitionsQueryVariables>(PrimaryDefinitionsDocument, options);
+        }
+export type PrimaryDefinitionsQueryHookResult = ReturnType<typeof usePrimaryDefinitionsQuery>;
+export type PrimaryDefinitionsLazyQueryHookResult = ReturnType<typeof usePrimaryDefinitionsLazyQuery>;
+export type PrimaryDefinitionsQueryResult = Apollo.QueryResult<PrimaryDefinitionsQuery, PrimaryDefinitionsQueryVariables>;
 export const ListPodDocument = gql`
     query ListPod {
   pods {

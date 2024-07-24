@@ -48,6 +48,7 @@ export type Agent = {
   provisions: Array<Provision>;
   registry: Registry;
   status: AgentStatus;
+  template?: Maybe<Template>;
   templates: Array<Template>;
 };
 
@@ -61,6 +62,11 @@ export type AgentHardwareRecordsArgs = {
 export type AgentProvisionsArgs = {
   filters?: InputMaybe<ProvisionFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type AgentTemplateArgs = {
+  interface: Scalars['String']['input'];
 };
 
 
@@ -1509,7 +1515,7 @@ export type WaiterFilter = {
   instanceId: Scalars['InstanceId']['input'];
 };
 
-export type AgentFragment = { __typename?: 'Agent', id: string, instanceId: any, status: AgentStatus, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, provisions: Array<{ __typename?: 'Provision', id: string, status: ProvisionEventKind, provided: boolean, active: boolean, dependenciesMet: boolean, template: { __typename?: 'Template', id: string }, agent: { __typename?: 'Agent', id: string } }>, defaults: Array<{ __typename?: 'Template', id: string, interface: string, node: { __typename?: 'Node', description?: string | null, name: string }, provisions: Array<{ __typename?: 'Provision', id: string, status: ProvisionEventKind }> }>, workflows: Array<{ __typename?: 'Template', id: string, interface: string, node: { __typename?: 'Node', description?: string | null, name: string }, provisions: Array<{ __typename?: 'Provision', id: string, status: ProvisionEventKind }> }>, registry: { __typename?: 'Registry', app: { __typename?: 'App', clientId: string }, user: { __typename?: 'User', id: string } } };
+export type AgentFragment = { __typename?: 'Agent', id: string, instanceId: any, status: AgentStatus, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, provisions: Array<{ __typename?: 'Provision', id: string, status: ProvisionEventKind, provided: boolean, active: boolean, dependenciesMet: boolean, template: { __typename?: 'Template', id: string }, agent: { __typename?: 'Agent', id: string } }>, defaults: Array<{ __typename?: 'Template', id: string, interface: string, node: { __typename?: 'Node', description?: string | null, name: string }, provisions: Array<{ __typename?: 'Provision', id: string, status: ProvisionEventKind }> }>, workflows: Array<{ __typename?: 'Template', id: string, interface: string, node: { __typename?: 'Node', description?: string | null, name: string }, provisions: Array<{ __typename?: 'Provision', id: string, status: ProvisionEventKind }> }>, state?: { __typename?: 'Template', id: string, interface: string, extension: string, params: any, dependencies: Array<{ __typename?: 'Dependency', id: string, initialHash: any, reference?: string | null, resolvable: boolean, node?: { __typename?: 'Node', id: string, name: string, hash: any } | null }>, node: { __typename?: 'Node', name: string, description?: string | null, kind: NodeKind, hash: any, id: string, templates: Array<{ __typename?: 'Template', id: string, interface: string }>, reservations?: Array<{ __typename?: 'Reservation', id: string, title?: string | null, status: ReservationEventKind, reference: string, node: { __typename?: 'Node', name: string, description?: string | null, hash: any } }> | null, dependencyGraph: { __typename?: 'DependencyGraph', nodes: Array<{ __typename?: 'InvalidNode', id: string, initialHash: string } | { __typename?: 'NodeNode', id: string, nodeId: string, name: string, reservationId?: string | null, status?: string | null } | { __typename?: 'TemplateNode', id: string, templateId: string, interface: string, clientId: string, provisionId?: string | null, reservationId?: string | null, linked: boolean, status?: string | null, active: boolean }>, edges: Array<{ __typename?: 'DependencyEdge', id: string, source: string, target: string } | { __typename?: 'ImplementationEdge', id: string, source: string, target: string, linked: boolean }> }, testCases?: Array<{ __typename?: 'TestCase', id: string, name: string, description: string, results: Array<{ __typename?: 'TestResult', id: string, passed: boolean, template: { __typename?: 'Template', id: string, interface: string, agent: { __typename?: 'Agent', name: string } }, tester: { __typename?: 'Template', id: string, interface: string, agent: { __typename?: 'Agent', name: string } }, case: { __typename?: 'TestCase', id: string } }>, tester: { __typename?: 'Node', hash: any } }> | null, collections: Array<{ __typename?: 'Collection', id: string, name: string }>, protocols: Array<{ __typename?: 'Protocol', name: string }>, args: Array<{ __typename: 'Port', key: string, label?: string | null, nullable: boolean, description?: string | null, scope: PortScope, kind: PortKind, identifier?: any | null, default?: any | null, groups?: Array<string> | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<{ __typename?: 'EffectDependency', key: string, condition: LogicalCondition, value: string }> } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<{ __typename?: 'EffectDependency', key: string, condition: LogicalCondition, value: string }> }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ChildPort', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ChildPort', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ChildPort', kind: PortKind, identifier?: any | null, scope: PortScope, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null, label?: string | null, errorMessage?: string | null }> | null }>, returns: Array<{ __typename: 'Port', key: string, label?: string | null, nullable: boolean, description?: string | null, scope: PortScope, kind: PortKind, identifier?: any | null, default?: any | null, groups?: Array<string> | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<{ __typename?: 'EffectDependency', key: string, condition: LogicalCondition, value: string }> } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<{ __typename?: 'EffectDependency', key: string, condition: LogicalCondition, value: string }> }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ChildPort', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ChildPort', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ChildPort', kind: PortKind, identifier?: any | null, scope: PortScope, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null, label?: string | null, errorMessage?: string | null }> | null }>, portGroups: Array<{ __typename?: 'PortGroup', key: string, hidden: boolean }> }, provisions: Array<{ __typename?: 'Provision', id: string, status: ProvisionEventKind }> } | null, registry: { __typename?: 'Registry', app: { __typename?: 'App', clientId: string }, user: { __typename?: 'User', id: string } } };
 
 export type ListAgentFragment = { __typename?: 'Agent', id: string, instanceId: any, status: AgentStatus, active: boolean, connected: boolean, name: string, lastSeen?: any | null, registry: { __typename?: 'Registry', app: { __typename?: 'App', clientId: string }, user: { __typename?: 'User', id: string } } };
 
@@ -1755,7 +1761,7 @@ export type AgentQueryVariables = Exact<{
 }>;
 
 
-export type AgentQuery = { __typename?: 'Query', agent: { __typename?: 'Agent', id: string, instanceId: any, status: AgentStatus, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, provisions: Array<{ __typename?: 'Provision', id: string, status: ProvisionEventKind, provided: boolean, active: boolean, dependenciesMet: boolean, template: { __typename?: 'Template', id: string }, agent: { __typename?: 'Agent', id: string } }>, defaults: Array<{ __typename?: 'Template', id: string, interface: string, node: { __typename?: 'Node', description?: string | null, name: string }, provisions: Array<{ __typename?: 'Provision', id: string, status: ProvisionEventKind }> }>, workflows: Array<{ __typename?: 'Template', id: string, interface: string, node: { __typename?: 'Node', description?: string | null, name: string }, provisions: Array<{ __typename?: 'Provision', id: string, status: ProvisionEventKind }> }>, registry: { __typename?: 'Registry', app: { __typename?: 'App', clientId: string }, user: { __typename?: 'User', id: string } } } };
+export type AgentQuery = { __typename?: 'Query', agent: { __typename?: 'Agent', id: string, instanceId: any, status: AgentStatus, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, provisions: Array<{ __typename?: 'Provision', id: string, status: ProvisionEventKind, provided: boolean, active: boolean, dependenciesMet: boolean, template: { __typename?: 'Template', id: string }, agent: { __typename?: 'Agent', id: string } }>, defaults: Array<{ __typename?: 'Template', id: string, interface: string, node: { __typename?: 'Node', description?: string | null, name: string }, provisions: Array<{ __typename?: 'Provision', id: string, status: ProvisionEventKind }> }>, workflows: Array<{ __typename?: 'Template', id: string, interface: string, node: { __typename?: 'Node', description?: string | null, name: string }, provisions: Array<{ __typename?: 'Provision', id: string, status: ProvisionEventKind }> }>, state?: { __typename?: 'Template', id: string, interface: string, extension: string, params: any, dependencies: Array<{ __typename?: 'Dependency', id: string, initialHash: any, reference?: string | null, resolvable: boolean, node?: { __typename?: 'Node', id: string, name: string, hash: any } | null }>, node: { __typename?: 'Node', name: string, description?: string | null, kind: NodeKind, hash: any, id: string, templates: Array<{ __typename?: 'Template', id: string, interface: string }>, reservations?: Array<{ __typename?: 'Reservation', id: string, title?: string | null, status: ReservationEventKind, reference: string, node: { __typename?: 'Node', name: string, description?: string | null, hash: any } }> | null, dependencyGraph: { __typename?: 'DependencyGraph', nodes: Array<{ __typename?: 'InvalidNode', id: string, initialHash: string } | { __typename?: 'NodeNode', id: string, nodeId: string, name: string, reservationId?: string | null, status?: string | null } | { __typename?: 'TemplateNode', id: string, templateId: string, interface: string, clientId: string, provisionId?: string | null, reservationId?: string | null, linked: boolean, status?: string | null, active: boolean }>, edges: Array<{ __typename?: 'DependencyEdge', id: string, source: string, target: string } | { __typename?: 'ImplementationEdge', id: string, source: string, target: string, linked: boolean }> }, testCases?: Array<{ __typename?: 'TestCase', id: string, name: string, description: string, results: Array<{ __typename?: 'TestResult', id: string, passed: boolean, template: { __typename?: 'Template', id: string, interface: string, agent: { __typename?: 'Agent', name: string } }, tester: { __typename?: 'Template', id: string, interface: string, agent: { __typename?: 'Agent', name: string } }, case: { __typename?: 'TestCase', id: string } }>, tester: { __typename?: 'Node', hash: any } }> | null, collections: Array<{ __typename?: 'Collection', id: string, name: string }>, protocols: Array<{ __typename?: 'Protocol', name: string }>, args: Array<{ __typename: 'Port', key: string, label?: string | null, nullable: boolean, description?: string | null, scope: PortScope, kind: PortKind, identifier?: any | null, default?: any | null, groups?: Array<string> | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<{ __typename?: 'EffectDependency', key: string, condition: LogicalCondition, value: string }> } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<{ __typename?: 'EffectDependency', key: string, condition: LogicalCondition, value: string }> }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ChildPort', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ChildPort', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ChildPort', kind: PortKind, identifier?: any | null, scope: PortScope, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null, label?: string | null, errorMessage?: string | null }> | null }>, returns: Array<{ __typename: 'Port', key: string, label?: string | null, nullable: boolean, description?: string | null, scope: PortScope, kind: PortKind, identifier?: any | null, default?: any | null, groups?: Array<string> | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, hook: string, ward: string, dependencies: Array<{ __typename?: 'EffectDependency', key: string, condition: LogicalCondition, value: string }> } | { __typename: 'MessageEffect', kind: EffectKind, message: string, dependencies: Array<{ __typename?: 'EffectDependency', key: string, condition: LogicalCondition, value: string }> }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'ChildPort', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'ChildPort', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'ChildPort', kind: PortKind, identifier?: any | null, scope: PortScope, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null, label?: string | null, errorMessage?: string | null }> | null }>, portGroups: Array<{ __typename?: 'PortGroup', key: string, hidden: boolean }> }, provisions: Array<{ __typename?: 'Provision', id: string, status: ProvisionEventKind }> } | null, registry: { __typename?: 'Registry', app: { __typename?: 'App', clientId: string }, user: { __typename?: 'User', id: string } } } };
 
 export type AssignationsQueryVariables = Exact<{
   instanceId: Scalars['InstanceId']['input'];
@@ -1987,68 +1993,17 @@ export const ListTemplateFragmentDoc = gql`
   }
 }
     `;
-export const AgentFragmentDoc = gql`
-    fragment Agent on Agent {
+export const ListDependencyFragmentDoc = gql`
+    fragment ListDependency on Dependency {
   id
-  instanceId
-  status
-  provisions {
-    ...ListProvision
-  }
-  defaults: templates(filters: {extension: "default"}) {
-    ...ListTemplate
-  }
-  workflows: templates(filters: {extension: "reaktion_next"}) {
-    ...ListTemplate
-  }
-  registry {
-    app {
-      clientId
-    }
-    user {
-      id
-    }
-  }
-  extensions
-  name
-  active
-  connected
-  lastSeen
-}
-    ${ListProvisionFragmentDoc}
-${ListTemplateFragmentDoc}`;
-export const ListAgentFragmentDoc = gql`
-    fragment ListAgent on Agent {
-  id
-  instanceId
-  status
-  active
-  connected
-  name
-  lastSeen
-  registry {
-    app {
-      clientId
-    }
-    user {
-      id
-    }
-  }
-}
-    `;
-export const AssignationEventFragmentDoc = gql`
-    fragment AssignationEvent on AssignationEvent {
-  id
-  kind
-  level
-  returns
-  assignation {
+  initialHash
+  node {
     id
+    name
+    hash
   }
-  progress
   reference
-  createdAt
-  message
+  resolvable
 }
     `;
 export const EffectDependencyFragmentDoc = gql`
@@ -2283,6 +2238,250 @@ export const PortsFragmentDoc = gql`
 }
     ${PortFragmentDoc}
 ${PortGroupFragmentDoc}`;
+export const GraphNodeNodeFragmentDoc = gql`
+    fragment GraphNodeNode on Node {
+  name
+  description
+  kind
+  hash
+  id
+  collections {
+    id
+    name
+  }
+  ...Ports
+  protocols {
+    name
+  }
+}
+    ${PortsFragmentDoc}`;
+export const ListReservationFragmentDoc = gql`
+    fragment ListReservation on Reservation {
+  id
+  title
+  status
+  reference
+  node {
+    name
+    description
+    hash
+  }
+}
+    `;
+export const NodeNodeFragmentDoc = gql`
+    fragment NodeNode on NodeNode {
+  id
+  nodeId
+  name
+  reservationId
+  status
+}
+    `;
+export const TemplateNodeFragmentDoc = gql`
+    fragment TemplateNode on TemplateNode {
+  id
+  templateId
+  interface
+  clientId
+  provisionId
+  reservationId
+  linked
+  status
+  active
+}
+    `;
+export const InvalidNodeFragmentDoc = gql`
+    fragment InvalidNode on InvalidNode {
+  id
+  initialHash
+}
+    `;
+export const DependencyEdgeFragmentDoc = gql`
+    fragment DependencyEdge on DependencyEdge {
+  id
+  source
+  target
+}
+    `;
+export const ImplementationEdgeFragmentDoc = gql`
+    fragment ImplementationEdge on ImplementationEdge {
+  id
+  source
+  target
+  linked
+}
+    `;
+export const DependencyGraphFragmentDoc = gql`
+    fragment DependencyGraph on DependencyGraph {
+  nodes {
+    ...NodeNode
+    ...TemplateNode
+    ...InvalidNode
+  }
+  edges {
+    ...DependencyEdge
+    ...ImplementationEdge
+  }
+}
+    ${NodeNodeFragmentDoc}
+${TemplateNodeFragmentDoc}
+${InvalidNodeFragmentDoc}
+${DependencyEdgeFragmentDoc}
+${ImplementationEdgeFragmentDoc}`;
+export const TestResultFragmentDoc = gql`
+    fragment TestResult on TestResult {
+  id
+  template {
+    id
+    interface
+    agent {
+      name
+    }
+  }
+  tester {
+    id
+    interface
+    agent {
+      name
+    }
+  }
+  case {
+    id
+  }
+  passed
+}
+    `;
+export const ListTestResultFragmentDoc = gql`
+    fragment ListTestResult on TestResult {
+  ...TestResult
+}
+    ${TestResultFragmentDoc}`;
+export const TestCaseFragmentDoc = gql`
+    fragment TestCase on TestCase {
+  id
+  name
+  description
+  results {
+    ...ListTestResult
+  }
+  tester {
+    hash
+  }
+}
+    ${ListTestResultFragmentDoc}`;
+export const ListTestCaseFragmentDoc = gql`
+    fragment ListTestCase on TestCase {
+  ...TestCase
+}
+    ${TestCaseFragmentDoc}`;
+export const DetailNodeFragmentDoc = gql`
+    fragment DetailNode on Node {
+  ...GraphNodeNode
+  templates {
+    id
+    interface
+  }
+  reservations {
+    ...ListReservation
+  }
+  dependencyGraph {
+    ...DependencyGraph
+  }
+  testCases {
+    ...ListTestCase
+  }
+}
+    ${GraphNodeNodeFragmentDoc}
+${ListReservationFragmentDoc}
+${DependencyGraphFragmentDoc}
+${ListTestCaseFragmentDoc}`;
+export const DetailTemplateFragmentDoc = gql`
+    fragment DetailTemplate on Template {
+  id
+  interface
+  dependencies {
+    ...ListDependency
+  }
+  node {
+    ...DetailNode
+  }
+  provisions {
+    id
+    status
+  }
+  extension
+  params
+}
+    ${ListDependencyFragmentDoc}
+${DetailNodeFragmentDoc}`;
+export const AgentFragmentDoc = gql`
+    fragment Agent on Agent {
+  id
+  instanceId
+  status
+  provisions {
+    ...ListProvision
+  }
+  defaults: templates(filters: {extension: "default"}) {
+    ...ListTemplate
+  }
+  workflows: templates(filters: {extension: "reaktion_next"}) {
+    ...ListTemplate
+  }
+  state: template(interface: "__state__") {
+    ...DetailTemplate
+  }
+  registry {
+    app {
+      clientId
+    }
+    user {
+      id
+    }
+  }
+  extensions
+  name
+  active
+  connected
+  lastSeen
+}
+    ${ListProvisionFragmentDoc}
+${ListTemplateFragmentDoc}
+${DetailTemplateFragmentDoc}`;
+export const ListAgentFragmentDoc = gql`
+    fragment ListAgent on Agent {
+  id
+  instanceId
+  status
+  active
+  connected
+  name
+  lastSeen
+  registry {
+    app {
+      clientId
+    }
+    user {
+      id
+    }
+  }
+}
+    `;
+export const AssignationEventFragmentDoc = gql`
+    fragment AssignationEvent on AssignationEvent {
+  id
+  kind
+  level
+  returns
+  assignation {
+    id
+  }
+  progress
+  reference
+  createdAt
+  message
+}
+    `;
 export const PostmanAssignationFragmentDoc = gql`
     fragment PostmanAssignation on Assignation {
   id
@@ -2478,66 +2677,6 @@ export const PostmanReservationFragmentDoc = gql`
     ${PortsFragmentDoc}
 ${BindsFragmentDoc}
 ${ReservationEventFragmentDoc}`;
-export const NodeNodeFragmentDoc = gql`
-    fragment NodeNode on NodeNode {
-  id
-  nodeId
-  name
-  reservationId
-  status
-}
-    `;
-export const TemplateNodeFragmentDoc = gql`
-    fragment TemplateNode on TemplateNode {
-  id
-  templateId
-  interface
-  clientId
-  provisionId
-  reservationId
-  linked
-  status
-  active
-}
-    `;
-export const InvalidNodeFragmentDoc = gql`
-    fragment InvalidNode on InvalidNode {
-  id
-  initialHash
-}
-    `;
-export const DependencyEdgeFragmentDoc = gql`
-    fragment DependencyEdge on DependencyEdge {
-  id
-  source
-  target
-}
-    `;
-export const ImplementationEdgeFragmentDoc = gql`
-    fragment ImplementationEdge on ImplementationEdge {
-  id
-  source
-  target
-  linked
-}
-    `;
-export const DependencyGraphFragmentDoc = gql`
-    fragment DependencyGraph on DependencyGraph {
-  nodes {
-    ...NodeNode
-    ...TemplateNode
-    ...InvalidNode
-  }
-  edges {
-    ...DependencyEdge
-    ...ImplementationEdge
-  }
-}
-    ${NodeNodeFragmentDoc}
-${TemplateNodeFragmentDoc}
-${InvalidNodeFragmentDoc}
-${DependencyEdgeFragmentDoc}
-${ImplementationEdgeFragmentDoc}`;
 export const DetailReservationFragmentDoc = gql`
     fragment DetailReservation on Reservation {
   ...PostmanReservation
@@ -2557,135 +2696,6 @@ export const DetailReservationFragmentDoc = gql`
 ${ListProvisionFragmentDoc}
 ${PortsFragmentDoc}
 ${DependencyGraphFragmentDoc}`;
-export const ListDependencyFragmentDoc = gql`
-    fragment ListDependency on Dependency {
-  id
-  initialHash
-  node {
-    id
-    name
-    hash
-  }
-  reference
-  resolvable
-}
-    `;
-export const GraphNodeNodeFragmentDoc = gql`
-    fragment GraphNodeNode on Node {
-  name
-  description
-  kind
-  hash
-  id
-  collections {
-    id
-    name
-  }
-  ...Ports
-  protocols {
-    name
-  }
-}
-    ${PortsFragmentDoc}`;
-export const ListReservationFragmentDoc = gql`
-    fragment ListReservation on Reservation {
-  id
-  title
-  status
-  reference
-  node {
-    name
-    description
-    hash
-  }
-}
-    `;
-export const TestResultFragmentDoc = gql`
-    fragment TestResult on TestResult {
-  id
-  template {
-    id
-    interface
-    agent {
-      name
-    }
-  }
-  tester {
-    id
-    interface
-    agent {
-      name
-    }
-  }
-  case {
-    id
-  }
-  passed
-}
-    `;
-export const ListTestResultFragmentDoc = gql`
-    fragment ListTestResult on TestResult {
-  ...TestResult
-}
-    ${TestResultFragmentDoc}`;
-export const TestCaseFragmentDoc = gql`
-    fragment TestCase on TestCase {
-  id
-  name
-  description
-  results {
-    ...ListTestResult
-  }
-  tester {
-    hash
-  }
-}
-    ${ListTestResultFragmentDoc}`;
-export const ListTestCaseFragmentDoc = gql`
-    fragment ListTestCase on TestCase {
-  ...TestCase
-}
-    ${TestCaseFragmentDoc}`;
-export const DetailNodeFragmentDoc = gql`
-    fragment DetailNode on Node {
-  ...GraphNodeNode
-  templates {
-    id
-    interface
-  }
-  reservations {
-    ...ListReservation
-  }
-  dependencyGraph {
-    ...DependencyGraph
-  }
-  testCases {
-    ...ListTestCase
-  }
-}
-    ${GraphNodeNodeFragmentDoc}
-${ListReservationFragmentDoc}
-${DependencyGraphFragmentDoc}
-${ListTestCaseFragmentDoc}`;
-export const DetailTemplateFragmentDoc = gql`
-    fragment DetailTemplate on Template {
-  id
-  interface
-  dependencies {
-    ...ListDependency
-  }
-  node {
-    ...DetailNode
-  }
-  provisions {
-    id
-    status
-  }
-  extension
-  params
-}
-    ${ListDependencyFragmentDoc}
-${DetailNodeFragmentDoc}`;
 export const AcknowledgeDocument = gql`
     mutation Acknowledge($assignation: ID!) {
   ack(input: {assignation: $assignation}) {

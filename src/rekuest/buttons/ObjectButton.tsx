@@ -14,6 +14,11 @@ import { useNodeAction } from "../hooks/useNodeAction";
 import { App } from "@/arkitekt/types";
 import { Action, ActionState, defaultRegistry } from "@/app/action-registry";
 import { useArkitekt } from "@/arkitekt/provider";
+import {
+  ListDefinitionFragment,
+  usePrimaryDefinitionsQuery,
+} from "@/kabinet/api/graphql";
+import { useHashAction } from "../hooks/useHashActions";
 
 export const AssignButton = (props: {
   object: string;
@@ -65,6 +70,49 @@ export const AssignButton = (props: {
   );
 };
 
+export const InstallButton = (props: {
+  definition: ListDefinitionFragment;
+  children: React.ReactNode;
+}) => {
+  const { assign, latestAssignation, node } = useHashAction({ hash: "xxxxx" });
+
+  const objectAssign = async () => {
+    try {
+      await assign({
+        node: node?.id,
+        args: {
+          definition: props.definition.id,
+        },
+      });
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
+
+  const progress = useAssignProgress({
+    identifier: "@kabinet/definition",
+    object: props.definition.id,
+    node: node?.id,
+  });
+
+  return (
+    <Button
+      onClick={objectAssign}
+      variant={"outline"}
+      size="sm"
+      className="flex-1"
+      style={{
+        backgroundSize: `${progress?.progress || 0}% 100%`,
+        backgroundImage: `linear-gradient(to right, #10b981 ${progress?.progress}%, #10b981 ${progress?.progress}%)`,
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "left center",
+      }}
+    >
+      {props.children}
+    </Button>
+  );
+};
+
 export const ApplicableNodes = (props: {
   object: string;
   identifier: string;
@@ -85,6 +133,25 @@ export const ApplicableNodes = (props: {
         >
           {x.name}
         </AssignButton>
+      ))}
+    </div>
+  );
+};
+
+export const ApplicableDefinitions = (props: {
+  object: string;
+  identifier: string;
+}) => {
+  const { data } = usePrimaryDefinitionsQuery({
+    variables: {
+      identifier: props.identifier,
+    },
+  });
+
+  return (
+    <div className="grid grid-cols-1 w-full gap-2 ">
+      {data?.definitions.map((x) => (
+        <InstallButton definition={x}>{x.name}</InstallButton>
       ))}
     </div>
   );
@@ -152,7 +219,7 @@ export const LocalActionButton = (props: {
         backgroundPosition: "left center",
       }}
     >
-      {props.action.name}
+      {props.action.title}
     </Button>
   );
 };
@@ -207,7 +274,17 @@ export const ObjectButton = (props: ObjectButtonProps) => {
               object={props.object}
               identifier={props.identifier}
             />
+            <div className="text-xs text-muted-foreground mx-auto mb-2">
+              Generic Actions
+            </div>
             <ApplicableActions
+              object={props.object}
+              identifier={props.identifier}
+            />
+            <div className="text-xs text-muted-foreground mx-auto my-2">
+              Available to install
+            </div>
+            <ApplicableDefinitions
               object={props.object}
               identifier={props.identifier}
             />

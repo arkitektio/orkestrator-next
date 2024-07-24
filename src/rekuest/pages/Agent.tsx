@@ -8,6 +8,7 @@ import { ArrowRightIcon } from "@radix-ui/react-icons";
 import { BellIcon } from "lucide-react";
 import { TemplateActionButton } from "../buttons/TemplateActionButton";
 import TemplateCard from "../components/cards/TemplateCard";
+import { StateDisplay } from "../components/State";
 
 export const sizer = (length: number, index: number): string => {
   const divider = 3;
@@ -70,6 +71,10 @@ const TemplateBentoCard = ({
 );
 
 export default asDetailQueryRoute(useAgentQuery, ({ data, refetch }) => {
+  const stateAction = data.agent.defaults.find(
+    (x) => x.interface == "__state__",
+  );
+
   return (
     <RekuestAgent.ModelPage title={data.agent.name} object={data.agent.id}>
       <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
@@ -82,6 +87,9 @@ export default asDetailQueryRoute(useAgentQuery, ({ data, refetch }) => {
       <p className="mt-3 text-xl text-muted-foreground">
         {data?.agent?.extensions.map((ext) => ext).join(", ")}
       </p>
+
+      {data.agent.state && <StateDisplay template={data.agent.state} />}
+
       <ListRender array={data.agent.defaults} title="Registered Functions">
         {(item) => <TemplateCard item={item} />}
       </ListRender>

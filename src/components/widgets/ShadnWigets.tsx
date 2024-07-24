@@ -16,6 +16,7 @@ import { UnionWidget } from "./fallbacks/UnionWidget";
 import { BoolReturnWidget } from "./returns/fallbacks/BoolReturnWidget";
 import { IntReturnWidget } from "./returns/fallbacks/IntReturnWidget";
 import { StringReturnWidget } from "./returns/fallbacks/StringReturnWidget";
+import { ModelReturnWidget } from "./returns/fallbacks/ModelReturnWidget";
 
 export const ShadnWigets = () => {
   const { registry } = useWidgetRegistry();
@@ -61,6 +62,7 @@ export const ShadnWigets = () => {
       list();
       string();
       search();
+      dict();
       date();
       bool();
       float();
@@ -84,11 +86,16 @@ export const ShadnWigets = () => {
       PortKind.Bool,
       BoolReturnWidget,
     );
+    let model = registry.registerReturnWidgetFallback(
+      PortKind.Model,
+      ModelReturnWidget,
+    );
 
     return () => {
       int();
       list();
       bool();
+      model();
     };
   }, []);
 

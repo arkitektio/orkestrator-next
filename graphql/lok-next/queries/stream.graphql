@@ -1,0 +1,5 @@
+query GetStream($id: ID!) {
+  stream(id: $id) {
+    ...DetailStream
+  }
+}

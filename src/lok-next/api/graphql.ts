@@ -605,6 +605,7 @@ export type Query = {
   stashItem: StashItem;
   stashItems: Array<StashItem>;
   stashes: Array<Stash>;
+  stream: Stream;
   user: User;
   users: Array<User>;
 };
@@ -705,6 +706,11 @@ export type QueryStashItemsArgs = {
 export type QueryStashesArgs = {
   filters?: InputMaybe<StashFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryStreamArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -1235,7 +1241,9 @@ export type StashItemFragment = { __typename?: 'StashItem', id: string, identifi
 
 export type StreamFragment = { __typename?: 'Stream', id: string, title: string };
 
-export type EnsuredStreamFragment = { __typename?: 'Stream', id: string, title: string, token: string };
+export type EnsuredStreamFragment = { __typename?: 'Stream', id: string, title: string, token: string, agent: { __typename?: 'Agent', room: { __typename?: 'Room', id: string } } };
+
+export type DetailStreamFragment = { __typename?: 'Stream', id: string, title: string, token: string, agent: { __typename?: 'Agent', room: { __typename?: 'Room', id: string } } };
 
 export type ListUserFragment = { __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string };
 
@@ -1335,7 +1343,7 @@ export type CreateStreamMutationVariables = Exact<{
 }>;
 
 
-export type CreateStreamMutation = { __typename?: 'Mutation', createStream: { __typename?: 'Stream', id: string, title: string, token: string } };
+export type CreateStreamMutation = { __typename?: 'Mutation', createStream: { __typename?: 'Stream', id: string, title: string, token: string, agent: { __typename?: 'Agent', room: { __typename?: 'Room', id: string } } } };
 
 export type AppsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1480,6 +1488,13 @@ export type MyStashesQueryVariables = Exact<{
 
 
 export type MyStashesQuery = { __typename?: 'Query', stashes: Array<{ __typename?: 'Stash', id: string, name: string, description?: string | null, createdAt: any, updatedAt: any, items: Array<{ __typename?: 'StashItem', id: string, identifier: string, object: string }>, owner: { __typename?: 'User', id: string, username: string } }> };
+
+export type GetStreamQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetStreamQuery = { __typename?: 'Query', stream: { __typename?: 'Stream', id: string, title: string, token: string, agent: { __typename?: 'Agent', room: { __typename?: 'Room', id: string } } } };
 
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1899,6 +1914,23 @@ export const EnsuredStreamFragmentDoc = gql`
   id
   title
   token
+  agent {
+    room {
+      id
+    }
+  }
+}
+    `;
+export const DetailStreamFragmentDoc = gql`
+    fragment DetailStream on Stream {
+  id
+  title
+  token
+  agent {
+    room {
+      id
+    }
+  }
 }
     `;
 export const DetailUserFragmentDoc = gql`
@@ -3092,6 +3124,41 @@ export function useMyStashesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHo
 export type MyStashesQueryHookResult = ReturnType<typeof useMyStashesQuery>;
 export type MyStashesLazyQueryHookResult = ReturnType<typeof useMyStashesLazyQuery>;
 export type MyStashesQueryResult = Apollo.QueryResult<MyStashesQuery, MyStashesQueryVariables>;
+export const GetStreamDocument = gql`
+    query GetStream($id: ID!) {
+  stream(id: $id) {
+    ...DetailStream
+  }
+}
+    ${DetailStreamFragmentDoc}`;
+
+/**
+ * __useGetStreamQuery__
+ *
+ * To run a query within a React component, call `useGetStreamQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetStreamQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetStreamQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetStreamQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetStreamQuery, GetStreamQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetStreamQuery, GetStreamQueryVariables>(GetStreamDocument, options);
+      }
+export function useGetStreamLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStreamQuery, GetStreamQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetStreamQuery, GetStreamQueryVariables>(GetStreamDocument, options);
+        }
+export type GetStreamQueryHookResult = ReturnType<typeof useGetStreamQuery>;
+export type GetStreamLazyQueryHookResult = ReturnType<typeof useGetStreamLazyQuery>;
+export type GetStreamQueryResult = Apollo.QueryResult<GetStreamQuery, GetStreamQueryVariables>;
 export const MeDocument = gql`
     query Me {
   me {

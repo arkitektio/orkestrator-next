@@ -1,6 +1,7 @@
 import {
   DetailRunFragment,
   GraphInput,
+  RunStatus,
   useRunForAssignationQuery,
 } from "@/reaktion/api/graphql";
 import { AnimatePresence } from "framer-motion";
@@ -95,7 +96,8 @@ export const TrackFlow: React.FC<Props> = ({ run, assignation, onSave }) => {
         </div>
         <AnimatePresence>
           <div className=" w-full flex-initial ">
-            {assignation?.status != AssignationEventKind.Done ? (
+            {run.status}
+            {run?.status != RunStatus.Completed ? (
               <LiveTracker run={run} startT={run?.latestSnapshot?.t || 0} />
             ) : (
               <RangeTracker run={run} />

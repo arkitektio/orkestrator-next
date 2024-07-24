@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { AssignationEventKind, DetailTemplateFragment } from "../api/graphql";
 import { useTemplateAction } from "../hooks/useTemplateAction";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
@@ -7,47 +7,44 @@ import { ReturnsContainer } from "@/components/widgets/returns/ReturnsContainer"
 import { portToLabel } from "../widgets/utils";
 import { toast } from "sonner";
 import Timestamp from "react-timestamp";
+import { useTemplateSubscribeAction } from "../hooks/useTemplateSubscribeAction";
 
 export const StateDisplay = ({
   template,
 }: {
   template: DetailTemplateFragment;
 }) => {
-  const { assign, latestAssignation, cancel } = useTemplateAction({
+  const { assign, causedAssignation, cancel } = useTemplateSubscribeAction({
     id: template.id,
   });
 
-  const watchState = useCallback(() => {
-    assign({
-      template: template.id,
-      args: {},
-      hooks: [],
-    }).then(
-      (v) => {
-        console.log("Result", v);
-      },
-      (error) => {
-        console.log("Error", error);
-        toast.error(error.message);
-      },
-    );
-  }, [template, assign]);
+  const called = useRef(false);
+
+  useEffect(() => {
+    if (called.current) return;
+    assign({ template: template.id, args: {}, hooks: [] });
+    called.current = true;
+
+    return () => {
+      cancel();
+      called.current = true;
+    };
+  }, [template]);
 
   const { registry } = useWidgetRegistry();
 
-  console.log("Latest Assignation", latestAssignation);
+  console.log("Latest Assignation", causedAssignation);
 
-  const yieldEvent = latestAssignation?.events.find(
+  const yieldEvent = causedAssignation?.events.find(
     (x) => x.kind == AssignationEventKind.Yield,
   );
 
-  const errorEvent = latestAssignation?.events.find(
+  const errorEvent = causedAssignation?.events.find(
     (x) => x.kind == AssignationEventKind.Critical,
   );
 
   return (
     <>
-      <button onClick={watchState}>Watch</button>
       {yieldEvent ? (
         <Card className="flex-1">
           <CardHeader>

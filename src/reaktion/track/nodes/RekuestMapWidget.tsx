@@ -35,6 +35,10 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
       id={id}
       className={cn(
         "border-blue-400/40 shadow-blue-400/10 dark:border-blue-300 dark:shadow-blue/20 shadow-xl",
+        latestEvent?.kind === RunEventKind.Error &&
+          "border-red-400 dark:border-red-300  dark:shadow-red/20 shadow-red-400/10",
+        latestEvent?.kind === RunEventKind.Complete &&
+          "border-green-400 dark:border-green-300  dark:shadow-green/20 shadow-green-400/10",
       )}
       selected={selected}
       contextMenu={
@@ -65,10 +69,12 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
               />
             )}
             {latestEvent && latestEvent.kind === RunEventKind.Complete && (
-              <div className="text-center font-light p-5">Node is complete</div>
+              <div className="text-center font-light p-5 ">
+                Node is complete
+              </div>
             )}
             {latestEvent && latestEvent.kind === RunEventKind.Error && (
-              <div className="text-center font-light p-5">
+              <div className="text-center font-light p-5 text-red-300">
                 {latestEvent.value}
               </div>
             )}
@@ -77,9 +83,7 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
             )}
           </div>
         </CardTitle>
-        <CardDescription>
-          <NodeDescription description={description} />
-        </CardDescription>
+        <CardDescription></CardDescription>
         {expanded && <div>Not implemented yet</div>}
       </CardHeader>
       {outs.map((s, index) => (

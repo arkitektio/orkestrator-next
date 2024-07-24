@@ -48,6 +48,7 @@ fragment DetailRun on Run {
     }
     t
   }
+  status
   flow {
     ...Flow
   }
@@ -57,6 +58,7 @@ fragment ListRun on Run {
   id
   assignation
   createdAt
+  status
   flow {
     workspace {
       title

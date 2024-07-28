@@ -1,5 +1,5 @@
 import { ServiceMap } from "@/arkitekt/provider";
-import { KanbanIcon } from "lucide-react";
+import { MIKRO_ACTIONS } from "@/lib/mikro/actions";
 
 export type Condition = {
   type: string;
@@ -47,6 +47,7 @@ export type Action = {
   title: string;
   description: string;
   conditions: Conditions[];
+  collections?: string[];
   execute: (action: ActionParams) => Promise<ActionState | void>;
 };
 
@@ -113,4 +114,9 @@ defaultRegistry.registerAction({
       isCommand: false,
     };
   },
+  collections: ["io"],
 });
+
+for (let i of MIKRO_ACTIONS) {
+  defaultRegistry.registerAction(i);
+}

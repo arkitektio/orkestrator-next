@@ -29,3 +29,7 @@ mutation RequestFileAccess($store: ID!, $duration: Int) {
     ...AccessCredentials
   }
 }
+
+mutation DeleteFile($id: ID!){
+  deleteFile(input: {id: $id})
+}

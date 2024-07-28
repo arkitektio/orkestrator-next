@@ -47,3 +47,8 @@ mutation UpdateImage($input: UpdateImageInput!) {
     ...Image
   }
 }
+
+
+mutation DeleteImage($id: ID!) {
+  deleteImage(input: { id: $id }) 
+}

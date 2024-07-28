@@ -1,5 +1,15 @@
-import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { ContextMenuItem } from "@/components/ui/context-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Sheet,
   SheetContent,
@@ -22,7 +32,10 @@ import { RekuestMapNodeProps } from "@/reaktion/types";
 import { PortFragment } from "@/rekuest/api/graphql";
 import { GearIcon } from "@radix-ui/react-icons";
 import React from "react";
+import { TbBurger } from "react-icons/tb";
 import { useEditNodeErrors, useEditRiver } from "../context";
+
+export const DeviceSelector = (props) => {};
 
 export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
   data: { ins, outs, constants, ...data },
@@ -87,20 +100,31 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
         <CardTitle onDoubleClick={() => setExpanded(!expanded)}>
           <div className="flex justify-between">
             {data?.title}
-            <Sheet>
-              <SheetTrigger className="group-hover:opacity-100 opacity-0 transition-all duration-3000">
-                <GearIcon />
-              </SheetTrigger>
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle>These are advanced settings</SheetTitle>
-                  <SheetDescription>
-                    You can change the settings here but be aware that they
-                    might smeellll
-                  </SheetDescription>
-                </SheetHeader>
-              </SheetContent>
-            </Sheet>
+            <div className="group-hover:opacity-100 opacity-0 transition-all duration-3000">
+              <Popover>
+                <PopoverTrigger className="mr-2">
+                  <TbBurger />
+                </PopoverTrigger>
+                <PopoverContent>
+                  <Card>The Card</Card>
+                </PopoverContent>
+              </Popover>
+
+              <Sheet>
+                <SheetTrigger>
+                  <GearIcon />
+                </SheetTrigger>
+                <SheetContent>
+                  <SheetHeader>
+                    <SheetTitle>These are advanced settings</SheetTitle>
+                    <SheetDescription>
+                      You can change the settings here but be aware that they
+                      might smeellll
+                    </SheetDescription>
+                  </SheetHeader>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </CardTitle>
         <CardDescription>

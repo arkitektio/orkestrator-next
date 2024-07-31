@@ -26,6 +26,7 @@ import FileCard from "../components/cards/FileCard";
 import ImageMetricCard from "../components/cards/ImageMetricCard";
 import LabelViewCard from "../components/cards/LabelViewCard";
 import OpticsViewCard from "../components/cards/OpticsViewCard";
+import SpecimenViewCard from "../components/cards/SpecimenViewCard";
 import RGBViewCard from "../components/cards/RGBViewCard";
 import TransformationViewCard from "../components/cards/TransformationViewCard";
 import WellPositionViewCard from "../components/cards/WellPositionViewCard";
@@ -37,6 +38,7 @@ import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { PinToggle } from "../components/ui/PinToggle";
 import { AddImageViewForm } from "../forms/AddImageViewForm";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
+import RoiCard from "../components/cards/RoiCard";
 
 export type IRepresentationScreenProps = {};
 
@@ -229,6 +231,9 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                         {view.__typename == "WellPositionView" && (
                           <WellPositionViewCard view={view} key={index} />
                         )}
+                        {view.__typename == "SpecimenView" && (
+                          <SpecimenViewCard view={view} key={index} />
+                        )}
                       </>
                     ))}
                     {data?.image && (
@@ -251,6 +256,10 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                   {(metric, index) => (
                     <ImageMetricCard metric={metric} key={index} />
                   )}
+                </ListRender>
+
+                <ListRender title="Rois" array={data?.image?.rois}>
+                  {(roi, index) => <RoiCard item={roi} key={index} />}
                 </ListRender>
 
                 <ListRender

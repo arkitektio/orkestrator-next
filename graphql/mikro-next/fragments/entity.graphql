@@ -1,0 +1,16 @@
+fragment Entity on Entity {
+  id
+  name
+  kind {
+    id
+    label
+    ontology {
+      id
+      name
+    }
+  }
+  group {
+    id
+    name
+  }
+}

@@ -1,0 +1,8 @@
+fragment EntityKind on EntityKind {
+  id
+  label
+  ontology {
+    id
+    name
+  }
+}

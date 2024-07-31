@@ -1,0 +1,17 @@
+fragment Specimen on Specimen {
+  id
+  entity {
+    id
+    kind {
+      id
+      label
+    }
+    name
+    group {
+      id
+    }
+  }
+  protocol {
+    id
+  }
+}

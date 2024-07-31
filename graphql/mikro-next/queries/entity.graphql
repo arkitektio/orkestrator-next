@@ -1,0 +1,15 @@
+query GetEntity($id: ID!) {
+  entity(id: $id) {
+    ...Entity
+  }
+}
+
+query SearchEntities($search: String, $values: [ID!]) {
+  options: entities(
+    filters: { search: $search, ids: $values }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: name
+  }
+}

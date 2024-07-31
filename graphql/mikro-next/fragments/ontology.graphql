@@ -1,0 +1,4 @@
+fragment Ontology on Ontology {
+  id
+  name
+}

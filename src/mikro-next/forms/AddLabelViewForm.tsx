@@ -4,17 +4,10 @@ import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import {
-  useAutoCreateFluorophoreMutation,
-  useCreateLabelViewMutation,
-  useFluorophoreOptionsLazyQuery,
-} from "../api/graphql";
+import { useCreateLabelViewMutation } from "../api/graphql";
 
 export const AddLabelViewForm = (props: { image: string }) => {
   const [add] = useCreateLabelViewMutation();
-
-  const [searchFluorophoes] = useFluorophoreOptionsLazyQuery();
-  const [createFluorophore] = useAutoCreateFluorophoreMutation();
 
   const dialog = useGraphQlFormDialog(add);
 
@@ -40,16 +33,7 @@ export const AddLabelViewForm = (props: { image: string }) => {
           })}
         >
           <div className="grid grid-cols-2 gap-2">
-            <div className="col-span-2">
-              <GraphQLCreatableSearchField
-                name="fluorophore"
-                label="Context"
-                searchQuery={searchFluorophoes}
-                createMutation={createFluorophore}
-                description="Which fluorophore is this label using?"
-                placeholder="Fluorophore"
-              />
-            </div>
+            <div className="col-span-2"></div>
           </div>
 
           <DialogFooter className="mt-2">

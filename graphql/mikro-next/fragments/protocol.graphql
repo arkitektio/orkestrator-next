@@ -1,0 +1,9 @@
+fragment Protocol on Protocol {
+  id
+  name
+  experiment {
+    id
+    name
+    description
+  }
+}

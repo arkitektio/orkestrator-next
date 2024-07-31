@@ -1,5 +1,10 @@
 import { CardHeader, CardTitle } from "@/components/ui/card";
-import { MikroFluorophore, MikroLabelView } from "@/linkers";
+import {
+  MikroEntity,
+  MikroFluorophore,
+  MikroLabelView,
+  MikroMetric,
+} from "@/linkers";
 import { ArrowDownIcon, ArrowUpIcon } from "@radix-ui/react-icons";
 import { MateFinder } from "../../../mates/types";
 import { LabelViewFragment } from "../../api/graphql";
@@ -17,29 +22,50 @@ const TheCard = ({ view, mates }: Props) => {
         <CardHeader>
           <CardTitle>
             {" "}
+            {view.primaryAntibody && (
+              <>
+                <MikroEntity.DetailLink
+                  className={({ isActive } /*  */) =>
+                    "z-10 font-bold text-md mb-2 cursor-pointer " +
+                    (isActive ? "text-primary-300" : "")
+                  }
+                  object={view.primaryAntibody.id}
+                >
+                  {view.primaryAntibody?.kind.label}
+                  <p className="text-xs font-light">
+                    {view.primaryAntibody.name}
+                  </p>
+                </MikroEntity.DetailLink>
+              </>
+            )}
             {view.fluorophore && (
               <>
-                <MikroFluorophore.DetailLink
+                <MikroEntity.DetailLink
                   className={({ isActive } /*  */) =>
                     "z-10 font-bold text-md mb-2 cursor-pointer " +
                     (isActive ? "text-primary-300" : "")
                   }
                   object={view.fluorophore.id}
                 >
-                  {view.fluorophore?.name}
-                </MikroFluorophore.DetailLink>
-                <div className=" @sm:block hidden">
-                  <div className="mt-1 flex flex-row gap-1 text-xs">
-                    <div className="text-muted-foreground flex flex-row gap-1">
-                      <ArrowDownIcon />
-                      {view.fluorophore?.emissionWavelength} nm
-                    </div>
-                    <div className="text-muted-foreground flex flex-row gap-1">
-                      <ArrowUpIcon /> {view.fluorophore?.excitationWavelength}{" "}
-                      nm
-                    </div>
-                  </div>
-                </div>
+                  {view.fluorophore?.kind.label}
+                  <p className="text-xs font-light">{view.fluorophore.name}</p>
+                </MikroEntity.DetailLink>
+              </>
+            )}
+            {view.secondaryAntibody && (
+              <>
+                <MikroEntity.DetailLink
+                  className={({ isActive } /*  */) =>
+                    "z-10 font-bold text-md mb-2 cursor-pointer " +
+                    (isActive ? "text-primary-300" : "")
+                  }
+                  object={view.secondaryAntibody.id}
+                >
+                  {view.secondaryAntibody?.kind.label}
+                  <p className="text-xs font-light">
+                    {view.secondaryAntibody.name}
+                  </p>
+                </MikroEntity.DetailLink>
               </>
             )}
           </CardTitle>

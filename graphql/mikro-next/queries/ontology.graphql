@@ -1,0 +1,15 @@
+query GetOntology($id: ID!) {
+  ontology(id: $id) {
+    ...Ontology
+  }
+}
+
+query SearchOntologies($search: String, $values: [ID!]) {
+  options: ontologies(
+    filters: { search: $search, ids: $values }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: name
+  }
+}

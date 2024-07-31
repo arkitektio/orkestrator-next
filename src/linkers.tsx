@@ -48,6 +48,8 @@ export const MikroRenderTree = buildSmart(
 
 export const MikroMetric = buildSmart("@mikro/metric", "mikro/metrics");
 
+export const MikroEntity = buildSmart("@mikro/entitry", "mikro/entities");
+
 export const MikroDataset = buildSmart("@mikro/dataset", "mikro/datasets");
 
 export const OmeroArkProject = buildSmart(
@@ -78,6 +80,11 @@ export const MikroAffineTransformationView = buildSmart(
 export const MikroLabelView = buildSmart(
   "@mikro/labelview",
   "mikro/labelviews",
+);
+
+export const MikroSpecimenView = buildSmart(
+  "@mikro/specimenview",
+  "mikro/specimenviews",
 );
 
 export const MikroMultiPositionView = buildSmart(
@@ -121,6 +128,10 @@ export const MikroInstrument = buildSmart(
   "@mikro/instrument",
   "mikro/instruments",
 );
+
+export const MikroROI = buildSmart("@mikro/roi", "mikro/rois");
+
+export const MikroSpecimen = buildSmart("@mikro/specimen", "mikro/specimens");
 
 export const RekuestModuleLink = buildModuleLink("rekuestnext");
 export const MikroModuleLink = buildModuleLink("mikro");

@@ -112,35 +112,6 @@ export type AffineTransformationViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
-export type Antibody = {
-  __typename?: 'Antibody';
-  epitope?: Maybe<Scalars['String']['output']>;
-  history: Array<History>;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
-  primaryViews: Array<LabelView>;
-  secondaryViews: Array<LabelView>;
-};
-
-
-export type AntibodyHistoryArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-export type AntibodyFilter = {
-  AND?: InputMaybe<AntibodyFilter>;
-  OR?: InputMaybe<AntibodyFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  name?: InputMaybe<StrFilterLookup>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type AntibodyInput = {
-  epitope?: InputMaybe<Scalars['String']['input']>;
-  name: Scalars['String']['input'];
-};
-
 /** An app. */
 export type App = {
   __typename?: 'App';
@@ -422,10 +393,6 @@ export type DatasetFilter = {
   provenance?: InputMaybe<ProvenanceFilter>;
 };
 
-export type DeleteAntibodyInput = {
-  id: Scalars['ID']['input'];
-};
-
 export type DeleteCameraInput = {
   id: Scalars['ID']['input'];
 };
@@ -438,15 +405,27 @@ export type DeleteDatasetInput = {
   id: Scalars['ID']['input'];
 };
 
+export type DeleteEntityGroupInput = {
+  id: Scalars['ID']['input'];
+};
+
+export type DeleteEntityInput = {
+  id: Scalars['ID']['input'];
+};
+
+export type DeleteEntityKindInput = {
+  id: Scalars['ID']['input'];
+};
+
 export type DeleteEraInput = {
   id: Scalars['ID']['input'];
 };
 
-export type DeleteFileInput = {
+export type DeleteExperimentInput = {
   id: Scalars['ID']['input'];
 };
 
-export type DeleteFluorophoreInput = {
+export type DeleteFileInput = {
   id: Scalars['ID']['input'];
 };
 
@@ -466,6 +445,14 @@ export type DeleteObjectiveInput = {
   id: Scalars['ID']['input'];
 };
 
+export type DeleteOntologyInput = {
+  id: Scalars['ID']['input'];
+};
+
+export type DeleteProtocolInput = {
+  id: Scalars['ID']['input'];
+};
+
 export type DeleteRgbContextInput = {
   id: Scalars['ID']['input'];
 };
@@ -475,6 +462,10 @@ export type DeleteRoiInput = {
 };
 
 export type DeleteSnaphotInput = {
+  id: Scalars['ID']['input'];
+};
+
+export type DeleteSpecimenInput = {
   id: Scalars['ID']['input'];
 };
 
@@ -493,6 +484,77 @@ export type DeleteViewInput = {
 export type DesociateInput = {
   other: Scalars['ID']['input'];
   selfs: Array<Scalars['ID']['input']>;
+};
+
+export type Entity = {
+  __typename?: 'Entity';
+  epitope?: Maybe<Scalars['String']['output']>;
+  group: EntityGroup;
+  id: Scalars['ID']['output'];
+  index: Scalars['Int']['output'];
+  kind: EntityKind;
+  name: Scalars['String']['output'];
+  parent?: Maybe<Entity>;
+};
+
+export type EntityFilter = {
+  AND?: InputMaybe<EntityFilter>;
+  OR?: InputMaybe<EntityFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  kind?: InputMaybe<Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type EntityGroup = {
+  __typename?: 'EntityGroup';
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type EntityGroupFilter = {
+  AND?: InputMaybe<EntityGroupFilter>;
+  OR?: InputMaybe<EntityGroupFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type EntityGroupInput = {
+  image?: InputMaybe<Scalars['ID']['input']>;
+  name: Scalars['String']['input'];
+};
+
+export type EntityInput = {
+  group?: InputMaybe<Scalars['ID']['input']>;
+  instanceKind?: InputMaybe<Scalars['String']['input']>;
+  kind: Scalars['ID']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+  parent?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type EntityKind = {
+  __typename?: 'EntityKind';
+  id: Scalars['ID']['output'];
+  label: Scalars['String']['output'];
+  ontology: Ontology;
+  publicUrl?: Maybe<Scalars['String']['output']>;
+};
+
+export type EntityKindFilter = {
+  AND?: InputMaybe<EntityKindFilter>;
+  OR?: InputMaybe<EntityKindFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  image?: InputMaybe<Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type EntityKindInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  label: Scalars['String']['input'];
+  ontology?: InputMaybe<Scalars['ID']['input']>;
+  purl?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type Era = {
@@ -525,6 +587,34 @@ export type EraFilter = {
 
 export type EraInput = {
   begin?: InputMaybe<Scalars['DateTime']['input']>;
+  name: Scalars['String']['input'];
+};
+
+export type Experiment = {
+  __typename?: 'Experiment';
+  createdAt: Scalars['DateTime']['output'];
+  creator?: Maybe<User>;
+  description?: Maybe<Scalars['String']['output']>;
+  history: Array<History>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+};
+
+
+export type ExperimentHistoryArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+export type ExperimentFilter = {
+  AND?: InputMaybe<ExperimentFilter>;
+  OR?: InputMaybe<ExperimentFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ExperimentInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
 };
 
@@ -598,38 +688,6 @@ export type FloatFilterLookup = {
   startsWith?: InputMaybe<Scalars['Float']['input']>;
 };
 
-export type Fluorophore = {
-  __typename?: 'Fluorophore';
-  emissionWavelength?: Maybe<Scalars['Micrometers']['output']>;
-  excitationWavelength?: Maybe<Scalars['Micrometers']['output']>;
-  history: Array<History>;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
-  views: Array<LabelView>;
-};
-
-
-export type FluorophoreHistoryArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-export type FluorophoreFilter = {
-  AND?: InputMaybe<FluorophoreFilter>;
-  OR?: InputMaybe<FluorophoreFilter>;
-  emissionWavelength?: InputMaybe<IntFilterLookup>;
-  excitationWavelength?: InputMaybe<IntFilterLookup>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  provenance?: InputMaybe<ProvenanceFilter>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type FluorophoreInput = {
-  emissionWavelength?: InputMaybe<Scalars['Micrometers']['input']>;
-  excitationWavelength?: InputMaybe<Scalars['Micrometers']['input']>;
-  name: Scalars['String']['input'];
-};
-
 export type FromArrayLikeInput = {
   acquisitionViews?: InputMaybe<Array<PartialAcquisitionViewInput>>;
   array: Scalars['ArrayLike']['input'];
@@ -642,6 +700,7 @@ export type FromArrayLikeInput = {
   origins?: InputMaybe<Array<Scalars['ID']['input']>>;
   rgbViews?: InputMaybe<Array<PartialRgbViewInput>>;
   roiOrigins?: InputMaybe<Array<Scalars['ID']['input']>>;
+  specimenViews?: InputMaybe<Array<PartialSpecimenViewInput>>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   timepointViews?: InputMaybe<Array<PartialTimepointViewInput>>;
   transformationViews?: InputMaybe<Array<PartialAffineTransformationViewInput>>;
@@ -922,12 +981,12 @@ export type LabelView = View & {
   acquisitionMode?: Maybe<Scalars['String']['output']>;
   cMax?: Maybe<Scalars['Int']['output']>;
   cMin?: Maybe<Scalars['Int']['output']>;
-  fluorophore?: Maybe<Fluorophore>;
+  fluorophore?: Maybe<Entity>;
   id: Scalars['ID']['output'];
   image: Image;
   isGlobal: Scalars['Boolean']['output'];
-  primaryAntibody?: Maybe<Antibody>;
-  secondaryAntibody?: Maybe<Antibody>;
+  primaryAntibody?: Maybe<Entity>;
+  secondaryAntibody?: Maybe<Entity>;
   tMax?: Maybe<Scalars['Int']['output']>;
   tMin?: Maybe<Scalars['Int']['output']>;
   xMax?: Maybe<Scalars['Int']['output']>;
@@ -1011,66 +1070,72 @@ export type MultiWellPlateInput = {
 export type Mutation = {
   __typename?: 'Mutation';
   createAffineTransformationView: AffineTransformationView;
-  createAntibody: Antibody;
   createCamera: Camera;
   createChannel: Channel;
   createChannelView: ChannelView;
   createContinousScanView: ContinousScanView;
   createDataset: Dataset;
+  createEntity: Entity;
+  createEntityGroup: Entity;
+  createEntityKind: EntityKind;
   createEra: Era;
-  createFluorophore: Fluorophore;
+  createExperiment: Experiment;
   createInstrument: Instrument;
   createLabelView: LabelView;
   createMultiWellPlate: MultiWellPlate;
   createObjective: Objective;
+  createOntology: Ontology;
   createOpticsView: OpticsView;
+  createProtocol: Protocol;
   createRenderTree: RenderTree;
   createRgbContext: RgbContext;
   createRgbView: RgbView;
   createRoi: Roi;
   createSnapshot: Snapshot;
+  createSpecimen: Specimen;
   createStage: Stage;
   createTimepointView: TimepointView;
   createViewCollection: ViewCollection;
   createWellPositionView: WellPositionView;
   deleteAffineTransformationView: Scalars['ID']['output'];
-  deleteAntibody: Scalars['ID']['output'];
   deleteCamera: Scalars['ID']['output'];
   deleteChannel: Scalars['ID']['output'];
   deleteChannelView: Scalars['ID']['output'];
   deleteDataset: Scalars['ID']['output'];
+  deleteEntity: Scalars['ID']['output'];
+  deleteEntityGroup: Scalars['ID']['output'];
+  deleteEntityKind: Scalars['ID']['output'];
   deleteEra: Scalars['ID']['output'];
+  deleteExperiment: Scalars['ID']['output'];
   deleteFile: Scalars['ID']['output'];
-  deleteFluorophore: Scalars['ID']['output'];
   deleteImage: Scalars['ID']['output'];
   deleteInstrument: Scalars['ID']['output'];
   deleteMultiWellPlate: Scalars['ID']['output'];
   deleteObjective: Scalars['ID']['output'];
+  deleteOntology: Scalars['ID']['output'];
   deleteOpticsView: Scalars['ID']['output'];
+  deleteProtocol: Scalars['ID']['output'];
   deleteRgbContext: Scalars['ID']['output'];
   deleteRgbView: Scalars['ID']['output'];
   deleteRoi: Scalars['ID']['output'];
   deleteSnapshot: Scalars['ID']['output'];
+  deleteSpecimen: Scalars['ID']['output'];
   deleteStage: Scalars['ID']['output'];
   deleteTimepointView: Scalars['ID']['output'];
   deleteView: Scalars['ID']['output'];
   deleteViewCollection: Scalars['ID']['output'];
-  ensureAntibody: Antibody;
   ensureCamera: Camera;
   ensureChannel: Channel;
-  ensureFluorophore: Fluorophore;
   ensureInstrument: Instrument;
   ensureMultiWellPlate: MultiWellPlate;
   ensureObjective: Objective;
   fromArrayLike: Image;
   fromFileLike: File;
   fromParquetLike: Table;
-  pinAntibody: Antibody;
   pinCamera: Camera;
   pinChannel: Channel;
   pinDataset: Dataset;
   pinEra: Era;
-  pinFluorophore: Fluorophore;
   pinImage: Image;
   pinInstrument: Instrument;
   pinMultiWellPlate: MultiWellPlate;
@@ -1108,11 +1173,6 @@ export type MutationCreateAffineTransformationViewArgs = {
 };
 
 
-export type MutationCreateAntibodyArgs = {
-  input: AntibodyInput;
-};
-
-
 export type MutationCreateCameraArgs = {
   input: CameraInput;
 };
@@ -1138,13 +1198,28 @@ export type MutationCreateDatasetArgs = {
 };
 
 
+export type MutationCreateEntityArgs = {
+  input: EntityInput;
+};
+
+
+export type MutationCreateEntityGroupArgs = {
+  input: EntityGroupInput;
+};
+
+
+export type MutationCreateEntityKindArgs = {
+  input: EntityKindInput;
+};
+
+
 export type MutationCreateEraArgs = {
   input: EraInput;
 };
 
 
-export type MutationCreateFluorophoreArgs = {
-  input: FluorophoreInput;
+export type MutationCreateExperimentArgs = {
+  input: ExperimentInput;
 };
 
 
@@ -1168,8 +1243,18 @@ export type MutationCreateObjectiveArgs = {
 };
 
 
+export type MutationCreateOntologyArgs = {
+  input: OntologyInput;
+};
+
+
 export type MutationCreateOpticsViewArgs = {
   input: OpticsViewInput;
+};
+
+
+export type MutationCreateProtocolArgs = {
+  input: ProtocolInput;
 };
 
 
@@ -1198,6 +1283,11 @@ export type MutationCreateSnapshotArgs = {
 };
 
 
+export type MutationCreateSpecimenArgs = {
+  input: SpecimenInput;
+};
+
+
 export type MutationCreateStageArgs = {
   input: StageInput;
 };
@@ -1223,11 +1313,6 @@ export type MutationDeleteAffineTransformationViewArgs = {
 };
 
 
-export type MutationDeleteAntibodyArgs = {
-  input: DeleteAntibodyInput;
-};
-
-
 export type MutationDeleteCameraArgs = {
   input: DeleteCameraInput;
 };
@@ -1248,18 +1333,33 @@ export type MutationDeleteDatasetArgs = {
 };
 
 
+export type MutationDeleteEntityArgs = {
+  input: DeleteEntityInput;
+};
+
+
+export type MutationDeleteEntityGroupArgs = {
+  input: DeleteEntityGroupInput;
+};
+
+
+export type MutationDeleteEntityKindArgs = {
+  input: DeleteEntityKindInput;
+};
+
+
 export type MutationDeleteEraArgs = {
   input: DeleteEraInput;
 };
 
 
-export type MutationDeleteFileArgs = {
-  input: DeleteFileInput;
+export type MutationDeleteExperimentArgs = {
+  input: DeleteExperimentInput;
 };
 
 
-export type MutationDeleteFluorophoreArgs = {
-  input: DeleteFluorophoreInput;
+export type MutationDeleteFileArgs = {
+  input: DeleteFileInput;
 };
 
 
@@ -1283,8 +1383,18 @@ export type MutationDeleteObjectiveArgs = {
 };
 
 
+export type MutationDeleteOntologyArgs = {
+  input: DeleteOntologyInput;
+};
+
+
 export type MutationDeleteOpticsViewArgs = {
   input: DeleteViewInput;
+};
+
+
+export type MutationDeleteProtocolArgs = {
+  input: DeleteProtocolInput;
 };
 
 
@@ -1308,6 +1418,11 @@ export type MutationDeleteSnapshotArgs = {
 };
 
 
+export type MutationDeleteSpecimenArgs = {
+  input: DeleteSpecimenInput;
+};
+
+
 export type MutationDeleteStageArgs = {
   input: DeleteStageInput;
 };
@@ -1328,11 +1443,6 @@ export type MutationDeleteViewCollectionArgs = {
 };
 
 
-export type MutationEnsureAntibodyArgs = {
-  input: AntibodyInput;
-};
-
-
 export type MutationEnsureCameraArgs = {
   input: CameraInput;
 };
@@ -1340,11 +1450,6 @@ export type MutationEnsureCameraArgs = {
 
 export type MutationEnsureChannelArgs = {
   input: ChannelInput;
-};
-
-
-export type MutationEnsureFluorophoreArgs = {
-  input: FluorophoreInput;
 };
 
 
@@ -1378,11 +1483,6 @@ export type MutationFromParquetLikeArgs = {
 };
 
 
-export type MutationPinAntibodyArgs = {
-  input: PinAntibodyInput;
-};
-
-
 export type MutationPinCameraArgs = {
   input: PinCameraInput;
 };
@@ -1400,11 +1500,6 @@ export type MutationPinDatasetArgs = {
 
 export type MutationPinEraArgs = {
   input: PinEraInput;
-};
-
-
-export type MutationPinFluorophoreArgs = {
-  input: PinFluorophoreInput;
 };
 
 
@@ -1578,6 +1673,28 @@ export type ObjectiveInput = {
 export type OffsetPaginationInput = {
   limit?: Scalars['Int']['input'];
   offset?: Scalars['Int']['input'];
+};
+
+export type Ontology = {
+  __typename?: 'Ontology';
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  purl?: Maybe<Scalars['String']['output']>;
+};
+
+export type OntologyFilter = {
+  AND?: InputMaybe<OntologyFilter>;
+  OR?: InputMaybe<OntologyFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type OntologyInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  purl?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type OpticsView = View & {
@@ -1755,6 +1872,22 @@ export type PartialRgbViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type PartialSpecimenViewInput = {
+  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars['Int']['input']>;
+  collection?: InputMaybe<Scalars['ID']['input']>;
+  specimen?: InputMaybe<Scalars['ID']['input']>;
+  t?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type PartialTimepointViewInput = {
   cMax?: InputMaybe<Scalars['Int']['input']>;
   cMin?: InputMaybe<Scalars['Int']['input']>;
@@ -1770,11 +1903,6 @@ export type PartialTimepointViewInput = {
   yMin?: InputMaybe<Scalars['Int']['input']>;
   zMax?: InputMaybe<Scalars['Int']['input']>;
   zMin?: InputMaybe<Scalars['Int']['input']>;
-};
-
-export type PinAntibodyInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
 };
 
 export type PinCameraInput = {
@@ -1793,11 +1921,6 @@ export type PinDatasetInput = {
 };
 
 export type PinEraInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
-};
-
-export type PinFluorophoreInput = {
   id: Scalars['ID']['input'];
   pin: Scalars['Boolean']['input'];
 };
@@ -1856,6 +1979,36 @@ export type PresignedPostCredentials = {
   xAmzSignature: Scalars['String']['output'];
 };
 
+export type Protocol = {
+  __typename?: 'Protocol';
+  createdAt: Scalars['DateTime']['output'];
+  creator?: Maybe<User>;
+  description?: Maybe<Scalars['String']['output']>;
+  experiment: Experiment;
+  history: Array<History>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+};
+
+
+export type ProtocolHistoryArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+export type ProtocolFilter = {
+  AND?: InputMaybe<ProtocolFilter>;
+  OR?: InputMaybe<ProtocolFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ProtocolInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  experiment: Scalars['ID']['input'];
+  name: Scalars['String']['input'];
+};
+
 export type ProvenanceFilter = {
   AND?: InputMaybe<ProvenanceFilter>;
   OR?: InputMaybe<ProvenanceFilter>;
@@ -1866,18 +2019,22 @@ export type Query = {
   __typename?: 'Query';
   acquisitionViews: Array<AcquisitionView>;
   affineTransformationViews: Array<AffineTransformationView>;
-  antibodies: Array<Antibody>;
   camera: Camera;
   channelViews: Array<ChannelView>;
   channels: Array<Channel>;
   continousScanViews: Array<ContinousScanView>;
   dataset: Dataset;
   datasets: Array<Dataset>;
+  entities: Array<Entity>;
+  entity: Entity;
+  entityGroup: EntityGroup;
+  entityGroups: Array<EntityGroup>;
+  entityKind: EntityKind;
+  entityKinds: Array<EntityKind>;
   eras: Array<Era>;
+  experiments: Array<Experiment>;
   file: File;
   files: Array<File>;
-  fluorophore: Fluorophore;
-  fluorophores: Array<Fluorophore>;
   image: Image;
   images: Array<Image>;
   instrument: Instrument;
@@ -1895,6 +2052,9 @@ export type Query = {
   mytables: Array<Table>;
   objective: Objective;
   objectives: Array<Objective>;
+  ontologies: Array<Ontology>;
+  ontology: Ontology;
+  protocols: Array<Protocol>;
   randomImage: Image;
   renderTree: RenderTree;
   renderTrees: Array<RenderTree>;
@@ -1905,6 +2065,8 @@ export type Query = {
   rois: Array<Roi>;
   snapshot: Snapshot;
   snapshots: Array<Snapshot>;
+  specimenViews: Array<SpecimenView>;
+  specimens: Array<Specimen>;
   stage: Stage;
   stages: Array<Stage>;
   table: Table;
@@ -1916,12 +2078,6 @@ export type Query = {
 
 export type QueryAffineTransformationViewsArgs = {
   filters?: InputMaybe<AffineTransformationViewFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type QueryAntibodiesArgs = {
-  filters?: InputMaybe<AntibodyFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1948,8 +2104,47 @@ export type QueryDatasetsArgs = {
 };
 
 
+export type QueryEntitiesArgs = {
+  filters?: InputMaybe<EntityFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryEntityArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryEntityGroupArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryEntityGroupsArgs = {
+  filters?: InputMaybe<EntityGroupFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryEntityKindArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryEntityKindsArgs = {
+  filters?: InputMaybe<EntityKindFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryErasArgs = {
   filters?: InputMaybe<EraFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryExperimentsArgs = {
+  filters?: InputMaybe<ExperimentFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1961,17 +2156,6 @@ export type QueryFileArgs = {
 
 export type QueryFilesArgs = {
   filters?: InputMaybe<FileFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type QueryFluorophoreArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type QueryFluorophoresArgs = {
-  filters?: InputMaybe<FluorophoreFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2046,6 +2230,23 @@ export type QueryObjectiveArgs = {
 };
 
 
+export type QueryOntologiesArgs = {
+  filters?: InputMaybe<OntologyFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryOntologyArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryProtocolsArgs = {
+  filters?: InputMaybe<ProtocolFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryRenderTreeArgs = {
   id: Scalars['ID']['input'];
 };
@@ -2087,6 +2288,18 @@ export type QuerySnapshotArgs = {
 
 export type QuerySnapshotsArgs = {
   filters?: InputMaybe<SnapshotFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QuerySpecimenViewsArgs = {
+  filters?: InputMaybe<SpecimenFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QuerySpecimensArgs = {
+  filters?: InputMaybe<SpecimenFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2224,6 +2437,7 @@ export type RgbViewInput = {
 
 export type Roi = {
   __typename?: 'ROI';
+  entity?: Maybe<Entity>;
   id: Scalars['ID']['output'];
   image: Image;
   kind: RoiKind;
@@ -2342,6 +2556,10 @@ export type RoiEvent = {
 };
 
 export type RoiInput = {
+  entity?: InputMaybe<Scalars['ID']['input']>;
+  entityGroup?: InputMaybe<Scalars['ID']['input']>;
+  entityKind?: InputMaybe<Scalars['ID']['input']>;
+  entityParent?: InputMaybe<Scalars['ID']['input']>;
   image: Scalars['ID']['input'];
   kind: RoiKind;
   vectors: Array<Scalars['FiveDVector']['input']>;
@@ -2412,6 +2630,47 @@ export type SnapshotFilter = {
   OR?: InputMaybe<SnapshotFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   name?: InputMaybe<StrFilterLookup>;
+};
+
+export type Specimen = {
+  __typename?: 'Specimen';
+  entity: Entity;
+  id: Scalars['ID']['output'];
+  protocol: Protocol;
+};
+
+export type SpecimenFilter = {
+  AND?: InputMaybe<SpecimenFilter>;
+  OR?: InputMaybe<SpecimenFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type SpecimenInput = {
+  entity: Scalars['ID']['input'];
+  protocol?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type SpecimenView = View & {
+  __typename?: 'SpecimenView';
+  /** The accessor */
+  accessor: Array<Scalars['String']['output']>;
+  cMax?: Maybe<Scalars['Int']['output']>;
+  cMin?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['ID']['output'];
+  image: Image;
+  isGlobal: Scalars['Boolean']['output'];
+  specimen: Specimen;
+  t?: Maybe<Scalars['Int']['output']>;
+  tMax?: Maybe<Scalars['Int']['output']>;
+  tMin?: Maybe<Scalars['Int']['output']>;
+  xMax?: Maybe<Scalars['Int']['output']>;
+  xMin?: Maybe<Scalars['Int']['output']>;
+  yMax?: Maybe<Scalars['Int']['output']>;
+  yMin?: Maybe<Scalars['Int']['output']>;
+  zMax?: Maybe<Scalars['Int']['output']>;
+  zMin?: Maybe<Scalars['Int']['output']>;
 };
 
 export type SplitNode = RenderNode & {
@@ -2781,8 +3040,6 @@ export type ZarrStoreFilter = {
   shape?: InputMaybe<IntFilterLookup>;
 };
 
-export type AntibodyFragment = { __typename?: 'Antibody', name: string, epitope?: string | null };
-
 export type CameraFragment = { __typename?: 'Camera', sensorSizeX?: number | null, sensorSizeY?: number | null, pixelSizeX?: any | null, pixelSizeY?: any | null, name: string, serialNumber: string };
 
 export type ChannelFragment = { __typename?: 'Channel', id: string, name: string, excitationWavelength?: number | null };
@@ -2797,17 +3054,21 @@ export type DatasetFragment = { __typename?: 'Dataset', id: string, name: string
 
 export type ListDatasetFragment = { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean };
 
+export type EntityFragment = { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } };
+
+export type EntityKindFragment = { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } };
+
 export type EraFragment = { __typename?: 'Era', id: string, begin?: any | null, name: string };
+
+export type ExperimentFragment = { __typename?: 'Experiment', id: string, name: string, description?: string | null };
 
 export type FileFragment = { __typename?: 'File', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string } };
 
 export type ListFileFragment = { __typename?: 'File', id: string, name: string };
 
-export type FluorophoreFragment = { __typename?: 'Fluorophore', id: string, name: string, emissionWavelength?: any | null, excitationWavelength?: any | null };
-
 export type HistoryFragment = { __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue: string, newValue: string }> };
 
-export type ImageFragment = { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null }, views: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channel: { __typename?: 'Channel', id: string, name: string, excitationWavelength?: number | null } } | { __typename?: 'ContinousScanView' } | { __typename?: 'LabelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, fluorophore?: { __typename?: 'Fluorophore', id: string, name: string, emissionWavelength?: any | null, excitationWavelength?: any | null } | null, primaryAntibody?: { __typename?: 'Antibody', name: string, epitope?: string | null } | null, secondaryAntibody?: { __typename?: 'Antibody', name: string, epitope?: string | null } | null } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue: string, newValue: string }> }>, creator?: { __typename?: 'User', sub: string } | null, metrics: Array<{ __typename?: 'ImageIntMetric', id: string, value: number }>, roiOrigins: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }>, fileOrigins: Array<{ __typename?: 'File', id: string, name: string }>, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> }>, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> };
+export type ImageFragment = { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null }, views: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channel: { __typename?: 'Channel', id: string, name: string, excitationWavelength?: number | null } } | { __typename?: 'ContinousScanView' } | { __typename?: 'LabelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, fluorophore?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } } | null, primaryAntibody?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } } | null, secondaryAntibody?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } } | null } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } } | { __typename?: 'SpecimenView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, specimen: { __typename?: 'Specimen', id: string, entity: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string }, group: { __typename?: 'EntityGroup', id: string } }, protocol: { __typename?: 'Protocol', id: string } } } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue: string, newValue: string }> }>, creator?: { __typename?: 'User', sub: string } | null, metrics: Array<{ __typename?: 'ImageIntMetric', id: string, value: number }>, roiOrigins: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string }, entity?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string }, parent?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string } } | null } | null }>, fileOrigins: Array<{ __typename?: 'File', id: string, name: string }>, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> }>, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string }, entity?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string }, parent?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string } } | null } | null }> };
 
 export type ListImageFragment = { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null };
 
@@ -2822,6 +3083,10 @@ export type MultiWellPlateFragment = { __typename?: 'MultiWellPlate', id: string
 export type ListMultiWellPlateFragment = { __typename?: 'MultiWellPlate', id: string, name?: string | null };
 
 export type ObjectiveFragment = { __typename?: 'Objective', na?: number | null, name: string, serialNumber: string };
+
+export type OntologyFragment = { __typename?: 'Ontology', id: string, name: string };
+
+export type ProtocolFragment = { __typename?: 'Protocol', id: string, name: string, experiment: { __typename?: 'Experiment', id: string, name: string, description?: string | null } };
 
 export type ContextNodeNestedFragment = { __typename?: 'ContextNode', label?: string | null, context: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } } };
 
@@ -2865,9 +3130,11 @@ export type RgbContextFragment = { __typename?: 'RGBContext', id: string, pinned
 
 export type ListRgbContextFragment = { __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> };
 
-export type ListRoiFragment = { __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } };
+export type ListRoiFragment = { __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string }, entity?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string }, parent?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string } } | null } | null };
 
 export type SnapshotFragment = { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } };
+
+export type SpecimenFragment = { __typename?: 'Specimen', id: string, entity: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string }, group: { __typename?: 'EntityGroup', id: string } }, protocol: { __typename?: 'Protocol', id: string } };
 
 export type StageFragment = { __typename?: 'Stage', id: string, pinned: boolean, name: string, affineViews: Array<{ __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, image: { __typename?: 'Image', id: string, name: string, store: { __typename?: 'ZarrStore', shape?: Array<number> | null } }, stage: { __typename?: 'Stage', id: string, name: string } }> };
 
@@ -2899,11 +3166,13 @@ type View_OpticsView_Fragment = { __typename?: 'OpticsView', xMin?: number | nul
 
 type View_RgbView_Fragment = { __typename?: 'RGBView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
 
+type View_SpecimenView_Fragment = { __typename?: 'SpecimenView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
+
 type View_TimepointView_Fragment = { __typename?: 'TimepointView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
 
 type View_WellPositionView_Fragment = { __typename?: 'WellPositionView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
 
-export type ViewFragment = View_AcquisitionView_Fragment | View_AffineTransformationView_Fragment | View_ChannelView_Fragment | View_ContinousScanView_Fragment | View_LabelView_Fragment | View_OpticsView_Fragment | View_RgbView_Fragment | View_TimepointView_Fragment | View_WellPositionView_Fragment;
+export type ViewFragment = View_AcquisitionView_Fragment | View_AffineTransformationView_Fragment | View_ChannelView_Fragment | View_ContinousScanView_Fragment | View_LabelView_Fragment | View_OpticsView_Fragment | View_RgbView_Fragment | View_SpecimenView_Fragment | View_TimepointView_Fragment | View_WellPositionView_Fragment;
 
 export type ChannelViewFragment = { __typename?: 'ChannelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channel: { __typename?: 'Channel', id: string, name: string, excitationWavelength?: number | null } };
 
@@ -2915,29 +3184,15 @@ export type TimepointViewFragment = { __typename?: 'TimepointView', id: string, 
 
 export type OpticsViewFragment = { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null };
 
-export type LabelViewFragment = { __typename?: 'LabelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, fluorophore?: { __typename?: 'Fluorophore', id: string, name: string, emissionWavelength?: any | null, excitationWavelength?: any | null } | null, primaryAntibody?: { __typename?: 'Antibody', name: string, epitope?: string | null } | null, secondaryAntibody?: { __typename?: 'Antibody', name: string, epitope?: string | null } | null };
+export type LabelViewFragment = { __typename?: 'LabelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, fluorophore?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } } | null, primaryAntibody?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } } | null, secondaryAntibody?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } } | null };
+
+export type SpecimenViewFragment = { __typename?: 'SpecimenView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, specimen: { __typename?: 'Specimen', id: string, entity: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string }, group: { __typename?: 'EntityGroup', id: string } }, protocol: { __typename?: 'Protocol', id: string } } };
 
 export type AcquisitionViewFragment = { __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null };
 
 export type WellPositionViewFragment = { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null };
 
 export type ContinousScanViewFragment = { __typename?: 'ContinousScanView', id: string, direction: ScanDirection, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-export type CreateAntibodyMutationVariables = Exact<{
-  name: Scalars['String']['input'];
-  epitope?: InputMaybe<Scalars['String']['input']>;
-}>;
-
-
-export type CreateAntibodyMutation = { __typename?: 'Mutation', createAntibody: { __typename?: 'Antibody', id: string, name: string } };
-
-export type EnsureAntibodyMutationVariables = Exact<{
-  name: Scalars['String']['input'];
-  epitope?: InputMaybe<Scalars['String']['input']>;
-}>;
-
-
-export type EnsureAntibodyMutation = { __typename?: 'Mutation', ensureAntibody: { __typename?: 'Antibody', id: string, name: string } };
 
 export type CreateCameraMutationVariables = Exact<{
   serialNumber: Scalars['String']['input'];
@@ -3105,31 +3360,6 @@ export type DeleteFileMutationVariables = Exact<{
 
 export type DeleteFileMutation = { __typename?: 'Mutation', deleteFile: string };
 
-export type CreateFluorophoreMutationVariables = Exact<{
-  name: Scalars['String']['input'];
-  excitationWavelength?: InputMaybe<Scalars['Micrometers']['input']>;
-  emissionWavelength?: InputMaybe<Scalars['Micrometers']['input']>;
-}>;
-
-
-export type CreateFluorophoreMutation = { __typename?: 'Mutation', createFluorophore: { __typename?: 'Fluorophore', id: string, name: string } };
-
-export type AutoCreateFluorophoreMutationVariables = Exact<{
-  input: Scalars['String']['input'];
-}>;
-
-
-export type AutoCreateFluorophoreMutation = { __typename?: 'Mutation', result: { __typename?: 'Fluorophore', value: string, label: string } };
-
-export type EnsureFluorophoreMutationVariables = Exact<{
-  name: Scalars['String']['input'];
-  excitationWavelength?: InputMaybe<Scalars['Micrometers']['input']>;
-  emissionWavelength?: InputMaybe<Scalars['Micrometers']['input']>;
-}>;
-
-
-export type EnsureFluorophoreMutation = { __typename?: 'Mutation', ensureFluorophore: { __typename?: 'Fluorophore', id: string, name: string } };
-
 export type From_Array_LikeMutationVariables = Exact<{
   array: Scalars['ArrayLike']['input'];
   name: Scalars['String']['input'];
@@ -3142,7 +3372,7 @@ export type From_Array_LikeMutationVariables = Exact<{
 }>;
 
 
-export type From_Array_LikeMutation = { __typename?: 'Mutation', fromArrayLike: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null }, views: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channel: { __typename?: 'Channel', id: string, name: string, excitationWavelength?: number | null } } | { __typename?: 'ContinousScanView' } | { __typename?: 'LabelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, fluorophore?: { __typename?: 'Fluorophore', id: string, name: string, emissionWavelength?: any | null, excitationWavelength?: any | null } | null, primaryAntibody?: { __typename?: 'Antibody', name: string, epitope?: string | null } | null, secondaryAntibody?: { __typename?: 'Antibody', name: string, epitope?: string | null } | null } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue: string, newValue: string }> }>, creator?: { __typename?: 'User', sub: string } | null, metrics: Array<{ __typename?: 'ImageIntMetric', id: string, value: number }>, roiOrigins: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }>, fileOrigins: Array<{ __typename?: 'File', id: string, name: string }>, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> }>, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
+export type From_Array_LikeMutation = { __typename?: 'Mutation', fromArrayLike: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null }, views: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channel: { __typename?: 'Channel', id: string, name: string, excitationWavelength?: number | null } } | { __typename?: 'ContinousScanView' } | { __typename?: 'LabelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, fluorophore?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } } | null, primaryAntibody?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } } | null, secondaryAntibody?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } } | null } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } } | { __typename?: 'SpecimenView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, specimen: { __typename?: 'Specimen', id: string, entity: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string }, group: { __typename?: 'EntityGroup', id: string } }, protocol: { __typename?: 'Protocol', id: string } } } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue: string, newValue: string }> }>, creator?: { __typename?: 'User', sub: string } | null, metrics: Array<{ __typename?: 'ImageIntMetric', id: string, value: number }>, roiOrigins: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string }, entity?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string }, parent?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string } } | null } | null }>, fileOrigins: Array<{ __typename?: 'File', id: string, name: string }>, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> }>, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string }, entity?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string }, parent?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string } } | null } | null }> } };
 
 export type RequestUploadMutationVariables = Exact<{
   key: Scalars['String']['input'];
@@ -3166,14 +3396,14 @@ export type PinImageMutationVariables = Exact<{
 }>;
 
 
-export type PinImageMutation = { __typename?: 'Mutation', pinImage: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null }, views: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channel: { __typename?: 'Channel', id: string, name: string, excitationWavelength?: number | null } } | { __typename?: 'ContinousScanView' } | { __typename?: 'LabelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, fluorophore?: { __typename?: 'Fluorophore', id: string, name: string, emissionWavelength?: any | null, excitationWavelength?: any | null } | null, primaryAntibody?: { __typename?: 'Antibody', name: string, epitope?: string | null } | null, secondaryAntibody?: { __typename?: 'Antibody', name: string, epitope?: string | null } | null } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue: string, newValue: string }> }>, creator?: { __typename?: 'User', sub: string } | null, metrics: Array<{ __typename?: 'ImageIntMetric', id: string, value: number }>, roiOrigins: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }>, fileOrigins: Array<{ __typename?: 'File', id: string, name: string }>, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> }>, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
+export type PinImageMutation = { __typename?: 'Mutation', pinImage: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null }, views: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channel: { __typename?: 'Channel', id: string, name: string, excitationWavelength?: number | null } } | { __typename?: 'ContinousScanView' } | { __typename?: 'LabelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, fluorophore?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } } | null, primaryAntibody?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } } | null, secondaryAntibody?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } } | null } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } } | { __typename?: 'SpecimenView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, specimen: { __typename?: 'Specimen', id: string, entity: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string }, group: { __typename?: 'EntityGroup', id: string } }, protocol: { __typename?: 'Protocol', id: string } } } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue: string, newValue: string }> }>, creator?: { __typename?: 'User', sub: string } | null, metrics: Array<{ __typename?: 'ImageIntMetric', id: string, value: number }>, roiOrigins: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string }, entity?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string }, parent?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string } } | null } | null }>, fileOrigins: Array<{ __typename?: 'File', id: string, name: string }>, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> }>, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string }, entity?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string }, parent?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string } } | null } | null }> } };
 
 export type UpdateImageMutationVariables = Exact<{
   input: UpdateImageInput;
 }>;
 
 
-export type UpdateImageMutation = { __typename?: 'Mutation', updateImage: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null }, views: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channel: { __typename?: 'Channel', id: string, name: string, excitationWavelength?: number | null } } | { __typename?: 'ContinousScanView' } | { __typename?: 'LabelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, fluorophore?: { __typename?: 'Fluorophore', id: string, name: string, emissionWavelength?: any | null, excitationWavelength?: any | null } | null, primaryAntibody?: { __typename?: 'Antibody', name: string, epitope?: string | null } | null, secondaryAntibody?: { __typename?: 'Antibody', name: string, epitope?: string | null } | null } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue: string, newValue: string }> }>, creator?: { __typename?: 'User', sub: string } | null, metrics: Array<{ __typename?: 'ImageIntMetric', id: string, value: number }>, roiOrigins: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }>, fileOrigins: Array<{ __typename?: 'File', id: string, name: string }>, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> }>, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
+export type UpdateImageMutation = { __typename?: 'Mutation', updateImage: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null }, views: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channel: { __typename?: 'Channel', id: string, name: string, excitationWavelength?: number | null } } | { __typename?: 'ContinousScanView' } | { __typename?: 'LabelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, fluorophore?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } } | null, primaryAntibody?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } } | null, secondaryAntibody?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } } | null } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } } | { __typename?: 'SpecimenView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, specimen: { __typename?: 'Specimen', id: string, entity: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string }, group: { __typename?: 'EntityGroup', id: string } }, protocol: { __typename?: 'Protocol', id: string } } } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue: string, newValue: string }> }>, creator?: { __typename?: 'User', sub: string } | null, metrics: Array<{ __typename?: 'ImageIntMetric', id: string, value: number }>, roiOrigins: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string }, entity?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string }, parent?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string } } | null } | null }>, fileOrigins: Array<{ __typename?: 'File', id: string, name: string }>, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> }>, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string }, entity?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string }, parent?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string } } | null } | null }> } };
 
 export type DeleteImageMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3357,7 +3587,7 @@ export type CreateLabelViewMutationVariables = Exact<{
 }>;
 
 
-export type CreateLabelViewMutation = { __typename?: 'Mutation', createLabelView: { __typename?: 'LabelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, fluorophore?: { __typename?: 'Fluorophore', id: string, name: string, emissionWavelength?: any | null, excitationWavelength?: any | null } | null, primaryAntibody?: { __typename?: 'Antibody', name: string, epitope?: string | null } | null, secondaryAntibody?: { __typename?: 'Antibody', name: string, epitope?: string | null } | null } };
+export type CreateLabelViewMutation = { __typename?: 'Mutation', createLabelView: { __typename?: 'LabelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, fluorophore?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } } | null, primaryAntibody?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } } | null, secondaryAntibody?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } } | null } };
 
 export type CreateWellPositionViewMutationVariables = Exact<{
   input: WellPositionViewInput;
@@ -3402,6 +3632,36 @@ export type GetDatasetsQueryVariables = Exact<{
 
 export type GetDatasetsQuery = { __typename?: 'Query', datasets: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }> };
 
+export type GetEntityQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetEntityQuery = { __typename?: 'Query', entity: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } } };
+
+export type SearchEntitiesQueryVariables = Exact<{
+  search?: InputMaybe<Scalars['String']['input']>;
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+}>;
+
+
+export type SearchEntitiesQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Entity', value: string, label: string }> };
+
+export type GetEntityKindQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetEntityKindQuery = { __typename?: 'Query', entityKind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } } };
+
+export type SearchEntityKindQueryVariables = Exact<{
+  search?: InputMaybe<Scalars['String']['input']>;
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+}>;
+
+
+export type SearchEntityKindQuery = { __typename?: 'Query', options: Array<{ __typename?: 'EntityKind', value: string, label: string }> };
+
 export type GetFileQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
@@ -3416,29 +3676,6 @@ export type GetFilesQueryVariables = Exact<{
 
 
 export type GetFilesQuery = { __typename?: 'Query', files: Array<{ __typename?: 'File', id: string, name: string }> };
-
-export type GetFluorophoreQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type GetFluorophoreQuery = { __typename?: 'Query', fluorophore: { __typename?: 'Fluorophore', id: string, name: string, emissionWavelength?: any | null, excitationWavelength?: any | null } };
-
-export type GetFluorophoresQueryVariables = Exact<{
-  filters?: InputMaybe<FluorophoreFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-}>;
-
-
-export type GetFluorophoresQuery = { __typename?: 'Query', fluorophores: Array<{ __typename?: 'Fluorophore', id: string, name: string, emissionWavelength?: any | null, excitationWavelength?: any | null }> };
-
-export type FluorophoreOptionsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
-}>;
-
-
-export type FluorophoreOptionsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Fluorophore', value: string, label: string }> };
 
 export type GlobalSearchQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -3460,7 +3697,7 @@ export type GetImageQueryVariables = Exact<{
 }>;
 
 
-export type GetImageQuery = { __typename?: 'Query', image: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null }, views: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channel: { __typename?: 'Channel', id: string, name: string, excitationWavelength?: number | null } } | { __typename?: 'ContinousScanView' } | { __typename?: 'LabelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, fluorophore?: { __typename?: 'Fluorophore', id: string, name: string, emissionWavelength?: any | null, excitationWavelength?: any | null } | null, primaryAntibody?: { __typename?: 'Antibody', name: string, epitope?: string | null } | null, secondaryAntibody?: { __typename?: 'Antibody', name: string, epitope?: string | null } | null } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue: string, newValue: string }> }>, creator?: { __typename?: 'User', sub: string } | null, metrics: Array<{ __typename?: 'ImageIntMetric', id: string, value: number }>, roiOrigins: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }>, fileOrigins: Array<{ __typename?: 'File', id: string, name: string }>, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> }>, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
+export type GetImageQuery = { __typename?: 'Query', image: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null }, views: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channel: { __typename?: 'Channel', id: string, name: string, excitationWavelength?: number | null } } | { __typename?: 'ContinousScanView' } | { __typename?: 'LabelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, fluorophore?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } } | null, primaryAntibody?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } } | null, secondaryAntibody?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } } | null } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } } | { __typename?: 'SpecimenView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, specimen: { __typename?: 'Specimen', id: string, entity: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string }, group: { __typename?: 'EntityGroup', id: string } }, protocol: { __typename?: 'Protocol', id: string } } } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue: string, newValue: string }> }>, creator?: { __typename?: 'User', sub: string } | null, metrics: Array<{ __typename?: 'ImageIntMetric', id: string, value: number }>, roiOrigins: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string }, entity?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string }, parent?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string } } | null } | null }>, fileOrigins: Array<{ __typename?: 'File', id: string, name: string }>, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> }>, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string }, entity?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string }, parent?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string } } | null } | null }> } };
 
 export type GetImagesQueryVariables = Exact<{
   filters?: InputMaybe<ImageFilter>;
@@ -3506,6 +3743,21 @@ export type GetObjectiveQueryVariables = Exact<{
 
 
 export type GetObjectiveQuery = { __typename?: 'Query', objective: { __typename?: 'Objective', na?: number | null, name: string, serialNumber: string } };
+
+export type GetOntologyQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetOntologyQuery = { __typename?: 'Query', ontology: { __typename?: 'Ontology', id: string, name: string } };
+
+export type SearchOntologiesQueryVariables = Exact<{
+  search?: InputMaybe<Scalars['String']['input']>;
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+}>;
+
+
+export type SearchOntologiesQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Ontology', value: string, label: string }> };
 
 export type RenderTreeQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3702,6 +3954,23 @@ export const DatasetFragmentDoc = gql`
 ${ListImageFragmentDoc}
 ${ListFileFragmentDoc}
 ${ListDatasetFragmentDoc}`;
+export const EntityKindFragmentDoc = gql`
+    fragment EntityKind on EntityKind {
+  id
+  label
+  ontology {
+    id
+    name
+  }
+}
+    `;
+export const ExperimentFragmentDoc = gql`
+    fragment Experiment on Experiment {
+  id
+  name
+  description
+}
+    `;
 export const BigFileStoreFragmentDoc = gql`
     fragment BigFileStore on BigFileStore {
   id
@@ -3774,18 +4043,22 @@ export const AffineTransformationViewFragmentDoc = gql`
   }
 }
     ${ViewFragmentDoc}`;
-export const FluorophoreFragmentDoc = gql`
-    fragment Fluorophore on Fluorophore {
+export const EntityFragmentDoc = gql`
+    fragment Entity on Entity {
   id
   name
-  emissionWavelength
-  excitationWavelength
-}
-    `;
-export const AntibodyFragmentDoc = gql`
-    fragment Antibody on Antibody {
-  name
-  epitope
+  kind {
+    id
+    label
+    ontology {
+      id
+      name
+    }
+  }
+  group {
+    id
+    name
+  }
 }
     `;
 export const LabelViewFragmentDoc = gql`
@@ -3793,18 +4066,17 @@ export const LabelViewFragmentDoc = gql`
   ...View
   id
   fluorophore {
-    ...Fluorophore
+    ...Entity
   }
   primaryAntibody {
-    ...Antibody
+    ...Entity
   }
   secondaryAntibody {
-    ...Antibody
+    ...Entity
   }
 }
     ${ViewFragmentDoc}
-${FluorophoreFragmentDoc}
-${AntibodyFragmentDoc}`;
+${EntityFragmentDoc}`;
 export const EraFragmentDoc = gql`
     fragment Era on Era {
   id
@@ -3896,6 +4168,35 @@ export const WellPositionViewFragmentDoc = gql`
   }
 }
     ${ViewFragmentDoc}`;
+export const SpecimenFragmentDoc = gql`
+    fragment Specimen on Specimen {
+  id
+  entity {
+    id
+    kind {
+      id
+      label
+    }
+    name
+    group {
+      id
+    }
+  }
+  protocol {
+    id
+  }
+}
+    `;
+export const SpecimenViewFragmentDoc = gql`
+    fragment SpecimenView on SpecimenView {
+  ...View
+  id
+  specimen {
+    ...Specimen
+  }
+}
+    ${ViewFragmentDoc}
+${SpecimenFragmentDoc}`;
 export const SnapshotFragmentDoc = gql`
     fragment Snapshot on Snapshot {
   id
@@ -3931,6 +4232,20 @@ export const ListRoiFragmentDoc = gql`
   image {
     id
     name
+  }
+  entity {
+    id
+    name
+    kind {
+      label
+    }
+    parent {
+      id
+      name
+      kind {
+        label
+      }
+    }
   }
   vectors
 }
@@ -3974,6 +4289,7 @@ export const ImageFragmentDoc = gql`
     ...AcquisitionView
     ...RGBView
     ...WellPositionView
+    ...SpecimenView
   }
   pinned
   renders {
@@ -4017,6 +4333,7 @@ ${OpticsViewFragmentDoc}
 ${AcquisitionViewFragmentDoc}
 ${RgbViewFragmentDoc}
 ${WellPositionViewFragmentDoc}
+${SpecimenViewFragmentDoc}
 ${SnapshotFragmentDoc}
 ${VideoFragmentDoc}
 ${HistoryFragmentDoc}
@@ -4051,6 +4368,23 @@ export const ObjectiveFragmentDoc = gql`
   na
   name
   serialNumber
+}
+    `;
+export const OntologyFragmentDoc = gql`
+    fragment Ontology on Ontology {
+  id
+  name
+}
+    `;
+export const ProtocolFragmentDoc = gql`
+    fragment Protocol on Protocol {
+  id
+  name
+  experiment {
+    id
+    name
+    description
+  }
 }
     `;
 export const RgbContextFragmentDoc = gql`
@@ -4215,76 +4549,6 @@ export const ContinousScanViewFragmentDoc = gql`
   direction
 }
     ${ViewFragmentDoc}`;
-export const CreateAntibodyDocument = gql`
-    mutation CreateAntibody($name: String!, $epitope: String) {
-  createAntibody(input: {name: $name, epitope: $epitope}) {
-    id
-    name
-  }
-}
-    `;
-export type CreateAntibodyMutationFn = Apollo.MutationFunction<CreateAntibodyMutation, CreateAntibodyMutationVariables>;
-
-/**
- * __useCreateAntibodyMutation__
- *
- * To run a mutation, you first call `useCreateAntibodyMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateAntibodyMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createAntibodyMutation, { data, loading, error }] = useCreateAntibodyMutation({
- *   variables: {
- *      name: // value for 'name'
- *      epitope: // value for 'epitope'
- *   },
- * });
- */
-export function useCreateAntibodyMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateAntibodyMutation, CreateAntibodyMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateAntibodyMutation, CreateAntibodyMutationVariables>(CreateAntibodyDocument, options);
-      }
-export type CreateAntibodyMutationHookResult = ReturnType<typeof useCreateAntibodyMutation>;
-export type CreateAntibodyMutationResult = Apollo.MutationResult<CreateAntibodyMutation>;
-export type CreateAntibodyMutationOptions = Apollo.BaseMutationOptions<CreateAntibodyMutation, CreateAntibodyMutationVariables>;
-export const EnsureAntibodyDocument = gql`
-    mutation EnsureAntibody($name: String!, $epitope: String) {
-  ensureAntibody(input: {name: $name, epitope: $epitope}) {
-    id
-    name
-  }
-}
-    `;
-export type EnsureAntibodyMutationFn = Apollo.MutationFunction<EnsureAntibodyMutation, EnsureAntibodyMutationVariables>;
-
-/**
- * __useEnsureAntibodyMutation__
- *
- * To run a mutation, you first call `useEnsureAntibodyMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useEnsureAntibodyMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [ensureAntibodyMutation, { data, loading, error }] = useEnsureAntibodyMutation({
- *   variables: {
- *      name: // value for 'name'
- *      epitope: // value for 'epitope'
- *   },
- * });
- */
-export function useEnsureAntibodyMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<EnsureAntibodyMutation, EnsureAntibodyMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<EnsureAntibodyMutation, EnsureAntibodyMutationVariables>(EnsureAntibodyDocument, options);
-      }
-export type EnsureAntibodyMutationHookResult = ReturnType<typeof useEnsureAntibodyMutation>;
-export type EnsureAntibodyMutationResult = Apollo.MutationResult<EnsureAntibodyMutation>;
-export type EnsureAntibodyMutationOptions = Apollo.BaseMutationOptions<EnsureAntibodyMutation, EnsureAntibodyMutationVariables>;
 export const CreateCameraDocument = gql`
     mutation CreateCamera($serialNumber: String!, $name: String, $pixelSizeX: Micrometers, $pixelSizeY: Micrometers, $sensorSizeX: Int, $sensorSizeY: Int) {
   createCamera(
@@ -4984,116 +5248,6 @@ export function useDeleteFileMutation(baseOptions?: ApolloReactHooks.MutationHoo
 export type DeleteFileMutationHookResult = ReturnType<typeof useDeleteFileMutation>;
 export type DeleteFileMutationResult = Apollo.MutationResult<DeleteFileMutation>;
 export type DeleteFileMutationOptions = Apollo.BaseMutationOptions<DeleteFileMutation, DeleteFileMutationVariables>;
-export const CreateFluorophoreDocument = gql`
-    mutation CreateFluorophore($name: String!, $excitationWavelength: Micrometers, $emissionWavelength: Micrometers) {
-  createFluorophore(
-    input: {name: $name, excitationWavelength: $excitationWavelength, emissionWavelength: $emissionWavelength}
-  ) {
-    id
-    name
-  }
-}
-    `;
-export type CreateFluorophoreMutationFn = Apollo.MutationFunction<CreateFluorophoreMutation, CreateFluorophoreMutationVariables>;
-
-/**
- * __useCreateFluorophoreMutation__
- *
- * To run a mutation, you first call `useCreateFluorophoreMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateFluorophoreMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createFluorophoreMutation, { data, loading, error }] = useCreateFluorophoreMutation({
- *   variables: {
- *      name: // value for 'name'
- *      excitationWavelength: // value for 'excitationWavelength'
- *      emissionWavelength: // value for 'emissionWavelength'
- *   },
- * });
- */
-export function useCreateFluorophoreMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateFluorophoreMutation, CreateFluorophoreMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateFluorophoreMutation, CreateFluorophoreMutationVariables>(CreateFluorophoreDocument, options);
-      }
-export type CreateFluorophoreMutationHookResult = ReturnType<typeof useCreateFluorophoreMutation>;
-export type CreateFluorophoreMutationResult = Apollo.MutationResult<CreateFluorophoreMutation>;
-export type CreateFluorophoreMutationOptions = Apollo.BaseMutationOptions<CreateFluorophoreMutation, CreateFluorophoreMutationVariables>;
-export const AutoCreateFluorophoreDocument = gql`
-    mutation AutoCreateFluorophore($input: String!) {
-  result: createFluorophore(input: {name: $input}) {
-    value: id
-    label: name
-  }
-}
-    `;
-export type AutoCreateFluorophoreMutationFn = Apollo.MutationFunction<AutoCreateFluorophoreMutation, AutoCreateFluorophoreMutationVariables>;
-
-/**
- * __useAutoCreateFluorophoreMutation__
- *
- * To run a mutation, you first call `useAutoCreateFluorophoreMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useAutoCreateFluorophoreMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [autoCreateFluorophoreMutation, { data, loading, error }] = useAutoCreateFluorophoreMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useAutoCreateFluorophoreMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AutoCreateFluorophoreMutation, AutoCreateFluorophoreMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<AutoCreateFluorophoreMutation, AutoCreateFluorophoreMutationVariables>(AutoCreateFluorophoreDocument, options);
-      }
-export type AutoCreateFluorophoreMutationHookResult = ReturnType<typeof useAutoCreateFluorophoreMutation>;
-export type AutoCreateFluorophoreMutationResult = Apollo.MutationResult<AutoCreateFluorophoreMutation>;
-export type AutoCreateFluorophoreMutationOptions = Apollo.BaseMutationOptions<AutoCreateFluorophoreMutation, AutoCreateFluorophoreMutationVariables>;
-export const EnsureFluorophoreDocument = gql`
-    mutation EnsureFluorophore($name: String!, $excitationWavelength: Micrometers, $emissionWavelength: Micrometers) {
-  ensureFluorophore(
-    input: {name: $name, excitationWavelength: $excitationWavelength, emissionWavelength: $emissionWavelength}
-  ) {
-    id
-    name
-  }
-}
-    `;
-export type EnsureFluorophoreMutationFn = Apollo.MutationFunction<EnsureFluorophoreMutation, EnsureFluorophoreMutationVariables>;
-
-/**
- * __useEnsureFluorophoreMutation__
- *
- * To run a mutation, you first call `useEnsureFluorophoreMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useEnsureFluorophoreMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [ensureFluorophoreMutation, { data, loading, error }] = useEnsureFluorophoreMutation({
- *   variables: {
- *      name: // value for 'name'
- *      excitationWavelength: // value for 'excitationWavelength'
- *      emissionWavelength: // value for 'emissionWavelength'
- *   },
- * });
- */
-export function useEnsureFluorophoreMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<EnsureFluorophoreMutation, EnsureFluorophoreMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<EnsureFluorophoreMutation, EnsureFluorophoreMutationVariables>(EnsureFluorophoreDocument, options);
-      }
-export type EnsureFluorophoreMutationHookResult = ReturnType<typeof useEnsureFluorophoreMutation>;
-export type EnsureFluorophoreMutationResult = Apollo.MutationResult<EnsureFluorophoreMutation>;
-export type EnsureFluorophoreMutationOptions = Apollo.BaseMutationOptions<EnsureFluorophoreMutation, EnsureFluorophoreMutationVariables>;
 export const From_Array_LikeDocument = gql`
     mutation from_array_like($array: ArrayLike!, $name: String!, $origins: [ID!], $channelViews: [PartialChannelViewInput!], $transformationViews: [PartialAffineTransformationViewInput!], $labelViews: [PartialLabelViewInput!], $timepointViews: [PartialTimepointViewInput!], $opticsViews: [PartialOpticsViewInput!]) {
   fromArrayLike(
@@ -6247,6 +6401,156 @@ export function useGetDatasetsLazyQuery(baseOptions?: ApolloReactHooks.LazyQuery
 export type GetDatasetsQueryHookResult = ReturnType<typeof useGetDatasetsQuery>;
 export type GetDatasetsLazyQueryHookResult = ReturnType<typeof useGetDatasetsLazyQuery>;
 export type GetDatasetsQueryResult = Apollo.QueryResult<GetDatasetsQuery, GetDatasetsQueryVariables>;
+export const GetEntityDocument = gql`
+    query GetEntity($id: ID!) {
+  entity(id: $id) {
+    ...Entity
+  }
+}
+    ${EntityFragmentDoc}`;
+
+/**
+ * __useGetEntityQuery__
+ *
+ * To run a query within a React component, call `useGetEntityQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetEntityQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetEntityQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetEntityQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetEntityQuery, GetEntityQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetEntityQuery, GetEntityQueryVariables>(GetEntityDocument, options);
+      }
+export function useGetEntityLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetEntityQuery, GetEntityQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetEntityQuery, GetEntityQueryVariables>(GetEntityDocument, options);
+        }
+export type GetEntityQueryHookResult = ReturnType<typeof useGetEntityQuery>;
+export type GetEntityLazyQueryHookResult = ReturnType<typeof useGetEntityLazyQuery>;
+export type GetEntityQueryResult = Apollo.QueryResult<GetEntityQuery, GetEntityQueryVariables>;
+export const SearchEntitiesDocument = gql`
+    query SearchEntities($search: String, $values: [ID!]) {
+  options: entities(
+    filters: {search: $search, ids: $values}
+    pagination: {limit: 10}
+  ) {
+    value: id
+    label: name
+  }
+}
+    `;
+
+/**
+ * __useSearchEntitiesQuery__
+ *
+ * To run a query within a React component, call `useSearchEntitiesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchEntitiesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchEntitiesQuery({
+ *   variables: {
+ *      search: // value for 'search'
+ *      values: // value for 'values'
+ *   },
+ * });
+ */
+export function useSearchEntitiesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchEntitiesQuery, SearchEntitiesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<SearchEntitiesQuery, SearchEntitiesQueryVariables>(SearchEntitiesDocument, options);
+      }
+export function useSearchEntitiesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchEntitiesQuery, SearchEntitiesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<SearchEntitiesQuery, SearchEntitiesQueryVariables>(SearchEntitiesDocument, options);
+        }
+export type SearchEntitiesQueryHookResult = ReturnType<typeof useSearchEntitiesQuery>;
+export type SearchEntitiesLazyQueryHookResult = ReturnType<typeof useSearchEntitiesLazyQuery>;
+export type SearchEntitiesQueryResult = Apollo.QueryResult<SearchEntitiesQuery, SearchEntitiesQueryVariables>;
+export const GetEntityKindDocument = gql`
+    query GetEntityKind($id: ID!) {
+  entityKind(id: $id) {
+    ...EntityKind
+  }
+}
+    ${EntityKindFragmentDoc}`;
+
+/**
+ * __useGetEntityKindQuery__
+ *
+ * To run a query within a React component, call `useGetEntityKindQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetEntityKindQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetEntityKindQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetEntityKindQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetEntityKindQuery, GetEntityKindQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetEntityKindQuery, GetEntityKindQueryVariables>(GetEntityKindDocument, options);
+      }
+export function useGetEntityKindLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetEntityKindQuery, GetEntityKindQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetEntityKindQuery, GetEntityKindQueryVariables>(GetEntityKindDocument, options);
+        }
+export type GetEntityKindQueryHookResult = ReturnType<typeof useGetEntityKindQuery>;
+export type GetEntityKindLazyQueryHookResult = ReturnType<typeof useGetEntityKindLazyQuery>;
+export type GetEntityKindQueryResult = Apollo.QueryResult<GetEntityKindQuery, GetEntityKindQueryVariables>;
+export const SearchEntityKindDocument = gql`
+    query SearchEntityKind($search: String, $values: [ID!]) {
+  options: entityKinds(
+    filters: {search: $search, ids: $values}
+    pagination: {limit: 10}
+  ) {
+    value: id
+    label: label
+  }
+}
+    `;
+
+/**
+ * __useSearchEntityKindQuery__
+ *
+ * To run a query within a React component, call `useSearchEntityKindQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchEntityKindQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchEntityKindQuery({
+ *   variables: {
+ *      search: // value for 'search'
+ *      values: // value for 'values'
+ *   },
+ * });
+ */
+export function useSearchEntityKindQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchEntityKindQuery, SearchEntityKindQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<SearchEntityKindQuery, SearchEntityKindQueryVariables>(SearchEntityKindDocument, options);
+      }
+export function useSearchEntityKindLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchEntityKindQuery, SearchEntityKindQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<SearchEntityKindQuery, SearchEntityKindQueryVariables>(SearchEntityKindDocument, options);
+        }
+export type SearchEntityKindQueryHookResult = ReturnType<typeof useSearchEntityKindQuery>;
+export type SearchEntityKindLazyQueryHookResult = ReturnType<typeof useSearchEntityKindLazyQuery>;
+export type SearchEntityKindQueryResult = Apollo.QueryResult<SearchEntityKindQuery, SearchEntityKindQueryVariables>;
 export const GetFileDocument = gql`
     query GetFile($id: ID!) {
   file(id: $id) {
@@ -6318,117 +6622,6 @@ export function useGetFilesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHoo
 export type GetFilesQueryHookResult = ReturnType<typeof useGetFilesQuery>;
 export type GetFilesLazyQueryHookResult = ReturnType<typeof useGetFilesLazyQuery>;
 export type GetFilesQueryResult = Apollo.QueryResult<GetFilesQuery, GetFilesQueryVariables>;
-export const GetFluorophoreDocument = gql`
-    query GetFluorophore($id: ID!) {
-  fluorophore(id: $id) {
-    ...Fluorophore
-  }
-}
-    ${FluorophoreFragmentDoc}`;
-
-/**
- * __useGetFluorophoreQuery__
- *
- * To run a query within a React component, call `useGetFluorophoreQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetFluorophoreQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetFluorophoreQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useGetFluorophoreQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetFluorophoreQuery, GetFluorophoreQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetFluorophoreQuery, GetFluorophoreQueryVariables>(GetFluorophoreDocument, options);
-      }
-export function useGetFluorophoreLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetFluorophoreQuery, GetFluorophoreQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetFluorophoreQuery, GetFluorophoreQueryVariables>(GetFluorophoreDocument, options);
-        }
-export type GetFluorophoreQueryHookResult = ReturnType<typeof useGetFluorophoreQuery>;
-export type GetFluorophoreLazyQueryHookResult = ReturnType<typeof useGetFluorophoreLazyQuery>;
-export type GetFluorophoreQueryResult = Apollo.QueryResult<GetFluorophoreQuery, GetFluorophoreQueryVariables>;
-export const GetFluorophoresDocument = gql`
-    query GetFluorophores($filters: FluorophoreFilter, $pagination: OffsetPaginationInput) {
-  fluorophores(filters: $filters, pagination: $pagination) {
-    ...Fluorophore
-  }
-}
-    ${FluorophoreFragmentDoc}`;
-
-/**
- * __useGetFluorophoresQuery__
- *
- * To run a query within a React component, call `useGetFluorophoresQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetFluorophoresQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetFluorophoresQuery({
- *   variables: {
- *      filters: // value for 'filters'
- *      pagination: // value for 'pagination'
- *   },
- * });
- */
-export function useGetFluorophoresQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetFluorophoresQuery, GetFluorophoresQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetFluorophoresQuery, GetFluorophoresQueryVariables>(GetFluorophoresDocument, options);
-      }
-export function useGetFluorophoresLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetFluorophoresQuery, GetFluorophoresQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetFluorophoresQuery, GetFluorophoresQueryVariables>(GetFluorophoresDocument, options);
-        }
-export type GetFluorophoresQueryHookResult = ReturnType<typeof useGetFluorophoresQuery>;
-export type GetFluorophoresLazyQueryHookResult = ReturnType<typeof useGetFluorophoresLazyQuery>;
-export type GetFluorophoresQueryResult = Apollo.QueryResult<GetFluorophoresQuery, GetFluorophoresQueryVariables>;
-export const FluorophoreOptionsDocument = gql`
-    query FluorophoreOptions($search: String, $values: [ID!]) {
-  options: fluorophores(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: name
-  }
-}
-    `;
-
-/**
- * __useFluorophoreOptionsQuery__
- *
- * To run a query within a React component, call `useFluorophoreOptionsQuery` and pass it any options that fit your needs.
- * When your component renders, `useFluorophoreOptionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useFluorophoreOptionsQuery({
- *   variables: {
- *      search: // value for 'search'
- *      values: // value for 'values'
- *   },
- * });
- */
-export function useFluorophoreOptionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<FluorophoreOptionsQuery, FluorophoreOptionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<FluorophoreOptionsQuery, FluorophoreOptionsQueryVariables>(FluorophoreOptionsDocument, options);
-      }
-export function useFluorophoreOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<FluorophoreOptionsQuery, FluorophoreOptionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<FluorophoreOptionsQuery, FluorophoreOptionsQueryVariables>(FluorophoreOptionsDocument, options);
-        }
-export type FluorophoreOptionsQueryHookResult = ReturnType<typeof useFluorophoreOptionsQuery>;
-export type FluorophoreOptionsLazyQueryHookResult = ReturnType<typeof useFluorophoreOptionsLazyQuery>;
-export type FluorophoreOptionsQueryResult = Apollo.QueryResult<FluorophoreOptionsQuery, FluorophoreOptionsQueryVariables>;
 export const GlobalSearchDocument = gql`
     query GlobalSearch($search: String, $noImages: Boolean!, $noFiles: Boolean!, $pagination: OffsetPaginationInput) {
   images: images(filters: {name: {iContains: $search}}, pagination: $pagination) @skip(if: $noImages) {
@@ -6757,6 +6950,81 @@ export function useGetObjectiveLazyQuery(baseOptions?: ApolloReactHooks.LazyQuer
 export type GetObjectiveQueryHookResult = ReturnType<typeof useGetObjectiveQuery>;
 export type GetObjectiveLazyQueryHookResult = ReturnType<typeof useGetObjectiveLazyQuery>;
 export type GetObjectiveQueryResult = Apollo.QueryResult<GetObjectiveQuery, GetObjectiveQueryVariables>;
+export const GetOntologyDocument = gql`
+    query GetOntology($id: ID!) {
+  ontology(id: $id) {
+    ...Ontology
+  }
+}
+    ${OntologyFragmentDoc}`;
+
+/**
+ * __useGetOntologyQuery__
+ *
+ * To run a query within a React component, call `useGetOntologyQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetOntologyQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetOntologyQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetOntologyQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetOntologyQuery, GetOntologyQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetOntologyQuery, GetOntologyQueryVariables>(GetOntologyDocument, options);
+      }
+export function useGetOntologyLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetOntologyQuery, GetOntologyQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetOntologyQuery, GetOntologyQueryVariables>(GetOntologyDocument, options);
+        }
+export type GetOntologyQueryHookResult = ReturnType<typeof useGetOntologyQuery>;
+export type GetOntologyLazyQueryHookResult = ReturnType<typeof useGetOntologyLazyQuery>;
+export type GetOntologyQueryResult = Apollo.QueryResult<GetOntologyQuery, GetOntologyQueryVariables>;
+export const SearchOntologiesDocument = gql`
+    query SearchOntologies($search: String, $values: [ID!]) {
+  options: ontologies(
+    filters: {search: $search, ids: $values}
+    pagination: {limit: 10}
+  ) {
+    value: id
+    label: name
+  }
+}
+    `;
+
+/**
+ * __useSearchOntologiesQuery__
+ *
+ * To run a query within a React component, call `useSearchOntologiesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchOntologiesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchOntologiesQuery({
+ *   variables: {
+ *      search: // value for 'search'
+ *      values: // value for 'values'
+ *   },
+ * });
+ */
+export function useSearchOntologiesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchOntologiesQuery, SearchOntologiesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<SearchOntologiesQuery, SearchOntologiesQueryVariables>(SearchOntologiesDocument, options);
+      }
+export function useSearchOntologiesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchOntologiesQuery, SearchOntologiesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<SearchOntologiesQuery, SearchOntologiesQueryVariables>(SearchOntologiesDocument, options);
+        }
+export type SearchOntologiesQueryHookResult = ReturnType<typeof useSearchOntologiesQuery>;
+export type SearchOntologiesLazyQueryHookResult = ReturnType<typeof useSearchOntologiesLazyQuery>;
+export type SearchOntologiesQueryResult = Apollo.QueryResult<SearchOntologiesQuery, SearchOntologiesQueryVariables>;
 export const RenderTreeDocument = gql`
     query RenderTree($id: ID!) {
   renderTree(id: $id) {

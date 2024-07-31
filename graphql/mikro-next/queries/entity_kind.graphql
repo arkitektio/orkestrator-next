@@ -1,0 +1,15 @@
+query GetEntityKind($id: ID!) {
+  entityKind(id: $id) {
+    ...EntityKind
+  }
+}
+
+query SearchEntityKind($search: String, $values: [ID!]) {
+  options: entityKinds(
+    filters: { search: $search, ids: $values }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: label
+  }
+}

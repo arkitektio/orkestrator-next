@@ -87,13 +87,21 @@ fragment LabelView on LabelView {
   ...View
   id
   fluorophore {
-    ...Fluorophore
+    ...Entity
   }
   primaryAntibody {
-    ...Antibody
+    ...Entity
   }
   secondaryAntibody {
-    ...Antibody
+    ...Entity
+  }
+}
+
+fragment SpecimenView on SpecimenView {
+  ...View
+  id
+  specimen {
+    ...Specimen
   }
 }
 

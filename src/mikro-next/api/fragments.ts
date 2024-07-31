@@ -30,6 +30,7 @@
       "LabelView",
       "OpticsView",
       "RGBView",
+      "SpecimenView",
       "TimepointView",
       "WellPositionView"
     ]

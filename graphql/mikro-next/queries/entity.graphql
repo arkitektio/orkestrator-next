@@ -4,6 +4,12 @@ query GetEntity($id: ID!) {
   }
 }
 
+query ListEntities($filters: EntityFilter, $pagination: OffsetPaginationInput) {
+  entities(filters: $filters, pagination: $pagination) {
+    ...Entity
+  }
+}
+
 query SearchEntities($search: String, $values: [ID!]) {
   options: entities(
     filters: { search: $search, ids: $values }

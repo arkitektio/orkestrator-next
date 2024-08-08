@@ -1,7 +1,7 @@
-import { useDetailRoomQuery, useGetStreamQuery } from "@/lok-next/api/graphql";
 import { useGetImageQuery } from "@/mikro-next/api/graphql";
 import { RGBD } from "@/mikro-next/components/render/TwoDThree";
 import { ReturnWidgetProps } from "@/rekuest/widgets/types";
+import { RenderedPlotWidget } from "@/widgets/RenderedPlotWidget";
 import { StreamWidget } from "@/widgets/StreamWidget";
 
 export const ImageWidget = (props: ReturnWidgetProps) => {
@@ -29,6 +29,8 @@ export const DelegatingStructureWidget = (props: ReturnWidgetProps) => {
       return <ImageWidget {...props} />;
     case "@lok/stream":
       return <StreamWidget {...props} />;
+    case "@mikro/renderedplot":
+      return <RenderedPlotWidget {...props} />;
 
     default:
       return (

@@ -12,6 +12,9 @@
     "IntMetric": [
       "ImageIntMetric"
     ],
+    "Plot": [
+      "RenderedPlot"
+    ],
     "Render": [
       "Snapshot",
       "Video"
@@ -30,6 +33,7 @@
       "LabelView",
       "OpticsView",
       "RGBView",
+      "ScaleView",
       "SpecimenView",
       "TimepointView",
       "WellPositionView"

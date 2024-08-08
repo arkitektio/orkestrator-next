@@ -1,0 +1,11 @@
+query GetRenderedPlot($id: ID!) {
+  renderedPlot(id: $id) {
+    ...RenderedPlot
+  }
+}
+
+query ListRenderedPlots {
+  renderedPlots {
+    ...ListRenderedPlot
+  }
+}

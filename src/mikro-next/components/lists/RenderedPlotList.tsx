@@ -3,9 +3,9 @@ import { MikroRenderTree } from "@/linkers";
 import {
   ImageFilter,
   OffsetPaginationInput,
-  useRenderTreesQuery,
+  useListRenderedPlotsQuery,
 } from "../../api/graphql";
-import RenderTreeCard from "../cards/RenderTreeCard";
+import RenderedPlotCard from "../cards/RenderedPlotCard";
 
 export type Props = {
   filters?: ImageFilter;
@@ -13,13 +13,13 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useRenderTreesQuery({
-    variables: { filters, pagination },
+  const { data, error, subscribeToMore, refetch } = useListRenderedPlotsQuery({
+    variables: {},
   });
 
   return (
     <ListRender
-      array={data?.renderTrees}
+      array={data?.renderedPlots}
       title={
         <MikroRenderTree.ListLink className="flex-0">
           Renders
@@ -27,7 +27,7 @@ const List = ({ filters, pagination }: Props) => {
       }
       refetch={refetch}
     >
-      {(ex, index) => <RenderTreeCard key={index} item={ex} mates={[]} />}
+      {(ex, index) => <RenderedPlotCard key={index} item={ex} mates={[]} />}
     </ListRender>
   );
 };

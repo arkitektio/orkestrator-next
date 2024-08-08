@@ -85,14 +85,14 @@ export const NavigationPane = (props: {}) => {
 
         <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
           <DroppableNavLink
-            to="/mikro/plots"
+            to="/mikro/renderedplots"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <FaChartArea className="h-4 w-4" />
             Plots
           </DroppableNavLink>
           <DroppableNavLink
-            to="/mikro/plots"
+            to="/mikro/entities"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <SparkleIcon className="h-4 w-4" />

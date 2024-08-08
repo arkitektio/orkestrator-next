@@ -20,3 +20,10 @@ fragment BigFileStore on BigFileStore {
   bucket
   path
 }
+
+
+fragment MediaStore on MediaStore {
+  id
+  key
+  presignedUrl
+}

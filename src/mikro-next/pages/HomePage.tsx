@@ -6,6 +6,7 @@ import React from "react";
 import DatasetList from "../components/lists/DatasetList";
 import FileList from "../components/lists/FileList";
 import ImageList from "../components/lists/ImageList";
+import RenderedPlotList from "../components/lists/RenderedPlotList";
 import RenderTreeList from "../components/lists/RenderTreeList";
 import StageList from "../components/lists/StageList";
 
@@ -27,6 +28,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
           uploadFile={performDataLayerUpload}
           createFile={createFile}
         />
+        <RenderedPlotList pagination={{ limit: 30 }} />
       </div>
     </PageLayout>
   );

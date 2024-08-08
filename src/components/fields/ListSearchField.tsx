@@ -139,7 +139,7 @@ export const ListSearchField = ({
         <FormItem>
           <Popover>
             <FormItem className="flex flex-col">
-              <FormLabel>{label ? label : name}</FormLabel>
+              {label && <FormLabel>{label ? label : name}</FormLabel>}
 
               <PopoverTrigger asChild>
                 <FormControl>
@@ -216,7 +216,7 @@ export const ListSearchField = ({
                             console.log(option.value);
                           }}
                         >
-                          {option.label}ff
+                          {option.label}
                           <CheckIcon
                             className={cn(
                               "ml-auto h-4 w-4",

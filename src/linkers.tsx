@@ -41,6 +41,10 @@ export const RekuestProvision = buildSmart(
 export const RekuestAgent = buildSmart("@rekuest-next/agent", "rekuest/agents");
 
 export const MikroImage = buildSmart("@mikro/image", "mikro/images");
+export const MikroRenderedPlot = buildSmart(
+  "@mikro/renderedplot",
+  "mikro/renderedplots",
+);
 export const MikroRenderTree = buildSmart(
   "@mikronext/rendertree",
   "mikro/rendertrees",

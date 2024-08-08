@@ -69,6 +69,7 @@
     "@react-three/drei": "^9.108.3",
     "@react-three/fiber": "^8.16.8",
     "@tailwindcss/container-queries": "^0.1.1",
+    "@tanstack/react-table": "^8.20.1",
     "@uidotdev/usehooks": "^2.2.0",
     "@vivjs/viewers": "^0.16.1",
     "any-signal": "^4.1.1",

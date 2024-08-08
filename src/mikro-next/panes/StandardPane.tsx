@@ -2,8 +2,9 @@ import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { DroppableNavLink } from "@/components/ui/link";
 import { CubeIcon } from "@radix-ui/react-icons";
-import { File, Folder, Home, Image } from "lucide-react";
+import { File, Folder, Home, Image, SparkleIcon, Wallet } from "lucide-react";
 import * as React from "react";
+import { FaChartArea } from "react-icons/fa";
 import {
   GlobalSearchQueryVariables,
   useGlobalSearchQuery,
@@ -70,11 +71,46 @@ export const NavigationPane = (props: {}) => {
             <File className="h-4 w-4" />
             Files
           </DroppableNavLink>
+          <DroppableNavLink
+            to="/mikro/plots"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <Wallet className="h-4 w-4" />
+            Experiments
+          </DroppableNavLink>
         </div>
         <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
+          Insights
+        </div>
+
+        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
+          <DroppableNavLink
+            to="/mikro/plots"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <FaChartArea className="h-4 w-4" />
+            Plots
+          </DroppableNavLink>
+          <DroppableNavLink
+            to="/mikro/plots"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <SparkleIcon className="h-4 w-4" />
+            Entities
+          </DroppableNavLink>
+        </div>
+
+        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4 mt-4">
           Recent
         </div>
         <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground"></div>
+
+        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4 mt-4">
+          Plotters
+        </div>
+        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
+          Reserve a plotter :)
+        </div>
       </nav>
     </div>
   );

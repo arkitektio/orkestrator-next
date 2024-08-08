@@ -123,6 +123,7 @@ export type AppOrder = {
 export type AssignInput = {
   args: Scalars['Args']['input'];
   cached?: Scalars['Boolean']['input'];
+  ephemeral?: Scalars['Boolean']['input'];
   hooks?: InputMaybe<Array<HookInput>>;
   instanceId: Scalars['InstanceId']['input'];
   isHook?: Scalars['Boolean']['input'];
@@ -300,6 +301,10 @@ export type CollectionNodesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+export type CreateDashboardInput = {
+  tree: UiTreeInput;
+};
+
 export type CreateForeignTemplateInput = {
   agent: Scalars['ID']['input'];
   extension: Scalars['String']['input'];
@@ -354,6 +359,14 @@ export type CustomReturnWidget = ReturnWidget & {
   hook: Scalars['String']['output'];
   kind: ReturnWidgetKind;
   ward: Scalars['String']['output'];
+};
+
+export type Dashboard = {
+  __typename?: 'Dashboard';
+  id: Scalars['ID']['output'];
+  name?: Maybe<Scalars['String']['output']>;
+  structure?: Maybe<Structure>;
+  uiTree: UiTree;
 };
 
 export type DeActivateInput = {
@@ -535,6 +548,7 @@ export type Mutation = {
   activate: Provision;
   assign: Assignation;
   cancel: Assignation;
+  createDashboard: Dashboard;
   createForeignTemplate: Template;
   createHardwareRecord: HardwareRecord;
   createTemplate: Template;
@@ -574,6 +588,11 @@ export type MutationAssignArgs = {
 
 export type MutationCancelArgs = {
   input: CancelInput;
+};
+
+
+export type MutationCreateDashboardArgs = {
+  input: CreateDashboardInput;
 };
 
 
@@ -1322,6 +1341,12 @@ export type StringAssignWidget = AssignWidget & {
   placeholder: Scalars['String']['output'];
 };
 
+export type Structure = {
+  __typename?: 'Structure';
+  identifier: Scalars['ID']['output'];
+  object: Scalars['ID']['output'];
+};
+
 export type Subscription = {
   __typename?: 'Subscription';
   assignationEvents: AssignationEvent;
@@ -1466,6 +1491,52 @@ export type TestResultFilter = {
   OR?: InputMaybe<TestResultFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   name?: InputMaybe<StrFilterLookup>;
+};
+
+export type UiChild = {
+  kind: UiChildKind;
+};
+
+export type UiChildInput = {
+  children?: InputMaybe<Array<UiChildInput>>;
+  left?: InputMaybe<UiChildInput>;
+  right?: InputMaybe<UiChildInput>;
+};
+
+export enum UiChildKind {
+  Grid = 'GRID',
+  Reservation = 'RESERVATION',
+  Split = 'SPLIT'
+}
+
+export type UiGrid = UiChild & {
+  __typename?: 'UIGrid';
+  children: Array<UiGridItem>;
+  columns: Scalars['Int']['output'];
+  kind: UiChildKind;
+  rows: Scalars['Int']['output'];
+};
+
+export type UiGridItem = {
+  __typename?: 'UIGridItem';
+  child: UiChild;
+  span: Scalars['Int']['output'];
+};
+
+export type UiSplit = UiChild & {
+  __typename?: 'UISplit';
+  kind: UiChildKind;
+  left: UiChild;
+  right: UiChild;
+};
+
+export type UiTree = {
+  __typename?: 'UITree';
+  child: UiChild;
+};
+
+export type UiTreeInput = {
+  child: UiChildInput;
 };
 
 export type UnProvideInput = {

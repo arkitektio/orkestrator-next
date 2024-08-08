@@ -29,6 +29,10 @@
     "ReturnWidget": [
       "ChoiceReturnWidget",
       "CustomReturnWidget"
+    ],
+    "UIChild": [
+      "UIGrid",
+      "UISplit"
     ]
   }
 };

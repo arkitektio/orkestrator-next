@@ -73,11 +73,6 @@ export const columns: ColumnDef<EntityFragment>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "id",
-    header: "Id",
-    cell: ({ row }) => <div className="capitalize">{row.getValue("id")}</div>,
-  },
-  {
     accessorKey: "name",
     header: ({ column }) => {
       return (
@@ -152,18 +147,19 @@ const initialVariables: ListEntitiesQueryVariables = {
 
 const calculateColumns = (variables: ListEntitiesQueryVariables) => {
   let calculated_columns = columns;
-  let other_columns = variables.metrics?.map((metric) => {
-    return {
-      id: "metric-" + metric,
-      accessorKey: `metricMap.${metric}`,
-      header: () => <div className="text-center">{metric}</div>,
-      cell: ({ row, getValue }) => {
-        const label = row.getValue("metric-" + metric);
+  let other_columns =
+    variables.metrics?.map((metric) => {
+      return {
+        id: "metric-" + metric,
+        accessorKey: `metricMap.${metric}`,
+        header: () => <div className="text-center">{metric}</div>,
+        cell: ({ row, getValue }) => {
+          const label = row.getValue("metric-" + metric);
 
-        return <div className="text-center font-medium">{label}</div>;
-      },
-    } as ColumnDef<EntityFragment>;
-  });
+          return <div className="text-center font-medium">{label}</div>;
+        },
+      } as ColumnDef<EntityFragment>;
+    }) || [];
 
   console.log(other_columns);
 

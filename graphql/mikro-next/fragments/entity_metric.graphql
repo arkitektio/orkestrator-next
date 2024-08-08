@@ -1,0 +1,13 @@
+fragment EntityMetric on EntityMetric {
+  id
+  kind {
+    id
+    label
+    ontology {
+      id
+      name
+    }
+  }
+  dataKind
+}
+

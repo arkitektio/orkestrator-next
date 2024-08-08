@@ -21,6 +21,8 @@ export type Scalars = {
   FileLike: { input: any; output: any; }
   FiveDVector: { input: any; output: any; }
   FourByFourMatrix: { input: any; output: any; }
+  Metric: { input: any; output: any; }
+  MetricMap: { input: any; output: any; }
   Micrometers: { input: any; output: any; }
   Milliseconds: { input: any; output: any; }
   ParquetLike: { input: any; output: any; }
@@ -123,6 +125,15 @@ export type App = {
 export type AssociateInput = {
   other: Scalars['ID']['input'];
   selfs: Array<Scalars['ID']['input']>;
+};
+
+export type AttachEntityMetricInput = {
+  dataKind?: InputMaybe<MetricDataType>;
+  entity: Scalars['ID']['input'];
+  kind?: InputMaybe<Scalars['ID']['input']>;
+  kindName?: InputMaybe<Scalars['String']['input']>;
+  metric?: InputMaybe<Scalars['ID']['input']>;
+  value: Scalars['Metric']['input'];
 };
 
 export type BigFileStore = {
@@ -493,9 +504,16 @@ export type Entity = {
   id: Scalars['ID']['output'];
   index: Scalars['Int']['output'];
   kind: EntityKind;
+  metricMap: Scalars['MetricMap']['output'];
   name: Scalars['String']['output'];
   parent?: Maybe<Entity>;
   relations: Array<EntityRelation>;
+  tabularMetrics: Array<TabularMetric>;
+};
+
+
+export type EntityMetricMapArgs = {
+  metrics?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
 
@@ -504,12 +522,17 @@ export type EntityRelationsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
+export type EntityTabularMetricsArgs = {
+  metrics: Array<Scalars['ID']['input']>;
+};
+
 export type EntityFilter = {
   AND?: InputMaybe<EntityFilter>;
   OR?: InputMaybe<EntityFilter>;
   id?: InputMaybe<Scalars['ID']['input']>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  kind?: InputMaybe<Scalars['ID']['input']>;
+  kinds?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -562,6 +585,30 @@ export type EntityKindInput = {
   label: Scalars['String']['input'];
   ontology?: InputMaybe<Scalars['ID']['input']>;
   purl?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type EntityMetric = {
+  __typename?: 'EntityMetric';
+  dataKind: MetricDataType;
+  id: Scalars['ID']['output'];
+  kind: EntityKind;
+  label: Scalars['String']['output'];
+};
+
+export type EntityMetricFilter = {
+  AND?: InputMaybe<EntityMetricFilter>;
+  OR?: InputMaybe<EntityMetricFilter>;
+  dataKind?: InputMaybe<MetricDataType>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  kind?: InputMaybe<Scalars['ID']['input']>;
+  kindLabel?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type EntityMetricInput = {
+  dataKind: MetricDataType;
+  kind: Scalars['ID']['input'];
 };
 
 export type EntityRelation = {
@@ -1066,6 +1113,13 @@ export type MediaStorePresignedUrlArgs = {
   host?: InputMaybe<Scalars['String']['input']>;
 };
 
+export enum MetricDataType {
+  Datetime = 'DATETIME',
+  Float = 'FLOAT',
+  Int = 'INT',
+  String = 'STRING'
+}
+
 export type ModelChange = {
   __typename?: 'ModelChange';
   field: Scalars['String']['output'];
@@ -1106,6 +1160,7 @@ export type MultiWellPlateInput = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  attachEntityMetric: Entity;
   createAffineTransformationView: AffineTransformationView;
   createCamera: Camera;
   createChannel: Channel;
@@ -1115,6 +1170,7 @@ export type Mutation = {
   createEntity: Entity;
   createEntityGroup: Entity;
   createEntityKind: EntityKind;
+  createEntityMetric: EntityMetric;
   createEntityRelation: EntityRelation;
   createEra: Era;
   createExperiment: Experiment;
@@ -1207,6 +1263,11 @@ export type Mutation = {
 };
 
 
+export type MutationAttachEntityMetricArgs = {
+  input: AttachEntityMetricInput;
+};
+
+
 export type MutationCreateAffineTransformationViewArgs = {
   input: AffineTransformationViewInput;
 };
@@ -1249,6 +1310,11 @@ export type MutationCreateEntityGroupArgs = {
 
 export type MutationCreateEntityKindArgs = {
   input: EntityKindInput;
+};
+
+
+export type MutationCreateEntityMetricArgs = {
+  input: EntityMetricInput;
 };
 
 
@@ -2121,6 +2187,8 @@ export type Query = {
   entityGroups: Array<EntityGroup>;
   entityKind: EntityKind;
   entityKinds: Array<EntityKind>;
+  entityMetric: EntityMetric;
+  entityMetrics: Array<EntityMetric>;
   entityRelation: EntityRelation;
   entityRelations: Array<EntityRelation>;
   eras: Array<Era>;
@@ -2228,6 +2296,17 @@ export type QueryEntityKindArgs = {
 
 export type QueryEntityKindsArgs = {
   filters?: InputMaybe<EntityKindFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryEntityMetricArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryEntityMetricsArgs = {
+  filters?: InputMaybe<EntityMetricFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2970,6 +3049,12 @@ export type TableFilter = {
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
+export type TabularMetric = {
+  __typename?: 'TabularMetric';
+  metricId: Scalars['ID']['output'];
+  value: Scalars['String']['output'];
+};
+
 export type TimepointView = View & {
   __typename?: 'TimepointView';
   /** The accessor */
@@ -3222,7 +3307,11 @@ export type ListDatasetFragment = { __typename?: 'Dataset', id: string, name: st
 
 export type EntityFragment = { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } };
 
+export type TabularMetricFragment = { __typename?: 'TabularMetric', value: string, metricId: string };
+
 export type EntityKindFragment = { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } };
+
+export type EntityMetricFragment = { __typename?: 'EntityMetric', id: string, dataKind: MetricDataType, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } } };
 
 export type EraFragment = { __typename?: 'Era', id: string, begin?: any | null, name: string };
 
@@ -3816,10 +3905,11 @@ export type GetEntityQuery = { __typename?: 'Query', entity: { __typename?: 'Ent
 export type ListEntitiesQueryVariables = Exact<{
   filters?: InputMaybe<EntityFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+  metrics?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
 }>;
 
 
-export type ListEntitiesQuery = { __typename?: 'Query', entities: Array<{ __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } }> };
+export type ListEntitiesQuery = { __typename?: 'Query', entities: Array<{ __typename?: 'Entity', metricMap: any, id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string } }> };
 
 export type SearchEntitiesQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -3843,6 +3933,21 @@ export type SearchEntityKindQueryVariables = Exact<{
 
 
 export type SearchEntityKindQuery = { __typename?: 'Query', options: Array<{ __typename?: 'EntityKind', value: string, label: string }> };
+
+export type GetEntityMetricQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetEntityMetricQuery = { __typename?: 'Query', entityMetric: { __typename?: 'EntityMetric', id: string, dataKind: MetricDataType, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } } } };
+
+export type SearchEntityMetricQueryVariables = Exact<{
+  search?: InputMaybe<Scalars['String']['input']>;
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+}>;
+
+
+export type SearchEntityMetricQuery = { __typename?: 'Query', options: Array<{ __typename?: 'EntityMetric', value: string, label: string }> };
 
 export type GetFileQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4148,6 +4253,12 @@ export const DatasetFragmentDoc = gql`
 ${ListImageFragmentDoc}
 ${ListFileFragmentDoc}
 ${ListDatasetFragmentDoc}`;
+export const TabularMetricFragmentDoc = gql`
+    fragment TabularMetric on TabularMetric {
+  value
+  metricId
+}
+    `;
 export const EntityKindFragmentDoc = gql`
     fragment EntityKind on EntityKind {
   id
@@ -4156,6 +4267,20 @@ export const EntityKindFragmentDoc = gql`
     id
     name
   }
+}
+    `;
+export const EntityMetricFragmentDoc = gql`
+    fragment EntityMetric on EntityMetric {
+  id
+  kind {
+    id
+    label
+    ontology {
+      id
+      name
+    }
+  }
+  dataKind
 }
     `;
 export const ExperimentFragmentDoc = gql`
@@ -6656,9 +6781,10 @@ export type GetEntityQueryHookResult = ReturnType<typeof useGetEntityQuery>;
 export type GetEntityLazyQueryHookResult = ReturnType<typeof useGetEntityLazyQuery>;
 export type GetEntityQueryResult = Apollo.QueryResult<GetEntityQuery, GetEntityQueryVariables>;
 export const ListEntitiesDocument = gql`
-    query ListEntities($filters: EntityFilter, $pagination: OffsetPaginationInput) {
+    query ListEntities($filters: EntityFilter, $pagination: OffsetPaginationInput, $metrics: [ID!]) {
   entities(filters: $filters, pagination: $pagination) {
     ...Entity
+    metricMap(metrics: $metrics)
   }
 }
     ${EntityFragmentDoc}`;
@@ -6677,6 +6803,7 @@ export const ListEntitiesDocument = gql`
  *   variables: {
  *      filters: // value for 'filters'
  *      pagination: // value for 'pagination'
+ *      metrics: // value for 'metrics'
  *   },
  * });
  */
@@ -6806,6 +6933,81 @@ export function useSearchEntityKindLazyQuery(baseOptions?: ApolloReactHooks.Lazy
 export type SearchEntityKindQueryHookResult = ReturnType<typeof useSearchEntityKindQuery>;
 export type SearchEntityKindLazyQueryHookResult = ReturnType<typeof useSearchEntityKindLazyQuery>;
 export type SearchEntityKindQueryResult = Apollo.QueryResult<SearchEntityKindQuery, SearchEntityKindQueryVariables>;
+export const GetEntityMetricDocument = gql`
+    query GetEntityMetric($id: ID!) {
+  entityMetric(id: $id) {
+    ...EntityMetric
+  }
+}
+    ${EntityMetricFragmentDoc}`;
+
+/**
+ * __useGetEntityMetricQuery__
+ *
+ * To run a query within a React component, call `useGetEntityMetricQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetEntityMetricQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetEntityMetricQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetEntityMetricQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetEntityMetricQuery, GetEntityMetricQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetEntityMetricQuery, GetEntityMetricQueryVariables>(GetEntityMetricDocument, options);
+      }
+export function useGetEntityMetricLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetEntityMetricQuery, GetEntityMetricQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetEntityMetricQuery, GetEntityMetricQueryVariables>(GetEntityMetricDocument, options);
+        }
+export type GetEntityMetricQueryHookResult = ReturnType<typeof useGetEntityMetricQuery>;
+export type GetEntityMetricLazyQueryHookResult = ReturnType<typeof useGetEntityMetricLazyQuery>;
+export type GetEntityMetricQueryResult = Apollo.QueryResult<GetEntityMetricQuery, GetEntityMetricQueryVariables>;
+export const SearchEntityMetricDocument = gql`
+    query SearchEntityMetric($search: String, $values: [ID!]) {
+  options: entityMetrics(
+    filters: {search: $search, ids: $values}
+    pagination: {limit: 10}
+  ) {
+    value: id
+    label: label
+  }
+}
+    `;
+
+/**
+ * __useSearchEntityMetricQuery__
+ *
+ * To run a query within a React component, call `useSearchEntityMetricQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchEntityMetricQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchEntityMetricQuery({
+ *   variables: {
+ *      search: // value for 'search'
+ *      values: // value for 'values'
+ *   },
+ * });
+ */
+export function useSearchEntityMetricQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchEntityMetricQuery, SearchEntityMetricQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<SearchEntityMetricQuery, SearchEntityMetricQueryVariables>(SearchEntityMetricDocument, options);
+      }
+export function useSearchEntityMetricLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchEntityMetricQuery, SearchEntityMetricQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<SearchEntityMetricQuery, SearchEntityMetricQueryVariables>(SearchEntityMetricDocument, options);
+        }
+export type SearchEntityMetricQueryHookResult = ReturnType<typeof useSearchEntityMetricQuery>;
+export type SearchEntityMetricLazyQueryHookResult = ReturnType<typeof useSearchEntityMetricLazyQuery>;
+export type SearchEntityMetricQueryResult = Apollo.QueryResult<SearchEntityMetricQuery, SearchEntityMetricQueryVariables>;
 export const GetFileDocument = gql`
     query GetFile($id: ID!) {
   file(id: $id) {

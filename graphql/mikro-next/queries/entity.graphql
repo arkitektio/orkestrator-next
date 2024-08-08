@@ -4,9 +4,10 @@ query GetEntity($id: ID!) {
   }
 }
 
-query ListEntities($filters: EntityFilter, $pagination: OffsetPaginationInput) {
+query ListEntities($filters: EntityFilter, $pagination: OffsetPaginationInput, $metrics: [ID!]) {
   entities(filters: $filters, pagination: $pagination) {
     ...Entity
+    metricMap(metrics: $metrics) 
   }
 }
 

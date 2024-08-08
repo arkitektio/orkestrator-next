@@ -1,0 +1,15 @@
+query GetEntityMetric($id: ID!) {
+  entityMetric(id: $id) {
+    ...EntityMetric
+  }
+}
+
+query SearchEntityMetric($search: String, $values: [ID!]) {
+  options: entityMetrics(
+    filters: { search: $search, ids: $values }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: label
+  }
+}

@@ -43,6 +43,7 @@ import {
   ListEntitiesQueryVariables,
   useListEntitiesQuery,
   useSearchEntityKindLazyQuery,
+  useSearchEntityMetricLazyQuery,
 } from "@/mikro-next/api/graphql";
 import { useForm } from "react-hook-form";
 
@@ -150,7 +151,30 @@ const initialVariables: ListEntitiesQueryVariables = {
 };
 
 const calculateColumns = (variables: ListEntitiesQueryVariables) => {
-  return columns;
+  let calculated_columns = columns;
+  let other_columns = variables.metrics?.map((metric) => {
+    return {
+      id: "metric-" + metric,
+      accessorKey: `metricMap.${metric}`,
+      header: () => <div className="text-center">{metric}</div>,
+      cell: ({ row, getValue }) => {
+        const label = row.getValue("metric-" + metric);
+
+        return <div className="text-center font-medium">{label}</div>;
+      },
+    } as ColumnDef<EntityFragment>;
+  });
+
+  console.log(other_columns);
+
+  calculated_columns = calculated_columns.concat(other_columns);
+  return calculated_columns;
+};
+
+export type FormValues = {
+  metrics?: string[];
+  kinds?: string[];
+  search?: string | null;
 };
 
 export const EntitiesTable = () => {
@@ -159,15 +183,15 @@ export const EntitiesTable = () => {
     pageSize: 20,
   });
 
-  const [search] = useSearchEntityKindLazyQuery({});
+  const [searchK] = useSearchEntityKindLazyQuery({});
+  const [searchM] = useSearchEntityMetricLazyQuery({});
 
-  const form = useForm({
-    defaultValues: {
-      search: "",
-    },
+  const form = useForm<FormValues>({
+    defaultValues: {},
   });
+  const { metrics, kinds, search } = form.watch();
 
-  const { data, loading, refetch } = useListEntitiesQuery({
+  const { data, loading, refetch, error } = useListEntitiesQuery({
     variables: {
       pagination: {
         limit: pagination.pageSize,
@@ -176,7 +200,24 @@ export const EntitiesTable = () => {
     },
   });
 
-  const columns = calculateColumns(initialVariables);
+  React.useEffect(() => {
+    const variables = {
+      filters: { search: search, kinds: kinds },
+      metrics: metrics,
+      pagination: {
+        limit: pagination.pageSize,
+        offset: pagination.pageIndex * pagination.pageSize,
+      },
+    };
+    refetch(variables);
+
+    console.log(variables);
+    setColumns(calculateColumns(variables));
+  }, [metrics, kinds, search, refetch]);
+
+  const [columns, setColumns] = React.useState<ColumnDef<EntityFragment>[]>(
+    () => calculateColumns(initialVariables),
+  );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -216,8 +257,13 @@ export const EntitiesTable = () => {
           <Form {...form}>
             <GraphQLSearchField
               placeholder="Filter Kind"
-              searchQuery={search}
-              name="search"
+              searchQuery={searchK}
+              name="kinds"
+            />
+            <GraphQLSearchField
+              placeholder="Add Metric"
+              searchQuery={searchM}
+              name="metrics"
             />
           </Form>
           <Input

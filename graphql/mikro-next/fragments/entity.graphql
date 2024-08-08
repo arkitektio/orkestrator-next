@@ -14,3 +14,9 @@ fragment Entity on Entity {
     name
   }
 }
+
+
+fragment TabularMetric on TabularMetric {
+  value 
+  metricId
+}

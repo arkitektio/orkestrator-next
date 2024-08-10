@@ -11,6 +11,7 @@ import FilesPage from "./pages/FilesPage";
 import HomePage from "./pages/HomePage";
 import ImagePage from "./pages/ImagePage";
 import ImagesPage from "./pages/ImagesPage";
+import PlotterPage from "./pages/PlotterPage";
 import RenderedPlotPage from "./pages/RenderedPlotPage";
 import RenderedPlotsPage from "./pages/RenderedPlotsPage";
 import RenderTreePage from "./pages/RenderTreePage";
@@ -36,6 +37,7 @@ export const MikroNextModule: React.FC<Props> = (props) => {
           <Route path="files/:id" element={<FilePage />} />
           <Route path="tables" element={<TablesPage />} />
           <Route path="stages/:id" element={<StagePage />} />
+          <Route path="plotters/:id" element={<PlotterPage />} />
           <Route path="rendertrees/:id" element={<RenderTreePage />} />
           <Route path="rendertrees" element={<RenderTreesPage />} />
           <Route path="renderedplots/:id" element={<RenderedPlotPage />} />

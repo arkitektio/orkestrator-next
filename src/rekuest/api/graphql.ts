@@ -980,6 +980,8 @@ export type Query = {
   assignation: Assignation;
   assignations: Array<Assignation>;
   clients: Array<App>;
+  dashboard: Dashboard;
+  dashboards: Array<Dashboard>;
   dependency: Dependency;
   event: Array<AssignationEvent>;
   hardwareRecord: HardwareRecord;
@@ -1029,6 +1031,11 @@ export type QueryClientsArgs = {
   filters?: InputMaybe<AppFilter>;
   order?: InputMaybe<AppOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryDashboardArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -1937,6 +1944,15 @@ export type PrimaryNodesQueryVariables = Exact<{
 
 
 export type PrimaryNodesQuery = { __typename?: 'Query', nodes: Array<{ __typename?: 'Node', id: string, name: string, description?: string | null, templates: Array<{ __typename?: 'Template', id: string, interface: string }>, args: Array<{ __typename?: 'Port', key: string, identifier?: any | null, kind: PortKind }> }> };
+
+export type PrimaryReturnNodesQueryVariables = Exact<{
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  identifier?: InputMaybe<Scalars['String']['input']>;
+  order?: InputMaybe<NodeOrder>;
+}>;
+
+
+export type PrimaryReturnNodesQuery = { __typename?: 'Query', nodes: Array<{ __typename?: 'Node', id: string, name: string, description?: string | null, templates: Array<{ __typename?: 'Template', id: string, interface: string }>, args: Array<{ __typename?: 'Port', key: string, identifier?: any | null, kind: PortKind }> }> };
 
 export type ProtocolOptionsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -3818,6 +3834,47 @@ export function usePrimaryNodesLazyQuery(baseOptions?: ApolloReactHooks.LazyQuer
 export type PrimaryNodesQueryHookResult = ReturnType<typeof usePrimaryNodesQuery>;
 export type PrimaryNodesLazyQueryHookResult = ReturnType<typeof usePrimaryNodesLazyQuery>;
 export type PrimaryNodesQueryResult = Apollo.QueryResult<PrimaryNodesQuery, PrimaryNodesQueryVariables>;
+export const PrimaryReturnNodesDocument = gql`
+    query PrimaryReturnNodes($pagination: OffsetPaginationInput, $identifier: String, $order: NodeOrder) {
+  nodes(
+    order: $order
+    pagination: $pagination
+    filters: {demands: [{kind: RETURNS, matches: [{at: 0, kind: STRUCTURE, identifier: $identifier}]}]}
+  ) {
+    ...PrimaryNode
+  }
+}
+    ${PrimaryNodeFragmentDoc}`;
+
+/**
+ * __usePrimaryReturnNodesQuery__
+ *
+ * To run a query within a React component, call `usePrimaryReturnNodesQuery` and pass it any options that fit your needs.
+ * When your component renders, `usePrimaryReturnNodesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = usePrimaryReturnNodesQuery({
+ *   variables: {
+ *      pagination: // value for 'pagination'
+ *      identifier: // value for 'identifier'
+ *      order: // value for 'order'
+ *   },
+ * });
+ */
+export function usePrimaryReturnNodesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<PrimaryReturnNodesQuery, PrimaryReturnNodesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<PrimaryReturnNodesQuery, PrimaryReturnNodesQueryVariables>(PrimaryReturnNodesDocument, options);
+      }
+export function usePrimaryReturnNodesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<PrimaryReturnNodesQuery, PrimaryReturnNodesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<PrimaryReturnNodesQuery, PrimaryReturnNodesQueryVariables>(PrimaryReturnNodesDocument, options);
+        }
+export type PrimaryReturnNodesQueryHookResult = ReturnType<typeof usePrimaryReturnNodesQuery>;
+export type PrimaryReturnNodesLazyQueryHookResult = ReturnType<typeof usePrimaryReturnNodesLazyQuery>;
+export type PrimaryReturnNodesQueryResult = Apollo.QueryResult<PrimaryReturnNodesQuery, PrimaryReturnNodesQueryVariables>;
 export const ProtocolOptionsDocument = gql`
     query ProtocolOptions($search: String, $values: [ID!]) {
   options: protocols(

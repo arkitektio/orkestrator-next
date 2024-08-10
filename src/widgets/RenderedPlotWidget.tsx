@@ -13,11 +13,11 @@ export const RenderedPlotWidget = (props: ReturnWidgetProps) => {
   const resolve = useResolve();
 
   return (
-    <div className="w-[200px] h-[200px]">
+    <div>
       {data?.renderedPlot.store.presignedUrl && (
         <Image
           src={resolve(data?.renderedPlot.store.presignedUrl)}
-          className="w-full h-full object-cover absolute top-0 left-0 rounded rounded-lg"
+          className="w-full h-full"
         />
       )}
     </div>

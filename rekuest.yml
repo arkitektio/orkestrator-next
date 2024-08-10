@@ -1,5 +1,5 @@
 overwrite: true
-schema: "http://127.0.0.1/rekuest/graphql"
+schema: "http://jhnnsrs-lab/rekuest/graphql"
 documents: "graphql/rekuest-next/**/*.graphql"
 generates:
   src/rekuest/api/fragments.ts:

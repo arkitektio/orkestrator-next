@@ -68,3 +68,24 @@ query PrimaryNodes(
     ...PrimaryNode
   }
 }
+
+query PrimaryReturnNodes(
+  $pagination: OffsetPaginationInput
+  $identifier: String
+  $order: NodeOrder
+) {
+  nodes(
+    order: $order
+    pagination: $pagination
+    filters: {
+      demands: [
+        {
+          kind: RETURNS
+          matches: [{ at: 0, kind: STRUCTURE, identifier: $identifier }]
+        }
+      ]
+    }
+  ) {
+    ...PrimaryNode
+  }
+}

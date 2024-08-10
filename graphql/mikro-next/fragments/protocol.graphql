@@ -6,18 +6,9 @@ fragment Protocol on Protocol {
     name
     description
   }
+  description
   steps {
-    id
-    name
-    t 
-    kind {
-      label
-    }
-    reagents {
-      id
-      name
-      metricMap
-    }
+    ...ListProtocolStep
   }
 }
 

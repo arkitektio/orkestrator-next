@@ -1,15 +1,7 @@
 import { CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  MikroEntity,
-  MikroFluorophore,
-  MikroLabelView,
-  MikroMetric,
-  MikroSpecimen,
-  MikroSpecimenView,
-} from "@/linkers";
-import { ArrowDownIcon, ArrowUpIcon } from "@radix-ui/react-icons";
+import { MikroSpecimenView } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
-import { LabelViewFragment, SpecimenViewFragment } from "../../api/graphql";
+import { SpecimenViewFragment } from "../../api/graphql";
 import { ViewCard } from "./meta/ViewCard";
 
 interface Props {
@@ -24,25 +16,10 @@ const TheCard = ({ view, mates }: Props) => {
         <CardHeader>
           <CardTitle>
             {" "}
-            {view.specimen && (
-              <>
-                <MikroSpecimen.DetailLink
-                  className={({ isActive } /*  */) =>
-                    "z-10 font-bold text-md mb-2 cursor-pointer " +
-                    (isActive ? "text-primary-300" : "")
-                  }
-                  object={view.specimen.id}
-                >
-                  {view.specimen.entity.name}
-                  <p className="text-xs font-light">
-                    {view.specimen?.entity?.kind.label}
-                  </p>
-                  <p className="text-xs font-light">
-                    {view.specimen.protocol.id}
-                  </p>
-                </MikroSpecimen.DetailLink>
-              </>
-            )}
+            {view.step ? view.step.kind.label : "Unknown"}{" "}
+            <div className="text-muted-foreground">
+              {view?.step?.reagents.map((reagent) => reagent.name).join(", ")}
+            </div>
           </CardTitle>
         </CardHeader>
       </ViewCard>

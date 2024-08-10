@@ -1,0 +1,53 @@
+fragment ProtocolStep on ProtocolStep {
+
+  id
+  name
+  t 
+  kind {
+    label
+  }
+  description
+  reagents {
+    id
+    name
+    metricMap
+  }
+}
+
+
+fragment ListProtocolStep on ProtocolStep {
+  id
+  name
+  t 
+  kind {
+    label
+  }
+  description
+  reagents {
+    id
+    name
+    metrics {
+      metric {
+        id
+        kind {
+          label
+        }
+        dataKind
+      }
+      value
+    }
+  }
+  views {
+    id 
+    specimen {
+      id
+      entity {
+        id
+      }
+    }
+    image {
+      id
+      name
+    }
+  }
+}

@@ -103,6 +103,16 @@ fragment SpecimenView on SpecimenView {
   specimen {
     ...Specimen
   }
+  step {
+    kind {
+      label
+    }
+    reagents {
+      id
+      name
+      metricMap
+    }
+  }
 }
 
 fragment AcquisitionView on AcquisitionView {

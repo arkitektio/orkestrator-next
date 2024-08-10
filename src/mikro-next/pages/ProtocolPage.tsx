@@ -1,13 +1,17 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { ListRender } from "@/components/layout/ListRender";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { DropZone } from "@/components/ui/dropzone";
 import {
-  DetailPane,
-  DetailPaneHeader,
-  DetailPaneTitle,
-} from "@/components/ui/pane";
-import { MikroExperiment, MikroProtocol } from "@/linkers";
+  Timeline,
+  TimelineConnector,
+  TimelineContent,
+  TimelineDescription,
+  TimelineHeader,
+  TimelineIcon,
+  TimelineItem,
+  TimelineTitle,
+} from "@/components/timeline/timeline";
+import { Badge } from "@/components/ui/badge";
+import { MikroExperiment, MikroImage, MikroProtocol } from "@/linkers";
 import { useGetProtocolQuery } from "../api/graphql";
 
 export type IRepresentationScreenProps = {};
@@ -26,40 +30,54 @@ export default asDetailQueryRoute(useGetProtocolQuery, ({ data }) => {
         />
       }
     >
-      <DetailPane className="p-3 @container">
-        <DetailPaneHeader>
-          <DetailPaneTitle actions={<></>}>
-            {data?.protocol?.name}
-          </DetailPaneTitle>
-        </DetailPaneHeader>
-        <div className="flex flex-col bg-white p-3 rounded rounded-md mt-2 mb-2">
-          <div className="font-light mt-2 ">Created At</div>
-          <div className="font-light mt-2 ">Created by</div>
-
-          <div className="font-light mt-2 ">Tags</div>
+      <div>
+        <div className="text-muted-foreground text-sm my-2">
+          {data.protocol.description}
         </div>
-        <ListRender
-          title="Contained Steps"
-          array={data?.protocol?.steps}
-          additionalChildren={
-            <>
-              <DropZone
-                accepts={["item:@mikro/protocol", "list:@mikro/protocol"]}
-                className="border border-gray-800 cursor-pointer rounded p-5 text-white bg-gray-900 hover:shadow-lg truncate"
-                onDrop={async (item) => {
-                  console.log(item);
-                }}
-                canDropLabel={
-                  "Drag datasets here to associated with this Dataset"
-                }
-                overLabel={"Release to add"}
-              />
-            </>
-          }
-        >
-          {(step, index) => <>{step.t}</>}
-        </ListRender>
-      </DetailPane>
+        <Timeline className="w-full">
+          {data?.protocol.steps.map((e) => (
+            <TimelineItem>
+              <TimelineConnector />
+              <TimelineHeader>
+                <TimelineIcon />
+                <TimelineTitle>
+                  {e.kind.label}{" "}
+                  <i className="text-muted-foreground mr-2"> t = {e.t} </i>
+                </TimelineTitle>
+              </TimelineHeader>
+              <TimelineContent>
+                <TimelineDescription>{e.description}</TimelineDescription>
+
+                <div className="flex flex-col mt-1">
+                  {e.reagents.map((reagent) => (
+                    <Badge className="flex flex-row ">
+                      <div className="flex-1 mr-1">{reagent.name}</div>
+                      {reagent.metrics.map((m) => (
+                        <Badge className="bg-black text-white">
+                          {m.metric.kind.label}:{m.value}
+                        </Badge>
+                      ))}
+                    </Badge>
+                  ))}
+                </div>
+
+                <div className="flex flex-col">
+                  {e.views.map((view) => (
+                    <div className="flex flex-row">
+                      <MikroImage.DetailLink
+                        object={view.image.id}
+                        className="flex-1"
+                      >
+                        {view.image.name}
+                      </MikroImage.DetailLink>
+                    </div>
+                  ))}
+                </div>
+              </TimelineContent>
+            </TimelineItem>
+          ))}
+        </Timeline>
+      </div>
     </MikroProtocol.ModelPage>
   );
 });

@@ -2,4 +2,22 @@ fragment Experiment on Experiment {
   id
   name
   description
+  createdAt
+  history(pagination: { limit: 3 }) {
+    ...History
+  }
+  protocols {
+    ...ListProtocol
+  } 
+}
+
+
+fragment ListExperiment on Experiment {
+  id
+  name
+  description
+  protocols {
+    id
+    name
+  }
 }

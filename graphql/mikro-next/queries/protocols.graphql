@@ -1,0 +1,12 @@
+query GetProtocol($id: ID!) {
+  protocol(id: $id) {
+    ...Protocol
+  }
+}
+
+
+query ListProtocols($filters: ProtocolFilter, $pagination: OffsetPaginationInput) {
+  protocols(filters: $filters, pagination: $pagination) {
+    ...ListProtocol
+  }
+}

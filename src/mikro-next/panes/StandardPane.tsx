@@ -82,7 +82,7 @@ export const NavigationPane = (props: {}) => {
             Files
           </DroppableNavLink>
           <DroppableNavLink
-            to="/mikro/plots"
+            to="/mikro/experiments"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <Wallet className="h-4 w-4" />

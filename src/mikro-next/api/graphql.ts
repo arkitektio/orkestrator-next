@@ -136,6 +136,20 @@ export type AttachEntityMetricInput = {
   value: Scalars['Metric']['input'];
 };
 
+export type AttachMetricsToEntitiesMetricInput = {
+  metric?: InputMaybe<Scalars['ID']['input']>;
+  pairs: Array<EntityValuePairInput>;
+};
+
+export type AttachRelationMetricInput = {
+  dataKind?: InputMaybe<MetricDataType>;
+  kind?: InputMaybe<Scalars['ID']['input']>;
+  kindName?: InputMaybe<Scalars['String']['input']>;
+  metric?: InputMaybe<Scalars['ID']['input']>;
+  relation: Scalars['ID']['input'];
+  value: Scalars['Metric']['input'];
+};
+
 export type BigFileStore = {
   __typename?: 'BigFileStore';
   bucket: Scalars['String']['output'];
@@ -638,6 +652,11 @@ export type EntityRelationInput = {
   right: Scalars['ID']['input'];
 };
 
+export type EntityValuePairInput = {
+  entity: Scalars['ID']['input'];
+  value: Scalars['Metric']['input'];
+};
+
 export type Era = {
   __typename?: 'Era';
   begin?: Maybe<Scalars['DateTime']['output']>;
@@ -679,10 +698,17 @@ export type Experiment = {
   history: Array<History>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
+  protocols: Array<Protocol>;
 };
 
 
 export type ExperimentHistoryArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type ExperimentProtocolsArgs = {
+  filters?: InputMaybe<ProtocolFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1161,6 +1187,8 @@ export type MultiWellPlateInput = {
 export type Mutation = {
   __typename?: 'Mutation';
   attachEntityMetric: Entity;
+  attachMetricsToEntities: Array<Entity>;
+  attachRelationMetric: EntityRelation;
   createAffineTransformationView: AffineTransformationView;
   createCamera: Camera;
   createChannel: Channel;
@@ -1181,6 +1209,7 @@ export type Mutation = {
   createOntology: Ontology;
   createOpticsView: OpticsView;
   createProtocol: Protocol;
+  createRelationMetric: RelationMetric;
   createRenderTree: RenderTree;
   createRenderedPlot: RenderedPlot;
   createRgbContext: RgbContext;
@@ -1265,6 +1294,16 @@ export type Mutation = {
 
 export type MutationAttachEntityMetricArgs = {
   input: AttachEntityMetricInput;
+};
+
+
+export type MutationAttachMetricsToEntitiesArgs = {
+  input: AttachMetricsToEntitiesMetricInput;
+};
+
+
+export type MutationAttachRelationMetricArgs = {
+  input: AttachRelationMetricInput;
 };
 
 
@@ -1365,6 +1404,11 @@ export type MutationCreateOpticsViewArgs = {
 
 export type MutationCreateProtocolArgs = {
   input: ProtocolInput;
+};
+
+
+export type MutationCreateRelationMetricArgs = {
+  input: RelationMetricInput;
 };
 
 
@@ -2144,10 +2188,17 @@ export type Protocol = {
   history: Array<History>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
+  steps: Array<ProtocolStep>;
 };
 
 
 export type ProtocolHistoryArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type ProtocolStepsArgs = {
+  filters?: InputMaybe<ProtocolFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2163,6 +2214,31 @@ export type ProtocolInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   experiment: Scalars['ID']['input'];
   name: Scalars['String']['input'];
+};
+
+export type ProtocolStep = {
+  __typename?: 'ProtocolStep';
+  createdAt: Scalars['DateTime']['output'];
+  creator?: Maybe<User>;
+  description?: Maybe<Scalars['String']['output']>;
+  history: Array<History>;
+  id: Scalars['ID']['output'];
+  kind: EntityKind;
+  name: Scalars['String']['output'];
+  protocol: Protocol;
+  reagents: Array<Entity>;
+  t: Scalars['Int']['output'];
+};
+
+
+export type ProtocolStepHistoryArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type ProtocolStepReagentsArgs = {
+  filters?: InputMaybe<EntityFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 export type ProvenanceFilter = {
@@ -2192,6 +2268,7 @@ export type Query = {
   entityRelation: EntityRelation;
   entityRelations: Array<EntityRelation>;
   eras: Array<Era>;
+  experiment: Experiment;
   experiments: Array<Experiment>;
   file: File;
   files: Array<File>;
@@ -2214,8 +2291,12 @@ export type Query = {
   objectives: Array<Objective>;
   ontologies: Array<Ontology>;
   ontology: Ontology;
+  protocol: Protocol;
+  protocolStep: ProtocolStep;
   protocols: Array<Protocol>;
   randomImage: Image;
+  relationMetric: RelationMetric;
+  relationMetrics: Array<RelationMetric>;
   renderTree: RenderTree;
   renderTrees: Array<RenderTree>;
   renderedPlot: RenderedPlot;
@@ -2228,6 +2309,7 @@ export type Query = {
   scaleViews: Array<ScaleView>;
   snapshot: Snapshot;
   snapshots: Array<Snapshot>;
+  specimen: Specimen;
   specimenViews: Array<SpecimenView>;
   specimens: Array<Specimen>;
   stage: Stage;
@@ -2325,6 +2407,11 @@ export type QueryEntityRelationsArgs = {
 export type QueryErasArgs = {
   filters?: InputMaybe<EraFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryExperimentArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -2426,8 +2513,29 @@ export type QueryOntologyArgs = {
 };
 
 
+export type QueryProtocolArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryProtocolStepArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type QueryProtocolsArgs = {
   filters?: InputMaybe<ProtocolFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryRelationMetricArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryRelationMetricsArgs = {
+  filters?: InputMaybe<EntityMetricFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2485,6 +2593,11 @@ export type QuerySnapshotArgs = {
 export type QuerySnapshotsArgs = {
   filters?: InputMaybe<SnapshotFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QuerySpecimenArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -2651,6 +2764,19 @@ export type RoiFilter = {
 export type RelateToDatasetInput = {
   id: Scalars['ID']['input'];
   other: Scalars['ID']['input'];
+};
+
+export type RelationMetric = {
+  __typename?: 'RelationMetric';
+  dataKind: MetricDataType;
+  id: Scalars['ID']['output'];
+  kind: EntityKind;
+  label: Scalars['String']['output'];
+};
+
+export type RelationMetricInput = {
+  dataKind: MetricDataType;
+  kind: Scalars['ID']['input'];
 };
 
 export type Render = {
@@ -3315,7 +3441,9 @@ export type EntityMetricFragment = { __typename?: 'EntityMetric', id: string, da
 
 export type EraFragment = { __typename?: 'Era', id: string, begin?: any | null, name: string };
 
-export type ExperimentFragment = { __typename?: 'Experiment', id: string, name: string, description?: string | null };
+export type ExperimentFragment = { __typename?: 'Experiment', id: string, name: string, description?: string | null, createdAt: any, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue: string, newValue: string }> }>, protocols: Array<{ __typename?: 'Protocol', id: string, name: string, experiment: { __typename?: 'Experiment', id: string, name: string } }> };
+
+export type ListExperimentFragment = { __typename?: 'Experiment', id: string, name: string, description?: string | null, protocols: Array<{ __typename?: 'Protocol', id: string, name: string }> };
 
 export type FileFragment = { __typename?: 'File', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string } };
 
@@ -3341,7 +3469,9 @@ export type ObjectiveFragment = { __typename?: 'Objective', na?: number | null, 
 
 export type OntologyFragment = { __typename?: 'Ontology', id: string, name: string };
 
-export type ProtocolFragment = { __typename?: 'Protocol', id: string, name: string, experiment: { __typename?: 'Experiment', id: string, name: string, description?: string | null } };
+export type ProtocolFragment = { __typename?: 'Protocol', id: string, name: string, experiment: { __typename?: 'Experiment', id: string, name: string, description?: string | null }, steps: Array<{ __typename?: 'ProtocolStep', id: string, name: string, t: number, kind: { __typename?: 'EntityKind', label: string }, reagents: Array<{ __typename?: 'Entity', id: string, name: string, metricMap: any }> }> };
+
+export type ListProtocolFragment = { __typename?: 'Protocol', id: string, name: string, experiment: { __typename?: 'Experiment', id: string, name: string } };
 
 export type ContextNodeNestedFragment = { __typename?: 'ContextNode', label?: string | null, context: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } } };
 
@@ -3582,6 +3712,14 @@ export type CreateEraMutationVariables = Exact<{
 
 export type CreateEraMutation = { __typename?: 'Mutation', createEra: { __typename?: 'Era', id: string, begin?: any | null } };
 
+export type CreateExperimentMutationVariables = Exact<{
+  name: Scalars['String']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type CreateExperimentMutation = { __typename?: 'Mutation', createExperiment: { __typename?: 'Experiment', id: string, name: string, description?: string | null, createdAt: any, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue: string, newValue: string }> }>, protocols: Array<{ __typename?: 'Protocol', id: string, name: string, experiment: { __typename?: 'Experiment', id: string, name: string } }> } };
+
 export type From_File_LikeMutationVariables = Exact<{
   file: Scalars['FileLike']['input'];
   name: Scalars['String']['input'];
@@ -3735,6 +3873,22 @@ export type EnsureObjectiveMutationVariables = Exact<{
 
 export type EnsureObjectiveMutation = { __typename?: 'Mutation', ensureObjective: { __typename?: 'Objective', id: string, name: string } };
 
+export type CreateProtocolMutationVariables = Exact<{
+  name: Scalars['String']['input'];
+  experiment: Scalars['ID']['input'];
+}>;
+
+
+export type CreateProtocolMutation = { __typename?: 'Mutation', createProtocol: { __typename?: 'Protocol', id: string, name: string, experiment: { __typename?: 'Experiment', id: string, name: string, description?: string | null }, steps: Array<{ __typename?: 'ProtocolStep', id: string, name: string, t: number, kind: { __typename?: 'EntityKind', label: string }, reagents: Array<{ __typename?: 'Entity', id: string, name: string, metricMap: any }> }> } };
+
+export type CreateProtocolStepMutationVariables = Exact<{
+  name: Scalars['String']['input'];
+  experiment: Scalars['ID']['input'];
+}>;
+
+
+export type CreateProtocolStepMutation = { __typename?: 'Mutation', createProtocol: { __typename?: 'Protocol', id: string, name: string, experiment: { __typename?: 'Experiment', id: string, name: string, description?: string | null }, steps: Array<{ __typename?: 'ProtocolStep', id: string, name: string, t: number, kind: { __typename?: 'EntityKind', label: string }, reagents: Array<{ __typename?: 'Entity', id: string, name: string, metricMap: any }> }> } };
+
 export type CreateRgbContextMutationVariables = Exact<{
   input: CreateRgbContextInput;
 }>;
@@ -3756,6 +3910,14 @@ export type CreateSnapshotMutationVariables = Exact<{
 
 
 export type CreateSnapshotMutation = { __typename?: 'Mutation', createSnapshot: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } };
+
+export type CreateSpecimenMutationVariables = Exact<{
+  entity: Scalars['ID']['input'];
+  protocol: Scalars['ID']['input'];
+}>;
+
+
+export type CreateSpecimenMutation = { __typename?: 'Mutation', createSpecimen: { __typename?: 'Specimen', id: string, entity: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string }, group: { __typename?: 'EntityGroup', id: string } }, protocol: { __typename?: 'Protocol', id: string } } };
 
 export type CreateStageMutationVariables = Exact<{
   name: Scalars['String']['input'];
@@ -3949,6 +4111,21 @@ export type SearchEntityMetricQueryVariables = Exact<{
 
 export type SearchEntityMetricQuery = { __typename?: 'Query', options: Array<{ __typename?: 'EntityMetric', value: string, label: string }> };
 
+export type GetExperimentQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetExperimentQuery = { __typename?: 'Query', experiment: { __typename?: 'Experiment', id: string, name: string, description?: string | null, createdAt: any, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue: string, newValue: string }> }>, protocols: Array<{ __typename?: 'Protocol', id: string, name: string, experiment: { __typename?: 'Experiment', id: string, name: string } }> } };
+
+export type ListExperimentsQueryVariables = Exact<{
+  filters?: InputMaybe<ExperimentFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+}>;
+
+
+export type ListExperimentsQuery = { __typename?: 'Query', experiments: Array<{ __typename?: 'Experiment', id: string, name: string, description?: string | null, protocols: Array<{ __typename?: 'Protocol', id: string, name: string }> }> };
+
 export type GetFileQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
@@ -4046,6 +4223,21 @@ export type SearchOntologiesQueryVariables = Exact<{
 
 export type SearchOntologiesQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Ontology', value: string, label: string }> };
 
+export type GetProtocolQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetProtocolQuery = { __typename?: 'Query', protocol: { __typename?: 'Protocol', id: string, name: string, experiment: { __typename?: 'Experiment', id: string, name: string, description?: string | null }, steps: Array<{ __typename?: 'ProtocolStep', id: string, name: string, t: number, kind: { __typename?: 'EntityKind', label: string }, reagents: Array<{ __typename?: 'Entity', id: string, name: string, metricMap: any }> }> } };
+
+export type ListProtocolsQueryVariables = Exact<{
+  filters?: InputMaybe<ProtocolFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+}>;
+
+
+export type ListProtocolsQuery = { __typename?: 'Query', protocols: Array<{ __typename?: 'Protocol', id: string, name: string, experiment: { __typename?: 'Experiment', id: string, name: string } }> };
+
 export type RenderTreeQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
@@ -4095,6 +4287,18 @@ export type RgbContextOptionsQueryVariables = Exact<{
 
 
 export type RgbContextOptionsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'RGBContext', value: string, label: string }> };
+
+export type GetSpecimenQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetSpecimenQuery = { __typename?: 'Query', specimen: { __typename?: 'Specimen', id: string, entity: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string }, group: { __typename?: 'EntityGroup', id: string } }, protocol: { __typename?: 'Protocol', id: string } } };
+
+export type ListSpecimensQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ListSpecimensQuery = { __typename?: 'Query', specimens: Array<{ __typename?: 'Specimen', id: string, entity: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string }, group: { __typename?: 'EntityGroup', id: string } }, protocol: { __typename?: 'Protocol', id: string } }> };
 
 export type GetStageQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4283,11 +4487,40 @@ export const EntityMetricFragmentDoc = gql`
   dataKind
 }
     `;
+export const ListProtocolFragmentDoc = gql`
+    fragment ListProtocol on Protocol {
+  id
+  name
+  experiment {
+    id
+    name
+  }
+}
+    `;
 export const ExperimentFragmentDoc = gql`
     fragment Experiment on Experiment {
   id
   name
   description
+  createdAt
+  history(pagination: {limit: 3}) {
+    ...History
+  }
+  protocols {
+    ...ListProtocol
+  }
+}
+    ${HistoryFragmentDoc}
+${ListProtocolFragmentDoc}`;
+export const ListExperimentFragmentDoc = gql`
+    fragment ListExperiment on Experiment {
+  id
+  name
+  description
+  protocols {
+    id
+    name
+  }
 }
     `;
 export const BigFileStoreFragmentDoc = gql`
@@ -4703,6 +4936,19 @@ export const ProtocolFragmentDoc = gql`
     id
     name
     description
+  }
+  steps {
+    id
+    name
+    t
+    kind {
+      label
+    }
+    reagents {
+      id
+      name
+      metricMap
+    }
   }
 }
     `;
@@ -5421,6 +5667,40 @@ export function useCreateEraMutation(baseOptions?: ApolloReactHooks.MutationHook
 export type CreateEraMutationHookResult = ReturnType<typeof useCreateEraMutation>;
 export type CreateEraMutationResult = Apollo.MutationResult<CreateEraMutation>;
 export type CreateEraMutationOptions = Apollo.BaseMutationOptions<CreateEraMutation, CreateEraMutationVariables>;
+export const CreateExperimentDocument = gql`
+    mutation CreateExperiment($name: String!, $description: String) {
+  createExperiment(input: {name: $name, description: $description}) {
+    ...Experiment
+  }
+}
+    ${ExperimentFragmentDoc}`;
+export type CreateExperimentMutationFn = Apollo.MutationFunction<CreateExperimentMutation, CreateExperimentMutationVariables>;
+
+/**
+ * __useCreateExperimentMutation__
+ *
+ * To run a mutation, you first call `useCreateExperimentMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateExperimentMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createExperimentMutation, { data, loading, error }] = useCreateExperimentMutation({
+ *   variables: {
+ *      name: // value for 'name'
+ *      description: // value for 'description'
+ *   },
+ * });
+ */
+export function useCreateExperimentMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateExperimentMutation, CreateExperimentMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateExperimentMutation, CreateExperimentMutationVariables>(CreateExperimentDocument, options);
+      }
+export type CreateExperimentMutationHookResult = ReturnType<typeof useCreateExperimentMutation>;
+export type CreateExperimentMutationResult = Apollo.MutationResult<CreateExperimentMutation>;
+export type CreateExperimentMutationOptions = Apollo.BaseMutationOptions<CreateExperimentMutation, CreateExperimentMutationVariables>;
 export const From_File_LikeDocument = gql`
     mutation from_file_like($file: FileLike!, $name: String!, $origins: [ID!], $dataset: ID) {
   fromFileLike(
@@ -6055,6 +6335,74 @@ export function useEnsureObjectiveMutation(baseOptions?: ApolloReactHooks.Mutati
 export type EnsureObjectiveMutationHookResult = ReturnType<typeof useEnsureObjectiveMutation>;
 export type EnsureObjectiveMutationResult = Apollo.MutationResult<EnsureObjectiveMutation>;
 export type EnsureObjectiveMutationOptions = Apollo.BaseMutationOptions<EnsureObjectiveMutation, EnsureObjectiveMutationVariables>;
+export const CreateProtocolDocument = gql`
+    mutation CreateProtocol($name: String!, $experiment: ID!) {
+  createProtocol(input: {name: $name, experiment: $experiment}) {
+    ...Protocol
+  }
+}
+    ${ProtocolFragmentDoc}`;
+export type CreateProtocolMutationFn = Apollo.MutationFunction<CreateProtocolMutation, CreateProtocolMutationVariables>;
+
+/**
+ * __useCreateProtocolMutation__
+ *
+ * To run a mutation, you first call `useCreateProtocolMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateProtocolMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createProtocolMutation, { data, loading, error }] = useCreateProtocolMutation({
+ *   variables: {
+ *      name: // value for 'name'
+ *      experiment: // value for 'experiment'
+ *   },
+ * });
+ */
+export function useCreateProtocolMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateProtocolMutation, CreateProtocolMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateProtocolMutation, CreateProtocolMutationVariables>(CreateProtocolDocument, options);
+      }
+export type CreateProtocolMutationHookResult = ReturnType<typeof useCreateProtocolMutation>;
+export type CreateProtocolMutationResult = Apollo.MutationResult<CreateProtocolMutation>;
+export type CreateProtocolMutationOptions = Apollo.BaseMutationOptions<CreateProtocolMutation, CreateProtocolMutationVariables>;
+export const CreateProtocolStepDocument = gql`
+    mutation CreateProtocolStep($name: String!, $experiment: ID!) {
+  createProtocol(input: {name: $name, experiment: $experiment}) {
+    ...Protocol
+  }
+}
+    ${ProtocolFragmentDoc}`;
+export type CreateProtocolStepMutationFn = Apollo.MutationFunction<CreateProtocolStepMutation, CreateProtocolStepMutationVariables>;
+
+/**
+ * __useCreateProtocolStepMutation__
+ *
+ * To run a mutation, you first call `useCreateProtocolStepMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateProtocolStepMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createProtocolStepMutation, { data, loading, error }] = useCreateProtocolStepMutation({
+ *   variables: {
+ *      name: // value for 'name'
+ *      experiment: // value for 'experiment'
+ *   },
+ * });
+ */
+export function useCreateProtocolStepMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateProtocolStepMutation, CreateProtocolStepMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateProtocolStepMutation, CreateProtocolStepMutationVariables>(CreateProtocolStepDocument, options);
+      }
+export type CreateProtocolStepMutationHookResult = ReturnType<typeof useCreateProtocolStepMutation>;
+export type CreateProtocolStepMutationResult = Apollo.MutationResult<CreateProtocolStepMutation>;
+export type CreateProtocolStepMutationOptions = Apollo.BaseMutationOptions<CreateProtocolStepMutation, CreateProtocolStepMutationVariables>;
 export const CreateRgbContextDocument = gql`
     mutation CreateRGBContext($input: CreateRGBContextInput!) {
   createRgbContext(input: $input) {
@@ -6155,6 +6503,40 @@ export function useCreateSnapshotMutation(baseOptions?: ApolloReactHooks.Mutatio
 export type CreateSnapshotMutationHookResult = ReturnType<typeof useCreateSnapshotMutation>;
 export type CreateSnapshotMutationResult = Apollo.MutationResult<CreateSnapshotMutation>;
 export type CreateSnapshotMutationOptions = Apollo.BaseMutationOptions<CreateSnapshotMutation, CreateSnapshotMutationVariables>;
+export const CreateSpecimenDocument = gql`
+    mutation CreateSpecimen($entity: ID!, $protocol: ID!) {
+  createSpecimen(input: {entity: $entity, protocol: $protocol}) {
+    ...Specimen
+  }
+}
+    ${SpecimenFragmentDoc}`;
+export type CreateSpecimenMutationFn = Apollo.MutationFunction<CreateSpecimenMutation, CreateSpecimenMutationVariables>;
+
+/**
+ * __useCreateSpecimenMutation__
+ *
+ * To run a mutation, you first call `useCreateSpecimenMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateSpecimenMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createSpecimenMutation, { data, loading, error }] = useCreateSpecimenMutation({
+ *   variables: {
+ *      entity: // value for 'entity'
+ *      protocol: // value for 'protocol'
+ *   },
+ * });
+ */
+export function useCreateSpecimenMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateSpecimenMutation, CreateSpecimenMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateSpecimenMutation, CreateSpecimenMutationVariables>(CreateSpecimenDocument, options);
+      }
+export type CreateSpecimenMutationHookResult = ReturnType<typeof useCreateSpecimenMutation>;
+export type CreateSpecimenMutationResult = Apollo.MutationResult<CreateSpecimenMutation>;
+export type CreateSpecimenMutationOptions = Apollo.BaseMutationOptions<CreateSpecimenMutation, CreateSpecimenMutationVariables>;
 export const CreateStageDocument = gql`
     mutation CreateStage($name: String!) {
   createStage(input: {name: $name}) {
@@ -7008,6 +7390,77 @@ export function useSearchEntityMetricLazyQuery(baseOptions?: ApolloReactHooks.La
 export type SearchEntityMetricQueryHookResult = ReturnType<typeof useSearchEntityMetricQuery>;
 export type SearchEntityMetricLazyQueryHookResult = ReturnType<typeof useSearchEntityMetricLazyQuery>;
 export type SearchEntityMetricQueryResult = Apollo.QueryResult<SearchEntityMetricQuery, SearchEntityMetricQueryVariables>;
+export const GetExperimentDocument = gql`
+    query GetExperiment($id: ID!) {
+  experiment(id: $id) {
+    ...Experiment
+  }
+}
+    ${ExperimentFragmentDoc}`;
+
+/**
+ * __useGetExperimentQuery__
+ *
+ * To run a query within a React component, call `useGetExperimentQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetExperimentQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetExperimentQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetExperimentQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetExperimentQuery, GetExperimentQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetExperimentQuery, GetExperimentQueryVariables>(GetExperimentDocument, options);
+      }
+export function useGetExperimentLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetExperimentQuery, GetExperimentQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetExperimentQuery, GetExperimentQueryVariables>(GetExperimentDocument, options);
+        }
+export type GetExperimentQueryHookResult = ReturnType<typeof useGetExperimentQuery>;
+export type GetExperimentLazyQueryHookResult = ReturnType<typeof useGetExperimentLazyQuery>;
+export type GetExperimentQueryResult = Apollo.QueryResult<GetExperimentQuery, GetExperimentQueryVariables>;
+export const ListExperimentsDocument = gql`
+    query ListExperiments($filters: ExperimentFilter, $pagination: OffsetPaginationInput) {
+  experiments(filters: $filters, pagination: $pagination) {
+    ...ListExperiment
+  }
+}
+    ${ListExperimentFragmentDoc}`;
+
+/**
+ * __useListExperimentsQuery__
+ *
+ * To run a query within a React component, call `useListExperimentsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListExperimentsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListExperimentsQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *      pagination: // value for 'pagination'
+ *   },
+ * });
+ */
+export function useListExperimentsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListExperimentsQuery, ListExperimentsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListExperimentsQuery, ListExperimentsQueryVariables>(ListExperimentsDocument, options);
+      }
+export function useListExperimentsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListExperimentsQuery, ListExperimentsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListExperimentsQuery, ListExperimentsQueryVariables>(ListExperimentsDocument, options);
+        }
+export type ListExperimentsQueryHookResult = ReturnType<typeof useListExperimentsQuery>;
+export type ListExperimentsLazyQueryHookResult = ReturnType<typeof useListExperimentsLazyQuery>;
+export type ListExperimentsQueryResult = Apollo.QueryResult<ListExperimentsQuery, ListExperimentsQueryVariables>;
 export const GetFileDocument = gql`
     query GetFile($id: ID!) {
   file(id: $id) {
@@ -7482,6 +7935,77 @@ export function useSearchOntologiesLazyQuery(baseOptions?: ApolloReactHooks.Lazy
 export type SearchOntologiesQueryHookResult = ReturnType<typeof useSearchOntologiesQuery>;
 export type SearchOntologiesLazyQueryHookResult = ReturnType<typeof useSearchOntologiesLazyQuery>;
 export type SearchOntologiesQueryResult = Apollo.QueryResult<SearchOntologiesQuery, SearchOntologiesQueryVariables>;
+export const GetProtocolDocument = gql`
+    query GetProtocol($id: ID!) {
+  protocol(id: $id) {
+    ...Protocol
+  }
+}
+    ${ProtocolFragmentDoc}`;
+
+/**
+ * __useGetProtocolQuery__
+ *
+ * To run a query within a React component, call `useGetProtocolQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetProtocolQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetProtocolQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetProtocolQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetProtocolQuery, GetProtocolQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetProtocolQuery, GetProtocolQueryVariables>(GetProtocolDocument, options);
+      }
+export function useGetProtocolLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetProtocolQuery, GetProtocolQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetProtocolQuery, GetProtocolQueryVariables>(GetProtocolDocument, options);
+        }
+export type GetProtocolQueryHookResult = ReturnType<typeof useGetProtocolQuery>;
+export type GetProtocolLazyQueryHookResult = ReturnType<typeof useGetProtocolLazyQuery>;
+export type GetProtocolQueryResult = Apollo.QueryResult<GetProtocolQuery, GetProtocolQueryVariables>;
+export const ListProtocolsDocument = gql`
+    query ListProtocols($filters: ProtocolFilter, $pagination: OffsetPaginationInput) {
+  protocols(filters: $filters, pagination: $pagination) {
+    ...ListProtocol
+  }
+}
+    ${ListProtocolFragmentDoc}`;
+
+/**
+ * __useListProtocolsQuery__
+ *
+ * To run a query within a React component, call `useListProtocolsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListProtocolsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListProtocolsQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *      pagination: // value for 'pagination'
+ *   },
+ * });
+ */
+export function useListProtocolsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListProtocolsQuery, ListProtocolsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListProtocolsQuery, ListProtocolsQueryVariables>(ListProtocolsDocument, options);
+      }
+export function useListProtocolsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListProtocolsQuery, ListProtocolsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListProtocolsQuery, ListProtocolsQueryVariables>(ListProtocolsDocument, options);
+        }
+export type ListProtocolsQueryHookResult = ReturnType<typeof useListProtocolsQuery>;
+export type ListProtocolsLazyQueryHookResult = ReturnType<typeof useListProtocolsLazyQuery>;
+export type ListProtocolsQueryResult = Apollo.QueryResult<ListProtocolsQuery, ListProtocolsQueryVariables>;
 export const RenderTreeDocument = gql`
     query RenderTree($id: ID!) {
   renderTree(id: $id) {
@@ -7733,6 +8257,75 @@ export function useRgbContextOptionsLazyQuery(baseOptions?: ApolloReactHooks.Laz
 export type RgbContextOptionsQueryHookResult = ReturnType<typeof useRgbContextOptionsQuery>;
 export type RgbContextOptionsLazyQueryHookResult = ReturnType<typeof useRgbContextOptionsLazyQuery>;
 export type RgbContextOptionsQueryResult = Apollo.QueryResult<RgbContextOptionsQuery, RgbContextOptionsQueryVariables>;
+export const GetSpecimenDocument = gql`
+    query GetSpecimen($id: ID!) {
+  specimen(id: $id) {
+    ...Specimen
+  }
+}
+    ${SpecimenFragmentDoc}`;
+
+/**
+ * __useGetSpecimenQuery__
+ *
+ * To run a query within a React component, call `useGetSpecimenQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSpecimenQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSpecimenQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetSpecimenQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetSpecimenQuery, GetSpecimenQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetSpecimenQuery, GetSpecimenQueryVariables>(GetSpecimenDocument, options);
+      }
+export function useGetSpecimenLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetSpecimenQuery, GetSpecimenQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetSpecimenQuery, GetSpecimenQueryVariables>(GetSpecimenDocument, options);
+        }
+export type GetSpecimenQueryHookResult = ReturnType<typeof useGetSpecimenQuery>;
+export type GetSpecimenLazyQueryHookResult = ReturnType<typeof useGetSpecimenLazyQuery>;
+export type GetSpecimenQueryResult = Apollo.QueryResult<GetSpecimenQuery, GetSpecimenQueryVariables>;
+export const ListSpecimensDocument = gql`
+    query ListSpecimens {
+  specimens {
+    ...Specimen
+  }
+}
+    ${SpecimenFragmentDoc}`;
+
+/**
+ * __useListSpecimensQuery__
+ *
+ * To run a query within a React component, call `useListSpecimensQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListSpecimensQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListSpecimensQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useListSpecimensQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListSpecimensQuery, ListSpecimensQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListSpecimensQuery, ListSpecimensQueryVariables>(ListSpecimensDocument, options);
+      }
+export function useListSpecimensLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListSpecimensQuery, ListSpecimensQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListSpecimensQuery, ListSpecimensQueryVariables>(ListSpecimensDocument, options);
+        }
+export type ListSpecimensQueryHookResult = ReturnType<typeof useListSpecimensQuery>;
+export type ListSpecimensLazyQueryHookResult = ReturnType<typeof useListSpecimensLazyQuery>;
+export type ListSpecimensQueryResult = Apollo.QueryResult<ListSpecimensQuery, ListSpecimensQueryVariables>;
 export const GetStageDocument = gql`
     query GetStage($id: ID!) {
   stage(id: $id) {

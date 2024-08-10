@@ -30,6 +30,7 @@ export const DoNodeForm = ({ node }: { node: DetailNodeFragment }) => {
 
   const form = usePortForm({
     ports: node?.args || [],
+    overwrites: latestAssignation?.args,
   });
 
   const description = useNodeDescription({
@@ -100,22 +101,18 @@ export const DoNodeForm = ({ node }: { node: DetailNodeFragment }) => {
             </ResizablePanel>
             <ResizableHandle />
             <ResizablePanel
-              className="max-w-[80%]"
+              className="w-full justify-center items-center flex"
               maxSize={80}
               defaultSize={80}
             >
               {yieldEvent ? (
-                <div className="max-w-[80%]">
-                  <ReturnsContainer
-                    registry={registry}
-                    ports={node.returns}
-                    values={yieldEvent?.returns}
-                  ></ReturnsContainer>
-                </div>
+                <ReturnsContainer
+                  registry={registry}
+                  ports={node.returns}
+                  values={yieldEvent?.returns}
+                ></ReturnsContainer>
               ) : (
-                <Card className="col-span-11">
-                  Create a new assignation to see the results
-                </Card>
+                <Card className="p-3">Please create to see the plot</Card>
               )}
 
               {errorEvent && (

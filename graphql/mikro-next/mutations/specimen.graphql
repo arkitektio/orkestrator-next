@@ -1,0 +1,5 @@
+mutation CreateSpecimen($entity: ID!, $protocol: ID!) {
+  createSpecimen(input: { entity: $entity, protocol: $protocol }) {
+    ...Specimen
+  }
+}

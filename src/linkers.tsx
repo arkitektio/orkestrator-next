@@ -55,6 +55,15 @@ export const MikroMetric = buildSmart("@mikro/metric", "mikro/metrics");
 export const MikroEntity = buildSmart("@mikro/entitry", "mikro/entities");
 
 export const MikroDataset = buildSmart("@mikro/dataset", "mikro/datasets");
+export const MikroExperiment = buildSmart(
+  "@mikro/experiment",
+  "mikro/experiments",
+);
+export const MikroProtocol = buildSmart("@mikro/protocol", "mikro/protocols");
+export const MikroProtocolStep = buildSmart(
+  "@mikro/protocolstep",
+  "mikro/protocolsteps",
+);
 
 export const OmeroArkProject = buildSmart(
   "@omero-ark/project",

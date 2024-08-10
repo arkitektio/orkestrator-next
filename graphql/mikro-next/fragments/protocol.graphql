@@ -6,4 +6,27 @@ fragment Protocol on Protocol {
     name
     description
   }
+  steps {
+    id
+    name
+    t 
+    kind {
+      label
+    }
+    reagents {
+      id
+      name
+      metricMap
+    }
+  }
+}
+
+
+fragment ListProtocol on Protocol {
+  id
+  name
+  experiment {
+    id
+    name
+  }
 }

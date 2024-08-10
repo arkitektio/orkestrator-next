@@ -1,0 +1,5 @@
+mutation CreateExperiment($name: String!, $description: String) {
+  createExperiment(input: { name: $name, description: $description }) {
+    ...Experiment
+  }
+}

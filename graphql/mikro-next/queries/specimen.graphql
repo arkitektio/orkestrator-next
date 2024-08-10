@@ -1,0 +1,12 @@
+query GetSpecimen($id: ID!) {
+  specimen(id: $id) {
+    ...Specimen
+  }
+}
+
+
+query ListSpecimens {
+  specimens {
+    ...Specimen
+  }
+}

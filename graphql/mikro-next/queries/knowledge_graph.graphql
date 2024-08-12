@@ -1,0 +1,5 @@
+query GetKnowledgeGraph($ontologies: [ID!]) {
+  knowledgeGraph(ontologies: $ontologies) {
+    ...KnowledgeGraph
+  }
+}

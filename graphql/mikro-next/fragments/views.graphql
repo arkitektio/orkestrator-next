@@ -110,7 +110,16 @@ fragment SpecimenView on SpecimenView {
     reagents {
       id
       name
-      metricMap
+      metrics {
+        metric {
+          id
+          kind {
+            label
+          }
+          dataKind
+        }
+        value
+      }
     }
   }
 }

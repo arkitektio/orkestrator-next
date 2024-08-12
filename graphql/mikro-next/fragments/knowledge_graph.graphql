@@ -1,0 +1,22 @@
+
+
+fragment KnowledgeGraph on KnowledgeGraph {
+    nodes {
+        id 
+        label
+        metrics {
+            kind
+            dataKind
+        }
+    }
+    edges {
+        id
+        label
+        source 
+        target
+        metrics {
+            kind
+            dataKind
+        }
+    }
+}

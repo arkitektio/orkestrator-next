@@ -3,7 +3,15 @@ import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { DroppableNavLink } from "@/components/ui/link";
 import { usePrimaryReturnNodesQuery } from "@/rekuest/api/graphql";
 import { CubeIcon } from "@radix-ui/react-icons";
-import { File, Folder, Home, Image, SparkleIcon, Wallet } from "lucide-react";
+import {
+  File,
+  Folder,
+  GitBranchPlusIcon,
+  Home,
+  Image,
+  SparkleIcon,
+  Wallet,
+} from "lucide-react";
 import * as React from "react";
 import { FaChartArea } from "react-icons/fa";
 import {
@@ -39,6 +47,13 @@ export const NavigationPane = (props: {}) => {
           >
             <Home className="h-4 w-4" />
             Dashboard
+          </DroppableNavLink>
+          <DroppableNavLink
+            to="/mikro/knowledge"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <GitBranchPlusIcon className="h-4 w-4" />
+            Knowledge Graph
           </DroppableNavLink>
         </div>
 

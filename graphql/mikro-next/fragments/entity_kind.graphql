@@ -5,4 +5,10 @@ fragment EntityKind on EntityKind {
     id
     name
   }
+  description
+  purl
+  entities(pagination: {limit: 4}) {
+    id
+    name
+  }
 }

@@ -13,9 +13,12 @@ import FilesPage from "./pages/FilesPage";
 import HomePage from "./pages/HomePage";
 import ImagePage from "./pages/ImagePage";
 import ImagesPage from "./pages/ImagesPage";
-import KnowledgePage from "./pages/KnowledgePage";
+import OntologiesPage from "./pages/OntologiesPage";
+import KnowledgePage from "./pages/OntologyPage";
 import PlotterPage from "./pages/PlotterPage";
 import ProtocolPage from "./pages/ProtocolPage";
+import ProtocolStepPage from "./pages/ProtocolStepPage";
+import ProtocolStepsPage from "./pages/ProtocolStepsPage";
 import RenderedPlotPage from "./pages/RenderedPlotPage";
 import RenderedPlotsPage from "./pages/RenderedPlotsPage";
 import RenderTreePage from "./pages/RenderTreePage";
@@ -42,8 +45,11 @@ export const MikroNextModule: React.FC<Props> = (props) => {
           <Route path="tables" element={<TablesPage />} />
           <Route path="experiments" element={<ExperimentsPage />} />
           <Route path="experiments/:id" element={<ExperimentPage />} />
-          <Route path="knowledge" element={<KnowledgePage />} />
+          <Route path="ontologies/:id" element={<KnowledgePage />} />
+          <Route path="ontologies" element={<OntologiesPage />} />
           <Route path="protocols/:id" element={<ProtocolPage />} />
+          <Route path="protocolsteps/:id" element={<ProtocolStepPage />} />
+          <Route path="protocolsteps" element={<ProtocolStepsPage />} />
           <Route path="stages/:id" element={<StagePage />} />
           <Route path="plotters/:id" element={<PlotterPage />} />
           <Route path="rendertrees/:id" element={<RenderTreePage />} />

@@ -1,0 +1,7 @@
+mutation CreateOntology($name: String!, $purl: String, $description: String) {
+  createOntology(
+    input: { name: $name, purl: $purl, description: $description }
+  ) {
+    ...Ontology
+  }
+}

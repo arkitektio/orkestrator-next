@@ -16,9 +16,10 @@ export const ModelPageLayout = ({
   children,
   identifier,
   object,
+  actions,
 }: ModelPageLayoutProps) => {
   return (
-    <PageLayout title={title} sidebars={<>{sidebars}</>}>
+    <PageLayout title={title} sidebars={<>{sidebars}</>} actions={actions}>
       {children}
     </PageLayout>
   );

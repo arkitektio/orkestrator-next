@@ -31,7 +31,7 @@ export const NavigationPane = (props: {}) => {
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <Home className="h-4 w-4" />
-            Dashboard
+            Home
           </DroppableNavLink>
         </div>
 
@@ -52,6 +52,13 @@ export const NavigationPane = (props: {}) => {
           >
             <FunctionSquare className="h-4 w-4" />
             Nodes
+          </DroppableNavLink>
+          <DroppableNavLink
+            to="/rekuest"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <Home className="h-4 w-4" />
+            Dashboards
           </DroppableNavLink>
         </div>
         <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">

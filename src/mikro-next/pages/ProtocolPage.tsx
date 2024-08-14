@@ -11,7 +11,7 @@ import {
   TimelineTitle,
 } from "@/components/timeline/timeline";
 import { Badge } from "@/components/ui/badge";
-import { MikroExperiment, MikroImage, MikroProtocol } from "@/linkers";
+import { MikroImage, MikroProtocol } from "@/linkers";
 import { useGetProtocolQuery } from "../api/graphql";
 
 export type IRepresentationScreenProps = {};
@@ -25,7 +25,7 @@ export default asDetailQueryRoute(useGetProtocolQuery, ({ data }) => {
       sidebars={
         <MultiSidebar
           map={{
-            Comments: <MikroExperiment.Komments object={data.protocol.id} />,
+            Comments: <MikroProtocol.Komments object={data.protocol.id} />,
           }}
         />
       }
@@ -35,21 +35,21 @@ export default asDetailQueryRoute(useGetProtocolQuery, ({ data }) => {
           {data.protocol.description}
         </div>
         <Timeline className="w-full">
-          {data?.protocol.steps.map((e) => (
+          {data?.protocol.mappings.map((e) => (
             <TimelineItem>
               <TimelineConnector />
               <TimelineHeader>
                 <TimelineIcon />
                 <TimelineTitle>
-                  {e.kind.label}{" "}
+                  {e.step.kind.label}{" "}
                   <i className="text-muted-foreground mr-2"> t = {e.t} </i>
                 </TimelineTitle>
               </TimelineHeader>
               <TimelineContent>
-                <TimelineDescription>{e.description}</TimelineDescription>
+                <TimelineDescription>{e.step.description}</TimelineDescription>
 
                 <div className="flex flex-col mt-1">
-                  {e.reagents.map((reagent) => (
+                  {e.step.reagents.map((reagent) => (
                     <Badge className="flex flex-row ">
                       <div className="flex-1 mr-1">{reagent.name}</div>
                       {reagent.metrics.map((m) => (
@@ -62,7 +62,7 @@ export default asDetailQueryRoute(useGetProtocolQuery, ({ data }) => {
                 </div>
 
                 <div className="flex flex-col">
-                  {e.views.map((view) => (
+                  {e.step.views.map((view) => (
                     <div className="flex flex-row">
                       <MikroImage.DetailLink
                         object={view.image.id}

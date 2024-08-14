@@ -4,6 +4,12 @@ query GetOntology($id: ID!) {
   }
 }
 
+query ListOntologies {
+  ontologies {
+    ...ListOntology
+  }
+}
+
 query SearchOntologies($search: String, $values: [ID!]) {
   options: ontologies(
     filters: { search: $search, ids: $values }

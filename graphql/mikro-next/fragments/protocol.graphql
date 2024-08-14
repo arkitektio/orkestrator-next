@@ -7,8 +7,11 @@ fragment Protocol on Protocol {
     description
   }
   description
-  steps {
+  mappings {
+    t 
+    step {
     ...ListProtocolStep
+    }
   }
 }
 

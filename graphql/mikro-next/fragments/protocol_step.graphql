@@ -1,8 +1,6 @@
 fragment ProtocolStep on ProtocolStep {
-
   id
   name
-  t 
   kind {
     label
   }
@@ -10,7 +8,36 @@ fragment ProtocolStep on ProtocolStep {
   reagents {
     id
     name
-    metricMap
+    metrics {
+      metric {
+        id
+        kind {
+          label
+        }
+        dataKind
+      }
+      value
+    }
+  }
+  mappings {
+    t
+    protocol {
+      id
+      name
+    }
+  }
+  views {
+    id 
+    specimen {
+      id
+      entity {
+        id
+      }
+    }
+    image {
+      id
+      name
+    }
   }
 }
 
@@ -18,11 +45,17 @@ fragment ProtocolStep on ProtocolStep {
 fragment ListProtocolStep on ProtocolStep {
   id
   name
-  t 
   kind {
     label
   }
   description
+  mappings {
+    t
+    protocol {
+      id
+      name
+    }
+  }
   reagents {
     id
     name

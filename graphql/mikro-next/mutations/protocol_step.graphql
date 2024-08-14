@@ -1,5 +1,5 @@
-mutation CreateProtocolStep($name: String!, $experiment: ID!) {
-  createProtocol(input: { name: $name, experiment: $experiment }) {
-    ...Protocol
+mutation CreateProtocolStep($name: String!, $description: String!, $kind: ID!) {
+  createProtocolStep(input: { name: $name, description: $description, kind: $kind }) {
+    ...ProtocolStep
   }
 }

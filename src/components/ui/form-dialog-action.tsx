@@ -58,10 +58,15 @@ export const FormDialogAction: React.FC<FormDialogActionProps> = ({
 
       const [promise, defered] = createDefered();
       setDefered(defered);
-
-      let x = await promise;
-      setDefered(undefined);
-      return x;
+      try {
+        let x = await promise;
+        setDefered(undefined);
+        return x;
+      } catch (e) {
+        setDefered(undefined);
+        alert(e);
+        throw e;
+      }
     },
     ...props,
   });

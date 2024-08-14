@@ -2,3 +2,11 @@ fragment Ontology on Ontology {
   id
   name
 }
+
+
+fragment ListOntology on Ontology {
+  id
+  name
+  description
+  purl
+}

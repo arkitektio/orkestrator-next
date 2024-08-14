@@ -13,6 +13,12 @@ fragment Entity on Entity {
     id
     name
   }
+  specimens {
+    id
+    protocol {
+      id
+    }
+  }
 }
 
 

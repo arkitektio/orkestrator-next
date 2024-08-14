@@ -26,19 +26,20 @@ import FileCard from "../components/cards/FileCard";
 import ImageMetricCard from "../components/cards/ImageMetricCard";
 import LabelViewCard from "../components/cards/LabelViewCard";
 import OpticsViewCard from "../components/cards/OpticsViewCard";
-import SpecimenViewCard from "../components/cards/SpecimenViewCard";
 import RGBViewCard from "../components/cards/RGBViewCard";
+import RoiCard from "../components/cards/RoiCard";
+import SpecimenViewCard from "../components/cards/SpecimenViewCard";
 import TransformationViewCard from "../components/cards/TransformationViewCard";
 import WellPositionViewCard from "../components/cards/WellPositionViewCard";
 import SnapshotPanel from "../components/panels/SnapshotPanel";
 import VideoPanel from "../components/panels/VideoPanel";
 import { TwoDViewController } from "../components/render/Controller";
 import { TwoDRGBThreeRenderDetail } from "../components/render/TwoDThree";
+import { VivRenderer } from "../components/render/VivRenderer";
 import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { PinToggle } from "../components/ui/PinToggle";
 import { AddImageViewForm } from "../forms/AddImageViewForm";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
-import RoiCard from "../components/cards/RoiCard";
 
 export type IRepresentationScreenProps = {};
 
@@ -98,6 +99,7 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                         {data?.image.renders.length == 0 && (
                           <Card className="w-full h-full items-center flex justify-center flex-col">
                             No render yet
+                            <VivRenderer context={context} rois={[]} />
                             <p className="text-xs">How do i render an Image?</p>
                           </Card>
                         )}

@@ -1,5 +1,5 @@
-query GetKnowledgeGraph($ontologies: [ID!]) {
-  knowledgeGraph(ontologies: $ontologies) {
+query GetKnowledgeGraph($id: ID!) {
+  knowledgeGraph(id: $id) {
     ...KnowledgeGraph
   }
 }

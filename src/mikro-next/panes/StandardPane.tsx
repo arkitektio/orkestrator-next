@@ -49,11 +49,18 @@ export const NavigationPane = (props: {}) => {
             Dashboard
           </DroppableNavLink>
           <DroppableNavLink
-            to="/mikro/knowledge"
+            to="/mikro/ontologies"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <GitBranchPlusIcon className="h-4 w-4" />
-            Knowledge Graph
+            Ontologies
+          </DroppableNavLink>
+          <DroppableNavLink
+            to="/mikro/protocolsteps"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <GitBranchPlusIcon className="h-4 w-4" />
+            Protocol Steps
           </DroppableNavLink>
         </div>
 

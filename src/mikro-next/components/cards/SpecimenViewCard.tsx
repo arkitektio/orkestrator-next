@@ -19,10 +19,10 @@ const TheCard = ({ view, mates }: Props) => {
             {view.step?.kind.label}
             <div className="flex flex-col mt-1">
               {view?.step?.reagents.map((reagent) => (
-                <Badge className="flex flex-row ">
+                <Badge className="flex flex-row bg-black text-white">
                   <div className="flex-1 mr-1">{reagent.name}</div>
                   {reagent.metrics.map((m) => (
-                    <Badge className="bg-black text-white">
+                    <Badge className="bg-gray-900 text-white">
                       {m.metric.kind.label}:{m.value}
                     </Badge>
                   ))}

@@ -1,0 +1,12 @@
+query GetProtocolStep($id: ID!) {
+  protocolStep(id: $id) {
+    ...ProtocolStep
+  }
+}
+
+
+query ListProtocolSteps($filters: ProtocolStepFilter, $pagination: OffsetPaginationInput) {
+  protocolSteps(filters: $filters, pagination: $pagination) {
+    ...ListProtocolStep
+  }
+}

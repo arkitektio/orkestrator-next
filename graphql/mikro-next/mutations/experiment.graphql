@@ -3,3 +3,10 @@ mutation CreateExperiment($name: String!, $description: String) {
     ...Experiment
   }
 }
+
+
+mutation UpdateExperiment($input: UpdateExperimentInput!) {
+  updateExperiment(input: $input) {
+    ...Experiment
+  }
+}

@@ -5,7 +5,6 @@ import { ListRender } from "@/components/layout/ListRender";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import {
   DetailPane,
   DetailPaneContent,
@@ -31,10 +30,7 @@ import RoiCard from "../components/cards/RoiCard";
 import SpecimenViewCard from "../components/cards/SpecimenViewCard";
 import TransformationViewCard from "../components/cards/TransformationViewCard";
 import WellPositionViewCard from "../components/cards/WellPositionViewCard";
-import SnapshotPanel from "../components/panels/SnapshotPanel";
-import VideoPanel from "../components/panels/VideoPanel";
 import { TwoDViewController } from "../components/render/Controller";
-import { TwoDRGBThreeRenderDetail } from "../components/render/TwoDThree";
 import { VivRenderer } from "../components/render/VivRenderer";
 import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { PinToggle } from "../components/ui/PinToggle";
@@ -94,31 +90,9 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                     value={"context" + context.id}
                     className={"h-full w-full mt-0 rounded rounded-md relative"}
                   >
-                    <Dialog>
-                      <DialogTrigger className="w-full h-full">
-                        {data?.image.renders.length == 0 && (
-                          <Card className="w-full h-full items-center flex justify-center flex-col">
-                            No render yet
-                            <VivRenderer context={context} rois={[]} />
-                            <p className="text-xs">How do i render an Image?</p>
-                          </Card>
-                        )}
-                        {data?.image?.renders?.map((x) => {
-                          if (x.__typename == "Snapshot") {
-                            return <SnapshotPanel image={x} />;
-                          }
-                          if (x.__typename == "Video") {
-                            return <VideoPanel video={x} />;
-                          }
-                        })}
-                      </DialogTrigger>
-                      <DialogContent className="p-3 min-w-[100vw] min-h-[100vh] max-w-[100vw] max-h-[100vh] border-0 bg-black text-white">
-                        <TwoDRGBThreeRenderDetail
-                          context={context}
-                          rois={data.image.rois}
-                        />
-                      </DialogContent>
-                    </Dialog>
+                    <Card className="w-full h-full items-center flex justify-center flex-col">
+                      <VivRenderer context={context} rois={[]} />
+                    </Card>
                   </TabsContent>
                 ))}
               </AspectRatio>

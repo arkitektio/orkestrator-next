@@ -42,7 +42,7 @@ export type IRepresentationScreenProps = {};
 export const dimensionOrder = ["c", "t", "z", "y", "x"];
 
 export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
-  const x = data?.image?.store?.shape?.at(3);
+  const x = data?.image?.store?.shape?.at(4);
   const y = data?.image?.store?.shape?.at(4);
   const z = data?.image?.store?.shape?.at(2) || 1;
   const t = data?.image?.store?.shape?.at(1) || 1;

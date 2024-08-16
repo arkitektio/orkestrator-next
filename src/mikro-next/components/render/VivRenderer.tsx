@@ -277,6 +277,7 @@ export const VivRenderer = ({
                     ? new AdditiveColormapExtension()
                     : new LensExtension(),
                 ]}
+                hoverHooks={}
                 colormap={singleChannel ? "viridis" : undefined}
                 width={bounds.width}
                 colors={context.views.map(mapToRgbColor)}

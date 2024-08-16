@@ -75,29 +75,8 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
           id={data?.image?.id}
           className="relative"
         >
-          <div className="flex @2xl:flex-row-reverse flex-col rounded-md gap-4 mt-2">
-            <div className="flex-1  overflow-hidden ">
-              <AspectRatio
-                ratio={aspectRatio}
-                className=" group overflow-hidden rounded rounded-md shadow shadow-xl relative"
-              >
-                <div className="absolute top-0 right-0">
-                  <TwoDViewController zSize={z} tSize={t} cSize={c} />
-                </div>
-                {data?.image?.rgbContexts?.map((context, index) => (
-                  <TabsContent
-                    key={index}
-                    value={"context" + context.id}
-                    className={"h-full w-full mt-0 rounded rounded-md relative"}
-                  >
-                    <Card className="w-full h-full items-center flex justify-center flex-col">
-                      <VivRenderer context={context} rois={[]} />
-                    </Card>
-                  </TabsContent>
-                ))}
-              </AspectRatio>
-            </div>
-            <DetailPane className="flex-1 @container ">
+          <div className="grid grid-cols-12 grid-reverse flex-col rounded-md gap-4 mt-2">
+            <DetailPane className="col-span-3 @container ">
               <DetailPaneHeader>
                 <DetailPaneTitle
                   actions={
@@ -246,6 +225,27 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                 </ListRender>
               </DetailPaneContent>
             </DetailPane>
+            <div className="col-span-9 overflow-hidden ">
+              <AspectRatio
+                ratio={aspectRatio}
+                className=" group overflow-hidden rounded rounded-md shadow shadow-xl relative"
+              >
+                <div className="absolute top-0 right-0">
+                  <TwoDViewController zSize={z} tSize={t} cSize={c} />
+                </div>
+                {data?.image?.rgbContexts?.map((context, index) => (
+                  <TabsContent
+                    key={index}
+                    value={"context" + context.id}
+                    className={"h-full w-full mt-0 rounded rounded-md relative"}
+                  >
+                    <Card className="w-full h-full items-center flex justify-center flex-col">
+                      <VivRenderer context={context} rois={[]} />
+                    </Card>
+                  </TabsContent>
+                ))}
+              </AspectRatio>
+            </div>
           </div>
         </Tabs>
       </TwoDViewProvider>

@@ -8,6 +8,15 @@ fragment RGBContext on RGBContext {
     store {
       ...ZarrStore
     }
+    derivedScaleViews {
+      id
+      image {
+        id
+        store {
+          ...ZarrStore
+        }
+      }
+    }
   }
   pinned
   name
@@ -22,6 +31,15 @@ fragment ListRGBContext on RGBContext {
     id
     store {
       ...ZarrStore
+    }
+    derivedScaleViews {
+      id
+      image {
+        id
+        store {
+          ...ZarrStore
+        }
+      }
     }
   }
   id

@@ -4,9 +4,21 @@ query GetProtocolStep($id: ID!) {
   }
 }
 
-
-query ListProtocolSteps($filters: ProtocolStepFilter, $pagination: OffsetPaginationInput) {
+query ListProtocolSteps(
+  $filters: ProtocolStepFilter
+  $pagination: OffsetPaginationInput
+) {
   protocolSteps(filters: $filters, pagination: $pagination) {
     ...ListProtocolStep
+  }
+}
+
+query SearchProtocolSteps($search: String, $values: [ID!]) {
+  options: protocolSteps(
+    filters: { search: $search, ids: $values }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: name
   }
 }

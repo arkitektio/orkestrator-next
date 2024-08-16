@@ -27,7 +27,7 @@ fragment ProtocolStep on ProtocolStep {
     }
   }
   views {
-    id 
+    id
     specimen {
       id
       entity {
@@ -39,8 +39,8 @@ fragment ProtocolStep on ProtocolStep {
       name
     }
   }
+  plateChildren
 }
-
 
 fragment ListProtocolStep on ProtocolStep {
   id
@@ -71,7 +71,7 @@ fragment ListProtocolStep on ProtocolStep {
     }
   }
   views {
-    id 
+    id
     specimen {
       id
       entity {

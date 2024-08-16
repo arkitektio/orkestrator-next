@@ -1,5 +1,27 @@
 mutation CreateProtocolStep($name: String!, $description: String!, $kind: ID!) {
-  createProtocolStep(input: { name: $name, description: $description, kind: $kind }) {
+  createProtocolStep(
+    input: { name: $name, description: $description, kind: $kind }
+  ) {
+    ...ProtocolStep
+  }
+}
+
+mutation UpdateProtocolStep(
+  $id: ID!
+  $name: String
+  $description: String
+  $kind: ID
+  $plateChildren: [PlateChildInput!]
+) {
+  updateProtocolStep(
+    input: {
+      id: $id
+      name: $name
+      description: $description
+      kind: $kind
+      plateChildren: $plateChildren
+    }
+  ) {
     ...ProtocolStep
   }
 }

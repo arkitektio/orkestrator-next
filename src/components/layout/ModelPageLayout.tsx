@@ -1,5 +1,5 @@
 import { Identifier } from "@/types";
-import { PageLayout } from "./PageLayout";
+import { PageLayout, PageVariant } from "./PageLayout";
 
 export type ModelPageLayoutProps = {
   children: React.ReactNode;
@@ -8,6 +8,7 @@ export type ModelPageLayoutProps = {
   title?: string;
   sidebars?: React.ReactNode;
   actions?: React.ReactNode;
+  variant?: PageVariant;
 };
 
 export const ModelPageLayout = ({
@@ -16,10 +17,16 @@ export const ModelPageLayout = ({
   children,
   identifier,
   object,
+  variant,
   actions,
 }: ModelPageLayoutProps) => {
   return (
-    <PageLayout title={title} sidebars={<>{sidebars}</>} actions={actions}>
+    <PageLayout
+      title={title}
+      sidebars={<>{sidebars}</>}
+      actions={actions}
+      variant={variant}
+    >
       {children}
     </PageLayout>
   );

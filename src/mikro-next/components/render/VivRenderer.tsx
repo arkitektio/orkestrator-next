@@ -9,6 +9,8 @@ import {
   RequestAccessMutation,
   RequestAccessMutationVariables,
   RgbViewFragment,
+  ZarrStore,
+  ZarrStoreFragment,
 } from "@/mikro-next/api/graphql";
 import { S3Store } from "@/mikro-next/providers/xarray/store";
 import { ApolloClient, NormalizedCache } from "@apollo/client";
@@ -30,6 +32,9 @@ import { BiCuboid } from "react-icons/bi";
 import useMeasure from "react-use-measure";
 import { openGroup, ZarrArray } from "zarr";
 import { useViewRenderFunction } from "./hooks/useViewRender";
+import { LRUIndexedDBCache } from "./VivCache";
+import { VivS3Store } from "./VivStore";
+import { cn } from "@/lib/utils";
 
 export function isInterleaved(shape: number[]) {
   const lastDimSize = shape[shape.length - 1];
@@ -47,6 +52,24 @@ export function guessTileSize(arr: ZarrArray) {
   // deck.gl requirement for power-of-two tile size.
   return prevPowerOf2(size);
 }
+
+const cache = new LRUIndexedDBCache("s3-cache-db", "items", 1000);
+
+const createPixelSource = async (
+  image: { id: string; store: ZarrStoreFragment },
+  endpointUrl: string,
+  aws: AwsClient,
+  cache: LRUIndexedDBCache,
+) => {
+  let path = endpointUrl + "/" + image.store.bucket + "/" + image.store.key;
+
+  let store = new VivS3Store(path, aws, cache);
+  let group = await openGroup(store, "", "r");
+  let array = (await group.getItem("data")) as ZarrArray;
+  let labels = ["c", "t", "z", "y", "x"];
+  const tileSize = guessTileSize(array);
+  return new ZarrPixelSource(array, labels, tileSize);
+};
 
 const mikroLoader = async (
   client: ApolloClient<NormalizedCache>,
@@ -73,13 +96,6 @@ const mikroLoader = async (
 
   let credentials = data.requestAccess;
 
-  let path =
-    endpoint_url +
-    "/" +
-    context.image.store.bucket +
-    "/" +
-    context.image.store.key;
-
   let aws = new AwsClient({
     accessKeyId: credentials.accessKey,
     secretAccessKey: credentials.secretKey,
@@ -87,18 +103,25 @@ const mikroLoader = async (
     service: "s3",
   });
 
-  console.log(await aws.fetch(path + "/.zattrs"));
+  let sources: ZarrPixelSource<any>[] = [];
 
-  let store = new S3Store(path, aws);
+  let primary = await createPixelSource(
+    context.image,
+    endpoint_url,
+    aws,
+    cache,
+  );
 
-  let group = await openGroup(store, "", "r");
-  let array = (await group.getItem("data")) as ZarrArray;
+  sources.push(primary);
 
-  let labels = ["c", "t", "z", "y", "x"];
+  for (let view of context.image.derivedScaleViews) {
+    console.log("Adding view", view);
+    let source = await createPixelSource(view.image, endpoint_url, aws, cache);
+    sources.push(source);
+  }
 
-  const tileSize = guessTileSize(array);
   return {
-    data: [new ZarrPixelSource(array, labels, tileSize)],
+    data: sources,
     metadata: {},
   };
 };
@@ -127,26 +150,6 @@ export function get3DExtension(colormap, renderingMode) {
   throw new Error(`${renderingMode} rendering mode not supported`);
 }
 
-const newContrastLimits = [
-  [0, 255],
-  [0, 255],
-  [0, 255],
-];
-const newDomains = [
-  [0, 255],
-  [0, 255],
-  [0, 255],
-];
-const newColors = [
-  [255, 0, 0],
-  [0, 255, 0],
-  [0, 0, 255],
-  [255, 255, 0],
-  [255, 0, 255],
-  [0, 255, 255],
-  [255, 255, 255],
-];
-
 const mapToRgbColor = (view: RgbViewFragment) => {
   switch (view.colorMap) {
     case ColorMap.Red:
@@ -156,7 +159,7 @@ const mapToRgbColor = (view: RgbViewFragment) => {
     case ColorMap.Blue:
       return [0, 0, 255];
     default:
-      return view.baseColor || [255, 255, 255];
+      return view.baseColor.slice(0, 3) || [255, 255, 255];
   }
 };
 
@@ -193,6 +196,11 @@ const dtypeToMax = (
   }
 };
 
+const isImageRenderable = (image: { store: ZarrStoreFragment }) => {
+  let shape_size = (image.store?.shape || []).reduce((a, b) => a * b, 1);
+  console.log("shape_size", shape_size);
+  return shape_size < 1000 * 1000 * 200;
+};
 export function getPhysicalSizeScalingMatrix(x, y, z) {
   const ratio = [x, y, z];
   return new Matrix4().scale(ratio);
@@ -200,16 +208,19 @@ export function getPhysicalSizeScalingMatrix(x, y, z) {
 
 export const VivRenderer = ({
   context,
+  modelMatrix,
 }: {
   context: ListRgbContextFragment;
+  modelMatrix?: Matrix4;
 }) => {
-  const { renderView } = useViewRenderFunction();
-
   const client = useMikro();
   const fakts = Arkitekt.useFakts();
 
   const [threeD, setThreeD] = useState(false);
   const [source, setSource] = useState<ZarrPixelSource<any>[] | null>(null);
+  const [resolution, setResolution] = useState(
+    Math.max(0, context.image.derivedScaleViews.length),
+  ); // 0 is the highest resolution
 
   const [t, setT] = useState(0);
   const [z, setZ] = useState(0);
@@ -241,7 +252,10 @@ export const VivRenderer = ({
 
   return (
     <>
-      <div className="w-full h-full relative" ref={ref}>
+      <div
+        className="w-full h-full relative bg-black overflow-hidden"
+        ref={ref}
+      >
         {source != null && bounds.width > 0 && (
           <>
             {threeD ? (
@@ -251,12 +265,18 @@ export const VivRenderer = ({
                 channelsVisible={context.views.map((v) => v.active)}
                 height={bounds.height}
                 selections={selections}
-                modelMatrix={getPhysicalSizeScalingMatrix(1, 1, 3)}
+                modelMatrix={
+                  modelMatrix || getPhysicalSizeScalingMatrix(1, 1, 1)
+                }
                 overview={true}
+                resolution={resolution}
                 overviewOn={true}
-                colormap={singleChannel ? "viridis" : "rgb"}
+                colormap={singleChannel ? "viridis" : undefined}
                 extensions={[
-                  get3DExtension("viridis", RENDERING_MODES.ADDITIVE),
+                  get3DExtension(
+                    singleChannel ? "viridis" : undefined,
+                    RENDERING_MODES.ADDITIVE,
+                  ),
                 ]}
                 width={bounds.width}
                 colors={context.views.map(mapToRgbColor)}
@@ -270,60 +290,95 @@ export const VivRenderer = ({
                 height={bounds.height}
                 selections={selections}
                 overview={true}
-                modelMatrix={getPhysicalSizeScalingMatrix(1, 1, 3)}
+                modelMatrix={
+                  modelMatrix || getPhysicalSizeScalingMatrix(1, 1, 1)
+                }
                 overviewOn={true}
                 extensions={[
                   singleChannel
                     ? new AdditiveColormapExtension()
                     : new LensExtension(),
                 ]}
-                hoverHooks={}
                 colormap={singleChannel ? "viridis" : undefined}
                 width={bounds.width}
                 colors={context.views.map(mapToRgbColor)}
                 viewStates={[viewState]}
+                onViewportLoad={(viewport) => {
+                  console.log("viewport", viewport);
+                }}
               />
             )}
           </>
         )}
-        <div className="absolute top-0 right-0 p-2 w-full">
+        <div className="absolute bottom-0 right-0 p-3 w-full flex flex-row gap-2">
           <Button
             variant="outline"
             size={"icon"}
             onClick={() => setThreeD(!threeD)}
-            className=" w-6 h-6"
+            className="flex-initial  w-6 h-6 p-1"
           >
             {threeD ? <BiCuboid /> : <Layers />}
           </Button>
-          <div className="flex flex-col w-full">
-            {(context.image.store?.shape?.at(1) || 1) != 1 && (
-              <>
-                <Slider
-                  value={[t]}
-                  onValueChange={(s) => setT(s[0])}
-                  max={context.image.store?.shape?.at(1) || 1}
-                  className="mb-2 w-full"
-                />{" "}
-                {t}
-              </>
-            )}
-            {(context.image.store?.shape?.at(2) || 1) != 1 && !threeD && (
-              <>
-                <Slider
-                  value={[z]}
-                  onValueChange={(s) => setZ(s[0])}
-                  max={context.image.store?.shape?.at(2) || 1}
-                  className="mb-2 w-full"
-                />{" "}
-                {z}
-              </>
-            )}
-          </div>
+          {threeD && (
+            <div className="flex flex-initial">
+              {context.image.derivedScaleViews.length > 0 && (
+                <Button
+                  variant="outline"
+                  size={"icon"}
+                  onClick={() => setResolution(0)}
+                  className={cn(
+                    "w-6 h-6 p-2",
+                    resolution === 0 && "bg-primary",
+                  )}
+                  disabled={isImageRenderable(context.image) === false}
+                  aria-label="RAW"
+                >
+                  RAW
+                </Button>
+              )}
+
+              {context.image.derivedScaleViews.map((view, index) => (
+                <Button
+                  key={view.id}
+                  variant="outline"
+                  size={"icon"}
+                  onClick={() => setResolution(index + 1)}
+                  className={cn(
+                    "w-6 h-6 p-2",
+                    resolution === index + 1 && "bg-primary",
+                  )}
+                  disabled={isImageRenderable(view.image) === false}
+                >
+                  {view.id}
+                </Button>
+              ))}
+            </div>
+          )}
+
+          {(context.image.store?.shape?.at(1) || 1) != 1 && (
+            <>
+              <Slider
+                value={[t]}
+                onValueChange={(s) => setT(s[0])}
+                max={context.image.store?.shape?.at(1) || 1}
+                className="mb-2 flex-grow bg-black"
+              />{" "}
+              {t}
+            </>
+          )}
+          {(context.image.store?.shape?.at(2) || 1) != 1 && !threeD && (
+            <>
+              <Slider
+                value={[z]}
+                onValueChange={(s) => setZ(s[0])}
+                max={context.image.store?.shape?.at(2) || 1}
+                className="mb-2 flex-grow"
+              />{" "}
+              {z}
+            </>
+          )}
         </div>
       </div>
     </>
   );
 };
-function useMikroClient() {
-  throw new Error("Function not implemented.");
-}

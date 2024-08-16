@@ -48,24 +48,6 @@ mutation CreateRgbView(
   }
 }
 
-mutation CreateLabelView(
-  $image: ID!
-  $fluorophore: ID
-  $primaryAntibody: ID
-  $secondaryAntibody: ID
-) {
-  createLabelView(
-    input: {
-      image: $image
-      fluorophore: $fluorophore
-      primaryAntibody: $primaryAntibody
-      secondaryAntibody: $secondaryAntibody
-    }
-  ) {
-    ...LabelView
-  }
-}
-
 mutation CreateWellPositionView($input: WellPositionViewInput!) {
   createWellPositionView(input: $input) {
     ...WellPositionView
@@ -75,5 +57,11 @@ mutation CreateWellPositionView($input: WellPositionViewInput!) {
 mutation CreateContinousScanView($input: ContinousScanViewInput!) {
   createContinousScanView(input: $input) {
     ...ContinousScanView
+  }
+}
+
+mutation CreateSpecimenView($input: SpecimenViewInput!) {
+  createSpecimenView(input: $input) {
+    ...SpecimenView
   }
 }

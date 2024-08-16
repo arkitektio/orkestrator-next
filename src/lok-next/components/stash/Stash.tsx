@@ -263,7 +263,7 @@ export const Stash = () => {
     // Add ctrl s event listener to document
 
     const handleSave = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.key === "s") {
+      if (event.ctrlKey && event.key === "e") {
         event.preventDefault();
         setShow(true);
       }
@@ -280,7 +280,7 @@ export const Stash = () => {
     // Add ctrl s event listener to document
 
     const handleSave = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.key === "s") {
+      if (event.ctrlKey && event.key === "e") {
         event.preventDefault();
         setShow(false);
       }

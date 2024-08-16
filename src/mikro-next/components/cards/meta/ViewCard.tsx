@@ -8,8 +8,6 @@ export interface ViewCardProps extends ComponentProps<typeof Card> {
   view: ViewFragment;
 }
 export const ViewCard = ({ view, className, ...props }: ViewCardProps) => {
-  const { active, setWithMe, justMe } = useMatchedView(view);
-
   return (
     <Card
       data-viewactive={true}
@@ -17,7 +15,6 @@ export const ViewCard = ({ view, className, ...props }: ViewCardProps) => {
         "data-[viewactive=true]:border-accent data-[viewactive=false]:opacity-20 cursor-pointer @container ",
         className,
       )}
-      onClick={() => justMe()}
       {...props}
     />
   );

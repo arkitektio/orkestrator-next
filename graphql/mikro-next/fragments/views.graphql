@@ -104,9 +104,12 @@ fragment SpecimenView on SpecimenView {
     ...Specimen
   }
   step {
+    id
+    name
     kind {
       label
     }
+    description
     reagents {
       id
       name

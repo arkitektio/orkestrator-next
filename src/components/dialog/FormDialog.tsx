@@ -74,7 +74,7 @@ export const FormDialog = (props: {
     (e: any) => {
       console.log("error", e);
       setOpen(false);
-      props.onError?.(e);
+      props.onError ? props.onError(e) : alert("Error: " + e);
     },
     [setOpen, props.onError],
   );

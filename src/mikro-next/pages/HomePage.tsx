@@ -19,7 +19,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   return (
     <PageLayout actions={<></>} title="Data">
       <div className="flex flex-col w-full h-full">
-        <ImageList pagination={{ limit: 30 }} />
+        <ImageList pagination={{ limit: 30 }} filters={{ notDerived: true }} />
         <DatasetList pagination={{ limit: 30 }} />
         <StageList pagination={{ limit: 30 }} />
         <FileList pagination={{ limit: 30 }} />

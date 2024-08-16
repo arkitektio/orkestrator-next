@@ -15,6 +15,9 @@ import {
   ResizablePanelGroup,
 } from "../ui/resizable";
 import { Actionbar } from "./Actionbar";
+import { cn } from "@/lib/utils";
+
+export type PageVariant = "black" | "default";
 
 export type PageLayoutProps = {
   title: string | undefined;
@@ -22,6 +25,7 @@ export type PageLayoutProps = {
   sidebars?: React.ReactNode;
   actions?: React.ReactNode;
   pageActions?: React.ReactNode;
+  variant?: PageVariant;
 };
 
 export const PageLayout = ({
@@ -30,6 +34,7 @@ export const PageLayout = ({
   children,
   actions,
   pageActions,
+  variant = "default",
 }: PageLayoutProps) => {
   const [params, setParams] = useSearchParams({
     pageSidebar: "true",
@@ -60,8 +65,20 @@ export const PageLayout = ({
   return (
     <ResizablePanelGroup autoSaveId="page" direction="horizontal">
       <ResizablePanel className="" defaultSize={80}>
-        <div className="h-full w-full flex flex-col  relative">
-          <div className="h-16 flex-row flex justify-between flex-initial border-b dark:border-gray-700 px-2 py-2 items-center">
+        <div
+          className={cn(
+            "h-full w-full flex flex-col  relative",
+            variant == "default" ? "" : "bg-black text-gray-300",
+          )}
+        >
+          <div
+            className={cn(
+              "h-16 flex-row flex justify-between flex-initial border-b dark:border-gray-700 px-2 py-2 items-center",
+              variant == "default"
+                ? ""
+                : "border-0 bg-black bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ",
+            )}
+          >
             <div className="flex flex flex-col">
               <h1 className="scroll-m-20 text-2xl font-extrabold tracking-tight lg:text-2xl truncate">
                 {title}
@@ -106,7 +123,10 @@ export const PageLayout = ({
           <ResizablePanel
             minSize={10}
             defaultSize={20}
-            className="border-l-1 border bg-pane dark:border-gray-700 dark:bg-sidebar"
+            className={cn(
+              "border-l-1 border bg-pane dark:border-gray-700 dark:bg-sidebar",
+              variant == "default" ? "" : "border-0 bg-black",
+            )}
           >
             {sidebars}
           </ResizablePanel>

@@ -4,9 +4,18 @@ query GetSpecimen($id: ID!) {
   }
 }
 
-
 query ListSpecimens {
   specimens {
     ...Specimen
+  }
+}
+
+query SearchSpecimens($search: String, $values: [ID!]) {
+  options: specimens(
+    filters: { search: $search, ids: $values }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: label
   }
 }

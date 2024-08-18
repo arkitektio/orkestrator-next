@@ -6,6 +6,7 @@ import { Route, Routes } from "react-router";
 import DatasetPage from "./pages/DatasetPage";
 import DatasetsPage from "./pages/DatasetsPage";
 import EntitiesPage from "./pages/EntitiesPage";
+import EntityGraphPage from "./pages/EntityGraphPage";
 import ExperimentPage from "./pages/ExperimentPage";
 import ExperimentsPage from "./pages/ExperimentsPage";
 import FilePage from "./pages/FilePage";
@@ -41,6 +42,7 @@ export const MikroNextModule: React.FC<Props> = (props) => {
           <Route path="datasets" element={<DatasetsPage />} />
           <Route path="files" element={<FilesPage />} />
           <Route path="entities" element={<EntitiesPage />} />
+          <Route path="entities/:id" element={<EntityGraphPage />} />
           <Route path="files/:id" element={<FilePage />} />
           <Route path="tables" element={<TablesPage />} />
           <Route path="experiments" element={<ExperimentsPage />} />

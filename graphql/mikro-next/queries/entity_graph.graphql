@@ -1,0 +1,5 @@
+query GetEntityGraph($id: ID!) {
+  entityGraph(id: $id) {
+    ...EntityGraph
+  }
+}

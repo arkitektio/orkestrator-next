@@ -1,0 +1,26 @@
+
+
+fragment EntityGraph on EntityGraph {
+    nodes {
+        id 
+        label
+        metrics {
+            kind
+            dataKind
+            value
+        }
+        isRoot
+        subtitle
+    }
+    edges {
+        id
+        label
+        source 
+        target
+        metrics {
+            kind
+            dataKind
+            value
+        }
+    }
+}

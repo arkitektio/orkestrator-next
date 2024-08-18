@@ -8,25 +8,31 @@ import { useEffect, useRef, useState } from "react";
 import CytoscapeComponent from "react-cytoscapejs";
 import { useForm } from "react-hook-form";
 import {
-  GetKnowledgeGraphQuery,
-  useGetKnowledgeGraphQuery,
+  GetEntityGraphQuery,
+  useGetEntityGraphQuery,
   useSearchOntologiesLazyQuery,
 } from "../api/graphql";
-import { EntityKindCard } from "../components/entity/EntityKindCard";
+import { EntityCard } from "../components/entity/EntityCard";
+
+import { MikroEntity } from "@/linkers";
+import cise from "cytoscape-cise";
+import dagre from "cytoscape-dagre";
+import { useNavigate } from "react-router-dom";
 
 cytoscape.use(cola);
+cytoscape.use(cise);
+cytoscape.use(dagre);
 
-export const graphToElements: (graph: GetKnowledgeGraphQuery) => any = (
-  graph,
-) => {
+export const graphToElements: (graph: GetEntityGraphQuery) => any = (graph) => {
   return {
-    nodes: graph.knowledgeGraph.nodes.map((node) => ({
+    nodes: graph.entityGraph.nodes.map((node) => ({
       data: {
         id: node.id,
         label: node.label,
+        subtitle: node.subtitle,
       },
     })),
-    edges: graph.knowledgeGraph.edges.map((edge) => ({
+    edges: graph.entityGraph.edges.map((edge) => ({
       data: {
         source: edge.source,
         target: edge.target,
@@ -41,6 +47,7 @@ const nodeStyle = {
   width: "100px",
   height: "40px",
   label: "data(label)",
+
   backgroundColor: "#121E2B",
   "text-valign": "center",
   color: "#94A3B8",
@@ -51,22 +58,19 @@ const nodeStyle = {
 };
 
 export default asDetailQueryRoute(
-  useGetKnowledgeGraphQuery,
+  useGetEntityGraphQuery,
   ({ data, refetch }) => {
     const cy = useRef<cytoscape.Core | null>(null); // Reference to the Cytoscape instance
 
     const [selectedNode, setSelectedNode] = useState<any>(null); // State to manage selected node for popup
     const [anchorPosition, setAnchorPosition] = useState({ x: 0, y: 0 }); // State to manage popup position
 
+    const navigate = useNavigate();
     const handleNodeClick = (event) => {
       const node = event.target;
       const position = node.renderedPosition();
 
-      setSelectedNode(node.data());
-      setAnchorPosition({
-        x: position.x,
-        y: position.y,
-      });
+      navigate(MikroEntity.linkBuilder(node.data().id));
     };
 
     const handlePaneClick = (event) => {
@@ -101,17 +105,22 @@ export default asDetailQueryRoute(
       if (ontologies) {
         refetch({
           ontologies: ontologies,
-        }).then((data) => {
-          if (cy.current) {
-            cy.current
-              .layout({
-                name: "cola",
-              })
-              .run();
-          }
         });
       }
     }, [ontologies]);
+
+    useEffect(() => {
+      if (data && cy.current) {
+        cy.current
+          .layout({
+            name: "cise",
+            clusters: (node) => {
+              return node.data("subtitle");
+            },
+          })
+          .run();
+      }
+    }, [data, cy]);
 
     const [searchOntology] = useSearchOntologiesLazyQuery();
 
@@ -139,7 +148,10 @@ export default asDetailQueryRoute(
                 graphToElements(data),
               )}
               layout={{
-                name: "cola",
+                name: "cise",
+                clusters: (node) => {
+                  return node.data("subtitle");
+                },
               }}
               style={{ width: "100%", height: "100%" }}
               stylesheet={[
@@ -184,7 +196,7 @@ export default asDetailQueryRoute(
               }}
               onClick={handleClosePopover}
             >
-              <EntityKindCard id={selectedNode.id} />
+              <EntityCard id={selectedNode.id} />
             </div>
           )}
         </div>

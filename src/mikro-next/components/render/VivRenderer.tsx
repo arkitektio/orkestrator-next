@@ -2,6 +2,7 @@ import { Arkitekt, useMikro } from "@/arkitekt";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Fakts } from "@/lib/fakts";
+import { cn } from "@/lib/utils";
 import {
   ColorMap,
   ListRgbContextFragment,
@@ -9,15 +10,14 @@ import {
   RequestAccessMutation,
   RequestAccessMutationVariables,
   RgbViewFragment,
-  ZarrStore,
   ZarrStoreFragment,
 } from "@/mikro-next/api/graphql";
-import { S3Store } from "@/mikro-next/providers/xarray/store";
 import { ApolloClient, NormalizedCache } from "@apollo/client";
 import {
   AdditiveColormap3DExtensions,
   AdditiveColormapExtension,
   ColorPalette3DExtensions,
+  getChannelStats,
   LensExtension,
   PictureInPictureViewer,
   RENDERING_MODES,
@@ -31,10 +31,8 @@ import { useEffect, useMemo, useState } from "react";
 import { BiCuboid } from "react-icons/bi";
 import useMeasure from "react-use-measure";
 import { openGroup, ZarrArray } from "zarr";
-import { useViewRenderFunction } from "./hooks/useViewRender";
 import { LRUIndexedDBCache } from "./VivCache";
 import { VivS3Store } from "./VivStore";
-import { cn } from "@/lib/utils";
 
 export function isInterleaved(shape: number[]) {
   const lastDimSize = shape[shape.length - 1];
@@ -68,6 +66,7 @@ const createPixelSource = async (
   let array = (await group.getItem("data")) as ZarrArray;
   let labels = ["c", "t", "z", "y", "x"];
   const tileSize = guessTileSize(array);
+
   return new ZarrPixelSource(array, labels, tileSize);
 };
 
@@ -159,7 +158,7 @@ const mapToRgbColor = (view: RgbViewFragment) => {
     case ColorMap.Blue:
       return [0, 0, 255];
     default:
-      return view.baseColor.slice(0, 3) || [255, 255, 255];
+      return (view.baseColor || [255, 255, 255]).slice(0, 3);
   }
 };
 
@@ -216,14 +215,40 @@ export const VivRenderer = ({
   const client = useMikro();
   const fakts = Arkitekt.useFakts();
 
+  const [viewport, setViewport] = useState(null);
+  const [autoContrast, setAutoContrast] = useState(true);
+
   const [threeD, setThreeD] = useState(false);
   const [source, setSource] = useState<ZarrPixelSource<any>[] | null>(null);
   const [resolution, setResolution] = useState(
     Math.max(0, context.image.derivedScaleViews.length),
   ); // 0 is the highest resolution
 
+  const [autoContrastLimits, setAutoContrastLimits] = useState<
+    number[][] | undefined
+  >(undefined);
+
   const [t, setT] = useState(0);
   const [z, setZ] = useState(0);
+
+  const onViewPortLoaded = async (viewport) => {
+    const channelStates = await Promise.all(
+      viewport.data.map((loader) => getChannelStats(loader)),
+    );
+
+    console.log("channelStates", channelStates);
+
+    const limits = channelStates.map((stats) => stats.contrastLimits);
+
+    console.log("limits", limits);
+    setAutoContrastLimits(limits);
+  };
+
+  useEffect(() => {
+    if (viewport) {
+      onViewPortLoaded(viewport);
+    }
+  }, [viewport]);
 
   useEffect(() => {
     mikroLoader(client, fakts, context)
@@ -260,7 +285,12 @@ export const VivRenderer = ({
           <>
             {threeD ? (
               <VolumeViewer
-                contrastLimits={context.views.map((v) => [0, maxType])}
+                contrastLimits={
+                  autoContrast
+                    ? autoContrastLimits ||
+                      context.views.map((v) => [0, maxType])
+                    : context.views.map((v) => [0, maxType])
+                }
                 loader={source}
                 channelsVisible={context.views.map((v) => v.active)}
                 height={bounds.height}
@@ -284,7 +314,12 @@ export const VivRenderer = ({
               />
             ) : (
               <PictureInPictureViewer
-                contrastLimits={context.views.map((v) => [0, maxType])}
+                contrastLimits={
+                  autoContrast
+                    ? autoContrastLimits ||
+                      context.views.map((v) => [0, maxType])
+                    : context.views.map((v) => [0, maxType])
+                }
                 loader={source}
                 channelsVisible={context.views.map((v) => v.active)}
                 height={bounds.height}
@@ -304,13 +339,14 @@ export const VivRenderer = ({
                 colors={context.views.map(mapToRgbColor)}
                 viewStates={[viewState]}
                 onViewportLoad={(viewport) => {
-                  console.log("viewport", viewport);
+                  setViewport(viewport);
                 }}
               />
             )}
           </>
         )}
         <div className="absolute bottom-0 right-0 p-3 w-full flex flex-row gap-2">
+          {!autoContrastLimits && <>Loading</>}
           <Button
             variant="outline"
             size={"icon"}
@@ -318,6 +354,14 @@ export const VivRenderer = ({
             className="flex-initial  w-6 h-6 p-1"
           >
             {threeD ? <BiCuboid /> : <Layers />}
+          </Button>
+          <Button
+            variant="outline"
+            size={"icon"}
+            onClick={() => setAutoContrast(!autoContrast)}
+            className="flex-initial  w-6 h-6 p-1"
+          >
+            Auto
           </Button>
           {threeD && (
             <div className="flex flex-initial">

@@ -1,5 +1,5 @@
 import { AwsClient } from "aws4fetch";
-import { HTTPStore, openGroup, ZarrArray } from "zarr";
+import { HTTPStore } from "zarr";
 import { LRUIndexedDBCache } from "./VivCache";
 
 enum HTTPMethod {
@@ -60,7 +60,7 @@ export class VivS3Store extends HTTPStore {
 
     // Check if the item is in the shared cache (IndexedDB)
     const cachedValue = await this.cache.get(cacheKey);
-    if (cachedValue) {
+    if (cachedValue && false) {
       console.warn("Cache hit for item", item);
       return new Uint8Array(cachedValue).buffer;
     }
@@ -84,7 +84,7 @@ export class VivS3Store extends HTTPStore {
     const data = await value.arrayBuffer(); // Browser only decode if 200
 
     // Store the result in the shared cache (IndexedDB)
-    await this.cache.set(cacheKey, data);
+    // await this.cache.set(cacheKey, data);
 
     return data;
   }

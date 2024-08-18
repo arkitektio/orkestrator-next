@@ -14,7 +14,7 @@ export class LRUIndexedDBCache {
   }
 
   generateKey(url: string, item: any): string {
-    return `${url}:${JSON.stringify(item)}`;
+    return `${url}:::${JSON.stringify(item)}`;
   }
 
   private async openDB(): Promise<IDBDatabase> {

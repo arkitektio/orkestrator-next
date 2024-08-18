@@ -562,6 +562,12 @@ export type EntityFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type EntityGraph = {
+  __typename?: 'EntityGraph';
+  edges: Array<EntityRelationEdge>;
+  nodes: Array<EntityNode>;
+};
+
 export type EntityGroup = {
   __typename?: 'EntityGroup';
   id: Scalars['ID']['output'];
@@ -621,6 +627,28 @@ export type EntityKindInput = {
   purl?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type EntityKindNode = {
+  __typename?: 'EntityKindNode';
+  id: Scalars['String']['output'];
+  label: Scalars['String']['output'];
+  metrics: Array<EntityKindNodeMetric>;
+};
+
+export type EntityKindNodeMetric = {
+  __typename?: 'EntityKindNodeMetric';
+  dataKind: Scalars['String']['output'];
+  kind: Scalars['String']['output'];
+};
+
+export type EntityKindRelationEdge = {
+  __typename?: 'EntityKindRelationEdge';
+  id: Scalars['String']['output'];
+  label: Scalars['String']['output'];
+  metrics: Array<EntityKindNodeMetric>;
+  source: Scalars['String']['output'];
+  target: Scalars['String']['output'];
+};
+
 export type EntityMetric = {
   __typename?: 'EntityMetric';
   dataKind: MetricDataType;
@@ -648,14 +676,18 @@ export type EntityMetricInput = {
 export type EntityNode = {
   __typename?: 'EntityNode';
   id: Scalars['String']['output'];
+  isRoot: Scalars['Boolean']['output'];
   label: Scalars['String']['output'];
   metrics: Array<EntityNodeMetric>;
+  subtitle: Scalars['String']['output'];
 };
 
 export type EntityNodeMetric = {
   __typename?: 'EntityNodeMetric';
   dataKind: Scalars['String']['output'];
   kind: Scalars['String']['output'];
+  metricId: Scalars['String']['output'];
+  value: Scalars['String']['output'];
 };
 
 export type EntityRelation = {
@@ -866,10 +898,10 @@ export type FromArrayLikeInput = {
   channelViews?: InputMaybe<Array<PartialChannelViewInput>>;
   dataset?: InputMaybe<Scalars['ID']['input']>;
   fileOrigins?: InputMaybe<Array<Scalars['ID']['input']>>;
-  labelViews?: InputMaybe<Array<PartialLabelViewInput>>;
   name: Scalars['String']['input'];
   opticsViews?: InputMaybe<Array<PartialOpticsViewInput>>;
   origins?: InputMaybe<Array<Scalars['ID']['input']>>;
+  pixelViews?: InputMaybe<Array<PartialPixelViewInput>>;
   rgbViews?: InputMaybe<Array<PartialRgbViewInput>>;
   roiOrigins?: InputMaybe<Array<Scalars['ID']['input']>>;
   scaleViews?: InputMaybe<Array<PartialScaleViewInput>>;
@@ -1152,8 +1184,8 @@ export type IntMetric = {
 
 export type KnowledgeGraph = {
   __typename?: 'KnowledgeGraph';
-  edges: Array<EntityRelationEdge>;
-  nodes: Array<EntityNode>;
+  edges: Array<EntityKindRelationEdge>;
+  nodes: Array<EntityKindNode>;
 };
 
 export type LabelView = View & {
@@ -2117,13 +2149,13 @@ export type PartialChannelViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
-export type PartialLabelViewInput = {
+export type PartialOpticsViewInput = {
   cMax?: InputMaybe<Scalars['Int']['input']>;
   cMin?: InputMaybe<Scalars['Int']['input']>;
+  camera?: InputMaybe<Scalars['ID']['input']>;
   collection?: InputMaybe<Scalars['ID']['input']>;
-  fluorophore?: InputMaybe<Scalars['ID']['input']>;
-  primaryAntibody?: InputMaybe<Scalars['ID']['input']>;
-  secondaryAntibody?: InputMaybe<Scalars['ID']['input']>;
+  instrument?: InputMaybe<Scalars['ID']['input']>;
+  objective?: InputMaybe<Scalars['ID']['input']>;
   tMax?: InputMaybe<Scalars['Int']['input']>;
   tMin?: InputMaybe<Scalars['Int']['input']>;
   xMax?: InputMaybe<Scalars['Int']['input']>;
@@ -2134,13 +2166,12 @@ export type PartialLabelViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
-export type PartialOpticsViewInput = {
+export type PartialPixelViewInput = {
   cMax?: InputMaybe<Scalars['Int']['input']>;
   cMin?: InputMaybe<Scalars['Int']['input']>;
-  camera?: InputMaybe<Scalars['ID']['input']>;
   collection?: InputMaybe<Scalars['ID']['input']>;
-  instrument?: InputMaybe<Scalars['ID']['input']>;
-  objective?: InputMaybe<Scalars['ID']['input']>;
+  linkedView?: InputMaybe<Scalars['ID']['input']>;
+  rangeLabels?: InputMaybe<Array<RangePixelLabel>>;
   tMax?: InputMaybe<Scalars['Int']['input']>;
   tMin?: InputMaybe<Scalars['Int']['input']>;
   xMax?: InputMaybe<Scalars['Int']['input']>;
@@ -2442,6 +2473,7 @@ export type Query = {
   datasets: Array<Dataset>;
   entities: Array<Entity>;
   entity: Entity;
+  entityGraph: EntityGraph;
   entityGroup: EntityGroup;
   entityGroups: Array<EntityGroup>;
   entityKind: EntityKind;
@@ -2544,6 +2576,11 @@ export type QueryEntitiesArgs = {
 
 
 export type QueryEntityArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryEntityGraphArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -2975,6 +3012,13 @@ export type RoiFilter = {
   id?: InputMaybe<Scalars['ID']['input']>;
   image?: InputMaybe<Scalars['ID']['input']>;
   kind?: InputMaybe<RoiKindChoices>;
+};
+
+export type RangePixelLabel = {
+  entityKind: Scalars['ID']['input'];
+  group?: InputMaybe<Scalars['ID']['input']>;
+  max: Scalars['Int']['input'];
+  min: Scalars['Int']['input'];
 };
 
 export type RelateToDatasetInput = {
@@ -3676,6 +3720,8 @@ export type ListDatasetFragment = { __typename?: 'Dataset', id: string, name: st
 
 export type EntityFragment = { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string }, specimens: Array<{ __typename?: 'Specimen', id: string, protocol: { __typename?: 'Protocol', id: string } }> };
 
+export type EntityGraphFragment = { __typename?: 'EntityGraph', nodes: Array<{ __typename?: 'EntityNode', id: string, label: string, isRoot: boolean, subtitle: string, metrics: Array<{ __typename?: 'EntityNodeMetric', kind: string, dataKind: string, value: string }> }>, edges: Array<{ __typename?: 'EntityRelationEdge', id: string, label: string, source: string, target: string, metrics: Array<{ __typename?: 'EntityNodeMetric', kind: string, dataKind: string, value: string }> }> };
+
 export type EntityKindFragment = { __typename?: 'EntityKind', id: string, label: string, description?: string | null, purl?: string | null, ontology: { __typename?: 'Ontology', id: string, name: string }, entities: Array<{ __typename?: 'Entity', id: string, name: string }> };
 
 export type EntityMetricFragment = { __typename?: 'EntityMetric', id: string, dataKind: MetricDataType, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } } };
@@ -3698,7 +3744,7 @@ export type ListImageFragment = { __typename?: 'Image', id: string, name: string
 
 export type InstrumentFragment = { __typename?: 'Instrument', model?: string | null, name: string, serialNumber: string };
 
-export type KnowledgeGraphFragment = { __typename?: 'KnowledgeGraph', nodes: Array<{ __typename?: 'EntityNode', id: string, label: string, metrics: Array<{ __typename?: 'EntityNodeMetric', kind: string, dataKind: string }> }>, edges: Array<{ __typename?: 'EntityRelationEdge', id: string, label: string, source: string, target: string, metrics: Array<{ __typename?: 'EntityNodeMetric', kind: string, dataKind: string }> }> };
+export type KnowledgeGraphFragment = { __typename?: 'KnowledgeGraph', nodes: Array<{ __typename?: 'EntityKindNode', id: string, label: string, metrics: Array<{ __typename?: 'EntityKindNodeMetric', kind: string, dataKind: string }> }>, edges: Array<{ __typename?: 'EntityKindRelationEdge', id: string, label: string, source: string, target: string, metrics: Array<{ __typename?: 'EntityKindNodeMetric', kind: string, dataKind: string }> }> };
 
 export type ImageIntMetricFragment = { __typename?: 'ImageIntMetric', id: string, value: number };
 
@@ -4016,20 +4062,6 @@ export type DeleteFileMutationVariables = Exact<{
 
 
 export type DeleteFileMutation = { __typename?: 'Mutation', deleteFile: string };
-
-export type From_Array_LikeMutationVariables = Exact<{
-  array: Scalars['ArrayLike']['input'];
-  name: Scalars['String']['input'];
-  origins?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
-  channelViews?: InputMaybe<Array<PartialChannelViewInput> | PartialChannelViewInput>;
-  transformationViews?: InputMaybe<Array<PartialAffineTransformationViewInput> | PartialAffineTransformationViewInput>;
-  labelViews?: InputMaybe<Array<PartialLabelViewInput> | PartialLabelViewInput>;
-  timepointViews?: InputMaybe<Array<PartialTimepointViewInput> | PartialTimepointViewInput>;
-  opticsViews?: InputMaybe<Array<PartialOpticsViewInput> | PartialOpticsViewInput>;
-}>;
-
-
-export type From_Array_LikeMutation = { __typename?: 'Mutation', fromArrayLike: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null }, views: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channel: { __typename?: 'Channel', id: string, name: string, excitationWavelength?: number | null } } | { __typename?: 'ContinousScanView' } | { __typename?: 'LabelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, fluorophore?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string }, specimens: Array<{ __typename?: 'Specimen', id: string, protocol: { __typename?: 'Protocol', id: string } }> } | null, primaryAntibody?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string }, specimens: Array<{ __typename?: 'Specimen', id: string, protocol: { __typename?: 'Protocol', id: string } }> } | null, secondaryAntibody?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string }, specimens: Array<{ __typename?: 'Specimen', id: string, protocol: { __typename?: 'Protocol', id: string } }> } | null } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } } | { __typename?: 'ScaleView' } | { __typename?: 'SpecimenView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, specimen: { __typename?: 'Specimen', id: string, entity: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string }, group: { __typename?: 'EntityGroup', id: string } }, protocol: { __typename?: 'Protocol', id: string } }, step?: { __typename?: 'ProtocolStep', id: string, name: string, description?: string | null, kind: { __typename?: 'EntityKind', label: string }, reagents: Array<{ __typename?: 'Entity', id: string, name: string, metrics: Array<{ __typename?: 'MetricAssociation', value: string, metric: { __typename?: 'EntityMetric', id: string, dataKind: MetricDataType, kind: { __typename?: 'EntityKind', label: string } } }> }> } | null } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, metrics: Array<{ __typename?: 'ImageIntMetric', id: string, value: number }>, roiOrigins: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string }, entity?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string }, parent?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string } } | null } | null }>, fileOrigins: Array<{ __typename?: 'File', id: string, name: string }>, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> }>, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string }, entity?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string }, parent?: { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', label: string } } | null } | null }> } };
 
 export type RequestUploadMutationVariables = Exact<{
   key: Scalars['String']['input'];
@@ -4355,6 +4387,13 @@ export type SearchEntitiesQueryVariables = Exact<{
 
 export type SearchEntitiesQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Entity', value: string, label: string }> };
 
+export type GetEntityGraphQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetEntityGraphQuery = { __typename?: 'Query', entityGraph: { __typename?: 'EntityGraph', nodes: Array<{ __typename?: 'EntityNode', id: string, label: string, isRoot: boolean, subtitle: string, metrics: Array<{ __typename?: 'EntityNodeMetric', kind: string, dataKind: string, value: string }> }>, edges: Array<{ __typename?: 'EntityRelationEdge', id: string, label: string, source: string, target: string, metrics: Array<{ __typename?: 'EntityNodeMetric', kind: string, dataKind: string, value: string }> }> } };
+
 export type GetEntityKindQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
@@ -4457,7 +4496,7 @@ export type GetKnowledgeGraphQueryVariables = Exact<{
 }>;
 
 
-export type GetKnowledgeGraphQuery = { __typename?: 'Query', knowledgeGraph: { __typename?: 'KnowledgeGraph', nodes: Array<{ __typename?: 'EntityNode', id: string, label: string, metrics: Array<{ __typename?: 'EntityNodeMetric', kind: string, dataKind: string }> }>, edges: Array<{ __typename?: 'EntityRelationEdge', id: string, label: string, source: string, target: string, metrics: Array<{ __typename?: 'EntityNodeMetric', kind: string, dataKind: string }> }> } };
+export type GetKnowledgeGraphQuery = { __typename?: 'Query', knowledgeGraph: { __typename?: 'KnowledgeGraph', nodes: Array<{ __typename?: 'EntityKindNode', id: string, label: string, metrics: Array<{ __typename?: 'EntityKindNodeMetric', kind: string, dataKind: string }> }>, edges: Array<{ __typename?: 'EntityKindRelationEdge', id: string, label: string, source: string, target: string, metrics: Array<{ __typename?: 'EntityKindNodeMetric', kind: string, dataKind: string }> }> } };
 
 export type GetMultiWellPlateQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4774,6 +4813,32 @@ export const DatasetFragmentDoc = gql`
 ${ListImageFragmentDoc}
 ${ListFileFragmentDoc}
 ${ListDatasetFragmentDoc}`;
+export const EntityGraphFragmentDoc = gql`
+    fragment EntityGraph on EntityGraph {
+  nodes {
+    id
+    label
+    metrics {
+      kind
+      dataKind
+      value
+    }
+    isRoot
+    subtitle
+  }
+  edges {
+    id
+    label
+    source
+    target
+    metrics {
+      kind
+      dataKind
+      value
+    }
+  }
+}
+    `;
 export const EntityKindFragmentDoc = gql`
     fragment EntityKind on EntityKind {
   id
@@ -6381,48 +6446,6 @@ export function useDeleteFileMutation(baseOptions?: ApolloReactHooks.MutationHoo
 export type DeleteFileMutationHookResult = ReturnType<typeof useDeleteFileMutation>;
 export type DeleteFileMutationResult = Apollo.MutationResult<DeleteFileMutation>;
 export type DeleteFileMutationOptions = Apollo.BaseMutationOptions<DeleteFileMutation, DeleteFileMutationVariables>;
-export const From_Array_LikeDocument = gql`
-    mutation from_array_like($array: ArrayLike!, $name: String!, $origins: [ID!], $channelViews: [PartialChannelViewInput!], $transformationViews: [PartialAffineTransformationViewInput!], $labelViews: [PartialLabelViewInput!], $timepointViews: [PartialTimepointViewInput!], $opticsViews: [PartialOpticsViewInput!]) {
-  fromArrayLike(
-    input: {array: $array, name: $name, origins: $origins, channelViews: $channelViews, transformationViews: $transformationViews, labelViews: $labelViews, timepointViews: $timepointViews, opticsViews: $opticsViews}
-  ) {
-    ...Image
-  }
-}
-    ${ImageFragmentDoc}`;
-export type From_Array_LikeMutationFn = Apollo.MutationFunction<From_Array_LikeMutation, From_Array_LikeMutationVariables>;
-
-/**
- * __useFrom_Array_LikeMutation__
- *
- * To run a mutation, you first call `useFrom_Array_LikeMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useFrom_Array_LikeMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [fromArrayLikeMutation, { data, loading, error }] = useFrom_Array_LikeMutation({
- *   variables: {
- *      array: // value for 'array'
- *      name: // value for 'name'
- *      origins: // value for 'origins'
- *      channelViews: // value for 'channelViews'
- *      transformationViews: // value for 'transformationViews'
- *      labelViews: // value for 'labelViews'
- *      timepointViews: // value for 'timepointViews'
- *      opticsViews: // value for 'opticsViews'
- *   },
- * });
- */
-export function useFrom_Array_LikeMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<From_Array_LikeMutation, From_Array_LikeMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<From_Array_LikeMutation, From_Array_LikeMutationVariables>(From_Array_LikeDocument, options);
-      }
-export type From_Array_LikeMutationHookResult = ReturnType<typeof useFrom_Array_LikeMutation>;
-export type From_Array_LikeMutationResult = Apollo.MutationResult<From_Array_LikeMutation>;
-export type From_Array_LikeMutationOptions = Apollo.BaseMutationOptions<From_Array_LikeMutation, From_Array_LikeMutationVariables>;
 export const RequestUploadDocument = gql`
     mutation RequestUpload($key: String!, $datalayer: String!) {
   requestUpload(input: {key: $key, datalayer: $datalayer}) {
@@ -7819,6 +7842,41 @@ export function useSearchEntitiesLazyQuery(baseOptions?: ApolloReactHooks.LazyQu
 export type SearchEntitiesQueryHookResult = ReturnType<typeof useSearchEntitiesQuery>;
 export type SearchEntitiesLazyQueryHookResult = ReturnType<typeof useSearchEntitiesLazyQuery>;
 export type SearchEntitiesQueryResult = Apollo.QueryResult<SearchEntitiesQuery, SearchEntitiesQueryVariables>;
+export const GetEntityGraphDocument = gql`
+    query GetEntityGraph($id: ID!) {
+  entityGraph(id: $id) {
+    ...EntityGraph
+  }
+}
+    ${EntityGraphFragmentDoc}`;
+
+/**
+ * __useGetEntityGraphQuery__
+ *
+ * To run a query within a React component, call `useGetEntityGraphQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetEntityGraphQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetEntityGraphQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetEntityGraphQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetEntityGraphQuery, GetEntityGraphQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetEntityGraphQuery, GetEntityGraphQueryVariables>(GetEntityGraphDocument, options);
+      }
+export function useGetEntityGraphLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetEntityGraphQuery, GetEntityGraphQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetEntityGraphQuery, GetEntityGraphQueryVariables>(GetEntityGraphDocument, options);
+        }
+export type GetEntityGraphQueryHookResult = ReturnType<typeof useGetEntityGraphQuery>;
+export type GetEntityGraphLazyQueryHookResult = ReturnType<typeof useGetEntityGraphLazyQuery>;
+export type GetEntityGraphQueryResult = Apollo.QueryResult<GetEntityGraphQuery, GetEntityGraphQueryVariables>;
 export const GetEntityKindDocument = gql`
     query GetEntityKind($id: ID!) {
   entityKind(id: $id) {

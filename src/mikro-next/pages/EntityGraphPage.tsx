@@ -11,17 +11,16 @@ import {
   GetEntityGraphQuery,
   useGetEntityGraphLazyQuery,
   useGetEntityGraphQuery,
-  useGetEntityLazyQuery,
   useSearchOntologiesLazyQuery,
 } from "../api/graphql";
 import { EntityCard } from "../components/entity/EntityCard";
 
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { MikroEntity } from "@/linkers";
 import cise from "cytoscape-cise";
 import dagre from "cytoscape-dagre";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 
 cytoscape.use(cola);
 cytoscape.use(cise);
@@ -54,12 +53,28 @@ const nodeStyle = {
   height: "20px",
   label: "data(label)",
 
-  backgroundColor: "data(color)",
+  backgroundColor: "#000000",
+  "border-color": "data(color)",
   "text-valign": "center",
   color: "#94A3B8",
-  "border-color": "#94A3B8",
   "border-width": 0.5,
   "font-size": "6px",
+  "font-family":
+    'ui-sans-serif, system-ui, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
+};
+
+const edgeStyle = {
+  shape: "round-rectangle",
+  width: 1,
+  "target-arrow-shape": "triangle", // Set the shape of the target arrow
+  "target-arrow-width": 0.5, // Set the width of the target arrow
+  "arrow-scale": 0.5,
+  label: "data(label)", // Show label on edges
+  "font-size": "4px",
+  "curve-style": "bezier", // Make sure the edges are curved if they overlap
+  "text-rotation": "autorotate",
+  color: "#94A3B8",
+  "text-margin-y": -4,
   "font-family":
     'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
 };
@@ -189,23 +204,11 @@ export default asDetailQueryRoute(
               },
               {
                 selector: "edge",
-                style: {
-                  shape: "round-rectangle",
-                  width: 2,
-                  "target-arrow-shape": "triangle", // Set the shape of the target arrow
-                  label: "data(label)", // Show label on edges
-                  "font-size": "10px",
-                  "curve-style": "bezier", // Make sure the edges are curved if they overlap
-                  "text-rotation": "autorotate",
-                  color: "#94A3B8",
-                  "text-margin-y": -10,
-
-                  "font-family":
-                    'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
-                },
+                style: edgeStyle,
               },
             ]} // Apply the styles
             cy={(thecy) => {
+              console.log("cy", thecy);
               thecy.on("tap", handleNodeClick);
               cy.current = thecy;
             }}

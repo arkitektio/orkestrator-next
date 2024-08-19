@@ -15,26 +15,27 @@ export const EntityCard = ({ id }: { id: string }) => {
   });
 
   return (
-    <Card className="p-3">
-      <CardContent>
-        {data?.entity?.id && (
-          <MikroEntity.DetailLink object={data?.entity?.id}>
-            <CardTitle>{data?.entity?.kind?.label}</CardTitle>
-          </MikroEntity.DetailLink>
+    <CardContent>
+      {data?.entity?.id && (
+        <MikroEntity.DetailLink object={data?.entity?.id}>
+          <CardTitle>{data?.entity?.kind?.label}</CardTitle>
+        </MikroEntity.DetailLink>
+      )}
+
+      <CardDescription>{data?.entity?.name}</CardDescription>
+
+      <CardDescription>
+        {data?.entity.specimens && data?.entity?.specimens?.length > 0 && (
+          <CardTitle>Specimens</CardTitle>
         )}
-
-        <CardDescription>{data?.entity?.name}</CardDescription>
-
-        <CardDescription>
-          {data?.entity?.specimens.map((field, i) => (
-            <Card key={i}>
-              <MikroSpecimen.DetailLink object={field.id}>
-                {field.id}
-              </MikroSpecimen.DetailLink>
-            </Card>
-          ))}
-        </CardDescription>
-      </CardContent>
-    </Card>
+        {data?.entity?.specimens.map((field, i) => (
+          <Card key={i}>
+            <MikroSpecimen.DetailLink object={field.id}>
+              {field.id}
+            </MikroSpecimen.DetailLink>
+          </Card>
+        ))}
+      </CardDescription>
+    </CardContent>
   );
 };

@@ -1,26 +1,25 @@
-
-
 fragment EntityGraph on EntityGraph {
-    nodes {
-        id 
-        label
-        metrics {
-            kind
-            dataKind
-            value
-        }
-        isRoot
-        subtitle
+  nodes {
+    id
+    label
+    metrics {
+      kind
+      dataKind
+      value
     }
-    edges {
-        id
-        label
-        source 
-        target
-        metrics {
-            kind
-            dataKind
-            value
-        }
+    color
+    isRoot
+    subtitle
+  }
+  edges {
+    id
+    label
+    source
+    target
+    metrics {
+      kind
+      dataKind
+      value
     }
+  }
 }

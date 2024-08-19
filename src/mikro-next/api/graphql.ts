@@ -597,6 +597,7 @@ export type EntityInput = {
 
 export type EntityKind = {
   __typename?: 'EntityKind';
+  color: Scalars['String']['output'];
   description?: Maybe<Scalars['String']['output']>;
   entities: Array<Entity>;
   id: Scalars['ID']['output'];
@@ -675,6 +676,7 @@ export type EntityMetricInput = {
 
 export type EntityNode = {
   __typename?: 'EntityNode';
+  color: Scalars['String']['output'];
   id: Scalars['String']['output'];
   isRoot: Scalars['Boolean']['output'];
   label: Scalars['String']['output'];
@@ -2320,12 +2322,15 @@ export type PintMultiWellPlateInput = {
 
 export type PlateChildInput = {
   backgroundColor?: InputMaybe<Scalars['String']['input']>;
+  bold?: InputMaybe<Scalars['Boolean']['input']>;
   children?: InputMaybe<Array<PlateChildInput>>;
   color?: InputMaybe<Scalars['String']['input']>;
   fontSize?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  italic?: InputMaybe<Scalars['Boolean']['input']>;
   text?: InputMaybe<Scalars['String']['input']>;
   type?: InputMaybe<Scalars['String']['input']>;
+  underline?: InputMaybe<Scalars['Boolean']['input']>;
   value?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -3720,7 +3725,7 @@ export type ListDatasetFragment = { __typename?: 'Dataset', id: string, name: st
 
 export type EntityFragment = { __typename?: 'Entity', id: string, name: string, kind: { __typename?: 'EntityKind', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, group: { __typename?: 'EntityGroup', id: string, name: string }, specimens: Array<{ __typename?: 'Specimen', id: string, protocol: { __typename?: 'Protocol', id: string } }> };
 
-export type EntityGraphFragment = { __typename?: 'EntityGraph', nodes: Array<{ __typename?: 'EntityNode', id: string, label: string, isRoot: boolean, subtitle: string, metrics: Array<{ __typename?: 'EntityNodeMetric', kind: string, dataKind: string, value: string }> }>, edges: Array<{ __typename?: 'EntityRelationEdge', id: string, label: string, source: string, target: string, metrics: Array<{ __typename?: 'EntityNodeMetric', kind: string, dataKind: string, value: string }> }> };
+export type EntityGraphFragment = { __typename?: 'EntityGraph', nodes: Array<{ __typename?: 'EntityNode', id: string, label: string, color: string, isRoot: boolean, subtitle: string, metrics: Array<{ __typename?: 'EntityNodeMetric', kind: string, dataKind: string, value: string }> }>, edges: Array<{ __typename?: 'EntityRelationEdge', id: string, label: string, source: string, target: string, metrics: Array<{ __typename?: 'EntityNodeMetric', kind: string, dataKind: string, value: string }> }> };
 
 export type EntityKindFragment = { __typename?: 'EntityKind', id: string, label: string, description?: string | null, purl?: string | null, ontology: { __typename?: 'Ontology', id: string, name: string }, entities: Array<{ __typename?: 'Entity', id: string, name: string }> };
 
@@ -4392,7 +4397,7 @@ export type GetEntityGraphQueryVariables = Exact<{
 }>;
 
 
-export type GetEntityGraphQuery = { __typename?: 'Query', entityGraph: { __typename?: 'EntityGraph', nodes: Array<{ __typename?: 'EntityNode', id: string, label: string, isRoot: boolean, subtitle: string, metrics: Array<{ __typename?: 'EntityNodeMetric', kind: string, dataKind: string, value: string }> }>, edges: Array<{ __typename?: 'EntityRelationEdge', id: string, label: string, source: string, target: string, metrics: Array<{ __typename?: 'EntityNodeMetric', kind: string, dataKind: string, value: string }> }> } };
+export type GetEntityGraphQuery = { __typename?: 'Query', entityGraph: { __typename?: 'EntityGraph', nodes: Array<{ __typename?: 'EntityNode', id: string, label: string, color: string, isRoot: boolean, subtitle: string, metrics: Array<{ __typename?: 'EntityNodeMetric', kind: string, dataKind: string, value: string }> }>, edges: Array<{ __typename?: 'EntityRelationEdge', id: string, label: string, source: string, target: string, metrics: Array<{ __typename?: 'EntityNodeMetric', kind: string, dataKind: string, value: string }> }> } };
 
 export type GetEntityKindQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4823,6 +4828,7 @@ export const EntityGraphFragmentDoc = gql`
       dataKind
       value
     }
+    color
     isRoot
     subtitle
   }

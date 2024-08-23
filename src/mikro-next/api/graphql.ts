@@ -622,6 +622,7 @@ export type EntityKindFilter = {
 };
 
 export type EntityKindInput = {
+  color?: InputMaybe<Array<Scalars['Int']['input']>>;
   description?: InputMaybe<Scalars['String']['input']>;
   label: Scalars['String']['input'];
   ontology?: InputMaybe<Scalars['ID']['input']>;

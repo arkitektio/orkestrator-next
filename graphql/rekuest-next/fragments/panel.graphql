@@ -1,0 +1,15 @@
+fragment Panel on Panel {
+    id
+    kind
+    state {
+        id
+    }
+    accessors
+    reservation {
+        id
+        template {
+            id
+        }
+    }
+
+}

@@ -5937,6 +5937,25 @@ dnd-multi-backend@^8.0.3:
   resolved "https://registry.yarnpkg.com/dnd-multi-backend/-/dnd-multi-backend-8.0.3.tgz#2cc8121ad2b6e6164e3044be9ffdfe994ab6bdb0"
   integrity sha512-yFFARotr+OEJk787Fsj+V52pi6j7+Pt/CRp3IR2Ai3fnxA/z6J54T7+gxkXzXu4cvxTNE7NiBzzAaJ2f7JjFTw==
 
+dockview-core@^1.16.1:
+  version "1.16.1"
+  resolved "https://registry.yarnpkg.com/dockview-core/-/dockview-core-1.16.1.tgz#c63befcae140ca95ab3510b59655dc2ec9d907d0"
+  integrity sha512-D+Tgk3Ykt9mr3jzFPdkozM17XY+c/EPQ8dRqs21MTzcISyW7V+cjZRuEpzjlYdaHG5TGpbJROixU8eiTP7sccQ==
+
+dockview-react@^1.16.1:
+  version "1.16.1"
+  resolved "https://registry.yarnpkg.com/dockview-react/-/dockview-react-1.16.1.tgz#c6320f6782160420c0306aece5874632ae17c3c6"
+  integrity sha512-xdYOy3/XCTQf0KZn6qcAkqSax0aT9XnnDi50OCQcQL6uJ6Np1mHv9JR9sh4BooJbdXIlfPM0xglS+GAEZo6MkA==
+  dependencies:
+    dockview "^1.16.1"
+
+dockview@^1.16.1:
+  version "1.16.1"
+  resolved "https://registry.yarnpkg.com/dockview/-/dockview-1.16.1.tgz#c7c502a83ec544e389754724d71f086893e02444"
+  integrity sha512-M+WcQAEV5yqzsufdON4WhC5/twJeVGOpZQdocBVzqsgOMWdeFGcFve1KLbI94BHxSItAizqknIx2xPZs6cqv4Q==
+  dependencies:
+    dockview-core "^1.16.1"
+
 doctrine@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/doctrine/-/doctrine-2.1.0.tgz#5cd01fc101621b42c4cd7f5d1a66243716d3f39d"

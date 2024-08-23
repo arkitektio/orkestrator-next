@@ -1,0 +1,10 @@
+fragment State on State {
+    value
+    stateSchema {
+        name 
+        ports {
+            ...Port
+        }
+    }
+    updatedAt
+}

@@ -54,7 +54,7 @@ export const NavigationPane = (props: {}) => {
             Nodes
           </DroppableNavLink>
           <DroppableNavLink
-            to="/rekuest"
+            to="/rekuest/dashboards"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <Home className="h-4 w-4" />

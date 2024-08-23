@@ -1,7 +1,5 @@
 import { useLivekit } from "@/arkitekt";
-import { Button } from "@/components/ui/button";
 import {
-  DetailRoomFragment,
   EnsuredStreamFragment,
   useCreateStreamMutation,
   useGetStreamQuery,
@@ -10,7 +8,6 @@ import { ReturnWidgetProps } from "@/rekuest/widgets/types";
 import {
   GridLayout,
   LiveKitRoom,
-  ParticipantTile,
   useTracks,
   VideoTrack,
 } from "@livekit/components-react";
@@ -83,8 +80,6 @@ export const StreamWidget = (props: ReturnWidgetProps) => {
   const room = data?.stream?.agent?.room.id;
 
   return (
-    <div className="w-[200px] h-[200px]">
-      {room && <StreamJoiner room={room} />}
-    </div>
+    <div className="w-full h-full">{room && <StreamJoiner room={room} />}</div>
   );
 };

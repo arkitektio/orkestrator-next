@@ -4,6 +4,8 @@ import React from "react";
 import { Route, Routes } from "react-router";
 import Agent from "./pages/Agent";
 import Assignation from "./pages/Assignation";
+import Dashboard from "./pages/Dashboard";
+import Dashboards from "./pages/Dashboards";
 import Dependency from "./pages/Dependency";
 import Home from "./pages/Home";
 import Node from "./pages/Node";
@@ -30,6 +32,8 @@ const Module: React.FC<Props> = () => {
           <Route path="reservations/:id" element={<Reservation />} />
           <Route path="reservations" element={<Reservations />} />
           <Route path="nodes" element={<Nodes />} />
+          <Route path="dashboards" element={<Dashboards />} />
+          <Route path="dashboards/:id" element={<Dashboard />} />
           <Route path="dependencies/:id" element={<Dependency />} />
           <Route path="templates/:id" element={<Template />} />
           <Route path="provisions/:id" element={<Provision />} />

@@ -88,7 +88,11 @@ export default asDetailQueryRoute(useAgentQuery, ({ data, refetch }) => {
         {data?.agent?.extensions.map((ext) => ext).join(", ")}
       </p>
 
-      {data.agent.state && <StateDisplay template={data.agent.state} />}
+      <div className="flex flex-row gap-4 mt-4">
+        {data.agent.latestStates.map((x) => (
+          <StateDisplay state={x} />
+        ))}
+      </div>
 
       <ListRender array={data.agent.defaults} title="Registered Functions">
         {(item) => <TemplateCard item={item} />}

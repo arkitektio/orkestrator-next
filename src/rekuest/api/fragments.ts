@@ -32,7 +32,8 @@
     ],
     "UIChild": [
       "UIGrid",
-      "UISplit"
+      "UISplit",
+      "UIState"
     ]
   }
 };

@@ -1,4 +1,4 @@
-import { useService } from "@/arkitekt/hooks";
+import { useRekuest } from "@/arkitekt";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Card } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
@@ -29,7 +29,7 @@ import { useForm } from "react-hook-form";
 import { ClickContextualParams, ReactiveNodeSuggestions } from "../../types";
 import { useEditRiver } from "../context";
 import { ContextualContainer } from "./ContextualContainer";
-import { useRekuest } from "@/arkitekt";
+import { TemplateSelector } from "./TemplateSelector";
 
 export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   const form = useForm({
@@ -273,17 +273,62 @@ const ClickArkitektNodes = (props: {
         });
   };
 
+  const onTemplateClick = (nodeid: string, template: string) => {
+    client &&
+      client
+        .query<ConstantNodeQuery>({
+          query: ConstantNodeDocument,
+          variables: { id: nodeid },
+        })
+        .then(async (event) => {
+          console.log(event);
+          if (event.data?.node) {
+            let flownode = rekuestNodeToMatchingNode(event.data?.node, {
+              x: 0,
+              y: 0,
+            });
+
+            flownode.data.binds.templates = [template];
+            console.log("Trying to add", flownode, props.params);
+            addClickNode(flownode, props.params);
+          }
+        });
+  };
+
   return (
     <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
       {data?.nodes.map((node) => (
         <Tooltip>
           <TooltipTrigger>
-            <Card
-              onClick={() => onNodeClick(node.id)}
-              className="px-2 py-1 border-solid border-2 border-accent"
-            >
-              {node.name}
-            </Card>
+            <>
+              {node.stateful ? (
+                <Popover>
+                  <PopoverTrigger>
+                    <Card className="px-2 py-1 border-solid border-2 border-green-300 border ">
+                      {node.name}
+                    </Card>
+                  </PopoverTrigger>
+                  <PopoverContent className="rounded rounded-lg">
+                    <div className="text-xs text-muted-foreground mb-2  mt">
+                      This is a stateful node and needs to be bound to a
+                      specific instance
+                    </div>
+                    <TemplateSelector
+                      hash={node.hash}
+                      node={node.id}
+                      onClick={onTemplateClick}
+                    />
+                  </PopoverContent>
+                </Popover>
+              ) : (
+                <Card
+                  onClick={() => onNodeClick(node.id)}
+                  className="px-2 py-1 border-solid border-2 border-accent"
+                >
+                  {node.name}
+                </Card>
+              )}
+            </>
           </TooltipTrigger>
           <TooltipContent align="center">{node.description}</TooltipContent>
         </Tooltip>

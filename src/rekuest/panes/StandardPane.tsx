@@ -60,6 +60,13 @@ export const NavigationPane = (props: {}) => {
             <Home className="h-4 w-4" />
             Dashboards
           </DroppableNavLink>
+          <DroppableNavLink
+            to="/rekuest/panels"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <Home className="h-4 w-4" />
+            Panels
+          </DroppableNavLink>
         </div>
         <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
           My Apps

@@ -8,6 +8,7 @@ export type ArgsContainerProps = {
   ports: (Port | null | undefined)[];
   groups?: (PortGroup | null | undefined)[] | undefined;
   options?: PortOptions | undefined;
+  bound?: string; // Are we bound to a specific template?
   path: string[];
 };
 
@@ -42,19 +43,21 @@ export const ReturnsContainer: OutputContainer = ({
       className={`grid @lg:grid-cols-${lg_size} @xl-grid-cols-${xl_size} @2xl:grid-cols-${xxl_size}  @3xl:grid-cols-${xxxl_size}   @5xl:grid-cols-${xxxxl_size} gap-4`}
     >
       {Object.keys(values).map((key, index) => {
-        let port = ports.find(p => p.key === key)
+        let port = ports.find((p) => p.key === key);
         if (!port) return <>No Port</>;
 
         const Widget = registry.getReturnWidgetForPort(port);
 
         return (
           <div className="@container flex flex-col rounded rounded-md border-1">
-            {showKeys && <label
-              className="flex-initial font-light text-slate-200 mb-2"
-              htmlFor={port.key}
-            >
-              {port.label || port.key}
-            </label>}
+            {showKeys && (
+              <label
+                className="flex-initial font-light text-slate-200 mb-2"
+                htmlFor={port.key}
+              >
+                {port.label || port.key}
+              </label>
+            )}
             <div className="flex-grow bg-gray-800 rounded rounded-md max-h-[300px]">
               <EffectWrapper
                 effects={port.effects || []}

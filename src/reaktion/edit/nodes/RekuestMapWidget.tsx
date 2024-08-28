@@ -1,9 +1,5 @@
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ContextMenuItem } from "@/components/ui/context-menu";
 import {
   Popover,
@@ -23,19 +19,67 @@ import {
   useNodeDescription,
 } from "@/lib/rekuest/NodeDescription";
 import { cn } from "@/lib/utils";
+import { RekuestMapNodeFragment } from "@/reaktion/api/graphql";
 import { Args } from "@/reaktion/base/Args";
 import { Constants } from "@/reaktion/base/Constants";
 import { InStream } from "@/reaktion/base/Instream";
 import { NodeShowLayout } from "@/reaktion/base/NodeShow";
 import { OutStream } from "@/reaktion/base/Outstream";
 import { RekuestMapNodeProps } from "@/reaktion/types";
-import { PortFragment } from "@/rekuest/api/graphql";
+import {
+  PortFragment,
+  useTemplateQuery,
+  useTemplatesQuery,
+} from "@/rekuest/api/graphql";
 import { GearIcon } from "@radix-ui/react-icons";
-import React from "react";
+import React, { useCallback } from "react";
 import { TbBurger } from "react-icons/tb";
 import { useEditNodeErrors, useEditRiver } from "../context";
 
 export const DeviceSelector = (props) => {};
+
+const TemplateSelector = (props: {
+  data: RekuestMapNodeFragment;
+  bind: (x: string) => void;
+}) => {
+  const { data } = useTemplatesQuery({
+    variables: {
+      filters: {
+        nodeHash: props.data.hash,
+      },
+    },
+  });
+
+  const templates = data?.templates || [];
+
+  return (
+    <div>
+      {templates.map((template) => (
+        <Button
+          onClick={() => props.bind(template.id)}
+          data-active={props.data.binds.templates.includes(template.id) && true}
+          className=" hover:bg-green-300 data-[active=true]:bg-green-300"
+        >
+          {template.interface}
+        </Button>
+      ))}
+    </div>
+  );
+};
+
+export const TemplateTag = (props: { template: string }) => {
+  const { data } = useTemplateQuery({
+    variables: {
+      id: props.template,
+    },
+  });
+
+  return (
+    <div className="px-1 m-2 rounded rounded-md border-gray-200 bg-sidepane border">
+      {data?.template?.interface}
+    </div>
+  );
+};
 
 export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
   data: { ins, outs, constants, ...data },
@@ -71,12 +115,37 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
     moveConstantToGlobals(id, index, key);
   };
 
+  const bind = useCallback(
+    (template: string) => {
+      if (data.binds?.templates.includes(template)) {
+        updateData(
+          {
+            binds: {
+              templates: data.binds.templates.filter((x) => x !== template),
+            },
+          },
+          id,
+        );
+        return;
+      } else {
+        updateData(
+          { binds: { templates: [...data.binds.templates, template] } },
+          id,
+        );
+      }
+    },
+    [id, updateData],
+  );
+
   const errors = useEditNodeErrors(id);
 
   const description = useNodeDescription({
     description: data.description,
     variables: data.constantsMap,
   });
+
+  const bound =
+    data.binds?.templates.length == 1 ? data.binds.templates[0] : undefined;
 
   return (
     <NodeShowLayout
@@ -96,6 +165,12 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
       {ins.map((s, index) => (
         <InStream stream={s} id={index} length={ins.length} />
       ))}
+
+      <div className="absolute top-0 left-[50%] translate-y-[-100%] translate-x-[-50%] opacity-0 group-hover:opacity-100">
+        {data.binds?.templates.map((template) => (
+          <TemplateTag template={template} />
+        ))}
+      </div>
       <CardHeader className="p-4">
         <CardTitle onDoubleClick={() => setExpanded(!expanded)}>
           <div className="flex justify-between">
@@ -105,8 +180,8 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
                 <PopoverTrigger className="mr-2">
                   <TbBurger />
                 </PopoverTrigger>
-                <PopoverContent>
-                  <Card>The Card</Card>
+                <PopoverContent className="border-gray-200 ">
+                  <TemplateSelector data={data} bind={bind} />
                 </PopoverContent>
               </Popover>
 
@@ -156,6 +231,7 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
               onToGlobal={onToGlobal}
               onSubmit={(values) => updateData({ constantsMap: values }, id)}
               path={[]}
+              bound={bound}
             />
           </div>
         )}

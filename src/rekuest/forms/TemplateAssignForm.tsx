@@ -5,10 +5,10 @@ import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 import { useNodeDescription } from "@/lib/rekuest/NodeDescription";
 import { ApolloError } from "@apollo/client";
 import { toast } from "sonner";
+import { PostmanAssignationFragment } from "../api/graphql";
 import { usePortForm } from "../hooks/usePortForm";
 import { useTemplateAction } from "../hooks/useTemplateAction";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
-import { PostmanAssignationFragment } from "../api/graphql";
 
 export type TemplateAssignFormProps = {
   id: string;
@@ -70,6 +70,7 @@ export const TemplateAssignForm = (props: TemplateAssignFormProps) => {
             registry={registry}
             ports={template?.node.args || []}
             path={[]}
+            bound={template?.id}
           />
           <DialogFooter>
             <Button type="submit" className="btn">

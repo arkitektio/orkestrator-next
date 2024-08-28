@@ -20,6 +20,7 @@ export const RekuestTemplate = buildSmart(
   "@rekuest-next/template",
   "rekuest/templates",
 );
+export const RekuestPanel = buildSmart("@rekuest-next/panel", "rekuest/panels");
 export const RekuestDependency = buildSmart(
   "@rekuest-next/dependency",
   "rekuest/dependencies",

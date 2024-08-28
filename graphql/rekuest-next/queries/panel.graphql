@@ -1,0 +1,11 @@
+query GetPanel($id: ID!){
+    panel(id: $id){
+        ...Panel
+    }
+}
+
+query ListPanels {
+    panels {
+        ...ListPanel
+    }
+}

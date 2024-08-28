@@ -3,6 +3,7 @@ import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { useEffect } from "react";
 import { ChoicesWidget } from "./custom/ChoicesWidget";
 import { SearchWidget } from "./custom/SearchWidget";
+import { StateChoiceWidget } from "./custom/StateChoiceWidget";
 import { BoolWidget } from "./fallbacks/BoolWidget";
 import { DateWidget } from "./fallbacks/DateWidget";
 import { DictWidget } from "./fallbacks/DictWidget";
@@ -15,8 +16,9 @@ import { StructureWidget } from "./fallbacks/StructureWidget";
 import { UnionWidget } from "./fallbacks/UnionWidget";
 import { BoolReturnWidget } from "./returns/fallbacks/BoolReturnWidget";
 import { IntReturnWidget } from "./returns/fallbacks/IntReturnWidget";
-import { StringReturnWidget } from "./returns/fallbacks/StringReturnWidget";
+import { ListReturnWidget } from "./returns/fallbacks/ListReturnWidget";
 import { ModelReturnWidget } from "./returns/fallbacks/ModelReturnWidget";
+import { StringReturnWidget } from "./returns/fallbacks/StringReturnWidget";
 
 export const ShadnWigets = () => {
   const { registry } = useWidgetRegistry();
@@ -57,6 +59,11 @@ export const ShadnWigets = () => {
       ChoicesWidget,
     );
 
+    let stateChoise = registry.registerInputWidget(
+      "StateChoiceAssignWidget",
+      StateChoiceWidget,
+    );
+
     return () => {
       int();
       list();
@@ -67,6 +74,7 @@ export const ShadnWigets = () => {
       bool();
       float();
       union();
+      stateChoise();
       choices();
       structure();
       model();
@@ -78,7 +86,7 @@ export const ShadnWigets = () => {
       PortKind.Int,
       IntReturnWidget,
     );
-    let list = registry.registerReturnWidgetFallback(
+    let string = registry.registerReturnWidgetFallback(
       PortKind.String,
       StringReturnWidget,
     );
@@ -90,12 +98,17 @@ export const ShadnWigets = () => {
       PortKind.Model,
       ModelReturnWidget,
     );
+    let list = registry.registerReturnWidgetFallback(
+      PortKind.List,
+      ListReturnWidget,
+    );
 
     return () => {
       int();
-      list();
+      string();
       bool();
       model();
+      list();
     };
   }, []);
 

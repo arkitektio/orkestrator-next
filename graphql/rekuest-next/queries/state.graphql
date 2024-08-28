@@ -3,3 +3,9 @@ query GetState($id: ID!){
         ...State
     }
 }
+
+query GetStateFor($template: ID, $agent: ID, $stateKey: String!){
+    stateFor(template: $template, agent: $agent, stateKey: $stateKey){
+        ...State
+    }
+}

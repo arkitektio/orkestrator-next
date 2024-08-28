@@ -5,6 +5,7 @@ fragment ListNode on Node {
   hash
   kind
   scope
+  stateful
   templates {
     id
     agent {
@@ -19,6 +20,7 @@ fragment GraphNodeNode on Node {
   kind
   hash
   id
+  stateful
   collections {
     id
     name
@@ -49,17 +51,17 @@ fragment DetailNode on Node {
 
 
 fragment PrimaryNode on Node {
-
   id
-    name
-    templates {
-      id
-      interface
-    }
-    args {
-      key
-      identifier
-      kind
-    }
-    description
+  stateful
+  name
+  templates {
+    id
+    interface
+  }
+  args {
+    key
+    identifier
+    kind
+  }
+  description
 }

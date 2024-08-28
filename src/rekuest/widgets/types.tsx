@@ -15,6 +15,7 @@ export interface InputWidgetProps<
   options?: PortOptions;
   parentKind?: PortKind;
   path: string[];
+  bound?: string;
 }
 
 export type Returns =

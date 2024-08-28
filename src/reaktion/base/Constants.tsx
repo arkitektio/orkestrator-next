@@ -35,6 +35,7 @@ export const ArgsContainer = ({
   ports,
   groups,
   options,
+  bound,
   onToArg,
   onToGlobal,
   registry,
@@ -105,6 +106,7 @@ export const ArgsContainer = ({
                           widget={port.assignWidget}
                           options={options}
                           path={path.concat(port.key)}
+                          bound={bound}
                         />
                       </div>
                       <div className="my-auto flex-col flex">
@@ -143,6 +145,7 @@ export const ArgsContainer = ({
 export const Constants = (props: {
   ports: PortFragment[];
   path: string[];
+  bound?: string | undefined;
   onSubmit: (data: any) => void;
   overwrites: { [key: string]: any };
   onToArg?: (port: PortFragment) => void;
@@ -185,6 +188,7 @@ export const Constants = (props: {
             onToArg={props.onToArg}
             onToGlobal={props.onToGlobal}
             path={props.path}
+            bound={props.bound}
           />
         </form>
       </Form>

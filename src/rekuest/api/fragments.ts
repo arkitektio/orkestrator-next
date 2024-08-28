@@ -11,6 +11,7 @@
       "CustomAssignWidget",
       "SearchAssignWidget",
       "SliderAssignWidget",
+      "StateChoiceAssignWidget",
       "StringAssignWidget"
     ],
     "DependencyEdgeImplementationEdge": [

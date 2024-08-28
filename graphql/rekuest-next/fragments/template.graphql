@@ -13,6 +13,9 @@ fragment DetailTemplate on Template {
   }
   extension
   params
+  agent {
+    name
+  }
 }
 
 fragment ListTemplate on Template {
@@ -21,9 +24,13 @@ fragment ListTemplate on Template {
   node {
     description
     name
+    stateful
   }
   provisions {
     id
     status
+  }
+  agent {
+    name
   }
 }

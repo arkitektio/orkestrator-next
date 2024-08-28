@@ -12,6 +12,13 @@ fragment SliderAssignWidget on SliderAssignWidget {
   max
 }
 
+fragment StateChoiceAssignWidget on StateChoiceAssignWidget {
+  __typename
+  kind
+  followValue
+  stateChoices
+}
+
 fragment SearchAssignWidget on SearchAssignWidget {
   __typename
   kind
@@ -118,6 +125,7 @@ fragment AssignWidget on AssignWidget {
   ...SliderAssignWidget
   ...ChoiceAssignWidget
   ...CustomAssignWidget
+  ...StateChoiceAssignWidget
 }
 
 fragment Validator on Validator {

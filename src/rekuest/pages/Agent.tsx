@@ -8,7 +8,7 @@ import { ArrowRightIcon } from "@radix-ui/react-icons";
 import { BellIcon } from "lucide-react";
 import { TemplateActionButton } from "../buttons/TemplateActionButton";
 import TemplateCard from "../components/cards/TemplateCard";
-import { StateDisplay } from "../components/State";
+import { RenderPlugins } from "../remote/Plugin";
 
 export const sizer = (length: number, index: number): string => {
   const divider = 3;
@@ -88,11 +88,7 @@ export default asDetailQueryRoute(useAgentQuery, ({ data, refetch }) => {
         {data?.agent?.extensions.map((ext) => ext).join(", ")}
       </p>
 
-      <div className="flex flex-row gap-4 mt-4">
-        {data.agent.latestStates.map((x) => (
-          <StateDisplay state={x} />
-        ))}
-      </div>
+      <RenderPlugins />
 
       <ListRender array={data.agent.defaults} title="Registered Functions">
         {(item) => <TemplateCard item={item} />}

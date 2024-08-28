@@ -2,7 +2,6 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
-import { NodeDescription } from "@/lib/rekuest/NodeDescription";
 import { RekuestDashboard } from "@/linkers";
 import {
   DockviewApi,
@@ -10,13 +9,16 @@ import {
   DockviewReadyEvent,
   IDockviewPanelProps,
 } from "dockview";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import {
   PanelFragment,
   PanelKind,
   useGetDashboardQuery,
   useGetStateQuery,
+  WatchStateEventsDocument,
+  WatchStateEventsSubscription,
+  WatchStateEventsSubscriptionVariables,
 } from "../api/graphql";
 import { StateDisplay } from "../components/State";
 import { usePortForm } from "../hooks/usePortForm";
@@ -27,11 +29,36 @@ const StateWidget = (props: {
   state: string;
   accessors?: string[] | null | undefined;
 }) => {
-  const { data } = useGetStateQuery({
+  const { data, subscribeToMore } = useGetStateQuery({
     variables: {
       id: props.state,
     },
   });
+
+  useEffect(() => {
+    console.log("Starting subscription");
+    const unsubscribe = subscribeToMore<
+      WatchStateEventsSubscription,
+      WatchStateEventsSubscriptionVariables
+    >({
+      document: WatchStateEventsDocument,
+      variables: { stateID: props.state },
+      updateQuery: (prev, { subscriptionData }) => {
+        console.log("Subscription data for state", subscriptionData);
+        if (!subscriptionData.data.stateUpdateEvents.value) return prev;
+
+        let newState = subscriptionData.data.stateUpdateEvents;
+        return {
+          ...prev,
+          state: { ...prev.state, ...newState },
+        };
+      },
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [props.state]);
 
   return (
     <>
@@ -42,7 +69,7 @@ const StateWidget = (props: {
   );
 };
 
-const Fake = (props: { template: string }) => {
+const Fake = (props: { template: string; panel: PanelFragment }) => {
   const { assign, latestAssignation, cancel, template } = useTemplateAction({
     id: props.template,
   });
@@ -68,27 +95,39 @@ const Fake = (props: { template: string }) => {
     );
   };
 
+  const { handleSubmit, watch } = form;
+
+  useEffect(() => {
+    // TypeScript users
+    if (props.panel.submitOnChange) {
+      console.log("Watching for changes");
+      const subscription = watch(() => handleSubmit(onSubmit)());
+
+      return () => subscription.unsubscribe();
+    }
+  }, [handleSubmit, watch, props.panel]);
+
   const { registry } = useWidgetRegistry();
 
   return (
     <>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
-          {template?.node?.description && (
-            <NodeDescription
-              description={template.node.description}
-              variables={form.watch()}
-            />
-          )}
+        <form onSubmit={form.handleSubmit(onSubmit)} className="">
+          <p className="text-muted-foreground text-xs mb-2">
+            {props.panel.name}
+          </p>
           <ArgsContainer
             registry={registry}
             ports={template?.node.args || []}
             path={[]}
+            bound={props.template}
           />
-          <Button type="submit" className="btn">
-            {" "}
-            Submit{" "}
-          </Button>
+          {!props.panel.submitOnChange && (
+            <Button type="submit" className="btn">
+              {" "}
+              Submit{" "}
+            </Button>
+          )}
         </form>
       </Form>
     </>
@@ -118,7 +157,10 @@ const components: { [key in PanelKind]: any } = {
     return (
       <div style={{ padding: "20px", color: "white" }}>
         {props.params.panel.reservation?.template ? (
-          <Fake template={props.params.panel.reservation?.template.id} />
+          <Fake
+            template={props.params.panel.reservation?.template.id}
+            panel={props.params.panel}
+          />
         ) : (
           <> State kind but now state? </>
         )}
@@ -165,7 +207,7 @@ export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
         <DockviewReact
           components={components}
           onReady={onReady}
-          className={"dockview-theme-abyss rounded-md rounded"}
+          className={"dockview-theme-abyss"}
         />
         <Button
           variant="outline"

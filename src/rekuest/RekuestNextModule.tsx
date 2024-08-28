@@ -10,6 +10,8 @@ import Dependency from "./pages/Dependency";
 import Home from "./pages/Home";
 import Node from "./pages/Node";
 import Nodes from "./pages/Nodes";
+import Panel from "./pages/Panel";
+import Panels from "./pages/Panels";
 import Provision from "./pages/Provision";
 import Reservation from "./pages/Reservation";
 import Reservations from "./pages/Reservations";
@@ -34,6 +36,8 @@ const Module: React.FC<Props> = () => {
           <Route path="nodes" element={<Nodes />} />
           <Route path="dashboards" element={<Dashboards />} />
           <Route path="dashboards/:id" element={<Dashboard />} />
+          <Route path="panels/:id" element={<Panel />} />
+          <Route path="panels" element={<Panels />} />
           <Route path="dependencies/:id" element={<Dependency />} />
           <Route path="templates/:id" element={<Template />} />
           <Route path="provisions/:id" element={<Provision />} />

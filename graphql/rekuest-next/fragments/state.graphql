@@ -8,3 +8,7 @@ fragment State on State {
     }
     updatedAt
 }
+
+fragment StateEvent on State {
+    value 
+}

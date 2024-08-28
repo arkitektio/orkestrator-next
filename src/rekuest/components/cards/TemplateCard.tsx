@@ -42,6 +42,7 @@ const TheCard = ({ item, mates }: Props) => {
           backgroundImage: `linear-gradient(to right, #10b981 ${progress?.progress}%, #10b981 ${progress?.progress}%)`,
           backgroundRepeat: "no-repeat",
           backgroundPosition: "left center",
+          borderColor: item.node.stateful ? "#5a5a5e" : "#84848a",
         }}
       >
         <CardHeader className="flex flex-row justify-between">

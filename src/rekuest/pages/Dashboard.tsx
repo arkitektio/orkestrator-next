@@ -125,7 +125,7 @@ const Fake = (props: { template: string; panel: PanelFragment }) => {
           {!props.panel.submitOnChange && (
             <Button type="submit" className="btn">
               {" "}
-              Submit{" "}
+              Do{" "}
             </Button>
           )}
         </form>

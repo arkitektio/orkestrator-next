@@ -1,14 +1,15 @@
 fragment State on State {
-    value
-    stateSchema {
-        name 
-        ports {
-            ...Port
-        }
+  value
+  stateSchema {
+    hash
+    name
+    ports {
+      ...Port
     }
-    updatedAt
+  }
+  updatedAt
 }
 
 fragment StateEvent on State {
-    value 
+  value
 }

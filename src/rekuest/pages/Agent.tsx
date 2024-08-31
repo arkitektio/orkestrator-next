@@ -9,6 +9,7 @@ import { BellIcon } from "lucide-react";
 import { TemplateActionButton } from "../buttons/TemplateActionButton";
 import TemplateCard from "../components/cards/TemplateCard";
 import { RenderPlugins } from "../remote/Plugin";
+import { StateDisplay } from "../components/State";
 
 export const sizer = (length: number, index: number): string => {
   const divider = 3;
@@ -87,6 +88,13 @@ export default asDetailQueryRoute(useAgentQuery, ({ data, refetch }) => {
       <p className="mt-3 text-xl text-muted-foreground">
         {data?.agent?.extensions.map((ext) => ext).join(", ")}
       </p>
+
+      {data.agent.states.map((state) => (
+        <>
+          {state.stateSchema.hash}
+          <StateDisplay state={state} label={true} />
+        </>
+      ))}
 
       <ListRender array={data.agent.defaults} title="Registered Functions">
         {(item) => <TemplateCard item={item} />}

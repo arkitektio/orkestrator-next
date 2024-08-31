@@ -181,7 +181,10 @@ export default asDetailQueryRoute(useDetailNodeQuery, ({ data, refetch }) => {
     >
       <div className=" p-6">
         <div className="mb-3">
-          <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl ">
+          <h1
+            className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl cursor-pointer"
+            onClick={copyHashToClipboard}
+          >
             {data?.node?.name}
           </h1>
           <p className="mt-3 text-xl text-muted-foreground max-w-[80%]">

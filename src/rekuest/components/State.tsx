@@ -4,8 +4,10 @@ import { useWidgetRegistry } from "../widgets/WidgetsContext";
 export const StateDisplay = ({
   state,
   select,
+  label,
 }: {
   state: StateFragment;
+  label?: boolean;
   select?: string[] | null | undefined;
 }) => {
   const { registry } = useWidgetRegistry();
@@ -20,14 +22,15 @@ export const StateDisplay = ({
         const Widget = registry.getReturnWidgetForPort(port);
 
         return (
-          <>
+          <div className="flex-1">
+            {label && <label>{port.key}</label>}
             <Widget
               key={index}
               value={state?.value[port.key]}
               port={port}
               widget={port.returnWidget}
             />
-          </>
+          </div>
         );
       })}
     </div>

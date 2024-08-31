@@ -12,6 +12,11 @@ const api = {
     // @ts-ignore (define in dts)
     console.log("Running oauth?", url);
 
+    let response = await fetch(url);
+    if (response.status !== 200) {
+      throw new Error("Failed to authenticate. Server does not respond");
+    }
+
     const promise = new Promise<string>((resolve, reject) => {
       ipcRenderer.on("oauth-response", (event, arg) => {
         console.log("Got oauth response", arg);

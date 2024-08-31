@@ -20,9 +20,14 @@ import {
 import { manifest } from "@/constants";
 import { useForm } from "react-hook-form";
 import { useLocation } from "react-router-dom";
+import { introspectUrl } from "@/lib/fakts";
+import React from "react";
 
 export const NotConnected = () => {
-  const { registeredEndpoints, load } = Arkitekt.useConnect();
+  const { registeredEndpoints, load, error } = Arkitekt.useConnect();
+  const [introspectError, setIntrospectError] = React.useState<string | null>(
+    null,
+  );
   const location = useLocation();
 
   const form = useForm({
@@ -30,6 +35,24 @@ export const NotConnected = () => {
       url: "",
     },
   });
+
+  const onSubmit = (data: any) => {
+    console.log(data);
+    setIntrospectError(null);
+
+    introspectUrl(data.url, 2000, new AbortController())
+      .then((endpoint) => {
+        load({
+          endpoint,
+          manifest: manifest,
+          requestedClientType: "desktop",
+          requestPublic: true,
+        });
+      })
+      .catch((e) => {
+        setIntrospectError(e.message);
+      });
+  };
 
   return (
     <div className="flex flex-col w-full h-full flex items-center justify-center">
@@ -54,6 +77,12 @@ export const NotConnected = () => {
           <div className="flex items-center space-x-2 text-foreground">
             Discovered Endpoints
           </div>
+
+          {error && (
+            <div className="bg-red-100 text-red-900 p-2 rounded-md">
+              {error}
+            </div>
+          )}
 
           <div className="flex flex-col gap-2 min-[400px]:flex-row">
             {registeredEndpoints.map((endpoint) => (
@@ -99,20 +128,35 @@ export const NotConnected = () => {
                       Enter your username and password to access your local
                       server.
                     </p>
-                    <Form {...form}>
-                      <div className="grid w-full max-w-sm gap-2">
-                        <StringField
-                          name="url"
-                          description="The local server url"
-                        />
-                        <Button
-                          className="w-full"
-                          type="submit"
-                          variant={"secondary"}
-                        >
-                          Connect
-                        </Button>
+
+                    {error && (
+                      <div className="bg-red-100 text-red-900 p-2 rounded-md">
+                        {error}
                       </div>
+                    )}
+
+                    {introspectError && (
+                      <div className="bg-red-100 text-red-900 p-2 rounded-md">
+                        Could not connect to the server
+                        <p className="text-xs">{introspectError}</p>
+                      </div>
+                    )}
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit(onSubmit)}>
+                        <div className="grid w-full max-w-sm gap-2">
+                          <StringField
+                            name="url"
+                            description="The local server url"
+                          />
+                          <Button
+                            className="w-full"
+                            type="submit"
+                            variant={"secondary"}
+                          >
+                            Connect
+                          </Button>
+                        </div>
+                      </form>
                     </Form>
                   </div>
                 </SheetDescription>

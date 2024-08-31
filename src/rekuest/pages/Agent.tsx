@@ -88,8 +88,6 @@ export default asDetailQueryRoute(useAgentQuery, ({ data, refetch }) => {
         {data?.agent?.extensions.map((ext) => ext).join(", ")}
       </p>
 
-      <RenderPlugins />
-
       <ListRender array={data.agent.defaults} title="Registered Functions">
         {(item) => <TemplateCard item={item} />}
       </ListRender>

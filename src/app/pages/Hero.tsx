@@ -21,6 +21,8 @@ import { manifest } from "@/constants";
 import { introspectUrl } from "@/lib/fakts";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { NotLoggedIn } from "../components/fallbacks/NotLoggedIn";
+import { NotConnected } from "../components/fallbacks/NotConnected";
 
 export const ConnectButton = () => {
   const { registeredEndpoints, load, remove } = Arkitekt.useConnect();
@@ -373,8 +375,8 @@ function Page() {
   return (
     <>
       <Arkitekt.Guard
-        notConnectedFallback={<ConnectButton />}
-        notLoggedInFallback={<LoginButton />}
+        notConnectedFallback={<NotConnected />}
+        notLoggedInFallback={<NotLoggedIn />}
       >
         <Home />
       </Arkitekt.Guard>

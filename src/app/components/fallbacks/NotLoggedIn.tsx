@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/sheet";
 
 export const NotLoggedIn = () => {
-  const { login } = Arkitekt.useLogin();
+  const { login, error } = Arkitekt.useLogin();
   const { remove, fakts } = Arkitekt.useConnect();
 
   return (
@@ -62,6 +62,12 @@ export const NotLoggedIn = () => {
             <p className="max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
               You need to login to access the features of this server.
             </p>
+
+            {error && (
+              <div className="">
+                We could not connect to the server. Please try again later.
+              </div>
+            )}
 
             <div className="flex items-center space-x-2">
               <Button onClick={() => login()} className="w-60">

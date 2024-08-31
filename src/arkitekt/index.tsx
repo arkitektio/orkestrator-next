@@ -266,11 +266,12 @@ export const serviceMap: ServiceBuilderMap = {
   },
 };
 
-export const tauriRedirect = async (
+export const electronRedirect = async (
   url: string,
   abortController: AbortController,
 ) => {
   console.log("Running redirect?", url);
+
   return await window.api.authenticate(url);
 };
 // Check if running in tauri
@@ -279,7 +280,7 @@ export const Arkitekt = window.electron
   ? buildArkitekt({
       manifest,
       serviceBuilderMap: serviceMap,
-      herreProps: { doRedirect: tauriRedirect },
+      herreProps: { doRedirect: electronRedirect },
     })
   : buildArkitekt({ manifest, serviceBuilderMap: serviceMap });
 

@@ -34,13 +34,13 @@ export const useLogin = () => {
             console.log("Error", e);
 
             setPromise(null);
-            setError(e.message);
+            setError(e.message || "Unknown error");
           });
 
         setPromise(newPromise);
       }
     },
-    [promise, herreLogin]
+    [promise, herreLogin],
   );
 
   const logout = useCallback(() => {

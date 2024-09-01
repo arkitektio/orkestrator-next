@@ -40,6 +40,12 @@ export const RekuestProvision = buildSmart(
   "rekuest/provisions",
 );
 export const RekuestAgent = buildSmart("@rekuest-next/agent", "rekuest/agents");
+
+export const RekuestDescriptor = buildSmart(
+  "@rekuest-next/descriptor",
+  "rekuest/descriptors",
+);
+
 export const RekuestDashboard = buildSmart(
   "@rekuest-next/dashboard",
   "rekuest/dashboards",

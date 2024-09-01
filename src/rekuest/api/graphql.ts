@@ -80,6 +80,8 @@ export type AgentFilter = {
   AND?: InputMaybe<AgentFilter>;
   OR?: InputMaybe<AgentFilter>;
   extensions?: InputMaybe<Array<Scalars['String']['input']>>;
+  hasStates?: InputMaybe<Array<Scalars['String']['input']>>;
+  hasTemplates?: InputMaybe<Array<Scalars['String']['input']>>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   instanceId?: InputMaybe<Scalars['String']['input']>;
 };

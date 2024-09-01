@@ -1,7 +1,7 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { DroppableNavLink } from "@/components/ui/link";
-import { RekuestAgent } from "@/linkers";
+import { RekuestAgent, RekuestDescriptor } from "@/linkers";
 import { CardStackIcon, CubeIcon } from "@radix-ui/react-icons";
 import { FunctionSquare, Home } from "lucide-react";
 import * as React from "react";
@@ -13,11 +13,14 @@ import {
 } from "../api/graphql";
 import NodeCard from "../components/cards/NodeCard";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
+import { useDescriptors } from "../interfaces/hooks/useDescriptors";
 
 interface IDataSidebarProps {}
 
 export const NavigationPane = (props: {}) => {
   const { data, refetch, variables } = useAgentsQuery();
+
+  const descriptors = useDescriptors();
 
   return (
     <div className="flex-1 flex-col">
@@ -59,6 +62,13 @@ export const NavigationPane = (props: {}) => {
           >
             <Home className="h-4 w-4" />
             Dashboards
+          </DroppableNavLink>
+          <DroppableNavLink
+            to="/rekuest/interfaces"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <Home className="h-4 w-4" />
+            Interfaces
           </DroppableNavLink>
           <DroppableNavLink
             to="/rekuest/panels"

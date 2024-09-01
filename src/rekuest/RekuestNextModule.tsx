@@ -17,6 +17,8 @@ import Reservation from "./pages/Reservation";
 import Reservations from "./pages/Reservations";
 import Template from "./pages/Template";
 import Standardpane from "./panes/StandardPane";
+import Interfaces from "./pages/Interfaces";
+import Interface from "./pages/Interface";
 
 interface Props {}
 /**
@@ -38,11 +40,13 @@ const Module: React.FC<Props> = () => {
           <Route path="dashboards/:id" element={<Dashboard />} />
           <Route path="panels/:id" element={<Panel />} />
           <Route path="panels" element={<Panels />} />
+          <Route path="interfaces" element={<Interfaces />} />
           <Route path="dependencies/:id" element={<Dependency />} />
           <Route path="templates/:id" element={<Template />} />
           <Route path="provisions/:id" element={<Provision />} />
           <Route path="agents/:id" element={<Agent />} />
           <Route path="assignations/:id" element={<Assignation />} />
+          <Route path="interfaces/:kind/:id" element={<Interface />} />
         </Routes>
       </ModuleLayout>
     </Guard.Rekuest>

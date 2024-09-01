@@ -1,11 +1,11 @@
-query GetState($id: ID!){
-    state(id: $id){
-        ...State
-    }
+query GetState($id: ID!) {
+  state(id: $id) {
+    ...State
+  }
 }
 
-query GetStateFor($template: ID, $agent: ID, $stateKey: String!){
-    stateFor(template: $template, agent: $agent, stateKey: $stateKey){
-        ...State
-    }
+query GetStateFor($template: ID, $agent: ID, $stateHash: String!) {
+  stateFor(template: $template, agent: $agent, stateHash: $stateHash) {
+    ...State
+  }
 }

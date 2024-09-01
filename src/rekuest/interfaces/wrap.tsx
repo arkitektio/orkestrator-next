@@ -3,10 +3,13 @@ import { AppContext, ArkitektContext, Service } from "@/arkitekt/provider";
 import { manifest } from "@/constants";
 import r2wc from "@r2wc/react-to-web-component";
 import { ReactNode, useEffect, useState } from "react";
+import { Descriptor, InterfaceDefinition } from "./types";
 
 export type WrappedProps = {
   fakts: any;
   token: string;
+  descriptor: InterfaceDefinition<any, any>;
+  agent: string;
 };
 
 export const ComponentServiceProvier = ({
@@ -52,13 +55,21 @@ export const ComponentServiceProvier = ({
   );
 };
 
-export const wrap = (Component: React.ComponentType) =>
+export const wrap = (
+  Component: React.ComponentType<{
+    descriptor: InterfaceDefinition<any, any>;
+    agent: string;
+  }>,
+) =>
   r2wc(
     (props: WrappedProps) => {
       return (
         <>
           <ComponentServiceProvier token={props.token} fakts={props.fakts}>
-            <Component></Component>
+            <Component
+              descriptor={props.descriptor}
+              agent={props.agent}
+            ></Component>
           </ComponentServiceProvier>
         </>
       );
@@ -67,6 +78,8 @@ export const wrap = (Component: React.ComponentType) =>
       props: {
         fakts: "json",
         token: "string",
+        descriptor: "json",
+        agent: "string",
       },
     },
   );

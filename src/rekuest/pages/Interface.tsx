@@ -12,8 +12,10 @@ import { useParams } from "react-router-dom";
 
 export function WebComponentLoader({
   descriptor,
+  agent,
 }: {
   descriptor: Descriptor<any, any>;
+  agent?: string;
 }) {
   const containerRef = useRef(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -43,6 +45,14 @@ export function WebComponentLoader({
       console.log(webComponent);
       webComponent.setAttribute("fakts", JSON.stringify(fakts));
       webComponent.setAttribute("token", token || "");
+      webComponent.setAttribute("agent", agent);
+      webComponent.setAttribute(
+        "descriptor",
+        JSON.stringify({
+          nodeRequirements: descriptor.nodeRequirements,
+          stateRequirements: descriptor.stateRequirements,
+        }),
+      );
       containerRef.current.appendChild(webComponent);
     }
   }, [isLoaded, containerRef]);
@@ -59,7 +69,7 @@ const Page = (props) => {
 
   return (
     <PageLayout title={params.kind}>
-      <WebComponentLoader descriptor={descriptor} />
+      <WebComponentLoader descriptor={descriptor} agent={params.id} />
     </PageLayout>
   );
 };

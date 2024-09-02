@@ -42,10 +42,10 @@ import {
   EntityFragment,
   ListEntitiesQueryVariables,
   useListEntitiesQuery,
-  useSearchEntityKindLazyQuery,
-  useSearchEntityMetricLazyQuery,
+  useSearchLinkedExpressionLazyQuery,
 } from "@/mikro-next/api/graphql";
 import { useForm } from "react-hook-form";
+import { MikroEntity } from "@/linkers";
 
 export const columns: ColumnDef<EntityFragment>[] = [
   {
@@ -80,16 +80,23 @@ export const columns: ColumnDef<EntityFragment>[] = [
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Name
+          ID
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
-    cell: ({ row }) => <div className="lowercase">{row.getValue("name")}</div>,
+    cell: ({ row }) => (
+      <MikroEntity.DetailLink
+        object={row.getValue("name")}
+        className="lowercase"
+      >
+        {row.getValue("name")}
+      </MikroEntity.DetailLink>
+    ),
   },
   {
     id: "Label",
-    accessorKey: "kind.label",
+    accessorKey: "linkedExpression.label",
     header: () => <div className="text-center">Type</div>,
     cell: ({ row, getValue }) => {
       const label = row.getValue("Label");
@@ -99,7 +106,7 @@ export const columns: ColumnDef<EntityFragment>[] = [
   },
   {
     id: "Ontology",
-    accessorKey: "kind.ontology.name",
+    accessorKey: "linkedExpression.expression.label",
     header: () => <div className="text-center">Ontology</div>,
     cell: ({ row, getValue }) => {
       const label = row.getValue("Ontology");
@@ -179,8 +186,7 @@ export const EntitiesTable = () => {
     pageSize: 20,
   });
 
-  const [searchK] = useSearchEntityKindLazyQuery({});
-  const [searchM] = useSearchEntityMetricLazyQuery({});
+  const [searchM] = useSearchLinkedExpressionLazyQuery({});
 
   const form = useForm<FormValues>({
     defaultValues: {},
@@ -253,7 +259,7 @@ export const EntitiesTable = () => {
           <Form {...form}>
             <GraphQLSearchField
               placeholder="Filter Kind"
-              searchQuery={searchK}
+              searchQuery={searchM}
               name="kinds"
             />
             <GraphQLSearchField

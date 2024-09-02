@@ -1,0 +1,11 @@
+query GetGraph($id: ID!) {
+  graph(id: $id) {
+    ...Graph
+  }
+}
+
+query ListGraphs($filters: GraphFilter, $pagination: OffsetPaginationInput) {
+  graphs(filters: $filters, pagination: $pagination) {
+    ...ListGraph
+  }
+}

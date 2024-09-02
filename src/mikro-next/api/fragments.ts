@@ -6,12 +6,6 @@
       }
       const result: PossibleTypesResultData = {
   "possibleTypes": {
-    "ImageMetric": [
-      "ImageIntMetric"
-    ],
-    "IntMetric": [
-      "ImageIntMetric"
-    ],
     "Plot": [
       "RenderedPlot"
     ],

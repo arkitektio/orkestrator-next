@@ -67,6 +67,7 @@ export const MikroEntity = buildSmart("@mikro/entitry", "mikro/entities");
 
 export const MikroDataset = buildSmart("@mikro/dataset", "mikro/datasets");
 export const MikroOntology = buildSmart("@mikro/ontology", "mikro/ontologies");
+export const MikroGraph = buildSmart("@mikro/graph", "mikro/graphs");
 export const MikroExperiment = buildSmart(
   "@mikro/experiment",
   "mikro/experiments",

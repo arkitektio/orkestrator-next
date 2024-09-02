@@ -1,0 +1,9 @@
+fragment Graph on Graph {
+  id
+  name
+}
+
+fragment ListGraph on Graph {
+  id
+  name
+}

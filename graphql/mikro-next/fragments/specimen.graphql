@@ -2,14 +2,22 @@ fragment Specimen on Specimen {
   id
   entity {
     id
-    kind {
+    linkedExpression {
       id
-      label
+      expression {
+        id
+        label
+        ontology {
+          id
+          name
+        }
+      }
+
+      graph {
+        id
+      }
     }
     name
-    group {
-      id
-    }
   }
   protocol {
     id

@@ -1,18 +1,19 @@
 fragment Entity on Entity {
   id
   name
-  kind {
+  linkedExpression {
     id
     label
-    ontology {
+    expression {
+      id
+      label
+    }
+    graph {
       id
       name
     }
   }
-  group {
-    id
-    name
-  }
+
   specimens {
     id
     protocol {
@@ -20,5 +21,3 @@ fragment Entity on Entity {
     }
   }
 }
-
-

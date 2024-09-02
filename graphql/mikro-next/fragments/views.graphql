@@ -106,23 +106,13 @@ fragment SpecimenView on SpecimenView {
   step {
     id
     name
-    kind {
+    expression {
       label
     }
     description
     reagents {
       id
-      name
-      metrics {
-        metric {
-          id
-          kind {
-            label
-          }
-          dataKind
-        }
-        value
-      }
+      concentration
     }
   }
 }

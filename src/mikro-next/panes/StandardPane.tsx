@@ -56,6 +56,13 @@ export const NavigationPane = (props: {}) => {
             Ontologies
           </DroppableNavLink>
           <DroppableNavLink
+            to="/mikro/graphs"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <GitBranchPlusIcon className="h-4 w-4" />
+            Graphs
+          </DroppableNavLink>
+          <DroppableNavLink
             to="/mikro/protocolsteps"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >

@@ -1,0 +1,18 @@
+fragment LinkedExpression on LinkedExpression {
+  id
+  graph {
+    id
+  }
+  expression {
+    id
+    label
+    ontology {
+      id
+      name
+    }
+  }
+  entities(pagination: { limit: 10 }) {
+    id
+    name
+  }
+}

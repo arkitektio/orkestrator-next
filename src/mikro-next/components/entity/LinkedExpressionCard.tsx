@@ -5,10 +5,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { MikroEntity } from "@/linkers";
-import { useGetEntityKindQuery } from "@/mikro-next/api/graphql";
+import { useGetLinkedExpressionQuery } from "@/mikro-next/api/graphql";
 
 export const EntityKindCard = ({ id }: { id: string }) => {
-  const { data } = useGetEntityKindQuery({
+  const { data } = useGetLinkedExpressionQuery({
     variables: {
       id: id,
     },
@@ -17,12 +17,12 @@ export const EntityKindCard = ({ id }: { id: string }) => {
   return (
     <Card className="p-3">
       <CardContent>
-        <CardTitle>{data?.entityKind?.label}</CardTitle>
+        <CardTitle>{data?.linkedExpression?.expression.label}</CardTitle>
 
-        <CardDescription>{data?.entityKind?.description}</CardDescription>
+        <CardDescription>{data?.linkedExpression?.graph.id}</CardDescription>
 
         <CardDescription>
-          {data?.entityKind?.entities.map((field, i) => (
+          {data?.linkedExpression?.entities.map((field, i) => (
             <Card key={i}>
               <MikroEntity.DetailLink object={field.id}>
                 {field.name}

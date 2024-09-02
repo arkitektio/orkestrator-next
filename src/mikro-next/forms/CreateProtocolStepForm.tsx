@@ -8,13 +8,14 @@ import { useForm } from "react-hook-form";
 import {
   CreateProtocolStepMutationVariables,
   useCreateProtocolStepMutation,
-  useSearchEntityKindLazyQuery,
+  useSearchLinkedExpressionLazyQuery,
+  useSearchLinkedExpressionQuery,
 } from "../api/graphql";
 
 export default (props) => {
   const [add] = useCreateProtocolStepMutation();
 
-  const [search] = useSearchEntityKindLazyQuery();
+  const [search] = useSearchLinkedExpressionLazyQuery();
 
   const dialog = useGraphQlFormDialog(add);
 

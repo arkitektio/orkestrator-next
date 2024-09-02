@@ -35,9 +35,6 @@ fragment Image on Image {
     sub
   }
   tags
-  metrics {
-    ...ImageMetric
-  }
   roiOrigins {
     ...ListROI
   }

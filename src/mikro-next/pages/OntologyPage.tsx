@@ -12,7 +12,7 @@ import {
   useGetKnowledgeGraphQuery,
   useSearchOntologiesLazyQuery,
 } from "../api/graphql";
-import { EntityKindCard } from "../components/entity/EntityKindCard";
+import { EntityKindCard } from "../components/entity/LinkedExpressionCard";
 
 cytoscape.use(cola);
 

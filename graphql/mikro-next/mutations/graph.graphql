@@ -1,0 +1,5 @@
+mutation CreateGraph($input: GraphInput!) {
+  createGraph(input: $input) {
+    ...Graph
+  }
+}

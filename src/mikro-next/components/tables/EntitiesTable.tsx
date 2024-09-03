@@ -180,7 +180,7 @@ export type FormValues = {
   search?: string | null;
 };
 
-export const EntitiesTable = (props: { graph: string }) => {
+export const EntitiesTable = (props: { graph?: string }) => {
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize: 20,

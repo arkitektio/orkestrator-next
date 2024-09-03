@@ -516,6 +516,7 @@ export type Entity = {
   label: Scalars['String']['output'];
   linkedExpression: LinkedExpression;
   metricMap: Scalars['MetricMap']['output'];
+  metrics: Array<MetricAssociation>;
   name: Scalars['String']['output'];
   relations: Array<EntityRelation>;
   specimens: Array<Specimen>;
@@ -571,6 +572,7 @@ export type EntityRelation = {
   left: Entity;
   leftId: Scalars['String']['output'];
   linkedExpression: LinkedExpression;
+  metrics: Array<MetricAssociation>;
   right: Entity;
   rightId: Scalars['String']['output'];
 };
@@ -1144,11 +1146,25 @@ export type MediaStorePresignedUrlArgs = {
   host?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type MetricAssociation = {
+  __typename?: 'MetricAssociation';
+  key: Scalars['String']['output'];
+  linkedExpression: LinkedExpression;
+  value: Scalars['String']['output'];
+};
+
 export enum MetricDataType {
+  Boolean = 'BOOLEAN',
+  Category = 'CATEGORY',
   Datetime = 'DATETIME',
   Float = 'FLOAT',
+  FourDVector = 'FOUR_D_VECTOR',
   Int = 'INT',
-  String = 'STRING'
+  NVector = 'N_VECTOR',
+  OneDVector = 'ONE_D_VECTOR',
+  String = 'STRING',
+  ThreeDVector = 'THREE_D_VECTOR',
+  TwoDVector = 'TWO_D_VECTOR'
 }
 
 export type ModelChange = {
@@ -3612,7 +3628,7 @@ export type ListDatasetFragment = { __typename?: 'Dataset', id: string, name: st
 
 export type EntityFragment = { __typename?: 'Entity', id: string, name: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, specimens: Array<{ __typename?: 'Specimen', id: string, protocol: { __typename?: 'Protocol', id: string } }> };
 
-export type EntityGraphFragment = { __typename?: 'EntityGraph', nodes: Array<{ __typename?: 'Entity', id: string, name: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', color: string } }>, edges: Array<{ __typename?: 'EntityRelation', id: string, label: string, leftId: string, rightId: string }> };
+export type EntityGraphFragment = { __typename?: 'EntityGraph', nodes: Array<{ __typename?: 'Entity', id: string, name: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', color: string }, metrics: Array<{ __typename?: 'MetricAssociation', value: string, key: string }> }>, edges: Array<{ __typename?: 'EntityRelation', id: string, label: string, leftId: string, rightId: string, metrics: Array<{ __typename?: 'MetricAssociation', value: string, key: string }> }> };
 
 export type EraFragment = { __typename?: 'Era', id: string, begin?: any | null, name: string };
 
@@ -4315,7 +4331,7 @@ export type GetEntityGraphQueryVariables = Exact<{
 }>;
 
 
-export type GetEntityGraphQuery = { __typename?: 'Query', entityGraph: { __typename?: 'EntityGraph', nodes: Array<{ __typename?: 'Entity', id: string, name: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', color: string } }>, edges: Array<{ __typename?: 'EntityRelation', id: string, label: string, leftId: string, rightId: string }> } };
+export type GetEntityGraphQuery = { __typename?: 'Query', entityGraph: { __typename?: 'EntityGraph', nodes: Array<{ __typename?: 'Entity', id: string, name: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', color: string }, metrics: Array<{ __typename?: 'MetricAssociation', value: string, key: string }> }>, edges: Array<{ __typename?: 'EntityRelation', id: string, label: string, leftId: string, rightId: string, metrics: Array<{ __typename?: 'MetricAssociation', value: string, key: string }> }> } };
 
 export type GetExperimentQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4760,12 +4776,20 @@ export const EntityGraphFragmentDoc = gql`
     linkedExpression {
       color
     }
+    metrics {
+      value
+      key
+    }
   }
   edges {
     id
     label
     leftId
     rightId
+    metrics {
+      value
+      key
+    }
   }
 }
     `;

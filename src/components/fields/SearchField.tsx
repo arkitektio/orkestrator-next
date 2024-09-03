@@ -121,7 +121,7 @@ export const SearchField = ({
       render={({ field }) => (
         <>
           <FormItem className="flex flex-col dark:text-white">
-            <FormLabel>{label ? label : name}</FormLabel>
+            {label != undefined && <FormLabel>{label}</FormLabel>}
             <Popover>
               <PopoverTrigger asChild>
                 <FormControl>

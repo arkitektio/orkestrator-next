@@ -20,6 +20,8 @@ import { MikroEntity } from "@/linkers";
 import cise from "cytoscape-cise";
 import dagre from "cytoscape-dagre";
 import { useNavigate, useParams } from "react-router-dom";
+import { set } from "date-fns";
+import { SearchField, SearchFunction } from "@/components/fields/SearchField";
 
 cytoscape.use(cola);
 cytoscape.use(cise);
@@ -33,9 +35,10 @@ export const graphToElements: (
     nodes: graph.entityGraph.nodes.map((node) => ({
       data: {
         id: node.id,
-        label: node.label + (node.id == root ? "(Root)" : ""),
+        label: node.metrics.find((m) => m.key == "Label")?.value || node.label,
         subtitle: node.name,
         color: node.linkedExpression.color,
+        metrics: node.metrics,
       },
     })),
     edges: graph.entityGraph.edges.map((edge) => ({
@@ -44,6 +47,7 @@ export const graphToElements: (
         source: edge.leftId,
         target: edge.rightId,
         label: edge.label,
+        metrics: edge.metrics,
       },
     })),
   };
@@ -81,33 +85,62 @@ const edgeStyle = {
     'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
 };
 
+const layoutOptions = [
+  { value: "cise", label: "CISE" },
+  { value: "dagre", label: "Dagre" },
+  { value: "cola", label: "Cola" },
+];
+
 export default asDetailQueryRoute(
   useGetEntityGraphQuery,
   ({ data, refetch }) => {
     const cy = useRef<cytoscape.Core | null>(null); // Reference to the Cytoscape instance
 
     const [selectedNode, setSelectedNode] = useState<any>(null); // State to manage selected node for popup
+    const [selectedEdge, setSelectedEdge] = useState<any>(null); // State to manage selected edge for popup
     const [anchorPosition, setAnchorPosition] = useState({ x: 0, y: 0 }); // State to manage popup position
+    const [edgeAnchorPosition, setEdgeAnchorPosition] = useState({
+      x: 0,
+      y: 0,
+    }); // State to manage popup position
 
     const [queryMore, setQueryMore] = useGetEntityGraphLazyQuery();
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
-    const handleNodeClick = (event) => {
+    const handleTap = (event) => {
       if (event.target == cy.current) {
         setSelectedNode(null);
+        setSelectedEdge(null);
         return;
       }
 
-      const node = event.target;
-      const position = node.renderedPosition();
+      const target = event.target;
 
-      if (!position) {
-        return;
+      console.log("Tapped", target);
+
+      if (target.isNode()) {
+        console.log("Not a node");
+        const position = target.renderedPosition();
+
+        if (!position) {
+          return;
+        }
+
+        setSelectedNode(target.data());
+        setAnchorPosition({ x: position.x, y: position.y });
       }
 
-      setSelectedNode(node.data());
-      setAnchorPosition({ x: position.x, y: position.y });
+      if (target.isEdge()) {
+        const position = target.renderedMidpoint();
+
+        if (!position) {
+          return;
+        }
+
+        setSelectedEdge(target.data());
+        setEdgeAnchorPosition({ x: position.x, y: position.y });
+      }
     };
 
     useEffect(() => {
@@ -180,8 +213,35 @@ export default asDetailQueryRoute(
     const form = useForm({
       defaultValues: {
         ontologies: null,
+        layout: "dagre",
       },
     });
+
+    const layout = form.watch("layout");
+
+    useEffect(() => {
+      if (layout) {
+        cy.current
+          ?.layout({
+            name: layout,
+            clusters: (node) => {
+              return node.data("label");
+            },
+          })
+          .run();
+      }
+    }, [layout]);
+
+    const searchLayouts: SearchFunction = async ({ search, values }) => {
+      if (values) {
+        return layoutOptions.filter((option) => {
+          return values.includes(option.value);
+        });
+      }
+      return layoutOptions.filter((option) => {
+        return option.label.toLowerCase().includes(search || "".toLowerCase());
+      });
+    };
 
     const [searchOntology] = useSearchOntologiesLazyQuery();
 
@@ -191,12 +251,13 @@ export default asDetailQueryRoute(
         pageActions={
           <>
             <Form {...form}>
-              <form>
+              <form className="flex flex-row gap-2">
                 <GraphQLSearchField
                   {...form}
                   name="ontologies"
                   searchQuery={searchOntology}
                 />
+                <SearchField {...form} name="layout" search={searchLayouts} />
               </form>
             </Form>
           </>
@@ -217,13 +278,14 @@ export default asDetailQueryRoute(
             ]} // Apply the styles
             cy={(thecy) => {
               console.log("cy", thecy);
-              thecy.on("tap", handleNodeClick);
+              thecy.on("tap", handleTap);
+
               cy.current = thecy;
             }}
           />
           {selectedNode && (
             <Card
-              className="p-2 rounded-full shadow-lg"
+              className="p-2 "
               style={{
                 position: "absolute",
                 zIndex: 1000,
@@ -233,6 +295,13 @@ export default asDetailQueryRoute(
               }}
               onClick={handleClosePopover}
             >
+              {selectedNode.metrics.map((metric) => (
+                <div className="flex flex-row justify-between">
+                  <div>{metric.key}</div>
+                  <div>{metric.value}</div>
+                </div>
+              ))}
+
               <div className="flex flex-row justify-between rounded rounded-md">
                 <Button
                   onClick={() => handleMoreNodeClick(selectedNode.id)}
@@ -251,6 +320,29 @@ export default asDetailQueryRoute(
                   View
                 </Button>
               </div>
+            </Card>
+          )}
+          {selectedEdge && (
+            <Card
+              className="p-2 "
+              style={{
+                position: "absolute",
+                zIndex: 1000,
+                left: edgeAnchorPosition.x,
+                top: edgeAnchorPosition.y,
+                transform: "translate(-50%, -50%)",
+              }}
+              onClick={handleClosePopover}
+            >
+              {selectedEdge.metrics.length == 0 && (
+                <div>No metrics available</div>
+              )}
+              {selectedEdge.metrics.map((metric) => (
+                <div className="flex flex-row justify-between">
+                  <p className={"text-muted mr-2"}>{metric.key}</p>
+                  <div>{metric.value}</div>
+                </div>
+              ))}
             </Card>
           )}
           {loading && (

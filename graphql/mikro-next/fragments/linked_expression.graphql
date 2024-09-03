@@ -2,6 +2,7 @@ fragment LinkedExpression on LinkedExpression {
   id
   graph {
     id
+    name
   }
   expression {
     id
@@ -12,6 +13,19 @@ fragment LinkedExpression on LinkedExpression {
     }
   }
   entities(pagination: { limit: 10 }) {
+    id
+    name
+  }
+}
+
+
+fragment ListLinkedExpression on LinkedExpression {
+  id
+  graph {
+    id
+    name
+  }
+  entities(pagination: { limit: 2 }) {
     id
     name
   }

@@ -1,18 +1,17 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { Form } from "@/components/ui/form";
+import { Image } from "@/components/ui/image";
+import { DragZone } from "@/components/upload/drag";
+import { useResolve } from "@/datalayer/hooks/useResolve";
+import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import cytoscape from "cytoscape";
 import cola from "cytoscape-cola";
-import { useEffect, useRef, useState } from "react";
-import CytoscapeComponent from "react-cytoscapejs";
-import { useForm } from "react-hook-form";
 import {
   GetKnowledgeGraphQuery,
-  useGetKnowledgeGraphQuery,
-  useSearchOntologiesLazyQuery,
+  useGetOntologyQuery,
+  useUpdateOntologyMutation,
 } from "../api/graphql";
-import { EntityKindCard } from "../components/entity/LinkedExpressionCard";
+import ExpressionCard from "../components/cards/ExpressionCard";
 
 cytoscape.use(cola);
 
@@ -50,145 +49,50 @@ const nodeStyle = {
     'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
 };
 
-export default asDetailQueryRoute(
-  useGetKnowledgeGraphQuery,
-  ({ data, refetch }) => {
-    const cy = useRef<cytoscape.Core | null>(null); // Reference to the Cytoscape instance
+export default asDetailQueryRoute(useGetOntologyQuery, ({ data, refetch }) => {
+  const uploadFile = useMediaUpload();
 
-    const [selectedNode, setSelectedNode] = useState<any>(null); // State to manage selected node for popup
-    const [anchorPosition, setAnchorPosition] = useState({ x: 0, y: 0 }); // State to manage popup position
+  const [update] = useUpdateOntologyMutation();
+  const resolve = useResolve();
 
-    const handleNodeClick = (event) => {
-      const node = event.target;
-      const position = node.renderedPosition();
-
-      setSelectedNode(node.data());
-      setAnchorPosition({
-        x: position.x,
-        y: position.y,
-      });
-    };
-
-    const handlePaneClick = (event) => {
-      // Ensure the click is on the background
-      if (event.target !== cy.current) {
-        return;
-      }
-      const pos = event.position; // Get the position where the user clicked
-      const newNodeId = "dd";
-      // Add the new node to the graph
-      cy.current?.add({
-        group: "nodes",
-        data: { id: newNodeId, label: newNodeId },
-        position: { x: pos.x, y: pos.y },
-        style: nodeStyle,
-      });
-    };
-
-    const handleClosePopover = (e) => {
-      setSelectedNode(null);
-    };
-
-    const form = useForm({
-      defaultValues: {
-        ontologies: null,
+  const createFile = async (file: File, key: string) => {
+    update({
+      variables: {
+        input: {
+          id: data.ontology.id,
+          image: key,
+        },
       },
     });
+  };
 
-    const ontologies = form.watch("ontologies");
-
-    useEffect(() => {
-      if (ontologies) {
-        refetch({
-          ontologies: ontologies,
-        }).then((data) => {
-          if (cy.current) {
-            cy.current
-              .layout({
-                name: "cola",
-              })
-              .run();
-          }
-        });
-      }
-    }, [ontologies]);
-
-    const [searchOntology] = useSearchOntologiesLazyQuery();
-
-    return (
-      <PageLayout
-        title="Knowledge Graph"
-        pageActions={
-          <>
-            <Form {...form}>
-              <form>
-                <GraphQLSearchField
-                  {...form}
-                  name="ontologies"
-                  searchQuery={searchOntology}
-                />
-              </form>
-            </Form>
-          </>
-        }
-      >
-        <div className="w-full h-full">
-          {data && (
-            <CytoscapeComponent
-              elements={CytoscapeComponent.normalizeElements(
-                graphToElements(data),
-              )}
-              layout={{
-                name: "cola",
-              }}
-              style={{ width: "100%", height: "100%" }}
-              stylesheet={[
-                {
-                  selector: "node",
-                  style: nodeStyle,
-                },
-                {
-                  selector: "edge",
-                  style: {
-                    shape: "round-rectangle",
-                    width: 2,
-                    "target-arrow-shape": "triangle", // Set the shape of the target arrow
-                    label: "data(label)", // Show label on edges
-                    "font-size": "10px",
-                    "curve-style": "bezier", // Make sure the edges are curved if they overlap
-                    "text-rotation": "autorotate",
-                    color: "#94A3B8",
-                    "text-margin-y": -10,
-
-                    "font-family":
-                      'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
-                  },
-                },
-              ]} // Apply the styles
-              cy={(thecy) => {
-                thecy.on("dbltap", "node", handleNodeClick);
-                thecy.on("tap", handleClosePopover);
-                cy.current = thecy;
-              }}
-            />
-          )}
-          {selectedNode && (
-            <div
-              className="p-2"
-              style={{
-                position: "absolute",
-                zIndex: 1000,
-                left: anchorPosition.x,
-                top: anchorPosition.y,
-                transform: "translate(-50%, -100%)",
-              }}
-              onClick={handleClosePopover}
-            >
-              <EntityKindCard id={selectedNode.id} />
-            </div>
-          )}
+  return (
+    <PageLayout title={data.ontology.name} pageActions={<></>}>
+      <div className="w-full h-full">
+        <div>
+          <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+            {data.ontology.name}
+          </h1>
+          <p className="mt-3 text-xl text-muted-foreground">
+            {data.ontology.description || "No description"}
+          </p>
+          <div className="w-full h-full flex-row relative">
+            {data.ontology?.store?.presignedUrl && (
+              <Image
+                src={resolve(data.ontology.store?.presignedUrl)}
+                style={{ filter: "brightness(0.7)" }}
+                className="object-cover h-full w-full absolute top-0 left-0 rounded rounded-lg"
+              />
+            )}
+          </div>
         </div>
-      </PageLayout>
-    );
-  },
-);
+        <DragZone uploadFile={uploadFile} createFile={createFile} />
+        <div className="grid grid-cols-2 gap-4 mt-2">
+          {data.ontology.expressions.map((expression) => (
+            <ExpressionCard key={expression.id} item={expression} />
+          ))}
+        </div>
+      </div>
+    </PageLayout>
+  );
+});

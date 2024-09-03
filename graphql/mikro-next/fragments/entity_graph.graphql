@@ -1,25 +1,16 @@
 fragment EntityGraph on EntityGraph {
   nodes {
     id
+    name
     label
-    metrics {
-      kind
-      dataKind
-      value
+    linkedExpression {
+      color
     }
-    color
-    isRoot
-    subtitle
   }
   edges {
     id
     label
-    source
-    target
-    metrics {
-      kind
-      dataKind
-      value
-    }
+    leftId 
+    rightId
   }
 }

@@ -13,34 +13,36 @@ import {
   useGetEntityGraphQuery,
   useSearchOntologiesLazyQuery,
 } from "../api/graphql";
-import { EntityCard } from "../components/entity/EntityCard";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MikroEntity } from "@/linkers";
 import cise from "cytoscape-cise";
 import dagre from "cytoscape-dagre";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 cytoscape.use(cola);
 cytoscape.use(cise);
 cytoscape.use(dagre);
 
-export const graphToElements: (graph: GetEntityGraphQuery) => any = (graph) => {
+export const graphToElements: (
+  graph: GetEntityGraphQuery,
+  root: string,
+) => any = (graph, root) => {
   return {
     nodes: graph.entityGraph.nodes.map((node) => ({
       data: {
         id: node.id,
-        label: node.label,
-        subtitle: node.subtitle,
-        color: node.color,
+        label: node.label + (node.id == root ? "(Root)" : ""),
+        subtitle: node.name,
+        color: node.linkedExpression.color,
       },
     })),
     edges: graph.entityGraph.edges.map((edge) => ({
       data: {
         id: edge.id,
-        source: edge.source,
-        target: edge.target,
+        source: edge.leftId,
+        target: edge.rightId,
         label: edge.label,
       },
     })),
@@ -88,7 +90,7 @@ export default asDetailQueryRoute(
     const [anchorPosition, setAnchorPosition] = useState({ x: 0, y: 0 }); // State to manage popup position
 
     const [queryMore, setQueryMore] = useGetEntityGraphLazyQuery();
-
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
     const handleNodeClick = (event) => {
@@ -110,11 +112,23 @@ export default asDetailQueryRoute(
 
     useEffect(() => {
       if (data) {
-        let elements = graphToElements(data);
-        cy.current?.elements().remove();
-        cy.current?.add(elements);
+        let elements = graphToElements(data, id);
+        setGraphElements(elements);
       }
     }, [data]);
+
+    const setGraphElements = (elements: any) => {
+      cy.current?.elements().remove();
+      cy.current?.add(elements);
+      cy.current
+        ?.layout({
+          name: "cise",
+          clusters: (node) => {
+            return node.data("label");
+          },
+        })
+        .run();
+    };
 
     const [loading, setLoading] = useState(false);
 
@@ -131,24 +145,26 @@ export default asDetailQueryRoute(
       })
         .then((data) => {
           if (data.data?.entityGraph) {
-            let elements = graphToElements(data.data);
+            let elements = graphToElements(data.data, id);
 
-            let cleanedElements = elements.nodes.filter(
-              (node) =>
-                !cy.current?.nodes().some((n) => n.data("id") === node.data.id),
-            );
+            for (let node of elements.nodes) {
+              console.log("Adding node", node);
+              cy.current?.nodes().add(node);
+            }
 
-            let cleanedEdges = elements.edges.filter(
-              (edge) =>
-                !cy.current?.edges().some((e) => e.data("id") === edge.data.id),
-            );
+            for (let edge of elements.edges) {
+              console.log("Adding edge", edge);
+              cy.current?.edges().add(edge);
+            }
 
-            elements = {
-              nodes: cleanedElements,
-              edges: cleanedEdges,
-            };
-
-            cy.current?.add(elements);
+            cy.current
+              ?.layout({
+                name: "cise",
+                clusters: (node) => {
+                  return node.data("label");
+                },
+              })
+              .run();
             setLoading(false);
           }
         })
@@ -166,8 +182,6 @@ export default asDetailQueryRoute(
         ontologies: null,
       },
     });
-
-    const ontologies = form.watch("ontologies");
 
     const [searchOntology] = useSearchOntologiesLazyQuery();
 
@@ -190,12 +204,6 @@ export default asDetailQueryRoute(
       >
         <div className="w-full h-full relative">
           <CytoscapeComponent
-            layout={{
-              name: "cise",
-              clusters: (node) => {
-                return node.data("subtitle");
-              },
-            }}
             style={{ width: "100%", height: "100%" }}
             stylesheet={[
               {
@@ -215,21 +223,21 @@ export default asDetailQueryRoute(
           />
           {selectedNode && (
             <Card
-              className="p-2"
+              className="p-2 rounded-full shadow-lg"
               style={{
                 position: "absolute",
                 zIndex: 1000,
                 left: anchorPosition.x,
                 top: anchorPosition.y,
-                transform: "translate(-50%, -100%)",
+                transform: "translate(-50%, -50%)",
               }}
               onClick={handleClosePopover}
             >
-              <EntityCard id={selectedNode.id} />
-              <div className="flex flex-row justify-between gap-2">
+              <div className="flex flex-row justify-between rounded rounded-md">
                 <Button
                   onClick={() => handleMoreNodeClick(selectedNode.id)}
-                  className="flex-1"
+                  className="flex-1 rounded-l-full"
+                  disabled={true}
                 >
                   Expand
                 </Button>
@@ -238,7 +246,7 @@ export default asDetailQueryRoute(
                   onClick={() => {
                     navigate(MikroEntity.linkBuilder(selectedNode.id));
                   }}
-                  className="flex-1"
+                  className="flex-1 rounded-r-full"
                 >
                   View
                 </Button>

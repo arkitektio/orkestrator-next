@@ -1,0 +1,11 @@
+query GetExpression($id: ID!) {
+  expression(id: $id) {
+    ...Expression
+  }
+}
+
+query ListExpressions($filters: ExpressionFilter, $pagination: OffsetPaginationInput) {
+  expressions(filters: $filters, pagination: $pagination) {
+    ...ListExpression
+  }
+}

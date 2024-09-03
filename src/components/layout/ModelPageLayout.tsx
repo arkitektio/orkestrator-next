@@ -8,6 +8,7 @@ export type ModelPageLayoutProps = {
   title?: string;
   sidebars?: React.ReactNode;
   actions?: React.ReactNode;
+  pageActions?: React.ReactNode;
   variant?: PageVariant;
 };
 
@@ -19,6 +20,7 @@ export const ModelPageLayout = ({
   object,
   variant,
   actions,
+  pageActions,
 }: ModelPageLayoutProps) => {
   return (
     <PageLayout
@@ -26,6 +28,7 @@ export const ModelPageLayout = ({
       sidebars={<>{sidebars}</>}
       actions={actions}
       variant={variant}
+      pageActions={pageActions}
     >
       {children}
     </PageLayout>

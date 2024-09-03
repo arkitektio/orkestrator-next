@@ -38,6 +38,7 @@ import {
 import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Form } from "@/components/ui/form";
+import { MikroEntity } from "@/linkers";
 import {
   EntityFragment,
   ListEntitiesQueryVariables,
@@ -45,7 +46,6 @@ import {
   useSearchLinkedExpressionLazyQuery,
 } from "@/mikro-next/api/graphql";
 import { useForm } from "react-hook-form";
-import { MikroEntity } from "@/linkers";
 
 export const columns: ColumnDef<EntityFragment>[] = [
   {
@@ -109,9 +109,9 @@ export const columns: ColumnDef<EntityFragment>[] = [
     accessorKey: "linkedExpression.expression.label",
     header: () => <div className="text-center">Ontology</div>,
     cell: ({ row, getValue }) => {
-      const label = row.getValue("Ontology");
+      const label = row.getValue("Ontology") as string;
 
-      return <div className="text-center font-medium">{label}</div>;
+      return <div className="text-center font-medium">{label || ""}</div>;
     },
   },
   {
@@ -180,7 +180,7 @@ export type FormValues = {
   search?: string | null;
 };
 
-export const EntitiesTable = () => {
+export const EntitiesTable = (props: { graph: string }) => {
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize: 20,
@@ -195,6 +195,9 @@ export const EntitiesTable = () => {
 
   const { data, loading, refetch, error } = useListEntitiesQuery({
     variables: {
+      filters: {
+        graph: props.graph,
+      },
       pagination: {
         limit: pagination.pageSize,
         offset: pagination.pageIndex * pagination.pageSize,
@@ -204,7 +207,7 @@ export const EntitiesTable = () => {
 
   React.useEffect(() => {
     const variables = {
-      filters: { search: search, kinds: kinds },
+      filters: { search: search, kinds: kinds, graph: props.graph },
       metrics: metrics,
       pagination: {
         limit: pagination.pageSize,

@@ -1,6 +1,14 @@
 fragment Ontology on Ontology {
   id
   name
+  description
+  purl
+  expressions {
+    ...ListExpression
+  }
+  store {
+    ...MediaStore
+  }
 }
 
 

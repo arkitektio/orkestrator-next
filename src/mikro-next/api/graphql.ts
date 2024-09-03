@@ -513,6 +513,7 @@ export type DesociateInput = {
 export type Entity = {
   __typename?: 'Entity';
   id: Scalars['ID']['output'];
+  label: Scalars['String']['output'];
   linkedExpression: LinkedExpression;
   metricMap: Scalars['MetricMap']['output'];
   name: Scalars['String']['output'];
@@ -521,7 +522,7 @@ export type Entity = {
 };
 
 export type EntityFilter = {
-  group?: InputMaybe<Scalars['ID']['input']>;
+  graph?: InputMaybe<Scalars['ID']['input']>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   kind?: InputMaybe<Scalars['ID']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
@@ -529,8 +530,8 @@ export type EntityFilter = {
 
 export type EntityGraph = {
   __typename?: 'EntityGraph';
-  edges: Array<EntityRelationEdge>;
-  nodes: Array<EntityNode>;
+  edges: Array<EntityRelation>;
+  nodes: Array<Entity>;
 };
 
 export type EntityInput = {
@@ -563,40 +564,15 @@ export type EntityKindRelationEdge = {
   target: Scalars['String']['output'];
 };
 
-export type EntityNode = {
-  __typename?: 'EntityNode';
-  color: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  isRoot: Scalars['Boolean']['output'];
-  label: Scalars['String']['output'];
-  metrics: Array<EntityNodeMetric>;
-  subtitle: Scalars['String']['output'];
-};
-
-export type EntityNodeMetric = {
-  __typename?: 'EntityNodeMetric';
-  dataKind: Scalars['String']['output'];
-  kind: Scalars['String']['output'];
-  metricId: Scalars['String']['output'];
-  value: Scalars['String']['output'];
-};
-
 export type EntityRelation = {
   __typename?: 'EntityRelation';
   id: Scalars['ID']['output'];
   label: Scalars['String']['output'];
   left: Entity;
+  leftId: Scalars['String']['output'];
   linkedExpression: LinkedExpression;
   right: Entity;
-};
-
-export type EntityRelationEdge = {
-  __typename?: 'EntityRelationEdge';
-  id: Scalars['String']['output'];
-  label: Scalars['String']['output'];
-  metrics: Array<EntityNodeMetric>;
-  source: Scalars['String']['output'];
-  target: Scalars['String']['output'];
+  rightId: Scalars['String']['output'];
 };
 
 export type EntityRelationInput = {
@@ -680,11 +656,13 @@ export type ExperimentInput = {
 
 export type Expression = {
   __typename?: 'Expression';
+  description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   kind: ExpressionKind;
   label: Scalars['String']['output'];
   linkedExpressions: Array<LinkedExpression>;
   ontology: Ontology;
+  store?: Maybe<MediaStore>;
 };
 
 export type ExpressionFilter = {
@@ -698,6 +676,7 @@ export type ExpressionInput = {
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
   dataKind?: InputMaybe<MetricDataType>;
   description?: InputMaybe<Scalars['String']['input']>;
+  image?: InputMaybe<Scalars['Upload']['input']>;
   kind: ExpressionKind;
   label: Scalars['String']['input'];
   ontology?: InputMaybe<Scalars['ID']['input']>;
@@ -1316,7 +1295,9 @@ export type Mutation = {
   unlinkExpression: Scalars['ID']['output'];
   updateDataset: Dataset;
   updateExperiment: Experiment;
+  updateExpression: Expression;
   updateImage: Image;
+  updateOntology: Ontology;
   updateProtocolStep: ProtocolStep;
   /** Update RGB Context */
   updateRgbContext: RgbContext;
@@ -1838,8 +1819,18 @@ export type MutationUpdateExperimentArgs = {
 };
 
 
+export type MutationUpdateExpressionArgs = {
+  input: UpdateExpressionInput;
+};
+
+
 export type MutationUpdateImageArgs = {
   input: UpdateImageInput;
+};
+
+
+export type MutationUpdateOntologyArgs = {
+  input: UpdateOntologyInput;
 };
 
 
@@ -1893,9 +1884,17 @@ export type OffsetPaginationInput = {
 export type Ontology = {
   __typename?: 'Ontology';
   description?: Maybe<Scalars['String']['output']>;
+  expressions: Array<Expression>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   purl?: Maybe<Scalars['String']['output']>;
+  store?: Maybe<MediaStore>;
+};
+
+
+export type OntologyExpressionsArgs = {
+  filters?: InputMaybe<ExpressionFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 export type OntologyFilter = {
@@ -1908,6 +1907,7 @@ export type OntologyFilter = {
 
 export type OntologyInput = {
   description?: InputMaybe<Scalars['String']['input']>;
+  image?: InputMaybe<Scalars['ID']['input']>;
   name: Scalars['String']['input'];
   purl?: InputMaybe<Scalars['String']['input']>;
 };
@@ -2380,7 +2380,8 @@ export type Query = {
   eras: Array<Era>;
   experiment: Experiment;
   experiments: Array<Experiment>;
-  expression: Array<Expression>;
+  expression: Expression;
+  expressions: Array<Expression>;
   file: File;
   files: Array<File>;
   graph: Graph;
@@ -2510,6 +2511,11 @@ export type QueryExperimentsArgs = {
 
 
 export type QueryExpressionArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryExpressionsArgs = {
   filters?: InputMaybe<ExpressionFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -3396,10 +3402,27 @@ export type UpdateExperimentInput = {
   name: Scalars['String']['input'];
 };
 
+export type UpdateExpressionInput = {
+  color?: InputMaybe<Array<Scalars['Int']['input']>>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['ID']['input'];
+  image?: InputMaybe<Scalars['ID']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  purl?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateImageInput = {
   id: Scalars['ID']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type UpdateOntologyInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['ID']['input'];
+  image?: InputMaybe<Scalars['ID']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  purl?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateProtocolStepInput = {
@@ -3589,7 +3612,7 @@ export type ListDatasetFragment = { __typename?: 'Dataset', id: string, name: st
 
 export type EntityFragment = { __typename?: 'Entity', id: string, name: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, specimens: Array<{ __typename?: 'Specimen', id: string, protocol: { __typename?: 'Protocol', id: string } }> };
 
-export type EntityGraphFragment = { __typename?: 'EntityGraph', nodes: Array<{ __typename?: 'EntityNode', id: string, label: string, color: string, isRoot: boolean, subtitle: string, metrics: Array<{ __typename?: 'EntityNodeMetric', kind: string, dataKind: string, value: string }> }>, edges: Array<{ __typename?: 'EntityRelationEdge', id: string, label: string, source: string, target: string, metrics: Array<{ __typename?: 'EntityNodeMetric', kind: string, dataKind: string, value: string }> }> };
+export type EntityGraphFragment = { __typename?: 'EntityGraph', nodes: Array<{ __typename?: 'Entity', id: string, name: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', color: string } }>, edges: Array<{ __typename?: 'EntityRelation', id: string, label: string, leftId: string, rightId: string }> };
 
 export type EraFragment = { __typename?: 'Era', id: string, begin?: any | null, name: string };
 
@@ -3597,7 +3620,9 @@ export type ExperimentFragment = { __typename?: 'Experiment', id: string, name: 
 
 export type ListExperimentFragment = { __typename?: 'Experiment', id: string, name: string, description?: string | null, protocols: Array<{ __typename?: 'Protocol', id: string, name: string }> };
 
-export type ExpressionFragment = { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } };
+export type ExpressionFragment = { __typename?: 'Expression', id: string, label: string, description?: string | null, ontology: { __typename?: 'Ontology', id: string, name: string }, linkedExpressions: Array<{ __typename?: 'LinkedExpression', id: string, graph: { __typename?: 'Graph', id: string, name: string }, entities: Array<{ __typename?: 'Entity', id: string, name: string }> }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null };
+
+export type ListExpressionFragment = { __typename?: 'Expression', id: string, label: string, description?: string | null };
 
 export type FileFragment = { __typename?: 'File', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string } };
 
@@ -3617,7 +3642,9 @@ export type InstrumentFragment = { __typename?: 'Instrument', model?: string | n
 
 export type KnowledgeGraphFragment = { __typename?: 'KnowledgeGraph', nodes: Array<{ __typename?: 'EntityKindNode', id: string, label: string, metrics: Array<{ __typename?: 'EntityKindNodeMetric', kind: string, dataKind: string }> }>, edges: Array<{ __typename?: 'EntityKindRelationEdge', id: string, label: string, source: string, target: string, metrics: Array<{ __typename?: 'EntityKindNodeMetric', kind: string, dataKind: string }> }> };
 
-export type LinkedExpressionFragment = { __typename?: 'LinkedExpression', id: string, graph: { __typename?: 'Graph', id: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, entities: Array<{ __typename?: 'Entity', id: string, name: string }> };
+export type LinkedExpressionFragment = { __typename?: 'LinkedExpression', id: string, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, entities: Array<{ __typename?: 'Entity', id: string, name: string }> };
+
+export type ListLinkedExpressionFragment = { __typename?: 'LinkedExpression', id: string, graph: { __typename?: 'Graph', id: string, name: string }, entities: Array<{ __typename?: 'Entity', id: string, name: string }> };
 
 export type MultiWellPlateFragment = { __typename?: 'MultiWellPlate', id: string, name?: string | null, views: Array<{ __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }> };
 
@@ -3625,7 +3652,7 @@ export type ListMultiWellPlateFragment = { __typename?: 'MultiWellPlate', id: st
 
 export type ObjectiveFragment = { __typename?: 'Objective', na?: number | null, name: string, serialNumber: string };
 
-export type OntologyFragment = { __typename?: 'Ontology', id: string, name: string };
+export type OntologyFragment = { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null };
 
 export type ListOntologyFragment = { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null };
 
@@ -3891,6 +3918,20 @@ export type UpdateExperimentMutationVariables = Exact<{
 
 export type UpdateExperimentMutation = { __typename?: 'Mutation', updateExperiment: { __typename?: 'Experiment', id: string, name: string, description?: string | null, createdAt: any, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, protocols: Array<{ __typename?: 'Protocol', id: string, name: string, experiment: { __typename?: 'Experiment', id: string, name: string } }> } };
 
+export type CreateExpressionMutationVariables = Exact<{
+  input: ExpressionInput;
+}>;
+
+
+export type CreateExpressionMutation = { __typename?: 'Mutation', createExpression: { __typename?: 'Expression', id: string, label: string, description?: string | null, ontology: { __typename?: 'Ontology', id: string, name: string }, linkedExpressions: Array<{ __typename?: 'LinkedExpression', id: string, graph: { __typename?: 'Graph', id: string, name: string }, entities: Array<{ __typename?: 'Entity', id: string, name: string }> }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } };
+
+export type UpdateExpressionMutationVariables = Exact<{
+  input: UpdateExpressionInput;
+}>;
+
+
+export type UpdateExpressionMutation = { __typename?: 'Mutation', updateExpression: { __typename?: 'Expression', id: string, label: string, description?: string | null, ontology: { __typename?: 'Ontology', id: string, name: string }, linkedExpressions: Array<{ __typename?: 'LinkedExpression', id: string, graph: { __typename?: 'Graph', id: string, name: string }, entities: Array<{ __typename?: 'Entity', id: string, name: string }> }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } };
+
 export type From_File_LikeMutationVariables = Exact<{
   file: Scalars['FileLike']['input'];
   name: Scalars['String']['input'];
@@ -4044,7 +4085,14 @@ export type CreateOntologyMutationVariables = Exact<{
 }>;
 
 
-export type CreateOntologyMutation = { __typename?: 'Mutation', createOntology: { __typename?: 'Ontology', id: string, name: string } };
+export type CreateOntologyMutation = { __typename?: 'Mutation', createOntology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } };
+
+export type UpdateOntologyMutationVariables = Exact<{
+  input: UpdateOntologyInput;
+}>;
+
+
+export type UpdateOntologyMutation = { __typename?: 'Mutation', updateOntology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } };
 
 export type CreateProtocolMutationVariables = Exact<{
   name: Scalars['String']['input'];
@@ -4267,7 +4315,7 @@ export type GetEntityGraphQueryVariables = Exact<{
 }>;
 
 
-export type GetEntityGraphQuery = { __typename?: 'Query', entityGraph: { __typename?: 'EntityGraph', nodes: Array<{ __typename?: 'EntityNode', id: string, label: string, color: string, isRoot: boolean, subtitle: string, metrics: Array<{ __typename?: 'EntityNodeMetric', kind: string, dataKind: string, value: string }> }>, edges: Array<{ __typename?: 'EntityRelationEdge', id: string, label: string, source: string, target: string, metrics: Array<{ __typename?: 'EntityNodeMetric', kind: string, dataKind: string, value: string }> }> } };
+export type GetEntityGraphQuery = { __typename?: 'Query', entityGraph: { __typename?: 'EntityGraph', nodes: Array<{ __typename?: 'Entity', id: string, name: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', color: string } }>, edges: Array<{ __typename?: 'EntityRelation', id: string, label: string, leftId: string, rightId: string }> } };
 
 export type GetExperimentQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4283,6 +4331,21 @@ export type ListExperimentsQueryVariables = Exact<{
 
 
 export type ListExperimentsQuery = { __typename?: 'Query', experiments: Array<{ __typename?: 'Experiment', id: string, name: string, description?: string | null, protocols: Array<{ __typename?: 'Protocol', id: string, name: string }> }> };
+
+export type GetExpressionQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetExpressionQuery = { __typename?: 'Query', expression: { __typename?: 'Expression', id: string, label: string, description?: string | null, ontology: { __typename?: 'Ontology', id: string, name: string }, linkedExpressions: Array<{ __typename?: 'LinkedExpression', id: string, graph: { __typename?: 'Graph', id: string, name: string }, entities: Array<{ __typename?: 'Entity', id: string, name: string }> }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } };
+
+export type ListExpressionsQueryVariables = Exact<{
+  filters?: InputMaybe<ExpressionFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+}>;
+
+
+export type ListExpressionsQuery = { __typename?: 'Query', expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null }> };
 
 export type GetFileQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4363,7 +4426,7 @@ export type GetLinkedExpressionQueryVariables = Exact<{
 }>;
 
 
-export type GetLinkedExpressionQuery = { __typename?: 'Query', linkedExpression: { __typename?: 'LinkedExpression', id: string, graph: { __typename?: 'Graph', id: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, entities: Array<{ __typename?: 'Entity', id: string, name: string }> } };
+export type GetLinkedExpressionQuery = { __typename?: 'Query', linkedExpression: { __typename?: 'LinkedExpression', id: string, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string } }, entities: Array<{ __typename?: 'Entity', id: string, name: string }> } };
 
 export type SearchLinkedExpressionQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -4408,7 +4471,7 @@ export type GetOntologyQueryVariables = Exact<{
 }>;
 
 
-export type GetOntologyQuery = { __typename?: 'Query', ontology: { __typename?: 'Ontology', id: string, name: string } };
+export type GetOntologyQuery = { __typename?: 'Query', ontology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } };
 
 export type ListOntologiesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -4692,26 +4755,17 @@ export const EntityGraphFragmentDoc = gql`
     fragment EntityGraph on EntityGraph {
   nodes {
     id
+    name
     label
-    metrics {
-      kind
-      dataKind
-      value
+    linkedExpression {
+      color
     }
-    color
-    isRoot
-    subtitle
   }
   edges {
     id
     label
-    source
-    target
-    metrics {
-      kind
-      dataKind
-      value
-    }
+    leftId
+    rightId
   }
 }
     `;
@@ -4751,6 +4805,26 @@ export const ListExperimentFragmentDoc = gql`
   }
 }
     `;
+export const ListLinkedExpressionFragmentDoc = gql`
+    fragment ListLinkedExpression on LinkedExpression {
+  id
+  graph {
+    id
+    name
+  }
+  entities(pagination: {limit: 2}) {
+    id
+    name
+  }
+}
+    `;
+export const MediaStoreFragmentDoc = gql`
+    fragment MediaStore on MediaStore {
+  id
+  key
+  presignedUrl
+}
+    `;
 export const ExpressionFragmentDoc = gql`
     fragment Expression on Expression {
   id
@@ -4759,8 +4833,16 @@ export const ExpressionFragmentDoc = gql`
     id
     name
   }
+  description
+  linkedExpressions {
+    ...ListLinkedExpression
+  }
+  store {
+    ...MediaStore
+  }
 }
-    `;
+    ${ListLinkedExpressionFragmentDoc}
+${MediaStoreFragmentDoc}`;
 export const BigFileStoreFragmentDoc = gql`
     fragment BigFileStore on BigFileStore {
   id
@@ -5189,6 +5271,7 @@ export const LinkedExpressionFragmentDoc = gql`
   id
   graph {
     id
+    name
   }
   expression {
     id
@@ -5226,12 +5309,28 @@ export const ObjectiveFragmentDoc = gql`
   serialNumber
 }
     `;
+export const ListExpressionFragmentDoc = gql`
+    fragment ListExpression on Expression {
+  id
+  label
+  description
+}
+    `;
 export const OntologyFragmentDoc = gql`
     fragment Ontology on Ontology {
   id
   name
+  description
+  purl
+  expressions {
+    ...ListExpression
+  }
+  store {
+    ...MediaStore
+  }
 }
-    `;
+    ${ListExpressionFragmentDoc}
+${MediaStoreFragmentDoc}`;
 export const ListOntologyFragmentDoc = gql`
     fragment ListOntology on Ontology {
   id
@@ -5441,13 +5540,6 @@ export const ListRenderTreeFragmentDoc = gql`
     fragment ListRenderTree on RenderTree {
   id
   name
-}
-    `;
-export const MediaStoreFragmentDoc = gql`
-    fragment MediaStore on MediaStore {
-  id
-  key
-  presignedUrl
 }
     `;
 export const RenderedPlotFragmentDoc = gql`
@@ -6118,6 +6210,72 @@ export function useUpdateExperimentMutation(baseOptions?: ApolloReactHooks.Mutat
 export type UpdateExperimentMutationHookResult = ReturnType<typeof useUpdateExperimentMutation>;
 export type UpdateExperimentMutationResult = Apollo.MutationResult<UpdateExperimentMutation>;
 export type UpdateExperimentMutationOptions = Apollo.BaseMutationOptions<UpdateExperimentMutation, UpdateExperimentMutationVariables>;
+export const CreateExpressionDocument = gql`
+    mutation CreateExpression($input: ExpressionInput!) {
+  createExpression(input: $input) {
+    ...Expression
+  }
+}
+    ${ExpressionFragmentDoc}`;
+export type CreateExpressionMutationFn = Apollo.MutationFunction<CreateExpressionMutation, CreateExpressionMutationVariables>;
+
+/**
+ * __useCreateExpressionMutation__
+ *
+ * To run a mutation, you first call `useCreateExpressionMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateExpressionMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createExpressionMutation, { data, loading, error }] = useCreateExpressionMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateExpressionMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateExpressionMutation, CreateExpressionMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateExpressionMutation, CreateExpressionMutationVariables>(CreateExpressionDocument, options);
+      }
+export type CreateExpressionMutationHookResult = ReturnType<typeof useCreateExpressionMutation>;
+export type CreateExpressionMutationResult = Apollo.MutationResult<CreateExpressionMutation>;
+export type CreateExpressionMutationOptions = Apollo.BaseMutationOptions<CreateExpressionMutation, CreateExpressionMutationVariables>;
+export const UpdateExpressionDocument = gql`
+    mutation UpdateExpression($input: UpdateExpressionInput!) {
+  updateExpression(input: $input) {
+    ...Expression
+  }
+}
+    ${ExpressionFragmentDoc}`;
+export type UpdateExpressionMutationFn = Apollo.MutationFunction<UpdateExpressionMutation, UpdateExpressionMutationVariables>;
+
+/**
+ * __useUpdateExpressionMutation__
+ *
+ * To run a mutation, you first call `useUpdateExpressionMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateExpressionMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateExpressionMutation, { data, loading, error }] = useUpdateExpressionMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateExpressionMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateExpressionMutation, UpdateExpressionMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<UpdateExpressionMutation, UpdateExpressionMutationVariables>(UpdateExpressionDocument, options);
+      }
+export type UpdateExpressionMutationHookResult = ReturnType<typeof useUpdateExpressionMutation>;
+export type UpdateExpressionMutationResult = Apollo.MutationResult<UpdateExpressionMutation>;
+export type UpdateExpressionMutationOptions = Apollo.BaseMutationOptions<UpdateExpressionMutation, UpdateExpressionMutationVariables>;
 export const From_File_LikeDocument = gql`
     mutation from_file_like($file: FileLike!, $name: String!, $origins: [ID!], $dataset: ID) {
   fromFileLike(
@@ -6778,6 +6936,39 @@ export function useCreateOntologyMutation(baseOptions?: ApolloReactHooks.Mutatio
 export type CreateOntologyMutationHookResult = ReturnType<typeof useCreateOntologyMutation>;
 export type CreateOntologyMutationResult = Apollo.MutationResult<CreateOntologyMutation>;
 export type CreateOntologyMutationOptions = Apollo.BaseMutationOptions<CreateOntologyMutation, CreateOntologyMutationVariables>;
+export const UpdateOntologyDocument = gql`
+    mutation UpdateOntology($input: UpdateOntologyInput!) {
+  updateOntology(input: $input) {
+    ...Ontology
+  }
+}
+    ${OntologyFragmentDoc}`;
+export type UpdateOntologyMutationFn = Apollo.MutationFunction<UpdateOntologyMutation, UpdateOntologyMutationVariables>;
+
+/**
+ * __useUpdateOntologyMutation__
+ *
+ * To run a mutation, you first call `useUpdateOntologyMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateOntologyMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateOntologyMutation, { data, loading, error }] = useUpdateOntologyMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateOntologyMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateOntologyMutation, UpdateOntologyMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<UpdateOntologyMutation, UpdateOntologyMutationVariables>(UpdateOntologyDocument, options);
+      }
+export type UpdateOntologyMutationHookResult = ReturnType<typeof useUpdateOntologyMutation>;
+export type UpdateOntologyMutationResult = Apollo.MutationResult<UpdateOntologyMutation>;
+export type UpdateOntologyMutationOptions = Apollo.BaseMutationOptions<UpdateOntologyMutation, UpdateOntologyMutationVariables>;
 export const CreateProtocolDocument = gql`
     mutation CreateProtocol($name: String!, $experiment: ID!) {
   createProtocol(input: {name: $name, experiment: $experiment}) {
@@ -7823,6 +8014,77 @@ export function useListExperimentsLazyQuery(baseOptions?: ApolloReactHooks.LazyQ
 export type ListExperimentsQueryHookResult = ReturnType<typeof useListExperimentsQuery>;
 export type ListExperimentsLazyQueryHookResult = ReturnType<typeof useListExperimentsLazyQuery>;
 export type ListExperimentsQueryResult = Apollo.QueryResult<ListExperimentsQuery, ListExperimentsQueryVariables>;
+export const GetExpressionDocument = gql`
+    query GetExpression($id: ID!) {
+  expression(id: $id) {
+    ...Expression
+  }
+}
+    ${ExpressionFragmentDoc}`;
+
+/**
+ * __useGetExpressionQuery__
+ *
+ * To run a query within a React component, call `useGetExpressionQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetExpressionQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetExpressionQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetExpressionQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetExpressionQuery, GetExpressionQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetExpressionQuery, GetExpressionQueryVariables>(GetExpressionDocument, options);
+      }
+export function useGetExpressionLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetExpressionQuery, GetExpressionQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetExpressionQuery, GetExpressionQueryVariables>(GetExpressionDocument, options);
+        }
+export type GetExpressionQueryHookResult = ReturnType<typeof useGetExpressionQuery>;
+export type GetExpressionLazyQueryHookResult = ReturnType<typeof useGetExpressionLazyQuery>;
+export type GetExpressionQueryResult = Apollo.QueryResult<GetExpressionQuery, GetExpressionQueryVariables>;
+export const ListExpressionsDocument = gql`
+    query ListExpressions($filters: ExpressionFilter, $pagination: OffsetPaginationInput) {
+  expressions(filters: $filters, pagination: $pagination) {
+    ...ListExpression
+  }
+}
+    ${ListExpressionFragmentDoc}`;
+
+/**
+ * __useListExpressionsQuery__
+ *
+ * To run a query within a React component, call `useListExpressionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListExpressionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListExpressionsQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *      pagination: // value for 'pagination'
+ *   },
+ * });
+ */
+export function useListExpressionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListExpressionsQuery, ListExpressionsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListExpressionsQuery, ListExpressionsQueryVariables>(ListExpressionsDocument, options);
+      }
+export function useListExpressionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListExpressionsQuery, ListExpressionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListExpressionsQuery, ListExpressionsQueryVariables>(ListExpressionsDocument, options);
+        }
+export type ListExpressionsQueryHookResult = ReturnType<typeof useListExpressionsQuery>;
+export type ListExpressionsLazyQueryHookResult = ReturnType<typeof useListExpressionsLazyQuery>;
+export type ListExpressionsQueryResult = Apollo.QueryResult<ListExpressionsQuery, ListExpressionsQueryVariables>;
 export const GetFileDocument = gql`
     query GetFile($id: ID!) {
   file(id: $id) {

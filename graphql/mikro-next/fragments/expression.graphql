@@ -5,4 +5,19 @@ fragment Expression on Expression {
     id
     name
   }
+  description
+  linkedExpressions {
+   ...ListLinkedExpression
+  }
+  store {
+    ...MediaStore
+  }
+
+}
+
+fragment ListExpression on Expression {
+  id
+  label
+  description
+
 }

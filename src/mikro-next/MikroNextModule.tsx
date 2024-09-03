@@ -9,8 +9,11 @@ import EntitiesPage from "./pages/EntitiesPage";
 import EntityGraphPage from "./pages/EntityGraphPage";
 import ExperimentPage from "./pages/ExperimentPage";
 import ExperimentsPage from "./pages/ExperimentsPage";
+import ExpressionPage from "./pages/ExpressionPage";
 import FilePage from "./pages/FilePage";
 import FilesPage from "./pages/FilesPage";
+import GraphPage from "./pages/GraphPage";
+import GraphsPage from "./pages/GraphsPage";
 import HomePage from "./pages/HomePage";
 import ImagePage from "./pages/ImagePage";
 import ImagesPage from "./pages/ImagesPage";
@@ -28,8 +31,6 @@ import StagePage from "./pages/StagePage";
 import StagesPage from "./pages/StagesPage";
 import TablesPage from "./pages/TablesPage";
 import StandardPane from "./panes/StandardPane";
-import GraphsPage from "./pages/GraphsPage";
-import GraphPage from "./pages/GraphPage";
 interface Props {}
 
 export const MikroNextModule: React.FC<Props> = (props) => {
@@ -47,6 +48,7 @@ export const MikroNextModule: React.FC<Props> = (props) => {
           <Route path="entities/:id" element={<EntityGraphPage />} />
           <Route path="files/:id" element={<FilePage />} />
           <Route path="tables" element={<TablesPage />} />
+          <Route path="expressions/:id" element={<ExpressionPage />} />
           <Route path="experiments" element={<ExperimentsPage />} />
           <Route path="experiments/:id" element={<ExperimentPage />} />
           <Route path="ontologies/:id" element={<KnowledgePage />} />

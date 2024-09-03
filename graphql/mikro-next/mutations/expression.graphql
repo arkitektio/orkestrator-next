@@ -1,0 +1,16 @@
+mutation CreateExpression($input: ExpressionInput!) {
+  createExpression(
+    input: $input
+  ) {
+    ...Expression
+  }
+}
+
+
+mutation UpdateExpression($input: UpdateExpressionInput!) {
+  updateExpression(
+    input: $input
+  ) {
+    ...Expression
+  }
+}

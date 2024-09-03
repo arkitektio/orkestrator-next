@@ -5,3 +5,12 @@ mutation CreateOntology($name: String!, $purl: String, $description: String) {
     ...Ontology
   }
 }
+
+
+mutation UpdateOntology($input: UpdateOntologyInput!) {
+  updateOntology(
+    input: $input
+  ) {
+    ...Ontology
+  }
+}

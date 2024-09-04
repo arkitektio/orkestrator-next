@@ -237,6 +237,28 @@ const connectReactiveNodes = (
     });
   }
 
+  if (rightPorts.length > 1) {
+    for (let i in rightPorts) {
+      nodes.push({
+        id: nodeIdBuilder(),
+        type: "ReactiveNode",
+        position: { x: 0, y: 0 },
+        data: {
+          globalsMap: {},
+          title: "Select " + rightPorts[i].key,
+          description: "Select an item of the stream",
+          kind: GraphNodeKind.Reactive,
+          ins: [leftPorts],
+          constantsMap: {},
+          outs: [[i]],
+          voids: [],
+          constants: [],
+          implementation: ReactiveImplementation.Select,
+        },
+      });
+    }
+  }
+
   for (let mapping of generateAllMappings(leftPorts, rightPorts)) {
     nodes.push({
       id: nodeIdBuilder(),

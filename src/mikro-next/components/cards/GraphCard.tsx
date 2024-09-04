@@ -21,7 +21,7 @@ const TheCard = ({ item, mates }: Props) => {
         >
           {item?.name}
         </MikroGraph.DetailLink>
-        <MikroOntology.ObjectButton object={item.id} />
+        <MikroGraph.ObjectButton object={item.id} />
       </Card>
     </MikroGraph.Smart>
   );

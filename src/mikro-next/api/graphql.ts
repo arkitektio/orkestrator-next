@@ -445,6 +445,10 @@ export type DeleteFileInput = {
   id: Scalars['ID']['input'];
 };
 
+export type DeleteGraphInput = {
+  id: Scalars['ID']['input'];
+};
+
 export type DeleteImageInput = {
   id: Scalars['ID']['input'];
 };
@@ -1252,6 +1256,7 @@ export type Mutation = {
   deleteExperiment: Scalars['ID']['output'];
   deleteExpression: Scalars['ID']['output'];
   deleteFile: Scalars['ID']['output'];
+  deleteGraph: Scalars['ID']['output'];
   deleteImage: Scalars['ID']['output'];
   deleteInstrument: Scalars['ID']['output'];
   deleteMultiWellPlate: Scalars['ID']['output'];
@@ -1317,6 +1322,7 @@ export type Mutation = {
   updateProtocolStep: ProtocolStep;
   /** Update RGB Context */
   updateRgbContext: RgbContext;
+  updateRoi: Roi;
 };
 
 
@@ -1542,6 +1548,11 @@ export type MutationDeleteExpressionArgs = {
 
 export type MutationDeleteFileArgs = {
   input: DeleteFileInput;
+};
+
+
+export type MutationDeleteGraphArgs = {
+  input: DeleteGraphInput;
 };
 
 
@@ -1857,6 +1868,11 @@ export type MutationUpdateProtocolStepArgs = {
 
 export type MutationUpdateRgbContextArgs = {
   input: UpdateRgbContextInput;
+};
+
+
+export type MutationUpdateRoiArgs = {
+  input: UpdateRoiInput;
 };
 
 export type Objective = {
@@ -2894,6 +2910,7 @@ export type Roi = {
   id: Scalars['ID']['output'];
   image: Image;
   kind: RoiKind;
+  name: Scalars['String']['output'];
   vectors: Array<Scalars['FiveDVector']['output']>;
 };
 
@@ -2901,8 +2918,10 @@ export type RoiFilter = {
   AND?: InputMaybe<RoiFilter>;
   OR?: InputMaybe<RoiFilter>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   image?: InputMaybe<Scalars['ID']['input']>;
   kind?: InputMaybe<RoiKindChoices>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type RangePixelLabel = {
@@ -3460,6 +3479,16 @@ export type UpdateRgbContextInput = {
   z?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type UpdateRoiInput = {
+  entity?: InputMaybe<Scalars['ID']['input']>;
+  entityGroup?: InputMaybe<Scalars['ID']['input']>;
+  entityKind?: InputMaybe<Scalars['ID']['input']>;
+  entityParent?: InputMaybe<Scalars['ID']['input']>;
+  kind?: InputMaybe<RoiKind>;
+  roi: Scalars['ID']['input'];
+  vectors?: InputMaybe<Array<Scalars['FiveDVector']['input']>>;
+};
+
 /** A user. */
 export type User = {
   __typename?: 'User';
@@ -3995,6 +4024,13 @@ export type CreateGraphMutationVariables = Exact<{
 
 
 export type CreateGraphMutation = { __typename?: 'Mutation', createGraph: { __typename?: 'Graph', id: string, name: string } };
+
+export type DeleteGraphMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteGraphMutation = { __typename?: 'Mutation', deleteGraph: string };
 
 export type RequestUploadMutationVariables = Exact<{
   key: Scalars['String']['input'];
@@ -6504,6 +6540,37 @@ export function useCreateGraphMutation(baseOptions?: ApolloReactHooks.MutationHo
 export type CreateGraphMutationHookResult = ReturnType<typeof useCreateGraphMutation>;
 export type CreateGraphMutationResult = Apollo.MutationResult<CreateGraphMutation>;
 export type CreateGraphMutationOptions = Apollo.BaseMutationOptions<CreateGraphMutation, CreateGraphMutationVariables>;
+export const DeleteGraphDocument = gql`
+    mutation DeleteGraph($id: ID!) {
+  deleteGraph(input: {id: $id})
+}
+    `;
+export type DeleteGraphMutationFn = Apollo.MutationFunction<DeleteGraphMutation, DeleteGraphMutationVariables>;
+
+/**
+ * __useDeleteGraphMutation__
+ *
+ * To run a mutation, you first call `useDeleteGraphMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteGraphMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteGraphMutation, { data, loading, error }] = useDeleteGraphMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteGraphMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteGraphMutation, DeleteGraphMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<DeleteGraphMutation, DeleteGraphMutationVariables>(DeleteGraphDocument, options);
+      }
+export type DeleteGraphMutationHookResult = ReturnType<typeof useDeleteGraphMutation>;
+export type DeleteGraphMutationResult = Apollo.MutationResult<DeleteGraphMutation>;
+export type DeleteGraphMutationOptions = Apollo.BaseMutationOptions<DeleteGraphMutation, DeleteGraphMutationVariables>;
 export const RequestUploadDocument = gql`
     mutation RequestUpload($key: String!, $datalayer: String!) {
   requestUpload(input: {key: $key, datalayer: $datalayer}) {

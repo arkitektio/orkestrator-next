@@ -21,6 +21,7 @@ import {
   LensExtension,
   PictureInPictureViewer,
   RENDERING_MODES,
+  VivViewer,
   VolumeViewer,
   ZarrPixelSource,
 } from "@hms-dbmi/viv";
@@ -328,7 +329,7 @@ export const VivRenderer = ({
                 modelMatrix={
                   modelMatrix || getPhysicalSizeScalingMatrix(1, 1, 1)
                 }
-                overviewOn={true}
+                overviewOn={false}
                 extensions={[
                   singleChannel
                     ? new AdditiveColormapExtension()

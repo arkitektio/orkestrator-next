@@ -1,6 +1,6 @@
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { MikroImage, MikroROI } from "@/linkers";
+import { MikroEntity, MikroImage, MikroROI } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
 import { ListImageFragment, ListRoiFragment } from "../../api/graphql";
 
@@ -35,15 +35,17 @@ const ImageCard = ({ item, mates }: ImageCardProps) => {
         }}
       >
         <MikroROI.ObjectButton object={item.id} className="ml-3 my-auto" />
-        <MikroROI.DetailLink
-          className={({ isActive } /*  */) =>
-            "z-10 font-bold text-md mb-2 cursor-pointer " +
-            (isActive ? "text-primary-300" : "")
-          }
-          object={item.id}
-        >
-          {item?.entity?.name}
-        </MikroROI.DetailLink>
+        {item.entity?.id && (
+          <MikroEntity.DetailLink
+            className={({ isActive } /*  */) =>
+              "z-10 font-bold text-md mb-2 cursor-pointer " +
+              (isActive ? "text-primary-300" : "")
+            }
+            object={item.entity?.id}
+          >
+            {item?.entity?.name}
+          </MikroEntity.DetailLink>
+        )}
       </div>
     </MikroROI.Smart>
   );

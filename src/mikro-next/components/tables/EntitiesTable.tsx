@@ -73,6 +73,25 @@ export const columns: ColumnDef<EntityFragment>[] = [
     enableHiding: false,
   },
   {
+    accessorKey: "id",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          ID
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => (
+      <MikroEntity.DetailLink object={row.getValue("id")} className="lowercase">
+        {row.getValue("id")}
+      </MikroEntity.DetailLink>
+    ),
+  },
+  {
     accessorKey: "name",
     header: ({ column }) => {
       return (
@@ -86,10 +105,7 @@ export const columns: ColumnDef<EntityFragment>[] = [
       );
     },
     cell: ({ row }) => (
-      <MikroEntity.DetailLink
-        object={row.getValue("name")}
-        className="lowercase"
-      >
+      <MikroEntity.DetailLink object={row.getValue("id")} className="lowercase">
         {row.getValue("name")}
       </MikroEntity.DetailLink>
     ),

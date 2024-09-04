@@ -3,3 +3,7 @@ mutation CreateGraph($input: GraphInput!) {
     ...Graph
   }
 }
+
+mutation DeleteGraph($id: ID!) {
+  deleteGraph(input: { id: $id })
+}

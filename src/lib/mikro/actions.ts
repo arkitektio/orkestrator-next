@@ -2,6 +2,7 @@ import { Action } from "@/actions/action-registry";
 import { buildDeleteAction } from "@/actions/builders/deleteAction";
 import {
   DeleteFileDocument,
+  DeleteGraphDocument,
   DeleteImageDocument,
 } from "@/mikro-next/api/graphql";
 
@@ -17,5 +18,11 @@ export const MIKRO_ACTIONS: Action[] = [
     identifier: "@mikro/file",
     service: "mikro",
     mutation: DeleteFileDocument,
+  }),
+  buildDeleteAction({
+    title: "Delete Graph",
+    identifier: "@mikro/graph",
+    service: "mikro",
+    mutation: DeleteGraphDocument,
   }),
 ];

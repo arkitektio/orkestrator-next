@@ -41,28 +41,37 @@ const TheCard = ({ item, mates, hideGraph, hideExpression }: Props) => {
           </Button>
         )}
 
-        {!hideGraph && (
-          <MikroGraph.DetailLink
-            className={({ isActive } /*  */) =>
-              "z-10 font-bold text-md mb-2 cursor-pointer " +
-              (isActive ? "text-primary-300" : "")
-            }
-            object={item.graph.id}
-          >
-            {item?.graph.name}
-          </MikroGraph.DetailLink>
-        )}
-        {!hideExpression && (
-          <MikroExpression.DetailLink
-            className={({ isActive } /*  */) =>
-              "z-10 font-bold text-md mb-2 cursor-pointer " +
-              (isActive ? "text-primary-300" : "")
-            }
-            object={item.expression?.id}
-          >
-            {item?.expression?.label}
-          </MikroExpression.DetailLink>
-        )}
+        <MikroLinkedExpression.DetailLink
+          object={item.id}
+          className="z-10 font-bold text-md mb-2 cursor-pointer"
+        >
+          {item?.expression?.label}
+        </MikroLinkedExpression.DetailLink>
+
+        <p>
+          {!hideGraph && (
+            <MikroGraph.DetailLink
+              className={({ isActive } /*  */) =>
+                "z-10 font-bold text-md mb-2 cursor-pointer " +
+                (isActive ? "text-primary-300" : "")
+              }
+              object={item.graph.id}
+            >
+              {item?.graph.name}
+            </MikroGraph.DetailLink>
+          )}
+          {!hideExpression && (
+            <MikroExpression.DetailLink
+              className={({ isActive } /*  */) =>
+                "z-10 font-bold text-md mb-2 cursor-pointer " +
+                (isActive ? "text-primary-300" : "")
+              }
+              object={item.expression?.id}
+            >
+              {item?.expression?.label}
+            </MikroExpression.DetailLink>
+          )}
+        </p>
       </Card>
     </MikroLinkedExpression.Smart>
   );

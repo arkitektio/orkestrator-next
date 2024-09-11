@@ -25,7 +25,9 @@ import { ParagraphField } from "@/components/fields/ParagraphField";
 import { ChoicesField } from "@/components/fields/ChoicesField";
 
 export default (props: { ontology?: string }) => {
-  const [add] = useCreateExpressionMutation();
+  const [add] = useCreateExpressionMutation({
+    refetchQueries: ["GetOntology"],
+  });
 
   const dialog = useGraphQlFormDialog(add);
 

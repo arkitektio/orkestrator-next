@@ -530,6 +530,7 @@ export type EntityFilter = {
   graph?: InputMaybe<Scalars['ID']['input']>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   kind?: InputMaybe<Scalars['ID']['input']>;
+  linkedExpression?: InputMaybe<Scalars['ID']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
 

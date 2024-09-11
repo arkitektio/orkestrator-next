@@ -19,6 +19,7 @@ import { PlusIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import LinkExpressionForm from "../forms/LinkExpressionForm";
 import { EntitiesTable } from "../components/tables/EntitiesTable";
+import { LinkedExpressionEntitiesTable } from "../components/tables/LinkedExpressionEntityTable";
 
 export default asDetailQueryRoute(
   useGetLinkedExpressionQuery,
@@ -79,8 +80,12 @@ export default asDetailQueryRoute(
           </div>
         </div>
         <DragZone uploadFile={uploadFile} createFile={createFile} />
-
-        <EntitiesTable graph={data.linkedExpression.graph.id} />
+        <div className="p-6 h-full">
+          <LinkedExpressionEntitiesTable
+            graph={data.linkedExpression.graph.id}
+            linkedExpression={data.linkedExpression.id}
+          />
+        </div>
       </MikroExpression.ModelPage>
     );
   },

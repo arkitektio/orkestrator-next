@@ -104,14 +104,16 @@ export default asDetailQueryRoute(useGetOntologyQuery, ({ data, refetch }) => {
       sidebars={<MikroOntology.Komments object={data.ontology.id} />}
     >
       <div className="w-full h-full">
-        <div>
-          <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-            {data.ontology.name}
-          </h1>
-          <p className="mt-3 text-xl text-muted-foreground">
-            {data.ontology.description || "No description"}
-          </p>
-          <div className="w-full h-full flex-row relative">
+        <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
+          <div>
+            <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+              {data.ontology.name}
+            </h1>
+            <p className="mt-3 text-xl text-muted-foreground">
+              {data.ontology.description || "No description"}
+            </p>
+          </div>
+          <div className="w-full h-full flex-row relative min-h-[200px]">
             {data.ontology?.store?.presignedUrl && (
               <Image
                 src={resolve(data.ontology.store?.presignedUrl)}
@@ -122,7 +124,7 @@ export default asDetailQueryRoute(useGetOntologyQuery, ({ data, refetch }) => {
           </div>
         </div>
         <DragZone uploadFile={uploadFile} createFile={createFile} />
-        <div className="grid grid-cols-2 gap-4 mt-2">
+        <div className="grid grid-cols-5 gap-4 mt-2">
           {data.ontology.expressions.map((expression) => (
             <ExpressionCard key={expression.id} item={expression} />
           ))}

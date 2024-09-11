@@ -196,7 +196,7 @@ export type FormValues = {
   search?: string | null;
 };
 
-export const EntitiesTable = (props: {
+export const LinkedExpressionEntitiesTable = (props: {
   graph?: string;
   linkedExpression?: string;
 }) => {
@@ -227,7 +227,12 @@ export const EntitiesTable = (props: {
 
   React.useEffect(() => {
     const variables = {
-      filters: { search: search, kinds: kinds, graph: props.graph },
+      filters: {
+        search: search,
+        kinds: kinds,
+        graph: props.graph,
+        linkedExpression: props.linkedExpression,
+      },
       metrics: metrics,
       pagination: {
         limit: pagination.pageSize,

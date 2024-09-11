@@ -1,6 +1,10 @@
 fragment Graph on Graph {
   id
   name
+  description
+  linkedExpressions {
+    ...ListLinkedExpression
+  }
 }
 
 fragment ListGraph on Graph {

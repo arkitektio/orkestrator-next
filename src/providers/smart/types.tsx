@@ -5,7 +5,10 @@ export type Identifier = string;
 
 export type OmitedNavLinkProps = Omit<NavLinkProps, "to">;
 export type BaseLinkProps = OmitedNavLinkProps;
-export type ModelLinkProps = OmitedNavLinkProps & { object: string };
+export type ModelLinkProps = OmitedNavLinkProps & {
+  object: string;
+  subroute?: string;
+};
 
 export type ClassNameOptions = {
   isOver: boolean;

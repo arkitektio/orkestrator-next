@@ -12,6 +12,11 @@ import {
   useUpdateOntologyMutation,
 } from "../api/graphql";
 import ExpressionCard from "../components/cards/ExpressionCard";
+import { FormDialogAction } from "@/components/ui/form-dialog-action";
+import { PlusIcon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { MikroExpression, MikroOntology } from "@/linkers";
+import CreateExpressionForm from "../forms/CreateExpressionForm";
 
 cytoscape.use(cola);
 
@@ -66,8 +71,38 @@ export default asDetailQueryRoute(useGetOntologyQuery, ({ data, refetch }) => {
     });
   };
 
+  const navigate = useNavigate();
+
   return (
-    <PageLayout title={data.ontology.name} pageActions={<></>}>
+    <MikroOntology.ModelPage
+      object={data.ontology.id}
+      title={data.ontology.name}
+      pageActions={
+        <div className="flex flex-row gap-2">
+          <>
+            <FormDialogAction
+              variant={"outline"}
+              size={"sm"}
+              label="Create"
+              description="Create a new Graph"
+              buttonChildren={
+                <>
+                  <PlusIcon className="h-4 w-4 mr-2" />
+                  New Expression
+                </>
+              }
+              onSubmit={(item) => {
+                console.log(item);
+                navigate(MikroExpression.linkBuilder(item.createExpression.id));
+              }}
+            >
+              <CreateExpressionForm ontology={data.ontology.id} />
+            </FormDialogAction>
+          </>
+        </div>
+      }
+      sidebars={<MikroOntology.Komments object={data.ontology.id} />}
+    >
       <div className="w-full h-full">
         <div>
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
@@ -93,6 +128,6 @@ export default asDetailQueryRoute(useGetOntologyQuery, ({ data, refetch }) => {
           ))}
         </div>
       </div>
-    </PageLayout>
+    </MikroOntology.ModelPage>
   );
 });

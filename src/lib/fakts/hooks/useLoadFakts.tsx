@@ -1,8 +1,19 @@
 import { useCallback, useState } from "react";
-import { CancelableRequest, Fakts, FaktsRequest, useFakts } from "../FaktsContext";
+import {
+  CancelableRequest,
+  Fakts,
+  FaktsRequest,
+  useFakts,
+} from "../FaktsContext";
 
 export const useLoadFakts = () => {
-  const { load: faktsLoad, setFakts, fakts, registeredEndpoints, registerEndpoints } = useFakts();
+  const {
+    load: faktsLoad,
+    setFakts,
+    fakts,
+    registeredEndpoints,
+    registerEndpoints,
+  } = useFakts();
   const [progress, setProgress] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | undefined>(undefined);
   const [promise, setPromise] = useState<CancelableRequest<Fakts> | null>(null);
@@ -14,9 +25,12 @@ export const useLoadFakts = () => {
       } else {
         let manifest = request.manifest;
 
-        if (request.requestedClientType == "website" && !request.requestedRedirectURIs) {
+        if (
+          request.requestedClientType == "website" &&
+          !request.requestedRedirectURIs
+        ) {
           throw new Error(
-            "No redirect URI specified, but requested website, please set requestedRedirectURIs"
+            "No redirect URI specified, but requested website, please set requestedRedirectURIs",
           );
         }
 
@@ -34,7 +48,7 @@ export const useLoadFakts = () => {
           },
           deviceCodeExpirationTime: 200000,
           maxChallengeRetries: 30,
-          maxRetrievalAttempts: 30
+          maxRetrievalAttempts: 30,
         });
 
         newPromise.promise
@@ -52,7 +66,7 @@ export const useLoadFakts = () => {
         setPromise(newPromise);
       }
     },
-    [promise]
+    [promise],
   );
 
   const remove = useCallback(() => {
@@ -73,6 +87,6 @@ export const useLoadFakts = () => {
     error,
     fakts,
     registerEndpoints,
-    registeredEndpoints
+    registeredEndpoints,
   };
 };

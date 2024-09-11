@@ -212,16 +212,18 @@ export const renderView = async (
   credentials: AccessCredentialsFragment,
   datalayerUrl: string,
   view: RgbViewFragment,
+  store: ZarrStoreFragment,
   t: number,
   z: number,
   abortSignal?: AbortSignal,
 ): Promise<ImageData> => {
   let slices = viewToSlices(view, t, z);
+  console.log("Slices", slices);
 
   let selection = await downloadSelectionFromStore(
     credentials,
     datalayerUrl,
-    view.image.store,
+    store,
     slices,
     abortSignal,
   );
@@ -235,6 +237,7 @@ const downloadView = async (
   t: number,
   z: number,
   view: RgbViewFragment,
+  store: ZarrStoreFragment,
   signal?: AbortSignal,
 ) => {
   let endpoint_url = (fakts?.datalayer as any)?.endpoint_url;
@@ -247,7 +250,7 @@ const downloadView = async (
     RequestAccessMutationVariables
   >({
     mutation: RequestAccessDocument,
-    variables: { store: view.image.store.id },
+    variables: { store: store.id },
     context: { fetchOptions: { signal } },
   });
   let data = x?.data;
@@ -256,7 +259,15 @@ const downloadView = async (
     throw Error("No credentials loaded");
   }
 
-  return await renderView(data.requestAccess, endpoint_url, view, t, z, signal);
+  return await renderView(
+    data.requestAccess,
+    endpoint_url,
+    view,
+    store,
+    t,
+    z,
+    signal,
+  );
 };
 
 export const useViewRenderFunction = () => {
@@ -270,7 +281,16 @@ export const useViewRenderFunction = () => {
       z: number,
       signal?: AbortSignal,
     ) => {
-      const cacheKey = `renderedView-${view.image.store.id}(${slicesToString(viewToSlices(view, t, z))})-rescale:${view.rescale}-${view.colorMap}$`;
+      let smallestScale =
+        view.image.derivedScaleViews.at(-1)?.image || view.image;
+      let tRescale = view.image.derivedScaleViews.at(-1)?.scaleT || 1;
+      let zRescale = view.image.derivedScaleViews.at(-1)?.scaleZ || 1;
+
+      console.log(smallestScale.store.shape);
+
+      let renderView = { ...view, rescale: true };
+
+      const cacheKey = `renderedViews-${smallestScale.store.id}(${slicesToString(viewToSlices(view, t, z))})-rescale:${renderView.rescale}-${view.colorMap}$`;
       let cachedImageData = await getImageDataFromCache(cacheKey, signal);
 
       if (cachedImageData) {
@@ -286,7 +306,15 @@ export const useViewRenderFunction = () => {
         throw Error("No fakts found");
       }
 
-      const imageData = await downloadView(client, fakts, t, z, view, signal);
+      const imageData = await downloadView(
+        client,
+        fakts,
+        t,
+        z,
+        renderView,
+        smallestScale.store,
+        signal,
+      );
       await addImageDataToCache(cacheKey, imageData);
 
       return imageData;

@@ -7,17 +7,18 @@ fragment Expression on Expression {
   }
   description
   linkedExpressions {
-   ...ListLinkedExpression
+    ...ListLinkedExpression
   }
   store {
     ...MediaStore
   }
-
+  kind
+  metricKind
 }
 
 fragment ListExpression on Expression {
   id
   label
   description
-
+  kind
 }

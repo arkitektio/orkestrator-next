@@ -5,7 +5,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { MikroEntity } from "@/linkers";
-import { useGetLinkedExpressionQuery } from "@/mikro-next/api/graphql";
+import {
+  useGetLinkedExpressionQuery,
+  usePinLinkedExpressionMutation,
+} from "@/mikro-next/api/graphql";
 
 export const EntityKindCard = ({ id }: { id: string }) => {
   const { data } = useGetLinkedExpressionQuery({
@@ -13,6 +16,8 @@ export const EntityKindCard = ({ id }: { id: string }) => {
       id: id,
     },
   });
+
+  const [link] = usePinLinkedExpressionMutation({});
 
   return (
     <Card className="p-3">

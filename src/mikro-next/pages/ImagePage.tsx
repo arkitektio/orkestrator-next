@@ -42,6 +42,8 @@ import { AddImageViewForm } from "../forms/AddImageViewForm";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
 import { Matrix4 } from "@math.gl/core";
 import { useMemo } from "react";
+import { TwoDRGBRender } from "../components/render/TwoDRGBRender";
+import { RGBD, TwoDRGBThreeRenderDetail } from "../components/render/TwoDThree";
 
 export type IRepresentationScreenProps = {};
 
@@ -100,11 +102,7 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
             {data?.image?.rgbContexts?.map((context, index) => (
               <div className={"h-full w-full mt-0 rounded rounded-md relative"}>
                 <div className="w-full h-full items-center flex justify-center flex-col">
-                  <VivRenderer
-                    context={context}
-                    rois={[]}
-                    modelMatrix={modelMatrix}
-                  />
+                  <RGBD context={context} rois={[]} modelMatrix={modelMatrix} />
                 </div>
               </div>
             ))}

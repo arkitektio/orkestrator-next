@@ -61,6 +61,7 @@ const useAsyncTexture = (context: ListRgbContextFragment) => {
 
   const calculateImageData = async (signal: AbortSignal) => {
     // Sequentially render each view to ensure proper blending
+
     // Fetch all ImageData objects for the views
     const imageDataArray = await Promise.all(
       context.views

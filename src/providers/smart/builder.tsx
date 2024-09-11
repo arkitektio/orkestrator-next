@@ -30,9 +30,13 @@ const buildBaseLink = (to: string) => {
 };
 
 const buildModelLink = (to: string) => {
-  return ({ children, ...props }: ModelLinkProps) => {
+  return ({ children, subroute, ...props }: ModelLinkProps) => {
     return (
-      <NavLink {...props} to={`/${to}/${props.object}`} title="Open">
+      <NavLink
+        {...props}
+        to={`/${to}/${props.object}/${subroute || ""}`}
+        title="Open"
+      >
         {children}
       </NavLink>
     );

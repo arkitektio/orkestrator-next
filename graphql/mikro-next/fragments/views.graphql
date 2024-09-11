@@ -42,6 +42,20 @@ fragment RGBView on RGBView {
     store {
       ...ZarrStore
     }
+    derivedScaleViews {
+      id
+      image {
+        id
+        store {
+          ...ZarrStore
+        }
+      }
+      scaleX
+      scaleY
+      scaleZ
+      scaleT
+      scaleC
+    }
   }
   colorMap
   contrastLimitMin

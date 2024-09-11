@@ -1,0 +1,5 @@
+mutation PinLinkedExpression($input: PinLinkedExpressionInput!) {
+  pinLinkedExpression(input: $input) {
+    ...LinkedExpression
+  }
+}

@@ -1,16 +1,11 @@
-mutation CreateOntology($name: String!, $purl: String, $description: String) {
-  createOntology(
-    input: { name: $name, purl: $purl, description: $description }
-  ) {
+mutation CreateOntology($input: OntologyInput!) {
+  createOntology(input: $input) {
     ...Ontology
   }
 }
 
-
 mutation UpdateOntology($input: UpdateOntologyInput!) {
-  updateOntology(
-    input: $input
-  ) {
+  updateOntology(input: $input) {
     ...Ontology
   }
 }

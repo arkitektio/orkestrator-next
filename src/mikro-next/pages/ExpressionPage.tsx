@@ -12,6 +12,7 @@ import {
 } from "../api/graphql";
 import LinkedExpressionCard from "../components/cards/LinkedExpressionCard";
 import { UpdateExpressionForm } from "../forms/UpdateExpressionForm";
+import { Badge } from "@/components/ui/badge";
 
 export default asDetailQueryRoute(
   useGetExpressionQuery,
@@ -43,6 +44,7 @@ export default asDetailQueryRoute(
             )}
           </FormSheet>
         }
+        sidebars={<MikroExpression.Komments object={data.expression.id} />}
       >
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
           <div>
@@ -51,6 +53,9 @@ export default asDetailQueryRoute(
             </h1>
             <p className="mt-3 text-xl text-muted-foreground">
               {data.expression.description}
+            </p>
+            <p className="mt-3 text-xl text-muted-foreground">
+              <Badge>{data.expression.kind}</Badge>
             </p>
           </div>
           <div className="w-full h-full flex-row relative">

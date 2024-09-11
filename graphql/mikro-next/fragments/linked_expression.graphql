@@ -18,7 +18,6 @@ fragment LinkedExpression on LinkedExpression {
   }
 }
 
-
 fragment ListLinkedExpression on LinkedExpression {
   id
   graph {
@@ -29,4 +28,13 @@ fragment ListLinkedExpression on LinkedExpression {
     id
     name
   }
+  expression {
+    id
+    label
+    ontology {
+      id
+      name
+    }
+  }
+  pinned
 }

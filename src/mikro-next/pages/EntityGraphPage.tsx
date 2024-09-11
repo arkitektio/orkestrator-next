@@ -11,17 +11,17 @@ import {
   GetEntityGraphQuery,
   useGetEntityGraphLazyQuery,
   useGetEntityGraphQuery,
+  useGetEntityQuery,
   useSearchOntologiesLazyQuery,
 } from "../api/graphql";
 
+import { SearchField, SearchFunction } from "@/components/fields/SearchField";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MikroEntity } from "@/linkers";
 import cise from "cytoscape-cise";
 import dagre from "cytoscape-dagre";
 import { useNavigate, useParams } from "react-router-dom";
-import { set } from "date-fns";
-import { SearchField, SearchFunction } from "@/components/fields/SearchField";
 
 cytoscape.use(cola);
 cytoscape.use(cise);
@@ -90,6 +90,33 @@ const layoutOptions = [
   { value: "dagre", label: "Dagre" },
   { value: "cola", label: "Cola" },
 ];
+
+
+export const DetailEntityCard = ({ entity }: {entity: string}) => {
+
+  const {data } = useGetEntityQuery({variables: {id: entity}});
+
+
+  if (!data) {
+    return null;
+  }
+
+  return (
+    <Card>
+      <div className="p-4">
+        {data.entity.specimens.map((spec) => (
+          <div className="flex flex-row justify-between">
+            <div>{spec.id}</div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+
+}
+
+
+
 
 export default asDetailQueryRoute(
   useGetEntityGraphQuery,
@@ -285,7 +312,7 @@ export default asDetailQueryRoute(
           />
           {selectedNode && (
             <Card
-              className="p-2 "
+              className="p-4 "
               style={{
                 position: "absolute",
                 zIndex: 1000,
@@ -295,12 +322,16 @@ export default asDetailQueryRoute(
               }}
               onClick={handleClosePopover}
             >
+              <DetailEntityCard entity={selectedNode.id} />
+              ddd
+            <div className="p-4">
               {selectedNode.metrics.map((metric) => (
                 <div className="flex flex-row justify-between">
                   <div>{metric.key}</div>
                   <div>{metric.value}</div>
                 </div>
               ))}
+              </div>
 
               <div className="flex flex-row justify-between rounded rounded-md">
                 <Button

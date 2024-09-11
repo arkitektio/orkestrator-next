@@ -56,6 +56,7 @@ export const useArkitektLogin = () => {
         redirectUri = "http://127.0.0.1:9999/callback";
       } else {
         redirectUri = window.location.origin + "/callback";
+        alert(redirectUri);
       }
 
       return login({
@@ -115,6 +116,8 @@ export const buildArkitektConnect =
 
         if (window.electron) {
           request.requestedClientType = "desktop";
+        } else {
+          request.requestedClientType = "website";
         }
 
         if (

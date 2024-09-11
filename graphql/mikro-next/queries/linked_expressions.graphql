@@ -13,3 +13,12 @@ query SearchLinkedExpression($search: String, $values: [ID!]) {
     label: label
   }
 }
+
+query ListLinkedExpression(
+  $filters: LinkedExpressionFilter
+  $pagination: OffsetPaginationInput
+) {
+  linkedExpressions(filters: $filters, pagination: $pagination) {
+    ...ListLinkedExpression
+  }
+}

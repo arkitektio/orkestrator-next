@@ -4,6 +4,12 @@ query GetLinkedExpression($id: ID!) {
   }
 }
 
+query GetLinkedExpressionByAgeName($ageName: String!, $graph: ID!) {
+  linkedExpressionByAgename(ageName: $ageName, graphId: $graph) {
+    ...LinkedExpression
+  }
+}
+
 query SearchLinkedExpression($search: String, $values: [ID!]) {
   options: linkedExpressions(
     filters: { search: $search, ids: $values }

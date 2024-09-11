@@ -38,14 +38,28 @@ import {
 import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Form } from "@/components/ui/form";
-import { MikroEntity } from "@/linkers";
+import { MikroEntity, MikroLinkedExpression } from "@/linkers";
 import {
   EntityFragment,
+  ListEntitiesQuery,
   ListEntitiesQueryVariables,
+  useGetLinkedExpressionByAgeNameQuery,
+  useGetLinkedExpressionQuery,
   useListEntitiesQuery,
   useSearchLinkedExpressionLazyQuery,
 } from "@/mikro-next/api/graphql";
 import { useForm } from "react-hook-form";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { EntityOverlay } from "@/mikro-next/overlays/EntityOverlay";
 
 export const columns: ColumnDef<EntityFragment>[] = [
   {
@@ -86,10 +100,20 @@ export const columns: ColumnDef<EntityFragment>[] = [
       );
     },
     cell: ({ row }) => (
-      <MikroEntity.DetailLink object={row.getValue("id")} className="lowercase">
-        {row.getValue("id")}
-      </MikroEntity.DetailLink>
+      <Popover>
+        <PopoverTrigger>
+          <Button variant="ghost" className="lowercase">
+            {row.getValue("id")}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="rounded rounded-xl shadow-xl shadow">
+          <EntityOverlay entity={row.getValue("id")} />
+        </PopoverContent>
+      </Popover>
     ),
+    sortingFn: (a, b) => a.getValue("id") - b.getValue("id"),
+    enableSorting: true,
+    enableHiding: true,
   },
   {
     accessorKey: "name",
@@ -136,27 +160,7 @@ export const columns: ColumnDef<EntityFragment>[] = [
     cell: ({ row }) => {
       const payment = row.original;
 
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(payment.id)}
-            >
-              Copy payment ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View customer</DropdownMenuItem>
-            <DropdownMenuItem>View payment details</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
+      return <MikroEntity.ObjectButton object={row.getValue("id")} />;
     },
   },
 ];
@@ -168,21 +172,64 @@ const initialVariables: ListEntitiesQueryVariables = {
   },
 };
 
-const calculateColumns = (variables: ListEntitiesQueryVariables) => {
-  let calculated_columns = columns;
-  let other_columns =
-    variables.metrics?.map((metric) => {
-      return {
-        id: "metric-" + metric,
-        accessorKey: `metricMap.${metric}`,
-        header: () => <div className="text-center">{metric}</div>,
-        cell: ({ row, getValue }) => {
-          const label = row.getValue("metric-" + metric);
+export const MetricHeader = (props: { ageName: string; graph: string }) => {
+  const { data } = useGetLinkedExpressionByAgeNameQuery({
+    variables: {
+      graph: props.graph,
+      ageName: props.ageName,
+    },
+  });
 
-          return <div className="text-center font-medium">{label}</div>;
-        },
-      } as ColumnDef<EntityFragment>;
-    }) || [];
+  if (!data?.linkedExpressionByAgename) {
+    return null;
+  }
+
+  return (
+    <div>
+      <Tooltip>
+        <TooltipTrigger>
+          <MikroLinkedExpression.DetailLink
+            object={data?.linkedExpressionByAgename.id}
+          >
+            {data?.linkedExpressionByAgename?.expression.label}
+          </MikroLinkedExpression.DetailLink>
+        </TooltipTrigger>
+        <TooltipContent>
+          <div>
+            <h1>{data?.linkedExpressionByAgename?.expression.label}</h1>
+            <p>{data?.linkedExpressionByAgename?.expression.description}</p>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  );
+};
+
+const calculateColumns = (graph: string, data: ListEntitiesQuery) => {
+  let calculated_columns = columns;
+  let other_columns = [];
+
+  for (let entity of data?.entities || []) {
+    Object.keys(entity.metricMap).forEach((metric) => {
+      console.log("FOUND", metric);
+      if (!other_columns.find((column) => column.id === `metric-${metric}`)) {
+        other_columns.push({
+          id: `metric-${metric}`,
+          accessorKey: `metricMap.${metric}`,
+          header: () => (
+            <div className="text-center">
+              <MetricHeader ageName={metric} graph={graph} />
+            </div>
+          ),
+          cell: ({ row, getValue }) => {
+            const label = row.getValue(`metric-${metric}`);
+
+            return <div className="text-center font-medium">{label}</div>;
+          },
+        } as ColumnDef<EntityFragment>);
+      }
+    });
+  }
 
   console.log(other_columns);
 
@@ -239,14 +286,13 @@ export const LinkedExpressionEntitiesTable = (props: {
         offset: pagination.pageIndex * pagination.pageSize,
       },
     };
-    refetch(variables);
-
-    console.log(variables);
-    setColumns(calculateColumns(variables));
+    refetch(variables).then((d) => {
+      setColumns(calculateColumns(props.graph, d.data));
+    });
   }, [metrics, kinds, search, refetch]);
 
   const [columns, setColumns] = React.useState<ColumnDef<EntityFragment>[]>(
-    () => calculateColumns(initialVariables),
+    () => calculateColumns(props.graph, data),
   );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -290,11 +336,6 @@ export const LinkedExpressionEntitiesTable = (props: {
               name="kinds"
             />
           )}
-          <GraphQLSearchField
-            placeholder="Add Metric"
-            searchQuery={searchM}
-            name="metrics"
-          />
         </Form>
         <Input
           placeholder="Search..."

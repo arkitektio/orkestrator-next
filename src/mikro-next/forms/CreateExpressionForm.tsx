@@ -24,6 +24,13 @@ import {
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { ChoicesField } from "@/components/fields/ChoicesField";
 
+const enumToOptions = (e: any) => {
+  return Object.keys(e).map((key) => ({
+    label: key,
+    value: e[key],
+  }));
+};
+
 export default (props: { ontology?: string }) => {
   const [add] = useCreateExpressionMutation({
     refetchQueries: ["GetOntology"],
@@ -77,42 +84,16 @@ export default (props: { ontology?: string }) => {
                 label="Kind"
                 name="kind"
                 description="What kind of expression is this?"
-                options={[
-                  {
-                    label: "Entity",
-                    value: "ENTITY",
-                    description:
-                      "An entity is a thing or concept that can be distinguished from other things.",
-                  },
-                  {
-                    label: "Relation",
-                    value: "RELATION",
-                    description:
-                      "A relation is a connection between two entities.",
-                  },
-                ]}
+                options={enumToOptions(ExpressionKind)}
               />
 
               {currentKind === "METRIC" && (
                 <>
                   <ChoicesField
                     label="Data Kind"
-                    name="kind"
+                    name="metricKind"
                     description="What kind of value type do you expect for this metric?"
-                    options={[
-                      {
-                        label: "Bool",
-                        value: MetricDataType.Boolean,
-                        description:
-                          "A boolean is a value that can be either true or false.",
-                      },
-                      {
-                        label: "Float",
-                        value: MetricDataType.Float,
-                        description:
-                          "A float is a number that can have a decimal point.",
-                      },
-                    ]}
+                    options={enumToOptions(MetricDataType)}
                   />
                 </>
               )}

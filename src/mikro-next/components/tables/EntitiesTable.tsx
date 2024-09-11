@@ -196,7 +196,10 @@ export type FormValues = {
   search?: string | null;
 };
 
-export const EntitiesTable = (props: { graph?: string }) => {
+export const EntitiesTable = (props: {
+  graph?: string;
+  linkedExpression?: string;
+}) => {
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize: 20,
@@ -213,6 +216,7 @@ export const EntitiesTable = (props: { graph?: string }) => {
     variables: {
       filters: {
         graph: props.graph,
+        linkedExpression: props.linkedExpression,
       },
       pagination: {
         limit: pagination.pageSize,
@@ -276,11 +280,13 @@ export const EntitiesTable = (props: { graph?: string }) => {
       pageActions={
         <div className="flex items-center py-4 gap-2">
           <Form {...form}>
-            <GraphQLSearchField
-              placeholder="Filter Kind"
-              searchQuery={searchM}
-              name="kinds"
-            />
+            {!props.linkedExpression && (
+              <GraphQLSearchField
+                placeholder="Filter Kind"
+                searchQuery={searchM}
+                name="kinds"
+              />
+            )}
             <GraphQLSearchField
               placeholder="Add Metric"
               searchQuery={searchM}

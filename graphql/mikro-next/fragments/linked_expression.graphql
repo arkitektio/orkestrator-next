@@ -5,12 +5,7 @@ fragment LinkedExpression on LinkedExpression {
     name
   }
   expression {
-    id
-    label
-    ontology {
-      id
-      name
-    }
+    ...Expression
   }
   entities(pagination: { limit: 10 }) {
     id

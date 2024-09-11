@@ -8,24 +8,29 @@ import { useForm } from "react-hook-form";
 import {
   CreateGraphMutationVariables,
   CreateProtocolStepMutationVariables,
+  LinkExpressionMutation,
+  LinkExpressionMutationVariables,
   useCreateGraphMutation,
   useCreateProtocolStepMutation,
+  useLinkExpressionMutation,
+  useSearchGraphsLazyQuery,
   useSearchLinkedExpressionLazyQuery,
   useSearchLinkedExpressionQuery,
 } from "../api/graphql";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 
-export default (props) => {
-  const [add] = useCreateGraphMutation();
+export default (props: { expression: string }) => {
+  const [add] = useLinkExpressionMutation();
 
   const dialog = useGraphQlFormDialog(add);
 
-  const form = useForm<CreateGraphMutationVariables["input"]>({
+  const form = useForm<LinkExpressionMutationVariables["input"]>({
     defaultValues: {
-      name: "New Step",
-      description: "No Description",
+      expression: props.expression,
     },
   });
+
+  const [search] = useSearchGraphsLazyQuery();
 
   return (
     <>
@@ -43,16 +48,7 @@ export default (props) => {
         >
           <div className="grid grid-cols-2 gap-2">
             <div className="col-span-2 flex-col gap-1 flex">
-              <StringField
-                label="Name"
-                name="name"
-                description="How do you can to call this Graph"
-              />
-              <ParagraphField
-                label="Description"
-                name="description"
-                description="What is the purpose of this Graph"
-              />
+              <GraphQLSearchField name="graph" searchQuery={search} />
             </div>
           </div>
 

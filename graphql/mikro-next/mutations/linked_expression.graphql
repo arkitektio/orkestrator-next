@@ -3,3 +3,9 @@ mutation PinLinkedExpression($input: PinLinkedExpressionInput!) {
     ...LinkedExpression
   }
 }
+
+mutation LinkExpression($input: LinkExpressionInput!) {
+  linkExpression(input: $input) {
+    ...LinkedExpression
+  }
+}

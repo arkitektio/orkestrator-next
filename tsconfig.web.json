@@ -3,7 +3,7 @@
   "include": [
     "src",
     "electron/preload/*.d.ts"
-  ],
+, "src/mikro-next/forms/.tsx"  ],
   "compilerOptions": {
     "composite": true,
     "jsx": "react-jsx",

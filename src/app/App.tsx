@@ -14,7 +14,7 @@ import RekuestNextModule from "@/rekuest/RekuestNextModule";
 import SettingsModule from "@/settings/SettingsModule";
 import React from "react";
 import { Route, Routes } from "react-router-dom";
-import { AppProvider } from "./AppProvider";
+import { AppProvider, BackNavigationErrorCatcher } from "./AppProvider";
 import { NotConnected } from "./components/fallbacks/NotConnected";
 import { NotFound } from "./components/fallbacks/NotFound";
 import { NotLoggedIn } from "./components/fallbacks/NotLoggedIn";
@@ -41,21 +41,26 @@ function App() {
     <AppProvider>
       <TooltipProvider>
         <AppLayout navigationBar={<PrivateNavigationBar />}>
-          <Toaster />
-          <Routes>
-            <Route path="callback" element={<Callback />} />{" "}
-            {/* This is the callback route for the herre provider, and needs to be publicalyl available. (Represents Oauth2 Callback)*/}
-            <Route index element={<Hero />} />
-            <Route path="mikro/*" element={protect(<MikroNextModule />)} />
-            <Route path="rekuest/*" element={protect(<RekuestNextModule />)} />
-            <Route path="fluss/*" element={protect(<ReaktionModule />)} />
-            <Route path="kabinet/*" element={protect(<KabinetModule />)} />
-            <Route path="omero-ark/*" element={protect(<OmeroArkModule />)} />
-            <Route path="lok/*" element={protect(<LokNextModule />)} />
-            <Route path="settings/*" element={protect(<SettingsModule />)} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <Stash />
+          <BackNavigationErrorCatcher>
+            <Toaster />
+            <Routes>
+              <Route path="callback" element={<Callback />} />{" "}
+              {/* This is the callback route for the herre provider, and needs to be publicalyl available. (Represents Oauth2 Callback)*/}
+              <Route index element={<Hero />} />
+              <Route path="mikro/*" element={protect(<MikroNextModule />)} />
+              <Route
+                path="rekuest/*"
+                element={protect(<RekuestNextModule />)}
+              />
+              <Route path="fluss/*" element={protect(<ReaktionModule />)} />
+              <Route path="kabinet/*" element={protect(<KabinetModule />)} />
+              <Route path="omero-ark/*" element={protect(<OmeroArkModule />)} />
+              <Route path="lok/*" element={protect(<LokNextModule />)} />
+              <Route path="settings/*" element={protect(<SettingsModule />)} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Stash />
+          </BackNavigationErrorCatcher>
         </AppLayout>
       </TooltipProvider>
     </AppProvider>

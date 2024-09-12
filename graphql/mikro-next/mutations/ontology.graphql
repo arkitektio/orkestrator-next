@@ -9,3 +9,7 @@ mutation UpdateOntology($input: UpdateOntologyInput!) {
     ...Ontology
   }
 }
+
+mutation DeleteOntology($id: ID!) {
+  deleteOntology(input: { id: $id })
+}

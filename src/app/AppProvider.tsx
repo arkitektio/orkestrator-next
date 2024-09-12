@@ -1,5 +1,8 @@
 import { Arkitekt, Guard } from "@/arkitekt";
 import { CommandMenu } from "@/command/Menu";
+import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import { PageLayout } from "@/components/layout/PageLayout";
+import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { ShadnWigets } from "@/components/widgets/ShadnWigets";
 import { WELL_KNOWN_ENDPOINTS } from "@/constants";
@@ -31,11 +34,29 @@ function fallbackRender({ error, resetErrorBoundary }: FallbackProps) {
   // Call resetErrorBoundary() to reset the error boundary and retry the render.
 
   return (
-    <div role="alert">
-      <p>Something went wrong:</p>
-      <pre style={{ color: "red" }}>{error.message}</pre>
-      <button onClick={resetErrorBoundary}>Go back again</button>
-    </div>
+    <ModuleLayout pane={<>ohhhh boy, this is embarrassing</>}>
+      <PageLayout title="Test">
+        <div className="h-full w-full flex flex-col items-center justify-center">
+          <div className="text-6xl text-muted-foreground mb-3">😬</div>
+          <div className="text-2xl font-bold mb-5">
+            Oh boy this is embarrassing
+          </div>
+
+          <p>Something went wrong:</p>
+          <pre style={{ color: "red" }} className="my-5">
+            {error.message}
+          </pre>
+
+          <p className="text-muted-foreground mb-2">
+            You can try to go back and try again. But please let us know about
+            this...
+          </p>
+          <Button variant={"outline"} onClick={resetErrorBoundary}>
+            Go back again
+          </Button>
+        </div>
+      </PageLayout>
+    </ModuleLayout>
   );
 }
 
@@ -67,7 +88,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <DebugProvider>
       <HashRouter>
-        <BackNavigationErrorCatcher>
+        <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+          {/* This is where we configure the application automatically based on facts */}
+
           <Arkitekt.Provider>
             <DisplayProvider registry={displayRegistry}>
               <WellKnownDiscovery
@@ -93,23 +116,19 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                       <Guard.Fluss fallback={<></>}>
                         <FlussWard key="fluss" />
                       </Guard.Fluss>
-                      <ThemeProvider
-                        defaultTheme="dark"
-                        storageKey="vite-ui-theme"
-                      >
-                        {/* This is where we configure the application automatically based on facts */}
-                        {children}
-                      </ThemeProvider>
                     </WidgetRegistryProvider>
                     <Guard.Lok fallback={<></>}>
                       <SystemMessageDisplay />
                     </Guard.Lok>
+                    <BackNavigationErrorCatcher>
+                      {children}
+                    </BackNavigationErrorCatcher>
                   </SmartProvider>
                 </CommandProvider>
               </SelectionProvider>
             </DisplayProvider>
           </Arkitekt.Provider>
-        </BackNavigationErrorCatcher>
+        </ThemeProvider>
       </HashRouter>
     </DebugProvider>
   );

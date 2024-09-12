@@ -14,6 +14,7 @@ import {
   useUpdateExpressionMutation,
 } from "../api/graphql";
 import { LinkedExpressionEntitiesTable } from "../components/tables/LinkedExpressionEntityTable";
+import { LinkedExpressionRelationTable } from "../components/tables/LinkedExpressionRelationTable";
 
 export default asDetailQueryRoute(
   useGetLinkedExpressionQuery,

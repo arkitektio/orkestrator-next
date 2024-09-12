@@ -57,7 +57,7 @@ import {
 import { EntityOverlay } from "@/mikro-next/overlays/EntityOverlay";
 import { useForm } from "react-hook-form";
 
-export const columns: ColumnDef<EntityFragment>[] = [
+export const columns: ColumnDef<EntityRelationFragment>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -112,22 +112,57 @@ export const columns: ColumnDef<EntityFragment>[] = [
     enableHiding: true,
   },
   {
-    accessorKey: "name",
+    id: "leftId",
+    accessorKey: "leftId",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          ID
+          Left Entity
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
     cell: ({ row }) => (
-      <MikroEntity.DetailLink object={row.getValue("id")} className="lowercase">
-        {row.getValue("name")}
-      </MikroEntity.DetailLink>
+      <Popover>
+        <PopoverTrigger>
+          <Button variant="ghost" className="lowercase">
+            {row.getValue("leftId")}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="rounded rounded-xl shadow-xl shadow">
+          <EntityOverlay entity={row.getValue("leftId")} />
+        </PopoverContent>
+      </Popover>
+    ),
+  },
+  {
+    id: "rightId",
+    accessorKey: "rightId",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Right Entity
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => (
+      <Popover>
+        <PopoverTrigger>
+          <Button variant="ghost" className="lowercase">
+            {row.getValue("rightId")}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="rounded rounded-xl shadow-xl shadow">
+          <EntityOverlay entity={row.getValue("rightId")} />
+        </PopoverContent>
+      </Popover>
     ),
   },
   {
@@ -201,7 +236,10 @@ export const MetricHeader = (props: { ageName: string; graph: string }) => {
   );
 };
 
-const calculateColumns = (graph: string, data: ListEntityRelationsQuery) => {
+const calculateColumns = (
+  graph: string,
+  data?: ListEntityRelationsQuery | undefined,
+) => {
   let calculated_columns = columns;
   let other_columns = [];
 
@@ -240,7 +278,7 @@ export type FormValues = {
 };
 
 export const LinkedExpressionRelationTable = (props: {
-  graph?: string;
+  graph: string;
   linkedExpression?: string;
 }) => {
   const [pagination, setPagination] = React.useState({
@@ -287,9 +325,9 @@ export const LinkedExpressionRelationTable = (props: {
     });
   }, [metrics, kinds, search, refetch]);
 
-  const [columns, setColumns] = React.useState<ColumnDef<EntityFragment>[]>(
-    () => calculateColumns(props.graph, data),
-  );
+  const [columns, setColumns] = React.useState<
+    ColumnDef<EntityRelationFragment>[]
+  >(() => calculateColumns(props.graph, data));
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -300,7 +338,7 @@ export const LinkedExpressionRelationTable = (props: {
   const [rowSelection, setRowSelection] = React.useState({});
 
   const table = useReactTable({
-    data: data?.entities ?? [],
+    data: data?.entityRelations ?? [],
     columns,
     pageCount: -1,
     manualPagination: true,
@@ -333,6 +371,7 @@ export const LinkedExpressionRelationTable = (props: {
             />
           )}
         </Form>
+
         <Input
           placeholder="Search..."
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}

@@ -4,6 +4,7 @@ import {
   DeleteFileDocument,
   DeleteGraphDocument,
   DeleteImageDocument,
+  DeleteOntologyDocument,
 } from "@/mikro-next/api/graphql";
 
 export const MIKRO_ACTIONS: Action[] = [
@@ -24,5 +25,11 @@ export const MIKRO_ACTIONS: Action[] = [
     identifier: "@mikro/graph",
     service: "mikro",
     mutation: DeleteGraphDocument,
+  }),
+  buildDeleteAction({
+    title: "Delete Ontology",
+    identifier: "@mikro/ontology",
+    service: "mikro",
+    mutation: DeleteOntologyDocument,
   }),
 ];

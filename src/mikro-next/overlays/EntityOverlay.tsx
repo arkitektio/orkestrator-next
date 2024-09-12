@@ -1,5 +1,6 @@
-import { MikroEntity, MikroROI } from "@/linkers";
+import { MikroEntity, MikroEntityRelation, MikroROI } from "@/linkers";
 import { useGetEntityQuery } from "../api/graphql";
+import { Card } from "@/components/ui/card";
 
 export const EntityOverlay = (props: { entity?: string }) => {
   const { data } = useGetEntityQuery({

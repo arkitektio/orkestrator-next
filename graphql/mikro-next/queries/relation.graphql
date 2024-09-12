@@ -4,9 +4,12 @@ query GetEntityRelation($id: ID!) {
   }
 }
 
-query ListEntityRelations($filters: EntityRelationFilter, $pagination: GraphPaginationInput) {
+query ListEntityRelations(
+  $filters: EntityRelationFilter
+  $pagination: GraphPaginationInput
+) {
   entityRelations(filters: $filters, pagination: $pagination) {
-    ...EntityRelation
+    ...ListEntityRelation
     metricMap
   }
 }

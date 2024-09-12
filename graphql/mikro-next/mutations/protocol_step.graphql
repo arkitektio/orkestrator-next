@@ -1,7 +1,5 @@
-mutation CreateProtocolStep($name: String!, $description: String!, $kind: ID!) {
-  createProtocolStep(
-    input: { name: $name, description: $description, kind: $kind }
-  ) {
+mutation CreateProtocolStep($input: ProtocolStepInput!) {
+  createProtocolStep(input: $input) {
     ...ProtocolStep
   }
 }

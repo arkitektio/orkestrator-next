@@ -1,5 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
 import { DragZone } from "@/components/upload/drag";
 import { useResolve } from "@/datalayer/hooks/useResolve";
@@ -9,10 +10,10 @@ import { useNavigate } from "react-router-dom";
 import {
   ExpressionKind,
   useGetLinkedExpressionQuery,
+  usePinLinkedExpressionMutation,
   useUpdateExpressionMutation,
 } from "../api/graphql";
 import { LinkedExpressionEntitiesTable } from "../components/tables/LinkedExpressionEntityTable";
-import { LinkedExpressionRelationTable } from "../components/tables/LinkedExpressionRelationTable";
 
 export default asDetailQueryRoute(
   useGetLinkedExpressionQuery,
@@ -21,7 +22,7 @@ export default asDetailQueryRoute(
 
     const [update] = useUpdateExpressionMutation();
     const resolve = useResolve();
-
+    const [link] = usePinLinkedExpressionMutation({});
     const createFile = async (file: File, key: string) => {
       update({
         variables: {
@@ -44,7 +45,35 @@ export default asDetailQueryRoute(
         }
         pageActions={
           <div className="flex flex-row gap-2">
-            <></>
+            {data.linkedExpression.pinned ? (
+              <Button
+                variant={"outline"}
+                size={"sm"}
+                onClick={() =>
+                  link({
+                    variables: {
+                      input: { id: data.linkedExpression.id, pin: false },
+                    },
+                  })
+                }
+              >
+                Unpin
+              </Button>
+            ) : (
+              <Button
+                variant={"outline"}
+                size={"sm"}
+                onClick={() =>
+                  link({
+                    variables: {
+                      input: { id: data.linkedExpression.id, pin: true },
+                    },
+                  })
+                }
+              >
+                Pin
+              </Button>
+            )}
           </div>
         }
       >

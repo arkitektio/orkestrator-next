@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { cn, withRef } from "@udecode/cn";
 import { PlateElement } from "@udecode/plate-common";
@@ -11,19 +11,43 @@ import {
   InlineComboboxInput,
   InlineComboboxItem,
 } from "./inline-combobox";
+import { Option } from "../fields/SearchField";
+import { useSearchReagentsLazyQuery } from "@/mikro-next/api/graphql";
 
 const onSelectItem = getMentionOnSelectItem();
 
 const MENTIONABLES = [
-  { key: "1", text: "John Doe" },
-  { key: "2", text: "Jane Doe" },
-  { key: "3", text: "John Smith" },
+  { key: "1", text: "PFA 4% (active)" },
+  { key: "2", text: "PFA 6% (active)" },
+  { key: "3", text: "PFA 2% (active)" },
+  { key: "4", text: "Alexa 466" },
 ];
 
 export const MentionInputElement = withRef<typeof PlateElement>(
   ({ className, ...props }, ref) => {
     const { children, editor, element } = props;
+
+    const [options, setOptions] = useState<(Option | null | undefined)[]>([]);
+    const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState("");
+
+    const [searchF] = useSearchReagentsLazyQuery();
+
+    const query = (string: string) => {
+      searchF({ variables: { search: string } })
+        .then((res) => {
+          setOptions(res.data?.options || ([] as Option[]));
+          setError(null);
+        })
+        .catch((err) => {
+          setError(err.message);
+          setOptions([]);
+        });
+    };
+
+    useEffect(() => {
+      query(search);
+    }, [search]);
 
     return (
       <PlateElement
@@ -38,6 +62,7 @@ export const MentionInputElement = withRef<typeof PlateElement>(
           showTrigger={false}
           trigger="@"
           value={search}
+          filter={false}
         >
           <span
             className={cn(
@@ -51,13 +76,13 @@ export const MentionInputElement = withRef<typeof PlateElement>(
           <InlineComboboxContent className="my-1.5">
             <InlineComboboxEmpty>No results found</InlineComboboxEmpty>
 
-            {MENTIONABLES.map((item) => (
+            {options.map((item) => (
               <InlineComboboxItem
-                key={item.key}
-                onClick={() => onSelectItem(editor, item, search)}
-                value={item.text}
+                key={item?.value}
+                onClick={() => onSelectItem(editor, item?.value, search)}
+                value={item?.label || ""}
               >
-                {item.text}
+                {item?.label}
               </InlineComboboxItem>
             ))}
           </InlineComboboxContent>

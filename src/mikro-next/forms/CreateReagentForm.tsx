@@ -6,23 +6,30 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
+  CreateGraphMutationVariables,
+  CreateOntologyMutationVariables,
   CreateProtocolStepMutationVariables,
+  CreateReagentMutationVariables,
+  useCreateGraphMutation,
+  useCreateOntologyMutation,
   useCreateProtocolStepMutation,
+  useCreateReagentMutation,
+  useSearchExpressionLazyQuery,
+  useSearchExpressionQuery,
   useSearchLinkedExpressionLazyQuery,
   useSearchLinkedExpressionQuery,
 } from "../api/graphql";
+import { ParagraphField } from "@/components/fields/ParagraphField";
 
 export default (props) => {
-  const [add] = useCreateProtocolStepMutation();
-
-  const [search] = useSearchLinkedExpressionLazyQuery();
+  const [add] = useCreateReagentMutation();
 
   const dialog = useGraphQlFormDialog(add);
 
-  const form = useForm<CreateProtocolStepMutationVariables["input"]>({
-    defaultValues: {
-      name: "New Step",
-    },
+  const [search] = useSearchExpressionLazyQuery();
+
+  const form = useForm<CreateReagentMutationVariables["input"]>({
+    defaultValues: {},
   });
 
   return (
@@ -32,23 +39,22 @@ export default (props) => {
           onSubmit={form.handleSubmit(async (data) => {
             dialog({
               variables: {
-                input: data,
+                input: {
+                  ...data,
+                },
               },
             });
           })}
         >
           <div className="grid grid-cols-2 gap-2">
             <div className="col-span-2 flex-col gap-1 flex">
-              <StringField
-                label="New Name"
-                name="name"
-                description="The Name Value"
+              <GraphQLSearchField
+                searchQuery={search}
+                name="expression"
+                label="Expression"
+                description="What type of reagent is this?"
               />
-              <StringField
-                label="New Description"
-                name="description"
-                description="The Description Value"
-              />
+              <StringField name="lotId" label="The ID of the Lot" />
             </div>
           </div>
 

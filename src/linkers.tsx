@@ -75,6 +75,7 @@ export const MikroLinkedExpression = buildSmart(
   "mikro/linkedexpressions",
 );
 export const MikroOntology = buildSmart("@mikro/ontology", "mikro/ontologies");
+export const MikroReagent = buildSmart("@mikro/reagent", "mikro/reagents");
 export const MikroGraph = buildSmart("@mikro/graph", "mikro/graphs");
 export const MikroExperiment = buildSmart(
   "@mikro/experiment",

@@ -41,25 +41,12 @@ export default asDetailQueryRoute(useGetProtocolQuery, ({ data }) => {
               <TimelineHeader>
                 <TimelineIcon />
                 <TimelineTitle>
-                  {e.step.kind.label}{" "}
+                  {e.step.expression?.label}{" "}
                   <i className="text-muted-foreground mr-2"> t = {e.t} </i>
                 </TimelineTitle>
               </TimelineHeader>
               <TimelineContent>
                 <TimelineDescription>{e.step.description}</TimelineDescription>
-
-                <div className="flex flex-col mt-1">
-                  {e.step.reagents.map((reagent) => (
-                    <Badge className="flex flex-row ">
-                      <div className="flex-1 mr-1">{reagent.name}</div>
-                      {reagent.metrics.map((m) => (
-                        <Badge className="bg-black text-white">
-                          {m.metric.kind.label}:{m.value}
-                        </Badge>
-                      ))}
-                    </Badge>
-                  ))}
-                </div>
 
                 <div className="flex flex-col">
                   {e.step.views.map((view) => (

@@ -4,8 +4,21 @@ query GetExpression($id: ID!) {
   }
 }
 
-query ListExpressions($filters: ExpressionFilter, $pagination: OffsetPaginationInput) {
+query ListExpressions(
+  $filters: ExpressionFilter
+  $pagination: OffsetPaginationInput
+) {
   expressions(filters: $filters, pagination: $pagination) {
     ...ListExpression
+  }
+}
+
+query SearchExpression($search: String, $values: [ID!]) {
+  options: expressions(
+    filters: { search: $search, ids: $values }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: label
   }
 }

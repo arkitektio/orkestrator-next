@@ -116,25 +116,6 @@ export const columns: ColumnDef<EntityFragment>[] = [
     enableHiding: true,
   },
   {
-    accessorKey: "name",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          ID
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => (
-      <MikroEntity.DetailLink object={row.getValue("id")} className="lowercase">
-        {row.getValue("name")}
-      </MikroEntity.DetailLink>
-    ),
-  },
-  {
     id: "Label",
     accessorKey: "linkedExpression.label",
     header: () => <div className="text-center">Type</div>,
@@ -142,16 +123,6 @@ export const columns: ColumnDef<EntityFragment>[] = [
       const label = row.getValue("Label");
 
       return <div className="text-center font-medium">{label}</div>;
-    },
-  },
-  {
-    id: "Ontology",
-    accessorKey: "linkedExpression.expression.label",
-    header: () => <div className="text-center">Ontology</div>,
-    cell: ({ row, getValue }) => {
-      const label = row.getValue("Ontology") as string;
-
-      return <div className="text-center font-medium">{label || ""}</div>;
     },
   },
   {

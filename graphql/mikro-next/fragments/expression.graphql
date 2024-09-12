@@ -21,4 +21,7 @@ fragment ListExpression on Expression {
   label
   description
   kind
+  store {
+    ...MediaStore
+  }
 }

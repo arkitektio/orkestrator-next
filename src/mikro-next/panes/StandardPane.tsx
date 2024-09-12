@@ -140,9 +140,24 @@ export const NavigationPane = (props: {}) => {
         </div>
 
         <div className="text-muted-foreground text-xs font-semibold uppercase mb-4 mt-4">
-          Recent
+          Protocols
         </div>
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground"></div>
+        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
+          <DroppableNavLink
+            to="/mikro/protocols"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <Folder className="h-4 w-4" />
+            Protocols
+          </DroppableNavLink>
+          <DroppableNavLink
+            to="/mikro/reagents"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <File className="h-4 w-4" />
+            Reagents
+          </DroppableNavLink>
+        </div>
 
         <div className="text-muted-foreground text-xs font-semibold uppercase mb-4 mt-4">
           Plotters

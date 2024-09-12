@@ -143,14 +143,11 @@ export default asDetailQueryRoute(useGetProtocolStepQuery, ({ data }) => {
         <PlateEditor step={data.protocolStep} />
         <p className="text-muted-foreground text-sm mt-6">Linked Reagents</p>
         <div className="flex flex-row">
-          {data.protocolStep?.reagents.map((reagent) => (
+          {data.protocolStep?.reagentMappings.map((map) => (
             <Card className="flex flex-row p-3">
-              <div className="flex-1 mr-1">{reagent.name}</div>
-              {reagent.metrics.map((m) => (
-                <Badge className="bg-black text-white">
-                  {m.metric.kind.label}:{m.value}
-                </Badge>
-              ))}
+              <div className="flex-1 mr-1">{map.reagent.label}</div>
+
+              {map.volume}
             </Card>
           ))}
         </div>

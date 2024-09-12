@@ -17,7 +17,8 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       pageActions={
         <>
           <FormDialogAction
-            label="Create"
+            label="Perform Step"
+            variant={"outline"}
             onSubmit={(item) => {
               console.log(item);
               navigate(

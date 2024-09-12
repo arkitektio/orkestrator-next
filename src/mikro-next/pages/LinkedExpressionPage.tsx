@@ -9,6 +9,7 @@ import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import {
   useGetExpressionQuery,
   useGetLinkedExpressionQuery,
+  usePinLinkedExpressionMutation,
   useUpdateExpressionMutation,
 } from "../api/graphql";
 import LinkedExpressionCard from "../components/cards/LinkedExpressionCard";
@@ -20,6 +21,7 @@ import { useNavigate } from "react-router-dom";
 import LinkExpressionForm from "../forms/LinkExpressionForm";
 import { EntitiesTable } from "../components/tables/EntitiesTable";
 import { LinkedExpressionEntitiesTable } from "../components/tables/LinkedExpressionEntityTable";
+import { Button } from "@/components/ui/button";
 
 export default asDetailQueryRoute(
   useGetLinkedExpressionQuery,
@@ -28,7 +30,7 @@ export default asDetailQueryRoute(
 
     const [update] = useUpdateExpressionMutation();
     const resolve = useResolve();
-
+    const [link] = usePinLinkedExpressionMutation({});
     const createFile = async (file: File, key: string) => {
       update({
         variables: {
@@ -51,7 +53,35 @@ export default asDetailQueryRoute(
         }
         pageActions={
           <div className="flex flex-row gap-2">
-            <></>
+            {data.linkedExpression.pinned ? (
+              <Button
+                variant={"outline"}
+                size={"sm"}
+                onClick={() =>
+                  link({
+                    variables: {
+                      input: { id: data.linkedExpression.id, pin: false },
+                    },
+                  })
+                }
+              >
+                Unpin
+              </Button>
+            ) : (
+              <Button
+                variant={"outline"}
+                size={"sm"}
+                onClick={() =>
+                  link({
+                    variables: {
+                      input: { id: data.linkedExpression.id, pin: true },
+                    },
+                  })
+                }
+              >
+                Pin
+              </Button>
+            )}
           </div>
         }
       >

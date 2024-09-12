@@ -11,6 +11,7 @@ fragment LinkedExpression on LinkedExpression {
     id
     name
   }
+  pinned
 }
 
 fragment ListLinkedExpression on LinkedExpression {

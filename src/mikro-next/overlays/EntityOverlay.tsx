@@ -1,4 +1,4 @@
-import { MikroROI } from "@/linkers";
+import { MikroEntity, MikroROI } from "@/linkers";
 import { useGetEntityQuery } from "../api/graphql";
 import { Card } from "@/components/ui/card";
 
@@ -11,7 +11,9 @@ export const EntityOverlay = (props: { entity?: string }) => {
 
   return (
     <div>
-      {data?.entity?.linkedExpression.expression.label}
+      <MikroEntity.DetailLink object={props.entity}>
+        {data?.entity?.linkedExpression.expression.label}
+      </MikroEntity.DetailLink>
 
       <div className="text-sm text-gray-500m mt-2">Marked as ROI in </div>
       <div className="grid grid-cols-2 gap-2">

@@ -1,0 +1,17 @@
+fragment Reagent on Reagent {
+  id
+  label
+  protocol {
+    id
+    name
+  }
+}
+
+fragment ListReagent on Reagent {
+  id
+  label
+  protocol {
+    id
+    name
+  }
+}

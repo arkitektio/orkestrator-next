@@ -5,9 +5,13 @@ fragment ProtocolStep on ProtocolStep {
     label
   }
   description
-  reagents {
+  reagentMappings {
     id
-    concentration
+    reagent {
+      id
+      label
+    }
+    volume
   }
   mappings {
     t
@@ -45,10 +49,6 @@ fragment ListProtocolStep on ProtocolStep {
       id
       name
     }
-  }
-  reagents {
-    id
-    concentration
   }
   views {
     id

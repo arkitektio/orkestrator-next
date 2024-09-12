@@ -13,7 +13,6 @@ fragment Entity on Entity {
       name
     }
   }
-
   specimens {
     id
     protocol {
@@ -30,6 +29,22 @@ fragment Entity on Entity {
       store {
         id
       }
+    }
+  }
+  relations {
+    id
+    right {
+      id 
+      linkedExpression {
+        id
+        expression {
+          id
+          label
+        }
+      }
+    }
+    linkedExpression {
+        label
     }
   }
 }

@@ -2,7 +2,10 @@ fragment Graph on Graph {
   id
   name
   description
-  linkedExpressions {
+  relations: linkedExpressions(filters: {kind: RELATION}, pagination: { limit: 10 }) {
+    ...ListLinkedExpression
+  }
+  entities: linkedExpressions(filters: {kind: ENTITY}, pagination: { limit: 10 }) {
     ...ListLinkedExpression
   }
 }

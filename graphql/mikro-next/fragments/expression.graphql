@@ -8,6 +8,10 @@ fragment Expression on Expression {
   description
   linkedExpressions {
     ...ListLinkedExpression
+    entities(pagination: { limit: 10 }) {
+      id
+      name
+    }
   }
   store {
     ...MediaStore
@@ -21,4 +25,7 @@ fragment ListExpression on Expression {
   label
   description
   kind
+  store {
+    ...MediaStore
+  }
 }

@@ -1,25 +1,18 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { FormSheet } from "@/components/dialog/FormDialog";
+import { Badge } from "@/components/ui/badge";
 import { Image } from "@/components/ui/image";
 import { DragZone } from "@/components/upload/drag";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { useMediaUpload } from "@/datalayer/hooks/useUpload";
-import { MikroEntity, MikroExpression, MikroLinkedExpression } from "@/linkers";
-import { HobbyKnifeIcon } from "@radix-ui/react-icons";
+import { MikroExpression } from "@/linkers";
+import { useNavigate } from "react-router-dom";
 import {
-  useGetExpressionQuery,
+  ExpressionKind,
   useGetLinkedExpressionQuery,
   useUpdateExpressionMutation,
 } from "../api/graphql";
-import LinkedExpressionCard from "../components/cards/LinkedExpressionCard";
-import { UpdateExpressionForm } from "../forms/UpdateExpressionForm";
-import { Badge } from "@/components/ui/badge";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
-import { PlusIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import LinkExpressionForm from "../forms/LinkExpressionForm";
-import { EntitiesTable } from "../components/tables/EntitiesTable";
 import { LinkedExpressionEntitiesTable } from "../components/tables/LinkedExpressionEntityTable";
+import { LinkedExpressionRelationTable } from "../components/tables/LinkedExpressionRelationTable";
 
 export default asDetailQueryRoute(
   useGetLinkedExpressionQuery,
@@ -84,10 +77,18 @@ export default asDetailQueryRoute(
         </div>
         <DragZone uploadFile={uploadFile} createFile={createFile} />
         <div className="p-6 h-full">
-          <LinkedExpressionEntitiesTable
-            graph={data.linkedExpression.graph.id}
-            linkedExpression={data.linkedExpression.id}
-          />
+          {data.linkedExpression.expression.kind == ExpressionKind.Entity && (
+            <LinkedExpressionEntitiesTable
+              graph={data.linkedExpression.graph.id}
+              linkedExpression={data.linkedExpression.id}
+            />
+          )}
+          {data.linkedExpression.expression.kind == ExpressionKind.Relation && (
+            <LinkedExpressionRelationTable
+              graph={data.linkedExpression.graph.id}
+              linkedExpression={data.linkedExpression.id}
+            />
+          )}
         </div>
       </MikroExpression.ModelPage>
     );

@@ -1,0 +1,26 @@
+fragment EntityRelation on EntityRelation {
+  left {
+    ...Entity
+  }
+  right {
+    ...Entity
+  }
+  linkedExpression {
+    id
+    expression {
+      label
+    }
+  }
+}
+
+
+fragment ListEntityRelation on EntityRelation {
+  leftId
+  rightId
+  linkedExpression {
+    id
+    expression {
+      label
+    }
+  }
+}

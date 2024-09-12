@@ -164,6 +164,10 @@ export const MikroInstrument = buildSmart(
 );
 
 export const MikroROI = buildSmart("@mikro/roi", "mikro/rois");
+export const MikroEntityRelation = buildSmart(
+  "@mikro/entityrelation",
+  "mikro/entityrelations",
+);
 
 export const MikroSpecimen = buildSmart("@mikro/specimen", "mikro/specimens");
 

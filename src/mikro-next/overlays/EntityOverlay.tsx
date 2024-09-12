@@ -1,6 +1,6 @@
-import { MikroROI } from "@/linkers";
-import { useGetEntityQuery } from "../api/graphql";
 import { Card } from "@/components/ui/card";
+import { MikroEntityRelation, MikroROI } from "@/linkers";
+import { useGetEntityQuery } from "../api/graphql";
 
 export const EntityOverlay = (props: { entity?: string }) => {
   const { data } = useGetEntityQuery({
@@ -24,6 +24,19 @@ export const EntityOverlay = (props: { entity?: string }) => {
               {roi.image.name}
             </MikroROI.DetailLink>
             {roi.kind}
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        {data?.entity?.relations.map((relation, i) => (
+          <Card className="p-2 truncate">
+            <MikroEntityRelation.DetailLink
+              object={relation.id}
+              className={"max-w-[80px] truncate "}
+            >
+              {relation.linkedExpression.label}
+            </MikroEntityRelation.DetailLink>
           </Card>
         ))}
       </div>

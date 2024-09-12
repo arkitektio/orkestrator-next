@@ -1,10 +1,7 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { useGetGraphQuery, useListLinkedExpressionQuery } from "../api/graphql";
-import { EntitiesTable } from "../components/tables/EntitiesTable";
-import LinkedExpressionCard from "../components/cards/LinkedExpressionCard";
-import { Link } from "react-router-dom";
 import { MikroGraph } from "@/linkers";
-import { object } from "yup";
+import { useGetGraphQuery } from "../api/graphql";
+import LinkedExpressionCard from "../components/cards/LinkedExpressionCard";
 
 export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
   return (
@@ -19,17 +16,43 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
           </p>
         </div>
       </div>
-      <MikroGraph.DetailLink
-        object={data.graph.id}
-        subroute="entities"
-        className=""
-      >
-        Entitites{" "}
-      </MikroGraph.DetailLink>
-      <div className="grid grid-cols-6 gap-2">
-        {data?.graph?.linkedExpressions?.map((item, i) => (
-          <LinkedExpressionCard item={item} key={i} hideGraph={true} />
-        ))}
+      <div className="p-6">
+        <MikroGraph.DetailLink
+          object={data.graph.id}
+          subroute="entities"
+          className=""
+        >
+          Entitites{" "}
+        </MikroGraph.DetailLink>
+        <div className="grid grid-cols-6 gap-2">
+          {data?.graph?.entities?.map((item, i) => (
+            <LinkedExpressionCard
+              item={item}
+              key={i}
+              hideGraph={true}
+              hideExpression={true}
+            />
+          ))}
+        </div>
+      </div>
+      <div className="p-6">
+        <MikroGraph.DetailLink
+          object={data.graph.id}
+          subroute="relations"
+          className=""
+        >
+          Relations{" "}
+        </MikroGraph.DetailLink>
+        <div className="grid grid-cols-6 gap-2">
+          {data?.graph?.relations?.map((item, i) => (
+            <LinkedExpressionCard
+              item={item}
+              key={i}
+              hideGraph={true}
+              hideExpression={true}
+            />
+          ))}
+        </div>
       </div>
     </MikroGraph.ModelPage>
   );

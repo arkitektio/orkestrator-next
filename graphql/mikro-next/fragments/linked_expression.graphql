@@ -19,16 +19,15 @@ fragment ListLinkedExpression on LinkedExpression {
     id
     name
   }
-  entities(pagination: { limit: 2 }) {
-    id
-    name
-  }
   expression {
     id
     label
     ontology {
       id
       name
+    }
+    store {
+      ...MediaStore
     }
   }
   pinned

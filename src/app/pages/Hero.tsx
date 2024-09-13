@@ -1,4 +1,4 @@
-import { Arkitekt } from "@/arkitekt";
+import { Arkitekt } from "@/arkitekt/Arkitekt";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import {

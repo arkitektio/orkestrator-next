@@ -1,4 +1,4 @@
-import { Arkitekt } from "@/arkitekt";
+import { Arkitekt } from "@/arkitekt/Arkitekt";
 import { NavLink, useLocation } from "react-router-dom";
 
 export const NotFound = () => {

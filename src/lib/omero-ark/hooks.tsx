@@ -1,4 +1,4 @@
-import { useFluss, useOmeroArk } from "@/arkitekt";
+import { useFluss, useOmeroArk } from "@/arkitekt/Arkitekt";
 import { useArkitekt } from "@/arkitekt/provider";
 import {
   LazyQueryHookOptions,

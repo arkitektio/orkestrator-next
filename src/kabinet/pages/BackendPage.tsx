@@ -7,6 +7,7 @@ import { Separator } from "@radix-ui/react-dropdown-menu";
 import { useGetBackendQuery } from "../api/graphql";
 import { IconForBackendKind } from "../components/IconForBackendKind";
 import PodsList from "../components/lists/PodsList";
+import PodCard from "../components/cards/PodCard";
 
 export default asDetailQueryRoute(
   withKabinet(useGetBackendQuery),
@@ -51,7 +52,11 @@ export default asDetailQueryRoute(
           </div>
           <Separator className="mt-8 mb-2" />
 
-          <PodsList />
+          <div className="grid grid-cols-6 gap-2">
+            {data?.backend?.pods.map((pod) => (
+              <PodCard key={pod.id} item={pod} />
+            ))}
+          </div>
         </div>
       </KabinetBackend.ModelPage>
     );

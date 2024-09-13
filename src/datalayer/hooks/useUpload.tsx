@@ -1,4 +1,4 @@
-import { Arkitekt, useMikro } from "@/arkitekt";
+import { Arkitekt, useMikro } from "@/arkitekt/Arkitekt";
 import { useService } from "@/arkitekt/hooks";
 import {
   PresignedPostCredentialsFragment,

@@ -1,4 +1,4 @@
-import { Arkitekt } from "@/arkitekt";
+import { Arkitekt } from "@/arkitekt/Arkitekt";
 import { PageLayout } from "@/components/layout/PageLayout";
 import React from "react";
 

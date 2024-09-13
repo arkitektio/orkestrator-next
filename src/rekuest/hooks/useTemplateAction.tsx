@@ -67,6 +67,7 @@ export const useTemplateAction = <T extends any>(
         variables: {
           input: {
             ...vars,
+            template: data?.template.id,
             args: vars.args,
             instanceId: settings.instanceId,
             hooks: [],
@@ -95,7 +96,7 @@ export const useTemplateAction = <T extends any>(
     }
     return assign({
       args: latestAssignation.args,
-      node: latestAssignation?.node.id,
+      template: latestAssignation?.template?.id,
       hooks: [],
     });
   }, [assign]);

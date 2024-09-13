@@ -28,7 +28,7 @@ export default asDetailQueryRoute(
       update({
         variables: {
           input: {
-            id: data.expression.id,
+            id: data.linkedExpression.expression.id,
             image: key,
           },
         },
@@ -104,8 +104,9 @@ export default asDetailQueryRoute(
               />
             )}
           </div>
+          <DragZone uploadFile={uploadFile} createFile={createFile} />
         </div>
-        <DragZone uploadFile={uploadFile} createFile={createFile} />
+
         <div className="p-6 h-full">
           {data.linkedExpression.expression.kind == ExpressionKind.Entity && (
             <LinkedExpressionEntitiesTable

@@ -3,3 +3,9 @@ query ListReleases {
     ...ListRelease
   }
 }
+
+query GetRelease($id: ID!) {
+  release(id: $id) {
+    ...Release
+  }
+}

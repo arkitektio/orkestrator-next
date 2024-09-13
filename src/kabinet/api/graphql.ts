@@ -50,7 +50,24 @@ export type Backend = {
   id: Scalars['ID']['output'];
   kind: Scalars['String']['output'];
   name: Scalars['String']['output'];
+  pods: Array<Pod>;
   user: User;
+};
+
+
+/** A user of the bridge server. Maps to an authentikate user */
+export type BackendPodsArgs = {
+  filters?: InputMaybe<PodFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+/** Filter for Dask Clusters */
+export type BackendFilter = {
+  AND?: InputMaybe<BackendFilter>;
+  NOT?: InputMaybe<BackendFilter>;
+  OR?: InputMaybe<BackendFilter>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 /**  A selector is a way to select a release */
@@ -268,6 +285,10 @@ export type DefinitionOrder = {
   definedAt?: InputMaybe<Ordering>;
 };
 
+export type DeletePodInput = {
+  id: Scalars['ID']['input'];
+};
+
 export enum DemandKind {
   Args = 'ARGS',
   Returns = 'RETURNS'
@@ -281,6 +302,16 @@ export type Deployment = {
   flavour: Flavour;
   id: Scalars['ID']['output'];
   localId: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+};
+
+/** Filter for Dask Clusters */
+export type DeploymentFilter = {
+  AND?: InputMaybe<DeploymentFilter>;
+  NOT?: InputMaybe<DeploymentFilter>;
+  OR?: InputMaybe<DeploymentFilter>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** The Feature you are trying to match */
@@ -345,8 +376,18 @@ export type FlavourDefinitionsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
+/** A user of the bridge server. Maps to an authentikate user */
+export type FlavourDeploymentsArgs = {
+  filters?: InputMaybe<DeploymentFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 /** Filter for Dask Clusters */
 export type FlavourFilter = {
+  AND?: InputMaybe<FlavourFilter>;
+  NOT?: InputMaybe<FlavourFilter>;
+  OR?: InputMaybe<FlavourFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
@@ -371,6 +412,9 @@ export type GithubRepoFlavoursArgs = {
 
 /** Filter for Dask Clusters */
 export type GithubRepoFilter = {
+  AND?: InputMaybe<GithubRepoFilter>;
+  NOT?: InputMaybe<GithubRepoFilter>;
+  OR?: InputMaybe<GithubRepoFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
@@ -415,6 +459,8 @@ export type Mutation = {
   /** Create a new dask cluster on a bridge server */
   declareBackend: Backend;
   /** Create a new dask cluster on a bridge server */
+  deletePod: Scalars['ID']['output'];
+  /** Create a new dask cluster on a bridge server */
   dumpLogs: LogDump;
   /** Create a new dask cluster on a bridge server */
   scanRepo: GithubRepo;
@@ -442,6 +488,11 @@ export type MutationCreatePodArgs = {
 
 export type MutationDeclareBackendArgs = {
   input: DeclareBackendInput;
+};
+
+
+export type MutationDeletePodArgs = {
+  input: DeletePodInput;
 };
 
 
@@ -493,8 +544,19 @@ export type Pod = {
   deployment: Deployment;
   id: Scalars['ID']['output'];
   latestLogDump?: Maybe<LogDump>;
+  name: Scalars['String']['output'];
   podId: Scalars['String']['output'];
   status: PodStatus;
+};
+
+/** Filter for Dask Clusters */
+export type PodFilter = {
+  AND?: InputMaybe<PodFilter>;
+  NOT?: InputMaybe<PodFilter>;
+  OR?: InputMaybe<PodFilter>;
+  backend?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** The state of a dask cluster */
@@ -613,6 +675,12 @@ export type QueryBackendArgs = {
 };
 
 
+export type QueryBackendsArgs = {
+  filters?: InputMaybe<BackendFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryDefinitionArgs = {
   hash?: InputMaybe<Scalars['NodeHash']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
@@ -628,6 +696,12 @@ export type QueryDefinitionsArgs = {
 
 export type QueryDeploymentArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryDeploymentsArgs = {
+  filters?: InputMaybe<DeploymentFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -663,8 +737,20 @@ export type QueryPodArgs = {
 };
 
 
+export type QueryPodsArgs = {
+  filters?: InputMaybe<PodFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryReleaseArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryReleasesArgs = {
+  filters?: InputMaybe<ReleaseFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 /** A user of the bridge server. Maps to an authentikate user */
@@ -683,6 +769,8 @@ export type Release = {
   /** Is this release deployed */
   installed: Scalars['Boolean']['output'];
   logo?: Maybe<Scalars['String']['output']>;
+  /** Is this release deployed */
+  name: Scalars['String']['output'];
   /** The original logo url */
   originalLogo?: Maybe<Scalars['String']['output']>;
   scopes: Array<Scalars['String']['output']>;
@@ -694,6 +782,15 @@ export type Release = {
 export type ReleaseFlavoursArgs = {
   filters?: InputMaybe<FlavourFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+/** Filter for Dask Clusters */
+export type ReleaseFilter = {
+  AND?: InputMaybe<ReleaseFilter>;
+  NOT?: InputMaybe<ReleaseFilter>;
+  OR?: InputMaybe<ReleaseFilter>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ReturnWidget = {
@@ -785,7 +882,7 @@ export type Validator = {
 
 export type ListBackendFragment = { __typename?: 'Backend', id: string, name: string, kind: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } };
 
-export type BackendFragment = { __typename?: 'Backend', id: string, name: string, kind: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } };
+export type BackendFragment = { __typename?: 'Backend', id: string, name: string, kind: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } } }> };
 
 export type DefinitionFragment = { __typename?: 'Definition', id: string, name: string, hash: any, description?: string | null, args: Array<{ __typename?: 'Port', kind: PortKind }> };
 
@@ -818,7 +915,7 @@ export type GetBackendQueryVariables = Exact<{
 }>;
 
 
-export type GetBackendQuery = { __typename?: 'Query', backend: { __typename?: 'Backend', id: string, name: string, kind: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } } };
+export type GetBackendQuery = { __typename?: 'Query', backend: { __typename?: 'Backend', id: string, name: string, kind: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } } }> } };
 
 export type ListDefinitionsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -851,6 +948,13 @@ export type ListReleasesQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type ListReleasesQuery = { __typename?: 'Query', releases: Array<{ __typename?: 'Release', id: string, version: string, installed: boolean, scopes: Array<string>, colour: string, description: string, app: { __typename?: 'App', identifier: string }, flavours: Array<{ __typename?: 'Flavour', id: string, name: string }> }> };
 
+export type GetReleaseQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetReleaseQuery = { __typename?: 'Query', release: { __typename?: 'Release', id: string, version: string, scopes: Array<string>, colour: string, description: string, app: { __typename?: 'App', identifier: string } } };
+
 export type GlobalSearchQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -870,49 +974,6 @@ export const ListBackendFragmentDoc = gql`
   }
   name
   kind
-}
-    `;
-export const BackendFragmentDoc = gql`
-    fragment Backend on Backend {
-  id
-  user {
-    id
-  }
-  client {
-    id
-  }
-  name
-  kind
-}
-    `;
-export const DefinitionFragmentDoc = gql`
-    fragment Definition on Definition {
-  id
-  name
-  hash
-  description
-  args {
-    kind
-  }
-}
-    `;
-export const ListDefinitionFragmentDoc = gql`
-    fragment ListDefinition on Definition {
-  id
-  name
-  hash
-  description
-  flavours {
-    id
-    name
-    release {
-      id
-      version
-      app {
-        identifier
-      }
-    }
-  }
 }
     `;
 export const ListPodFragmentDoc = gql`
@@ -941,6 +1002,52 @@ export const ListPodFragmentDoc = gql`
     }
   }
   status
+}
+    `;
+export const BackendFragmentDoc = gql`
+    fragment Backend on Backend {
+  id
+  user {
+    id
+  }
+  client {
+    id
+  }
+  name
+  kind
+  pods {
+    ...ListPod
+  }
+}
+    ${ListPodFragmentDoc}`;
+export const DefinitionFragmentDoc = gql`
+    fragment Definition on Definition {
+  id
+  name
+  hash
+  description
+  args {
+    kind
+  }
+}
+    `;
+export const ListDefinitionFragmentDoc = gql`
+    fragment ListDefinition on Definition {
+  id
+  name
+  hash
+  description
+  flavours {
+    id
+    name
+    release {
+      id
+      version
+      app {
+        identifier
+      }
+    }
+  }
 }
     `;
 export const PodFragmentDoc = gql`
@@ -1289,6 +1396,41 @@ export function useListReleasesLazyQuery(baseOptions?: ApolloReactHooks.LazyQuer
 export type ListReleasesQueryHookResult = ReturnType<typeof useListReleasesQuery>;
 export type ListReleasesLazyQueryHookResult = ReturnType<typeof useListReleasesLazyQuery>;
 export type ListReleasesQueryResult = Apollo.QueryResult<ListReleasesQuery, ListReleasesQueryVariables>;
+export const GetReleaseDocument = gql`
+    query GetRelease($id: ID!) {
+  release(id: $id) {
+    ...Release
+  }
+}
+    ${ReleaseFragmentDoc}`;
+
+/**
+ * __useGetReleaseQuery__
+ *
+ * To run a query within a React component, call `useGetReleaseQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetReleaseQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetReleaseQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetReleaseQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetReleaseQuery, GetReleaseQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetReleaseQuery, GetReleaseQueryVariables>(GetReleaseDocument, options);
+      }
+export function useGetReleaseLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetReleaseQuery, GetReleaseQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetReleaseQuery, GetReleaseQueryVariables>(GetReleaseDocument, options);
+        }
+export type GetReleaseQueryHookResult = ReturnType<typeof useGetReleaseQuery>;
+export type GetReleaseLazyQueryHookResult = ReturnType<typeof useGetReleaseLazyQuery>;
+export type GetReleaseQueryResult = Apollo.QueryResult<GetReleaseQuery, GetReleaseQueryVariables>;
 export const GlobalSearchDocument = gql`
     query GlobalSearch($search: String, $pagination: OffsetPaginationInput) {
   definitions: definitions(filters: {search: $search}, pagination: $pagination) {

@@ -8,6 +8,7 @@ import { FormDialogAction } from "@/components/ui/form-dialog-action";
 import CreateGraphForm from "../forms/CreateOntologyForm";
 import { useNavigate } from "react-router-dom";
 import { MikroGraph } from "@/linkers";
+import CreateOntologyForm from "../forms/CreateOntologyForm";
 
 export type IRepresentationScreenProps = {};
 

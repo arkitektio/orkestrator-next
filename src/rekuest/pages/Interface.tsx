@@ -7,7 +7,7 @@ import {
 import { Descriptor } from "../interfaces/types";
 import { useAgentsForDescriptor } from "../interfaces/hooks/useAgentsForInterface";
 import { useEffect, useRef, useState } from "react";
-import { Arkitekt } from "@/arkitekt";
+import { Arkitekt } from "@/arkitekt/Arkitekt";
 import { useParams } from "react-router-dom";
 
 export function WebComponentLoader({

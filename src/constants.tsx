@@ -54,3 +54,9 @@ export const SMART_MODEL_DROP_TYPE = "smart";
 
 // Which endpoints should be used to discover the fakts services
 export const WELL_KNOWN_ENDPOINTS = ["https://localhost:443"];
+
+export const KABINET_REFRESH_POD_HASH =
+  "363c28aca6fad6032ca3d5ff8f2baa67f93abbd3cacb1f033f6f17fd302e91e1";
+
+export const KABINET_INSTALL_POD_HASH =
+  "c23d99cae434f6d143cd9fa2f831de1ac66a51d74df2ea405b08903b1af13d16";

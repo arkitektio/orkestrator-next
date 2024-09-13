@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/pane";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 import { NodeDescription } from "@/lib/rekuest/NodeDescription";
-import { RekuestAssignation } from "@/linkers";
+import { RekuestAssignation, RekuestNode } from "@/linkers";
 import { useFlowQuery } from "@/reaktion/api/graphql";
 import { ShowFlow } from "@/reaktion/show/ShowFlow";
 import {
@@ -118,6 +118,11 @@ export const DefaultRenderer = (props: {
         >
           {props?.template?.interface}
         </DetailPaneTitle>
+
+        <RekuestNode.DetailLink object={props.template.node.id}>
+          {" "}
+          Go to node
+        </RekuestNode.DetailLink>
 
         <DetailPaneDescription>
           <DoForm id={props.template.id} />

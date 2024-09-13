@@ -1,4 +1,4 @@
-import { useKabinet } from "@/arkitekt";
+import { useKabinet } from "@/arkitekt/Arkitekt";
 import { useArkitekt } from "@/arkitekt/provider";
 import {
   LazyQueryHookOptions,

@@ -1,14 +1,13 @@
-import { useOmeroArk } from "@/arkitekt/Arkitekt";
+import { useKabinet, useMikro } from "@/arkitekt/Arkitekt";
 import { useService } from "@/arkitekt/hooks";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { gql } from "@apollo/client";
 import { useEffect } from "react";
 
-export const OmeroArkWard: React.FC<{
-  key?: string;
+export const KabinetWard: React.FC<{
   fallback?: React.ReactNode;
 }> = ({ key, fallback }) => {
-  const client = useOmeroArk();
+  const client = useKabinet();
   const { registry } = useWidgetRegistry();
 
   useEffect(() => {
@@ -26,7 +25,7 @@ export const OmeroArkWard: React.FC<{
           });
       };
 
-      registry?.registerWard(key || "omero_ark", {
+      registry?.registerWard("kabinet", {
         search: runFunc,
       });
     }

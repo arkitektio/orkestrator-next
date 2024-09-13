@@ -6,7 +6,7 @@ import { useAgentsForDescriptor } from "../interfaces/hooks/useAgentsForInterfac
 import { Card } from "@/components/ui/card";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Arkitekt } from "@/arkitekt";
+import { Arkitekt } from "@/arkitekt/Arkitekt";
 import { DroppableNavLink } from "@/components/ui/link";
 
 export const ConditionalDescriptorRenderer = ({

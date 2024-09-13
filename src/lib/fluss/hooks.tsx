@@ -1,4 +1,4 @@
-import { useFluss } from "@/arkitekt";
+import { useFluss } from "@/arkitekt/Arkitekt";
 import { useArkitekt } from "@/arkitekt/provider";
 import {
   LazyQueryHookOptions,

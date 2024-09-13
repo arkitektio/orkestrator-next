@@ -1,4 +1,4 @@
-import { Arkitekt, Guard } from "@/arkitekt";
+import { Arkitekt, Guard } from "@/arkitekt/Arkitekt";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -71,23 +71,24 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
   const { logout } = Arkitekt.useLogin();
   const { remove, fakts } = Arkitekt.useConnect();
   const { debug, setDebug } = useDebug();
+  const services = Arkitekt.useServices();
 
   const linkChildren =
     (fakts &&
-      Object.keys(fakts).map((key) => {
-        if (key == "self") return null;
-        if (key == "datalayer") return null;
-        const faktsValue = fakts[key];
+      services.map((s) => {
+        if (s.key == "self") return null;
+        if (s.key == "datalayer") return null;
+        if (s.key == "livekit") return null;
         return (
-          <DroppableNavLink key={key} to={`/${key}`}>
+          <DroppableNavLink key={s.key} to={`/${s.key}`}>
             {({ isActive }) => (
               <Tooltip>
                 <TooltipTrigger>
                   <NavigationMenuLink active={isActive}>
-                    {matchIcon(key)}
+                    {matchIcon(s.key)}
                   </NavigationMenuLink>
                 </TooltipTrigger>
-                <TooltipContent side="right">{key}</TooltipContent>
+                <TooltipContent side="right">{s.key}</TooltipContent>
               </Tooltip>
             )}
           </DroppableNavLink>
@@ -146,7 +147,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
                 <DroppableNavLink
                   to={"/user/settings"}
                   className={({ isActive }) =>
-                    ` dark:hover:text-back-400 px-2 py-2 
+                    ` dark:hover:text-back-400 px-2 py-2
               ${isActive ? "dark:text-back-400" : "text-back-500"}`
                   }
                 >

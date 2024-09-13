@@ -18,11 +18,11 @@ import {
 import { ParagraphField } from "@/components/fields/ParagraphField";
 
 export default (props) => {
-  const [add] = useCreateOntologyMutation();
+  const [add] = useCreateGraphMutation();
 
   const dialog = useGraphQlFormDialog(add);
 
-  const form = useForm<CreateOntologyMutationVariables["input"]>({
+  const form = useForm<CreateGraphMutationVariables["input"]>({
     defaultValues: {
       name: "New Step",
       description: "No Description",

@@ -1231,6 +1231,18 @@
             "deprecationReason": null
           },
           {
+            "name": "filters",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "ChildPortInput",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "followValue",
             "description": null,
             "type": {
@@ -11728,6 +11740,26 @@
         "description": null,
         "isOneOf": null,
         "fields": [
+          {
+            "name": "filters",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "ChildPort",
+                  "ofType": null
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "followValue",
             "description": null,

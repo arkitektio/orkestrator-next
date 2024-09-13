@@ -1,4 +1,4 @@
-import { Arkitekt } from "@/arkitekt";
+import { Arkitekt } from "@/arkitekt/Arkitekt";
 import { useCallback } from "react";
 
 const s3resolveWithEndpoint = (endpointUrl: string, key: string) => {

@@ -1,4 +1,4 @@
-import { Arkitekt } from "@/arkitekt";
+import { Arkitekt } from "@/arkitekt/Arkitekt";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,

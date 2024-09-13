@@ -1,4 +1,6 @@
+import { FilterSearchField } from "@/components/fields/FilterSearchField";
 import { SearchField, SearchOptions } from "@/components/fields/SearchField";
+import { FilterSearch } from "@/kabinet/forms/filter/GlobalSearchFilter";
 import { SearchAssignWidgetFragment } from "@/rekuest/api/graphql";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { InputWidgetProps } from "@/rekuest/widgets/types";
@@ -38,6 +40,20 @@ export const SearchWidget = (
     },
     [theward, query, values],
   );
+
+  if (props.widget?.filters) {
+    return (
+      <FilterSearchField
+        name={pathToName(props.path)}
+        label={props.port.label || props.port.key}
+        filters={props.widget.filters || []}
+        search={search}
+        description={props.port.description || undefined}
+        noOptionFoundPlaceholder="No options found"
+        commandPlaceholder="Search..."
+      />
+    );
+  }
 
   return (
     <SearchField

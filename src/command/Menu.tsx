@@ -1,4 +1,4 @@
-import { Guard } from "@/arkitekt";
+import { Guard } from "@/arkitekt/Arkitekt";
 import { Badge } from "@/components/ui/badge";
 import {
   Command,

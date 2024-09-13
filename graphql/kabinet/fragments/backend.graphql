@@ -21,4 +21,7 @@ fragment Backend on Backend {
   }
   name
   kind
+  pods {
+    ...ListPod
+  }
 }

@@ -28,10 +28,8 @@ export const UnknownInputWidget: React.FC<InputWidgetProps> = ({ port }) => {
 
 export const UnknownReturnWidget: React.FC<ReturnWidgetProps> = ({ port }) => {
   return (
-    <div className="text-xl bg-red-200">
-      Registry error! No assign Widget registered for: {port.kind} and{" "}
-      {port?.returnWidget?.__typename || "unset widget"}
-      {JSON.stringify(port)}
+    <div className="text-xs bg-red-200">
+      {port.kind} and {port?.returnWidget?.__typename || "unset widget"}
     </div>
   );
 };

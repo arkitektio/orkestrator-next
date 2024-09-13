@@ -1,4 +1,4 @@
-import { Arkitekt } from "@/arkitekt";
+import { Arkitekt } from "@/arkitekt/Arkitekt";
 import { OmeroArkImage } from "@/linkers";
 import { MateFinder } from "@/mates/types";
 import { ListImageFragment } from "@/omero-ark/api/graphql";

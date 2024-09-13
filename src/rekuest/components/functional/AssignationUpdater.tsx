@@ -1,30 +1,65 @@
 import { useService } from "@/arkitekt/hooks";
 import { useSettings } from "@/providers/settings/SettingsContext";
-import { useAssignations } from "@/rekuest/hooks/useAssignations";
-import { useEffect } from "react";
+import {
+  useAssignations,
+  useLiveAssignation,
+} from "@/rekuest/hooks/useAssignations";
+import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import {
+  AssignationEventKind,
   AssignationsDocument,
   AssignationsQuery,
+  useDetailNodeQuery,
   WatchAssignationEventsSubscriptionVariables,
   WatchAssignationsDocument,
   WatchAssignationsSubscription,
 } from "../../api/graphql";
-import { useRekuest } from "@/arkitekt";
+import { useRekuest } from "@/arkitekt/Arkitekt";
+import { useToast } from "@/components/ui/use-toast";
+import { progress } from "framer-motion";
+import { Alert } from "@/components/ui/alert";
+import { ReturnsContainer } from "@/rekuest/widgets/tailwind";
+import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 
-export const AssignationToaster = (props: { id: string }) => {
-  const { data } = useAssignations();
+export const DynamicYieldDisplay = (props: {
+  values: any[];
+  nodeId: string;
+}) => {
+  const { data } = useDetailNodeQuery({
+    variables: {
+      id: props.nodeId,
+    },
+  });
 
-  const events = data?.assignations.find((a) => a.id === props.id)?.events;
+  const { registry } = useWidgetRegistry();
+
+  if (!data) {
+    return <> Loaaading </>;
+  }
 
   return (
-    <div>
-      <a to="" className="">
-        <>
-          <h1>Assignation Created</h1>
-          {events?.map((e) => <div className="">{e.kind}</div>)}
-        </>
-      </a>
+    <>
+      <ReturnsContainer
+        ports={data.node.returns}
+        values={props.values}
+        registry={registry}
+      />
+    </>
+  );
+};
+
+export const AssignationToaster = (props: { id: string }) => {
+  const ass = useLiveAssignation({ assignation: props.id });
+
+  return (
+    <div className="truncate w-full h-full">
+      {ass.progress}
+      {ass.error && <Alert>{ass.error}</Alert>}
+      {ass.yield && ass.nodeId && (
+        <DynamicYieldDisplay values={ass.yield} nodeId={ass.nodeId} />
+      )}
+      {ass.done && "Done :)"}
     </div>
   );
 };
@@ -99,7 +134,10 @@ export const AssignationUpdater = (props: {}) => {
             );
 
             console.error("Added assignation", create.reference);
-            toast(<AssignationToaster id={create.id} />);
+            toast(<AssignationToaster id={create.id} />, {
+              duration: 5000,
+              dismissible: true,
+            });
           }
         });
 

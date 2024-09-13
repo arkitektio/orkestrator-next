@@ -1,4 +1,4 @@
-import { useRekuest } from "@/arkitekt";
+import { useRekuest } from "@/arkitekt/Arkitekt";
 import { useArkitekt } from "@/arkitekt/provider";
 import {
   LazyQueryHookOptions,

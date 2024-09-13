@@ -1,4 +1,4 @@
-import { useMikro } from "@/arkitekt";
+import { useMikro } from "@/arkitekt/Arkitekt";
 import { useArkitekt } from "@/arkitekt/provider";
 import {
   LazyQueryHookOptions,

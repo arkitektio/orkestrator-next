@@ -106,7 +106,7 @@ import { RekuestFilterWidget } from "./nodes/RekuestFilterWidget";
 import { RekuestMapWidget } from "./nodes/RekuestMapWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
-import { useRekuest } from "@/arkitekt";
+import { useRekuest } from "@/arkitekt/Arkitekt";
 
 const nodeTypes: NodeTypes = {
   RekuestFilterNode: RekuestFilterWidget,

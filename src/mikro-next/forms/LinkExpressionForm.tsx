@@ -13,13 +13,14 @@ import {
   useCreateGraphMutation,
   useCreateProtocolStepMutation,
   useLinkExpressionMutation,
+  useSearchExpressionLazyQuery,
   useSearchGraphsLazyQuery,
   useSearchLinkedExpressionLazyQuery,
   useSearchLinkedExpressionQuery,
 } from "../api/graphql";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 
-export default (props: { expression: string }) => {
+export default (props: { expression?: string; graph?: string }) => {
   const [add] = useLinkExpressionMutation();
 
   const dialog = useGraphQlFormDialog(add);
@@ -27,10 +28,12 @@ export default (props: { expression: string }) => {
   const form = useForm<LinkExpressionMutationVariables["input"]>({
     defaultValues: {
       expression: props.expression,
+      graph: props.graph,
     },
   });
 
   const [search] = useSearchGraphsLazyQuery();
+  const [searchExpression] = useSearchExpressionLazyQuery();
 
   return (
     <>
@@ -47,8 +50,18 @@ export default (props: { expression: string }) => {
           })}
         >
           <div className="grid grid-cols-2 gap-2">
+            <div className="text-lg font-bold">Link Expression</div>
+
             <div className="col-span-2 flex-col gap-1 flex">
-              <GraphQLSearchField name="graph" searchQuery={search} />
+              {props.expression && (
+                <GraphQLSearchField name="graph" searchQuery={search} />
+              )}
+              {props.graph && (
+                <GraphQLSearchField
+                  name="expression"
+                  searchQuery={searchExpression}
+                />
+              )}
             </div>
           </div>
 

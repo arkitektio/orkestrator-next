@@ -9,7 +9,7 @@ import RoomPage from "@/lok-next/pages/RoomPage";
 import { Popover, PopoverContent } from "../ui/popover";
 import { PopoverTrigger } from "@radix-ui/react-popover";
 import { LiveKitRoom, ParticipantTile } from "@livekit/components-react";
-import { useLivekit } from "@/arkitekt";
+import { useLivekit } from "@/arkitekt/Arkitekt";
 
 import { Track } from "livekit-client";
 import { useTracks, VideoTrack } from "@livekit/components-react";

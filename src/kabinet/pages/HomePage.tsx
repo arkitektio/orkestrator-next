@@ -12,11 +12,13 @@ export type IRepresentationScreenProps = {};
 const Page: React.FC<IRepresentationScreenProps> = () => {
   return (
     <PageLayout
-      actions={
+      pageActions={
         <>
           <>
             <FormDialogAction
               label="Add Repo"
+              variant="outline"
+              size="sm"
               onSubmit={(item) => {
                 console.log(item);
               }}

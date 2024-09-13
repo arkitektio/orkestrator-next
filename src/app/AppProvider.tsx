@@ -1,4 +1,4 @@
-import { Arkitekt, Guard } from "@/arkitekt";
+import { Arkitekt, Guard } from "@/arkitekt/Arkitekt";
 import { CommandMenu } from "@/command/Menu";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { ShadnWigets } from "@/components/widgets/ShadnWigets";
 import { WELL_KNOWN_ENDPOINTS } from "@/constants";
+import { KabinetWard } from "@/kabinet/KabinetWard";
 import { WellKnownDiscovery } from "@/lib/fakts";
 import { SystemMessageDisplay } from "@/lok-next/SystemMessage";
 import { MikroNextWard } from "@/mikro-next/MikroNextWard";
@@ -100,7 +101,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                 <CommandProvider>
                   <SmartProvider>
                     <WidgetRegistryProvider>
-                      <Toaster />
                       <CommandMenu />
                       <Guard.Rekuest fallback={<></>}>
                         {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
@@ -109,20 +109,25 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                         {/* We register the Shadn powered widgets to the widget registry. */}
                         <RekuestNextWard />
                         <ShadnWigets />
+                        <Toaster />
                       </Guard.Rekuest>
+                      <Guard.Kabinet fallback={<></>}>
+                        <KabinetWard key="kabinet" />
+                      </Guard.Kabinet>
+
                       <Guard.Mikro fallback={<></>}>
                         <MikroNextWard key="mikro" />
                       </Guard.Mikro>
                       <Guard.Fluss fallback={<></>}>
                         <FlussWard key="fluss" />
                       </Guard.Fluss>
+                      <Guard.Lok fallback={<></>}>
+                        <SystemMessageDisplay />
+                      </Guard.Lok>
+                      <BackNavigationErrorCatcher>
+                        {children}
+                      </BackNavigationErrorCatcher>
                     </WidgetRegistryProvider>
-                    <Guard.Lok fallback={<></>}>
-                      <SystemMessageDisplay />
-                    </Guard.Lok>
-                    <BackNavigationErrorCatcher>
-                      {children}
-                    </BackNavigationErrorCatcher>
                   </SmartProvider>
                 </CommandProvider>
               </SelectionProvider>

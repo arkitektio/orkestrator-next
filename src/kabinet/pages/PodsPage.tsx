@@ -9,10 +9,8 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   return (
     <PageLayout actions={<></>} title="Pods">
       <div className="p-3">
-
-      <PodsList />
+        <PodsList />
         <Separator className="mt-8 mb-2" />
-
       </div>
     </PageLayout>
   );

@@ -1,4 +1,4 @@
-import { Guard } from "@/arkitekt";
+import { Guard } from "@/arkitekt/Arkitekt";
 import { UserAvatar } from "../UserAvatar";
 
 export const UserInfo = (props: { sub: string | undefined }) => {

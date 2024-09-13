@@ -20,14 +20,21 @@ import {
   useState,
 } from "react";
 
+export type AvailableService = {
+  key: string;
+  service: string;
+};
+
 export type AppContext = {
   manifest: Manifest;
   clients: ServiceMap;
+  availableServices: AvailableService[];
 };
 
 export const ArkitektContext = createContext<AppContext>({
   manifest: undefined as unknown as Manifest,
   clients: {},
+  availableServices: [],
 });
 export const useArkitekt = () => useContext(ArkitektContext);
 
@@ -47,6 +54,7 @@ export const ServiceProvier = ({
   const [context, setContext] = useState<AppContext>({
     manifest: manifest,
     clients: {},
+    availableServices: [],
   });
 
   useEffect(() => {
@@ -55,10 +63,16 @@ export const ServiceProvier = ({
 
       console.log("Building clients for", fakts);
 
+      let availableServices = [] as AvailableService[];
+
       for (let key in serviceBuilderMap) {
         let definition = serviceBuilderMap[key];
         try {
           clients[key] = definition.builder(manifest, fakts, token);
+          availableServices.push({
+            key,
+            service: definition.service,
+          });
         } catch (e) {
           console.error(`Failed to build client for ${key}`, e);
           if (!definition.optional) {
@@ -67,7 +81,11 @@ export const ServiceProvier = ({
         }
       }
 
-      setContext({ manifest: manifest, clients });
+      setContext({
+        manifest: manifest,
+        clients,
+        availableServices: availableServices,
+      });
     }
   }, [fakts, token, serviceBuilderMap]);
 

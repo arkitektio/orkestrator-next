@@ -19,11 +19,32 @@ fragment StateChoiceAssignWidget on StateChoiceAssignWidget {
   stateChoices
 }
 
+fragment FilterPort on ChildPort {
+  __typename
+  kind
+  key
+  identifier
+  scope
+  assignWidget {
+    ... on SearchAssignWidget {
+      query
+    }
+  }
+  returnWidget {
+    ...ReturnWidget
+  }
+  description
+  nullable
+}
+
 fragment SearchAssignWidget on SearchAssignWidget {
   __typename
   kind
   query
   ward
+  filters {
+    ...FilterPort
+  }
 }
 
 fragment CustomAssignWidget on CustomAssignWidget {

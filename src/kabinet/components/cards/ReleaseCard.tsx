@@ -7,11 +7,17 @@ import {
 } from "@/components/ui/card";
 import { NodeDescription } from "@/lib/rekuest/NodeDescription";
 import { KabinetRelease } from "@/linkers";
-import { useAssignMutation, usePrimaryNodesQuery } from "@/rekuest/api/graphql";
+import {
+  useAssignMutation,
+  usePrimaryNodesQuery,
+  useTemplatesQuery,
+} from "@/rekuest/api/graphql";
 import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
 import { useInstancId } from "@/rekuest/hooks/useInstanceId";
 import { MateFinder } from "../../../mates/types";
 import { ListReleaseFragment } from "../../api/graphql";
+import { useTemplateAction } from "@/rekuest/hooks/useTemplateAction";
+import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 
 interface Props {
   item: ListReleaseFragment;
@@ -19,53 +25,48 @@ interface Props {
 }
 
 export const AssignButton = (props: { id: string; release: string }) => {
-  const [postAssign, _] = useAssignMutation();
+  const { assign, latestAssignation } = useTemplateAction({
+    id: props.id,
+  });
 
-  const instanceId = useInstancId();
-
-  const assign = async () => {
+  const doassign = async () => {
     console.log(
-      await postAssign({
-        variables: {
-          input: {
-            template: props.id,
-            args: {
-              release: props.release,
-            },
-            instanceId: instanceId,
-          },
+      await assign({
+        args: {
+          release: props.release,
         },
       }),
     );
   };
 
   return (
-    <Button onClick={assign} variant={"outline"} size="sm">
+    <Button onClick={doassign} variant={"outline"} size="sm">
       Install
     </Button>
   );
 };
 
 const InstallDialog = (props: { item: ListReleaseFragment }) => {
-  const { data } = usePrimaryNodesQuery({
+  const { data } = useTemplatesQuery({
     variables: {
-      identifier: "@kabinet/release",
+      filters: {
+        nodeHash:
+          "c23d99cae434f6d143cd9fa2f831de1ac66a51d74df2ea405b08903b1af13d16",
+      },
     },
   });
 
   return (
     <div className="flex flex-row gap-2">
-      {data?.nodes
-        .at(0)
-        ?.templates.map((t) => (
-          <AssignButton id={t.id} release={props.item.id} />
-        ))}
+      {data?.templates.map((t) => (
+        <AssignButton id={t.id} release={props.item.id} />
+      ))}
     </div>
   );
 };
 
 const TheCard = ({ item, mates }: Props) => {
-  const progress = useAssignProgress({
+  const { progress } = useLiveAssignation({
     identifier: "@kabinet/release",
     object: item.id,
   });
@@ -75,8 +76,8 @@ const TheCard = ({ item, mates }: Props) => {
       <Card
         className="group transition-all duration-300 ease-in-out"
         style={{
-          backgroundSize: `${progress?.progress || 0}% 100%`,
-          backgroundImage: `linear-gradient(to right, #10b981 ${progress?.progress}%, #10b981 ${progress?.progress}%)`,
+          backgroundSize: `${progress || 0}% 100%`,
+          backgroundImage: `linear-gradient(to right, #10b981 ${progress}%, #10b981 ${progress}%)`,
           backgroundRepeat: "no-repeat",
           backgroundPosition: "left center",
         }}
@@ -93,7 +94,7 @@ const TheCard = ({ item, mates }: Props) => {
               {item?.description && (
                 <NodeDescription description={item?.description} />
               )}
-              {progress?.progress && <>{progress.progress}</>}
+              {progress}
             </CardDescription>
           </div>
           <CardTitle>

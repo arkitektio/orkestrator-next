@@ -14,7 +14,7 @@ import { EmojiPicker } from "../emoji-picker";
 import { Button, buttonVariants } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Textarea } from "../ui/textarea";
-import { Arkitekt, Guard } from "@/arkitekt";
+import { Arkitekt, Guard } from "@/arkitekt/Arkitekt";
 import { StreamButton } from "./stream_button";
 import { DetailRoomFragment } from "@/lok-next/api/graphql";
 

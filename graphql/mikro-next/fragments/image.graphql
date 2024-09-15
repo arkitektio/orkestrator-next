@@ -49,6 +49,16 @@ fragment Image on Image {
   }
 }
 
+fragment RGBImage on Image {
+  name
+  rgbContexts {
+    ...ListRGBContext
+  }
+}
+
+
+
+
 fragment ListImage on Image {
   latestSnapshot {
     id

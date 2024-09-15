@@ -8,6 +8,7 @@ import {
   ObjectButton,
   ObjectButtonProps,
 } from "@/rekuest/buttons/ObjectButton";
+import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
 import { NavLink } from "react-router-dom";
 import { SmartModel } from "./SmartModel";
@@ -102,6 +103,13 @@ const buildUseProgress = (model: Identifier, object: string) => {
   });
 };
 
+const buildUseLive = (model: Identifier, object: string) => {
+  return useLiveAssignation({
+    identifier: model,
+    object: object,
+  });
+};
+
 export type SmartObjectButtonProps = Omit<ObjectButtonProps, "identifier">;
 
 const buildObjectButton = (model: Identifier) => {
@@ -124,6 +132,7 @@ export const buildSmart = (model: Identifier, to: string) => {
     ObjectButton: buildObjectButton(model),
     useProgress: ({ object }: { object: string }) =>
       buildUseProgress(model, object),
+    useLive: ({ object }: { object: string }) => buildUseLive(model, object),
   };
 };
 

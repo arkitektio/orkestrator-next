@@ -3,7 +3,6 @@ import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
 import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
 import { ListRender } from "@/components/layout/ListRender";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   DetailPane,
@@ -12,11 +11,14 @@ import {
   DetailPaneTitle,
 } from "@/components/ui/pane";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useResolve } from "@/datalayer/hooks/useResolve";
 import { MikroDataset, MikroImage } from "@/linkers";
 import { UserInfo } from "@/lok-next/components/protected/UserInfo";
 import { TwoDViewProvider } from "@/providers/view/ViewProvider";
+import { Matrix4 } from "@math.gl/core";
 import { HobbyKnifeIcon, PlusIcon } from "@radix-ui/react-icons";
+import { Download } from "lucide-react";
+import { useMemo } from "react";
 import Timestamp from "react-timestamp";
 import {
   AffineTransformationViewFragment,
@@ -26,24 +28,17 @@ import {
 import AcquisitionViewCard from "../components/cards/AcquisitionViewCard";
 import ChannelViewCard from "../components/cards/ChannelViewCard";
 import FileCard from "../components/cards/FileCard";
-import ImageMetricCard from "../components/cards/ImageMetricCard";
 import LabelViewCard from "../components/cards/LabelViewCard";
 import OpticsViewCard from "../components/cards/OpticsViewCard";
 import RGBViewCard from "../components/cards/RGBViewCard";
-import RoiCard from "../components/cards/RoiCard";
 import SpecimenViewCard from "../components/cards/SpecimenViewCard";
 import TransformationViewCard from "../components/cards/TransformationViewCard";
 import WellPositionViewCard from "../components/cards/WellPositionViewCard";
-import { TwoDViewController } from "../components/render/Controller";
-import { VivRenderer } from "../components/render/VivRenderer";
+import { RGBD } from "../components/render/TwoDThree";
 import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { PinToggle } from "../components/ui/PinToggle";
 import { AddImageViewForm } from "../forms/AddImageViewForm";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
-import { Matrix4 } from "@math.gl/core";
-import { useMemo } from "react";
-import { TwoDRGBRender } from "../components/render/TwoDRGBRender";
-import { RGBD, TwoDRGBThreeRenderDetail } from "../components/render/TwoDThree";
 
 export type IRepresentationScreenProps = {};
 
@@ -82,6 +77,7 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
     return new Matrix4().scale(scale);
   }, [data?.image?.views]);
 
+  const resolve = useResolve();
   return (
     <MikroImage.ModelPage
       title={data?.image?.name}
@@ -91,6 +87,18 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
           map={{
             Comments: <MikroImage.Komments object={data?.image?.id} />,
             Provenance: <ProvenanceSidebar items={data?.image.history} />,
+            Downloads: (
+              <div className="p-3">
+                {data.image.renders.map((render, index) => (
+                  <Card className="p-2 truncate">
+                    <a href={resolve(render.store.presignedUrl)} download>
+                      <Download size={24} />
+                      {render.__typename}
+                    </a>
+                  </Card>
+                ))}
+              </div>
+            ),
           }}
         />
       }
@@ -102,12 +110,16 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
             {data?.image?.rgbContexts?.map((context, index) => (
               <div className={"h-full w-full mt-0 rounded rounded-md relative"}>
                 <div className="w-full h-full items-center flex justify-center flex-col">
-                  <RGBD context={context} rois={[]} modelMatrix={modelMatrix} />
+                  <RGBD
+                    context={context}
+                    rois={data.image.rois}
+                    modelMatrix={modelMatrix}
+                  />
                 </div>
               </div>
             ))}
           </div>
-          <DetailPane className="col-span-2 @container bg-black max-h-[80%] bg-clip-padding backdrop-filter backdrop-blur-2xl bg-opacity-10 z-100 overflow-hidden">
+          <DetailPane className="col-span-3 @container p-2 bg-black bg-clip-padding backdrop-filter backdrop-blur-2xl bg-opacity-10 z-100 overflow-hidden">
             <DetailPaneHeader>
               <DetailPaneTitle
                 actions={
@@ -124,12 +136,17 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                       }}
                       pinned={data?.image?.pinned || false}
                     />
-                    <FormSheet trigger={<HobbyKnifeIcon />}>
-                      {data?.image && <UpdateImageForm image={data?.image} />}
-                    </FormSheet>
                   </>
                 }
+                className="group "
               >
+                <FormSheet
+                  trigger={
+                    <HobbyKnifeIcon className="w-full group-hover:block hidden" />
+                  }
+                >
+                  {data?.image && <UpdateImageForm image={data?.image} />}
+                </FormSheet>
                 {data?.image?.name}
               </DetailPaneTitle>
             </DetailPaneHeader>
@@ -138,14 +155,14 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
               {data?.image?.dataset && (
                 <>
                   <div className="font-light">In Dataset</div>
-                  <div className="flex flex-row mb-2">
+                  <Card className="flex flex-row mb-2 px-2 py-1">
                     <MikroDataset.DetailLink
-                      className="text-xl cursor-pointer p-1 border rounded mr-2 border-gray-300"
+                      className="text-xl cursor-pointer"
                       object={data?.image?.dataset?.id}
                     >
                       {data?.image?.dataset.name}
                     </MikroDataset.DetailLink>
-                  </div>
+                  </Card>
                 </>
               )}
 
@@ -225,20 +242,14 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                     </Card>
                   )}
                 </ResponsiveContainerGrid>
+
+                <ListRender
+                  title="File origins"
+                  array={data?.image?.fileOrigins}
+                >
+                  {(file, index) => <FileCard file={file} key={index} />}
+                </ListRender>
               </ScrollArea>
-              <ListRender title="Metrics" array={data?.image?.metrics}>
-                {(metric, index) => (
-                  <ImageMetricCard metric={metric} key={index} />
-                )}
-              </ListRender>
-
-              <ListRender title="Rois" array={data?.image?.rois}>
-                {(roi, index) => <RoiCard item={roi} key={index} />}
-              </ListRender>
-
-              <ListRender title="File origins" array={data?.image?.fileOrigins}>
-                {(file, index) => <FileCard file={file} key={index} />}
-              </ListRender>
             </DetailPaneContent>
           </DetailPane>
         </div>

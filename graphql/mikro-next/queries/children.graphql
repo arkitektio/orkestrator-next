@@ -1,0 +1,9 @@
+
+
+query Children($id: ID!) {
+  children(parent: $id) {
+    ...ListFile
+    ...ListImage
+    ...ListDataset
+  }
+}

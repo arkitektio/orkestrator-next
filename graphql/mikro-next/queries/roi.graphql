@@ -1,0 +1,11 @@
+query GetROI($id: ID!) {
+  roi(id: $id) {
+    ...ROI
+  }
+}
+
+query GetROIs($filters: ROIFilter, $pagination: OffsetPaginationInput) {
+  rois(filters: $filters, pagination: $pagination) {
+    ...ListROI
+  }
+}

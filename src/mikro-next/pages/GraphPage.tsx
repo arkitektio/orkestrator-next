@@ -1,10 +1,14 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { FormSheet } from "@/components/dialog/FormDialog";
+import { Button } from "@/components/ui/button";
+import { FormDialogAction } from "@/components/ui/form-dialog-action";
 import { MikroGraph, MikroLinkedExpression } from "@/linkers";
+import { HobbyKnifeIcon } from "@radix-ui/react-icons";
+import { PlusIcon } from "lucide-react";
 import { useGetGraphQuery } from "../api/graphql";
 import LinkedExpressionCard from "../components/cards/LinkedExpressionCard";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
-import { PlusIcon } from "lucide-react";
 import LinkExpressionForm from "../forms/LinkExpressionForm";
+import { UpdateGraphForm } from "../forms/UpdateGraphForm";
 
 export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
   return (
@@ -12,7 +16,12 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
       object={data.graph.id}
       title={data.graph.name}
       pageActions={
-        <>
+        <div className="flex flex-row gap-2">
+          <MikroGraph.DetailLink object={data.graph.id} subroute="entities">
+            <Button variant={"outline"} size={"sm"}>
+              All Entities
+            </Button>
+          </MikroGraph.DetailLink>
           <FormDialogAction
             variant={"outline"}
             size={"sm"}
@@ -31,8 +40,12 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
           >
             <LinkExpressionForm graph={data.graph.id} />
           </FormDialogAction>
-        </>
+          <FormSheet trigger={<HobbyKnifeIcon />}>
+            {data?.graph && <UpdateGraphForm graph={data?.graph} />}
+          </FormSheet>
+        </div>
       }
+      sidebars={<MikroGraph.Komments object={data.graph.id} />}
     >
       <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
         <div>

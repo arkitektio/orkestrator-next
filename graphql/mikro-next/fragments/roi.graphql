@@ -13,3 +13,28 @@ fragment ListROI on ROI {
   }
   vectors
 }
+
+
+fragment ROI on ROI {
+  id
+  entity {
+    id
+    name
+    linkedExpression {
+      label
+    }
+  }
+  pinned
+  image {
+    id
+    ...RGBImage
+  }
+  createdAt
+  creator {
+    sub
+  }
+  history {
+    ...History
+  }
+  vectors
+}

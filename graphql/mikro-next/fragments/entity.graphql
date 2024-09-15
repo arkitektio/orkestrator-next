@@ -20,16 +20,7 @@ fragment Entity on Entity {
     }
   }
   rois {
-    id
-    name
-    kind
-    image {
-      name
-      id
-      store {
-        id
-      }
-    }
+    ...ROI
   }
   relations {
     id

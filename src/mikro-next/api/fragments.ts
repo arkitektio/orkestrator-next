@@ -6,6 +6,11 @@
       }
       const result: PossibleTypesResultData = {
   "possibleTypes": {
+    "DatasetImageFile": [
+      "Dataset",
+      "File",
+      "Image"
+    ],
     "Plot": [
       "RenderedPlot"
     ],

@@ -39,14 +39,16 @@ import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
 import { Form } from "@/components/ui/form";
 import { MikroEntity } from "@/linkers";
 import {
-  EntityFragment,
+  ChildrenQuery,
   ListEntitiesQueryVariables,
-  useListEntitiesQuery,
+  useChildrenQuery,
   useSearchLinkedExpressionLazyQuery,
 } from "@/mikro-next/api/graphql";
 import { useForm } from "react-hook-form";
 
-export const columns: ColumnDef<EntityFragment>[] = [
+export type Item = ChildrenQuery["children"][0];
+
+export const columns: ColumnDef<Item>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -72,25 +74,7 @@ export const columns: ColumnDef<EntityFragment>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "id",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          ID
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => (
-      <MikroEntity.DetailLink object={row.getValue("id")} className="lowercase">
-        {row.getValue("id")}
-      </MikroEntity.DetailLink>
-    ),
-  },
-  {
+    id: "name",
     accessorKey: "name",
     header: ({ column }) => {
       return (
@@ -98,36 +82,19 @@ export const columns: ColumnDef<EntityFragment>[] = [
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          ID
+          Name
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
     cell: ({ row }) => (
-      <MikroEntity.DetailLink object={row.getValue("id")} className="lowercase">
+      <MikroEntity.DetailLink
+        object={row.getValue("name")}
+        className="lowercase"
+      >
         {row.getValue("name")}
       </MikroEntity.DetailLink>
     ),
-  },
-  {
-    id: "Label",
-    accessorKey: "linkedExpression.label",
-    header: () => <div className="text-center">Type</div>,
-    cell: ({ row, getValue }) => {
-      const label = row.getValue("Label");
-
-      return <div className="text-center font-medium">{label}</div>;
-    },
-  },
-  {
-    id: "Ontology",
-    accessorKey: "linkedExpression.expression.label",
-    header: () => <div className="text-center">Ontology</div>,
-    cell: ({ row, getValue }) => {
-      const label = row.getValue("Ontology") as string;
-
-      return <div className="text-center font-medium">{label || ""}</div>;
-    },
   },
   {
     id: "actions",
@@ -167,25 +134,9 @@ const initialVariables: ListEntitiesQueryVariables = {
   },
 };
 
-const calculateColumns = (variables: ListEntitiesQueryVariables) => {
+const calculateColumns = () => {
   let calculated_columns = columns;
-  let other_columns =
-    variables.metrics?.map((metric) => {
-      return {
-        id: "metric-" + metric,
-        accessorKey: `metricMap.${metric}`,
-        header: () => <div className="text-center">{metric}</div>,
-        cell: ({ row, getValue }) => {
-          const label = row.getValue("metric-" + metric);
 
-          return <div className="text-center font-medium">{label}</div>;
-        },
-      } as ColumnDef<EntityFragment>;
-    }) || [];
-
-  console.log(other_columns);
-
-  calculated_columns = calculated_columns.concat(other_columns);
   return calculated_columns;
 };
 
@@ -195,10 +146,7 @@ export type FormValues = {
   search?: string | null;
 };
 
-export const EntitiesTable = (props: {
-  graph?: string;
-  linkedExpression?: string;
-}) => {
+export const DatasetTable = (props: { dataset: string }) => {
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize: 20,
@@ -211,21 +159,24 @@ export const EntitiesTable = (props: {
   });
   const { metrics, kinds, search } = form.watch();
 
-  const { data, loading, refetch, error } = useListEntitiesQuery({
+  const { data, loading, refetch, error } = useChildrenQuery({
     variables: {
-      filters: {
-        graph: props.graph,
-        linkedExpression: props.linkedExpression,
-      },
-      pagination: {
-        limit: pagination.pageSize,
-        offset: pagination.pageIndex * pagination.pageSize,
-      },
+      id: props.dataset,
     },
   });
 
-  const [columns, setColumns] = React.useState<ColumnDef<EntityFragment>[]>(
-    () => calculateColumns(initialVariables),
+  React.useEffect(() => {
+    const variables = {
+      id: props.dataset,
+    };
+    refetch(variables);
+
+    console.log(variables);
+    setColumns(calculateColumns());
+  }, [metrics, kinds, search, refetch]);
+
+  const [columns, setColumns] = React.useState<ColumnDef<Item>[]>(() =>
+    calculateColumns(),
   );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -237,7 +188,7 @@ export const EntitiesTable = (props: {
   const [rowSelection, setRowSelection] = React.useState({});
 
   const table = useReactTable({
-    data: data?.entities ?? [],
+    data: data?.children ?? [],
     columns,
     pageCount: -1,
     manualPagination: true,
@@ -262,13 +213,6 @@ export const EntitiesTable = (props: {
     <div className="w-full h-full">
       <div className="flex items-center py-4 gap-2">
         <Form {...form}>
-          {!props.linkedExpression && (
-            <GraphQLSearchField
-              placeholder="Filter Kind"
-              searchQuery={searchM}
-              name="kinds"
-            />
-          )}
           <GraphQLSearchField
             placeholder="Add Metric"
             searchQuery={searchM}

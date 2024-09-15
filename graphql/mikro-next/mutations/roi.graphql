@@ -1,0 +1,5 @@
+mutation PinROI($id: ID!, $pin: Boolean!) {
+  pinRoi(input: { id: $id, pin: $pin }) {
+    ...ROI
+  }
+}

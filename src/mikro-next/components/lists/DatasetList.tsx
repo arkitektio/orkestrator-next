@@ -21,8 +21,8 @@ const List = ({ filters, pagination }: Props) => {
     <ListRender
       array={data?.datasets}
       title={
-        <MikroDataset.ListLink className="flex-0">
-          Datasets
+        <MikroDataset.ListLink className="flex-0 ">
+          Recently used Datasets
         </MikroDataset.ListLink>
       }
       refetch={refetch}

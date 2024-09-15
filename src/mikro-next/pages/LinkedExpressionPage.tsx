@@ -84,7 +84,7 @@ export default asDetailQueryRoute(
               {data.linkedExpression.expression.label}
             </h1>
             <p className="mt-3 text-xl text-muted-foreground">
-              {data.linkedExpression.graph.name}
+              {data.linkedExpression.expression.description}
             </p>
             <p className="mt-3 text-xs text-muted-foreground">
               {data.linkedExpression.expression.ontology.name}

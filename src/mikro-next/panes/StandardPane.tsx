@@ -48,27 +48,6 @@ export const NavigationPane = (props: {}) => {
             <Home className="h-4 w-4" />
             Dashboard
           </DroppableNavLink>
-          <DroppableNavLink
-            to="/mikro/ontologies"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <GitBranchPlusIcon className="h-4 w-4" />
-            Ontologies
-          </DroppableNavLink>
-          <DroppableNavLink
-            to="/mikro/graphs"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <GitBranchPlusIcon className="h-4 w-4" />
-            Graphs
-          </DroppableNavLink>
-          <DroppableNavLink
-            to="/mikro/protocolsteps"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <GitBranchPlusIcon className="h-4 w-4" />
-            Protocol Steps
-          </DroppableNavLink>
         </div>
 
         <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
@@ -110,13 +89,6 @@ export const NavigationPane = (props: {}) => {
             <File className="h-4 w-4" />
             Files
           </DroppableNavLink>
-          <DroppableNavLink
-            to="/mikro/experiments"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <Wallet className="h-4 w-4" />
-            Experiments
-          </DroppableNavLink>
         </div>
         <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
           Insights
@@ -124,23 +96,30 @@ export const NavigationPane = (props: {}) => {
 
         <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
           <DroppableNavLink
+            to="/mikro/ontologies"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <GitBranchPlusIcon className="h-4 w-4" />
+            Ontologies
+          </DroppableNavLink>
+          <DroppableNavLink
+            to="/mikro/graphs"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <SparkleIcon className="h-4 w-4" />
+            Graphs
+          </DroppableNavLink>
+          <DroppableNavLink
             to="/mikro/renderedplots"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <FaChartArea className="h-4 w-4" />
             Plots
           </DroppableNavLink>
-          <DroppableNavLink
-            to="/mikro/entities"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <SparkleIcon className="h-4 w-4" />
-            Entities
-          </DroppableNavLink>
         </div>
 
         <div className="text-muted-foreground text-xs font-semibold uppercase mb-4 mt-4">
-          Protocols
+          Experiments
         </div>
         <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
           <DroppableNavLink
@@ -149,6 +128,22 @@ export const NavigationPane = (props: {}) => {
           >
             <Folder className="h-4 w-4" />
             Protocols
+          </DroppableNavLink>
+
+          <DroppableNavLink
+            to="/mikro/experiments"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <Wallet className="h-4 w-4" />
+            Experiments
+          </DroppableNavLink>
+
+          <DroppableNavLink
+            to="/mikro/protocolsteps"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <GitBranchPlusIcon className="h-4 w-4" />
+            Steps
           </DroppableNavLink>
           <DroppableNavLink
             to="/mikro/reagents"

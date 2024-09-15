@@ -3,6 +3,8 @@ import { SliderField } from "@/components/fields/SliderField";
 import { SwitchField } from "@/components/fields/SwitchField";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Text, useCursor } from "@react-three/drei";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,22 +12,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Form } from "@/components/ui/form";
-import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import { cn } from "@/lib/utils";
+import { MikroROI } from "@/linkers";
 import {
   ColorMap,
   ListRgbContextFragment,
   ListRoiFragment,
-  useCreateRgbContextMutation,
-  useUpdateRgbContextMutation,
 } from "@/mikro-next/api/graphql";
 import { OrbitControls, OrthographicCamera } from "@react-three/drei";
 import { Canvas, ThreeElements, useFrame } from "@react-three/fiber";
 import { Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import * as THREE from "three";
-import { additiveBlending, bitmapToBlob, viewHasher } from "./TwoDRGBRender";
+import { additiveBlending, viewHasher } from "./TwoDRGBRender";
 import { useViewRenderFunction } from "./hooks/useViewRender";
 
 export interface RGBDProps {
@@ -148,17 +148,81 @@ interface ROIPolygonProps {
   vertices: [number, number][];
 }
 
-const ROIPolygon: React.FC<ROIPolygonProps> = ({ vertices }) => {
+const ROIPolygon = (props: {
+  roi: ListRoiFragment;
+  width: number;
+  height: number;
+}) => {
+  const { roi, width, height } = props;
+
+  // Convert your ROI vectors to Three.js coordinates
+  const vertices = convertToThreeJSCoords(roi.vectors, width, height);
+
+  // Create the shape from the vertices
   const shape = new THREE.Shape();
   shape.moveTo(vertices[0][0], vertices[0][1]);
   vertices.slice(1).forEach(([x, y]) => shape.lineTo(x, y));
   shape.lineTo(vertices[0][0], vertices[0][1]); // Close the shape
 
+  const navigate = useNavigate();
+  const [hovered, setHovered] = useState(false);
+
+  const onClick = (e) => {
+    navigate(MikroROI.linkBuilder(roi.id));
+    e.stopPropagation();
+  };
+
+  useCursor(hovered, "pointer");
+
+  // Calculate the bounding box to find the top center position
+  const boundingBox = new THREE.Box2().setFromPoints(shape.getPoints());
+  const offset = 0.001; // Adjust as needed to position text above the shape
+  const topCenter = new THREE.Vector3(
+    (boundingBox.min.x + boundingBox.max.x) / 2,
+    boundingBox.max.y + offset,
+    0.1, // Slightly in front to prevent z-fighting
+  );
+
   return (
-    <line>
-      <shapeGeometry args={[shape]} />
-      <lineBasicMaterial color="red" linewidth={3} />
-    </line>
+    <>
+      <mesh
+        onClick={onClick}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          setHovered(true);
+        }}
+        onPointerOut={(e) => {
+          e.stopPropagation();
+          setHovered(false);
+        }}
+      >
+        <shapeGeometry args={[shape]} />
+        <meshBasicMaterial
+          color={"white"}
+          side={THREE.DoubleSide}
+          transparent={true}
+          opacity={hovered ? 0.5 : 0.2}
+          depthWrite={false}
+        />
+      </mesh>
+      <line>
+        <shapeGeometry args={[shape]} />
+        <lineBasicMaterial color="black" linewidth={1} />
+      </line>
+      {hovered && (
+        <>
+          <Text
+            position={[topCenter.x, topCenter.y, topCenter.z]}
+            fontSize={0.03} // Scaled-down text size
+            color="white"
+            anchorX="center"
+            anchorY="bottom"
+          >
+            {roi.entity?.linkedExpression.label}
+          </Text>
+        </>
+      )}
+    </>
   );
 };
 
@@ -175,11 +239,9 @@ const ImageBitmapTextureMesh = ({ context, rois }: RGBDProps) => {
         <planeGeometry args={[2, 2]} />
         <meshStandardMaterial map={texture} />
       </mesh>
-      {rois
-        .map((x) => convertToThreeJSCoords(x.vectors, width, height))
-        .map((verts) => (
-          <ROIPolygon vertices={verts} />
-        ))}
+      {rois.map((roi) => (
+        <ROIPolygon roi={roi} width={width} height={height} />
+      ))}
     </group>
   );
 };
@@ -225,6 +287,18 @@ export const RGBD = (props: RGBDProps) => {
       </Canvas>
     </div>
   );
+};
+
+export const ImageRGBD = (props: { image: RgbImageFragment }) => {
+  const context = props.image.rgbContexts.at(0);
+
+  return <>{context && <RGBD context={context} rois={props.image.rois} />}</>;
+};
+
+export const RoiRGBD = (props: { roi: RoiFragment }) => {
+  const context = props.roi.image.rgbContexts.at(0);
+
+  return <>{context && <RGBD context={context} rois={[props.roi]} />}</>;
 };
 
 export const TwoDRGBThreeRenderDetail = ({

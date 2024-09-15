@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { cn, withRef } from "@udecode/cn";
 import { PlateElement } from "@udecode/plate-common";
 import { getMentionOnSelectItem } from "@udecode/plate-mention";
 
+import { useSearchReagentsLazyQuery } from "@/mikro-next/api/graphql";
+import { Option } from "../fields/SearchField";
 import {
   InlineCombobox,
   InlineComboboxContent,
@@ -11,17 +13,8 @@ import {
   InlineComboboxInput,
   InlineComboboxItem,
 } from "./inline-combobox";
-import { Option } from "../fields/SearchField";
-import { useSearchReagentsLazyQuery } from "@/mikro-next/api/graphql";
 
 const onSelectItem = getMentionOnSelectItem();
-
-const MENTIONABLES = [
-  { key: "1", text: "PFA 4% (active)" },
-  { key: "2", text: "PFA 6% (active)" },
-  { key: "3", text: "PFA 2% (active)" },
-  { key: "4", text: "Alexa 466" },
-];
 
 export const MentionInputElement = withRef<typeof PlateElement>(
   ({ className, ...props }, ref) => {
@@ -79,8 +72,11 @@ export const MentionInputElement = withRef<typeof PlateElement>(
             {options.map((item) => (
               <InlineComboboxItem
                 key={item?.value}
-                onClick={() => onSelectItem(editor, item?.value, search)}
+                onClick={() =>
+                  onSelectItem(editor, { text: item?.value || "karl" }, search)
+                }
                 value={item?.label || ""}
+                className="hover:bg-primary bg-slate-200"
               >
                 {item?.label}
               </InlineComboboxItem>

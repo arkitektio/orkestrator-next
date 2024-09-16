@@ -3,11 +3,13 @@ import { useCallback } from "react";
 import {
   AssignInput,
   AssignationEventKind,
+  DetailNodeFragment,
   PostmanAssignationFragment,
   ReserveMutationVariables,
   useAssignMutation,
   useAssignationsQuery,
   useCancelMutation,
+  useDetailNodeQuery,
 } from "../api/graphql";
 
 export type ActionReserveVariables = Omit<
@@ -24,6 +26,7 @@ export type useActionReturn<T> = {
   cancel: () => void;
   assignations?: PostmanAssignationFragment[];
   latestAssignation?: PostmanAssignationFragment;
+  node: DetailNodeFragment | undefined;
 };
 
 export type useActionOptions<T> = {
@@ -34,6 +37,12 @@ export const useNodeAction = <T extends any>(
   options: useActionOptions<T>,
 ): useActionReturn<T> => {
   const { settings } = useSettings();
+
+  const { data, variables, refetch } = useDetailNodeQuery({
+    variables: {
+      id: options.id,
+    },
+  });
 
   const { data: assignations_data } = useAssignationsQuery({
     variables: {
@@ -122,5 +131,6 @@ export const useNodeAction = <T extends any>(
     latestAssignation,
     cancel,
     assignations,
+    node: data?.node,
   };
 };

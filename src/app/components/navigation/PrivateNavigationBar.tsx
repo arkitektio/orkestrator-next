@@ -99,7 +99,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
   return (
     <NavigationMenu
       className="mx-auto px-1 max-w-[40px] mt-3 flex flex-grow sm:flex-col flex-row gap-8  items-center justify-start h-full py-3"
-      orientation="vertical"
+      orientation="horizontal"
     >
       <IconContext.Provider
         value={{
@@ -107,7 +107,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
           style: { stroke: "0.3px" },
         }}
       >
-        <div className="flex-grow  flex-col flex gap-8 ">
+        <div className="flex-grow  flex-row md:flex-col  flex gap-8 ">
           <div className="flex-grow"></div>
           {linkChildren}
           <div className="flex-grow"></div>
@@ -115,7 +115,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
 
         <Button
           variant="ghost"
-          className="text-foreground"
+          className="md:block text-foreground hidden"
           onClick={() => setDebug(!debug)}
         >
           {debug ? <Bug /> : <TbBugOff />}

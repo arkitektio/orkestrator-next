@@ -103,12 +103,14 @@ export const portToZod = (port: LabellablePort): any => {
       }
       baseType = z.discriminatedUnion(
         "__use",
-        variants.map((v, index) =>
-          z.object({
-            __value: portToZod(v),
-            __use: z.literal(index.toString()),
-          }),
-        ),
+        port.children
+          ?.filter((v) => v != undefined)
+          .map((v, index) =>
+            z.object({
+              __value: portToZod(v),
+              __use: z.literal(index.toString()),
+            }),
+          ) || [],
       );
       break;
     case PortKind.Bool:

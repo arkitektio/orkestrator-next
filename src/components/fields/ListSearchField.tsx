@@ -34,8 +34,8 @@ export type Option = {
 
 export const ListButtonLabel = (props: {
   search: SearchFunction;
-  value: string[] | undefined;
-  setValue: (value: string[]) => void;
+  value: { __value: string }[] | undefined;
+  setValue: (value: { __value: string }[]) => void;
   placeholder?: string;
 }) => {
   const [options, setOptions] = useState<Option[]>([]);
@@ -51,7 +51,7 @@ export const ListButtonLabel = (props: {
       return;
     }
     props
-      .search({ values: props.value })
+      .search({ values: props.value.map((v) => v.__value) })
       .then((res) => {
         setOptions(res.filter(notEmpty));
       })
@@ -61,7 +61,7 @@ export const ListButtonLabel = (props: {
   }, [props.value, props.search]);
 
   const remove = (value: string) => {
-    props.setValue(props.value?.filter((v) => v !== value) || []);
+    props.setValue(props.value?.filter((v) => v.__value !== value) || []);
   };
 
   return (
@@ -140,7 +140,7 @@ export const ListSearchField = ({
           <Popover>
             <FormItem className="flex flex-col">
               {label && <FormLabel>{label ? label : name}</FormLabel>}
-
+              {error}
               <PopoverTrigger asChild>
                 <FormControl>
                   <Button
@@ -191,22 +191,27 @@ export const ListSearchField = ({
                           onSelect={() => {
                             console.log(option.value);
                             if (field.value == undefined) {
-                              field.onChange([option.value]);
+                              field.onChange([{ __value: option.value }]);
                             } else {
-                              if (field.value.includes(option.value)) {
+                              if (
+                                field.value.find(
+                                  (v) => v.__value == option.value,
+                                )
+                              ) {
                                 form.setValue(
                                   name,
                                   field.value.filter(
-                                    (v: string) => v !== option.value,
+                                    (v) => v.__value !== option.value,
                                   ),
                                   { shouldValidate: true },
                                 );
                               } else {
                                 form.setValue(
                                   name,
-                                  [...field.value, option.value].filter(
-                                    notEmpty,
-                                  ),
+                                  [
+                                    ...field.value,
+                                    { __value: option.value },
+                                  ].filter(notEmpty),
                                   { shouldValidate: true },
                                 );
                               }

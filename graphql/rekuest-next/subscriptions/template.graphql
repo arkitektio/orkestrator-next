@@ -3,3 +3,16 @@ subscription WatchTemplate($template: ID!) {
     ...DetailTemplate
   }
 }
+
+
+subscription WatchTemplates($agent: ID!) {
+  templates(agent: $agent) {
+    create {
+      ...ListTemplate
+    }
+    update {
+      ...ListTemplate
+    }
+    delete 
+  }
+}

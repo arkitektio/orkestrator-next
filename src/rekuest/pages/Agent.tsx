@@ -3,12 +3,17 @@ import { ListRender } from "@/components/layout/ListRender";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { RekuestAgent } from "@/linkers";
-import { ListTemplateFragment, useAgentQuery } from "@/rekuest/api/graphql";
+import {
+  ListTemplateFragment,
+  useAgentQuery,
+  WatchTemplatesDocument,
+  WatchTemplatesSubscription,
+} from "@/rekuest/api/graphql";
 import { ArrowRightIcon } from "@radix-ui/react-icons";
 import { BellIcon } from "lucide-react";
+import { useEffect } from "react";
 import { TemplateActionButton } from "../buttons/TemplateActionButton";
 import TemplateCard from "../components/cards/TemplateCard";
-import { RenderPlugins } from "../remote/Plugin";
 import { StateDisplay } from "../components/State";
 
 export const sizer = (length: number, index: number): string => {
@@ -71,37 +76,82 @@ const TemplateBentoCard = ({
   </div>
 );
 
-export default asDetailQueryRoute(useAgentQuery, ({ data, refetch }) => {
-  const stateAction = data.agent.defaults.find(
-    (x) => x.interface == "__state__",
-  );
+export default asDetailQueryRoute(
+  useAgentQuery,
+  ({ data, refetch, subscribeToMore }) => {
+    const stateAction = data.agent.defaults.find(
+      (x) => x.interface == "__state__",
+    );
 
-  return (
-    <RekuestAgent.ModelPage title={data.agent.name} object={data.agent.id}>
-      <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-        {data?.agent.name}
-      </h1>
+    useEffect(() => {
+      return subscribeToMore<
+        WatchTemplatesSubscription,
+        WatchTemplatesSubscription
+      >({
+        document: WatchTemplatesDocument,
+        updateQuery: (prev, { subscriptionData }) => {
+          if (!subscriptionData.data) return prev;
+          const create = subscriptionData.data.templates.create;
+          const update = subscriptionData.data.templates.update;
+          const remove = subscriptionData.data.templates.delete;
+          if (create) {
+            return {
+              agent: {
+                ...prev.agent,
+                templates: [...prev.agent.defaults, create],
+              },
+            };
+          }
+          if (update) {
+            return {
+              agent: {
+                ...prev.agent,
+                templates: prev.agent.defaults.map((x) =>
+                  x.id == update.id ? update : x,
+                ),
+              },
+            };
+          }
+          if (remove) {
+            return {
+              agent: {
+                ...prev.agent,
+                templates: prev.agent.defaults.filter((x) => x.id != remove),
+              },
+            };
+          }
+          return prev;
+        },
+      });
+    }, [subscribeToMore, data.agent.id]);
 
-      <p className="mt-3 text-xl text-muted-foreground">
-        Is running as {data?.agent?.instanceId}
-      </p>
-      <p className="mt-3 text-xl text-muted-foreground">
-        {data?.agent?.extensions.map((ext) => ext).join(", ")}
-      </p>
+    return (
+      <RekuestAgent.ModelPage title={data.agent.name} object={data.agent.id}>
+        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+          {data?.agent.name}
+        </h1>
 
-      {data.agent.states.map((state) => (
-        <>
-          {state.stateSchema.hash}
-          <StateDisplay state={state} label={true} />
-        </>
-      ))}
+        <p className="mt-3 text-xl text-muted-foreground">
+          Is running as {data?.agent?.instanceId}
+        </p>
+        <p className="mt-3 text-xl text-muted-foreground">
+          {data?.agent?.extensions.map((ext) => ext).join(", ")}
+        </p>
 
-      <ListRender array={data.agent.defaults} title="Registered Functions">
-        {(item) => <TemplateCard item={item} />}
-      </ListRender>
-      <ListRender array={data.agent.workflows} title="Registered Workflows">
-        {(item) => <TemplateCard item={item} />}
-      </ListRender>
-    </RekuestAgent.ModelPage>
-  );
-});
+        {data.agent.states.map((state) => (
+          <>
+            {state.stateSchema.hash}
+            <StateDisplay state={state} label={true} />
+          </>
+        ))}
+
+        <ListRender array={data.agent.defaults} title="Registered Functions">
+          {(item) => <TemplateCard item={item} />}
+        </ListRender>
+        <ListRender array={data.agent.workflows} title="Registered Workflows">
+          {(item) => <TemplateCard item={item} />}
+        </ListRender>
+      </RekuestAgent.ModelPage>
+    );
+  },
+);

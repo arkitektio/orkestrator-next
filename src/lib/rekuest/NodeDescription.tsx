@@ -35,6 +35,8 @@ export const NodeDescription = (props: {
         replaceUndefinedValuesWithKeyName({ ...props.variables }),
       );
       setText(newText);
+    } else {
+      setText(replaceVariablesWithNames(props.description));
     }
   }, [props.description, props.variables]);
 
@@ -56,6 +58,8 @@ export const useNodeDescription = (props: {
         replaceUndefinedValuesWithKeyName({ ...props.variables }),
       );
       setText(newText);
+    } else {
+      setText(replaceVariablesWithNames(props.description));
     }
   }, [props.description, props.variables]);
 

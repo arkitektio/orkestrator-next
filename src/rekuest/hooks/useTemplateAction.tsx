@@ -38,9 +38,9 @@ export const useTemplateAction = <T extends any>(
 ): UseTemplateActionReturn<T> => {
   const { settings } = useSettings();
 
-  const { data } = useTemplateQuery({
+  const { data, variables, refetch } = useTemplateQuery({
     variables: {
-      ...options,
+      id: options.id,
     },
   });
 
@@ -67,7 +67,7 @@ export const useTemplateAction = <T extends any>(
         variables: {
           input: {
             ...vars,
-            template: data?.template.id,
+            template: options.id,
             args: vars.args,
             instanceId: settings.instanceId,
             hooks: [],
@@ -86,7 +86,7 @@ export const useTemplateAction = <T extends any>(
 
       return assignation;
     },
-    [postAssign, settings],
+    [postAssign, settings.instanceId, options.id],
   );
 
   const reassign = useCallback(() => {

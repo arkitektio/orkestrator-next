@@ -1,11 +1,10 @@
 import { useSettings } from "@/providers/settings/SettingsContext";
+import { useMemo } from "react";
 import {
   AssignationEventKind,
   PortKind,
   useAssignationsQuery,
 } from "../api/graphql";
-import { progress } from "framer-motion";
-import { useMemo } from "react";
 
 export const useAssignations = () => {
   const { settings } = useSettings();
@@ -32,6 +31,7 @@ export type FilterOptions = {
   object?: string;
   node?: string;
   template?: string;
+  assignation?: string;
   assignedTemplate?: string;
   allowDone?: boolean;
 };
@@ -44,6 +44,12 @@ export const useFilteredAssignations = (options?: FilterOptions) => {
       data?.assignations.filter((a) => {
         if (!options) {
           return true;
+        }
+
+        if (options.assignation) {
+          if (a.id != options.assignation) {
+            return false;
+          }
         }
 
         if (a.status == AssignationEventKind.Done && !options.allowDone) {
@@ -97,6 +103,7 @@ export const useFilteredAssignations = (options?: FilterOptions) => {
       options?.assignedTemplate,
       options?.identifier,
       options?.object,
+      options?.assignation,
     ],
   );
 

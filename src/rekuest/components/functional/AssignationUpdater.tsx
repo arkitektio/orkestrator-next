@@ -1,13 +1,13 @@
-import { useService } from "@/arkitekt/hooks";
+import { useRekuest } from "@/arkitekt/Arkitekt";
+import { Alert } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
 import { useSettings } from "@/providers/settings/SettingsContext";
-import {
-  useAssignations,
-  useLiveAssignation,
-} from "@/rekuest/hooks/useAssignations";
-import { useEffect, useMemo } from "react";
+import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
+import { ReturnsContainer } from "@/rekuest/widgets/tailwind";
+import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import {
-  AssignationEventKind,
   AssignationsDocument,
   AssignationsQuery,
   useDetailNodeQuery,
@@ -15,12 +15,6 @@ import {
   WatchAssignationsDocument,
   WatchAssignationsSubscription,
 } from "../../api/graphql";
-import { useRekuest } from "@/arkitekt/Arkitekt";
-import { useToast } from "@/components/ui/use-toast";
-import { progress } from "framer-motion";
-import { Alert } from "@/components/ui/alert";
-import { ReturnsContainer } from "@/rekuest/widgets/tailwind";
-import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 
 export const DynamicYieldDisplay = (props: {
   values: any[];
@@ -54,7 +48,8 @@ export const AssignationToaster = (props: { id: string }) => {
 
   return (
     <div className="truncate w-full h-full">
-      {ass.progress}
+      {ass.progress != undefined && <Progress value={ass.progress} />}
+      <p className="mt-2">{ass.message}</p>
       {ass.error && <Alert>{ass.error}</Alert>}
       {ass.yield && ass.nodeId && (
         <DynamicYieldDisplay values={ass.yield} nodeId={ass.nodeId} />

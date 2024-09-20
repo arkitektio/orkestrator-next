@@ -8,6 +8,7 @@ import {
 import { NodeDescription } from "@/lib/rekuest/NodeDescription";
 import { KabinetRelease } from "@/linkers";
 import {
+  ListTemplateFragment,
   useAssignMutation,
   usePrimaryNodesQuery,
   useTemplatesQuery,
@@ -18,15 +19,24 @@ import { MateFinder } from "../../../mates/types";
 import { ListReleaseFragment } from "../../api/graphql";
 import { useTemplateAction } from "@/rekuest/hooks/useTemplateAction";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Props {
   item: ListReleaseFragment;
   mates?: MateFinder[];
 }
 
-export const AssignButton = (props: { id: string; release: string }) => {
+export const AssignButton = (props: {
+  template: ListTemplateFragment;
+  release: string;
+}) => {
   const { assign, latestAssignation } = useTemplateAction({
-    id: props.id,
+    id: props.template.id,
   });
 
   const doassign = async () => {
@@ -40,9 +50,9 @@ export const AssignButton = (props: { id: string; release: string }) => {
   };
 
   return (
-    <Button onClick={doassign} variant={"outline"} size="sm">
-      Install
-    </Button>
+    <DropdownMenuItem onSelect={doassign}>
+      Install on {props.template.agent.name}
+    </DropdownMenuItem>
   );
 };
 
@@ -58,9 +68,18 @@ const InstallDialog = (props: { item: ListReleaseFragment }) => {
 
   return (
     <div className="flex flex-row gap-2">
-      {data?.templates.map((t) => (
-        <AssignButton id={t.id} release={props.item.id} />
-      ))}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm">
+            Install
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="right">
+          {data?.templates.map((t) => (
+            <AssignButton template={t} release={props.item.id} />
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };

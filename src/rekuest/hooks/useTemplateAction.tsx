@@ -11,6 +11,7 @@ import {
   useCancelMutation,
   useTemplateQuery,
 } from "../api/graphql";
+import { toast } from "sonner";
 
 export type ActionReserveVariables = Omit<
   ReserveMutationVariables,
@@ -63,17 +64,21 @@ export const useTemplateAction = <T extends any>(
     async (vars: ActionAssignVariables) => {
       console.log("Assigning", vars);
 
-      let mutation = await postAssign({
-        variables: {
-          input: {
-            ...vars,
-            template: options.id,
-            args: vars.args,
-            instanceId: settings.instanceId,
-            hooks: [],
+      try {
+        let mutation = await postAssign({
+          variables: {
+            input: {
+              ...vars,
+              template: options.id,
+              args: vars.args,
+              instanceId: settings.instanceId,
+              hooks: [],
+            },
           },
-        },
-      });
+        });
+      } catch (error) {
+        toast.error(`${error.message}`);
+      }
 
       console.log(mutation);
 

@@ -24,4 +24,7 @@ fragment Backend on Backend {
   pods {
     ...ListPod
   }
+  resources {
+    ...ListResource
+  }
 }

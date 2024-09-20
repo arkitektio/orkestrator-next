@@ -82,6 +82,8 @@ export default asDetailQueryRoute(
           <pre className="w-[500px] text-xs">
             {data?.pod.latestLogDump?.logs}
           </pre>
+
+          {data.pod.clientId}
         </DetailPane>
       </KabinetPod.ModelPage>
     );

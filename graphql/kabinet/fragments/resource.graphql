@@ -1,0 +1,23 @@
+fragment Resource on Resource {
+  id
+  name
+  qualifiers
+  backend {
+    id
+    name
+  }
+  pods {
+    id
+    podId
+  }
+}
+
+fragment ListResource on Resource {
+  id
+  name
+  qualifiers
+  backend {
+    id
+    name
+  }
+}

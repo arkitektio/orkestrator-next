@@ -11,18 +11,21 @@ fragment ListPod on Pod {
     name
   }
   deployment {
-    id 
+    id
     flavour {
       release {
         id
-        version 
+        version
         app {
           identifier
         }
       }
     }
-
-
+  }
+  clientId
+  resource {
+    id
+    name
   }
   status
 }
@@ -44,18 +47,21 @@ fragment Pod on Pod {
     logs
     createdAt
   }
+  clientId
+  resource {
+    id
+    name
+  }
   deployment {
-    id 
+    id
     flavour {
       release {
         id
-        version 
+        version
         app {
           identifier
         }
       }
     }
-
-
   }
 }

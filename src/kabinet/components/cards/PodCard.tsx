@@ -15,12 +15,7 @@ interface Props {
   mates?: MateFinder[];
 }
 
-
-
 const TheCard = ({ item, mates }: Props) => {
-
-
-
   return (
     <KabinetPod.Smart object={item?.id} mates={mates}>
       <Card className="group">
@@ -29,18 +24,18 @@ const TheCard = ({ item, mates }: Props) => {
             <CardTitle>
               <KabinetPod.DetailLink object={item?.id}>
                 {" "}
-                {item.deployment.flavour.release.app.identifier}{item.deployment.flavour.release.version}
-
+                {item.deployment.flavour.release.app.identifier}
+                {item.deployment.flavour.release.version}
               </KabinetPod.DetailLink>
             </CardTitle>
             <CardDescription>
-                {item.status} {item.backend.name}
+              {item.status} {item.backend.name}
+              {item.resource && <p>Running on {item.resource.name}</p>}
             </CardDescription>
           </div>
-          
         </CardHeader>
-        <CardContent  className="flex flex-row gap-2">
-          <ObjectButton object={item.id} identifier="@kabinet/pod"/>
+        <CardContent className="flex flex-row gap-2">
+          <ObjectButton object={item.id} identifier="@kabinet/pod" />
         </CardContent>
       </Card>
     </KabinetPod.Smart>

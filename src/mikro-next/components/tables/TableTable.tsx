@@ -174,13 +174,16 @@ export const TableTable = (props: { table: TableFragment }) => {
   React.useEffect(() => {
     const variables = {
       table: props.table.id,
-      ...initialVariables,
+      pagination: {
+        limit: pagination.pageSize,
+        offset: pagination.pageIndex * pagination.pageSize,
+      },
     };
     refetch(variables);
 
     console.log(variables);
     setColumns(calculateColumns(props.table));
-  }, [metrics, kinds, search, refetch]);
+  }, [pagination, kinds, search, refetch]);
 
   const [columns, setColumns] = React.useState<ColumnDef<Item>[]>(() =>
     calculateColumns(props.table),

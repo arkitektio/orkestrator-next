@@ -1,0 +1,5 @@
+
+
+query Rows($table: ID!, $filters: TableFilter, $pagination: TablePaginationInput) {
+  rows(table: $table, filters: $filters, pagination: $pagination) 
+}

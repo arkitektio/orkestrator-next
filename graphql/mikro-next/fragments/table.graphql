@@ -7,6 +7,10 @@ fragment Table on Table {
   store {
     ...ParquetStore
   }
+  columns {
+    name
+    type
+  }
 }
 
 fragment ListTable on Table {

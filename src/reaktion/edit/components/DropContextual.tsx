@@ -1,4 +1,4 @@
-import { useService } from "@/arkitekt/hooks";
+import { useRekuest } from "@/arkitekt/Arkitekt";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Card } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
@@ -40,7 +40,6 @@ import { useForm } from "react-hook-form";
 import { DropContextualParams, FlowNode } from "../../types";
 import { useEditRiver } from "../context";
 import { ContextualContainer } from "./ContextualContainer";
-import { useRekuest } from "@/arkitekt/Arkitekt";
 
 export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   const form = useForm({
@@ -188,7 +187,6 @@ const reactiveNodes = (
               },
             ],
             voids: [],
-            voids: ports,
             implementation: ReactiveImplementation.Select,
           },
         },

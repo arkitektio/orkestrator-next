@@ -1,9 +1,12 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
+import { useGetPodForAgentQuery } from "@/kabinet/api/graphql";
 import { cn } from "@/lib/utils";
-import { RekuestAgent } from "@/linkers";
+import { KabinetPod, RekuestAgent } from "@/linkers";
 import {
+  AgentFragment,
   ListTemplateFragment,
   useAgentQuery,
   WatchTemplatesDocument,
@@ -76,6 +79,28 @@ const TemplateBentoCard = ({
   </div>
 );
 
+export const ManagedByCard = (props: { agent: AgentFragment }) => {
+  const { data } = useGetPodForAgentQuery({
+    variables: {
+      clientId: props.agent.registry.app.clientId,
+      instanceId: props.agent.instanceId,
+    },
+  });
+
+  if (!data?.podForAgent) {
+    return <></>;
+  }
+
+  return (
+    <KabinetPod.DetailLink object={data?.podForAgent.id}>
+      <Button variant="outline" size="sm">
+        Running on {data?.podForAgent?.resource?.name} -{" "}
+        {data?.podForAgent?.backend?.name}
+      </Button>
+    </KabinetPod.DetailLink>
+  );
+};
+
 export default asDetailQueryRoute(
   useAgentQuery,
   ({ data, refetch, subscribeToMore }) => {
@@ -126,16 +151,24 @@ export default asDetailQueryRoute(
     }, [subscribeToMore, data.agent.id]);
 
     return (
-      <RekuestAgent.ModelPage title={data.agent.name} object={data.agent.id}>
+      <RekuestAgent.ModelPage
+        title={data.agent.name}
+        object={data.agent.id}
+        sidebars={
+          <MultiSidebar
+            map={{
+              Comments: <RekuestAgent.Komments object={data?.agent?.id} />,
+            }}
+          />
+        }
+        pageActions={<ManagedByCard agent={data.agent} />}
+      >
         <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
           {data?.agent.name}
         </h1>
 
         <p className="mt-3 text-xl text-muted-foreground">
           Is running as {data?.agent?.instanceId}
-        </p>
-        <p className="mt-3 text-xl text-muted-foreground">
-          {data?.agent?.extensions.map((ext) => ext).join(", ")}
         </p>
 
         {data.agent.states.map((state) => (

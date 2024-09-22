@@ -1,21 +1,30 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { withKabinet } from "@/arkitekt";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { DetailPane } from "@/components/ui/pane";
-import { KabinetPod } from "@/linkers";
-import { useGetPodQuery } from "../api/graphql";
-import { useTemplatesQuery } from "@/rekuest/api/graphql";
-import { KABINET_REFRESH_POD_HASH } from "@/constants";
-import { useTemplateAction } from "@/rekuest/hooks/useTemplateAction";
 import { Button } from "@/components/ui/button";
+import { DetailPane } from "@/components/ui/pane";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { KabinetPod } from "@/linkers";
+import { ListTemplateFragment, useTemplatesQuery } from "@/rekuest/api/graphql";
+import { useTemplateAction } from "@/rekuest/hooks/useTemplateAction";
+import {
+  DemandKind,
+  PodFragment,
+  PortKind,
+  useGetPodQuery,
+} from "../api/graphql";
 
 export const AssignButton = (props: {
-  id: string;
+  template: ListTemplateFragment;
   pod: string;
   refetch: () => void;
 }) => {
   const { assign } = useTemplateAction({
-    id: props.id,
+    id: props.template.id,
   });
 
   const doassign = async () => {
@@ -31,16 +40,36 @@ export const AssignButton = (props: {
 
   return (
     <Button onClick={doassign} variant={"outline"} size="sm">
-      Refresh
+      {props.template.node.name}
     </Button>
   );
 };
 
-const RefreshLogsButton = (props: { item: string; refetch: () => void }) => {
+const RefreshLogsButton = (props: {
+  pod: PodFragment;
+  refetch: () => void;
+}) => {
   const { data } = useTemplatesQuery({
     variables: {
       filters: {
-        nodeHash: KABINET_REFRESH_POD_HASH,
+        node: {
+          demands: [
+            {
+              kind: DemandKind.Args,
+              matches: [
+                {
+                  key: "pod",
+                  kind: PortKind.Structure,
+                  identifier: "@kabinet/pod",
+                },
+              ],
+            },
+          ],
+        },
+        agent: {
+          clientId: props.pod.backend.clientId,
+          instanceId: props.pod.backend.instanceId,
+        },
       },
     },
   });
@@ -48,7 +77,20 @@ const RefreshLogsButton = (props: { item: string; refetch: () => void }) => {
   return (
     <div className="flex flex-row gap-2">
       {data?.templates.map((t) => (
-        <AssignButton id={t.id} pod={props.item} refetch={props.refetch} />
+        <Tooltip>
+          <TooltipTrigger>
+            <AssignButton
+              template={t}
+              pod={props.pod.id}
+              refetch={props.refetch}
+            />
+          </TooltipTrigger>
+          <TooltipContent>
+            <div className="p-2 text-sm">
+              Refresh logs on {props.pod.backend.name}
+            </div>
+          </TooltipContent>
+        </Tooltip>
       ))}
     </div>
   );
@@ -59,7 +101,7 @@ export default asDetailQueryRoute(
   ({ data, refetch }) => {
     return (
       <KabinetPod.ModelPage
-        title={data?.pod?.id}
+        title={data.pod.backend.name}
         object={data?.pod?.id}
         sidebars={
           <MultiSidebar
@@ -68,9 +110,7 @@ export default asDetailQueryRoute(
             }}
           />
         }
-        pageActions={
-          <RefreshLogsButton item={data?.pod.id} refetch={refetch} />
-        }
+        pageActions={<RefreshLogsButton pod={data.pod} refetch={refetch} />}
       >
         <DetailPane>
           <div className="p-3">

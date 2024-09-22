@@ -1,5 +1,5 @@
 overwrite: true
-schema: "http://localhost/kabinet/graphql"
+schema: "http://jhnnsrs-lab/kabinet/graphql"
 documents: "graphql/kabinet/**/*.graphql"
 generates:
   src/kabinet/api/fragments.ts:

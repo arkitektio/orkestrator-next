@@ -47,7 +47,9 @@ export enum AssignWidgetKind {
 export type Backend = {
   __typename?: 'Backend';
   client: Client;
+  clientId: Scalars['String']['output'];
   id: Scalars['ID']['output'];
+  instanceId: Scalars['String']['output'];
   kind: Scalars['String']['output'];
   name: Scalars['String']['output'];
   pods: Array<Pod>;
@@ -690,6 +692,8 @@ export type Query = {
   me: User;
   /** Return all dask clusters */
   pod: Pod;
+  /** Return the pod for an agent */
+  podForAgent?: Maybe<Pod>;
   pods: Array<Pod>;
   /** Return all dask clusters */
   release: Release;
@@ -764,6 +768,12 @@ export type QueryMatchFlavourArgs = {
 
 export type QueryPodArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryPodForAgentArgs = {
+  clientId: Scalars['ID']['input'];
+  instanceId: Scalars['ID']['input'];
 };
 
 
@@ -950,7 +960,7 @@ export type Validator = {
 
 export type ListBackendFragment = { __typename?: 'Backend', id: string, name: string, kind: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } };
 
-export type BackendFragment = { __typename?: 'Backend', id: string, name: string, kind: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> };
+export type BackendFragment = { __typename?: 'Backend', id: string, clientId: string, instanceId: string, name: string, kind: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> };
 
 export type DefinitionFragment = { __typename?: 'Definition', id: string, name: string, hash: any, description?: string | null, args: Array<{ __typename?: 'Port', kind: PortKind }> };
 
@@ -960,13 +970,13 @@ export type ListFlavourFragment = { __typename?: 'Flavour', id: string, name: st
 
 export type ListPodFragment = { __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null };
 
-export type PodFragment = { __typename?: 'Pod', id: string, podId: string, status: PodStatus, clientId?: string | null, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, latestLogDump?: { __typename?: 'LogDump', logs: string, createdAt: any } | null, resource?: { __typename?: 'Resource', id: string, name: string } | null, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } } };
+export type PodFragment = { __typename?: 'Pod', id: string, podId: string, status: PodStatus, clientId?: string | null, backend: { __typename?: 'Backend', id: string, clientId: string, instanceId: string, name: string, kind: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> }, latestLogDump?: { __typename?: 'LogDump', logs: string, createdAt: any } | null, resource?: { __typename?: 'Resource', id: string, name: string } | null, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } } };
 
 export type ReleaseFragment = { __typename?: 'Release', id: string, version: string, scopes: Array<string>, colour: string, description: string, app: { __typename?: 'App', identifier: string } };
 
 export type ListReleaseFragment = { __typename?: 'Release', id: string, version: string, installed: boolean, scopes: Array<string>, colour: string, description: string, app: { __typename?: 'App', identifier: string }, flavours: Array<{ __typename?: 'Flavour', id: string, name: string }> };
 
-export type ResourceFragment = { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string }> };
+export type ResourceFragment = { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }> };
 
 export type ListResourceFragment = { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } };
 
@@ -987,7 +997,14 @@ export type GetBackendQueryVariables = Exact<{
 }>;
 
 
-export type GetBackendQuery = { __typename?: 'Query', backend: { __typename?: 'Backend', id: string, name: string, kind: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> } };
+export type GetBackendQuery = { __typename?: 'Query', backend: { __typename?: 'Backend', id: string, clientId: string, instanceId: string, name: string, kind: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> } };
+
+export type GetDefinitionQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetDefinitionQuery = { __typename?: 'Query', definition: { __typename?: 'Definition', id: string, name: string, hash: any, description?: string | null, args: Array<{ __typename?: 'Port', kind: PortKind }> } };
 
 export type ListDefinitionsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1013,7 +1030,15 @@ export type GetPodQueryVariables = Exact<{
 }>;
 
 
-export type GetPodQuery = { __typename?: 'Query', pod: { __typename?: 'Pod', id: string, podId: string, status: PodStatus, clientId?: string | null, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, latestLogDump?: { __typename?: 'LogDump', logs: string, createdAt: any } | null, resource?: { __typename?: 'Resource', id: string, name: string } | null, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } } } };
+export type GetPodQuery = { __typename?: 'Query', pod: { __typename?: 'Pod', id: string, podId: string, status: PodStatus, clientId?: string | null, backend: { __typename?: 'Backend', id: string, clientId: string, instanceId: string, name: string, kind: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> }, latestLogDump?: { __typename?: 'LogDump', logs: string, createdAt: any } | null, resource?: { __typename?: 'Resource', id: string, name: string } | null, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } } } };
+
+export type GetPodForAgentQueryVariables = Exact<{
+  clientId: Scalars['ID']['input'];
+  instanceId: Scalars['ID']['input'];
+}>;
+
+
+export type GetPodForAgentQuery = { __typename?: 'Query', podForAgent?: { __typename?: 'Pod', id: string, podId: string, status: PodStatus, clientId?: string | null, backend: { __typename?: 'Backend', id: string, clientId: string, instanceId: string, name: string, kind: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> }, latestLogDump?: { __typename?: 'LogDump', logs: string, createdAt: any } | null, resource?: { __typename?: 'Resource', id: string, name: string } | null, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } } } | null };
 
 export type ListReleasesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1037,7 +1062,7 @@ export type GetResourceQueryVariables = Exact<{
 }>;
 
 
-export type GetResourceQuery = { __typename?: 'Query', resource: { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string }> } };
+export type GetResourceQuery = { __typename?: 'Query', resource: { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }> } };
 
 export type GlobalSearchQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -1058,6 +1083,36 @@ export const ListBackendFragmentDoc = gql`
   }
   name
   kind
+}
+    `;
+export const DefinitionFragmentDoc = gql`
+    fragment Definition on Definition {
+  id
+  name
+  hash
+  description
+  args {
+    kind
+  }
+}
+    `;
+export const ListDefinitionFragmentDoc = gql`
+    fragment ListDefinition on Definition {
+  id
+  name
+  hash
+  description
+  flavours {
+    id
+    name
+    release {
+      id
+      version
+      app {
+        identifier
+      }
+    }
+  }
 }
     `;
 export const ListPodFragmentDoc = gql`
@@ -1113,6 +1168,8 @@ export const BackendFragmentDoc = gql`
   client {
     id
   }
+  clientId
+  instanceId
   name
   kind
   pods {
@@ -1124,48 +1181,12 @@ export const BackendFragmentDoc = gql`
 }
     ${ListPodFragmentDoc}
 ${ListResourceFragmentDoc}`;
-export const DefinitionFragmentDoc = gql`
-    fragment Definition on Definition {
-  id
-  name
-  hash
-  description
-  args {
-    kind
-  }
-}
-    `;
-export const ListDefinitionFragmentDoc = gql`
-    fragment ListDefinition on Definition {
-  id
-  name
-  hash
-  description
-  flavours {
-    id
-    name
-    release {
-      id
-      version
-      app {
-        identifier
-      }
-    }
-  }
-}
-    `;
 export const PodFragmentDoc = gql`
     fragment Pod on Pod {
   id
   podId
   backend {
-    user {
-      id
-    }
-    client {
-      id
-    }
-    name
+    ...Backend
   }
   status
   latestLogDump {
@@ -1190,7 +1211,7 @@ export const PodFragmentDoc = gql`
     }
   }
 }
-    `;
+    ${BackendFragmentDoc}`;
 export const ReleaseFragmentDoc = gql`
     fragment Release on Release {
   id
@@ -1235,11 +1256,10 @@ export const ResourceFragmentDoc = gql`
     name
   }
   pods {
-    id
-    podId
+    ...ListPod
   }
 }
-    `;
+    ${ListPodFragmentDoc}`;
 export const CreateGithubRepoDocument = gql`
     mutation CreateGithubRepo($identifier: String!) {
   createGithubRepo(input: {identifier: $identifier}) {
@@ -1342,6 +1362,41 @@ export function useGetBackendLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryH
 export type GetBackendQueryHookResult = ReturnType<typeof useGetBackendQuery>;
 export type GetBackendLazyQueryHookResult = ReturnType<typeof useGetBackendLazyQuery>;
 export type GetBackendQueryResult = Apollo.QueryResult<GetBackendQuery, GetBackendQueryVariables>;
+export const GetDefinitionDocument = gql`
+    query GetDefinition($id: ID!) {
+  definition(id: $id) {
+    ...Definition
+  }
+}
+    ${DefinitionFragmentDoc}`;
+
+/**
+ * __useGetDefinitionQuery__
+ *
+ * To run a query within a React component, call `useGetDefinitionQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetDefinitionQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetDefinitionQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetDefinitionQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetDefinitionQuery, GetDefinitionQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetDefinitionQuery, GetDefinitionQueryVariables>(GetDefinitionDocument, options);
+      }
+export function useGetDefinitionLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetDefinitionQuery, GetDefinitionQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetDefinitionQuery, GetDefinitionQueryVariables>(GetDefinitionDocument, options);
+        }
+export type GetDefinitionQueryHookResult = ReturnType<typeof useGetDefinitionQuery>;
+export type GetDefinitionLazyQueryHookResult = ReturnType<typeof useGetDefinitionLazyQuery>;
+export type GetDefinitionQueryResult = Apollo.QueryResult<GetDefinitionQuery, GetDefinitionQueryVariables>;
 export const ListDefinitionsDocument = gql`
     query ListDefinitions {
   definitions {
@@ -1486,6 +1541,42 @@ export function useGetPodLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookO
 export type GetPodQueryHookResult = ReturnType<typeof useGetPodQuery>;
 export type GetPodLazyQueryHookResult = ReturnType<typeof useGetPodLazyQuery>;
 export type GetPodQueryResult = Apollo.QueryResult<GetPodQuery, GetPodQueryVariables>;
+export const GetPodForAgentDocument = gql`
+    query GetPodForAgent($clientId: ID!, $instanceId: ID!) {
+  podForAgent(clientId: $clientId, instanceId: $instanceId) {
+    ...Pod
+  }
+}
+    ${PodFragmentDoc}`;
+
+/**
+ * __useGetPodForAgentQuery__
+ *
+ * To run a query within a React component, call `useGetPodForAgentQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetPodForAgentQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetPodForAgentQuery({
+ *   variables: {
+ *      clientId: // value for 'clientId'
+ *      instanceId: // value for 'instanceId'
+ *   },
+ * });
+ */
+export function useGetPodForAgentQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetPodForAgentQuery, GetPodForAgentQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetPodForAgentQuery, GetPodForAgentQueryVariables>(GetPodForAgentDocument, options);
+      }
+export function useGetPodForAgentLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetPodForAgentQuery, GetPodForAgentQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetPodForAgentQuery, GetPodForAgentQueryVariables>(GetPodForAgentDocument, options);
+        }
+export type GetPodForAgentQueryHookResult = ReturnType<typeof useGetPodForAgentQuery>;
+export type GetPodForAgentLazyQueryHookResult = ReturnType<typeof useGetPodForAgentLazyQuery>;
+export type GetPodForAgentQueryResult = Apollo.QueryResult<GetPodForAgentQuery, GetPodForAgentQueryVariables>;
 export const ListReleasesDocument = gql`
     query ListReleases {
   releases {

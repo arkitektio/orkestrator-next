@@ -68,14 +68,17 @@ export const asDetailQueryRoute = <T extends any>(
       >,
     ) => () => void;
   }>,
-  fallback?: React.ReactNode | undefined,
+  options: {
+    fallback?: React.ReactNode;
+    queryOptions?: QueryHookOptions<T, DetailVariables>;
+  } = { fallback: <></> },
 ) => {
   return () => {
     const { debug } = useDebug();
     const { id } = useParams<{ id: string }>();
     if (!id) {
-      if (fallback) {
-        return fallback;
+      if (options.fallback) {
+        return options.fallback;
       } else {
         return <> This route is illconfigured</>;
       }
@@ -83,6 +86,7 @@ export const asDetailQueryRoute = <T extends any>(
 
     const { data, error, refetch, subscribeToMore } = hook({
       variables: { id: id },
+      ...options.queryOptions,
     });
 
     if (error) {

@@ -7,8 +7,7 @@ fragment Resource on Resource {
     name
   }
   pods {
-    id
-    podId
+   ...ListPod
   }
 }
 

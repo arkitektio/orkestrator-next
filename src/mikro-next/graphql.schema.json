@@ -4515,6 +4515,144 @@
         "possibleTypes": null
       },
       {
+        "kind": "ENUM",
+        "name": "DuckDBDataType",
+        "description": null,
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": [
+          {
+            "name": "BIGINT",
+            "description": "Large integer for large numeric values",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "BLOB",
+            "description": "Binary large object for storing binary data",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "BOOLEAN",
+            "description": "Represents a True/False value",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DATE",
+            "description": "Specific date (year, month, day)",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DECIMAL",
+            "description": "Exact decimal number with defined precision and scale",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DOUBLE",
+            "description": "Double-precision floating point number",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ENUM",
+            "description": "Enumeration of predefined values",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "FLOAT",
+            "description": "Single-precision floating point number",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "HUGEINT",
+            "description": "Extremely large integer for very large numeric ranges",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "INTEGER",
+            "description": "Standard integer (-2,147,483,648 to 2,147,483,647)",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "INTERVAL",
+            "description": "Span of time between two dates or times",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "JSON",
+            "description": "JSON object, a structured text format used for representing data",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "LIST",
+            "description": "A list of values of the same data type",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "MAP",
+            "description": "A collection of key-value pairs where each key is unique",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "SMALLINT",
+            "description": "Small integer (-32,768 to 32,767)",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "STRUCT",
+            "description": "Composite type grouping several fields with different data types",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "TIME",
+            "description": "Specific time of the day (hours, minutes, seconds)",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "TIMESTAMP",
+            "description": "Date and time with precision",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "TINYINT",
+            "description": "Very small integer (-128 to 127)",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "UUID",
+            "description": "Universally Unique Identifier used to uniquely identify objects",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "VARCHAR",
+            "description": "Variable-length string (text)",
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "possibleTypes": null
+      },
+      {
         "kind": "OBJECT",
         "name": "Entity",
         "description": null,
@@ -23096,6 +23234,71 @@
             "deprecationReason": null
           },
           {
+            "name": "rows",
+            "description": null,
+            "args": [
+              {
+                "name": "filters",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "TableFilter",
+                  "ofType": null
+                },
+                "defaultValue": "null",
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "pagination",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "TablePaginationInput",
+                  "ofType": null
+                },
+                "defaultValue": "null",
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "table",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "ID",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "MetricMap",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "scaleViews",
             "description": null,
             "args": [],
@@ -28896,6 +29099,30 @@
         "isOneOf": null,
         "fields": [
           {
+            "name": "columns",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "TableColumn",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "id",
             "description": null,
             "args": [],
@@ -28989,6 +29216,30 @@
             "deprecationReason": null
           },
           {
+            "name": "rows",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "MetricMap",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "store",
             "description": null,
             "args": [],
@@ -28998,6 +29249,90 @@
               "ofType": {
                 "kind": "OBJECT",
                 "name": "ParquetStore",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "TableColumn",
+        "description": "A column descriptor",
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "default",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "key",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "name",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "nullable",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "type",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "ENUM",
+                "name": "DuckDBDataType",
                 "ofType": null
               }
             },
@@ -29070,6 +29405,42 @@
               }
             },
             "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "TablePaginationInput",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "limit",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": "200",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "offset",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": "0",
             "isDeprecated": false,
             "deprecationReason": null
           }

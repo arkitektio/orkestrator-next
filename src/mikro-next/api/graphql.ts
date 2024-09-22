@@ -520,6 +520,51 @@ export type DesociateInput = {
   selfs: Array<Scalars['ID']['input']>;
 };
 
+export enum DuckDbDataType {
+  /** Large integer for large numeric values */
+  Bigint = 'BIGINT',
+  /** Binary large object for storing binary data */
+  Blob = 'BLOB',
+  /** Represents a True/False value */
+  Boolean = 'BOOLEAN',
+  /** Specific date (year, month, day) */
+  Date = 'DATE',
+  /** Exact decimal number with defined precision and scale */
+  Decimal = 'DECIMAL',
+  /** Double-precision floating point number */
+  Double = 'DOUBLE',
+  /** Enumeration of predefined values */
+  Enum = 'ENUM',
+  /** Single-precision floating point number */
+  Float = 'FLOAT',
+  /** Extremely large integer for very large numeric ranges */
+  Hugeint = 'HUGEINT',
+  /** Standard integer (-2,147,483,648 to 2,147,483,647) */
+  Integer = 'INTEGER',
+  /** Span of time between two dates or times */
+  Interval = 'INTERVAL',
+  /** JSON object, a structured text format used for representing data */
+  Json = 'JSON',
+  /** A list of values of the same data type */
+  List = 'LIST',
+  /** A collection of key-value pairs where each key is unique */
+  Map = 'MAP',
+  /** Small integer (-32,768 to 32,767) */
+  Smallint = 'SMALLINT',
+  /** Composite type grouping several fields with different data types */
+  Struct = 'STRUCT',
+  /** Specific time of the day (hours, minutes, seconds) */
+  Time = 'TIME',
+  /** Date and time with precision */
+  Timestamp = 'TIMESTAMP',
+  /** Very small integer (-128 to 127) */
+  Tinyint = 'TINYINT',
+  /** Universally Unique Identifier used to uniquely identify objects */
+  Uuid = 'UUID',
+  /** Variable-length string (text) */
+  Varchar = 'VARCHAR'
+}
+
 export type Entity = {
   __typename?: 'Entity';
   id: Scalars['ID']['output'];
@@ -2538,6 +2583,7 @@ export type Query = {
   rgbcontexts: Array<RgbContext>;
   roi: Roi;
   rois: Array<Roi>;
+  rows: Array<Scalars['MetricMap']['output']>;
   scaleViews: Array<ScaleView>;
   snapshot: Snapshot;
   snapshots: Array<Snapshot>;
@@ -2848,6 +2894,13 @@ export type QueryRoiArgs = {
 export type QueryRoisArgs = {
   filters?: InputMaybe<RoiFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryRowsArgs = {
+  filters?: InputMaybe<TableFilter>;
+  pagination?: InputMaybe<TablePaginationInput>;
+  table: Scalars['ID']['input'];
 };
 
 
@@ -3481,9 +3534,11 @@ export type SubscriptionRoisArgs = {
 
 export type Table = {
   __typename?: 'Table';
+  columns: Array<TableColumn>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   origins: Array<Image>;
+  rows: Array<Scalars['MetricMap']['output']>;
   store: ParquetStore;
 };
 
@@ -3494,11 +3549,26 @@ export type TableOriginsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+/** A column descriptor */
+export type TableColumn = {
+  __typename?: 'TableColumn';
+  default?: Maybe<Scalars['String']['output']>;
+  key?: Maybe<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  nullable: Scalars['Boolean']['output'];
+  type: DuckDbDataType;
+};
+
 export type TableFilter = {
   AND?: InputMaybe<TableFilter>;
   OR?: InputMaybe<TableFilter>;
   id?: InputMaybe<Scalars['ID']['input']>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type TablePaginationInput = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type TimepointView = View & {
@@ -3930,9 +4000,9 @@ export type BigFileStoreFragment = { __typename?: 'BigFileStore', id: string, ke
 
 export type MediaStoreFragment = { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string };
 
-export type TableFragment = { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string } };
+export type TableFragment = { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType }> };
 
-export type ListTableFragment = { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string } };
+export type ListTableFragment = { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType }> };
 
 export type VideoFragment = { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } };
 
@@ -4423,7 +4493,7 @@ export type From_Parquet_LikeMutationVariables = Exact<{
 }>;
 
 
-export type From_Parquet_LikeMutation = { __typename?: 'Mutation', fromParquetLike: { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string } } };
+export type From_Parquet_LikeMutation = { __typename?: 'Mutation', fromParquetLike: { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType }> } };
 
 export type RequestTableUploadMutationVariables = Exact<{
   key: Scalars['String']['input'];
@@ -4922,6 +4992,15 @@ export type GetRoIsQueryVariables = Exact<{
 
 export type GetRoIsQuery = { __typename?: 'Query', rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string }, entity?: { __typename?: 'Entity', id: string, name: string, linkedExpression: { __typename?: 'LinkedExpression', label: string } } | null }> };
 
+export type RowsQueryVariables = Exact<{
+  table: Scalars['ID']['input'];
+  filters?: InputMaybe<TableFilter>;
+  pagination?: InputMaybe<TablePaginationInput>;
+}>;
+
+
+export type RowsQuery = { __typename?: 'Query', rows: Array<any> };
+
 export type GetSpecimenQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
@@ -4970,7 +5049,7 @@ export type GetTableQueryVariables = Exact<{
 }>;
 
 
-export type GetTableQuery = { __typename?: 'Query', table: { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string } } };
+export type GetTableQuery = { __typename?: 'Query', table: { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType }> } };
 
 export type GetTablesQueryVariables = Exact<{
   filters?: InputMaybe<TableFilter>;
@@ -4978,7 +5057,7 @@ export type GetTablesQueryVariables = Exact<{
 }>;
 
 
-export type GetTablesQuery = { __typename?: 'Query', tables: Array<{ __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string } }> };
+export type GetTablesQuery = { __typename?: 'Query', tables: Array<{ __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType }> }> };
 
 export type WatchImagesSubscriptionVariables = Exact<{
   dataset?: InputMaybe<Scalars['ID']['input']>;
@@ -6097,6 +6176,10 @@ export const TableFragmentDoc = gql`
   name
   store {
     ...ParquetStore
+  }
+  columns {
+    name
+    type
   }
 }
     ${ParquetStoreFragmentDoc}`;
@@ -10413,6 +10496,41 @@ export function useGetRoIsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHook
 export type GetRoIsQueryHookResult = ReturnType<typeof useGetRoIsQuery>;
 export type GetRoIsLazyQueryHookResult = ReturnType<typeof useGetRoIsLazyQuery>;
 export type GetRoIsQueryResult = Apollo.QueryResult<GetRoIsQuery, GetRoIsQueryVariables>;
+export const RowsDocument = gql`
+    query Rows($table: ID!, $filters: TableFilter, $pagination: TablePaginationInput) {
+  rows(table: $table, filters: $filters, pagination: $pagination)
+}
+    `;
+
+/**
+ * __useRowsQuery__
+ *
+ * To run a query within a React component, call `useRowsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useRowsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useRowsQuery({
+ *   variables: {
+ *      table: // value for 'table'
+ *      filters: // value for 'filters'
+ *      pagination: // value for 'pagination'
+ *   },
+ * });
+ */
+export function useRowsQuery(baseOptions: ApolloReactHooks.QueryHookOptions<RowsQuery, RowsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<RowsQuery, RowsQueryVariables>(RowsDocument, options);
+      }
+export function useRowsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<RowsQuery, RowsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<RowsQuery, RowsQueryVariables>(RowsDocument, options);
+        }
+export type RowsQueryHookResult = ReturnType<typeof useRowsQuery>;
+export type RowsLazyQueryHookResult = ReturnType<typeof useRowsLazyQuery>;
+export type RowsQueryResult = Apollo.QueryResult<RowsQuery, RowsQueryVariables>;
 export const GetSpecimenDocument = gql`
     query GetSpecimen($id: ID!) {
   specimen(id: $id) {

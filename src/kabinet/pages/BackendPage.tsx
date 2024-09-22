@@ -5,9 +5,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { KabinetBackend } from "@/linkers";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { useGetBackendQuery } from "../api/graphql";
-import { IconForBackendKind } from "../components/IconForBackendKind";
-import PodsList from "../components/lists/PodsList";
 import PodCard from "../components/cards/PodCard";
+import ResourceCard from "../components/cards/ResourceCard";
+import { IconForBackendKind } from "../components/IconForBackendKind";
 
 export default asDetailQueryRoute(
   withKabinet(useGetBackendQuery),
@@ -52,9 +52,16 @@ export default asDetailQueryRoute(
           </div>
           <Separator className="mt-8 mb-2" />
 
+          <div className="mt-4 font-light mb-2">Managed Pods</div>
           <div className="grid grid-cols-6 gap-2">
             {data?.backend?.pods.map((pod) => (
               <PodCard key={pod.id} item={pod} />
+            ))}
+          </div>
+          <div className="mt-4 font-light mb-2">Managed Resources</div>
+          <div className="grid grid-cols-6 gap-2">
+            {data?.backend?.resources.map((re) => (
+              <ResourceCard key={re.id} item={re} />
             ))}
           </div>
         </div>

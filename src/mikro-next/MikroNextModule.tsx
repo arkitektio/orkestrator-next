@@ -33,6 +33,7 @@ import RenderTreesPage from "./pages/RenderTreesPage";
 import RoiPage from "./pages/RoiPage";
 import StagePage from "./pages/StagePage";
 import StagesPage from "./pages/StagesPage";
+import TablePage from "./pages/TablePage";
 import TablesPage from "./pages/TablesPage";
 import StandardPane from "./panes/StandardPane";
 interface Props {}
@@ -52,6 +53,7 @@ export const MikroNextModule: React.FC<Props> = (props) => {
           <Route path="entities/:id" element={<EntityGraphPage />} />
           <Route path="files/:id" element={<FilePage />} />
           <Route path="tables" element={<TablesPage />} />
+          <Route path="tables/:id" element={<TablePage />} />
           <Route path="expressions/:id" element={<ExpressionPage />} />
           <Route path="experiments" element={<ExperimentsPage />} />
           <Route path="experiments/:id" element={<ExperimentPage />} />

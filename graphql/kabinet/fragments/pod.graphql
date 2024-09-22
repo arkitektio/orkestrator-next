@@ -34,13 +34,7 @@ fragment Pod on Pod {
   id
   podId
   backend {
-    user {
-      id
-    }
-    client {
-      id
-    }
-    name
+    ...Backend
   }
   status
   latestLogDump {

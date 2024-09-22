@@ -79,6 +79,7 @@ export type AgentTemplatesArgs = {
 export type AgentFilter = {
   AND?: InputMaybe<AgentFilter>;
   OR?: InputMaybe<AgentFilter>;
+  clientId?: InputMaybe<Scalars['String']['input']>;
   extensions?: InputMaybe<Array<Scalars['String']['input']>>;
   hasStates?: InputMaybe<Array<Scalars['String']['input']>>;
   hasTemplates?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -1596,13 +1597,25 @@ export type TemplateProvisionsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+export type TemplateAgentFilter = {
+  AND?: InputMaybe<TemplateAgentFilter>;
+  OR?: InputMaybe<TemplateAgentFilter>;
+  clientId?: InputMaybe<Scalars['String']['input']>;
+  extensions?: InputMaybe<Array<Scalars['String']['input']>>;
+  hasStates?: InputMaybe<Array<Scalars['String']['input']>>;
+  hasTemplates?: InputMaybe<Array<Scalars['String']['input']>>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  instanceId?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type TemplateFilter = {
   AND?: InputMaybe<TemplateFilter>;
   OR?: InputMaybe<TemplateFilter>;
+  agent?: InputMaybe<TemplateAgentFilter>;
   extension?: InputMaybe<Scalars['String']['input']>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   interface?: InputMaybe<StrFilterLookup>;
-  node?: InputMaybe<NodeFilter>;
+  node?: InputMaybe<TemplateNodeFilter>;
   nodeHash?: InputMaybe<Scalars['NodeHash']['input']>;
 };
 
@@ -1626,6 +1639,17 @@ export type TemplateNode = {
   reservationId?: Maybe<Scalars['String']['output']>;
   status?: Maybe<Scalars['String']['output']>;
   templateId: Scalars['String']['output'];
+};
+
+export type TemplateNodeFilter = {
+  AND?: InputMaybe<TemplateNodeFilter>;
+  OR?: InputMaybe<TemplateNodeFilter>;
+  demands?: InputMaybe<Array<PortDemandInput>>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  kind?: InputMaybe<NodeKind>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  protocols?: InputMaybe<Array<Scalars['String']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type TemplateUpdate = {

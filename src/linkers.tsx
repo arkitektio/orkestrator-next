@@ -196,6 +196,10 @@ export const KabinetBackend = buildSmart(
 );
 
 export const KabinetPod = buildSmart("@kabinet/pod", "kabinet/pods");
+export const KabinetResource = buildSmart(
+  "@kabinet/resource",
+  "kabinet/resources",
+);
 
 export const KabinetRelease = buildSmart(
   "@kabinet/release",

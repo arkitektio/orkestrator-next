@@ -48,11 +48,12 @@ export const ContainerGrid: React.FC<FittingResponsiveGridProps> = ({
   let xl_size = fitLength && fitLength < 3 ? fitLength : 3;
   let xxl_size = fitLength && fitLength < 4 ? fitLength : 4;
   let xxxl_size = fitLength && fitLength < 5 ? fitLength : 5;
-  let xxxxl_size = fitLength && fitLength < 6 ? fitLength : 6;
+  let xxxxl_size = fitLength && fitLength < 8 ? fitLength : 8;
+  let xxxxxl_size = fitLength && fitLength < 7 ? fitLength : 7;
 
   return (
     <div
-      className={`grid @lg:grid-cols-${lg_size} @xl-grid-cols-${xl_size} @2xl:grid-cols-${xxl_size}  @3xl:grid-cols-${xxxl_size}   @5xl:grid-cols-${xxxxl_size} gap-4`}
+      className={`grid @lg:grid-cols-${lg_size} @xl-grid-cols-${xl_size} @2xl:grid-cols-${xxl_size}  @3xl:grid-cols-${xxxl_size}  @5xl:grid-cols-${xxxxl_size} @6xl:grid-cols-${xxxxxl_size} gap-4`}
       data-enableselect="true"
       ref={parent}
     >
@@ -73,7 +74,7 @@ const ResponsiveContainerGrid: React.FC<IResponsiveGridProps> = ({
   return (
     <div
       className={cn(
-        `grid @lg:grid-cols-2 @xl:grid-cols-3 @2xl:grid-cols-4  @3xl:grid-cols-5 @4xl:grid-cols-6 gap-2`,
+        `grid @lg:grid-cols-2 @xl:grid-cols-3 @2xl:grid-cols-4  @3xl:grid-cols-5 @4xl:grid-cols-6 @5xl:grid-cols-8  @6xl:grid-cols-10 gap-2`,
         className,
       )}
       data-enableselect="true"

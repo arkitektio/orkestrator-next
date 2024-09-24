@@ -18,6 +18,10 @@ import {
   ColorMap,
   ListRgbContextFragment,
   ListRoiFragment,
+  RgbImageFragment,
+  RoiFragment,
+  useCreateRgbContextMutation,
+  useUpdateRgbContextMutation,
 } from "@/mikro-next/api/graphql";
 import { OrbitControls, OrthographicCamera } from "@react-three/drei";
 import { Canvas, ThreeElements, useFrame } from "@react-three/fiber";
@@ -25,8 +29,10 @@ import { Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import * as THREE from "three";
-import { additiveBlending, viewHasher } from "./TwoDRGBRender";
+import { additiveBlending, bitmapToBlob, viewHasher } from "./TwoDRGBRender";
 import { useViewRenderFunction } from "./hooks/useViewRender";
+import { useMediaUpload } from "@/datalayer/hooks/useUpload";
+import { useFieldArray, useForm } from "react-hook-form";
 
 export interface RGBDProps {
   context: ListRgbContextFragment;
@@ -292,7 +298,7 @@ export const RGBD = (props: RGBDProps) => {
 export const ImageRGBD = (props: { image: RgbImageFragment }) => {
   const context = props.image.rgbContexts.at(0);
 
-  return <>{context && <RGBD context={context} rois={props.image.rois} />}</>;
+  return <>{context && <RGBD context={context} rois={[]} />}</>;
 };
 
 export const RoiRGBD = (props: { roi: RoiFragment }) => {

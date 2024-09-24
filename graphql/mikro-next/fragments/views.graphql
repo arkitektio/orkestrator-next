@@ -100,30 +100,20 @@ fragment OpticsView on OpticsView {
 fragment LabelView on LabelView {
   ...View
   id
-  fluorophore {
-    ...Entity
-  }
-  primaryAntibody {
-    ...Entity
-  }
-  secondaryAntibody {
-    ...Entity
+  expression {
+    label
   }
 }
 
 fragment SpecimenView on SpecimenView {
   ...View
   id
-  specimen {
-    ...Specimen
-  }
-  step {
+  entity {
     id
-    name
-    expression {
+    linkedExpression {
       label
     }
-    description
+    label
   }
 }
 

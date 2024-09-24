@@ -1,6 +1,5 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
-import { IntField } from "@/components/fields/IntField";
+import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
@@ -9,35 +8,28 @@ import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import {
   SpecimenViewInput,
-  WellPositionViewInput,
-  useAutoCreateMultiWellPlateMutation,
   useCreateSpecimenViewMutation,
-  useCreateWellPositionViewMutation,
-  useMultiWellPlateOptionsLazyQuery,
+  useSearchEntitiesLazyQuery,
+  useSearchGraphsLazyQuery,
   useSearchProtocolStepsLazyQuery,
-  useSearchSpecimensLazyQuery,
 } from "../api/graphql";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 
 export const AddSpecimenViewForm = (props: { image: string }) => {
   const [add] = useCreateSpecimenViewMutation();
 
-  const [search] = useSearchSpecimensLazyQuery();
-  const [searchP] = useSearchProtocolStepsLazyQuery();
+  const [search] = useSearchEntitiesLazyQuery();
 
   const dialog = useGraphQlFormDialog(add);
 
   const form = useForm<SpecimenViewInput>({
     defaultValues: {
       image: props.image,
-      step: null,
-      specimen: null,
+      entity: null,
     },
     resolver: yupResolver(
       yup.object().shape({
         image: yup.string().required(),
-        step: yup.string().required(),
-        specimen: yup.string().required(),
+        entity: yup.string().required(),
       }),
     ),
   });
@@ -58,18 +50,11 @@ export const AddSpecimenViewForm = (props: { image: string }) => {
         >
           <div className="grid grid-cols-2 gap-2">
             <GraphQLSearchField
-              name="specimen"
-              label="Specimen"
+              name="entity"
+              label="Entity"
               searchQuery={search}
-              description="Which specimen is being monitored in this view?"
-              placeholder="Specimen"
-            />
-            <GraphQLSearchField
-              name="step"
-              label="Protocol Step"
-              searchQuery={searchP}
-              description="Which Protocol Step corresponds to what you see?"
-              placeholder="Step"
+              description="Which entity is being imaged?"
+              placeholder="Entity"
             />
           </div>
 

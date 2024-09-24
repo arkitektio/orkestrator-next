@@ -52,6 +52,10 @@ export const RekuestDashboard = buildSmart(
 );
 
 export const MikroImage = buildSmart("@mikro/image", "mikro/images");
+export const MikroSubjection = buildSmart(
+  "@mikro/subjection",
+  "mikro/subjections",
+);
 export const MikroRenderedPlot = buildSmart(
   "@mikro/renderedplot",
   "mikro/renderedplots",

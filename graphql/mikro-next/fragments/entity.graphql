@@ -13,9 +13,17 @@ fragment Entity on Entity {
       name
     }
   }
-  specimens {
+  specimenViews {
     id
-    protocol {
+    image {
+      id
+      ...RGBImage
+    }
+  }
+  subjectedTo {
+    id
+    performedAt
+    step {
       id
     }
   }
@@ -25,7 +33,7 @@ fragment Entity on Entity {
   relations {
     id
     right {
-      id 
+      id
       linkedExpression {
         id
         expression {
@@ -35,7 +43,7 @@ fragment Entity on Entity {
       }
     }
     linkedExpression {
-        label
+      label
     }
   }
 }

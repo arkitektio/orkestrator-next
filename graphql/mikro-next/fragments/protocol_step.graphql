@@ -20,18 +20,12 @@ fragment ProtocolStep on ProtocolStep {
       name
     }
   }
-  views {
+  subjections {
     id
-    specimen {
+    entity {
       id
-      entity {
-        id
-      }
     }
-    image {
-      id
-      name
-    }
+    performedAt
   }
   plateChildren
 }
@@ -50,17 +44,11 @@ fragment ListProtocolStep on ProtocolStep {
       name
     }
   }
-  views {
+  subjections {
     id
-    specimen {
+    entity {
       id
-      entity {
-        id
-      }
     }
-    image {
-      id
-      name
-    }
+    performedAt
   }
 }

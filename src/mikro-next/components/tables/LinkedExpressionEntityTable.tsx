@@ -299,6 +299,7 @@ export const LinkedExpressionEntitiesTable = (props: {
   return (
     <div className="w-full h-full">
       <div className="flex items-center py-4 gap-2">
+        {JSON.stringify(error)}
         <Form {...form}>
           {!props.linkedExpression && (
             <GraphQLSearchField

@@ -17,6 +17,7 @@ fragment Image on Image {
     ...RGBView
     ...WellPositionView
     ...SpecimenView
+    ...ProtocolStepView
   }
   pinned
   renders {

@@ -8,8 +8,7 @@ mutation UpdateProtocolStep(
   $id: ID!
   $name: String
   $description: String
-  $kind: ID
-  $plateChildren: [PlateChildInput!]
+  $kind: ProtocolStepKind
 ) {
   updateProtocolStep(
     input: {
@@ -17,7 +16,6 @@ mutation UpdateProtocolStep(
       name: $name
       description: $description
       kind: $kind
-      plateChildren: $plateChildren
     }
   ) {
     ...ProtocolStep

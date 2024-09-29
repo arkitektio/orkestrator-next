@@ -1,17 +1,18 @@
 fragment Reagent on Reagent {
   id
   label
-  protocol {
+  creationSteps {
+    id 
+    kind
+  }
+  usedIn {
     id
     name
+    kind
   }
 }
 
 fragment ListReagent on Reagent {
   id
   label
-  protocol {
-    id
-    name
-  }
 }

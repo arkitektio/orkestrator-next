@@ -31,6 +31,7 @@
       "ContinousScanView",
       "LabelView",
       "OpticsView",
+      "ProtocolStepView",
       "RGBView",
       "ScaleView",
       "SpecimenView",

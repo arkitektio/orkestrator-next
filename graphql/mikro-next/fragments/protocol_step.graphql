@@ -1,54 +1,31 @@
 fragment ProtocolStep on ProtocolStep {
   id
   name
+  kind
   expression {
     label
   }
   description
-  reagentMappings {
+  forReagent {
     id
-    reagent {
-      id
-      label
-    }
-    volume
   }
-  mappings {
-    t
-    protocol {
-      id
-      name
-    }
-  }
-  subjections {
+  forEntity {
     id
-    entity {
-      id
-    }
-    performedAt
   }
-  plateChildren
+  usedEntity {
+    id
+  }
+  usedReagent {
+    id
+  }
 }
 
 fragment ListProtocolStep on ProtocolStep {
   id
   name
+  kind
   expression {
     label
   }
   description
-  mappings {
-    t
-    protocol {
-      id
-      name
-    }
-  }
-  subjections {
-    id
-    entity {
-      id
-    }
-    performedAt
-  }
 }

@@ -30,6 +30,7 @@ import ChannelViewCard from "../components/cards/ChannelViewCard";
 import FileCard from "../components/cards/FileCard";
 import LabelViewCard from "../components/cards/LabelViewCard";
 import OpticsViewCard from "../components/cards/OpticsViewCard";
+import ProtocolStepViewCard from "../components/cards/ProtocolStepViewCard";
 import RGBViewCard from "../components/cards/RGBViewCard";
 import SpecimenViewCard from "../components/cards/SpecimenViewCard";
 import TransformationViewCard from "../components/cards/TransformationViewCard";
@@ -224,6 +225,9 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                       )}
                       {view.__typename == "SpecimenView" && (
                         <SpecimenViewCard view={view} key={index} />
+                      )}
+                      {view.__typename == "ProtocolStepView" && (
+                        <ProtocolStepViewCard view={view} key={index} />
                       )}
                     </>
                   ))}

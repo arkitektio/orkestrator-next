@@ -23,13 +23,26 @@ fragment Entity on Entity {
   subjectedTo {
     id
     performedAt
-    step {
+    name 
+    usedReagent {
       id
+      label
     }
   }
   rois {
     ...ROI
   }
+  metrics {
+    id 
+    linkedExpression {
+      id
+      label
+    }
+    value
+    validFrom
+  }
+
+
   relations {
     id
     right {

@@ -52,6 +52,10 @@ export const RekuestDashboard = buildSmart(
 );
 
 export const MikroImage = buildSmart("@mikro/image", "mikro/images");
+export const MikroEntityMetric = buildSmart(
+  "@mikro/entitymetric",
+  "mikro/entitymetric",
+);
 export const MikroSubjection = buildSmart(
   "@mikro/subjection",
   "mikro/subjections",
@@ -124,6 +128,11 @@ export const MikroLabelView = buildSmart(
 export const MikroSpecimenView = buildSmart(
   "@mikro/specimenview",
   "mikro/specimenviews",
+);
+
+export const MikroProtocolStepView = buildSmart(
+  "@mikro/protocolstepview",
+  "mikro/protocolstepviews",
 );
 
 export const MikroMultiPositionView = buildSmart(

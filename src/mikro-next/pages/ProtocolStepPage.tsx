@@ -1,39 +1,24 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import {
-  Timeline,
-  TimelineConnector,
-  TimelineContent,
-  TimelineDescription,
-  TimelineHeader,
-  TimelineIcon,
-  TimelineItem,
-  TimelineTitle,
-} from "@/components/timeline/timeline";
-import { Badge } from "@/components/ui/badge";
-import { MikroImage, MikroProtocol, MikroProtocolStep } from "@/linkers";
+import { CommentsPopover } from "@/components/plate-ui/comments-popover";
+import { Editor } from "@/components/plate-ui/editor";
+import { FixedToolbar } from "@/components/plate-ui/fixed-toolbar";
+import { FixedToolbarButtons } from "@/components/plate-ui/fixed-toolbar-buttons";
+import { FloatingToolbar } from "@/components/plate-ui/floating-toolbar";
+import { FloatingToolbarButtons } from "@/components/plate-ui/floating-toolbar-buttons";
+import { TooltipProvider } from "@/components/plate-ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { MikroProtocolStep } from "@/linkers";
+import { plugins } from "@/plate/plugins";
+import { CommentsProvider } from "@udecode/plate-comments";
+import { Plate, useEditorReadOnly, useEditorRef } from "@udecode/plate-common";
+import { useEffect, useState } from "react";
 import {
   ProtocolStepFragment,
   useGetProtocolStepQuery,
   useUpdateProtocolStepMutation,
 } from "../api/graphql";
-import { TooltipProvider } from "@/components/plate-ui/tooltip";
-import { DndProvider } from "react-dnd-multi-backend";
-import { CommentsProvider } from "@udecode/plate-comments";
-import { HTML5Backend } from "react-dnd-html5-backend";
-import { Plate, useEditorReadOnly, useEditorRef } from "@udecode/plate-common";
-import { plugins } from "@/plate/plugins";
-import { FixedToolbar } from "@/components/plate-ui/fixed-toolbar";
-import { FixedToolbarButtons } from "@/components/plate-ui/fixed-toolbar-buttons";
-import { Editor } from "@/components/plate-ui/editor";
-import { FloatingToolbar } from "@/components/plate-ui/floating-toolbar";
-import { FloatingToolbarButtons } from "@/components/plate-ui/floating-toolbar-buttons";
-import { CommentsPopover } from "@/components/plate-ui/comments-popover";
-import { EmojiDropdownMenu } from "@/components/plate-ui/emoji-dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { ListToolbarButton } from "@/components/plate-ui/list-toolbar-button";
-import { Card } from "@/components/ui/card";
-import { useEffect, useState } from "react";
 
 export type IRepresentationScreenProps = {};
 
@@ -140,40 +125,20 @@ export default asDetailQueryRoute(useGetProtocolStepQuery, ({ data }) => {
       }
     >
       <div className="h-full w-full flex flex-col">
-        <PlateEditor step={data.protocolStep} />
-        <p className="text-muted-foreground text-sm mt-6">Linked Reagents</p>
+        <p className="text-muted-foreground text-sm mt-6">Used Reagent</p>
         <div className="flex flex-row">
-          {data.protocolStep?.reagentMappings.map((map) => (
-            <Card className="flex flex-row p-3">
-              <div className="flex-1 mr-1">{map.reagent.label}</div>
-
-              {map.volume}
-            </Card>
-          ))}
-        </div>
-
-        <p className="text-muted-foreground text-sm mt-1">Used in</p>
-        <div className="flex flex-row gap-2 mt-1">
-          {data?.protocolStep?.mappings.map((e) => (
-            <Card className="flex flex-row p-3">
-              <MikroProtocol.DetailLink object={e.protocol.id}>
-                {e.protocol.name}
-              </MikroProtocol.DetailLink>
-            </Card>
-          ))}
+          <Card className="flex flex-row p-3">
+            <div className="flex-1 mr-1">
+              {data?.protocolStep?.usedReagent?.id}
+            </div>
+          </Card>
         </div>
 
         <p className="text-muted-foreground text-sm mt-2">
           Latest Images inlcuding this step
         </p>
         <div className="flex flex-row gap-2">
-          {data.protocolStep?.views?.map((view) => (
-            <Card className="flex flex-row p-3">
-              <MikroImage.DetailLink object={view.image.id} className="flex-1">
-                {view.image.name}
-              </MikroImage.DetailLink>
-            </Card>
-          ))}
+          {data?.protocolStep.description}
         </div>
       </div>
     </MikroProtocolStep.ModelPage>

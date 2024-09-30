@@ -1,6 +1,7 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { useGetEntityQuery } from "../api/graphql";
 
+import { FormDialog } from "@/components/dialog/FormDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -12,6 +13,7 @@ import {
   MikroROI,
 } from "@/linkers";
 import { ImageRGBD, RoiRGBD } from "../components/render/TwoDThree";
+import CreateEntityMetricForm from "../forms/CreateEntityMetricForm";
 
 export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
   return (
@@ -28,6 +30,15 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
           <Button variant="outline" size="sm">
             Record Protocolstep
           </Button>
+          <FormDialog
+            trigger={
+              <Button variant="outline" size="sm">
+                Measure
+              </Button>
+            }
+          >
+            <CreateEntityMetricForm entity={data.entity} />
+          </FormDialog>
         </>
       }
     >
@@ -64,7 +75,7 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
       <div className="font-bold text-xl"> Measurements </div>
       <div className="grid grid-cols-2 gap-2">
         {data?.entity?.metrics.map((spec, i) => (
-          <Card className="p-2 truncate">
+          <Card className="p-2 truncate" key={i}>
             <MikroEntityMetric.DetailLink
               object={spec.id}
               className={"max-w-[80px] truncate "}

@@ -5,12 +5,15 @@ import { FormDialogAction } from "@/components/ui/form-dialog-action";
 import { MikroGraph, MikroLinkedExpression } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { PlusIcon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useGetGraphQuery } from "../api/graphql";
 import LinkedExpressionCard from "../components/cards/LinkedExpressionCard";
 import LinkExpressionForm from "../forms/LinkExpressionForm";
 import { UpdateGraphForm } from "../forms/UpdateGraphForm";
 
 export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
+  const navigate = useNavigate();
+
   return (
     <MikroGraph.ModelPage
       object={data.graph.id}
@@ -67,6 +70,25 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
         </MikroGraph.DetailLink>
         <div className="grid grid-cols-6 gap-2">
           {data?.graph?.entities?.map((item, i) => (
+            <LinkedExpressionCard
+              item={item}
+              key={i}
+              hideGraph={true}
+              hideExpression={true}
+            />
+          ))}
+        </div>
+      </div>
+      <div className="p-6">
+        <MikroGraph.DetailLink
+          object={data.graph.id}
+          subroute="entities"
+          className=""
+        >
+          Metrics{" "}
+        </MikroGraph.DetailLink>
+        <div className="grid grid-cols-6 gap-2">
+          {data?.graph?.metrics?.map((item, i) => (
             <LinkedExpressionCard
               item={item}
               key={i}

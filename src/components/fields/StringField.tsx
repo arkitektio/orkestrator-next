@@ -27,6 +27,7 @@ export const StringField = (props: FieldProps & { placeholder?: string }) => {
               placeholder={props.placeholder ? props.placeholder : "Enter.."}
               {...field}
               type="string"
+              className="text-slate-200"
             />
           </FormControl>
           <FormDescription>{props.description}</FormDescription>

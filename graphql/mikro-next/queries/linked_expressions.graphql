@@ -10,9 +10,9 @@ query GetLinkedExpressionByAgeName($ageName: String!, $graph: ID!) {
   }
 }
 
-query SearchLinkedExpression($search: String, $values: [ID!]) {
+query SearchLinkedExpression($search: String, $values: [ID!], $graph: ID) {
   options: linkedExpressions(
-    filters: { search: $search, ids: $values }
+    filters: { search: $search, ids: $values, graph: $graph },
     pagination: { limit: 10 }
   ) {
     value: id

@@ -8,6 +8,9 @@ fragment Graph on Graph {
   entities: linkedExpressions(filters: {kind: ENTITY}, pagination: { limit: 10 }) {
     ...ListLinkedExpression
   }
+  metrics: linkedExpressions(filters: {kind: METRIC}, pagination: { limit: 10 }) {
+    ...ListLinkedExpression
+  }
 }
 
 fragment ListGraph on Graph {

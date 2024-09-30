@@ -35,7 +35,7 @@ export const graphToElements: (
     nodes: graph.entityGraph.nodes.map((node) => ({
       data: {
         id: node.id,
-        label: node.metrics.find((m) => m.key == "Label")?.value || node.label,
+        label: node.label,
         subtitle: node.name,
         color: node.linkedExpression.color,
         metrics: node.metrics,
@@ -91,11 +91,8 @@ const layoutOptions = [
   { value: "cola", label: "Cola" },
 ];
 
-
-export const DetailEntityCard = ({ entity }: {entity: string}) => {
-
-  const {data } = useGetEntityQuery({variables: {id: entity}});
-
+export const DetailEntityCard = ({ entity }: { entity: string }) => {
+  const { data } = useGetEntityQuery({ variables: { id: entity } });
 
   if (!data) {
     return null;
@@ -104,7 +101,7 @@ export const DetailEntityCard = ({ entity }: {entity: string}) => {
   return (
     <Card>
       <div className="p-4">
-        {data.entity.specimens.map((spec) => (
+        {data.entity.subjectedTo.map((spec) => (
           <div className="flex flex-row justify-between">
             <div>{spec.id}</div>
           </div>
@@ -112,11 +109,7 @@ export const DetailEntityCard = ({ entity }: {entity: string}) => {
       </div>
     </Card>
   );
-
-}
-
-
-
+};
 
 export default asDetailQueryRoute(
   useGetEntityGraphQuery,
@@ -324,15 +317,14 @@ export default asDetailQueryRoute(
             >
               <DetailEntityCard entity={selectedNode.id} />
               ddd
-            <div className="p-4">
-              {selectedNode.metrics.map((metric) => (
-                <div className="flex flex-row justify-between">
-                  <div>{metric.key}</div>
-                  <div>{metric.value}</div>
-                </div>
-              ))}
+              <div className="p-4">
+                {selectedNode.metrics.map((metric) => (
+                  <div className="flex flex-row justify-between">
+                    <div>{metric.key}</div>
+                    <div>{metric.value}</div>
+                  </div>
+                ))}
               </div>
-
               <div className="flex flex-row justify-between rounded rounded-md">
                 <Button
                   onClick={() => handleMoreNodeClick(selectedNode.id)}

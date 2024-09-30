@@ -9,6 +9,7 @@ import { MikroExpression } from "@/linkers";
 import { useNavigate } from "react-router-dom";
 import {
   ExpressionKind,
+  useCreateEntityMutation,
   useGetLinkedExpressionQuery,
   usePinLinkedExpressionMutation,
   useUpdateExpressionMutation,
@@ -20,6 +21,20 @@ export default asDetailQueryRoute(
   useGetLinkedExpressionQuery,
   ({ data, refetch }) => {
     const uploadFile = useMediaUpload();
+
+    const [create] = useCreateEntityMutation({
+      variables: {
+        input: {
+          kind: data.linkedExpression.id,
+        },
+      },
+      onCompleted: () => {
+        refetch();
+      },
+      onError: (error) => {
+        alert(error.message);
+      },
+    });
 
     const [update] = useUpdateExpressionMutation();
     const resolve = useResolve();
@@ -75,6 +90,21 @@ export default asDetailQueryRoute(
                 Pin
               </Button>
             )}
+            <Button
+              variant={"outline"}
+              size={"sm"}
+              onClick={() =>
+                create({
+                  variables: {
+                    input: {
+                      kind: data.linkedExpression.id,
+                    },
+                  },
+                })
+              }
+            >
+              Create instance
+            </Button>
           </div>
         }
       >

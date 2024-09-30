@@ -114,9 +114,7 @@ fragment OpticsView on OpticsView {
 fragment LabelView on LabelView {
   ...View
   id
-  expression {
-    label
-  }
+  label
 }
 
 fragment SpecimenView on SpecimenView {

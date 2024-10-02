@@ -32,9 +32,8 @@ dmg:
 linux:
   target:
     - AppImage
-    - snap
     - deb
-  maintainer: electronjs.org
+  maintainer: arkitekt.live
   category: Utility
 appImage:
   artifactName: ${name}-${version}.${ext}

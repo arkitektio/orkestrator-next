@@ -1,5 +1,5 @@
-appId: live.arkitekt.orkestrator
-productName: orkestrator
+appId: live.arkitekt.orkestrator.next
+productName: orkestrator-next
 directories:
   buildResources: build
 files:

@@ -38,6 +38,7 @@ jobs:
       - name: build-linux
         if: matrix.os == 'ubuntu-latest'
         env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_LOGIN }}
           NODE_OPTIONS: "--max_old_space_size=4096"
         run: npm run build:linux
 

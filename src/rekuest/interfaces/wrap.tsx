@@ -1,9 +1,9 @@
-import { serviceMap } from "@/arkitekt";
+import { serviceMap } from "@/arkitekt/Arkitekt";
 import { AppContext, ArkitektContext, Service } from "@/arkitekt/provider";
 import { manifest } from "@/constants";
 import r2wc from "@r2wc/react-to-web-component";
 import { ReactNode, useEffect, useState } from "react";
-import { Descriptor, InterfaceDefinition } from "./types";
+import { InterfaceDefinition } from "./types";
 
 export type WrappedProps = {
   fakts: any;
@@ -24,6 +24,7 @@ export const ComponentServiceProvier = ({
   const [context, setContext] = useState<AppContext>({
     manifest: manifest,
     clients: {},
+    availableServices: [],
   });
 
   useEffect(() => {

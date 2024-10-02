@@ -56,12 +56,12 @@ export const ChoicesField = (props: FieldProps & { options: Option[] }) => {
                   variant="outline"
                   role="combobox"
                   aria-expanded={open}
-                  className="w-[200px] justify-between"
+                  className="w-[200px] justify-between text-slate-200"
                 >
                   {field.value
                     ? props.options.find((op) => op.value === field.value)
                         ?.label
-                    : "Select framework..."}
+                    : `Select ${props.name}...`}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
@@ -74,6 +74,7 @@ export const ChoicesField = (props: FieldProps & { options: Option[] }) => {
                       {props.options.map((op) => (
                         <CommandItem
                           key={op.value}
+                          className="flex items-center slate-200"
                           value={op.value}
                           onSelect={(currentValue) => {
                             console.log(currentValue);

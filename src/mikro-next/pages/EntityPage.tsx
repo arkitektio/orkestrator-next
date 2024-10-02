@@ -8,28 +8,36 @@ import {
   MikroEntity,
   MikroEntityMetric,
   MikroEntityRelation,
+  MikroEntityRelationMetric,
   MikroImage,
   MikroProtocolStep,
   MikroROI,
 } from "@/linkers";
 import { ImageRGBD, RoiRGBD } from "../components/render/TwoDThree";
 import CreateEntityMetricForm from "../forms/CreateEntityMetricForm";
+import RecordProtocolStepForm from "../forms/RecordProtocolStepForm";
 
 export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
   return (
     <MikroEntity.ModelPage
-      title={data.entity.name}
+      title={data.entity.label}
       object={data.entity.id}
       pageActions={
-        <>
+        <div className="flex flex-row gap-2">
           <MikroEntity.DetailLink object={data.entity.id} subroute="graph">
             <Button variant="outline" size="sm">
               Graph
             </Button>
           </MikroEntity.DetailLink>
-          <Button variant="outline" size="sm">
-            Record Protocolstep
-          </Button>
+          <FormDialog
+            trigger={
+              <Button variant="outline" size="sm">
+                Record
+              </Button>
+            }
+          >
+            <RecordProtocolStepForm entity={data.entity} />
+          </FormDialog>
           <FormDialog
             trigger={
               <Button variant="outline" size="sm">
@@ -39,7 +47,7 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
           >
             <CreateEntityMetricForm entity={data.entity} />
           </FormDialog>
-        </>
+        </div>
       }
     >
       <MikroEntity.DetailLink object={data.entity.id}>
@@ -109,7 +117,7 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
               object={rel.id}
               className={"max-w-[80px] truncate "}
             >
-              {rel.right.linkedExpression.expression.label}
+              {rel.right.label}
             </MikroEntityRelation.DetailLink>
           </Card>
         ))}

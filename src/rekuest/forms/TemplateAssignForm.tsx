@@ -72,6 +72,7 @@ export const TemplateAssignForm = (props: TemplateAssignFormProps) => {
             path={[]}
             bound={template?.id}
           />
+
           <DialogFooter>
             <Button type="submit" className="btn">
               {" "}

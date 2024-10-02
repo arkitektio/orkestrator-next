@@ -60,7 +60,7 @@ export default asDetailQueryRoute(useGetRoiQuery, ({ data, refetch }) => {
                       className="text-xl cursor-pointer p-1"
                       object={data?.roi?.entity?.id}
                     >
-                      {data?.roi?.entity?.linkedExpression?.label}
+                      {data?.roi?.entity?.label}
                     </MikroEntity.DetailLink>
                   </Card>
                 </>

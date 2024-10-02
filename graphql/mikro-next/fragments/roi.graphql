@@ -6,7 +6,7 @@ fragment ListROI on ROI {
   }
   entity {
     id
-    name
+    label
     linkedExpression {
       label
     }
@@ -14,12 +14,11 @@ fragment ListROI on ROI {
   vectors
 }
 
-
 fragment ROI on ROI {
   id
   entity {
     id
-    name
+    label
     linkedExpression {
       label
     }

@@ -77,20 +77,6 @@ fragment TimepointView on TimepointView {
   }
 }
 
-fragment ProtocolStepView on ProtocolStepView {
-  ...View
-  id
-  step {
-    id
-    name
-    usedReagentVolume
-    usedReagent {
-      id
-      label
-    }
-  }
-}
-
 fragment OpticsView on OpticsView {
   ...View
   id

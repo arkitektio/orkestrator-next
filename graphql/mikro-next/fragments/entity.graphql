@@ -1,6 +1,6 @@
 fragment Entity on Entity {
   id
-  name
+  label
   linkedExpression {
     id
     label
@@ -23,7 +23,7 @@ fragment Entity on Entity {
   subjectedTo {
     id
     performedAt
-    name 
+    name
     usedReagent {
       id
       label
@@ -33,7 +33,7 @@ fragment Entity on Entity {
     ...ROI
   }
   metrics {
-    id 
+    id
     linkedExpression {
       id
       label
@@ -42,11 +42,11 @@ fragment Entity on Entity {
     validFrom
   }
 
-
   relations {
     id
     right {
       id
+      label
       linkedExpression {
         id
         expression {

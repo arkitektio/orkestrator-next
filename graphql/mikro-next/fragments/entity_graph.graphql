@@ -1,8 +1,8 @@
 fragment EntityGraph on EntityGraph {
   nodes {
     id
-    name
     label
+    kindName
     linkedExpression {
       color
     }

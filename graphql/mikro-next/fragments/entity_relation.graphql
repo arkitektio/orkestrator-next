@@ -6,6 +6,9 @@ fragment EntityRelation on EntityRelation {
   right {
     ...Entity
   }
+  metrics {
+    value
+  }
   linkedExpression {
     id
     expression {

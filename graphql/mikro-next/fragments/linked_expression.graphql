@@ -9,7 +9,7 @@ fragment LinkedExpression on LinkedExpression {
   }
   entities(pagination: { limit: 10 }) {
     id
-    name
+    label
   }
   pinned
 }

@@ -226,9 +226,6 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                       {view.__typename == "SpecimenView" && (
                         <SpecimenViewCard view={view} key={index} />
                       )}
-                      {view.__typename == "ProtocolStepView" && (
-                        <ProtocolStepViewCard view={view} key={index} />
-                      )}
                     </>
                   ))}
                   {data?.image && (

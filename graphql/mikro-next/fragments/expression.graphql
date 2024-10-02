@@ -10,7 +10,7 @@ fragment Expression on Expression {
     ...ListLinkedExpression
     entities(pagination: { limit: 10 }) {
       id
-      name
+      label
     }
   }
   store {

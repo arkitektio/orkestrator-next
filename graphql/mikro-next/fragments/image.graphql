@@ -17,7 +17,6 @@ fragment Image on Image {
     ...RGBView
     ...WellPositionView
     ...SpecimenView
-    ...ProtocolStepView
   }
   pinned
   renders {
@@ -56,9 +55,6 @@ fragment RGBImage on Image {
     ...ListRGBContext
   }
 }
-
-
-
 
 fragment ListImage on Image {
   latestSnapshot {

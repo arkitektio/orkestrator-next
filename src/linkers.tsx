@@ -56,6 +56,10 @@ export const MikroEntityMetric = buildSmart(
   "@mikro/entitymetric",
   "mikro/entitymetric",
 );
+export const MikroEntityRelationMetric = buildSmart(
+  "@mikro/entityrelationmetric",
+  "mikro/entityrelationmetric",
+);
 export const MikroSubjection = buildSmart(
   "@mikro/subjection",
   "mikro/subjections",

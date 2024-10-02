@@ -17,6 +17,6 @@ query SearchEntities($search: String, $values: [ID!]) {
     pagination: { limit: 10 }
   ) {
     value: id
-    label: name
+    label: label
   }
 }

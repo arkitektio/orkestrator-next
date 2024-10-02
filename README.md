@@ -41,13 +41,13 @@ Before the new version of Orkestrator can be merged into the main repository, th
 ### Mikro
 
 - [x] Move to Mikro Next
-- [ ] Establish "Views" as central concept
+- [X] Establish "Views" as central concept
 - [ ] Deprecated OMERO metadata support
 
 ### Fluss
 
 - [x] Establish new Workflow UI + Engine (typesafe, wizard, ...) (looks nice)
-- [ ] Move to Fluss Next
+- [X] Move to Fluss Next
 - [x] More tighlty integrate Schedulers in UI
 - [ ] Allow Resource Management in UI ( provisional UI for resource management)
 
@@ -60,7 +60,7 @@ Before the new version of Orkestrator can be merged into the main repository, th
 ### Kabinet
 
 - [x] Establish Kabinet
-- [ ] Create App Store like Feature
+- [X] Create App Store like Feature
 - [ ] Create App Store UI
 
 ### Omero-Ark

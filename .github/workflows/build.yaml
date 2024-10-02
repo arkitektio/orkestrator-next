@@ -38,6 +38,16 @@ jobs:
     needs: build
 
     steps:
+  
+      # Step 1: Install Snapcraft
+      - name: Install Snapcraft dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y snapd
+          sudo snap install core
+          sudo snap install snapcraft --classic
+
+
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:

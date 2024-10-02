@@ -1,76 +1,64 @@
-name: Build and Release Electron App
+name: Build/release Electron app
 
 on:
   push:
     tags:
-      - 'v*'  # This triggers the workflow on any tag that starts with 'v'
-
-permissions:
-  contents: write  # This is necessary for creating releases and uploading release assets
+      - v*.*.*
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  release:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - name: Check out Git repository
+        uses: actions/checkout@v3
 
-      - name: Set up Node.js
+      - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "20"
+          node-version: 16
 
-      - name: Install dependencies
-        run: yarn install
+      - name: Install Dependencies
+        run: npm install
 
-      - name: Build Electron app
-        run: yarn build:linux
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: electron-app
-          path: dist/*.deb
-
-  release:
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-  
-      # Step 1: Install Snapcraft
-      - name: Install Snapcraft dependencies
+      - name: install-snapcraft
+        if: matrix.os == "ubuntu-latest"
         run: |
           sudo apt update
           sudo apt install -y snapd
           sudo snap install core
           sudo snap install snapcraft --classic
 
+      - name: build-linux
+        if: matrix.os == 'ubuntu-latest'
+        run: npm run build:linux
 
-      - name: Download artifact
-        uses: actions/download-artifact@v3
+      - name: build-mac
+        if: matrix.os == 'macos-latest'
+        run: npm run build:mac
+
+      - name: build-win
+        if: matrix.os == 'windows-latest'
+        run: npm run build:win
+
+      - name: release
+        uses: softprops/action-gh-release@v1
         with:
-          name: electron-app
-          path: ./dist
-
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+          draft: true
+          files: |
+            dist/*.exe
+            dist/*.zip
+            dist/*.dmg
+            dist/*.AppImage
+            dist/*.snap
+            dist/*.deb
+            dist/*.rpm
+            dist/*.tar.gz
+            dist/*.yml
+            dist/*.blockmap
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}  # Use the tag that triggered the workflow
-          release_name: Release ${{ github.ref_name }}
-          draft: false
-          prerelease: false
-
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/*.deb
-          asset_name: "orkestrator-${{ github.ref_name }}.deb"
-          asset_content_type: application/vnd.debian.binary-package
+          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}

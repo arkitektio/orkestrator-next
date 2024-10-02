@@ -2,11 +2,11 @@ name: Build and Release Electron App
 
 on:
   push:
-    branches:
-      - main # This triggers the workflow on pushes to the main branch
+    tags:
+      - 'v*'  # This triggers the workflow on any tag that starts with 'v'
 
 permissions:
-  contents: write # This is necessary for creating releases and uploading release assets
+  contents: write  # This is necessary for creating releases and uploading release assets
 
 jobs:
   build:
@@ -50,8 +50,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: release-${{ github.run_id }}
-          release_name: Release for ${{ github.run_id	 }}
+          tag_name: ${{ github.ref_name }}  # Use the tag that triggered the workflow
+          release_name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
 
@@ -62,5 +62,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./dist/*.deb
-          asset_name: "orkestrator-${{ github.run_id }}.deb"
+          asset_name: "orkestrator-${{ github.ref_name }}.deb"
           asset_content_type: application/vnd.debian.binary-package

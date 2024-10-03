@@ -19,6 +19,7 @@ import { IntReturnWidget } from "./returns/fallbacks/IntReturnWidget";
 import { ListReturnWidget } from "./returns/fallbacks/ListReturnWidget";
 import { ModelReturnWidget } from "./returns/fallbacks/ModelReturnWidget";
 import { StringReturnWidget } from "./returns/fallbacks/StringReturnWidget";
+import { FloatReturnWidget } from "./returns/fallbacks/FloatReturnWidget";
 
 export const ShadnWigets = () => {
   const { registry } = useWidgetRegistry();
@@ -102,6 +103,10 @@ export const ShadnWigets = () => {
       PortKind.List,
       ListReturnWidget,
     );
+    let float = registry.registerReturnWidgetFallback(
+      PortKind.Float,
+      FloatReturnWidget,
+    );
 
     return () => {
       int();
@@ -109,6 +114,7 @@ export const ShadnWigets = () => {
       bool();
       model();
       list();
+      float();
     };
   }, []);
 

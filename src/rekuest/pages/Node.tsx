@@ -193,11 +193,11 @@ export default asDetailQueryRoute(useDetailNodeQuery, ({ data, refetch }) => {
         </div>
         <DoNodeForm node={data.node} />
 
-        {(data.node.testCases?.length || 0) > 0 && (
+        {(data.node.tests?.length || 0) > 0 && (
           <>
             <h5 className="font-light text-xl mt-2"> Tests for this Node </h5>
             <div className="grid grid-cols-2 gap-4 mt-3">
-              {data.node.testCases?.map((testCase, key) => (
+              {data.node.tests?.map((testCase, key) => (
                 <Card key={key}>
                   <CardHeader>
                     <CardTitle>
@@ -206,20 +206,29 @@ export default asDetailQueryRoute(useDetailNodeQuery, ({ data, refetch }) => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {testCase.results?.map((result, key) => (
-                      <div key={key}>
-                        <RekuestTemplate.DetailLink
-                          object={result.template.id}
-                          className="font-bold"
-                        >
-                          {result.template.interface} @{" "}
-                          {result.template.agent.name}
-                        </RekuestTemplate.DetailLink>
-                        <div>
-                          {result.passed ? <TiTick /> : <TbMedicalCross />}
+                    {testCase.runs?.map((result, key) => {
+                      if (result?.template_id == null) {
+                        return null;
+                      }
+
+                      return (
+                        <div key={key}>
+                          <RekuestTemplate.DetailLink
+                            object={result?.template_id}
+                            className="font-bold"
+                          >
+                            {result?.template_id}
+                          </RekuestTemplate.DetailLink>
+                          <div>
+                            {result.status == AssignationEventKind.Done ? (
+                              <TiTick />
+                            ) : (
+                              <TbMedicalCross />
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </CardContent>
                 </Card>
               ))}

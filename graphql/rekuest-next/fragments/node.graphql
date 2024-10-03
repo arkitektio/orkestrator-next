@@ -45,10 +45,17 @@ fragment DetailNode on Node {
   }
   testCases {
     ...ListTestCase
-  
+  }
+  tests {
+    id
+    name
+    description
+    runs {
+      template_id: arg(key: "template")
+      status
+    }
   }
 }
-
 
 fragment PrimaryNode on Node {
   id

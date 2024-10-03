@@ -1,9 +1,11 @@
-name: Build Electron app
+name: Build/release Electron app
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - v*.*.*
+
+permissions: write-all
 
 jobs:
   release:
@@ -36,6 +38,7 @@ jobs:
       - name: build-linux
         if: matrix.os == 'ubuntu-latest'
         env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_LOGIN }}
           NODE_OPTIONS: "--max_old_space_size=4096"
         run: npm run build:linux
 
@@ -51,4 +54,18 @@ jobs:
           NODE_OPTIONS: "--max_old_space_size=4096"
         run: npm run build:win
 
-    
+      - name: release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          files: |
+            dist/*.exe
+            dist/*.zip
+            dist/*.dmg
+            dist/*.AppImage
+            dist/*.snap
+            dist/*.deb
+            dist/*.rpm
+            dist/*.tar.gz
+            dist/*.yml
+            dist/*.blockmap

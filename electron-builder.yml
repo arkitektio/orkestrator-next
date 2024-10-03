@@ -1,5 +1,5 @@
-appId: live.arkitekt.orkestrator
-productName: orkestrator
+appId: live.arkitekt.orkestrator.next
+productName: orkestrator-next
 directories:
   buildResources: build
 files:
@@ -32,9 +32,8 @@ dmg:
 linux:
   target:
     - AppImage
-    - snap
     - deb
-  maintainer: electronjs.org
+  maintainer: arkitekt.live
   category: Utility
 appImage:
   artifactName: ${name}-${version}.${ext}

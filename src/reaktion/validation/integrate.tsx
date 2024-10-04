@@ -636,16 +636,30 @@ export const istriviallyIntegratable = (
   const targetStream = targetNode?.data.ins.at(targetStreamIndex);
 
   if (targetNode?.type == "ReactiveNode") {
-    return state.edges.find((e) => e.source == targetNode.id) == undefined; // We can always connect to a reactive node if it has not outgoing edges
+    let alreadyConnected = state.edges.find((e) => e.source == targetNode.id);
+    if (alreadyConnected) {
+      return isSameStream(sourceStream, targetStream);
+    }
+    return true;
   }
 
   if (sourceStream == undefined || targetStream == undefined) return false;
 
   // Args and Returns are always trivially integratable if they have no connections
-  if (sourceNode?.type == "ArgNode")
-    return state.edges.find((e) => e.source == sourceNode.id) == undefined;
-  if (targetNode?.type == "ReturnNode")
-    return state.edges.find((e) => e.target == targetNode.id) == undefined;
+  if (sourceNode?.type == "ArgNode") {
+    let alreadyConnected = state.edges.find((e) => e.source == sourceNode.id);
+    if (alreadyConnected) {
+      return isSameStream(sourceStream, targetStream);
+    }
+    return true;
+  }
+  if (targetNode?.type == "ReturnNode") {
+    let alreadyConnected = state.edges.find((e) => e.target == targetNode.id);
+    if (alreadyConnected) {
+      return isSameStream(sourceStream, targetStream);
+    }
+    return true;
+  }
 
   return isSameStream(sourceStream, targetStream);
 };

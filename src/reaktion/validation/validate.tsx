@@ -266,6 +266,8 @@ export const validateNodeConstants = (
   node: FlowNode,
 ): ValidationResult => {
   console.log("Validating node constants");
+  if (!node.data.constants) return state;
+  if (node.data.constants.length == 0) return state;
   const schema = buildZodSchema(
     node.data.constants.filter((k) => !(k.key in node.data.globalsMap)),
   ); // Only validate non global constants
@@ -284,7 +286,7 @@ export const validateNodeConstants = (
       newRemainingErrors.push({
         type: "node",
         id: node.id,
-        path: path.at(0) || "",
+        path: path.join("."),
         level: "critical",
         message: element.message,
       });
@@ -316,7 +318,7 @@ export const validateState = (
     initial = { ...initial, ...validated };
   }
 
-  if (options.validateNodeDefaults && false) {
+  if (options.validateNodeDefaults) {
     for (let node of initial.nodes) {
       let validated = validateNodeConstants(initial, node);
       initial = { ...initial, ...validated };

@@ -1,5 +1,4 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
 import { Button } from "@/components/ui/button";
 import {
   DetailPane,
@@ -7,6 +6,7 @@ import {
   DetailPaneHeader,
   DetailPaneTitle,
 } from "@/components/ui/pane";
+import { RekuestAssignation } from "@/linkers";
 import { useRunForAssignationQuery } from "@/reaktion/api/graphql";
 import { TrackFlow } from "@/reaktion/track/TrackFlow";
 import {
@@ -14,15 +14,11 @@ import {
   useCancelMutation,
   useDetailAssignationQuery,
   useInterruptMutation,
-  WatchAssignationEventsDocument,
-  WatchAssignationEventsSubscription,
-  WatchAssignationEventsSubscriptionVariables,
 } from "@/rekuest/api/graphql";
 import { ClipboardIcon } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ref } from "yup";
-import { useInstancId } from "../hooks/useInstanceId";
+import { useNodeAction } from "../hooks/useNodeAction";
 
 export const AssignationFlow = (props: {
   id: string;
@@ -123,27 +119,64 @@ export const WorkflowRender = (props: {
   );
 };
 
+export const useReassign = ({
+  assignation,
+}: {
+  assignation: DetailAssignationFragment;
+}) => {
+  const { assign } = useNodeAction({
+    id: assignation.provision?.template.id || "",
+  });
+  const navigate = useNavigate();
+
+  const reassign = async () => {
+    let x = await assign({
+      args: assignation.args,
+      template: assignation.provision?.template.id || "",
+      hooks: [],
+    });
+
+    navigate(RekuestAssignation.linkBuilder(x.id));
+  };
+
+  return reassign;
+};
+
 export default asDetailQueryRoute(
   useDetailAssignationQuery,
   ({ data, refetch, subscribeToMore }) => {
     const navigate = useNavigate();
 
+    const reassign = useReassign({ assignation: data.assignation });
+
     return (
-      <ModelPageLayout
-        identifier="@rekuest/reservation"
+      <RekuestAssignation.ModelPage
         title={data?.assignation?.reference || data?.assignation.status}
         object={data.assignation.id}
+        pageActions={
+          <Button
+            variant={"outline"}
+            size={"sm"}
+            onClick={() => {
+              reassign();
+            }}
+          >
+            Rerun
+          </Button>
+        }
       >
-        {data?.assignation?.provision?.template?.extension ===
-        "reaktion_next" ? (
-          <AssignationFlow
-            id={data?.assignation?.provision.template?.params["flow"]}
-            assignation={data.assignation}
-          />
-        ) : (
-          <DefaultRenderer assignation={data.assignation} />
-        )}
-      </ModelPageLayout>
+        <div className="flex h-full w-full relative">
+          {data?.assignation?.provision?.template?.extension ===
+          "reaktion_next" ? (
+            <AssignationFlow
+              id={data?.assignation?.provision.template?.params["flow"]}
+              assignation={data.assignation}
+            />
+          ) : (
+            <DefaultRenderer assignation={data.assignation} />
+          )}
+        </div>
+      </RekuestAssignation.ModelPage>
     );
   },
 );

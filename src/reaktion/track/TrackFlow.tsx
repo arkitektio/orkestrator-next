@@ -2,14 +2,15 @@ import {
   DetailRunFragment,
   GraphInput,
   RunStatus,
-  useRunForAssignationQuery,
 } from "@/reaktion/api/graphql";
+import { DetailAssignationFragment } from "@/rekuest/api/graphql";
 import { AnimatePresence } from "framer-motion";
 import React, { useRef, useState } from "react";
 import { useNodesState } from "reactflow";
 import { Graph } from "../base/Graph";
 import { EdgeTypes, FlowNode, NodeTypes } from "../types";
 import { edges_to_flowedges, nodes_to_flownodes } from "../utils";
+import { LiveTracker } from "./components/tracker/LiveTracker";
 import { RangeTracker } from "./components/tracker/RangeTracker";
 import { TrackRiverContext } from "./context";
 import { LabeledShowEdge } from "./edges/LabeledShowEdge";
@@ -19,12 +20,6 @@ import { RekuestMapWidget } from "./nodes/RekuestMapWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
 import { RunState } from "./types";
-import {
-  AssignationEventKind,
-  DetailAssignationFragment,
-} from "@/rekuest/api/graphql";
-import { LiveTracker } from "./components/tracker/LiveTracker";
-import { RelativeTracker } from "./components/tracker/RelativeTracker";
 
 const nodeTypes: NodeTypes = {
   RekuestFilterNode: RekuestFilterWidget,
@@ -79,7 +74,7 @@ export const TrackFlow: React.FC<Props> = ({ run, assignation, onSave }) => {
     >
       <div
         ref={reactFlowWrapper}
-        className="h-full w-full flex flex-col"
+        className="h-full w-full flex flex-col relative"
         data-disableselect
       >
         <div className="flex flex-grow h-full w-full">

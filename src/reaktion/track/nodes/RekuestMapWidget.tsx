@@ -1,10 +1,6 @@
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ContextMenuItem } from "@/components/ui/context-menu";
 import { ReturnsContainer } from "@/components/widgets/returns/ReturnsContainer";
-import {
-  NodeDescription,
-  useNodeDescription,
-} from "@/lib/rekuest/NodeDescription";
+import { useNodeDescription } from "@/lib/rekuest/NodeDescription";
 import { cn } from "@/lib/utils";
 import { RunEventKind } from "@/reaktion/api/graphql";
 import { InStream } from "@/reaktion/base/Instream";
@@ -41,18 +37,16 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
           "border-green-400 dark:border-green-300  dark:shadow-green/20 shadow-green-400/10",
       )}
       selected={selected}
-      contextMenu={
-        <>
-          <ContextMenuItem>Fart</ContextMenuItem>
-        </>
-      }
     >
       {ins.map((s, index) => (
         <InStream stream={s} id={index} length={ins.length} />
       ))}
-      <CardHeader className="p-4">
+      <CardHeader className="p-3 justify-between flex">
         <CardTitle onDoubleClick={() => setExpanded(!expanded)}>
-          <div className="flex justify-between">
+          <div className="text-left font-semibold text-xs p-1">
+            {data.title}
+          </div>
+          <div className="text-center justify-between">
             {latestEvent && ins && latestEvent.kind === RunEventKind.Next && (
               <ReturnsContainer
                 ports={outs.at(0) || []}
@@ -69,17 +63,17 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
               />
             )}
             {latestEvent && latestEvent.kind === RunEventKind.Complete && (
-              <div className="text-center font-light p-5 ">
-                Node is complete
+              <div className="text-center font-light p-2 ">
+                {latestEvent?.kind === RunEventKind.Complete && "✅"}
               </div>
             )}
             {latestEvent && latestEvent.kind === RunEventKind.Error && (
-              <div className="text-center font-light p-5 text-red-300">
-                {latestEvent.value}
+              <div className="text-center font-light p-2 text-red-300">
+                {latestEvent?.kind === RunEventKind.Error && "❌"}
               </div>
             )}
             {!latestEvent && (
-              <div className="text-center font-light p-5">No event yet...</div>
+              <div className="text-center font-light p-2">...</div>
             )}
           </div>
         </CardTitle>

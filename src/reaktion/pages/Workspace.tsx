@@ -10,6 +10,7 @@ import { DeployPane } from "../edit/components/deploy/DeployPane";
 
 export default asDetailQueryRoute(useWorkspaceQuery, ({ data }) => {
   const [saveFlow] = useUpdateWorkspaceMutation();
+
   return (
     <ModelPageLayout
       title={data?.workspace.latestFlow?.title || "No title"}

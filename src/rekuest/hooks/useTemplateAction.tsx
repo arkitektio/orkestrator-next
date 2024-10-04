@@ -1,5 +1,6 @@
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { useCallback } from "react";
+import { toast } from "sonner";
 import {
   AssignInput,
   AssignationEventKind,
@@ -11,7 +12,6 @@ import {
   useCancelMutation,
   useTemplateQuery,
 } from "../api/graphql";
-import { toast } from "sonner";
 
 export type ActionReserveVariables = Omit<
   ReserveMutationVariables,
@@ -76,20 +76,20 @@ export const useTemplateAction = <T extends any>(
             },
           },
         });
-      } catch (error) {
+
+        console.log(mutation);
+
+        let assignation = mutation.data?.assign;
+
+        if (!assignation) {
+          console.error(mutation);
+          throw Error("Couln't assign");
+        }
+
+        return assignation;
+      } catch (error: any) {
         toast.error(`${error.message}`);
       }
-
-      console.log(mutation);
-
-      let assignation = mutation.data?.assign;
-
-      if (!assignation) {
-        console.error(mutation);
-        throw Error("Couln't assign");
-      }
-
-      return assignation;
     },
     [postAssign, settings.instanceId, options.id],
   );

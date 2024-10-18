@@ -1,17 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import {
-  Timeline,
-  TimelineConnector,
-  TimelineContent,
-  TimelineDescription,
-  TimelineHeader,
-  TimelineIcon,
-  TimelineItem,
-  TimelineTitle,
-} from "@/components/timeline/timeline";
-import { Badge } from "@/components/ui/badge";
-import { MikroImage, MikroProtocol } from "@/linkers";
+import { MikroProtocol } from "@/linkers";
 import { useGetProtocolQuery } from "../api/graphql";
 
 export type IRepresentationScreenProps = {};
@@ -34,36 +23,6 @@ export default asDetailQueryRoute(useGetProtocolQuery, ({ data }) => {
         <div className="text-muted-foreground text-sm my-2">
           {data.protocol.description}
         </div>
-        <Timeline className="w-full">
-          {data?.protocol.mappings.map((e) => (
-            <TimelineItem>
-              <TimelineConnector />
-              <TimelineHeader>
-                <TimelineIcon />
-                <TimelineTitle>
-                  {e.step.expression?.label}{" "}
-                  <i className="text-muted-foreground mr-2"> t = {e.t} </i>
-                </TimelineTitle>
-              </TimelineHeader>
-              <TimelineContent>
-                <TimelineDescription>{e.step.description}</TimelineDescription>
-
-                <div className="flex flex-col">
-                  {e.step.views.map((view) => (
-                    <div className="flex flex-row">
-                      <MikroImage.DetailLink
-                        object={view.image.id}
-                        className="flex-1"
-                      >
-                        {view.image.name}
-                      </MikroImage.DetailLink>
-                    </div>
-                  ))}
-                </div>
-              </TimelineContent>
-            </TimelineItem>
-          ))}
-        </Timeline>
       </div>
     </MikroProtocol.ModelPage>
   );

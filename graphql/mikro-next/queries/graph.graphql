@@ -4,6 +4,14 @@ query GetGraph($id: ID!) {
   }
 }
 
+query MyActiveGraph {
+  myActiveGraph {
+    id 
+    name 
+    description
+  }
+}
+
 query ListGraphs($filters: GraphFilter, $pagination: OffsetPaginationInput) {
   graphs(filters: $filters, pagination: $pagination) {
     ...ListGraph

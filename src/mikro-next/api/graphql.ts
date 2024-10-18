@@ -2513,6 +2513,7 @@ export type Query = {
   linkedExpressions: Array<LinkedExpression>;
   multiWellPlate: MultiWellPlate;
   multiWellPlates: Array<MultiWellPlate>;
+  myActiveGraph: Graph;
   mychannels: Array<Channel>;
   mydatasets: Array<Dataset>;
   myeras: Array<Era>;
@@ -4656,6 +4657,11 @@ export type GetGraphQueryVariables = Exact<{
 
 
 export type GetGraphQuery = { __typename?: 'Query', graph: { __typename?: 'Graph', id: string, name: string, description?: string | null, relations: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, entities: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, metrics: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }> } };
+
+export type MyActiveGraphQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyActiveGraphQuery = { __typename?: 'Query', myActiveGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null } };
 
 export type ListGraphsQueryVariables = Exact<{
   filters?: InputMaybe<GraphFilter>;
@@ -9021,6 +9027,42 @@ export function useGetGraphLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHoo
 export type GetGraphQueryHookResult = ReturnType<typeof useGetGraphQuery>;
 export type GetGraphLazyQueryHookResult = ReturnType<typeof useGetGraphLazyQuery>;
 export type GetGraphQueryResult = Apollo.QueryResult<GetGraphQuery, GetGraphQueryVariables>;
+export const MyActiveGraphDocument = gql`
+    query MyActiveGraph {
+  myActiveGraph {
+    id
+    name
+    description
+  }
+}
+    `;
+
+/**
+ * __useMyActiveGraphQuery__
+ *
+ * To run a query within a React component, call `useMyActiveGraphQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMyActiveGraphQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMyActiveGraphQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useMyActiveGraphQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<MyActiveGraphQuery, MyActiveGraphQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<MyActiveGraphQuery, MyActiveGraphQueryVariables>(MyActiveGraphDocument, options);
+      }
+export function useMyActiveGraphLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<MyActiveGraphQuery, MyActiveGraphQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<MyActiveGraphQuery, MyActiveGraphQueryVariables>(MyActiveGraphDocument, options);
+        }
+export type MyActiveGraphQueryHookResult = ReturnType<typeof useMyActiveGraphQuery>;
+export type MyActiveGraphLazyQueryHookResult = ReturnType<typeof useMyActiveGraphLazyQuery>;
+export type MyActiveGraphQueryResult = Apollo.QueryResult<MyActiveGraphQuery, MyActiveGraphQueryVariables>;
 export const ListGraphsDocument = gql`
     query ListGraphs($filters: GraphFilter, $pagination: OffsetPaginationInput) {
   graphs(filters: $filters, pagination: $pagination) {

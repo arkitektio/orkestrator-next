@@ -10,7 +10,6 @@ import {
   DetailPaneHeader,
   DetailPaneTitle,
 } from "@/components/ui/pane";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { MikroDataset, MikroImage } from "@/linkers";
 import { UserInfo } from "@/lok-next/components/protected/UserInfo";
@@ -30,7 +29,6 @@ import ChannelViewCard from "../components/cards/ChannelViewCard";
 import FileCard from "../components/cards/FileCard";
 import LabelViewCard from "../components/cards/LabelViewCard";
 import OpticsViewCard from "../components/cards/OpticsViewCard";
-import ProtocolStepViewCard from "../components/cards/ProtocolStepViewCard";
 import RGBViewCard from "../components/cards/RGBViewCard";
 import SpecimenViewCard from "../components/cards/SpecimenViewCard";
 import TransformationViewCard from "../components/cards/TransformationViewCard";
@@ -198,59 +196,54 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                 ))}
               </div>
               <div className="font-light">Views</div>
-              <ScrollArea className="mt-2">
-                <ResponsiveContainerGrid className="gap-3">
-                  {data?.image.views?.map((view, index) => (
-                    <>
-                      {view.__typename == "AffineTransformationView" && (
-                        <TransformationViewCard view={view} key={index} />
-                      )}
-                      {view.__typename == "LabelView" && (
-                        <LabelViewCard view={view} key={index} />
-                      )}
-                      {view.__typename == "OpticsView" && (
-                        <OpticsViewCard view={view} key={index} />
-                      )}
-                      {view.__typename == "ChannelView" && (
-                        <ChannelViewCard view={view} key={index} />
-                      )}
-                      {view.__typename == "RGBView" && (
-                        <RGBViewCard view={view} key={index} />
-                      )}
-                      {view.__typename == "AcquisitionView" && (
-                        <AcquisitionViewCard view={view} key={index} />
-                      )}
-                      {view.__typename == "WellPositionView" && (
-                        <WellPositionViewCard view={view} key={index} />
-                      )}
-                      {view.__typename == "SpecimenView" && (
-                        <SpecimenViewCard view={view} key={index} />
-                      )}
-                    </>
-                  ))}
-                  {data?.image && (
-                    <Card className="opacity-0 hover:opacity-100 relative">
-                      <CardContent className="grid place-items-center w-full h-full">
-                        <FormDialog
-                          trigger={<PlusIcon className="text-xl" />}
-                          onSubmit={async (data) => {
-                            await refetch();
-                          }}
-                        >
-                          <AddImageViewForm image={data?.image.id} />
-                        </FormDialog>
-                      </CardContent>
-                    </Card>
-                  )}
-                </ResponsiveContainerGrid>
+              <ResponsiveContainerGrid className="gap-3 ">
+                {data?.image.views?.map((view, index) => (
+                  <>
+                    {view.__typename == "AffineTransformationView" && (
+                      <TransformationViewCard view={view} key={index} />
+                    )}
+                    {view.__typename == "LabelView" && (
+                      <LabelViewCard view={view} key={index} />
+                    )}
+                    {view.__typename == "OpticsView" && (
+                      <OpticsViewCard view={view} key={index} />
+                    )}
+                    {view.__typename == "ChannelView" && (
+                      <ChannelViewCard view={view} key={index} />
+                    )}
+                    {view.__typename == "RGBView" && (
+                      <RGBViewCard view={view} key={index} />
+                    )}
+                    {view.__typename == "AcquisitionView" && (
+                      <AcquisitionViewCard view={view} key={index} />
+                    )}
+                    {view.__typename == "WellPositionView" && (
+                      <WellPositionViewCard view={view} key={index} />
+                    )}
+                    {view.__typename == "SpecimenView" && (
+                      <SpecimenViewCard view={view} key={index} />
+                    )}
+                  </>
+                ))}
+                {data?.image && (
+                  <Card className="opacity-0 hover:opacity-100 relative">
+                    <CardContent className="grid place-items-center w-full h-full">
+                      <FormDialog
+                        trigger={<PlusIcon className="text-xl" />}
+                        onSubmit={async (data) => {
+                          await refetch();
+                        }}
+                      >
+                        <AddImageViewForm image={data?.image.id} />
+                      </FormDialog>
+                    </CardContent>
+                  </Card>
+                )}
+              </ResponsiveContainerGrid>
 
-                <ListRender
-                  title="File origins"
-                  array={data?.image?.fileOrigins}
-                >
-                  {(file, index) => <FileCard file={file} key={index} />}
-                </ListRender>
-              </ScrollArea>
+              <ListRender title="File origins" array={data?.image?.fileOrigins}>
+                {(file, index) => <FileCard file={file} key={index} />}
+              </ListRender>
             </DetailPaneContent>
           </DetailPane>
         </div>

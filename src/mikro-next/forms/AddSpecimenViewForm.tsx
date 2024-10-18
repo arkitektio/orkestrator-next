@@ -1,5 +1,4 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
@@ -10,9 +9,8 @@ import {
   SpecimenViewInput,
   useCreateSpecimenViewMutation,
   useSearchEntitiesLazyQuery,
-  useSearchGraphsLazyQuery,
-  useSearchProtocolStepsLazyQuery,
 } from "../api/graphql";
+import { EntitySearchField } from "../components/fields/EntitySearchField";
 
 export const AddSpecimenViewForm = (props: { image: string }) => {
   const [add] = useCreateSpecimenViewMutation();
@@ -24,7 +22,6 @@ export const AddSpecimenViewForm = (props: { image: string }) => {
   const form = useForm<SpecimenViewInput>({
     defaultValues: {
       image: props.image,
-      entity: null,
     },
     resolver: yupResolver(
       yup.object().shape({
@@ -49,10 +46,9 @@ export const AddSpecimenViewForm = (props: { image: string }) => {
           })}
         >
           <div className="grid grid-cols-2 gap-2">
-            <GraphQLSearchField
+            <EntitySearchField
               name="entity"
               label="Entity"
-              searchQuery={search}
               description="Which entity is being imaged?"
               placeholder="Entity"
             />

@@ -1,15 +1,15 @@
+import { electronApp, is, optimizer } from "@electron-toolkit/utils";
 import {
   app,
-  shell,
   BrowserWindow,
+  dialog,
   ipcMain,
   IpcMainEvent,
-  dialog,
+  shell,
 } from "electron";
-import { join, resolve } from "path";
-import { electronApp, optimizer, is } from "@electron-toolkit/utils";
-import icon from "../../resources/icon.png?asset";
 import { writeFileSync } from "fs";
+import { join, resolve } from "path";
+import icon from "../../resources/icon.png?asset";
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -81,13 +81,20 @@ function createFaktsWindow(url: string): void {
   });
 
   const baseUrl = new URL(url);
+  console.log(baseUrl, baseUrl.origin);
+
+  const baseRoot = baseUrl.pathname.split("/").slice(0, -2).join("/");
+  console.log(`${baseUrl.origin}${baseRoot}/success*`);
 
   const {
     session: { webRequest },
   } = faktsWindows.webContents;
 
   const filter = {
-    urls: [`${baseUrl.origin}/f/success*`, `${baseUrl.origin}/f/failure*`],
+    urls: [
+      `${baseUrl.origin}${baseRoot}/success*`,
+      `${baseUrl.origin}${baseRoot}/failure*`,
+    ],
   };
 
   webRequest.onBeforeRequest(filter, async ({ url }, callback) => {

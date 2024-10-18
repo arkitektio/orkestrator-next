@@ -1,13 +1,14 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { DroppableNavLink } from "@/components/ui/link";
-import { RekuestAgent, RekuestDescriptor } from "@/linkers";
+import { RekuestAgent } from "@/linkers";
 import { CardStackIcon, CubeIcon } from "@radix-ui/react-icons";
 import { FunctionSquare, Home } from "lucide-react";
 import * as React from "react";
 import {
   AgentStatus,
   GlobalSearchQueryVariables,
+  Ordering,
   useAgentsQuery,
   useGlobalSearchQuery,
 } from "../api/graphql";
@@ -18,7 +19,27 @@ import { useDescriptors } from "../interfaces/hooks/useDescriptors";
 interface IDataSidebarProps {}
 
 export const NavigationPane = (props: {}) => {
-  const { data, refetch, variables } = useAgentsQuery();
+  const { data, refetch, variables } = useAgentsQuery({
+    variables: {
+      filters: {
+        pinned: false,
+      },
+      order: {
+        lastSeen: Ordering.Desc,
+      },
+      pagination: {
+        limit: 10,
+      },
+    },
+  });
+
+  const { data: pinnedAgents, error } = useAgentsQuery({
+    variables: {
+      filters: {
+        pinned: true,
+      },
+    },
+  });
 
   const descriptors = useDescriptors();
 
@@ -78,6 +99,35 @@ export const NavigationPane = (props: {}) => {
             Panels
           </DroppableNavLink>
         </div>
+        {JSON.stringify(error)}
+        {pinnedAgents?.agents && pinnedAgents.agents.length > 0 && (
+          <>
+            <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
+              My Pinned Apps
+            </div>
+            <div className="flex flex-col items-start gap-4 rounded-lg ml-2 mb-4 text-muted-foreground">
+              {pinnedAgents?.agents.map((agent, index) => (
+                <RekuestAgent.DetailLink
+                  object={agent.id}
+                  key={index}
+                  className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
+                >
+                  <CardStackIcon className="h-4 w-4" />
+                  {agent.name}
+                  <div
+                    className="w-3 h-3 rounded rounded-full my-auto animate-pulse"
+                    style={{
+                      backgroundColor:
+                        agent.status == AgentStatus.Active
+                          ? "#00FF00"
+                          : "#FF0000",
+                    }}
+                  />
+                </RekuestAgent.DetailLink>
+              ))}
+            </div>
+          </>
+        )}
         <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
           My Apps
         </div>

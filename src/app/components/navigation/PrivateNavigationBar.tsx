@@ -13,7 +13,7 @@ import {
   NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
-import { Me } from "@/lok-next/components/Me";
+import { Me, Username } from "@/lok-next/components/Me";
 import { useDebug } from "@/providers/debug/DebugContext";
 import { HomeIcon } from "@radix-ui/react-icons";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
@@ -142,7 +142,9 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
               side="right"
               className="p-2 mb-2 border-seperator"
             >
-              <DropdownMenuLabel>Hello </DropdownMenuLabel>
+              <DropdownMenuLabel>
+                <Username />
+              </DropdownMenuLabel>
               <DropdownMenuGroup>
                 <DroppableNavLink
                   to={"/user/settings"}
@@ -155,9 +157,21 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
                 </DroppableNavLink>
               </DropdownMenuGroup>
 
-              <div className="flex flex-row gap-2">
-                <Button onClick={() => logout()}>Logout</Button>{" "}
-                <Button onClick={() => remove()}>Unconnect</Button>{" "}
+              <div className="flex flex-row gap-2 w-full">
+                <Button
+                  variant={"outline"}
+                  className="flex-1"
+                  onClick={() => logout()}
+                >
+                  Logout
+                </Button>{" "}
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => remove()}
+                >
+                  Unconnect
+                </Button>{" "}
                 <ModeToggle />
               </div>
             </DropdownMenuContent>

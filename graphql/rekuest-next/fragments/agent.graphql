@@ -22,6 +22,7 @@ fragment Agent on Agent {
       id
     }
   }
+  pinned
   extensions
   name
   active
@@ -37,6 +38,7 @@ fragment ListAgent on Agent {
   connected
   name
   lastSeen
+  pinned
   registry {
     app {
       clientId

@@ -250,6 +250,22 @@
             "deprecationReason": null
           },
           {
+            "name": "pinned",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "provisions",
             "description": null,
             "args": [
@@ -572,6 +588,18 @@
             "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
+          },
+          {
+            "name": "pinned",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
           }
         ],
         "interfaces": null,
@@ -646,7 +674,7 @@
         "fields": null,
         "inputFields": [
           {
-            "name": "installedAt",
+            "name": "lastSeen",
             "description": null,
             "type": {
               "kind": "ENUM",
@@ -1547,6 +1575,18 @@
             "deprecationReason": null
           },
           {
+            "name": "mother",
+            "description": "A mother assignation is the root assignation that caused this assignation to be created. This mother is always created by intent (e.g a user action). If null, this assignation is the mother",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Assignation",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "name",
             "description": null,
             "args": [],
@@ -1564,7 +1604,7 @@
           },
           {
             "name": "node",
-            "description": null,
+            "description": "The node that this assignation is assigned to",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -1580,7 +1620,7 @@
           },
           {
             "name": "parent",
-            "description": null,
+            "description": "A parent assignation is the next assignation in the chain of assignations that caused this assignation to be created. Parents can be created by intent or by the system. If null, this assignation is the parent",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -1592,7 +1632,7 @@
           },
           {
             "name": "provision",
-            "description": null,
+            "description": "The provision that this assignation was assigned to",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -1616,7 +1656,7 @@
           },
           {
             "name": "reservation",
-            "description": null,
+            "description": "If this assignation is the result of a reservation, this field will contain the reservation that caused this assignation to be created",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -1628,7 +1668,7 @@
           },
           {
             "name": "status",
-            "description": null,
+            "description": "The status of this assignation",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -1656,7 +1696,7 @@
           },
           {
             "name": "template",
-            "description": null,
+            "description": "If set, this assignation was directly assigned to a template",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -1684,7 +1724,7 @@
           },
           {
             "name": "waiter",
-            "description": null,
+            "description": "The Waiter that this assignation was created by",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -6146,6 +6186,72 @@
             "deprecationReason": null
           },
           {
+            "name": "pinAgent",
+            "description": null,
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "PinInput",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "Agent",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "pinTemplate",
+            "description": null,
+            "args": [
+              {
+                "name": "input",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "PinInput",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "Template",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "provide",
             "description": "Provide a provision",
             "args": [
@@ -6713,6 +6819,22 @@
               "ofType": {
                 "kind": "SCALAR",
                 "name": "String",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "pinned",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
                 "ofType": null
               }
             },
@@ -7650,6 +7772,50 @@
             "deprecationReason": null
           }
         ],
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "PinInput",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "id",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "ID",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "pin",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
         "possibleTypes": null
       },
       {
@@ -13507,6 +13673,22 @@
               "ofType": {
                 "kind": "SCALAR",
                 "name": "AnyDefault",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "pinned",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
                 "ofType": null
               }
             },

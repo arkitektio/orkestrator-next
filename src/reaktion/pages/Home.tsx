@@ -3,6 +3,7 @@ import { FormDialogAction } from "@/components/ui/form-dialog-action";
 import { FlussWorkspace } from "@/linkers";
 import { useNavigate } from "react-router-dom";
 import { CreateWorkspaceForm } from "../components/forms/CreateWorkspaceForm";
+import RunList from "../components/lists/RunList";
 import WorkspaceList from "../components/lists/WorkspaceList";
 
 const Page = () => {
@@ -26,6 +27,7 @@ const Page = () => {
       }
     >
       <WorkspaceList />
+      <RunList />
     </PageLayout>
   );
 };

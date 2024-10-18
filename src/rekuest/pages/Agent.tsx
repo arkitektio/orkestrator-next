@@ -9,8 +9,10 @@ import {
   AgentFragment,
   ListTemplateFragment,
   useAgentQuery,
+  usePinAgentMutation,
   WatchTemplatesDocument,
   WatchTemplatesSubscription,
+  WatchTemplatesSubscriptionVariables,
 } from "@/rekuest/api/graphql";
 import { ArrowRightIcon } from "@radix-ui/react-icons";
 import { BellIcon } from "lucide-react";
@@ -79,6 +81,28 @@ const TemplateBentoCard = ({
   </div>
 );
 
+export const PinAgent = (props: { agent: AgentFragment }) => {
+  const [pin] = usePinAgentMutation();
+
+  return (
+    <div className="flex flex-row gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => {
+          pin({
+            variables: {
+              input: { id: props.agent.id, pin: !props.agent.pinned },
+            },
+          });
+        }}
+      >
+        {props.agent.pinned ? "Unpin" : "Pin"}
+      </Button>
+    </div>
+  );
+};
+
 export const ManagedByCard = (props: { agent: AgentFragment }) => {
   const { data } = useGetPodForAgentQuery({
     variables: {
@@ -111,9 +135,10 @@ export default asDetailQueryRoute(
     useEffect(() => {
       return subscribeToMore<
         WatchTemplatesSubscription,
-        WatchTemplatesSubscription
+        WatchTemplatesSubscriptionVariables
       >({
         document: WatchTemplatesDocument,
+        variables: { agent: data.agent.id },
         updateQuery: (prev, { subscriptionData }) => {
           if (!subscriptionData.data) return prev;
           const create = subscriptionData.data.templates.create;
@@ -161,7 +186,12 @@ export default asDetailQueryRoute(
             }}
           />
         }
-        pageActions={<ManagedByCard agent={data.agent} />}
+        pageActions={
+          <>
+            <PinAgent agent={data.agent} />
+            <ManagedByCard agent={data.agent} />
+          </>
+        }
       >
         <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
           {data?.agent.name}

@@ -17,3 +17,9 @@ export const Me = () => {
     </Avatar>
   );
 };
+
+export const Username = () => {
+  const { data } = useMeQuery();
+
+  return <>{data?.me?.username}</>;
+};

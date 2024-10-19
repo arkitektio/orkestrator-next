@@ -915,6 +915,11 @@ export enum PanelKind {
   State = 'STATE'
 }
 
+export type ParamPair = {
+  key: Scalars['String']['input'];
+  value: Scalars['String']['input'];
+};
+
 export type PinInput = {
   id: Scalars['ID']['input'];
   pin: Scalars['Boolean']['input'];
@@ -1655,6 +1660,7 @@ export type TemplateFilter = {
   interface?: InputMaybe<StrFilterLookup>;
   node?: InputMaybe<TemplateNodeFilter>;
   nodeHash?: InputMaybe<Scalars['NodeHash']['input']>;
+  parameters?: InputMaybe<Array<ParamPair>>;
 };
 
 export type TemplateInput = {

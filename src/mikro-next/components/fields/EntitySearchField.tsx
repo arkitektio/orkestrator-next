@@ -29,9 +29,18 @@ import {
 import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn, notEmpty } from "@/lib/utils";
 import {
+  ExpressionKind,
+  ListEntityFragment,
+  ListGraphFragment,
+  useCreateEntityMutation,
+  useListEntitiesLazyQuery,
+  useListGraphsLazyQuery,
   useMyActiveGraphQuery,
   useSearchEntitiesLazyQuery,
+  useSearchExpressionLazyQuery,
+  useSearchGraphEntitiesLazyQuery,
   useSearchGraphsLazyQuery,
+  useSearchLinkedExpressionLazyQuery,
 } from "@/mikro-next/api/graphql";
 import { Tooltip } from "@radix-ui/react-tooltip";
 import { useEffect, useState } from "react";
@@ -46,7 +55,9 @@ export const ButtonLabel = (props: {
   search: SearchFunction;
   value: string;
 }) => {
-  const [option, setOption] = useState<Option | null | undefined>(null);
+  const [option, setOption] = useState<ListEntityFragment | null | undefined>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -72,7 +83,7 @@ export type SearchOptions = { search?: string; values?: (string | number)[] };
 
 export type SearchFunction = (
   searching: SearchOptions,
-) => Promise<(Option | null | undefined)[]>;
+) => Promise<(ListEntityFragment | null | undefined)[]>;
 
 export type SearchFieldProps = {
   name: string;
@@ -84,9 +95,9 @@ export type SearchFieldProps = {
 } & FieldProps;
 
 export const GraphPanel = (props: {
-  onGraphSelected: (id: string) => void;
+  onGraphSelected: (id: ListGraphFragment) => void;
 }) => {
-  const [graphSearch] = useSearchGraphsLazyQuery();
+  const [graphSearch] = useListGraphsLazyQuery();
 
   const search = useCallback(
     async (x: {
@@ -95,8 +106,10 @@ export const GraphPanel = (props: {
     }) => {
       let queryResult = await graphSearch({
         variables: {
-          search: x.search,
-          values: x.values?.map((x) => x.toString()),
+          filters: {
+            search: x.search,
+            ids: x.values?.map((x) => x.toString()),
+          },
         },
       });
       if (queryResult?.error) {
@@ -105,12 +118,14 @@ export const GraphPanel = (props: {
       if (!queryResult.data) {
         throw new Error("No data");
       }
-      return queryResult.data?.options;
+      return queryResult.data?.graphs;
     },
     [graphSearch],
   );
 
-  const [options, setOptions] = useState<(Option | null | undefined)[]>([]);
+  const [options, setOptions] = useState<
+    (ListGraphFragment | null | undefined)[]
+  >([]);
   const [error, setError] = useState<string | null>(null);
 
   const query = (string: string) => {
@@ -157,14 +172,106 @@ export const GraphPanel = (props: {
           <CommandGroup>
             {options.filter(notEmpty).map((option) => (
               <CommandItem
-                value={option.value}
-                key={option.value}
+                value={option.id}
+                key={option.id}
                 onSelect={() => {
-                  console.log(option.value);
-                  props.onGraphSelected(option.value);
+                  console.log(option.id);
+                  props.onGraphSelected(option);
                 }}
               >
-                {option.label}
+                {option.name}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </CommandList>
+      </Command>
+    </div>
+  );
+};
+
+export const LinkExpressionPanel = (props: {
+  onExpressionSelected: (id: string) => void;
+}) => {
+  const [graphSearch] = useSearchExpressionLazyQuery();
+
+  const search = useCallback(
+    async (x: {
+      search?: string | undefined;
+      values?: (string | number)[] | undefined;
+    }) => {
+      let queryResult = await graphSearch({
+        variables: {
+          search: x.search,
+        },
+      });
+      if (queryResult?.error) {
+        throw new Error(queryResult.error[0].message);
+      }
+      if (!queryResult.data) {
+        throw new Error("No data");
+      }
+      return queryResult.data?.options;
+    },
+    [graphSearch],
+  );
+
+  const [options, setOptions] = useState<
+    (ListGraphFragment | null | undefined)[]
+  >([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const query = (string: string) => {
+    search({ search: string })
+      .then((res) => {
+        setOptions(res || []);
+        setError(null);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setOptions([]);
+      });
+  };
+
+  useEffect(() => {
+    search({})
+      .then((res) => {
+        setOptions(res || []);
+        setError(null);
+      })
+      .catch((err) => {
+        setError(err.message || "Error");
+        setOptions([]);
+      });
+  }, [search]);
+
+  return (
+    <div>
+      <Command shouldFilter={false}>
+        <CommandInput
+          placeholder={"Search Graphs"}
+          className="h-9"
+          onValueChange={(e) => {
+            query(e);
+          }}
+        />
+        <CommandList>
+          <CommandEmpty>{"No Graphs Found"}</CommandEmpty>
+          {error && (
+            <CommandGroup heading="Error">
+              {error && <CommandItem>{error}</CommandItem>}
+            </CommandGroup>
+          )}
+          <CommandGroup>
+            {options.filter(notEmpty).map((option) => (
+              <CommandItem
+                value={option.id}
+                key={option.id}
+                onSelect={() => {
+                  console.log(option.id);
+                  props.onGraphSelected(option);
+                }}
+              >
+                {option.name}
               </CommandItem>
             ))}
           </CommandGroup>
@@ -183,22 +290,78 @@ export const EntitySearchField = ({
   noOptionFoundPlaceholder = "No options found",
   description,
 }: SearchFieldProps) => {
-  const { data: mygraph, error: myerror } = useMyActiveGraphQuery();
+  const { data, error: myerror } = useMyActiveGraphQuery();
 
-  const [selectedGraph, setSelectedGraph] = useState<string | null>(null);
+  const mygraph = data?.myActiveGraph;
+
+  const form = useFormContext();
+
+  const [options, setOptions] = useState<
+    (ListEntityFragment | null | undefined)[]
+  >([]);
+  const [expressions, setExpressions] = useState<(Option | null | undefined)[]>(
+    [],
+  );
+
+  const [generalPopoverOpen, setGeneralPopoverOpen] = useState(false);
+
+  const [error, setError] = useState<string | null>(null);
+
+  const [createNewEntity] = useCreateEntityMutation();
+
+  const [selectedGraph, setSelectedGraph] = useState<ListGraphFragment | null>(
+    null,
+  );
   const [graphPopoverOpen, setGraphPopoverOpen] = useState(false);
 
-  const [entitySearch] = useSearchEntitiesLazyQuery();
+  const [entitySearch] = useSearchGraphEntitiesLazyQuery();
+
+  const [linkedExpressionSearch] = useSearchLinkedExpressionLazyQuery();
 
   const search = useCallback(
     async (x: {
       search?: string | undefined;
       values?: (string | number)[] | undefined;
     }) => {
+      let graphId = selectedGraph?.id || mygraph?.id;
+
+      if (!graphId) {
+        throw new Error("No graph selected");
+      }
       let queryResult = await entitySearch({
         variables: {
+          filters: {
+            search: x.search,
+            ids: x.values?.map((x) => x.toString()),
+            graph: graphId,
+          },
+        },
+      });
+      if (queryResult?.error) {
+        throw new Error(queryResult.error[0].message);
+      }
+      if (!queryResult.data) {
+        throw new Error("No data");
+      }
+      return queryResult.data?.entities;
+    },
+    [entitySearch, selectedGraph, mygraph],
+  );
+
+  const linkedSearch = useCallback(
+    async (x: {
+      search?: string | undefined;
+      values?: (string | number)[] | undefined;
+    }) => {
+      let graphId = selectedGraph?.id || mygraph?.id;
+
+      if (!graphId) {
+        throw new Error("No graph selected");
+      }
+      let queryResult = await linkedExpressionSearch({
+        variables: {
           search: x.search,
-          values: x.values?.map((x) => x.toString()),
+          graph: graphId,
         },
       });
       if (queryResult?.error) {
@@ -209,13 +372,8 @@ export const EntitySearchField = ({
       }
       return queryResult.data?.options;
     },
-    [entitySearch],
+    [entitySearch, selectedGraph, mygraph],
   );
-
-  const form = useFormContext();
-
-  const [options, setOptions] = useState<(Option | null | undefined)[]>([]);
-  const [error, setError] = useState<string | null>(null);
 
   const query = (string: string) => {
     search({ search: string })
@@ -226,6 +384,18 @@ export const EntitySearchField = ({
       .catch((err) => {
         setError(err.message);
         setOptions([]);
+      });
+  };
+
+  const linkedQuery = (string: string) => {
+    linkedSearch({ search: string })
+      .then((res) => {
+        setExpressions(res || []);
+        setError(null);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setExpressions([]);
       });
   };
 
@@ -251,7 +421,7 @@ export const EntitySearchField = ({
           <FormItem className="flex flex-col dark:text-white">
             {label != undefined && <FormLabel>{label}</FormLabel>}
 
-            {mygraph && (
+            {(selectedGraph || mygraph) && (
               <Popover
                 open={graphPopoverOpen}
                 onOpenChange={setGraphPopoverOpen}
@@ -260,12 +430,11 @@ export const EntitySearchField = ({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Badge color="red" className="mb-2">
-                        {mygraph?.myActiveGraph.name}
+                        {(selectedGraph || mygraph)?.name}
                       </Badge>
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>The item will be put into this graph</p>
-                      {mygraph?.myActiveGraph.description}
                     </TooltipContent>
                   </Tooltip>
                 </PopoverTrigger>
@@ -281,7 +450,10 @@ export const EntitySearchField = ({
             )}
             {myerror && <div>{myerror?.message}</div>}
 
-            <Popover>
+            <Popover
+              open={generalPopoverOpen}
+              onOpenChange={setGeneralPopoverOpen}
+            >
               <PopoverTrigger asChild>
                 <FormControl>
                   <Button
@@ -308,39 +480,70 @@ export const EntitySearchField = ({
                     className="h-9"
                     onValueChange={(e) => {
                       query(e);
+                      linkedQuery(e);
                     }}
                   />
                   <CommandList>
-                    <CommandEmpty>{noOptionFoundPlaceholder}</CommandEmpty>
+                    <CommandEmpty></CommandEmpty>
                     {error && (
                       <CommandGroup heading="Error">
                         {error && <CommandItem>{error}</CommandItem>}
                       </CommandGroup>
                     )}
-                    <CommandGroup>
-                      {options.filter(notEmpty).map((option) => (
-                        <CommandItem
-                          value={option.value}
-                          key={option.value}
-                          onSelect={() => {
-                            console.log(option.value);
-                            form.setValue(name, option.value, {
-                              shouldValidate: true,
-                            });
-                          }}
-                        >
-                          {option.label}
-                          <CheckIcon
-                            className={cn(
-                              "ml-auto h-4 w-4",
-                              option.value === field.value
-                                ? "opacity-100"
-                                : "opacity-0",
-                            )}
-                          />
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
+                    {options.length > 0 && (
+                      <CommandGroup heading="Entities">
+                        {options.filter(notEmpty).map((option) => (
+                          <CommandItem
+                            value={option.id}
+                            key={option.id}
+                            onSelect={() => {
+                              console.log(option.id);
+                              form.setValue(name, option.id, {
+                                shouldValidate: true,
+                              });
+                              setGeneralPopoverOpen(false);
+                            }}
+                          >
+                            {option.label}
+                            <CheckIcon
+                              className={cn(
+                                "ml-auto h-4 w-4",
+                                option.id === field.value
+                                  ? "opacity-100"
+                                  : "opacity-0",
+                              )}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
+                    {expressions.length > 0 && (
+                      <CommandGroup heading="New Entities">
+                        {expressions.filter(notEmpty).map((option) => (
+                          <CommandItem
+                            value={option.value}
+                            key={option.value}
+                            onSelect={() => {
+                              console.log(option.value);
+                              createNewEntity({
+                                variables: {
+                                  input: {
+                                    kind: option.value,
+                                  },
+                                },
+                              }).then((res) => {
+                                form.setValue(name, res.data?.createEntity.id, {
+                                  shouldValidate: true,
+                                });
+                                setGeneralPopoverOpen(false);
+                              });
+                            }}
+                          >
+                            New {option.label}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
                   </CommandList>
                 </Command>
               </PopoverContent>

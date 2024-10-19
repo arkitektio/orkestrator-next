@@ -125,7 +125,7 @@ export default asDetailQueryRoute(
                       <Popover>
                         <PopoverTrigger>
                           <Button variant="ghost" className="lowercase">
-                            {e.name}
+                            {e.label}
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="rounded rounded-xl shadow-xl shadow">

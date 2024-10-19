@@ -1,9 +1,14 @@
 import { Card } from "@/components/ui/card";
-import { MikroEntity, MikroEntityRelation, MikroROI } from "@/linkers";
+import {
+  MikroEntity,
+  MikroEntityMetric,
+  MikroEntityRelation,
+  MikroROI,
+} from "@/linkers";
 import { useGetEntityQuery } from "../api/graphql";
 import { RoiRGBD } from "../components/render/TwoDThree";
 
-export const EntityOverlay = (props: { entity?: string }) => {
+export const EntityOverlay = (props: { entity: string }) => {
   const { data } = useGetEntityQuery({
     variables: {
       id: props.entity,
@@ -36,6 +41,18 @@ export const EntityOverlay = (props: { entity?: string }) => {
             >
               {relation.linkedExpression.label}
             </MikroEntityRelation.DetailLink>
+          </Card>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {data?.entity?.metrics.map((metric, i) => (
+          <Card className="p-2 truncate">
+            <MikroEntityMetric.DetailLink
+              object={metric.id}
+              className={"max-w-[80px] truncate "}
+            >
+              {metric.linkedExpression.label}: {metric.value}
+            </MikroEntityMetric.DetailLink>
           </Card>
         ))}
       </div>

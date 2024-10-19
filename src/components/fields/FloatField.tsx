@@ -32,6 +32,7 @@ export const FloatField = (props: FieldProps & { placeholder?: string }) => {
                 field.onChange(e);
               }}
               type="number"
+              className="w-full dark:text-white"
             />
           </FormControl>
           <FormDescription>{props.description}</FormDescription>

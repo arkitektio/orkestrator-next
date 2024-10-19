@@ -6,9 +6,7 @@ query GetGraph($id: ID!) {
 
 query MyActiveGraph {
   myActiveGraph {
-    id 
-    name 
-    description
+    ...ListGraph
   }
 }
 

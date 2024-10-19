@@ -37,6 +37,7 @@ import {
   ConstantNodeDocument,
   ConstantNodeQuery,
   PortScope,
+  useTemplatesQuery,
 } from "@/rekuest/api/graphql";
 import {
   DoubleArrowLeftIcon,
@@ -107,6 +108,7 @@ import { RekuestMapWidget } from "./nodes/RekuestMapWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
 import { useRekuest } from "@/arkitekt/Arkitekt";
+import { RunButton } from "./components/buttons/RunButton";
 
 const nodeTypes: NodeTypes = {
   RekuestFilterNode: RekuestFilterWidget,
@@ -1324,6 +1326,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
               <div className="absolute bottom-0 right-0  mr-3 mb-5 z-50 flex flex-row gap-2">
                 <Button onClick={() => save()}> Save </Button>
                 {flow.id && <DeployInterfaceButton flow={flow} />}
+                {flow.id && <RunButton flow={flow} />}
               </div>
             )}
 

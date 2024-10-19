@@ -24,21 +24,37 @@ import {
   useUpdateRgbContextMutation,
 } from "@/mikro-next/api/graphql";
 import { OrbitControls, OrthographicCamera } from "@react-three/drei";
-import { Canvas, ThreeElements, useFrame } from "@react-three/fiber";
+import { Canvas, ThreeElements, useFrame, useThree } from "@react-three/fiber";
 import { Plus, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import * as THREE from "three";
 import { additiveBlending, bitmapToBlob, viewHasher } from "./TwoDRGBRender";
 import { useViewRenderFunction } from "./hooks/useViewRender";
 import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import { useFieldArray, useForm } from "react-hook-form";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { EntityOverlay } from "@/mikro-next/overlays/EntityOverlay";
 
 export interface RGBDProps {
   context: ListRgbContextFragment;
   rois: ListRoiFragment[];
   className?: string;
   follow?: "width" | "height";
+}
+
+export type PassThroughProps = {
+  setOpenPanels: Dispatch<SetStateAction<Panel[]>>;
+};
+
+export interface Panel {
+  positionX: number;
+  positionY: number;
+  roi: ListRoiFragment;
 }
 
 function Box(props: ThreeElements["mesh"]) {
@@ -154,39 +170,74 @@ interface ROIPolygonProps {
   vertices: [number, number][];
 }
 
-const ROIPolygon = (props: {
-  roi: ListRoiFragment;
-  width: number;
-  height: number;
-}) => {
-  const { roi, width, height } = props;
+interface ROIPolygonProps {
+  vertices: [number, number][];
+}
 
-  // Convert your ROI vectors to Three.js coordinates
+const ROIPolygon = (
+  props: {
+    roi: ListRoiFragment;
+    width: number;
+    height: number;
+  } & PassThroughProps,
+) => {
+  const { roi, width, height } = props;
+  const navigate = useNavigate();
+
+  const { camera, gl } = useThree(); // Get the camera and WebGL renderer
+  const [hovered, setHovered] = useState(false);
+  const popoverRef = useRef(null); // Ref for popover content
+
+  // Convert ROI vectors to Three.js coordinates
   const vertices = convertToThreeJSCoords(roi.vectors, width, height);
 
-  // Create the shape from the vertices
+  // Create shape from vertices
   const shape = new THREE.Shape();
   shape.moveTo(vertices[0][0], vertices[0][1]);
   vertices.slice(1).forEach(([x, y]) => shape.lineTo(x, y));
   shape.lineTo(vertices[0][0], vertices[0][1]); // Close the shape
 
-  const navigate = useNavigate();
-  const [hovered, setHovered] = useState(false);
-
   const onClick = (e) => {
-    navigate(MikroROI.linkBuilder(roi.id));
-    e.stopPropagation();
+    const vector = new THREE.Vector3(
+      rightCenter.x,
+      rightCenter.y,
+      rightCenter.z,
+    );
+    vector.project(camera); // Project the 3D position onto the 2D screen
+
+    // Convert to 2D screen space (pixels)
+    const x = (vector.x * 0.5 + 0.5) * gl.domElement.clientWidth;
+    const y = -(vector.y * 0.5 - 0.5) * gl.domElement.clientHeight;
+
+    props.setOpenPanels((panels) => {
+      if (panels.find((x) => x.roi.id === roi.id)) {
+        return panels.filter((x) => x.roi.id !== roi.id);
+      } else {
+        return [
+          ...panels,
+          {
+            positionX: x,
+            positionY: y,
+            roi: roi,
+          },
+        ];
+      }
+    });
   };
 
+  // Handle hover states and bounding box calculations
   useCursor(hovered, "pointer");
-
-  // Calculate the bounding box to find the top center position
   const boundingBox = new THREE.Box2().setFromPoints(shape.getPoints());
-  const offset = 0.001; // Adjust as needed to position text above the shape
+  const offset = 0.001;
   const topCenter = new THREE.Vector3(
     (boundingBox.min.x + boundingBox.max.x) / 2,
     boundingBox.max.y + offset,
-    0.1, // Slightly in front to prevent z-fighting
+    0.1,
+  );
+  const rightCenter = new THREE.Vector3(
+    boundingBox.max.x + offset,
+    (boundingBox.min.y + boundingBox.max.y) / 2,
+    0.1,
   );
 
   return (
@@ -215,11 +266,12 @@ const ROIPolygon = (props: {
         <shapeGeometry args={[shape]} />
         <lineBasicMaterial color="black" linewidth={1} />
       </line>
+
       {hovered && (
         <>
           <Text
             position={[topCenter.x, topCenter.y, topCenter.z]}
-            fontSize={0.03} // Scaled-down text size
+            fontSize={0.03}
             color="white"
             anchorX="center"
             anchorY="bottom"
@@ -232,7 +284,11 @@ const ROIPolygon = (props: {
   );
 };
 
-const ImageBitmapTextureMesh = ({ context, rois }: RGBDProps) => {
+const ImageBitmapTextureMesh = ({
+  context,
+  rois,
+  setOpenPanels,
+}: RGBDProps & PassThroughProps) => {
   const texture = useAsyncTexture(context);
 
   const [width, height, depth] = useImageDimensions(context);
@@ -241,18 +297,23 @@ const ImageBitmapTextureMesh = ({ context, rois }: RGBDProps) => {
   if (!texture) return null;
   return (
     <group>
-      <mesh rotation={[0, 0, Math.PI]}>
+      <mesh rotation={[0, 0, Math.PI]} onClick={() => setOpenPanels([])}>
         <planeGeometry args={[2, 2]} />
         <meshStandardMaterial map={texture} />
       </mesh>
       {rois.map((roi) => (
-        <ROIPolygon roi={roi} width={width} height={height} />
+        <ROIPolygon
+          roi={roi}
+          width={width}
+          height={height}
+          setOpenPanels={setOpenPanels}
+        />
       ))}
     </group>
   );
 };
 
-export const AutoZoomCamera = () => {
+export const AutoZoomCamera = (props: PassThroughProps) => {
   const cameraRef = useRef<THREE.OrthographicCamera | null>(null);
 
   useFrame(({ size }) => {
@@ -283,14 +344,36 @@ const colorMapOptions = Object.values(ColorMap).map((x) => ({
 }));
 
 export const RGBD = (props: RGBDProps) => {
+  const [openPanels, setOpenPanels] = useState<Panel[]>([]);
+
   return (
-    <div style={{ width: "100%", height: "100%" }}>
+    <div style={{ width: "100%", height: "100%" }} className="relative">
       <Canvas style={{ width: "100%", height: "100%" }}>
         <ambientLight intensity={1} />
-        <AutoZoomCamera />
+        <AutoZoomCamera setOpenPanels={setOpenPanels} />
         <OrbitControls enableRotate={false} enablePan={true} regress={false} />
-        <ImageBitmapTextureMesh {...props} />
+        <ImageBitmapTextureMesh {...props} setOpenPanels={setOpenPanels} />
       </Canvas>
+
+      {openPanels.map((panel) => (
+        <div
+          style={{
+            position: "absolute",
+            top: `${panel.positionY}px`,
+            left: `${panel.positionX + 20}px`,
+            zIndex: 10,
+          }}
+          className="transform -translate-y-1/2 max-w-[400px]"
+        >
+          <Card className="p-3">
+            {panel.roi.entity && <EntityOverlay entity={panel.roi.entity.id} />}
+
+            <MikroROI.DetailLink object={panel.roi.id}>
+              {panel.roi.entity?.linkedExpression.label}
+            </MikroROI.DetailLink>
+          </Card>
+        </div>
+      ))}
     </div>
   );
 };

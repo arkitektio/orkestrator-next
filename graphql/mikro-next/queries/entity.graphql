@@ -20,3 +20,12 @@ query SearchEntities($search: String, $values: [ID!]) {
     label: label
   }
 }
+
+query SearchGraphEntities(
+  $filters: EntityFilter
+  $pagination: GraphPaginationInput
+) {
+  entities(filters: $filters, pagination: $pagination) {
+    ...ListEntity
+  }
+}

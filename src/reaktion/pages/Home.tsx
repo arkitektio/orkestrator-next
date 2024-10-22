@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { CreateWorkspaceForm } from "../components/forms/CreateWorkspaceForm";
 import RunList from "../components/lists/RunList";
 import WorkspaceList from "../components/lists/WorkspaceList";
+import WorkspaceCarousel from "../edit/carousels/WorkspaceCarousel";
 
 const Page = () => {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ const Page = () => {
         </>
       }
     >
+      <WorkspaceCarousel />
       <WorkspaceList />
       <RunList />
     </PageLayout>

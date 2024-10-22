@@ -182,3 +182,12 @@ fragment Workspace on Workspace {
     ...Flow
   }
 }
+
+fragment CarouselWorkspace on Workspace {
+  id
+  title
+  description
+  latestFlow {
+    ...Flow
+  }
+}

@@ -4,10 +4,15 @@ query GetEntity($id: ID!) {
   }
 }
 
+query GetEntityGraphNode($id: ID!) {
+  entity(id: $id) {
+    ...EntityGraphNode
+  }
+}
+
 query ListEntities($filters: EntityFilter, $pagination: GraphPaginationInput) {
   entities(filters: $filters, pagination: $pagination) {
-    ...Entity
-    metricMap
+    ...ListEntity
   }
 }
 

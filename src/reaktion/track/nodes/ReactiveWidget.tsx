@@ -20,17 +20,20 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { NodeDescription } from "@/lib/rekuest/NodeDescription";
-import { ReactiveImplementation } from "@/reaktion/api/graphql";
+import { ReactiveImplementation, RunEventKind } from "@/reaktion/api/graphql";
 import { InStream } from "@/reaktion/base/Instream";
 import { OutStream } from "@/reaktion/base/Outstream";
 import { portToLabel } from "@/rekuest/widgets/utils";
 import React from "react";
 import { ReactiveNodeData, ReactiveNodeProps } from "../../types";
+import { useLatestNodeEvent } from "../hooks/useLatestNodeEvent";
+import { cn } from "@/lib/utils";
 
 export type ShapeProps = {
   implementation: ReactiveImplementation;
   data: ReactiveNodeData;
   id: string;
+  className?: string;
 };
 
 export type ContextMenuProps = {
@@ -57,10 +60,15 @@ export const TriangleToRight = ({ data, implementation }: ShapeProps) => {
   );
 };
 
-export const Default = ({ data }: ShapeProps) => {
+export const Default = ({ data, className }: ShapeProps) => {
   return (
     <>
-      <Card className="rounded-md border-blue-400/40 shadow-blue-400/20 dark:border-blue-300 dark:shadow-blue/20 shadow-xl">
+      <Card
+        className={cn(
+          "rounded-md border-blue-400/40 shadow-blue-400/20 dark:border-blue-300 dark:shadow-blue/20 shadow-xl",
+          className,
+        )}
+      >
         <CardHeader className="p-1">
           <Tooltip>
             <TooltipTrigger>
@@ -86,7 +94,7 @@ export const Default = ({ data }: ShapeProps) => {
   );
 };
 
-export const Select = ({ data }: ShapeProps) => {
+export const Select = ({ data, className }: ShapeProps) => {
   return (
     <>
       <Card className="rounded-md border-blue-400/40 shadow-blue-400/20 dark:border-blue-300 dark:shadow-blue/20 shadow-xl">
@@ -331,6 +339,8 @@ export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({
   data,
   id,
 }) => {
+  const latestEvent = useLatestNodeEvent(id);
+
   const Shape = shapeForImplementation(data.implementation);
   const ContextMenuImplementatoin = contextMenuForImplementation(
     data.implementation,
@@ -351,6 +361,13 @@ export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({
                   implementation={data.implementation}
                   data={data}
                   id={id}
+                  className={cn(
+                    "border-blue-400/40 shadow-blue-400/10 dark:border-blue-300 dark:shadow-blue/20 shadow-xl",
+                    latestEvent?.kind === RunEventKind.Error &&
+                      "border-red-400 dark:border-red-300  dark:shadow-red/20 shadow-red-400/10",
+                    latestEvent?.kind === RunEventKind.Complete &&
+                      "border-green-400 dark:border-green-300  dark:shadow-green/20 shadow-green-400/10",
+                  )}
                 />
               </PopoverTrigger>
               <PopoverContent></PopoverContent>

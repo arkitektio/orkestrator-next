@@ -38,6 +38,7 @@ import {
   useSearchGraphEntitiesLazyQuery,
   useSearchLinkedEntitiesLazyQuery,
   useSearchLinkedExpressionLazyQuery,
+  useSearchLinkedRelationsLazyQuery,
 } from "@/mikro-next/api/graphql";
 import { Tooltip } from "@radix-ui/react-tooltip";
 import { useEffect, useState } from "react";
@@ -213,9 +214,7 @@ export const LinkExpressionPanel = (props: {
     [graphSearch],
   );
 
-  const [options, setOptions] = useState<
-    (ListGraphFragment | null | undefined)[]
-  >([]);
+  const [options, setOptions] = useState<(Option | null | undefined)[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const query = (string: string) => {
@@ -262,14 +261,14 @@ export const LinkExpressionPanel = (props: {
           <CommandGroup>
             {options.filter(notEmpty).map((option) => (
               <CommandItem
-                value={option.id}
-                key={option.id}
+                value={option.value}
+                key={option.value}
                 onSelect={() => {
-                  console.log(option.id);
-                  props.onExpressionSelected(option);
+                  console.log(option.value);
+                  props.onExpressionSelected(option.value);
                 }}
               >
-                {option.name}
+                {option.value}
               </CommandItem>
             ))}
           </CommandGroup>
@@ -279,7 +278,7 @@ export const LinkExpressionPanel = (props: {
   );
 };
 
-export const EntitySearchField = ({
+export const EntityRelationSearchField = ({
   name,
   label,
   graph,
@@ -295,13 +294,7 @@ export const EntitySearchField = ({
 
   const form = useFormContext();
 
-  const [options, setOptions] = useState<
-    (ListEntityFragment | null | undefined)[]
-  >([]);
-  const [expressions, setExpressions] = useState<(Option | null | undefined)[]>(
-    [],
-  );
-
+  const [options, setOptions] = useState<(Option | null | undefined)[]>([]);
   const [generalPopoverOpen, setGeneralPopoverOpen] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
@@ -313,9 +306,7 @@ export const EntitySearchField = ({
   );
   const [graphPopoverOpen, setGraphPopoverOpen] = useState(false);
 
-  const [entitySearch] = useSearchGraphEntitiesLazyQuery();
-
-  const [linkedExpressionSearch] = useSearchLinkedEntitiesLazyQuery();
+  const [entitySearch] = useSearchLinkedRelationsLazyQuery();
 
   const search = useCallback(
     async (x: {
@@ -329,37 +320,8 @@ export const EntitySearchField = ({
       }
       let queryResult = await entitySearch({
         variables: {
-          filters: {
-            search: x.search,
-            ids: x.values?.map((x) => x.toString()),
-            graph: graphId,
-          },
-        },
-      });
-      if (queryResult?.error) {
-        throw new Error(queryResult.error[0].message);
-      }
-      if (!queryResult.data) {
-        throw new Error("No data");
-      }
-      return queryResult.data?.entities;
-    },
-    [entitySearch, selectedGraph, mygraph],
-  );
-
-  const linkedSearch = useCallback(
-    async (x: {
-      search?: string | undefined;
-      values?: (string | number)[] | undefined;
-    }) => {
-      let graphId = graph || selectedGraph?.id || mygraph?.id;
-
-      if (!graphId) {
-        throw new Error("No graph selected");
-      }
-      let queryResult = await linkedExpressionSearch({
-        variables: {
           search: x.search,
+          values: x.values?.map((x) => x.toString()),
           graph: graphId,
         },
       });
@@ -383,18 +345,6 @@ export const EntitySearchField = ({
       .catch((err) => {
         setError(err.message);
         setOptions([]);
-      });
-  };
-
-  const linkedQuery = (string: string) => {
-    linkedSearch({ search: string })
-      .then((res) => {
-        setExpressions(res || []);
-        setError(null);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setExpressions([]);
       });
   };
 
@@ -479,7 +429,6 @@ export const EntitySearchField = ({
                     className="h-9"
                     onValueChange={(e) => {
                       query(e);
-                      linkedQuery(e);
                     }}
                   />
                   <CommandList>
@@ -493,11 +442,11 @@ export const EntitySearchField = ({
                       <CommandGroup heading="Entities">
                         {options.filter(notEmpty).map((option) => (
                           <CommandItem
-                            value={option.id}
-                            key={option.id}
+                            value={option.value}
+                            key={option.value}
                             onSelect={() => {
-                              console.log(option.id);
-                              form.setValue(name, option.id, {
+                              console.log(option.value);
+                              form.setValue(name, option.value, {
                                 shouldValidate: true,
                               });
                               setGeneralPopoverOpen(false);
@@ -507,38 +456,11 @@ export const EntitySearchField = ({
                             <CheckIcon
                               className={cn(
                                 "ml-auto h-4 w-4",
-                                option.id === field.value
+                                option.value === field.value
                                   ? "opacity-100"
                                   : "opacity-0",
                               )}
                             />
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    )}
-                    {expressions.length > 0 && (
-                      <CommandGroup heading="New Entities">
-                        {expressions.filter(notEmpty).map((option) => (
-                          <CommandItem
-                            value={option.value}
-                            key={option.value}
-                            onSelect={() => {
-                              console.log(option.value);
-                              createNewEntity({
-                                variables: {
-                                  input: {
-                                    kind: option.value,
-                                  },
-                                },
-                              }).then((res) => {
-                                form.setValue(name, res.data?.createEntity.id, {
-                                  shouldValidate: true,
-                                });
-                                setGeneralPopoverOpen(false);
-                              });
-                            }}
-                          >
-                            New {option.label}
                           </CommandItem>
                         ))}
                       </CommandGroup>

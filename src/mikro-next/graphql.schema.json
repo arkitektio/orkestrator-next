@@ -5068,6 +5068,22 @@
             "deprecationReason": null
           },
           {
+            "name": "graph",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "Graph",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "nodes",
             "description": null,
             "args": [],
@@ -15591,13 +15607,9 @@
             "description": null,
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Metric",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null

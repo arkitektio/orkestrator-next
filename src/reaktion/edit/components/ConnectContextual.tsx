@@ -194,15 +194,22 @@ const combineOptions = [
 
 // Checks if two items are structurally equal, that means they have the same kind and identifier. (If the kind is a structure)
 const isStructuralMatch = (
-  item1: FlussPortFragment,
-  item2: FlussPortFragment,
-) =>
-  item1.kind === item2.kind &&
-  (item2.kind
-    ? PortKind.Structure
-      ? item1.identifier === item2.identifier
-      : true
-    : false);
+  item1: FlussPortFragment | undefined,
+  item2: FlussPortFragment | undefined,
+) => {
+  if (!item1 || !item2) {
+    return false;
+  }
+
+  return (
+    item1.kind === item2.kind &&
+    (item2.kind
+      ? PortKind.Structure
+        ? item1.identifier === item2.identifier
+        : true
+      : false)
+  );
+};
 
 const connectReactiveNodes = (
   leftPorts: FlussPortFragment[],
@@ -270,6 +277,35 @@ const connectReactiveNodes = (
         });
       });
     }
+  }
+
+  if (
+    leftPorts.length == 1 &&
+    leftPorts.at(0)?.kind == PortKind.List &&
+    isStructuralMatch(leftPorts.at(0)?.children?.at(0), rightPorts.at(0))
+  ) {
+    // Is chunk transferable
+    nodes.push({
+      node: {
+        id: nodeIdBuilder(),
+        type: "ReactiveNode",
+        position: { x: 0, y: 0 },
+        data: {
+          globalsMap: {},
+          title: "Chunk",
+          description: "Chunk the stream",
+          kind: GraphNodeKind.Reactive,
+          ins: [leftPorts],
+          constantsMap: {},
+          outs: [rightPorts],
+          voids: [],
+          constants: [],
+          implementation: ReactiveImplementation.Chunk,
+        },
+      },
+      title: "Chunk",
+      description: "Chunk the stream",
+    });
   }
 
   if (

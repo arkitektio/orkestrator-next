@@ -30,6 +30,9 @@ export const FlussWorkspace = buildSmart(
   "@fluss/workspace",
   "fluss/workspaces",
 );
+
+export const FlussRun = buildSmart("@fluss/run", "fluss/runs");
+
 export const RekuestReservation = buildSmart(
   "@rekuest-next/reservation",
   "rekuest/reservations",
@@ -222,5 +225,3 @@ export const KabinetRelease = buildSmart(
   "@kabinet/release",
   "kabinet/releases",
 );
-
-export const FlussRun = buildSmart("@fluss/run", "fluss/runs");

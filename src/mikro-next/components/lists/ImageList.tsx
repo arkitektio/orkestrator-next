@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import {
   ImageFilter,
   OffsetPaginationInput,
+  Ordering,
   useGetImagesQuery,
   WatchImagesDocument,
   WatchImagesSubscription,
@@ -18,7 +19,7 @@ export type Props = {
 
 const List = ({ filters, pagination }: Props) => {
   const { data, error, subscribeToMore, refetch } = useGetImagesQuery({
-    variables: { filters, pagination },
+    variables: { filters, pagination, order: { createdAt: Ordering.Desc } },
   });
 
   useEffect(() => {

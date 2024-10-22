@@ -212,13 +212,6 @@ export const DatasetTable = (props: { dataset: string }) => {
   return (
     <div className="w-full h-full">
       <div className="flex items-center py-4 gap-2">
-        <Form {...form}>
-          <GraphQLSearchField
-            placeholder="Add Metric"
-            searchQuery={searchM}
-            name="metrics"
-          />
-        </Form>
         <Input
           placeholder="Search..."
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}

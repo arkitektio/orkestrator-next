@@ -27,6 +27,8 @@ export const TemplateAssignForm = (props: TemplateAssignFormProps) => {
 
   const form = usePortForm({
     ports: template?.node.args || [],
+    overwrites: latestAssignation?.args,
+    reValidateMode: "onChange",
   });
 
   const onSubmit = async (data: any) => {

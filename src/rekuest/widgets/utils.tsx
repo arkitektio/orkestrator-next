@@ -81,10 +81,7 @@ export const portToZod = (port: LabellablePort): any => {
       baseType = z.string({ message: "Please enter a string" });
       break;
     case PortKind.Int:
-      baseType = z.preprocess(
-        (a) => parseInt(z.string().parse(a), 10),
-        z.number({ message: "Please enter a valid integer" }),
-      );
+      baseType = z.coerce.number({ message: "Please enter a valid integer" });
       break;
     case PortKind.Float:
       baseType = z.preprocess(
@@ -231,7 +228,8 @@ export const portToValidation = (port: LabellablePort): Yup.AnySchema => {
       baseType = Yup.number()
         .integer("Please enter a valid integer")
         .typeError(`Please enter a valid integer`)
-        .transform((v) => (v === "" || Number.isNaN(v) ? null : v));
+        .transform((v) => (v === "" || Number.isNaN(v) ? null : v))
+        .typeError("Please enter a valid integer");
       break;
     case PortKind.Float:
       baseType = Yup.number()

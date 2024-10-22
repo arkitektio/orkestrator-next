@@ -1,5 +1,6 @@
 import { ServiceMap } from "@/arkitekt/provider";
 import { MIKRO_ACTIONS } from "@/lib/mikro/actions";
+import { DeleteFileDocument } from "@/mikro-next/api/graphql";
 
 export type Condition = {
   type: string;
@@ -99,13 +100,23 @@ defaultRegistry.registerAction({
   title: "Delete File",
   description: "Delete the File",
   conditions: [{ type: "identifier", identifier: "@mikro/file" }],
-  execute: async ({ services, onProgress, abortSignal }) => {
+  execute: async ({ services, onProgress, abortSignal, state }) => {
     let kabinet = services["kabinet"];
     console.log("Deleting file");
 
     onProgress(50);
     // Sleepe
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    state.left.forEach((e) => {
+      kabinet.client.mutate({
+        mutation: DeleteFileDocument,
+        variables: {
+          input: {
+            id: e.object,
+          },
+        },
+      });
+    });
 
     onProgress(100);
     console.log("File deleted");

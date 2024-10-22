@@ -43,6 +43,7 @@ import {
   EntityFragment,
   ListEntitiesQuery,
   ListEntitiesQueryVariables,
+  ListEntityFragment,
   useGetLinkedExpressionByAgeNameQuery,
   useGetLinkedExpressionQuery,
   useListEntitiesQuery,
@@ -60,8 +61,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { EntityOverlay } from "@/mikro-next/overlays/EntityOverlay";
+import Timestamp from "react-timestamp";
 
-export const columns: ColumnDef<EntityFragment>[] = [
+export const columns: ColumnDef<ListEntityFragment>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -85,6 +87,44 @@ export const columns: ColumnDef<EntityFragment>[] = [
     ),
     enableSorting: false,
     enableHiding: false,
+  },
+  {
+    accessorKey: "createdAt",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Created at
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => <Timestamp date={row.getValue("createdAt")} />,
+    sortingFn: (a, b) => a.getValue("createdAt") - b.getValue("createdAt"),
+    enableSorting: true,
+    enableHiding: true,
+  },
+  {
+    accessorKey: "label",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Label
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => (
+      <div className="text-left font-medium">{row.getValue("label")}</div>
+    ),
+    sortingFn: (a, b) => a.getValue("label") - b.getValue("label"),
+    enableSorting: true,
+    enableHiding: true,
   },
   {
     accessorKey: "id",
@@ -122,7 +162,12 @@ export const columns: ColumnDef<EntityFragment>[] = [
     cell: ({ row, getValue }) => {
       const label = row.getValue("Label");
 
-      return <div className="text-center font-medium">{label}</div>;
+      return <div className="text-center font-small">{label}</div>;
+    },
+    filterFn: (rows, filterValue) => {
+      return rows.filter((row) => {
+        return row.getValue("Label").includes(filterValue);
+      });
     },
   },
   {
@@ -176,38 +221,6 @@ export const MetricHeader = (props: { ageName: string; graph: string }) => {
   );
 };
 
-const calculateColumns = (graph: string, data: ListEntitiesQuery) => {
-  let calculated_columns = columns;
-  let other_columns = [];
-
-  for (let entity of data?.entities || []) {
-    Object.keys(entity.metricMap).forEach((metric) => {
-      console.log("FOUND", metric);
-      if (!other_columns.find((column) => column.id === `metric-${metric}`)) {
-        other_columns.push({
-          id: `metric-${metric}`,
-          accessorKey: `metricMap.${metric}`,
-          header: () => (
-            <div className="text-center">
-              <MetricHeader ageName={metric} graph={graph} />
-            </div>
-          ),
-          cell: ({ row, getValue }) => {
-            const label = row.getValue(`metric-${metric}`);
-
-            return <div className="text-center font-medium">{label}</div>;
-          },
-        } as ColumnDef<EntityFragment>);
-      }
-    });
-  }
-
-  console.log(other_columns);
-
-  calculated_columns = calculated_columns.concat(other_columns);
-  return calculated_columns;
-};
-
 export type FormValues = {
   metrics?: string[];
   kinds?: string[];
@@ -215,8 +228,8 @@ export type FormValues = {
 };
 
 export const LinkedExpressionEntitiesTable = (props: {
-  graph?: string;
-  linkedExpression?: string;
+  graph: string;
+  linkedExpression: string;
 }) => {
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
@@ -257,14 +270,8 @@ export const LinkedExpressionEntitiesTable = (props: {
         offset: pagination.pageIndex * pagination.pageSize,
       },
     };
-    refetch(variables).then((d) => {
-      setColumns(calculateColumns(props.graph, d.data));
-    });
+    refetch(variables);
   }, [metrics, kinds, search, refetch]);
-
-  const [columns, setColumns] = React.useState<ColumnDef<EntityFragment>[]>(
-    () => calculateColumns(props.graph, data),
-  );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -311,9 +318,9 @@ export const LinkedExpressionEntitiesTable = (props: {
         </Form>
         <Input
           placeholder="Search..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          value={(table.getColumn("label")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
+            table.getColumn("label")?.setFilterValue(event.target.value)
           }
           className="max-w-sm w-full bg-background"
         />

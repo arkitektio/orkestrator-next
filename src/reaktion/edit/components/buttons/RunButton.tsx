@@ -4,7 +4,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { RekuestTemplate } from "@/linkers";
+import { RekuestAssignation, RekuestTemplate } from "@/linkers";
 import { FlowFragment } from "@/reaktion/api/graphql";
 import { flowToDefinition, flowToDependencies } from "@/reaktion/utils";
 import {
@@ -84,6 +84,12 @@ export const RunButton = (props: { flow: FlowFragment }) => {
     },
   });
 
+  const navigate = useNavigate();
+
+  const navigateToTemplate = (ass: { id: string }) => {
+    navigate(RekuestAssignation.linkBuilder(ass.id));
+  };
+
   return (
     <>
       {data?.templates && data.templates.length > 1 && (
@@ -104,7 +110,10 @@ export const RunButton = (props: { flow: FlowFragment }) => {
       )}
       {data?.templates && data.templates.length == 1 && (
         <>
-          <TemplateActionButton id={data.templates.at(0).id}>
+          <TemplateActionButton
+            id={data.templates.at(0).id}
+            onAssign={navigateToTemplate}
+          >
             <Button>Run on {data.templates.at(0).agent.name} </Button>
           </TemplateActionButton>
         </>

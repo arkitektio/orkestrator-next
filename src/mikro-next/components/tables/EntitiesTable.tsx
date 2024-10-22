@@ -41,12 +41,13 @@ import { MikroEntity } from "@/linkers";
 import {
   EntityFragment,
   ListEntitiesQueryVariables,
+  ListEntityFragment,
   useListEntitiesQuery,
   useSearchLinkedExpressionLazyQuery,
 } from "@/mikro-next/api/graphql";
 import { useForm } from "react-hook-form";
 
-export const columns: ColumnDef<EntityFragment>[] = [
+export const columns: ColumnDef<ListEntityFragment>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -167,25 +168,8 @@ const initialVariables: ListEntitiesQueryVariables = {
   },
 };
 
-const calculateColumns = (variables: ListEntitiesQueryVariables) => {
+const calculateColumns = () => {
   let calculated_columns = columns;
-  let other_columns =
-    variables.metrics?.map((metric) => {
-      return {
-        id: "metric-" + metric,
-        accessorKey: `metricMap.${metric}`,
-        header: () => <div className="text-center">{metric}</div>,
-        cell: ({ row, getValue }) => {
-          const label = row.getValue("metric-" + metric);
-
-          return <div className="text-center font-medium">{label}</div>;
-        },
-      } as ColumnDef<EntityFragment>;
-    }) || [];
-
-  console.log(other_columns);
-
-  calculated_columns = calculated_columns.concat(other_columns);
   return calculated_columns;
 };
 
@@ -209,7 +193,6 @@ export const EntitiesTable = (props: {
   const form = useForm<FormValues>({
     defaultValues: {},
   });
-  const { metrics, kinds, search } = form.watch();
 
   const { data, loading, refetch, error } = useListEntitiesQuery({
     variables: {
@@ -224,10 +207,6 @@ export const EntitiesTable = (props: {
     },
   });
 
-  const [columns, setColumns] = React.useState<ColumnDef<EntityFragment>[]>(
-    () => calculateColumns(initialVariables),
-  );
-
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -237,7 +216,7 @@ export const EntitiesTable = (props: {
   const [rowSelection, setRowSelection] = React.useState({});
 
   const table = useReactTable({
-    data: data?.entities ?? [],
+    data: data?.entities && [],
     columns,
     pageCount: -1,
     manualPagination: true,

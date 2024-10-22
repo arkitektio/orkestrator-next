@@ -46,7 +46,9 @@ export const NavigationPane = (props: {}) => {
         </DroppableNavLink>
       </SubTree>
 
-      <SubTreeTitle>Runs</SubTreeTitle>
+      <SubTreeTitle>
+        <FlussRun.ListLink>Runs</FlussRun.ListLink>
+      </SubTreeTitle>
       <SubTree>
         {rundata?.runs.map((run, index) => (
           <FlussRun.DetailLink

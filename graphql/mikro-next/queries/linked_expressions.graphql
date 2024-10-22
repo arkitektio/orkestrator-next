@@ -12,7 +12,27 @@ query GetLinkedExpressionByAgeName($ageName: String!, $graph: ID!) {
 
 query SearchLinkedExpression($search: String, $values: [ID!], $graph: ID) {
   options: linkedExpressions(
-    filters: { search: $search, ids: $values, graph: $graph },
+    filters: { search: $search, ids: $values, graph: $graph }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: label
+  }
+}
+
+query SearchLinkedRelations($search: String, $values: [ID!], $graph: ID) {
+  options: linkedExpressions(
+    filters: { search: $search, ids: $values, graph: $graph, kind: RELATION }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: label
+  }
+}
+
+query SearchLinkedEntities($search: String, $values: [ID!], $graph: ID) {
+  options: linkedExpressions(
+    filters: { search: $search, ids: $values, graph: $graph, kind: ENTITY }
     pagination: { limit: 10 }
   ) {
     value: id

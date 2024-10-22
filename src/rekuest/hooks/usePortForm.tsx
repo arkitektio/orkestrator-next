@@ -7,6 +7,7 @@ import {
   portToDefaults,
   submittedDataToRekuestFormat,
 } from "../widgets/utils";
+import { toast } from "sonner";
 
 export const portHash = (port: Port[]) => {
   return port
@@ -39,9 +40,14 @@ export const usePortForm = (props: {
 
   const overWrittenHandleSubmit = useCallback(
     (onSubmit: any) => {
-      return handleSubmit((data) => {
-        onSubmit(submittedDataToRekuestFormat(data, props.ports));
-      });
+      return handleSubmit(
+        (data) => {
+          onSubmit(submittedDataToRekuestFormat(data, props.ports));
+        },
+        (e) => {
+          toast.error(JSON.stringify(e));
+        },
+      );
     },
     [handleSubmit, hash],
   );

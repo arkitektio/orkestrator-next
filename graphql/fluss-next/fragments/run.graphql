@@ -4,6 +4,7 @@ fragment RunEvent on RunEvent {
   handle
   kind
   createdAt
+  exception
   value
   t
   causedBy

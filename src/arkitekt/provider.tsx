@@ -104,7 +104,7 @@ const defaultFaktsProps: Partial<FaktsProps> = {
 
 export type Service<T extends any = any> = {
   ward?: Ward;
-  client: T;
+  client: ApolloClient<T>;
 };
 
 export type ServiceBuilder<T> = (

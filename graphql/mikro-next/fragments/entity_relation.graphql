@@ -28,3 +28,10 @@ fragment ListEntityRelation on EntityRelation {
     }
   }
 }
+
+fragment EntityGraphEdge on EntityRelation {
+  id
+  label
+  leftId
+  rightId
+}

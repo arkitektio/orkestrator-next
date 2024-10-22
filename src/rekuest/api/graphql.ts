@@ -2243,6 +2243,7 @@ export type PrimaryNodesQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
   identifier?: InputMaybe<Scalars['String']['input']>;
   order?: InputMaybe<NodeOrder>;
+  search?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
@@ -4382,11 +4383,11 @@ export type DetailNodeQueryHookResult = ReturnType<typeof useDetailNodeQuery>;
 export type DetailNodeLazyQueryHookResult = ReturnType<typeof useDetailNodeLazyQuery>;
 export type DetailNodeQueryResult = Apollo.QueryResult<DetailNodeQuery, DetailNodeQueryVariables>;
 export const PrimaryNodesDocument = gql`
-    query PrimaryNodes($pagination: OffsetPaginationInput, $identifier: String, $order: NodeOrder) {
+    query PrimaryNodes($pagination: OffsetPaginationInput, $identifier: String, $order: NodeOrder, $search: String) {
   nodes(
     order: $order
     pagination: $pagination
-    filters: {demands: [{kind: ARGS, matches: [{at: 0, kind: STRUCTURE, identifier: $identifier}]}]}
+    filters: {demands: [{kind: ARGS, matches: [{at: 0, kind: STRUCTURE, identifier: $identifier}]}], search: $search}
   ) {
     ...PrimaryNode
   }
@@ -4408,6 +4409,7 @@ export const PrimaryNodesDocument = gql`
  *      pagination: // value for 'pagination'
  *      identifier: // value for 'identifier'
  *      order: // value for 'order'
+ *      search: // value for 'search'
  *   },
  * });
  */

@@ -1,22 +1,11 @@
 fragment EntityGraph on EntityGraph {
-  nodes {
+  graph {
     id
-    label
-    kindName
-    linkedExpression {
-      color
-    }
-    metrics {
-      value
-    }
+  }
+  nodes {
+    ...EntityGraphNode
   }
   edges {
-    id
-    label
-    leftId
-    rightId
-    metrics {
-      value
-    }
+    ...EntityGraphEdge
   }
 }

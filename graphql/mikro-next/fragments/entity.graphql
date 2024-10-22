@@ -64,4 +64,21 @@ fragment Entity on Entity {
 fragment ListEntity on Entity {
   id
   label
+  linkedExpression {
+    id
+    label
+  }
+  createdAt
+}
+
+fragment EntityGraphNode on Entity {
+  id
+  label
+  kindName
+  linkedExpression {
+    color
+  }
+  metrics {
+    value
+  }
 }

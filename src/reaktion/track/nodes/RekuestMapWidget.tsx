@@ -70,6 +70,7 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
             {latestEvent && latestEvent.kind === RunEventKind.Error && (
               <div className="text-center font-light p-2 text-red-300">
                 {latestEvent?.kind === RunEventKind.Error && "❌"}
+                {latestEvent.exception}
               </div>
             )}
             {!latestEvent && (
@@ -78,7 +79,7 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
           </div>
         </CardTitle>
         <CardDescription></CardDescription>
-        {expanded && <div>Not implemented yet</div>}
+        {expanded && <div></div>}
       </CardHeader>
       {outs.map((s, index) => (
         <OutStream stream={s} id={index} length={outs.length} />

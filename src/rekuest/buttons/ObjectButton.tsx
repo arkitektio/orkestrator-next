@@ -22,6 +22,7 @@ import { PrimaryNodeFragment, usePrimaryNodesQuery } from "../api/graphql";
 import { useAssignProgress } from "../hooks/useAssignProgress";
 import { useHashAction } from "../hooks/useHashActions";
 import { useNodeAction } from "../hooks/useNodeAction";
+import { Input } from "@/components/ui/input";
 
 export const AssignButton = (props: {
   object: string;
@@ -119,10 +120,12 @@ export const InstallButton = (props: {
 export const ApplicableNodes = (props: {
   object: string;
   identifier: string;
+  filter?: string;
 }) => {
   const { data } = usePrimaryNodesQuery({
     variables: {
       identifier: props.identifier,
+      search: props.filter,
     },
   });
 
@@ -258,6 +261,10 @@ export type ObjectButtonProps = {
 };
 
 export const ObjectButton = (props: ObjectButtonProps) => {
+  const [filter, setFilterValue] = React.useState<string | undefined>(
+    undefined,
+  );
+
   return (
     <>
       <>
@@ -270,12 +277,20 @@ export const ObjectButton = (props: ObjectButtonProps) => {
             )}
           </PopoverTrigger>
           <PopoverContent className="text-white border-gray-800 px-2 py-2 items-center">
+            <Input
+              type="text"
+              onChange={(e) => setFilterValue(e.target.value)}
+              value={filter}
+              autoFocus
+            />
+
             <div className="text-xs text-muted-foreground mx-auto mb-2">
               Assign to
             </div>
             <ApplicableNodes
               object={props.object}
               identifier={props.identifier}
+              filter={filter}
             />
             <div className="text-xs text-muted-foreground mx-auto mb-2">
               Generic Actions
@@ -283,6 +298,7 @@ export const ObjectButton = (props: ObjectButtonProps) => {
             <ApplicableActions
               object={props.object}
               identifier={props.identifier}
+              filter={filter}
             />
             <div className="text-xs text-muted-foreground mx-auto my-2">
               Available to install
@@ -290,6 +306,7 @@ export const ObjectButton = (props: ObjectButtonProps) => {
             <ApplicableDefinitions
               object={props.object}
               identifier={props.identifier}
+              filter={filter}
             />
           </PopoverContent>
         </Popover>

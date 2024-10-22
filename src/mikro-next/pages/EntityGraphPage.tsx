@@ -1,14 +1,12 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Form } from "@/components/ui/form";
-import cytoscape, { InputEventObject } from "cytoscape";
+import cytoscape, { ElementDefinition, InputEventObject } from "cytoscape";
 import cola from "cytoscape-cola";
 import { useEffect, useRef, useState } from "react";
 import CytoscapeComponent from "react-cytoscapejs";
 import { useForm } from "react-hook-form";
 import {
-  EntityFragment,
   EntityGraphEdgeFragment,
   EntityGraphNodeFragment,
   GetEntityGraphQuery,
@@ -18,10 +16,6 @@ import {
   useGetEntityGraphNodeLazyQuery,
   useGetEntityGraphQuery,
   useGetEntityQuery,
-  useListLinkedExpressionQuery,
-  useSearchLinkedExpressionQuery,
-  useSearchLinkedRelationsLazyQuery,
-  useSearchOntologiesLazyQuery,
 } from "../api/graphql";
 
 import { SearchField, SearchFunction } from "@/components/fields/SearchField";
@@ -31,9 +25,8 @@ import { MikroEntity } from "@/linkers";
 import cise from "cytoscape-cise";
 import dagre from "cytoscape-dagre";
 import { useNavigate, useParams } from "react-router-dom";
-import { EntitySearchField } from "../components/fields/EntitySearchField";
-import { toast } from "sonner";
 import { EntityRelationSearchField } from "../components/fields/EntityRelationSearchField";
+import { EntitySearchField } from "../components/fields/EntitySearchField";
 import { EntityOverlay } from "../overlays/EntityOverlay";
 
 cytoscape.use(cola);
@@ -263,7 +256,6 @@ export default asDetailQueryRoute(
     const navigate = useNavigate();
 
     const handleTap = (event: InputEventObject) => {
-      console.log("The event", event);
       if (event.originalEvent.shiftKey) {
         setSelectedNode(null);
         setSelectedEdge(null);
@@ -408,26 +400,24 @@ export default asDetailQueryRoute(
       })
         .then((data) => {
           if (data.data?.entityGraph) {
-            let elements = graphToElements(data.data, id);
+            let nodes = data?.data?.entityGraph.nodes.map(
+              nodeToElement,
+            ) as ElementDefinition[];
+            let edges = data?.data?.entityGraph.edges.map(
+              relationToEdge,
+            ) as ElementDefinition[];
 
-            for (let node of elements.nodes) {
-              console.log("Adding node", node);
-              cy.current?.nodes().add(node);
-            }
-
-            for (let edge of elements.edges) {
-              console.log("Adding edge", edge);
-              cy.current?.edges().add(edge);
-            }
+            cy.current?.add(nodes.concat(edges));
 
             cy.current
               ?.layout({
-                name: "cise",
+                name: layout,
                 clusters: (node) => {
                   return node.data("label");
                 },
               })
               .run();
+
             setLoading(false);
           }
         })
@@ -558,7 +548,7 @@ export default asDetailQueryRoute(
                 <Button
                   onClick={() => handleMoreNodeClick(selectedNode.id)}
                   className="flex-1 rounded-l-full"
-                  disabled={true}
+                  disabled={false}
                 >
                   Expand
                 </Button>

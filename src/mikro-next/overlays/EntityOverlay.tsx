@@ -33,7 +33,7 @@ export const EntityOverlay = (props: { entity: string }) => {
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        {data?.entity?.relations.map((relation, i) => (
+        {data?.entity?.relations.slice(0, 20).map((relation, i) => (
           <Card className="p-2 truncate">
             <MikroEntityRelation.DetailLink
               object={relation.id}

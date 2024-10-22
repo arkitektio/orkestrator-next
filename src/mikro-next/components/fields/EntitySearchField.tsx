@@ -29,17 +29,13 @@ import {
 import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn, notEmpty } from "@/lib/utils";
 import {
-  ExpressionKind,
   ListEntityFragment,
   ListGraphFragment,
   useCreateEntityMutation,
-  useListEntitiesLazyQuery,
   useListGraphsLazyQuery,
   useMyActiveGraphQuery,
-  useSearchEntitiesLazyQuery,
   useSearchExpressionLazyQuery,
   useSearchGraphEntitiesLazyQuery,
-  useSearchGraphsLazyQuery,
   useSearchLinkedExpressionLazyQuery,
 } from "@/mikro-next/api/graphql";
 import { Tooltip } from "@radix-ui/react-tooltip";
@@ -268,7 +264,7 @@ export const LinkExpressionPanel = (props: {
                 key={option.id}
                 onSelect={() => {
                   console.log(option.id);
-                  props.onGraphSelected(option);
+                  props.onExpressionSelected(option);
                 }}
               >
                 {option.name}

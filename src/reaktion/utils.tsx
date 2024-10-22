@@ -356,6 +356,10 @@ export const flowToDefinition = (flow: FlowFragment): DefinitionInput => {
       ?.find((arg) => arg.__typename == "ArgNode")
       ?.outs.at(0)
       ?.map((p) => convertPortToInput(p)) || [];
+
+  let kwargs =
+    flow.graph.globals?.map((arg) => convertPortToInput(arg.port)) || [];
+
   let returns =
     flow.graph?.nodes
       ?.find((arg) => arg.__typename == "ReturnNode")
@@ -364,7 +368,7 @@ export const flowToDefinition = (flow: FlowFragment): DefinitionInput => {
 
   return {
     kind: NodeKind.Function,
-    args: args,
+    args: [...args, ...kwargs],
     returns: returns,
     name: flow.title,
     description: flow.description,

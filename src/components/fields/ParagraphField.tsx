@@ -6,10 +6,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { useFormContext } from "react-hook-form";
-import { FieldProps } from "./types";
 import { Textarea } from "../ui/textarea";
+import { FieldProps } from "./types";
 
 export const ParagraphField = (
   props: FieldProps & { placeholder?: string },
@@ -29,6 +28,7 @@ export const ParagraphField = (
             <Textarea
               placeholder={props.placeholder ? props.placeholder : "Enter.."}
               {...field}
+              className="dark:text-white"
             />
           </FormControl>
           <FormDescription>{props.description}</FormDescription>

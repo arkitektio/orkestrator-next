@@ -3851,6 +3851,30 @@
             "deprecationReason": null
           },
           {
+            "name": "rescanRepos",
+            "description": "Rescan all repos",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "GithubRepo",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "scanRepo",
             "description": "Create a new dask cluster on a bridge server",
             "args": [

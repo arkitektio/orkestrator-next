@@ -41,10 +41,6 @@ const TheCard = ({ item, mates }: ImageCardProps) => {
           backgroundPosition: "left center",
         }}
       >
-        <MikroRenderedPlot.ObjectButton
-          object={item.id}
-          className="ml-3 my-auto"
-        />
         <MikroRenderedPlot.DetailLink
           className={({ isActive } /*  */) =>
             "z-10 font-bold text-md mb-2 cursor-pointer " +

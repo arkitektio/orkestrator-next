@@ -9,12 +9,6 @@ import { useDrag, useDrop } from "react-dnd";
 import { useMySelection } from "../selection/SelectionContext";
 import { Mates } from "./Mates";
 import { SmartModelProps } from "./types";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import { SmartContext } from "@/rekuest/buttons/ObjectButton";
 
 export const SmartModel = ({
   showSelfMates = true,
@@ -121,36 +115,49 @@ export const SmartModel = ({
         e.preventDefault();
       }}
     >
-      <ContextMenu>
-        <ContextMenuContent className="dark:border-gray-700">
-          <SmartContext identifier={props.identifier} object={props.object} />
-        </ContextMenuContent>
-        <ContextMenuTrigger asChild>
-          <div
-            ref={drag}
-            className={dragClassNameFunc({
+      <Popover open={isOver || show}>
+        <PopoverContent side="bottom" sideOffset={-10}>
+          {(isOver || show) && (
+            <Mates
+              self={self}
+              onProgress={onProgress}
+              withSelf={true}
+              overItems={overItems ? overItems : [self]}
+              onDone={async () => setShow(false)}
+              onError={async () => setShow(false)}
+              mateFinder={mates && composeMates(mates)}
+            />
+          )}
+        </PopoverContent>
+        <PopoverAnchor
+          ref={drag}
+          data-draggable
+          className={dragClassNameFunc({
+            isDragging,
+            isOver,
+            canDrop,
+            progress,
+          })}
+          style={
+            props.dragStyle &&
+            props.dragStyle({
               isDragging,
               isOver,
               canDrop,
               progress,
-            })}
-            style={
-              props.dragStyle &&
-              props.dragStyle({
-                isDragging,
-                isOver,
-                canDrop,
-                progress,
-              })
-            }
-          >
-            {isSelected && (
-              <Card className="border-2 absolute border-solid border-primary" />
-            )}
-            {props.children}
-          </div>
-        </ContextMenuTrigger>
-      </ContextMenu>
+            })
+          }
+          draggable={true}
+          onDragStart={(e) => {
+            e.dataTransfer.setData("text", JSON.stringify(self));
+          }}
+        >
+          {isSelected && (
+            <Card className="border-2 absolute border-solid border-primary" />
+          )}
+          {props.children}
+        </PopoverAnchor>
+      </Popover>
     </div>
   );
 };

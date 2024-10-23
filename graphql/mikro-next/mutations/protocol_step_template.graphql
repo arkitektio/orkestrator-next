@@ -1,0 +1,11 @@
+mutation CreateProtocolStepTemplate($input: ProtocolStepTemplateInput!) {
+  createProtocolStepTemplate(input: $input) {
+    ...ProtocolStepTemplate
+  }
+}
+
+mutation UpdateProtocolStepTemplate($input: UpdateProtocolStepTemplateInput!) {
+  updateProtocolStepTemplate(input: $input) {
+    ...ProtocolStepTemplate
+  }
+}

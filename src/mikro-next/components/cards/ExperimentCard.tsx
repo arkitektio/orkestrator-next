@@ -21,7 +21,6 @@ const TheCard = ({ item, mates }: Props) => {
         >
           {item?.name}
         </MikroExperiment.DetailLink>
-        <MikroExperiment.ObjectButton object={item.id} />
       </Card>
     </MikroExperiment.Smart>
   );

@@ -11,11 +11,13 @@ import {
   usePutImagesInDatasetMutation,
 } from "@/mikro-next/api/graphql";
 import { ViewType } from "@/mikro-next/pages/DatasetPage";
-import { LayoutList, ListIcon } from "lucide-react";
+import { ArrowLeft, ArrowRight, LayoutList, ListIcon } from "lucide-react";
 import DatasetCard from "../cards/DatasetCard";
 import FileCard from "../cards/FileCard";
 import ImageCard from "../cards/ImageCard";
 import { ProvenanceSidebar } from "../sidebars/ProvenanceSidebar";
+import { offset } from "@udecode/plate-floating";
+import { useState } from "react";
 
 export type IRepresentationScreenProps = {};
 
@@ -27,9 +29,15 @@ export const DatasetListExplorer = (props: {
   const [putDatasets] = usePutDatasetsInDatasetMutation();
   const [putImages] = usePutImagesInDatasetMutation();
 
+  const [pagination, setPagination] = useState({
+    limit: 30,
+    offset: 0,
+  });
+
   const { data, loading, refetch, error } = useChildrenQuery({
     variables: {
       id: props.dataset.id,
+      pagination: pagination,
     },
   });
 
@@ -78,50 +86,81 @@ export const DatasetListExplorer = (props: {
           >
             <LayoutList />
           </Button>
+
+          <Button
+            variant="outline"
+            onClick={() => {
+              setPagination({
+                limit: pagination.limit,
+                offset: pagination.offset - pagination.limit,
+              });
+            }}
+            disabled={pagination.offset - pagination.limit < 0}
+          >
+            <ArrowLeft />
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setPagination({
+                limit: pagination.limit,
+                offset: pagination.offset + pagination.limit,
+              });
+            }}
+            disabled={
+              data?.children && data?.children.length < pagination.limit
+            }
+          >
+            <ArrowRight />
+          </Button>
         </div>
       }
     >
-      <div className="grid grid-cols-6 rounded-md gap-4 mt-2 h-full">
-        {data?.children.map((child) => {
-          if (child.__typename === "Dataset") {
-            return <DatasetCard dataset={child} />;
-          } else if (child.__typename === "Image") {
-            return <ImageCard image={child} />;
-          } else if (child.__typename === "File") {
-            return <FileCard file={child} />;
-          } else {
-            return <div>Unknown type</div>;
-          }
-        })}
+      <div className="flex-grow">
+        <div className="grid grid-cols-6 rounded-md gap-4 mt-2">
+          {data?.children.map((child) => {
+            if (child.__typename === "Dataset") {
+              return <DatasetCard dataset={child} className="h-10" />;
+            } else if (child.__typename === "Image") {
+              return (
+                <ImageCard image={child} className="h-20 w-full  ellipsis" />
+              );
+            } else if (child.__typename === "File") {
+              return <FileCard file={child} className="h-10" />;
+            } else {
+              return <div>Unknown type</div>;
+            }
+          })}
+        </div>
+        <DropZone
+          accepts={["item:@mikro/image", "list:@mikro/image"]}
+          className="border border-gray-800 cursor-pointer rounded p-5 text-white bg-gray-900 hover:shadow-lg truncate"
+          onDrop={async (item) => {
+            await putImages({
+              variables: {
+                selfs: item.map((i) => i.id),
+                other: props?.dataset?.id,
+              },
+            });
+          }}
+          canDropLabel={"Drag datasets here to associated with this Dataset"}
+          overLabel={"Release to add"}
+        />
+        <DropZone
+          accepts={["item:@mikro/dataset", "list:@mikro/dataset"]}
+          className="border border-gray-800 cursor-pointer rounded p-5 text-white bg-gray-900 hover:shadow-lg truncate"
+          onDrop={async (item) => {
+            await putDatasets({
+              variables: {
+                selfs: item.map((i) => i.id),
+                other: props?.dataset?.id,
+              },
+            });
+          }}
+          canDropLabel={"Drag datasets here to associated with this Dataset"}
+          overLabel={"Release to add"}
+        />
       </div>
-      <DropZone
-        accepts={["item:@mikro/image", "list:@mikro/image"]}
-        className="border border-gray-800 cursor-pointer rounded p-5 text-white bg-gray-900 hover:shadow-lg truncate"
-        onDrop={async (item) => {
-          await putImages({
-            variables: {
-              selfs: item.map((i) => i.id),
-              other: props?.dataset?.id,
-            },
-          });
-        }}
-        canDropLabel={"Drag datasets here to associated with this Dataset"}
-        overLabel={"Release to add"}
-      />
-      <DropZone
-        accepts={["item:@mikro/dataset", "list:@mikro/dataset"]}
-        className="border border-gray-800 cursor-pointer rounded p-5 text-white bg-gray-900 hover:shadow-lg truncate"
-        onDrop={async (item) => {
-          await putDatasets({
-            variables: {
-              selfs: item.map((i) => i.id),
-              other: props?.dataset?.id,
-            },
-          });
-        }}
-        canDropLabel={"Drag datasets here to associated with this Dataset"}
-        overLabel={"Release to add"}
-      />
     </MikroDataset.ModelPage>
   );
 };

@@ -101,6 +101,10 @@ export const MikroProtocolStep = buildSmart(
   "@mikro/protocolstep",
   "mikro/protocolsteps",
 );
+export const MikroProtocolStepTemplate = buildSmart(
+  "@mikro/protocolsteptemplate",
+  "mikro/protocolsteptemplates",
+);
 
 export const OmeroArkProject = buildSmart(
   "@omero-ark/project",

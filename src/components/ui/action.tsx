@@ -1,9 +1,9 @@
 import { cn } from "@/lib/utils";
 import { Action, useAction } from "@/providers/command/CommandContext";
 import React, { useCallback, useState } from "react";
-import { Button } from "./button";
+import { Button, ButtonProps } from "./button";
 
-export interface ActionButtonProps extends Action {
+export interface ActionButtonProps extends Action, ButtonProps {
   children: React.ReactNode;
   className?: string;
   disabled?: boolean;
@@ -48,6 +48,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
       className={cn("flex flex-row items-center justify-center", className)}
       disabled={doing || props.disabled}
       onClick={onClick}
+      {...props}
     >
       {children}
     </Button>

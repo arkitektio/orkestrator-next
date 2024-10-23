@@ -6,7 +6,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { KabinetPod } from "@/linkers";
-import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 import { MateFinder } from "../../../mates/types";
 import { ListPodFragment } from "../../api/graphql";
 
@@ -34,9 +33,7 @@ const TheCard = ({ item, mates }: Props) => {
             </CardDescription>
           </div>
         </CardHeader>
-        <CardContent className="flex flex-row gap-2">
-          <ObjectButton object={item.id} identifier="@kabinet/pod" />
-        </CardContent>
+        <CardContent className="flex flex-row gap-2"></CardContent>
       </Card>
     </KabinetPod.Smart>
   );

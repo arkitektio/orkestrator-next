@@ -28,6 +28,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { EntityRelationSearchField } from "../components/fields/EntityRelationSearchField";
 import { EntitySearchField } from "../components/fields/EntitySearchField";
 import { EntityOverlay } from "../overlays/EntityOverlay";
+import { EntitySidebar } from "../overlays/EntitySidebar";
 
 cytoscape.use(cola);
 cytoscape.use(cise);
@@ -57,15 +58,39 @@ const relationToEdge = (edge: EntityGraphEdgeFragment) => {
   };
 };
 
-export const graphToElements: (
-  graph: GetEntityGraphQuery,
-  root: string,
-) => any = (graph, root) => {
-  return {
-    nodes: graph.entityGraph.nodes.map(nodeToElement),
-    edges: graph.entityGraph.edges.map(relationToEdge),
-  };
+export const graphToElements: (graph: GetEntityGraphQuery) => any = (graph) => {
+  return [
+    ...graph.entityGraph.nodes.map(nodeToElement),
+    ...graph.entityGraph.edges.map(relationToEdge),
+  ];
 };
+
+function debounce<T extends (...args: any[]) => void>(
+  func: T,
+  wait: number,
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | null;
+  return function (...args: Parameters<T>): void {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
+
+function throttle<T extends (...args: any[]) => void>(
+  func: T,
+  limit: number,
+): (...args: Parameters<T>) => void {
+  let inThrottle: boolean;
+  return function (...args: Parameters<T>) {
+    if (!inThrottle) {
+      func(...args);
+      inThrottle = true;
+      setTimeout(() => (inThrottle = false), limit);
+    }
+  };
+}
 
 const nodeStyle = {
   shape: "round-rectangle",
@@ -337,6 +362,7 @@ export default asDetailQueryRoute(
         }
 
         if (event.originalEvent.detail > 1) {
+          debouncedHandleMoreNodeClick(target.data().id);
           setSelectedNode(target.data());
           setAnchorPosition({
             x: renderedPosition.x,
@@ -344,6 +370,8 @@ export default asDetailQueryRoute(
             internalX: position.x,
             internalY: position.y,
           });
+        } else {
+          setSelectedNode(target.data());
         }
       }
 
@@ -365,25 +393,38 @@ export default asDetailQueryRoute(
       }
     };
 
-    useEffect(() => {
-      if (data) {
-        let elements = graphToElements(data, id);
-        setGraphElements(elements);
-      }
-    }, [data]);
+    const [isLoading, setIsLoading] = useState(false);
 
-    const setGraphElements = (elements: any) => {
-      cy.current?.elements().remove();
-      cy.current?.add(elements);
-      cy.current
-        ?.layout({
-          name: "cise",
-          clusters: (node) => {
-            return node.data("label");
-          },
-        })
-        .run();
+    const rerunLayout = () => {
+      setIsLoading(true);
+
+      // Simulate a layout function, replace this with your actual layout logic
+      var layoutx = cy.current?.layout({ name: layout });
+      if (!layoutx) {
+        return;
+      }
+
+      layoutx.run();
+
+      // Once layout is done, set loading state to false
+      setIsLoading(false);
     };
+
+    useEffect(() => {
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.ctrlKey && event.key === "q") {
+          event.preventDefault();
+          rerunLayout(); // Rerun layout on keybind "Ctrl+R"
+          event.stopPropagation();
+        }
+      };
+
+      window.addEventListener("keydown", handleKeyDown);
+
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+      };
+    }, []);
 
     const [loading, setLoading] = useState(false);
 
@@ -409,15 +450,6 @@ export default asDetailQueryRoute(
 
             cy.current?.add(nodes.concat(edges));
 
-            cy.current
-              ?.layout({
-                name: layout,
-                clusters: (node) => {
-                  return node.data("label");
-                },
-              })
-              .run();
-
             setLoading(false);
           }
         })
@@ -425,6 +457,10 @@ export default asDetailQueryRoute(
           setLoading(false);
         });
     };
+
+    const debouncedHandleMoreNodeClick = throttle((nodeId: string) => {
+      handleMoreNodeClick(nodeId);
+    }, 1000); // Debounce for 200ms
 
     const handleClosePopover = (e) => {
       setSelectedNode(null);
@@ -488,7 +524,7 @@ export default asDetailQueryRoute(
       <PageLayout
         title="Knowledge Graph"
         pageActions={
-          <>
+          <div className="flex flex-row gap-2">
             <Form {...form}>
               <form className="flex flex-row gap-2">
                 <EntityRelationSearchField
@@ -499,11 +535,26 @@ export default asDetailQueryRoute(
                 <SearchField {...form} name="layout" search={searchLayouts} />
               </form>
             </Form>
-          </>
+            <Button
+              onClick={() => {
+                rerunLayout();
+              }}
+              disabled={isLoading}
+              variant={"outline"}
+            >
+              {isLoading ? "Loading..." : "Rerun Layout"}
+            </Button>
+          </div>
+        }
+        sidebars={
+          <div className="flex flex-col gap-2">
+            {selectedNode?.id && <EntitySidebar entity={selectedNode.id} />}
+          </div>
         }
       >
         <div className="w-full h-full relative">
           <CytoscapeComponent
+            elements={data.entityGraph ? graphToElements(data) : []}
             userPanningEnabled={true}
             style={{ width: "100%", height: "100%" }}
             stylesheet={[
@@ -523,70 +574,7 @@ export default asDetailQueryRoute(
               cy.current = thecy;
             }}
           />
-          {selectedNode && (
-            <Card
-              className="p-4 "
-              style={{
-                position: "absolute",
-                zIndex: 1000,
-                left: anchorPosition.x,
-                top: anchorPosition.y,
-                transform: "translate(-50%, -50%)",
-              }}
-              onClick={handleClosePopover}
-            >
-              <EntityOverlay entity={selectedNode.id} />
-              <div className="p-4">
-                {selectedNode.metrics.map((metric) => (
-                  <div className="flex flex-row justify-between">
-                    <div>{metric.key}</div>
-                    <div>{metric.value}</div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex flex-row justify-between rounded rounded-md">
-                <Button
-                  onClick={() => handleMoreNodeClick(selectedNode.id)}
-                  className="flex-1 rounded-l-full"
-                  disabled={false}
-                >
-                  Expand
-                </Button>
 
-                <Button
-                  onClick={() => {
-                    navigate(MikroEntity.linkBuilder(selectedNode.id));
-                  }}
-                  className="flex-1 rounded-r-full"
-                >
-                  View
-                </Button>
-              </div>
-            </Card>
-          )}
-          {selectedEdge && (
-            <Card
-              className="p-2 "
-              style={{
-                position: "absolute",
-                zIndex: 1000,
-                left: edgeAnchorPosition.x,
-                top: edgeAnchorPosition.y,
-                transform: "translate(-50%, -50%)",
-              }}
-              onClick={handleClosePopover}
-            >
-              {selectedEdge.metrics.length == 0 && (
-                <div>No metrics available</div>
-              )}
-              {selectedEdge.metrics.map((metric) => (
-                <div className="flex flex-row justify-between">
-                  <p className={"text-muted mr-2"}>{metric.key}</p>
-                  <div>{metric.value}</div>
-                </div>
-              ))}
-            </Card>
-          )}
           {selectedNaked && (
             <Card
               className="p-2 "

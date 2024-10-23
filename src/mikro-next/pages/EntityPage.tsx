@@ -26,7 +26,6 @@ import {
 import Timestamp from "react-timestamp";
 import { ImageRGBD, RoiRGBD } from "../components/render/TwoDThree";
 import CreateEntityMetricForm from "../forms/CreateEntityMetricForm";
-import RecordProtocolStepForm from "../forms/RecordProtocolStepForm";
 
 export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
   return (
@@ -40,15 +39,6 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
               Graph
             </Button>
           </MikroEntity.DetailLink>
-          <FormDialog
-            trigger={
-              <Button variant="outline" size="sm">
-                Record
-              </Button>
-            }
-          >
-            <RecordProtocolStepForm entity={data.entity} />
-          </FormDialog>
           <FormDialog
             trigger={
               <Button variant="outline" size="sm">

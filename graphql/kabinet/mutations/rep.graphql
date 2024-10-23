@@ -3,3 +3,9 @@ mutation CreateGithubRepo($identifier: String!) {
     id
   }
 }
+
+mutation RescanRepos {
+  rescanRepos {
+    id
+  }
+}

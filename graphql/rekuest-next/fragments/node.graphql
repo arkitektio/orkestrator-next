@@ -61,6 +61,7 @@ fragment PrimaryNode on Node {
   id
   stateful
   name
+  hash
   templates {
     id
     interface

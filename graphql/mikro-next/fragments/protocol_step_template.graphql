@@ -1,0 +1,11 @@
+fragment ProtocolStepTemplate on ProtocolStepTemplate {
+  id
+  name
+  plateChildren
+}
+
+fragment ListProtocolStepTemplate on ProtocolStepTemplate {
+  id
+  name
+  plateChildren
+}

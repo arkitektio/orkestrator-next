@@ -1,21 +1,18 @@
 fragment ProtocolStep on ProtocolStep {
   id
   name
-  kind
-  expression {
-    label
+  template {
+    name
+    plateChildren
   }
-  description
   forReagent {
     id
   }
   forEntity {
     id
   }
-  usedEntity {
-    id
-  }
-  usedReagent {
+  performedAt
+  performedBy {
     id
   }
 }
@@ -23,9 +20,8 @@ fragment ProtocolStep on ProtocolStep {
 fragment ListProtocolStep on ProtocolStep {
   id
   name
-  kind
-  expression {
-    label
+  performedAt
+  performedBy {
+    id
   }
-  description
 }

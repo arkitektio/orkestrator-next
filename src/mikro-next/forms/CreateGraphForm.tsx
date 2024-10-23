@@ -18,7 +18,7 @@ import {
 import { ParagraphField } from "@/components/fields/ParagraphField";
 
 export default (props) => {
-  const [add] = useCreateOntologyMutation();
+  const [add] = useCreateGraphMutation();
 
   const dialog = useGraphQlFormDialog(add);
 

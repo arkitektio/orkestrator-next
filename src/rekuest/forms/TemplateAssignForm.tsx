@@ -14,6 +14,7 @@ export type TemplateAssignFormProps = {
   id: string;
   onAssign?: (assignation: PostmanAssignationFragment) => void;
   onError?: (error: any) => void;
+  args?: any;
 };
 
 export const TemplateAssignForm = (props: TemplateAssignFormProps) => {
@@ -27,7 +28,7 @@ export const TemplateAssignForm = (props: TemplateAssignFormProps) => {
 
   const form = usePortForm({
     ports: template?.node.args || [],
-    overwrites: latestAssignation?.args,
+    overwrites: { ...latestAssignation?.args, ...props.args },
     reValidateMode: "onChange",
   });
 

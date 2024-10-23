@@ -21,7 +21,6 @@ const TheCard = ({ item, mates }: Props) => {
         >
           {item?.name}
         </MikroOntology.DetailLink>
-        <MikroOntology.ObjectButton object={item.id} />
       </Card>
     </MikroOntology.Smart>
   );

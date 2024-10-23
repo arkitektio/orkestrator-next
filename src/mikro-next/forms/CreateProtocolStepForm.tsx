@@ -1,27 +1,32 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
-import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
   CreateProtocolStepMutationVariables,
+  ListProtocolStepTemplateFragment,
   useCreateProtocolStepMutation,
-  useSearchLinkedExpressionLazyQuery,
-  useSearchLinkedExpressionQuery,
+  useSearchProtocolStepTemplatesLazyQuery,
 } from "../api/graphql";
 
-export default (props) => {
+export default (props: {
+  template: ListProtocolStepTemplateFragment;
+  entity: id;
+}) => {
   const [add] = useCreateProtocolStepMutation();
 
-  const [search] = useSearchLinkedExpressionLazyQuery();
+  const [search] = useSearchProtocolStepTemplatesLazyQuery();
 
   const dialog = useGraphQlFormDialog(add);
 
   const form = useForm<CreateProtocolStepMutationVariables["input"]>({
     defaultValues: {
-      name: "New Step",
+      performedAt: new Date().toISOString(),
+      reagentMappings: [],
+      valueMappings: [],
+      template: props.template.id,
+      entity: props.entity,
     },
   });
 
@@ -38,18 +43,7 @@ export default (props) => {
           })}
         >
           <div className="grid grid-cols-2 gap-2">
-            <div className="col-span-2 flex-col gap-1 flex">
-              <StringField
-                label="New Name"
-                name="name"
-                description="The Name Value"
-              />
-              <StringField
-                label="New Description"
-                name="description"
-                description="The Description Value"
-              />
-            </div>
+            <div className="col-span-2 flex-col gap-1 flex"></div>
           </div>
 
           <DialogFooter className="mt-2">

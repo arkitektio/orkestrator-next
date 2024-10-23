@@ -6,14 +6,18 @@ import DefinitionList from "../components/lists/DefinitionList";
 import ReleasesList from "../components/lists/ReleasesList";
 import { FormDialogAction } from "@/components/ui/form-dialog-action";
 import { CreateRepoForm } from "../forms/CreateRepoForm";
+import { useRescanReposMutation } from "../api/graphql";
+import { ActionButton } from "@/components/ui/action";
 
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
+  const [rescan, { loading }] = useRescanReposMutation();
+
   return (
     <PageLayout
       pageActions={
-        <>
+        <div className="flex flex-row gap-1">
           <>
             <FormDialogAction
               label="Add Repo"
@@ -26,7 +30,18 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
               <CreateRepoForm />
             </FormDialogAction>
           </>
-        </>
+
+          <ActionButton
+            label="Rescan Repos"
+            run={async () => {
+              await rescan();
+            }}
+            variant="outline"
+            size="sm"
+          >
+            {loading ? "Rescanning..." : "Rescan Repos"}
+          </ActionButton>
+        </div>
       }
       title="App Store"
     >

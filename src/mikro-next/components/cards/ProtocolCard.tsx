@@ -21,7 +21,6 @@ const TheCard = ({ item, mates }: Props) => {
         >
           {item?.name}
         </MikroProtocol.DetailLink>
-        <MikroProtocol.ObjectButton object={item.id} />
       </Card>
     </MikroProtocol.Smart>
   );

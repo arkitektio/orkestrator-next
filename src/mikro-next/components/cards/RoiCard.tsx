@@ -34,7 +34,6 @@ const ImageCard = ({ item, mates }: ImageCardProps) => {
           backgroundPosition: "left center",
         }}
       >
-        <MikroROI.ObjectButton object={item.id} className="ml-3 my-auto" />
         {item.entity?.id && (
           <MikroEntity.DetailLink
             className={({ isActive } /*  */) =>

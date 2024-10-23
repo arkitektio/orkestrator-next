@@ -4,7 +4,6 @@ query GetDefinition($id: ID!) {
   }
 }
 
-
 query ListDefinitions {
   definitions {
     ...ListDefinition
@@ -14,6 +13,7 @@ query ListDefinitions {
 query PrimaryDefinitions(
   $pagination: OffsetPaginationInput
   $identifier: String
+  $search: String
   $order: DefinitionOrder
 ) {
   definitions(
@@ -26,6 +26,7 @@ query PrimaryDefinitions(
           matches: [{ at: 0, kind: STRUCTURE, identifier: $identifier }]
         }
       ]
+      search: $search
     }
   ) {
     ...ListDefinition

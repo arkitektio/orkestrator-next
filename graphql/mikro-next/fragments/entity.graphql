@@ -24,10 +24,6 @@ fragment Entity on Entity {
     id
     performedAt
     name
-    usedReagent {
-      id
-      label
-    }
   }
   rois {
     ...ROI

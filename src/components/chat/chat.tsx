@@ -4,7 +4,6 @@ import {
 } from "@/lok-next/api/graphql";
 import { ChatList } from "./chat-list";
 import { Message, UserData } from "./data";
-import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 import { LokRoom } from "@/linkers";
 
 interface ChatProps {
@@ -38,8 +37,6 @@ export function Chat({ messages, selectedUser, isMobile, room }: ChatProps) {
         isMobile={isMobile}
         room={room}
       />
-
-      <LokRoom.ObjectButton object={room.id} />
     </div>
   );
 }

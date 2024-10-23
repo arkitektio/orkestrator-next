@@ -21,7 +21,6 @@ const TheCard = ({ item, mates }: Props) => {
         >
           {item?.name}
         </MikroGraph.DetailLink>
-        <MikroGraph.ObjectButton object={item.id} />
       </Card>
     </MikroGraph.Smart>
   );

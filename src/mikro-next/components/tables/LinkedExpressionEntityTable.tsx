@@ -134,6 +134,29 @@ export const columns: ColumnDef<ListEntityFragment>[] = [
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
+          Link
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => (
+      <MikroEntity.DetailLink object={row.getValue("id")}>
+        {" "}
+        Open{" "}
+      </MikroEntity.DetailLink>
+    ),
+    sortingFn: (a, b) => a.getValue("id") - b.getValue("id"),
+    enableSorting: true,
+    enableHiding: true,
+  },
+  {
+    accessorKey: "id",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
           ID
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>

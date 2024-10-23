@@ -3,13 +3,15 @@ import { useResolve } from "@/datalayer/hooks/useResolve";
 import { MikroImage } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
 import { ListImageFragment } from "../../api/graphql";
+import { cn } from "@/lib/utils";
 
 interface ImageCardProps {
   image: ListImageFragment;
   mates?: MateFinder[];
+  className?: string;
 }
 
-const ImageCard = ({ image, mates }: ImageCardProps) => {
+const ImageCard = ({ image, mates, className }: ImageCardProps) => {
   const resolve = useResolve();
 
   const { progress } = MikroImage.useLive({ object: image.id });
@@ -17,11 +19,14 @@ const ImageCard = ({ image, mates }: ImageCardProps) => {
     <MikroImage.Smart
       object={image?.id}
       dragClassName={({ isOver, canDrop, isSelected, isDragging }) =>
-        `relative rounded group text-white bg-center bg-background shadow-lg aspect-square rounded rounded-lg hover:bg-back-800 transition-all ease-in-out duration-200 group ${
-          isOver && !isDragging && "border-primary-200 border"
-        } ${isDragging && "ring-primary-200 ring"} ${
-          isSelected && "ring-2 ring-secondary-500"
-        }`
+        cn(
+          `relative rounded group text-white bg-center bg-background shadow-lg aspect-square rounded rounded-lg hover:bg-back-800 transition-all ease-in-out duration-200 group ${
+            isOver && !isDragging && "border-primary-200 border"
+          } ${isDragging && "ring-primary-200 ring"} ${
+            isSelected && "ring-2 ring-secondary-500"
+          }`,
+          className,
+        )
       }
       mates={mates}
     >
@@ -41,7 +46,6 @@ const ImageCard = ({ image, mates }: ImageCardProps) => {
           backgroundPosition: "left center",
         }}
       >
-        <MikroImage.ObjectButton object={image.id} className="ml-3 my-auto" />
         <MikroImage.DetailLink
           className={({ isActive } /*  */) =>
             "z-10 font-bold text-md mb-2 cursor-pointer " +

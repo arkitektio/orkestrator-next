@@ -28,12 +28,7 @@ export default asDetailQueryRoute(
           kind: data.linkedExpression.id,
         },
       },
-      onCompleted: () => {
-        refetch();
-      },
-      onError: (error) => {
-        alert(error.message);
-      },
+      refetchQueries: ["ListEntities"],
     });
 
     const [update] = useUpdateExpressionMutation();

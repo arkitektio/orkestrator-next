@@ -95,39 +95,6 @@ export const get_action_registry = () => {
   return defaultRegistry;
 };
 
-defaultRegistry.registerAction({
-  name: "delete-file",
-  title: "Delete File",
-  description: "Delete the File",
-  conditions: [{ type: "identifier", identifier: "@mikro/file" }],
-  execute: async ({ services, onProgress, abortSignal, state }) => {
-    let kabinet = services["kabinet"];
-    console.log("Deleting file");
-
-    onProgress(50);
-    // Sleepe
-
-    state.left.forEach((e) => {
-      kabinet.client.mutate({
-        mutation: DeleteFileDocument,
-        variables: {
-          input: {
-            id: e.object,
-          },
-        },
-      });
-    });
-
-    onProgress(100);
-    console.log("File deleted");
-    return {
-      left: [],
-      isCommand: false,
-    };
-  },
-  collections: ["io"],
-});
-
 for (let i of MIKRO_ACTIONS) {
   defaultRegistry.registerAction(i);
 }

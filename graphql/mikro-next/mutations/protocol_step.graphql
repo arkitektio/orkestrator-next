@@ -4,20 +4,8 @@ mutation CreateProtocolStep($input: ProtocolStepInput!) {
   }
 }
 
-mutation UpdateProtocolStep(
-  $id: ID!
-  $name: String
-  $description: String
-  $kind: ProtocolStepKind
-) {
-  updateProtocolStep(
-    input: {
-      id: $id
-      name: $name
-      description: $description
-      kind: $kind
-    }
-  ) {
+mutation UpdateProtocolStep($input: UpdateProtocolStepInput!) {
+  updateProtocolStep(input: $input) {
     ...ProtocolStep
   }
 }

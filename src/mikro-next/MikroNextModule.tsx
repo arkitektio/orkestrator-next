@@ -38,6 +38,8 @@ import TablesPage from "./pages/TablesPage";
 import StandardPane from "./panes/StandardPane";
 import EntityPage from "./pages/EntityPage";
 import EntityRelationPage from "./pages/EntityRelationPage";
+import ProtocolStepTemplatesPage from "./pages/ProtocolStepTemplatesPage";
+import ProtocolStepTemplatePage from "./pages/ProtocolStepTemplatePage";
 interface Props {}
 
 export const MikroNextModule: React.FC<Props> = (props) => {
@@ -75,6 +77,14 @@ export const MikroNextModule: React.FC<Props> = (props) => {
           />
           <Route path="protocols/:id" element={<ProtocolPage />} />
           <Route path="protocolsteps/:id" element={<ProtocolStepPage />} />
+          <Route
+            path="protocolsteptemplates"
+            element={<ProtocolStepTemplatesPage />}
+          />
+          <Route
+            path="protocolsteptemplates/:id"
+            element={<ProtocolStepTemplatePage />}
+          />
           <Route path="protocolsteps" element={<ProtocolStepsPage />} />
           <Route path="stages/:id" element={<StagePage />} />
           <Route path="plotters/:id" element={<PlotterPage />} />

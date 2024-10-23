@@ -2,7 +2,6 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { MikroFile } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
 import { ListFileFragment } from "../../api/graphql";
-import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 
 interface Props {
   file: ListFileFragment;
@@ -18,7 +17,6 @@ const TheCard = ({ file, mates }: Props) => {
             {file.name}
           </MikroFile.DetailLink>
         </CardTitle>
-        <MikroFile.ObjectButton object={file.id} />
       </Card>
     </MikroFile.Smart>
   );

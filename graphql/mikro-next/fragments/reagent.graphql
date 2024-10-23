@@ -2,13 +2,15 @@ fragment Reagent on Reagent {
   id
   label
   creationSteps {
-    id 
-    kind
+    id
+    name
   }
   usedIn {
     id
-    name
-    kind
+    protocolStep {
+      performedAt
+      name
+    }
   }
 }
 

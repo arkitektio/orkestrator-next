@@ -9,7 +9,6 @@ import { NodeDescription } from "@/lib/rekuest/NodeDescription";
 import { KabinetDefinition } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
 import { ListDefinitionFragment } from "../../api/graphql";
-import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 
 interface Props {
   item: ListDefinitionFragment;
@@ -34,9 +33,7 @@ const TheCard = ({ item, mates }: Props) => {
               )}
             </CardDescription>
           </div>
-          <CardTitle>
-            <KabinetDefinition.ObjectButton object={item.id} />
-          </CardTitle>
+          <CardTitle></CardTitle>
         </CardHeader>
       </Card>
     </KabinetDefinition.Smart>

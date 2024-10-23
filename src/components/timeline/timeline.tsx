@@ -43,7 +43,7 @@ const TimelineConnector = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "absolute top-[5px] left-[30px] -translate-x-1/2 translate-y-2 h-full w-px bg-primary",
+      "absolute top-[5px] left-[30px] -translate-x-1/2 translate-y-2 h-full w-px bg-slate-300",
       className,
     )}
     {...props}
@@ -86,7 +86,7 @@ const TimelineIcon = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex flex-col size-3 bg-primary rounded-full", className)}
+    className={cn("flex flex-col size-3 bg-slate-300 rounded-full", className)}
     {...props}
   />
 ));

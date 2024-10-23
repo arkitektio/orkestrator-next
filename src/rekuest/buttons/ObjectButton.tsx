@@ -18,22 +18,86 @@ import { cn } from "@/lib/utils";
 import { CaretDownIcon } from "@radix-ui/react-icons";
 import React from "react";
 import { toast } from "sonner";
-import { PrimaryNodeFragment, usePrimaryNodesQuery } from "../api/graphql";
+import {
+  ListTemplateFragment,
+  PrimaryNodeFragment,
+  usePrimaryNodesQuery,
+  useTemplatesQuery,
+} from "../api/graphql";
 import { useAssignProgress } from "../hooks/useAssignProgress";
 import { useHashAction } from "../hooks/useHashActions";
 import { useNodeAction } from "../hooks/useNodeAction";
 import { Input } from "@/components/ui/input";
+import { useLiveAssignation } from "../hooks/useAssignations";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Command,
+  CommandEmpty,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { CommandGroup } from "cmdk";
+import { useTemplateAction } from "../hooks/useTemplateAction";
+import { TemplateActionButton } from "./TemplateActionButton";
+import { template } from "handlebars";
+
+export const DirectTemplateAssignment = (props: {
+  object: string;
+  node: PrimaryNodeFragment;
+  identifier: string;
+  theKey: string;
+}) => {
+  const templates = useTemplatesQuery({
+    variables: {
+      filters: {
+        nodeHash: props.node.hash,
+      },
+    },
+  });
+
+  return (
+    <>
+      <div className="flex flex-row text-xs">Run on</div>
+      <div className="flex flex-col gap-2">
+        {templates.data?.templates.map((x) => (
+          <>
+            <TemplateActionButton
+              id={x.id}
+              args={{ [props.theKey]: props.object }}
+            >
+              <Button variant={"outline"} size={"sm"} className="flex flex-col">
+                <span className="mr-auto text-md text-gray-100">
+                  {x.agent.name}
+                </span>
+                <span className="mr-auto text-xs text-gray-400">
+                  {x.interface}
+                </span>
+              </Button>
+            </TemplateActionButton>
+          </>
+        ))}
+      </div>
+    </>
+  );
+};
 
 export const AssignButton = (props: {
   object: string;
   node: PrimaryNodeFragment;
-  children: React.ReactNode;
   identifier: string;
 }) => {
   const { assign, latestAssignation } = useNodeAction({ id: props.node.id });
 
+  let the_key = props.node.args?.at(0)?.key;
+
   const objectAssign = async () => {
-    let the_key = props.node.args?.at(0)?.key;
     if (!the_key) {
       toast.error("No key found");
       return;
@@ -50,27 +114,44 @@ export const AssignButton = (props: {
     }
   };
 
-  const progress = useAssignProgress({
+  const status = useLiveAssignation({
     identifier: props.identifier,
     object: props.object,
     node: props.node.id,
   });
 
   return (
-    <Button
-      onClick={objectAssign}
-      variant={"outline"}
-      size="sm"
-      className="flex-1"
-      style={{
-        backgroundSize: `${progress?.progress || 0}% 100%`,
-        backgroundImage: `linear-gradient(to right, #10b981 ${progress?.progress}%, #10b981 ${progress?.progress}%)`,
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "left center",
-      }}
-    >
-      {props.children}
-    </Button>
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <CommandItem
+          onSelect={objectAssign}
+          value={props.node.id}
+          key={props.node.id}
+          className="flex-grow  flex flex-col group cursor-pointer"
+          style={{
+            backgroundSize: `${status?.progress || 0}% 100%`,
+            backgroundImage: `linear-gradient(to right, #10b981 ${status?.progress}%, #10b981 ${status?.progress}%)`,
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "left center",
+          }}
+        >
+          <span className="mr-auto text-md text-gray-100">
+            {props.node.name}
+          </span>
+          <span className="mr-auto text-xs text-gray-400">
+            {props.node.description}
+          </span>
+        </CommandItem>
+      </ContextMenuTrigger>
+      <ContextMenuContent className="text-white border-gray-800 px-2 py-2 items-center">
+        <DirectTemplateAssignment
+          node={props.node}
+          identifier={props.identifier}
+          object={props.object}
+          theKey={the_key}
+        />
+      </ContextMenuContent>
+    </ContextMenu>
   );
 };
 
@@ -93,18 +174,18 @@ export const InstallButton = (props: {
     }
   };
 
-  const progress = useAssignProgress({
+  const progress = useLiveAssignation({
     identifier: "@kabinet/definition",
     object: props.definition.id,
     node: node?.id,
   });
 
   return (
-    <Button
-      onClick={objectAssign}
-      variant={"outline"}
-      size="sm"
-      className="flex-1"
+    <CommandItem
+      value={props.definition.name}
+      key={props.definition.id}
+      onSelect={objectAssign}
+      className="flex-1 "
       style={{
         backgroundSize: `${progress?.progress || 0}% 100%`,
         backgroundImage: `linear-gradient(to right, #10b981 ${progress?.progress}%, #10b981 ${progress?.progress}%)`,
@@ -112,8 +193,10 @@ export const InstallButton = (props: {
         backgroundPosition: "left center",
       }}
     >
-      {props.children}
-    </Button>
+      <Tooltip>
+        <TooltipTrigger>{props.children}</TooltipTrigger>
+      </Tooltip>
+    </CommandItem>
   );
 };
 
@@ -129,37 +212,65 @@ export const ApplicableNodes = (props: {
     },
   });
 
+  if (!data) {
+    return null;
+  }
+
+  if (data.nodes.length === 0) {
+    return null;
+  }
+
   return (
-    <div className="grid grid-cols-1 w-full gap-2 ">
+    <CommandGroup
+      heading={
+        <span className="font-light text-xs w-full items-center ml-2 w-full">
+          Run...
+        </span>
+      }
+    >
       {data?.nodes.map((x) => (
         <AssignButton
           node={x}
           object={props.object}
           identifier={props.identifier}
-        >
-          {x.name}
-        </AssignButton>
+        />
       ))}
-    </div>
+    </CommandGroup>
   );
 };
 
 export const ApplicableDefinitions = (props: {
   object: string;
   identifier: string;
+  filter?: string;
 }) => {
   const { data } = usePrimaryDefinitionsQuery({
     variables: {
       identifier: props.identifier,
+      search: props.filter,
     },
   });
 
+  if (!data) {
+    return null;
+  }
+
+  if (data.definitions.length === 0) {
+    return null;
+  }
+
   return (
-    <div className="grid grid-cols-1 w-full gap-2 ">
+    <CommandGroup
+      heading={
+        <span className="font-light text-xs w-full items-center ml-2 w-full">
+          Installable
+        </span>
+      }
+    >
       {data?.definitions.map((x) => (
         <InstallButton definition={x}>{x.name}</InstallButton>
       ))}
-    </div>
+    </CommandGroup>
   );
 };
 
@@ -203,7 +314,7 @@ export const useAction = (props: { action: Action; state: ActionState }) => {
   };
 };
 
-export const useActions = (props: { state: ActionState }) => {
+export const useActions = (props: { state: ActionState; filter?: string }) => {
   return defaultRegistry.getActionsForState(props.state);
 };
 
@@ -214,10 +325,9 @@ export const LocalActionButton = (props: {
   const { assign, progress } = useAction(props);
 
   return (
-    <Button
-      onClick={assign}
-      variant={"outline"}
-      className="flex-1"
+    <CommandItem
+      onSelect={assign}
+      className="flex-1 cursor-pointer"
       style={{
         backgroundSize: `${progress || 0}% 100%`,
         backgroundImage: `linear-gradient(to right, #10b981 ${progress}%, #10b981 ${progress}%)`,
@@ -226,30 +336,44 @@ export const LocalActionButton = (props: {
       }}
     >
       {props.action.title}
-    </Button>
+    </CommandItem>
   );
 };
 
-export const Actions = (props: { state: ActionState }) => {
-  const actions = useActions(props);
+export const Actions = (props: { state: ActionState; filter?: string }) => {
+  const actions = useActions(props).filter(
+    (x) => !props.filter || x.title.includes(props.filter),
+  );
+
+  if (actions.length === 0) {
+    return null;
+  }
 
   return (
-    <div className="grid grid-cols-1 w-full gap-2 ">
+    <CommandGroup
+      heading={
+        <span className="font-light text-xs w-full items-center ml-2 w-full">
+          Generic
+        </span>
+      }
+    >
       {actions.map((x) => (
         <LocalActionButton action={x} state={props.state} />
       ))}
-    </div>
+    </CommandGroup>
   );
 };
 
 export const ApplicableActions = (props: {
   object: string;
   identifier: string;
+  filter?: string;
 }) => {
   return (
-    <div className="grid grid-cols-1 w-full gap-2 ">
-      <Actions state={{ left: [props], isCommand: false }} />
-    </div>
+    <Actions
+      state={{ left: [props], isCommand: false }}
+      filter={props.filter}
+    />
   );
 };
 
@@ -277,40 +401,50 @@ export const ObjectButton = (props: ObjectButtonProps) => {
             )}
           </PopoverTrigger>
           <PopoverContent className="text-white border-gray-800 px-2 py-2 items-center">
-            <Input
-              type="text"
-              onChange={(e) => setFilterValue(e.target.value)}
-              value={filter}
-              autoFocus
-            />
-
-            <div className="text-xs text-muted-foreground mx-auto mb-2">
-              Assign to
-            </div>
-            <ApplicableNodes
-              object={props.object}
-              identifier={props.identifier}
-              filter={filter}
-            />
-            <div className="text-xs text-muted-foreground mx-auto mb-2">
-              Generic Actions
-            </div>
-            <ApplicableActions
-              object={props.object}
-              identifier={props.identifier}
-              filter={filter}
-            />
-            <div className="text-xs text-muted-foreground mx-auto my-2">
-              Available to install
-            </div>
-            <ApplicableDefinitions
-              object={props.object}
-              identifier={props.identifier}
-              filter={filter}
-            />
+            <SmartContext {...props} />
           </PopoverContent>
         </Popover>
       </>
+    </>
+  );
+};
+
+export const SmartContext = (props: ObjectButtonProps) => {
+  const [filter, setFilterValue] = React.useState<string | undefined>(
+    undefined,
+  );
+
+  return (
+    <>
+      <Command shouldFilter={false}>
+        <CommandInput
+          placeholder={"Search"}
+          className="h-9"
+          onValueChange={(e) => {
+            setFilterValue(e);
+          }}
+          autoFocus
+        />
+        <CommandList>
+          <CommandEmpty>{"No Action available"}</CommandEmpty>
+          <ApplicableActions
+            object={props.object}
+            identifier={props.identifier}
+            filter={filter}
+          />
+          <ApplicableNodes
+            object={props.object}
+            identifier={props.identifier}
+            filter={filter}
+          />
+
+          <ApplicableDefinitions
+            object={props.object}
+            identifier={props.identifier}
+            filter={filter}
+          />
+        </CommandList>
+      </Command>
     </>
   );
 };

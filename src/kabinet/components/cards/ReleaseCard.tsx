@@ -25,6 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { KABINET_INSTALL_POD_HASH } from "@/constants";
 
 interface Props {
   item: ListReleaseFragment;
@@ -60,8 +61,7 @@ const InstallDialog = (props: { item: ListReleaseFragment }) => {
   const { data } = useTemplatesQuery({
     variables: {
       filters: {
-        nodeHash:
-          "c23d99cae434f6d143cd9fa2f831de1ac66a51d74df2ea405b08903b1af13d16",
+        nodeHash: KABINET_INSTALL_POD_HASH,
       },
     },
   });

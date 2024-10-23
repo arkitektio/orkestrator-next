@@ -484,6 +484,8 @@ export type Mutation = {
   deletePod: Scalars['ID']['output'];
   /** Create a new dask cluster on a bridge server */
   dumpLogs: LogDump;
+  /** Rescan all repos */
+  rescanRepos: Array<GithubRepo>;
   /** Create a new dask cluster on a bridge server */
   scanRepo: GithubRepo;
   /** Create a new dask cluster on a bridge server */
@@ -987,6 +989,11 @@ export type CreateGithubRepoMutationVariables = Exact<{
 
 export type CreateGithubRepoMutation = { __typename?: 'Mutation', createGithubRepo: { __typename?: 'GithubRepo', id: string } };
 
+export type RescanReposMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type RescanReposMutation = { __typename?: 'Mutation', rescanRepos: Array<{ __typename?: 'GithubRepo', id: string }> };
+
 export type ListBackendsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -1014,6 +1021,7 @@ export type ListDefinitionsQuery = { __typename?: 'Query', definitions: Array<{ 
 export type PrimaryDefinitionsQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
   identifier?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
   order?: InputMaybe<DefinitionOrder>;
 }>;
 
@@ -1293,6 +1301,38 @@ export function useCreateGithubRepoMutation(baseOptions?: ApolloReactHooks.Mutat
 export type CreateGithubRepoMutationHookResult = ReturnType<typeof useCreateGithubRepoMutation>;
 export type CreateGithubRepoMutationResult = Apollo.MutationResult<CreateGithubRepoMutation>;
 export type CreateGithubRepoMutationOptions = Apollo.BaseMutationOptions<CreateGithubRepoMutation, CreateGithubRepoMutationVariables>;
+export const RescanReposDocument = gql`
+    mutation RescanRepos {
+  rescanRepos {
+    id
+  }
+}
+    `;
+export type RescanReposMutationFn = Apollo.MutationFunction<RescanReposMutation, RescanReposMutationVariables>;
+
+/**
+ * __useRescanReposMutation__
+ *
+ * To run a mutation, you first call `useRescanReposMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRescanReposMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [rescanReposMutation, { data, loading, error }] = useRescanReposMutation({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useRescanReposMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RescanReposMutation, RescanReposMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<RescanReposMutation, RescanReposMutationVariables>(RescanReposDocument, options);
+      }
+export type RescanReposMutationHookResult = ReturnType<typeof useRescanReposMutation>;
+export type RescanReposMutationResult = Apollo.MutationResult<RescanReposMutation>;
+export type RescanReposMutationOptions = Apollo.BaseMutationOptions<RescanReposMutation, RescanReposMutationVariables>;
 export const ListBackendsDocument = gql`
     query ListBackends {
   backends {
@@ -1432,11 +1472,11 @@ export type ListDefinitionsQueryHookResult = ReturnType<typeof useListDefinition
 export type ListDefinitionsLazyQueryHookResult = ReturnType<typeof useListDefinitionsLazyQuery>;
 export type ListDefinitionsQueryResult = Apollo.QueryResult<ListDefinitionsQuery, ListDefinitionsQueryVariables>;
 export const PrimaryDefinitionsDocument = gql`
-    query PrimaryDefinitions($pagination: OffsetPaginationInput, $identifier: String, $order: DefinitionOrder) {
+    query PrimaryDefinitions($pagination: OffsetPaginationInput, $identifier: String, $search: String, $order: DefinitionOrder) {
   definitions(
     order: $order
     pagination: $pagination
-    filters: {demands: [{kind: ARGS, matches: [{at: 0, kind: STRUCTURE, identifier: $identifier}]}]}
+    filters: {demands: [{kind: ARGS, matches: [{at: 0, kind: STRUCTURE, identifier: $identifier}]}], search: $search}
   ) {
     ...ListDefinition
   }
@@ -1457,6 +1497,7 @@ export const PrimaryDefinitionsDocument = gql`
  *   variables: {
  *      pagination: // value for 'pagination'
  *      identifier: // value for 'identifier'
+ *      search: // value for 'search'
  *      order: // value for 'order'
  *   },
  * });

@@ -216,7 +216,7 @@ export const EntitiesTable = (props: {
   const [rowSelection, setRowSelection] = React.useState({});
 
   const table = useReactTable({
-    data: data?.entities && [],
+    data: data?.entities || ([] as ListEntityFragment[]),
     columns,
     pageCount: -1,
     manualPagination: true,

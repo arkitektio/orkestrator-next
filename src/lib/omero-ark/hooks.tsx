@@ -10,6 +10,7 @@ import {
   useQuery as useApolloQuery,
   useSubscription as useApolloSubscription,
 } from "@apollo/client";
+import { onApolloError } from "../errorHandler";
 
 type MutationFuncType = typeof useApolloMutation;
 type QueryFuncType = typeof useApolloQuery;
@@ -26,7 +27,11 @@ export type {
 export const useMutation: MutationFuncType = (doc, options) => {
   const fluss = useOmeroArk();
 
-  return useApolloMutation(doc, { ...options, client: fluss });
+  return useApolloMutation(doc, {
+    ...options,
+    client: fluss,
+    onError: onApolloError("fluss"),
+  });
 };
 
 export const useQuery: QueryFuncType = (doc, options) => {

@@ -10,6 +10,7 @@ import {
   useSubscription as useApolloSubscription,
 } from "@apollo/client";
 import { toast } from "sonner";
+import { onApolloError } from "../errorHandler";
 
 type MutationFuncType = typeof useApolloMutation;
 type QueryFuncType = typeof useApolloQuery;
@@ -29,10 +30,7 @@ export const useMutation: MutationFuncType = (doc, options) => {
   return useApolloMutation(doc, {
     ...options,
     client: kabinet,
-    onError: (error) => {
-      console.error(error);
-      toast.error(error.message);
-    },
+    onError: onApolloError("kabinet"),
   });
 };
 

@@ -4,7 +4,13 @@ fragment Definition on Definition {
   hash
   description
   args {
-    kind
+    ...Port
+  }
+  returns {
+    ...Port
+  }
+  flavours {
+    ...ListFlavour
   }
 }
 

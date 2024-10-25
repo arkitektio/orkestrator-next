@@ -82,13 +82,12 @@ export const useTemplateAction = <T extends any>(
         let assignation = mutation.data?.assign;
 
         if (!assignation) {
-          console.error(mutation);
-          throw Error("Couln't assign");
+          throw Error(`Couldn't assign`);
         }
 
         return assignation;
       } catch (error: any) {
-        toast.error(`${error.message}`);
+        throw Error(`Couldn't assign: ${error.message}`);
       }
     },
     [postAssign, settings.instanceId, options.id],
@@ -125,7 +124,10 @@ export const useTemplateAction = <T extends any>(
 
     if (!assignation) {
       console.error(mutation);
-      throw Error("Couln't assign");
+      const errorMessages =
+        mutation.errors?.map((error) => error.message).join(", ") ||
+        "Unknown error";
+      throw Error(`Couldn't assign: ${errorMessages}`);
     }
 
     return assignation;

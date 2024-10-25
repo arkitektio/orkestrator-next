@@ -80,7 +80,10 @@ export const useHashAction = <T extends any>(
 
       if (!assignation) {
         console.error(mutation);
-        throw Error("Couln't assign");
+        const errorMessages =
+          mutation.errors?.map((error) => error.message).join(", ") ||
+          "Unknown error";
+        throw Error(`Couldn't assign: ${errorMessages}`);
       }
 
       return assignation;
@@ -119,7 +122,10 @@ export const useHashAction = <T extends any>(
 
     if (!assignation) {
       console.error(mutation);
-      throw Error("Couln't assign");
+      const errorMessages =
+        mutation.errors?.map((error) => error.message).join(", ") ||
+        "Unknown error";
+      throw Error(`Couldn't assign: ${errorMessages}`);
     }
 
     return assignation;

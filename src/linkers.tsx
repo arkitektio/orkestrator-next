@@ -229,3 +229,8 @@ export const KabinetRelease = buildSmart(
   "@kabinet/release",
   "kabinet/releases",
 );
+
+export const KabinetFlavour = buildSmart(
+  "@kabinet/flavour",
+  "kabinet/flavours",
+);

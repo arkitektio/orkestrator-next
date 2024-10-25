@@ -177,7 +177,14 @@ export const InstallButton = (props: {
       className="flex-1 "
     >
       <Tooltip>
-        <TooltipTrigger>{props.children}</TooltipTrigger>
+        <TooltipTrigger className="flex flex-col">
+          <span className="mr-auto text-md text-gray-100 flex">
+            {props.definition.name}
+          </span>
+          <span className="mr-auto text-xs text-gray-400">
+            {props.definition.description}
+          </span>
+        </TooltipTrigger>
         <TooltipContent>{props.definition.description}</TooltipContent>
       </Tooltip>
     </CommandItem>
@@ -311,7 +318,7 @@ export const LocalActionButton = (props: {
   return (
     <CommandItem
       onSelect={assign}
-      className="flex-1 cursor-pointer"
+      className="flex-1"
       style={{
         backgroundSize: `${progress || 0}% 100%`,
         backgroundImage: `linear-gradient(to right, #10b981 ${progress}%, #10b981 ${progress}%)`,
@@ -319,7 +326,17 @@ export const LocalActionButton = (props: {
         backgroundPosition: "left center",
       }}
     >
-      {props.action.title}
+      <Tooltip>
+        <TooltipTrigger className="flex flex-col">
+          <span className="mr-auto text-md text-gray-100 flex">
+            {props.action.title}
+          </span>
+          <span className="mr-auto text-xs text-gray-400">
+            {props.action.description}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>{props.action.description}</TooltipContent>
+      </Tooltip>
     </CommandItem>
   );
 };

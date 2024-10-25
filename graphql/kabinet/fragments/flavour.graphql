@@ -1,4 +1,11 @@
 fragment ListFlavour on Flavour {
   id
   name
+  release {
+    id
+    version
+    app {
+      identifier
+    }
+  }
 }

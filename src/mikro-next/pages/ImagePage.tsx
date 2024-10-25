@@ -39,6 +39,9 @@ import { PinToggle } from "../components/ui/PinToggle";
 import { AddImageViewForm } from "../forms/AddImageViewForm";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
 import { VivRenderer } from "../components/render/VivRenderer";
+import ROIViewCard from "../components/cards/ROIViewCard";
+import FileViewCard from "../components/cards/FileViewCard";
+import DerivedViewCard from "../components/cards/DerivedViewCard";
 
 export type IRepresentationScreenProps = {};
 
@@ -224,6 +227,15 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                     {view.__typename == "SpecimenView" && (
                       <SpecimenViewCard view={view} key={index} />
                     )}
+                    {view.__typename == "ROIView" && (
+                      <ROIViewCard view={view} key={index} />
+                    )}
+                    {view.__typename == "FileView" && (
+                      <FileViewCard view={view} key={index} />
+                    )}
+                    {view.__typename == "DerivedView" && (
+                      <DerivedViewCard view={view} key={index} />
+                    )}
                   </>
                 ))}
                 {data?.image && (
@@ -241,10 +253,6 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                   </Card>
                 )}
               </ResponsiveContainerGrid>
-
-              <ListRender title="File origins" array={data?.image?.fileOrigins}>
-                {(file, index) => <FileCard file={file} key={index} />}
-              </ListRender>
             </DetailPaneContent>
           </DetailPane>
         </div>

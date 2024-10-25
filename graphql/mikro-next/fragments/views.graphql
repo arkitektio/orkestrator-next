@@ -19,6 +19,34 @@ fragment ChannelView on ChannelView {
   }
 }
 
+fragment DerivedView on DerivedView {
+  ...View
+  id
+  originImage {
+    id
+    name
+  }
+}
+
+fragment ROIView on ROIView {
+  ...View
+  id
+  roi {
+    id
+    name
+  }
+}
+
+fragment FileView on FileView {
+  ...View
+  id
+  seriesIdentifier
+  file {
+    id
+    name
+  }
+}
+
 fragment AffineTransformationView on AffineTransformationView {
   ...View
   id

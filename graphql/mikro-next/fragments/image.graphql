@@ -1,7 +1,4 @@
 fragment Image on Image {
-  origins {
-    id
-  }
   id
   name
   store {
@@ -17,6 +14,9 @@ fragment Image on Image {
     ...RGBView
     ...WellPositionView
     ...SpecimenView
+    ...DerivedView
+    ...ROIView
+    ...FileView
   }
   pinned
   renders {
@@ -35,12 +35,6 @@ fragment Image on Image {
     sub
   }
   tags
-  roiOrigins {
-    ...ListROI
-  }
-  fileOrigins {
-    ...ListFile
-  }
   rgbContexts {
     ...ListRGBContext
   }

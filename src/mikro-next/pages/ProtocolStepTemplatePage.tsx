@@ -114,6 +114,23 @@ export function PlateEditor({ step }: { step: ProtocolStepTemplateFragment }) {
   );
 }
 
+export function PlateDisplay({ step }: { step: { plateChildren: any[] } }) {
+  return (
+    <TooltipProvider>
+      <CommentsProvider users={{}} myUserId="1">
+        <Plate plugins={plugins} initialValue={step.plateChildren || []}>
+          <Editor
+            className="rounded-xs border-0 mt-0 ring-0 h-full w-full"
+            disabled={true}
+          />
+
+          <CommentsPopover />
+        </Plate>
+      </CommentsProvider>
+    </TooltipProvider>
+  );
+}
+
 export default asDetailQueryRoute(
   useGetProtocolStepTemplateQuery,
   ({ data }) => {

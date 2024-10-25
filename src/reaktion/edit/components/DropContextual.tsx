@@ -156,7 +156,7 @@ const reactiveNodes = (
           ],
           voids: [],
           constants: [],
-          implementation: ReactiveImplementation.ToList,
+          implementation: ReactiveImplementation.Chunk,
         },
       },
       title: "Chunk",

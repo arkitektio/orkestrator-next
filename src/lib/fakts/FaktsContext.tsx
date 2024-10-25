@@ -15,12 +15,10 @@ export type Manifest = {
   scopes: string[];
   logo?: string;
   requirements: {
-    [key: string]: {
-      key: string;
-      service: string;
-      optional?: boolean;
-    };
-  };
+    key: string;
+    service: string;
+    optional?: boolean;
+  }[];
 };
 
 export type Token = string;

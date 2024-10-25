@@ -98,19 +98,14 @@ export const buildArkitektConnect =
           throw new Error("No scopes specified in manifest");
         }
 
-        let requirements = Object.keys(serviceBuilderMap)
-          .map((key) => {
-            let service = serviceBuilderMap[key];
-            return {
-              key: service.key,
-              optional: service.optional,
-              service: service.service,
-            };
-          })
-          .reduce((acc, cur) => {
-            acc[cur.key] = cur;
-            return acc;
-          }, {} as any);
+        let requirements = Object.keys(serviceBuilderMap).map((key) => {
+          let service = serviceBuilderMap[key];
+          return {
+            key: service.key,
+            optional: service.optional,
+            service: service.service,
+          };
+        });
 
         request.manifest.requirements = requirements;
 

@@ -1,5 +1,5 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
+import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -7,15 +7,8 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
   CreateGraphMutationVariables,
-  CreateOntologyMutationVariables,
-  CreateProtocolStepMutationVariables,
-  useCreateGraphMutation,
   useCreateOntologyMutation,
-  useCreateProtocolStepMutation,
-  useSearchLinkedExpressionLazyQuery,
-  useSearchLinkedExpressionQuery,
 } from "../api/graphql";
-import { ParagraphField } from "@/components/fields/ParagraphField";
 
 export default (props) => {
   const [add] = useCreateOntologyMutation();

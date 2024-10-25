@@ -4,6 +4,9 @@ fragment Release on Release {
   app {
     identifier
   }
+  flavours {
+    ...ListFlavour
+  }
   scopes
   colour
   description

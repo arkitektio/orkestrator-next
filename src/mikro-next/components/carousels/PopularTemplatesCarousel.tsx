@@ -6,8 +6,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { NodeDescription } from "@/lib/rekuest/NodeDescription";
-import { useListDefinitionsQuery } from "../api/graphql";
+import { MikroProtocolStepTemplate } from "@/linkers";
 import { useListProtocolStepTemplatesQuery } from "@/mikro-next/api/graphql";
 import { PlateDisplay } from "@/mikro-next/pages/ProtocolStepTemplatePage";
 
@@ -34,13 +33,19 @@ export const PopularTemplatesCarousel = ({}) => {
             <CarouselItem key={index} className="grid grid-cols-6">
               <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
                 <div>
-                  <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+                  <MikroProtocolStepTemplate.DetailLink
+                    object={item.id}
+                    className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl"
+                  >
                     {item.name}
-                  </h1>
+                  </MikroProtocolStepTemplate.DetailLink>
                 </div>
               </div>
               <div className="col-span-2">
-                <div className="p-1">
+                <MikroProtocolStepTemplate.DetailLink
+                  object={item.id}
+                  className="p-1"
+                >
                   <Card>
                     <CardContent className="flex aspect-[3/2] items-center justify-center p-6">
                       <p className="mt-3 text-xl text-muted-foreground">
@@ -48,7 +53,7 @@ export const PopularTemplatesCarousel = ({}) => {
                       </p>
                     </CardContent>
                   </Card>
-                </div>
+                </MikroProtocolStepTemplate.DetailLink>
               </div>
             </CarouselItem>
           ))}

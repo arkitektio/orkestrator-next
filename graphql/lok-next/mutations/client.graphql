@@ -13,5 +13,7 @@ mutation CreateClient(
         logo: $logo
       }
     }
-  )
+  ) {
+    id
+  }
 }

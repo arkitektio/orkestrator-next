@@ -1,22 +1,27 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { FormSheet } from "@/components/dialog/FormDialog";
 import { ListRender } from "@/components/layout/ListRender";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import {
-  DetailPane,
-  DetailPaneHeader,
-  DetailPaneTitle,
-} from "@/components/ui/pane";
-import { MikroFile, MikroImage } from "@/linkers";
-import { HobbyKnifeIcon } from "@radix-ui/react-icons";
-import { useGetFileQuery, usePinStageMutation } from "../api/graphql";
-import { UpdateFileForm } from "../forms/UpdateFileForm";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { Badge } from "@/components/ui/badge";
+import { MikroFile, MikroImage } from "@/linkers";
+import { useGetFileQuery, usePinStageMutation } from "../api/graphql";
 
 export default asDetailQueryRoute(useGetFileQuery, ({ data, refetch }) => {
   const [pinStage] = usePinStageMutation();
+
+  const downloadFile = () => {
+    if (data?.file?.store.presignedUrl) {
+      const url = resolve(data.file.store.presignedUrl);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = data.file.name || "download";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
 
   const resolve = useResolve();
   return (
@@ -29,22 +34,22 @@ export default asDetailQueryRoute(useGetFileQuery, ({ data, refetch }) => {
           map={{ Comments: <MikroFile.Komments object={data.file.id} /> }}
         />
       }
+      pageActions={
+        <>
+          <Button onClick={downloadFile} variant="outline">
+            Download
+          </Button>
+        </>
+      }
     >
-      <DetailPane className="p-3 @container">
-        <DetailPaneHeader>
-          <DetailPaneTitle
-            actions={
-              <>
-                <FormSheet trigger={<HobbyKnifeIcon />}>
-                  {data?.file && <UpdateFileForm file={data?.file} />}
-                </FormSheet>
-              </>
-            }
-          >
-            {data?.file?.name}
-          </DetailPaneTitle>
-        </DetailPaneHeader>
-      </DetailPane>
+      <div className="flex flex-col gap-1 mb-3">
+        <MikroFile.DetailLink object={data.file.id} className={"text-3xl"}>
+          {data?.file?.name}
+        </MikroFile.DetailLink>
+        <p>
+          {data?.file?.store.bucket}/{data?.file?.store.key}
+        </p>
+      </div>
       <ListRender array={data?.file?.views} title="Converted Images">
         {(view, index) => (
           <MikroImage.Smart

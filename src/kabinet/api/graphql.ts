@@ -435,6 +435,13 @@ export type DeviceFeature = {
   kind: Scalars['String']['input'];
 };
 
+/** A docker image descriptor */
+export type DockerImage = {
+  __typename?: 'DockerImage';
+  buildAt: Scalars['DateTime']['output'];
+  imageString: Scalars['String']['output'];
+};
+
 export type DockerImageInput = {
   buildAt: Scalars['DateTime']['input'];
   imageString: Scalars['String']['input'];
@@ -489,9 +496,9 @@ export type Flavour = {
   definitions: Array<Definition>;
   deployments: Array<Deployment>;
   description: Scalars['String']['output'];
-  entrypoint: Scalars['String']['output'];
+  entrypoint: CudaSelector;
   id: Scalars['ID']['output'];
-  image: Scalars['String']['output'];
+  image: DockerImage;
   logo?: Maybe<Scalars['String']['output']>;
   manifest: Scalars['UntypedParams']['output'];
   name: Scalars['String']['output'];
@@ -1263,7 +1270,7 @@ type ReturnWidget_CustomReturnWidget_Fragment = { __typename: 'CustomReturnWidge
 
 export type ReturnWidgetFragment = ReturnWidget_ChoiceReturnWidget_Fragment | ReturnWidget_CustomReturnWidget_Fragment;
 
-export type ReleaseFragment = { __typename?: 'Release', id: string, version: string, scopes: Array<string>, colour: string, description: string, app: { __typename?: 'App', identifier: string } };
+export type ReleaseFragment = { __typename?: 'Release', id: string, version: string, scopes: Array<string>, colour: string, description: string, app: { __typename?: 'App', identifier: string }, flavours: Array<{ __typename?: 'Flavour', id: string, name: string, release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } }> };
 
 export type ListReleaseFragment = { __typename?: 'Release', id: string, version: string, installed: boolean, scopes: Array<string>, colour: string, description: string, app: { __typename?: 'App', identifier: string }, flavours: Array<{ __typename?: 'Flavour', id: string, name: string, release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } }> };
 
@@ -1347,7 +1354,7 @@ export type GetReleaseQueryVariables = Exact<{
 }>;
 
 
-export type GetReleaseQuery = { __typename?: 'Query', release: { __typename?: 'Release', id: string, version: string, scopes: Array<string>, colour: string, description: string, app: { __typename?: 'App', identifier: string } } };
+export type GetReleaseQuery = { __typename?: 'Query', release: { __typename?: 'Release', id: string, version: string, scopes: Array<string>, colour: string, description: string, app: { __typename?: 'App', identifier: string }, flavours: Array<{ __typename?: 'Flavour', id: string, name: string, release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } }> } };
 
 export type ListResourcesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1780,11 +1787,14 @@ export const ReleaseFragmentDoc = gql`
   app {
     identifier
   }
+  flavours {
+    ...ListFlavour
+  }
   scopes
   colour
   description
 }
-    `;
+    ${ListFlavourFragmentDoc}`;
 export const ListReleaseFragmentDoc = gql`
     fragment ListRelease on Release {
   id

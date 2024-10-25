@@ -2,7 +2,7 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { withKabinet } from "@/arkitekt";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
-import { DetailPane } from "@/components/ui/pane";
+import { Card } from "@/components/ui/card";
 import {
   Tooltip,
   TooltipContent,
@@ -112,19 +112,28 @@ export default asDetailQueryRoute(
         }
         pageActions={<RefreshLogsButton pod={data.pod} refetch={refetch} />}
       >
-        <DetailPane>
-          <div className="p-3">
-            {data?.pod?.deployment.flavour.release.app.identifier}
-            {data?.pod?.deployment.flavour.release.version}
-            {data?.pod?.status}
+        <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
+          <div className="mb-3">
+            <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl cursor-pointer">
+              {data?.pod?.deployment.flavour.release.app.identifier}
+            </h1>
+            <p className="mt-3 text-xl text-muted-foreground max-w-[80%]">
+              {data?.pod?.deployment.flavour.release.version} on{" "}
+              {data?.pod?.deployment.flavour.release.id}
+            </p>
+            <p className="mt-3 text-xl text-muted-foreground max-w-[80%]">
+              {data.pod.backend.name}
+            </p>
           </div>
-
-          <pre className="w-[500px] text-xs">
-            {data?.pod.latestLogDump?.logs}
-          </pre>
-
-          {data.pod.clientId}
-        </DetailPane>
+        </div>
+        <div className="p-6">
+          <p className="mb-2">Latest Logs</p>
+          <Card className="p-2 w-full">
+            <pre className="w-[500px] text-xs">
+              {data?.pod.latestLogDump?.logs}
+            </pre>
+          </Card>
+        </div>
       </KabinetPod.ModelPage>
     );
   },

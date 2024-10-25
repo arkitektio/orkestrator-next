@@ -1,5 +1,5 @@
 overwrite: true
-schema: "http://localhost/lok/graphql"
+schema: "http://jhnnsrs-lab/lok/graphql"
 documents: "graphql/lok-next/**/*.graphql"
 generates:
   src/lok-next/api/fragments.ts:

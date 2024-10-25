@@ -215,6 +215,7 @@ export const LokRedeemToken = buildSmart("@lok/redeem_token", "lok/users");
 export const LokGroup = buildSmart("@lok/group", "lok/groups");
 export const LokClient = buildSmart("@lok/client", "lok/clients");
 export const LokRoom = buildSmart("@lok/room", "lok/rooms");
+export const LokComment = buildSmart("@lok/comment", "lok/comments");
 export const LokMapping = buildSmart("@lok/mapping", "lok/mappings");
 export const LokComposition = buildSmart("@lok/composition", "lok/composition");
 

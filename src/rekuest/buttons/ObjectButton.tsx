@@ -6,47 +6,47 @@ import {
 import { useArkitekt } from "@/arkitekt/provider";
 import { Button } from "@/components/ui/button";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  ListDefinitionFragment,
-  usePrimaryDefinitionsQuery,
-} from "@/kabinet/api/graphql";
-import { cn } from "@/lib/utils";
-import { CaretDownIcon } from "@radix-ui/react-icons";
-import React from "react";
-import { toast } from "sonner";
-import {
-  ListTemplateFragment,
-  PrimaryNodeFragment,
-  usePrimaryNodesQuery,
-  useTemplatesQuery,
-} from "../api/graphql";
-import { useAssignProgress } from "../hooks/useAssignProgress";
-import { useHashAction } from "../hooks/useHashActions";
-import { useNodeAction } from "../hooks/useNodeAction";
-import { Input } from "@/components/ui/input";
-import { useLiveAssignation } from "../hooks/useAssignations";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import { Separator } from "@/components/ui/separator";
-import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
-import {
   Command,
   CommandEmpty,
   CommandInput,
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  ListDefinitionFragment,
+  usePrimaryDefinitionsQuery,
+} from "@/kabinet/api/graphql";
+import { cn } from "@/lib/utils";
+import { CaretDownIcon } from "@radix-ui/react-icons";
 import { CommandGroup } from "cmdk";
-import { useTemplateAction } from "../hooks/useTemplateAction";
+import React from "react";
+import { toast } from "sonner";
+import {
+  PrimaryNodeFragment,
+  usePrimaryNodesQuery,
+  useTemplatesQuery,
+} from "../api/graphql";
+import { useLiveAssignation } from "../hooks/useAssignations";
+import { useHashAction } from "../hooks/useHashActions";
+import { useNodeAction } from "../hooks/useNodeAction";
 import { TemplateActionButton } from "./TemplateActionButton";
-import { template } from "handlebars";
+import { useNavigate } from "react-router-dom";
+import { KabinetDefinition } from "@/linkers";
 
 export const DirectTemplateAssignment = (props: {
   object: string;
@@ -159,26 +159,15 @@ export const InstallButton = (props: {
   definition: ListDefinitionFragment;
   children: React.ReactNode;
 }) => {
-  const { assign, latestAssignation, node } = useHashAction({ hash: "xxxxx" });
+  const navigate = useNavigate();
 
   const objectAssign = async () => {
     try {
-      await assign({
-        node: node?.id,
-        args: {
-          definition: props.definition.id,
-        },
-      });
+      navigate(KabinetDefinition.linkBuilder(props.definition.id));
     } catch (e) {
       toast.error(e.message);
     }
   };
-
-  const progress = useLiveAssignation({
-    identifier: "@kabinet/definition",
-    object: props.definition.id,
-    node: node?.id,
-  });
 
   return (
     <CommandItem
@@ -186,15 +175,10 @@ export const InstallButton = (props: {
       key={props.definition.id}
       onSelect={objectAssign}
       className="flex-1 "
-      style={{
-        backgroundSize: `${progress?.progress || 0}% 100%`,
-        backgroundImage: `linear-gradient(to right, #10b981 ${progress?.progress}%, #10b981 ${progress?.progress}%)`,
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "left center",
-      }}
     >
       <Tooltip>
         <TooltipTrigger>{props.children}</TooltipTrigger>
+        <TooltipContent>{props.definition.description}</TooltipContent>
       </Tooltip>
     </CommandItem>
   );

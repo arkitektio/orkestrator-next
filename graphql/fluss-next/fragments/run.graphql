@@ -66,3 +66,27 @@ fragment ListRun on Run {
     }
   }
 }
+
+
+fragment CarouselRun on Run {
+  id
+  assignation
+  snapshots {
+    id
+    status
+    t
+    createdAt
+  }
+  createdAt
+  latestSnapshot {
+    createdAt
+    events {
+      ...RunEvent
+    }
+    t
+  }
+  status
+  flow {
+    ...Flow
+  }
+}

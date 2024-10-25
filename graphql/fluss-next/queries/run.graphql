@@ -33,3 +33,13 @@ query GetRun($id: ID!) {
     ...DetailRun
   }
 }
+
+query RunCarousel(
+  $pagination: OffsetPaginationInput
+  $filters: RunFilter
+  $order: RunOrder
+) {
+  runs(pagination: $pagination, filters: $filters, order: $order) {
+    ...CarouselRun
+  }
+}

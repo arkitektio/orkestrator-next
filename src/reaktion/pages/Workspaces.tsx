@@ -1,8 +1,8 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import RunList from "../components/lists/RunList";
-import RunCarousel from "../edit/carousels/RunCarousel";
+import WorkspaceList from "../components/lists/WorkspaceList";
+import WorkspaceCarousel from "../edit/carousels/WorkspaceCarousel";
 
 export type IRepresentationScreenProps = {};
 
@@ -11,12 +11,12 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
 
   return (
     <PageLayout
-      title="Runs"
+      title="Workspaces"
       pageActions={<div className="flex flex-row gap-2"></div>}
     >
-      <RunCarousel />
+      <WorkspaceCarousel />
       <div className="p-6">
-        <RunList pagination={{ limit: 30 }} />
+        <WorkspaceList pagination={{ limit: 30 }} />
       </div>
     </PageLayout>
   );

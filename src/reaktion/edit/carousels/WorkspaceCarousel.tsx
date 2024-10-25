@@ -6,11 +6,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { FlussWorkspace, LokRoom } from "@/linkers";
-import {
-  useWorkspaceCarouselQuery,
-  useWorkspacesQuery,
-} from "@/reaktion/api/graphql";
+import { FlussWorkspace } from "@/linkers";
+import { useWorkspaceCarouselQuery } from "@/reaktion/api/graphql";
 import { ShowFlow } from "@/reaktion/show/ShowFlow";
 import { Ordering } from "@/rekuest/api/graphql";
 
@@ -50,7 +47,7 @@ export default ({}) => {
                 </div>
               </div>
               <div className="col-span-6">
-                <div className="p-1">
+                <FlussWorkspace.DetailLink object={item.id} className="p-1">
                   <Card>
                     <CardContent className="flex aspect-[10/5] p-6 ">
                       <div className="w-full h-full">
@@ -58,7 +55,7 @@ export default ({}) => {
                       </div>
                     </CardContent>
                   </Card>
-                </div>
+                </FlussWorkspace.DetailLink>
               </div>
             </CarouselItem>
           ))}

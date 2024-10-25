@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { FlussWorkspace } from "@/linkers";
 import {
   useUpdateWorkspaceMutation,
@@ -12,16 +12,22 @@ export default asDetailQueryRoute(useWorkspaceQuery, ({ data }) => {
   const [saveFlow] = useUpdateWorkspaceMutation();
 
   return (
-    <ModelPageLayout
+    <FlussWorkspace.ModelPage
       title={data?.workspace.latestFlow?.title || "No title"}
       object={data.workspace.id}
-      identifier={FlussWorkspace.identifier}
       sidebars={
-        <>
-          {data?.workspace.latestFlow && (
-            <DeployPane flow={data?.workspace.latestFlow} />
-          )}
-        </>
+        <MultiSidebar
+          map={{
+            Comments: <FlussWorkspace.Komments object={data.workspace.id} />,
+            Deployments: (
+              <>
+                {data?.workspace.latestFlow && (
+                  <DeployPane flow={data?.workspace.latestFlow} />
+                )}
+              </>
+            ),
+          }}
+        />
       }
     >
       {data?.workspace.latestFlow && (
@@ -44,6 +50,6 @@ export default asDetailQueryRoute(useWorkspaceQuery, ({ data }) => {
           }}
         />
       )}
-    </ModelPageLayout>
+    </FlussWorkspace.ModelPage>
   );
 });

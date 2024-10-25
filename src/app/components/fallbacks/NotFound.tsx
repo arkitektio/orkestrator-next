@@ -12,10 +12,12 @@ export const NotFound = () => {
           <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl text-foreground">
             Hi {user?.preferred_username || "Stranger"} :)
           </h1>
-          <h2 className="text-2xl font-light tracking-tighter sm:text-3xl md:text-4xl text-foreground">
+          <h2 className="text-xl font-light tracking-tighter sm:text-2xl md:text-3xl text-foreground">
             This route does not exist
-            {location.pathname}
           </h2>
+          <h3 className="text-2xl font-light tracking-tighter sm:text-3xl md:text-4xl text-foreground">
+            {location.pathname}
+          </h3>
           <p className="max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
             Try another one
           </p>

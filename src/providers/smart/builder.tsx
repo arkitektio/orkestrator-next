@@ -23,7 +23,7 @@ import {
 const buildBaseLink = (to: string) => {
   return ({ children, ...props }: BaseLinkProps) => {
     return (
-      <NavLink {...props} to={`/user/${to}`}>
+      <NavLink {...props} to={`/${to}`}>
         {children}
       </NavLink>
     );

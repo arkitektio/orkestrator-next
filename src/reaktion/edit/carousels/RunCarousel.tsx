@@ -7,21 +7,14 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { LokRoom } from "@/linkers";
-import {
-  useWorkspaceCarouselQuery,
-  useWorkspacesQuery,
-} from "@/reaktion/api/graphql";
-import { ShowFlow } from "@/reaktion/show/ShowFlow";
-import { Ordering } from "@/rekuest/api/graphql";
+import { useRunCarouselQuery } from "@/reaktion/api/graphql";
+import { TrackFlow } from "@/reaktion/track/TrackFlow";
 
 export default ({}) => {
-  const { data, error, subscribeToMore, refetch } = useWorkspaceCarouselQuery({
+  const { data, error, subscribeToMore, refetch } = useRunCarouselQuery({
     variables: {
       pagination: {
         limit: 3,
-      },
-      order: {
-        createdAt: Ordering.Desc,
       },
     },
   });
@@ -32,19 +25,19 @@ export default ({}) => {
       <Carousel className="w-full dark:text-white">
         <CarouselPrevious />
         <CarouselContent>
-          {data?.workspaces.map((item, index) => (
+          {data?.runs.map((item, index) => (
             <CarouselItem key={index} className="grid grid-cols-8">
               <div className="col-span-2 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
                 <div>
                   <p className="mt-3 text-xl text-muted-foreground">
-                    Latest Workspace
+                    Latest Run
                   </p>
                   <LokRoom.DetailLink object={item.id}>
                     <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-                      {item.title}
+                      {item.flow.title}
                     </h1>
                     <p className="mt-3 text-xl text-muted-foreground">
-                      {item.description}
+                      {item.createdAt}
                     </p>
                   </LokRoom.DetailLink>
                 </div>
@@ -54,7 +47,7 @@ export default ({}) => {
                   <Card>
                     <CardContent className="flex aspect-[10/5] p-6 ">
                       <div className="w-full h-full">
-                        {item.latestFlow && <ShowFlow flow={item.latestFlow} />}
+                        {item && <TrackFlow run={item} />}
                       </div>
                     </CardContent>
                   </Card>

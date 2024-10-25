@@ -5,9 +5,10 @@ import { Route, Routes } from "react-router";
 import Flow from "./pages/Flow";
 import Home from "./pages/Home";
 import Run from "./pages/Run";
-import Workspace from "./pages/Workspace";
-import SearchPane from "./panes/SearchPane";
 import Runs from "./pages/Runs";
+import Workspace from "./pages/Workspace";
+import Workspaces from "./pages/Workspaces";
+import SearchPane from "./panes/SearchPane";
 
 interface Props {}
 
@@ -32,6 +33,7 @@ const Module: React.FC<Props> = (props) => {
         <Routes>
           <Route index element={<Home />} />
           <Route path="runs" element={<Runs />} />
+          <Route path="workspaces" element={<Workspaces />} />
           <Route path="workspaces/:id" element={<Workspace />} />
           <Route path="flows/:id" element={<Flow />} />
           <Route path="runs/:id" element={<Run />} />

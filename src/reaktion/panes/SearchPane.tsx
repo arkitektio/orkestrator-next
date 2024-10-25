@@ -1,5 +1,9 @@
+import { SubTree } from "@/components/explorer/SubTree";
+import { SubTreeTitle } from "@/components/explorer/SubTreeTitle";
+import { Tree } from "@/components/explorer/Tree";
 import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import { FormDialogAction } from "@/components/ui/form-dialog-action";
 import { DroppableNavLink } from "@/components/ui/link";
 import { FlussRun, FlussWorkspace } from "@/linkers";
 import { NodeSearchQueryVariables } from "@/rekuest/api/graphql";
@@ -14,12 +18,8 @@ import {
   useWorkspacesQuery,
 } from "../api/graphql";
 import WorkspaceCard from "../components/cards/WorkspaceCard";
-import NodeSearchFilter from "../components/forms/filter/NodeSearchFilter";
-import { Tree } from "@/components/explorer/Tree";
-import { SubTreeTitle } from "@/components/explorer/SubTreeTitle";
-import { SubTree } from "@/components/explorer/SubTree";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
 import { CreateWorkspaceForm } from "../components/forms/CreateWorkspaceForm";
+import NodeSearchFilter from "../components/forms/filter/NodeSearchFilter";
 
 interface IDataSidebarProps {}
 
@@ -78,7 +78,7 @@ export const NavigationPane = (props: {}) => {
           </FormDialogAction>
         }
       >
-        Workspaces
+        <FlussWorkspace.ListLink>Workspaces</FlussWorkspace.ListLink>
       </SubTreeTitle>
       <SubTree>
         {data?.workspaces.map((workspace, index) => (

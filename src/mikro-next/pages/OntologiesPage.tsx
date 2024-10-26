@@ -1,14 +1,12 @@
+import { Explainer } from "@/components/explainer/Explainer";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { Button } from "@/components/ui/button";
-import { PlusIcon, UploadIcon } from "lucide-react";
-import React from "react";
-import { useCreateOntologyMutation } from "../api/graphql";
-import OntologyList from "../components/lists/OntologyList";
 import { FormDialogAction } from "@/components/ui/form-dialog-action";
-import CreateOntologyForm from "../forms/CreateOntologyForm";
 import { MikroOntology } from "@/linkers";
+import { PlusIcon } from "lucide-react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Komments } from "@/lok-next/components/komments/Komments";
+import OntologyList from "../components/lists/OntologyList";
+import CreateOntologyForm from "../forms/CreateOntologyForm";
 
 export type IRepresentationScreenProps = {};
 
@@ -43,7 +41,13 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
         </div>
       }
     >
-      <OntologyList pagination={{ limit: 30 }} />
+      <div className="p-3">
+        <Explainer
+          title="Ontologies"
+          description="Ontologies are ways of establishing a shared vocabulary to talk about your data. They allow you to specifically label biological entities such as cells, animals and other  and then use these labels to analyze your data."
+        />
+        <OntologyList pagination={{ limit: 30 }} />
+      </div>
     </PageLayout>
   );
 };

@@ -78,9 +78,12 @@ export const ThreadsCarousel = ({}) => {
               <div className="col-span-2">
                 <div className="p-1">
                   <Card>
-                    <CardContent className="flex aspect-[3/2] items-center justify-center p-6">
+                    <CardContent className="flex aspect-[3/2] items-center justify-center p-6 flex flex-col">
                       <p className="mt-3 text-xl text-muted-foreground">
                         You are all caught up :)
+                      </p>
+                      <p className=" text-xs text-muted-foreground">
+                        Your mentions will appear here
                       </p>
                     </CardContent>
                   </Card>

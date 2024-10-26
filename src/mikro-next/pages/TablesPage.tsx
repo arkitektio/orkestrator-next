@@ -1,6 +1,6 @@
+import { Explainer } from "@/components/explainer/Explainer";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { Button } from "@/components/ui/button";
-import { UploadIcon } from "lucide-react";
+import { MikroTable } from "@/linkers";
 import React from "react";
 import TableList from "../components/lists/TableList";
 
@@ -12,14 +12,17 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       title="Tables"
       pageActions={
         <>
-          <Button variant="outline" size="sm">
-            <UploadIcon className="h-4 w-4 mr-2" />
-            Upload
-          </Button>
+          <MikroTable.NewButton />
         </>
       }
     >
-      <TableList pagination={{ limit: 30 }} />
+      <div className="p-3">
+        <Explainer
+          title="Tables"
+          description="Tables are just like excel sheets, but better. They are your go to for storing table-like data."
+        />
+        <TableList pagination={{ limit: 30 }} />
+      </div>
     </PageLayout>
   );
 };

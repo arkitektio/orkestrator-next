@@ -1,6 +1,7 @@
+import { cn } from "@/lib/utils";
 import { GearIcon } from "@radix-ui/react-icons";
 import { useCallback } from "react";
-import { useLocation, useRoutes, useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import BreadCrumbs from "../navigation/BreadCrumbs";
 import { Button } from "../ui/button";
 import {
@@ -15,12 +16,11 @@ import {
   ResizablePanelGroup,
 } from "../ui/resizable";
 import { Actionbar } from "./Actionbar";
-import { cn } from "@/lib/utils";
 
 export type PageVariant = "black" | "default";
 
 export type PageLayoutProps = {
-  title: string | undefined;
+  title: React.ReactNode | undefined;
   children: React.ReactNode;
   sidebars?: React.ReactNode;
   actions?: React.ReactNode;

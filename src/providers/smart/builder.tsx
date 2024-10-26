@@ -4,6 +4,7 @@ import {
 } from "@/components/layout/ModelPageLayout";
 import { Komments } from "@/lok-next/components/komments/Komments";
 import { usePrimaryNodesQuery } from "@/rekuest/api/graphql";
+import { NewButton, NewButtonProps } from "@/rekuest/buttons/NewButton";
 import {
   ObjectButton,
   ObjectButtonProps,
@@ -111,10 +112,17 @@ const buildUseLive = (model: Identifier, object: string) => {
 };
 
 export type SmartObjectButtonProps = Omit<ObjectButtonProps, "identifier">;
+export type SmartNewButtonProps = Omit<NewButtonProps, "identifier">;
 
 const buildObjectButton = (model: Identifier) => {
   return ({ ...props }: SmartObjectButtonProps) => {
     return <ObjectButton identifier={model} {...props} />;
+  };
+};
+
+const buildNewButton = (model: Identifier) => {
+  return ({ ...props }: SmartNewButtonProps) => {
+    return <NewButton identifier={model} {...props} />;
   };
 };
 
@@ -130,6 +138,7 @@ export const buildSmart = (model: Identifier, to: string) => {
     ModelPage: buildModelPage(model),
     useNodes: () => buildUseNodesQuery(model),
     ObjectButton: buildObjectButton(model),
+    NewButton: buildNewButton(model),
     useProgress: ({ object }: { object: string }) =>
       buildUseProgress(model, object),
     useLive: ({ object }: { object: string }) => buildUseLive(model, object),

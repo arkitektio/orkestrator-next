@@ -1,5 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -50,7 +51,15 @@ export default asDetailQueryRoute(
       <MikroExpression.ModelPage
         object={data.expression.id}
         title={data?.expression.label}
-        sidebars={<MikroExpression.Komments object={data.expression.id} />}
+        sidebars={
+          <MultiSidebar
+            map={{
+              Comments: (
+                <MikroExpression.Komments object={data.expression.id} />
+              ),
+            }}
+          />
+        }
         pageActions={
           <div className="flex flex-row gap-2">
             <>
@@ -73,7 +82,7 @@ export default asDetailQueryRoute(
                 onSubmit={(item) => {
                   console.log(item);
                   navigate(
-                    MikroLinkedExpression.linkBuilder(item.createGraph.id),
+                    MikroLinkedExpression.linkBuilder(item.linkedExpression.id),
                   );
                 }}
               >
@@ -107,7 +116,7 @@ export default asDetailQueryRoute(
         </div>
         <DragZone uploadFile={uploadFile} createFile={createFile} />
 
-        <div className="flex flex-col p-6">
+        <div className="flex flex-col p-8">
           <div className="grid grid-cols-1 gap-4 mt-2">
             {data.expression.linkedExpressions.map((l) => (
               <div className="w-full">

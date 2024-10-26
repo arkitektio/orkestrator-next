@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -145,17 +144,6 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
               <DropdownMenuLabel>
                 <Username />
               </DropdownMenuLabel>
-              <DropdownMenuGroup>
-                <DroppableNavLink
-                  to={"/user/settings"}
-                  className={({ isActive }) =>
-                    ` dark:hover:text-back-400 px-2 py-2
-              ${isActive ? "dark:text-back-400" : "text-back-500"}`
-                  }
-                >
-                  Open Settings
-                </DroppableNavLink>
-              </DropdownMenuGroup>
 
               <div className="flex flex-row gap-2 w-full">
                 <Button

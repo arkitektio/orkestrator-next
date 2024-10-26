@@ -1,5 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import { FormDialogAction } from "@/components/ui/form-dialog-action";
 import { MikroGraph, MikroLinkedExpression } from "@/linkers";
@@ -28,8 +29,8 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
           <FormDialogAction
             variant={"outline"}
             size={"sm"}
-            label="Create"
-            description="Create a new Graph"
+            label="Link Expression"
+            description="Link an expression to this graph"
             buttonChildren={
               <>
                 <PlusIcon className="h-4 w-4 mr-2" />
@@ -48,7 +49,13 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
           </FormSheet>
         </div>
       }
-      sidebars={<MikroGraph.Komments object={data.graph.id} />}
+      sidebars={
+        <MultiSidebar
+          map={{
+            Comments: <MikroGraph.Komments object={data.graph.id} />,
+          }}
+        />
+      }
     >
       <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
         <div>

@@ -30,12 +30,13 @@ export default asDetailQueryRoute(
             <p className="mt-3 text-xl text-muted-foreground"></p>
           </div>
         </div>
-
-        <div className="mt-4 font-light mb-2">Managed Pods</div>
-        <div className="grid grid-cols-6 gap-2">
-          {data?.resource?.pods.map((pod) => (
-            <PodCard key={pod.id} item={pod} />
-          ))}
+        <div className="p-6">
+          <div className="mt-4 font-light mb-2">Hosted Pods</div>
+          <div className="grid grid-cols-6 gap-2">
+            {data?.resource?.pods.map((pod) => (
+              <PodCard key={pod.id} item={pod} />
+            ))}
+          </div>
         </div>
       </KabinetResource.ModelPage>
     );

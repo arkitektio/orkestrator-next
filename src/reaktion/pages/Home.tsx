@@ -28,8 +28,10 @@ const Page = () => {
       }
     >
       <WorkspaceCarousel />
-      <WorkspaceList />
-      <RunList />
+      <div className="p-6">
+        <WorkspaceList />
+        <RunList />
+      </div>
     </PageLayout>
   );
 };

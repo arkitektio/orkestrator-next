@@ -19,7 +19,7 @@ const List = ({ pagination }: Props) => {
     <ListRender
       array={data?.workspaces}
       title={
-        <FlussWorkspace.ListLink className="flex-0">
+        <FlussWorkspace.ListLink className="flex-0 text-xs">
           Workspaces
         </FlussWorkspace.ListLink>
       }

@@ -10,7 +10,7 @@ export const MultiSidebar = (props: { map: ChildMap | undefined }) => {
       defaultValue={props.map && Object.keys(props.map).at(0)}
       className="w-full"
     >
-      <TabsList className="w-full flex flex-row h-12 bg-sidebar border-b dark:border-gray-700 rounded-xs">
+      <TabsList className="w-full flex flex-row h-16 p-2 bg-sidebar border-b dark:border-gray-700 rounded-xs">
         {props.map &&
           Object.keys(props.map).map((key) => {
             return (

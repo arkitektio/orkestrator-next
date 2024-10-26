@@ -14,11 +14,13 @@ import {
   WatchTemplatesSubscription,
   WatchTemplatesSubscriptionVariables,
 } from "@/rekuest/api/graphql";
+import { Separator } from "@radix-ui/react-dropdown-menu";
 import { ArrowRightIcon } from "@radix-ui/react-icons";
 import { BellIcon } from "lucide-react";
 import { useEffect } from "react";
 import { TemplateActionButton } from "../buttons/TemplateActionButton";
 import TemplateCard from "../components/cards/TemplateCard";
+import AgentCarousel from "../components/carousels/AgentCarousel";
 import { StateDisplay } from "../components/State";
 
 export const sizer = (length: number, index: number): string => {
@@ -193,27 +195,30 @@ export default asDetailQueryRoute(
           </div>
         }
       >
-        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-          {data?.agent.name}
-        </h1>
+        <AgentCarousel agent={data.agent} />
 
-        <p className="mt-3 text-xl text-muted-foreground">
-          Is running as {data?.agent?.instanceId}
-        </p>
+        <div className="p-6 mt-2">
+          {data.agent.states.map((state) => (
+            <>
+              {state.stateSchema.hash}
+              <StateDisplay state={state} label={true} />
+            </>
+          ))}
 
-        {data.agent.states.map((state) => (
-          <>
-            {state.stateSchema.hash}
-            <StateDisplay state={state} label={true} />
-          </>
-        ))}
-
-        <ListRender array={data.agent.defaults} title="Registered Functions">
-          {(item) => <TemplateCard item={item} />}
-        </ListRender>
-        <ListRender array={data.agent.workflows} title="Registered Workflows">
-          {(item) => <TemplateCard item={item} />}
-        </ListRender>
+          <ListRender
+            array={data.agent.defaults}
+            title={<p className="text-xs ml-2 mb-2">Registered Actions</p>}
+          >
+            {(item) => <TemplateCard item={item} />}
+          </ListRender>
+          <Separator className="my-2" />
+          <ListRender
+            array={data.agent.workflows}
+            title={<p className="text-xs ml-2 mb-2">Scheduler for Workflows</p>}
+          >
+            {(item) => <TemplateCard item={item} />}
+          </ListRender>
+        </div>
       </RekuestAgent.ModelPage>
     );
   },

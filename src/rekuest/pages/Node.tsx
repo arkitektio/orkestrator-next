@@ -67,7 +67,7 @@ export const DoNodeForm = ({ node }: { node: DetailNodeFragment }) => {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="rounded flex gap-2xl max-w-[80%] mt-2 gap-2">
-            <Card className="flex-1">
+            <Card className="flex-1 p-2">
               <CardHeader>
                 <CardTitle className="font-light">Arguments</CardTitle>
               </CardHeader>

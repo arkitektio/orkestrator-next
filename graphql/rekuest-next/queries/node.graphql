@@ -75,6 +75,7 @@ query PrimaryReturnNodes(
   $pagination: OffsetPaginationInput
   $identifier: String
   $order: NodeOrder
+  $search: String
 ) {
   nodes(
     order: $order
@@ -86,6 +87,7 @@ query PrimaryReturnNodes(
           matches: [{ at: 0, kind: STRUCTURE, identifier: $identifier }]
         }
       ]
+      search: $search
     }
   ) {
     ...PrimaryNode

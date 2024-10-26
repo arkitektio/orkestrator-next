@@ -1,6 +1,7 @@
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { RekuestAgent } from "@/linkers";
+import { UserAvatarUsername } from "@/lok-next/components/UserAvatar";
 import { MateFinder } from "@/mates/types";
 import { ListAgentFragment } from "@/rekuest/api/graphql";
 
@@ -12,8 +13,13 @@ interface Props {
 const TheCard = ({ item, mates }: Props) => {
   return (
     <RekuestAgent.Smart object={item?.id}>
-      <Card className={cn(item.connected && "dark:border-green-300 border")}>
-        <CardHeader>
+      <Card
+        className={cn(
+          "aspect-square flex flex-col",
+          item.connected && "dark:border-green-300 border ",
+        )}
+      >
+        <CardHeader className="flex-grow">
           <CardTitle>
             <RekuestAgent.DetailLink object={item?.id}>
               {" "}
@@ -24,6 +30,9 @@ const TheCard = ({ item, mates }: Props) => {
             </RekuestAgent.DetailLink>
           </CardTitle>
         </CardHeader>
+        <CardFooter>
+          <UserAvatarUsername sub={item.registry.user.id} />
+        </CardFooter>
       </Card>
     </RekuestAgent.Smart>
   );

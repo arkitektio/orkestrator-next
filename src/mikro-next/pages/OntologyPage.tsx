@@ -1,22 +1,26 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { PageLayout } from "@/components/layout/PageLayout";
+import { FormSheet } from "@/components/dialog/FormDialog";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Button } from "@/components/ui/button";
+import { FormDialogAction } from "@/components/ui/form-dialog-action";
 import { Image } from "@/components/ui/image";
 import { DragZone } from "@/components/upload/drag";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { useMediaUpload } from "@/datalayer/hooks/useUpload";
+import { MikroExpression, MikroOntology } from "@/linkers";
+import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import cytoscape from "cytoscape";
 import cola from "cytoscape-cola";
+import { PlusIcon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   GetKnowledgeGraphQuery,
   useGetOntologyQuery,
   useUpdateOntologyMutation,
 } from "../api/graphql";
 import ExpressionCard from "../components/cards/ExpressionCard";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
-import { PlusIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { MikroExpression, MikroOntology } from "@/linkers";
 import CreateExpressionForm from "../forms/CreateExpressionForm";
+import { UpdateOntologyForm } from "../forms/UpdateOntologyForm";
 
 cytoscape.use(cola);
 
@@ -99,9 +103,24 @@ export default asDetailQueryRoute(useGetOntologyQuery, ({ data, refetch }) => {
               <CreateExpressionForm ontology={data.ontology.id} />
             </FormDialogAction>
           </>
+          <FormSheet
+            trigger={
+              <Button size="icon" variant={"outline"}>
+                <HobbyKnifeIcon />
+              </Button>
+            }
+          >
+            {data?.ontology && <UpdateOntologyForm ontology={data?.ontology} />}
+          </FormSheet>
         </div>
       }
-      sidebars={<MikroOntology.Komments object={data.ontology.id} />}
+      sidebars={
+        <MultiSidebar
+          map={{
+            Comments: <MikroOntology.Komments object={data.ontology.id} />,
+          }}
+        />
+      }
     >
       <div className="w-full h-full">
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">

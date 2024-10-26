@@ -11,6 +11,7 @@ import { useReserveMate } from "@/mates/reserve/useReserveMate";
 import { MateFinder } from "@/mates/types";
 import { ListNodeFragment } from "@/rekuest/api/graphql";
 import { NodeActionButton } from "@/rekuest/buttons/NodeActionButton";
+import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 
 interface Props {
   node: ListNodeFragment;
@@ -20,11 +21,23 @@ interface Props {
 const TheCard = ({ node, mates }: Props) => {
   const reserveMate = useReserveMate();
 
+  const progress = useLiveAssignation({
+    assignedNode: node.id,
+  });
+
   return (
     <RekuestNode.Smart object={node?.id} mates={[reserveMate]}>
-      <Card className="group h-20 overflow-y-hidden">
-        <CardHeader className="flex flex-row justify-between">
-          <div>
+      <Card
+        className="group border border-gray-200 dark:border-gray-800 aspect-square"
+        style={{
+          backgroundSize: `${progress?.progress || 0}% 100%`,
+          backgroundImage: `linear-gradient(to right, #10b981 ${progress?.progress}%, #10b981 ${progress?.progress}%)`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "left center",
+        }}
+      >
+        <CardHeader className="flex flex-col justify-between p-3 h-full">
+          <div className="flex-grow">
             <CardTitle>
               <RekuestNode.DetailLink object={node?.id}>
                 {" "}

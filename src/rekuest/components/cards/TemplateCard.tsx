@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useNodeDescription } from "@/lib/rekuest/NodeDescription";
 import { RekuestTemplate } from "@/linkers";
 import { useReserveMate } from "@/mates/reserve/useReserveMate";
 import { MateFinder } from "@/mates/types";
@@ -14,7 +15,7 @@ import {
   useDeleteTemplateMutation,
 } from "@/rekuest/api/graphql";
 import { TemplateActionButton } from "@/rekuest/buttons/TemplateActionButton";
-import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
+import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 
 interface Props {
   item: ListTemplateFragment;
@@ -29,32 +30,35 @@ const TheCard = ({ item, mates }: Props) => {
     },
   });
 
-  const progress = useAssignProgress({
+  const progress = useLiveAssignation({
     assignedTemplate: item.id,
+  });
+
+  const description = useNodeDescription({
+    description: item.node.description || "",
   });
 
   return (
     <RekuestTemplate.Smart object={item?.id} mates={[reserveMate]}>
       <Card
-        className="group"
+        className="group border border-gray-200 dark:border-gray-800"
         style={{
           backgroundSize: `${progress?.progress || 0}% 100%`,
           backgroundImage: `linear-gradient(to right, #10b981 ${progress?.progress}%, #10b981 ${progress?.progress}%)`,
           backgroundRepeat: "no-repeat",
           backgroundPosition: "left center",
-          borderColor: item.node.stateful ? "#5a5a5e" : "#84848a",
         }}
       >
-        <CardHeader className="flex flex-row justify-between">
+        <CardHeader className="flex flex-row p-3">
           <div>
-            <p className="text-xs text-gray-500">{item.interface}</p>
-            <CardTitle>
+            <CardTitle className="mb-2">
               <RekuestTemplate.DetailLink object={item?.id}>
                 {" "}
                 {item.node.name}
               </RekuestTemplate.DetailLink>
             </CardTitle>
-            <CardDescription></CardDescription>
+            <CardDescription>{item.node.description}</CardDescription>
+            <p className="text-xs text-gray-500">{item.interface}</p>
           </div>
         </CardHeader>
         <CardContent>

@@ -30,8 +30,8 @@ const initialValue: Node[] = [
 ];
 
 export type CommentEditProps = {
-  identifier: string;
-  object: string;
+  identifier?: string;
+  object?: string;
   parent?: string;
   createComment: CreateCommentFunc;
 };

@@ -1,24 +1,5 @@
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { NodeDescription } from "@/lib/rekuest/NodeDescription";
-import { KabinetFlavour, KabinetRelease } from "@/linkers";
-import {
-  ListTemplateFragment,
-  useAssignMutation,
-  usePrimaryNodesQuery,
-  useTemplatesQuery,
-} from "@/rekuest/api/graphql";
-import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
-import { useInstancId } from "@/rekuest/hooks/useInstanceId";
-import { MateFinder } from "../../../mates/types";
-import { ListFlavourFragment, ListReleaseFragment } from "../../api/graphql";
-import { useTemplateAction } from "@/rekuest/hooks/useTemplateAction";
-import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +7,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { KABINET_INSTALL_POD_HASH } from "@/constants";
+import { KabinetFlavour } from "@/linkers";
+import { ListTemplateFragment, useTemplatesQuery } from "@/rekuest/api/graphql";
+import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
+import { useTemplateAction } from "@/rekuest/hooks/useTemplateAction";
+import { MateFinder } from "../../../mates/types";
+import { ListFlavourFragment } from "../../api/graphql";
 
 interface Props {
   item: ListFlavourFragment;
@@ -93,7 +80,7 @@ const TheCard = ({ item, mates }: Props) => {
   return (
     <KabinetFlavour.Smart object={item?.id} mates={mates}>
       <Card
-        className="group transition-all duration-300 ease-in-out"
+        className="group transition-all duration-300 ease-in-out aspect-square"
         style={{
           backgroundSize: `${progress || 0}% 100%`,
           backgroundImage: `linear-gradient(to right, #10b981 ${progress}%, #10b981 ${progress}%)`,

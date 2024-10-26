@@ -33,6 +33,7 @@ export type FilterOptions = {
   template?: string;
   assignation?: string;
   assignedTemplate?: string;
+  assignedNode?: string;
   allowDone?: boolean;
 };
 
@@ -64,6 +65,12 @@ export const useFilteredAssignations = (options?: FilterOptions) => {
 
         if (options.template) {
           if (a.template?.id != options.template) {
+            return false;
+          }
+        }
+
+        if (options.assignedNode) {
+          if (a?.node.id != options.assignedNode) {
             return false;
           }
         }

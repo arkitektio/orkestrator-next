@@ -17,6 +17,7 @@ import {
   PortKind,
   useGetPodQuery,
 } from "../api/graphql";
+import ResourceCard from "../components/cards/ResourceCard";
 
 export const AssignButton = (props: {
   template: ListTemplateFragment;
@@ -126,6 +127,7 @@ export default asDetailQueryRoute(
             </p>
           </div>
         </div>
+
         <div className="p-6">
           <p className="mb-2">Latest Logs</p>
           <Card className="p-2 w-full">
@@ -133,6 +135,12 @@ export default asDetailQueryRoute(
               {data?.pod.latestLogDump?.logs}
             </pre>
           </Card>
+          {data?.pod?.resource && (
+            <div className="p-2">
+              Running on
+              <ResourceCard item={data?.pod.resource} />
+            </div>
+          )}
         </div>
       </KabinetPod.ModelPage>
     );

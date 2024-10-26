@@ -21,8 +21,8 @@ const List = ({ filters, pagination }: Props) => {
     <ListRender
       array={data?.ontologies}
       title={
-        <MikroDataset.ListLink className="flex-0">
-          Ontology
+        <MikroDataset.ListLink className="flex-0 text-xs">
+          My Ontologies
         </MikroDataset.ListLink>
       }
       refetch={refetch}

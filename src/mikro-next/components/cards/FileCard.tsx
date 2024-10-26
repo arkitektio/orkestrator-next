@@ -11,8 +11,8 @@ interface Props {
 const TheCard = ({ file, mates }: Props) => {
   return (
     <MikroFile.Smart object={file?.id} mates={mates}>
-      <Card className="px-2 py-2 ">
-        <CardTitle className="truncate">
+      <Card className="px-2 py-2 aspect-[5/3]">
+        <CardTitle className="line-clamp-2 break-words">
           <MikroFile.DetailLink object={file.id}>
             {file.name}
           </MikroFile.DetailLink>

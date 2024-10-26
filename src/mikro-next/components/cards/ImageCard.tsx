@@ -1,9 +1,9 @@
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
+import { cn } from "@/lib/utils";
 import { MikroImage } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
 import { ListImageFragment } from "../../api/graphql";
-import { cn } from "@/lib/utils";
 
 interface ImageCardProps {
   image: ListImageFragment;
@@ -38,7 +38,7 @@ const ImageCard = ({ image, mates, className }: ImageCardProps) => {
         />
       )}
       <div
-        className="px-2 py-2 h-full w-full absolute rounded-lg rounded  top-0 left-0 bg-opacity-20  hover:bg-opacity-10 transition-all ease-in-out duration-200 flex flex-row break-all overflow-y-hidden"
+        className="px-2 py-2 h-full w-full absolute rounded-lg rounded  top-0 left-0 bg-opacity-20  hover:bg-opacity-10 transition-all ease-in-out duration-200 flex flex-row "
         style={{
           backgroundSize: `${progress || 0}% 100%`,
           backgroundImage: `linear-gradient(to right, #10b981 ${progress}%, #10b981 ${progress}%)`,
@@ -48,7 +48,7 @@ const ImageCard = ({ image, mates, className }: ImageCardProps) => {
       >
         <MikroImage.DetailLink
           className={({ isActive } /*  */) =>
-            "z-10 font-bold text-md mb-2 cursor-pointer " +
+            "z-10 font-bold text-md mb-2 cursor-pointer break-words line-clamp-2" +
             (isActive ? "text-primary-300" : "")
           }
           object={image.id}

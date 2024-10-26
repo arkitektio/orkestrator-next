@@ -5,7 +5,7 @@ export type ModelPageLayoutProps = {
   children: React.ReactNode;
   identifier: Identifier;
   object: string;
-  title?: string;
+  title?: React.ReactNode;
   sidebars?: React.ReactNode;
   actions?: React.ReactNode;
   pageActions?: React.ReactNode;

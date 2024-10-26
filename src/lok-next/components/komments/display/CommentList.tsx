@@ -10,9 +10,6 @@ export const CommentList: React.FunctionComponent<{
       <ScrollArea className="mt-4 text-foreground flex flex-col gap-3">
         {comments && comments.length > 0 ? (
           <>
-            <div className="flex flex-row text-md text-muted-foreground">
-              Latest Comments
-            </div>
             {comments.map((comment, index) => (
               <Comment comment={comment} key={index} />
             ))}

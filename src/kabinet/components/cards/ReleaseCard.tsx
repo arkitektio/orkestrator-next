@@ -5,20 +5,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { NodeDescription } from "@/lib/rekuest/NodeDescription";
-import { KabinetRelease } from "@/linkers";
-import {
-  ListTemplateFragment,
-  useAssignMutation,
-  usePrimaryNodesQuery,
-  useTemplatesQuery,
-} from "@/rekuest/api/graphql";
-import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
-import { useInstancId } from "@/rekuest/hooks/useInstanceId";
-import { MateFinder } from "../../../mates/types";
-import { ListReleaseFragment } from "../../api/graphql";
-import { useTemplateAction } from "@/rekuest/hooks/useTemplateAction";
-import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +12,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { KABINET_INSTALL_POD_HASH } from "@/constants";
+import { NodeDescription } from "@/lib/rekuest/NodeDescription";
+import { KabinetRelease } from "@/linkers";
+import { ListTemplateFragment, useTemplatesQuery } from "@/rekuest/api/graphql";
+import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
+import { useTemplateAction } from "@/rekuest/hooks/useTemplateAction";
+import { MateFinder } from "../../../mates/types";
+import { ListReleaseFragment } from "../../api/graphql";
 
 interface Props {
   item: ListReleaseFragment;
@@ -67,20 +60,18 @@ const InstallDialog = (props: { item: ListReleaseFragment }) => {
   });
 
   return (
-    <div className="flex flex-row gap-2">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm">
-            Install
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent side="right">
-          {data?.templates.map((t) => (
-            <AssignButton template={t} release={props.item.id} />
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm">
+          Install
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent side="right">
+        {data?.templates.map((t) => (
+          <AssignButton template={t} release={props.item.id} />
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 
@@ -93,7 +84,7 @@ const TheCard = ({ item, mates }: Props) => {
   return (
     <KabinetRelease.Smart object={item?.id} mates={mates}>
       <Card
-        className="group transition-all duration-300 ease-in-out"
+        className="group transition-all duration-300 ease-in-out aspect-square"
         style={{
           backgroundSize: `${progress || 0}% 100%`,
           backgroundImage: `linear-gradient(to right, #10b981 ${progress}%, #10b981 ${progress}%)`,
@@ -101,8 +92,8 @@ const TheCard = ({ item, mates }: Props) => {
           backgroundPosition: "left center",
         }}
       >
-        <CardHeader className="flex flex-row justify-between">
-          <div>
+        <CardHeader className="flex flex-col justify-between h-full">
+          <div className="flex-grow">
             <CardTitle>
               <KabinetRelease.DetailLink object={item?.id}>
                 {" "}
@@ -116,9 +107,9 @@ const TheCard = ({ item, mates }: Props) => {
               {progress}
             </CardDescription>
           </div>
-          <CardTitle>
+          <div>
             <InstallDialog item={item} />
-          </CardTitle>
+          </div>
         </CardHeader>
       </Card>
     </KabinetRelease.Smart>

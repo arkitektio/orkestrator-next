@@ -17,7 +17,7 @@ interface Props {
 const TheCard = ({ item, mates }: Props) => {
   return (
     <KabinetPod.Smart object={item?.id} mates={mates}>
-      <Card className="group">
+      <Card className="group aspect-[3/2]">
         <CardHeader className="flex flex-row justify-between">
           <div>
             <CardTitle>

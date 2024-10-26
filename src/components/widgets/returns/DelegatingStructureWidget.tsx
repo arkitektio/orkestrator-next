@@ -70,6 +70,8 @@ export const DelegatingStructureWidget = (props: ReturnWidgetProps) => {
       return <NodeWidget {...props} />;
     case "@kabinet/pod":
       return <PodWidget {...props} />;
+    case "@mikro/snapshot":
+      return <div>Snapshssot</div>;
 
     default:
       return (

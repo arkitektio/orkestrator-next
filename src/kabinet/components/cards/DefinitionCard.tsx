@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardDescription,
@@ -18,7 +17,7 @@ interface Props {
 const TheCard = ({ item, mates }: Props) => {
   return (
     <KabinetDefinition.Smart object={item?.id} mates={mates}>
-      <Card className="group">
+      <Card className="group aspect-square">
         <CardHeader className="flex flex-row justify-between">
           <div>
             <CardTitle>

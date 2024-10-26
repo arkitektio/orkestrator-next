@@ -1,3 +1,5 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card } from "@/components/ui/card";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokUser } from "@/linkers";
 import { useState } from "react";
@@ -45,23 +47,28 @@ export const Comment = ({ comment }: { comment: ListCommentType }) => {
   return (
     <>
       <div className="flex flex-row rounded rounded-md p-2 group">
-        <div className="flex-initial">
+        <div className="flex-initial my-auto">
           <LokUser.DetailLink object={comment?.user?.id}>
-            <img
-              className="h-10 w-10 rounded-full hover:ring-pink-500 hover:ring-2 cursor-pointer"
-              src={
-                comment?.user?.avatar
-                  ? s3resolve(comment?.user?.avatar)
-                  : `https://eu.ui-avatars.com/api/?name=${comment?.user?.username}&background=random`
-              }
-              alt=""
-            />
+            <Avatar>
+              <AvatarImage
+                className="h-10 w-10 rounded-full hover:ring-pink-500 hover:ring-2 cursor-pointer"
+                src={
+                  comment?.user?.avatar
+                    ? s3resolve(comment?.user?.avatar)
+                    : `https://eu.ui-avatars.com/api/?name=${comment?.user?.username}&background=random`
+                }
+                alt=""
+              />
+              <AvatarFallback>
+                {comment?.user.username.slice(0, 2)}
+              </AvatarFallback>
+            </Avatar>
           </LokUser.DetailLink>
         </div>
         <div className="flex-grow flex-col ml-3">
-          <div className="text-sm bg-slate-300 p-3 border rounded text-black">
+          <Card className="text-sm p-3 border rounded rounded-xl text-black dark:text-slate-200">
             {comment?.descendants?.map(renderDescendant)}
-          </div>
+          </Card>
 
           {comment?.createdAt && (
             <Timestamp
@@ -117,7 +124,7 @@ export const Comment = ({ comment }: { comment: ListCommentType }) => {
                 hide{" "}
               </button>
               <div className="flex-grow">
-                <CommentEdit parent={comment?.id} identifier={identifier} />
+                <CommentEdit parent={comment?.id} />
               </div>
             </div>
           )}

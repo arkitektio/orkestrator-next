@@ -5787,7 +5787,7 @@ decamelize@^1.2.0:
   resolved "https://registry.yarnpkg.com/decamelize/-/decamelize-1.2.0.tgz#f6534d15148269b20352e7bee26f501f9a191290"
   integrity sha512-z2S+W9X73hAUUki+N+9Za2lBlun89zigOyGrsax+KUQ6wKW4ZoWpEYBkGhQjwAjjDCkWxhY0VKEhk8wzY7F5cA==
 
-deck.gl@^8.0.27:
+deck.gl@8:
   version "8.9.36"
   resolved "https://registry.yarnpkg.com/deck.gl/-/deck.gl-8.9.36.tgz#40e940ee20d6915a3d956a9aed1c48d622f20f12"
   integrity sha512-2LzolV1oNL4f5Q73JvgjsCCzwEMBaJWo1gTT1OWUE2l/7wMuXSdFfYRI45ewH8YaB+vh90d1G8N7kfmSysKabA==

@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
-import { MikroOntology, MikroReagent } from "@/linkers";
+import { MikroReagent } from "@/linkers";
 import { MateFinder } from "@/mates/types";
-import { ListOntologyFragment, ListReagentFragment } from "../../api/graphql";
+import { ListReagentFragment } from "../../api/graphql";
 
 interface Props {
   item: ListReagentFragment;
@@ -21,7 +21,6 @@ const TheCard = ({ item, mates }: Props) => {
         >
           {item?.label}
         </MikroReagent.DetailLink>
-        <MikroReagent.ObjectButton object={item.id} />
       </Card>
     </MikroReagent.Smart>
   );

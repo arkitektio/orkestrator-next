@@ -41,7 +41,7 @@ const TheCard = ({ item, mates }: Props) => {
   return (
     <RekuestTemplate.Smart object={item?.id} mates={[reserveMate]}>
       <Card
-        className="group border border-gray-200 dark:border-gray-800"
+        className="group border border-gray-200 dark:border-gray-800 aspect-square "
         style={{
           backgroundSize: `${progress?.progress || 0}% 100%`,
           backgroundImage: `linear-gradient(to right, #10b981 ${progress?.progress}%, #10b981 ${progress?.progress}%)`,

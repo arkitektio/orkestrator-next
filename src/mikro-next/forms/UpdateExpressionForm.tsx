@@ -1,4 +1,5 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -41,14 +42,14 @@ export const UpdateExpressionForm = (props: {
           <div className="grid grid-cols-2 gap-2">
             <div className="col-span-2 flex-col gap-1 flex">
               <StringField
-                label="New Name"
-                name="description"
-                description="The new description"
-              />
-              <StringField
                 label="New label"
                 name="label"
                 description="The new label"
+              />
+              <ParagraphField
+                label="New Description"
+                name="description"
+                description="The new description"
               />
             </div>
           </div>

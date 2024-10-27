@@ -2,19 +2,13 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FormDialogAction } from "@/components/ui/form-dialog-action";
 import { Image } from "@/components/ui/image";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { DragZone } from "@/components/upload/drag";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { useMediaUpload } from "@/datalayer/hooks/useUpload";
-import { MikroExpression, MikroLinkedExpression } from "@/linkers";
+import { MikroEntity, MikroExpression, MikroLinkedExpression } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { PlusIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -24,7 +18,6 @@ import {
 } from "../api/graphql";
 import LinkExpressionForm from "../forms/LinkExpressionForm";
 import { UpdateExpressionForm } from "../forms/UpdateExpressionForm";
-import { EntityOverlay } from "../overlays/EntityOverlay";
 
 export default asDetailQueryRoute(
   useGetExpressionQuery,
@@ -130,18 +123,9 @@ export default asDetailQueryRoute(
 
                 <div className="grid grid-cols-5 gap-4 mt-2">
                   {l.entities.map((e) => (
-                    <Card className="p-4">
-                      <Popover>
-                        <PopoverTrigger>
-                          <Button variant="ghost" className="lowercase">
-                            {e.label}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="rounded rounded-xl shadow-xl shadow">
-                          <EntityOverlay entity={e.id} />
-                        </PopoverContent>
-                      </Popover>
-                    </Card>
+                    <MikroEntity.DetailLink object={e.id}>
+                      <Card className="p-4">{e.label}</Card>
+                    </MikroEntity.DetailLink>
                   ))}
                 </div>
               </div>

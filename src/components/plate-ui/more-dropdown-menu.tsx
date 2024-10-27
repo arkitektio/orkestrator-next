@@ -2,8 +2,11 @@ import React from 'react';
 
 import type { DropdownMenuProps } from '@radix-ui/react-dropdown-menu';
 
-import { MARK_SUBSCRIPT, MARK_SUPERSCRIPT } from '@udecode/plate-basic-marks';
-import { focusEditor, toggleMark, useEditorRef } from '@udecode/plate-common';
+import {
+  SubscriptPlugin,
+  SuperscriptPlugin,
+} from '@udecode/plate-basic-marks/react';
+import { focusEditor, useEditorRef } from '@udecode/plate-common/react';
 
 import { Icons } from '@/components/icons';
 
@@ -29,14 +32,14 @@ export function MoreDropdownMenu(props: DropdownMenuProps) {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
-        align="start"
         className="flex max-h-[500px] min-w-[180px] flex-col gap-0.5 overflow-y-auto"
+        align="start"
       >
         <DropdownMenuItem
           onSelect={() => {
-            toggleMark(editor, {
-              clear: [MARK_SUBSCRIPT, MARK_SUPERSCRIPT],
-              key: MARK_SUPERSCRIPT,
+            editor.tf.toggle.mark({
+              key: SuperscriptPlugin.key,
+              clear: [SubscriptPlugin.key, SuperscriptPlugin.key],
             });
             focusEditor(editor);
           }}
@@ -47,9 +50,9 @@ export function MoreDropdownMenu(props: DropdownMenuProps) {
         </DropdownMenuItem>
         <DropdownMenuItem
           onSelect={() => {
-            toggleMark(editor, {
-              clear: [MARK_SUPERSCRIPT, MARK_SUBSCRIPT],
-              key: MARK_SUBSCRIPT,
+            editor.tf.toggle.mark({
+              key: SubscriptPlugin.key,
+              clear: [SuperscriptPlugin.key, SubscriptPlugin.key],
             });
             focusEditor(editor);
           }}

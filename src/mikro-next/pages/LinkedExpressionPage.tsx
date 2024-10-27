@@ -1,4 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
@@ -52,7 +53,13 @@ export default asDetailQueryRoute(
         object={data.linkedExpression.id}
         title={data?.linkedExpression.expression.label}
         sidebars={
-          <MikroExpression.Komments object={data.linkedExpression.id} />
+          <MultiSidebar
+            map={{
+              Comments: (
+                <MikroExpression.Komments object={data.linkedExpression.id} />
+              ),
+            }}
+          />
         }
         pageActions={
           <div className="flex flex-row gap-2">
@@ -105,9 +112,12 @@ export default asDetailQueryRoute(
       >
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
           <div>
-            <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+            <MikroExpression.DetailLink
+              object={data.linkedExpression.expression.id}
+              className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl"
+            >
               {data.linkedExpression.expression.label}
-            </h1>
+            </MikroExpression.DetailLink>
             <p className="mt-3 text-xl text-muted-foreground">
               {data.linkedExpression.expression.description}
             </p>

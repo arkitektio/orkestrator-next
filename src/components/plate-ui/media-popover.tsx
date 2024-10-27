@@ -1,16 +1,19 @@
 import React, { useEffect } from 'react';
 
 import {
+  type WithRequiredKey,
   isSelectionExpanded,
+} from '@udecode/plate-common';
+import {
   useEditorSelector,
   useElement,
   useRemoveNodeButton,
-} from '@udecode/plate-common';
+} from '@udecode/plate-common/react';
 import {
   FloatingMedia as FloatingMediaPrimitive,
   floatingMediaActions,
   useFloatingMediaSelectors,
-} from '@udecode/plate-media';
+} from '@udecode/plate-media/react';
 import { useReadOnly, useSelected } from 'slate-react';
 
 import { Icons } from '@/components/icons';
@@ -23,10 +26,10 @@ import { Separator } from './separator';
 
 export interface MediaPopoverProps {
   children: React.ReactNode;
-  pluginKey?: string;
+  plugin: WithRequiredKey;
 }
 
-export function MediaPopover({ children, pluginKey }: MediaPopoverProps) {
+export function MediaPopover({ children, plugin }: MediaPopoverProps) {
   const readOnly = useReadOnly();
   const selected = useSelected();
 
@@ -50,7 +53,7 @@ export function MediaPopover({ children, pluginKey }: MediaPopoverProps) {
   if (readOnly) return <>{children}</>;
 
   return (
-    <Popover modal={false} open={isOpen}>
+    <Popover open={isOpen} modal={false}>
       <PopoverAnchor>{children}</PopoverAnchor>
 
       <PopoverContent
@@ -66,10 +69,8 @@ export function MediaPopover({ children, pluginKey }: MediaPopoverProps) {
 
               <FloatingMediaPrimitive.UrlInput
                 className={inputVariants({ h: 'sm', variant: 'ghost' })}
-                options={{
-                  pluginKey,
-                }}
                 placeholder="Paste the embed link..."
+                options={{ plugin }}
               />
             </div>
           </div>
@@ -83,7 +84,7 @@ export function MediaPopover({ children, pluginKey }: MediaPopoverProps) {
 
             <CaptionButton variant="ghost">Caption</CaptionButton>
 
-            <Separator className="my-1" orientation="vertical" />
+            <Separator orientation="vertical" className="my-1" />
 
             <Button size="sms" variant="ghost" {...buttonProps}>
               <Icons.delete className="size-4" />

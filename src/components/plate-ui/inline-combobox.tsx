@@ -15,9 +15,9 @@ import React, {
 import type { PointRef } from 'slate';
 
 import {
+  type ComboboxItemProps,
   Combobox,
   ComboboxItem,
-  type ComboboxItemProps,
   ComboboxPopover,
   ComboboxProvider,
   Portal,
@@ -25,33 +25,35 @@ import {
   useComboboxStore,
 } from '@ariakit/react';
 import { cn } from '@udecode/cn';
+import { filterWords } from '@udecode/plate-combobox';
 import {
   type UseComboboxInputResult,
-  filterWords,
   useComboboxInput,
   useHTMLInputCursorState,
-} from '@udecode/plate-combobox';
+} from '@udecode/plate-combobox/react';
 import {
   type TElement,
   createPointRef,
-  findNodePath,
   getPointBefore,
   insertText,
   moveSelection,
+} from '@udecode/plate-common';
+import {
+  findNodePath,
   useComposedRef,
   useEditorRef,
-} from '@udecode/plate-common';
+} from '@udecode/plate-common/react';
 import { cva } from 'class-variance-authority';
 
 type FilterFn = (
-  item: { keywords?: string[]; value: string },
+  item: { value: string; keywords?: string[] },
   search: string
 ) => boolean;
 
 interface InlineComboboxContextValue {
   filter: FilterFn | false;
   inputProps: UseComboboxInputResult['props'];
-  inputRef: RefObject<HTMLInputElement>;
+  inputRef: RefObject<HTMLInputElement | null>;
   removeInput: UseComboboxInputResult['removeInput'];
   setHasEmpty: (hasEmpty: boolean) => void;
   showTrigger: boolean;
@@ -131,6 +133,7 @@ const InlineCombobox = ({
   const { props: inputProps, removeInput } = useComboboxInput({
     cancelInputOnBlur: false,
     cursorState,
+    ref: inputRef,
     onCancelInput: (cause) => {
       if (cause !== 'backspace') {
         insertText(editor, trigger + value, {
@@ -144,7 +147,6 @@ const InlineCombobox = ({
         });
       }
     },
-    ref: inputRef,
   });
 
   const [hasEmpty, setHasEmpty] = useState(false);
@@ -176,8 +178,6 @@ const InlineCombobox = ({
   });
 
   const items = store.useState('items');
-
-  useEffect;
 
   /**
    * If there is no active ID and the list of items changes, select the first
@@ -236,20 +236,20 @@ const InlineComboboxInput = forwardRef<
 
       <span className="relative min-h-[1lh]">
         <span
-          aria-hidden="true"
           className="invisible overflow-hidden text-nowrap"
+          aria-hidden="true"
         >
           {value || '\u200B'}
         </span>
 
         <Combobox
-          autoSelect
+          ref={ref}
           className={cn(
             'absolute left-0 top-0 size-full bg-transparent outline-none',
             className
           )}
-          ref={ref}
           value={value}
+          autoSelect
           {...inputProps}
           {...props}
         />
@@ -279,7 +279,7 @@ const InlineComboboxContent: typeof ComboboxPopover = ({
 };
 
 const comboboxItemVariants = cva(
-  'relative flex h-9 select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none',
+  'relative flex h-9 select-none items-center rounded-sm px-2 py-1.5 text-sm text-foreground outline-none',
   {
     defaultVariants: {
       interactive: true,
@@ -294,12 +294,14 @@ const comboboxItemVariants = cva(
 );
 
 export type InlineComboboxItemProps = {
+  focusEditor?: boolean;
   keywords?: string[];
 } & ComboboxItemProps &
   Required<Pick<ComboboxItemProps, 'value'>>;
 
 const InlineComboboxItem = ({
   className,
+  focusEditor = true,
   keywords,
   onClick,
   ...props
@@ -324,7 +326,7 @@ const InlineComboboxItem = ({
     <ComboboxItem
       className={cn(comboboxItemVariants(), className)}
       onClick={(event) => {
-        removeInput(true);
+        removeInput(focusEditor);
         onClick?.(event);
       }}
       {...props}

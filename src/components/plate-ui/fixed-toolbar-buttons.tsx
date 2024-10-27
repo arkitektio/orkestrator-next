@@ -1,23 +1,21 @@
-import React from "react";
+import React from 'react';
 
 import {
-  MARK_BOLD,
-  MARK_CODE,
-  MARK_ITALIC,
-  MARK_STRIKETHROUGH,
-  MARK_UNDERLINE,
-} from "@udecode/plate-basic-marks";
-import { useEditorReadOnly } from "@udecode/plate-common";
+  BoldPlugin,
+  CodePlugin,
+  ItalicPlugin,
+  StrikethroughPlugin,
+  UnderlinePlugin,
+} from '@udecode/plate-basic-marks/react';
+import { useEditorReadOnly } from '@udecode/plate-common/react';
 
-import { Icons } from "@/components/icons";
+import { Icons } from '@/components/icons';
 
-import { InsertDropdownMenu } from "./insert-dropdown-menu";
-import { MarkToolbarButton } from "./mark-toolbar-button";
-import { ModeDropdownMenu } from "./mode-dropdown-menu";
-import { ToolbarGroup } from "./toolbar";
-import { TurnIntoDropdownMenu } from "./turn-into-dropdown-menu";
-import { EmojiDropdownMenu } from "./emoji-toolbar";
-import { ListToolbarButton } from "./list-toolbar-button";
+import { InsertDropdownMenu } from './insert-dropdown-menu';
+import { MarkToolbarButton } from './mark-toolbar-button';
+import { ModeDropdownMenu } from './mode-dropdown-menu';
+import { ToolbarGroup } from './toolbar';
+import { TurnIntoDropdownMenu } from './turn-into-dropdown-menu';
 
 export function FixedToolbarButtons() {
   const readOnly = useEditorReadOnly();
@@ -27,49 +25,49 @@ export function FixedToolbarButtons() {
       <div
         className="flex flex-wrap"
         style={{
-          transform: "translateX(calc(-1px))",
+          transform: 'translateX(calc(-1px))',
         }}
       >
         {!readOnly && (
           <>
-            <ToolbarGroup noSeparator>
+            <ToolbarGroup>
               <InsertDropdownMenu />
               <TurnIntoDropdownMenu />
             </ToolbarGroup>
 
             <ToolbarGroup>
-              <MarkToolbarButton nodeType={MARK_BOLD} tooltip="Bold (⌘+B)">
+              <MarkToolbarButton nodeType={BoldPlugin.key} tooltip="Bold (⌘+B)">
                 <Icons.bold />
               </MarkToolbarButton>
-              <MarkToolbarButton nodeType={MARK_ITALIC} tooltip="Italic (⌘+I)">
+              <MarkToolbarButton
+                nodeType={ItalicPlugin.key}
+                tooltip="Italic (⌘+I)"
+              >
                 <Icons.italic />
               </MarkToolbarButton>
               <MarkToolbarButton
-                nodeType={MARK_UNDERLINE}
+                nodeType={UnderlinePlugin.key}
                 tooltip="Underline (⌘+U)"
               >
                 <Icons.underline />
               </MarkToolbarButton>
 
               <MarkToolbarButton
-                nodeType={MARK_STRIKETHROUGH}
+                nodeType={StrikethroughPlugin.key}
                 tooltip="Strikethrough (⌘+⇧+M)"
               >
                 <Icons.strikethrough />
               </MarkToolbarButton>
-              <MarkToolbarButton nodeType={MARK_CODE} tooltip="Code (⌘+E)">
+              <MarkToolbarButton nodeType={CodePlugin.key} tooltip="Code (⌘+E)">
                 <Icons.code />
               </MarkToolbarButton>
-
-              <EmojiDropdownMenu />
-              <ListToolbarButton nodeType="ul" />
             </ToolbarGroup>
           </>
         )}
 
         <div className="grow" />
 
-        <ToolbarGroup noSeparator>
+        <ToolbarGroup>
           <ModeDropdownMenu />
         </ToolbarGroup>
       </div>

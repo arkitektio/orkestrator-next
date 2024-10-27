@@ -1,3 +1,4 @@
+import { Explainer } from "@/components/explainer/Explainer";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { DownloadIcon, PlusIcon, UploadIcon } from "lucide-react";
@@ -35,7 +36,13 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
         </>
       }
     >
-      <DatasetList pagination={{ limit: 30 }} />
+      <div className="p-3">
+        <Explainer
+          title="Datasets"
+          description="Datasets allow you to group your images and files together. Just like folders. "
+        />
+        <DatasetList pagination={{ limit: 30 }} />
+      </div>
     </PageLayout>
   );
 };

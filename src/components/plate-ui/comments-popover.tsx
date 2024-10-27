@@ -9,8 +9,8 @@ import {
   SCOPE_ACTIVE_COMMENT,
   useFloatingCommentsContentState,
   useFloatingCommentsState,
-} from '@udecode/plate-comments';
-import { PortalBody } from '@udecode/plate-common';
+} from '@udecode/plate-comments/react';
+import { PortalBody } from '@udecode/plate-common/react';
 
 import { CommentCreateForm } from './comment-create-form';
 import { CommentItem } from './comment-item';
@@ -29,14 +29,14 @@ export function CommentsPopoverContent(props: FloatingCommentsContentProps) {
 
   return (
     <CommentProvider
-      id={activeCommentId}
+      id={activeCommentId!}
       key={activeCommentId}
       scope={SCOPE_ACTIVE_COMMENT}
     >
-      <div className={cn(popoverVariants(), 'relative w-[310px]')} ref={ref}>
+      <div ref={ref} className={cn(popoverVariants(), 'relative w-[310px]')}>
         {!hasNoComment && (
           <>
-            <CommentItem commentId={activeCommentId} key={activeCommentId} />
+            <CommentItem key={activeCommentId} commentId={activeCommentId!} />
 
             <CommentReplyItems />
           </>
@@ -55,7 +55,7 @@ export function CommentsPopover() {
 
   return (
     <PortalBody>
-      <CommentsPositioner className="absolute z-50 w-[418px] pb-4">
+      <CommentsPositioner className="absolute z-50 w-[418px] pb-4" data-popover>
         <CommentsPopoverContent />
       </CommentsPositioner>
     </PortalBody>

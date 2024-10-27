@@ -143,10 +143,12 @@ export default asDetailQueryRoute(useGetOntologyQuery, ({ data, refetch }) => {
           </div>
         </div>
         <DragZone uploadFile={uploadFile} createFile={createFile} />
-        <div className="grid grid-cols-5 gap-4 mt-2">
-          {data.ontology.expressions.map((expression) => (
-            <ExpressionCard key={expression.id} item={expression} />
-          ))}
+        <div className="p-6">
+          <div className="grid grid-cols-5 gap-4">
+            {data.ontology.expressions.map((expression) => (
+              <ExpressionCard key={expression.id} item={expression} />
+            ))}
+          </div>
         </div>
       </div>
     </MikroOntology.ModelPage>

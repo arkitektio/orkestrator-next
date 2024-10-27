@@ -1,3 +1,5 @@
+import { Plate } from "@udecode/plate-common/react";
+
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { CommentsPopover } from "@/components/plate-ui/comments-popover";
@@ -8,18 +10,17 @@ import { FloatingToolbar } from "@/components/plate-ui/floating-toolbar";
 import { FloatingToolbarButtons } from "@/components/plate-ui/floating-toolbar-buttons";
 import { TooltipProvider } from "@/components/plate-ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { MikroProtocolStep, MikroProtocolStepTemplate } from "@/linkers";
-import { plugins } from "@/plate/plugins";
-import { CommentsProvider } from "@udecode/plate-comments";
-import { Plate, useEditorReadOnly, useEditorRef } from "@udecode/plate-common";
-import { useEffect, useState } from "react";
+import { MikroProtocolStepTemplate } from "@/linkers";
+import { editor } from "@/plate/plugins";
 import {
-  ProtocolStepFragment,
+  useEditorReadOnly,
+  useEditorRef,
+  usePlateEditor,
+} from "@udecode/plate-common/react";
+import { useState } from "react";
+import {
   ProtocolStepTemplateFragment,
-  useGetProtocolStepQuery,
   useGetProtocolStepTemplateQuery,
-  useUpdateProtocolStepMutation,
   useUpdateProtocolStepTemplateMutation,
 } from "../api/graphql";
 
@@ -42,23 +43,6 @@ export const SafeButton = ({
   const [update] = useUpdateProtocolStepTemplateMutation();
   const readOnly = useEditorReadOnly();
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    // Add ctrl s event listener to document
-
-    const handleSave = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.key === "s") {
-        event.preventDefault();
-        onClick();
-      }
-    };
-
-    document.addEventListener("keydown", handleSave);
-
-    return () => {
-      document.removeEventListener("keydown", handleSave);
-    };
-  }, []);
 
   const onClick = () => {
     console.log("serialized");
@@ -91,42 +75,43 @@ export const SafeButton = ({
 };
 
 export function PlateEditor({ step }: { step: ProtocolStepTemplateFragment }) {
+  const plateEditor = usePlateEditor({
+    ...editor,
+    value: step.plateChildren,
+  });
+
   return (
-    <TooltipProvider>
-      <CommentsProvider users={{}} myUserId="1">
-        <Plate plugins={plugins} initialValue={step.plateChildren || []}>
-          <div className="flex-grow">
-            <FixedToolbar>
-              <FixedToolbarButtons />
-              <SafeButton step={step} />
-            </FixedToolbar>
+    <Plate editor={plateEditor}>
+      <FixedToolbar>
+        <FixedToolbarButtons />
+        <SafeButton step={step} />
+      </FixedToolbar>
 
-            <Editor className="rounded-xs border-0 mt-0 ring-0 h-full w-full" />
+      <Editor />
 
-            <FloatingToolbar>
-              <FloatingToolbarButtons />
-            </FloatingToolbar>
-            <CommentsPopover />
-          </div>
-        </Plate>
-      </CommentsProvider>
-    </TooltipProvider>
+      <FloatingToolbar>
+        <FloatingToolbarButtons />
+      </FloatingToolbar>
+      <CommentsPopover />
+    </Plate>
   );
 }
 
 export function PlateDisplay({ step }: { step: { plateChildren: any[] } }) {
+  const plateEditor = usePlateEditor({
+    ...editor,
+    value: step.plateChildren,
+  });
   return (
     <TooltipProvider>
-      <CommentsProvider users={{}} myUserId="1">
-        <Plate plugins={plugins} initialValue={step.plateChildren || []}>
-          <Editor
-            className="rounded-xs border-0 mt-0 ring-0 h-full w-full"
-            disabled={true}
-          />
+      <Plate editor={plateEditor}>
+        <Editor
+          className="rounded-xs border-0 mt-0 ring-0 h-full w-full"
+          disabled={true}
+        />
 
-          <CommentsPopover />
-        </Plate>
-      </CommentsProvider>
+        <CommentsPopover />
+      </Plate>
     </TooltipProvider>
   );
 }

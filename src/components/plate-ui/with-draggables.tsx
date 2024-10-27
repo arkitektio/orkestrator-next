@@ -1,24 +1,31 @@
 import type { FC } from 'react';
 
-import { ELEMENT_BLOCKQUOTE } from '@udecode/plate-block-quote';
-import { ELEMENT_CODE_BLOCK } from '@udecode/plate-code-block';
-import { createNodesWithHOC } from '@udecode/plate-common';
+import { BlockquotePlugin } from '@udecode/plate-block-quote/react';
+import { CodeBlockPlugin } from '@udecode/plate-code-block/react';
+import {
+  ParagraphPlugin,
+  createNodesWithHOC,
+} from '@udecode/plate-common/react';
 import {
   type WithDraggableOptions,
   withDraggable as withDraggablePrimitive,
 } from '@udecode/plate-dnd';
+import { ExcalidrawPlugin } from '@udecode/plate-excalidraw/react';
+import { HEADING_KEYS } from '@udecode/plate-heading';
+import { ColumnPlugin } from '@udecode/plate-layout/react';
 import {
-  ELEMENT_H1,
-  ELEMENT_H2,
-  ELEMENT_H3,
-  ELEMENT_H4,
-  ELEMENT_H5,
-  ELEMENT_H6,
-} from '@udecode/plate-heading';
-import { ELEMENT_OL, ELEMENT_UL } from '@udecode/plate-list';
-import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph';
+  BulletedListPlugin,
+  NumberedListPlugin,
+} from '@udecode/plate-list/react';
+import {
+  ImagePlugin,
+  MediaEmbedPlugin,
+  PlaceholderPlugin,
+} from '@udecode/plate-media/react';
+import { TablePlugin } from '@udecode/plate-table/react';
+import { TogglePlugin } from '@udecode/plate-toggle/react';
 
-import { Draggable, type DraggableProps } from './draggable';
+import { type DraggableProps, Draggable } from './draggable';
 
 export const withDraggable = (
   Component: FC,
@@ -33,76 +40,115 @@ export const withDraggablesPrimitive = createNodesWithHOC(withDraggable);
 export const withDraggables = (components: any) => {
   return withDraggablesPrimitive(components, [
     {
-      keys: [ELEMENT_PARAGRAPH, ELEMENT_UL, ELEMENT_OL],
+      keys: [
+        ParagraphPlugin.key,
+        BulletedListPlugin.key,
+        NumberedListPlugin.key,
+      ],
       level: 0,
     },
     {
+      key: HEADING_KEYS.h1,
       draggableProps: {
-        classNames: {
-          blockToolbarWrapper: 'h-[1.3em]',
-          gutterLeft: 'px-0 pb-1 text-[1.875em]',
-        },
+        className:
+          '[&_.slate-blockToolbarWrapper]:h-[1.3em] [&_.slate-gutterLeft]:px-0 [&_.slate-gutterLeft]:pb-1 [&_.slate-gutterLeft]:text-[1.875em]',
       },
-      key: ELEMENT_H1,
     },
     {
+      key: HEADING_KEYS.h2,
       draggableProps: {
-        classNames: {
-          blockToolbarWrapper: 'h-[1.3em]',
-          gutterLeft: 'px-0 pb-1 text-[1.5em]',
-        },
+        className:
+          '[&_.slate-blockToolbarWrapper]:h-[1.3em] [&_.slate-gutterLeft]:px-0 [&_.slate-gutterLeft]:pb-1 [&_.slate-gutterLeft]:text-[1.5em]',
       },
-      key: ELEMENT_H2,
     },
     {
+      key: HEADING_KEYS.h3,
       draggableProps: {
-        classNames: {
-          blockToolbarWrapper: 'h-[1.3em]',
-          gutterLeft: 'pt-[2px] px-0 pb-1 text-[1.25em]',
-        },
+        className:
+          '[&_.slate-blockToolbarWrapper]:h-[1.3em] [&_.slate-gutterLeft]:pt-[2px] [&_.slate-gutterLeft]:px-0 [&_.slate-gutterLeft]:pb-1 [&_.slate-gutterLeft]:text-[1.25em]',
       },
-      key: ELEMENT_H3,
     },
     {
+      keys: [HEADING_KEYS.h4, HEADING_KEYS.h5],
       draggableProps: {
-        classNames: {
-          blockToolbarWrapper: 'h-[1.3em]',
-          gutterLeft: 'pt-[3px] px-0 pb-0 text-[1.1em]',
-        },
+        className:
+          '[&_.slate-blockToolbarWrapper]:h-[1.3em] [&_.slate-gutterLeft]:pt-[3px] [&_.slate-gutterLeft]:px-0 [&_.slate-gutterLeft]:pb-0 [&_.slate-gutterLeft]:text-[1.1em]',
       },
-      keys: [ELEMENT_H4, ELEMENT_H5],
     },
     {
+      keys: [ParagraphPlugin.key],
       draggableProps: {
-        classNames: {
-          gutterLeft: 'pt-[3px] px-0 pb-0',
-        },
+        className:
+          '[&_.slate-gutterLeft]:pt-[3px] [&_.slate-gutterLeft]:px-0 [&_.slate-gutterLeft]:pb-0',
       },
-      keys: [ELEMENT_PARAGRAPH],
     },
     {
+      keys: [HEADING_KEYS.h6, BulletedListPlugin.key, NumberedListPlugin.key],
       draggableProps: {
-        classNames: {
-          gutterLeft: 'px-0 pb-0',
-        },
+        className: '[&_.slate-gutterLeft]:px-0 [&_.slate-gutterLeft]:pb-0',
       },
-      keys: [ELEMENT_H6, ELEMENT_UL, ELEMENT_OL],
     },
     {
+      key: BlockquotePlugin.key,
       draggableProps: {
-        classNames: {
-          gutterLeft: 'px-0 pb-0',
-        },
+        className: '[&_.slate-gutterLeft]:px-0 [&_.slate-gutterLeft]:pb-0',
       },
-      key: ELEMENT_BLOCKQUOTE,
     },
     {
+      key: CodeBlockPlugin.key,
       draggableProps: {
-        classNames: {
-          gutterLeft: 'pt-8 px-0 pb-0',
-        },
+        className:
+          '[&_.slate-gutterLeft]:pt-6 [&_.slate-gutterLeft]:px-0 [&_.slate-gutterLeft]:pb-0',
       },
-      key: ELEMENT_CODE_BLOCK,
+    },
+    {
+      key: ImagePlugin.key,
+      draggableProps: {
+        className:
+          '[&_.slate-gutterLeft]:pt-0 [&_.slate-gutterLeft]:px-0 [&_.slate-gutterLeft]:pb-0',
+      },
+    },
+    {
+      key: MediaEmbedPlugin.key,
+      draggableProps: {
+        className:
+          '[&_.slate-gutterLeft]:pt-0 [&_.slate-gutterLeft]:px-0 [&_.slate-gutterLeft]:pb-0',
+      },
+    },
+    {
+      key: ExcalidrawPlugin.key,
+      draggableProps: {
+        className:
+          '[&_.slate-gutterLeft]:pt-0 [&_.slate-gutterLeft]:px-0 [&_.slate-gutterLeft]:pb-0',
+      },
+    },
+    {
+      key: TogglePlugin.key,
+      draggableProps: {
+        className:
+          '[&_.slate-gutterLeft]:pt-0 [&_.slate-gutterLeft]:px-0 [&_.slate-gutterLeft]:pb-0',
+      },
+    },
+    {
+      key: ColumnPlugin.key,
+      draggableProps: {
+        className:
+          '[&_.slate-gutterLeft]:pt-0 [&_.slate-gutterLeft]:px-0 [&_.slate-gutterLeft]:pb-0',
+      },
+    },
+    {
+      key: PlaceholderPlugin.key,
+      draggableProps: {
+        className:
+          '[&_.slate-gutterLeft]:pt-3 [&_.slate-gutterLeft]:px-0 [&_.slate-gutterLeft]:pb-0',
+      },
+    },
+    {
+      key: TablePlugin.key,
+      draggableProps: {
+        className:
+          '[&_.slate-gutterLeft]:pt-3 [&_.slate-gutterLeft]:px-0 [&_.slate-gutterLeft]:pb-0',
+      },
     },
   ]);
 };

@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 
 import { withRef } from '@udecode/cn';
-import { PlateElement } from '@udecode/plate-common';
 import { EmojiInlineIndexSearch, insertEmoji } from '@udecode/plate-emoji';
 
 import { useDebounce } from '@/hooks/use-debounce';
@@ -13,6 +12,7 @@ import {
   InlineComboboxInput,
   InlineComboboxItem,
 } from './inline-combobox';
+import { PlateElement } from './plate-element';
 
 export const EmojiInputElement = withRef<typeof PlateElement>(
   ({ className, ...props }, ref) => {
@@ -31,18 +31,18 @@ export const EmojiInputElement = withRef<typeof PlateElement>(
 
     return (
       <PlateElement
+        ref={ref}
         as="span"
         data-slate-value={element.value}
-        ref={ref}
         {...props}
       >
         <InlineCombobox
+          value={value}
           element={element}
           filter={false}
-          hideWhenNoValue
           setValue={setValue}
           trigger=":"
-          value={value}
+          hideWhenNoValue
         >
           <InlineComboboxInput />
 
@@ -54,8 +54,8 @@ export const EmojiInputElement = withRef<typeof PlateElement>(
             {filteredEmojis.map((emoji) => (
               <InlineComboboxItem
                 key={emoji.id}
-                onClick={() => insertEmoji(editor, emoji)}
                 value={emoji.name}
+                onClick={() => insertEmoji(editor, emoji)}
               >
                 {emoji.skins[0].native} {emoji.name}
               </InlineComboboxItem>

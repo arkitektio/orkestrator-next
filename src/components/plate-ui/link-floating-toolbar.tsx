@@ -3,21 +3,21 @@
 import React from 'react';
 
 import { cn } from '@udecode/cn';
-import { useFormInputProps } from '@udecode/plate-common';
+import { useFormInputProps } from '@udecode/plate-common/react';
 import {
   type UseVirtualFloatingOptions,
   flip,
   offset,
 } from '@udecode/plate-floating';
 import {
-  FloatingLinkUrlInput,
   type LinkFloatingToolbarState,
+  FloatingLinkUrlInput,
   LinkOpenButton,
   useFloatingLinkEdit,
   useFloatingLinkEditState,
   useFloatingLinkInsert,
   useFloatingLinkInsertState,
-} from '@udecode/plate-link';
+} from '@udecode/plate-link/react';
 
 import { Icons } from '@/components/icons';
 
@@ -142,16 +142,16 @@ export function LinkFloatingToolbar({ state }: LinkFloatingToolbarProps) {
   return (
     <>
       <div
-        className={cn(popoverVariants(), 'w-auto p-1')}
         ref={insertRef}
+        className={cn(popoverVariants(), 'w-auto p-1')}
         {...insertProps}
       >
         {input}
       </div>
 
       <div
-        className={cn(popoverVariants(), 'w-auto p-1')}
         ref={editRef}
+        className={cn(popoverVariants(), 'w-auto p-1')}
         {...editProps}
       >
         {editContent}

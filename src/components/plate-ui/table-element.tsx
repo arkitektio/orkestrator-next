@@ -1,20 +1,19 @@
 import React from 'react';
 
 import type * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
+import type { TTableElement } from '@udecode/plate-table';
 
 import { PopoverAnchor } from '@radix-ui/react-popover';
 import { cn, withRef } from '@udecode/cn';
+import { isSelectionExpanded } from '@udecode/plate-common';
 import {
-  PlateElement,
-  isSelectionExpanded,
   useEditorRef,
   useEditorSelector,
   useElement,
   useRemoveNodeButton,
   withHOC,
-} from '@udecode/plate-common';
+} from '@udecode/plate-common/react';
 import {
-  type TTableElement,
   TableProvider,
   mergeTableCells,
   unmergeTableCells,
@@ -22,7 +21,7 @@ import {
   useTableElement,
   useTableElementState,
   useTableMergeState,
-} from '@udecode/plate-table';
+} from '@udecode/plate-table/react';
 import { useReadOnly, useSelected } from 'slate-react';
 
 import { Icons, iconVariants } from '@/components/icons';
@@ -35,6 +34,7 @@ import {
   DropdownMenuPortal,
   DropdownMenuTrigger,
 } from './dropdown-menu';
+import { PlateElement } from './plate-element';
 import { Popover, PopoverContent, popoverVariants } from './popover';
 import { Separator } from './separator';
 
@@ -53,9 +53,9 @@ export const TableBordersDropdownMenuContent = withRef<
 
   return (
     <DropdownMenuContent
-      align="start"
-      className={cn('min-w-[220px]')}
       ref={ref}
+      className={cn('min-w-[220px]')}
+      align="start"
       side="right"
       sideOffset={0}
       {...props}
@@ -130,10 +130,10 @@ export const TableFloatingToolbar = withRef<typeof PopoverContent>(
 
     const mergeContent = canMerge && (
       <Button
+        variant="ghost"
+        onClick={() => mergeTableCells(editor)}
         contentEditable={false}
         isMenu
-        onClick={() => mergeTableCells(editor)}
-        variant="ghost"
       >
         <Icons.combine className="mr-2 size-4" />
         Merge
@@ -142,10 +142,10 @@ export const TableFloatingToolbar = withRef<typeof PopoverContent>(
 
     const unmergeButton = canUnmerge && (
       <Button
+        variant="ghost"
+        onClick={() => unmergeTableCells(editor)}
         contentEditable={false}
         isMenu
-        onClick={() => unmergeTableCells(editor)}
-        variant="ghost"
       >
         <Icons.ungroup className="mr-2 size-4" />
         Unmerge
@@ -156,7 +156,7 @@ export const TableFloatingToolbar = withRef<typeof PopoverContent>(
       <>
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
-            <Button isMenu variant="ghost">
+            <Button variant="ghost" isMenu>
               <Icons.borderAll className="mr-2 size-4" />
               Borders
             </Button>
@@ -167,7 +167,7 @@ export const TableFloatingToolbar = withRef<typeof PopoverContent>(
           </DropdownMenuPortal>
         </DropdownMenu>
 
-        <Button contentEditable={false} isMenu variant="ghost" {...buttonProps}>
+        <Button variant="ghost" contentEditable={false} isMenu {...buttonProps}>
           <Icons.delete className="mr-2 size-4" />
           Delete
         </Button>
@@ -175,16 +175,16 @@ export const TableFloatingToolbar = withRef<typeof PopoverContent>(
     );
 
     return (
-      <Popover modal={false} open={open}>
+      <Popover open={open} modal={false}>
         <PopoverAnchor asChild>{children}</PopoverAnchor>
         {(canMerge || canUnmerge || collapsed) && (
           <PopoverContent
+            ref={ref}
             className={cn(
               popoverVariants(),
               'flex w-[220px] flex-col gap-1 p-1'
             )}
             onOpenAutoFocus={(e) => e.preventDefault()}
-            ref={ref}
             {...props}
           >
             {unmergeButton}
@@ -208,31 +208,29 @@ export const TableElement = withHOC(
       <TableFloatingToolbar>
         <div style={{ paddingLeft: marginLeft }}>
           <PlateElement
-            asChild
+            ref={ref}
+            as="table"
             className={cn(
               'my-4 ml-px mr-0 table h-px w-full table-fixed border-collapse',
               isSelectingCell && '[&_*::selection]:bg-none',
               className
             )}
-            ref={ref}
             {...tableProps}
             {...props}
           >
-            <table>
-              <colgroup {...colGroupProps}>
-                {colSizes.map((width, index) => (
-                  <col
-                    key={index}
-                    style={{
-                      minWidth: minColumnWidth,
-                      width: width || undefined,
-                    }}
-                  />
-                ))}
-              </colgroup>
+            <colgroup {...colGroupProps}>
+              {colSizes.map((width, index) => (
+                <col
+                  key={index}
+                  style={{
+                    minWidth: minColumnWidth,
+                    width: width || undefined,
+                  }}
+                />
+              ))}
+            </colgroup>
 
-              <tbody className="min-w-full">{children}</tbody>
-            </table>
+            <tbody className="min-w-full">{children}</tbody>
           </PlateElement>
         </div>
       </TableFloatingToolbar>

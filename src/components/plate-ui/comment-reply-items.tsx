@@ -5,7 +5,7 @@ import React from 'react';
 import {
   SCOPE_ACTIVE_COMMENT,
   useCommentReplies,
-} from '@udecode/plate-comments';
+} from '@udecode/plate-comments/react';
 
 import { CommentItem } from './comment-item';
 
@@ -15,7 +15,7 @@ export function CommentReplyItems() {
   return (
     <>
       {Object.keys(commentReplies).map((id) => (
-        <CommentItem commentId={id} key={id} />
+        <CommentItem key={id} commentId={id} />
       ))}
     </>
   );

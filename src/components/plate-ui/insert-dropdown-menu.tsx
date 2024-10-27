@@ -1,19 +1,17 @@
-"use client";
+import React from 'react';
 
-import React from "react";
+import type { DropdownMenuProps } from '@radix-ui/react-dropdown-menu';
 
-import type { DropdownMenuProps } from "@radix-ui/react-dropdown-menu";
-
-import { ELEMENT_BLOCKQUOTE } from "@udecode/plate-block-quote";
+import { BlockquotePlugin } from '@udecode/plate-block-quote/react';
+import { insertEmptyElement } from '@udecode/plate-common';
 import {
+  ParagraphPlugin,
   focusEditor,
-  insertEmptyElement,
   useEditorRef,
-} from "@udecode/plate-common";
-import { ELEMENT_H1, ELEMENT_H2, ELEMENT_H3 } from "@udecode/plate-heading";
-import { ELEMENT_PARAGRAPH } from "@udecode/plate-paragraph";
+} from '@udecode/plate-common/react';
+import { HEADING_KEYS } from '@udecode/plate-heading';
 
-import { Icons } from "@/components/icons";
+import { Icons } from '@/components/icons';
 
 import {
   DropdownMenu,
@@ -23,88 +21,92 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   useOpenState,
-} from "./dropdown-menu";
-import { ToolbarButton } from "./toolbar";
-import { toggleList } from "@udecode/plate-list";
-import { ELEMENT_HR } from "@udecode/plate-horizontal-rule";
+} from './dropdown-menu';
+import { ToolbarButton } from './toolbar';
 
 const items = [
   {
     items: [
       {
-        description: "Paragraph",
+        description: 'Paragraph',
         icon: Icons.paragraph,
-        label: "Paragraph",
-        value: ELEMENT_PARAGRAPH,
+        label: 'Paragraph',
+        value: ParagraphPlugin.key,
       },
       {
-        description: "Heading 1",
+        description: 'Heading 1',
         icon: Icons.h1,
-        label: "Heading 1",
-        value: ELEMENT_H1,
+        label: 'Heading 1',
+        value: HEADING_KEYS.h1,
       },
       {
-        description: "Heading 2",
+        description: 'Heading 2',
         icon: Icons.h2,
-        label: "Heading 2",
-        value: ELEMENT_H2,
+        label: 'Heading 2',
+        value: HEADING_KEYS.h2,
       },
       {
-        description: "Heading 3",
+        description: 'Heading 3',
         icon: Icons.h3,
-        label: "Heading 3",
-        value: ELEMENT_H3,
+        label: 'Heading 3',
+        value: HEADING_KEYS.h3,
       },
       {
-        description: "Quote (⌘+⇧+.)",
+        description: 'Quote (⌘+⇧+.)',
         icon: Icons.blockquote,
-        label: "Quote",
-        value: ELEMENT_BLOCKQUOTE,
+        label: 'Quote',
+        value: BlockquotePlugin.key,
       },
       // {
-      //   value: ELEMENT_TABLE,
+      //   value: TablePlugin.key,
       //   label: 'Table',
       //   description: 'Table',
       //   icon: Icons.table,
       // },
-      {
-        value: "ul",
-        label: "Bulleted list",
-        description: "Bulleted list",
-        icon: Icons.ul,
-      },
-      {
-        value: "ol",
-        label: "Numbered list",
-        description: "Numbered list",
-        icon: Icons.ol,
-      },
+      // {
+      //   value: 'ul',
+      //   label: 'Bulleted list',
+      //   description: 'Bulleted list',
+      //   icon: Icons.ul,
+      // },
+      // {
+      //   value: 'ol',
+      //   label: 'Numbered list',
+      //   description: 'Numbered list',
+      //   icon: Icons.ol,
+      // },
+      // {
+      //   value: HorizontalRulePlugin.key,
+      //   label: 'Divider',
+      //   description: 'Divider (---)',
+      //   icon: Icons.hr,
+      // },
     ],
-    label: "Basic blocks",
+    label: 'Basic blocks',
   },
   // {
   //   label: 'Media',
   //   items: [
   //     {
-  //       value: ELEMENT_CODE_BLOCK,
+  //       value: CodeBlockPlugin.key,
   //       label: 'Code',
   //       description: 'Code (```)',
   //       icon: Icons.codeblock,
   //     },
   //     {
-  //       value: ELEMENT_IMAGE,
+  //       value: ImagePlugin.key,
   //       label: 'Image',
   //       description: 'Image',
   //       icon: Icons.image,
   //     },
   //     {
-  //       value: ELEMENT_MEDIA_EMBED,
+  //       value: MediaEmbedPlugin.key,
   //       label: 'Embed',
   //       description: 'Embed',
   //       icon: Icons.embed,
   //     },
   //     {
-  //       value: ELEMENT_EXCALIDRAW,
+  //       value: ExcalidrawPlugin.key,
   //       label: 'Excalidraw',
   //       description: 'Excalidraw',
   //       icon: Icons.excalidraw,
@@ -115,7 +117,7 @@ const items = [
   //   label: 'Inline',
   //   items: [
   //     {
-  //       value: ELEMENT_LINK,
+  //       value: LinkPlugin.key,
   //       label: 'Link',
   //       description: 'Link',
   //       icon: Icons.link,
@@ -131,14 +133,14 @@ export function InsertDropdownMenu(props: DropdownMenuProps) {
   return (
     <DropdownMenu modal={false} {...openState} {...props}>
       <DropdownMenuTrigger asChild>
-        <ToolbarButton isDropdown pressed={openState.open} tooltip="Insert">
+        <ToolbarButton pressed={openState.open} tooltip="Insert" isDropdown>
           <Icons.add />
         </ToolbarButton>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
-        align="start"
         className="flex max-h-[500px] min-w-0 flex-col gap-0.5 overflow-y-auto"
+        align="start"
       >
         {items.map(({ items: nestedItems, label }, index) => (
           <React.Fragment key={label}>
@@ -148,44 +150,50 @@ export function InsertDropdownMenu(props: DropdownMenuProps) {
             {nestedItems.map(
               ({ icon: Icon, label: itemLabel, value: type }) => (
                 <DropdownMenuItem
-                  className="min-w-[180px]"
                   key={type}
+                  className="min-w-[180px]"
                   onSelect={() => {
                     switch (type) {
-                      // case ELEMENT_CODE_BLOCK: {
+                      // case CodeBlockPlugin.key: {
                       //   insertEmptyCodeBlock(editor);
                       //
                       //   break;
                       // }
-                      // case ELEMENT_IMAGE: {
-                      //   await insertMedia(editor, { type: ELEMENT_IMAGE });
+                      // case ImagePlugin.key: {
+                      //   await insertMedia(editor, { type: ImagePlugin.key });
                       //
                       //   break;
                       // }
-                      // case ELEMENT_MEDIA_EMBED: {
+                      // case MediaEmbedPlugin.key: {
                       //   await insertMedia(editor, {
-                      //     type: ELEMENT_MEDIA_EMBED,
+                      //     type: MediaEmbedPlugin.key,
                       //   });
                       //
                       //   break;
                       // }
-                      case "ul":
-                      case "ol": {
-                        insertEmptyElement(editor, ELEMENT_PARAGRAPH, {
-                          select: true,
-                          nextBlock: true,
-                        });
-
-                        toggleList(editor, { type });
-
-                        break;
-                      }
-                      // case ELEMENT_TABLE: {
+                      // case 'ul':
+                      // case 'ol': {
+                      //   insertEmptyElement(editor, ParagraphPlugin.key, {
+                      //     select: true,
+                      //     nextBlock: true,
+                      //   });
+                      //
+                      //   if (settingsStore.get.checkedId(IndentListPlugin.key)) {
+                      //     toggleIndentList(editor, {
+                      //       listStyleType: type === 'ul' ? 'disc' : 'decimal',
+                      //     });
+                      //   } else if (settingsStore.get.checkedId('list')) {
+                      //     toggleList(editor, { type });
+                      //   }
+                      //
+                      //   break;
+                      // }
+                      // case TablePlugin.key: {
                       //   insertTable(editor);
                       //
                       //   break;
                       // }
-                      // case ELEMENT_LINK: {
+                      // case LinkPlugin.key: {
                       //   triggerFloatingLink(editor, { focused: true });
                       //
                       //   break;
@@ -204,7 +212,7 @@ export function InsertDropdownMenu(props: DropdownMenuProps) {
                   <Icon className="mr-2 size-5" />
                   {itemLabel}
                 </DropdownMenuItem>
-              ),
+              )
             )}
           </React.Fragment>
         ))}

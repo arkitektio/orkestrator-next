@@ -1,14 +1,10 @@
+import { Explainer } from "@/components/explainer/Explainer";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { Button } from "@/components/ui/button";
-import { PlusIcon, UploadIcon } from "lucide-react";
-import React from "react";
-import { useCreateOntologyMutation } from "../api/graphql";
-import OntologyList from "../components/lists/OntologyList";
 import { FormDialogAction } from "@/components/ui/form-dialog-action";
-import CreateOntologyForm from "../forms/CreateOntologyForm";
-import { MikroOntology, MikroReagent } from "@/linkers";
+import { MikroReagent } from "@/linkers";
+import { PlusIcon } from "lucide-react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Komments } from "@/lok-next/components/komments/Komments";
 import ReagentList from "../components/lists/ReagentList";
 import CreateReagentForm from "../forms/CreateReagentForm";
 
@@ -45,7 +41,13 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
         </div>
       }
     >
-      <ReagentList pagination={{ limit: 30 }} />
+      <div className="p-3">
+        <Explainer
+          title="Reagents"
+          description="Reagents are ingredients used in your protocols. They can be antibodies, chemicals, or other substances."
+        />
+        <ReagentList pagination={{ limit: 30 }} />
+      </div>
     </PageLayout>
   );
 };

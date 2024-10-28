@@ -14,7 +14,12 @@ import {
 import { KABINET_INSTALL_POD_HASH } from "@/constants";
 import { NodeDescription } from "@/lib/rekuest/NodeDescription";
 import { KabinetRelease } from "@/linkers";
-import { ListTemplateFragment, useTemplatesQuery } from "@/rekuest/api/graphql";
+import {
+  DemandKind,
+  ListTemplateFragment,
+  PortKind,
+  useTemplatesQuery,
+} from "@/rekuest/api/graphql";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 import { useTemplateAction } from "@/rekuest/hooks/useTemplateAction";
 import { MateFinder } from "../../../mates/types";
@@ -44,7 +49,7 @@ export const AssignButton = (props: {
   };
 
   return (
-    <DropdownMenuItem onSelect={doassign}>
+    <DropdownMenuItem onSelect={doassign} className="cursor-pointer">
       Install on {props.template.agent.name}
     </DropdownMenuItem>
   );
@@ -54,7 +59,30 @@ const InstallDialog = (props: { item: ListReleaseFragment }) => {
   const { data } = useTemplatesQuery({
     variables: {
       filters: {
-        nodeHash: KABINET_INSTALL_POD_HASH,
+        node: {
+          demands: [
+            {
+              kind: DemandKind.Args,
+              matches: [
+                {
+                  at: 0,
+                  kind: PortKind.Structure,
+                  identifier: "@kabinet/release",
+                },
+              ],
+            },
+            {
+              kind: DemandKind.Returns,
+              matches: [
+                {
+                  at: 0,
+                  kind: PortKind.Structure,
+                  identifier: "@kabinet/pod",
+                },
+              ],
+            },
+          ],
+        },
       },
     },
   });
@@ -67,6 +95,9 @@ const InstallDialog = (props: { item: ListReleaseFragment }) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent side="right">
+        {data?.templates.length === 0 && (
+          <>No installers found. Please install an engine...</>
+        )}
         {data?.templates.map((t) => (
           <AssignButton template={t} release={props.item.id} />
         ))}

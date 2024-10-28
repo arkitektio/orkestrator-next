@@ -1,5 +1,6 @@
 import { ServiceMap } from "@/arkitekt/provider";
 import { MIKRO_ACTIONS } from "@/lib/mikro/actions";
+import { REKUEST_ACTIONS } from "@/lib/rekuest/actions";
 import { DeleteFileDocument } from "@/mikro-next/api/graphql";
 
 export type Condition = {
@@ -96,5 +97,9 @@ export const get_action_registry = () => {
 };
 
 for (let i of MIKRO_ACTIONS) {
+  defaultRegistry.registerAction(i);
+}
+
+for (let i of REKUEST_ACTIONS) {
   defaultRegistry.registerAction(i);
 }

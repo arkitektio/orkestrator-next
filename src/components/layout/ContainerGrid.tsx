@@ -29,7 +29,7 @@ export const ContainerGrid: React.FC<FittingResponsiveGridProps> = ({
           return {
             structure: {
               identifier: item.dataset.identifier,
-              id: item.dataset.object,
+              object: item.dataset.object,
             },
             item: item,
           };
@@ -48,8 +48,8 @@ export const ContainerGrid: React.FC<FittingResponsiveGridProps> = ({
   let xl_size = fitLength && fitLength < 3 ? fitLength : 3;
   let xxl_size = fitLength && fitLength < 4 ? fitLength : 4;
   let xxxl_size = fitLength && fitLength < 5 ? fitLength : 5;
-  let xxxxl_size = fitLength && fitLength < 8 ? fitLength : 8;
-  let xxxxxl_size = fitLength && fitLength < 7 ? fitLength : 7;
+  let xxxxl_size = fitLength && fitLength < 6 ? fitLength : 8;
+  let xxxxxl_size = fitLength && fitLength < 8 ? fitLength : 12;
 
   return (
     <div

@@ -34,11 +34,15 @@ export const AssignButton = (props: {
   template: ListTemplateFragment;
   release: string;
 }) => {
-  const { assign, latestAssignation } = useTemplateAction({
+  const { assign, latestAssignation, template } = useTemplateAction({
     id: props.template.id,
   });
 
   const doassign = async () => {
+    let argKey = template?.node.args.at(0)?.key;
+    if (!argKey) {
+      return;
+    }
     console.log(
       await assign({
         args: {

@@ -11,18 +11,18 @@ import { buildModuleLink, buildSmart } from "@/providers/smart/builder";
 // - `linkBuilder` a function that can be used to build links to the smart model
 
 export const RekuestAssignation = buildSmart(
-  "@rekuest-next/assignation",
+  "@rekuest/assignation",
   "rekuest/assignations",
 );
 
-export const RekuestNode = buildSmart("@rekuest-next/node", "rekuest/nodes");
+export const RekuestNode = buildSmart("@rekuest/node", "rekuest/nodes");
 export const RekuestTemplate = buildSmart(
-  "@rekuest-next/template",
+  "@rekuest/template",
   "rekuest/templates",
 );
-export const RekuestPanel = buildSmart("@rekuest-next/panel", "rekuest/panels");
+export const RekuestPanel = buildSmart("@rekuest/panel", "rekuest/panels");
 export const RekuestDependency = buildSmart(
-  "@rekuest-next/dependency",
+  "@rekuest/dependency",
   "rekuest/dependencies",
 );
 export const FlussFlow = buildSmart("@fluss/flow", "fluss/flows");
@@ -34,23 +34,23 @@ export const FlussWorkspace = buildSmart(
 export const FlussRun = buildSmart("@fluss/run", "fluss/runs");
 
 export const RekuestReservation = buildSmart(
-  "@rekuest-next/reservation",
+  "@rekuest/reservation",
   "rekuest/reservations",
 );
 
 export const RekuestProvision = buildSmart(
-  "@rekuest-next/reservation",
+  "@rekuest/reservation",
   "rekuest/provisions",
 );
-export const RekuestAgent = buildSmart("@rekuest-next/agent", "rekuest/agents");
+export const RekuestAgent = buildSmart("@rekuest/agent", "rekuest/agents");
 
 export const RekuestDescriptor = buildSmart(
-  "@rekuest-next/descriptor",
+  "@rekuest/descriptor",
   "rekuest/descriptors",
 );
 
 export const RekuestDashboard = buildSmart(
-  "@rekuest-next/dashboard",
+  "@rekuest/dashboard",
   "rekuest/dashboards",
 );
 

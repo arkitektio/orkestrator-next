@@ -8,7 +8,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { KABINET_INSTALL_POD_HASH } from "@/constants";
 import { KabinetFlavour } from "@/linkers";
-import { ListTemplateFragment, useTemplatesQuery } from "@/rekuest/api/graphql";
+import {
+  DemandKind,
+  ListTemplateFragment,
+  PortKind,
+  useTemplatesQuery,
+} from "@/rekuest/api/graphql";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 import { useTemplateAction } from "@/rekuest/hooks/useTemplateAction";
 import { MateFinder } from "../../../mates/types";
@@ -23,15 +28,20 @@ export const AssignButton = (props: {
   template: ListTemplateFragment;
   release: string;
 }) => {
-  const { assign, latestAssignation } = useTemplateAction({
+  const { assign, latestAssignation, template } = useTemplateAction({
     id: props.template.id,
   });
 
   const doassign = async () => {
+    let argKey = template?.node.args.at(0)?.key;
+    if (!argKey) {
+      return;
+    }
+
     console.log(
       await assign({
         args: {
-          release: props.release,
+          [argKey]: props.release,
         },
       }),
     );
@@ -48,7 +58,30 @@ const InstallDialog = (props: { item: { id: string } }) => {
   const { data } = useTemplatesQuery({
     variables: {
       filters: {
-        nodeHash: KABINET_INSTALL_POD_HASH,
+        node: {
+          demands: [
+            {
+              kind: DemandKind.Args,
+              matches: [
+                {
+                  at: 0,
+                  kind: PortKind.Structure,
+                  identifier: "@kabinet/flavour",
+                },
+              ],
+            },
+            {
+              kind: DemandKind.Returns,
+              matches: [
+                {
+                  at: 0,
+                  kind: PortKind.Structure,
+                  identifier: "@kabinet/pod",
+                },
+              ],
+            },
+          ],
+        },
       },
     },
   });
@@ -98,7 +131,7 @@ const TheCard = ({ item, mates }: Props) => {
             </CardTitle>
           </div>
           <CardTitle>
-            <InstallDialog item={item.release} />
+            <InstallDialog item={item} />
           </CardTitle>
         </CardHeader>
       </Card>

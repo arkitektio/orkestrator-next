@@ -33,7 +33,8 @@ export const useMySelection = (
 
   const variables = useMemo(() => {
     const me = selection.find(
-      (item) => item.identifier === iam.identifier && item.id === iam.id,
+      (item) =>
+        item.identifier === iam.identifier && item.object === iam.object,
     );
 
     if (!me) return { me: undefined, hasfocus: false, isSelected: false };
@@ -43,7 +44,8 @@ export const useMySelection = (
       me: me,
       isSelected: true,
 
-      hasfocus: focus?.identifier === iam.identifier && focus?.id === iam.id,
+      hasfocus:
+        focus?.identifier === iam.identifier && focus?.object === iam.object,
       myindex: myindex,
     };
   }, [selection, focus]);
@@ -62,7 +64,8 @@ export const useMySelection = (
           if (iam) {
             let array = selection.filter(
               (item) =>
-                item.id !== iam.id || item.identifier !== iam.identifier,
+                item.object !== iam.object ||
+                item.identifier !== iam.identifier,
             );
             if (array.length === 0) {
               setIsMultiSelecting(false);

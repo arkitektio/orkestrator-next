@@ -15,6 +15,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { SmartContext } from "@/rekuest/buttons/ObjectButton";
+import { cn } from "@/lib/utils";
 
 export const SmartModel = ({
   showSelfMates = true,
@@ -113,27 +114,29 @@ export const SmartModel = ({
   return (
     <div
       ref={drop}
-      data-disableselect
       data-identifier={props.identifier}
       data-object={props.object}
-      onContextMenu={(e) => {
-        setShow(!show);
-        e.preventDefault();
-      }}
     >
       <ContextMenu>
         <ContextMenuContent className="dark:border-gray-700">
-          <SmartContext identifier={props.identifier} object={props.object} />
+          {isSelected ? (
+            <>Multiselect is not implemented yet</>
+          ) : (
+            <SmartContext identifier={props.identifier} object={props.object} />
+          )}
         </ContextMenuContent>
         <ContextMenuTrigger asChild>
           <div
             ref={drag}
-            className={dragClassNameFunc({
-              isDragging,
-              isOver,
-              canDrop,
-              progress,
-            })}
+            className={cn(
+              isSelected && "group ring ring-1",
+              dragClassNameFunc({
+                isDragging,
+                isOver,
+                canDrop,
+                progress,
+              }),
+            )}
             style={
               props.dragStyle &&
               props.dragStyle({
@@ -144,9 +147,6 @@ export const SmartModel = ({
               })
             }
           >
-            {isSelected && (
-              <Card className="border-2 absolute border-solid border-primary" />
-            )}
             {props.children}
           </div>
         </ContextMenuTrigger>

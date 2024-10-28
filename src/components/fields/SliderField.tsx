@@ -47,11 +47,10 @@ export const SliderField = (
       rules={{ validate: props.validate }}
       render={({ field }) => (
         <FormItem>
-          <div className="flex flex-row items-center justify-between w-full">
+          <div className="flex flex-row items-center justify-between w-full gap-2">
             <FormLabel>
               {props.label != undefined ? props.label : props.name}
             </FormLabel>
-            {JSON.stringify(field.value)}
 
             <FormControl>
               <Slider
@@ -66,6 +65,8 @@ export const SliderField = (
                 step={props.step}
               />
             </FormControl>
+
+            {JSON.stringify(field.value)}
           </div>
           <FormDescription>{props.description}</FormDescription>
           <FormMessage />

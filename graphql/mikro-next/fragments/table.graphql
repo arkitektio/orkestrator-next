@@ -10,9 +10,25 @@ fragment Table on Table {
   columns {
     name
     type
+    accessors {
+      ...Accessor
+      ...ImageAccessor
+      ...LabelAccessor
+    }
+  }
+  accessors {
+    ...ImageAccessor
+    ...LabelAccessor
   }
 }
 
 fragment ListTable on Table {
-  ...Table
+  origins {
+    id
+  }
+  id
+  name
+  store {
+    ...ParquetStore
+  }
 }

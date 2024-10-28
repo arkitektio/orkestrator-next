@@ -20,6 +20,7 @@ import { ListReturnWidget } from "./returns/fallbacks/ListReturnWidget";
 import { ModelReturnWidget } from "./returns/fallbacks/ModelReturnWidget";
 import { StringReturnWidget } from "./returns/fallbacks/StringReturnWidget";
 import { FloatReturnWidget } from "./returns/fallbacks/FloatReturnWidget";
+import { SliderWidget } from "./custom/SliderWidget";
 
 export const ShadnWigets = () => {
   const { registry } = useWidgetRegistry();
@@ -55,6 +56,11 @@ export const ShadnWigets = () => {
       "SearchAssignWidget",
       SearchWidget,
     );
+    let slider = registry.registerInputWidget(
+      "SliderAssignWidget",
+      SliderWidget,
+    );
+
     let choices = registry.registerInputWidget(
       "ChoiceAssignWidget",
       ChoicesWidget,
@@ -79,6 +85,7 @@ export const ShadnWigets = () => {
       choices();
       structure();
       model();
+      slider();
     };
   }, []);
 

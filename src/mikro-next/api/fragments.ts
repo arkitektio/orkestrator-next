@@ -6,6 +6,10 @@
       }
       const result: PossibleTypesResultData = {
   "possibleTypes": {
+    "Accessor": [
+      "ImageAccessor",
+      "LabelAccessor"
+    ],
     "DatasetImageFile": [
       "Dataset",
       "File",
@@ -33,6 +37,7 @@
       "FileView",
       "LabelView",
       "OpticsView",
+      "PixelView",
       "RGBView",
       "ROIView",
       "ScaleView",

@@ -17,7 +17,15 @@ fragment Image on Image {
     ...DerivedView
     ...ROIView
     ...FileView
+    ...PixelView
   }
+  derivedFromViews {
+    image {
+      id
+      name
+    }
+  }
+
   pinned
   renders {
     ...Snapshot

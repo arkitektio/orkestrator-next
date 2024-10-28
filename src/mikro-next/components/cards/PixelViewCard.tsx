@@ -5,6 +5,7 @@ import {
   MikroFile,
   MikroFileView,
   MikroImage,
+  MikroPixelView,
   MikroProtocolStep,
   MikroROI,
   MikroROIView,
@@ -14,13 +15,15 @@ import { MateFinder } from "../../../mates/types";
 import {
   DerivedViewFragment,
   FileViewFragment,
+  PixelView,
+  PixelViewFragment,
   RoiViewFragment,
   SpecimenViewFragment,
 } from "../../api/graphql";
 import { ViewCard } from "./meta/ViewCard";
 
 interface Props {
-  view: DerivedViewFragment;
+  view: PixelViewFragment;
   mates?: MateFinder[];
 }
 
@@ -30,14 +33,11 @@ const TheCard = ({ view, mates }: Props) => {
       <ViewCard view={view}>
         <CardHeader>
           <CardTitle>
-            <p className="font-bold text-xs">
-              Derived through {view.operation} from{" "}
-            </p>
             <p className="font-bold text-xl">
-              {view.originImage && (
-                <MikroImage.DetailLink object={view.originImage?.id}>
-                  {view.originImage?.name}
-                </MikroImage.DetailLink>
+              {view.id && (
+                <MikroPixelView.DetailLink object={view.id}>
+                  Pixel Meaning
+                </MikroPixelView.DetailLink>
               )}
             </p>
           </CardTitle>

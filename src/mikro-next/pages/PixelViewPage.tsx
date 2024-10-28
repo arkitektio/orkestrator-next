@@ -11,7 +11,7 @@ import {
   DetailPaneTitle,
 } from "@/components/ui/pane";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { MikroDataset, MikroImage } from "@/linkers";
+import { MikroDataset, MikroImage, MikroPixelView } from "@/linkers";
 import { UserInfo } from "@/lok-next/components/protected/UserInfo";
 import { TwoDViewProvider } from "@/providers/view/ViewProvider";
 import { Matrix4 } from "@math.gl/core";
@@ -22,6 +22,7 @@ import Timestamp from "react-timestamp";
 import {
   AffineTransformationViewFragment,
   useGetImageQuery,
+  useGetPixelViewQuery,
   usePinImageMutation,
 } from "../api/graphql";
 import AcquisitionViewCard from "../components/cards/AcquisitionViewCard";
@@ -42,25 +43,26 @@ import { VivRenderer } from "../components/render/VivRenderer";
 import ROIViewCard from "../components/cards/ROIViewCard";
 import FileViewCard from "../components/cards/FileViewCard";
 import DerivedViewCard from "../components/cards/DerivedViewCard";
-import PixelViewCard from "../components/cards/PixelViewCard";
+import { useParams } from "react-router-dom";
+import { NotImplementedYet } from "@/app/components/fallbacks/NotImplemted";
 
 export type IRepresentationScreenProps = {};
 
 export const dimensionOrder = ["c", "t", "z", "y", "x"];
 
-export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
-  const x = data?.image?.store?.shape?.at(4);
-  const y = data?.image?.store?.shape?.at(4);
-  const z = data?.image?.store?.shape?.at(2) || 1;
-  const t = data?.image?.store?.shape?.at(1) || 1;
-  const c = data?.image?.store?.shape?.at(0) || 1;
+export default asDetailQueryRoute(useGetPixelViewQuery, ({ data, refetch }) => {
+  const x = data?.pixelView.image?.store?.shape?.at(4);
+  const y = data?.pixelView.image?.store?.shape?.at(4);
+  const z = data?.pixelView.image?.store?.shape?.at(2) || 1;
+  const t = data?.pixelView.image?.store?.shape?.at(1) || 1;
+  const c = data?.pixelView.image?.store?.shape?.at(0) || 1;
 
   const aspectRatio = x && y ? x / y : 1;
 
   const [pinImage] = usePinImageMutation();
 
   const modelMatrix = useMemo(() => {
-    const affineView = data?.image?.views.find(
+    const affineView = data?.pixelView.image?.views.find(
       (x) => x.__typename == "AffineTransformationView",
     ) as AffineTransformationViewFragment;
     if (!affineView) {
@@ -79,36 +81,26 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
     console.log("scale", scale);
 
     return new Matrix4().scale(scale);
-  }, [data?.image?.views]);
+  }, [data?.pixelView.image?.views]);
 
   const resolve = useResolve();
+
+  const { value } = useParams<{ id: string; value: string }>();
+
   return (
-    <MikroImage.ModelPage
-      title={data?.image?.name}
-      object={data?.image?.id}
+    <MikroPixelView.ModelPage
+      title={data?.pixelView?.id}
+      object={data?.pixelView?.id}
       sidebars={
         <MultiSidebar
           map={{
-            Comments: <MikroImage.Komments object={data?.image?.id} />,
-            Provenance: <ProvenanceSidebar items={data?.image.history} />,
-            Downloads: (
-              <div className="p-3">
-                {data.image.renders.map((render, index) => (
-                  <Card className="p-2 truncate">
-                    <a href={resolve(render.store.presignedUrl)} download>
-                      <Download size={24} />
-                      {render.__typename}
-                    </a>
-                  </Card>
-                ))}
-              </div>
-            ),
+            Comments: <MikroPixelView.Komments object={data?.pixelView?.id} />,
           }}
         />
       }
       pageActions={
         <>
-          <MikroImage.ObjectButton object={data?.image?.id} />
+          <MikroPixelView.ObjectButton object={data?.pixelView?.id} />
         </>
       }
       variant="black"
@@ -116,13 +108,19 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
       <TwoDViewProvider initialC={0} initialT={0} initialZ={0}>
         <div className="grid grid-cols-12 grid-reverse flex-col rounded-md gap-4 mt-2 h-full">
           <div className="absolute w-full h-full overflow-hidden border-0">
-            {data?.image?.rgbContexts?.map((context, index) => (
+            {data?.pixelView.image?.rgbContexts?.map((context, index) => (
               <div className={"h-full w-full mt-0 rounded rounded-md relative"}>
                 <div className="w-full h-full items-center flex justify-center flex-col">
                   <VivRenderer
                     context={context}
-                    rois={data.image.rois}
+                    rois={data.pixelView.image.rois}
                     modelMatrix={modelMatrix}
+                  />
+                  <NotImplementedYet
+                    className="absolute top-1/2 right-1/2"
+                    message={
+                      "Soon you will see the highlighted pixel values here"
+                    }
                   />
                 </div>
               </div>
@@ -135,41 +133,39 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                   <>
                     <PinToggle
                       onPin={(e) => {
-                        data?.image.id &&
+                        data?.pixelView.id &&
                           pinImage({
                             variables: {
-                              id: data?.image?.id,
+                              id: data?.pixelView?.id,
                               pin: e,
                             },
                           });
                       }}
-                      pinned={data?.image?.pinned || false}
+                      pinned={data?.pixelView.image?.pinned || false}
                     />
                   </>
                 }
-                className="group "
+                className="group flex-row flex justify-between"
               >
-                <FormSheet
-                  trigger={
-                    <HobbyKnifeIcon className="w-full group-hover:block hidden" />
-                  }
-                >
-                  {data?.image && <UpdateImageForm image={data?.image} />}
-                </FormSheet>
-                {data?.image?.name}
+                <div className="flex flex-row gap-2">
+                  {data?.pixelView.image?.name}{" "}
+                  {value && (
+                    <div className="text-muted-foreground">Value: {value}</div>
+                  )}
+                </div>
               </DetailPaneTitle>
             </DetailPaneHeader>
 
             <DetailPaneContent>
-              {data?.image?.dataset && (
+              {data?.pixelView.image?.dataset && (
                 <>
                   <div className="font-light">In Dataset</div>
                   <Card className="flex flex-row mb-2 px-2 py-1">
                     <MikroDataset.DetailLink
                       className="text-xl cursor-pointer"
-                      object={data?.image?.dataset?.id}
+                      object={data?.pixelView?.image.id}
                     >
-                      {data?.image?.dataset.name}
+                      {data?.pixelView?.image.dataset.name}
                     </MikroDataset.DetailLink>
                   </Card>
                 </>
@@ -177,17 +173,17 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
 
               <div className="font-light mt-2 ">Created At</div>
               <div className="text-md mt-2 ">
-                <Timestamp date={data?.image?.createdAt} />
+                <Timestamp date={data?.pixelView.image?.createdAt} />
               </div>
               <div className="font-light mt-2 ">Created by</div>
               <div className="text-md mt-2 ">
-                {data?.image?.creator?.sub && (
-                  <UserInfo sub={data?.image?.creator?.sub} />
+                {data?.pixelView.image?.creator?.sub && (
+                  <UserInfo sub={data?.pixelView.image?.creator?.sub} />
                 )}
               </div>
               <div className="font-light">Shape</div>
               <div className="text-xl flex mb-2">
-                {data?.image?.store?.shape?.map((val, index) => (
+                {data?.pixelView.image?.store?.shape?.map((val, index) => (
                   <div key={index}>
                     <span className="font-semibold">{val}</span>{" "}
                     <span className="text-xs font-light mr-1 ml-1 my-auto">
@@ -199,7 +195,7 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
               </div>
               <div className="font-light">Tags</div>
               <div className="text-xl flex mb-2">
-                {data?.image?.tags?.map((tag, index) => (
+                {data?.pixelView.image?.tags?.map((tag, index) => (
                   <>
                     <span className="font-semibold mr-2">#{tag} </span>
                   </>
@@ -207,7 +203,7 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
               </div>
               <div className="font-light">Views</div>
               <ResponsiveContainerGrid className="gap-3 ">
-                {data?.image.views?.map((view, index) => (
+                {data?.pixelView.image.views?.map((view, index) => (
                   <>
                     {view.__typename == "AffineTransformationView" && (
                       <TransformationViewCard view={view} key={index} />
@@ -242,12 +238,9 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                     {view.__typename == "DerivedView" && (
                       <DerivedViewCard view={view} key={index} />
                     )}
-                    {view.__typename == "PixelView" && (
-                      <PixelViewCard view={view} key={index} />
-                    )}
                   </>
                 ))}
-                {data?.image && (
+                {data?.pixelView.image && (
                   <Card className="opacity-0 hover:opacity-100 relative">
                     <CardContent className="grid place-items-center w-full h-full">
                       <FormDialog
@@ -256,33 +249,16 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                           await refetch();
                         }}
                       >
-                        <AddImageViewForm image={data?.image.id} />
+                        <AddImageViewForm image={data?.pixelView.image.id} />
                       </FormDialog>
                     </CardContent>
                   </Card>
                 )}
               </ResponsiveContainerGrid>
-              {data?.image.derivedFromViews?.length > 0 && (
-                <>
-                  <div className="font-light">Derived Images</div>
-                  <div className="flex flex-col gap-2 mt-2">
-                    {data?.image.derivedFromViews?.map((view, index) => (
-                      <MikroImage.DetailLink
-                        object={view.image?.id}
-                        className="cursor-pointer"
-                      >
-                        <Card className="flex flex-row gap-2 px-2 py-1">
-                          <span className="text-md">{view.image?.name}</span>
-                        </Card>
-                      </MikroImage.DetailLink>
-                    ))}
-                  </div>
-                </>
-              )}
             </DetailPaneContent>
           </DetailPane>
         </div>
       </TwoDViewProvider>
-    </MikroImage.ModelPage>
+    </MikroPixelView.ModelPage>
   );
 });

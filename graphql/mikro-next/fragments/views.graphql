@@ -26,6 +26,7 @@ fragment DerivedView on DerivedView {
     id
     name
   }
+  operation
 }
 
 fragment ROIView on ROIView {
@@ -170,4 +171,17 @@ fragment ContinousScanView on ContinousScanView {
   ...View
   id
   direction
+}
+
+fragment PixelView on PixelView {
+  ...View
+  id
+}
+
+fragment DetailPixelView on PixelView {
+  ...View
+  id
+  image {
+    ...Image
+  }
 }

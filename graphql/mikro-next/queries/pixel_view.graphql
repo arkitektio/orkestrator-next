@@ -1,0 +1,5 @@
+query GetPixelView($id: ID!) {
+  pixelView(id: $id) {
+    ...DetailPixelView
+  }
+}

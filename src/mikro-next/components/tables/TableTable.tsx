@@ -40,12 +40,17 @@ import { Form } from "@/components/ui/form";
 import { TooltipButton } from "@/components/ui/tooltip-button";
 import {
   ChildrenQuery,
+  ImageAccessorFragment,
+  LabelAccessorFragment,
   ListEntitiesQueryVariables,
   TableFragment,
   useRowsQuery,
   useSearchLinkedExpressionLazyQuery,
 } from "@/mikro-next/api/graphql";
 import { useForm } from "react-hook-form";
+import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipContent } from "@radix-ui/react-tooltip";
+import { MikroPixelView } from "@/linkers";
 
 export type Item = ChildrenQuery["rows"][0];
 
@@ -115,6 +120,75 @@ const initialVariables: ListEntitiesQueryVariables = {
   },
 };
 
+export type ValueAccessorProps<T extends any> = {
+  accessor: T;
+  value?: any;
+};
+
+export const LabelAccessor = ({
+  accessor,
+  value,
+}: ValueAccessorProps<LabelAccessorFragment>) => {
+  return (
+    <MikroPixelView.DetailLink
+      object={accessor.pixelView.id}
+      subroute={`value/${parseInt(value?.toString() ?? "0")}`}
+    >
+      <div className="text-sm font-semibold">{accessor.__typename}</div>
+      <div className="text-xs text-muted-foreground">{value}</div>
+    </MikroPixelView.DetailLink>
+  );
+};
+
+export const ImageAccessor = ({
+  accessor,
+  value,
+}: ValueAccessorProps<ImageAccessorFragment>) => {
+  return (
+    <div>
+      <div className="text-sm font-semibold">{accessor.__typename}</div>
+      <div className="text-xs text-muted-foreground">{value}</div>
+    </div>
+  );
+};
+
+export const AccessorDiplay = (props: {
+  accessor: TableFragment["accessors"][0];
+  value?: any;
+}) => {
+  if (props.accessor.__typename === "LabelAccessor") {
+    return <LabelAccessor accessor={props.accessor} value={props.value} />;
+  }
+
+  if (props.accessor.__typename === "ImageAccessor") {
+    return <ImageAccessor accessor={props.accessor} value={props.value} />;
+  }
+
+  return (
+    <div>
+      <div className="text-sm font-semibold">{props.accessor.__typename}</div>
+      <div className="text-xs text-muted-foreground">{props.children}</div>
+    </div>
+  );
+};
+
+export const DelegatinAccessorDisplay = (props: {
+  accessors: TableFragment["accessors"];
+  value: any;
+}) => {
+  return (
+    <div className="flex flex-row gap-2">
+      {props.accessors.map((accessor) => (
+        <AccessorDiplay
+          key={accessor.id}
+          accessor={accessor}
+          value={props.value}
+        />
+      ))}
+    </div>
+  );
+};
+
 const calculateColumns = (table: TableFragment) => {
   let calculated_columns = [...columns];
 
@@ -124,19 +198,38 @@ const calculateColumns = (table: TableFragment) => {
       accessorKey: col.name,
       header: ({ column }) => {
         return (
-          <TooltipButton
-            tooltip={col.type}
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            {col.name}
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </TooltipButton>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                onClick={() =>
+                  column.toggleSorting(column.getIsSorted() === "asc")
+                }
+                variant="ghost"
+              >
+                {col.name}
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" align="center">
+              {col.accessors.map((accessor) => (
+                <div key={accessor.keys.join("")}>{accessor.__typename}</div>
+              ))}
+            </TooltipContent>
+          </Tooltip>
         );
       },
       cell: ({ row }) => {
         return (
-          <div className="text-center mx-auto">{row.getValue(col.name)}</div>
+          <div className="text-center mx-auto">
+            {col.accessors.length == 0 ? (
+              <div>{row.getValue(col.name)}</div>
+            ) : (
+              <DelegatinAccessorDisplay
+                accessors={col.accessors}
+                value={row.getValue(col.name)}
+              />
+            )}
+          </div>
         );
       },
     });

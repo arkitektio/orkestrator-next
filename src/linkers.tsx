@@ -142,6 +142,10 @@ export const MikroSpecimenView = buildSmart(
 );
 
 export const MikroFileView = buildSmart("@mikro/fileview", "mikro/fileviews");
+export const MikroPixelView = buildSmart(
+  "@mikro/pixelview",
+  "mikro/pixelviews",
+);
 
 export const MikroROIView = buildSmart("@mikro/roiview", "mikro/roiviews");
 

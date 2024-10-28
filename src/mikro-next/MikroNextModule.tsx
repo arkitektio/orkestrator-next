@@ -40,6 +40,7 @@ import EntityPage from "./pages/EntityPage";
 import EntityRelationPage from "./pages/EntityRelationPage";
 import ProtocolStepTemplatesPage from "./pages/ProtocolStepTemplatesPage";
 import ProtocolStepTemplatePage from "./pages/ProtocolStepTemplatePage";
+import PixelViewPage from "./pages/PixelViewPage";
 interface Props {}
 
 export const MikroNextModule: React.FC<Props> = (props) => {
@@ -66,7 +67,11 @@ export const MikroNextModule: React.FC<Props> = (props) => {
           <Route path="ontologies/:id" element={<KnowledgePage />} />
           <Route path="ontologies" element={<OntologiesPage />} />
           <Route path="graphs" element={<GraphsPage />} />
-
+          <Route path="pixelviews/:id" element={<PixelViewPage />} />
+          <Route
+            path="pixelviews/:id/value/:value"
+            element={<PixelViewPage />}
+          />
           <Route path="graphs/:id" element={<GraphPage />} />
           <Route path="reagents" element={<ReagentsPage />} />
           <Route path="reagents/:id" element={<ReagentPage />} />

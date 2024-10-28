@@ -10,6 +10,7 @@ fragment SliderAssignWidget on SliderAssignWidget {
   kind
   min
   max
+  step
 }
 
 fragment StateChoiceAssignWidget on StateChoiceAssignWidget {

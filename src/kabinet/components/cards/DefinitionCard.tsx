@@ -17,7 +17,7 @@ interface Props {
 const TheCard = ({ item, mates }: Props) => {
   return (
     <KabinetDefinition.Smart object={item?.id} mates={mates}>
-      <Card className="group aspect-square">
+      <Card className="group aspect-square @sm:aspect-[3/2] overflow-hidden">
         <CardHeader className="flex flex-row justify-between">
           <div>
             <CardTitle>

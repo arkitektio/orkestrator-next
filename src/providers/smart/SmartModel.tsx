@@ -129,7 +129,8 @@ export const SmartModel = ({
           <div
             ref={drag}
             className={cn(
-              isSelected && "group ring ring-1",
+              "@container ",
+              isSelected && "group ring ring-1 ",
               dragClassNameFunc({
                 isDragging,
                 isOver,

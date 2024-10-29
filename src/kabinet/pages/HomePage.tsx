@@ -45,7 +45,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       }
       title="App Store"
     >
-      <div className="p-3">
+      <div className="p-3 ">
         <PopularCarousel />
 
         <Separator className="mt-8 mb-2" />

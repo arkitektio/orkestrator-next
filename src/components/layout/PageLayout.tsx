@@ -111,7 +111,7 @@ export const PageLayout = ({
             </div>
           </div>
 
-          <div className="p-3 flex-grow @container flex flex-col">
+          <div className="p-3 flex-grow @container flex flex-col overflow-y-auto overflow-x-hidden">
             {children}
           </div>
           <Actionbar>{actions}</Actionbar>

@@ -125,7 +125,7 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
               </div>
             ))}
           </div>
-          <DetailPane className="col-span-3 @container p-2 bg-black bg-clip-padding backdrop-filter backdrop-blur-2xl bg-opacity-10 z-100 overflow-hidden">
+          <DetailPane className="col-span-3 @container p-2 ml-4 bg-black bg-clip-padding backdrop-filter backdrop-blur-2xl bg-opacity-10 z-100 overflow-hidden flex flex-col h-max-[400px]">
             <DetailPaneHeader>
               <DetailPaneTitle
                 actions={
@@ -157,7 +157,7 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
               </DetailPaneTitle>
             </DetailPaneHeader>
 
-            <DetailPaneContent>
+            <DetailPaneContent className="ml-3 flex flex-col">
               {data?.image?.dataset && (
                 <>
                   <div className="font-light">In Dataset</div>

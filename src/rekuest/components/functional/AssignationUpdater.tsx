@@ -49,7 +49,12 @@ export const AssignationToaster = (props: { id: string }) => {
   // useEffect to close the toast if `ass.done` becomes true
   useEffect(() => {
     if (ass.done) {
-      toast.dismiss(props.id); // Dismiss the toast when task is done
+      // wait delay
+      const timer = setTimeout(() => {
+        toast.dismiss(props.id);
+      }, 3000);
+
+      return () => clearTimeout(timer);
     }
   }, [ass.done, props.id]);
 

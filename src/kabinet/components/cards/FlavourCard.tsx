@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -6,7 +7,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { KABINET_INSTALL_POD_HASH } from "@/constants";
 import { KabinetFlavour } from "@/linkers";
 import {
   DemandKind,
@@ -104,6 +104,20 @@ const InstallDialog = (props: { item: { id: string } }) => {
   );
 };
 
+const DelegatingSelector = (props: {
+  selector: ListFlavourFragment["selectors"][0];
+}) => {
+  if (props.selector.__typename == "CudaSelector") {
+    return <div> Cuda </div>;
+  }
+
+  if (props.selector.__typename == "RocmSelector") {
+    return <div> Cpu </div>;
+  }
+
+  return <> Unknown </>;
+};
+
 const TheCard = ({ item, mates }: Props) => {
   const { progress } = useLiveAssignation({
     identifier: "@kabinet/flavour",
@@ -121,7 +135,7 @@ const TheCard = ({ item, mates }: Props) => {
           backgroundPosition: "left center",
         }}
       >
-        <CardHeader className="flex flex-row justify-between">
+        <CardHeader className="flex flex-col justify-between h-full">
           <div>
             <CardTitle>
               <KabinetFlavour.DetailLink object={item?.id}>
@@ -129,7 +143,13 @@ const TheCard = ({ item, mates }: Props) => {
                 {item.release.app.identifier}:{item.release.version}-{item.name}
               </KabinetFlavour.DetailLink>
             </CardTitle>
+            {item.selectors.map((selector) => (
+              <Badge className=" text-white bg-gray-700">
+                <DelegatingSelector selector={selector} />
+              </Badge>
+            ))}
           </div>
+
           <CardTitle>
             <InstallDialog item={item} />
           </CardTitle>

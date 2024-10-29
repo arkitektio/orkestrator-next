@@ -2,6 +2,7 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { useGetEntityQuery } from "../api/graphql";
 
 import { FormDialog } from "@/components/dialog/FormDialog";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import {
   Timeline,
   TimelineConnector,
@@ -10,25 +11,22 @@ import {
   TimelineHeader,
   TimelineIcon,
   TimelineItem,
-  TimelineTime,
   TimelineTitle,
 } from "@/components/timeline/timeline";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import {
   MikroEntity,
   MikroEntityMetric,
   MikroEntityRelation,
   MikroImage,
   MikroLinkedExpression,
-  MikroProtocolStep,
   MikroROI,
 } from "@/linkers";
 import Timestamp from "react-timestamp";
 import { ImageRGBD, RoiRGBD } from "../components/render/TwoDThree";
 import CreateEntityMetricForm from "../forms/CreateEntityMetricForm";
-import { PlateDisplay } from "./ProtocolStepTemplatePage";
-import { Separator } from "@/components/ui/separator";
 import { PerformStepButton } from "../overlays/EntitySidebar";
 
 export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
@@ -53,6 +51,13 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
             <CreateEntityMetricForm entity={data.entity} />
           </FormDialog>
         </div>
+      }
+      sidebars={
+        <MultiSidebar
+          map={{
+            Comments: <MikroEntity.Komments object={data.entity.id} />,
+          }}
+        />
       }
     >
       <div className="w-full h-full p-3">

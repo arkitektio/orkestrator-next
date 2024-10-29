@@ -1,7 +1,6 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { DroppableNavLink } from "@/components/ui/link";
-import { usePrimaryReturnNodesQuery } from "@/rekuest/api/graphql";
 import { CubeIcon } from "@radix-ui/react-icons";
 import {
   File,
@@ -10,7 +9,6 @@ import {
   Home,
   Image,
   SparkleIcon,
-  Wallet,
 } from "lucide-react";
 import * as React from "react";
 import { FaChartArea } from "react-icons/fa";
@@ -25,15 +23,6 @@ import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
 interface IDataSidebarProps {}
 
 export const NavigationPane = (props: {}) => {
-  const { data } = usePrimaryReturnNodesQuery({
-    variables: {
-      pagination: {
-        limit: 5,
-      },
-      identifier: "@mikro/renderedplot",
-    },
-  });
-
   return (
     <div className="flex-1 flex-col">
       <nav className="grid items-start px-1 text-sm font-medium lg:px-2">
@@ -119,7 +108,7 @@ export const NavigationPane = (props: {}) => {
         </div>
 
         <div className="text-muted-foreground text-xs font-semibold uppercase mb-4 mt-4">
-          Experiments
+          Protocols
         </div>
         <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
           <DroppableNavLink
@@ -127,15 +116,7 @@ export const NavigationPane = (props: {}) => {
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <Folder className="h-4 w-4" />
-            Protocols
-          </DroppableNavLink>
-
-          <DroppableNavLink
-            to="/mikro/experiments"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <Wallet className="h-4 w-4" />
-            Experiments
+            Templates
           </DroppableNavLink>
 
           <DroppableNavLink
@@ -152,22 +133,6 @@ export const NavigationPane = (props: {}) => {
             <File className="h-4 w-4" />
             Reagents
           </DroppableNavLink>
-        </div>
-
-        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4 mt-4">
-          Plotters
-        </div>
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
-          {data?.nodes.map((node, i) => (
-            <DroppableNavLink
-              to={`/mikro/plotters/${node.id}`}
-              key={i}
-              className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-            >
-              <SparkleIcon className="h-4 w-4" />
-              {node.name}
-            </DroppableNavLink>
-          ))}
         </div>
       </nav>
     </div>

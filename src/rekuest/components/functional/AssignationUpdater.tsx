@@ -46,6 +46,13 @@ export const DynamicYieldDisplay = (props: {
 export const AssignationToaster = (props: { id: string }) => {
   const ass = useLiveAssignation({ assignation: props.id });
 
+  // useEffect to close the toast if `ass.done` becomes true
+  useEffect(() => {
+    if (ass.done) {
+      toast.dismiss(props.id); // Dismiss the toast when task is done
+    }
+  }, [ass.done, props.id]);
+
   return (
     <div className="truncate w-full h-full">
       {ass.progress != undefined && <Progress value={ass.progress} />}
@@ -129,8 +136,10 @@ export const AssignationUpdater = (props: {}) => {
             );
 
             console.error("Added assignation", create.reference);
+            const toastId = create.id; // Use the assignation id as the toastId
             toast(<AssignationToaster id={create.id} />, {
-              duration: 5000,
+              id: toastId,
+              duration: Infinity, // Keep toast open until manually closed or task completes
               dismissible: true,
             });
           }

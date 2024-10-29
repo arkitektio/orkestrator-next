@@ -8,4 +8,8 @@ fragment ListFlavour on Flavour {
       identifier
     }
   }
+  selectors {
+      ...CudaSelector
+      ...RocmSelector
+  }
 }

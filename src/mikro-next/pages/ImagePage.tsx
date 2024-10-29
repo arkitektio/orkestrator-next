@@ -1,7 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
 import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
-import { ListRender } from "@/components/layout/ListRender";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -26,10 +25,13 @@ import {
 } from "../api/graphql";
 import AcquisitionViewCard from "../components/cards/AcquisitionViewCard";
 import ChannelViewCard from "../components/cards/ChannelViewCard";
-import FileCard from "../components/cards/FileCard";
+import DerivedViewCard from "../components/cards/DerivedViewCard";
+import FileViewCard from "../components/cards/FileViewCard";
 import LabelViewCard from "../components/cards/LabelViewCard";
 import OpticsViewCard from "../components/cards/OpticsViewCard";
+import PixelViewCard from "../components/cards/PixelViewCard";
 import RGBViewCard from "../components/cards/RGBViewCard";
+import ROIViewCard from "../components/cards/ROIViewCard";
 import SpecimenViewCard from "../components/cards/SpecimenViewCard";
 import TransformationViewCard from "../components/cards/TransformationViewCard";
 import WellPositionViewCard from "../components/cards/WellPositionViewCard";
@@ -38,11 +40,6 @@ import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { PinToggle } from "../components/ui/PinToggle";
 import { AddImageViewForm } from "../forms/AddImageViewForm";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
-import { VivRenderer } from "../components/render/VivRenderer";
-import ROIViewCard from "../components/cards/ROIViewCard";
-import FileViewCard from "../components/cards/FileViewCard";
-import DerivedViewCard from "../components/cards/DerivedViewCard";
-import PixelViewCard from "../components/cards/PixelViewCard";
 
 export type IRepresentationScreenProps = {};
 
@@ -119,7 +116,7 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
             {data?.image?.rgbContexts?.map((context, index) => (
               <div className={"h-full w-full mt-0 rounded rounded-md relative"}>
                 <div className="w-full h-full items-center flex justify-center flex-col">
-                  <VivRenderer
+                  <RGBD
                     context={context}
                     rois={data.image.rois}
                     modelMatrix={modelMatrix}

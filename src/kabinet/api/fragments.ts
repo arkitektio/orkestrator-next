@@ -24,7 +24,8 @@
     ],
     "Selector": [
       "CPUSelector",
-      "CudaSelector"
+      "CudaSelector",
+      "RocmSelector"
     ]
   }
 };

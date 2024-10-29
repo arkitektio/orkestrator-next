@@ -28,7 +28,7 @@ const TheCard = ({ node, mates }: Props) => {
   return (
     <RekuestNode.Smart object={node?.id} mates={[reserveMate]}>
       <Card
-        className="group border border-gray-200 dark:border-gray-800 aspect-square ring ring-0 group-data-[selected=true]:ring-1 "
+        className="group border border-gray-200 dark:border-gray-800 aspect-square ring ring-0 group-data-[selected=true]:ring-1  "
         style={{
           backgroundSize: `${progress?.progress || 0}% 100%`,
           backgroundImage: `linear-gradient(to right, #10b981 ${progress?.progress}%, #10b981 ${progress?.progress}%)`,
@@ -37,7 +37,7 @@ const TheCard = ({ node, mates }: Props) => {
         }}
       >
         <CardHeader className="flex flex-col justify-between p-3 h-full">
-          <div className="flex-grow">
+          <div className="flex-grow overflow-hidden">
             <CardTitle>
               <RekuestNode.DetailLink object={node?.id}>
                 {" "}

@@ -343,6 +343,7 @@ export type NewButtonProps = {
   identifier: string;
   children?: React.ReactNode;
   className?: string;
+  minimal?: boolean;
 };
 
 export const NewButton = (props: NewButtonProps) => {
@@ -355,14 +356,19 @@ export const NewButton = (props: NewButtonProps) => {
       <>
         <Popover>
           <PopoverTrigger asChild>
-            {props.children || (
-              <Button variant={"outline"} size={"default"}>
-                <>
-                  <PlusIcon className="mr-2" />
-                  Create
-                </>
-              </Button>
-            )}
+            {props.children ||
+              (props.minimal ? (
+                <Button variant={"ghost"} size={"sm"}>
+                  <PlusIcon />
+                </Button>
+              ) : (
+                <Button variant={"outline"} size={"default"}>
+                  <>
+                    <PlusIcon className="mr-2" />
+                    Create
+                  </>
+                </Button>
+              ))}
           </PopoverTrigger>
           <PopoverContent className="text-white border-gray-800 px-2 py-2 items-center">
             <NewContext {...props} />

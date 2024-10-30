@@ -6,11 +6,16 @@ import { Form } from "@/components/ui/form";
 import { useCreateWorkspaceMutation } from "@/reaktion/api/graphql";
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { useForm } from "react-hook-form";
-import { useCreateGithubRepoMutation } from "../api/graphql";
+import {
+  ListDefinitionsDocument,
+  ListReleasesDocument,
+  useCreateGithubRepoMutation,
+} from "../api/graphql";
+import { ReleasesDocument } from "@/lok-next/api/graphql";
 
 export const CreateRepoForm = (props: {}) => {
   const [add] = useCreateGithubRepoMutation({
-    refetchQueries: ["GithubRepos"],
+    refetchQueries: [ListReleasesDocument, ListDefinitionsDocument],
   });
 
   const dialog = useGraphQlFormDialog(add);

@@ -1,4 +1,5 @@
 import { BsCaretLeft, BsCaretRight } from "react-icons/bs";
+import { Button } from "./button";
 
 export const ListOffsetter = ({
   offset,
@@ -13,24 +14,27 @@ export const ListOffsetter = ({
 }) => (
   <>
     {offset != 0 && (
-      <button
+      <Button
+        size={"sm"}
+        variant={"ghost"}
         type="button"
-        className="hover:text-gray-200 transition-all "
+        className="hover:text-gray-200 transition-all"
         onClick={() => setOffset(offset - step > 0 ? offset - step : 0)}
       >
         {" "}
         <BsCaretLeft />{" "}
-      </button>
+      </Button>
     )}
     {array && array.length == step && (
-      <button
-        type="button"
+      <Button
+        size={"sm"}
+        variant={"ghost"}
         className="hover:text-gray-200 transition-all "
         onClick={() => setOffset(offset + step)}
       >
         {" "}
         <BsCaretRight />{" "}
-      </button>
+      </Button>
     )}
   </>
 );

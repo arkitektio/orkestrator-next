@@ -113,6 +113,7 @@ export const SmartModel = ({
 
   return (
     <div
+      key={props.identifier + "/" + props.object}
       ref={drop}
       data-identifier={props.identifier}
       data-object={props.object}

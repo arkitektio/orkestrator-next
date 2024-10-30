@@ -6,13 +6,19 @@ import DefinitionList from "../components/lists/DefinitionList";
 import ReleasesList from "../components/lists/ReleasesList";
 import { FormDialogAction } from "@/components/ui/form-dialog-action";
 import { CreateRepoForm } from "../forms/CreateRepoForm";
-import { useRescanReposMutation } from "../api/graphql";
+import {
+  ListDefinitionsDocument,
+  ListReleasesDocument,
+  useRescanReposMutation,
+} from "../api/graphql";
 import { ActionButton } from "@/components/ui/action";
 
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
-  const [rescan, { loading }] = useRescanReposMutation();
+  const [rescan, { loading }] = useRescanReposMutation({
+    refetchQueries: [ListReleasesDocument, ListDefinitionsDocument],
+  });
 
   return (
     <PageLayout

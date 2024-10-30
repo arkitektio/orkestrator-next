@@ -4,12 +4,16 @@ import { FlussWorkspace } from "@/linkers";
 import {
   useUpdateWorkspaceMutation,
   useWorkspaceQuery,
+  WorkspaceCarouselDocument,
+  WorkspacesDocument,
 } from "@/reaktion/api/graphql";
 import { EditFlow } from "@/reaktion/edit/EditFlow";
 import { DeployPane } from "../edit/components/deploy/DeployPane";
 
 export default asDetailQueryRoute(useWorkspaceQuery, ({ data }) => {
-  const [saveFlow] = useUpdateWorkspaceMutation();
+  const [saveFlow] = useUpdateWorkspaceMutation({
+    refetchQueries: [WorkspacesDocument, WorkspaceCarouselDocument],
+  });
 
   return (
     <FlussWorkspace.ModelPage

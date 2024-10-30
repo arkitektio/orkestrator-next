@@ -47,6 +47,7 @@ const List = ({ filters, pagination }: Props) => {
           Latest Images
         </MikroImage.ListLink>
       }
+      actions={<MikroImage.NewButton minimal />}
       refetch={refetch}
     >
       {(ex, index) => <ImageCard key={index} image={ex} mates={[]} />}

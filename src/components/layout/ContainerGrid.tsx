@@ -17,7 +17,15 @@ export const ContainerGrid: React.FC<FittingResponsiveGridProps> = ({
 
   useEffect(() => {
     if (parent.current) {
-      autoAnimate(parent.current);
+      autoAnimate(parent.current, {
+        // Animation duration in milliseconds (default: 250)
+        duration: 240,
+        // Easing for motion (default: 'ease-in-out')
+        easing: "ease-in-out",
+        // When true, this will enable animations even if the user has indicated
+        // they don’t want them via prefers-reduced-motion.
+        disrespectUserMotionPreference: false,
+      });
 
       const selectables = Array.from<HTMLElement>(
         parent.current.children as unknown as HTMLElement[],

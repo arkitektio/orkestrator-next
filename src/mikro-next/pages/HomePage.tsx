@@ -9,6 +9,7 @@ import FileList from "../components/lists/FileList";
 import ImageList from "../components/lists/ImageList";
 import RenderedPlotList from "../components/lists/RenderedPlotList";
 import RenderTreeList from "../components/lists/RenderTreeList";
+import { MikroImage } from "@/linkers";
 
 export type IRepresentationScreenProps = {};
 

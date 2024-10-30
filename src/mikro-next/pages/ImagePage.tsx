@@ -40,6 +40,7 @@ import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { PinToggle } from "../components/ui/PinToggle";
 import { AddImageViewForm } from "../forms/AddImageViewForm";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
+import { Image } from "@/components/ui/image";
 
 export type IRepresentationScreenProps = {};
 
@@ -88,10 +89,14 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
           map={{
             Comments: <MikroImage.Komments object={data?.image?.id} />,
             Provenance: <ProvenanceSidebar items={data?.image.history} />,
-            Downloads: (
-              <div className="p-3">
+            Renders: (
+              <div className="p-3 flex flex-col gap-2">
                 {data.image.renders.map((render, index) => (
                   <Card className="p-2 truncate">
+                    <Image
+                      src={resolve(render.store.presignedUrl)}
+                      className="w-full"
+                    />
                     <a href={resolve(render.store.presignedUrl)} download>
                       <Download size={24} />
                       {render.__typename}

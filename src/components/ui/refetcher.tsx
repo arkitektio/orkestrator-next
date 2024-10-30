@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { BiRefresh } from "react-icons/bi";
+import { Button } from "./button";
 
 export const Refetcher = (props: { refetch: () => Promise<any> }) => {
   const [refetching, setRefetching] = useState(false);
@@ -12,11 +13,12 @@ export const Refetcher = (props: { refetch: () => Promise<any> }) => {
   };
 
   return (
-    <BiRefresh
-      onClick={onClick}
-      className={`hover:text-gray-200 transition-all cursor-pointer ${
-        refetching ? "animate-spin" : ""
-      } `}
-    />
+    <Button onClick={onClick} variant={"ghost"} size={"sm"}>
+      <BiRefresh
+        className={`hover:text-gray-200 transition-all cursor-pointer ${
+          refetching ? "animate-spin" : ""
+        } `}
+      />
+    </Button>
   );
 };

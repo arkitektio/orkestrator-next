@@ -3,6 +3,7 @@ import React, { ReactNode, useEffect, useState } from "react";
 import { ListOffsetter, ListTitle } from "../ui/list";
 import { Refetcher } from "../ui/refetcher";
 import { ContainerGrid } from "./ContainerGrid";
+import { Card } from "../ui/card";
 
 export type ListRenderProps<T> = {
   title?: React.ReactNode;
@@ -72,6 +73,9 @@ export const ListRender = <T extends any>({
           <ContainerGrid fitLength={fit ? array.length : undefined}>
             {array?.map(children)}
             {additionalChildren}
+            <div className="flex items-center justify-left group">
+              <div className="p-3 group-hover:visible invisible">{actions}</div>
+            </div>
           </ContainerGrid>
         </>
       )}

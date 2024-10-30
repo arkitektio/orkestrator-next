@@ -86,6 +86,7 @@ query PrimaryReturnNodes(
           kind: RETURNS
           matches: [{ at: 0, kind: STRUCTURE, identifier: $identifier }]
         }
+        { kind: ARGS, forceStructureLength: 0 }
       ]
       search: $search
     }

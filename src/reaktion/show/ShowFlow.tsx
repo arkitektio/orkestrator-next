@@ -124,6 +124,9 @@ export const ShowFlow: React.FC<Props> = ({ flow, template }) => {
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             fitView
+            nodesConnectable={false}
+            nodesDraggable={false}
+            nodesFocusable={false}
             attributionPosition="bottom-right"
           >
             <Controls className="flex flex-row bg-white gap-2 rounded rounded-md overflow-hidden px-2">

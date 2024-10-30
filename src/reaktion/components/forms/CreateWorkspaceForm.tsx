@@ -3,13 +3,17 @@ import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter, DialogHeader } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { useCreateWorkspaceMutation } from "@/reaktion/api/graphql";
+import {
+  useCreateWorkspaceMutation,
+  WorkspaceCarouselDocument,
+  WorkspacesDocument,
+} from "@/reaktion/api/graphql";
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { useForm } from "react-hook-form";
 
 export const CreateWorkspaceForm = (props: {}) => {
   const [add] = useCreateWorkspaceMutation({
-    refetchQueries: ["Workspaces"],
+    refetchQueries: [WorkspacesDocument, WorkspaceCarouselDocument],
   });
 
   const dialog = useGraphQlFormDialog(add);

@@ -956,6 +956,7 @@ export type Port = {
 export type PortDemandInput = {
   forceLength?: InputMaybe<Scalars['Int']['input']>;
   forceNonNullableLength?: InputMaybe<Scalars['Int']['input']>;
+  forceStructureLength?: InputMaybe<Scalars['Int']['input']>;
   kind: DemandKind;
   matches?: InputMaybe<Array<PortMatchInput>>;
 };
@@ -4481,7 +4482,7 @@ export const PrimaryReturnNodesDocument = gql`
   nodes(
     order: $order
     pagination: $pagination
-    filters: {demands: [{kind: RETURNS, matches: [{at: 0, kind: STRUCTURE, identifier: $identifier}]}], search: $search}
+    filters: {demands: [{kind: RETURNS, matches: [{at: 0, kind: STRUCTURE, identifier: $identifier}]}, {kind: ARGS, forceStructureLength: 0}], search: $search}
   ) {
     ...PrimaryNode
   }

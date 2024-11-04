@@ -9,7 +9,7 @@ import { FlowFragment } from "@/reaktion/api/graphql";
 import { flowToDefinition, flowToDependencies } from "@/reaktion/utils";
 import {
   ListAgentFragment,
-  useAgentsQuery,
+  TemplatesDocument,
   useCreateForeignTemplateMutation,
   useTemplateAtQuery,
   useTemplatesQuery,
@@ -44,6 +44,7 @@ export const DeployButton = (props: {
         },
       },
     },
+    refetchQueries: [TemplatesDocument],
   });
 
   const navigate = useNavigate();

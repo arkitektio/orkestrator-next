@@ -4,11 +4,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { RekuestTemplate } from "@/linkers";
 import { FlowFragment } from "@/reaktion/api/graphql";
 import { flowToDefinition, flowToDependencies } from "@/reaktion/utils";
 import {
   ListAgentFragment,
+  TemplateAtDocument,
   useAgentsQuery,
   useCreateForeignTemplateMutation,
   useTemplateAtQuery,
@@ -42,6 +42,7 @@ export const DeployButton = (props: {
         },
       },
     },
+    refetchQueries: [TemplateAtDocument],
   });
 
   const navigate = useNavigate();
@@ -51,12 +52,7 @@ export const DeployButton = (props: {
       onClick={() => {
         console.log(
           deploy().then((result) => {
-            result?.data &&
-              navigate(
-                RekuestTemplate.linkBuilder(
-                  result?.data?.createForeignTemplate.id,
-                ),
-              );
+            result?.data;
           }),
         );
       }}

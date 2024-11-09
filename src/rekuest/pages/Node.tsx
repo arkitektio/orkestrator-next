@@ -17,7 +17,6 @@ import { ArrowRight } from "lucide-react";
 import { useCallback, useState } from "react";
 import { TbMedicalCross } from "react-icons/tb";
 import { TiTick } from "react-icons/ti";
-import { toast } from "sonner";
 import ReservationCard from "../components/cards/ReservationCard";
 import { useNodeAction } from "../hooks/useNodeAction";
 import { usePortForm } from "../hooks/usePortForm";
@@ -47,7 +46,6 @@ export const DoNodeForm = ({ node }: { node: DetailNodeFragment }) => {
       },
       (error) => {
         console.log("Error", error);
-        toast.error(error.message);
       },
     );
   };

@@ -136,23 +136,25 @@ export const NavigationPane = (props: {}) => {
         <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
           {data?.agents.map((agent, index) => (
             <RekuestAgent.Smart object={agent.id} key={index}>
-              <RekuestAgent.DetailLink
-                object={agent.id}
-                key={index}
-                className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
-              >
-                <CardStackIcon className="h-4 w-4" />
-                {agent.name}
-                <div
-                  className="w-3 h-3 rounded rounded-full my-auto animate-pulse"
-                  style={{
-                    backgroundColor:
-                      agent.status == AgentStatus.Active
-                        ? "#00FF00"
-                        : "#FF0000",
-                  }}
-                />
-              </RekuestAgent.DetailLink>
+              <div className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary">
+                <RekuestAgent.DetailLink
+                  object={agent.id}
+                  key={index}
+                  className={"flex flex-row gap-2"}
+                >
+                  <CardStackIcon
+                    className="h-4 w-4"
+                    style={{
+                      color:
+                        agent.status == AgentStatus.Active
+                          ? "#00FF00"
+                          : "#A9A9A9",
+                    }}
+                  />
+                  {agent.name}
+                  <div className="w-3 h-3 rounded rounded-full my-auto animate-pulse" />
+                </RekuestAgent.DetailLink>
+              </div>
             </RekuestAgent.Smart>
           ))}
         </div>

@@ -80,9 +80,7 @@ export const useNodeAction = <T extends any>(
 
       if (!assignation) {
         console.error(mutation);
-        const errorMessages =
-          mutation.errors?.map((error) => error.message).join(", ") ||
-          "Unknown error";
+        const errorMessages = mutation.errors || "Unknown error";
         throw Error(`Couldn't assign: ${errorMessages}`);
       }
 

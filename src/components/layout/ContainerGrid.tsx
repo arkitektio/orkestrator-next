@@ -54,7 +54,7 @@ export const ContainerGrid: React.FC<FittingResponsiveGridProps> = ({
 
   return (
     <div
-      className={`grid @lg:grid-cols-2 @xl-grid-cols-2 @2xl:grid-cols-4  @3xl:grid-cols-6  @5xl:grid-cols-6 @6xl:grid-cols-8 @7xl:grid-cols-10 @7xl:grid-cols-12 gap-4`}
+      className={`grid @lg:grid-cols-2 @xl-grid-cols-2 @2xl:grid-cols-4  @3xl:grid-cols-6  @5xl:grid-cols-6 @6xl:grid-cols-8 @7xl:grid-cols-10 @7xl:grid-cols-10 gap-4`}
       data-enableselect="true"
       ref={parent}
     >

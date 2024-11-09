@@ -41,6 +41,7 @@ import { PinToggle } from "../components/ui/PinToggle";
 import { AddImageViewForm } from "../forms/AddImageViewForm";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
 import { Image } from "@/components/ui/image";
+import { DelegatingImageRender } from "../components/render/DelegatingImageRender";
 
 export type IRepresentationScreenProps = {};
 
@@ -93,10 +94,12 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
               <div className="p-3 flex flex-col gap-2">
                 {data.image.renders.map((render, index) => (
                   <Card className="p-2 truncate">
-                    <Image
-                      src={resolve(render.store.presignedUrl)}
-                      className="w-full"
-                    />
+                    {render.__typename == "Snapshot" && (
+                      <Image
+                        src={resolve(render.store.presignedUrl)}
+                        className="w-full"
+                      />
+                    )}
                     <a href={resolve(render.store.presignedUrl)} download>
                       <Download size={24} />
                       {render.__typename}
@@ -121,7 +124,7 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
             {data?.image?.rgbContexts?.map((context, index) => (
               <div className={"h-full w-full mt-0 rounded rounded-md relative"}>
                 <div className="w-full h-full items-center flex justify-center flex-col">
-                  <RGBD
+                  <DelegatingImageRender
                     context={context}
                     rois={data.image.rois}
                     modelMatrix={modelMatrix}
@@ -269,14 +272,16 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                   <div className="font-light">Derived Images</div>
                   <div className="flex flex-col gap-2 mt-2">
                     {data?.image.derivedFromViews?.map((view, index) => (
-                      <MikroImage.DetailLink
-                        object={view.image?.id}
-                        className="cursor-pointer"
-                      >
-                        <Card className="flex flex-row gap-2 px-2 py-1">
-                          <span className="text-md">{view.image?.name}</span>
-                        </Card>
-                      </MikroImage.DetailLink>
+                      <MikroImage.Smart object={view.image.id}>
+                        <MikroImage.DetailLink
+                          object={view.image?.id}
+                          className="cursor-pointer"
+                        >
+                          <Card className="flex flex-row gap-2 px-2 py-1">
+                            <span className="text-md">{view.image?.name}</span>
+                          </Card>
+                        </MikroImage.DetailLink>
+                      </MikroImage.Smart>
                     ))}
                   </div>
                 </>

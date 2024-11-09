@@ -1,10 +1,14 @@
 import { Card } from "@/components/ui/card";
-import { Popover, PopoverContent } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { SMART_MODEL_DROP_TYPE } from "@/constants";
 import { composeMates } from "@/mates/compose";
 import { Structure } from "@/types";
 import { PopoverAnchor } from "@radix-ui/react-popover";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { useMySelection } from "../selection/SelectionContext";
 import { Mates } from "./Mates";
@@ -16,6 +20,7 @@ import {
 } from "@/components/ui/context-menu";
 import { SmartContext } from "@/rekuest/buttons/ObjectButton";
 import { cn } from "@/lib/utils";
+import { NativeTypes } from "react-dnd-html5-backend";
 
 export const SmartModel = ({
   showSelfMates = true,
@@ -29,15 +34,14 @@ export const SmartModel = ({
     object: props.object,
   };
 
-  const [progress, setProgress] = useState<number | undefined>(undefined);
-  const [show, setShow] = useState(false);
+  const [partners, setPartners] = useState<Structure[]>([]);
 
   useEffect(() => {
-    if (show) {
+    if (partners.length > 0) {
       const listener = {
         handleEvent: (e: Event) => {
           e.stopPropagation();
-          setShow(false);
+          setPartners([]);
         },
       };
       document.addEventListener("click", listener);
@@ -46,19 +50,18 @@ export const SmartModel = ({
         document.removeEventListener("click", listener);
       };
     }
-  }, [show]);
-
-  const onProgress = async (progress: number | undefined) => {
-    setProgress(progress);
-  };
+  }, [partners]);
 
   const [{ isOver, canDrop, overItems }, drop] = useDrop(() => {
     return {
       accept: [SMART_MODEL_DROP_TYPE],
       drop: (item, monitor) => {
-        if (!monitor.didDrop()) {
-          console.log("Ommitting Parent Drop");
-        }
+        console.log("drop", item);
+        let text = item.text;
+        if (text) {
+          let structure: Structure = JSON.parse(text);
+          setPartners([structure]);
+        } else setPartners(item);
         return {};
       },
       collect: (monitor) => {
@@ -83,7 +86,7 @@ export const SmartModel = ({
     };
   });
 
-  const [{ isDragging }, drag, preview] = useDrag(
+  const [{ isDragging }, drag] = useDrag(
     () => ({
       type: SMART_MODEL_DROP_TYPE,
       item: [self],
@@ -103,14 +106,6 @@ export const SmartModel = ({
 
   const dragClassNameFunc = props.dragClassName || (({}) => "");
 
-  const dropClassNameFunc =
-    props.dropClassName ||
-    (({ isOver, canDrop, progress }) =>
-      `${props.className} ${
-        hover &&
-        "hover:scale-110 transition-all ease-in-out duration-200 group hover:shadow-xl hover:shadow border-2 border-hidden"
-      } ${isOver && "border-solid "} ${progress && "animate-pulse"}`);
-
   return (
     <div
       key={props.identifier + "/" + props.object}
@@ -119,40 +114,60 @@ export const SmartModel = ({
       data-object={props.object}
     >
       <ContextMenu>
-        <ContextMenuContent className="dark:border-gray-700">
+        <ContextMenuContent className="dark:border-gray-700 max-w-lg">
           {isSelected ? (
             <>Multiselect is not implemented yet</>
           ) : (
-            <SmartContext identifier={props.identifier} object={props.object} />
+            <SmartContext
+              identifier={props.identifier}
+              object={props.object}
+              partners={[]}
+            />
           )}
         </ContextMenuContent>
         <ContextMenuTrigger asChild>
           <div
             ref={drag}
             className={cn(
-              "@container ",
+              "@container relative smartdraggable ",
               isSelected && "group ring ring-1 ",
+              isOver && "shadow-xl",
               dragClassNameFunc({
                 isDragging,
-                isOver,
+                isOver: false,
                 canDrop,
-                progress,
+                progress: 0,
               }),
             )}
-            style={
-              props.dragStyle &&
-              props.dragStyle({
-                isDragging,
-                isOver,
-                canDrop,
-                progress,
-              })
-            }
+            onClick={(e) => {
+              setPartners([]);
+            }}
           >
             {props.children}
+
+            {isOver && <CombineButton />}
+            {partners.length > 0 && (
+              <div className="absolute bottom-0 w-full h-full flex justify-center items-center z-10 p-3">
+                <Card className="h-full w-full flex text-wrap p-3">
+                  <SmartContext
+                    identifier={props.identifier}
+                    object={props.object}
+                    partners={[]}
+                  />
+                </Card>
+              </div>
+            )}
           </div>
         </ContextMenuTrigger>
       </ContextMenu>
+    </div>
+  );
+};
+
+export const CombineButton = (props: { children?: React.ReactNode }) => {
+  return (
+    <div className="absolute bottom-0  w-full h-full flex justify-center items-center z-100">
+      <Card className="mx-2 mb-2 p-3">Drop to Combine</Card>
     </div>
   );
 };

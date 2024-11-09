@@ -23,7 +23,7 @@ const MyPreview = () => {
   }
   const { itemType, item, style } = preview;
   return (
-    <Card className="item-list__item" style={style}>
+    <Card className="z-100" style={style}>
       hallo
     </Card>
   );

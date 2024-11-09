@@ -142,6 +142,7 @@
     "date-fns": "^4.1.0",
     "debounce": "^1.2.1",
     "deck.gl": "8",
+    "deep-equal": "^2.2.3",
     "dockview": "^1.16.1",
     "dockview-react": "^1.16.1",
     "embla-carousel-react": "^8.0.0",

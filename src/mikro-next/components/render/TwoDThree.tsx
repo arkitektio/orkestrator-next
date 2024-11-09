@@ -45,6 +45,7 @@ export interface RGBDProps {
   rois: ListRoiFragment[];
   className?: string;
   follow?: "width" | "height";
+  onValueClick?: (value: number) => void;
 }
 
 export type PassThroughProps = {
@@ -288,6 +289,7 @@ const ImageBitmapTextureMesh = ({
   context,
   rois,
   setOpenPanels,
+  onValueClick,
 }: RGBDProps & PassThroughProps) => {
   const texture = useAsyncTexture(context);
 
@@ -297,7 +299,13 @@ const ImageBitmapTextureMesh = ({
   if (!texture) return null;
   return (
     <group>
-      <mesh rotation={[0, 0, Math.PI]} onClick={() => setOpenPanels([])}>
+      <mesh
+        rotation={[0, 0, Math.PI]}
+        onClick={(e) => {
+          setOpenPanels([]);
+          alert(JSON.stringify(e.uv1));
+        }}
+      >
         <planeGeometry args={[2, 2]} />
         <meshStandardMaterial map={texture} />
       </mesh>
@@ -352,7 +360,11 @@ export const RGBD = (props: RGBDProps) => {
         <ambientLight intensity={1} />
         <AutoZoomCamera setOpenPanels={setOpenPanels} />
         <OrbitControls enableRotate={false} enablePan={true} regress={false} />
-        <ImageBitmapTextureMesh {...props} setOpenPanels={setOpenPanels} />
+        <ImageBitmapTextureMesh
+          {...props}
+          setOpenPanels={setOpenPanels}
+          onValueClick={props.onValueClick}
+        />
       </Canvas>
 
       {openPanels.map((panel) => (

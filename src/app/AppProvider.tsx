@@ -16,6 +16,7 @@ import { CommandProvider } from "@/providers/command/CommandProvider";
 import { DebugProvider } from "@/providers/debug/DebugProvider";
 import { DisplayProvider } from "@/providers/display/DisplayProvider";
 import { SelectionProvider } from "@/providers/selection/SelectionProvider";
+import { SettingsProvider } from "@/providers/settings/SettingsProvider";
 import { SmartProvider } from "@/providers/smart/provider";
 import { FlussWard } from "@/reaktion/FlussWard";
 import { RekuestNextWard } from "@/rekuest/RekuestNextWard";
@@ -87,54 +88,56 @@ export const BackNavigationErrorCatcher = ({
 // Additionally, it wraps the DisplayProvider, which allows for the configuration of the display registry.
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   return (
-    <DebugProvider>
-      <HashRouter>
-        <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-          {/* This is where we configure the application automatically based on facts */}
+    <SettingsProvider>
+      <DebugProvider>
+        <HashRouter>
+          <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+            {/* This is where we configure the application automatically based on facts */}
 
-          <Arkitekt.Provider>
-            <DisplayProvider registry={displayRegistry}>
-              <WellKnownDiscovery
-                endpoints={WELL_KNOWN_ENDPOINTS} // this configures fakts to use the well known endpoints in order to discover the other services
-              />
-              <SelectionProvider>
-                <CommandProvider>
-                  <SmartProvider>
-                    <WidgetRegistryProvider>
-                      <CommandMenu />
-                      <Guard.Rekuest fallback={<></>}>
-                        {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
-                        <AssignationUpdater />
-                        <ReservationUpdater />
-                        {/* We register the Shadn powered widgets to the widget registry. */}
-                        <RekuestNextWard />
-                        <ShadnWigets />
-                        <Toaster />
-                      </Guard.Rekuest>
-                      <Guard.Kabinet fallback={<></>}>
-                        <KabinetWard key="kabinet" />
-                      </Guard.Kabinet>
+            <Arkitekt.Provider>
+              <DisplayProvider registry={displayRegistry}>
+                <WellKnownDiscovery
+                  endpoints={WELL_KNOWN_ENDPOINTS} // this configures fakts to use the well known endpoints in order to discover the other services
+                />
+                <SelectionProvider>
+                  <CommandProvider>
+                    <SmartProvider>
+                      <WidgetRegistryProvider>
+                        <CommandMenu />
+                        <Guard.Rekuest fallback={<></>}>
+                          {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
+                          <AssignationUpdater />
+                          <ReservationUpdater />
+                          {/* We register the Shadn powered widgets to the widget registry. */}
+                          <RekuestNextWard />
+                          <ShadnWigets />
+                          <Toaster />
+                        </Guard.Rekuest>
+                        <Guard.Kabinet fallback={<></>}>
+                          <KabinetWard key="kabinet" />
+                        </Guard.Kabinet>
 
-                      <Guard.Mikro fallback={<></>}>
-                        <MikroNextWard key="mikro" />
-                      </Guard.Mikro>
-                      <Guard.Fluss fallback={<></>}>
-                        <FlussWard key="fluss" />
-                      </Guard.Fluss>
-                      <Guard.Lok fallback={<></>}>
-                        <SystemMessageDisplay />
-                      </Guard.Lok>
-                      <BackNavigationErrorCatcher>
-                        {children}
-                      </BackNavigationErrorCatcher>
-                    </WidgetRegistryProvider>
-                  </SmartProvider>
-                </CommandProvider>
-              </SelectionProvider>
-            </DisplayProvider>
-          </Arkitekt.Provider>
-        </ThemeProvider>
-      </HashRouter>
-    </DebugProvider>
+                        <Guard.Mikro fallback={<></>}>
+                          <MikroNextWard key="mikro" />
+                        </Guard.Mikro>
+                        <Guard.Fluss fallback={<></>}>
+                          <FlussWard key="fluss" />
+                        </Guard.Fluss>
+                        <Guard.Lok fallback={<></>}>
+                          <SystemMessageDisplay />
+                        </Guard.Lok>
+                        <BackNavigationErrorCatcher>
+                          {children}
+                        </BackNavigationErrorCatcher>
+                      </WidgetRegistryProvider>
+                    </SmartProvider>
+                  </CommandProvider>
+                </SelectionProvider>
+              </DisplayProvider>
+            </Arkitekt.Provider>
+          </ThemeProvider>
+        </HashRouter>
+      </DebugProvider>
+    </SettingsProvider>
   );
 };

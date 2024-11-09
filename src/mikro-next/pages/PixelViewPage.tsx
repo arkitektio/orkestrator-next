@@ -11,19 +11,25 @@ import {
   DetailPaneTitle,
 } from "@/components/ui/pane";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { MikroDataset, MikroImage, MikroPixelView } from "@/linkers";
+import {
+  MikroDataset,
+  MikroImage,
+  MikroPixelView,
+  MikroTable,
+} from "@/linkers";
 import { UserInfo } from "@/lok-next/components/protected/UserInfo";
 import { TwoDViewProvider } from "@/providers/view/ViewProvider";
 import { Matrix4 } from "@math.gl/core";
 import { HobbyKnifeIcon, PlusIcon } from "@radix-ui/react-icons";
 import { Download } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import Timestamp from "react-timestamp";
 import {
   AffineTransformationViewFragment,
   useGetImageQuery,
   useGetPixelViewQuery,
   usePinImageMutation,
+  useRowsLazyQuery,
 } from "../api/graphql";
 import AcquisitionViewCard from "../components/cards/AcquisitionViewCard";
 import ChannelViewCard from "../components/cards/ChannelViewCard";
@@ -85,7 +91,39 @@ export default asDetailQueryRoute(useGetPixelViewQuery, ({ data, refetch }) => {
 
   const resolve = useResolve();
 
+  const [query, rowdata] = useRowsLazyQuery({});
+
+  const onValueClick = (value: number) => {
+    let first = data?.pixelView.labelAccessors.at(0);
+    console.log("value", value);
+    if (value && first) {
+      query({
+        variables: {
+          table: first.table.id,
+          filters: {
+            clause: `WHERE ${first.keys.at(0)} = '${value}'`,
+          },
+        },
+      });
+    }
+  };
+
   const { value } = useParams<{ id: string; value: string }>();
+
+  useEffect(() => {
+    let first = data?.pixelView.labelAccessors.at(0);
+
+    if (value && first) {
+      query({
+        variables: {
+          table: first.table.id,
+          filters: {
+            clause: `WHERE ${first.keys.at(0)} = '${value}'`,
+          },
+        },
+      });
+    }
+  }, [value, data.pixelView.labelAccessors]);
 
   return (
     <MikroPixelView.ModelPage
@@ -111,11 +149,7 @@ export default asDetailQueryRoute(useGetPixelViewQuery, ({ data, refetch }) => {
             {data?.pixelView.image?.rgbContexts?.map((context, index) => (
               <div className={"h-full w-full mt-0 rounded rounded-md relative"}>
                 <div className="w-full h-full items-center flex justify-center flex-col">
-                  <VivRenderer
-                    context={context}
-                    rois={data.pixelView.image.rois}
-                    modelMatrix={modelMatrix}
-                  />
+                  <VivRenderer context={context} onValueClick={onValueClick} />
                   <NotImplementedYet
                     className="absolute top-1/2 right-1/2"
                     message={
@@ -201,60 +235,23 @@ export default asDetailQueryRoute(useGetPixelViewQuery, ({ data, refetch }) => {
                   </>
                 ))}
               </div>
-              <div className="font-light">Views</div>
+              <div className="font-light">Tables</div>
               <ResponsiveContainerGrid className="gap-3 ">
-                {data?.pixelView.image.views?.map((view, index) => (
-                  <>
-                    {view.__typename == "AffineTransformationView" && (
-                      <TransformationViewCard view={view} key={index} />
-                    )}
-                    {view.__typename == "LabelView" && (
-                      <LabelViewCard view={view} key={index} />
-                    )}
-                    {view.__typename == "OpticsView" && (
-                      <OpticsViewCard view={view} key={index} />
-                    )}
-                    {view.__typename == "ChannelView" && (
-                      <ChannelViewCard view={view} key={index} />
-                    )}
-                    {view.__typename == "RGBView" && (
-                      <RGBViewCard view={view} key={index} />
-                    )}
-                    {view.__typename == "AcquisitionView" && (
-                      <AcquisitionViewCard view={view} key={index} />
-                    )}
-                    {view.__typename == "WellPositionView" && (
-                      <WellPositionViewCard view={view} key={index} />
-                    )}
-                    {view.__typename == "SpecimenView" && (
-                      <SpecimenViewCard view={view} key={index} />
-                    )}
-                    {view.__typename == "ROIView" && (
-                      <ROIViewCard view={view} key={index} />
-                    )}
-                    {view.__typename == "FileView" && (
-                      <FileViewCard view={view} key={index} />
-                    )}
-                    {view.__typename == "DerivedView" && (
-                      <DerivedViewCard view={view} key={index} />
-                    )}
-                  </>
-                ))}
-                {data?.pixelView.image && (
-                  <Card className="opacity-0 hover:opacity-100 relative">
-                    <CardContent className="grid place-items-center w-full h-full">
-                      <FormDialog
-                        trigger={<PlusIcon className="text-xl" />}
-                        onSubmit={async (data) => {
-                          await refetch();
-                        }}
-                      >
-                        <AddImageViewForm image={data?.pixelView.image.id} />
-                      </FormDialog>
-                    </CardContent>
+                {data?.pixelView.labelAccessors.map((label, index) => (
+                  <Card className="relative p-3">
+                    {label.keys.join(", ")}
+                    <p className="text-xs text-muted-foreground">
+                      <MikroTable.DetailLink object={label.table.id}>
+                        {label.table.name}
+                      </MikroTable.DetailLink>
+                    </p>
                   </Card>
-                )}
+                ))}
               </ResponsiveContainerGrid>
+              {rowdata.data?.rows.map((row) => {
+                return <>{JSON.stringify(row)}</>;
+              })}
+              {rowdata.error && <>{rowdata.error.message}</>}
             </DetailPaneContent>
           </DetailPane>
         </div>

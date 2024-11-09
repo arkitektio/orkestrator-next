@@ -184,4 +184,11 @@ fragment DetailPixelView on PixelView {
   image {
     ...Image
   }
+  labelAccessors {
+    keys
+    table {
+      id
+      name
+    }
+  }
 }

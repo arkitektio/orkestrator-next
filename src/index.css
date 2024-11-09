@@ -4,7 +4,11 @@
 @tailwind utilities;
 
 
-
+/* Add this to your CSS */
+.smartdraggable {
+  -webkit-user-drag: none;
+  user-select: none;
+}
 
 
 @layer base {

@@ -2,6 +2,7 @@ import {
   Action,
   ActionState,
   defaultRegistry,
+  Structure,
 } from "@/actions/action-registry";
 import { useArkitekt } from "@/arkitekt/provider";
 import { Button } from "@/components/ui/button";
@@ -191,11 +192,7 @@ export const InstallButton = (props: {
   );
 };
 
-export const ApplicableNodes = (props: {
-  object: string;
-  identifier: string;
-  filter?: string;
-}) => {
+export const ApplicableNodes = (props: PassDownProps) => {
   const { data } = usePrimaryNodesQuery({
     variables: {
       identifier: props.identifier,
@@ -230,11 +227,7 @@ export const ApplicableNodes = (props: {
   );
 };
 
-export const ApplicableDefinitions = (props: {
-  object: string;
-  identifier: string;
-  filter?: string;
-}) => {
+export const ApplicableDefinitions = (props: PassDownProps) => {
   const { data } = usePrimaryDefinitionsQuery({
     variables: {
       identifier: props.identifier,
@@ -365,14 +358,14 @@ export const Actions = (props: { state: ActionState; filter?: string }) => {
   );
 };
 
-export const ApplicableActions = (props: {
-  object: string;
-  identifier: string;
-  filter?: string;
-}) => {
+export const ApplicableActions = (props: PassDownProps) => {
   return (
     <Actions
-      state={{ left: [props], isCommand: false }}
+      state={{
+        left: [{ object: props.object, identifier: props.identifier }],
+        right: props.partners,
+        isCommand: false,
+      }}
       filter={props.filter}
     />
   );
@@ -383,6 +376,14 @@ export type ObjectButtonProps = {
   identifier: string;
   children?: React.ReactNode;
   className?: string;
+  partners?: Structure[];
+};
+
+export type PassDownProps = {
+  object: string;
+  identifier: string;
+  partners?: Structure[];
+  filter?: string;
 };
 
 export const ObjectButton = (props: ObjectButtonProps) => {

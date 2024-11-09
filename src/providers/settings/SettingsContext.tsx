@@ -9,11 +9,12 @@ export type Settings = {
   experimental: boolean;
   pollInterval: number;
   instanceId: string;
+  experimentalViv: boolean;
 };
 
 export type SettingsContextType = {
   settings: Settings;
-  setSettings: React.Dispatch<React.SetStateAction<Settings | undefined>>;
+  setSettings: (settings: Settings) => void;
 };
 
 export const SettingsContext = React.createContext<SettingsContextType>({
@@ -26,6 +27,7 @@ export const SettingsContext = React.createContext<SettingsContextType>({
     experimental: false,
     pollInterval: 1000,
     instanceId: "main",
+    experimentalViv: false,
   },
   setSettings: () => {},
 });

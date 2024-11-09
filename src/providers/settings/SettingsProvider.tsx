@@ -1,21 +1,23 @@
 import React, { useEffect, useState } from "react";
-import * as yup from "yup";
+import * as zod from "yup";
 import { Settings, SettingsContext } from "./SettingsContext";
+import { set } from "date-fns";
 
 export type SettingsProps = {
   children: React.ReactNode;
   defaultSettings?: Settings;
 };
 
-const settingsValidator = yup.object().shape({
-  autoResolve: yup.boolean().required(),
-  allowAutoRequest: yup.boolean().required(),
-  allowBatch: yup.boolean().required(),
-  darkMode: yup.boolean().required(),
-  colorScheme: yup.string().required(),
-  experimental: yup.boolean().required(),
-  pollInterval: yup.number().required(),
-  instanceId: yup.string().required(),
+const settingsValidator = zod.object().shape({
+  autoResolve: zod.boolean().required(),
+  allowAutoRequest: zod.boolean().required(),
+  allowBatch: zod.boolean().required(),
+  darkMode: zod.boolean().required(),
+  colorScheme: zod.string().required(),
+  experimental: zod.boolean().required(),
+  pollInterval: zod.number().required(),
+  instanceId: zod.string().required(),
+  experimentalViv: zod.boolean().required(),
 });
 
 export const SettingsProvider: React.FC<SettingsProps> = ({
@@ -29,18 +31,21 @@ export const SettingsProvider: React.FC<SettingsProps> = ({
     experimental: false,
     pollInterval: 3000,
     instanceId: "main",
+    experimentalViv: false,
   },
 }) => {
-  const [settings, setSettings] = useState<Settings | undefined>(undefined);
+  const [settings, setLocalSettings] = useState<Settings | undefined>(
+    undefined,
+  );
 
-  useEffect(() => {
-    // save settings to local storage
+  const setSettings = (settings: Settings) => {
     console.log("Saving settings", settings);
     if (settings) {
       localStorage.setItem("wasser-settings", JSON.stringify(settings));
       console.log("Settings saved to local storage");
     }
-  }, [settings]);
+    setLocalSettings(settings);
+  };
 
   useEffect(() => {
     if (settings?.darkMode) {

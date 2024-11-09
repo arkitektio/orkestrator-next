@@ -371,6 +371,9 @@ export const VivRenderer = ({
                 deckProps={{
                   layers: [roiLayer],
                 }}
+                onHover={(hover) => {
+                  console.log(hover);
+                }}
               />
             )}
           </>

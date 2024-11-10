@@ -30,6 +30,7 @@ export default asDetailQueryRoute(useWorkspaceQuery, ({ data }) => {
                 )}
               </>
             ),
+            Versions: <div className="p-4">Versions</div>,
           }}
         />
       }

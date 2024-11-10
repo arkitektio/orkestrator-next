@@ -80,7 +80,7 @@ export const AssignationToaster = (props: { id: string }) => {
       {ass.done && "Done :)"}
 
       <div className="group-hover:opacity-100 opacity-0 bg-black p-1 rounded-full absolute bottom-0 right-0">
-        {!ass.done ? (
+        {!ass.done && !ass.error ? (
           <Button
             onClick={() =>
               cancelAssign({ variables: { input: { assignation: props.id } } })
@@ -96,11 +96,14 @@ export const AssignationToaster = (props: { id: string }) => {
           <Button
             variant={"destructive"}
             size={"sm"}
+            onClick={() => {
+              toast.dismiss(props.id);
+            }}
             className="flex-1 rounded-l-full py-1"
             disabled={true}
           >
             {" "}
-            Done{" "}
+            Accept{" "}
           </Button>
         )}
         <Button

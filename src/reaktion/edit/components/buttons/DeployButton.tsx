@@ -8,10 +8,9 @@ import { FlowFragment } from "@/reaktion/api/graphql";
 import { flowToDefinition, flowToDependencies } from "@/reaktion/utils";
 import {
   ListAgentFragment,
-  TemplateAtDocument,
+  TemplatesDocument,
   useAgentsQuery,
   useCreateForeignTemplateMutation,
-  useTemplateAtQuery,
 } from "@/rekuest/api/graphql";
 import { useNavigate } from "react-router-dom";
 
@@ -19,14 +18,6 @@ export const DeployButton = (props: {
   flow: FlowFragment;
   agent: ListAgentFragment;
 }) => {
-  const { data } = useTemplateAtQuery({
-    variables: {
-      agent: props.agent.id,
-      extension: "reaktion_next",
-      interface: props.flow.id,
-    },
-  });
-
   const [deploy] = useCreateForeignTemplateMutation({
     variables: {
       input: {
@@ -42,7 +33,7 @@ export const DeployButton = (props: {
         },
       },
     },
-    refetchQueries: [TemplateAtDocument],
+    refetchQueries: [TemplatesDocument],
   });
 
   const navigate = useNavigate();

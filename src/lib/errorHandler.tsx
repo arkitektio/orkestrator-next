@@ -7,12 +7,12 @@ export const onApolloError = (service: name) => (error: ApolloError) => {
   if (error.graphQLErrors) {
     let message = error.graphQLErrors.map((e) => e.message).join(", ");
     error.graphQLErrors.forEach((e) => {
-      toast.error(message, {
+      toast.error(<div className="p-3">{message}</div>, {
         description: "This is a graphql-server on " + service,
       });
     });
   } else {
-    toast.error(error.message, {
+    toast.error(<div className="p-3">{error.message}</div>, {
       description: "This is a network-error on " + service,
     });
   }

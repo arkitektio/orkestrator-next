@@ -135,6 +135,9 @@ export const useLiveAssignation = (options: FilterOptions) => {
   const done = assignation?.events
     .filter((x) => x.kind == AssignationEventKind.Done)
     .at(0);
+  const cancelled = assignation?.events
+    .filter((x) => x.kind == AssignationEventKind.Cancelled)
+    .at(0);
 
   const error = assignation?.events
     .filter(
@@ -152,6 +155,7 @@ export const useLiveAssignation = (options: FilterOptions) => {
     progress:
       done == undefined && error == undefined ? latestProgress : undefined,
     yield: latestYield,
+    cancelled: cancelled,
     done,
     error,
     nodeId: assignation?.node.id,

@@ -50,7 +50,7 @@ const List = ({ filters, pagination }: Props) => {
       actions={<MikroImage.NewButton minimal />}
       refetch={refetch}
     >
-      {(ex, index) => <ImageCard key={index} image={ex} mates={[]} />}
+      {(ex, index) => <ImageCard key={ex.id} image={ex} mates={[]} />}
     </ListRender>
   );
 };

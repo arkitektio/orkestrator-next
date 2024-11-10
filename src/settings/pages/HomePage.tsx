@@ -1,4 +1,3 @@
-import { Arkitekt } from "@/arkitekt/Arkitekt";
 import { SwitchField } from "@/components/fields/SwitchField";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Form } from "@/components/ui/form";
@@ -35,16 +34,25 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   }, [formState, data, isValidating, settings]);
 
   return (
-    <PageLayout actions={<></>} title="Home">
-      Hallo
+    <PageLayout actions={<></>} title="App Settings">
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit((data) => {
             console.log("setting", data);
             setSettings(data);
           })}
+          className="space-y-4"
         >
-          <SwitchField name="experimentalViv" label="Experimental Viv" />
+          <SwitchField
+            name="experimentalViv"
+            label="Experimental Viv"
+            description="Enable Experimental Caching"
+          />
+          <SwitchField
+            name="experimentalCache"
+            label="Experimental Cache Mode"
+            description="Cache image layers"
+          />
         </form>
       </Form>
     </PageLayout>

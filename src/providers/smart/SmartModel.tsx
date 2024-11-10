@@ -1,26 +1,16 @@
-import { Card } from "@/components/ui/card";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { SMART_MODEL_DROP_TYPE } from "@/constants";
-import { composeMates } from "@/mates/compose";
-import { Structure } from "@/types";
-import { PopoverAnchor } from "@radix-ui/react-popover";
-import React, { useEffect, useState } from "react";
-import { useDrag, useDrop } from "react-dnd";
-import { useMySelection } from "../selection/SelectionContext";
-import { Mates } from "./Mates";
-import { SmartModelProps } from "./types";
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { SmartContext } from "@/rekuest/buttons/ObjectButton";
+import { SMART_MODEL_DROP_TYPE } from "@/constants";
 import { cn } from "@/lib/utils";
-import { NativeTypes } from "react-dnd-html5-backend";
+import { SmartContext } from "@/rekuest/buttons/ObjectButton";
+import { Structure } from "@/types";
+import React, { useEffect, useState } from "react";
+import { useDrag, useDrop } from "react-dnd";
+import { useMySelection } from "../selection/SelectionContext";
+import { SmartModelProps } from "./types";
 
 export const SmartModel = ({
   showSelfMates = true,
@@ -40,14 +30,17 @@ export const SmartModel = ({
     if (partners.length > 0) {
       const listener = {
         handleEvent: (e: Event) => {
-          e.stopPropagation();
-          setPartners([]);
+          const target = e.target as HTMLElement;
+          const partnerCard = target.closest(".partnercard");
+          if (!partnerCard) {
+            setPartners([]);
+          }
         },
       };
-      document.addEventListener("click", listener);
+      document.addEventListener("mousedown", listener);
 
       return () => {
-        document.removeEventListener("click", listener);
+        document.removeEventListener("mousedown", listener);
       };
     }
   }, [partners]);
@@ -104,17 +97,15 @@ export const SmartModel = ({
     object: props.object,
   });
 
-  const dragClassNameFunc = props.dragClassName || (({}) => "");
-
   return (
     <div
-      key={props.identifier + "/" + props.object}
+      key={props.object}
       ref={drop}
       data-identifier={props.identifier}
       data-object={props.object}
     >
       <ContextMenu>
-        <ContextMenuContent className="dark:border-gray-700 max-w-lg">
+        <ContextMenuContent className="dark:border-gray-700 max-w-md">
           {isSelected ? (
             <>Multiselect is not implemented yet</>
           ) : (
@@ -131,13 +122,10 @@ export const SmartModel = ({
             className={cn(
               "@container relative smartdraggable ",
               isSelected && "group ring ring-1 ",
-              isOver && "shadow-xl",
-              dragClassNameFunc({
-                isDragging,
-                isOver: false,
-                canDrop,
-                progress: 0,
-              }),
+              isDragging &&
+                "opacity-50 ring-2 ring-gray-600 ring rounded rounded-md",
+              isOver &&
+                "shadow-xl ring-2 border-gray-200 ring rounded rounded-md",
             )}
             onClick={(e) => {
               setPartners([]);
@@ -147,14 +135,14 @@ export const SmartModel = ({
 
             {isOver && <CombineButton />}
             {partners.length > 0 && (
-              <div className="absolute bottom-0 w-full h-full flex justify-center items-center z-10 p-3">
-                <Card className="h-full w-full flex text-wrap p-3">
+              <div className="absolute bottom-0 w-full h-full flex justify-center items-center z-10  partnercard">
+                <div className="h-full w-full flex text-wrap p-3 bg-black">
                   <SmartContext
                     identifier={props.identifier}
                     object={props.object}
                     partners={[]}
                   />
-                </Card>
+                </div>
               </div>
             )}
           </div>
@@ -166,8 +154,10 @@ export const SmartModel = ({
 
 export const CombineButton = (props: { children?: React.ReactNode }) => {
   return (
-    <div className="absolute bottom-0  w-full h-full flex justify-center items-center z-100">
-      <Card className="mx-2 mb-2 p-3">Drop to Combine</Card>
+    <div className="absolute bottom-0 w-full h-full flex justify-center items-center z-10 bg-black bg-opacity-75">
+      <div className="font-light text-xs p-2 rounded-full bg-black bg-opacity-100">
+        Drop to Combine
+      </div>
     </div>
   );
 };

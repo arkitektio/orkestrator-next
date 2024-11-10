@@ -1,4 +1,4 @@
-import { notEmpty } from "@/lib/utils";
+import { cn, notEmpty } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { EffectWrapper } from "./EffectWrapper";
 import { Port, PortGroup, PortOptions, WidgetRegistryType } from "./types";
@@ -20,6 +20,7 @@ export type ReturnContainerProps = {
   values: { [key: string]: any | null | undefined };
   options?: PortOptions | undefined;
   showKeys?: boolean;
+  className?: string;
 };
 
 export type OutputContainer = (props: ReturnContainerProps) => JSX.Element;
@@ -29,6 +30,7 @@ export const ReturnsContainer: OutputContainer = ({
   values,
   registry,
   showKeys = false,
+  className,
 }) => {
   let len = ports.length;
 
@@ -40,7 +42,10 @@ export const ReturnsContainer: OutputContainer = ({
 
   return (
     <div
-      className={`grid @lg:grid-cols-${lg_size} @xl-grid-cols-${xl_size} @2xl:grid-cols-${xxl_size}  @3xl:grid-cols-${xxxl_size}   @5xl:grid-cols-${xxxxl_size} gap-4`}
+      className={cn(
+        `grid @lg:grid-cols-${lg_size} @xl-grid-cols-${xl_size} @2xl:grid-cols-${xxl_size}  @3xl:grid-cols-${xxxl_size}   @5xl:grid-cols-${xxxxl_size} gap-4`,
+        className,
+      )}
     >
       {Object.keys(values).map((key, index) => {
         let port = ports.find((p) => p.key === key);

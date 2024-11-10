@@ -1,38 +1,19 @@
 import React, { useEffect, useState } from "react";
-import * as zod from "yup";
-import { Settings, SettingsContext } from "./SettingsContext";
-import { set } from "date-fns";
+import { SettingsContext } from "./SettingsContext";
+import {
+  Settings,
+  defaultSettings as defSett,
+  settingsValidator,
+} from "./validator";
 
 export type SettingsProps = {
   children: React.ReactNode;
   defaultSettings?: Settings;
 };
 
-const settingsValidator = zod.object().shape({
-  autoResolve: zod.boolean().required(),
-  allowAutoRequest: zod.boolean().required(),
-  allowBatch: zod.boolean().required(),
-  darkMode: zod.boolean().required(),
-  colorScheme: zod.string().required(),
-  experimental: zod.boolean().required(),
-  pollInterval: zod.number().required(),
-  instanceId: zod.string().required(),
-  experimentalViv: zod.boolean().required(),
-});
-
 export const SettingsProvider: React.FC<SettingsProps> = ({
   children,
-  defaultSettings = {
-    autoResolve: true,
-    allowAutoRequest: true,
-    allowBatch: true,
-    darkMode: true,
-    colorScheme: "red",
-    experimental: false,
-    pollInterval: 3000,
-    instanceId: "main",
-    experimentalViv: false,
-  },
+  defaultSettings = defSett,
 }) => {
   const [settings, setLocalSettings] = useState<Settings | undefined>(
     undefined,
@@ -81,7 +62,7 @@ export const SettingsProvider: React.FC<SettingsProps> = ({
         let l = localStorage.getItem("wasser-settings");
         console.log("Loaded Settings", l);
         if (l) {
-          localSettings = await settingsValidator.validate(JSON.parse(l));
+          localSettings = await settingsValidator.parseAsync(JSON.parse(l));
           console.log("Settings loaded from local storage");
         }
       } catch (e) {

@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Form } from "@/components/ui/form";
+import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import { cn } from "@/lib/utils";
 import { MikroROI } from "@/linkers";
 import {
@@ -23,22 +24,16 @@ import {
   useCreateRgbContextMutation,
   useUpdateRgbContextMutation,
 } from "@/mikro-next/api/graphql";
+import { EntityOverlay } from "@/mikro-next/overlays/EntityOverlay";
 import { OrbitControls, OrthographicCamera } from "@react-three/drei";
 import { Canvas, ThreeElements, useFrame, useThree } from "@react-three/fiber";
 import { Plus, X } from "lucide-react";
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import * as THREE from "three";
 import { additiveBlending, bitmapToBlob, viewHasher } from "./TwoDRGBRender";
 import { useViewRenderFunction } from "./hooks/useViewRender";
-import { useMediaUpload } from "@/datalayer/hooks/useUpload";
-import { useFieldArray, useForm } from "react-hook-form";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { EntityOverlay } from "@/mikro-next/overlays/EntityOverlay";
 
 export interface RGBDProps {
   context: ListRgbContextFragment;
@@ -303,7 +298,6 @@ const ImageBitmapTextureMesh = ({
         rotation={[0, 0, Math.PI]}
         onClick={(e) => {
           setOpenPanels([]);
-          alert(JSON.stringify(e.uv1));
         }}
       >
         <planeGeometry args={[2, 2]} />

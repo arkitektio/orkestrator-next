@@ -25,7 +25,7 @@ import { AssignationUpdater } from "@/rekuest/components/functional/AssignationU
 import { ReservationUpdater } from "@/rekuest/components/functional/ReservationUpdater";
 import { WidgetRegistryProvider } from "@/rekuest/widgets/WidgetsProvider";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
-import { BrowserRouter, HashRouter, useNavigate } from "react-router-dom";
+import { BrowserRouter, useNavigate } from "react-router-dom";
 
 const displayRegistry = {
   "@mikro-next/image": ImageDisplay,
@@ -90,7 +90,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <SettingsProvider>
       <DebugProvider>
-        <HashRouter>
+        <BrowserRouter>
           <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
             {/* This is where we configure the application automatically based on facts */}
 
@@ -136,7 +136,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
               </DisplayProvider>
             </Arkitekt.Provider>
           </ThemeProvider>
-        </HashRouter>
+        </BrowserRouter>
       </DebugProvider>
     </SettingsProvider>
   );

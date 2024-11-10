@@ -1,5 +1,4 @@
 import { Arkitekt, useMikro } from "@/arkitekt/Arkitekt";
-import { useService } from "@/arkitekt/hooks";
 import {
   AccessCredentialsFragment,
   RequestAccessDocument,
@@ -11,6 +10,7 @@ import {
 import { BasicIndexer } from "@/mikro-next/providers/xarray/indexing";
 import { S3Store } from "@/mikro-next/providers/xarray/store";
 import { getChunkItem } from "@/mikro-next/providers/xarray/utils";
+import { useSettings } from "@/providers/settings/SettingsContext";
 import { ApolloClient } from "@apollo/client";
 import { AwsClient } from "aws4fetch";
 import { useCallback } from "react";
@@ -271,6 +271,9 @@ const downloadView = async (
 };
 
 export const useViewRenderFunction = () => {
+  const {
+    settings: { experimentalCache },
+  } = useSettings();
   const client = useMikro();
   const fakts = Arkitekt.useFakts();
 
@@ -291,7 +294,9 @@ export const useViewRenderFunction = () => {
       let renderView = { ...view, rescale: true };
 
       const cacheKey = `renderedViews-${smallestScale.store.id}(${slicesToString(viewToSlices(view, t, z))})-rescale:${renderView.rescale}-${view.colorMap}$`;
-      let cachedImageData = await getImageDataFromCache(cacheKey, signal);
+      let cachedImageData = experimentalCache
+        ? await getImageDataFromCache(cacheKey, signal)
+        : null;
 
       if (cachedImageData) {
         console.log("Loaded rendered view from cache");
@@ -319,7 +324,7 @@ export const useViewRenderFunction = () => {
 
       return imageData;
     },
-    [client, fakts],
+    [client, fakts, experimentalCache],
   );
 
   return {

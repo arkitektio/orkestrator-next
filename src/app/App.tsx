@@ -19,6 +19,7 @@ import { NotConnected } from "./components/fallbacks/NotConnected";
 import { NotFound } from "./components/fallbacks/NotFound";
 import { NotLoggedIn } from "./components/fallbacks/NotLoggedIn";
 import { PrivateNavigationBar } from "./components/navigation/PrivateNavigationBar";
+import KraphModule from "@/kraph/KraphModule";
 // Entrypoint of the application.
 // We provide two main routers, one for the public routes, and one for the private routes.
 export const protect = (component: React.ReactNode) => {
@@ -55,6 +56,7 @@ function App() {
               <Route path="fluss/*" element={protect(<ReaktionModule />)} />
               <Route path="kabinet/*" element={protect(<KabinetModule />)} />
               <Route path="omero-ark/*" element={protect(<OmeroArkModule />)} />
+              <Route path="kraph/*" element={protect(<KraphModule />)} />
               <Route path="lok/*" element={protect(<LokNextModule />)} />
               <Route path="settings/*" element={protect(<SettingsModule />)} />
               <Route path="*" element={<NotFound />} />

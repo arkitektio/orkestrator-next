@@ -76,34 +76,35 @@ export const MikroRenderTree = buildSmart(
   "mikro/rendertrees",
 );
 
-export const MikroMetric = buildSmart("@mikro/metric", "mikro/metrics");
-
-export const MikroEntity = buildSmart("@mikro/entitry", "mikro/entities");
-
 export const MikroDataset = buildSmart("@mikro/dataset", "mikro/datasets");
-export const MikroExpression = buildSmart(
-  "@mikro/expression",
-  "mikro/expressions",
+
+export const KraphMetric = buildSmart("@kraph/metric", "kraph/metrics");
+
+export const KraphEntity = buildSmart("@kraph/entity", "kraph/entities");
+
+export const KraphExpression = buildSmart(
+  "@kraph/expression",
+  "kraph/expressions",
 );
-export const MikroLinkedExpression = buildSmart(
-  "@mikro/linkedexpression",
-  "mikro/linkedexpressions",
+export const KraphLinkedExpression = buildSmart(
+  "@kraph/linkedexpression",
+  "kraph/linkedexpressions",
 );
-export const MikroOntology = buildSmart("@mikro/ontology", "mikro/ontologies");
-export const MikroReagent = buildSmart("@mikro/reagent", "mikro/reagents");
-export const MikroGraph = buildSmart("@mikro/graph", "mikro/graphs");
+export const KraphOntology = buildSmart("@kraph/ontology", "kraph/ontologies");
+export const KraphReagent = buildSmart("@kraph/reagent", "kraph/reagents");
+export const KraphGraph = buildSmart("@kraph/graph", "kraph/graphs");
 export const MikroExperiment = buildSmart(
   "@mikro/experiment",
   "mikro/experiments",
 );
-export const MikroProtocol = buildSmart("@mikro/protocol", "mikro/protocols");
-export const MikroProtocolStep = buildSmart(
-  "@mikro/protocolstep",
-  "mikro/protocolsteps",
+export const KraphProtocol = buildSmart("@kraph/protocol", "kraph/protocols");
+export const KraphProtocolStep = buildSmart(
+  "@kraph/protocolstep",
+  "kraph/protocolsteps",
 );
-export const MikroProtocolStepTemplate = buildSmart(
-  "@mikro/protocolsteptemplate",
-  "mikro/protocolsteptemplates",
+export const KraphProtocolStepTemplate = buildSmart(
+  "@kraph/protocolsteptemplate",
+  "kraph/protocolsteptemplates",
 );
 
 export const OmeroArkProject = buildSmart(

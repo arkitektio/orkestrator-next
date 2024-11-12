@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ShadnWigets } from "@/components/widgets/ShadnWigets";
 import { WELL_KNOWN_ENDPOINTS } from "@/constants";
 import { KabinetWard } from "@/kabinet/KabinetWard";
+import { KraphWard } from "@/kraph/KraphWard";
 import { WellKnownDiscovery } from "@/lib/fakts";
 import { SystemMessageDisplay } from "@/lok-next/SystemMessage";
 import { MikroNextWard } from "@/mikro-next/MikroNextWard";
@@ -116,7 +117,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                         <Guard.Kabinet fallback={<></>}>
                           <KabinetWard key="kabinet" />
                         </Guard.Kabinet>
-
+                        <Guard.Kraph fallback={<></>}>
+                          <KraphWard key="kraph" />
+                        </Guard.Kraph>
                         <Guard.Mikro fallback={<></>}>
                           <MikroNextWard key="mikro" />
                         </Guard.Mikro>

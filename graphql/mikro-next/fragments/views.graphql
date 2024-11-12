@@ -132,16 +132,10 @@ fragment LabelView on LabelView {
   label
 }
 
-fragment SpecimenView on SpecimenView {
+fragment StructureView on StructureView {
   ...View
   id
-  entity {
-    id
-    linkedExpression {
-      label
-    }
-    label
-  }
+  structure
 }
 
 fragment AcquisitionView on AcquisitionView {

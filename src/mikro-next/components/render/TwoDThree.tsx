@@ -24,7 +24,6 @@ import {
   useCreateRgbContextMutation,
   useUpdateRgbContextMutation,
 } from "@/mikro-next/api/graphql";
-import { EntityOverlay } from "@/mikro-next/overlays/EntityOverlay";
 import { OrbitControls, OrthographicCamera } from "@react-three/drei";
 import { Canvas, ThreeElements, useFrame, useThree } from "@react-three/fiber";
 import { Plus, X } from "lucide-react";
@@ -262,20 +261,6 @@ const ROIPolygon = (
         <shapeGeometry args={[shape]} />
         <lineBasicMaterial color="black" linewidth={1} />
       </line>
-
-      {hovered && (
-        <>
-          <Text
-            position={[topCenter.x, topCenter.y, topCenter.z]}
-            fontSize={0.03}
-            color="white"
-            anchorX="center"
-            anchorY="bottom"
-          >
-            {roi.entity?.linkedExpression.label}
-          </Text>
-        </>
-      )}
     </>
   );
 };

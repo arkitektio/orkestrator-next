@@ -13,11 +13,13 @@ import omeroArkResult from "@/omero-ark/api/fragments";
 import flussResult from "@/reaktion/api/fragments";
 import rekuestResult from "@/rekuest/api/fragments";
 import kabinetResult from "@/kabinet/api/fragments";
+import kraphResult from "@/kraph/api/fragments";
 import { WidgetRegistry } from "@/rekuest/widgets/Registry";
 import { createOmeroArkClient } from "@/lib/omero-ark/client";
 import { createLokClient } from "@/lok-next/lib/LokClient";
 import { App, ServiceMap } from "./types";
 import { createLivekitClient } from "@/lib/livekit/client";
+import { createKraphClient } from "@/lib/kraph/client";
 
 export const electronRedirect = async (
   url: string,
@@ -117,6 +119,21 @@ export const serviceMap: ServiceBuilderMap = {
       };
     },
   },
+  kraph: {
+    key: "kraph",
+    service: "live.arkitekt.kraph",
+    optional: true,
+    builder: (manifest, fakts: any, token) => {
+      return {
+        client: createKraphClient({
+          wsEndpointUrl: fakts.kraph.ws_endpoint_url,
+          endpointUrl: fakts.kraph.endpoint_url,
+          possibleTypes: kraphResult.possibleTypes,
+          retrieveToken: () => token,
+        }),
+      };
+    },
+  },
   livekit: {
     key: "livekit",
     service: "io.livekit.livekit",
@@ -159,6 +176,7 @@ export const Guard = {
   Kabinet: buildGuard("kabinet"),
   OmeroArk: buildGuard("omero_ark"),
   Livekit: buildGuard("livekit"),
+  Kraph: buildGuard("kraph"),
 };
 
 export const useMikro = (): ApolloClient<NormalizedCache> => {
@@ -219,6 +237,16 @@ export const useOmeroArk = (): ApolloClient<NormalizedCache> => {
   }
 
   return clients.omero_ark?.client;
+};
+
+export const useKraph = (): ApolloClient<NormalizedCache> => {
+  const { clients } = useArkitekt();
+
+  if (!clients.kraph?.client) {
+    throw new Error("Kraph client not available");
+  }
+
+  return clients.kraph?.client;
 };
 
 export const useLivekit = (): LivekitClient => {

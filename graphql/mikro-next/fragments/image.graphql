@@ -13,7 +13,7 @@ fragment Image on Image {
     ...AcquisitionView
     ...RGBView
     ...WellPositionView
-    ...SpecimenView
+    ...StructureView
     ...DerivedView
     ...ROIView
     ...FileView

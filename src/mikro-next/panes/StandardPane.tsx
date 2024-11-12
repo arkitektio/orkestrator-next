@@ -79,61 +79,6 @@ export const NavigationPane = (props: {}) => {
             Files
           </DroppableNavLink>
         </div>
-        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
-          Insights
-        </div>
-
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
-          <DroppableNavLink
-            to="/mikro/ontologies"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <GitBranchPlusIcon className="h-4 w-4" />
-            Ontologies
-          </DroppableNavLink>
-          <DroppableNavLink
-            to="/mikro/graphs"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <SparkleIcon className="h-4 w-4" />
-            Graphs
-          </DroppableNavLink>
-          <DroppableNavLink
-            to="/mikro/renderedplots"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <FaChartArea className="h-4 w-4" />
-            Plots
-          </DroppableNavLink>
-        </div>
-
-        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4 mt-4">
-          Protocols
-        </div>
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
-          <DroppableNavLink
-            to="/mikro/protocolsteptemplates"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <Folder className="h-4 w-4" />
-            Templates
-          </DroppableNavLink>
-
-          <DroppableNavLink
-            to="/mikro/protocolsteps"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <GitBranchPlusIcon className="h-4 w-4" />
-            Steps
-          </DroppableNavLink>
-          <DroppableNavLink
-            to="/mikro/reagents"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <File className="h-4 w-4" />
-            Reagents
-          </DroppableNavLink>
-        </div>
       </nav>
     </div>
   );

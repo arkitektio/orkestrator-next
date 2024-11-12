@@ -4,25 +4,11 @@ fragment ListROI on ROI {
     id
     name
   }
-  entity {
-    id
-    label
-    linkedExpression {
-      label
-    }
-  }
   vectors
 }
 
 fragment ROI on ROI {
   id
-  entity {
-    id
-    label
-    linkedExpression {
-      label
-    }
-  }
   pinned
   image {
     id

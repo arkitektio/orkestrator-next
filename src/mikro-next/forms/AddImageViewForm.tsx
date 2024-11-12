@@ -3,14 +3,14 @@ import { AddContinousScanViewForm } from "./AddContinousScanViewForm";
 import { AddMultiPositionViewForm } from "./AddMultiPositionViewForm";
 import { AddRGBViewForm } from "./AddRGBViewForm";
 import { AddTransformationViewForm } from "./AddTransformationViewForm";
-import { AddSpecimenViewForm } from "./AddSpecimenViewForm";
+import { AddStructureViewForm } from "./AddSpecimenViewForm";
 
 export const AddImageViewForm = (props: { image: string }) => {
   return (
     <div className="mt-2">
       <Tabs defaultValue="affine" className="relative">
         <TabsList className="mb-2">
-          <TabsTrigger value="specimen">Specimen</TabsTrigger>
+          <TabsTrigger value="specimen">Structure</TabsTrigger>
           <TabsTrigger value="affine">Affine</TabsTrigger>
           <TabsTrigger value="rgb">RGB</TabsTrigger>
           <TabsTrigger value="scan">Scan</TabsTrigger>
@@ -24,10 +24,10 @@ export const AddImageViewForm = (props: { image: string }) => {
           <AddTransformationViewForm {...props} />
         </TabsContent>
         <TabsContent
-          value="specimen"
+          value="structure"
           className={"h-full w-full mt-0 rounded rounded-md "}
         >
-          <AddSpecimenViewForm {...props} />
+          <AddStructureViewForm {...props} />
         </TabsContent>
         <TabsContent
           value="rgb"

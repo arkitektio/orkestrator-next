@@ -6,20 +6,17 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import {
-  SpecimenViewInput,
-  useCreateSpecimenViewMutation,
-  useSearchEntitiesLazyQuery,
+  StructureViewInput,
+  useCreateStructureViewMutation,
 } from "../api/graphql";
-import { EntitySearchField } from "../components/fields/EntitySearchField";
+import { NotImplementedYet } from "@/app/components/fallbacks/NotImplemted";
 
-export const AddSpecimenViewForm = (props: { image: string }) => {
-  const [add] = useCreateSpecimenViewMutation();
-
-  const [search] = useSearchEntitiesLazyQuery();
+export const AddStructureViewForm = (props: { image: string }) => {
+  const [add] = useCreateStructureViewMutation();
 
   const dialog = useGraphQlFormDialog(add);
 
-  const form = useForm<SpecimenViewInput>({
+  const form = useForm<StructureViewInput>({
     defaultValues: {
       image: props.image,
     },
@@ -46,12 +43,7 @@ export const AddSpecimenViewForm = (props: { image: string }) => {
           })}
         >
           <div className="grid grid-cols-2 gap-2">
-            <EntitySearchField
-              name="entity"
-              label="Entity"
-              description="Which entity is being imaged?"
-              placeholder="Entity"
-            />
+            <NotImplementedYet />
           </div>
 
           <DialogFooter className="mt-2">

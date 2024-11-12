@@ -41,7 +41,7 @@
       "RGBView",
       "ROIView",
       "ScaleView",
-      "SpecimenView",
+      "StructureView",
       "TimepointView",
       "WellPositionView"
     ]

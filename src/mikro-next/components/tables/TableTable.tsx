@@ -42,10 +42,8 @@ import {
   ChildrenQuery,
   ImageAccessorFragment,
   LabelAccessorFragment,
-  ListEntitiesQueryVariables,
   TableFragment,
   useRowsQuery,
-  useSearchLinkedExpressionLazyQuery,
 } from "@/mikro-next/api/graphql";
 import { useForm } from "react-hook-form";
 import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
@@ -112,13 +110,6 @@ const endColumns = [
     },
   },
 ];
-
-const initialVariables: ListEntitiesQueryVariables = {
-  pagination: {
-    limit: 15, // Default page size
-    offset: 0, // Start from the first item
-  },
-};
 
 export type ValueAccessorProps<T extends any> = {
   accessor: T;
@@ -250,8 +241,6 @@ export const TableTable = (props: { table: TableFragment }) => {
     pageSize: 15,
   });
 
-  const [searchM] = useSearchLinkedExpressionLazyQuery({});
-
   const form = useForm<FormValues>({
     defaultValues: {},
   });
@@ -315,13 +304,6 @@ export const TableTable = (props: { table: TableFragment }) => {
   return (
     <div className="w-full h-full">
       <div className="flex items-center py-4 gap-2">
-        <Form {...form}>
-          <GraphQLSearchField
-            placeholder="Add Metric"
-            searchQuery={searchM}
-            name="metrics"
-          />
-        </Form>
         <Input
           placeholder="Search..."
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}

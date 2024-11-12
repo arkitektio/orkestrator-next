@@ -19,6 +19,7 @@ import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import {
   Bug,
   Database,
+  Eye,
   Podcast,
   Settings,
   ShoppingBasket,
@@ -54,6 +55,8 @@ export const matchIcon = (key: string) => {
       return <GoWorkflow className="w-8 h-8 mx-auto  text-foreground" />;
     case "kabinet":
       return <ShoppingBasket className="w-8 h-8 mx-auto  text-foreground" />;
+    case "kraph":
+      return <Eye className="w-8 h-8 mx-auto  text-foreground" />;
     default:
       return <HomeIcon className="w-8 h-8 mx-auto  text-foreground" />;
   }

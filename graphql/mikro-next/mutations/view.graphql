@@ -60,8 +60,8 @@ mutation CreateContinousScanView($input: ContinousScanViewInput!) {
   }
 }
 
-mutation CreateSpecimenView($input: SpecimenViewInput!) {
-  createSpecimenView(input: $input) {
-    ...SpecimenView
+mutation CreateStructureView($input: StructureViewInput!) {
+  createStructureView(input: $input) {
+    ...StructureView
   }
 }

@@ -1,0 +1,11 @@
+query GlobalSearch(
+  $search: String
+  $noImages: Boolean!
+  $noFiles: Boolean!
+  $pagination: GraphPaginationInput
+) {
+  entities: entities(filters: { search: $search }, pagination: $pagination)
+    @skip(if: $noImages) {
+    ...ListEntity
+  }
+}

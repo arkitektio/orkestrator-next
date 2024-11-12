@@ -23,6 +23,7 @@
     "build:linux": "electron-vite build && electron-builder --linux",
     "rekuest": "graphql-codegen --config rekuest.yml",
     "mikro": "graphql-codegen --config mikro.yml",
+    "kraph": "graphql-codegen --config kraph.yml",
     "omero-ark": "graphql-codegen --config omero-ark.yml",
     "fluss": "graphql-codegen --config fluss.yml",
     "kabinet": "graphql-codegen --config kabinet.yml",

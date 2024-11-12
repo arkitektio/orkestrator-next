@@ -1,8 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  MikroEntity,
-  MikroProtocolStep,
+  KraphEntity,
+  KraphProtocolStep,
   MikroROI,
   MikroROIView,
   MikroSpecimenView,

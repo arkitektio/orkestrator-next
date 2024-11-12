@@ -49,9 +49,7 @@ import { Komments } from "@/lok-next/components/komments/Komments";
 import {
   ChildrenQuery,
   DatasetFragment,
-  ListEntitiesQueryVariables,
   useChildrenQuery,
-  useSearchLinkedExpressionLazyQuery,
 } from "@/mikro-next/api/graphql";
 import { ViewType } from "@/mikro-next/pages/DatasetPage";
 import { useForm } from "react-hook-form";
@@ -223,13 +221,6 @@ export const columns: ColumnDef<Item>[] = [
   },
 ];
 
-const initialVariables: ListEntitiesQueryVariables = {
-  pagination: {
-    limit: 20, // Default page size
-    offset: 0, // Start from the first item
-  },
-};
-
 const calculateColumns = () => {
   let calculated_columns = columns;
 
@@ -250,8 +241,6 @@ export const DatasetTableExplorer = (props: {
     pageIndex: 0,
     pageSize: 20,
   });
-
-  const [searchM] = useSearchLinkedExpressionLazyQuery({});
 
   const form = useForm<FormValues>({
     defaultValues: {},
@@ -314,13 +303,6 @@ export const DatasetTableExplorer = (props: {
       pageActions={
         <>
           <div className="flex items-center py-4 gap-2">
-            <Form {...form}>
-              <GraphQLSearchField
-                placeholder="Add Metric"
-                searchQuery={searchM}
-                name="metrics"
-              />
-            </Form>
             <Input
               placeholder="Search..."
               value={

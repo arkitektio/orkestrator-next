@@ -1,9 +1,11 @@
-name: Build Electron app
+name: Build/release Electron app
 
 on:
   push:
     branches:
       - main
+
+permissions: write-all
 
 jobs:
   release:
@@ -39,6 +41,7 @@ jobs:
       - name: build-linux
         if: matrix.os == 'ubuntu-latest'
         env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_LOGIN }}
           NODE_OPTIONS: "--max_old_space_size=4096"
         run: yarn run build:linux
 
@@ -54,4 +57,45 @@ jobs:
           NODE_OPTIONS: "--max_old_space_size=4096"
         run: yarn run build:win
 
-    
+      # Step 5: Save build artifacts
+      - name: Save build artifacts
+        run: mkdir -p artifacts && cp -R dist/* artifacts/
+
+      - name: Upload artifacts for release
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts-${{ matrix.os }}
+          path: artifacts/
+
+  publish-and-release:
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Download all artifacts from matrix jobs
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: all-artifacts
+
+      # Step 2: Set the release name with timestamp
+      - name: Set Release Name
+        id: release_name
+        run: echo "RELEASE_NAME=Release $(date +"%Y-%m-%d %H:%M:%S")" >> $GITHUB_ENV
+
+      # Step 3: Publish the NPM package (once, after matrix completes)
+      - name: Publish to NPM
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
+
+      # Step 4: Create GitHub Release and upload all artifacts
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            all-artifacts/**/*
+          tag_name: "v${{ github.run_number }}"
+          name: "${{ env.RELEASE_NAME }}"
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

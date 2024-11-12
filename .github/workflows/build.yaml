@@ -68,7 +68,7 @@ jobs:
           path: artifacts/
 
   publish-and-release:
-    needs: build-and-release
+    needs: release
     runs-on: ubuntu-latest
     steps:
       # Step 1: Download all artifacts from matrix jobs

@@ -57,15 +57,19 @@ jobs:
           NODE_OPTIONS: "--max_old_space_size=4096"
         run: yarn run build:win
 
-      # Step 5: Save build artifacts
-      - name: Save build artifacts
-        run: mkdir -p artifacts && cp -R dist/* artifacts/
-
+      # Step 5: Upload only specific release artifacts
       - name: Upload artifacts for release
         uses: actions/upload-artifact@v3
         with:
           name: build-artifacts-${{ matrix.os }}
-          path: artifacts/
+          path: |
+            dist/*.exe          # Windows executable
+            dist/*.dmg          # macOS disk image
+            dist/*.AppImage     # Linux AppImage
+            dist/*.snap         # Linux snap package
+            dist/*.deb          # Debian package
+            dist/*.rpm          # RPM package
+            dist/*.tar.gz       # Compressed tarball
 
   publish-and-release:
     needs: release

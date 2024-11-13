@@ -19,6 +19,7 @@ export type Scalars = {
   DateTime: { input: any; output: any; }
   Metric: { input: any; output: any; }
   MetricMap: { input: any; output: any; }
+  StructureString: { input: any; output: any; }
   UntypedPlateChild: { input: any; output: any; }
   Upload: { input: any; output: any; }
 };
@@ -86,11 +87,13 @@ export type Entity = {
   __typename?: 'Entity';
   createdAt: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
+  identifier?: Maybe<Scalars['String']['output']>;
   kindName: Scalars['String']['output'];
   label: Scalars['String']['output'];
   linkedExpression: LinkedExpression;
   metricMap: Scalars['MetricMap']['output'];
   metrics: Array<NodeMetric>;
+  object?: Maybe<Scalars['String']['output']>;
   relations: Array<EntityRelation>;
   subjectedTo: Array<ProtocolStep>;
   usedIn: Array<ProtocolStep>;
@@ -250,7 +253,8 @@ export enum ExpressionKind {
   Measurement = 'MEASUREMENT',
   Metric = 'METRIC',
   Relation = 'RELATION',
-  RelationMetric = 'RELATION_METRIC'
+  RelationMetric = 'RELATION_METRIC',
+  Structure = 'STRUCTURE'
 }
 
 export type Graph = {
@@ -347,6 +351,14 @@ export type LinkedExpressionFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type MeasurementInput = {
+  graph: Scalars['ID']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+  structure: Scalars['StructureString']['input'];
+  validFrom?: InputMaybe<Scalars['DateTime']['input']>;
+  validTo?: InputMaybe<Scalars['DateTime']['input']>;
+};
+
 export type MediaStore = {
   __typename?: 'MediaStore';
   bucket: Scalars['String']['output'];
@@ -390,6 +402,7 @@ export type Mutation = {
   createEntityRelation: EntityRelation;
   createExpression: Expression;
   createGraph: Graph;
+  createMeasurement: Entity;
   createOntology: Ontology;
   createProtocol: Protocol;
   createProtocolStep: ProtocolStep;
@@ -442,6 +455,11 @@ export type MutationCreateExpressionArgs = {
 
 export type MutationCreateGraphArgs = {
   input: GraphInput;
+};
+
+
+export type MutationCreateMeasurementArgs = {
+  input: MeasurementInput;
 };
 
 
@@ -739,6 +757,7 @@ export type Query = {
   protocols: Array<Protocol>;
   reagent: Reagent;
   reagents: Array<Reagent>;
+  structure: Entity;
 };
 
 
@@ -865,6 +884,12 @@ export type QueryReagentArgs = {
 export type QueryReagentsArgs = {
   filters?: InputMaybe<ReagentFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryStructureArgs = {
+  graph: Scalars['ID']['input'];
+  structure: Scalars['StructureString']['input'];
 };
 
 export type Reagent = {
@@ -997,15 +1022,15 @@ export type VariableInput = {
   value: Scalars['String']['input'];
 };
 
-export type EntityFragment = { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> };
+export type EntityFragment = { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> };
 
-export type ListEntityFragment = { __typename?: 'Entity', id: string, label: string, createdAt: any, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } };
+export type ListEntityFragment = { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, createdAt: any, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } };
 
 export type EntityGraphNodeFragment = { __typename?: 'Entity', id: string, label: string, kindName: string, linkedExpression: { __typename?: 'LinkedExpression', color: string }, metrics: Array<{ __typename?: 'NodeMetric', value?: any | null }> };
 
 export type EntityGraphFragment = { __typename?: 'EntityGraph', graph: { __typename?: 'Graph', id: string }, nodes: Array<{ __typename?: 'Entity', id: string, label: string, kindName: string, linkedExpression: { __typename?: 'LinkedExpression', color: string }, metrics: Array<{ __typename?: 'NodeMetric', value?: any | null }> }>, edges: Array<{ __typename?: 'EntityRelation', id: string, label: string, leftId: string, rightId: string }> };
 
-export type EntityRelationFragment = { __typename?: 'EntityRelation', id: string, left: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> }, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> }, metrics: Array<{ __typename?: 'RelationMetric', value: string }>, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', label: string } } };
+export type EntityRelationFragment = { __typename?: 'EntityRelation', id: string, left: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> }, right: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> }, metrics: Array<{ __typename?: 'RelationMetric', value: string }>, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', label: string } } };
 
 export type ListEntityRelationFragment = { __typename?: 'EntityRelation', id: string, leftId: string, rightId: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', label: string } } };
 
@@ -1015,7 +1040,7 @@ export type ExpressionFragment = { __typename?: 'Expression', id: string, label:
 
 export type ListExpressionFragment = { __typename?: 'Expression', id: string, label: string, description?: string | null, kind: ExpressionKind, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null };
 
-export type GraphFragment = { __typename?: 'Graph', id: string, name: string, description?: string | null, relations: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, entities: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, metrics: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }> };
+export type GraphFragment = { __typename?: 'Graph', id: string, name: string, description?: string | null, relations: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, entities: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, metrics: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, structures: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }> };
 
 export type ListGraphFragment = { __typename?: 'Graph', id: string, name: string };
 
@@ -1052,14 +1077,14 @@ export type CreateEntityMutationVariables = Exact<{
 }>;
 
 
-export type CreateEntityMutation = { __typename?: 'Mutation', createEntity: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> } };
+export type CreateEntityMutation = { __typename?: 'Mutation', createEntity: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> } };
 
 export type CreateEntityRelationMutationVariables = Exact<{
   input: EntityRelationInput;
 }>;
 
 
-export type CreateEntityRelationMutation = { __typename?: 'Mutation', createEntityRelation: { __typename?: 'EntityRelation', id: string, left: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> }, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> }, metrics: Array<{ __typename?: 'RelationMetric', value: string }>, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', label: string } } } };
+export type CreateEntityRelationMutation = { __typename?: 'Mutation', createEntityRelation: { __typename?: 'EntityRelation', id: string, left: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> }, right: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> }, metrics: Array<{ __typename?: 'RelationMetric', value: string }>, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', label: string } } } };
 
 export type CreateEntityGraphRelationMutationVariables = Exact<{
   input: EntityRelationInput;
@@ -1073,7 +1098,7 @@ export type CreateEntityMetricMutationVariables = Exact<{
 }>;
 
 
-export type CreateEntityMetricMutation = { __typename?: 'Mutation', createEntityMetric: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> } };
+export type CreateEntityMetricMutation = { __typename?: 'Mutation', createEntityMetric: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> } };
 
 export type CreateExpressionMutationVariables = Exact<{
   input: ExpressionInput;
@@ -1094,7 +1119,7 @@ export type CreateGraphMutationVariables = Exact<{
 }>;
 
 
-export type CreateGraphMutation = { __typename?: 'Mutation', createGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, relations: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, entities: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, metrics: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }> } };
+export type CreateGraphMutation = { __typename?: 'Mutation', createGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, relations: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, entities: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, metrics: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, structures: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }> } };
 
 export type DeleteGraphMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1108,7 +1133,7 @@ export type UpdateGraphMutationVariables = Exact<{
 }>;
 
 
-export type UpdateGraphMutation = { __typename?: 'Mutation', updateGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, relations: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, entities: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, metrics: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }> } };
+export type UpdateGraphMutation = { __typename?: 'Mutation', updateGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, relations: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, entities: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, metrics: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, structures: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }> } };
 
 export type PinLinkedExpressionMutationVariables = Exact<{
   input: PinLinkedExpressionInput;
@@ -1193,7 +1218,7 @@ export type GetEntityQueryVariables = Exact<{
 }>;
 
 
-export type GetEntityQuery = { __typename?: 'Query', entity: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> } };
+export type GetEntityQuery = { __typename?: 'Query', entity: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> } };
 
 export type GetEntityGraphNodeQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1208,7 +1233,7 @@ export type ListEntitiesQueryVariables = Exact<{
 }>;
 
 
-export type ListEntitiesQuery = { __typename?: 'Query', entities: Array<{ __typename?: 'Entity', id: string, label: string, createdAt: any, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }> };
+export type ListEntitiesQuery = { __typename?: 'Query', entities: Array<{ __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, createdAt: any, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }> };
 
 export type SearchEntitiesQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -1224,7 +1249,7 @@ export type SearchGraphEntitiesQueryVariables = Exact<{
 }>;
 
 
-export type SearchGraphEntitiesQuery = { __typename?: 'Query', entities: Array<{ __typename?: 'Entity', id: string, label: string, createdAt: any, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }> };
+export type SearchGraphEntitiesQuery = { __typename?: 'Query', entities: Array<{ __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, createdAt: any, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }> };
 
 export type GetEntityGraphQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1264,14 +1289,14 @@ export type GlobalSearchQueryVariables = Exact<{
 }>;
 
 
-export type GlobalSearchQuery = { __typename?: 'Query', entities?: Array<{ __typename?: 'Entity', id: string, label: string, createdAt: any, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }> };
+export type GlobalSearchQuery = { __typename?: 'Query', entities?: Array<{ __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, createdAt: any, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }> };
 
 export type GetGraphQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetGraphQuery = { __typename?: 'Query', graph: { __typename?: 'Graph', id: string, name: string, description?: string | null, relations: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, entities: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, metrics: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }> } };
+export type GetGraphQuery = { __typename?: 'Query', graph: { __typename?: 'Graph', id: string, name: string, description?: string | null, relations: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, entities: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, metrics: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, structures: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }> } };
 
 export type MyActiveGraphQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1460,7 +1485,7 @@ export type GetEntityRelationQueryVariables = Exact<{
 }>;
 
 
-export type GetEntityRelationQuery = { __typename?: 'Query', entityRelation: { __typename?: 'EntityRelation', id: string, left: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> }, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> }, metrics: Array<{ __typename?: 'RelationMetric', value: string }>, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', label: string } } } };
+export type GetEntityRelationQuery = { __typename?: 'Query', entityRelation: { __typename?: 'EntityRelation', id: string, left: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> }, right: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> }, metrics: Array<{ __typename?: 'RelationMetric', value: string }>, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', label: string } } } };
 
 export type ListEntityRelationsQueryVariables = Exact<{
   filters?: InputMaybe<EntityRelationFilter>;
@@ -1478,6 +1503,14 @@ export type SearchEntityRelationsQueryVariables = Exact<{
 
 export type SearchEntityRelationsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'EntityRelation', value: string, label: string }> };
 
+export type GetStructureQueryVariables = Exact<{
+  graph: Scalars['ID']['input'];
+  structure: Scalars['StructureString']['input'];
+}>;
+
+
+export type GetStructureQuery = { __typename?: 'Query', structure: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> } };
+
 export const ListEntityFragmentDoc = gql`
     fragment ListEntity on Entity {
   id
@@ -1486,6 +1519,8 @@ export const ListEntityFragmentDoc = gql`
     id
     label
   }
+  object
+  identifier
   createdAt
 }
     `;
@@ -1554,6 +1589,8 @@ export const EntityFragmentDoc = gql`
     value
     validFrom
   }
+  object
+  identifier
   relations {
     id
     right {
@@ -1649,6 +1686,12 @@ export const GraphFragmentDoc = gql`
     ...ListLinkedExpression
   }
   metrics: linkedExpressions(filters: {kind: METRIC}, pagination: {limit: 200}) {
+    ...ListLinkedExpression
+  }
+  structures: linkedExpressions(
+    filters: {kind: STRUCTURE}
+    pagination: {limit: 200}
+  ) {
     ...ListLinkedExpression
   }
 }
@@ -3903,3 +3946,39 @@ export function useSearchEntityRelationsLazyQuery(baseOptions?: ApolloReactHooks
 export type SearchEntityRelationsQueryHookResult = ReturnType<typeof useSearchEntityRelationsQuery>;
 export type SearchEntityRelationsLazyQueryHookResult = ReturnType<typeof useSearchEntityRelationsLazyQuery>;
 export type SearchEntityRelationsQueryResult = Apollo.QueryResult<SearchEntityRelationsQuery, SearchEntityRelationsQueryVariables>;
+export const GetStructureDocument = gql`
+    query GetStructure($graph: ID!, $structure: StructureString!) {
+  structure(graph: $graph, structure: $structure) {
+    ...Entity
+  }
+}
+    ${EntityFragmentDoc}`;
+
+/**
+ * __useGetStructureQuery__
+ *
+ * To run a query within a React component, call `useGetStructureQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetStructureQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetStructureQuery({
+ *   variables: {
+ *      graph: // value for 'graph'
+ *      structure: // value for 'structure'
+ *   },
+ * });
+ */
+export function useGetStructureQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetStructureQuery, GetStructureQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetStructureQuery, GetStructureQueryVariables>(GetStructureDocument, options);
+      }
+export function useGetStructureLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStructureQuery, GetStructureQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetStructureQuery, GetStructureQueryVariables>(GetStructureDocument, options);
+        }
+export type GetStructureQueryHookResult = ReturnType<typeof useGetStructureQuery>;
+export type GetStructureLazyQueryHookResult = ReturnType<typeof useGetStructureLazyQuery>;
+export type GetStructureQueryResult = Apollo.QueryResult<GetStructureQuery, GetStructureQueryVariables>;

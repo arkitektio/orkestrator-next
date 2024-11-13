@@ -11,6 +11,8 @@ import {
   WatchImagesSubscriptionVariables,
 } from "../../api/graphql";
 import ImageCard from "../cards/ImageCard";
+import { sub } from "date-fns";
+import { el } from "date-fns/locale";
 
 export type Props = {
   filters?: ImageFilter;
@@ -30,11 +32,29 @@ const List = ({ filters, pagination }: Props) => {
       document: WatchImagesDocument,
       updateQuery: (prev, { subscriptionData }) => {
         if (!subscriptionData.data) return prev;
-        const newImage = subscriptionData.data.images.create;
-        if (!newImage) return prev;
-        return Object.assign({}, prev, {
-          images: [newImage, ...prev.images],
-        });
+
+        if (subscriptionData.data.images.update) {
+          const updatedImage = subscriptionData.data.images.update;
+          console.log("updatedImage", updatedImage);
+          return Object.assign({}, prev, {
+            images: prev.images.map((image) =>
+              image.id === updatedImage.id
+                ? { ...updatedImage, retrigger: true }
+                : image,
+            ),
+          });
+        } else if (subscriptionData.data.images.delete) {
+          const deletedImage = subscriptionData.data.images.delete;
+          return Object.assign({}, prev, {
+            images: prev.images.filter((image) => image.id !== deletedImage),
+          });
+        } else if (subscriptionData.data.images.create) {
+          const newImage = subscriptionData.data.images.create;
+          return Object.assign({}, prev, {
+            images: [newImage, ...prev.images],
+          });
+        }
+        return prev;
       },
     });
   }, [subscribeToMore]);

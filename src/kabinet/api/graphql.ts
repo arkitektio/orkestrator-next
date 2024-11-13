@@ -706,6 +706,11 @@ export type OffsetPaginationInput = {
   offset?: Scalars['Int']['input'];
 };
 
+export type OneApiSelectorInput = {
+  /** The api versison of the selector */
+  oneapiVersion?: InputMaybe<Scalars['String']['input']>;
+};
+
 export enum Ordering {
   Asc = 'ASC',
   Desc = 'DESC'
@@ -1132,6 +1137,8 @@ export type SelectorInput = {
   kind: Scalars['String']['input'];
   /** The memory in MB */
   memory?: InputMaybe<Scalars['Int']['input']>;
+  /** The api version of the selector */
+  oneapiVersion?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type SliderAssignWidget = AssignWidget & {

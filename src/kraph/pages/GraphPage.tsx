@@ -124,6 +124,25 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
           ))}
         </div>
       </div>
+      <div className="p-6">
+        <KraphGraph.DetailLink
+          object={data.graph.id}
+          subroute="relations"
+          className=""
+        >
+          Structures{" "}
+        </KraphGraph.DetailLink>
+        <div className="grid grid-cols-6 gap-2">
+          {data?.graph?.structures?.map((item, i) => (
+            <LinkedExpressionCard
+              item={item}
+              key={i}
+              hideGraph={true}
+              hideExpression={true}
+            />
+          ))}
+        </div>
+      </div>
     </KraphGraph.ModelPage>
   );
 });

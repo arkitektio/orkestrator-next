@@ -20,6 +20,12 @@ fragment Graph on Graph {
   ) {
     ...ListLinkedExpression
   }
+  structures: linkedExpressions(
+    filters: { kind: STRUCTURE }
+    pagination: { limit: 200 }
+  ) {
+    ...ListLinkedExpression
+  }
 }
 
 fragment ListGraph on Graph {

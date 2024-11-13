@@ -1,4 +1,5 @@
 import { ServiceMap } from "@/arkitekt/provider";
+import { KRAPH_ACTIONS } from "@/lib/kraph/actions";
 import { MIKRO_ACTIONS } from "@/lib/mikro/actions";
 import { REKUEST_ACTIONS } from "@/lib/rekuest/actions";
 import { DeleteFileDocument } from "@/mikro-next/api/graphql";
@@ -101,5 +102,9 @@ for (let i of MIKRO_ACTIONS) {
 }
 
 for (let i of REKUEST_ACTIONS) {
+  defaultRegistry.registerAction(i);
+}
+
+for (let i of KRAPH_ACTIONS) {
   defaultRegistry.registerAction(i);
 }

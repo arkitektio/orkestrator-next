@@ -5,21 +5,20 @@ import {
   DeleteOntologyDocument,
 } from "@/kraph/api/graphql";
 
-export const MIKRO_ACTIONS: Action[] = [
+export const KRAPH_ACTIONS: Action[] = [
   buildDeleteAction({
     title: "Delete Graph",
-    identifier: "@mikro/graph",
+    identifier: "@kraph/graph",
     description: "Delete the Graph",
-
-    service: "mikro",
+    service: "kraph",
     typename: "Graph",
     mutation: DeleteGraphDocument,
   }),
   buildDeleteAction({
     title: "Delete Ontology",
-    identifier: "@mikro/ontology",
+    identifier: "@kraph/ontology",
     description: "Delete the Ontology",
-    service: "mikro",
+    service: "kraph",
     typename: "Ontology",
     mutation: DeleteOntologyDocument,
   }),

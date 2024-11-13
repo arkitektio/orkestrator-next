@@ -6,6 +6,8 @@ import {
   MikroROI,
 } from "@/linkers";
 import { useGetEntityQuery } from "../api/graphql";
+import { DelegatingStructureWidget } from "@/components/widgets/returns/DelegatingStructureWidget";
+import { PortKind, PortScope } from "@/rekuest/api/graphql";
 
 export const EntityOverlay = (props: { entity: string }) => {
   const { data } = useGetEntityQuery({
@@ -44,6 +46,22 @@ export const EntityOverlay = (props: { entity: string }) => {
           </Card>
         ))}
       </div>
+
+      {data?.entity.object && data?.entity.identifier && (
+        <>
+          <DelegatingStructureWidget
+            port={{
+              kind: PortKind.Structure,
+              identifier: data.entity.identifier,
+              key: data.entity.object,
+              __typename: "Port",
+              nullable: false,
+              scope: PortScope.Global,
+            }}
+            value={data.entity.object}
+          />
+        </>
+      )}
     </div>
   );
 };

@@ -274,7 +274,7 @@ export const VivRenderer = ({
       .catch((e) => {
         alert(e);
       });
-  }, []);
+  }, [context]);
 
   const [ref, bounds] = useMeasure({
     debounce: 100,
@@ -367,9 +367,6 @@ export const VivRenderer = ({
                 viewStates={[viewState]}
                 onViewportLoad={(viewport) => {
                   setViewport(viewport);
-                }}
-                deckProps={{
-                  layers: [roiLayer],
                 }}
                 onHover={(hover) => {
                   console.log(hover);

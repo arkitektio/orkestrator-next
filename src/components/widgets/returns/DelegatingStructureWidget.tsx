@@ -1,5 +1,5 @@
 import { useGetPodQuery } from "@/kabinet/api/graphql";
-import { KabinetPod, RekuestNode } from "@/linkers";
+import { KabinetPod, MikroImage, RekuestNode } from "@/linkers";
 import { useGetImageQuery } from "@/mikro-next/api/graphql";
 import { RGBD } from "@/mikro-next/components/render/TwoDThree";
 import { useDetailNodeQuery } from "@/rekuest/api/graphql";
@@ -17,9 +17,11 @@ export const ImageWidget = (props: ReturnWidgetProps) => {
   const defaultContext = data?.image?.rgbContexts.at(0);
 
   return (
-    <div className="w-[200px] h-[200px]">
-      {defaultContext && <RGBD context={defaultContext} rois={[]} />}
-    </div>
+    <MikroImage.DetailLink object={props.value}>
+      <div className="w-[200px] h-[200px]">
+        {defaultContext && <RGBD context={defaultContext} rois={[]} />}
+      </div>
+    </MikroImage.DetailLink>
   );
 };
 

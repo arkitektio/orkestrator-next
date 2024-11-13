@@ -151,6 +151,17 @@ const hasBoundPort = (node: FlowNode<BaseGraphNodeFragment>): boolean => {
   );
 };
 
+const checkFlowIsEqual = (a: ValidationResult, b: ValidationResult) => {
+  // Check multiple parts of the state
+  if (a.nodes.length !== b.nodes.length) return false;
+  if (a.edges.length !== b.edges.length) return false;
+  if (a.globals.length !== b.globals.length) return false;
+  if (a.valid !== b.valid) return false;
+  if (a.remainingErrors.length !== b.remainingErrors.length) return false;
+  if (a.solvedErrors.length !== b.solvedErrors.length) return false;
+  return true;
+};
+
 export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
   console.log("THE FLOW", flow);
 
@@ -188,6 +199,17 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
       solvedErrors: [],
       valid: true,
     });
+
+  const isEqual = useMemo(() => {
+    return checkFlowIsEqual(state, {
+      nodes: nodes_to_flownodes(flow.graph?.nodes),
+      edges: edges_to_flowedges(flow.graph?.edges),
+      globals: flow.graph.globals || [],
+      remainingErrors: [],
+      solvedErrors: [],
+      valid: true,
+    });
+  }, [state, flow.graph]);
 
   const boundNodes = useMemo(() => {
     return state.nodes.filter(hasBoundPort);
@@ -1325,8 +1347,8 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
             {state.remainingErrors.length == 0 && (
               <div className="absolute bottom-0 right-0  mr-3 mb-5 z-50 flex flex-row gap-2">
                 <Button onClick={() => save()}> Save </Button>
-                {flow.id && <DeployInterfaceButton flow={flow} />}
-                {flow.id && <RunButton flow={flow} />}
+                {flow.id && isEqual && <DeployInterfaceButton flow={flow} />}
+                {flow.id && isEqual && <RunButton flow={flow} />}
               </div>
             )}
 

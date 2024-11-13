@@ -107,6 +107,42 @@ export const columns: ColumnDef<ListEntityFragment>[] = [
     enableHiding: true,
   },
   {
+    accessorKey: "object",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Object
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => <>{row.getValue("object")}</>,
+    sortingFn: (a, b) => a.getValue("object") - b.getValue("object"),
+    enableSorting: true,
+    enableHiding: true,
+  },
+  {
+    accessorKey: "identifier",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Identifier
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => <>{row.getValue("identifier")}</>,
+    sortingFn: (a, b) => a.getValue("identifier") - b.getValue("identifier"),
+    enableSorting: true,
+    enableHiding: true,
+  },
+  {
     accessorKey: "label",
     header: ({ column }) => {
       return (
@@ -250,7 +286,7 @@ export type FormValues = {
   search?: string | null;
 };
 
-export const LinkedExpressionEntitiesTable = (props: {
+export const LinkedExpressionStructureTable = (props: {
   graph: string;
   linkedExpression: string;
 }) => {

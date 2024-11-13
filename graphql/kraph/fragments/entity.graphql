@@ -27,6 +27,8 @@ fragment Entity on Entity {
     value
     validFrom
   }
+  object
+  identifier
 
   relations {
     id
@@ -54,6 +56,8 @@ fragment ListEntity on Entity {
     id
     label
   }
+  object
+  identifier
   createdAt
 }
 

@@ -17,6 +17,7 @@ import {
 } from "../api/graphql";
 import { LinkedExpressionEntitiesTable } from "../components/tables/LinkedExpressionEntityTable";
 import { LinkedExpressionRelationTable } from "../components/tables/LinkedExpressionRelationTable";
+import { LinkedExpressionStructureTable } from "../components/tables/LinkedExpressionStructureTable";
 
 export default asDetailQueryRoute(
   useGetLinkedExpressionQuery,
@@ -145,6 +146,13 @@ export default asDetailQueryRoute(
         <div className="p-6 h-full">
           {data.linkedExpression.expression.kind == ExpressionKind.Entity && (
             <LinkedExpressionEntitiesTable
+              graph={data.linkedExpression.graph.id}
+              linkedExpression={data.linkedExpression.id}
+            />
+          )}
+          {data.linkedExpression.expression.kind ==
+            ExpressionKind.Structure && (
+            <LinkedExpressionStructureTable
               graph={data.linkedExpression.graph.id}
               linkedExpression={data.linkedExpression.id}
             />

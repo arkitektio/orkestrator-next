@@ -244,6 +244,9 @@ export const TableTable = (props: { table: TableFragment }) => {
   const form = useForm<FormValues>({
     defaultValues: {},
   });
+
+  const initialVariables = {};
+
   const { metrics, kinds, search } = form.watch();
 
   const { data, loading, refetch, error } = useRowsQuery({
@@ -302,8 +305,8 @@ export const TableTable = (props: { table: TableFragment }) => {
   });
 
   return (
-    <div className="w-full h-full">
-      <div className="flex items-center py-4 gap-2">
+    <div className="w-full h-full flex flex-col">
+      <div className="flex items-center py-4 gap-2 flex-initial">
         <Input
           placeholder="Search..."
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
@@ -339,8 +342,8 @@ export const TableTable = (props: { table: TableFragment }) => {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="w-full h-full">
-        <Table>
+      <div className="flex-grow flex flex-col">
+        <Table className="flex-grow">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -395,7 +398,7 @@ export const TableTable = (props: { table: TableFragment }) => {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
+      <div className="flex flex-initial items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
           {table.getFilteredRowModel().rows.length} row(s) selected.

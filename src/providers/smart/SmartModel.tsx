@@ -7,6 +7,8 @@ import { SMART_MODEL_DROP_TYPE } from "@/constants";
 import { cn } from "@/lib/utils";
 import { SmartContext } from "@/rekuest/buttons/ObjectButton";
 import { Structure } from "@/types";
+import { useFloating } from "@floating-ui/react";
+import { Portal } from "@radix-ui/react-portal";
 import React, { useEffect, useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { useMySelection } from "../selection/SelectionContext";
@@ -25,6 +27,16 @@ export const SmartModel = ({
   };
 
   const [partners, setPartners] = useState<Structure[]>([]);
+  const { refs, floatingStyles } = useFloating({
+    strategy: "fixed",
+    transform: true,
+    open: partners.length > 0,
+    onOpenChange: (open) => {
+      if (!open) {
+        setPartners([]);
+      }
+    },
+  });
 
   useEffect(() => {
     if (partners.length > 0) {
@@ -120,30 +132,40 @@ export const SmartModel = ({
           <div
             ref={drag}
             className={cn(
-              "@container relative smartdraggable ",
+              "@container relative smartdraggable z-10",
               isSelected && "group ring ring-1 ",
               isDragging &&
                 "opacity-50 ring-2 ring-gray-600 ring rounded rounded-md",
               isOver &&
                 "shadow-xl ring-2 border-gray-200 ring rounded rounded-md",
             )}
+            style={{
+              scale: partners.length > 0 ? 1.5 : 1,
+            }}
             onClick={(e) => {
               setPartners([]);
             }}
           >
             {props.children}
-
             {isOver && <CombineButton />}
+            <div className="absolute top-0 right-0 " ref={refs.setReference} />
+
             {partners.length > 0 && (
-              <div className="absolute bottom-0 w-full h-full flex justify-center items-center z-10  partnercard">
-                <div className="h-full w-full flex text-wrap p-3 bg-black">
+              <Portal>
+                <div
+                  ref={refs.setFloating}
+                  className={cn(
+                    " bg-background border rounded-lg shadow-lg p-2 z-[9999] w-[300px] aspect-square",
+                  )}
+                  style={floatingStyles}
+                >
                   <SmartContext
                     identifier={props.identifier}
                     object={props.object}
-                    partners={[]}
+                    partners={partners}
                   />
                 </div>
-              </div>
+              </Portal>
             )}
           </div>
         </ContextMenuTrigger>

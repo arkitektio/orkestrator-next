@@ -1,6 +1,7 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { FlussWorkspace } from "@/linkers";
+import { Card } from "@/components/ui/card";
+import { FlussFlow, FlussWorkspace } from "@/linkers";
 import {
   useUpdateWorkspaceMutation,
   useWorkspaceQuery,
@@ -17,7 +18,14 @@ export default asDetailQueryRoute(useWorkspaceQuery, ({ data }) => {
 
   return (
     <FlussWorkspace.ModelPage
-      title={data?.workspace.latestFlow?.title || "No title"}
+      title={
+        <div className="flex flex-row gap-2">
+          {data?.workspace?.title}
+          <p className="text-md font-light text-muted-foreground">
+            {data?.workspace.latestFlow?.title}
+          </p>
+        </div>
+      }
       object={data.workspace.id}
       sidebars={
         <MultiSidebar
@@ -30,7 +38,19 @@ export default asDetailQueryRoute(useWorkspaceQuery, ({ data }) => {
                 )}
               </>
             ),
-            Versions: <div className="p-4">Versions</div>,
+            Versions: (
+              <div className="p-4 flex flex-col gap-2">
+                {data?.workspace.flows.map((fl) => (
+                  <FlussFlow.Smart object={fl.id}>
+                    <Card className="p-4">
+                      <FlussFlow.DetailLink object={fl.id}>
+                        {fl.title}
+                      </FlussFlow.DetailLink>
+                    </Card>
+                  </FlussFlow.Smart>
+                ))}
+              </div>
+            ),
           }}
         />
       }

@@ -8,9 +8,9 @@ export const MultiSidebar = (props: { map: ChildMap | undefined }) => {
   return (
     <Tabs
       defaultValue={props.map && Object.keys(props.map).at(0)}
-      className="w-full"
+      className="w-full h-full"
     >
-      <TabsList className="w-full flex flex-row h-16 p-2 bg-sidebar border-b dark:border-gray-700 rounded-xs">
+      <TabsList className="w-full flex flex-row h-16 p-2 bg-sidebar border-b dark:border-gray-700 rounded-xs ">
         {props.map &&
           Object.keys(props.map).map((key) => {
             return (
@@ -26,7 +26,9 @@ export const MultiSidebar = (props: { map: ChildMap | undefined }) => {
       {props.map &&
         Object.keys(props.map).map((key) => {
           return (
-            <TabsContent value={key}>{props.map && props.map[key]}</TabsContent>
+            <TabsContent value={key} className="h-full">
+              {props.map && props.map[key]}
+            </TabsContent>
           );
         })}
     </Tabs>

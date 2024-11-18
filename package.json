@@ -38,6 +38,7 @@
     "@electron-toolkit/utils": "^3.0.0",
     "@emoji-mart/data": "^1.2.1",
     "@emoji-mart/react": "^1.1.1",
+    "@floating-ui/react": "^0.26.28",
     "@formkit/auto-animate": "^0.7.0",
     "@hms-dbmi/viv": "^0.16.1",
     "@hookform/resolvers": "^3.3.4",

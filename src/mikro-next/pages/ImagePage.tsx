@@ -3,6 +3,7 @@ import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
 import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Card, CardContent } from "@/components/ui/card";
+import { Image } from "@/components/ui/image";
 import {
   DetailPane,
   DetailPaneContent,
@@ -35,13 +36,11 @@ import ROIViewCard from "../components/cards/ROIViewCard";
 import SpecimenViewCard from "../components/cards/SpecimenViewCard";
 import TransformationViewCard from "../components/cards/TransformationViewCard";
 import WellPositionViewCard from "../components/cards/WellPositionViewCard";
-import { RGBD } from "../components/render/TwoDThree";
+import { DelegatingImageRender } from "../components/render/DelegatingImageRender";
 import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { PinToggle } from "../components/ui/PinToggle";
 import { AddImageViewForm } from "../forms/AddImageViewForm";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
-import { Image } from "@/components/ui/image";
-import { DelegatingImageRender } from "../components/render/DelegatingImageRender";
 
 export type IRepresentationScreenProps = {};
 
@@ -107,6 +106,11 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                   </Card>
                 ))}
               </div>
+            ),
+            Knowledge: (
+              <>
+                <MikroImage.Knowledge object={data?.image?.id} />
+              </>
             ),
           }}
         />

@@ -243,6 +243,7 @@ export enum AssignationEventKind {
   Interupting = 'INTERUPTING',
   Log = 'LOG',
   Progress = 'PROGRESS',
+  Queued = 'QUEUED',
   Yield = 'YIELD'
 }
 

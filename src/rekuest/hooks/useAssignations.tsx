@@ -160,5 +160,6 @@ export const useLiveAssignation = (options: FilterOptions) => {
     error,
     nodeId: assignation?.node.id,
     message: latestMessage,
+    event: assignation?.events.at(0),
   };
 };

@@ -50,7 +50,7 @@ export default (props: { agent: AgentFragment }) => {
               </Card>
             </div>
           </CarouselItem>
-          {props.agent?.defaults.map((item, index) => (
+          {props.agent?.templates.map((item, index) => (
             <CarouselItem key={index} className="grid grid-cols-8">
               <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
                 <div>

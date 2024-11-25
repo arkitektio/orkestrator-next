@@ -19,9 +19,9 @@ export type Scalars = {
   DateTime: { input: any; output: any; }
   Metric: { input: any; output: any; }
   MetricMap: { input: any; output: any; }
+  RemoteUpload: { input: any; output: any; }
   StructureString: { input: any; output: any; }
   UntypedPlateChild: { input: any; output: any; }
-  Upload: { input: any; output: any; }
 };
 
 /** An app. */
@@ -38,10 +38,24 @@ export type AttachMetricsToEntitiesMetricInput = {
 };
 
 export type CreateEntityMetricInput = {
+  /** The entity to attach the metric to. */
   entity: Scalars['ID']['input'];
+  /** The metric to attach to the entity. */
   metric: Scalars['ID']['input'];
+  /** The timepoint of the metric. */
   timepoint?: InputMaybe<Scalars['DateTime']['input']>;
+  /** The value of the metric. */
   value: Scalars['Metric']['input'];
+};
+
+/** Input type for creating a new model */
+export type CreateModelInput = {
+  /** The uploaded model file (e.g. .h5, .onnx, .pt) */
+  model: Scalars['RemoteUpload']['input'];
+  /** The name of the model */
+  name: Scalars['String']['input'];
+  /** Optional view ID to associate with the model */
+  view?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type CreateRelationMetricInput = {
@@ -55,7 +69,9 @@ export type DeleteEntityInput = {
   id: Scalars['ID']['input'];
 };
 
+/** Input for deleting an expression */
 export type DeleteExpressionInput = {
+  /** The ID of the expression to delete */
   id: Scalars['ID']['input'];
 };
 
@@ -67,7 +83,9 @@ export type DeleteLinkedExpressionInput = {
   id: Scalars['ID']['input'];
 };
 
+/** Input type for deleting an ontology */
 export type DeleteOntologyInput = {
+  /** The ID of the ontology to delete */
   id: Scalars['ID']['input'];
 };
 
@@ -83,35 +101,97 @@ export type DeleteProtocolStepTemplateInput = {
   id: Scalars['ID']['input'];
 };
 
+/**
+ * An entity is a node in a graph. Entities are the building blocks of the data model in kraph.
+ *
+ *                  They are used to represent the different objects in your data model, and how they are connected to each other, through
+ *                  relations.
+ *
+ *                  Kraph distinguishes between two core types of entities: Biological entities and Data entities. Biological entities
+ *                  are describing real-world objects, such as cells, tissues, organs, etc. Data entities are describing data objects, such as
+ *                  images, tables, etc.
+ *
+ *                  While you can relate any entity to any other entity, it is important to keep in mind that the relations between entities
+ *                     should be meaningful, and should reflect the real-world relationships between the objects they represent.
+ *
+ *                  If you want to attach measurments or metrics to an entity, you should never attach them directly to the entity, but rather
+ *                  point from the measurement (the data object) to the entity. This way, you can keep track of the provenance of the data, and
+ *                  ensure that you never know anything about the entity that is not backed by data.
+ *
+ *
+ */
 export type Entity = {
   __typename?: 'Entity';
+  /** When this entity was created */
   createdAt: Scalars['DateTime']['output'];
+  /** The unique identifier of the entity within its graph */
   id: Scalars['ID']['output'];
+  /** A unique identifier for this entity if available */
   identifier?: Maybe<Scalars['String']['output']>;
+  /** The name of the entity's type/kind */
   kindName: Scalars['String']['output'];
+  /** A human readable label for this entity */
   label: Scalars['String']['output'];
+  /** The expression that defines this entity's type */
   linkedExpression: LinkedExpression;
+  /** Map of metric values associated with this entity */
   metricMap: Scalars['MetricMap']['output'];
+  /** List of metrics associated with this entity */
   metrics: Array<NodeMetric>;
+  /** Reference to an external object if this entity represents one */
   object?: Maybe<Scalars['String']['output']>;
+  /** Relations this entity has with other entities */
   relations: Array<EntityRelation>;
+  /** Protocol steps where this entity was the target */
   subjectedTo: Array<ProtocolStep>;
+  /** Protocol steps where this entity was used */
   usedIn: Array<ProtocolStep>;
+  /** Timestamp from when this entity is valid */
   validFrom: Scalars['DateTime']['output'];
+  /** Timestamp until when this entity is valid */
   validTo: Scalars['DateTime']['output'];
 };
 
 
+/**
+ * An entity is a node in a graph. Entities are the building blocks of the data model in kraph.
+ *
+ *                  They are used to represent the different objects in your data model, and how they are connected to each other, through
+ *                  relations.
+ *
+ *                  Kraph distinguishes between two core types of entities: Biological entities and Data entities. Biological entities
+ *                  are describing real-world objects, such as cells, tissues, organs, etc. Data entities are describing data objects, such as
+ *                  images, tables, etc.
+ *
+ *                  While you can relate any entity to any other entity, it is important to keep in mind that the relations between entities
+ *                     should be meaningful, and should reflect the real-world relationships between the objects they represent.
+ *
+ *                  If you want to attach measurments or metrics to an entity, you should never attach them directly to the entity, but rather
+ *                  point from the measurement (the data object) to the entity. This way, you can keep track of the provenance of the data, and
+ *                  ensure that you never know anything about the entity that is not backed by data.
+ *
+ *
+ */
 export type EntityRelationsArgs = {
   filter?: InputMaybe<EntityRelationFilter>;
   pagination?: InputMaybe<GraphPaginationInput>;
 };
 
+/** Filter for entities in the graph */
 export type EntityFilter = {
+  /** Filter by graph ID */
   graph?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by structure identifier */
+  identifier?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by list of entity IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter by entity kind */
   kind?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by linked expression ID */
   linkedExpression?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by associated object ID */
+  object?: InputMaybe<Scalars['ID']['input']>;
+  /** Search entities by text */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -122,11 +202,17 @@ export type EntityGraph = {
   nodes: Array<Entity>;
 };
 
+/** Input type for creating a new entity */
 export type EntityInput = {
+  /** Optional group ID to associate the entity with */
   group?: InputMaybe<Scalars['ID']['input']>;
+  /** Optional instance kind specification */
   instanceKind?: InputMaybe<Scalars['String']['input']>;
+  /** The ID of the kind (LinkedExpression) to create the entity from */
   kind: Scalars['ID']['input'];
+  /** Optional name for the entity */
   name?: InputMaybe<Scalars['String']['input']>;
+  /** Optional parent entity ID */
   parent?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -165,20 +251,33 @@ export type EntityRelation = {
   rightId: Scalars['String']['output'];
 };
 
+/** Filter for entity relations in the graph */
 export type EntityRelationFilter = {
+  /** Filter by graph ID */
   graph?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of relation IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter by relation kind */
   kind?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by left entity ID */
   leftId?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by linked expression ID */
   linkedExpression?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by right entity ID */
   rightId?: InputMaybe<Scalars['ID']['input']>;
+  /** Search relations by text */
   search?: InputMaybe<Scalars['String']['input']>;
+  /** Include self-relations */
   withSelf?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
+/** Input type for creating a relation between two entities */
 export type EntityRelationInput = {
+  /** ID of the relation kind (LinkedExpression) */
   kind: Scalars['ID']['input'];
+  /** ID of the left entity (format: graph:id) */
   left: Scalars['ID']['input'];
+  /** ID of the right entity (format: graph:id) */
   right: Scalars['ID']['input'];
 };
 
@@ -209,19 +308,35 @@ export type ExperimentProtocolsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+/**
+ * An expression in an ontology. Expression are used to label entities and their relations in a graph like structure. Depending on the kind of the expression
+ *     it can be used to describe different aspects of the entities and relations.
+ */
 export type Expression = {
   __typename?: 'Expression';
+  /** A description of the expression. */
   description?: Maybe<Scalars['String']['output']>;
+  /** The unique identifier of the expression. */
   id: Scalars['ID']['output'];
+  /** The kind of the expression. */
   kind: ExpressionKind;
+  /** The label of the expression. The class */
   label: Scalars['String']['output'];
+  /** The linked expressions of the expression. i.e in which graphs the expression is used. */
   linkedExpressions: Array<LinkedExpression>;
+  /** The kind of metric that can be attached to the expression. */
   metricKind?: Maybe<MetricDataType>;
+  /** The ontology the expression belongs to. */
   ontology: Ontology;
+  /** An image or other media file that can be used to represent the expression. */
   store?: Maybe<MediaStore>;
 };
 
 
+/**
+ * An expression in an ontology. Expression are used to label entities and their relations in a graph like structure. Depending on the kind of the expression
+ *     it can be used to describe different aspects of the entities and relations.
+ */
 export type ExpressionLinkedExpressionsArgs = {
   filters?: InputMaybe<LinkedExpressionFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -236,14 +351,23 @@ export type ExpressionFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Input for creating a new expression */
 export type ExpressionInput = {
+  /** RGBA color values as list of 3 or 4 integers */
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
+  /** A detailed description of the expression */
   description?: InputMaybe<Scalars['String']['input']>;
-  image?: InputMaybe<Scalars['Upload']['input']>;
+  /** An optional image associated with this expression */
+  image?: InputMaybe<Scalars['RemoteUpload']['input']>;
+  /** The kind/type of this expression */
   kind: ExpressionKind;
+  /** The label/name of the expression */
   label: Scalars['String']['input'];
+  /** The type of metric data this expression represents */
   metricKind?: InputMaybe<MetricDataType>;
+  /** The ID of the ontology this expression belongs to. If not provided, uses default ontology */
   ontology?: InputMaybe<Scalars['ID']['input']>;
+  /** Permanent URL identifier for the expression */
   purl?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -257,6 +381,7 @@ export enum ExpressionKind {
   Structure = 'STRUCTURE'
 }
 
+/** A graph, that contains entities and relations. */
 export type Graph = {
   __typename?: 'Graph';
   ageName: Scalars['String']['output'];
@@ -267,6 +392,7 @@ export type Graph = {
 };
 
 
+/** A graph, that contains entities and relations. */
 export type GraphLinkedExpressionsArgs = {
   filters?: InputMaybe<LinkedExpressionFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -276,7 +402,9 @@ export type GraphFilter = {
   AND?: InputMaybe<GraphFilter>;
   OR?: InputMaybe<GraphFilter>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Search by text */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -387,6 +515,17 @@ export enum MetricDataType {
   TwoDVector = 'TWO_D_VECTOR'
 }
 
+/** A model represents a trained machine learning model that can be used for analysis. */
+export type Model = {
+  __typename?: 'Model';
+  /** The unique identifier of the model */
+  id: Scalars['ID']['output'];
+  /** The name of the model */
+  name: Scalars['String']['output'];
+  /** Optional file storage location containing the model weights/parameters */
+  store?: Maybe<MediaStore>;
+};
+
 export type ModelChange = {
   __typename?: 'ModelChange';
   field: Scalars['String']['output'];
@@ -394,36 +533,78 @@ export type ModelChange = {
   oldValue?: Maybe<Scalars['String']['output']>;
 };
 
+export type ModelFilter = {
+  AND?: InputMaybe<ModelFilter>;
+  OR?: InputMaybe<ModelFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
+  /** Attach metrics to multiple entities */
   attachMetricsToEntities: Array<Entity>;
+  /** Create a new entity */
   createEntity: Entity;
+  /** Create a new metric for an entity */
   createEntityMetric: Entity;
+  /** Create a new relation between entities */
   createEntityRelation: EntityRelation;
+  /** Create a new expression */
   createExpression: Expression;
+  /** Create a new graph */
   createGraph: Graph;
+  /** Create a new measurement */
   createMeasurement: Entity;
+  /** Create a new model */
+  createModel: Model;
+  /** Create a new ontology */
   createOntology: Ontology;
+  /** Create a new protocol */
   createProtocol: Protocol;
+  /** Create a new protocol step */
   createProtocolStep: ProtocolStep;
+  /** Create a new protocol step template */
   createProtocolStepTemplate: ProtocolStepTemplate;
+  /** Create a new reagent */
   createReagent: Reagent;
+  /** Create a new metric for a relation */
   createRelationMetric: EntityRelation;
+  /** Create a relation between structures */
   createStructureRelation: EntityRelation;
+  /** Delete an existing entity */
   deleteEntity: Scalars['ID']['output'];
+  /** Delete an existing expression */
   deleteExpression: Scalars['ID']['output'];
+  /** Delete an existing graph */
   deleteGraph: Scalars['ID']['output'];
+  /** Delete an existing ontology */
   deleteOntology: Scalars['ID']['output'];
+  /** Delete an existing protocol */
   deleteProtocol: Scalars['ID']['output'];
+  /** Delete an existing protocol step */
   deleteProtocolStep: Scalars['ID']['output'];
+  /** Delete an existing protocol step template */
   deleteProtocolStepTemplate: Scalars['ID']['output'];
+  /** Link an expression to an entity */
   linkExpression: LinkedExpression;
+  /** Pin a linked expression */
   pinLinkedExpression: LinkedExpression;
+  /** Request a new file upload */
+  requestUpload: PresignedPostCredentials;
+  /** Unlink an expression from an entity */
   unlinkExpression: Scalars['ID']['output'];
+  /** Update an existing expression */
   updateExpression: Expression;
+  /** Update an existing graph */
   updateGraph: Graph;
+  /** Update an existing ontology */
   updateOntology: Ontology;
+  /** Update an existing protocol step */
   updateProtocolStep: ProtocolStep;
+  /** Update an existing protocol step template */
   updateProtocolStepTemplate: ProtocolStepTemplate;
 };
 
@@ -460,6 +641,11 @@ export type MutationCreateGraphArgs = {
 
 export type MutationCreateMeasurementArgs = {
   input: MeasurementInput;
+};
+
+
+export type MutationCreateModelArgs = {
+  input: CreateModelInput;
 };
 
 
@@ -543,6 +729,11 @@ export type MutationPinLinkedExpressionArgs = {
 };
 
 
+export type MutationRequestUploadArgs = {
+  input: RequestMediaUploadInput;
+};
+
+
 export type MutationUnlinkExpressionArgs = {
   input: DeleteLinkedExpressionInput;
 };
@@ -587,35 +778,71 @@ export type OffsetPaginationInput = {
   offset?: Scalars['Int']['input'];
 };
 
+/**
+ * An ontology represents a formal naming and definition of types, properties, and
+ *     interrelationships between entities in a specific domain. In kraph, ontologies provide the vocabulary
+ *     and semantic structure for organizing data across graphs.
+ */
 export type Ontology = {
   __typename?: 'Ontology';
+  /** A detailed description of what this ontology represents and how it should be used */
   description?: Maybe<Scalars['String']['output']>;
+  /** The list of expressions (terms/concepts) defined in this ontology */
   expressions: Array<Expression>;
+  /** The unique identifier of the ontology */
   id: Scalars['ID']['output'];
+  /** The name of the ontology */
   name: Scalars['String']['output'];
+  /** The Persistent URL (PURL) that uniquely identifies this ontology globally */
   purl?: Maybe<Scalars['String']['output']>;
+  /** Optional associated media files like documentation or diagrams */
   store?: Maybe<MediaStore>;
 };
 
 
+/**
+ * An ontology represents a formal naming and definition of types, properties, and
+ *     interrelationships between entities in a specific domain. In kraph, ontologies provide the vocabulary
+ *     and semantic structure for organizing data across graphs.
+ */
 export type OntologyExpressionsArgs = {
   filters?: InputMaybe<ExpressionFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+/** Filter for ontologies */
 export type OntologyFilter = {
   AND?: InputMaybe<OntologyFilter>;
   OR?: InputMaybe<OntologyFilter>;
+  /** Filter by ontology ID */
   id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Search by text */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Input type for creating a new ontology */
 export type OntologyInput = {
+  /** An optional description of the ontology */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** An optional ID reference to an associated image */
   image?: InputMaybe<Scalars['ID']['input']>;
+  /** The name of the ontology (will be converted to snake_case) */
   name: Scalars['String']['input'];
+  /** An optional PURL (Persistent URL) for the ontology */
   purl?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** A paired structure two entities and the relation between them. */
+export type PairedStructure = {
+  __typename?: 'PairedStructure';
+  /** The left entity. */
+  left: Entity;
+  /** The relation between the two entities. */
+  relation: EntityRelation;
+  /** The right entity. */
+  right: Entity;
 };
 
 export type PinLinkedExpressionInput = {
@@ -635,6 +862,20 @@ export type PlateChildInput = {
   type?: InputMaybe<Scalars['String']['input']>;
   underline?: InputMaybe<Scalars['Boolean']['input']>;
   value?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Temporary Credentials for a file upload that can be used by a Client (e.g. in a python datalayer) */
+export type PresignedPostCredentials = {
+  __typename?: 'PresignedPostCredentials';
+  bucket: Scalars['String']['output'];
+  datalayer: Scalars['String']['output'];
+  key: Scalars['String']['output'];
+  policy: Scalars['String']['output'];
+  store: Scalars['String']['output'];
+  xAmzAlgorithm: Scalars['String']['output'];
+  xAmzCredential: Scalars['String']['output'];
+  xAmzDate: Scalars['String']['output'];
+  xAmzSignature: Scalars['String']['output'];
 };
 
 export type Protocol = {
@@ -657,7 +898,9 @@ export type ProtocolFilter = {
   AND?: InputMaybe<ProtocolFilter>;
   OR?: InputMaybe<ProtocolFilter>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Search by text */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -696,17 +939,26 @@ export type ProtocolStepFilter = {
   AND?: InputMaybe<ProtocolStepFilter>;
   OR?: InputMaybe<ProtocolStepFilter>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   protocol?: InputMaybe<Scalars['ID']['input']>;
+  /** Search by text */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Input type for creating a new protocol step */
 export type ProtocolStepInput = {
+  /** ID of the entity this step is performed on */
   entity: Scalars['ID']['input'];
+  /** When the step was performed */
   performedAt?: InputMaybe<Scalars['DateTime']['input']>;
+  /** ID of the user who performed the step */
   performedBy?: InputMaybe<Scalars['ID']['input']>;
+  /** List of reagent mappings */
   reagentMappings: Array<ReagentMappingInput>;
+  /** ID of the protocol step template */
   template: Scalars['ID']['input'];
+  /** List of variable mappings */
   valueMappings: Array<VariableInput>;
 };
 
@@ -722,6 +974,7 @@ export type ProtocolStepTemplateFilter = {
   AND?: InputMaybe<ProtocolStepTemplateFilter>;
   OR?: InputMaybe<ProtocolStepTemplateFilter>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
@@ -733,30 +986,49 @@ export type ProtocolStepTemplateInput = {
 
 export type Query = {
   __typename?: 'Query';
+  /** List of all entities in the system */
   entities: Array<Entity>;
   entity: Entity;
+  /** Retrieves the graph of entities and their relationships */
   entityGraph: EntityGraph;
   entityRelation: EntityRelation;
+  /** List of all relationships between entities */
   entityRelations: Array<EntityRelation>;
   expression: Expression;
+  /** List of all expressions in the system */
   expressions: Array<Expression>;
   graph: Graph;
+  /** List of all knowledge graphs */
   graphs: Array<Graph>;
+  /** Retrieves the complete knowledge graph starting from an entity */
   knowledgeGraph: KnowledgeGraph;
   linkedExpression: LinkedExpression;
+  /** Gets a linked expression by its AGE name */
   linkedExpressionByAgename: LinkedExpression;
+  /** List of all expressions that are linked in a Graph */
   linkedExpressions: Array<LinkedExpression>;
+  model: Model;
+  /** List of all deep learning models (e.g. neural networks) */
+  models: Array<Model>;
   myActiveGraph: Graph;
+  /** List of all ontologies */
   ontologies: Array<Ontology>;
   ontology: Ontology;
+  /** Retrieves paired entities */
+  pairedEntities: Array<PairedStructure>;
   protocol: Protocol;
   protocolStep: ProtocolStep;
   protocolStepTemplate: ProtocolStepTemplate;
+  /** List of all protocol step templates */
   protocolStepTemplates: Array<ProtocolStepTemplate>;
+  /** List of all protocol steps */
   protocolSteps: Array<ProtocolStep>;
+  /** List of all protocols */
   protocols: Array<Protocol>;
   reagent: Reagent;
+  /** List of all reagents used in protocols */
   reagents: Array<Reagent>;
+  /** Gets a specific structure e.g an image, video, or 3D model */
   structure: Entity;
 };
 
@@ -832,6 +1104,17 @@ export type QueryLinkedExpressionsArgs = {
 };
 
 
+export type QueryModelArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryModelsArgs = {
+  filters?: InputMaybe<ModelFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryOntologiesArgs = {
   filters?: InputMaybe<OntologyFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -840,6 +1123,15 @@ export type QueryOntologiesArgs = {
 
 export type QueryOntologyArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryPairedEntitiesArgs = {
+  graph?: InputMaybe<Scalars['ID']['input']>;
+  leftFilter?: InputMaybe<EntityFilter>;
+  pagination?: InputMaybe<GraphPaginationInput>;
+  relationFilter?: InputMaybe<EntityRelationFilter>;
+  rightFilter?: InputMaybe<EntityFilter>;
 };
 
 
@@ -919,7 +1211,9 @@ export type ReagentUsedInArgs = {
 export type ReagentFilter = {
   AND?: InputMaybe<ReagentFilter>;
   OR?: InputMaybe<ReagentFilter>;
+  /** Filter by list of reagent IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Search reagents by text */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -935,8 +1229,11 @@ export type ReagentMapping = {
   reagent: Reagent;
 };
 
+/** Input type for mapping reagents to protocol steps */
 export type ReagentMappingInput = {
+  /** ID of the reagent to map */
   reagent: Scalars['ID']['input'];
+  /** Volume of the reagent in microliters */
   volume: Scalars['Int']['input'];
 };
 
@@ -946,14 +1243,23 @@ export type RelationMetric = {
   value: Scalars['String']['output'];
 };
 
+export type RequestMediaUploadInput = {
+  datalayer: Scalars['String']['input'];
+  key: Scalars['String']['input'];
+};
+
 export type Structure = {
   id: Scalars['ID']['input'];
   identifier: Scalars['String']['input'];
 };
 
+/** Input type for creating a relation between two structures */
 export type StructureRelationInput = {
+  /** ID of the relation kind (LinkedExpression) */
   kind: Scalars['ID']['input'];
+  /** Left structure of the relation */
   left: Structure;
+  /** Right structure of the relation */
   right: Structure;
 };
 
@@ -967,12 +1273,19 @@ export type SubscriptionHistoryEventsArgs = {
   user: Scalars['String']['input'];
 };
 
+/** Input for updating an existing expression */
 export type UpdateExpressionInput = {
+  /** New RGBA color values as list of 3 or 4 integers */
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
+  /** New description for the expression */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** The ID of the expression to update */
   id: Scalars['ID']['input'];
+  /** New image ID for the expression */
   image?: InputMaybe<Scalars['ID']['input']>;
+  /** New label for the expression */
   label?: InputMaybe<Scalars['String']['input']>;
+  /** New permanent URL for the expression */
   purl?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -983,21 +1296,35 @@ export type UpdateGraphInput = {
   name?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Input type for updating an existing ontology */
 export type UpdateOntologyInput = {
+  /** New description for the ontology */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** The ID of the ontology to update */
   id: Scalars['ID']['input'];
+  /** New ID reference to an associated image */
   image?: InputMaybe<Scalars['ID']['input']>;
+  /** New name for the ontology (will be converted to snake_case) */
   name?: InputMaybe<Scalars['String']['input']>;
+  /** New PURL (Persistent URL) for the ontology */
   purl?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Input type for updating an existing protocol step */
 export type UpdateProtocolStepInput = {
+  /** ID of the protocol step to update */
   id: Scalars['ID']['input'];
+  /** New name for the protocol step */
   name: Scalars['String']['input'];
+  /** When the step was performed */
   performedAt?: InputMaybe<Scalars['DateTime']['input']>;
+  /** ID of the user who performed the step */
   performedBy?: InputMaybe<Scalars['ID']['input']>;
+  /** Updated list of reagent mappings */
   reagentMappings: Array<ReagentMappingInput>;
+  /** ID of the new protocol step template */
   template: Scalars['ID']['input'];
+  /** Updated list of variable mappings */
   valueMappings: Array<VariableInput>;
 };
 
@@ -1017,8 +1344,11 @@ export type User = {
   username: Scalars['String']['output'];
 };
 
+/** Input type for mapping variables to protocol steps */
 export type VariableInput = {
+  /** Key of the variable */
   key: Scalars['String']['input'];
+  /** Value of the variable */
   value: Scalars['String']['input'];
 };
 
@@ -1212,6 +1542,13 @@ export type CreateReagentMutationVariables = Exact<{
 
 
 export type CreateReagentMutation = { __typename?: 'Mutation', createReagent: { __typename?: 'Reagent', id: string, label: string, creationSteps: Array<{ __typename?: 'ProtocolStep', id: string, name: string }>, usedIn: Array<{ __typename?: 'ReagentMapping', id: string, protocolStep: { __typename?: 'ProtocolStep', performedAt?: any | null, name: string } }> } };
+
+export type CreateStructureMutationVariables = Exact<{
+  input: MeasurementInput;
+}>;
+
+
+export type CreateStructureMutation = { __typename?: 'Mutation', createMeasurement: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> } };
 
 export type GetEntityQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2545,6 +2882,39 @@ export function useCreateReagentMutation(baseOptions?: ApolloReactHooks.Mutation
 export type CreateReagentMutationHookResult = ReturnType<typeof useCreateReagentMutation>;
 export type CreateReagentMutationResult = Apollo.MutationResult<CreateReagentMutation>;
 export type CreateReagentMutationOptions = Apollo.BaseMutationOptions<CreateReagentMutation, CreateReagentMutationVariables>;
+export const CreateStructureDocument = gql`
+    mutation CreateStructure($input: MeasurementInput!) {
+  createMeasurement(input: $input) {
+    ...Entity
+  }
+}
+    ${EntityFragmentDoc}`;
+export type CreateStructureMutationFn = Apollo.MutationFunction<CreateStructureMutation, CreateStructureMutationVariables>;
+
+/**
+ * __useCreateStructureMutation__
+ *
+ * To run a mutation, you first call `useCreateStructureMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateStructureMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createStructureMutation, { data, loading, error }] = useCreateStructureMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateStructureMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateStructureMutation, CreateStructureMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateStructureMutation, CreateStructureMutationVariables>(CreateStructureDocument, options);
+      }
+export type CreateStructureMutationHookResult = ReturnType<typeof useCreateStructureMutation>;
+export type CreateStructureMutationResult = Apollo.MutationResult<CreateStructureMutation>;
+export type CreateStructureMutationOptions = Apollo.BaseMutationOptions<CreateStructureMutation, CreateStructureMutationVariables>;
 export const GetEntityDocument = gql`
     query GetEntity($id: ID!) {
   entity(id: $id) {

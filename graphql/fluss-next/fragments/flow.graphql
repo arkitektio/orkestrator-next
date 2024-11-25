@@ -181,6 +181,9 @@ fragment Workspace on Workspace {
   latestFlow {
     ...Flow
   }
+  flows {
+    ...ListFlow
+  }
 }
 
 fragment CarouselWorkspace on Workspace {

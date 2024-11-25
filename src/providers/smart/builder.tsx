@@ -2,6 +2,7 @@ import {
   ModelPageLayout,
   ModelPageLayoutProps,
 } from "@/components/layout/ModelPageLayout";
+import { Knowledge } from "@/kraph/panes/Knowledge";
 import { Komments } from "@/lok-next/components/komments/Komments";
 import { usePrimaryNodesQuery } from "@/rekuest/api/graphql";
 import { NewButton, NewButtonProps } from "@/rekuest/buttons/NewButton";
@@ -77,6 +78,12 @@ const buildKomments = (model: Identifier) => {
   };
 };
 
+const buildKnowledge = (model: Identifier) => {
+  return ({ ...props }: ObjectProps) => {
+    return <Knowledge identifier={model} object={props.object} />;
+  };
+};
+
 export type SmartModelPage = Omit<ModelPageLayoutProps, "identifier">;
 
 const buildModelPage = (model: Identifier) => {
@@ -134,6 +141,7 @@ export const buildSmart = (model: Identifier, to: string) => {
     Smart: buildSmartModel(model),
     Actions: buildSelfActions(model),
     Komments: buildKomments(model),
+    Knowledge: buildKnowledge(model),
     identifier: model,
     ModelPage: buildModelPage(model),
     useNodes: () => buildUseNodesQuery(model),

@@ -9,6 +9,7 @@ import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
+  AssignationEventKind,
   AssignationsDocument,
   AssignationsQuery,
   useCancelMutation,
@@ -78,6 +79,8 @@ export const AssignationToaster = (props: { id: string }) => {
       {ass.progress != undefined && <Progress value={ass.progress} />}
       <p className="mt-2">{ass.message}</p>
       {ass.done && "Done :)"}
+      {ass.event?.kind == AssignationEventKind.Queued && <>Enqueued...</>}
+      {ass.event?.kind == AssignationEventKind.Bound && <>Bound...</>}
 
       <div className="group-hover:opacity-100 opacity-0 bg-black p-1 rounded-full absolute bottom-0 right-0">
         {!ass.done && !ass.error ? (

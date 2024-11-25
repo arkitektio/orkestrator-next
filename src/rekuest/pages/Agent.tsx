@@ -14,7 +14,6 @@ import {
   WatchTemplatesSubscription,
   WatchTemplatesSubscriptionVariables,
 } from "@/rekuest/api/graphql";
-import { Separator } from "@radix-ui/react-dropdown-menu";
 import { ArrowRightIcon } from "@radix-ui/react-icons";
 import { BellIcon } from "lucide-react";
 import { useEffect } from "react";
@@ -130,10 +129,6 @@ export const ManagedByCard = (props: { agent: AgentFragment }) => {
 export default asDetailQueryRoute(
   useAgentQuery,
   ({ data, refetch, subscribeToMore }) => {
-    const stateAction = data.agent.defaults.find(
-      (x) => x.interface == "__state__",
-    );
-
     useEffect(() => {
       return subscribeToMore<
         WatchTemplatesSubscription,
@@ -150,7 +145,7 @@ export default asDetailQueryRoute(
             return {
               agent: {
                 ...prev.agent,
-                templates: [...prev.agent.defaults, create],
+                templates: [...prev.agent.templates, create],
               },
             };
           }
@@ -158,7 +153,7 @@ export default asDetailQueryRoute(
             return {
               agent: {
                 ...prev.agent,
-                templates: prev.agent.defaults.map((x) =>
+                templates: prev.agent.templates.map((x) =>
                   x.id == update.id ? update : x,
                 ),
               },
@@ -168,7 +163,7 @@ export default asDetailQueryRoute(
             return {
               agent: {
                 ...prev.agent,
-                templates: prev.agent.defaults.filter((x) => x.id != remove),
+                templates: prev.agent.templates.filter((x) => x.id != remove),
               },
             };
           }
@@ -206,15 +201,8 @@ export default asDetailQueryRoute(
           ))}
 
           <ListRender
-            array={data.agent.defaults}
+            array={data.agent.templates}
             title={<p className="text-xs ml-2 mb-2">Registered Actions</p>}
-          >
-            {(item) => <TemplateCard item={item} />}
-          </ListRender>
-          <Separator className="my-2" />
-          <ListRender
-            array={data.agent.workflows}
-            title={<p className="text-xs ml-2 mb-2">Scheduler for Workflows</p>}
           >
             {(item) => <TemplateCard item={item} />}
           </ListRender>

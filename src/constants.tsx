@@ -2,7 +2,19 @@
 
 import { Manifest } from "./lib/fakts";
 
-export const baseName = "orkestrator";
+declare global {
+  interface Window {
+    __ORKESTRATOR_BASE_NAME__: string;
+  }
+}
+
+export const windowBaseName =
+  window.__ORKESTRATOR_BASE_NAME__ &&
+  window.__ORKESTRATOR_BASE_NAME__ != "__ORKESTRATOR_BASE_NAME__"
+    ? window.__ORKESTRATOR_BASE_NAME__
+    : "";
+
+export const baseName = window.electron ? "" : "orkestrator";
 
 export const manifest: Manifest = {
   version: "0.0.1",

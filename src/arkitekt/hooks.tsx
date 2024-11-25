@@ -3,6 +3,7 @@ import { LoginRequest, useLogin } from "@/lib/herre";
 
 import { useCallback } from "react";
 import { useArkitekt } from "./provider";
+import { baseName } from "@/constants";
 
 export const useService = (key: string) => {
   const { clients } = useArkitekt();
@@ -55,8 +56,11 @@ export const useArkitektLogin = () => {
       if (window.electron) {
         redirectUri = "http://127.0.0.1:9999/callback";
       } else {
-        redirectUri = window.location.origin + "/callback";
-        alert(redirectUri);
+        if (baseName && baseName !== "") {
+          redirectUri = window.location.origin + "/" + baseName + "/callback";
+        } else {
+          redirectUri = window.location.origin + "/callback";
+        }
       }
 
       return login({
@@ -120,9 +124,15 @@ export const buildArkitektConnect =
           (!request.requestedRedirectURIs ||
             request.requestedRedirectURIs.length === 0)
         ) {
-          request.requestedRedirectURIs = [
-            window.location.origin + "/callback",
-          ];
+          if (baseName && baseName !== "") {
+            request.requestedRedirectURIs = [
+              window.location.origin + "/" + baseName + "/callback",
+            ];
+          } else {
+            request.requestedRedirectURIs = [
+              window.location.origin + "/callback",
+            ];
+          }
         }
 
         return load(request as FaktsRequest);

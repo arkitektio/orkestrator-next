@@ -2,6 +2,8 @@
 
 import { Manifest } from "./lib/fakts";
 
+export const baseName = "orkestrator";
+
 export const manifest: Manifest = {
   version: "0.0.1",
   identifier: "github.io.jhnnsrs.wiiibboo",

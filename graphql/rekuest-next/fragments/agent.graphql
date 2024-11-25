@@ -5,12 +5,10 @@ fragment Agent on Agent {
   provisions {
     ...ListProvision
   }
-  defaults: templates(filters: { extension: "default" }) {
+  templates {
     ...ListTemplate
   }
-  workflows: templates(filters: { extension: "reaktion_next" }) {
-    ...ListTemplate
-  }
+  
   states {
     ...State
   }

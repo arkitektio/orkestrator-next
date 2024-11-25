@@ -5,7 +5,7 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { ShadnWigets } from "@/components/widgets/ShadnWigets";
-import { WELL_KNOWN_ENDPOINTS } from "@/constants";
+import { baseName, WELL_KNOWN_ENDPOINTS } from "@/constants";
 import { KabinetWard } from "@/kabinet/KabinetWard";
 import { KraphWard } from "@/kraph/KraphWard";
 import { WellKnownDiscovery } from "@/lib/fakts";
@@ -91,7 +91,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <SettingsProvider>
       <DebugProvider>
-        <BrowserRouter>
+        <BrowserRouter basename={baseName}>
           <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
             {/* This is where we configure the application automatically based on facts */}
 

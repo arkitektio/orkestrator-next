@@ -62,15 +62,16 @@ jobs:
       - name: Upload artifacts for release
         uses: actions/upload-artifact@v3
         with:
+          if-no-files-found: error 
           name: build-artifacts-${{ matrix.os }}
           path: |
-            dist/*.exe          # Windows executable
-            dist/*.dmg          # macOS disk image
-            dist/*.AppImage     # Linux AppImage
-            dist/*.snap         # Linux snap package
-            dist/*.deb          # Debian package
-            dist/*.rpm          # RPM package
-            dist/*.tar.gz       # Compressed tarball
+            dist/*.exe          
+            dist/*.dmg          
+            dist/*.AppImage     
+            dist/*.snap        
+            dist/*.deb          
+            dist/*.rpm          
+            dist/*.tar.gz      
 
   publish-and-release:
     needs: release

@@ -3,6 +3,8 @@ import { SwitchField } from "@/components/fields/SwitchField";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
+import { Home } from "@/modules/Home";
+import registry from "@/modules/registry";
 import { useSettings } from "@/providers/settings/SettingsContext";
 import deepEqual from "deep-equal";
 import React, { useEffect } from "react";
@@ -70,6 +72,8 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
           />
         </form>
       </Form>
+
+      <Home registry={registry} />
     </PageLayout>
   );
 };

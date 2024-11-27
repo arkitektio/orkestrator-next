@@ -154,6 +154,10 @@ function openSecondaryWindow(path): void {
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === "linux" ? { icon } : {}),
+    webPreferences: {
+      preload: join(__dirname, "../preload/index.js"),
+      sandbox: false,
+    },
   });
 
   secondaryWindow.on("ready-to-show", () => {
@@ -168,11 +172,15 @@ function openSecondaryWindow(path): void {
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-    secondaryWindow.loadURL(process.env["ELECTRON_RENDERER_URL"] + "#" + path);
+    secondaryWindow.loadURL(process.env["ELECTRON_RENDERER_URL"] + path);
   } else {
-    secondaryWindow.loadFile(
-      join(__dirname, "../renderer/index.html", "#" + path),
-    );
+    secondaryWindow
+      .loadFile(join(__dirname, "../renderer/index.html"))
+      .then(() => {
+        secondaryWindow.webContents.executeJavaScript(
+          `window.location = '${path}'`,
+        );
+      });
   }
 }
 

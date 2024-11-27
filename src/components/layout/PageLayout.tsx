@@ -44,7 +44,6 @@ export const PageLayout = ({
   const location = useLocation();
 
   const popOut = useCallback(() => {
-    console.log(location.pathname);
     window.api.openSecondWindow(location.pathname);
   }, []);
 

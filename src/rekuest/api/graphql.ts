@@ -131,14 +131,17 @@ export type ArchiveStateInput = {
 };
 
 export type AssignInput = {
+  agent?: InputMaybe<Scalars['ID']['input']>;
   args: Scalars['Args']['input'];
   cached?: Scalars['Boolean']['input'];
   ephemeral?: Scalars['Boolean']['input'];
   hooks?: InputMaybe<Array<HookInput>>;
   instanceId: Scalars['InstanceId']['input'];
+  interface?: InputMaybe<Scalars['String']['input']>;
   isHook?: Scalars['Boolean']['input'];
   log?: Scalars['Boolean']['input'];
   node?: InputMaybe<Scalars['ID']['input']>;
+  nodeHash?: InputMaybe<Scalars['NodeHash']['input']>;
   parent?: InputMaybe<Scalars['ID']['input']>;
   reference?: InputMaybe<Scalars['String']['input']>;
   reservation?: InputMaybe<Scalars['ID']['input']>;

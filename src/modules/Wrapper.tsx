@@ -5,10 +5,24 @@ export const ModuleWrapper = (props: {
   app: MetaApplication<any, any>;
   children: React.ReactNode;
 }) => {
+  console.log("APP", props.app);
+
+  const stateHashes = Object.keys(props.app.states).map((key) => {
+    return props.app.states[key].manifest?.hash || "";
+  });
+
+  const templateHashes = Object.keys(props.app.actions).map((key) => {
+    return props.app.actions[key].manifest?.hash || "";
+  });
+
+  console.log("STATE_HASHES", stateHashes);
+  console.log("TEMPLATE_HASHES", templateHashes);
+
   const { data } = useAgentsQuery({
     variables: {
       filters: {
-        hasStates: props.app.states,
+        hasStates: stateHashes,
+        hasTemplates: templateHashes,
       },
     },
   });

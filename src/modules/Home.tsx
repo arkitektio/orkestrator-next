@@ -5,7 +5,7 @@ import { ModuleWrapper } from "./Wrapper";
 export const Home = (props: { registry: Registry }) => {
   return (
     <Guard.Rekuest>
-      <div className="flex flex-col gap-2">
+      <div className="grid grid-cols-3 gap-2">
         {Array.from(props.registry.modules.keys()).map((key) => {
           const Component = props.registry.components.get(key)?.component;
           const module = props.registry.components.get(key)?.module;

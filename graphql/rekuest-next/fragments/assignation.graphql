@@ -6,6 +6,7 @@ fragment PostmanAssignation on Assignation {
   events {
     ...AssignationEvent
   }
+  ephemeral
   node {
     hash
     id
@@ -20,7 +21,7 @@ fragment PostmanAssignation on Assignation {
     }
   }
   provision {
-    id 
+    id
     template {
       id
     }

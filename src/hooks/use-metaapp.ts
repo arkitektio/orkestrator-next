@@ -5,8 +5,11 @@ import {
   PortScope,
   PostmanAssignationFragment,
   useGetStateForQuery,
+  WatchStateEventsDocument,
+  WatchStateEventsSubscription,
+  WatchStateEventsSubscriptionVariables,
 } from "@/rekuest/api/graphql";
-import React from "react";
+import React, { useEffect } from "react";
 import zod from "zod";
 import { useAction } from "./use-action";
 
@@ -211,12 +214,17 @@ export type MetaApplication<
   actions: Actions;
 };
 
+export type UseActionOptions = {
+  ephemeral: boolean;
+};
+
 export type MetaApplicationAdds<T extends MetaApplication<any, any>> = T & {
   useState: <K extends keyof T["states"]>(
     state: K,
   ) => { value?: zod.infer<T["states"][K]["ports"]>; updatedAt?: string };
   useAction: <K extends keyof T["actions"]>(
     action: K,
+    options?: UseActionOptions,
   ) => {
     assign: (
       args: zod.infer<T["actions"][K]["args"]>,
@@ -238,7 +246,7 @@ export const UsedAgentContext = React.createContext<AgentContext>({
   agent: "",
 });
 
-const useAgentContext = () => React.useContext(UsedAgentContext);
+export const useAgentContext = () => React.useContext(UsedAgentContext);
 
 const buildUseRekuestState = <T extends MetaApplication<any, any>>(
   app: T,
@@ -246,12 +254,42 @@ const buildUseRekuestState = <T extends MetaApplication<any, any>>(
   const hook = (state: keyof T["states"]) => {
     const { agent } = useAgentContext();
 
-    const { data } = useGetStateForQuery({
+    const { data, subscribeToMore, refetch } = useGetStateForQuery({
       variables: {
         agent,
         stateHash: app.states[state].manifest.hash,
       },
     });
+
+    useEffect(() => {
+      refetch({
+        agent,
+        stateHash: app.states[state].manifest.hash,
+      });
+    }, [agent, app.states[state].manifest.hash]);
+
+    useEffect(() => {
+      if (data?.stateFor) {
+        subscribeToMore<
+          WatchStateEventsSubscription,
+          WatchStateEventsSubscriptionVariables
+        >({
+          document: WatchStateEventsDocument,
+          variables: {
+            stateID: data.stateFor.id,
+          },
+          updateQuery: (prev, { subscriptionData }) => {
+            if (!subscriptionData.data) return prev;
+            return {
+              stateFor: {
+                ...prev.stateFor,
+                ...subscriptionData.data.stateUpdateEvents,
+              },
+            };
+          },
+        });
+      }
+    }, [subscribeToMore, data?.stateFor?.id]);
 
     if (!data) {
       return {
@@ -269,7 +307,7 @@ const buildUseRekuestState = <T extends MetaApplication<any, any>>(
 const buildUseRekuestActions = <T extends MetaApplication<any, any>>(
   app: T,
 ): MetaApplicationAdds<T>["useAction"] => {
-  const hook = (action: keyof T["actions"]) => {
+  const hook = (action: keyof T["actions"], options?: UseActionOptions) => {
     const { agent } = useAgentContext();
 
     const { assign, reassign, cancel, latestAssignation } = useAction({
@@ -278,7 +316,7 @@ const buildUseRekuestActions = <T extends MetaApplication<any, any>>(
     });
 
     const nodeAssign = async (args: any) => {
-      return assign({ args: args });
+      return assign({ args: args, ephemeral: options?.ephemeral });
     };
 
     return {

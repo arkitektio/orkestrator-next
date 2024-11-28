@@ -2,6 +2,8 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import DashboardList from "../components/lists/DashboardList";
 
 const Page = () => {
+  const [createDashboard] = useCreate;
+
   return (
     <PageLayout title={"Dashboards"}>
       <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">

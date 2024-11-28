@@ -70,7 +70,7 @@ export const StreamJoiner = (props: { room: string }) => {
   );
 };
 
-export const StreamWidget = (props: ReturnWidgetProps) => {
+export const StreamWidget = (props: { value: string }) => {
   const { data } = useGetStreamQuery({
     variables: {
       id: props.value,

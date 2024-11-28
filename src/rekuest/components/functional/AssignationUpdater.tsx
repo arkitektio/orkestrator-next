@@ -193,6 +193,11 @@ export const AssignationUpdater = (props: {}) => {
               },
             );
 
+            if (create.ephemeral) {
+              // Ephemeral Assignations do not get a notification
+              return;
+            }
+
             console.error("Added assignation", create.reference);
             const toastId = create.id; // Use the assignation id as the toastId
             toast(<AssignationToaster id={toastId} />, {

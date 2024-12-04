@@ -8,17 +8,11 @@ declare global {
   }
 }
 
-export const windowBaseName =
-  window.__ORKESTRATOR_BASE_NAME__ &&
-  window.__ORKESTRATOR_BASE_NAME__ != "__ORKESTRATOR_BASE_NAME__"
-    ? window.__ORKESTRATOR_BASE_NAME__
-    : "";
-
-export const baseName = window.electron ? "" : "orkestrator";
+export const baseName = window.electron ? "" : process.env.PUBLIC_PATH || "";
 
 export const manifest: Manifest = {
   version: "0.0.1",
-  identifier: "github.io.jhnnsrs.wiiibboo",
+  identifier: "live.arkitekt.orkestrator",
   scopes: ["openid"],
   requirements: [
     {

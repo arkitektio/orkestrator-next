@@ -1,5 +1,6 @@
 // Constants used in the app
 
+import { BrowserRouter, HashRouter } from "react-router-dom";
 import { Manifest } from "./lib/fakts";
 
 declare global {
@@ -8,7 +9,9 @@ declare global {
   }
 }
 
-export const baseName = window.electron ? "" : process.env.PUBLIC_PATH || "";
+export const Router = window.electron ? HashRouter : BrowserRouter;
+
+export const baseName = window.electron ? "" : "orkestrator";
 
 export const manifest: Manifest = {
   version: "0.0.1",

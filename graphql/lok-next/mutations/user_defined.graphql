@@ -1,0 +1,7 @@
+mutation CreateUserDefinedServiceInstance(
+  $input: UserDefinedServiceInstanceInput!
+) {
+  createUserDefinedServiceInstance(input: $input) {
+    ...UserDefinedServiceInstance
+  }
+}

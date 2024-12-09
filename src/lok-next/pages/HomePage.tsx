@@ -4,6 +4,7 @@ import { Separator } from "@radix-ui/react-dropdown-menu";
 import React from "react";
 import { useCreateRoomMutation, useMeQuery } from "../api/graphql";
 import { ThreadsCarousel } from "../components/carousels/ThreadsCarousel";
+import ServiceList from "../components/lists/ServiceList";
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {

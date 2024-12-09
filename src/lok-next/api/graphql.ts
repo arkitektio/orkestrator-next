@@ -59,7 +59,8 @@ export type App = {
 
 export enum BackendType {
   ConfigBackend = 'ConfigBackend',
-  DockerBackend = 'DockerBackend'
+  DockerBackend = 'DockerBackend',
+  UserDefined = 'user_defined'
 }
 
 /**
@@ -89,7 +90,7 @@ export type Client = {
   user?: Maybe<User>;
 };
 
-/** Client(id, composition, release, oauth2_client, kind, public, token, client_id, client_secret, tenant, user, created_at) */
+/** Client(id, composition, release, oauth2_client, kind, redirect_uris, public, token, client_id, client_secret, tenant, user, created_at) */
 export type ClientFilter = {
   AND?: InputMaybe<ClientFilter>;
   OR?: InputMaybe<ClientFilter>;
@@ -205,6 +206,13 @@ export type CreateUserInput = {
   name: Scalars['String']['input'];
 };
 
+export type DefinedValue = {
+  __typename?: 'DefinedValue';
+  asType: FaktValueType;
+  key: Scalars['String']['output'];
+  value: Scalars['String']['output'];
+};
+
 export type DeleteStashInput = {
   stash: Scalars['ID']['input'];
 };
@@ -248,6 +256,12 @@ export type DjangoModelType = {
   __typename?: 'DjangoModelType';
   pk: Scalars['ID']['output'];
 };
+
+export enum FaktValueType {
+  Boolean = 'BOOLEAN',
+  Number = 'NUMBER',
+  String = 'STRING'
+}
 
 /**
  *
@@ -301,6 +315,12 @@ export type GroupFilter = {
 
 export type JoinStreamInput = {
   id: Scalars['ID']['input'];
+};
+
+export type KeyValueInput = {
+  asType: FaktValueType;
+  key: Scalars['String']['input'];
+  value: Scalars['String']['input'];
 };
 
 /** A leaf of text. This is the most basic descendant and always ends a tree. */
@@ -382,6 +402,7 @@ export type Mutation = {
   createStash: Stash;
   createStream: Stream;
   createUser: User;
+  createUserDefinedServiceInstance: UserDefinedServiceInstance;
   deleteStash: Scalars['ID']['output'];
   /** Delete items from a stash */
   deleteStashItems: Array<Scalars['ID']['output']>;
@@ -434,6 +455,11 @@ export type MutationCreateStreamArgs = {
 
 export type MutationCreateUserArgs = {
   input: CreateUserInput;
+};
+
+
+export type MutationCreateUserDefinedServiceInstanceArgs = {
+  input: UserDefinedServiceInstanceInput;
 };
 
 
@@ -602,6 +628,10 @@ export type Query = {
   room: Room;
   rooms: Array<Room>;
   scopes: Array<Scope>;
+  service: Service;
+  serviceInstance: ServiceInstance;
+  serviceInstances: Array<ServiceInstance>;
+  services: Array<Service>;
   stash: Stash;
   stashItem: StashItem;
   stashItems: Array<StashItem>;
@@ -684,6 +714,28 @@ export type QueryRoomArgs = {
 
 export type QueryRoomsArgs = {
   filters?: InputMaybe<RoomFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryServiceArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryServiceInstanceArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryServiceInstancesArgs = {
+  filters?: InputMaybe<ServiceInstanceFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryServicesArgs = {
+  filters?: InputMaybe<ServiceFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -877,16 +929,31 @@ export type SendMessageInput = {
 export type Service = {
   __typename?: 'Service';
   /** The description of the service. This should be a human readable description of the service. */
-  description: Scalars['String']['output'];
+  description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   /** The identifier of the service. This should be a globally unique string that identifies the service. We encourage you to use the reverse domain name notation. E.g. `com.example.myservice` */
   identifier: Scalars['ServiceIdentifier']['output'];
-  /** The key of the service. This is a unique string that identifies the service. It is used to identify the service in the code and in the database. */
-  key: Scalars['String']['output'];
+  /** The instances of the service. A service instance is a configured instance of a service. It will be configured by a configuration backend and will be used to send to the client as a configuration. It should never contain sensitive information. */
+  instances: Array<ServiceInstance>;
   /** The logo of the service. This should be a url to a logo that can be used to represent the service. */
   logo: Scalars['String']['output'];
   /** The name of the service */
   name: Scalars['String']['output'];
+};
+
+
+/** A Service is a Webservice that a Client might want to access. It is not the configured instance of the service, but the service itself. */
+export type ServiceInstancesArgs = {
+  filters?: InputMaybe<ServiceInstanceFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+/** Service(id, name, identifier, logo, description) */
+export type ServiceFilter = {
+  AND?: InputMaybe<ServiceFilter>;
+  OR?: InputMaybe<ServiceFilter>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** A ServiceInstance is a configured instance of a Service. It will be configured by a configuration backend and will be used to send to the client as a configuration. It should never contain sensitive information. */
@@ -903,6 +970,16 @@ export type ServiceInstance = {
   name: Scalars['String']['output'];
   /** The service that this instance belongs to. */
   service: Service;
+  /** The user defined instances of the service instance. These instances are used to configure the service instance with user defined values. */
+  userDefinitions: Array<UserDefinedServiceInstance>;
+};
+
+/** ServiceInstance(id, backend, service, identifier, template) */
+export type ServiceInstanceFilter = {
+  AND?: InputMaybe<ServiceInstanceFilter>;
+  OR?: InputMaybe<ServiceInstanceFilter>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** A ServiceInstance is a configured instance of a Service. It will be configured by a configuration backend and will be used to send to the client as a configuration. It should never contain sensitive information. */
@@ -1166,6 +1243,25 @@ export type UserGroupsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+/** A UserDefinedServiceInstance is a user defined instance of a service. It is used to configure a service instance with user defined values. */
+export type UserDefinedServiceInstance = {
+  __typename?: 'UserDefinedServiceInstance';
+  /** The user that created this user defined instance. */
+  creator: User;
+  id: Scalars['ID']['output'];
+  /** The instance that this user defined instance belongs to. */
+  instance: ServiceInstance;
+  /** The values of the user defined instance. These values will be used to configure the instance. */
+  renderedValues: Scalars['Fakt']['output'];
+  /** The values of the user defined instance. These values will be used to configure the instance. */
+  values: Array<DefinedValue>;
+};
+
+export type UserDefinedServiceInstanceInput = {
+  identifier: Scalars['String']['input'];
+  values?: Array<KeyValueInput>;
+};
+
 /**
  * A User of the System
  *
@@ -1232,6 +1328,14 @@ export type ListReleaseFragment = { __typename?: 'Release', id: string, version:
 
 export type DetailRoomFragment = { __typename?: 'Room', id: string, title: string, description: string, messages: Array<{ __typename?: 'Message', id: string, text: string, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> }>, streams: Array<{ __typename?: 'Stream', id: string, title: string }> };
 
+export type ListServiceFragment = { __typename?: 'Service', identifier: any, id: string, name: string, logo: string, description?: string | null, instances: Array<{ __typename?: 'ServiceInstance', id: string, backend: BackendType }> };
+
+export type ServiceFragment = { __typename?: 'Service', identifier: any, id: string, name: string, logo: string, description?: string | null, instances: Array<{ __typename?: 'ServiceInstance', id: string, backend: BackendType }> };
+
+export type ServiceInstanceFragment = { __typename?: 'ServiceInstance', id: string, backend: BackendType, userDefinitions: Array<{ __typename?: 'UserDefinedServiceInstance', id: string, values: Array<{ __typename?: 'DefinedValue', key: string, value: string }> }> };
+
+export type ListServiceInstanceFragment = { __typename?: 'ServiceInstance', id: string, backend: BackendType };
+
 export type ListServiceInstanceMappingFragment = { __typename?: 'ServiceInstanceMapping', id: string, key: string, instance: { __typename?: 'ServiceInstance', backend: BackendType, service: { __typename?: 'Service', identifier: any } } };
 
 export type StashFragment = { __typename?: 'Stash', id: string, name: string, description?: string | null, createdAt: any, updatedAt: any, owner: { __typename?: 'User', id: string, username: string } };
@@ -1251,6 +1355,10 @@ export type ListUserFragment = { __typename?: 'User', username: string, firstNam
 export type DetailUserFragment = { __typename?: 'User', id: string, username: string, email?: string | null, firstName?: string | null, lastName?: string | null, avatar?: string | null, groups: Array<{ __typename?: 'Group', id: string, name: string }> };
 
 export type MeUserFragment = { __typename?: 'User', id: string, username: string, email?: string | null, firstName?: string | null, lastName?: string | null, avatar?: string | null };
+
+export type UserDefinedServiceInstanceFragment = { __typename?: 'UserDefinedServiceInstance', id: string, instance: { __typename?: 'ServiceInstance', id: string, backend: BackendType, userDefinitions: Array<{ __typename?: 'UserDefinedServiceInstance', id: string, values: Array<{ __typename?: 'DefinedValue', key: string, value: string }> }> } };
+
+export type ListUserDefinedServiceInstanceFragment = { __typename?: 'UserDefinedServiceInstance', id: string, values: Array<{ __typename?: 'DefinedValue', key: string, value: string }> };
 
 export type CreateClientMutationVariables = Exact<{
   identifier: Scalars['String']['input'];
@@ -1345,6 +1453,13 @@ export type CreateStreamMutationVariables = Exact<{
 
 
 export type CreateStreamMutation = { __typename?: 'Mutation', createStream: { __typename?: 'Stream', id: string, title: string, token: string, agent: { __typename?: 'Agent', room: { __typename?: 'Room', id: string } } } };
+
+export type CreateUserDefinedServiceInstanceMutationVariables = Exact<{
+  input: UserDefinedServiceInstanceInput;
+}>;
+
+
+export type CreateUserDefinedServiceInstanceMutation = { __typename?: 'Mutation', createUserDefinedServiceInstance: { __typename?: 'UserDefinedServiceInstance', id: string, instance: { __typename?: 'ServiceInstance', id: string, backend: BackendType, userDefinitions: Array<{ __typename?: 'UserDefinedServiceInstance', id: string, values: Array<{ __typename?: 'DefinedValue', key: string, value: string }> }> } } };
 
 export type AppsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1482,6 +1597,36 @@ export type GlobalSearchQueryVariables = Exact<{
 
 
 export type GlobalSearchQuery = { __typename?: 'Query', users?: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, groups?: Array<{ __typename?: 'Group', id: string, name: string }> };
+
+export type ListServiceInstancesQueryVariables = Exact<{
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<ServiceInstanceFilter>;
+}>;
+
+
+export type ListServiceInstancesQuery = { __typename?: 'Query', serviceInstances: Array<{ __typename?: 'ServiceInstance', id: string, backend: BackendType }> };
+
+export type GetServiceInstanceQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetServiceInstanceQuery = { __typename?: 'Query', serviceInstance: { __typename?: 'ServiceInstance', id: string, backend: BackendType, userDefinitions: Array<{ __typename?: 'UserDefinedServiceInstance', id: string, values: Array<{ __typename?: 'DefinedValue', key: string, value: string }> }> } };
+
+export type ListServicesQueryVariables = Exact<{
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<ServiceFilter>;
+}>;
+
+
+export type ListServicesQuery = { __typename?: 'Query', services: Array<{ __typename?: 'Service', identifier: any, id: string, name: string, logo: string, description?: string | null, instances: Array<{ __typename?: 'ServiceInstance', id: string, backend: BackendType }> }> };
+
+export type GetServiceQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetServiceQuery = { __typename?: 'Query', service: { __typename?: 'Service', identifier: any, id: string, name: string, logo: string, description?: string | null, instances: Array<{ __typename?: 'ServiceInstance', id: string, backend: BackendType }> } };
 
 export type MyStashesQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -1881,6 +2026,36 @@ export const DetailRoomFragmentDoc = gql`
 }
     ${ListMessageFragmentDoc}
 ${StreamFragmentDoc}`;
+export const ListServiceInstanceFragmentDoc = gql`
+    fragment ListServiceInstance on ServiceInstance {
+  id
+  backend
+}
+    `;
+export const ListServiceFragmentDoc = gql`
+    fragment ListService on Service {
+  identifier
+  id
+  name
+  logo
+  description
+  instances {
+    ...ListServiceInstance
+  }
+}
+    ${ListServiceInstanceFragmentDoc}`;
+export const ServiceFragmentDoc = gql`
+    fragment Service on Service {
+  identifier
+  id
+  name
+  logo
+  description
+  instances {
+    ...ListServiceInstance
+  }
+}
+    ${ListServiceInstanceFragmentDoc}`;
 export const StashFragmentDoc = gql`
     fragment Stash on Stash {
   id
@@ -1958,6 +2133,32 @@ export const MeUserFragmentDoc = gql`
   avatar
 }
     `;
+export const ListUserDefinedServiceInstanceFragmentDoc = gql`
+    fragment ListUserDefinedServiceInstance on UserDefinedServiceInstance {
+  id
+  values {
+    key
+    value
+  }
+}
+    `;
+export const ServiceInstanceFragmentDoc = gql`
+    fragment ServiceInstance on ServiceInstance {
+  id
+  backend
+  userDefinitions {
+    ...ListUserDefinedServiceInstance
+  }
+}
+    ${ListUserDefinedServiceInstanceFragmentDoc}`;
+export const UserDefinedServiceInstanceFragmentDoc = gql`
+    fragment UserDefinedServiceInstance on UserDefinedServiceInstance {
+  id
+  instance {
+    ...ServiceInstance
+  }
+}
+    ${ServiceInstanceFragmentDoc}`;
 export const CreateClientDocument = gql`
     mutation CreateClient($identifier: String!, $version: String!, $scopes: [String!]!, $logo: String) {
   createDevelopmentalClient(
@@ -2367,6 +2568,39 @@ export function useCreateStreamMutation(baseOptions?: ApolloReactHooks.MutationH
 export type CreateStreamMutationHookResult = ReturnType<typeof useCreateStreamMutation>;
 export type CreateStreamMutationResult = Apollo.MutationResult<CreateStreamMutation>;
 export type CreateStreamMutationOptions = Apollo.BaseMutationOptions<CreateStreamMutation, CreateStreamMutationVariables>;
+export const CreateUserDefinedServiceInstanceDocument = gql`
+    mutation CreateUserDefinedServiceInstance($input: UserDefinedServiceInstanceInput!) {
+  createUserDefinedServiceInstance(input: $input) {
+    ...UserDefinedServiceInstance
+  }
+}
+    ${UserDefinedServiceInstanceFragmentDoc}`;
+export type CreateUserDefinedServiceInstanceMutationFn = Apollo.MutationFunction<CreateUserDefinedServiceInstanceMutation, CreateUserDefinedServiceInstanceMutationVariables>;
+
+/**
+ * __useCreateUserDefinedServiceInstanceMutation__
+ *
+ * To run a mutation, you first call `useCreateUserDefinedServiceInstanceMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateUserDefinedServiceInstanceMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createUserDefinedServiceInstanceMutation, { data, loading, error }] = useCreateUserDefinedServiceInstanceMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateUserDefinedServiceInstanceMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateUserDefinedServiceInstanceMutation, CreateUserDefinedServiceInstanceMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateUserDefinedServiceInstanceMutation, CreateUserDefinedServiceInstanceMutationVariables>(CreateUserDefinedServiceInstanceDocument, options);
+      }
+export type CreateUserDefinedServiceInstanceMutationHookResult = ReturnType<typeof useCreateUserDefinedServiceInstanceMutation>;
+export type CreateUserDefinedServiceInstanceMutationResult = Apollo.MutationResult<CreateUserDefinedServiceInstanceMutation>;
+export type CreateUserDefinedServiceInstanceMutationOptions = Apollo.BaseMutationOptions<CreateUserDefinedServiceInstanceMutation, CreateUserDefinedServiceInstanceMutationVariables>;
 export const AppsDocument = gql`
     query Apps {
   apps {
@@ -3092,6 +3326,148 @@ export function useGlobalSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQuer
 export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>;
 export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>;
 export type GlobalSearchQueryResult = Apollo.QueryResult<GlobalSearchQuery, GlobalSearchQueryVariables>;
+export const ListServiceInstancesDocument = gql`
+    query ListServiceInstances($pagination: OffsetPaginationInput, $filters: ServiceInstanceFilter) {
+  serviceInstances(pagination: $pagination, filters: $filters) {
+    ...ListServiceInstance
+  }
+}
+    ${ListServiceInstanceFragmentDoc}`;
+
+/**
+ * __useListServiceInstancesQuery__
+ *
+ * To run a query within a React component, call `useListServiceInstancesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListServiceInstancesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListServiceInstancesQuery({
+ *   variables: {
+ *      pagination: // value for 'pagination'
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useListServiceInstancesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListServiceInstancesQuery, ListServiceInstancesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListServiceInstancesQuery, ListServiceInstancesQueryVariables>(ListServiceInstancesDocument, options);
+      }
+export function useListServiceInstancesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListServiceInstancesQuery, ListServiceInstancesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListServiceInstancesQuery, ListServiceInstancesQueryVariables>(ListServiceInstancesDocument, options);
+        }
+export type ListServiceInstancesQueryHookResult = ReturnType<typeof useListServiceInstancesQuery>;
+export type ListServiceInstancesLazyQueryHookResult = ReturnType<typeof useListServiceInstancesLazyQuery>;
+export type ListServiceInstancesQueryResult = Apollo.QueryResult<ListServiceInstancesQuery, ListServiceInstancesQueryVariables>;
+export const GetServiceInstanceDocument = gql`
+    query GetServiceInstance($id: ID!) {
+  serviceInstance(id: $id) {
+    ...ServiceInstance
+  }
+}
+    ${ServiceInstanceFragmentDoc}`;
+
+/**
+ * __useGetServiceInstanceQuery__
+ *
+ * To run a query within a React component, call `useGetServiceInstanceQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetServiceInstanceQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetServiceInstanceQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetServiceInstanceQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetServiceInstanceQuery, GetServiceInstanceQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetServiceInstanceQuery, GetServiceInstanceQueryVariables>(GetServiceInstanceDocument, options);
+      }
+export function useGetServiceInstanceLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetServiceInstanceQuery, GetServiceInstanceQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetServiceInstanceQuery, GetServiceInstanceQueryVariables>(GetServiceInstanceDocument, options);
+        }
+export type GetServiceInstanceQueryHookResult = ReturnType<typeof useGetServiceInstanceQuery>;
+export type GetServiceInstanceLazyQueryHookResult = ReturnType<typeof useGetServiceInstanceLazyQuery>;
+export type GetServiceInstanceQueryResult = Apollo.QueryResult<GetServiceInstanceQuery, GetServiceInstanceQueryVariables>;
+export const ListServicesDocument = gql`
+    query ListServices($pagination: OffsetPaginationInput, $filters: ServiceFilter) {
+  services(pagination: $pagination, filters: $filters) {
+    ...ListService
+  }
+}
+    ${ListServiceFragmentDoc}`;
+
+/**
+ * __useListServicesQuery__
+ *
+ * To run a query within a React component, call `useListServicesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListServicesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListServicesQuery({
+ *   variables: {
+ *      pagination: // value for 'pagination'
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useListServicesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListServicesQuery, ListServicesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListServicesQuery, ListServicesQueryVariables>(ListServicesDocument, options);
+      }
+export function useListServicesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListServicesQuery, ListServicesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListServicesQuery, ListServicesQueryVariables>(ListServicesDocument, options);
+        }
+export type ListServicesQueryHookResult = ReturnType<typeof useListServicesQuery>;
+export type ListServicesLazyQueryHookResult = ReturnType<typeof useListServicesLazyQuery>;
+export type ListServicesQueryResult = Apollo.QueryResult<ListServicesQuery, ListServicesQueryVariables>;
+export const GetServiceDocument = gql`
+    query GetService($id: ID!) {
+  service(id: $id) {
+    ...Service
+  }
+}
+    ${ServiceFragmentDoc}`;
+
+/**
+ * __useGetServiceQuery__
+ *
+ * To run a query within a React component, call `useGetServiceQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetServiceQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetServiceQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetServiceQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetServiceQuery, GetServiceQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetServiceQuery, GetServiceQueryVariables>(GetServiceDocument, options);
+      }
+export function useGetServiceLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetServiceQuery, GetServiceQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetServiceQuery, GetServiceQueryVariables>(GetServiceDocument, options);
+        }
+export type GetServiceQueryHookResult = ReturnType<typeof useGetServiceQuery>;
+export type GetServiceLazyQueryHookResult = ReturnType<typeof useGetServiceLazyQuery>;
+export type GetServiceQueryResult = Apollo.QueryResult<GetServiceQuery, GetServiceQueryVariables>;
 export const MyStashesDocument = gql`
     query MyStashes($pagination: OffsetPaginationInput) {
   stashes(pagination: $pagination) {

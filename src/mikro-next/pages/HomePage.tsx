@@ -10,6 +10,7 @@ import ImageList from "../components/lists/ImageList";
 import RenderedPlotList from "../components/lists/RenderedPlotList";
 import RenderTreeList from "../components/lists/RenderTreeList";
 import { MikroImage } from "@/linkers";
+import { UploadWrapper } from "@/components/upload/wrapper";
 
 export type IRepresentationScreenProps = {};
 
@@ -19,19 +20,23 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
 
   return (
     <PageLayout actions={<></>} title="Your data">
-      <div className="flex flex-col w-full h-full">
-        <ImageList pagination={{ limit: 30 }} filters={{ notDerived: true }} />
-        <Separator className="my-4" />
-        <DatasetList pagination={{ limit: 30 }} />
-        <Separator className="my-4" />
-        <FileList pagination={{ limit: 30 }} />
-        <RenderTreeList pagination={{ limit: 30 }} />
-        <UploadZone
-          uploadFile={performDataLayerUpload}
-          createFile={createFile}
-        />
-        <RenderedPlotList pagination={{ limit: 30 }} />
-      </div>
+      <UploadWrapper
+        uploadFile={performDataLayerUpload}
+        createFile={createFile}
+      >
+        <div className="flex flex-col w-full h-full">
+          <ImageList
+            pagination={{ limit: 30 }}
+            filters={{ notDerived: true }}
+          />
+          <Separator className="my-4" />
+          <DatasetList pagination={{ limit: 30 }} />
+          <Separator className="my-4" />
+          <FileList pagination={{ limit: 30 }} />
+          <RenderTreeList pagination={{ limit: 30 }} />
+          <RenderedPlotList pagination={{ limit: 30 }} />
+        </div>
+      </UploadWrapper>
     </PageLayout>
   );
 };

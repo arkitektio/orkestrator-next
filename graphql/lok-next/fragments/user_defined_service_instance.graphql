@@ -1,0 +1,14 @@
+fragment UserDefinedServiceInstance on UserDefinedServiceInstance {
+  id
+  instance {
+    ...ServiceInstance
+  }
+}
+
+fragment ListUserDefinedServiceInstance on UserDefinedServiceInstance {
+  id
+  values {
+    key
+    value
+  }
+}

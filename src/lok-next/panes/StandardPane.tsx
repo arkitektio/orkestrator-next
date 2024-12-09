@@ -72,6 +72,13 @@ export const NavigationPane = (props: {}) => {
           <CubeIcon className="h-4 w-4" />
           Rooms
         </DroppableNavLink>
+        <DroppableNavLink
+          to="/lok/services"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <CubeIcon className="h-4 w-4" />
+          Services
+        </DroppableNavLink>
       </SubTree>
       <SubTreeTitle
         action={

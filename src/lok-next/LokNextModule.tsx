@@ -7,6 +7,9 @@ import HomePage from "./pages/HomePage";
 import RoomPage from "./pages/RoomPage";
 import UserPage from "./pages/UserPage";
 import StandardPane from "./panes/StandardPane";
+import ServicesPage from "./pages/ServicesPage";
+import ServicePage from "./pages/ServicePage";
+import ServiceInstancePage from "./pages/ServiceInstancePage";
 interface Props {}
 
 export const LokNextModule: React.FC<Props> = (props) => {
@@ -17,6 +20,12 @@ export const LokNextModule: React.FC<Props> = (props) => {
           <Route path="users/:id" element={<UserPage />} />
           <Route path="clients/:id" element={<ClientPage />} />
           <Route path="rooms/:id" element={<RoomPage />} />
+          <Route path="services" element={<ServicesPage />} />
+          <Route path="services/:id" element={<ServicePage />} />
+          <Route
+            path="serviceinstances/:id"
+            element={<ServiceInstancePage />}
+          />
           <Route path="*" element={<HomePage />} />
         </Routes>
       </ModuleLayout>

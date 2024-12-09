@@ -1,0 +1,12 @@
+fragment ServiceInstance on ServiceInstance {
+  id
+  backend
+  userDefinitions {
+    ...ListUserDefinedServiceInstance
+  }
+}
+
+fragment ListServiceInstance on ServiceInstance {
+  id
+  backend
+}

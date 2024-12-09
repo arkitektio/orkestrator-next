@@ -48,6 +48,12 @@ function createWindow(): BrowserWindow {
   } else {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
+
+  // Add this right after creating the main window in createWindow function
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+  });
+
   return mainWindow;
 }
 
@@ -119,34 +125,7 @@ ipcMain.on("ondragstart", (event, structure) => {
   });
 });
 
-function openJitsiWindow(): void {
-  // Create the browser window.
-  const jitsiWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
-    show: false,
-
-    autoHideMenuBar: true,
-    ...(process.platform === "linux" ? { icon } : {}),
-  });
-
-  jitsiWindow.on("ready-to-show", () => {
-    jitsiWindow.show();
-  });
-
-  jitsiWindow.webContents.setWindowOpenHandler((details) => {
-    let url = new URL(details.url);
-
-    openSecondaryWindow(url.pathname);
-    return { action: "deny" };
-  });
-
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
-  jitsiWindow.loadURL("https://localhost:8443/WorthyRailsStabilizeWorse");
-}
-
-function openSecondaryWindow(path): void {
+function openSecondaryWindow(path: string): void {
   // Create the browser window.
   const secondaryWindow = new BrowserWindow({
     width: 900,
@@ -237,7 +216,7 @@ if (process.platform == "darwin") {
   // Some APIs can only be used after this event occurs.
 
   // Handle the protocol. In this case, we choose to show an Error Box.
-  app.on("open-url", (event, url) => {
+  app.on("open-url", (_, url) => {
     dialog.showErrorBox("Welcome Back", `You arrived from: ${url}`);
   });
 }
@@ -247,7 +226,7 @@ const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
 } else {
-  app.on("second-instance", (event, commandLine, workingDirectory) => {
+  app.on("second-instance", (_, commandLine) => {
     // Someone tried to run a second instance, we should focus our window.
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
@@ -285,41 +264,18 @@ app.whenReady().then(() => {
   // IPC test
   ipcMain.on("ping", () => console.log("pong"));
 
-  ipcMain.on("fakts-start", (event: IpcMainEvent, msg) =>
-    createFaktsWindow(msg),
-  );
-  ipcMain.on("oauth-start", (event: IpcMainEvent, url) =>
-    createAuthWindow(url),
-  );
-  ipcMain.on("jitsi", (event: IpcMainEvent, url) => openJitsiWindow());
-  ipcMain.on("open-second-window", (event: IpcMainEvent, path) =>
+  ipcMain.on("fakts-start", (_: IpcMainEvent, msg) => createFaktsWindow(msg));
+  ipcMain.on("oauth-start", (_: IpcMainEvent, url) => createAuthWindow(url));
+  ipcMain.on("open-second-window", (_: IpcMainEvent, path) =>
     openSecondaryWindow(path),
   );
-
-  app.on("activate", function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
 });
 
-app.on(
-  "certificate-error",
-  (event, webContents, url, error, certificate, callback) => {
-    // Prevent having error
-    event.preventDefault();
-    // and continue
-    callback(true);
-  },
-);
-
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
+app.on("certificate-error", (event, _, __, ___, ____, callback) => {
+  // Prevent having error
+  event.preventDefault();
+  // and continue
+  callback(true);
 });
 
 // In this file you can include the rest of your app"s specific main process

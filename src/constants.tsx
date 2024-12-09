@@ -1,5 +1,6 @@
 // Constants used in the app
 
+import { BrowserRouter, HashRouter } from "react-router-dom";
 import { Manifest } from "./lib/fakts";
 
 declare global {
@@ -8,17 +9,13 @@ declare global {
   }
 }
 
-export const windowBaseName =
-  window.__ORKESTRATOR_BASE_NAME__ &&
-  window.__ORKESTRATOR_BASE_NAME__ != "__ORKESTRATOR_BASE_NAME__"
-    ? window.__ORKESTRATOR_BASE_NAME__
-    : "";
+export const Router = window.electron ? HashRouter : BrowserRouter;
 
 export const baseName = window.electron ? "" : "orkestrator";
 
 export const manifest: Manifest = {
   version: "0.0.1",
-  identifier: "github.io.jhnnsrs.wiiibboo",
+  identifier: "live.arkitekt.orkestrator",
   scopes: ["openid"],
   requirements: [
     {

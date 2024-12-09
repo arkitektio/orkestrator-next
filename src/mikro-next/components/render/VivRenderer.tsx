@@ -21,7 +21,6 @@ import {
   LensExtension,
   PictureInPictureViewer,
   RENDERING_MODES,
-  VivViewer,
   VolumeViewer,
   ZarrPixelSource,
 } from "@hms-dbmi/viv";
@@ -34,8 +33,6 @@ import useMeasure from "react-use-measure";
 import { openGroup, ZarrArray } from "zarr";
 import { LRUIndexedDBCache } from "./VivCache";
 import { VivS3Store } from "./VivStore";
-import DeckGL from "deck.gl";
-import { PolygonLayer } from "@deck.gl/layers";
 
 export function isInterleaved(shape: number[]) {
   const lastDimSize = shape[shape.length - 1];
@@ -261,7 +258,7 @@ export const VivRenderer = ({
   useEffect(() => {
     if (viewport) {
       console.log(viewport);
-      onViewPortLoaded(viewport);
+      //onViewPortLoaded(viewport);
     }
   }, [viewport]);
 
@@ -279,20 +276,6 @@ export const VivRenderer = ({
   const [ref, bounds] = useMeasure({
     debounce: 100,
   });
-
-  const roiLayer = useMemo(() => {
-    // Define the Deck.gl layer for rectangles
-    const rectangleLayer = new PolygonLayer({
-      id: "rectangle-layer",
-      data: rectangles,
-      getPolygon: (d) => d.coordinates,
-      getFillColor: [0, 0, 255, 80],
-      getLineColor: [0, 0, 255],
-      getLineWidth: 500,
-      lineWidthMinPixels: 1,
-    });
-    return rectangleLayer;
-  }, [rectangles]);
 
   const singleChannel = context.views.length === 1;
 

@@ -63,16 +63,16 @@ jobs:
       - name: Upload artifacts for release
         uses: actions/upload-artifact@v3
         with:
-          if-no-files-found: error 
+          if-no-files-found: error
           name: build-artifacts-${{ matrix.os }}
           path: |
-            dist/*.exe          
-            dist/*.dmg          
-            dist/*.AppImage     
-            dist/*.snap        
-            dist/*.deb          
-            dist/*.rpm          
-            dist/*.tar.gz      
+            dist/*.exe
+            dist/*.dmg
+            dist/*.AppImage
+            dist/*.snap
+            dist/*.deb
+            dist/*.rpm
+            dist/*.tar.gz
 
   publish-and-release:
     needs: release
@@ -89,6 +89,23 @@ jobs:
         id: release_name
         run: echo "RELEASE_NAME=Orkestrator $(date +"%Y-%m-%d %H:%M")" >> $GITHUB_ENV
 
+      # Step 3: Rename artifacts with release name
+      - name: Rename artifacts
+        run: |
+          cd all-artifacts
+          for dir in */; do
+        cd "$dir"
+        for file in *; do
+          if [ -f "$file" ]; then
+            ext="${file##*.}"
+            base="${file%.*}"
+            mv "$file" "${base}-$(date +"%Y-%m-%d-%H-%M").$ext"
+          fi
+        done
+        cd ..
+          done
+
+
       # Step 4: Create GitHub Release and upload all artifacts
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -98,7 +115,6 @@ jobs:
           tag_name: "v${{ github.run_number }}"
           name: "${{ env.RELEASE_NAME }}"
           prerelease: false
-          body: The latest release of orkestrator-next to install, but be aware it might be highly experimental. 
-          
+          body: The latest release of orkestrator-next to install, but be aware it might be highly experimental.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

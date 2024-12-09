@@ -94,17 +94,16 @@ jobs:
         run: |
           cd all-artifacts
           for dir in */; do
-        cd "$dir"
-        for file in *; do
-          if [ -f "$file" ]; then
-            ext="${file##*.}"
-            base="${file%.*}"
-            mv "$file" "${base}-$(date +"%Y-%m-%d-%H-%M").$ext"
-          fi
-        done
-        cd ..
+            cd "$dir"
+            for file in *; do
+              if [ -f "$file" ]; then
+                ext="${file##*.}"
+                base="${file%.*}"
+                mv "$file" "${base}-$(date +"%Y-%m-%d-%H-%M").$ext"
+              fi
+            done
+            cd ..
           done
-
 
       # Step 4: Create GitHub Release and upload all artifacts
       - name: Create GitHub Release

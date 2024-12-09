@@ -30,24 +30,25 @@ import {
 } from "@/components/ui/tooltip";
 import {
   ListDefinitionFragment,
-  usePrimaryDefinitionsQuery,
+  useAllPrimaryDefinitionsQuery,
 } from "@/kabinet/api/graphql";
 import { cn } from "@/lib/utils";
+import { KabinetDefinition } from "@/linkers";
 import { CaretDownIcon } from "@radix-ui/react-icons";
 import { CommandGroup } from "cmdk";
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
+  DemandKind,
+  PortKind,
   PrimaryNodeFragment,
-  usePrimaryNodesQuery,
+  useAllPrimaryNodesQuery,
   useTemplatesQuery,
 } from "../api/graphql";
 import { useLiveAssignation } from "../hooks/useAssignations";
-import { useHashAction } from "../hooks/useHashActions";
 import { useNodeAction } from "../hooks/useNodeAction";
 import { TemplateActionButton } from "./TemplateActionButton";
-import { useNavigate } from "react-router-dom";
-import { KabinetDefinition } from "@/linkers";
 
 export const DirectTemplateAssignment = (props: {
   object: string;
@@ -193,10 +194,36 @@ export const InstallButton = (props: {
 };
 
 export const ApplicableNodes = (props: PassDownProps) => {
-  const { data } = usePrimaryNodesQuery({
+  const demands = [
+    {
+      kind: DemandKind.Args,
+      matches: [
+        { at: 0, kind: PortKind.Structure, identifier: props.identifier },
+      ],
+    },
+  ];
+
+  let firstPartner = props.partners?.at(0);
+
+  if (firstPartner) {
+    demands.push({
+      kind: DemandKind.Args,
+      matches: [
+        {
+          at: 1,
+          kind: PortKind.Structure,
+          identifier: firstPartner.identifier,
+        },
+      ],
+    });
+  }
+
+  const { data } = useAllPrimaryNodesQuery({
     variables: {
-      identifier: props.identifier,
-      search: props.filter,
+      filters: {
+        demands: demands,
+        search: props.filter,
+      },
     },
   });
 
@@ -228,10 +255,36 @@ export const ApplicableNodes = (props: PassDownProps) => {
 };
 
 export const ApplicableDefinitions = (props: PassDownProps) => {
-  const { data } = usePrimaryDefinitionsQuery({
+  const demands = [
+    {
+      kind: DemandKind.Args,
+      matches: [
+        { at: 0, kind: PortKind.Structure, identifier: props.identifier },
+      ],
+    },
+  ];
+
+  let firstPartner = props.partners?.at(0);
+
+  if (firstPartner) {
+    demands.push({
+      kind: DemandKind.Args,
+      matches: [
+        {
+          at: 1,
+          kind: PortKind.Structure,
+          identifier: firstPartner.identifier,
+        },
+      ],
+    });
+  }
+
+  const { data } = useAllPrimaryDefinitionsQuery({
     variables: {
-      identifier: props.identifier,
-      search: props.filter,
+      filters: {
+        demands: demands,
+        search: props.filter,
+      },
     },
   });
 
@@ -433,17 +486,20 @@ export const SmartContext = (props: ObjectButtonProps) => {
             object={props.object}
             identifier={props.identifier}
             filter={filter}
+            partners={props.partners}
           />
           <ApplicableNodes
             object={props.object}
             identifier={props.identifier}
             filter={filter}
+            partners={props.partners}
           />
 
           <ApplicableDefinitions
             object={props.object}
             identifier={props.identifier}
             filter={filter}
+            partners={props.partners}
           />
         </CommandList>
       </Command>

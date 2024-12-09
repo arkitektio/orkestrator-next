@@ -2,7 +2,6 @@ import { ServiceMap } from "@/arkitekt/provider";
 import { KRAPH_ACTIONS } from "@/lib/kraph/actions";
 import { MIKRO_ACTIONS } from "@/lib/mikro/actions";
 import { REKUEST_ACTIONS } from "@/lib/rekuest/actions";
-import { DeleteFileDocument } from "@/mikro-next/api/graphql";
 
 export type Condition = {
   type: string;
@@ -18,12 +17,25 @@ export type PartnerActive = {
   partner: string;
 };
 
+export type PartnerIsNull = {
+  type: "nopartner";
+};
+
+export type HasPartner = {
+  type: "haspartner";
+};
+
 export type CommandSelect = {
   type: "command";
   command: boolean;
 };
 
-export type Conditions = IdentifierActive | PartnerActive | CommandSelect;
+export type Conditions =
+  | IdentifierActive
+  | PartnerActive
+  | CommandSelect
+  | PartnerIsNull
+  | HasPartner;
 
 export type Structure = {
   object: string;
@@ -76,6 +88,12 @@ export class ActionRegistry {
           return state.left.some(
             (structure) => structure.identifier === condition.identifier,
           );
+        }
+        if (condition.type === "nopartner") {
+          return !state.right || state.right.length === 0;
+        }
+        if (condition.type === "haspartner") {
+          return state.right && state.right?.length > 0;
         }
         if (condition.type === "partner") {
           return state.right?.some(

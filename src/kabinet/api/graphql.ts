@@ -222,7 +222,7 @@ export type CreateDeploymentInput = {
 };
 
 /** Create a new Github repository input */
-export type CreateGithupRepoInput = {
+export type CreateGithubRepoInput = {
   autoScan?: InputMaybe<Scalars['Boolean']['input']>;
   branch?: InputMaybe<Scalars['String']['input']>;
   identifier?: InputMaybe<Scalars['String']['input']>;
@@ -646,7 +646,7 @@ export type MutationCreateDeploymentArgs = {
 
 
 export type MutationCreateGithubRepoArgs = {
-  input: CreateGithupRepoInput;
+  input: CreateGithubRepoInput;
 };
 
 
@@ -1355,6 +1355,15 @@ export type PrimaryDefinitionsQueryVariables = Exact<{
 
 
 export type PrimaryDefinitionsQuery = { __typename?: 'Query', definitions: Array<{ __typename?: 'Definition', id: string, name: string, hash: any, description?: string | null, flavours: Array<{ __typename?: 'Flavour', id: string, name: string, release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } }> }> };
+
+export type AllPrimaryDefinitionsQueryVariables = Exact<{
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<DefinitionFilter>;
+  order?: InputMaybe<DefinitionOrder>;
+}>;
+
+
+export type AllPrimaryDefinitionsQuery = { __typename?: 'Query', definitions: Array<{ __typename?: 'Definition', id: string, name: string, hash: any, description?: string | null, flavours: Array<{ __typename?: 'Flavour', id: string, name: string, release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } }> }> };
 
 export type ListPodQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -2119,6 +2128,43 @@ export function usePrimaryDefinitionsLazyQuery(baseOptions?: ApolloReactHooks.La
 export type PrimaryDefinitionsQueryHookResult = ReturnType<typeof usePrimaryDefinitionsQuery>;
 export type PrimaryDefinitionsLazyQueryHookResult = ReturnType<typeof usePrimaryDefinitionsLazyQuery>;
 export type PrimaryDefinitionsQueryResult = Apollo.QueryResult<PrimaryDefinitionsQuery, PrimaryDefinitionsQueryVariables>;
+export const AllPrimaryDefinitionsDocument = gql`
+    query AllPrimaryDefinitions($pagination: OffsetPaginationInput, $filters: DefinitionFilter, $order: DefinitionOrder) {
+  definitions(order: $order, pagination: $pagination, filters: $filters) {
+    ...ListDefinition
+  }
+}
+    ${ListDefinitionFragmentDoc}`;
+
+/**
+ * __useAllPrimaryDefinitionsQuery__
+ *
+ * To run a query within a React component, call `useAllPrimaryDefinitionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAllPrimaryDefinitionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAllPrimaryDefinitionsQuery({
+ *   variables: {
+ *      pagination: // value for 'pagination'
+ *      filters: // value for 'filters'
+ *      order: // value for 'order'
+ *   },
+ * });
+ */
+export function useAllPrimaryDefinitionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<AllPrimaryDefinitionsQuery, AllPrimaryDefinitionsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<AllPrimaryDefinitionsQuery, AllPrimaryDefinitionsQueryVariables>(AllPrimaryDefinitionsDocument, options);
+      }
+export function useAllPrimaryDefinitionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<AllPrimaryDefinitionsQuery, AllPrimaryDefinitionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<AllPrimaryDefinitionsQuery, AllPrimaryDefinitionsQueryVariables>(AllPrimaryDefinitionsDocument, options);
+        }
+export type AllPrimaryDefinitionsQueryHookResult = ReturnType<typeof useAllPrimaryDefinitionsQuery>;
+export type AllPrimaryDefinitionsLazyQueryHookResult = ReturnType<typeof useAllPrimaryDefinitionsLazyQuery>;
+export type AllPrimaryDefinitionsQueryResult = Apollo.QueryResult<AllPrimaryDefinitionsQuery, AllPrimaryDefinitionsQueryVariables>;
 export const ListPodDocument = gql`
     query ListPod {
   pods {

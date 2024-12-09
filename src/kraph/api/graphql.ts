@@ -1550,6 +1550,13 @@ export type CreateStructureMutationVariables = Exact<{
 
 export type CreateStructureMutation = { __typename?: 'Mutation', createMeasurement: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> } };
 
+export type CreateStructureRelationMutationVariables = Exact<{
+  input: StructureRelationInput;
+}>;
+
+
+export type CreateStructureRelationMutation = { __typename?: 'Mutation', createStructureRelation: { __typename?: 'EntityRelation', id: string, left: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> }, right: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> }, metrics: Array<{ __typename?: 'RelationMetric', value: string }>, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', label: string } } } };
+
 export type GetEntityQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
@@ -2915,6 +2922,39 @@ export function useCreateStructureMutation(baseOptions?: ApolloReactHooks.Mutati
 export type CreateStructureMutationHookResult = ReturnType<typeof useCreateStructureMutation>;
 export type CreateStructureMutationResult = Apollo.MutationResult<CreateStructureMutation>;
 export type CreateStructureMutationOptions = Apollo.BaseMutationOptions<CreateStructureMutation, CreateStructureMutationVariables>;
+export const CreateStructureRelationDocument = gql`
+    mutation CreateStructureRelation($input: StructureRelationInput!) {
+  createStructureRelation(input: $input) {
+    ...EntityRelation
+  }
+}
+    ${EntityRelationFragmentDoc}`;
+export type CreateStructureRelationMutationFn = Apollo.MutationFunction<CreateStructureRelationMutation, CreateStructureRelationMutationVariables>;
+
+/**
+ * __useCreateStructureRelationMutation__
+ *
+ * To run a mutation, you first call `useCreateStructureRelationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateStructureRelationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createStructureRelationMutation, { data, loading, error }] = useCreateStructureRelationMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateStructureRelationMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateStructureRelationMutation, CreateStructureRelationMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateStructureRelationMutation, CreateStructureRelationMutationVariables>(CreateStructureRelationDocument, options);
+      }
+export type CreateStructureRelationMutationHookResult = ReturnType<typeof useCreateStructureRelationMutation>;
+export type CreateStructureRelationMutationResult = Apollo.MutationResult<CreateStructureRelationMutation>;
+export type CreateStructureRelationMutationOptions = Apollo.BaseMutationOptions<CreateStructureRelationMutation, CreateStructureRelationMutationVariables>;
 export const GetEntityDocument = gql`
     query GetEntity($id: ID!) {
   entity(id: $id) {

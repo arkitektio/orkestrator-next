@@ -1805,7 +1805,7 @@
       },
       {
         "kind": "INPUT_OBJECT",
-        "name": "CreateGithupRepoInput",
+        "name": "CreateGithubRepoInput",
         "description": "Create a new Github repository input",
         "isOneOf": false,
         "fields": null,
@@ -5183,7 +5183,7 @@
                   "name": null,
                   "ofType": {
                     "kind": "INPUT_OBJECT",
-                    "name": "CreateGithupRepoInput",
+                    "name": "CreateGithubRepoInput",
                     "ofType": null
                   }
                 },

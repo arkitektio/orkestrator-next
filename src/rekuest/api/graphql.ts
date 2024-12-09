@@ -2258,6 +2258,15 @@ export type AllNodesQueryVariables = Exact<{
 
 export type AllNodesQuery = { __typename?: 'Query', nodes: Array<{ __typename?: 'Node', id: string, name: string, description?: string | null, hash: any, kind: NodeKind, scope: NodeScope, stateful: boolean, templates: Array<{ __typename?: 'Template', id: string, agent: { __typename?: 'Agent', id: string } }> }> };
 
+export type AllPrimaryNodesQueryVariables = Exact<{
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<NodeFilter>;
+  order?: InputMaybe<NodeOrder>;
+}>;
+
+
+export type AllPrimaryNodesQuery = { __typename?: 'Query', nodes: Array<{ __typename?: 'Node', id: string, stateful: boolean, name: string, hash: any, description?: string | null, templates: Array<{ __typename?: 'Template', id: string, interface: string }>, args: Array<{ __typename?: 'Port', key: string, identifier?: any | null, kind: PortKind }> }> };
+
 export type NodeSearchQueryVariables = Exact<{
   filters?: InputMaybe<NodeFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -4413,6 +4422,43 @@ export function useAllNodesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHoo
 export type AllNodesQueryHookResult = ReturnType<typeof useAllNodesQuery>;
 export type AllNodesLazyQueryHookResult = ReturnType<typeof useAllNodesLazyQuery>;
 export type AllNodesQueryResult = Apollo.QueryResult<AllNodesQuery, AllNodesQueryVariables>;
+export const AllPrimaryNodesDocument = gql`
+    query AllPrimaryNodes($pagination: OffsetPaginationInput, $filters: NodeFilter, $order: NodeOrder) {
+  nodes(order: $order, pagination: $pagination, filters: $filters) {
+    ...PrimaryNode
+  }
+}
+    ${PrimaryNodeFragmentDoc}`;
+
+/**
+ * __useAllPrimaryNodesQuery__
+ *
+ * To run a query within a React component, call `useAllPrimaryNodesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAllPrimaryNodesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAllPrimaryNodesQuery({
+ *   variables: {
+ *      pagination: // value for 'pagination'
+ *      filters: // value for 'filters'
+ *      order: // value for 'order'
+ *   },
+ * });
+ */
+export function useAllPrimaryNodesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<AllPrimaryNodesQuery, AllPrimaryNodesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<AllPrimaryNodesQuery, AllPrimaryNodesQueryVariables>(AllPrimaryNodesDocument, options);
+      }
+export function useAllPrimaryNodesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<AllPrimaryNodesQuery, AllPrimaryNodesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<AllPrimaryNodesQuery, AllPrimaryNodesQueryVariables>(AllPrimaryNodesDocument, options);
+        }
+export type AllPrimaryNodesQueryHookResult = ReturnType<typeof useAllPrimaryNodesQuery>;
+export type AllPrimaryNodesLazyQueryHookResult = ReturnType<typeof useAllPrimaryNodesLazyQuery>;
+export type AllPrimaryNodesQueryResult = Apollo.QueryResult<AllPrimaryNodesQuery, AllPrimaryNodesQueryVariables>;
 export const NodeSearchDocument = gql`
     query NodeSearch($filters: NodeFilter, $pagination: OffsetPaginationInput) {
   nodes: nodes(filters: $filters, pagination: $pagination) {

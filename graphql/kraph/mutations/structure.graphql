@@ -3,3 +3,9 @@ mutation CreateStructure($input: MeasurementInput!) {
     ...Entity
   }
 }
+
+mutation CreateStructureRelation($input: StructureRelationInput!) {
+  createStructureRelation(input: $input) {
+    ...EntityRelation
+  }
+}

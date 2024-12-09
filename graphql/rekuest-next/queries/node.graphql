@@ -36,6 +36,16 @@ query AllNodes(
   }
 }
 
+query AllPrimaryNodes(
+  $pagination: OffsetPaginationInput
+  $filters: NodeFilter
+  $order: NodeOrder
+) {
+  nodes(order: $order, pagination: $pagination, filters: $filters) {
+    ...PrimaryNode
+  }
+}
+
 query NodeSearch($filters: NodeFilter, $pagination: OffsetPaginationInput) {
   nodes: nodes(filters: $filters, pagination: $pagination) {
     ...ListNode
@@ -63,7 +73,7 @@ query PrimaryNodes(
           kind: ARGS
           matches: [{ at: 0, kind: STRUCTURE, identifier: $identifier }]
         }
-      ]
+      ],
       search: $search
     }
   ) {

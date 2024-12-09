@@ -32,3 +32,14 @@ query PrimaryDefinitions(
     ...ListDefinition
   }
 }
+
+
+query AllPrimaryDefinitions(
+  $pagination: OffsetPaginationInput
+  $filters: DefinitionFilter
+  $order: DefinitionOrder
+) {
+  definitions(order: $order, pagination: $pagination, filters: $filters) {
+    ...ListDefinition
+  }
+}

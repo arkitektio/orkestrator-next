@@ -31,6 +31,9 @@ export const buildDeleteAction = (params: DeleteActionParams): Action => ({
       type: "identifier",
       identifier: identifierFromSmartOrString(params.identifier),
     },
+    {
+      type: "nopartner",
+    },
   ],
   execute: async ({ services, onProgress, abortSignal, state }) => {
     let service = services[params.service]

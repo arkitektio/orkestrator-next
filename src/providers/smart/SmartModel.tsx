@@ -142,9 +142,6 @@ export const SmartModel = ({
             style={{
               scale: partners.length > 0 ? 1.5 : 1,
             }}
-            onClick={(e) => {
-              setPartners([]);
-            }}
           >
             {props.children}
             {isOver && <CombineButton />}
@@ -155,7 +152,7 @@ export const SmartModel = ({
                 <div
                   ref={refs.setFloating}
                   className={cn(
-                    " bg-background border rounded-lg shadow-lg p-2 z-[9999] w-[300px] aspect-square",
+                    " bg-background border rounded-lg shadow-lg p-2 z-[9999] w-[300px] aspect-square partnercard",
                   )}
                   style={floatingStyles}
                 >

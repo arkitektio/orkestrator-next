@@ -222,7 +222,7 @@ export const ApplicableNodes = (props: PassDownProps) => {
     variables: {
       filters: {
         demands: demands,
-        search: props.filter,
+        search: props.filter && props.filter != "" ? props.filter : undefined,
       },
     },
   });
@@ -283,7 +283,7 @@ export const ApplicableDefinitions = (props: PassDownProps) => {
     variables: {
       filters: {
         demands: demands,
-        search: props.filter,
+        search: props.filter && props.filter != "" ? props.filter : undefined,
       },
     },
   });

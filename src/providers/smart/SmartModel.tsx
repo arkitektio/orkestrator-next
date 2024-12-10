@@ -152,7 +152,7 @@ export const SmartModel = ({
                 <div
                   ref={refs.setFloating}
                   className={cn(
-                    " bg-background border rounded-lg shadow-lg p-2 z-[9999] w-[300px] aspect-square partnercard",
+                    " bg-background border border-gray-500 rounded-lg shadow-lg p-2 z-[9999] w-[300px] aspect-square partnercard",
                   )}
                   style={floatingStyles}
                 >

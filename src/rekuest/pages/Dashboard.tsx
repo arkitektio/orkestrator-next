@@ -203,11 +203,11 @@ export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
       title={data.dashboard.name || "New Dasboard"}
       object={data.dashboard.id}
     >
-      <div className="relative w-full h-full">
+      <div className="relative w-full h-[800px] flex">
         <DockviewReact
           components={components}
           onReady={onReady}
-          className={"dockview-theme-abyss"}
+          className={"dockview-theme-abyss h-[800px] w-full"}
         />
         <Button
           variant="outline"

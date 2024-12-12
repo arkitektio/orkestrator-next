@@ -966,7 +966,7 @@
           },
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -978,7 +978,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -990,7 +990,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -1030,7 +1030,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -1042,7 +1042,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -1054,7 +1054,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -1066,7 +1066,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -1078,7 +1078,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -1090,7 +1090,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -1102,7 +1102,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -1114,7 +1114,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -1966,6 +1966,51 @@
         "possibleTypes": null
       },
       {
+        "kind": "OBJECT",
+        "name": "ChannelInfo",
+        "description": "A channel descriptor",
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "label",
+            "description": null,
+            "args": [
+              {
+                "name": "withColorName",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "Boolean",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": "false",
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "INPUT_OBJECT",
         "name": "ChannelInput",
         "description": null,
@@ -2228,7 +2273,7 @@
         "inputFields": [
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -2240,7 +2285,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -2252,7 +2297,7 @@
           },
           {
             "name": "channel",
-            "description": null,
+            "description": "The ID of the channel this view is for",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -2268,7 +2313,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -2280,7 +2325,7 @@
           },
           {
             "name": "image",
-            "description": null,
+            "description": "The ID of the image this view is for",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -2296,7 +2341,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -2308,7 +2353,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -2320,7 +2365,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -2332,7 +2377,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -2344,7 +2389,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -2356,7 +2401,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -2368,7 +2413,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -2380,7 +2425,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -2932,7 +2977,7 @@
         "inputFields": [
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -2944,7 +2989,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -2956,7 +3001,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -3000,7 +3045,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -3012,7 +3057,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -3024,7 +3069,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -3036,7 +3081,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -3048,7 +3093,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -3060,7 +3105,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -3072,7 +3117,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -3084,7 +3129,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -5715,7 +5760,7 @@
         "inputFields": [
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -5727,7 +5772,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -5739,7 +5784,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -5795,7 +5840,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -5807,7 +5852,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -5819,7 +5864,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -5831,7 +5876,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -5843,7 +5888,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -5855,7 +5900,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -5867,7 +5912,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -5879,7 +5924,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -6380,15 +6425,43 @@
         "possibleTypes": null
       },
       {
+        "kind": "OBJECT",
+        "name": "FrameInfo",
+        "description": "A channel descriptor",
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "label",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "INPUT_OBJECT",
         "name": "FromArrayLikeInput",
-        "description": null,
+        "description": "Input type for creating an image from an array-like object",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "acquisitionViews",
-            "description": null,
+            "description": "Optional list of acquisition views",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -6408,7 +6481,7 @@
           },
           {
             "name": "array",
-            "description": null,
+            "description": "The array-like object to create the image from",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -6424,7 +6497,7 @@
           },
           {
             "name": "channelViews",
-            "description": null,
+            "description": "Optional list of channel views",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -6444,7 +6517,7 @@
           },
           {
             "name": "dataset",
-            "description": null,
+            "description": "Optional dataset ID to associate the image with",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -6456,7 +6529,7 @@
           },
           {
             "name": "derivedViews",
-            "description": null,
+            "description": "Optional list of derived views",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -6476,7 +6549,7 @@
           },
           {
             "name": "fileViews",
-            "description": null,
+            "description": "Optional list of file views",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -6496,7 +6569,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "The name of the image",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -6512,7 +6585,7 @@
           },
           {
             "name": "opticsViews",
-            "description": null,
+            "description": "Optional list of optics views",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -6532,7 +6605,7 @@
           },
           {
             "name": "pixelViews",
-            "description": null,
+            "description": "Optional list of pixel views",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -6552,7 +6625,7 @@
           },
           {
             "name": "rgbViews",
-            "description": null,
+            "description": "Optional list of RGB views",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -6572,7 +6645,7 @@
           },
           {
             "name": "roiViews",
-            "description": null,
+            "description": "Optional list of ROI views",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -6592,7 +6665,7 @@
           },
           {
             "name": "scaleViews",
-            "description": null,
+            "description": "Optional list of scale views",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -6612,7 +6685,7 @@
           },
           {
             "name": "structureViews",
-            "description": null,
+            "description": "Optional list of structure views",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -6632,7 +6705,7 @@
           },
           {
             "name": "tags",
-            "description": null,
+            "description": "Optional list of tags to associate with the image",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -6652,7 +6725,7 @@
           },
           {
             "name": "timepointViews",
-            "description": null,
+            "description": "Optional list of timepoint views",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -6672,7 +6745,7 @@
           },
           {
             "name": "transformationViews",
-            "description": null,
+            "description": "Optional list of affine transformation views",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -6780,7 +6853,7 @@
         "inputFields": [
           {
             "name": "dataframe",
-            "description": null,
+            "description": "The parquet dataframe to create the table from",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -6796,7 +6869,7 @@
           },
           {
             "name": "dataset",
-            "description": null,
+            "description": "The dataset ID this table belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -6808,7 +6881,7 @@
           },
           {
             "name": "imageAccessors",
-            "description": null,
+            "description": "Image accessors to create for this table",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -6828,7 +6901,7 @@
           },
           {
             "name": "labelAccessors",
-            "description": null,
+            "description": "Label accessors to create for this table",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -6848,7 +6921,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "The name of the table",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -6864,7 +6937,7 @@
           },
           {
             "name": "origins",
-            "description": null,
+            "description": "The IDs of tables this table was derived from",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -7138,7 +7211,7 @@
         "fields": [
           {
             "name": "affineTransformationViews",
-            "description": "The affine transformation views of the image.",
+            "description": "The affine transformation views describing position and scale",
             "args": [
               {
                 "name": "filters",
@@ -7187,7 +7260,7 @@
           },
           {
             "name": "channelViews",
-            "description": null,
+            "description": "Channel views relating to acquisition channels",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7210,8 +7283,32 @@
             "deprecationReason": null
           },
           {
+            "name": "channels",
+            "description": "The channels of this image",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "ChannelInfo",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "createdAt",
-            "description": null,
+            "description": "When this image was created",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7227,7 +7324,7 @@
           },
           {
             "name": "creator",
-            "description": null,
+            "description": "Who created this image",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -7239,7 +7336,7 @@
           },
           {
             "name": "dataset",
-            "description": null,
+            "description": "The dataset this image belongs to",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -7251,7 +7348,7 @@
           },
           {
             "name": "derivedFromViews",
-            "description": null,
+            "description": "Views this image was derived from",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7275,7 +7372,7 @@
           },
           {
             "name": "derivedScaleViews",
-            "description": null,
+            "description": "Scale views derived from this image",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7299,7 +7396,7 @@
           },
           {
             "name": "derivedViews",
-            "description": null,
+            "description": "Views derived from this image",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7323,7 +7420,7 @@
           },
           {
             "name": "fileViews",
-            "description": null,
+            "description": "File views relating to source files",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7346,8 +7443,32 @@
             "deprecationReason": null
           },
           {
+            "name": "frames",
+            "description": "The channels of this image",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "FrameInfo",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "history",
-            "description": null,
+            "description": "History of changes to this image",
             "args": [
               {
                 "name": "pagination",
@@ -7400,7 +7521,7 @@
           },
           {
             "name": "labelViews",
-            "description": null,
+            "description": "Label views mapping channels to labels",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7424,7 +7545,7 @@
           },
           {
             "name": "latestSnapshot",
-            "description": null,
+            "description": "The latest snapshot of this image",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -7436,7 +7557,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "The name of the image",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7452,7 +7573,7 @@
           },
           {
             "name": "opticsViews",
-            "description": null,
+            "description": "Optics views describing acquisition settings",
             "args": [
               {
                 "name": "filters",
@@ -7501,7 +7622,7 @@
           },
           {
             "name": "pinned",
-            "description": null,
+            "description": "Is this image pinned by the current user",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7517,7 +7638,7 @@
           },
           {
             "name": "pixelViews",
-            "description": null,
+            "description": "Pixel views describing pixel value semantics",
             "args": [
               {
                 "name": "filters",
@@ -7556,6 +7677,30 @@
                   "ofType": {
                     "kind": "OBJECT",
                     "name": "PixelView",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "planes",
+            "description": "The channels of this image",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "PlaneInfo",
                     "ofType": null
                   }
                 }
@@ -7623,7 +7768,7 @@
           },
           {
             "name": "rgbContexts",
-            "description": null,
+            "description": "RGB rendering contexts",
             "args": [
               {
                 "name": "filters",
@@ -7672,7 +7817,7 @@
           },
           {
             "name": "roiViews",
-            "description": null,
+            "description": "Region of interest views",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7733,7 +7878,7 @@
           },
           {
             "name": "scaleViews",
-            "description": null,
+            "description": "Scale views describing physical dimensions",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7757,7 +7902,7 @@
           },
           {
             "name": "snapshots",
-            "description": null,
+            "description": "Associated snapshots",
             "args": [
               {
                 "name": "filters",
@@ -7822,7 +7967,7 @@
           },
           {
             "name": "structureViews",
-            "description": null,
+            "description": "Structure views relating other Arkitekt types to a subsection of the image",
             "args": [
               {
                 "name": "filters",
@@ -7871,7 +8016,7 @@
           },
           {
             "name": "tags",
-            "description": null,
+            "description": "The tags of this image",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7895,7 +8040,7 @@
           },
           {
             "name": "timepointViews",
-            "description": null,
+            "description": "Timepoint views describing temporal relationships",
             "args": [
               {
                 "name": "filters",
@@ -7944,7 +8089,7 @@
           },
           {
             "name": "videos",
-            "description": null,
+            "description": "Associated videos",
             "args": [
               {
                 "name": "pagination",
@@ -7981,11 +8126,11 @@
           },
           {
             "name": "views",
-            "description": null,
+            "description": "All views of this image",
             "args": [
               {
                 "name": "filters",
-                "description": null,
+                "description": "A filter to selected the subset of views",
                 "type": {
                   "kind": "INPUT_OBJECT",
                   "name": "ViewFilter",
@@ -9444,7 +9589,7 @@
         "inputFields": [
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -9456,7 +9601,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -9468,7 +9613,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -9512,7 +9657,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -9524,7 +9669,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -9536,7 +9681,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -9548,7 +9693,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -9560,7 +9705,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -9572,7 +9717,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -9584,7 +9729,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -9596,7 +9741,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -10078,7 +10223,7 @@
         "fields": [
           {
             "name": "createAffineTransformationView",
-            "description": null,
+            "description": "Create a new view for affine transformation data",
             "args": [
               {
                 "name": "input",
@@ -10111,7 +10256,7 @@
           },
           {
             "name": "createCamera",
-            "description": null,
+            "description": "Create a new camera configuration",
             "args": [
               {
                 "name": "input",
@@ -10144,7 +10289,7 @@
           },
           {
             "name": "createChannel",
-            "description": null,
+            "description": "Create a new channel",
             "args": [
               {
                 "name": "input",
@@ -10177,7 +10322,7 @@
           },
           {
             "name": "createChannelView",
-            "description": null,
+            "description": "Create a new view for channel data",
             "args": [
               {
                 "name": "input",
@@ -10210,7 +10355,7 @@
           },
           {
             "name": "createContinousScanView",
-            "description": null,
+            "description": "Create a new view for continuous scan data",
             "args": [
               {
                 "name": "input",
@@ -10243,7 +10388,7 @@
           },
           {
             "name": "createDataset",
-            "description": null,
+            "description": "Create a new dataset to organize data",
             "args": [
               {
                 "name": "input",
@@ -10276,7 +10421,7 @@
           },
           {
             "name": "createEra",
-            "description": null,
+            "description": "Create a new era for temporal organization",
             "args": [
               {
                 "name": "input",
@@ -10309,7 +10454,7 @@
           },
           {
             "name": "createFileView",
-            "description": null,
+            "description": "Create a new view for file data",
             "args": [
               {
                 "name": "input",
@@ -10342,7 +10487,7 @@
           },
           {
             "name": "createInstrument",
-            "description": null,
+            "description": "Create a new instrument configuration",
             "args": [
               {
                 "name": "input",
@@ -10375,7 +10520,7 @@
           },
           {
             "name": "createLabelView",
-            "description": null,
+            "description": "Create a new view for label data",
             "args": [
               {
                 "name": "input",
@@ -10408,7 +10553,7 @@
           },
           {
             "name": "createMultiWellPlate",
-            "description": null,
+            "description": "Create a new multi-well plate configuration",
             "args": [
               {
                 "name": "input",
@@ -10441,7 +10586,7 @@
           },
           {
             "name": "createObjective",
-            "description": null,
+            "description": "Create a new microscope objective configuration",
             "args": [
               {
                 "name": "input",
@@ -10474,7 +10619,7 @@
           },
           {
             "name": "createOpticsView",
-            "description": null,
+            "description": "Create a new view for optical settings",
             "args": [
               {
                 "name": "input",
@@ -10507,7 +10652,7 @@
           },
           {
             "name": "createRenderTree",
-            "description": null,
+            "description": "Create a new render tree for image visualization",
             "args": [
               {
                 "name": "input",
@@ -10540,7 +10685,7 @@
           },
           {
             "name": "createRenderedPlot",
-            "description": null,
+            "description": "Create a new rendered plot",
             "args": [
               {
                 "name": "input",
@@ -10573,7 +10718,7 @@
           },
           {
             "name": "createRgbContext",
-            "description": null,
+            "description": "Create a new RGB context for image visualization",
             "args": [
               {
                 "name": "input",
@@ -10606,7 +10751,7 @@
           },
           {
             "name": "createRgbView",
-            "description": null,
+            "description": "Create a new view for RGB image data",
             "args": [
               {
                 "name": "input",
@@ -10639,7 +10784,7 @@
           },
           {
             "name": "createRoi",
-            "description": null,
+            "description": "Create a new region of interest",
             "args": [
               {
                 "name": "input",
@@ -10672,7 +10817,7 @@
           },
           {
             "name": "createRoiView",
-            "description": null,
+            "description": "Create a new view for region of interest data",
             "args": [
               {
                 "name": "input",
@@ -10705,7 +10850,7 @@
           },
           {
             "name": "createSnapshot",
-            "description": null,
+            "description": "Create a new state snapshot",
             "args": [
               {
                 "name": "input",
@@ -10715,7 +10860,7 @@
                   "name": null,
                   "ofType": {
                     "kind": "INPUT_OBJECT",
-                    "name": "SnaphotInput",
+                    "name": "SnapshotInput",
                     "ofType": null
                   }
                 },
@@ -10738,7 +10883,7 @@
           },
           {
             "name": "createStage",
-            "description": null,
+            "description": "Create a new stage for organizing data",
             "args": [
               {
                 "name": "input",
@@ -10771,7 +10916,7 @@
           },
           {
             "name": "createStructureView",
-            "description": null,
+            "description": "Create a new view for structural data",
             "args": [
               {
                 "name": "input",
@@ -10804,7 +10949,7 @@
           },
           {
             "name": "createTimepointView",
-            "description": null,
+            "description": "Create a new view for temporal data",
             "args": [
               {
                 "name": "input",
@@ -10837,7 +10982,7 @@
           },
           {
             "name": "createViewCollection",
-            "description": null,
+            "description": "Create a new collection of views to organize related views",
             "args": [
               {
                 "name": "input",
@@ -10870,7 +11015,7 @@
           },
           {
             "name": "createWellPositionView",
-            "description": null,
+            "description": "Create a new view for well position data",
             "args": [
               {
                 "name": "input",
@@ -10903,7 +11048,7 @@
           },
           {
             "name": "deleteAffineTransformationView",
-            "description": null,
+            "description": "Delete an existing affine transformation view",
             "args": [
               {
                 "name": "input",
@@ -10936,7 +11081,7 @@
           },
           {
             "name": "deleteCamera",
-            "description": null,
+            "description": "Delete an existing camera",
             "args": [
               {
                 "name": "input",
@@ -10969,7 +11114,7 @@
           },
           {
             "name": "deleteChannel",
-            "description": null,
+            "description": "Delete an existing channel",
             "args": [
               {
                 "name": "input",
@@ -11002,7 +11147,7 @@
           },
           {
             "name": "deleteChannelView",
-            "description": null,
+            "description": "Delete an existing channel view",
             "args": [
               {
                 "name": "input",
@@ -11035,7 +11180,7 @@
           },
           {
             "name": "deleteDataset",
-            "description": null,
+            "description": "Delete an existing dataset",
             "args": [
               {
                 "name": "input",
@@ -11068,7 +11213,7 @@
           },
           {
             "name": "deleteEra",
-            "description": null,
+            "description": "Delete an existing era",
             "args": [
               {
                 "name": "input",
@@ -11101,7 +11246,7 @@
           },
           {
             "name": "deleteFile",
-            "description": null,
+            "description": "Delete an existing file",
             "args": [
               {
                 "name": "input",
@@ -11134,7 +11279,7 @@
           },
           {
             "name": "deleteImage",
-            "description": null,
+            "description": "Delete an existing image",
             "args": [
               {
                 "name": "input",
@@ -11167,7 +11312,7 @@
           },
           {
             "name": "deleteInstrument",
-            "description": null,
+            "description": "Delete an existing instrument",
             "args": [
               {
                 "name": "input",
@@ -11200,7 +11345,7 @@
           },
           {
             "name": "deleteMultiWellPlate",
-            "description": null,
+            "description": "Delete an existing multi-well plate configuration",
             "args": [
               {
                 "name": "input",
@@ -11233,7 +11378,7 @@
           },
           {
             "name": "deleteObjective",
-            "description": null,
+            "description": "Delete an existing objective",
             "args": [
               {
                 "name": "input",
@@ -11266,7 +11411,7 @@
           },
           {
             "name": "deleteOpticsView",
-            "description": null,
+            "description": "Delete an existing optics view",
             "args": [
               {
                 "name": "input",
@@ -11299,7 +11444,7 @@
           },
           {
             "name": "deleteRgbContext",
-            "description": null,
+            "description": "Delete an existing RGB context",
             "args": [
               {
                 "name": "input",
@@ -11332,7 +11477,7 @@
           },
           {
             "name": "deleteRgbView",
-            "description": null,
+            "description": "Delete an existing RGB view",
             "args": [
               {
                 "name": "input",
@@ -11365,7 +11510,7 @@
           },
           {
             "name": "deleteRoi",
-            "description": null,
+            "description": "Delete an existing region of interest",
             "args": [
               {
                 "name": "input",
@@ -11398,7 +11543,7 @@
           },
           {
             "name": "deleteSnapshot",
-            "description": null,
+            "description": "Delete an existing snapshot",
             "args": [
               {
                 "name": "input",
@@ -11431,7 +11576,7 @@
           },
           {
             "name": "deleteStage",
-            "description": null,
+            "description": "Delete an existing stage",
             "args": [
               {
                 "name": "input",
@@ -11464,7 +11609,7 @@
           },
           {
             "name": "deleteTimepointView",
-            "description": null,
+            "description": "Delete an existing timepoint view",
             "args": [
               {
                 "name": "input",
@@ -11497,7 +11642,7 @@
           },
           {
             "name": "deleteView",
-            "description": null,
+            "description": "Delete any type of view",
             "args": [
               {
                 "name": "input",
@@ -11530,7 +11675,7 @@
           },
           {
             "name": "deleteViewCollection",
-            "description": null,
+            "description": "Delete an existing view collection",
             "args": [
               {
                 "name": "input",
@@ -11563,7 +11708,7 @@
           },
           {
             "name": "ensureCamera",
-            "description": null,
+            "description": "Ensure a camera exists, creating if needed",
             "args": [
               {
                 "name": "input",
@@ -11596,7 +11741,7 @@
           },
           {
             "name": "ensureChannel",
-            "description": null,
+            "description": "Ensure a channel exists, creating if needed",
             "args": [
               {
                 "name": "input",
@@ -11629,7 +11774,7 @@
           },
           {
             "name": "ensureInstrument",
-            "description": null,
+            "description": "Ensure an instrument exists, creating if needed",
             "args": [
               {
                 "name": "input",
@@ -11662,7 +11807,7 @@
           },
           {
             "name": "ensureMultiWellPlate",
-            "description": null,
+            "description": "Ensure a multi-well plate exists, creating if needed",
             "args": [
               {
                 "name": "input",
@@ -11695,7 +11840,7 @@
           },
           {
             "name": "ensureObjective",
-            "description": null,
+            "description": "Ensure an objective exists, creating if needed",
             "args": [
               {
                 "name": "input",
@@ -11728,7 +11873,7 @@
           },
           {
             "name": "fromArrayLike",
-            "description": null,
+            "description": "Create an image from array-like data",
             "args": [
               {
                 "name": "input",
@@ -11761,7 +11906,7 @@
           },
           {
             "name": "fromFileLike",
-            "description": null,
+            "description": "Create a file from file-like data",
             "args": [
               {
                 "name": "input",
@@ -11794,7 +11939,7 @@
           },
           {
             "name": "fromParquetLike",
-            "description": null,
+            "description": "Create a table from parquet-like data",
             "args": [
               {
                 "name": "input",
@@ -11827,7 +11972,7 @@
           },
           {
             "name": "pinCamera",
-            "description": null,
+            "description": "Pin a camera for quick access",
             "args": [
               {
                 "name": "input",
@@ -11860,7 +12005,7 @@
           },
           {
             "name": "pinChannel",
-            "description": null,
+            "description": "Pin a channel for quick access",
             "args": [
               {
                 "name": "input",
@@ -11893,7 +12038,7 @@
           },
           {
             "name": "pinDataset",
-            "description": null,
+            "description": "Pin a dataset for quick access",
             "args": [
               {
                 "name": "input",
@@ -11926,7 +12071,7 @@
           },
           {
             "name": "pinEra",
-            "description": null,
+            "description": "Pin an era for quick access",
             "args": [
               {
                 "name": "input",
@@ -11959,7 +12104,7 @@
           },
           {
             "name": "pinImage",
-            "description": null,
+            "description": "Pin an image for quick access",
             "args": [
               {
                 "name": "input",
@@ -11992,7 +12137,7 @@
           },
           {
             "name": "pinInstrument",
-            "description": null,
+            "description": "Pin an instrument for quick access",
             "args": [
               {
                 "name": "input",
@@ -12025,7 +12170,7 @@
           },
           {
             "name": "pinMultiWellPlate",
-            "description": null,
+            "description": "Pin a multi-well plate for quick access",
             "args": [
               {
                 "name": "input",
@@ -12058,7 +12203,7 @@
           },
           {
             "name": "pinObjective",
-            "description": null,
+            "description": "Pin an objective for quick access",
             "args": [
               {
                 "name": "input",
@@ -12091,7 +12236,7 @@
           },
           {
             "name": "pinRoi",
-            "description": null,
+            "description": "Pin a region of interest for quick access",
             "args": [
               {
                 "name": "input",
@@ -12124,7 +12269,7 @@
           },
           {
             "name": "pinSnapshot",
-            "description": null,
+            "description": "Pin a snapshot for quick access",
             "args": [
               {
                 "name": "input",
@@ -12157,7 +12302,7 @@
           },
           {
             "name": "pinStage",
-            "description": null,
+            "description": "Pin a stage for quick access",
             "args": [
               {
                 "name": "input",
@@ -12190,7 +12335,7 @@
           },
           {
             "name": "pinView",
-            "description": null,
+            "description": "Pin a view for quick access",
             "args": [
               {
                 "name": "input",
@@ -12223,7 +12368,7 @@
           },
           {
             "name": "pinViewCollection",
-            "description": null,
+            "description": "Pin a view collection for quick access",
             "args": [
               {
                 "name": "input",
@@ -12256,7 +12401,7 @@
           },
           {
             "name": "putDatasetsInDataset",
-            "description": null,
+            "description": "Add datasets as children of another dataset",
             "args": [
               {
                 "name": "input",
@@ -12289,7 +12434,7 @@
           },
           {
             "name": "putFilesInDataset",
-            "description": null,
+            "description": "Add files to a dataset",
             "args": [
               {
                 "name": "input",
@@ -12322,7 +12467,7 @@
           },
           {
             "name": "putImagesInDataset",
-            "description": null,
+            "description": "Add images to a dataset",
             "args": [
               {
                 "name": "input",
@@ -12355,7 +12500,7 @@
           },
           {
             "name": "relateToDataset",
-            "description": null,
+            "description": "Relate an image to a dataset",
             "args": [
               {
                 "name": "input",
@@ -12388,7 +12533,7 @@
           },
           {
             "name": "releaseDatasetsFromDataset",
-            "description": null,
+            "description": "Remove datasets from being children of another dataset",
             "args": [
               {
                 "name": "input",
@@ -12421,7 +12566,7 @@
           },
           {
             "name": "releaseFilesFromDataset",
-            "description": null,
+            "description": "Remove files from a dataset",
             "args": [
               {
                 "name": "input",
@@ -12454,7 +12599,7 @@
           },
           {
             "name": "releaseImagesFromDataset",
-            "description": null,
+            "description": "Remove images from a dataset",
             "args": [
               {
                 "name": "input",
@@ -12487,7 +12632,7 @@
           },
           {
             "name": "requestAccess",
-            "description": "Request upload credentials for a given key",
+            "description": "Request credentials to access an image",
             "args": [
               {
                 "name": "input",
@@ -12520,7 +12665,7 @@
           },
           {
             "name": "requestFileAccess",
-            "description": null,
+            "description": "Request credentials to access a file",
             "args": [
               {
                 "name": "input",
@@ -12553,7 +12698,7 @@
           },
           {
             "name": "requestFileUpload",
-            "description": null,
+            "description": "Request credentials to upload a new file",
             "args": [
               {
                 "name": "input",
@@ -12586,7 +12731,7 @@
           },
           {
             "name": "requestFileUploadPresigned",
-            "description": null,
+            "description": "Request presigned credentials for file upload",
             "args": [
               {
                 "name": "input",
@@ -12619,7 +12764,7 @@
           },
           {
             "name": "requestMediaUpload",
-            "description": null,
+            "description": "Request credentials for media file upload",
             "args": [
               {
                 "name": "input",
@@ -12652,7 +12797,7 @@
           },
           {
             "name": "requestTableAccess",
-            "description": null,
+            "description": "Request credentials to access a table",
             "args": [
               {
                 "name": "input",
@@ -12685,7 +12830,7 @@
           },
           {
             "name": "requestTableUpload",
-            "description": null,
+            "description": "Request credentials to upload a new table",
             "args": [
               {
                 "name": "input",
@@ -12718,7 +12863,7 @@
           },
           {
             "name": "requestUpload",
-            "description": null,
+            "description": "Request credentials to upload a new image",
             "args": [
               {
                 "name": "input",
@@ -12751,7 +12896,7 @@
           },
           {
             "name": "revertDataset",
-            "description": null,
+            "description": "Revert dataset to a previous version",
             "args": [
               {
                 "name": "input",
@@ -12784,7 +12929,7 @@
           },
           {
             "name": "updateDataset",
-            "description": null,
+            "description": "Update dataset metadata",
             "args": [
               {
                 "name": "input",
@@ -12817,7 +12962,7 @@
           },
           {
             "name": "updateImage",
-            "description": null,
+            "description": "Update an existing image's metadata",
             "args": [
               {
                 "name": "input",
@@ -12850,7 +12995,7 @@
           },
           {
             "name": "updateRgbContext",
-            "description": "Update RGB Context",
+            "description": "Update settings of an existing RGB context",
             "args": [
               {
                 "name": "input",
@@ -12883,7 +13028,7 @@
           },
           {
             "name": "updateRoi",
-            "description": null,
+            "description": "Update an existing region of interest",
             "args": [
               {
                 "name": "input",
@@ -13608,7 +13753,7 @@
         "inputFields": [
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -13620,7 +13765,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -13644,7 +13789,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -13696,7 +13841,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -13708,7 +13853,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -13720,7 +13865,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -13732,7 +13877,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -13744,7 +13889,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -13756,7 +13901,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -13768,7 +13913,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -13780,7 +13925,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14181,7 +14326,7 @@
           },
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14193,7 +14338,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14205,7 +14350,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -14241,7 +14386,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14253,7 +14398,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14265,7 +14410,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14277,7 +14422,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14289,7 +14434,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14301,7 +14446,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14313,7 +14458,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14325,7 +14470,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14365,7 +14510,7 @@
           },
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14377,7 +14522,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14389,7 +14534,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -14413,7 +14558,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14425,7 +14570,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14437,7 +14582,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14449,7 +14594,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14461,7 +14606,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14473,7 +14618,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14485,7 +14630,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14497,7 +14642,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14521,7 +14666,7 @@
         "inputFields": [
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14533,7 +14678,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14545,7 +14690,7 @@
           },
           {
             "name": "channel",
-            "description": null,
+            "description": "The ID of the channel this view is for",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -14561,7 +14706,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -14573,7 +14718,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14585,7 +14730,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14597,7 +14742,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14609,7 +14754,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14621,7 +14766,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14633,7 +14778,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14645,7 +14790,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14657,7 +14802,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14681,7 +14826,7 @@
         "inputFields": [
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14693,7 +14838,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14705,7 +14850,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -14733,7 +14878,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14745,7 +14890,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14757,7 +14902,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14769,7 +14914,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14781,7 +14926,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14793,7 +14938,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14805,7 +14950,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14817,7 +14962,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14841,7 +14986,7 @@
         "inputFields": [
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14853,7 +14998,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14865,7 +15010,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -14905,7 +15050,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14917,7 +15062,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14929,7 +15074,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14941,7 +15086,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14953,7 +15098,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14965,7 +15110,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14977,7 +15122,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -14989,7 +15134,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15165,7 +15310,7 @@
         "inputFields": [
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15177,7 +15322,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15201,7 +15346,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -15237,7 +15382,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15249,7 +15394,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15261,7 +15406,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15273,7 +15418,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15285,7 +15430,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15297,7 +15442,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15309,7 +15454,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15321,7 +15466,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15345,7 +15490,7 @@
         "inputFields": [
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15357,7 +15502,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15369,7 +15514,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -15413,7 +15558,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15425,7 +15570,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15437,7 +15582,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15449,7 +15594,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15461,7 +15606,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15473,7 +15618,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15485,7 +15630,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15497,7 +15642,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15553,7 +15698,7 @@
           },
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15565,7 +15710,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15577,7 +15722,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -15673,7 +15818,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15685,7 +15830,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15697,7 +15842,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15709,7 +15854,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15721,7 +15866,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15733,7 +15878,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15745,7 +15890,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15757,7 +15902,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15781,7 +15926,7 @@
         "inputFields": [
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15793,7 +15938,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15805,7 +15950,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -15833,7 +15978,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15845,7 +15990,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15857,7 +16002,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15869,7 +16014,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15881,7 +16026,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15893,7 +16038,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15905,7 +16050,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15917,7 +16062,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15941,7 +16086,7 @@
         "inputFields": [
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15953,7 +16098,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -15965,7 +16110,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -16049,7 +16194,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16061,7 +16206,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16073,7 +16218,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16085,7 +16230,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16097,7 +16242,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16109,7 +16254,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16121,7 +16266,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16133,7 +16278,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16157,7 +16302,7 @@
         "inputFields": [
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16169,7 +16314,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16181,7 +16326,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -16209,7 +16354,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16221,7 +16366,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16233,7 +16378,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16245,7 +16390,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16257,7 +16402,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16269,7 +16414,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16281,7 +16426,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16293,7 +16438,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16317,7 +16462,7 @@
         "inputFields": [
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16329,7 +16474,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16341,7 +16486,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -16389,7 +16534,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16401,7 +16546,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16413,7 +16558,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16425,7 +16570,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16437,7 +16582,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16449,7 +16594,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16461,7 +16606,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -16473,7 +16618,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -17548,6 +17693,34 @@
         "possibleTypes": null
       },
       {
+        "kind": "OBJECT",
+        "name": "PlaneInfo",
+        "description": "A channel descriptor",
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "label",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "INTERFACE",
         "name": "Plot",
         "description": null,
@@ -17870,7 +18043,7 @@
             "args": [
               {
                 "name": "id",
-                "description": null,
+                "description": "The unique identifier of an object",
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
@@ -18065,7 +18238,7 @@
             "args": [
               {
                 "name": "id",
-                "description": null,
+                "description": "The unique identifier of an object",
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
@@ -18196,7 +18369,7 @@
             "args": [
               {
                 "name": "id",
-                "description": null,
+                "description": "The unique identifier of an object",
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
@@ -18278,7 +18451,7 @@
             "args": [
               {
                 "name": "id",
-                "description": null,
+                "description": "The unique identifier of an object",
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
@@ -18356,11 +18529,11 @@
           },
           {
             "name": "image",
-            "description": null,
+            "description": "Returns a single image by ID",
             "args": [
               {
                 "name": "id",
-                "description": null,
+                "description": "The unique identifier of an object",
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
@@ -18478,7 +18651,7 @@
             "args": [
               {
                 "name": "id",
-                "description": null,
+                "description": "The unique identifier of an object",
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
@@ -18583,7 +18756,7 @@
             "args": [
               {
                 "name": "id",
-                "description": null,
+                "description": "The unique identifier of an object",
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
@@ -19019,7 +19192,7 @@
             "args": [
               {
                 "name": "id",
-                "description": null,
+                "description": "The unique identifier of an object",
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
@@ -19076,7 +19249,7 @@
             "args": [
               {
                 "name": "id",
-                "description": null,
+                "description": "The unique identifier of an object",
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
@@ -19125,7 +19298,7 @@
             "args": [
               {
                 "name": "id",
-                "description": null,
+                "description": "The unique identifier of an object",
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
@@ -19219,7 +19392,7 @@
             "args": [
               {
                 "name": "id",
-                "description": null,
+                "description": "The unique identifier of an object",
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
@@ -19325,7 +19498,7 @@
             "args": [
               {
                 "name": "id",
-                "description": null,
+                "description": "The unique identifier of an object",
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
@@ -19407,7 +19580,7 @@
             "args": [
               {
                 "name": "id",
-                "description": null,
+                "description": "The unique identifier of an object",
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
@@ -19578,7 +19751,7 @@
             "args": [
               {
                 "name": "id",
-                "description": null,
+                "description": "The unique identifier of an object",
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
@@ -19709,7 +19882,7 @@
             "args": [
               {
                 "name": "id",
-                "description": null,
+                "description": "The unique identifier of an object",
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
@@ -19791,7 +19964,7 @@
             "args": [
               {
                 "name": "id",
-                "description": null,
+                "description": "The unique identifier of an object",
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
@@ -20742,7 +20915,7 @@
           },
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -20754,7 +20927,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -20766,7 +20939,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -20882,7 +21055,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -20894,7 +21067,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -20906,7 +21079,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -20918,7 +21091,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -20930,7 +21103,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -20942,7 +21115,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -20954,7 +21127,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -20966,7 +21139,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -21501,7 +21674,7 @@
         "inputFields": [
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -21513,7 +21686,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -21525,7 +21698,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -21569,7 +21742,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -21581,7 +21754,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -21593,7 +21766,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -21605,7 +21778,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -21617,7 +21790,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -21629,7 +21802,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -21641,7 +21814,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -21653,7 +21826,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -22835,56 +23008,8 @@
         "fields": null,
         "inputFields": [
           {
-            "name": "entity",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "ID",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "entityGroup",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "ID",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "entityKind",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "ID",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "entityParent",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "ID",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "image",
-            "description": null,
+            "description": "The image this ROI belongs to",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -22900,7 +23025,7 @@
           },
           {
             "name": "kind",
-            "description": null,
+            "description": "The type/kind of ROI",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -22916,7 +23041,7 @@
           },
           {
             "name": "vectors",
-            "description": null,
+            "description": "The vector coordinates defining the ROI",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -23532,50 +23657,6 @@
         "possibleTypes": null
       },
       {
-        "kind": "INPUT_OBJECT",
-        "name": "SnaphotInput",
-        "description": null,
-        "isOneOf": false,
-        "fields": null,
-        "inputFields": [
-          {
-            "name": "file",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Upload",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "image",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "ID",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "interfaces": null,
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
         "kind": "OBJECT",
         "name": "Snapshot",
         "description": null,
@@ -23727,6 +23808,50 @@
               "kind": "INPUT_OBJECT",
               "name": "StrFilterLookup",
               "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "SnapshotInput",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "file",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Upload",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "image",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "ID",
+                "ofType": null
+              }
             },
             "defaultValue": null,
             "isDeprecated": false,
@@ -24902,7 +25027,7 @@
         "inputFields": [
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -24914,7 +25039,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -24926,7 +25051,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -24970,7 +25095,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -24982,7 +25107,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -24994,7 +25119,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -25006,7 +25131,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -25018,7 +25143,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -25030,7 +25155,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -25042,7 +25167,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -25054,7 +25179,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -25077,7 +25202,7 @@
         "fields": [
           {
             "name": "files",
-            "description": null,
+            "description": "Subscribe to real-time file updates",
             "args": [
               {
                 "name": "dataset",
@@ -25106,25 +25231,8 @@
           },
           {
             "name": "historyEvents",
-            "description": null,
-            "args": [
-              {
-                "name": "user",
-                "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "kind": "SCALAR",
-                    "name": "String",
-                    "ofType": null
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
+            "description": "Subscribe to real-time image history events",
+            "args": [],
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -25139,7 +25247,7 @@
           },
           {
             "name": "images",
-            "description": null,
+            "description": "Subscribe to real-time image updates",
             "args": [
               {
                 "name": "dataset",
@@ -25168,7 +25276,7 @@
           },
           {
             "name": "rois",
-            "description": null,
+            "description": "Subscribe to real-time ROI updates",
             "args": [
               {
                 "name": "image",
@@ -26042,7 +26150,7 @@
         "inputFields": [
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -26054,7 +26162,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -26066,7 +26174,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -26130,7 +26238,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -26142,7 +26250,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -26154,7 +26262,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -26166,7 +26274,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -26178,7 +26286,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -26190,7 +26298,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -26202,7 +26310,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -26214,7 +26322,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -27817,7 +27925,7 @@
         "inputFields": [
           {
             "name": "cMax",
-            "description": null,
+            "description": "The maximum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -27829,7 +27937,7 @@
           },
           {
             "name": "cMin",
-            "description": null,
+            "description": "The minimum c (channel) coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -27841,7 +27949,7 @@
           },
           {
             "name": "collection",
-            "description": null,
+            "description": "The collection this view belongs to",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -27893,7 +28001,7 @@
           },
           {
             "name": "tMax",
-            "description": null,
+            "description": "The maximum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -27905,7 +28013,7 @@
           },
           {
             "name": "tMin",
-            "description": null,
+            "description": "The minimum t coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -27929,7 +28037,7 @@
           },
           {
             "name": "xMax",
-            "description": null,
+            "description": "The maximum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -27941,7 +28049,7 @@
           },
           {
             "name": "xMin",
-            "description": null,
+            "description": "The minimum x coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -27953,7 +28061,7 @@
           },
           {
             "name": "yMax",
-            "description": null,
+            "description": "The maximum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -27965,7 +28073,7 @@
           },
           {
             "name": "yMin",
-            "description": null,
+            "description": "The minimum y coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -27977,7 +28085,7 @@
           },
           {
             "name": "zMax",
-            "description": null,
+            "description": "The maximum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -27989,7 +28097,7 @@
           },
           {
             "name": "zMin",
-            "description": null,
+            "description": "The minimum z coordinate of the view",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -28133,6 +28241,22 @@
                   "name": "Int",
                   "ofType": null
                 }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "version",
+            "description": "The version of the zarr store (e.g. the version of the dataset).",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
               }
             },
             "isDeprecated": false,

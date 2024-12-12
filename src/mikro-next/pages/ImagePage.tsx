@@ -206,6 +206,9 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                   </div>
                 ))}
               </div>
+              <div className="font-light text-xs mb-2">
+                ZarrV {data?.image?.store?.version}
+              </div>
               <div className="font-light">Tags</div>
               <div className="text-xl flex mb-2">
                 {data?.image?.tags?.map((tag, index) => (
@@ -238,9 +241,6 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                     )}
                     {view.__typename == "WellPositionView" && (
                       <WellPositionViewCard view={view} key={index} />
-                    )}
-                    {view.__typename == "SpecimenView" && (
-                      <SpecimenViewCard view={view} key={index} />
                     )}
                     {view.__typename == "ROIView" && (
                       <ROIViewCard view={view} key={index} />

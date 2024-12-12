@@ -12,6 +12,7 @@ import {
 import React, { useEffect } from "react";
 import zod from "zod";
 import { useAction } from "./use-action";
+import { T } from "node_modules/@udecode/plate-emoji/dist/IndexSearch-Dvqq913n";
 
 export const ports = zod.object;
 
@@ -72,6 +73,12 @@ export const build = {
     zodType: zod.number(),
     scope: PortScope.Global,
   }),
+  int: (description?: string): StatePort => ({
+    kind: PortKind.Int,
+    description: description,
+    zodType: zod.number(),
+    scope: PortScope.Global,
+  }),
   float: (description?: string): StatePort => ({
     kind: PortKind.Float,
     description: description,
@@ -90,6 +97,30 @@ export const build = {
       identifier: identifier,
       description: description,
       zodType: zod.string(),
+      scope: PortScope.Global,
+    };
+  },
+  model: <T extends Record<string, StatePort>>(ports: T) => {
+    const shape = Object.entries(ports).reduce(
+      (acc, [key, value]) => {
+        acc[key] = value.zodType;
+        return acc;
+      },
+      {} as { [key: string]: zod.ZodTypeAny },
+    );
+
+    return {
+      kind: PortKind.Model,
+      zodType: zod.object(shape) as zod.ZodObject<{
+        [K in keyof T]: T[K]["zodType"];
+      }>,
+      scope: PortScope.Global,
+    };
+  },
+  array: <T extends StatePort>(port: T): StatePort => {
+    return {
+      kind: PortKind.List,
+      zodType: zod.array(port.zodType) as zod.ZodArray<T["zodType"]>,
       scope: PortScope.Global,
     };
   },
@@ -216,6 +247,7 @@ export type MetaApplication<
 
 export type UseActionOptions = {
   ephemeral: boolean;
+  debounce?: number;
 };
 
 export type MetaApplicationAdds<T extends MetaApplication<any, any>> = T & {
@@ -246,6 +278,16 @@ export const UsedAgentContext = React.createContext<AgentContext>({
   agent: "",
 });
 
+const debounce = (callback: Function, delay: number) => {
+  let timeout: NodeJS.Timeout | undefined;
+  return function () {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      callback();
+    }, delay);
+  };
+};
+
 export const useAgentContext = () => React.useContext(UsedAgentContext);
 
 const buildUseRekuestState = <T extends MetaApplication<any, any>>(
@@ -262,6 +304,7 @@ const buildUseRekuestState = <T extends MetaApplication<any, any>>(
     });
 
     useEffect(() => {
+      console.log("Refetching");
       refetch({
         agent,
         stateHash: app.states[state].manifest.hash,
@@ -270,7 +313,8 @@ const buildUseRekuestState = <T extends MetaApplication<any, any>>(
 
     useEffect(() => {
       if (data?.stateFor) {
-        subscribeToMore<
+        console.log("State", state, "subscribing to", data.stateFor.id);
+        return subscribeToMore<
           WatchStateEventsSubscription,
           WatchStateEventsSubscriptionVariables
         >({
@@ -280,6 +324,13 @@ const buildUseRekuestState = <T extends MetaApplication<any, any>>(
           },
           updateQuery: (prev, { subscriptionData }) => {
             if (!subscriptionData.data) return prev;
+            console.log("State update for", state, subscriptionData.data);
+            // TODO: This is so weird and hacky because why is it subscribing to the other state as well?
+            if (
+              subscriptionData.data.stateUpdateEvents.id !== data.stateFor.id
+            ) {
+              return prev;
+            }
             return {
               stateFor: {
                 ...prev.stateFor,
@@ -289,6 +340,8 @@ const buildUseRekuestState = <T extends MetaApplication<any, any>>(
           },
         });
       }
+
+      return () => {};
     }, [subscribeToMore, data?.stateFor?.id]);
 
     if (!data) {
@@ -316,7 +369,14 @@ const buildUseRekuestActions = <T extends MetaApplication<any, any>>(
     });
 
     const nodeAssign = async (args: any) => {
-      return assign({ args: args, ephemeral: options?.ephemeral });
+      if (options?.debounce) {
+        debounce(
+          () => assign({ args: args, ephemeral: options?.ephemeral }),
+          options.debounce,
+        );
+      } else {
+        return assign({ args: args, ephemeral: options?.ephemeral });
+      }
     };
 
     return {

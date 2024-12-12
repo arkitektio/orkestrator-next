@@ -3,7 +3,14 @@ import {
   Positioner,
   PositionerModule,
   PositionerPlaceholder,
-} from "./Positioner";
+} from "./modules/Positioner";
+import { IlluminationModule, Illuminator } from "./modules/Illumination";
+import TurretWidget, { TurretModule } from "./modules/Turret";
+import {
+  StageController,
+  StageControllerModule,
+} from "./modules/StageController";
+import { Camera, CameraModule } from "./modules/Camera";
 
 export type Registration = {
   name: string;
@@ -41,6 +48,30 @@ registry.register({
   name: "Positioner",
   module: PositionerModule,
   component: Positioner,
+  placeholder: PositionerPlaceholder,
+});
+registry.register({
+  name: "Illuminator",
+  module: IlluminationModule,
+  component: Illuminator,
+  placeholder: PositionerPlaceholder,
+});
+registry.register({
+  name: "Turret",
+  module: TurretModule,
+  component: TurretWidget,
+  placeholder: PositionerPlaceholder,
+});
+registry.register({
+  name: "StageControl",
+  module: StageControllerModule,
+  component: StageController,
+  placeholder: PositionerPlaceholder,
+});
+registry.register({
+  name: "Camera",
+  module: CameraModule,
+  component: Camera,
   placeholder: PositionerPlaceholder,
 });
 

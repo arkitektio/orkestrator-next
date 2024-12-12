@@ -15,6 +15,8 @@ export const RekuestAssignation = buildSmart(
   "rekuest/assignations",
 );
 
+export const BlokBlok = buildSmart("@blok/blok", "blok/bloks");
+
 export const RekuestNode = buildSmart("@rekuest/node", "rekuest/nodes");
 export const RekuestTemplate = buildSmart(
   "@rekuest/template",
@@ -224,6 +226,7 @@ export const LokServiceInstance = buildSmart(
   "@lok/serviceinstance",
   "lok/serviceinstances",
 );
+
 export const LokRoom = buildSmart("@lok/room", "lok/rooms");
 export const LokComment = buildSmart("@lok/comment", "lok/comments");
 export const LokMapping = buildSmart("@lok/mapping", "lok/mappings");

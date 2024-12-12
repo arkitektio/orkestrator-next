@@ -57,7 +57,7 @@ export const SmartModel = ({
     }
   }, [partners]);
 
-  const [{ isOver, canDrop, overItems }, drop] = useDrop(() => {
+  const [{ isOver, canDrop }, drop] = useDrop(() => {
     return {
       accept: [SMART_MODEL_DROP_TYPE],
       drop: (item, monitor) => {
@@ -70,21 +70,8 @@ export const SmartModel = ({
         return {};
       },
       collect: (monitor) => {
-        let text = monitor.getItem()?.text;
-        if (text) {
-          let structure: Structure = JSON.parse(text);
-          return {
-            isOver: monitor.isOver(),
-            canDrop: monitor.canDrop(),
-            overItems: [structure],
-          };
-        }
-
-        let item = monitor.getItem() as Structure[] | null;
-
         return {
           isOver: !!monitor.isOver(),
-          overItems: [],
           canDrop: !!monitor.canDrop(),
         };
       },
@@ -96,6 +83,7 @@ export const SmartModel = ({
       type: SMART_MODEL_DROP_TYPE,
       item: [self],
       collect: (monitor) => {
+        console.log("dragging", monitor.isDragging());
         return {
           isDragging: monitor.isDragging(),
         };
@@ -132,16 +120,16 @@ export const SmartModel = ({
           <div
             ref={drag}
             className={cn(
-              "@container relative smartdraggable z-10",
+              "@container relative z-10 cursor-pointer",
               isSelected && "group ring ring-1 ",
               isDragging &&
                 "opacity-50 ring-2 ring-gray-600 ring rounded rounded-md",
               isOver &&
                 "shadow-xl ring-2 border-gray-200 ring rounded rounded-md",
             )}
-            style={{
-              scale: partners.length > 0 ? 1.5 : 1,
-            }}
+            draggable={true}
+            data-identifier={props.identifier}
+            data-object={props.object}
           >
             {props.children}
             {isOver && <CombineButton />}
@@ -152,7 +140,7 @@ export const SmartModel = ({
                 <div
                   ref={refs.setFloating}
                   className={cn(
-                    " bg-background border border-gray-500 rounded-lg shadow-lg p-2 z-[9999] w-[300px] aspect-square partnercard",
+                    " bg-background border border-gray-500 rounded-lg shadow-lg p-2 z-[9999] w-[300px] aspect-square",
                   )}
                   style={floatingStyles}
                 >

@@ -5,6 +5,7 @@ fragment ZarrStore on ZarrStore {
   path
   shape
   dtype
+  version
 }
 
 fragment ParquetStore on ParquetStore {
@@ -21,7 +22,6 @@ fragment BigFileStore on BigFileStore {
   path
   presignedUrl
 }
-
 
 fragment MediaStore on MediaStore {
   id

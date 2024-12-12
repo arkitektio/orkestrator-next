@@ -17,6 +17,7 @@ import { useDebug } from "@/providers/debug/DebugContext";
 import { HomeIcon } from "@radix-ui/react-icons";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import {
+  Bolt,
   Bug,
   Database,
   Eye,
@@ -112,6 +113,17 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
         <div className="flex-grow  flex-row md:flex-col  flex gap-8 ">
           <div className="flex-grow"></div>
           {linkChildren}
+          <DroppableNavLink
+            key={"Bloks"}
+            to={"blok"}
+            className={"text-foreground mx-auto"}
+          >
+            {({ isActive }) => (
+              <NavigationMenuLink active={isActive}>
+                <Bolt />
+              </NavigationMenuLink>
+            )}
+          </DroppableNavLink>
           <div className="flex-grow"></div>
         </div>
 

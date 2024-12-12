@@ -12,6 +12,7 @@ fragment State on State {
 }
 
 fragment StateEvent on State {
+  id
   value
   updatedAt
 }

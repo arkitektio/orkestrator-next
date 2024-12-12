@@ -9,19 +9,17 @@ import {
 import { StreamWidget } from "@/widgets/StreamWidget";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpIcon } from "lucide-react";
 
-export const PositionerModule = buildModule({
+export const StageControllerModule = buildModule({
   states: {
     positioner: buildState(
       {
         position_x: build.float(),
         position_y: build.float(),
         position_z: build.float(),
-        latest_image: build.structure("@mikro/image"),
-        stream: build.structure("@lok/stream"),
       },
       {
         forceHash:
-          "419bca0e04d05a101436571cfe9590a62ecd8422cf8ff88488daeb2262aad00b",
+          "3e1ba8b3140b4a2dba7c0e4bfafa8ff9a9731a3e2b0b51a97d1f52c81ade623d",
       },
     ),
   },
@@ -49,54 +47,49 @@ export const PositionerModule = buildModule({
   },
 });
 
-export const Positioner = () => {
-  const { agent } = useAgentContext();
+export const StageController = () => {
+  const { value: position } = StageControllerModule.useState("positioner");
 
-  const { value } = PositionerModule.useState("positioner");
-
-  const { assign } = PositionerModule.useAction("moveY", {
+  const { assign } = StageControllerModule.useAction("moveY", {
     ephemeral: true,
   });
-  const { assign: assignX } = PositionerModule.useAction("moveX", {
+  const { assign: assignX } = StageControllerModule.useAction("moveX", {
     ephemeral: true,
   });
 
-  if (!value) {
+  if (!position) {
     return <div>Loading</div>;
   }
 
   return (
-    <div className="w-full h-full bg-black relative flex">
-      <div className="mx-auto">
-        <StreamWidget value={value.stream} />
-      </div>
-      <div className="absolute bottom-4 right-3 bg-gray-900 p-2 rounded-full px-3">
-        {value.position_y}y {value.position_x}x {value.position_z}z
+    <div className="relative w-full h-full">
+      <div className="absolute top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%] bg-gray-900 p-2 rounded-full px-3">
+        {position.position_y}y {position.position_x}x {position.position_z}z
       </div>
       <Button
         className="absolute top-2 left-1/2 transform -translate-x-1/2"
-        onClick={() => assign({ y: value.position_y + 1 })}
+        onClick={() => assign({ y: position.position_y + 1 })}
         variant={"outline"}
       >
         <ArrowUpIcon></ArrowUpIcon>
       </Button>
       <Button
         className="absolute bottom-2 left-1/2 transform -translate-x-1/2"
-        onClick={() => assign({ y: value.position_y - 1 })}
+        onClick={() => assign({ y: position.position_y - 1 })}
         variant={"outline"}
       >
         <ArrowDown />
       </Button>
       <Button
         className="absolute top-1/2 left-2 transform -translate-y-1/2"
-        onClick={() => assignX({ x: value.position_x - 1 })}
+        onClick={() => assignX({ x: position.position_x - 1 })}
         variant={"outline"}
       >
         <ArrowLeft />
       </Button>
       <Button
         className="absolute top-1/2 right-2 transform -translate-y-1/2"
-        onClick={() => assignX({ x: value.position_x + 1 })}
+        onClick={() => assignX({ x: position.position_x + 1 })}
         variant={"outline"}
       >
         <ArrowRight />

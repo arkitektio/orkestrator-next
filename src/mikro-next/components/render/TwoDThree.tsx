@@ -333,6 +333,12 @@ const colorMapOptions = Object.values(ColorMap).map((x) => ({
 export const RGBD = (props: RGBDProps) => {
   const [openPanels, setOpenPanels] = useState<Panel[]>([]);
 
+  const version = props.context.image.store.version;
+
+  if (version != "2") {
+    return <div>Rendering not implemented for Zarr Version other than 2</div>;
+  }
+
   return (
     <div style={{ width: "100%", height: "100%" }} className="relative">
       <Canvas style={{ width: "100%", height: "100%" }}>
@@ -356,13 +362,7 @@ export const RGBD = (props: RGBDProps) => {
           }}
           className="transform -translate-y-1/2 max-w-[400px]"
         >
-          <Card className="p-3">
-            {panel.roi.entity && <EntityOverlay entity={panel.roi.entity.id} />}
-
-            <MikroROI.DetailLink object={panel.roi.id}>
-              {panel.roi.entity?.linkedExpression.label}
-            </MikroROI.DetailLink>
-          </Card>
+          <Card className="p-3">Not implemented</Card>
         </div>
       ))}
     </div>
@@ -460,6 +460,10 @@ export const TwoDRGBThreeRenderDetail = ({
   };
 
   const updateView = async (data: ListRgbContextFragment) => {
+    if (data.image.store.version != "2") {
+      return;
+    }
+
     const imageData = await calculateImageData(data);
     if (!imageData) {
       return;

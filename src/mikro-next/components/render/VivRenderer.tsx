@@ -80,6 +80,10 @@ const mikroLoader = async (
     throw Error("No datalayer found");
   }
 
+  if (context.image.store.version != "2") {
+    throw Error("Version 3 not supported");
+  }
+
   let x = await client?.mutate<
     RequestAccessMutation,
     RequestAccessMutationVariables

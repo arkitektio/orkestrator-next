@@ -53,6 +53,7 @@ export const downloadSelectionFromStore = async (
     service: "s3",
   });
 
+  console.log("Path", path);
   let store = new S3Store(path, aws);
 
   let array = await open.v3(store, { kind: "array" });

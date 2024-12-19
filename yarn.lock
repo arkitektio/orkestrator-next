@@ -4433,6 +4433,37 @@
   resolved "https://registry.yarnpkg.com/@xmldom/xmldom/-/xmldom-0.8.10.tgz#a1337ca426aa61cef9fe15b5b28e340a72f6fa99"
   integrity sha512-2WALfTl4xo2SkGCYRt6rDTFfk9R1czmBvUQy12gK2KuRKIpWEhcbbzy8EZXtz/jkRqHX8bFEc6FC1HjX4TUWYw==
 
+"@zarrita/core@^0.1.0-next.17":
+  version "0.1.0-next.17"
+  resolved "https://registry.yarnpkg.com/@zarrita/core/-/core-0.1.0-next.17.tgz#36fbe2b19b6300dad3a72269a9c476342adc2be1"
+  integrity sha512-VTf1KWLz3vqX4IUdg1lJYBpHo/cT3NbpFQ47JOCEaVsmGv09So5yY7UkXPTQ6ef7oy9BFven7sD5EKSutiFn8A==
+  dependencies:
+    "@zarrita/storage" "^0.1.0-next.8"
+    "@zarrita/typedarray" "^0.1.0-next.4"
+    numcodecs "^0.3.2"
+
+"@zarrita/indexing@^0.1.0-next.19":
+  version "0.1.0-next.19"
+  resolved "https://registry.yarnpkg.com/@zarrita/indexing/-/indexing-0.1.0-next.19.tgz#ea0c89c947a06d0e9c8674d3340104dea133e408"
+  integrity sha512-GRu6CxtEeXnZUYR0Z/sEGFPcll7pG2Ek9muUkdpl5U5fUdPW7YaSj1tMBxDFhkgw9MNy87ksnN2VO4Tgjjl5fw==
+  dependencies:
+    "@zarrita/core" "^0.1.0-next.17"
+    "@zarrita/storage" "^0.1.0-next.8"
+    "@zarrita/typedarray" "^0.1.0-next.4"
+
+"@zarrita/storage@^0.1.0-next.8":
+  version "0.1.0-next.8"
+  resolved "https://registry.yarnpkg.com/@zarrita/storage/-/storage-0.1.0-next.8.tgz#bdbc9d027f3c9df407c001cd3945fbd649a55325"
+  integrity sha512-9d8bIaR2JuiG98gg5lF15Tpgc/+G/XOXlY53UtVP0LABwHbrIGFzpO2djzGB5bQe1jDj92VeXE8Z525Bs2vb6Q==
+  dependencies:
+    reference-spec-reader "^0.2.0"
+    unzipit "^1.4.3"
+
+"@zarrita/typedarray@^0.1.0-next.4":
+  version "0.1.0-next.4"
+  resolved "https://registry.yarnpkg.com/@zarrita/typedarray/-/typedarray-0.1.0-next.4.tgz#e5339201b0b16f82160930393fd1c59b33bcb4ff"
+  integrity sha512-sGqc5Ldh8nt/FE9gDA89OsL+FH37wgSxCF1Liv08O8SbZ4w3N48Wngv0EWAXvU1aSEdGhb2ABtSfErVDwnp45Q==
+
 acorn-jsx@^5.3.2:
   version "5.3.2"
   resolved "https://registry.yarnpkg.com/acorn-jsx/-/acorn-jsx-5.3.2.tgz#7ed5bb55908b3b2f1bc55c6af1653bada7f07937"
@@ -6664,7 +6695,7 @@ fflate@^0.6.9:
   resolved "https://registry.yarnpkg.com/fflate/-/fflate-0.6.10.tgz#5f40f9659205936a2d18abf88b2e7781662b6d43"
   integrity sha512-IQrh3lEPM93wVCEczc9SaAOvkmcoQn/G8Bo1e8ZPlY3X3bnAxWaBdvTdvM1hP62iZp0BXWDy4vTAy4fF0+Dlpg==
 
-fflate@~0.8.2:
+fflate@^0.8.0, fflate@~0.8.2:
   version "0.8.2"
   resolved "https://registry.yarnpkg.com/fflate/-/fflate-0.8.2.tgz#fc8631f5347812ad6028bbe4a2308b2792aa1dea"
   integrity sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==
@@ -8429,6 +8460,13 @@ numcodecs@^0.2.2:
   resolved "https://registry.yarnpkg.com/numcodecs/-/numcodecs-0.2.2.tgz#33d8b72e7223f3c80d67b9007720b9b54c62c240"
   integrity sha512-Y5K8mv80yb4MgVpcElBkUeMZqeE4TrovxRit/dTZvoRl6YkB6WEjY+fiUjGCblITnt3T3fmrDg8yRWu0gOLjhQ==
 
+numcodecs@^0.3.2:
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/numcodecs/-/numcodecs-0.3.2.tgz#09887cfc2a3ae1c59a495c01a7f0528118d85dcd"
+  integrity sha512-6YSPnmZgg0P87jnNhi3s+FVLOcIn3y+1CTIgUulA3IdASzK9fJM87sUFkpyA+be9GibGRaST2wCgkD+6U+fWKw==
+  dependencies:
+    fflate "^0.8.0"
+
 object-assign@^4.0.1, object-assign@^4.1.0, object-assign@^4.1.1:
   version "4.1.1"
   resolved "https://registry.yarnpkg.com/object-assign/-/object-assign-4.1.1.tgz#2109adc7965887cfc05cbbd442cac8bfbb360863"
@@ -9326,6 +9364,11 @@ redux@^4.2.0:
   integrity sha512-LAUYz4lc+Do8/g7aeRa8JkyDErK6ekstQaqWQrNRW//MY1TvCEpMtpTWvlQ+FPbWCx+Xixu/6SHt5N0HR+SB4w==
   dependencies:
     "@babel/runtime" "^7.9.2"
+
+reference-spec-reader@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/reference-spec-reader/-/reference-spec-reader-0.2.0.tgz#52bd79614dde68e68f05c97a05ae04ff20acd7ec"
+  integrity sha512-q0mfCi5yZSSHXpCyxjgQeaORq3tvDsxDyzaadA/5+AbAUwRyRuuTh0aRQuE/vAOt/qzzxidJ5iDeu1cLHaNBlQ==
 
 reflect.getprototypeof@^1.0.4:
   version "1.0.6"
@@ -10523,6 +10566,13 @@ unixify@^1.0.0:
   dependencies:
     normalize-path "^2.1.1"
 
+unzipit@^1.4.3:
+  version "1.4.3"
+  resolved "https://registry.yarnpkg.com/unzipit/-/unzipit-1.4.3.tgz#738298a6b235892bf7ce7db82cff813d4ca664ac"
+  integrity sha512-gsq2PdJIWWGhx5kcdWStvNWit9FVdTewm4SEG7gFskWs+XCVaULt9+BwuoBtJiRE8eo3L1IPAOrbByNLtLtIlg==
+  dependencies:
+    uzip-module "^1.0.2"
+
 update-browserslist-db@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/update-browserslist-db/-/update-browserslist-db-1.1.1.tgz#80846fba1d79e82547fb661f8d141e0945755fe5"
@@ -10647,6 +10697,11 @@ uuid@^9.0.0, uuid@^9.0.1:
   version "9.0.1"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-9.0.1.tgz#e188d4c8853cc722220392c424cd637f32293f30"
   integrity sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==
+
+uzip-module@^1.0.2:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/uzip-module/-/uzip-module-1.0.3.tgz#6bbabe2a3efea5d5a4a47479f523a571de3427ce"
+  integrity sha512-AMqwWZaknLM77G+VPYNZLEruMGWGzyigPK3/Whg99B3S6vGHuqsyl5ZrOv1UUF3paGK1U6PM0cnayioaryg/fA==
 
 valid-data-url@^3.0.0:
   version "3.0.1"
@@ -11017,6 +11072,15 @@ zarr@^0.6.1, zarr@^0.6.2:
   dependencies:
     numcodecs "^0.2.2"
     p-queue "^7.1.0"
+
+zarrita@^0.4.0-next.19:
+  version "0.4.0-next.19"
+  resolved "https://registry.yarnpkg.com/zarrita/-/zarrita-0.4.0-next.19.tgz#33338cacbe1050650ef7f4e014f2ea9b0d6ac2d9"
+  integrity sha512-7/O3ph+5BGnZ36Bc+DjMym2M1C/xY/klMn4V4N0FpOXFlAsUpvNqFqgYID1p8SdjJNh+aF4QFmuOoxceyz6KKA==
+  dependencies:
+    "@zarrita/core" "^0.1.0-next.17"
+    "@zarrita/indexing" "^0.1.0-next.19"
+    "@zarrita/storage" "^0.1.0-next.8"
 
 zen-observable-ts@^1.2.5:
   version "1.2.5"

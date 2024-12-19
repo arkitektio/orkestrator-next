@@ -125,6 +125,7 @@
     "@udecode/plate-toggle": "^39.0.0",
     "@udecode/plate-trailing-block": "^39.0.0",
     "@uidotdev/usehooks": "^2.2.0",
+    "@zarrita/storage": "^0.1.0-next.8",
     "any-signal": "^4.1.1",
     "aws4fetch": "^1.0.17",
     "blurhash": "^2.0.5",
@@ -198,6 +199,7 @@
     "vaul": "^0.9.0",
     "yup": "^1.2.0",
     "zarr": "^0.6.1",
+    "zarrita": "^0.4.0-next.19",
     "zod": "^3.23.8"
   },
   "devDependencies": {

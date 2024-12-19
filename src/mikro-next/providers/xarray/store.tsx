@@ -1,5 +1,5 @@
 import { AwsClient } from "aws4fetch";
-import { HTTPStore, openGroup, ZarrArray } from "zarr";
+import { AbsolutePath, FetchStore } from "@zarrita/storage";
 
 enum HTTPMethod {
   Get = "GET",
@@ -39,20 +39,53 @@ export function joinUrlParts(...args: string[]) {
     .join("/");
 }
 
-export class S3Store extends HTTPStore {
+function resolve(root: string | URL, path: AbsolutePath): URL {
+  const base = typeof root === "string" ? new URL(root) : root;
+  if (!base.pathname.endsWith("/")) {
+    // ensure trailing slash so that base is resolved as _directory_
+    base.pathname += "/";
+  }
+  const resolved = new URL(path.slice(1), base);
+  // copy search params to new URL
+  resolved.search = base.search;
+  return resolved;
+}
+
+async function handle_response(
+  response: Response,
+): Promise<Uint8Array | undefined> {
+  if (response.status === 404) {
+    return undefined;
+  }
+  if (response.status === 200 || response.status === 206) {
+    return new Uint8Array(await response.arrayBuffer());
+  }
+  throw new Error(
+    `Unexpected response status ${response.status} ${response.statusText}`,
+  );
+}
+
+export class S3Store extends FetchStore {
   aws: AwsClient;
 
   constructor(url: string, aws: AwsClient, options: any = {}) {
     super(url, options);
     this.aws = aws;
+    this.url = url;
+  }
+
+  async get(key: AbsolutePath, options: RequestInit = {}) {
+    let href = resolve(this.url, key).href;
+    let response = await this.aws.fetch(href, { ...options });
+    return handle_response(response);
   }
 
   async getItem(item: any, opts: any) {
-    const url = joinUrlParts(this.url, item);
+    const url = joinUrlParts(this.url as string, item);
     console.warn("Getting item", url);
     let value: any;
     try {
-      value = await this.aws.fetch(url, { ...this.fetchOptions, ...opts });
+      value = await this.aws.fetch(url, { ...opts });
     } catch (e) {
       console.log(e);
       throw new HTTPError("present");
@@ -67,12 +100,11 @@ export class S3Store extends HTTPStore {
     // only decode if 200
   }
   async setItem(item: any, value: any) {
-    const url = joinUrlParts(this.url, item);
+    const url = joinUrlParts(this.url as string, item);
     if (typeof value === "string") {
       value = new TextEncoder().encode(value).buffer;
     }
     const set = await this.aws.fetch(url, {
-      ...this.fetchOptions,
       method: HTTPMethod.Put,
       body: value,
     });
@@ -80,11 +112,9 @@ export class S3Store extends HTTPStore {
   }
 
   async containsItem(item: any) {
-    const url = joinUrlParts(this.url, item);
+    const url = joinUrlParts(this.url as string, item);
     try {
-      const value = await this.aws.fetch(url, {
-        ...this.fetchOptions,
-      });
+      const value = await this.aws.fetch(url, {});
 
       return value.status === 200;
     } catch (e) {

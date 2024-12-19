@@ -14,7 +14,7 @@ import { useSettings } from "@/providers/settings/SettingsContext";
 import { ApolloClient } from "@apollo/client";
 import { AwsClient } from "aws4fetch";
 import { useCallback } from "react";
-import { NestedArray, TypedArray, ZarrArray, openGroup } from "zarr";
+import { open, get, Chunk, DataType } from "zarrita";
 import { ArraySelection, Slice } from "zarr/types/core/types";
 import {
   addImageDataToCache,
@@ -22,10 +22,11 @@ import {
   getImageDataFromCache,
 } from "./renderCache";
 import { colorMapperMap, mapDTypeToMinMax } from "./useArray";
+import { ar } from "date-fns/locale";
 
 export type DownloadedArray = {
   shape: [number, number, number, number, number];
-  out: NestedArray<TypedArray>;
+  out: Chunk<DataType>;
   selection: ArraySelection;
   ySize: number;
   xSize: number;
@@ -52,55 +53,23 @@ export const downloadSelectionFromStore = async (
     service: "s3",
   });
 
-  console.log(await aws.fetch(path + "/.zattrs", { signal: abortSignal }));
-
   let store = new S3Store(path, aws);
 
-  let group = await openGroup(store, "", "r");
-  let array = (await group.getItem("data")) as ZarrArray;
+  let array = await open.v3(store, { kind: "array" });
 
-  let indexer = new BasicIndexer(selection, array);
-  const outShape = indexer.shape;
-  console.log("THE OUTSHAPE", outShape);
-
-  const outDtype = array.dtype;
-
-  const outSize = outShape.reduce((x, y) => x * y, 1);
-
-  const out = new NestedArray(null, outShape, outDtype);
-  if (outSize === 0) {
-    throw Error("Selection is empty.");
-  }
-
-  let promises = [];
-
-  for (const proj of indexer.iter()) {
-    promises.push(getChunkItem(aws, proj, array, path, abortSignal));
-  }
-
-  let chunkPairs = await Promise.all(promises);
-
-  for (const { decodedChunk, proj } of chunkPairs) {
-    out.set(proj.outSelection, decodedChunk);
-  }
-
-  if (out.shape.length !== 5) {
-    throw Error("Anything but 5D arrays are not supported. Got" + out.shape);
-  }
-
-  const [dtypeMin, dtypeMax] = mapDTypeToMinMax(outDtype);
+  let view = await get(array, selection);
 
   return {
-    shape: outShape as [number, number, number, number, number],
-    out: out,
+    shape: array.shape as [number, number, number, number, number],
+    out: view,
     selection: selection,
-    dtypeMin: dtypeMin,
-    dtypeMax: dtypeMax,
-    ySize: outShape[4],
-    xSize: outShape[3],
-    zSize: outShape[2],
-    tSize: outShape[1],
-    cSize: outShape[0],
+    dtypeMin: 0,
+    dtypeMax: 255,
+    ySize: array.shape[4],
+    xSize: array.shape[3],
+    zSize: array.shape[2],
+    tSize: array.shape[1],
+    cSize: array.shape[0],
   };
 };
 
@@ -112,7 +81,7 @@ export const renderSelectionViaView = async (
   let max = 0;
 
   if (view.rescale) {
-    let flattend = selection.out.flatten();
+    let flattend = selection.out.data;
 
     for (var i = 0; i < flattend.length; i++) {
       if (flattend[i] < min) {
@@ -135,18 +104,13 @@ export const renderSelectionViaView = async (
 
   for (let j = 0; j < selection.ySize; j++) {
     for (let i = 0; i < selection.xSize; i++) {
-      let arrayValues = selection.out.get([
-        ":",
-        0,
-        0,
-        i,
-        j,
-      ]) as NestedArray<TypedArray>;
-
       let channelValues: number[] = [];
 
       for (let c = 0; c < selection.cSize; c++) {
-        let val = arrayValues.get([c]) as number;
+        let val =
+          selection.out.data[
+            i + j * selection.xSize + c * selection.xSize * selection.ySize
+          ];
         val = Math.floor(((val - min) / (max - min)) * 255);
         channelValues.push(val);
       }

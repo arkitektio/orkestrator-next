@@ -9,8 +9,7 @@ import {
 import { AwsClient } from "aws4fetch";
 import c from "colormap";
 import React from "react";
-import { NestedArray, ZarrArray, openGroup } from "zarr";
-import { ArraySelection } from "zarr/types/core/types";
+import { open, get, Slice } from "zarrita";
 import { ImageView, XArrayContext } from "./context";
 import { BasicIndexer } from "./indexing";
 import { S3Store } from "./store";
@@ -62,6 +61,8 @@ export const available_color_maps = [
 
 export type AvailableColormap = (typeof available_color_maps)[number];
 
+export type ArraySelection = (number | Slice | null)[];
+
 export const XArrayProvider: React.FC<{
   children: React.ReactNode;
 }> = (props) => {
@@ -103,67 +104,21 @@ export const XArrayProvider: React.FC<{
 
     let store = new S3Store(path, aws);
 
-    let group = await openGroup(store, "", "r");
-    let array = (await group.getItem("data")) as ZarrArray;
+    let array = await open(store, { kind: "array" });
 
-    let indexer = new BasicIndexer(selection, array);
-    const outShape = indexer.shape.filter((x) => x !== 1) as number[];
-    console.log("THE OUTSHAPE", outShape);
-    if (outShape.length !== 2) {
-      throw Error(
-        `Only 2D selections are supported, got ${outShape.length}D selection.`,
-      );
-    }
-    if (outShape[0] * outShape[1] > 4000 * 4000) {
-      throw Error(
-        `Selection is too large, got ${outShape[0]}x${outShape[1]} pixels.`,
-      );
-    }
-
-    const outDtype = array.dtype;
-    const outSize = outShape.reduce((x, y) => x * y, 1);
-
-    const out = new NestedArray(null, outShape, outDtype);
-    if (outSize === 0) {
-      throw Error("Selection is empty.");
-    }
-
-    let promises = [];
-
-    for (const proj of indexer.iter()) {
-      promises.push(getChunkItem(aws, proj, array, path));
-    }
-
-    let chunkPairs = await Promise.all(promises);
-
-    for (const { decodedChunk, proj } of chunkPairs) {
-      out.set(proj.outSelection, decodedChunk);
-    }
-    let min = 0;
-    let max = 0;
-
-    let flattend = out.flatten();
-    let imgwidth = out.shape[1];
-    let imgheight = out.shape[0];
+    let view = await get(array, selection);
+    let imgwidth = array.shape[1];
+    let imgheight = array.shape[0];
 
     let converted = new Array(imgwidth * imgheight);
 
-    for (var i = 0; i < imgwidth * imgheight; i++) {
-      converted[i] = Number(flattend[i]);
-      if (flattend[i] < min) {
-        min = Number(flattend[i]);
-      }
-      if (flattend[i] > max) {
-        max = Number(flattend[i]);
-      }
-    }
     return {
       data: converted,
       width: imgwidth,
       height: imgheight,
-      dtype: outDtype,
-      min: min,
-      max: max,
+      dtype: array.dtype,
+      min: 0,
+      max: 255,
     };
   };
 

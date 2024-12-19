@@ -335,8 +335,8 @@ export const RGBD = (props: RGBDProps) => {
 
   const version = props.context.image.store.version;
 
-  if (version != "2") {
-    return <div>Rendering not implemented for Zarr Version other than 2</div>;
+  if (version != "3") {
+    return <div>Rendering not implemented for Zarr Version other than 3</div>;
   }
 
   return (

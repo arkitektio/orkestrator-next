@@ -20,9 +20,5 @@ export const DelegatingImageRender: React.FC<DelegatingImageRenderProps> = (
 ) => {
   const { settings } = useSettings();
   // console.log
-  if (settings.experimentalViv) {
-    return <VivRenderer {...props} />;
-  } else {
-    return <RGBD {...props} />;
-  }
+  return <RGBD {...props} />;
 };

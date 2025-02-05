@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/button";
 import {
   EntityGraph,
   GetStructureDocument,
+  GraphFragment,
+  MyActiveGraphDocument,
+  useCreateGraphMutation,
   useCreateStructureMutation,
   useGetEntityGraphQuery,
   useGetStructureQuery,
@@ -17,7 +20,7 @@ export type KnowledgeProps = {
 };
 
 export type InsideProps = KnowledgeProps & {
-  graph: string;
+  graph: GraphFragment;
 };
 
 export const entityNodesToNodes = (
@@ -73,7 +76,7 @@ const RealKnowledgeGraph = ({ entity }: { entity: string }) => {
 const Inside = ({ object, graph, identifier }: InsideProps) => {
   const { data, error } = useGetStructureQuery({
     variables: {
-      graph: graph,
+      graph: graph.id,
       structure: `${identifier}:${object}`,
     },
   });
@@ -91,15 +94,40 @@ const Inside = ({ object, graph, identifier }: InsideProps) => {
             onClick={() =>
               create({
                 variables: {
-                  input: { graph: graph, structure: `${identifier}:${object}` },
+                  input: {
+                    graph: graph.id,
+                    structure: `${identifier}:${object}`,
+                  },
                 },
               })
             }
           >
-            Create
+            Create Entity in {graph.name}
           </Button>
         </div>
       )}
+    </div>
+  );
+};
+
+export const CreateGraphButton = () => {
+  const [create] = useCreateGraphMutation({
+    refetchQueries: [MyActiveGraphDocument],
+  });
+
+  return (
+    <div className="p-3">
+      <Button
+        onClick={() =>
+          create({
+            variables: {
+              input: { name: "New Graph" },
+            },
+          })
+        }
+      >
+        Create
+      </Button>
     </div>
   );
 };
@@ -110,7 +138,13 @@ export const KnowledgeProtected = (props: KnowledgeProps) => {
   return (
     <>
       {data?.myActiveGraph.id && (
-        <Inside {...props} graph={data?.myActiveGraph.id} />
+        <Inside {...props} graph={data?.myActiveGraph} />
+      )}
+
+      {!data?.myActiveGraph.id && (
+        <div className="text-full">
+          No active graph for this user <CreateGraphButton />
+        </div>
       )}
     </>
   );

@@ -362,7 +362,9 @@ export const RGBD = (props: RGBDProps) => {
           }}
           className="transform -translate-y-1/2 max-w-[400px]"
         >
-          <Card className="p-3">Not implemented</Card>
+          <MikroROI.DetailLink object={panel.roi.id}>
+            <Card className="p-3">Open {panel.roi.id}</Card>
+          </MikroROI.DetailLink>
         </div>
       ))}
     </div>

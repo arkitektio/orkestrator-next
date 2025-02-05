@@ -4,6 +4,7 @@ import { useGetImageQuery } from "@/mikro-next/api/graphql";
 import { RGBD } from "@/mikro-next/components/render/TwoDThree";
 import { useDetailNodeQuery } from "@/rekuest/api/graphql";
 import { ReturnWidgetProps } from "@/rekuest/widgets/types";
+import { MeshWidget } from "@/widgets/MeshWidget";
 import { RenderedPlotWidget } from "@/widgets/RenderedPlotWidget";
 import { StreamWidget } from "@/widgets/StreamWidget";
 
@@ -74,6 +75,8 @@ export const DelegatingStructureWidget = (props: ReturnWidgetProps) => {
       return <PodWidget {...props} />;
     case "@mikro/snapshot":
       return <div>Snapshssot</div>;
+    case "@mikro/mesh":
+      return <MeshWidget {...props} />;
 
     default:
       return (

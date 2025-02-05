@@ -22,6 +22,7 @@ export type Scalars = {
   FiveDVector: { input: any; output: any; }
   FourByFourMatrix: { input: any; output: any; }
   JSON: { input: any; output: any; }
+  MeshLike: { input: any; output: any; }
   MetricMap: { input: any; output: any; }
   Micrometers: { input: any; output: any; }
   Milliseconds: { input: any; output: any; }
@@ -499,6 +500,10 @@ export type DeleteImageInput = {
 };
 
 export type DeleteInstrumentInput = {
+  id: Scalars['ID']['input'];
+};
+
+export type DeleteMeshInput = {
   id: Scalars['ID']['input'];
 };
 
@@ -1176,6 +1181,38 @@ export type MediaStorePresignedUrlArgs = {
   host?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type Mesh = {
+  __typename?: 'Mesh';
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  store: MeshStore;
+};
+
+export type MeshFilter = {
+  AND?: InputMaybe<MeshFilter>;
+  OR?: InputMaybe<MeshFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type MeshInput = {
+  mesh: Scalars['MeshLike']['input'];
+  name: Scalars['String']['input'];
+};
+
+export type MeshStore = {
+  __typename?: 'MeshStore';
+  bucket: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  key: Scalars['String']['output'];
+  path: Scalars['String']['output'];
+  presignedUrl: Scalars['String']['output'];
+};
+
+
+export type MeshStorePresignedUrlArgs = {
+  host?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type ModelChange = {
   __typename?: 'ModelChange';
   field: Scalars['String']['output'];
@@ -1236,6 +1273,8 @@ export type Mutation = {
   createInstrument: Instrument;
   /** Create a new view for label data */
   createLabelView: LabelView;
+  /** Create a new mesh */
+  createMesh: Mesh;
   /** Create a new multi-well plate configuration */
   createMultiWellPlate: MultiWellPlate;
   /** Create a new microscope objective configuration */
@@ -1284,6 +1323,8 @@ export type Mutation = {
   deleteImage: Scalars['ID']['output'];
   /** Delete an existing instrument */
   deleteInstrument: Scalars['ID']['output'];
+  /** Delete an existing mesh */
+  deleteMesh: Scalars['ID']['output'];
   /** Delete an existing multi-well plate configuration */
   deleteMultiWellPlate: Scalars['ID']['output'];
   /** Delete an existing objective */
@@ -1334,6 +1375,8 @@ export type Mutation = {
   pinImage: Image;
   /** Pin an instrument for quick access */
   pinInstrument: Instrument;
+  /** Pin a mesh for quick access */
+  pinMesh: Snapshot;
   /** Pin a multi-well plate for quick access */
   pinMultiWellPlate: MultiWellPlate;
   /** Pin an objective for quick access */
@@ -1372,6 +1415,8 @@ export type Mutation = {
   requestFileUploadPresigned: PresignedPostCredentials;
   /** Request credentials for media file upload */
   requestMediaUpload: PresignedPostCredentials;
+  /** Request presigned credentials for mesh upload */
+  requestMeshUpload: PresignedPostCredentials;
   /** Request credentials to access a table */
   requestTableAccess: AccessCredentials;
   /** Request credentials to upload a new table */
@@ -1438,6 +1483,11 @@ export type MutationCreateInstrumentArgs = {
 
 export type MutationCreateLabelViewArgs = {
   input: LabelViewInput;
+};
+
+
+export type MutationCreateMeshArgs = {
+  input: MeshInput;
 };
 
 
@@ -1558,6 +1608,11 @@ export type MutationDeleteImageArgs = {
 
 export type MutationDeleteInstrumentArgs = {
   input: DeleteInstrumentInput;
+};
+
+
+export type MutationDeleteMeshArgs = {
+  input: DeleteMeshInput;
 };
 
 
@@ -1686,6 +1741,11 @@ export type MutationPinInstrumentArgs = {
 };
 
 
+export type MutationPinMeshArgs = {
+  input: DeleteMeshInput;
+};
+
+
 export type MutationPinMultiWellPlateArgs = {
   input: PintMultiWellPlateInput;
 };
@@ -1778,6 +1838,11 @@ export type MutationRequestFileUploadPresignedArgs = {
 
 export type MutationRequestMediaUploadArgs = {
   input: RequestMediaUploadInput;
+};
+
+
+export type MutationRequestMeshUploadArgs = {
+  input: RequestMeshUploadInput;
 };
 
 
@@ -2474,6 +2539,8 @@ export type Query = {
   instruments: Array<Instrument>;
   labelAccessors: Array<LabelAccessor>;
   labelViews: Array<LabelView>;
+  mesh: Mesh;
+  meshes: Array<Mesh>;
   multiWellPlate: MultiWellPlate;
   multiWellPlates: Array<MultiWellPlate>;
   mychannels: Array<Channel>;
@@ -2588,6 +2655,17 @@ export type QueryImagesArgs = {
 
 export type QueryInstrumentArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryMeshArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryMeshesArgs = {
+  filters?: InputMaybe<MeshFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -3038,6 +3116,11 @@ export type RequestFileUploadInput = {
 };
 
 export type RequestMediaUploadInput = {
+  datalayer: Scalars['String']['input'];
+  key: Scalars['String']['input'];
+};
+
+export type RequestMeshUploadInput = {
   datalayer: Scalars['String']['input'];
   key: Scalars['String']['input'];
 };
@@ -3701,6 +3784,10 @@ export type ListImageFragment = { __typename?: 'Image', id: string, name: string
 
 export type InstrumentFragment = { __typename?: 'Instrument', model?: string | null, name: string, serialNumber: string };
 
+export type MeshFragment = { __typename?: 'Mesh', id: string, name: string, store: { __typename?: 'MeshStore', id: string, key: string, presignedUrl: string } };
+
+export type ListMeshFragment = { __typename?: 'Mesh', id: string, name: string };
+
 export type MultiWellPlateFragment = { __typename?: 'MultiWellPlate', id: string, name?: string | null, views: Array<{ __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }> };
 
 export type ListMultiWellPlateFragment = { __typename?: 'MultiWellPlate', id: string, name?: string | null };
@@ -3770,6 +3857,8 @@ export type ParquetStoreFragment = { __typename?: 'ParquetStore', id: string, ke
 export type BigFileStoreFragment = { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string };
 
 export type MediaStoreFragment = { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string };
+
+export type MeshStoreFragment = { __typename?: 'MeshStore', id: string, key: string, presignedUrl: string };
 
 export type TableFragment = { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, pixelView: { __typename?: 'PixelView', id: string } }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, pixelView: { __typename?: 'PixelView', id: string } }> };
 
@@ -4329,6 +4418,21 @@ export type GetInstrumentQueryVariables = Exact<{
 
 export type GetInstrumentQuery = { __typename?: 'Query', instrument: { __typename?: 'Instrument', model?: string | null, name: string, serialNumber: string } };
 
+export type DetailMeshQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DetailMeshQuery = { __typename?: 'Query', mesh: { __typename?: 'Mesh', id: string, name: string, store: { __typename?: 'MeshStore', id: string, key: string, presignedUrl: string } } };
+
+export type ListMeshesQueryVariables = Exact<{
+  filters?: InputMaybe<MeshFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+}>;
+
+
+export type ListMeshesQuery = { __typename?: 'Query', meshes: Array<{ __typename?: 'Mesh', id: string, name: string }> };
+
 export type GetMultiWellPlateQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
@@ -4638,6 +4742,28 @@ export const InstrumentFragmentDoc = gql`
   model
   name
   serialNumber
+}
+    `;
+export const MeshStoreFragmentDoc = gql`
+    fragment MeshStore on MeshStore {
+  id
+  key
+  presignedUrl
+}
+    `;
+export const MeshFragmentDoc = gql`
+    fragment Mesh on Mesh {
+  id
+  name
+  store {
+    ...MeshStore
+  }
+}
+    ${MeshStoreFragmentDoc}`;
+export const ListMeshFragmentDoc = gql`
+    fragment ListMesh on Mesh {
+  id
+  name
 }
     `;
 export const ViewFragmentDoc = gql`
@@ -7418,6 +7544,77 @@ export function useGetInstrumentLazyQuery(baseOptions?: ApolloReactHooks.LazyQue
 export type GetInstrumentQueryHookResult = ReturnType<typeof useGetInstrumentQuery>;
 export type GetInstrumentLazyQueryHookResult = ReturnType<typeof useGetInstrumentLazyQuery>;
 export type GetInstrumentQueryResult = Apollo.QueryResult<GetInstrumentQuery, GetInstrumentQueryVariables>;
+export const DetailMeshDocument = gql`
+    query DetailMesh($id: ID!) {
+  mesh(id: $id) {
+    ...Mesh
+  }
+}
+    ${MeshFragmentDoc}`;
+
+/**
+ * __useDetailMeshQuery__
+ *
+ * To run a query within a React component, call `useDetailMeshQuery` and pass it any options that fit your needs.
+ * When your component renders, `useDetailMeshQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useDetailMeshQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDetailMeshQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailMeshQuery, DetailMeshQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailMeshQuery, DetailMeshQueryVariables>(DetailMeshDocument, options);
+      }
+export function useDetailMeshLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailMeshQuery, DetailMeshQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailMeshQuery, DetailMeshQueryVariables>(DetailMeshDocument, options);
+        }
+export type DetailMeshQueryHookResult = ReturnType<typeof useDetailMeshQuery>;
+export type DetailMeshLazyQueryHookResult = ReturnType<typeof useDetailMeshLazyQuery>;
+export type DetailMeshQueryResult = Apollo.QueryResult<DetailMeshQuery, DetailMeshQueryVariables>;
+export const ListMeshesDocument = gql`
+    query ListMeshes($filters: MeshFilter, $pagination: OffsetPaginationInput) {
+  meshes(filters: $filters, pagination: $pagination) {
+    ...ListMesh
+  }
+}
+    ${ListMeshFragmentDoc}`;
+
+/**
+ * __useListMeshesQuery__
+ *
+ * To run a query within a React component, call `useListMeshesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListMeshesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListMeshesQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *      pagination: // value for 'pagination'
+ *   },
+ * });
+ */
+export function useListMeshesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListMeshesQuery, ListMeshesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListMeshesQuery, ListMeshesQueryVariables>(ListMeshesDocument, options);
+      }
+export function useListMeshesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListMeshesQuery, ListMeshesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListMeshesQuery, ListMeshesQueryVariables>(ListMeshesDocument, options);
+        }
+export type ListMeshesQueryHookResult = ReturnType<typeof useListMeshesQuery>;
+export type ListMeshesLazyQueryHookResult = ReturnType<typeof useListMeshesLazyQuery>;
+export type ListMeshesQueryResult = Apollo.QueryResult<ListMeshesQuery, ListMeshesQueryVariables>;
 export const GetMultiWellPlateDocument = gql`
     query GetMultiWellPlate($id: ID!) {
   multiWellPlate(id: $id) {

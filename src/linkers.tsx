@@ -178,6 +178,7 @@ export const MikroFluorophore = buildSmart(
 );
 
 export const MikroFile = buildSmart("@mikro/file", "mikro/files");
+export const MikroMesh = buildSmart("@mikro/mesh", "mikro/meshes");
 
 export const MikroStage = buildSmart("@mikro/stage", "mikro/stages");
 export const MikroTable = buildSmart("@mikro/table", "mikro/tables");

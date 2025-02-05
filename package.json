@@ -4,6 +4,7 @@
   "license": "MIT",
   "description": "The client application for the Arkitekt Framework",
   "main": "./out/main/index.js",
+  "type": "module",
   "author": "jhnnsrs",
   "homepage": "https://arkitekt.live",
   "scripts": {
@@ -232,5 +233,6 @@
   },
   "resolutions": {
     "rollup": "4.24.0"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610"
 }

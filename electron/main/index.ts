@@ -10,6 +10,7 @@ import {
 import { writeFileSync } from "fs";
 import { join, resolve } from "path";
 import icon from "../../resources/icon.png?asset";
+import { fileURLToPath } from "url";
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -23,7 +24,7 @@ function createWindow(): BrowserWindow {
     autoHideMenuBar: true,
     ...(process.platform === "linux" ? { icon } : {}),
     webPreferences: {
-      preload: join(__dirname, "../preload/index.js"),
+      preload: fileURLToPath(new URL("../preload/index.mjs", import.meta.url)),
       sandbox: false,
     },
   });

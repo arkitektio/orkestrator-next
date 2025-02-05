@@ -1,5 +1,6 @@
+import { AbsolutePath } from "@zarrita/storage";
 import { AwsClient } from "aws4fetch";
-import { AbsolutePath, FetchStore } from "@zarrita/storage";
+import { FetchStore } from "zarrita";
 
 enum HTTPMethod {
   Get = "GET",

@@ -5,8 +5,8 @@
     "electron/preload/*.d.ts"
 , "src/mikro-next/forms/.tsx", "src/modules/.tsx"  ],
   "compilerOptions": {
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "composite": true,
     "jsx": "react-jsx",
     "baseUrl": ".",

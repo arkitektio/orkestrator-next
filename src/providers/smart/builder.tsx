@@ -21,6 +21,7 @@ import {
   ModelLinkProps,
   OmitedNavLinkProps,
 } from "./types";
+import { SearchFunction, smartRegistry } from "./registry";
 
 const buildBaseLink = (to: string) => {
   return ({ children, ...props }: BaseLinkProps) => {
@@ -133,7 +134,18 @@ const buildNewButton = (model: Identifier) => {
   };
 };
 
-export const buildSmart = (model: Identifier, to: string) => {
+
+
+export const buildSmart = (model: Identifier, to: string, searchFunction?: SearchFunction) => {
+
+  smartRegistry.register({
+    identifier: model,
+    path: to,
+    search: searchFunction,
+    description: "A smart model",
+  });
+
+  
   return {
     DetailLink: buildModelLink(to),
     ListLink: buildBaseLink(to),

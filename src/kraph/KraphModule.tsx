@@ -22,6 +22,7 @@ import ProtocolStepTemplatesPage from "./pages/ProtocolStepTemplatesPage";
 import ReagentPage from "./pages/ReagentPage";
 import ReagentsPage from "./pages/ReagentsPage";
 import StandardPane from "./panes/StandardPane";
+import EntityKnowledgePage from "./pages/EntityKnowledgePage";
 interface Props {}
 
 export const KraphModule: React.FC<Props> = (props) => {
@@ -31,7 +32,7 @@ export const KraphModule: React.FC<Props> = (props) => {
         <Routes>
           <Route index element={<HomePage />} />
           <Route path="entities/:id" element={<EntityPage />} />
-          <Route path="entities/:id/graph" element={<EntityGraphPage />} />
+          <Route path="entities/:id/graph" element={<EntityKnowledgePage />} />
           <Route path="entityrelations/:id" element={<EntityRelationPage />} />
           <Route path="expressions/:id" element={<ExpressionPage />} />
           <Route path="ontologies/:id" element={<KnowledgePage />} />

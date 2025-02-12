@@ -21,6 +21,7 @@ function createWindow(): BrowserWindow {
     height: 670,
     show: false,
     title: "Orkestrator",
+    icon: icon,
     autoHideMenuBar: true,
     ...(process.platform === "linux" ? { icon } : {}),
     webPreferences: {
@@ -37,7 +38,6 @@ function createWindow(): BrowserWindow {
     let url = new URL(details.url);
 
     console.log(url.hash);
-
     openSecondaryWindow(url.hash.split("#")[1]);
     return { action: "deny" };
   });
@@ -52,7 +52,9 @@ function createWindow(): BrowserWindow {
 
   // Add this right after creating the main window in createWindow function
   mainWindow.on("closed", () => {
+    console.log("Main window closed");
     mainWindow = null;
+    app.quit();
   });
 
   return mainWindow;
@@ -135,7 +137,7 @@ function openSecondaryWindow(path: string): void {
     autoHideMenuBar: true,
     ...(process.platform === "linux" ? { icon } : {}),
     webPreferences: {
-      preload: join(__dirname, "../preload/index.js"),
+      preload: join(__dirname, "../preload/index.mjs"),
       sandbox: false,
     },
   });
@@ -246,6 +248,18 @@ if (!gotTheLock) {
   });
 }
 
+app.on('window-all-closed', () => {
+  console.log("All windows closed");
+  app.quit()
+})
+
+app.on("certificate-error", (event, _, __, ___, ____, callback) => {
+  // Prevent having error
+  event.preventDefault();
+  // and continue
+  callback(true);
+});
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -272,12 +286,7 @@ app.whenReady().then(() => {
   );
 });
 
-app.on("certificate-error", (event, _, __, ___, ____, callback) => {
-  // Prevent having error
-  event.preventDefault();
-  // and continue
-  callback(true);
-});
+
 
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.

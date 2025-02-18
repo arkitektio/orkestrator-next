@@ -9,8 +9,10 @@ fragment Ontology on Ontology {
   store {
     ...MediaStore
   }
+  graphs {
+    ...ListGraph
+  }
 }
-
 
 fragment ListOntology on Ontology {
   id

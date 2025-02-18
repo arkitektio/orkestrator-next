@@ -14,7 +14,7 @@ import {
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { Me, Username } from "@/lok-next/components/Me";
 import { useDebug } from "@/providers/debug/DebugContext";
-import { HomeIcon } from "@radix-ui/react-icons";
+import { ChatBubbleIcon, HomeIcon } from "@radix-ui/react-icons";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import {
   Bolt,
@@ -30,9 +30,11 @@ import {
 import React from "react";
 import { GoWorkflow } from "react-icons/go";
 import { IconContext } from "react-icons/lib";
-import { PiDatabaseLight } from "react-icons/pi";
+import { PiDatabaseLight, PiGraph } from "react-icons/pi";
 import { TbBugOff } from "react-icons/tb";
 import { ModeToggle } from "../ModeToggle";
+import { Icons } from "@/components/icons";
+import { BiSolidWidget } from "react-icons/bi";
 
 export type INavigationBarProps = {
   children?: React.ReactNode;
@@ -57,7 +59,11 @@ export const matchIcon = (key: string) => {
     case "kabinet":
       return <ShoppingBasket className="w-8 h-8 mx-auto  text-foreground" />;
     case "kraph":
-      return <Eye className="w-8 h-8 mx-auto  text-foreground" />;
+      return <PiGraph className="w-8 h-8 mx-auto ml- text-foreground" />;
+    case "alpaka":
+      return (
+        <ChatBubbleIcon className="w-8 h-8 mx-auto  text-foreground p-[0.5]" />
+      );
     default:
       return <HomeIcon className="w-8 h-8 mx-auto  text-foreground" />;
   }
@@ -120,7 +126,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
           >
             {({ isActive }) => (
               <NavigationMenuLink active={isActive}>
-                <Bolt />
+                <BiSolidWidget />
               </NavigationMenuLink>
             )}
           </DroppableNavLink>

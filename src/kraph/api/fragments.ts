@@ -5,7 +5,17 @@
         }
       }
       const result: PossibleTypesResultData = {
-  "possibleTypes": {}
+  "possibleTypes": {
+    "Edge": [
+      "ComputedMeasurement",
+      "Measurement",
+      "Relation"
+    ],
+    "Node": [
+      "Entity",
+      "Structure"
+    ]
+  }
 };
       export default result;
     

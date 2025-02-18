@@ -2,7 +2,6 @@ import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { Button } from "@/components/ui/button";
 import { DroppableNavLink } from "@/components/ui/link";
-import { LokRoom } from "@/linkers";
 import { CubeIcon, PlusIcon } from "@radix-ui/react-icons";
 import { Group, Home, User } from "lucide-react";
 import * as React from "react";
@@ -23,12 +22,6 @@ import { SubTree } from "@/components/explorer/SubTree";
 interface IDataSidebarProps {}
 
 export const NavigationPane = (props: {}) => {
-  const [createRoom] = useCreateRoomMutation({
-    refetchQueries: ["Rooms"],
-  });
-
-  const { data, refetch, variables } = useRoomsQuery();
-
   return (
     <Tree>
       <SubTreeTitle>Explore</SubTreeTitle>
@@ -79,27 +72,6 @@ export const NavigationPane = (props: {}) => {
           <CubeIcon className="h-4 w-4" />
           Services
         </DroppableNavLink>
-      </SubTree>
-      <SubTreeTitle
-        action={
-          <Button onClick={() => createRoom()} variant={"ghost"} size={"icon"}>
-            <PlusIcon className="h-3 w-3" />
-          </Button>
-        }
-      >
-        Recent Rooms
-      </SubTreeTitle>
-      <SubTree>
-        {data?.rooms.map((room, index) => (
-          <LokRoom.DetailLink
-            object={room.id}
-            key={index}
-            className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
-          >
-            <CubeIcon className="h-4 w-4" />
-            {room.title}
-          </LokRoom.DetailLink>
-        ))}
       </SubTree>
     </Tree>
   );

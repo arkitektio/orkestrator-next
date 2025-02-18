@@ -2,29 +2,9 @@ fragment Graph on Graph {
   id
   name
   description
-  relations: linkedExpressions(
-    filters: { kind: RELATION }
-    pagination: { limit: 200 }
-  ) {
-    ...ListLinkedExpression
-  }
-  entities: linkedExpressions(
-    filters: { kind: ENTITY }
-    pagination: { limit: 200 }
-  ) {
-    ...ListLinkedExpression
-  }
-  metrics: linkedExpressions(
-    filters: { kind: METRIC }
-    pagination: { limit: 200 }
-  ) {
-    ...ListLinkedExpression
-  }
-  structures: linkedExpressions(
-    filters: { kind: STRUCTURE }
-    pagination: { limit: 200 }
-  ) {
-    ...ListLinkedExpression
+  latestNodes {
+    id
+    label
   }
 }
 

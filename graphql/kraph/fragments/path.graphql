@@ -1,0 +1,9 @@
+fragment Path on Path {
+  nodes {
+    ...StructureGraphNode
+    ...EntityGraphNode
+  }
+  edges {
+    ...Measurement
+  }
+}

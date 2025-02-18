@@ -206,9 +206,6 @@ export default function ChatBottombar({
             <ThumbsUp size={20} className="text-muted-foreground" />
           </Link>
         )}
-        <Guard.Livekit fallback={""}>
-          <StreamButton room={room} />
-        </Guard.Livekit>
       </AnimatePresence>
     </div>
   );

@@ -16,7 +16,6 @@ import {
   useGetExpressionQuery,
   useUpdateExpressionMutation,
 } from "../api/graphql";
-import LinkExpressionForm from "../forms/LinkExpressionForm";
 import { UpdateExpressionForm } from "../forms/UpdateExpressionForm";
 
 export default asDetailQueryRoute(
@@ -61,26 +60,6 @@ export default asDetailQueryRoute(
                   <UpdateExpressionForm expression={data?.expression} />
                 )}
               </FormSheet>
-              <FormDialogAction
-                variant={"outline"}
-                size={"sm"}
-                label="Create"
-                description="Create a new Graph"
-                buttonChildren={
-                  <>
-                    <PlusIcon className="h-4 w-4 mr-2" />
-                    Link
-                  </>
-                }
-                onSubmit={(item) => {
-                  console.log(item);
-                  navigate(
-                    KraphLinkedExpression.linkBuilder(item.linkedExpression.id),
-                  );
-                }}
-              >
-                <LinkExpressionForm expression={data.expression.id} />
-              </FormDialogAction>
             </>
           </div>
         }
@@ -94,7 +73,7 @@ export default asDetailQueryRoute(
               {data.expression.description}
             </p>
             <p className="mt-3 text-xl text-muted-foreground">
-              <Badge>{data.expression.kind}</Badge>
+              <Badge>{data.expression.ontology.name}</Badge>
             </p>
           </div>
           <div className="w-full h-full flex-row relative">
@@ -108,30 +87,6 @@ export default asDetailQueryRoute(
           </div>
         </div>
         <DragZone uploadFile={uploadFile} createFile={createFile} />
-
-        <div className="flex flex-col p-8">
-          <div className="grid grid-cols-1 gap-4 mt-2">
-            {data.expression.linkedExpressions.map((l) => (
-              <div className="w-full">
-                <KraphLinkedExpression.DetailLink
-                  object={l.id}
-                  className={"scroll-m-20  text-md font-light tracking-tight"}
-                >
-                  Latest appearence in{" "}
-                  <b className="font-extrabold">{l.graph.name}</b>
-                </KraphLinkedExpression.DetailLink>
-
-                <div className="grid grid-cols-5 gap-4 mt-2">
-                  {l.entities.map((e) => (
-                    <KraphEntity.DetailLink object={e.id}>
-                      <Card className="p-4">{e.label}</Card>
-                    </KraphEntity.DetailLink>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </KraphExpression.ModelPage>
     );
   },

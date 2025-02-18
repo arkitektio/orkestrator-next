@@ -1,49 +1,22 @@
 fragment Entity on Entity {
   id
   label
-  linkedExpression {
+  expression {
     id
     label
-    expression {
-      id
-      label
-    }
-    graph {
-      id
-      name
-    }
   }
   subjectedTo {
     id
     performedAt
     name
   }
-  metrics {
-    id
-    linkedExpression {
-      id
-      label
-    }
-    value
-    validFrom
-  }
-  object
-  identifier
-
-  relations {
+  edges {
     id
     right {
       id
       label
-      linkedExpression {
-        id
-        expression {
-          id
-          label
-        }
-      }
     }
-    linkedExpression {
+    expression {
       label
     }
   }
@@ -52,23 +25,16 @@ fragment Entity on Entity {
 fragment ListEntity on Entity {
   id
   label
-  linkedExpression {
+  expression {
     id
     label
   }
-  object
-  identifier
-  createdAt
 }
 
 fragment EntityGraphNode on Entity {
   id
   label
-  kindName
-  linkedExpression {
+  expression {
     color
-  }
-  metrics {
-    value
   }
 }

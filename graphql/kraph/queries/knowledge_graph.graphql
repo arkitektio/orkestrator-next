@@ -1,5 +1,5 @@
-query GetKnowledgeGraph($id: ID!) {
-  knowledgeGraph(id: $id) {
-    ...KnowledgeGraph
+query Path($id: ID!, $query: String!) {
+  path(graph: $id, query: $query) {
+    ...Path
   }
 }

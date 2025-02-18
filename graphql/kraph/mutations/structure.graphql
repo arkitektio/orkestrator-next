@@ -1,11 +1,5 @@
-mutation CreateStructure($input: MeasurementInput!) {
-  createMeasurement(input: $input) {
-    ...Entity
-  }
-}
-
-mutation CreateStructureRelation($input: StructureRelationInput!) {
-  createStructureRelation(input: $input) {
-    ...EntityRelation
+mutation CreateStructure($input: StructureInput!) {
+  createStructure(input: $input) {
+    ...Structure
   }
 }

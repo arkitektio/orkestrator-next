@@ -1,0 +1,24 @@
+fragment Message on Message {
+    id
+    text 
+    agent {
+        id
+    }
+    attachedStructures {
+        identifier
+        object
+    }
+}
+
+fragment ListMessage on Message {
+    id
+    text 
+    agent {
+        id
+    }
+    attachedStructures {
+        identifier
+        object
+    }
+
+}

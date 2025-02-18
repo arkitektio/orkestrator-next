@@ -1,5 +1,0 @@
-mutation CreateEntityMetric($input: CreateEntityMetricInput!) {
-  createEntityMetric(input: $input) {
-    ...Entity
-  }
-}

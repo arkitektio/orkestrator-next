@@ -27,7 +27,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn, notEmpty } from "@/lib/utils";
 import {
   ListEntityFragment,
   ListGraphFragment,
@@ -35,11 +34,9 @@ import {
   useListGraphsLazyQuery,
   useMyActiveGraphQuery,
   useSearchExpressionLazyQuery,
-  useSearchGraphEntitiesLazyQuery,
-  useSearchLinkedEntitiesLazyQuery,
-  useSearchLinkedExpressionLazyQuery,
   useSearchLinkedRelationsLazyQuery,
 } from "@/kraph/api/graphql";
+import { cn, notEmpty } from "@/lib/utils";
 import { Tooltip } from "@radix-ui/react-tooltip";
 import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";

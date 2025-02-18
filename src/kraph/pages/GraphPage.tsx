@@ -5,11 +5,10 @@ import { Button } from "@/components/ui/button";
 import { FormDialogAction } from "@/components/ui/form-dialog-action";
 import { KraphGraph, KraphLinkedExpression } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
-import { PlusIcon } from "lucide-react";
+import { Divide, PlusIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useGetGraphQuery } from "../api/graphql";
-import LinkedExpressionCard from "../components/cards/LinkedExpressionCard";
-import LinkExpressionForm from "../forms/LinkExpressionForm";
+
 import { UpdateGraphForm } from "../forms/UpdateGraphForm";
 
 export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
@@ -26,24 +25,6 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
               All Entities
             </Button>
           </KraphGraph.DetailLink>
-          <FormDialogAction
-            variant={"outline"}
-            size={"sm"}
-            label="Link Expression"
-            description="Link an expression to this graph"
-            buttonChildren={
-              <>
-                <PlusIcon className="h-4 w-4 mr-2" />
-                Link Expression
-              </>
-            }
-            onSubmit={(item) => {
-              console.log(item);
-              navigate(KraphLinkedExpression.linkBuilder(item.createGraph.id));
-            }}
-          >
-            <LinkExpressionForm graph={data.graph.id} />
-          </FormDialogAction>
           <FormSheet trigger={<HobbyKnifeIcon />}>
             {data?.graph && <UpdateGraphForm graph={data?.graph} />}
           </FormSheet>
@@ -76,71 +57,7 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
           Entitites{" "}
         </KraphGraph.DetailLink>
         <div className="grid grid-cols-6 gap-2">
-          {data?.graph?.entities?.map((item, i) => (
-            <LinkedExpressionCard
-              item={item}
-              key={i}
-              hideGraph={true}
-              hideExpression={true}
-            />
-          ))}
-        </div>
-      </div>
-      <div className="p-6">
-        <KraphGraph.DetailLink
-          object={data.graph.id}
-          subroute="entities"
-          className=""
-        >
-          Metrics{" "}
-        </KraphGraph.DetailLink>
-        <div className="grid grid-cols-6 gap-2">
-          {data?.graph?.metrics?.map((item, i) => (
-            <LinkedExpressionCard
-              item={item}
-              key={i}
-              hideGraph={true}
-              hideExpression={true}
-            />
-          ))}
-        </div>
-      </div>
-      <div className="p-6">
-        <KraphGraph.DetailLink
-          object={data.graph.id}
-          subroute="relations"
-          className=""
-        >
-          Relations{" "}
-        </KraphGraph.DetailLink>
-        <div className="grid grid-cols-6 gap-2">
-          {data?.graph?.relations?.map((item, i) => (
-            <LinkedExpressionCard
-              item={item}
-              key={i}
-              hideGraph={true}
-              hideExpression={true}
-            />
-          ))}
-        </div>
-      </div>
-      <div className="p-6">
-        <KraphGraph.DetailLink
-          object={data.graph.id}
-          subroute="relations"
-          className=""
-        >
-          Structures{" "}
-        </KraphGraph.DetailLink>
-        <div className="grid grid-cols-6 gap-2">
-          {data?.graph?.structures?.map((item, i) => (
-            <LinkedExpressionCard
-              item={item}
-              key={i}
-              hideGraph={true}
-              hideExpression={true}
-            />
-          ))}
+          {data?.graph?.latestNodes?.map((item, i) => <> {item.id}</>)}
         </div>
       </div>
     </KraphGraph.ModelPage>

@@ -7,7 +7,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { NodeDescription } from "@/lib/rekuest/NodeDescription";
-import { LokRoom, RekuestAgent } from "@/linkers";
+import { RekuestAgent, RekuestTemplate } from "@/linkers";
 import { AgentFragment, AgentStatus } from "@/rekuest/api/graphql";
 import Timestamp from "react-timestamp";
 
@@ -57,7 +57,7 @@ export default (props: { agent: AgentFragment }) => {
                   <p className="mt-3 text-xl text-muted-foreground">
                     {item.node.name}
                   </p>
-                  <LokRoom.DetailLink object={item.id}>
+                  <RekuestTemplate.DetailLink object={item.id}>
                     <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
                       {item.agent.name}
                     </h1>
@@ -66,7 +66,7 @@ export default (props: { agent: AgentFragment }) => {
                         <NodeDescription description={item.node.description} />
                       )}
                     </p>
-                  </LokRoom.DetailLink>
+                  </RekuestTemplate.DetailLink>
                 </div>
               </div>
               <div className="col-span-4">

@@ -1,0 +1,10 @@
+mutation CreateRoom {
+  createRoom(input: { title: "Room 1" }) {
+    id
+    title
+  }
+}
+
+mutation DeleteRoom($input: DeleteRoomInput!) {
+  deleteRoom(input: $input)
+}

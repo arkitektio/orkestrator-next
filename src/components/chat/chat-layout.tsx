@@ -1,6 +1,6 @@
 "use client";
 
-import { DetailRoomFragment } from "@/lok-next/api/graphql";
+import { DetailRoomFragment } from "@/alpaka/api/graphql";
 import React, { useEffect, useState } from "react";
 import { Chat } from "./chat";
 import { userData } from "./data";

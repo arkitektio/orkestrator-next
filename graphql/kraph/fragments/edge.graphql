@@ -1,0 +1,6 @@
+fragment Edge on Edge {
+  id
+  label
+  ...Measurement
+  ...Relation
+}

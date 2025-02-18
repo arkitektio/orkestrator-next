@@ -2,7 +2,6 @@ import {
   ModelPageLayout,
   ModelPageLayoutProps,
 } from "@/components/layout/ModelPageLayout";
-import { Knowledge } from "@/kraph/panes/Knowledge";
 import { Komments } from "@/lok-next/components/komments/Komments";
 import { usePrimaryNodesQuery } from "@/rekuest/api/graphql";
 import { NewButton, NewButtonProps } from "@/rekuest/buttons/NewButton";
@@ -81,7 +80,7 @@ const buildKomments = (model: Identifier) => {
 
 const buildKnowledge = (model: Identifier) => {
   return ({ ...props }: ObjectProps) => {
-    return <Knowledge identifier={model} object={props.object} />;
+    return <> Currently not implemented</>;
   };
 };
 
@@ -134,10 +133,11 @@ const buildNewButton = (model: Identifier) => {
   };
 };
 
-
-
-export const buildSmart = (model: Identifier, to: string, searchFunction?: SearchFunction) => {
-
+export const buildSmart = (
+  model: Identifier,
+  to: string,
+  searchFunction?: SearchFunction,
+) => {
   smartRegistry.register({
     identifier: model,
     path: to,
@@ -145,7 +145,6 @@ export const buildSmart = (model: Identifier, to: string, searchFunction?: Searc
     description: "A smart model",
   });
 
-  
   return {
     DetailLink: buildModelLink(to),
     ListLink: buildBaseLink(to),

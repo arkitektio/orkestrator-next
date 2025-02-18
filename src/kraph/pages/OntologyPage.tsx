@@ -21,6 +21,7 @@ import {
 import ExpressionCard from "../components/cards/ExpressionCard";
 import CreateExpressionForm from "../forms/CreateExpressionForm";
 import { UpdateOntologyForm } from "../forms/UpdateOntologyForm";
+import GraphCard from "../components/cards/GraphCard";
 
 cytoscape.use(cola);
 
@@ -122,8 +123,8 @@ export default asDetailQueryRoute(useGetOntologyQuery, ({ data, refetch }) => {
         />
       }
     >
-      <div className="w-full h-full">
-        <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
+      <div className="w-full h-full p-6">
+        <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center ">
           <div>
             <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
               {data.ontology.name}
@@ -143,7 +144,16 @@ export default asDetailQueryRoute(useGetOntologyQuery, ({ data, refetch }) => {
           </div>
         </div>
         <DragZone uploadFile={uploadFile} createFile={createFile} />
-        <div className="p-6">
+        <h3 className="text-2xl font-bold p-2">Graphs</h3>
+        <div className="p-2">
+          <div className="grid grid-cols-5 gap-4">
+            {data.ontology.graphs.map((graph) => (
+              <GraphCard key={graph.id} item={graph} />
+            ))}
+          </div>
+        </div>
+        <h3 className="text-2xl font-bold p-2">Expressions</h3>
+        <div className="p-2">
           <div className="grid grid-cols-5 gap-4">
             {data.ontology.expressions.map((expression) => (
               <ExpressionCard key={expression.id} item={expression} />

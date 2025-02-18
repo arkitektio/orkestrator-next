@@ -1,0 +1,11 @@
+query GlobalSearch($search: String, $pagination: OffsetPaginationInput) {
+  graphs: graphs(filters: { search: $search }, pagination: $pagination) {
+    ...ListGraph
+  }
+  ontologies: ontologies(
+    filters: { search: $search }
+    pagination: $pagination
+  ) {
+    ...ListOntology
+  }
+}

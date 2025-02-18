@@ -3,11 +3,7 @@ import { Guard } from "@/arkitekt/Arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import React from "react";
 import { Route, Routes } from "react-router";
-import EntityGraphPage from "./pages/EntityGraphPage";
-import EntityPage from "./pages/EntityPage";
-import EntityRelationPage from "./pages/EntityRelationPage";
 import ExpressionPage from "./pages/ExpressionPage";
-import GraphEntitiesPage from "./pages/GraphEntitiesPage";
 import GraphPage from "./pages/GraphPage";
 import GraphsPage from "./pages/GraphsPage";
 import HomePage from "./pages/HomePage";
@@ -22,7 +18,6 @@ import ProtocolStepTemplatesPage from "./pages/ProtocolStepTemplatesPage";
 import ReagentPage from "./pages/ReagentPage";
 import ReagentsPage from "./pages/ReagentsPage";
 import StandardPane from "./panes/StandardPane";
-import EntityKnowledgePage from "./pages/EntityKnowledgePage";
 interface Props {}
 
 export const KraphModule: React.FC<Props> = (props) => {
@@ -31,9 +26,6 @@ export const KraphModule: React.FC<Props> = (props) => {
       <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route index element={<HomePage />} />
-          <Route path="entities/:id" element={<EntityPage />} />
-          <Route path="entities/:id/graph" element={<EntityKnowledgePage />} />
-          <Route path="entityrelations/:id" element={<EntityRelationPage />} />
           <Route path="expressions/:id" element={<ExpressionPage />} />
           <Route path="ontologies/:id" element={<KnowledgePage />} />
           <Route path="ontologies" element={<OntologiesPage />} />
@@ -41,11 +33,6 @@ export const KraphModule: React.FC<Props> = (props) => {
           <Route path="graphs/:id" element={<GraphPage />} />
           <Route path="reagents" element={<ReagentsPage />} />
           <Route path="reagents/:id" element={<ReagentPage />} />
-          <Route path="graphs/:id/entities" element={<GraphEntitiesPage />} />
-          <Route
-            path="linkedexpressions/:id"
-            element={<LinkedExpressionPage />}
-          />
           <Route path="protocols/:id" element={<ProtocolPage />} />
           <Route path="protocolsteps/:id" element={<ProtocolStepPage />} />
           <Route

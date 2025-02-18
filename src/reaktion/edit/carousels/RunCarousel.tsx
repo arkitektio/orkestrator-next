@@ -6,7 +6,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { LokRoom } from "@/linkers";
+import { FlussRun } from "@/linkers";
 import { useRunCarouselQuery } from "@/reaktion/api/graphql";
 import { TrackFlow } from "@/reaktion/track/TrackFlow";
 
@@ -32,14 +32,14 @@ export default ({}) => {
                   <p className="mt-3 text-xl text-muted-foreground">
                     Latest Run
                   </p>
-                  <LokRoom.DetailLink object={item.id}>
+                  <FlussRun.DetailLink object={item.id}>
                     <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
                       {item.flow.title}
                     </h1>
                     <p className="mt-3 text-xl text-muted-foreground">
                       {item.createdAt}
                     </p>
-                  </LokRoom.DetailLink>
+                  </FlussRun.DetailLink>
                 </div>
               </div>
               <div className="col-span-6">

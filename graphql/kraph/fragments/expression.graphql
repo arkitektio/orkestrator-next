@@ -6,25 +6,15 @@ fragment Expression on Expression {
     name
   }
   description
-  linkedExpressions {
-    ...ListLinkedExpression
-    entities(pagination: { limit: 10 }) {
-      id
-      label
-    }
-  }
   store {
     ...MediaStore
   }
-  kind
-  metricKind
 }
 
 fragment ListExpression on Expression {
   id
   label
   description
-  kind
   store {
     ...MediaStore
   }

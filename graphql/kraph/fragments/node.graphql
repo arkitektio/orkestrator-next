@@ -1,0 +1,6 @@
+fragment Node on Node {
+  id
+  label
+  ...Entity
+  ...Structure
+}

@@ -1,0 +1,25 @@
+fragment Structure on Structure {
+  id
+  label
+  edges {
+    id
+    right {
+      id
+      label
+    }
+  }
+  identifier
+  object
+}
+
+fragment ListStructure on Structure {
+  identifier
+  object
+  id
+}
+
+fragment StructureGraphNode on Structure {
+  identifier
+  object
+  id
+}

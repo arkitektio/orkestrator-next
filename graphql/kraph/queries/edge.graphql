@@ -1,0 +1,5 @@
+query GetEdge($id: ID!) {
+  edge(id: $id) {
+    ...Edge
+  }
+}

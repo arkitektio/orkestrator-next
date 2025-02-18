@@ -1,3 +1,4 @@
+import { AlpakaWard } from "@/alpaka/AlpakaWard";
 import { Arkitekt, Guard } from "@/arkitekt/Arkitekt";
 import { CommandMenu } from "@/command/Menu";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
@@ -120,6 +121,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                         <Guard.Kraph fallback={<></>}>
                           <KraphWard key="kraph" />
                         </Guard.Kraph>
+                        <Guard.Alpaka fallback={<></>}>
+                          <AlpakaWard key="alpaka" />
+                        </Guard.Alpaka>
                         <Guard.Mikro fallback={<></>}>
                           <MikroNextWard key="mikro" />
                         </Guard.Mikro>

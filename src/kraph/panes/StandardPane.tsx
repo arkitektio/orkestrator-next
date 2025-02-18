@@ -92,8 +92,6 @@ export const NavigationPane = (props: {}) => {
 
 const variables: GlobalSearchQueryVariables = {
   search: "",
-  noImages: false,
-  noFiles: false,
   pagination: {
     limit: 10,
   },

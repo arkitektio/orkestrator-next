@@ -4,14 +4,8 @@ mutation CreateEntity($input: EntityInput!) {
   }
 }
 
-mutation CreateEntityRelation($input: EntityRelationInput!) {
-  createEntityRelation(input: $input) {
-    ...EntityRelation
-  }
-}
-
-mutation CreateEntityGraphRelation($input: EntityRelationInput!) {
-  createEntityRelation(input: $input) {
-    ...EntityGraphEdge
+mutation CreateRelation($input: RelationInput!) {
+  createRelation(input: $input) {
+    ...Relation
   }
 }

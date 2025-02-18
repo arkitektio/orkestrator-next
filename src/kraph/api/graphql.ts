@@ -16,9 +16,10 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
+  Cypher: { input: any; output: any; }
   DateTime: { input: any; output: any; }
   Metric: { input: any; output: any; }
-  MetricMap: { input: any; output: any; }
+  NodeID: { input: any; output: any; }
   RemoteUpload: { input: any; output: any; }
   StructureString: { input: any; output: any; }
   UntypedPlateChild: { input: any; output: any; }
@@ -32,20 +33,28 @@ export type App = {
   name: Scalars['String']['output'];
 };
 
-export type AttachMetricsToEntitiesMetricInput = {
-  metric: Scalars['ID']['input'];
-  pairs: Array<EntityValuePairInput>;
-};
-
-export type CreateEntityMetricInput = {
-  /** The entity to attach the metric to. */
-  entity: Scalars['ID']['input'];
-  /** The metric to attach to the entity. */
-  metric: Scalars['ID']['input'];
-  /** The timepoint of the metric. */
-  timepoint?: InputMaybe<Scalars['DateTime']['input']>;
-  /** The value of the metric. */
-  value: Scalars['Metric']['input'];
+/**  A ComputedMeasurement is a measurement that is computed from other measurements. It is a special kind of measurement that is derived from other measurements. */
+export type ComputedMeasurement = Edge & {
+  __typename?: 'ComputedMeasurement';
+  /** When this entity was created */
+  computedFrom: Array<Measurement>;
+  /** When this entity was created */
+  createdAt: Scalars['DateTime']['output'];
+  expression: Expression;
+  /** The unique identifier of the entity within its graph */
+  id: Scalars['NodeID']['output'];
+  inferedBy: Edge;
+  label: Scalars['String']['output'];
+  left: Node;
+  leftId: Scalars['String']['output'];
+  right: Node;
+  rightId: Scalars['String']['output'];
+  /** Timestamp from when this entity is valid */
+  validFrom: Scalars['DateTime']['output'];
+  /** Timestamp until when this entity is valid */
+  validTo: Scalars['DateTime']['output'];
+  /** The value of the measurement */
+  value: Scalars['Metric']['output'];
 };
 
 /** Input type for creating a new model */
@@ -56,13 +65,6 @@ export type CreateModelInput = {
   name: Scalars['String']['input'];
   /** Optional view ID to associate with the model */
   view?: InputMaybe<Scalars['ID']['input']>;
-};
-
-export type CreateRelationMetricInput = {
-  metric?: InputMaybe<Scalars['ID']['input']>;
-  relation: Scalars['ID']['input'];
-  timepoint?: InputMaybe<Scalars['DateTime']['input']>;
-  value: Scalars['Metric']['input'];
 };
 
 export type DeleteEntityInput = {
@@ -76,10 +78,6 @@ export type DeleteExpressionInput = {
 };
 
 export type DeleteGraphInput = {
-  id: Scalars['ID']['input'];
-};
-
-export type DeleteLinkedExpressionInput = {
   id: Scalars['ID']['input'];
 };
 
@@ -101,78 +99,40 @@ export type DeleteProtocolStepTemplateInput = {
   id: Scalars['ID']['input'];
 };
 
-/**
- * An entity is a node in a graph. Entities are the building blocks of the data model in kraph.
- *
- *                  They are used to represent the different objects in your data model, and how they are connected to each other, through
- *                  relations.
- *
- *                  Kraph distinguishes between two core types of entities: Biological entities and Data entities. Biological entities
- *                  are describing real-world objects, such as cells, tissues, organs, etc. Data entities are describing data objects, such as
- *                  images, tables, etc.
- *
- *                  While you can relate any entity to any other entity, it is important to keep in mind that the relations between entities
- *                     should be meaningful, and should reflect the real-world relationships between the objects they represent.
- *
- *                  If you want to attach measurments or metrics to an entity, you should never attach them directly to the entity, but rather
- *                  point from the measurement (the data object) to the entity. This way, you can keep track of the provenance of the data, and
- *                  ensure that you never know anything about the entity that is not backed by data.
- *
- *
- */
-export type Entity = {
-  __typename?: 'Entity';
-  /** When this entity was created */
-  createdAt: Scalars['DateTime']['output'];
+export type Edge = {
+  expression: Expression;
   /** The unique identifier of the entity within its graph */
-  id: Scalars['ID']['output'];
-  /** A unique identifier for this entity if available */
-  identifier?: Maybe<Scalars['String']['output']>;
-  /** The name of the entity's type/kind */
-  kindName: Scalars['String']['output'];
-  /** A human readable label for this entity */
+  id: Scalars['NodeID']['output'];
+  inferedBy: Edge;
   label: Scalars['String']['output'];
-  /** The expression that defines this entity's type */
-  linkedExpression: LinkedExpression;
-  /** Map of metric values associated with this entity */
-  metricMap: Scalars['MetricMap']['output'];
-  /** List of metrics associated with this entity */
-  metrics: Array<NodeMetric>;
-  /** Reference to an external object if this entity represents one */
-  object?: Maybe<Scalars['String']['output']>;
-  /** Relations this entity has with other entities */
-  relations: Array<EntityRelation>;
+  left: Node;
+  leftId: Scalars['String']['output'];
+  right: Node;
+  rightId: Scalars['String']['output'];
+};
+
+/** A Entity is a recorded data point in a graph. It can measure a property of an entity through a direct measurement edge, that connects the entity to the structure. It of course can relate to other structures through relation edges. */
+export type Entity = Node & {
+  __typename?: 'Entity';
+  /** The unique identifier of the entity within its graph */
+  edges: Array<Edge>;
+  expression: Expression;
+  /** The unique identifier of the entity within its graph */
+  id: Scalars['NodeID']['output'];
+  label: Scalars['String']['output'];
+  /** The unique identifier of the entity within its graph */
+  leftEdges: Array<Edge>;
+  /** The unique identifier of the entity within its graph */
+  rightEdges: Array<Edge>;
   /** Protocol steps where this entity was the target */
   subjectedTo: Array<ProtocolStep>;
   /** Protocol steps where this entity was used */
   usedIn: Array<ProtocolStep>;
-  /** Timestamp from when this entity is valid */
-  validFrom: Scalars['DateTime']['output'];
-  /** Timestamp until when this entity is valid */
-  validTo: Scalars['DateTime']['output'];
 };
 
 
-/**
- * An entity is a node in a graph. Entities are the building blocks of the data model in kraph.
- *
- *                  They are used to represent the different objects in your data model, and how they are connected to each other, through
- *                  relations.
- *
- *                  Kraph distinguishes between two core types of entities: Biological entities and Data entities. Biological entities
- *                  are describing real-world objects, such as cells, tissues, organs, etc. Data entities are describing data objects, such as
- *                  images, tables, etc.
- *
- *                  While you can relate any entity to any other entity, it is important to keep in mind that the relations between entities
- *                     should be meaningful, and should reflect the real-world relationships between the objects they represent.
- *
- *                  If you want to attach measurments or metrics to an entity, you should never attach them directly to the entity, but rather
- *                  point from the measurement (the data object) to the entity. This way, you can keep track of the provenance of the data, and
- *                  ensure that you never know anything about the entity that is not backed by data.
- *
- *
- */
-export type EntityRelationsArgs = {
+/** A Entity is a recorded data point in a graph. It can measure a property of an entity through a direct measurement edge, that connects the entity to the structure. It of course can relate to other structures through relation edges. */
+export type EntityEdgesArgs = {
   filter?: InputMaybe<EntityRelationFilter>;
   pagination?: InputMaybe<GraphPaginationInput>;
 };
@@ -195,60 +155,13 @@ export type EntityFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type EntityGraph = {
-  __typename?: 'EntityGraph';
-  edges: Array<EntityRelation>;
-  graph: Graph;
-  nodes: Array<Entity>;
-};
-
 /** Input type for creating a new entity */
 export type EntityInput = {
-  /** Optional group ID to associate the entity with */
-  group?: InputMaybe<Scalars['ID']['input']>;
-  /** Optional instance kind specification */
-  instanceKind?: InputMaybe<Scalars['String']['input']>;
   /** The ID of the kind (LinkedExpression) to create the entity from */
-  kind: Scalars['ID']['input'];
+  expression: Scalars['ID']['input'];
+  graph: Scalars['ID']['input'];
   /** Optional name for the entity */
   name?: InputMaybe<Scalars['String']['input']>;
-  /** Optional parent entity ID */
-  parent?: InputMaybe<Scalars['ID']['input']>;
-};
-
-export type EntityKindNode = {
-  __typename?: 'EntityKindNode';
-  id: Scalars['String']['output'];
-  label: Scalars['String']['output'];
-  metrics: Array<EntityKindNodeMetric>;
-};
-
-export type EntityKindNodeMetric = {
-  __typename?: 'EntityKindNodeMetric';
-  dataKind: Scalars['String']['output'];
-  kind: Scalars['String']['output'];
-};
-
-export type EntityKindRelationEdge = {
-  __typename?: 'EntityKindRelationEdge';
-  id: Scalars['String']['output'];
-  label: Scalars['String']['output'];
-  metrics: Array<EntityKindNodeMetric>;
-  source: Scalars['String']['output'];
-  target: Scalars['String']['output'];
-};
-
-export type EntityRelation = {
-  __typename?: 'EntityRelation';
-  id: Scalars['ID']['output'];
-  label: Scalars['String']['output'];
-  left: Entity;
-  leftId: Scalars['String']['output'];
-  linkedExpression: LinkedExpression;
-  metricMap: Scalars['MetricMap']['output'];
-  metrics: Array<RelationMetric>;
-  right: Entity;
-  rightId: Scalars['String']['output'];
 };
 
 /** Filter for entity relations in the graph */
@@ -269,21 +182,6 @@ export type EntityRelationFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
   /** Include self-relations */
   withSelf?: InputMaybe<Scalars['Boolean']['input']>;
-};
-
-/** Input type for creating a relation between two entities */
-export type EntityRelationInput = {
-  /** ID of the relation kind (LinkedExpression) */
-  kind: Scalars['ID']['input'];
-  /** ID of the left entity (format: graph:id) */
-  left: Scalars['ID']['input'];
-  /** ID of the right entity (format: graph:id) */
-  right: Scalars['ID']['input'];
-};
-
-export type EntityValuePairInput = {
-  entity: Scalars['ID']['input'];
-  value: Scalars['Metric']['input'];
 };
 
 export type Experiment = {
@@ -308,38 +206,25 @@ export type ExperimentProtocolsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-/**
- * An expression in an ontology. Expression are used to label entities and their relations in a graph like structure. Depending on the kind of the expression
- *     it can be used to describe different aspects of the entities and relations.
- */
 export type Expression = {
   __typename?: 'Expression';
+  /** The unique identifier of the expression within its graph */
+  ageName: Scalars['String']['output'];
+  color?: Maybe<Scalars['String']['output']>;
   /** A description of the expression. */
   description?: Maybe<Scalars['String']['output']>;
-  /** The unique identifier of the expression. */
+  /** The unique identifier of the expression within its graph */
   id: Scalars['ID']['output'];
-  /** The kind of the expression. */
-  kind: ExpressionKind;
-  /** The label of the expression. The class */
+  /**  The value  type of the metric */
+  kind?: Maybe<MetricKind>;
+  /** The unique identifier of the expression within its graph */
   label: Scalars['String']['output'];
-  /** The linked expressions of the expression. i.e in which graphs the expression is used. */
-  linkedExpressions: Array<LinkedExpression>;
-  /** The kind of metric that can be attached to the expression. */
-  metricKind?: Maybe<MetricDataType>;
   /** The ontology the expression belongs to. */
   ontology: Ontology;
   /** An image or other media file that can be used to represent the expression. */
   store?: Maybe<MediaStore>;
-};
-
-
-/**
- * An expression in an ontology. Expression are used to label entities and their relations in a graph like structure. Depending on the kind of the expression
- *     it can be used to describe different aspects of the entities and relations.
- */
-export type ExpressionLinkedExpressionsArgs = {
-  filters?: InputMaybe<LinkedExpressionFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
+  /**  The unit  type of the metric */
+  unit?: Maybe<Scalars['String']['output']>;
 };
 
 export type ExpressionFilter = {
@@ -387,15 +272,16 @@ export type Graph = {
   ageName: Scalars['String']['output'];
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  linkedExpressions: Array<LinkedExpression>;
+  latestNodes: Array<Node>;
   name: Scalars['String']['output'];
+  ontology: Ontology;
 };
 
 
 /** A graph, that contains entities and relations. */
-export type GraphLinkedExpressionsArgs = {
-  filters?: InputMaybe<LinkedExpressionFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
+export type GraphLatestNodesArgs = {
+  filters?: InputMaybe<EntityFilter>;
+  pagination?: InputMaybe<GraphPaginationInput>;
 };
 
 export type GraphFilter = {
@@ -412,11 +298,46 @@ export type GraphInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   experiment?: InputMaybe<Scalars['ID']['input']>;
   name: Scalars['String']['input'];
+  ontology: Scalars['ID']['input'];
 };
 
 export type GraphPaginationInput = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+/** A view of a graph, that contains entities and relations. */
+export type GraphQuery = {
+  __typename?: 'GraphQuery';
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  kind: ViewKind;
+  name: Scalars['String']['output'];
+  ontology: Ontology;
+};
+
+export type GraphQueryFilter = {
+  AND?: InputMaybe<GraphQueryFilter>;
+  OR?: InputMaybe<GraphQueryFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Search by text */
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Input for creating a new expression */
+export type GraphQueryInput = {
+  /** A detailed description of the expression */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** The kind/type of this expression */
+  kind: ViewKind;
+  /** The label/name of the expression */
+  name: Scalars['String']['input'];
+  /** The ID of the ontology this expression belongs to. If not provided, uses default ontology */
+  ontology?: InputMaybe<Scalars['ID']['input']>;
+  /** The label/name of the expression */
+  query: Scalars['Cypher']['input'];
 };
 
 export type History = {
@@ -436,55 +357,44 @@ export enum HistoryKind {
   Update = 'UPDATE'
 }
 
-export type KnowledgeGraph = {
-  __typename?: 'KnowledgeGraph';
-  edges: Array<EntityKindRelationEdge>;
-  nodes: Array<EntityKindNode>;
-};
-
-export type LinkExpressionInput = {
-  color?: InputMaybe<Array<Scalars['Int']['input']>>;
-  expression: Scalars['ID']['input'];
-  graph: Scalars['ID']['input'];
-};
-
-export type LinkedExpression = {
-  __typename?: 'LinkedExpression';
-  color: Scalars['String']['output'];
-  dataKind?: Maybe<MetricDataType>;
-  description?: Maybe<Scalars['String']['output']>;
-  entities: Array<Entity>;
+/**
+ * A measurement is an edge from a structure to an entity. Importantly Measurement are always directed from the structure to the entity, and never the other way around.
+ *
+ * Why an edge?
+ * Because a measurement is a relation between two entities, and it is important to keep track of the provenance of the data.
+ *                  By making the measurement an edge, we can keep track of the timestamp when the data point (entity) was taken,
+ *                   and the timestamp when the measurment was created. We can also keep track of the validity of the measurment
+ *                  over time (valid_from, valid_to). Through these edges we can establish when a entity really existed (i.e. when it was measured)
+ *
+ */
+export type Measurement = Edge & {
+  __typename?: 'Measurement';
+  /** When this entity was created */
+  createdAt: Scalars['DateTime']['output'];
   expression: Expression;
-  graph: Graph;
-  id: Scalars['ID']['output'];
-  kind: ExpressionKind;
+  /** The unique identifier of the entity within its graph */
+  id: Scalars['NodeID']['output'];
+  inferedBy: Edge;
   label: Scalars['String']['output'];
-  pinned: Scalars['Boolean']['output'];
-  purl?: Maybe<Scalars['String']['output']>;
-};
-
-
-export type LinkedExpressionEntitiesArgs = {
-  filter?: InputMaybe<EntityFilter>;
-  pagination?: InputMaybe<GraphPaginationInput>;
-};
-
-export type LinkedExpressionFilter = {
-  AND?: InputMaybe<LinkedExpressionFilter>;
-  OR?: InputMaybe<LinkedExpressionFilter>;
-  graph?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  kind?: InputMaybe<ExpressionKind>;
-  pinned?: InputMaybe<Scalars['Boolean']['input']>;
-  search?: InputMaybe<Scalars['String']['input']>;
+  left: Node;
+  leftId: Scalars['String']['output'];
+  right: Node;
+  rightId: Scalars['String']['output'];
+  /** Timestamp from when this entity is valid */
+  validFrom: Scalars['DateTime']['output'];
+  /** Timestamp until when this entity is valid */
+  validTo: Scalars['DateTime']['output'];
+  /** The value of the measurement */
+  value: Scalars['Metric']['output'];
 };
 
 export type MeasurementInput = {
-  graph: Scalars['ID']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
-  structure: Scalars['StructureString']['input'];
+  entity: Scalars['NodeID']['input'];
+  expression: Scalars['ID']['input'];
+  structure: Scalars['NodeID']['input'];
   validFrom?: InputMaybe<Scalars['DateTime']['input']>;
   validTo?: InputMaybe<Scalars['DateTime']['input']>;
+  value?: InputMaybe<Scalars['Metric']['input']>;
 };
 
 export type MediaStore = {
@@ -513,6 +423,14 @@ export enum MetricDataType {
   String = 'STRING',
   ThreeDVector = 'THREE_D_VECTOR',
   TwoDVector = 'TWO_D_VECTOR'
+}
+
+export enum MetricKind {
+  Boolean = 'BOOLEAN',
+  Date = 'DATE',
+  Number = 'NUMBER',
+  String = 'STRING',
+  Vector = 'VECTOR'
 }
 
 /** A model represents a trained machine learning model that can be used for analysis. */
@@ -544,22 +462,20 @@ export type ModelFilter = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  /** Attach metrics to multiple entities */
-  attachMetricsToEntities: Array<Entity>;
   /** Create a new entity */
   createEntity: Entity;
-  /** Create a new metric for an entity */
-  createEntityMetric: Entity;
-  /** Create a new relation between entities */
-  createEntityRelation: EntityRelation;
   /** Create a new expression */
   createExpression: Expression;
   /** Create a new graph */
   createGraph: Graph;
-  /** Create a new measurement */
-  createMeasurement: Entity;
+  /** Create a new graph query */
+  createGraphQuery: GraphQuery;
+  /** Create a new metric for an entity */
+  createMeasurement: Measurement;
   /** Create a new model */
   createModel: Model;
+  /** Create a new node query */
+  createNodeQuery: NodeQuery;
   /** Create a new ontology */
   createOntology: Ontology;
   /** Create a new protocol */
@@ -570,10 +486,10 @@ export type Mutation = {
   createProtocolStepTemplate: ProtocolStepTemplate;
   /** Create a new reagent */
   createReagent: Reagent;
-  /** Create a new metric for a relation */
-  createRelationMetric: EntityRelation;
-  /** Create a relation between structures */
-  createStructureRelation: EntityRelation;
+  /** Create a new relation between entities */
+  createRelation: Relation;
+  /** Create a new structure */
+  createStructure: Structure;
   /** Delete an existing entity */
   deleteEntity: Scalars['ID']['output'];
   /** Delete an existing expression */
@@ -588,14 +504,8 @@ export type Mutation = {
   deleteProtocolStep: Scalars['ID']['output'];
   /** Delete an existing protocol step template */
   deleteProtocolStepTemplate: Scalars['ID']['output'];
-  /** Link an expression to an entity */
-  linkExpression: LinkedExpression;
-  /** Pin a linked expression */
-  pinLinkedExpression: LinkedExpression;
   /** Request a new file upload */
   requestUpload: PresignedPostCredentials;
-  /** Unlink an expression from an entity */
-  unlinkExpression: Scalars['ID']['output'];
   /** Update an existing expression */
   updateExpression: Expression;
   /** Update an existing graph */
@@ -609,23 +519,8 @@ export type Mutation = {
 };
 
 
-export type MutationAttachMetricsToEntitiesArgs = {
-  input: AttachMetricsToEntitiesMetricInput;
-};
-
-
 export type MutationCreateEntityArgs = {
   input: EntityInput;
-};
-
-
-export type MutationCreateEntityMetricArgs = {
-  input: CreateEntityMetricInput;
-};
-
-
-export type MutationCreateEntityRelationArgs = {
-  input: EntityRelationInput;
 };
 
 
@@ -639,6 +534,11 @@ export type MutationCreateGraphArgs = {
 };
 
 
+export type MutationCreateGraphQueryArgs = {
+  input: GraphQueryInput;
+};
+
+
 export type MutationCreateMeasurementArgs = {
   input: MeasurementInput;
 };
@@ -646,6 +546,11 @@ export type MutationCreateMeasurementArgs = {
 
 export type MutationCreateModelArgs = {
   input: CreateModelInput;
+};
+
+
+export type MutationCreateNodeQueryArgs = {
+  input: NodeQueryInput;
 };
 
 
@@ -674,13 +579,13 @@ export type MutationCreateReagentArgs = {
 };
 
 
-export type MutationCreateRelationMetricArgs = {
-  input: CreateRelationMetricInput;
+export type MutationCreateRelationArgs = {
+  input: RelationInput;
 };
 
 
-export type MutationCreateStructureRelationArgs = {
-  input: StructureRelationInput;
+export type MutationCreateStructureArgs = {
+  input: StructureInput;
 };
 
 
@@ -719,23 +624,8 @@ export type MutationDeleteProtocolStepTemplateArgs = {
 };
 
 
-export type MutationLinkExpressionArgs = {
-  input: LinkExpressionInput;
-};
-
-
-export type MutationPinLinkedExpressionArgs = {
-  input: PinLinkedExpressionInput;
-};
-
-
 export type MutationRequestUploadArgs = {
   input: RequestMediaUploadInput;
-};
-
-
-export type MutationUnlinkExpressionArgs = {
-  input: DeleteLinkedExpressionInput;
 };
 
 
@@ -763,14 +653,56 @@ export type MutationUpdateProtocolStepTemplateArgs = {
   input: UpdateProtocolStepTemplateInput;
 };
 
-export type NodeMetric = {
-  __typename?: 'NodeMetric';
+export type Node = {
+  /** The unique identifier of the entity within its graph */
+  edges: Array<Edge>;
+  /** The unique identifier of the entity within its graph */
+  id: Scalars['NodeID']['output'];
+  label: Scalars['String']['output'];
+  /** The unique identifier of the entity within its graph */
+  leftEdges: Array<Edge>;
+  /** The unique identifier of the entity within its graph */
+  rightEdges: Array<Edge>;
+};
+
+
+export type NodeEdgesArgs = {
+  filter?: InputMaybe<EntityRelationFilter>;
+  pagination?: InputMaybe<GraphPaginationInput>;
+};
+
+/** A view of a node entities and relations. */
+export type NodeQuery = {
+  __typename?: 'NodeQuery';
+  description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  key: Scalars['String']['output'];
-  linkedExpression: LinkedExpression;
-  validFrom?: Maybe<Scalars['DateTime']['output']>;
-  validTo?: Maybe<Scalars['DateTime']['output']>;
-  value?: Maybe<Scalars['Metric']['output']>;
+  kind: ViewKind;
+  name: Scalars['String']['output'];
+  ontology: Ontology;
+};
+
+export type NodeQueryFilter = {
+  AND?: InputMaybe<NodeQueryFilter>;
+  OR?: InputMaybe<NodeQueryFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Search by text */
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Input for creating a new expression */
+export type NodeQueryInput = {
+  /** A detailed description of the expression */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** The kind/type of this expression */
+  kind: ViewKind;
+  /** The label/name of the expression */
+  name: Scalars['String']['input'];
+  /** The ID of the ontology this expression belongs to. If not provided, uses default ontology */
+  ontology?: InputMaybe<Scalars['ID']['input']>;
+  /** The label/name of the expression */
+  query: Scalars['Cypher']['input'];
 };
 
 export type OffsetPaginationInput = {
@@ -787,12 +719,17 @@ export type Ontology = {
   __typename?: 'Ontology';
   /** A detailed description of what this ontology represents and how it should be used */
   description?: Maybe<Scalars['String']['output']>;
-  /** The list of expressions (terms/concepts) defined in this ontology */
   expressions: Array<Expression>;
+  /** The list of graph queries defined in this ontology */
+  graphQueries: Array<GraphQuery>;
+  /** The list of graphs defined in this ontology */
+  graphs: Array<Graph>;
   /** The unique identifier of the ontology */
   id: Scalars['ID']['output'];
   /** The name of the ontology */
   name: Scalars['String']['output'];
+  /** The list of node queries defined in this ontology */
+  nodeQueries: Array<NodeQuery>;
   /** The Persistent URL (PURL) that uniquely identifies this ontology globally */
   purl?: Maybe<Scalars['String']['output']>;
   /** Optional associated media files like documentation or diagrams */
@@ -807,6 +744,39 @@ export type Ontology = {
  */
 export type OntologyExpressionsArgs = {
   filters?: InputMaybe<ExpressionFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/**
+ * An ontology represents a formal naming and definition of types, properties, and
+ *     interrelationships between entities in a specific domain. In kraph, ontologies provide the vocabulary
+ *     and semantic structure for organizing data across graphs.
+ */
+export type OntologyGraphQueriesArgs = {
+  filters?: InputMaybe<GraphQueryFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/**
+ * An ontology represents a formal naming and definition of types, properties, and
+ *     interrelationships between entities in a specific domain. In kraph, ontologies provide the vocabulary
+ *     and semantic structure for organizing data across graphs.
+ */
+export type OntologyGraphsArgs = {
+  filters?: InputMaybe<GraphFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/**
+ * An ontology represents a formal naming and definition of types, properties, and
+ *     interrelationships between entities in a specific domain. In kraph, ontologies provide the vocabulary
+ *     and semantic structure for organizing data across graphs.
+ */
+export type OntologyNodeQueriesArgs = {
+  filters?: InputMaybe<NodeQueryFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -835,19 +805,20 @@ export type OntologyInput = {
 };
 
 /** A paired structure two entities and the relation between them. */
-export type PairedStructure = {
-  __typename?: 'PairedStructure';
-  /** The left entity. */
-  left: Entity;
+export type Pair = {
+  __typename?: 'Pair';
   /** The relation between the two entities. */
-  relation: EntityRelation;
+  edge: Edge;
+  /** The left entity. */
+  left: Node;
   /** The right entity. */
-  right: Entity;
+  right: Node;
 };
 
-export type PinLinkedExpressionInput = {
-  id: Scalars['ID']['input'];
-  pin?: InputMaybe<Scalars['Boolean']['input']>;
+export type Path = {
+  __typename?: 'Path';
+  edges: Array<Edge>;
+  nodes: Array<Node>;
 };
 
 export type PlateChildInput = {
@@ -986,36 +957,28 @@ export type ProtocolStepTemplateInput = {
 
 export type Query = {
   __typename?: 'Query';
-  /** List of all entities in the system */
-  entities: Array<Entity>;
-  entity: Entity;
-  /** Retrieves the graph of entities and their relationships */
-  entityGraph: EntityGraph;
-  entityRelation: EntityRelation;
+  edge: Edge;
   /** List of all relationships between entities */
-  entityRelations: Array<EntityRelation>;
+  edges: Array<Edge>;
   expression: Expression;
-  /** List of all expressions in the system */
   expressions: Array<Expression>;
   graph: Graph;
   /** List of all knowledge graphs */
   graphs: Array<Graph>;
-  /** Retrieves the complete knowledge graph starting from an entity */
-  knowledgeGraph: KnowledgeGraph;
-  linkedExpression: LinkedExpression;
-  /** Gets a linked expression by its AGE name */
-  linkedExpressionByAgename: LinkedExpression;
-  /** List of all expressions that are linked in a Graph */
-  linkedExpressions: Array<LinkedExpression>;
   model: Model;
   /** List of all deep learning models (e.g. neural networks) */
   models: Array<Model>;
   myActiveGraph: Graph;
+  node: Node;
+  /** List of all entities in the system */
+  nodes: Array<Entity>;
   /** List of all ontologies */
   ontologies: Array<Ontology>;
   ontology: Ontology;
   /** Retrieves paired entities */
-  pairedEntities: Array<PairedStructure>;
+  pairs: Array<Pair>;
+  /** Retrieves the complete knowledge graph starting from an entity */
+  path: Path;
   protocol: Protocol;
   protocolStep: ProtocolStep;
   protocolStepTemplate: ProtocolStepTemplate;
@@ -1029,32 +992,16 @@ export type Query = {
   /** List of all reagents used in protocols */
   reagents: Array<Reagent>;
   /** Gets a specific structure e.g an image, video, or 3D model */
-  structure: Entity;
+  structure: Structure;
 };
 
 
-export type QueryEntitiesArgs = {
-  filters?: InputMaybe<EntityFilter>;
-  pagination?: InputMaybe<GraphPaginationInput>;
-};
-
-
-export type QueryEntityArgs = {
+export type QueryEdgeArgs = {
   id: Scalars['ID']['input'];
 };
 
 
-export type QueryEntityGraphArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type QueryEntityRelationArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type QueryEntityRelationsArgs = {
+export type QueryEdgesArgs = {
   filters?: InputMaybe<EntityRelationFilter>;
   pagination?: InputMaybe<GraphPaginationInput>;
 };
@@ -1082,28 +1029,6 @@ export type QueryGraphsArgs = {
 };
 
 
-export type QueryKnowledgeGraphArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type QueryLinkedExpressionArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type QueryLinkedExpressionByAgenameArgs = {
-  ageName: Scalars['String']['input'];
-  graphId: Scalars['ID']['input'];
-};
-
-
-export type QueryLinkedExpressionsArgs = {
-  filters?: InputMaybe<LinkedExpressionFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
 export type QueryModelArgs = {
   id: Scalars['ID']['input'];
 };
@@ -1112,6 +1037,17 @@ export type QueryModelArgs = {
 export type QueryModelsArgs = {
   filters?: InputMaybe<ModelFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryNodeArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryNodesArgs = {
+  filters?: InputMaybe<EntityFilter>;
+  pagination?: InputMaybe<GraphPaginationInput>;
 };
 
 
@@ -1126,12 +1062,15 @@ export type QueryOntologyArgs = {
 };
 
 
-export type QueryPairedEntitiesArgs = {
-  graph?: InputMaybe<Scalars['ID']['input']>;
-  leftFilter?: InputMaybe<EntityFilter>;
-  pagination?: InputMaybe<GraphPaginationInput>;
-  relationFilter?: InputMaybe<EntityRelationFilter>;
-  rightFilter?: InputMaybe<EntityFilter>;
+export type QueryPairsArgs = {
+  graph: Scalars['ID']['input'];
+  query: Scalars['String']['input'];
+};
+
+
+export type QueryPathArgs = {
+  graph: Scalars['ID']['input'];
+  query: Scalars['String']['input'];
 };
 
 
@@ -1237,10 +1176,41 @@ export type ReagentMappingInput = {
   volume: Scalars['Int']['input'];
 };
 
-export type RelationMetric = {
-  __typename?: 'RelationMetric';
-  linkedExpression: LinkedExpression;
-  value: Scalars['String']['output'];
+/**
+ * A relation is an edge between two entities. It is a directed edge, that connects two entities and established a relationship
+ *                  that is not a measurement between them. I.e. when they are an subjective assertion about the entities.
+ *
+ *
+ *
+ *
+ */
+export type Relation = Edge & {
+  __typename?: 'Relation';
+  /** When this entity was created */
+  createdAt: Scalars['DateTime']['output'];
+  expression: Expression;
+  /** The unique identifier of the entity within its graph */
+  id: Scalars['NodeID']['output'];
+  inferedBy: Edge;
+  label: Scalars['String']['output'];
+  left: Node;
+  leftId: Scalars['String']['output'];
+  right: Node;
+  rightId: Scalars['String']['output'];
+  /** Timestamp from when this entity is valid */
+  validFrom: Scalars['DateTime']['output'];
+  /** Timestamp until when this entity is valid */
+  validTo: Scalars['DateTime']['output'];
+};
+
+/** Input type for creating a relation between two entities */
+export type RelationInput = {
+  /** ID of the relation kind (LinkedExpression) */
+  kind: Scalars['ID']['input'];
+  /** ID of the left entity (format: graph:id) */
+  left: Scalars['ID']['input'];
+  /** ID of the right entity (format: graph:id) */
+  right: Scalars['ID']['input'];
 };
 
 export type RequestMediaUploadInput = {
@@ -1248,19 +1218,34 @@ export type RequestMediaUploadInput = {
   key: Scalars['String']['input'];
 };
 
-export type Structure = {
-  id: Scalars['ID']['input'];
-  identifier: Scalars['String']['input'];
+/** A Structure is a recorded data point in a graph. It can measure a property of an entity through a direct measurement edge, that connects the entity to the structure. It of course can relate to other structures through relation edges. */
+export type Structure = Node & {
+  __typename?: 'Structure';
+  /** The unique identifier of the entity within its graph */
+  edges: Array<Edge>;
+  /** The unique identifier of the entity within its graph */
+  id: Scalars['NodeID']['output'];
+  /** The unique identifier of the entity within its graph */
+  identifier: Scalars['ID']['output'];
+  label: Scalars['String']['output'];
+  /** The unique identifier of the entity within its graph */
+  leftEdges: Array<Edge>;
+  /** The expression that defines this entity's type */
+  object?: Maybe<Scalars['String']['output']>;
+  /** The unique identifier of the entity within its graph */
+  rightEdges: Array<Edge>;
 };
 
-/** Input type for creating a relation between two structures */
-export type StructureRelationInput = {
-  /** ID of the relation kind (LinkedExpression) */
-  kind: Scalars['ID']['input'];
-  /** Left structure of the relation */
-  left: Structure;
-  /** Right structure of the relation */
-  right: Structure;
+
+/** A Structure is a recorded data point in a graph. It can measure a property of an entity through a direct measurement edge, that connects the entity to the structure. It of course can relate to other structures through relation edges. */
+export type StructureEdgesArgs = {
+  filter?: InputMaybe<EntityRelationFilter>;
+  pagination?: InputMaybe<GraphPaginationInput>;
+};
+
+export type StructureInput = {
+  graph: Scalars['ID']['input'];
+  structure: Scalars['StructureString']['input'];
 };
 
 export type Subscription = {
@@ -1352,43 +1337,53 @@ export type VariableInput = {
   value: Scalars['String']['input'];
 };
 
-export type EntityFragment = { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> };
+export enum ViewKind {
+  FloatMetric = 'FLOAT_METRIC',
+  IntMetric = 'INT_METRIC',
+  Path = 'PATH'
+}
 
-export type ListEntityFragment = { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, createdAt: any, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } };
+type Edge_ComputedMeasurement_Fragment = { __typename?: 'ComputedMeasurement', id: any, label: string };
 
-export type EntityGraphNodeFragment = { __typename?: 'Entity', id: string, label: string, kindName: string, linkedExpression: { __typename?: 'LinkedExpression', color: string }, metrics: Array<{ __typename?: 'NodeMetric', value?: any | null }> };
+type Edge_Measurement_Fragment = { __typename?: 'Measurement', id: any, label: string, value: any };
 
-export type EntityGraphFragment = { __typename?: 'EntityGraph', graph: { __typename?: 'Graph', id: string }, nodes: Array<{ __typename?: 'Entity', id: string, label: string, kindName: string, linkedExpression: { __typename?: 'LinkedExpression', color: string }, metrics: Array<{ __typename?: 'NodeMetric', value?: any | null }> }>, edges: Array<{ __typename?: 'EntityRelation', id: string, label: string, leftId: string, rightId: string }> };
+type Edge_Relation_Fragment = { __typename?: 'Relation', id: any, label: string };
 
-export type EntityRelationFragment = { __typename?: 'EntityRelation', id: string, left: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> }, right: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> }, metrics: Array<{ __typename?: 'RelationMetric', value: string }>, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', label: string } } };
+export type EdgeFragment = Edge_ComputedMeasurement_Fragment | Edge_Measurement_Fragment | Edge_Relation_Fragment;
 
-export type ListEntityRelationFragment = { __typename?: 'EntityRelation', id: string, leftId: string, rightId: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', label: string } } };
+export type EntityFragment = { __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } } | { __typename?: 'Measurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } } | { __typename?: 'Relation', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } }> };
 
-export type EntityGraphEdgeFragment = { __typename?: 'EntityRelation', id: string, label: string, leftId: string, rightId: string };
+export type ListEntityFragment = { __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', id: string, label: string } };
 
-export type ExpressionFragment = { __typename?: 'Expression', id: string, label: string, description?: string | null, kind: ExpressionKind, metricKind?: MetricDataType | null, ontology: { __typename?: 'Ontology', id: string, name: string }, linkedExpressions: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, entities: Array<{ __typename?: 'Entity', id: string, label: string }>, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null };
+export type EntityGraphNodeFragment = { __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', color?: string | null } };
 
-export type ListExpressionFragment = { __typename?: 'Expression', id: string, label: string, description?: string | null, kind: ExpressionKind, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null };
+export type ExpressionFragment = { __typename?: 'Expression', id: string, label: string, description?: string | null, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null };
 
-export type GraphFragment = { __typename?: 'Graph', id: string, name: string, description?: string | null, relations: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, entities: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, metrics: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, structures: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }> };
+export type ListExpressionFragment = { __typename?: 'Expression', id: string, label: string, description?: string | null, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null };
+
+export type GraphFragment = { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }> };
 
 export type ListGraphFragment = { __typename?: 'Graph', id: string, name: string };
 
-export type KnowledgeGraphFragment = { __typename?: 'KnowledgeGraph', nodes: Array<{ __typename?: 'EntityKindNode', id: string, label: string, metrics: Array<{ __typename?: 'EntityKindNodeMetric', kind: string, dataKind: string }> }>, edges: Array<{ __typename?: 'EntityKindRelationEdge', id: string, label: string, source: string, target: string, metrics: Array<{ __typename?: 'EntityKindNodeMetric', kind: string, dataKind: string }> }> };
+export type MeasurementFragment = { __typename?: 'Measurement', id: any, value: any };
 
-export type LinkedExpressionFragment = { __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, description?: string | null, kind: ExpressionKind, metricKind?: MetricDataType | null, ontology: { __typename?: 'Ontology', id: string, name: string }, linkedExpressions: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, entities: Array<{ __typename?: 'Entity', id: string, label: string }>, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }, entities: Array<{ __typename?: 'Entity', id: string, label: string }> };
+type Node_Entity_Fragment = { __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } } | { __typename?: 'Measurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } } | { __typename?: 'Relation', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } }> };
 
-export type ListLinkedExpressionFragment = { __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } };
+type Node_Structure_Fragment = { __typename?: 'Structure', id: any, label: string, identifier: string, object?: string | null, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } } | { __typename?: 'Measurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } } | { __typename?: 'Relation', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } }> };
 
-export type OntologyFragment = { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null, kind: ExpressionKind, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null };
+export type NodeFragment = Node_Entity_Fragment | Node_Structure_Fragment;
+
+export type OntologyFragment = { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string }> };
 
 export type ListOntologyFragment = { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null };
+
+export type PathFragment = { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', color?: string | null } } | { __typename?: 'Structure', identifier: string, object?: string | null, id: any }>, edges: Array<{ __typename?: 'ComputedMeasurement' } | { __typename?: 'Measurement', id: any, value: any } | { __typename?: 'Relation' }> };
 
 export type ProtocolFragment = { __typename?: 'Protocol', id: string, name: string, description?: string | null, experiment: { __typename?: 'Experiment', id: string, name: string, description?: string | null } };
 
 export type ListProtocolFragment = { __typename?: 'Protocol', id: string, name: string, experiment: { __typename?: 'Experiment', id: string, name: string } };
 
-export type ProtocolStepFragment = { __typename?: 'ProtocolStep', id: string, name: string, performedAt?: any | null, template: { __typename?: 'ProtocolStepTemplate', name: string, plateChildren: Array<any> }, forReagent?: { __typename?: 'Reagent', id: string } | null, forEntity?: { __typename?: 'Entity', id: string } | null, performedBy?: { __typename?: 'User', id: string } | null };
+export type ProtocolStepFragment = { __typename?: 'ProtocolStep', id: string, name: string, performedAt?: any | null, template: { __typename?: 'ProtocolStepTemplate', name: string, plateChildren: Array<any> }, forReagent?: { __typename?: 'Reagent', id: string } | null, forEntity?: { __typename?: 'Entity', id: any } | null, performedBy?: { __typename?: 'User', id: string } | null };
 
 export type ListProtocolStepFragment = { __typename?: 'ProtocolStep', id: string, name: string, performedAt?: any | null, performedBy?: { __typename?: 'User', id: string } | null };
 
@@ -1400,56 +1395,50 @@ export type ReagentFragment = { __typename?: 'Reagent', id: string, label: strin
 
 export type ListReagentFragment = { __typename?: 'Reagent', id: string, label: string };
 
+export type RelationFragment = { __typename?: 'Relation', id: any, label: string };
+
 export type MediaStoreFragment = { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string };
+
+export type StructureFragment = { __typename?: 'Structure', id: any, label: string, identifier: string, object?: string | null, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } } | { __typename?: 'Measurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } } | { __typename?: 'Relation', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } }> };
+
+export type ListStructureFragment = { __typename?: 'Structure', identifier: string, object?: string | null, id: any };
+
+export type StructureGraphNodeFragment = { __typename?: 'Structure', identifier: string, object?: string | null, id: any };
 
 export type CreateEntityMutationVariables = Exact<{
   input: EntityInput;
 }>;
 
 
-export type CreateEntityMutation = { __typename?: 'Mutation', createEntity: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> } };
+export type CreateEntityMutation = { __typename?: 'Mutation', createEntity: { __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } } | { __typename?: 'Measurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } } | { __typename?: 'Relation', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } }> } };
 
-export type CreateEntityRelationMutationVariables = Exact<{
-  input: EntityRelationInput;
+export type CreateRelationMutationVariables = Exact<{
+  input: RelationInput;
 }>;
 
 
-export type CreateEntityRelationMutation = { __typename?: 'Mutation', createEntityRelation: { __typename?: 'EntityRelation', id: string, left: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> }, right: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> }, metrics: Array<{ __typename?: 'RelationMetric', value: string }>, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', label: string } } } };
-
-export type CreateEntityGraphRelationMutationVariables = Exact<{
-  input: EntityRelationInput;
-}>;
-
-
-export type CreateEntityGraphRelationMutation = { __typename?: 'Mutation', createEntityRelation: { __typename?: 'EntityRelation', id: string, label: string, leftId: string, rightId: string } };
-
-export type CreateEntityMetricMutationVariables = Exact<{
-  input: CreateEntityMetricInput;
-}>;
-
-
-export type CreateEntityMetricMutation = { __typename?: 'Mutation', createEntityMetric: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> } };
+export type CreateRelationMutation = { __typename?: 'Mutation', createRelation: { __typename?: 'Relation', id: any, label: string } };
 
 export type CreateExpressionMutationVariables = Exact<{
   input: ExpressionInput;
 }>;
 
 
-export type CreateExpressionMutation = { __typename?: 'Mutation', createExpression: { __typename?: 'Expression', id: string, label: string, description?: string | null, kind: ExpressionKind, metricKind?: MetricDataType | null, ontology: { __typename?: 'Ontology', id: string, name: string }, linkedExpressions: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, entities: Array<{ __typename?: 'Entity', id: string, label: string }>, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } };
+export type CreateExpressionMutation = { __typename?: 'Mutation', createExpression: { __typename?: 'Expression', id: string, label: string, description?: string | null, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } };
 
 export type UpdateExpressionMutationVariables = Exact<{
   input: UpdateExpressionInput;
 }>;
 
 
-export type UpdateExpressionMutation = { __typename?: 'Mutation', updateExpression: { __typename?: 'Expression', id: string, label: string, description?: string | null, kind: ExpressionKind, metricKind?: MetricDataType | null, ontology: { __typename?: 'Ontology', id: string, name: string }, linkedExpressions: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, entities: Array<{ __typename?: 'Entity', id: string, label: string }>, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } };
+export type UpdateExpressionMutation = { __typename?: 'Mutation', updateExpression: { __typename?: 'Expression', id: string, label: string, description?: string | null, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } };
 
 export type CreateGraphMutationVariables = Exact<{
   input: GraphInput;
 }>;
 
 
-export type CreateGraphMutation = { __typename?: 'Mutation', createGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, relations: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, entities: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, metrics: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, structures: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }> } };
+export type CreateGraphMutation = { __typename?: 'Mutation', createGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }> } };
 
 export type DeleteGraphMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1463,35 +1452,21 @@ export type UpdateGraphMutationVariables = Exact<{
 }>;
 
 
-export type UpdateGraphMutation = { __typename?: 'Mutation', updateGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, relations: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, entities: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, metrics: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, structures: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }> } };
-
-export type PinLinkedExpressionMutationVariables = Exact<{
-  input: PinLinkedExpressionInput;
-}>;
-
-
-export type PinLinkedExpressionMutation = { __typename?: 'Mutation', pinLinkedExpression: { __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, description?: string | null, kind: ExpressionKind, metricKind?: MetricDataType | null, ontology: { __typename?: 'Ontology', id: string, name: string }, linkedExpressions: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, entities: Array<{ __typename?: 'Entity', id: string, label: string }>, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }, entities: Array<{ __typename?: 'Entity', id: string, label: string }> } };
-
-export type LinkExpressionMutationVariables = Exact<{
-  input: LinkExpressionInput;
-}>;
-
-
-export type LinkExpressionMutation = { __typename?: 'Mutation', linkExpression: { __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, description?: string | null, kind: ExpressionKind, metricKind?: MetricDataType | null, ontology: { __typename?: 'Ontology', id: string, name: string }, linkedExpressions: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, entities: Array<{ __typename?: 'Entity', id: string, label: string }>, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }, entities: Array<{ __typename?: 'Entity', id: string, label: string }> } };
+export type UpdateGraphMutation = { __typename?: 'Mutation', updateGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }> } };
 
 export type CreateOntologyMutationVariables = Exact<{
   input: OntologyInput;
 }>;
 
 
-export type CreateOntologyMutation = { __typename?: 'Mutation', createOntology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null, kind: ExpressionKind, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } };
+export type CreateOntologyMutation = { __typename?: 'Mutation', createOntology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string }> } };
 
 export type UpdateOntologyMutationVariables = Exact<{
   input: UpdateOntologyInput;
 }>;
 
 
-export type UpdateOntologyMutation = { __typename?: 'Mutation', updateOntology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null, kind: ExpressionKind, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } };
+export type UpdateOntologyMutation = { __typename?: 'Mutation', updateOntology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string }> } };
 
 export type DeleteOntologyMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1513,14 +1488,14 @@ export type CreateProtocolStepMutationVariables = Exact<{
 }>;
 
 
-export type CreateProtocolStepMutation = { __typename?: 'Mutation', createProtocolStep: { __typename?: 'ProtocolStep', id: string, name: string, performedAt?: any | null, template: { __typename?: 'ProtocolStepTemplate', name: string, plateChildren: Array<any> }, forReagent?: { __typename?: 'Reagent', id: string } | null, forEntity?: { __typename?: 'Entity', id: string } | null, performedBy?: { __typename?: 'User', id: string } | null } };
+export type CreateProtocolStepMutation = { __typename?: 'Mutation', createProtocolStep: { __typename?: 'ProtocolStep', id: string, name: string, performedAt?: any | null, template: { __typename?: 'ProtocolStepTemplate', name: string, plateChildren: Array<any> }, forReagent?: { __typename?: 'Reagent', id: string } | null, forEntity?: { __typename?: 'Entity', id: any } | null, performedBy?: { __typename?: 'User', id: string } | null } };
 
 export type UpdateProtocolStepMutationVariables = Exact<{
   input: UpdateProtocolStepInput;
 }>;
 
 
-export type UpdateProtocolStepMutation = { __typename?: 'Mutation', updateProtocolStep: { __typename?: 'ProtocolStep', id: string, name: string, performedAt?: any | null, template: { __typename?: 'ProtocolStepTemplate', name: string, plateChildren: Array<any> }, forReagent?: { __typename?: 'Reagent', id: string } | null, forEntity?: { __typename?: 'Entity', id: string } | null, performedBy?: { __typename?: 'User', id: string } | null } };
+export type UpdateProtocolStepMutation = { __typename?: 'Mutation', updateProtocolStep: { __typename?: 'ProtocolStep', id: string, name: string, performedAt?: any | null, template: { __typename?: 'ProtocolStepTemplate', name: string, plateChildren: Array<any> }, forReagent?: { __typename?: 'Reagent', id: string } | null, forEntity?: { __typename?: 'Entity', id: any } | null, performedBy?: { __typename?: 'User', id: string } | null } };
 
 export type CreateProtocolStepTemplateMutationVariables = Exact<{
   input: ProtocolStepTemplateInput;
@@ -1544,70 +1519,25 @@ export type CreateReagentMutationVariables = Exact<{
 export type CreateReagentMutation = { __typename?: 'Mutation', createReagent: { __typename?: 'Reagent', id: string, label: string, creationSteps: Array<{ __typename?: 'ProtocolStep', id: string, name: string }>, usedIn: Array<{ __typename?: 'ReagentMapping', id: string, protocolStep: { __typename?: 'ProtocolStep', performedAt?: any | null, name: string } }> } };
 
 export type CreateStructureMutationVariables = Exact<{
-  input: MeasurementInput;
+  input: StructureInput;
 }>;
 
 
-export type CreateStructureMutation = { __typename?: 'Mutation', createMeasurement: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> } };
+export type CreateStructureMutation = { __typename?: 'Mutation', createStructure: { __typename?: 'Structure', id: any, label: string, identifier: string, object?: string | null, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } } | { __typename?: 'Measurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } } | { __typename?: 'Relation', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } }> } };
 
-export type CreateStructureRelationMutationVariables = Exact<{
-  input: StructureRelationInput;
-}>;
-
-
-export type CreateStructureRelationMutation = { __typename?: 'Mutation', createStructureRelation: { __typename?: 'EntityRelation', id: string, left: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> }, right: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> }, metrics: Array<{ __typename?: 'RelationMetric', value: string }>, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', label: string } } } };
-
-export type GetEntityQueryVariables = Exact<{
+export type GetEdgeQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetEntityQuery = { __typename?: 'Query', entity: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> } };
-
-export type GetEntityGraphNodeQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type GetEntityGraphNodeQuery = { __typename?: 'Query', entity: { __typename?: 'Entity', id: string, label: string, kindName: string, linkedExpression: { __typename?: 'LinkedExpression', color: string }, metrics: Array<{ __typename?: 'NodeMetric', value?: any | null }> } };
-
-export type ListEntitiesQueryVariables = Exact<{
-  filters?: InputMaybe<EntityFilter>;
-  pagination?: InputMaybe<GraphPaginationInput>;
-}>;
-
-
-export type ListEntitiesQuery = { __typename?: 'Query', entities: Array<{ __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, createdAt: any, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }> };
-
-export type SearchEntitiesQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
-}>;
-
-
-export type SearchEntitiesQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Entity', value: string, label: string }> };
-
-export type SearchGraphEntitiesQueryVariables = Exact<{
-  filters?: InputMaybe<EntityFilter>;
-  pagination?: InputMaybe<GraphPaginationInput>;
-}>;
-
-
-export type SearchGraphEntitiesQuery = { __typename?: 'Query', entities: Array<{ __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, createdAt: any, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }> };
-
-export type GetEntityGraphQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type GetEntityGraphQuery = { __typename?: 'Query', entityGraph: { __typename?: 'EntityGraph', graph: { __typename?: 'Graph', id: string }, nodes: Array<{ __typename?: 'Entity', id: string, label: string, kindName: string, linkedExpression: { __typename?: 'LinkedExpression', color: string }, metrics: Array<{ __typename?: 'NodeMetric', value?: any | null }> }>, edges: Array<{ __typename?: 'EntityRelation', id: string, label: string, leftId: string, rightId: string }> } };
+export type GetEdgeQuery = { __typename?: 'Query', edge: { __typename?: 'ComputedMeasurement', id: any, label: string } | { __typename?: 'Measurement', id: any, label: string, value: any } | { __typename?: 'Relation', id: any, label: string } };
 
 export type GetExpressionQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetExpressionQuery = { __typename?: 'Query', expression: { __typename?: 'Expression', id: string, label: string, description?: string | null, kind: ExpressionKind, metricKind?: MetricDataType | null, ontology: { __typename?: 'Ontology', id: string, name: string }, linkedExpressions: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, entities: Array<{ __typename?: 'Entity', id: string, label: string }>, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } };
+export type GetExpressionQuery = { __typename?: 'Query', expression: { __typename?: 'Expression', id: string, label: string, description?: string | null, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } };
 
 export type ListExpressionsQueryVariables = Exact<{
   filters?: InputMaybe<ExpressionFilter>;
@@ -1615,7 +1545,7 @@ export type ListExpressionsQueryVariables = Exact<{
 }>;
 
 
-export type ListExpressionsQuery = { __typename?: 'Query', expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null, kind: ExpressionKind, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }> };
+export type ListExpressionsQuery = { __typename?: 'Query', expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }> };
 
 export type SearchExpressionQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -1625,22 +1555,12 @@ export type SearchExpressionQueryVariables = Exact<{
 
 export type SearchExpressionQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Expression', value: string, label: string }> };
 
-export type GlobalSearchQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  noImages: Scalars['Boolean']['input'];
-  noFiles: Scalars['Boolean']['input'];
-  pagination?: InputMaybe<GraphPaginationInput>;
-}>;
-
-
-export type GlobalSearchQuery = { __typename?: 'Query', entities?: Array<{ __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, createdAt: any, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }> };
-
 export type GetGraphQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetGraphQuery = { __typename?: 'Query', graph: { __typename?: 'Graph', id: string, name: string, description?: string | null, relations: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, entities: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, metrics: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, structures: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }> } };
+export type GetGraphQuery = { __typename?: 'Query', graph: { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }> } };
 
 export type MyActiveGraphQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1663,69 +1583,27 @@ export type SearchGraphsQueryVariables = Exact<{
 
 export type SearchGraphsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Graph', value: string, label: string }> };
 
-export type GetKnowledgeGraphQueryVariables = Exact<{
+export type PathQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+  query: Scalars['String']['input'];
+}>;
+
+
+export type PathQuery = { __typename?: 'Query', path: { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', color?: string | null } } | { __typename?: 'Structure', identifier: string, object?: string | null, id: any }>, edges: Array<{ __typename?: 'ComputedMeasurement' } | { __typename?: 'Measurement', id: any, value: any } | { __typename?: 'Relation' }> } };
+
+export type GetNodeQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetKnowledgeGraphQuery = { __typename?: 'Query', knowledgeGraph: { __typename?: 'KnowledgeGraph', nodes: Array<{ __typename?: 'EntityKindNode', id: string, label: string, metrics: Array<{ __typename?: 'EntityKindNodeMetric', kind: string, dataKind: string }> }>, edges: Array<{ __typename?: 'EntityKindRelationEdge', id: string, label: string, source: string, target: string, metrics: Array<{ __typename?: 'EntityKindNodeMetric', kind: string, dataKind: string }> }> } };
-
-export type GetLinkedExpressionQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type GetLinkedExpressionQuery = { __typename?: 'Query', linkedExpression: { __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, description?: string | null, kind: ExpressionKind, metricKind?: MetricDataType | null, ontology: { __typename?: 'Ontology', id: string, name: string }, linkedExpressions: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, entities: Array<{ __typename?: 'Entity', id: string, label: string }>, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }, entities: Array<{ __typename?: 'Entity', id: string, label: string }> } };
-
-export type GetLinkedExpressionByAgeNameQueryVariables = Exact<{
-  ageName: Scalars['String']['input'];
-  graph: Scalars['ID']['input'];
-}>;
-
-
-export type GetLinkedExpressionByAgeNameQuery = { __typename?: 'Query', linkedExpressionByAgename: { __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, description?: string | null, kind: ExpressionKind, metricKind?: MetricDataType | null, ontology: { __typename?: 'Ontology', id: string, name: string }, linkedExpressions: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, entities: Array<{ __typename?: 'Entity', id: string, label: string }>, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }, entities: Array<{ __typename?: 'Entity', id: string, label: string }> } };
-
-export type SearchLinkedExpressionQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
-  graph?: InputMaybe<Scalars['ID']['input']>;
-}>;
-
-
-export type SearchLinkedExpressionQuery = { __typename?: 'Query', options: Array<{ __typename?: 'LinkedExpression', value: string, label: string }> };
-
-export type SearchLinkedRelationsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
-  graph?: InputMaybe<Scalars['ID']['input']>;
-}>;
-
-
-export type SearchLinkedRelationsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'LinkedExpression', value: string, label: string }> };
-
-export type SearchLinkedEntitiesQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
-  graph?: InputMaybe<Scalars['ID']['input']>;
-}>;
-
-
-export type SearchLinkedEntitiesQuery = { __typename?: 'Query', options: Array<{ __typename?: 'LinkedExpression', value: string, label: string }> };
-
-export type ListLinkedExpressionQueryVariables = Exact<{
-  filters?: InputMaybe<LinkedExpressionFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-}>;
-
-
-export type ListLinkedExpressionQuery = { __typename?: 'Query', linkedExpressions: Array<{ __typename?: 'LinkedExpression', id: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, expression: { __typename?: 'Expression', id: string, label: string, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } }> };
+export type GetNodeQuery = { __typename?: 'Query', node: { __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } } | { __typename?: 'Measurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } } | { __typename?: 'Relation', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object?: string | null, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } } | { __typename?: 'Measurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } } | { __typename?: 'Relation', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } }> } };
 
 export type GetOntologyQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetOntologyQuery = { __typename?: 'Query', ontology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null, kind: ExpressionKind, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null } };
+export type GetOntologyQuery = { __typename?: 'Query', ontology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string }> } };
 
 export type ListOntologiesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1768,7 +1646,7 @@ export type GetProtocolStepQueryVariables = Exact<{
 }>;
 
 
-export type GetProtocolStepQuery = { __typename?: 'Query', protocolStep: { __typename?: 'ProtocolStep', id: string, name: string, performedAt?: any | null, template: { __typename?: 'ProtocolStepTemplate', name: string, plateChildren: Array<any> }, forReagent?: { __typename?: 'Reagent', id: string } | null, forEntity?: { __typename?: 'Entity', id: string } | null, performedBy?: { __typename?: 'User', id: string } | null } };
+export type GetProtocolStepQuery = { __typename?: 'Query', protocolStep: { __typename?: 'ProtocolStep', id: string, name: string, performedAt?: any | null, template: { __typename?: 'ProtocolStepTemplate', name: string, plateChildren: Array<any> }, forReagent?: { __typename?: 'Reagent', id: string } | null, forEntity?: { __typename?: 'Entity', id: any } | null, performedBy?: { __typename?: 'User', id: string } | null } };
 
 export type ListProtocolStepsQueryVariables = Exact<{
   filters?: InputMaybe<ProtocolStepFilter>;
@@ -1824,28 +1702,13 @@ export type SearchReagentsQueryVariables = Exact<{
 
 export type SearchReagentsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Reagent', value: string, label: string }> };
 
-export type GetEntityRelationQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type GetEntityRelationQuery = { __typename?: 'Query', entityRelation: { __typename?: 'EntityRelation', id: string, left: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> }, right: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> }, metrics: Array<{ __typename?: 'RelationMetric', value: string }>, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', label: string } } } };
-
-export type ListEntityRelationsQueryVariables = Exact<{
-  filters?: InputMaybe<EntityRelationFilter>;
-  pagination?: InputMaybe<GraphPaginationInput>;
-}>;
-
-
-export type ListEntityRelationsQuery = { __typename?: 'Query', entityRelations: Array<{ __typename?: 'EntityRelation', metricMap: any, id: string, leftId: string, rightId: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', label: string } } }> };
-
-export type SearchEntityRelationsQueryVariables = Exact<{
+export type GlobalSearchQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 }>;
 
 
-export type SearchEntityRelationsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'EntityRelation', value: string, label: string }> };
+export type GlobalSearchQuery = { __typename?: 'Query', graphs: Array<{ __typename?: 'Graph', id: string, name: string }>, ontologies: Array<{ __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null }> };
 
 export type GetStructureQueryVariables = Exact<{
   graph: Scalars['ID']['input'];
@@ -1853,137 +1716,36 @@ export type GetStructureQueryVariables = Exact<{
 }>;
 
 
-export type GetStructureQuery = { __typename?: 'Query', structure: { __typename?: 'Entity', id: string, label: string, object?: string | null, identifier?: string | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string, expression: { __typename?: 'Expression', id: string, label: string }, graph: { __typename?: 'Graph', id: string, name: string } }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, metrics: Array<{ __typename?: 'NodeMetric', id: string, value?: any | null, validFrom?: any | null, linkedExpression: { __typename?: 'LinkedExpression', id: string, label: string } }>, relations: Array<{ __typename?: 'EntityRelation', id: string, right: { __typename?: 'Entity', id: string, label: string, linkedExpression: { __typename?: 'LinkedExpression', id: string, expression: { __typename?: 'Expression', id: string, label: string } } }, linkedExpression: { __typename?: 'LinkedExpression', label: string } }> } };
+export type GetStructureQuery = { __typename?: 'Query', structure: { __typename?: 'Structure', id: any, label: string, identifier: string, object?: string | null, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } } | { __typename?: 'Measurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } } | { __typename?: 'Relation', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } }> } };
 
+export const MeasurementFragmentDoc = gql`
+    fragment Measurement on Measurement {
+  id
+  value
+}
+    `;
+export const RelationFragmentDoc = gql`
+    fragment Relation on Relation {
+  id
+  label
+}
+    `;
+export const EdgeFragmentDoc = gql`
+    fragment Edge on Edge {
+  id
+  label
+  ...Measurement
+  ...Relation
+}
+    ${MeasurementFragmentDoc}
+${RelationFragmentDoc}`;
 export const ListEntityFragmentDoc = gql`
     fragment ListEntity on Entity {
   id
   label
-  linkedExpression {
+  expression {
     id
     label
-  }
-  object
-  identifier
-  createdAt
-}
-    `;
-export const EntityGraphNodeFragmentDoc = gql`
-    fragment EntityGraphNode on Entity {
-  id
-  label
-  kindName
-  linkedExpression {
-    color
-  }
-  metrics {
-    value
-  }
-}
-    `;
-export const EntityGraphEdgeFragmentDoc = gql`
-    fragment EntityGraphEdge on EntityRelation {
-  id
-  label
-  leftId
-  rightId
-}
-    `;
-export const EntityGraphFragmentDoc = gql`
-    fragment EntityGraph on EntityGraph {
-  graph {
-    id
-  }
-  nodes {
-    ...EntityGraphNode
-  }
-  edges {
-    ...EntityGraphEdge
-  }
-}
-    ${EntityGraphNodeFragmentDoc}
-${EntityGraphEdgeFragmentDoc}`;
-export const EntityFragmentDoc = gql`
-    fragment Entity on Entity {
-  id
-  label
-  linkedExpression {
-    id
-    label
-    expression {
-      id
-      label
-    }
-    graph {
-      id
-      name
-    }
-  }
-  subjectedTo {
-    id
-    performedAt
-    name
-  }
-  metrics {
-    id
-    linkedExpression {
-      id
-      label
-    }
-    value
-    validFrom
-  }
-  object
-  identifier
-  relations {
-    id
-    right {
-      id
-      label
-      linkedExpression {
-        id
-        expression {
-          id
-          label
-        }
-      }
-    }
-    linkedExpression {
-      label
-    }
-  }
-}
-    `;
-export const EntityRelationFragmentDoc = gql`
-    fragment EntityRelation on EntityRelation {
-  id
-  left {
-    ...Entity
-  }
-  right {
-    ...Entity
-  }
-  metrics {
-    value
-  }
-  linkedExpression {
-    id
-    expression {
-      label
-    }
-  }
-}
-    ${EntityFragmentDoc}`;
-export const ListEntityRelationFragmentDoc = gql`
-    fragment ListEntityRelation on EntityRelation {
-  id
-  leftId
-  rightId
-  linkedExpression {
-    id
-    expression {
-      label
-    }
   }
 }
     `;
@@ -1992,80 +1754,6 @@ export const MediaStoreFragmentDoc = gql`
   id
   key
   presignedUrl
-}
-    `;
-export const ListLinkedExpressionFragmentDoc = gql`
-    fragment ListLinkedExpression on LinkedExpression {
-  id
-  graph {
-    id
-    name
-  }
-  expression {
-    id
-    label
-    ontology {
-      id
-      name
-    }
-    store {
-      ...MediaStore
-    }
-  }
-  pinned
-}
-    ${MediaStoreFragmentDoc}`;
-export const GraphFragmentDoc = gql`
-    fragment Graph on Graph {
-  id
-  name
-  description
-  relations: linkedExpressions(
-    filters: {kind: RELATION}
-    pagination: {limit: 200}
-  ) {
-    ...ListLinkedExpression
-  }
-  entities: linkedExpressions(filters: {kind: ENTITY}, pagination: {limit: 200}) {
-    ...ListLinkedExpression
-  }
-  metrics: linkedExpressions(filters: {kind: METRIC}, pagination: {limit: 200}) {
-    ...ListLinkedExpression
-  }
-  structures: linkedExpressions(
-    filters: {kind: STRUCTURE}
-    pagination: {limit: 200}
-  ) {
-    ...ListLinkedExpression
-  }
-}
-    ${ListLinkedExpressionFragmentDoc}`;
-export const ListGraphFragmentDoc = gql`
-    fragment ListGraph on Graph {
-  id
-  name
-}
-    `;
-export const KnowledgeGraphFragmentDoc = gql`
-    fragment KnowledgeGraph on KnowledgeGraph {
-  nodes {
-    id
-    label
-    metrics {
-      kind
-      dataKind
-    }
-  }
-  edges {
-    id
-    label
-    source
-    target
-    metrics {
-      kind
-      dataKind
-    }
-  }
 }
     `;
 export const ExpressionFragmentDoc = gql`
@@ -2077,49 +1765,87 @@ export const ExpressionFragmentDoc = gql`
     name
   }
   description
-  linkedExpressions {
-    ...ListLinkedExpression
-    entities(pagination: {limit: 10}) {
-      id
-      label
-    }
-  }
-  store {
-    ...MediaStore
-  }
-  kind
-  metricKind
-}
-    ${ListLinkedExpressionFragmentDoc}
-${MediaStoreFragmentDoc}`;
-export const LinkedExpressionFragmentDoc = gql`
-    fragment LinkedExpression on LinkedExpression {
-  id
-  graph {
-    id
-    name
-  }
-  expression {
-    ...Expression
-  }
-  entities(pagination: {limit: 10}) {
-    id
-    label
-  }
-  pinned
-}
-    ${ExpressionFragmentDoc}`;
-export const ListExpressionFragmentDoc = gql`
-    fragment ListExpression on Expression {
-  id
-  label
-  description
-  kind
   store {
     ...MediaStore
   }
 }
     ${MediaStoreFragmentDoc}`;
+export const GraphFragmentDoc = gql`
+    fragment Graph on Graph {
+  id
+  name
+  description
+  latestNodes {
+    id
+    label
+  }
+}
+    `;
+export const EntityFragmentDoc = gql`
+    fragment Entity on Entity {
+  id
+  label
+  expression {
+    id
+    label
+  }
+  subjectedTo {
+    id
+    performedAt
+    name
+  }
+  edges {
+    id
+    right {
+      id
+      label
+    }
+    expression {
+      label
+    }
+  }
+}
+    `;
+export const StructureFragmentDoc = gql`
+    fragment Structure on Structure {
+  id
+  label
+  edges {
+    id
+    right {
+      id
+      label
+    }
+  }
+  identifier
+  object
+}
+    `;
+export const NodeFragmentDoc = gql`
+    fragment Node on Node {
+  id
+  label
+  ...Entity
+  ...Structure
+}
+    ${EntityFragmentDoc}
+${StructureFragmentDoc}`;
+export const ListExpressionFragmentDoc = gql`
+    fragment ListExpression on Expression {
+  id
+  label
+  description
+  store {
+    ...MediaStore
+  }
+}
+    ${MediaStoreFragmentDoc}`;
+export const ListGraphFragmentDoc = gql`
+    fragment ListGraph on Graph {
+  id
+  name
+}
+    `;
 export const OntologyFragmentDoc = gql`
     fragment Ontology on Ontology {
   id
@@ -2132,9 +1858,13 @@ export const OntologyFragmentDoc = gql`
   store {
     ...MediaStore
   }
+  graphs {
+    ...ListGraph
+  }
 }
     ${ListExpressionFragmentDoc}
-${MediaStoreFragmentDoc}`;
+${MediaStoreFragmentDoc}
+${ListGraphFragmentDoc}`;
 export const ListOntologyFragmentDoc = gql`
     fragment ListOntology on Ontology {
   id
@@ -2143,6 +1873,35 @@ export const ListOntologyFragmentDoc = gql`
   purl
 }
     `;
+export const StructureGraphNodeFragmentDoc = gql`
+    fragment StructureGraphNode on Structure {
+  identifier
+  object
+  id
+}
+    `;
+export const EntityGraphNodeFragmentDoc = gql`
+    fragment EntityGraphNode on Entity {
+  id
+  label
+  expression {
+    color
+  }
+}
+    `;
+export const PathFragmentDoc = gql`
+    fragment Path on Path {
+  nodes {
+    ...StructureGraphNode
+    ...EntityGraphNode
+  }
+  edges {
+    ...Measurement
+  }
+}
+    ${StructureGraphNodeFragmentDoc}
+${EntityGraphNodeFragmentDoc}
+${MeasurementFragmentDoc}`;
 export const ProtocolFragmentDoc = gql`
     fragment Protocol on Protocol {
   id
@@ -2232,6 +1991,13 @@ export const ListReagentFragmentDoc = gql`
   label
 }
     `;
+export const ListStructureFragmentDoc = gql`
+    fragment ListStructure on Structure {
+  identifier
+  object
+  id
+}
+    `;
 export const CreateEntityDocument = gql`
     mutation CreateEntity($input: EntityInput!) {
   createEntity(input: $input) {
@@ -2265,105 +2031,39 @@ export function useCreateEntityMutation(baseOptions?: ApolloReactHooks.MutationH
 export type CreateEntityMutationHookResult = ReturnType<typeof useCreateEntityMutation>;
 export type CreateEntityMutationResult = Apollo.MutationResult<CreateEntityMutation>;
 export type CreateEntityMutationOptions = Apollo.BaseMutationOptions<CreateEntityMutation, CreateEntityMutationVariables>;
-export const CreateEntityRelationDocument = gql`
-    mutation CreateEntityRelation($input: EntityRelationInput!) {
-  createEntityRelation(input: $input) {
-    ...EntityRelation
+export const CreateRelationDocument = gql`
+    mutation CreateRelation($input: RelationInput!) {
+  createRelation(input: $input) {
+    ...Relation
   }
 }
-    ${EntityRelationFragmentDoc}`;
-export type CreateEntityRelationMutationFn = Apollo.MutationFunction<CreateEntityRelationMutation, CreateEntityRelationMutationVariables>;
+    ${RelationFragmentDoc}`;
+export type CreateRelationMutationFn = Apollo.MutationFunction<CreateRelationMutation, CreateRelationMutationVariables>;
 
 /**
- * __useCreateEntityRelationMutation__
+ * __useCreateRelationMutation__
  *
- * To run a mutation, you first call `useCreateEntityRelationMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateEntityRelationMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useCreateRelationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateRelationMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [createEntityRelationMutation, { data, loading, error }] = useCreateEntityRelationMutation({
+ * const [createRelationMutation, { data, loading, error }] = useCreateRelationMutation({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useCreateEntityRelationMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateEntityRelationMutation, CreateEntityRelationMutationVariables>) {
+export function useCreateRelationMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateRelationMutation, CreateRelationMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateEntityRelationMutation, CreateEntityRelationMutationVariables>(CreateEntityRelationDocument, options);
+        return ApolloReactHooks.useMutation<CreateRelationMutation, CreateRelationMutationVariables>(CreateRelationDocument, options);
       }
-export type CreateEntityRelationMutationHookResult = ReturnType<typeof useCreateEntityRelationMutation>;
-export type CreateEntityRelationMutationResult = Apollo.MutationResult<CreateEntityRelationMutation>;
-export type CreateEntityRelationMutationOptions = Apollo.BaseMutationOptions<CreateEntityRelationMutation, CreateEntityRelationMutationVariables>;
-export const CreateEntityGraphRelationDocument = gql`
-    mutation CreateEntityGraphRelation($input: EntityRelationInput!) {
-  createEntityRelation(input: $input) {
-    ...EntityGraphEdge
-  }
-}
-    ${EntityGraphEdgeFragmentDoc}`;
-export type CreateEntityGraphRelationMutationFn = Apollo.MutationFunction<CreateEntityGraphRelationMutation, CreateEntityGraphRelationMutationVariables>;
-
-/**
- * __useCreateEntityGraphRelationMutation__
- *
- * To run a mutation, you first call `useCreateEntityGraphRelationMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateEntityGraphRelationMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createEntityGraphRelationMutation, { data, loading, error }] = useCreateEntityGraphRelationMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useCreateEntityGraphRelationMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateEntityGraphRelationMutation, CreateEntityGraphRelationMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateEntityGraphRelationMutation, CreateEntityGraphRelationMutationVariables>(CreateEntityGraphRelationDocument, options);
-      }
-export type CreateEntityGraphRelationMutationHookResult = ReturnType<typeof useCreateEntityGraphRelationMutation>;
-export type CreateEntityGraphRelationMutationResult = Apollo.MutationResult<CreateEntityGraphRelationMutation>;
-export type CreateEntityGraphRelationMutationOptions = Apollo.BaseMutationOptions<CreateEntityGraphRelationMutation, CreateEntityGraphRelationMutationVariables>;
-export const CreateEntityMetricDocument = gql`
-    mutation CreateEntityMetric($input: CreateEntityMetricInput!) {
-  createEntityMetric(input: $input) {
-    ...Entity
-  }
-}
-    ${EntityFragmentDoc}`;
-export type CreateEntityMetricMutationFn = Apollo.MutationFunction<CreateEntityMetricMutation, CreateEntityMetricMutationVariables>;
-
-/**
- * __useCreateEntityMetricMutation__
- *
- * To run a mutation, you first call `useCreateEntityMetricMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateEntityMetricMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createEntityMetricMutation, { data, loading, error }] = useCreateEntityMetricMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useCreateEntityMetricMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateEntityMetricMutation, CreateEntityMetricMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateEntityMetricMutation, CreateEntityMetricMutationVariables>(CreateEntityMetricDocument, options);
-      }
-export type CreateEntityMetricMutationHookResult = ReturnType<typeof useCreateEntityMetricMutation>;
-export type CreateEntityMetricMutationResult = Apollo.MutationResult<CreateEntityMetricMutation>;
-export type CreateEntityMetricMutationOptions = Apollo.BaseMutationOptions<CreateEntityMetricMutation, CreateEntityMetricMutationVariables>;
+export type CreateRelationMutationHookResult = ReturnType<typeof useCreateRelationMutation>;
+export type CreateRelationMutationResult = Apollo.MutationResult<CreateRelationMutation>;
+export type CreateRelationMutationOptions = Apollo.BaseMutationOptions<CreateRelationMutation, CreateRelationMutationVariables>;
 export const CreateExpressionDocument = gql`
     mutation CreateExpression($input: ExpressionInput!) {
   createExpression(input: $input) {
@@ -2527,72 +2227,6 @@ export function useUpdateGraphMutation(baseOptions?: ApolloReactHooks.MutationHo
 export type UpdateGraphMutationHookResult = ReturnType<typeof useUpdateGraphMutation>;
 export type UpdateGraphMutationResult = Apollo.MutationResult<UpdateGraphMutation>;
 export type UpdateGraphMutationOptions = Apollo.BaseMutationOptions<UpdateGraphMutation, UpdateGraphMutationVariables>;
-export const PinLinkedExpressionDocument = gql`
-    mutation PinLinkedExpression($input: PinLinkedExpressionInput!) {
-  pinLinkedExpression(input: $input) {
-    ...LinkedExpression
-  }
-}
-    ${LinkedExpressionFragmentDoc}`;
-export type PinLinkedExpressionMutationFn = Apollo.MutationFunction<PinLinkedExpressionMutation, PinLinkedExpressionMutationVariables>;
-
-/**
- * __usePinLinkedExpressionMutation__
- *
- * To run a mutation, you first call `usePinLinkedExpressionMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `usePinLinkedExpressionMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [pinLinkedExpressionMutation, { data, loading, error }] = usePinLinkedExpressionMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function usePinLinkedExpressionMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PinLinkedExpressionMutation, PinLinkedExpressionMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PinLinkedExpressionMutation, PinLinkedExpressionMutationVariables>(PinLinkedExpressionDocument, options);
-      }
-export type PinLinkedExpressionMutationHookResult = ReturnType<typeof usePinLinkedExpressionMutation>;
-export type PinLinkedExpressionMutationResult = Apollo.MutationResult<PinLinkedExpressionMutation>;
-export type PinLinkedExpressionMutationOptions = Apollo.BaseMutationOptions<PinLinkedExpressionMutation, PinLinkedExpressionMutationVariables>;
-export const LinkExpressionDocument = gql`
-    mutation LinkExpression($input: LinkExpressionInput!) {
-  linkExpression(input: $input) {
-    ...LinkedExpression
-  }
-}
-    ${LinkedExpressionFragmentDoc}`;
-export type LinkExpressionMutationFn = Apollo.MutationFunction<LinkExpressionMutation, LinkExpressionMutationVariables>;
-
-/**
- * __useLinkExpressionMutation__
- *
- * To run a mutation, you first call `useLinkExpressionMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useLinkExpressionMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [linkExpressionMutation, { data, loading, error }] = useLinkExpressionMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useLinkExpressionMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<LinkExpressionMutation, LinkExpressionMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<LinkExpressionMutation, LinkExpressionMutationVariables>(LinkExpressionDocument, options);
-      }
-export type LinkExpressionMutationHookResult = ReturnType<typeof useLinkExpressionMutation>;
-export type LinkExpressionMutationResult = Apollo.MutationResult<LinkExpressionMutation>;
-export type LinkExpressionMutationOptions = Apollo.BaseMutationOptions<LinkExpressionMutation, LinkExpressionMutationVariables>;
 export const CreateOntologyDocument = gql`
     mutation CreateOntology($input: OntologyInput!) {
   createOntology(input: $input) {
@@ -2890,12 +2524,12 @@ export type CreateReagentMutationHookResult = ReturnType<typeof useCreateReagent
 export type CreateReagentMutationResult = Apollo.MutationResult<CreateReagentMutation>;
 export type CreateReagentMutationOptions = Apollo.BaseMutationOptions<CreateReagentMutation, CreateReagentMutationVariables>;
 export const CreateStructureDocument = gql`
-    mutation CreateStructure($input: MeasurementInput!) {
-  createMeasurement(input: $input) {
-    ...Entity
+    mutation CreateStructure($input: StructureInput!) {
+  createStructure(input: $input) {
+    ...Structure
   }
 }
-    ${EntityFragmentDoc}`;
+    ${StructureFragmentDoc}`;
 export type CreateStructureMutationFn = Apollo.MutationFunction<CreateStructureMutation, CreateStructureMutationVariables>;
 
 /**
@@ -2922,256 +2556,41 @@ export function useCreateStructureMutation(baseOptions?: ApolloReactHooks.Mutati
 export type CreateStructureMutationHookResult = ReturnType<typeof useCreateStructureMutation>;
 export type CreateStructureMutationResult = Apollo.MutationResult<CreateStructureMutation>;
 export type CreateStructureMutationOptions = Apollo.BaseMutationOptions<CreateStructureMutation, CreateStructureMutationVariables>;
-export const CreateStructureRelationDocument = gql`
-    mutation CreateStructureRelation($input: StructureRelationInput!) {
-  createStructureRelation(input: $input) {
-    ...EntityRelation
+export const GetEdgeDocument = gql`
+    query GetEdge($id: ID!) {
+  edge(id: $id) {
+    ...Edge
   }
 }
-    ${EntityRelationFragmentDoc}`;
-export type CreateStructureRelationMutationFn = Apollo.MutationFunction<CreateStructureRelationMutation, CreateStructureRelationMutationVariables>;
+    ${EdgeFragmentDoc}`;
 
 /**
- * __useCreateStructureRelationMutation__
+ * __useGetEdgeQuery__
  *
- * To run a mutation, you first call `useCreateStructureRelationMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateStructureRelationMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createStructureRelationMutation, { data, loading, error }] = useCreateStructureRelationMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useCreateStructureRelationMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateStructureRelationMutation, CreateStructureRelationMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateStructureRelationMutation, CreateStructureRelationMutationVariables>(CreateStructureRelationDocument, options);
-      }
-export type CreateStructureRelationMutationHookResult = ReturnType<typeof useCreateStructureRelationMutation>;
-export type CreateStructureRelationMutationResult = Apollo.MutationResult<CreateStructureRelationMutation>;
-export type CreateStructureRelationMutationOptions = Apollo.BaseMutationOptions<CreateStructureRelationMutation, CreateStructureRelationMutationVariables>;
-export const GetEntityDocument = gql`
-    query GetEntity($id: ID!) {
-  entity(id: $id) {
-    ...Entity
-  }
-}
-    ${EntityFragmentDoc}`;
-
-/**
- * __useGetEntityQuery__
- *
- * To run a query within a React component, call `useGetEntityQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetEntityQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetEdgeQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetEdgeQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetEntityQuery({
+ * const { data, loading, error } = useGetEdgeQuery({
  *   variables: {
  *      id: // value for 'id'
  *   },
  * });
  */
-export function useGetEntityQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetEntityQuery, GetEntityQueryVariables>) {
+export function useGetEdgeQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetEdgeQuery, GetEdgeQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetEntityQuery, GetEntityQueryVariables>(GetEntityDocument, options);
+        return ApolloReactHooks.useQuery<GetEdgeQuery, GetEdgeQueryVariables>(GetEdgeDocument, options);
       }
-export function useGetEntityLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetEntityQuery, GetEntityQueryVariables>) {
+export function useGetEdgeLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetEdgeQuery, GetEdgeQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetEntityQuery, GetEntityQueryVariables>(GetEntityDocument, options);
+          return ApolloReactHooks.useLazyQuery<GetEdgeQuery, GetEdgeQueryVariables>(GetEdgeDocument, options);
         }
-export type GetEntityQueryHookResult = ReturnType<typeof useGetEntityQuery>;
-export type GetEntityLazyQueryHookResult = ReturnType<typeof useGetEntityLazyQuery>;
-export type GetEntityQueryResult = Apollo.QueryResult<GetEntityQuery, GetEntityQueryVariables>;
-export const GetEntityGraphNodeDocument = gql`
-    query GetEntityGraphNode($id: ID!) {
-  entity(id: $id) {
-    ...EntityGraphNode
-  }
-}
-    ${EntityGraphNodeFragmentDoc}`;
-
-/**
- * __useGetEntityGraphNodeQuery__
- *
- * To run a query within a React component, call `useGetEntityGraphNodeQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetEntityGraphNodeQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetEntityGraphNodeQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useGetEntityGraphNodeQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetEntityGraphNodeQuery, GetEntityGraphNodeQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetEntityGraphNodeQuery, GetEntityGraphNodeQueryVariables>(GetEntityGraphNodeDocument, options);
-      }
-export function useGetEntityGraphNodeLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetEntityGraphNodeQuery, GetEntityGraphNodeQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetEntityGraphNodeQuery, GetEntityGraphNodeQueryVariables>(GetEntityGraphNodeDocument, options);
-        }
-export type GetEntityGraphNodeQueryHookResult = ReturnType<typeof useGetEntityGraphNodeQuery>;
-export type GetEntityGraphNodeLazyQueryHookResult = ReturnType<typeof useGetEntityGraphNodeLazyQuery>;
-export type GetEntityGraphNodeQueryResult = Apollo.QueryResult<GetEntityGraphNodeQuery, GetEntityGraphNodeQueryVariables>;
-export const ListEntitiesDocument = gql`
-    query ListEntities($filters: EntityFilter, $pagination: GraphPaginationInput) {
-  entities(filters: $filters, pagination: $pagination) {
-    ...ListEntity
-  }
-}
-    ${ListEntityFragmentDoc}`;
-
-/**
- * __useListEntitiesQuery__
- *
- * To run a query within a React component, call `useListEntitiesQuery` and pass it any options that fit your needs.
- * When your component renders, `useListEntitiesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useListEntitiesQuery({
- *   variables: {
- *      filters: // value for 'filters'
- *      pagination: // value for 'pagination'
- *   },
- * });
- */
-export function useListEntitiesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListEntitiesQuery, ListEntitiesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListEntitiesQuery, ListEntitiesQueryVariables>(ListEntitiesDocument, options);
-      }
-export function useListEntitiesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListEntitiesQuery, ListEntitiesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListEntitiesQuery, ListEntitiesQueryVariables>(ListEntitiesDocument, options);
-        }
-export type ListEntitiesQueryHookResult = ReturnType<typeof useListEntitiesQuery>;
-export type ListEntitiesLazyQueryHookResult = ReturnType<typeof useListEntitiesLazyQuery>;
-export type ListEntitiesQueryResult = Apollo.QueryResult<ListEntitiesQuery, ListEntitiesQueryVariables>;
-export const SearchEntitiesDocument = gql`
-    query SearchEntities($search: String, $values: [ID!]) {
-  options: entities(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: label
-  }
-}
-    `;
-
-/**
- * __useSearchEntitiesQuery__
- *
- * To run a query within a React component, call `useSearchEntitiesQuery` and pass it any options that fit your needs.
- * When your component renders, `useSearchEntitiesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useSearchEntitiesQuery({
- *   variables: {
- *      search: // value for 'search'
- *      values: // value for 'values'
- *   },
- * });
- */
-export function useSearchEntitiesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchEntitiesQuery, SearchEntitiesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchEntitiesQuery, SearchEntitiesQueryVariables>(SearchEntitiesDocument, options);
-      }
-export function useSearchEntitiesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchEntitiesQuery, SearchEntitiesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchEntitiesQuery, SearchEntitiesQueryVariables>(SearchEntitiesDocument, options);
-        }
-export type SearchEntitiesQueryHookResult = ReturnType<typeof useSearchEntitiesQuery>;
-export type SearchEntitiesLazyQueryHookResult = ReturnType<typeof useSearchEntitiesLazyQuery>;
-export type SearchEntitiesQueryResult = Apollo.QueryResult<SearchEntitiesQuery, SearchEntitiesQueryVariables>;
-export const SearchGraphEntitiesDocument = gql`
-    query SearchGraphEntities($filters: EntityFilter, $pagination: GraphPaginationInput) {
-  entities(filters: $filters, pagination: $pagination) {
-    ...ListEntity
-  }
-}
-    ${ListEntityFragmentDoc}`;
-
-/**
- * __useSearchGraphEntitiesQuery__
- *
- * To run a query within a React component, call `useSearchGraphEntitiesQuery` and pass it any options that fit your needs.
- * When your component renders, `useSearchGraphEntitiesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useSearchGraphEntitiesQuery({
- *   variables: {
- *      filters: // value for 'filters'
- *      pagination: // value for 'pagination'
- *   },
- * });
- */
-export function useSearchGraphEntitiesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchGraphEntitiesQuery, SearchGraphEntitiesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchGraphEntitiesQuery, SearchGraphEntitiesQueryVariables>(SearchGraphEntitiesDocument, options);
-      }
-export function useSearchGraphEntitiesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchGraphEntitiesQuery, SearchGraphEntitiesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchGraphEntitiesQuery, SearchGraphEntitiesQueryVariables>(SearchGraphEntitiesDocument, options);
-        }
-export type SearchGraphEntitiesQueryHookResult = ReturnType<typeof useSearchGraphEntitiesQuery>;
-export type SearchGraphEntitiesLazyQueryHookResult = ReturnType<typeof useSearchGraphEntitiesLazyQuery>;
-export type SearchGraphEntitiesQueryResult = Apollo.QueryResult<SearchGraphEntitiesQuery, SearchGraphEntitiesQueryVariables>;
-export const GetEntityGraphDocument = gql`
-    query GetEntityGraph($id: ID!) {
-  entityGraph(id: $id) {
-    ...EntityGraph
-  }
-}
-    ${EntityGraphFragmentDoc}`;
-
-/**
- * __useGetEntityGraphQuery__
- *
- * To run a query within a React component, call `useGetEntityGraphQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetEntityGraphQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetEntityGraphQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useGetEntityGraphQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetEntityGraphQuery, GetEntityGraphQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetEntityGraphQuery, GetEntityGraphQueryVariables>(GetEntityGraphDocument, options);
-      }
-export function useGetEntityGraphLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetEntityGraphQuery, GetEntityGraphQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetEntityGraphQuery, GetEntityGraphQueryVariables>(GetEntityGraphDocument, options);
-        }
-export type GetEntityGraphQueryHookResult = ReturnType<typeof useGetEntityGraphQuery>;
-export type GetEntityGraphLazyQueryHookResult = ReturnType<typeof useGetEntityGraphLazyQuery>;
-export type GetEntityGraphQueryResult = Apollo.QueryResult<GetEntityGraphQuery, GetEntityGraphQueryVariables>;
+export type GetEdgeQueryHookResult = ReturnType<typeof useGetEdgeQuery>;
+export type GetEdgeLazyQueryHookResult = ReturnType<typeof useGetEdgeLazyQuery>;
+export type GetEdgeQueryResult = Apollo.QueryResult<GetEdgeQuery, GetEdgeQueryVariables>;
 export const GetExpressionDocument = gql`
     query GetExpression($id: ID!) {
   expression(id: $id) {
@@ -3283,44 +2702,6 @@ export function useSearchExpressionLazyQuery(baseOptions?: ApolloReactHooks.Lazy
 export type SearchExpressionQueryHookResult = ReturnType<typeof useSearchExpressionQuery>;
 export type SearchExpressionLazyQueryHookResult = ReturnType<typeof useSearchExpressionLazyQuery>;
 export type SearchExpressionQueryResult = Apollo.QueryResult<SearchExpressionQuery, SearchExpressionQueryVariables>;
-export const GlobalSearchDocument = gql`
-    query GlobalSearch($search: String, $noImages: Boolean!, $noFiles: Boolean!, $pagination: GraphPaginationInput) {
-  entities: entities(filters: {search: $search}, pagination: $pagination) @skip(if: $noImages) {
-    ...ListEntity
-  }
-}
-    ${ListEntityFragmentDoc}`;
-
-/**
- * __useGlobalSearchQuery__
- *
- * To run a query within a React component, call `useGlobalSearchQuery` and pass it any options that fit your needs.
- * When your component renders, `useGlobalSearchQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGlobalSearchQuery({
- *   variables: {
- *      search: // value for 'search'
- *      noImages: // value for 'noImages'
- *      noFiles: // value for 'noFiles'
- *      pagination: // value for 'pagination'
- *   },
- * });
- */
-export function useGlobalSearchQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
-      }
-export function useGlobalSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
-        }
-export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>;
-export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>;
-export type GlobalSearchQueryResult = Apollo.QueryResult<GlobalSearchQuery, GlobalSearchQueryVariables>;
 export const GetGraphDocument = gql`
     query GetGraph($id: ID!) {
   graph(id: $id) {
@@ -3466,271 +2847,77 @@ export function useSearchGraphsLazyQuery(baseOptions?: ApolloReactHooks.LazyQuer
 export type SearchGraphsQueryHookResult = ReturnType<typeof useSearchGraphsQuery>;
 export type SearchGraphsLazyQueryHookResult = ReturnType<typeof useSearchGraphsLazyQuery>;
 export type SearchGraphsQueryResult = Apollo.QueryResult<SearchGraphsQuery, SearchGraphsQueryVariables>;
-export const GetKnowledgeGraphDocument = gql`
-    query GetKnowledgeGraph($id: ID!) {
-  knowledgeGraph(id: $id) {
-    ...KnowledgeGraph
+export const PathDocument = gql`
+    query Path($id: ID!, $query: String!) {
+  path(graph: $id, query: $query) {
+    ...Path
   }
 }
-    ${KnowledgeGraphFragmentDoc}`;
+    ${PathFragmentDoc}`;
 
 /**
- * __useGetKnowledgeGraphQuery__
+ * __usePathQuery__
  *
- * To run a query within a React component, call `useGetKnowledgeGraphQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetKnowledgeGraphQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `usePathQuery` and pass it any options that fit your needs.
+ * When your component renders, `usePathQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetKnowledgeGraphQuery({
+ * const { data, loading, error } = usePathQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *      query: // value for 'query'
+ *   },
+ * });
+ */
+export function usePathQuery(baseOptions: ApolloReactHooks.QueryHookOptions<PathQuery, PathQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<PathQuery, PathQueryVariables>(PathDocument, options);
+      }
+export function usePathLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<PathQuery, PathQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<PathQuery, PathQueryVariables>(PathDocument, options);
+        }
+export type PathQueryHookResult = ReturnType<typeof usePathQuery>;
+export type PathLazyQueryHookResult = ReturnType<typeof usePathLazyQuery>;
+export type PathQueryResult = Apollo.QueryResult<PathQuery, PathQueryVariables>;
+export const GetNodeDocument = gql`
+    query GetNode($id: ID!) {
+  node(id: $id) {
+    ...Node
+  }
+}
+    ${NodeFragmentDoc}`;
+
+/**
+ * __useGetNodeQuery__
+ *
+ * To run a query within a React component, call `useGetNodeQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodeQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodeQuery({
  *   variables: {
  *      id: // value for 'id'
  *   },
  * });
  */
-export function useGetKnowledgeGraphQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetKnowledgeGraphQuery, GetKnowledgeGraphQueryVariables>) {
+export function useGetNodeQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetNodeQuery, GetNodeQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetKnowledgeGraphQuery, GetKnowledgeGraphQueryVariables>(GetKnowledgeGraphDocument, options);
+        return ApolloReactHooks.useQuery<GetNodeQuery, GetNodeQueryVariables>(GetNodeDocument, options);
       }
-export function useGetKnowledgeGraphLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetKnowledgeGraphQuery, GetKnowledgeGraphQueryVariables>) {
+export function useGetNodeLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetNodeQuery, GetNodeQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetKnowledgeGraphQuery, GetKnowledgeGraphQueryVariables>(GetKnowledgeGraphDocument, options);
+          return ApolloReactHooks.useLazyQuery<GetNodeQuery, GetNodeQueryVariables>(GetNodeDocument, options);
         }
-export type GetKnowledgeGraphQueryHookResult = ReturnType<typeof useGetKnowledgeGraphQuery>;
-export type GetKnowledgeGraphLazyQueryHookResult = ReturnType<typeof useGetKnowledgeGraphLazyQuery>;
-export type GetKnowledgeGraphQueryResult = Apollo.QueryResult<GetKnowledgeGraphQuery, GetKnowledgeGraphQueryVariables>;
-export const GetLinkedExpressionDocument = gql`
-    query GetLinkedExpression($id: ID!) {
-  linkedExpression(id: $id) {
-    ...LinkedExpression
-  }
-}
-    ${LinkedExpressionFragmentDoc}`;
-
-/**
- * __useGetLinkedExpressionQuery__
- *
- * To run a query within a React component, call `useGetLinkedExpressionQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetLinkedExpressionQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetLinkedExpressionQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useGetLinkedExpressionQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetLinkedExpressionQuery, GetLinkedExpressionQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetLinkedExpressionQuery, GetLinkedExpressionQueryVariables>(GetLinkedExpressionDocument, options);
-      }
-export function useGetLinkedExpressionLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetLinkedExpressionQuery, GetLinkedExpressionQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetLinkedExpressionQuery, GetLinkedExpressionQueryVariables>(GetLinkedExpressionDocument, options);
-        }
-export type GetLinkedExpressionQueryHookResult = ReturnType<typeof useGetLinkedExpressionQuery>;
-export type GetLinkedExpressionLazyQueryHookResult = ReturnType<typeof useGetLinkedExpressionLazyQuery>;
-export type GetLinkedExpressionQueryResult = Apollo.QueryResult<GetLinkedExpressionQuery, GetLinkedExpressionQueryVariables>;
-export const GetLinkedExpressionByAgeNameDocument = gql`
-    query GetLinkedExpressionByAgeName($ageName: String!, $graph: ID!) {
-  linkedExpressionByAgename(ageName: $ageName, graphId: $graph) {
-    ...LinkedExpression
-  }
-}
-    ${LinkedExpressionFragmentDoc}`;
-
-/**
- * __useGetLinkedExpressionByAgeNameQuery__
- *
- * To run a query within a React component, call `useGetLinkedExpressionByAgeNameQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetLinkedExpressionByAgeNameQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetLinkedExpressionByAgeNameQuery({
- *   variables: {
- *      ageName: // value for 'ageName'
- *      graph: // value for 'graph'
- *   },
- * });
- */
-export function useGetLinkedExpressionByAgeNameQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetLinkedExpressionByAgeNameQuery, GetLinkedExpressionByAgeNameQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetLinkedExpressionByAgeNameQuery, GetLinkedExpressionByAgeNameQueryVariables>(GetLinkedExpressionByAgeNameDocument, options);
-      }
-export function useGetLinkedExpressionByAgeNameLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetLinkedExpressionByAgeNameQuery, GetLinkedExpressionByAgeNameQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetLinkedExpressionByAgeNameQuery, GetLinkedExpressionByAgeNameQueryVariables>(GetLinkedExpressionByAgeNameDocument, options);
-        }
-export type GetLinkedExpressionByAgeNameQueryHookResult = ReturnType<typeof useGetLinkedExpressionByAgeNameQuery>;
-export type GetLinkedExpressionByAgeNameLazyQueryHookResult = ReturnType<typeof useGetLinkedExpressionByAgeNameLazyQuery>;
-export type GetLinkedExpressionByAgeNameQueryResult = Apollo.QueryResult<GetLinkedExpressionByAgeNameQuery, GetLinkedExpressionByAgeNameQueryVariables>;
-export const SearchLinkedExpressionDocument = gql`
-    query SearchLinkedExpression($search: String, $values: [ID!], $graph: ID) {
-  options: linkedExpressions(
-    filters: {search: $search, ids: $values, graph: $graph}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: label
-  }
-}
-    `;
-
-/**
- * __useSearchLinkedExpressionQuery__
- *
- * To run a query within a React component, call `useSearchLinkedExpressionQuery` and pass it any options that fit your needs.
- * When your component renders, `useSearchLinkedExpressionQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useSearchLinkedExpressionQuery({
- *   variables: {
- *      search: // value for 'search'
- *      values: // value for 'values'
- *      graph: // value for 'graph'
- *   },
- * });
- */
-export function useSearchLinkedExpressionQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchLinkedExpressionQuery, SearchLinkedExpressionQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchLinkedExpressionQuery, SearchLinkedExpressionQueryVariables>(SearchLinkedExpressionDocument, options);
-      }
-export function useSearchLinkedExpressionLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchLinkedExpressionQuery, SearchLinkedExpressionQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchLinkedExpressionQuery, SearchLinkedExpressionQueryVariables>(SearchLinkedExpressionDocument, options);
-        }
-export type SearchLinkedExpressionQueryHookResult = ReturnType<typeof useSearchLinkedExpressionQuery>;
-export type SearchLinkedExpressionLazyQueryHookResult = ReturnType<typeof useSearchLinkedExpressionLazyQuery>;
-export type SearchLinkedExpressionQueryResult = Apollo.QueryResult<SearchLinkedExpressionQuery, SearchLinkedExpressionQueryVariables>;
-export const SearchLinkedRelationsDocument = gql`
-    query SearchLinkedRelations($search: String, $values: [ID!], $graph: ID) {
-  options: linkedExpressions(
-    filters: {search: $search, ids: $values, graph: $graph, kind: RELATION}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: label
-  }
-}
-    `;
-
-/**
- * __useSearchLinkedRelationsQuery__
- *
- * To run a query within a React component, call `useSearchLinkedRelationsQuery` and pass it any options that fit your needs.
- * When your component renders, `useSearchLinkedRelationsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useSearchLinkedRelationsQuery({
- *   variables: {
- *      search: // value for 'search'
- *      values: // value for 'values'
- *      graph: // value for 'graph'
- *   },
- * });
- */
-export function useSearchLinkedRelationsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchLinkedRelationsQuery, SearchLinkedRelationsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchLinkedRelationsQuery, SearchLinkedRelationsQueryVariables>(SearchLinkedRelationsDocument, options);
-      }
-export function useSearchLinkedRelationsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchLinkedRelationsQuery, SearchLinkedRelationsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchLinkedRelationsQuery, SearchLinkedRelationsQueryVariables>(SearchLinkedRelationsDocument, options);
-        }
-export type SearchLinkedRelationsQueryHookResult = ReturnType<typeof useSearchLinkedRelationsQuery>;
-export type SearchLinkedRelationsLazyQueryHookResult = ReturnType<typeof useSearchLinkedRelationsLazyQuery>;
-export type SearchLinkedRelationsQueryResult = Apollo.QueryResult<SearchLinkedRelationsQuery, SearchLinkedRelationsQueryVariables>;
-export const SearchLinkedEntitiesDocument = gql`
-    query SearchLinkedEntities($search: String, $values: [ID!], $graph: ID) {
-  options: linkedExpressions(
-    filters: {search: $search, ids: $values, graph: $graph, kind: ENTITY}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: label
-  }
-}
-    `;
-
-/**
- * __useSearchLinkedEntitiesQuery__
- *
- * To run a query within a React component, call `useSearchLinkedEntitiesQuery` and pass it any options that fit your needs.
- * When your component renders, `useSearchLinkedEntitiesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useSearchLinkedEntitiesQuery({
- *   variables: {
- *      search: // value for 'search'
- *      values: // value for 'values'
- *      graph: // value for 'graph'
- *   },
- * });
- */
-export function useSearchLinkedEntitiesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchLinkedEntitiesQuery, SearchLinkedEntitiesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchLinkedEntitiesQuery, SearchLinkedEntitiesQueryVariables>(SearchLinkedEntitiesDocument, options);
-      }
-export function useSearchLinkedEntitiesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchLinkedEntitiesQuery, SearchLinkedEntitiesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchLinkedEntitiesQuery, SearchLinkedEntitiesQueryVariables>(SearchLinkedEntitiesDocument, options);
-        }
-export type SearchLinkedEntitiesQueryHookResult = ReturnType<typeof useSearchLinkedEntitiesQuery>;
-export type SearchLinkedEntitiesLazyQueryHookResult = ReturnType<typeof useSearchLinkedEntitiesLazyQuery>;
-export type SearchLinkedEntitiesQueryResult = Apollo.QueryResult<SearchLinkedEntitiesQuery, SearchLinkedEntitiesQueryVariables>;
-export const ListLinkedExpressionDocument = gql`
-    query ListLinkedExpression($filters: LinkedExpressionFilter, $pagination: OffsetPaginationInput) {
-  linkedExpressions(filters: $filters, pagination: $pagination) {
-    ...ListLinkedExpression
-  }
-}
-    ${ListLinkedExpressionFragmentDoc}`;
-
-/**
- * __useListLinkedExpressionQuery__
- *
- * To run a query within a React component, call `useListLinkedExpressionQuery` and pass it any options that fit your needs.
- * When your component renders, `useListLinkedExpressionQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useListLinkedExpressionQuery({
- *   variables: {
- *      filters: // value for 'filters'
- *      pagination: // value for 'pagination'
- *   },
- * });
- */
-export function useListLinkedExpressionQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListLinkedExpressionQuery, ListLinkedExpressionQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListLinkedExpressionQuery, ListLinkedExpressionQueryVariables>(ListLinkedExpressionDocument, options);
-      }
-export function useListLinkedExpressionLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListLinkedExpressionQuery, ListLinkedExpressionQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListLinkedExpressionQuery, ListLinkedExpressionQueryVariables>(ListLinkedExpressionDocument, options);
-        }
-export type ListLinkedExpressionQueryHookResult = ReturnType<typeof useListLinkedExpressionQuery>;
-export type ListLinkedExpressionLazyQueryHookResult = ReturnType<typeof useListLinkedExpressionLazyQuery>;
-export type ListLinkedExpressionQueryResult = Apollo.QueryResult<ListLinkedExpressionQuery, ListLinkedExpressionQueryVariables>;
+export type GetNodeQueryHookResult = ReturnType<typeof useGetNodeQuery>;
+export type GetNodeLazyQueryHookResult = ReturnType<typeof useGetNodeLazyQuery>;
+export type GetNodeQueryResult = Apollo.QueryResult<GetNodeQuery, GetNodeQueryVariables>;
 export const GetOntologyDocument = gql`
     query GetOntology($id: ID!) {
   ontology(id: $id) {
@@ -4244,125 +3431,53 @@ export function useSearchReagentsLazyQuery(baseOptions?: ApolloReactHooks.LazyQu
 export type SearchReagentsQueryHookResult = ReturnType<typeof useSearchReagentsQuery>;
 export type SearchReagentsLazyQueryHookResult = ReturnType<typeof useSearchReagentsLazyQuery>;
 export type SearchReagentsQueryResult = Apollo.QueryResult<SearchReagentsQuery, SearchReagentsQueryVariables>;
-export const GetEntityRelationDocument = gql`
-    query GetEntityRelation($id: ID!) {
-  entityRelation(id: $id) {
-    ...EntityRelation
+export const GlobalSearchDocument = gql`
+    query GlobalSearch($search: String, $pagination: OffsetPaginationInput) {
+  graphs: graphs(filters: {search: $search}, pagination: $pagination) {
+    ...ListGraph
+  }
+  ontologies: ontologies(filters: {search: $search}, pagination: $pagination) {
+    ...ListOntology
   }
 }
-    ${EntityRelationFragmentDoc}`;
+    ${ListGraphFragmentDoc}
+${ListOntologyFragmentDoc}`;
 
 /**
- * __useGetEntityRelationQuery__
+ * __useGlobalSearchQuery__
  *
- * To run a query within a React component, call `useGetEntityRelationQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetEntityRelationQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGlobalSearchQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGlobalSearchQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetEntityRelationQuery({
+ * const { data, loading, error } = useGlobalSearchQuery({
  *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useGetEntityRelationQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetEntityRelationQuery, GetEntityRelationQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetEntityRelationQuery, GetEntityRelationQueryVariables>(GetEntityRelationDocument, options);
-      }
-export function useGetEntityRelationLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetEntityRelationQuery, GetEntityRelationQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetEntityRelationQuery, GetEntityRelationQueryVariables>(GetEntityRelationDocument, options);
-        }
-export type GetEntityRelationQueryHookResult = ReturnType<typeof useGetEntityRelationQuery>;
-export type GetEntityRelationLazyQueryHookResult = ReturnType<typeof useGetEntityRelationLazyQuery>;
-export type GetEntityRelationQueryResult = Apollo.QueryResult<GetEntityRelationQuery, GetEntityRelationQueryVariables>;
-export const ListEntityRelationsDocument = gql`
-    query ListEntityRelations($filters: EntityRelationFilter, $pagination: GraphPaginationInput) {
-  entityRelations(filters: $filters, pagination: $pagination) {
-    ...ListEntityRelation
-    metricMap
-  }
-}
-    ${ListEntityRelationFragmentDoc}`;
-
-/**
- * __useListEntityRelationsQuery__
- *
- * To run a query within a React component, call `useListEntityRelationsQuery` and pass it any options that fit your needs.
- * When your component renders, `useListEntityRelationsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useListEntityRelationsQuery({
- *   variables: {
- *      filters: // value for 'filters'
+ *      search: // value for 'search'
  *      pagination: // value for 'pagination'
  *   },
  * });
  */
-export function useListEntityRelationsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListEntityRelationsQuery, ListEntityRelationsQueryVariables>) {
+export function useGlobalSearchQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListEntityRelationsQuery, ListEntityRelationsQueryVariables>(ListEntityRelationsDocument, options);
+        return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
       }
-export function useListEntityRelationsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListEntityRelationsQuery, ListEntityRelationsQueryVariables>) {
+export function useGlobalSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListEntityRelationsQuery, ListEntityRelationsQueryVariables>(ListEntityRelationsDocument, options);
+          return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
         }
-export type ListEntityRelationsQueryHookResult = ReturnType<typeof useListEntityRelationsQuery>;
-export type ListEntityRelationsLazyQueryHookResult = ReturnType<typeof useListEntityRelationsLazyQuery>;
-export type ListEntityRelationsQueryResult = Apollo.QueryResult<ListEntityRelationsQuery, ListEntityRelationsQueryVariables>;
-export const SearchEntityRelationsDocument = gql`
-    query SearchEntityRelations($search: String, $values: [ID!]) {
-  options: entityRelations(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: label
-  }
-}
-    `;
-
-/**
- * __useSearchEntityRelationsQuery__
- *
- * To run a query within a React component, call `useSearchEntityRelationsQuery` and pass it any options that fit your needs.
- * When your component renders, `useSearchEntityRelationsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useSearchEntityRelationsQuery({
- *   variables: {
- *      search: // value for 'search'
- *      values: // value for 'values'
- *   },
- * });
- */
-export function useSearchEntityRelationsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchEntityRelationsQuery, SearchEntityRelationsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchEntityRelationsQuery, SearchEntityRelationsQueryVariables>(SearchEntityRelationsDocument, options);
-      }
-export function useSearchEntityRelationsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchEntityRelationsQuery, SearchEntityRelationsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchEntityRelationsQuery, SearchEntityRelationsQueryVariables>(SearchEntityRelationsDocument, options);
-        }
-export type SearchEntityRelationsQueryHookResult = ReturnType<typeof useSearchEntityRelationsQuery>;
-export type SearchEntityRelationsLazyQueryHookResult = ReturnType<typeof useSearchEntityRelationsLazyQuery>;
-export type SearchEntityRelationsQueryResult = Apollo.QueryResult<SearchEntityRelationsQuery, SearchEntityRelationsQueryVariables>;
+export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>;
+export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>;
+export type GlobalSearchQueryResult = Apollo.QueryResult<GlobalSearchQuery, GlobalSearchQueryVariables>;
 export const GetStructureDocument = gql`
     query GetStructure($graph: ID!, $structure: StructureString!) {
   structure(graph: $graph, structure: $structure) {
-    ...Entity
+    ...Structure
   }
 }
-    ${EntityFragmentDoc}`;
+    ${StructureFragmentDoc}`;
 
 /**
  * __useGetStructureQuery__

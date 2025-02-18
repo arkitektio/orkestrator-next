@@ -228,7 +228,7 @@ export const LokServiceInstance = buildSmart(
   "lok/serviceinstances",
 );
 
-export const LokRoom = buildSmart("@lok/room", "lok/rooms");
+export const AlpakaRoom = buildSmart("@alpaka/room", "alpaka/rooms");
 export const LokComment = buildSmart("@lok/comment", "lok/comments");
 export const LokMapping = buildSmart("@lok/mapping", "lok/mappings");
 export const LokComposition = buildSmart("@lok/composition", "lok/composition");

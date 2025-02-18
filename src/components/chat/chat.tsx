@@ -1,10 +1,9 @@
 import {
   DetailRoomFragment,
   useSendMessageMutation,
-} from "@/lok-next/api/graphql";
+} from "@/alpaka/api/graphql";
 import { ChatList } from "./chat-list";
 import { Message, UserData } from "./data";
-import { LokRoom } from "@/linkers";
 
 interface ChatProps {
   messages?: Message[];

@@ -1,5 +1,5 @@
 query GetStructure($graph: ID!, $structure: StructureString!) {
   structure(graph: $graph, structure: $structure) {
-    ...Entity
+    ...Structure
   }
 }

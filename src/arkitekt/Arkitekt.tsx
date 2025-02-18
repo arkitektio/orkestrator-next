@@ -13,6 +13,7 @@ import omeroArkResult from "@/omero-ark/api/fragments";
 import flussResult from "@/reaktion/api/fragments";
 import rekuestResult from "@/rekuest/api/fragments";
 import kabinetResult from "@/kabinet/api/fragments";
+import alpakaResult from "@/alpaka/api/fragments";
 import kraphResult from "@/kraph/api/fragments";
 import { WidgetRegistry } from "@/rekuest/widgets/Registry";
 import { createOmeroArkClient } from "@/lib/omero-ark/client";
@@ -20,6 +21,7 @@ import { createLokClient } from "@/lok-next/lib/LokClient";
 import { App, ServiceMap } from "./types";
 import { createLivekitClient } from "@/lib/livekit/client";
 import { createKraphClient } from "@/lib/kraph/client";
+import { createAlpakaClient } from "@/lib/alpaka/client";
 
 export const electronRedirect = async (
   url: string,
@@ -134,6 +136,21 @@ export const serviceMap: ServiceBuilderMap = {
       };
     },
   },
+  alpaka: {
+    key: "alpaka",
+    service: "live.arkitekt.alpaka",
+    optional: true,
+    builder: (manifest, fakts: any, token) => {
+      return {
+        client: createAlpakaClient({
+          wsEndpointUrl: fakts.alpaka.ws_endpoint_url,
+          endpointUrl: fakts.alpaka.endpoint_url,
+          possibleTypes: alpakaResult.possibleTypes,
+          retrieveToken: () => token,
+        }),
+      };
+    },
+  },
   livekit: {
     key: "livekit",
     service: "io.livekit.livekit",
@@ -177,6 +194,7 @@ export const Guard = {
   OmeroArk: buildGuard("omero_ark"),
   Livekit: buildGuard("livekit"),
   Kraph: buildGuard("kraph"),
+  Alpaka: buildGuard("alpaka"),
 };
 
 export const useMikro = (): ApolloClient<NormalizedCache> => {
@@ -247,6 +265,16 @@ export const useKraph = (): ApolloClient<NormalizedCache> => {
   }
 
   return clients.kraph?.client;
+};
+
+export const useAlpaka = (): ApolloClient<NormalizedCache> => {
+  const { clients } = useArkitekt();
+
+  if (!clients.alpaka?.client) {
+    throw new Error("Alpaka client not available");
+  }
+
+  return clients.alpaka?.client;
 };
 
 export const useLivekit = (): LivekitClient => {

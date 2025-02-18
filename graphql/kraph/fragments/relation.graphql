@@ -1,0 +1,4 @@
+fragment Relation on Relation {
+  id
+  label
+}

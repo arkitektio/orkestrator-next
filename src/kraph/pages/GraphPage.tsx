@@ -7,12 +7,63 @@ import { KraphGraph, KraphLinkedExpression } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { Divide, PlusIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useGetGraphQuery } from "../api/graphql";
+import { PathFragment, useGetGraphQuery, useRenderGraphQuery } from "../api/graphql";
 
 import { UpdateGraphForm } from "../forms/UpdateGraphForm";
+import { useState } from "react";
+import { PathGraph } from "../components/graph/KnowledgeGraph";
+
+
+export const PathRenderer = (props: {path: PathFragment}) => {
+
+
+  return (
+    <div>
+      {props.path.nodes.map((node, i) => (
+        <div key={i}>
+          {node.__typename}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+
+const ViewRenderer = (props: {graph: string, view: string}) => {
+
+  const { data, error} = useRenderGraphQuery({
+    variables: {
+      graph: props.graph,
+      query: props.view
+    }
+  })
+
+  if (error) {
+    return <div>{JSON.stringify(error)}</div>
+  }
+
+  if (!data) {
+    return <div>Loading...</div>
+  }
+
+
+  if (data.renderGraph.__typename === "Pairs") {
+    return <div>Pair Rendering</div>
+  }
+
+  if (data.renderGraph.__typename === "Path") {
+    return <PathGraph path={data.renderGraph} />
+  }
+
+
+
+}
 
 export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
-  const navigate = useNavigate();
+  
+
+
+  const [query, setQuery] = useState<string | undefined>(undefined);
 
   return (
     <KraphGraph.ModelPage
@@ -50,8 +101,12 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
       </div>
       <div className="p-6">
         {data.graph.ontology.graphQueries.map((item, i) => (
-          <div key={i}>ddd{item.query}</div>
+          <div key={i} onClick={() => setQuery(item.id)}>ddd{item.query}</div>
         ))}
+      </div>
+
+      <div className="p-6 h-96">
+        {query && <ViewRenderer graph={data.graph.id} view={query} />}
       </div>
 
       <div className="p-6">

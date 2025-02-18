@@ -1,29 +1,28 @@
 import { AnimatePresence } from "framer-motion";
-import React from "react";
+import React, { useEffect } from "react";
 import ReactFlow, {
   Background,
-  EdgeTypes,
-  NodeTypes,
-  ReactFlowProps,
+  ReactFlowProps
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { KnowledgeEdge, KnowledgeNode } from "./types.js";
-import { EntityGraph, GetEntityGraphQuery } from "@/kraph/api/graphql.js";
-import { entityNodesToNodes, entityRelationToEdges } from "./utils.js";
-import { node } from "slate";
-import MeasurementNodeWidget from "./nodes/MeasurementNodeWidget.js";
-import { Button } from "@/components/ui/button.js";
 import { ClickContextual } from "./components/ClickContextual.js";
+import StructureNodeWidget from "./nodes/StructureNodeWidget.js";
+import EntityNodeWidget from "./nodes/EntityNodeWidget.js";
+import { KnowledgeNode } from "./types.js";
+import { entityNodesToNodes, entityRelationToEdges } from "./utils.js";
+import { PathFragment } from "@/kraph/api/graphql.js";
+import ELK from 'elkjs/lib/elk.bundled.js';
+import { id } from "date-fns/locale";
 
 type Props = {
-  graph: EntityGraph;
-  children?: React.ReactNode;
+  path: PathFragment;
 } & ReactFlowProps;
 
 
 
 const nodeTypes = {
-  measurementNode: MeasurementNodeWidget,
+  Entity: EntityNodeWidget,
+  Structure: StructureNodeWidget,
 }
 
 
@@ -43,17 +42,69 @@ export type DropContextual = {
 
 export type Contextual = ClickContextual | DropContextual;
 
-export const KnowledgeGraph: React.FC<Props> = ({
-  graph: { nodes, edges },
-  children,
+
+const elk = new ELK();
+
+export const PathGraph: React.FC<Props> = ({
+  path,
   ...props
 }) => {
 
   const reactFlowWrapper = React.useRef<HTMLDivElement | null>(null);
   const [reactFlowInstance, setReactFlowInstance] = React.useState<any>(null);
 
+  const [currentPath, setCurrentPath] = React.useState({
+    nodes: entityNodesToNodes(path.nodes),
+    edges: entityRelationToEdges(path.edges),
+    layout: "vanilla"
+  });
+
 
   const [ contextual, setContextual] = React.useState<Contextual | null>(null);
+
+
+  useEffect(() => {
+  const graph = {
+    id: 'root',
+    layoutOptions: {
+      'elk.algorithm': 'layered',
+      'elk.direction': 'DOWN',
+    },
+    children: currentPath.nodes.map((node) => ({
+      id: node.id,
+      x: node.position.x,
+      y: node.position.y,
+      width: 200,
+      height: 100,
+    })),
+    edges: currentPath.edges.map(
+      (edge) => ({
+        id: edge.id,
+        sources: [edge.source],
+        targets: [edge.target],
+      })
+    )
+
+    
+  };
+
+  elk.layout(graph).then(({ children }) => {
+    // By mutating the children in-place we saves ourselves from creating a
+    // needless copy of the nodes array.
+    if (!children) {
+      return;
+    }
+
+    const newNodes = children.map((node) => {
+      const child = currentPath.nodes.find((n) => n.id === node.id);
+      return { ...child, position: {x: node.x, y: node.y }};
+    });
+
+    setCurrentPath({nodes: newNodes, edges: currentPath.edges, layout: "elk"})
+    reactFlowInstance?.fitView();
+    
+  });
+}, [ reactFlowInstance]);
 
 
 
@@ -61,8 +112,8 @@ export const KnowledgeGraph: React.FC<Props> = ({
   return (
     <div ref={reactFlowWrapper} className="relative h-full">
     <ReactFlow
-      nodes={entityNodesToNodes(nodes)}
-      edges={entityRelationToEdges(edges)}
+      nodes={currentPath.nodes}
+      edges={currentPath.edges}
       nodeTypes={nodeTypes}
       onInit={setReactFlowInstance}
       snapToGrid={true}
@@ -91,7 +142,6 @@ export const KnowledgeGraph: React.FC<Props> = ({
     >
       <AnimatePresence>
         <Background />
-        {children}
         
       </AnimatePresence>
     </ReactFlow>

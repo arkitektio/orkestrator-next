@@ -1,22 +1,22 @@
-import { EntityGraph } from "@/kraph/api/graphql";
+import { PathFragment } from "@/kraph/api/graphql";
 import { KnowledgeEdge, KnowledgeNode } from "../../panes/graph/types";
 
 export const entityNodesToNodes = (
-  nodes: EntityGraph["nodes"],
+  nodes: PathFragment["nodes"],
 ): KnowledgeNode[] => {
   return nodes.map((node) => {
     return {
-      type: node.label ? "measurementNode" : "default", 
+      type: node.__typename,
       position: { x: 0, y: 0 },
       id: node.id,
       label: node.__typename,
-      data: { label: node.label, id: node.id },
+      data: { label: node.__typename, id: node.id },
     } as KnowledgeNode;
   });
 };
 
 export const entityRelationToEdges = (
-  relations: EntityGraph["edges"],
+  relations: PathFragment["edges"],
 ): KnowledgeEdge[] => {
   return relations.map((relation) => {
     return {

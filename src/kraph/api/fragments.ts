@@ -14,6 +14,10 @@
     "Node": [
       "Entity",
       "Structure"
+    ],
+    "PathPairs": [
+      "Pairs",
+      "Path"
     ]
   }
 };

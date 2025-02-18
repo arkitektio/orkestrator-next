@@ -10,16 +10,6 @@ fragment Entity on Entity {
     performedAt
     name
   }
-  edges {
-    id
-    right {
-      id
-      label
-    }
-    expression {
-      label
-    }
-  }
 }
 
 fragment ListEntity on Entity {

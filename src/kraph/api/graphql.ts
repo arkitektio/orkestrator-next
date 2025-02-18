@@ -45,9 +45,7 @@ export type ComputedMeasurement = Edge & {
   id: Scalars['NodeID']['output'];
   inferedBy: Edge;
   label: Scalars['String']['output'];
-  left: Node;
   leftId: Scalars['String']['output'];
-  right: Node;
   rightId: Scalars['String']['output'];
   /** Timestamp from when this entity is valid */
   validFrom: Scalars['DateTime']['output'];
@@ -105,9 +103,7 @@ export type Edge = {
   id: Scalars['NodeID']['output'];
   inferedBy: Edge;
   label: Scalars['String']['output'];
-  left: Node;
   leftId: Scalars['String']['output'];
-  right: Node;
   rightId: Scalars['String']['output'];
 };
 
@@ -210,7 +206,7 @@ export type Expression = {
   __typename?: 'Expression';
   /** The unique identifier of the expression within its graph */
   ageName: Scalars['String']['output'];
-  color?: Maybe<Scalars['String']['output']>;
+  color?: Maybe<Array<Scalars['Float']['output']>>;
   /** A description of the expression. */
   description?: Maybe<Scalars['String']['output']>;
   /** The unique identifier of the expression within its graph */
@@ -379,9 +375,7 @@ export type Measurement = Edge & {
   id: Scalars['NodeID']['output'];
   inferedBy: Edge;
   label: Scalars['String']['output'];
-  left: Node;
   leftId: Scalars['String']['output'];
-  right: Node;
   rightId: Scalars['String']['output'];
   /** Timestamp from when this entity is valid */
   validFrom: Scalars['DateTime']['output'];
@@ -682,6 +676,7 @@ export type NodeQuery = {
   kind: ViewKind;
   name: Scalars['String']['output'];
   ontology: Ontology;
+  query: Scalars['String']['output'];
 };
 
 export type NodeQueryFilter = {
@@ -818,11 +813,20 @@ export type Pair = {
   right: Node;
 };
 
+/** A collection of paired entities. */
+export type Pairs = {
+  __typename?: 'Pairs';
+  /** The paired entities. */
+  pairs: Array<Pair>;
+};
+
 export type Path = {
   __typename?: 'Path';
   edges: Array<Edge>;
   nodes: Array<Node>;
 };
+
+export type PathPairs = Pairs | Path;
 
 export type PlateChildInput = {
   backgroundColor?: InputMaybe<Scalars['String']['input']>;
@@ -994,6 +998,8 @@ export type Query = {
   reagent: Reagent;
   /** List of all reagents used in protocols */
   reagents: Array<Reagent>;
+  /** Renders a graph query */
+  renderGraph: PathPairs;
   /** Gets a specific structure e.g an image, video, or 3D model */
   structure: Structure;
 };
@@ -1121,6 +1127,12 @@ export type QueryReagentsArgs = {
 };
 
 
+export type QueryRenderGraphArgs = {
+  graph: Scalars['ID']['input'];
+  query: Scalars['ID']['input'];
+};
+
+
 export type QueryStructureArgs = {
   graph: Scalars['ID']['input'];
   structure: Scalars['StructureString']['input'];
@@ -1196,9 +1208,7 @@ export type Relation = Edge & {
   id: Scalars['NodeID']['output'];
   inferedBy: Edge;
   label: Scalars['String']['output'];
-  left: Node;
   leftId: Scalars['String']['output'];
-  right: Node;
   rightId: Scalars['String']['output'];
   /** Timestamp from when this entity is valid */
   validFrom: Scalars['DateTime']['output'];
@@ -1343,22 +1353,23 @@ export type VariableInput = {
 export enum ViewKind {
   FloatMetric = 'FLOAT_METRIC',
   IntMetric = 'INT_METRIC',
+  Pairs = 'PAIRS',
   Path = 'PATH'
 }
 
-type Edge_ComputedMeasurement_Fragment = { __typename?: 'ComputedMeasurement', id: any, label: string };
+type Edge_ComputedMeasurement_Fragment = { __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string };
 
-type Edge_Measurement_Fragment = { __typename?: 'Measurement', id: any, label: string, value: any };
+type Edge_Measurement_Fragment = { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any };
 
-type Edge_Relation_Fragment = { __typename?: 'Relation', id: any, label: string };
+type Edge_Relation_Fragment = { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string };
 
 export type EdgeFragment = Edge_ComputedMeasurement_Fragment | Edge_Measurement_Fragment | Edge_Relation_Fragment;
 
-export type EntityFragment = { __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } } | { __typename?: 'Measurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } } | { __typename?: 'Relation', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } }> };
+export type EntityFragment = { __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> };
 
 export type ListEntityFragment = { __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', id: string, label: string } };
 
-export type EntityGraphNodeFragment = { __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', color?: string | null } };
+export type EntityGraphNodeFragment = { __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', color?: Array<number> | null } };
 
 export type ExpressionFragment = { __typename?: 'Expression', id: string, label: string, description?: string | null, ontology: { __typename?: 'Ontology', id: string, name: string }, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null };
 
@@ -1374,9 +1385,9 @@ export type ListGraphQueryFragment = { __typename?: 'GraphQuery', id: string, na
 
 export type MeasurementFragment = { __typename?: 'Measurement', id: any, value: any };
 
-type Node_Entity_Fragment = { __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } } | { __typename?: 'Measurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } } | { __typename?: 'Relation', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } }> };
+type Node_Entity_Fragment = { __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> };
 
-type Node_Structure_Fragment = { __typename?: 'Structure', id: any, label: string, identifier: string, object?: string | null, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } } | { __typename?: 'Measurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } } | { __typename?: 'Relation', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } }> };
+type Node_Structure_Fragment = { __typename?: 'Structure', id: any, label: string, identifier: string, object?: string | null };
 
 export type NodeFragment = Node_Entity_Fragment | Node_Structure_Fragment;
 
@@ -1384,7 +1395,9 @@ export type OntologyFragment = { __typename?: 'Ontology', id: string, name: stri
 
 export type ListOntologyFragment = { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null };
 
-export type PathFragment = { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', color?: string | null } } | { __typename?: 'Structure', identifier: string, object?: string | null, id: any }>, edges: Array<{ __typename?: 'ComputedMeasurement' } | { __typename?: 'Measurement', id: any, value: any } | { __typename?: 'Relation' }> };
+export type PairsFragment = { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> };
+
+export type PathFragment = { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object?: string | null }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> };
 
 export type ProtocolFragment = { __typename?: 'Protocol', id: string, name: string, description?: string | null, experiment: { __typename?: 'Experiment', id: string, name: string, description?: string | null } };
 
@@ -1406,7 +1419,7 @@ export type RelationFragment = { __typename?: 'Relation', id: any, label: string
 
 export type MediaStoreFragment = { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string };
 
-export type StructureFragment = { __typename?: 'Structure', id: any, label: string, identifier: string, object?: string | null, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } } | { __typename?: 'Measurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } } | { __typename?: 'Relation', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } }> };
+export type StructureFragment = { __typename?: 'Structure', id: any, label: string, identifier: string, object?: string | null };
 
 export type ListStructureFragment = { __typename?: 'Structure', identifier: string, object?: string | null, id: any };
 
@@ -1417,7 +1430,7 @@ export type CreateEntityMutationVariables = Exact<{
 }>;
 
 
-export type CreateEntityMutation = { __typename?: 'Mutation', createEntity: { __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } } | { __typename?: 'Measurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } } | { __typename?: 'Relation', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } }> } };
+export type CreateEntityMutation = { __typename?: 'Mutation', createEntity: { __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } };
 
 export type CreateRelationMutationVariables = Exact<{
   input: RelationInput;
@@ -1530,14 +1543,14 @@ export type CreateStructureMutationVariables = Exact<{
 }>;
 
 
-export type CreateStructureMutation = { __typename?: 'Mutation', createStructure: { __typename?: 'Structure', id: any, label: string, identifier: string, object?: string | null, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } } | { __typename?: 'Measurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } } | { __typename?: 'Relation', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } }> } };
+export type CreateStructureMutation = { __typename?: 'Mutation', createStructure: { __typename?: 'Structure', id: any, label: string, identifier: string, object?: string | null } };
 
 export type GetEdgeQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetEdgeQuery = { __typename?: 'Query', edge: { __typename?: 'ComputedMeasurement', id: any, label: string } | { __typename?: 'Measurement', id: any, label: string, value: any } | { __typename?: 'Relation', id: any, label: string } };
+export type GetEdgeQuery = { __typename?: 'Query', edge: { __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string } };
 
 export type GetExpressionQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1596,14 +1609,14 @@ export type PathQueryVariables = Exact<{
 }>;
 
 
-export type PathQuery = { __typename?: 'Query', path: { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', color?: string | null } } | { __typename?: 'Structure', identifier: string, object?: string | null, id: any }>, edges: Array<{ __typename?: 'ComputedMeasurement' } | { __typename?: 'Measurement', id: any, value: any } | { __typename?: 'Relation' }> } };
+export type PathQuery = { __typename?: 'Query', path: { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object?: string | null }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> } };
 
 export type GetNodeQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetNodeQuery = { __typename?: 'Query', node: { __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } } | { __typename?: 'Measurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } } | { __typename?: 'Relation', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, expression: { __typename?: 'Expression', label: string } }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object?: string | null, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } } | { __typename?: 'Measurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } } | { __typename?: 'Relation', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } }> } };
+export type GetNodeQuery = { __typename?: 'Query', node: { __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object?: string | null } };
 
 export type GetOntologyQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1709,6 +1722,14 @@ export type SearchReagentsQueryVariables = Exact<{
 
 export type SearchReagentsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Reagent', value: string, label: string }> };
 
+export type RenderGraphQueryVariables = Exact<{
+  graph: Scalars['ID']['input'];
+  query: Scalars['ID']['input'];
+}>;
+
+
+export type RenderGraphQuery = { __typename?: 'Query', renderGraph: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, expression: { __typename?: 'Expression', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object?: string | null }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> } };
+
 export type GlobalSearchQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -1723,29 +1744,8 @@ export type GetStructureQueryVariables = Exact<{
 }>;
 
 
-export type GetStructureQuery = { __typename?: 'Query', structure: { __typename?: 'Structure', id: any, label: string, identifier: string, object?: string | null, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } } | { __typename?: 'Measurement', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } } | { __typename?: 'Relation', id: any, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string } }> } };
+export type GetStructureQuery = { __typename?: 'Query', structure: { __typename?: 'Structure', id: any, label: string, identifier: string, object?: string | null } };
 
-export const MeasurementFragmentDoc = gql`
-    fragment Measurement on Measurement {
-  id
-  value
-}
-    `;
-export const RelationFragmentDoc = gql`
-    fragment Relation on Relation {
-  id
-  label
-}
-    `;
-export const EdgeFragmentDoc = gql`
-    fragment Edge on Edge {
-  id
-  label
-  ...Measurement
-  ...Relation
-}
-    ${MeasurementFragmentDoc}
-${RelationFragmentDoc}`;
 export const ListEntityFragmentDoc = gql`
     fragment ListEntity on Entity {
   id
@@ -1753,6 +1753,15 @@ export const ListEntityFragmentDoc = gql`
   expression {
     id
     label
+  }
+}
+    `;
+export const EntityGraphNodeFragmentDoc = gql`
+    fragment EntityGraphNode on Entity {
+  id
+  label
+  expression {
+    color
   }
 }
     `;
@@ -1801,55 +1810,6 @@ export const DetailGraphQueryFragmentDoc = gql`
   query
 }
     `;
-export const EntityFragmentDoc = gql`
-    fragment Entity on Entity {
-  id
-  label
-  expression {
-    id
-    label
-  }
-  subjectedTo {
-    id
-    performedAt
-    name
-  }
-  edges {
-    id
-    right {
-      id
-      label
-    }
-    expression {
-      label
-    }
-  }
-}
-    `;
-export const StructureFragmentDoc = gql`
-    fragment Structure on Structure {
-  id
-  label
-  edges {
-    id
-    right {
-      id
-      label
-    }
-  }
-  identifier
-  object
-}
-    `;
-export const NodeFragmentDoc = gql`
-    fragment Node on Node {
-  id
-  label
-  ...Entity
-  ...Structure
-}
-    ${EntityFragmentDoc}
-${StructureFragmentDoc}`;
 export const ListExpressionFragmentDoc = gql`
     fragment ListExpression on Expression {
   id
@@ -1903,35 +1863,84 @@ export const ListOntologyFragmentDoc = gql`
   purl
 }
     `;
-export const StructureGraphNodeFragmentDoc = gql`
-    fragment StructureGraphNode on Structure {
-  identifier
-  object
-  id
+export const PairsFragmentDoc = gql`
+    fragment Pairs on Pairs {
+  pairs {
+    left {
+      id
+    }
+    right {
+      id
+    }
+  }
 }
     `;
-export const EntityGraphNodeFragmentDoc = gql`
-    fragment EntityGraphNode on Entity {
+export const EntityFragmentDoc = gql`
+    fragment Entity on Entity {
   id
   label
   expression {
-    color
+    id
+    label
+  }
+  subjectedTo {
+    id
+    performedAt
+    name
   }
 }
     `;
+export const StructureFragmentDoc = gql`
+    fragment Structure on Structure {
+  id
+  label
+  identifier
+  object
+}
+    `;
+export const NodeFragmentDoc = gql`
+    fragment Node on Node {
+  id
+  label
+  ...Entity
+  ...Structure
+}
+    ${EntityFragmentDoc}
+${StructureFragmentDoc}`;
+export const MeasurementFragmentDoc = gql`
+    fragment Measurement on Measurement {
+  id
+  value
+}
+    `;
+export const RelationFragmentDoc = gql`
+    fragment Relation on Relation {
+  id
+  label
+}
+    `;
+export const EdgeFragmentDoc = gql`
+    fragment Edge on Edge {
+  id
+  label
+  leftId
+  rightId
+  ...Measurement
+  ...Relation
+}
+    ${MeasurementFragmentDoc}
+${RelationFragmentDoc}`;
 export const PathFragmentDoc = gql`
     fragment Path on Path {
   nodes {
-    ...StructureGraphNode
-    ...EntityGraphNode
+    ...Node
   }
   edges {
-    ...Measurement
+    ...Edge
   }
 }
-    ${StructureGraphNodeFragmentDoc}
-${EntityGraphNodeFragmentDoc}
-${MeasurementFragmentDoc}`;
+    ${NodeFragmentDoc}
+${EdgeFragmentDoc}`;
 export const ProtocolFragmentDoc = gql`
     fragment Protocol on Protocol {
   id
@@ -2023,6 +2032,13 @@ export const ListReagentFragmentDoc = gql`
     `;
 export const ListStructureFragmentDoc = gql`
     fragment ListStructure on Structure {
+  identifier
+  object
+  id
+}
+    `;
+export const StructureGraphNodeFragmentDoc = gql`
+    fragment StructureGraphNode on Structure {
   identifier
   object
   id
@@ -3461,6 +3477,44 @@ export function useSearchReagentsLazyQuery(baseOptions?: ApolloReactHooks.LazyQu
 export type SearchReagentsQueryHookResult = ReturnType<typeof useSearchReagentsQuery>;
 export type SearchReagentsLazyQueryHookResult = ReturnType<typeof useSearchReagentsLazyQuery>;
 export type SearchReagentsQueryResult = Apollo.QueryResult<SearchReagentsQuery, SearchReagentsQueryVariables>;
+export const RenderGraphDocument = gql`
+    query RenderGraph($graph: ID!, $query: ID!) {
+  renderGraph(graph: $graph, query: $query) {
+    ...Pairs
+    ...Path
+  }
+}
+    ${PairsFragmentDoc}
+${PathFragmentDoc}`;
+
+/**
+ * __useRenderGraphQuery__
+ *
+ * To run a query within a React component, call `useRenderGraphQuery` and pass it any options that fit your needs.
+ * When your component renders, `useRenderGraphQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useRenderGraphQuery({
+ *   variables: {
+ *      graph: // value for 'graph'
+ *      query: // value for 'query'
+ *   },
+ * });
+ */
+export function useRenderGraphQuery(baseOptions: ApolloReactHooks.QueryHookOptions<RenderGraphQuery, RenderGraphQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<RenderGraphQuery, RenderGraphQueryVariables>(RenderGraphDocument, options);
+      }
+export function useRenderGraphLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<RenderGraphQuery, RenderGraphQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<RenderGraphQuery, RenderGraphQueryVariables>(RenderGraphDocument, options);
+        }
+export type RenderGraphQueryHookResult = ReturnType<typeof useRenderGraphQuery>;
+export type RenderGraphLazyQueryHookResult = ReturnType<typeof useRenderGraphLazyQuery>;
+export type RenderGraphQueryResult = Apollo.QueryResult<RenderGraphQuery, RenderGraphQueryVariables>;
 export const GlobalSearchDocument = gql`
     query GlobalSearch($search: String, $pagination: OffsetPaginationInput) {
   graphs: graphs(filters: {search: $search}, pagination: $pagination) {

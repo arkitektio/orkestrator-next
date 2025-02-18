@@ -1,13 +1,6 @@
 fragment Structure on Structure {
   id
   label
-  edges {
-    id
-    right {
-      id
-      label
-    }
-  }
   identifier
   object
 }

@@ -1,3 +1,4 @@
+import { EntityFragment, StructureFragment } from "@/kraph/api/graphql";
 import { Edge, Node, NodeProps } from "reactflow";
 
 export type KnowledgeNode = Node<{ id: string; label: string }>;
@@ -15,4 +16,5 @@ export type MeasurementNodeData = {
 };
 
 
-export type MeasurementNodeWidgetProps = NodeProps<MeasurementNodeData>;
+export type StructureNodeWidgetProps = NodeProps<StructureFragment>;
+export type EntityNodeWidgetProps = NodeProps<EntityFragment>;

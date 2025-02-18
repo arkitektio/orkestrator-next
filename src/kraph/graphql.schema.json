@@ -1466,12 +1466,16 @@
           },
           {
             "name": "kind",
-            "description": " The value  type of the metric",
+            "description": "The kind of expression",
             "args": [],
             "type": {
-              "kind": "ENUM",
-              "name": "MetricKind",
-              "ofType": null
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "ENUM",
+                "name": "ExpressionKind",
+                "ofType": null
+              }
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -1488,6 +1492,18 @@
                 "name": "String",
                 "ofType": null
               }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "metricKind",
+            "description": " The value  type of the metric",
+            "args": [],
+            "type": {
+              "kind": "ENUM",
+              "name": "MetricKind",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -2205,6 +2221,22 @@
               "ofType": {
                 "kind": "OBJECT",
                 "name": "Ontology",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "query",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
                 "ofType": null
               }
             },

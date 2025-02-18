@@ -215,10 +215,12 @@ export type Expression = {
   description?: Maybe<Scalars['String']['output']>;
   /** The unique identifier of the expression within its graph */
   id: Scalars['ID']['output'];
-  /**  The value  type of the metric */
-  kind?: Maybe<MetricKind>;
+  /** The kind of expression */
+  kind: ExpressionKind;
   /** The unique identifier of the expression within its graph */
   label: Scalars['String']['output'];
+  /**  The value  type of the metric */
+  metricKind?: Maybe<MetricKind>;
   /** The ontology the expression belongs to. */
   ontology: Ontology;
   /** An image or other media file that can be used to represent the expression. */
@@ -314,6 +316,7 @@ export type GraphQuery = {
   kind: ViewKind;
   name: Scalars['String']['output'];
   ontology: Ontology;
+  query: Scalars['String']['output'];
 };
 
 export type GraphQueryFilter = {
@@ -1361,9 +1364,13 @@ export type ExpressionFragment = { __typename?: 'Expression', id: string, label:
 
 export type ListExpressionFragment = { __typename?: 'Expression', id: string, label: string, description?: string | null, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null };
 
-export type GraphFragment = { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }> };
+export type GraphFragment = { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }>, ontology: { __typename?: 'Ontology', graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> } };
 
 export type ListGraphFragment = { __typename?: 'Graph', id: string, name: string };
+
+export type DetailGraphQueryFragment = { __typename?: 'GraphQuery', name: string, query: string };
+
+export type ListGraphQueryFragment = { __typename?: 'GraphQuery', id: string, name: string };
 
 export type MeasurementFragment = { __typename?: 'Measurement', id: any, value: any };
 
@@ -1373,7 +1380,7 @@ type Node_Structure_Fragment = { __typename?: 'Structure', id: any, label: strin
 
 export type NodeFragment = Node_Entity_Fragment | Node_Structure_Fragment;
 
-export type OntologyFragment = { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string }> };
+export type OntologyFragment = { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string }> };
 
 export type ListOntologyFragment = { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null };
 
@@ -1438,7 +1445,7 @@ export type CreateGraphMutationVariables = Exact<{
 }>;
 
 
-export type CreateGraphMutation = { __typename?: 'Mutation', createGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }> } };
+export type CreateGraphMutation = { __typename?: 'Mutation', createGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }>, ontology: { __typename?: 'Ontology', graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> } } };
 
 export type DeleteGraphMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1452,21 +1459,21 @@ export type UpdateGraphMutationVariables = Exact<{
 }>;
 
 
-export type UpdateGraphMutation = { __typename?: 'Mutation', updateGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }> } };
+export type UpdateGraphMutation = { __typename?: 'Mutation', updateGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }>, ontology: { __typename?: 'Ontology', graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> } } };
 
 export type CreateOntologyMutationVariables = Exact<{
   input: OntologyInput;
 }>;
 
 
-export type CreateOntologyMutation = { __typename?: 'Mutation', createOntology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string }> } };
+export type CreateOntologyMutation = { __typename?: 'Mutation', createOntology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string }> } };
 
 export type UpdateOntologyMutationVariables = Exact<{
   input: UpdateOntologyInput;
 }>;
 
 
-export type UpdateOntologyMutation = { __typename?: 'Mutation', updateOntology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string }> } };
+export type UpdateOntologyMutation = { __typename?: 'Mutation', updateOntology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string }> } };
 
 export type DeleteOntologyMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1560,7 +1567,7 @@ export type GetGraphQueryVariables = Exact<{
 }>;
 
 
-export type GetGraphQuery = { __typename?: 'Query', graph: { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }> } };
+export type GetGraphQuery = { __typename?: 'Query', graph: { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }>, ontology: { __typename?: 'Ontology', graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> } } };
 
 export type MyActiveGraphQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1603,7 +1610,7 @@ export type GetOntologyQueryVariables = Exact<{
 }>;
 
 
-export type GetOntologyQuery = { __typename?: 'Query', ontology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string }> } };
+export type GetOntologyQuery = { __typename?: 'Query', ontology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, expressions: Array<{ __typename?: 'Expression', id: string, label: string, description?: string | null, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string }> } };
 
 export type ListOntologiesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1779,6 +1786,19 @@ export const GraphFragmentDoc = gql`
     id
     label
   }
+  ontology {
+    graphQueries {
+      id
+      name
+      query
+    }
+  }
+}
+    `;
+export const DetailGraphQueryFragmentDoc = gql`
+    fragment DetailGraphQuery on GraphQuery {
+  name
+  query
 }
     `;
 export const EntityFragmentDoc = gql`
@@ -1846,6 +1866,12 @@ export const ListGraphFragmentDoc = gql`
   name
 }
     `;
+export const ListGraphQueryFragmentDoc = gql`
+    fragment ListGraphQuery on GraphQuery {
+  id
+  name
+}
+    `;
 export const OntologyFragmentDoc = gql`
     fragment Ontology on Ontology {
   id
@@ -1861,10 +1887,14 @@ export const OntologyFragmentDoc = gql`
   graphs {
     ...ListGraph
   }
+  graphQueries {
+    ...ListGraphQuery
+  }
 }
     ${ListExpressionFragmentDoc}
 ${MediaStoreFragmentDoc}
-${ListGraphFragmentDoc}`;
+${ListGraphFragmentDoc}
+${ListGraphQueryFragmentDoc}`;
 export const ListOntologyFragmentDoc = gql`
     fragment ListOntology on Ontology {
   id

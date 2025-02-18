@@ -1,0 +1,9 @@
+fragment DetailGraphQuery on GraphQuery {
+  name
+  query
+}
+
+fragment ListGraphQuery on GraphQuery {
+  id
+  name
+}

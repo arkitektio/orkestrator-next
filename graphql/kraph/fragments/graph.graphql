@@ -6,6 +6,13 @@ fragment Graph on Graph {
     id
     label
   }
+  ontology {
+    graphQueries {
+      id
+      name
+      query
+    }
+  }
 }
 
 fragment ListGraph on Graph {

@@ -95,6 +95,10 @@ export const KraphLinkedExpression = buildSmart(
 export const KraphOntology = buildSmart("@kraph/ontology", "kraph/ontologies");
 export const KraphReagent = buildSmart("@kraph/reagent", "kraph/reagents");
 export const KraphGraph = buildSmart("@kraph/graph", "kraph/graphs");
+export const KraphGraphQuery = buildSmart(
+  "@kraph/graph_query",
+  "kraph/graph_query",
+);
 export const MikroExperiment = buildSmart(
   "@mikro/experiment",
   "mikro/experiments",

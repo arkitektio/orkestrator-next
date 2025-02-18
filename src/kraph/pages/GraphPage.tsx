@@ -49,6 +49,12 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
         </div>
       </div>
       <div className="p-6">
+        {data.graph.ontology.graphQueries.map((item, i) => (
+          <div key={i}>ddd{item.query}</div>
+        ))}
+      </div>
+
+      <div className="p-6">
         <KraphGraph.DetailLink
           object={data.graph.id}
           subroute="entities"
@@ -57,7 +63,7 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
           Entitites{" "}
         </KraphGraph.DetailLink>
         <div className="grid grid-cols-6 gap-2">
-          {data?.graph?.latestNodes?.map((item, i) => <> {item.id}</>)}
+          {data?.graph?.latestNodes?.map((item, i) => <> {item.__typename}</>)}
         </div>
       </div>
     </KraphGraph.ModelPage>

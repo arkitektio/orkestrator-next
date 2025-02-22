@@ -2,7 +2,7 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Card } from "@/components/ui/card";
 import { DetailPane, DetailPaneContent } from "@/components/ui/pane";
-import { KraphEntity, MikroImage, MikroROI } from "@/linkers";
+import { KraphNode, MikroImage, MikroROI } from "@/linkers";
 import { UserInfo } from "@/lok-next/components/protected/UserInfo";
 import { TwoDViewProvider } from "@/providers/view/ViewProvider";
 import Timestamp from "react-timestamp";
@@ -56,12 +56,12 @@ export default asDetailQueryRoute(useGetRoiQuery, ({ data, refetch }) => {
                 <>
                   <div className="font-light">Marks</div>
                   <Card className="truncate ellipsis p-3">
-                    <KraphEntity.DetailLink
+                    <KraphNode.DetailLink
                       className="text-xl cursor-pointer p-1"
                       object={data?.roi?.entity?.id}
                     >
                       {data?.roi?.entity?.label}
-                    </KraphEntity.DetailLink>
+                    </KraphNode.DetailLink>
                   </Card>
                 </>
               )}

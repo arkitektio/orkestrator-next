@@ -1,0 +1,15 @@
+query GetGraphView($id: ID!) {
+  graphView(id: $id) {
+    ...GraphView
+  }
+}
+
+query SearchGraphViews($search: String, $values: [ID!]) {
+  options: graphViews(
+    filters: { search: $search, ids: $values }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: label
+  }
+}

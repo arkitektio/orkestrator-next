@@ -2,6 +2,7 @@ import { cn, notEmpty } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { EffectWrapper } from "./EffectWrapper";
 import { Port, PortGroup, PortOptions, WidgetRegistryType } from "./types";
+import { hi } from "date-fns/locale";
 
 export type ArgsContainerProps = {
   registry: WidgetRegistryType;
@@ -10,6 +11,7 @@ export type ArgsContainerProps = {
   options?: PortOptions | undefined;
   bound?: string; // Are we bound to a specific template?
   path: string[];
+  hidden?: { [key: string]: boolean };
 };
 
 export type InputContainer = (props: ArgsContainerProps) => JSX.Element;
@@ -101,6 +103,7 @@ export const ArgsContainer: InputContainer = ({
   groups,
   options,
   path,
+  hidden,
   registry,
 }) => {
   const [filledGroups, setFilledGroups] = useState<FilledGroup[]>([]);
@@ -141,6 +144,7 @@ export const ArgsContainer: InputContainer = ({
       className={`grid @lg:grid-cols-${lg_size} @xl-grid-cols-${xl_size} @2xl:grid-cols-${xxl_size}  @3xl:grid-cols-${xxxl_size}   @5xl:grid-cols-${xxxxl_size} gap-4`}
     >
       {ports.filter(notEmpty).map((port, index) => {
+        if (hidden && hidden[port.key]) return null;
         const Widget = registry.getInputWidgetForPort(port);
 
         return (

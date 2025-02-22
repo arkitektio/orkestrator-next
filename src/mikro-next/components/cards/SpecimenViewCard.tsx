@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { CardHeader, CardTitle } from "@/components/ui/card";
-import { KraphEntity, KraphProtocolStep, MikroSpecimenView } from "@/linkers";
+import { KraphNode, KraphProtocolStep, MikroSpecimenView } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
 import { SpecimenViewFragment } from "../../api/graphql";
 import { ViewCard } from "./meta/ViewCard";
@@ -19,9 +19,9 @@ const TheCard = ({ view, mates }: Props) => {
             <p className="font-light ">Specimen: </p>
             <p className="font-bold text-xl">
               {view.entity && (
-                <KraphEntity.DetailLink object={view.entity?.id}>
+                <KraphNode.DetailLink object={view.entity?.id}>
                   {view.entity?.label}
-                </KraphEntity.DetailLink>
+                </KraphNode.DetailLink>
               )}
             </p>
           </CardTitle>

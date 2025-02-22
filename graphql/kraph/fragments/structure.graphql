@@ -3,12 +3,18 @@ fragment Structure on Structure {
   label
   identifier
   object
+  category {
+    identifier
+  }
 }
 
 fragment ListStructure on Structure {
   identifier
   object
   id
+  category {
+    identifier
+  }
 }
 
 fragment StructureGraphNode on Structure {

@@ -1,0 +1,299 @@
+"use client";
+
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import { ChevronDown } from "lucide-react";
+import * as React from "react";
+
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+import {
+  ColumnFragment,
+  ColumnKind,
+  GraphViewFragment,
+  TableFragment,
+} from "@/kraph/api/graphql";
+import { useForm } from "react-hook-form";
+import { KraphNode } from "@/linkers";
+
+const columnToDef = (
+  column: ColumnFragment,
+  table: TableFragment,
+): ColumnDef<{ [key: string]: any }> => {
+  if (column.kind == ColumnKind.Node) {
+    return {
+      id: column.name,
+      accessorKey: column.name,
+      header: () => (
+        <div className="text-center">{column.label || column.name}</div>
+      ),
+      cell: ({ row, getValue }) => {
+        const label = row.getValue(column.name) as string;
+
+        const concat_id = table.graph.ageName + ":" + label;
+
+        return (
+          <KraphNode.DetailLink object={concat_id}>
+            {label || ""}
+          </KraphNode.DetailLink>
+        );
+      },
+      enableSorting: true,
+      enableGlobalFilter: true,
+    };
+  }
+
+  if (column.kind == ColumnKind.Edge) {
+    return {
+      id: column.name,
+      accessorKey: column.name,
+      header: () => (
+        <div className="text-center">{column.label || column.name}</div>
+      ),
+      cell: ({ row, getValue }) => {
+        const label = row.getValue(column.name) as string;
+
+        return <div className="text-center font-medium">{label || ""}</div>;
+      },
+      enableSorting: true,
+      enableGlobalFilter: true,
+    };
+  }
+
+  if (column.kind == ColumnKind.Value) {
+    return {
+      id: column.name,
+      accessorKey: column.name,
+      header: () => (
+        <div className="text-center">{column.label || column.name}</div>
+      ),
+      cell: ({ row, getValue }) => {
+        const label = row.getValue(column.name) as string;
+
+        return <div className="text-center font-medium">{label || ""}</div>;
+      },
+      enableSorting: true,
+      enableGlobalFilter: true,
+    };
+  }
+
+  throw new Error(`Unknown column kind: ${column.kind}`);
+};
+
+const calculateColumns = (
+  table: TableFragment | undefined,
+): ColumnDef<{ [key: string]: any }>[] => {
+  if (!table) {
+    return [];
+  }
+
+  return table.columns.map((c, item) => {
+    return columnToDef(c, table);
+  });
+};
+
+const calculateRows = (table: TableFragment | undefined) => {
+  if (!table) {
+    return [];
+  }
+
+  const rowObjects = table.rows.map((row) =>
+    table.columns.reduce(
+      (acc, column, index) => {
+        acc[column.name] = row[index];
+        return acc;
+      },
+      {} as Record<string, any>,
+    ),
+  );
+  return rowObjects;
+};
+
+export type FormValues = {
+  metrics?: string[];
+  kinds?: string[];
+  search?: string | null;
+};
+
+export const GraphTable = (props: { table?: TableFragment }) => {
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: 20,
+  });
+
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = React.useState({});
+
+  const columns = calculateColumns(props.table);
+  const rows = calculateRows(props.table);
+
+  const table = useReactTable({
+    data: rows || [],
+    columns: columns || [],
+    pageCount: -1,
+    manualPagination: true,
+    onPaginationChange: setPagination,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+      pagination,
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+  });
+
+  return (
+    <div className="w-full h-full">
+      <div className="flex items-center py-4 gap-2">
+        <Input
+          placeholder="Search..."
+          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          onChange={(event) =>
+            table.getColumn("name")?.setFilterValue(event.target.value)
+          }
+          className="max-w-sm w-full bg-background"
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="ml-auto">
+              Columns <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {table
+              .getAllColumns()
+              .filter((column) => column.getCanHide())
+              .map((column) => {
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    className="capitalize"
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
+                  >
+                    {column.id}
+                  </DropdownMenuCheckboxItem>
+                );
+              })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div className="w-full h-full">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                    </TableHead>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <div className="flex-1 text-sm text-muted-foreground">
+          {table.getFilteredSelectedRowModel().rows.length} of{" "}
+          {table.getFilteredRowModel().rows.length} row(s) selected.
+        </div>
+        <div className="space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              table.previousPage();
+            }}
+            disabled={!table.getCanPreviousPage()}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              table.nextPage();
+            }}
+            disabled={!table.getCanNextPage()}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};

@@ -1,5 +1,5 @@
 import { DelegatingStructureWidget } from "@/components/widgets/returns/DelegatingStructureWidget";
-import { KraphEntity } from "@/linkers";
+import { KraphNode } from "@/linkers";
 import { PortKind, PortScope } from "@/rekuest/api/graphql";
 import { useGetNodeQuery } from "../api/graphql";
 
@@ -12,9 +12,9 @@ export const EntityOverlay = (props: { entity: string }) => {
 
   return (
     <div>
-      <KraphEntity.DetailLink object={props.entity}>
+      <KraphNode.DetailLink object={props.entity}>
         {data?.node?.label}
-      </KraphEntity.DetailLink>
+      </KraphNode.DetailLink>
 
       {data?.node?.__typename == "Structure" && (
         <>

@@ -12,7 +12,7 @@ import {
   useCreateEntityGraphRelationMutation,
   useGetEntityGraphNodeLazyQuery,
   useGetEntityGraphQuery,
-  useGetEntityQuery
+  useGetEntityQuery,
 } from "../api/graphql.js";
 
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ import cise from "cytoscape-cise";
 import dagre from "cytoscape-dagre";
 import { EntityRelationSearchField } from "../components/fields/EntityRelationSearchField.js";
 import { EntitySearchField } from "../components/fields/EntitySearchField.js";
-import { KnowledgeGraph } from "../components/graph/KnowledgeGraph.js";
+import { KnowledgeGraph } from "../components/renderers/graph/KnowledgeGraph.js";
 
 cytoscape.use(cola);
 cytoscape.use(cise);
@@ -242,17 +242,12 @@ export const DetailEntityCard = ({ entity }: { entity: string }) => {
 export default asDetailQueryRoute(
   useGetEntityGraphQuery,
   ({ data, refetch }) => {
-    
-
     return (
       <PageLayout
         title="Knowledge Graph"
-        pageActions={
-          <div className="flex flex-row gap-2">
-            
-          </div>
-        }>
-          <KnowledgeGraph graph={data.entityGraph} />
+        pageActions={<div className="flex flex-row gap-2"></div>}
+      >
+        <KnowledgeGraph graph={data.entityGraph} />
       </PageLayout>
     );
   },

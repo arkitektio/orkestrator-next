@@ -41,6 +41,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
   DemandKind,
+  ListTemplateFragment,
   PortKind,
   PrimaryNodeFragment,
   useAllPrimaryNodesQuery,
@@ -49,17 +50,18 @@ import {
 import { useLiveAssignation } from "../hooks/useAssignations";
 import { useNodeAction } from "../hooks/useNodeAction";
 import { TemplateActionButton } from "./TemplateActionButton";
+import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
+import { NodeAssignForm } from "../forms/NodeAssignForm";
+import { useAssign } from "../hooks/useAssign";
+import { BiRun } from "react-icons/bi";
 
-export const DirectTemplateAssignment = (props: {
-  object: string;
-  node: PrimaryNodeFragment;
-  identifier: string;
-  theKey: string;
-}) => {
+export const DirectTemplateAssignment = (
+  props: SmartContextProps & { node: PrimaryNodeFragment },
+) => {
   const templates = useTemplatesQuery({
     variables: {
       filters: {
-        nodeHash: props.node.hash,
+        nodeHash: props.node,
       },
     },
   });
@@ -70,19 +72,19 @@ export const DirectTemplateAssignment = (props: {
       <div className="flex flex-col gap-2">
         {templates.data?.templates.map((x) => (
           <>
-            <TemplateActionButton
-              id={x.id}
-              args={{ [props.theKey]: props.object }}
+            <Button
+              variant={"outline"}
+              size={"sm"}
+              className="flex flex-col"
+              onClick={() => props.onSelectTemplate(props.node, x)}
             >
-              <Button variant={"outline"} size={"sm"} className="flex flex-col">
-                <span className="mr-auto text-md text-gray-100">
-                  {x.agent.name}
-                </span>
-                <span className="mr-auto text-xs text-gray-400">
-                  {x.interface}
-                </span>
-              </Button>
-            </TemplateActionButton>
+              <span className="mr-auto text-md text-gray-100">
+                {x.agent.name}
+              </span>
+              <span className="mr-auto text-xs text-gray-400">
+                {x.interface}
+              </span>
+            </Button>
           </>
         ))}
       </div>
@@ -90,32 +92,9 @@ export const DirectTemplateAssignment = (props: {
   );
 };
 
-export const AssignButton = (props: {
-  object: string;
-  node: PrimaryNodeFragment;
-  identifier: string;
-}) => {
-  const { assign, latestAssignation } = useNodeAction({ id: props.node.id });
-
-  let the_key = props.node.args?.at(0)?.key;
-
-  const objectAssign = async () => {
-    if (!the_key) {
-      toast.error("No key found");
-      return;
-    }
-    try {
-      await assign({
-        node: props.node.id,
-        args: {
-          [the_key]: props.object,
-        },
-      });
-    } catch (e) {
-      toast.error(e.message);
-    }
-  };
-
+export const AssignButton = (
+  props: SmartContextProps & { node: PrimaryNodeFragment },
+) => {
   const status = useLiveAssignation({
     identifier: props.identifier,
     object: props.object,
@@ -126,7 +105,7 @@ export const AssignButton = (props: {
     <ContextMenu>
       <ContextMenuTrigger asChild>
         <CommandItem
-          onSelect={objectAssign}
+          onSelect={() => props.onSelectNode(props.node)}
           value={props.node.id}
           key={props.node.id}
           className="flex-grow  flex flex-col group cursor-pointer"
@@ -146,12 +125,7 @@ export const AssignButton = (props: {
         </CommandItem>
       </ContextMenuTrigger>
       <ContextMenuContent className="text-white border-gray-800 px-2 py-2 items-center">
-        <DirectTemplateAssignment
-          node={props.node}
-          identifier={props.identifier}
-          object={props.object}
-          theKey={the_key}
-        />
+        <DirectTemplateAssignment {...props} node={props.node} />
       </ContextMenuContent>
     </ContextMenu>
   );
@@ -243,13 +217,7 @@ export const ApplicableNodes = (props: PassDownProps) => {
         </span>
       }
     >
-      {data?.nodes.map((x) => (
-        <AssignButton
-          node={x}
-          object={props.object}
-          identifier={props.identifier}
-        />
-      ))}
+      {data?.nodes.map((x) => <AssignButton node={x} {...props} />)}
     </CommandGroup>
   );
 };
@@ -432,10 +400,7 @@ export type ObjectButtonProps = {
   partners?: Structure[];
 };
 
-export type PassDownProps = {
-  object: string;
-  identifier: string;
-  partners?: Structure[];
+export type PassDownProps = SmartContextProps & {
   filter?: string;
 };
 
@@ -444,27 +409,119 @@ export const ObjectButton = (props: ObjectButtonProps) => {
     undefined,
   );
 
+  const [dialogNode, setDialogNode] = React.useState<{
+    node: PrimaryNodeFragment;
+    args: { [key: string]: any };
+  } | null>(null);
+
+  const { assign } = useAssign();
+
+  const conditionalAssign = async (node: PrimaryNodeFragment) => {
+    let the_key = node.args?.at(0)?.key;
+
+    let neededAdditionalPorts = node.args.filter(
+      (x) => !x.nullable && x.key != the_key,
+    );
+    if (!the_key) {
+      toast.error("No key found");
+      return;
+    }
+    if (neededAdditionalPorts.length > 0) {
+      setDialogNode({ node: node, args: { [the_key]: props.object } });
+      return;
+    }
+
+    try {
+      await assign({
+        node: node.id,
+        args: {
+          [the_key]: props.object,
+        },
+      });
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
+
+  const onTemplateSelect = async (
+    node: PrimaryNodeFragment,
+    template: ListTemplateFragment,
+  ) => {
+    let the_key = node.args?.at(0)?.key;
+
+    let neededAdditionalPorts = node.args.filter(
+      (x) => !x.nullable && x.key != the_key,
+    );
+    if (!the_key) {
+      toast.error("No key found");
+      return;
+    }
+    if (neededAdditionalPorts.length > 0) {
+      setDialogNode(node);
+      return;
+    }
+
+    try {
+      await assign({
+        node: node.id,
+        args: {
+          [the_key]: props.object,
+        },
+      });
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
+
+  if (props.object === "") {
+    return <> Error</>;
+  }
+
   return (
     <>
-      <>
-        <Popover>
-          <PopoverTrigger asChild>
-            {props.children || (
-              <Button size={"icon"} variant={"outline"} className="w-4 h-4">
-                <CaretDownIcon className={cn("w-3 h-3", props.className)} />
-              </Button>
-            )}
-          </PopoverTrigger>
-          <PopoverContent className="text-white border-gray-800 px-2 py-2 items-center">
-            <SmartContext {...props} />
-          </PopoverContent>
-        </Popover>
-      </>
+      <Dialog
+        open={dialogNode != null}
+        onOpenChange={() => setDialogNode(null)}
+      >
+        <DialogTrigger asChild>
+          <Popover>
+            <PopoverTrigger asChild>
+              {props.children || (
+                <Button variant={"outline"} className="w-6 h-9 text-white">
+                  Do
+                </Button>
+              )}
+            </PopoverTrigger>
+            <PopoverContent className="text-white border-gray-800 px-2 py-2 items-center">
+              <SmartContext
+                {...props}
+                onSelectNode={conditionalAssign}
+                onSelectTemplate={onTemplateSelect}
+              />
+            </PopoverContent>
+          </Popover>
+        </DialogTrigger>
+        <DialogContent>
+          <NodeAssignForm
+            id={dialogNode?.node.id || ""}
+            args={dialogNode?.args}
+            hidden={dialogNode?.args}
+          />
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
 
-export const SmartContext = (props: ObjectButtonProps) => {
+export type SmartContextProps = ObjectButtonProps & {
+  onSelectNode: (node: PrimaryNodeFragment) => Promise<void>;
+  onSelectTemplate: (
+    node: PrimaryNodeFragment,
+    template: ListTemplateFragment,
+  ) => Promise<void>;
+};
+
+export const SmartContext = (props: SmartContextProps) => {
   const [filter, setFilterValue] = React.useState<string | undefined>(
     undefined,
   );
@@ -482,25 +539,9 @@ export const SmartContext = (props: ObjectButtonProps) => {
         />
         <CommandList>
           <CommandEmpty>{"No Action available"}</CommandEmpty>
-          <ApplicableActions
-            object={props.object}
-            identifier={props.identifier}
-            filter={filter}
-            partners={props.partners}
-          />
-          <ApplicableNodes
-            object={props.object}
-            identifier={props.identifier}
-            filter={filter}
-            partners={props.partners}
-          />
-
-          <ApplicableDefinitions
-            object={props.object}
-            identifier={props.identifier}
-            filter={filter}
-            partners={props.partners}
-          />
+          <ApplicableActions {...props} filter={filter} />
+          <ApplicableNodes {...props} onSelectNode={props.onSelectNode} />
+          <ApplicableDefinitions {...props} partners={props.partners} />
         </CommandList>
       </Command>
     </>

@@ -32,6 +32,7 @@ export const ArgsContainer = ({
   groups,
   options,
   registry,
+  hidden,
   bound,
   path,
 }: ArgsContainerProps) => {
@@ -85,6 +86,7 @@ export const ArgsContainer = ({
             <CollapsibleContent>
               {group.ports.map((port, index) => {
                 const Widget = registry.getInputWidgetForPort(port);
+                if (hidden && hidden[port.key]) return null;
 
                 return (
                   <EffectWrapper

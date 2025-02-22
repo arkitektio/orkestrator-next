@@ -1,24 +1,25 @@
 fragment Message on Message {
+  id
+  text
+  agent {
     id
-    text 
-    agent {
-        id
-    }
-    attachedStructures {
-        identifier
-        object
-    }
+  }
+  attachedStructures {
+    identifier
+    object
+  }
+  createdAt
 }
 
 fragment ListMessage on Message {
+  id
+  text
+  agent {
     id
-    text 
-    agent {
-        id
-    }
-    attachedStructures {
-        identifier
-        object
-    }
-
+  }
+  attachedStructures {
+    identifier
+    object
+  }
+  createdAt
 }

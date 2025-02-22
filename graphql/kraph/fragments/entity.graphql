@@ -1,7 +1,7 @@
 fragment Entity on Entity {
   id
   label
-  expression {
+  category {
     id
     label
   }
@@ -15,7 +15,7 @@ fragment Entity on Entity {
 fragment ListEntity on Entity {
   id
   label
-  expression {
+  category {
     id
     label
   }
@@ -24,7 +24,7 @@ fragment ListEntity on Entity {
 fragment EntityGraphNode on Entity {
   id
   label
-  expression {
+  category {
     color
   }
 }

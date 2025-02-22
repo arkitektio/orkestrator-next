@@ -1,5 +1,0 @@
-query Path($id: ID!, $query: String!) {
-  path(graph: $id, query: $query) {
-    ...Path
-  }
-}

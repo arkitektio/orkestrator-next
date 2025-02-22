@@ -37,6 +37,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
             >
               <CreateOntologyForm />
             </FormDialogAction>
+            <KraphOntology.NewButton />
           </>
         </div>
       }

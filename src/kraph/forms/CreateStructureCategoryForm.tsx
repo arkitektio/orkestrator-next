@@ -1,28 +1,17 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
+import { ChoicesField } from "@/components/fields/ChoicesField";
+import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
-  CreateExpressionMutation,
-  CreateExpressionMutationVariables,
-  CreateGraphMutationVariables,
-  CreateOntologyMutationVariables,
-  CreateProtocolStepMutationVariables,
-  ExpressionKind,
-  MetricDataType,
-  useCreateExpressionMutation,
-  useCreateGraphMutation,
-  useCreateOntologyMutation,
-  useCreateProtocolStepMutation,
-  useSearchLinkedExpressionLazyQuery,
-  useSearchLinkedExpressionQuery,
+  CreateStructureCategoryMutationVariables,
+  MeasurementKind,
+  useCreateStructureCategoryMutation,
   useSearchProtocolStepsLazyQuery,
 } from "../api/graphql";
-import { ParagraphField } from "@/components/fields/ParagraphField";
-import { ChoicesField } from "@/components/fields/ChoicesField";
 
 const enumToOptions = (e: any) => {
   return Object.keys(e).map((key) => ({
@@ -32,7 +21,7 @@ const enumToOptions = (e: any) => {
 };
 
 export default (props: { ontology?: string }) => {
-  const [add] = useCreateExpressionMutation({
+  const [add] = useCreateStructureCategoryMutation({
     refetchQueries: ["GetOntology"],
   });
 
@@ -40,14 +29,11 @@ export default (props: { ontology?: string }) => {
 
   const search = useSearchProtocolStepsLazyQuery();
 
-  const form = useForm<CreateExpressionMutationVariables["input"]>({
+  const form = useForm<CreateStructureCategoryMutationVariables["input"]>({
     defaultValues: {
-      kind: ExpressionKind.Entity,
       ontology: props.ontology,
     },
   });
-
-  const currentKind = form.watch("kind");
 
   return (
     <>
@@ -80,23 +66,13 @@ export default (props: { ontology?: string }) => {
                 name="purl"
                 description="What is the PURL of this expression?"
               />
-              <ChoicesField
-                label="Kind"
-                name="kind"
-                description="What kind of expression is this?"
-                options={enumToOptions(ExpressionKind)}
-              />
 
-              {currentKind === "METRIC" && (
-                <>
-                  <ChoicesField
-                    label="Data Kind"
-                    name="metricKind"
-                    description="What kind of value type do you expect for this metric?"
-                    options={enumToOptions(MetricDataType)}
-                  />
-                </>
-              )}
+              <ChoicesField
+                label="Data Kind"
+                name="metricKind"
+                description="What kind of value type do you expect for this metric?"
+                options={enumToOptions(MeasurementKind)}
+              />
             </div>
           </div>
 

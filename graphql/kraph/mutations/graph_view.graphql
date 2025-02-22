@@ -1,0 +1,5 @@
+mutation CreateGraphView($input: GraphViewInput!) {
+  createGraphView(input: $input) {
+    ...GraphView
+  }
+}

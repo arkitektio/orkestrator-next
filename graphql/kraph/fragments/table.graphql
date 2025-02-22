@@ -1,0 +1,18 @@
+fragment Column on Column {
+  name
+  kind
+  valueKind
+  description
+  label
+}
+
+fragment Table on Table {
+  rows
+  columns {
+    ...Column
+  }
+  graph {
+    id
+    ageName
+  }
+}

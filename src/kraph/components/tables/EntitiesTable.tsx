@@ -37,7 +37,7 @@ import {
 
 import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
 import { Form } from "@/components/ui/form";
-import { KraphEntity } from "@/linkers";
+import { KraphNode } from "@/linkers";
 import {
   EntityFragment,
   ListEntitiesQueryVariables,
@@ -86,9 +86,9 @@ export const columns: ColumnDef<ListEntityFragment>[] = [
       );
     },
     cell: ({ row }) => (
-      <KraphEntity.DetailLink object={row.getValue("id")} className="lowercase">
+      <KraphNode.DetailLink object={row.getValue("id")} className="lowercase">
         {row.getValue("id")}
-      </KraphEntity.DetailLink>
+      </KraphNode.DetailLink>
     ),
   },
   {
@@ -105,9 +105,9 @@ export const columns: ColumnDef<ListEntityFragment>[] = [
       );
     },
     cell: ({ row }) => (
-      <KraphEntity.DetailLink object={row.getValue("id")} className="lowercase">
+      <KraphNode.DetailLink object={row.getValue("id")} className="lowercase">
         {row.getValue("name")}
-      </KraphEntity.DetailLink>
+      </KraphNode.DetailLink>
     ),
   },
   {

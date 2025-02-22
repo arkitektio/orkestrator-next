@@ -4,3 +4,26 @@ fragment Node on Node {
   ...Entity
   ...Structure
 }
+
+fragment DetailNode on Node {
+  ...Node
+  graph {
+    id
+    name
+    ontology {
+      nodeQueries {
+        ...ListNodeQuery
+      }
+    }
+  }
+  nodeViews {
+    ...ListNodeView
+  }
+}
+
+fragment ListNode on Node {
+  id
+  label
+  ...Entity
+  ...Structure
+}

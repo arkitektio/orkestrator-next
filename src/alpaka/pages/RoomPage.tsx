@@ -45,7 +45,11 @@ export default asDetailQueryRoute(
       <AlpakaRoom.ModelPage
         title={data?.room?.title}
         object={data.room.id}
-        actions={<AlpakaRoom.Actions object={data.room.id} />}
+        pageActions={
+          <div className="flex flex-row gap-2">
+            <AlpakaRoom.ObjectButton object={data.room.id} />
+          </div>
+        }
         sidebars={
           <MultiSidebar
             map={{

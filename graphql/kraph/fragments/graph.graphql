@@ -2,9 +2,8 @@ fragment Graph on Graph {
   id
   name
   description
-  latestNodes {
-    id
-    label
+  latestNodes(pagination: { limit: 10 }) {
+    ...ListNode
   }
   ontology {
     graphQueries {
@@ -12,6 +11,12 @@ fragment Graph on Graph {
       name
       query
     }
+  }
+  graphViews {
+    ...ListGraphView
+  }
+  nodeViews {
+    ...ListNodeView
   }
 }
 

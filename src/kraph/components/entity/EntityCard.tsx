@@ -4,7 +4,7 @@ import {
   CardDescription,
   CardTitle,
 } from "@/components/ui/card";
-import { KraphEntity, MikroSpecimen } from "@/linkers";
+import { KraphNode, MikroSpecimen } from "@/linkers";
 import { useGetEntityQuery } from "@/kraph/api/graphql";
 
 export const EntityCard = ({ id }: { id: string }) => {
@@ -17,9 +17,9 @@ export const EntityCard = ({ id }: { id: string }) => {
   return (
     <CardContent>
       {data?.entity?.id && (
-        <KraphEntity.DetailLink object={data?.entity?.id}>
+        <KraphNode.DetailLink object={data?.entity?.id}>
           <CardTitle>{data?.entity?.kind?.label}</CardTitle>
-        </KraphEntity.DetailLink>
+        </KraphNode.DetailLink>
       )}
 
       <CardDescription>{data?.entity?.name}</CardDescription>

@@ -70,6 +70,8 @@ fragment PrimaryNode on Node {
     key
     identifier
     kind
+    nullable
+    default
   }
   description
 }

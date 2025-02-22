@@ -1,0 +1,9 @@
+fragment DetailNodeQuery on NodeQuery {
+  name
+  query
+}
+
+fragment ListNodeQuery on NodeQuery {
+  id
+  name
+}

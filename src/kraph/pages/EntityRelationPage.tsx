@@ -5,7 +5,7 @@ import { FormDialog } from "@/components/dialog/FormDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-  KraphEntity,
+  KraphNode,
   MikroEntityMetric,
   MikroEntityRelation,
   MikroEntityRelationMetric,
@@ -25,22 +25,22 @@ export default asDetailQueryRoute(
         object={data.entityRelation.id}
         pageActions={
           <>
-            <KraphEntity.DetailLink
+            <KraphNode.DetailLink
               object={data.entityRelation.left.id}
               subroute="graph"
             >
               <Button variant="outline" size="sm">
                 Left
               </Button>
-            </KraphEntity.DetailLink>
-            <KraphEntity.DetailLink
+            </KraphNode.DetailLink>
+            <KraphNode.DetailLink
               object={data.entityRelation.right.id}
               subroute="graph"
             >
               <Button variant="outline" size="sm">
                 Right
               </Button>
-            </KraphEntity.DetailLink>
+            </KraphNode.DetailLink>
             <Button variant="outline" size="sm">
               Record Protocolstep
             </Button>

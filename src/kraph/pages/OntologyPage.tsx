@@ -18,11 +18,14 @@ import {
   useGetOntologyQuery,
   useUpdateOntologyMutation,
 } from "../api/graphql";
-import ExpressionCard from "../components/cards/ExpressionCard";
-import CreateExpressionForm from "../forms/CreateExpressionForm";
-import { UpdateOntologyForm } from "../forms/UpdateOntologyForm";
+import GenericCategoryCard from "../components/cards/GenericCategoryCard";
 import GraphCard from "../components/cards/GraphCard";
 import GraphQueryCard from "../components/cards/GraphQueryCard";
+import MeasurementCategoryCard from "../components/cards/MeasurementCategoryCard";
+import RelationCategoryCard from "../components/cards/RelationCategoryCard";
+import StructureCategoryCard from "../components/cards/StructureCategoryCard";
+import CreateExpressionForm from "../forms/CreateStructureCategoryForm";
+import { UpdateOntologyForm } from "../forms/UpdateOntologyForm";
 
 cytoscape.use(cola);
 
@@ -114,6 +117,7 @@ export default asDetailQueryRoute(useGetOntologyQuery, ({ data, refetch }) => {
           >
             {data?.ontology && <UpdateOntologyForm ontology={data?.ontology} />}
           </FormSheet>
+          <KraphOntology.ObjectButton object={data.ontology.id} />
         </div>
       }
       sidebars={
@@ -161,11 +165,35 @@ export default asDetailQueryRoute(useGetOntologyQuery, ({ data, refetch }) => {
             ))}
           </div>
         </div>
-        <h3 className="text-2xl font-bold p-2">Expressions</h3>
+        <h3 className="text-2xl p-2">Entities</h3>
         <div className="p-2">
           <div className="grid grid-cols-5 gap-4">
-            {data.ontology.expressions.map((expression) => (
-              <ExpressionCard key={expression.id} item={expression} />
+            {data.ontology.genericCategories.map((expression) => (
+              <GenericCategoryCard key={expression.id} item={expression} />
+            ))}
+          </div>
+        </div>
+        <h3 className="text-2xl p-2">Structures</h3>
+        <div className="p-2">
+          <div className="grid grid-cols-5 gap-4">
+            {data.ontology.structureCategories.map((expression) => (
+              <StructureCategoryCard key={expression.id} item={expression} />
+            ))}
+          </div>
+        </div>
+        <h3 className="text-2xl p-2">Measurements</h3>
+        <div className="p-2">
+          <div className="grid grid-cols-5 gap-4">
+            {data.ontology.measurementCategories.map((expression) => (
+              <MeasurementCategoryCard key={expression.id} item={expression} />
+            ))}
+          </div>
+        </div>
+        <h3 className="text-2xl  p-2">Relations</h3>
+        <div className="p-2">
+          <div className="grid grid-cols-5 gap-4">
+            {data.ontology.relationCategories.map((expression) => (
+              <RelationCategoryCard key={expression.id} item={expression} />
             ))}
           </div>
         </div>

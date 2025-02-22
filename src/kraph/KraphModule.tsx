@@ -3,7 +3,7 @@ import { Guard } from "@/arkitekt/Arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import React from "react";
 import { Route, Routes } from "react-router";
-import ExpressionPage from "./pages/ExpressionPage";
+import ExpressionPage from "./pages/StructureCategoryPage";
 import GraphPage from "./pages/GraphPage";
 import GraphsPage from "./pages/GraphsPage";
 import HomePage from "./pages/HomePage";
@@ -18,6 +18,9 @@ import ProtocolStepTemplatesPage from "./pages/ProtocolStepTemplatesPage";
 import ReagentPage from "./pages/ReagentPage";
 import ReagentsPage from "./pages/ReagentsPage";
 import StandardPane from "./panes/StandardPane";
+import NodePage from "./pages/NodePage";
+import GraphViewPage from "./pages/GraphViewPage";
+import NodeViewPage from "./pages/NodeViewPage";
 interface Props {}
 
 export const KraphModule: React.FC<Props> = (props) => {
@@ -29,8 +32,11 @@ export const KraphModule: React.FC<Props> = (props) => {
           <Route path="expressions/:id" element={<ExpressionPage />} />
           <Route path="ontologies/:id" element={<KnowledgePage />} />
           <Route path="ontologies" element={<OntologiesPage />} />
+          <Route path="nodes/:id" element={<NodePage />} />
           <Route path="graphs" element={<GraphsPage />} />
           <Route path="graphs/:id" element={<GraphPage />} />
+          <Route path="graphviews/:id" element={<GraphViewPage />} />
+          <Route path="nodeviews/:id" element={<NodeViewPage />} />
           <Route path="graphs/:id/view/:viewid" element={<GraphPage />} />
           <Route path="reagents" element={<ReagentsPage />} />
           <Route path="reagents/:id" element={<ReagentPage />} />

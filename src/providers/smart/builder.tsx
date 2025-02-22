@@ -39,6 +39,7 @@ const buildModelLink = (to: string) => {
         {...props}
         to={`/${to}/${props.object}/${subroute || ""}`}
         title="Open"
+        className={props.className}
       >
         {children}
       </NavLink>
@@ -46,7 +47,11 @@ const buildModelLink = (to: string) => {
   };
 };
 
-const linkBuilder = (to: string) => (object: string) => {
+const linkBuilder = (to: string) => (object: string | undefined) => {
+  if (!object) {
+    return `/error`;
+  }
+
   return `/${to}/${object}`;
 };
 

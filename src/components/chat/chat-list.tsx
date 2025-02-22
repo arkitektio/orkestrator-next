@@ -6,7 +6,7 @@ import {
 import { PortKind, PortScope } from "@/rekuest/api/graphql";
 import { AnimatePresence, motion } from "framer-motion";
 import React, { useRef } from "react";
-import { Avatar, AvatarImage } from "../ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { DelegatingStructureWidget } from "../widgets/returns/DelegatingStructureWidget";
 import ChatBottombar from "./chat-bottombar";
 
@@ -65,43 +65,47 @@ export function ChatList({
                 message.agent.id !== agent.id ? "items-end" : "items-start",
               )}
             >
-              <div className="flex gap-3 items-center">
-                {message.agent.id !== agent.id && (
-                  <Avatar className="flex justify-center items-center">
-                    <AvatarImage
-                      src={message.id}
-                      alt={message.id}
-                      width={6}
-                      height={6}
-                    />
-                  </Avatar>
-                )}
-                <span className=" bg-accent p-3 rounded-md max-w-xs">
-                  {message.text}
-                </span>
-                {message.agent.id !== agent.id && (
-                  <Avatar className="flex justify-center items-center">
-                    <AvatarImage
-                      src={message.id}
-                      alt={message.id}
-                      width={6}
-                      height={6}
-                    />
-                  </Avatar>
-                )}
-                {message.attachedStructures.map((s, index) => (
-                  <DelegatingStructureWidget
-                    port={{
-                      kind: PortKind.Structure,
-                      identifier: s.identifier,
-                      __typename: "Port",
-                      key: index.toString(),
-                      nullable: false,
-                      scope: PortScope.Global,
-                    }}
-                    value={s.object}
-                  />
-                ))}
+              <div className="flex gap-3 bg-accent p-1 rounded-md max-w-xs flex-col">
+                <div className="flex flex-row gap-2">
+                  <span className=" bg-accent p-3 rounded-md max-w-xs">
+                    {message.text}
+                  </span>
+                  {message.agent.id !== agent.id && (
+                    <Avatar className="flex justify-center items-center">
+                      <AvatarImage
+                        src={message.id}
+                        alt={message.id}
+                        width={6}
+                        height={6}
+                      />
+                    </Avatar>
+                  )}
+                  {message.attachedStructures.length > 0 && (
+                    <div className="bg-black p-1 rounded-md max-w-xs">
+                      {message.attachedStructures.map((s, index) => (
+                        <DelegatingStructureWidget
+                          port={{
+                            kind: PortKind.Structure,
+                            identifier: s.identifier,
+                            __typename: "Port",
+                            key: index.toString(),
+                            nullable: false,
+                            scope: PortScope.Global,
+                          }}
+                          value={s.object}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-row gap-2 items-center ">
+                  <span className="text-xs text-muted-foreground">
+                    {message.agent.id}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(message.createdAt).toLocaleTimeString()}
+                  </span>
+                </div>
               </div>
             </motion.div>
           ))}

@@ -24,7 +24,7 @@ export const AlpakaWard: React.FC<{
           });
       };
 
-      registry?.registerWard("kraph", {
+      registry?.registerWard("alpaka", {
         search: runFunc,
       });
     }

@@ -1,0 +1,15 @@
+query GetNodeView($id: ID!) {
+  nodeView(id: $id) {
+    ...NodeView
+  }
+}
+
+query SearchNodeViews($search: String, $values: [ID!]) {
+  options: nodeViews(
+    filters: { search: $search, ids: $values }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: label
+  }
+}

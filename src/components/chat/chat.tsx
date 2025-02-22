@@ -30,7 +30,10 @@ export function Chat({ messages, selectedUser, isMobile, room }: ChatProps) {
   return (
     <div className="flex flex-col justify-between w-full h-full">
       <ChatList
-        messages={room.messages}
+        messages={[...room.messages].sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+        )}
         agent={{ id: "1" }}
         sendMessage={sendMessage}
         isMobile={isMobile}

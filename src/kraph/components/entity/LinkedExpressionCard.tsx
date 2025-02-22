@@ -4,7 +4,7 @@ import {
   CardDescription,
   CardTitle,
 } from "@/components/ui/card";
-import { KraphEntity } from "@/linkers";
+import { KraphNode } from "@/linkers";
 import {
   useGetLinkedExpressionQuery,
   usePinLinkedExpressionMutation,
@@ -29,9 +29,9 @@ export const EntityKindCard = ({ id }: { id: string }) => {
         <CardDescription>
           {data?.linkedExpression?.entities.map((field, i) => (
             <Card key={i}>
-              <KraphEntity.DetailLink object={field.id}>
+              <KraphNode.DetailLink object={field.id}>
                 {field.name}
-              </KraphEntity.DetailLink>
+              </KraphNode.DetailLink>
             </Card>
           ))}
         </CardDescription>

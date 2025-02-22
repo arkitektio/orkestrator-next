@@ -38,7 +38,7 @@ import {
 import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Form } from "@/components/ui/form";
-import { KraphEntity, KraphLinkedExpression } from "@/linkers";
+import { KraphNode, KraphLinkedExpression } from "@/linkers";
 import {
   EntityFragment,
   ListEntitiesQuery,
@@ -140,10 +140,10 @@ export const columns: ColumnDef<ListEntityFragment>[] = [
       );
     },
     cell: ({ row }) => (
-      <KraphEntity.DetailLink object={row.getValue("id")}>
+      <KraphNode.DetailLink object={row.getValue("id")}>
         {" "}
         Open{" "}
-      </KraphEntity.DetailLink>
+      </KraphNode.DetailLink>
     ),
     sortingFn: (a, b) => a.getValue("id") - b.getValue("id"),
     enableSorting: true,
@@ -199,7 +199,7 @@ export const columns: ColumnDef<ListEntityFragment>[] = [
     cell: ({ row }) => {
       const payment = row.original;
 
-      return <KraphEntity.ObjectButton object={row.getValue("id")} />;
+      return <KraphNode.ObjectButton object={row.getValue("id")} />;
     },
   },
 ];

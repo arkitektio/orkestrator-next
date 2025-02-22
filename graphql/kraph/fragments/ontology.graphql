@@ -3,8 +3,17 @@ fragment Ontology on Ontology {
   name
   description
   purl
-  expressions {
-    ...ListExpression
+  structureCategories {
+    ...ListStructureCategory
+  }
+  genericCategories {
+    ...ListGenericCategory
+  }
+  relationCategories {
+    ...ListRelationCategory
+  }
+  measurementCategories {
+    ...ListMeasurementCategory
   }
   store {
     ...MediaStore

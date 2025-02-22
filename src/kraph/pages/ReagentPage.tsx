@@ -1,40 +1,20 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
-import { Image } from "@/components/ui/image";
+import { Badge } from "@/components/ui/badge";
 import { DragZone } from "@/components/upload/drag";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { useMediaUpload } from "@/datalayer/hooks/useUpload";
-import { KraphEntity, KraphExpression, KraphLinkedExpression } from "@/linkers";
+import { KraphExpression } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
-import {
-  useGetExpressionQuery,
-  useGetReagentQuery,
-  useUpdateExpressionMutation,
-} from "../api/graphql";
-import LinkedExpressionCard from "../components/cards/LinkedExpressionCard";
-import { UpdateExpressionForm } from "../forms/UpdateExpressionForm";
-import { Badge } from "@/components/ui/badge";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
-import { PlusIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import LinkExpressionForm from "../forms/LinkExpressionForm";
+import { useGetReagentQuery } from "../api/graphql";
 
 export default asDetailQueryRoute(useGetReagentQuery, ({ data, refetch }) => {
   const uploadFile = useMediaUpload();
 
-  const [update] = useUpdateExpressionMutation();
   const resolve = useResolve();
 
-  const createFile = async (file: File, key: string) => {
-    update({
-      variables: {
-        input: {
-          id: data.reagent.id,
-          image: key,
-        },
-      },
-    });
-  };
+  const createFile = async (file: File, key: string) => {};
 
   const navigate = useNavigate();
 

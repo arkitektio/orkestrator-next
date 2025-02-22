@@ -1,0 +1,23 @@
+fragment GraphView on GraphView {
+  id
+  label
+  graph {
+    id
+    name
+  }
+  query {
+    id
+    name
+    query
+  }
+  render {
+    ...Path
+    ...Pairs
+    ...Table
+  }
+}
+
+fragment ListGraphView on GraphView {
+  id
+  label
+}

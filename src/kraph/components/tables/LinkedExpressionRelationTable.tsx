@@ -44,7 +44,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { KraphEntity, KraphLinkedExpression } from "@/linkers";
+import { KraphNode, KraphLinkedExpression } from "@/linkers";
 import {
   EntityFragment,
   EntityRelationFragment,
@@ -191,7 +191,7 @@ export const columns: ColumnDef<EntityRelationFragment>[] = [
     cell: ({ row }) => {
       const payment = row.original;
 
-      return <KraphEntity.ObjectButton object={row.getValue("id")} />;
+      return <KraphNode.ObjectButton object={row.getValue("id")} />;
     },
   },
 ];

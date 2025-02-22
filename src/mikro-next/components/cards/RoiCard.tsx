@@ -1,6 +1,6 @@
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { KraphEntity, MikroImage, MikroROI } from "@/linkers";
+import { KraphNode, MikroImage, MikroROI } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
 import { ListImageFragment, ListRoiFragment } from "../../api/graphql";
 
@@ -35,7 +35,7 @@ const ImageCard = ({ item, mates }: ImageCardProps) => {
         }}
       >
         {item.entity?.id && (
-          <KraphEntity.DetailLink
+          <KraphNode.DetailLink
             className={({ isActive } /*  */) =>
               "z-10 font-bold text-md mb-2 cursor-pointer " +
               (isActive ? "text-primary-300" : "")
@@ -43,7 +43,7 @@ const ImageCard = ({ item, mates }: ImageCardProps) => {
             object={item.entity?.id}
           >
             {item?.entity?.name}
-          </KraphEntity.DetailLink>
+          </KraphNode.DetailLink>
         )}
       </div>
     </MikroROI.Smart>

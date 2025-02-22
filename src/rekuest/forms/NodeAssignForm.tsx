@@ -26,13 +26,18 @@ export const SelectHooks = (props: {}) => {
   return <GraphQLSearchField name="hooks" searchQuery={search} />;
 };
 
-export const NodeAssignForm = (props: { id: string }) => {
+export const NodeAssignForm = (props: {
+  id: string;
+  args?: { [key: string]: any };
+  hidden?: { [key: string]: any };
+}) => {
   const { assign, latestAssignation, cancel, node } = useNodeAction({
     id: props.id,
   });
 
   const form = usePortForm({
     ports: node?.args || [],
+    overwrites: props.args,
   });
 
   const onSubmit = async (data: any) => {
@@ -70,6 +75,7 @@ export const NodeAssignForm = (props: { id: string }) => {
             <ArgsContainer
               registry={registry}
               ports={node?.args || []}
+              hidden={props.args}
               path={[]}
             />
             <Collapsible>

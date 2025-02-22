@@ -21,7 +21,7 @@ import {
 import { SearchField, SearchFunction } from "@/components/fields/SearchField";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { KraphEntity } from "@/linkers";
+import { KraphNode } from "@/linkers";
 import cise from "cytoscape-cise";
 import dagre from "cytoscape-dagre";
 import { useNavigate, useParams } from "react-router-dom";

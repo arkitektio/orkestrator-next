@@ -1,7 +1,0 @@
-
-query RenderGraph($graph: ID!, $query: ID! ){
-    renderGraph(graph: $graph, query: $query) {
-        ...Pairs
-        ...Path
-    }
-}

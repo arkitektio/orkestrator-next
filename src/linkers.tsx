@@ -82,12 +82,33 @@ export const MikroDataset = buildSmart("@mikro/dataset", "mikro/datasets");
 
 export const KraphMetric = buildSmart("@kraph/metric", "kraph/metrics");
 
-export const KraphEntity = buildSmart("@kraph/entity", "kraph/entities");
+export const KraphNode = buildSmart("@kraph/node", "kraph/nodes");
 
 export const KraphExpression = buildSmart(
   "@kraph/expression",
   "kraph/expressions",
 );
+
+export const KraphStructureCategory = buildSmart(
+  "@kraph/structurecategory",
+  "kraph/structurecategories",
+);
+
+export const KraphMeasurementCategory = buildSmart(
+  "@kraph/measurementcategory",
+  "kraph/measurementcategories",
+);
+
+export const KraphRelationCategory = buildSmart(
+  "@kraph/relationcategory",
+  "kraph/relationcategories",
+);
+
+export const KraphGenericCategory = buildSmart(
+  "@kraph/genericcategory",
+  "kraph/genericcategories",
+);
+
 export const KraphLinkedExpression = buildSmart(
   "@kraph/linkedexpression",
   "kraph/linkedexpressions",
@@ -95,10 +116,20 @@ export const KraphLinkedExpression = buildSmart(
 export const KraphOntology = buildSmart("@kraph/ontology", "kraph/ontologies");
 export const KraphReagent = buildSmart("@kraph/reagent", "kraph/reagents");
 export const KraphGraph = buildSmart("@kraph/graph", "kraph/graphs");
-export const KraphGraphQuery = buildSmart(
-  "@kraph/graph_query",
-  "kraph/graph_query",
+export const KraphGraphView = buildSmart(
+  "@kraph/graphview",
+  "kraph/graphviews",
 );
+export const KraphNodeView = buildSmart("@kraph/nodeview", "kraph/nodeviews");
+export const KraphGraphQuery = buildSmart(
+  "@kraph/graphquery",
+  "kraph/graphqueries",
+);
+export const KraphNodeQuery = buildSmart(
+  "@kraph/nodequery",
+  "kraph/ndoequeries",
+);
+
 export const MikroExperiment = buildSmart(
   "@mikro/experiment",
   "mikro/experiments",

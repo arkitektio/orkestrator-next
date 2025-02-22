@@ -1,9 +1,11 @@
 fragment DetailGraphQuery on GraphQuery {
   name
   query
+  description
 }
 
 fragment ListGraphQuery on GraphQuery {
   id
   name
+  description
 }

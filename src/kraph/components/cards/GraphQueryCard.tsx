@@ -20,6 +20,7 @@ const TheCard = ({ item, mates }: Props) => {
           object={item.id}
         >
           {item?.name}
+          <p className="text-xs font-light">{item.description}</p>
         </KraphGraphQuery.DetailLink>
       </Card>
     </KraphGraphQuery.Smart>

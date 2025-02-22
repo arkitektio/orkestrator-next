@@ -1,0 +1,55 @@
+fragment BaseListCategory on Category {
+  id
+  label
+  description
+  ageName
+  store {
+    presignedUrl
+  }
+}
+
+fragment BaseListNodeCategory on NodeCategory {
+  id
+}
+
+fragment BaseListEdgeCategory on EdgeCategory {
+  left {
+    id
+  }
+  right {
+    id
+  }
+}
+
+fragment ListMeasurementCategory on MeasurementCategory {
+  ...BaseListCategory
+  ...BaseListEdgeCategory
+  metricKind
+}
+
+fragment ListRelationCategory on RelationCategory {
+  ...BaseListCategory
+  ...BaseListEdgeCategory
+}
+
+fragment ListStructureCategory on StructureCategory {
+  ...BaseListCategory
+  ...BaseListNodeCategory
+  identifier
+}
+
+fragment ListGenericCategory on GenericCategory {
+  ...BaseListCategory
+  ...BaseNodeCategory
+  instanceKind
+}
+
+fragment ListNodeCategory on NodeCategory {
+  ...ListStructureCategory
+  ...ListGenericCategory
+}
+
+fragment ListEdgeCategory on EdgeCategory {
+  ...ListRelationCategory
+  ...ListMeasurementCategory
+}

@@ -1,0 +1,23 @@
+mutation CreateMeasurementCategory($input: MeasurementCategoryInput!) {
+  createMeasurementCategory(input: $input) {
+    ...MeasurementCategory
+  }
+}
+
+mutation CreateStructureCategory($input: StructureCategoryInput!) {
+  createStructureCategory(input: $input) {
+    ...StructureCategory
+  }
+}
+
+mutation CreateGenericCategory($input: GenericCategoryInput!) {
+  createGenericCategory(input: $input) {
+    ...GenericCategory
+  }
+}
+
+mutation CreateRelationCategory($input: RelationCategoryInput!) {
+  createRelationCategory(input: $input) {
+    ...RelationCategory
+  }
+}

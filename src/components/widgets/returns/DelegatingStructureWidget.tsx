@@ -1,6 +1,8 @@
 import { useGetPodQuery } from "@/kabinet/api/graphql";
+import GraphViewWidget from "@/kraph/widgets/GraphViewWidget";
+import OntologyWidget from "@/kraph/widgets/OntologyWidget";
 import { KabinetPod, MikroImage, RekuestNode } from "@/linkers";
-import { useGetImageQuery } from "@/mikro-next/api/graphql";
+import { useGetImageQuery, useGetRoiQuery } from "@/mikro-next/api/graphql";
 import { RGBD } from "@/mikro-next/components/render/TwoDThree";
 import { useDetailNodeQuery } from "@/rekuest/api/graphql";
 import { ReturnWidgetProps } from "@/rekuest/widgets/types";
@@ -21,6 +23,27 @@ export const ImageWidget = (props: ReturnWidgetProps) => {
     <MikroImage.DetailLink object={props.value}>
       <div className="w-[200px] h-[200px]">
         {defaultContext && <RGBD context={defaultContext} rois={[]} />}
+      </div>
+    </MikroImage.DetailLink>
+  );
+};
+
+export const RoiWidget = (props: ReturnWidgetProps) => {
+  const { data } = useGetRoiQuery({
+    variables: {
+      id: props.value,
+    },
+  });
+
+  const defaultContext = data?.roi.image?.rgbContexts.at(0);
+  const roi = data?.roi;
+
+  return (
+    <MikroImage.DetailLink object={props.value}>
+      <div className="w-[200px] h-[200px]">
+        {defaultContext && roi && (
+          <RGBD context={defaultContext} rois={[roi]} />
+        )}
       </div>
     </MikroImage.DetailLink>
   );
@@ -60,11 +83,15 @@ export const PodWidget = (props: ReturnWidgetProps) => {
 
 export const DelegatingStructureWidget = (props: ReturnWidgetProps) => {
   if (!props.value) {
-    return <div> null</div>;
+    return (
+      <div className="text-xs"> No Value received {props.port.identifier}</div>
+    );
   }
   switch (props.port.identifier) {
     case "@mikro/image":
       return <ImageWidget {...props} />;
+    case "@mikro/roi":
+      return <RoiWidget {...props} />;
     case "@lok/stream":
       return <StreamWidget {...props} />;
     case "@mikro/renderedplot":
@@ -77,6 +104,10 @@ export const DelegatingStructureWidget = (props: ReturnWidgetProps) => {
       return <div>Snapshssot</div>;
     case "@mikro/mesh":
       return <MeshWidget {...props} />;
+    case "@kraph/ontology":
+      return <OntologyWidget {...props} />;
+    case "@kraph/graphview":
+      return <GraphViewWidget {...props} />;
 
     default:
       return (

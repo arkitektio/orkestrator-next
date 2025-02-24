@@ -2642,6 +2642,11 @@ export type LatestPlotViewsQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type LatestPlotViewsQuery = { __typename?: 'Query', plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> };
 
+export type ListPlotViewsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ListPlotViewsQuery = { __typename?: 'Query', plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> };
+
 export type SearchPlotViewsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
   values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
@@ -4899,6 +4904,40 @@ export function useLatestPlotViewsLazyQuery(baseOptions?: ApolloReactHooks.LazyQ
 export type LatestPlotViewsQueryHookResult = ReturnType<typeof useLatestPlotViewsQuery>;
 export type LatestPlotViewsLazyQueryHookResult = ReturnType<typeof useLatestPlotViewsLazyQuery>;
 export type LatestPlotViewsQueryResult = Apollo.QueryResult<LatestPlotViewsQuery, LatestPlotViewsQueryVariables>;
+export const ListPlotViewsDocument = gql`
+    query ListPlotViews {
+  plotViews {
+    ...ListPlotView
+  }
+}
+    ${ListPlotViewFragmentDoc}`;
+
+/**
+ * __useListPlotViewsQuery__
+ *
+ * To run a query within a React component, call `useListPlotViewsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListPlotViewsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListPlotViewsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useListPlotViewsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListPlotViewsQuery, ListPlotViewsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListPlotViewsQuery, ListPlotViewsQueryVariables>(ListPlotViewsDocument, options);
+      }
+export function useListPlotViewsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListPlotViewsQuery, ListPlotViewsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListPlotViewsQuery, ListPlotViewsQueryVariables>(ListPlotViewsDocument, options);
+        }
+export type ListPlotViewsQueryHookResult = ReturnType<typeof useListPlotViewsQuery>;
+export type ListPlotViewsLazyQueryHookResult = ReturnType<typeof useListPlotViewsLazyQuery>;
+export type ListPlotViewsQueryResult = Apollo.QueryResult<ListPlotViewsQuery, ListPlotViewsQueryVariables>;
 export const SearchPlotViewsDocument = gql`
     query SearchPlotViews($search: String, $values: [ID!]) {
   options: plotViews(

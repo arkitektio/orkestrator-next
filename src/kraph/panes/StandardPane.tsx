@@ -50,7 +50,7 @@ export const NavigationPane = (props: {}) => {
             Graphs
           </DroppableNavLink>
           <DroppableNavLink
-            to="/kraph/renderedplots"
+            to="/kraph/plotviews"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <FaChartArea className="h-4 w-4" />

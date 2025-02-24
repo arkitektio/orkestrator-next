@@ -1,0 +1,15 @@
+query GetGraphQuery($id: ID!) {
+  graphQuery(id: $id) {
+    ...DetailGraphQuery
+  }
+}
+
+query SearchGraphQueries($search: String, $values: [ID!]) {
+  options: graphQueries(
+    filters: { search: $search, ids: $values }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: name
+  }
+}

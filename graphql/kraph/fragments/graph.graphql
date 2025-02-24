@@ -18,6 +18,9 @@ fragment Graph on Graph {
   nodeViews {
     ...ListNodeView
   }
+  plotViews(pagination: { limit: 2 }) {
+    ...CarouselPlotView
+  }
 }
 
 fragment ListGraph on Graph {

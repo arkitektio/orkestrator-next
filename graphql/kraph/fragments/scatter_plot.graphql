@@ -1,0 +1,9 @@
+fragment ScatterPlot on ScatterPlot {
+    id 
+    name 
+    description
+    xColumn
+    yColumn
+    colorColumn
+    sizeColumn
+}

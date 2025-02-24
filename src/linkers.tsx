@@ -120,6 +120,10 @@ export const KraphGraphView = buildSmart(
   "@kraph/graphview",
   "kraph/graphviews",
 );
+export const KraphPlotView = buildSmart(
+  "@kraph/plotview",
+  "kraph/plotviews",
+);
 export const KraphNodeView = buildSmart("@kraph/nodeview", "kraph/nodeviews");
 export const KraphGraphQuery = buildSmart(
   "@kraph/graphquery",

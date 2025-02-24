@@ -1,0 +1,3 @@
+mutation DeleteScatterPlot($id: ID!) {
+  deleteScatterPlot(input: { id: $id })
+}

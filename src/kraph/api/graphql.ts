@@ -158,6 +158,12 @@ export type DeleteRelationCategoryInput = {
 };
 
 /** Input for deleting an expression */
+export type DeleteScatterPlotInput = {
+  /** The ID of the expression to delete */
+  id: Scalars['ID']['input'];
+};
+
+/** Input for deleting an expression */
 export type DeleteStructureCategoryInput = {
   /** The ID of the expression to delete */
   id: Scalars['ID']['input'];
@@ -370,6 +376,7 @@ export type Graph = {
   name: Scalars['String']['output'];
   nodeViews: Array<NodeView>;
   ontology: Ontology;
+  plotViews: Array<PlotView>;
 };
 
 
@@ -390,6 +397,13 @@ export type GraphLatestNodesArgs = {
 /** A graph, that contains entities and relations. */
 export type GraphNodeViewsArgs = {
   filters?: InputMaybe<NodeViewFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** A graph, that contains entities and relations. */
+export type GraphPlotViewsArgs = {
+  filters?: InputMaybe<PlotViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -424,6 +438,22 @@ export type GraphQuery = {
   name: Scalars['String']['output'];
   ontology: Ontology;
   query: Scalars['String']['output'];
+  scatterPlots: Array<ScatterPlot>;
+  views: Array<GraphView>;
+};
+
+
+/** A view of a graph, that contains entities and relations. */
+export type GraphQueryScatterPlotsArgs = {
+  filters?: InputMaybe<ScatterPlotFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** A view of a graph, that contains entities and relations. */
+export type GraphQueryViewsArgs = {
+  filters?: InputMaybe<GraphViewFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 export type GraphQueryFilter = {
@@ -460,8 +490,16 @@ export type GraphView = {
   graph: Graph;
   id: Scalars['ID']['output'];
   label: Scalars['String']['output'];
+  plotViews: Array<PlotView>;
   query: GraphQuery;
   render: PairsPathTable;
+};
+
+
+/** A view of a graph, that contains entities and relations. */
+export type GraphViewPlotViewsArgs = {
+  filters?: InputMaybe<PlotViewFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 export type GraphViewFilter = {
@@ -664,6 +702,8 @@ export type Mutation = {
   createNodeView: NodeView;
   /** Create a new ontology */
   createOntology: Ontology;
+  /** Create a new plot view */
+  createPlotView: PlotView;
   /** Create a new protocol */
   createProtocol: Protocol;
   /** Create a new protocol step */
@@ -676,6 +716,8 @@ export type Mutation = {
   createRelation: Relation;
   /** Create a new expression */
   createRelationCategory: RelationCategory;
+  /** Create a new scatter plot */
+  createScatterPlot: ScatterPlot;
   /** Create a new structure */
   createStructure: Structure;
   /** Create a new expression */
@@ -698,6 +740,8 @@ export type Mutation = {
   deleteProtocolStepTemplate: Scalars['ID']['output'];
   /** Delete an existing expression */
   deleteRelationCategory: Scalars['ID']['output'];
+  /** Delete an existing scatter plot */
+  deleteScatterPlot: Scalars['ID']['output'];
   /** Delete an existing expression */
   deleteStructureCategory: Scalars['ID']['output'];
   /** Request a new file upload */
@@ -776,6 +820,11 @@ export type MutationCreateOntologyArgs = {
 };
 
 
+export type MutationCreatePlotViewArgs = {
+  input: PlotViewInput;
+};
+
+
 export type MutationCreateProtocolArgs = {
   input: ProtocolInput;
 };
@@ -803,6 +852,11 @@ export type MutationCreateRelationArgs = {
 
 export type MutationCreateRelationCategoryArgs = {
   input: RelationCategoryInput;
+};
+
+
+export type MutationCreateScatterPlotArgs = {
+  input: ScatterPlotInput;
 };
 
 
@@ -858,6 +912,11 @@ export type MutationDeleteProtocolStepTemplateArgs = {
 
 export type MutationDeleteRelationCategoryArgs = {
   input: DeleteRelationCategoryInput;
+};
+
+
+export type MutationDeleteScatterPlotArgs = {
+  input: DeleteScatterPlotInput;
 };
 
 
@@ -1225,6 +1284,31 @@ export type PlateChildInput = {
   value?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** A view of a graph, that contains entities and relations. */
+export type PlotView = {
+  __typename?: 'PlotView';
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  plot: ScatterPlot;
+  view: GraphView;
+};
+
+export type PlotViewFilter = {
+  AND?: InputMaybe<PlotViewFilter>;
+  OR?: InputMaybe<PlotViewFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Search by text */
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Input for creating a new expression */
+export type PlotViewInput = {
+  plot: Scalars['ID']['input'];
+  view: Scalars['ID']['input'];
+};
+
 /** Temporary Credentials for a file upload that can be used by a Client (e.g. in a python datalayer) */
 export type PresignedPostCredentials = {
   __typename?: 'PresignedPostCredentials';
@@ -1389,6 +1473,9 @@ export type Query = {
   /** List of all ontologies */
   ontologies: Array<Ontology>;
   ontology: Ontology;
+  plotView: PlotView;
+  /** List of all plot views */
+  plotViews: Array<PlotView>;
   protocol: Protocol;
   protocolStep: ProtocolStep;
   protocolStepTemplate: ProtocolStepTemplate;
@@ -1404,6 +1491,9 @@ export type Query = {
   /** List of all relation categories */
   relationCategories: Array<RelationCategory>;
   relationCategory: RelationCategory;
+  scatterPlot: ScatterPlot;
+  /** List of all scatter plots */
+  scatterPlots: Array<ScatterPlot>;
   /** Gets a specific structure e.g an image, video, or 3D model */
   structure: Structure;
   /** List of all structure categories */
@@ -1569,6 +1659,17 @@ export type QueryOntologyArgs = {
 };
 
 
+export type QueryPlotViewArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryPlotViewsArgs = {
+  filters?: InputMaybe<PlotViewFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryProtocolArgs = {
   id: Scalars['ID']['input'];
 };
@@ -1621,6 +1722,17 @@ export type QueryRelationCategoriesArgs = {
 
 export type QueryRelationCategoryArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryScatterPlotArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryScatterPlotsArgs = {
+  filters?: InputMaybe<ScatterPlotFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -1770,6 +1882,60 @@ export type RelationInput = {
 export type RequestMediaUploadInput = {
   datalayer: Scalars['String']['input'];
   key: Scalars['String']['input'];
+};
+
+/** A scatter plot of a table graph, that contains entities and relations. */
+export type ScatterPlot = {
+  __typename?: 'ScatterPlot';
+  colorColumn?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['DateTime']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  graph: GraphQuery;
+  id: Scalars['ID']['output'];
+  idColumn: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  shapeColumn?: Maybe<Scalars['String']['output']>;
+  sizeColumn?: Maybe<Scalars['String']['output']>;
+  xColumn: Scalars['String']['output'];
+  yColumn: Scalars['String']['output'];
+};
+
+export type ScatterPlotFilter = {
+  AND?: InputMaybe<ScatterPlotFilter>;
+  OR?: InputMaybe<ScatterPlotFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Search by text */
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Input for creating a new expression */
+export type ScatterPlotInput = {
+  /** The column to use for the color of the points */
+  colorColumn?: InputMaybe<Scalars['String']['input']>;
+  /** A detailed description of the expression */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** The column to use for the ID of the points */
+  idColumn: Scalars['String']['input'];
+  /** The label/name of the expression */
+  name: Scalars['String']['input'];
+  /** The query to use */
+  query: Scalars['ID']['input'];
+  /** The column to use for the shape of the points */
+  shapeColumn?: InputMaybe<Scalars['String']['input']>;
+  /** The column to use for the size of the points */
+  sizeColumn?: InputMaybe<Scalars['String']['input']>;
+  /** The graph to test against */
+  testAgainst?: InputMaybe<Scalars['ID']['input']>;
+  /** The column to use for the x-axis */
+  xColumn: Scalars['String']['input'];
+  /** The column to use for the x-axis ID (node, or edge) */
+  xIdColumn?: InputMaybe<Scalars['String']['input']>;
+  /** The column to use for the y-axis */
+  yColumn: Scalars['String']['input'];
+  /** The column to use for the y-axis ID (node, or edge) */
+  yIdColumn?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** A Structure is a recorded data point in a graph. It can measure a property of an entity through a direct measurement edge, that connects the entity to the structure. It of course can relate to other structures through relation edges. */
@@ -2044,15 +2210,15 @@ export type ListEntityFragment = { __typename?: 'Entity', id: any, label: string
 
 export type EntityGraphNodeFragment = { __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', color?: Array<number> | null } };
 
-export type GraphFragment = { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, ontology: { __typename?: 'Ontology', graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> }, graphViews: Array<{ __typename?: 'GraphView', id: string, label: string }>, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }> };
+export type GraphFragment = { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, ontology: { __typename?: 'Ontology', graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> }, graphViews: Array<{ __typename?: 'GraphView', id: string, label: string }>, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> };
 
 export type ListGraphFragment = { __typename?: 'Graph', id: string, name: string };
 
-export type DetailGraphQueryFragment = { __typename?: 'GraphQuery', name: string, query: string, description?: string | null };
+export type DetailGraphQueryFragment = { __typename?: 'GraphQuery', id: string, name: string, query: string, description?: string | null, ontology: { __typename?: 'Ontology', id: string, name: string }, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string }> };
 
 export type ListGraphQueryFragment = { __typename?: 'GraphQuery', id: string, name: string, description?: string | null };
 
-export type GraphViewFragment = { __typename?: 'GraphView', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string }, query: { __typename?: 'GraphQuery', id: string, name: string, query: string }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } };
+export type GraphViewFragment = { __typename?: 'GraphView', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string }, query: { __typename?: 'GraphQuery', id: string, name: string, query: string }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } }, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> };
 
 export type ListGraphViewFragment = { __typename?: 'GraphView', id: string, label: string };
 
@@ -2134,6 +2300,12 @@ export type PairsFragment = { __typename?: 'Pairs', pairs: Array<{ __typename?: 
 
 export type PathFragment = { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> };
 
+export type PlotViewFragment = { __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } };
+
+export type CarouselPlotViewFragment = { __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } };
+
+export type ListPlotViewFragment = { __typename?: 'PlotView', id: string, name: string, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } };
+
 export type ProtocolFragment = { __typename?: 'Protocol', id: string, name: string, description?: string | null, experiment: { __typename?: 'Experiment', id: string, name: string, description?: string | null } };
 
 export type ListProtocolFragment = { __typename?: 'Protocol', id: string, name: string, experiment: { __typename?: 'Experiment', id: string, name: string } };
@@ -2151,6 +2323,8 @@ export type ReagentFragment = { __typename?: 'Reagent', id: string, label: strin
 export type ListReagentFragment = { __typename?: 'Reagent', id: string, label: string };
 
 export type RelationFragment = { __typename?: 'Relation', id: any, label: string };
+
+export type ScatterPlotFragment = { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null };
 
 export type MediaStoreFragment = { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string };
 
@@ -2211,7 +2385,7 @@ export type CreateGraphMutationVariables = Exact<{
 }>;
 
 
-export type CreateGraphMutation = { __typename?: 'Mutation', createGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, ontology: { __typename?: 'Ontology', graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> }, graphViews: Array<{ __typename?: 'GraphView', id: string, label: string }>, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }> } };
+export type CreateGraphMutation = { __typename?: 'Mutation', createGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, ontology: { __typename?: 'Ontology', graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> }, graphViews: Array<{ __typename?: 'GraphView', id: string, label: string }>, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> } };
 
 export type DeleteGraphMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2225,14 +2399,14 @@ export type UpdateGraphMutationVariables = Exact<{
 }>;
 
 
-export type UpdateGraphMutation = { __typename?: 'Mutation', updateGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, ontology: { __typename?: 'Ontology', graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> }, graphViews: Array<{ __typename?: 'GraphView', id: string, label: string }>, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }> } };
+export type UpdateGraphMutation = { __typename?: 'Mutation', updateGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, ontology: { __typename?: 'Ontology', graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> }, graphViews: Array<{ __typename?: 'GraphView', id: string, label: string }>, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> } };
 
 export type CreateGraphViewMutationVariables = Exact<{
   input: GraphViewInput;
 }>;
 
 
-export type CreateGraphViewMutation = { __typename?: 'Mutation', createGraphView: { __typename?: 'GraphView', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string }, query: { __typename?: 'GraphQuery', id: string, name: string, query: string }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } } };
+export type CreateGraphViewMutation = { __typename?: 'Mutation', createGraphView: { __typename?: 'GraphView', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string }, query: { __typename?: 'GraphQuery', id: string, name: string, query: string }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } }, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> } };
 
 export type CreateNodeViewMutationVariables = Exact<{
   input: NodeViewInput;
@@ -2305,6 +2479,13 @@ export type CreateReagentMutationVariables = Exact<{
 
 export type CreateReagentMutation = { __typename?: 'Mutation', createReagent: { __typename?: 'Reagent', id: string, label: string, creationSteps: Array<{ __typename?: 'ProtocolStep', id: string, name: string }>, usedIn: Array<{ __typename?: 'ReagentMapping', id: string, protocolStep: { __typename?: 'ProtocolStep', performedAt?: any | null, name: string } }> } };
 
+export type DeleteScatterPlotMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteScatterPlotMutation = { __typename?: 'Mutation', deleteScatterPlot: string };
+
 export type CreateStructureMutationVariables = Exact<{
   input: StructureInput;
 }>;
@@ -2339,7 +2520,7 @@ export type GetGraphQueryVariables = Exact<{
 }>;
 
 
-export type GetGraphQuery = { __typename?: 'Query', graph: { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, ontology: { __typename?: 'Ontology', graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> }, graphViews: Array<{ __typename?: 'GraphView', id: string, label: string }>, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }> } };
+export type GetGraphQuery = { __typename?: 'Query', graph: { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, ontology: { __typename?: 'Ontology', graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> }, graphViews: Array<{ __typename?: 'GraphView', id: string, label: string }>, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> } };
 
 export type MyActiveGraphQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -2362,12 +2543,27 @@ export type SearchGraphsQueryVariables = Exact<{
 
 export type SearchGraphsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Graph', value: string, label: string }> };
 
+export type GetGraphQueryQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetGraphQueryQuery = { __typename?: 'Query', graphQuery: { __typename?: 'GraphQuery', id: string, name: string, query: string, description?: string | null, ontology: { __typename?: 'Ontology', id: string, name: string }, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string }> } };
+
+export type SearchGraphQueriesQueryVariables = Exact<{
+  search?: InputMaybe<Scalars['String']['input']>;
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+}>;
+
+
+export type SearchGraphQueriesQuery = { __typename?: 'Query', options: Array<{ __typename?: 'GraphQuery', value: string, label: string }> };
+
 export type GetGraphViewQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetGraphViewQuery = { __typename?: 'Query', graphView: { __typename?: 'GraphView', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string }, query: { __typename?: 'GraphQuery', id: string, name: string, query: string }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } } };
+export type GetGraphViewQuery = { __typename?: 'Query', graphView: { __typename?: 'GraphView', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string }, query: { __typename?: 'GraphQuery', id: string, name: string, query: string }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } }, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> } };
 
 export type SearchGraphViewsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -2433,6 +2629,26 @@ export type SearchOntologiesQueryVariables = Exact<{
 
 
 export type SearchOntologiesQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Ontology', value: string, label: string }> };
+
+export type GetPlotViewQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetPlotViewQuery = { __typename?: 'Query', plotView: { __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } } };
+
+export type LatestPlotViewsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type LatestPlotViewsQuery = { __typename?: 'Query', plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> };
+
+export type SearchPlotViewsQueryVariables = Exact<{
+  search?: InputMaybe<Scalars['String']['input']>;
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+}>;
+
+
+export type SearchPlotViewsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'PlotView', value: string, label: string }> };
 
 export type GetProtocolStepTemplateQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2700,6 +2916,55 @@ export const ListNodeViewFragmentDoc = gql`
   label
 }
     `;
+export const ColumnFragmentDoc = gql`
+    fragment Column on Column {
+  name
+  kind
+  valueKind
+  description
+  label
+}
+    `;
+export const TableFragmentDoc = gql`
+    fragment Table on Table {
+  rows
+  columns {
+    ...Column
+  }
+  graph {
+    id
+    ageName
+  }
+}
+    ${ColumnFragmentDoc}`;
+export const ScatterPlotFragmentDoc = gql`
+    fragment ScatterPlot on ScatterPlot {
+  id
+  name
+  description
+  xColumn
+  yColumn
+  colorColumn
+  sizeColumn
+}
+    `;
+export const CarouselPlotViewFragmentDoc = gql`
+    fragment CarouselPlotView on PlotView {
+  id
+  name
+  view {
+    id
+    label
+    render {
+      ...Table
+    }
+  }
+  plot {
+    ...ScatterPlot
+  }
+}
+    ${TableFragmentDoc}
+${ScatterPlotFragmentDoc}`;
 export const GraphFragmentDoc = gql`
     fragment Graph on Graph {
   id
@@ -2721,15 +2986,28 @@ export const GraphFragmentDoc = gql`
   nodeViews {
     ...ListNodeView
   }
+  plotViews(pagination: {limit: 2}) {
+    ...CarouselPlotView
+  }
 }
     ${ListNodeFragmentDoc}
 ${ListGraphViewFragmentDoc}
-${ListNodeViewFragmentDoc}`;
+${ListNodeViewFragmentDoc}
+${CarouselPlotViewFragmentDoc}`;
 export const DetailGraphQueryFragmentDoc = gql`
     fragment DetailGraphQuery on GraphQuery {
+  id
   name
   query
   description
+  ontology {
+    id
+    name
+  }
+  scatterPlots {
+    id
+    name
+  }
 }
     `;
 export const NodeFragmentDoc = gql`
@@ -2787,27 +3065,23 @@ export const PairsFragmentDoc = gql`
   }
 }
     `;
-export const ColumnFragmentDoc = gql`
-    fragment Column on Column {
+export const PlotViewFragmentDoc = gql`
+    fragment PlotView on PlotView {
+  id
   name
-  kind
-  valueKind
-  description
-  label
-}
-    `;
-export const TableFragmentDoc = gql`
-    fragment Table on Table {
-  rows
-  columns {
-    ...Column
-  }
-  graph {
+  view {
     id
-    ageName
+    label
+    render {
+      ...Table
+    }
+  }
+  plot {
+    ...ScatterPlot
   }
 }
-    ${ColumnFragmentDoc}`;
+    ${TableFragmentDoc}
+${ScatterPlotFragmentDoc}`;
 export const GraphViewFragmentDoc = gql`
     fragment GraphView on GraphView {
   id
@@ -2826,10 +3100,14 @@ export const GraphViewFragmentDoc = gql`
     ...Pairs
     ...Table
   }
+  plotViews {
+    ...PlotView
+  }
 }
     ${PathFragmentDoc}
 ${PairsFragmentDoc}
-${TableFragmentDoc}`;
+${TableFragmentDoc}
+${PlotViewFragmentDoc}`;
 export const BaseListCategoryFragmentDoc = gql`
     fragment BaseListCategory on Category {
   id
@@ -3017,6 +3295,15 @@ export const ListOntologyFragmentDoc = gql`
   purl
 }
     `;
+export const ListPlotViewFragmentDoc = gql`
+    fragment ListPlotView on PlotView {
+  id
+  name
+  plot {
+    ...ScatterPlot
+  }
+}
+    ${ScatterPlotFragmentDoc}`;
 export const ProtocolFragmentDoc = gql`
     fragment Protocol on Protocol {
   id
@@ -3780,6 +4067,37 @@ export function useCreateReagentMutation(baseOptions?: ApolloReactHooks.Mutation
 export type CreateReagentMutationHookResult = ReturnType<typeof useCreateReagentMutation>;
 export type CreateReagentMutationResult = Apollo.MutationResult<CreateReagentMutation>;
 export type CreateReagentMutationOptions = Apollo.BaseMutationOptions<CreateReagentMutation, CreateReagentMutationVariables>;
+export const DeleteScatterPlotDocument = gql`
+    mutation DeleteScatterPlot($id: ID!) {
+  deleteScatterPlot(input: {id: $id})
+}
+    `;
+export type DeleteScatterPlotMutationFn = Apollo.MutationFunction<DeleteScatterPlotMutation, DeleteScatterPlotMutationVariables>;
+
+/**
+ * __useDeleteScatterPlotMutation__
+ *
+ * To run a mutation, you first call `useDeleteScatterPlotMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteScatterPlotMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteScatterPlotMutation, { data, loading, error }] = useDeleteScatterPlotMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteScatterPlotMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteScatterPlotMutation, DeleteScatterPlotMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<DeleteScatterPlotMutation, DeleteScatterPlotMutationVariables>(DeleteScatterPlotDocument, options);
+      }
+export type DeleteScatterPlotMutationHookResult = ReturnType<typeof useDeleteScatterPlotMutation>;
+export type DeleteScatterPlotMutationResult = Apollo.MutationResult<DeleteScatterPlotMutation>;
+export type DeleteScatterPlotMutationOptions = Apollo.BaseMutationOptions<DeleteScatterPlotMutation, DeleteScatterPlotMutationVariables>;
 export const CreateStructureDocument = gql`
     mutation CreateStructure($input: StructureInput!) {
   createStructure(input: $input) {
@@ -4068,6 +4386,81 @@ export function useSearchGraphsLazyQuery(baseOptions?: ApolloReactHooks.LazyQuer
 export type SearchGraphsQueryHookResult = ReturnType<typeof useSearchGraphsQuery>;
 export type SearchGraphsLazyQueryHookResult = ReturnType<typeof useSearchGraphsLazyQuery>;
 export type SearchGraphsQueryResult = Apollo.QueryResult<SearchGraphsQuery, SearchGraphsQueryVariables>;
+export const GetGraphQueryDocument = gql`
+    query GetGraphQuery($id: ID!) {
+  graphQuery(id: $id) {
+    ...DetailGraphQuery
+  }
+}
+    ${DetailGraphQueryFragmentDoc}`;
+
+/**
+ * __useGetGraphQueryQuery__
+ *
+ * To run a query within a React component, call `useGetGraphQueryQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetGraphQueryQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetGraphQueryQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetGraphQueryQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetGraphQueryQuery, GetGraphQueryQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetGraphQueryQuery, GetGraphQueryQueryVariables>(GetGraphQueryDocument, options);
+      }
+export function useGetGraphQueryLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetGraphQueryQuery, GetGraphQueryQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetGraphQueryQuery, GetGraphQueryQueryVariables>(GetGraphQueryDocument, options);
+        }
+export type GetGraphQueryQueryHookResult = ReturnType<typeof useGetGraphQueryQuery>;
+export type GetGraphQueryLazyQueryHookResult = ReturnType<typeof useGetGraphQueryLazyQuery>;
+export type GetGraphQueryQueryResult = Apollo.QueryResult<GetGraphQueryQuery, GetGraphQueryQueryVariables>;
+export const SearchGraphQueriesDocument = gql`
+    query SearchGraphQueries($search: String, $values: [ID!]) {
+  options: graphQueries(
+    filters: {search: $search, ids: $values}
+    pagination: {limit: 10}
+  ) {
+    value: id
+    label: name
+  }
+}
+    `;
+
+/**
+ * __useSearchGraphQueriesQuery__
+ *
+ * To run a query within a React component, call `useSearchGraphQueriesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchGraphQueriesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchGraphQueriesQuery({
+ *   variables: {
+ *      search: // value for 'search'
+ *      values: // value for 'values'
+ *   },
+ * });
+ */
+export function useSearchGraphQueriesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchGraphQueriesQuery, SearchGraphQueriesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<SearchGraphQueriesQuery, SearchGraphQueriesQueryVariables>(SearchGraphQueriesDocument, options);
+      }
+export function useSearchGraphQueriesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchGraphQueriesQuery, SearchGraphQueriesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<SearchGraphQueriesQuery, SearchGraphQueriesQueryVariables>(SearchGraphQueriesDocument, options);
+        }
+export type SearchGraphQueriesQueryHookResult = ReturnType<typeof useSearchGraphQueriesQuery>;
+export type SearchGraphQueriesLazyQueryHookResult = ReturnType<typeof useSearchGraphQueriesLazyQuery>;
+export type SearchGraphQueriesQueryResult = Apollo.QueryResult<SearchGraphQueriesQuery, SearchGraphQueriesQueryVariables>;
 export const GetGraphViewDocument = gql`
     query GetGraphView($id: ID!) {
   graphView(id: $id) {
@@ -4437,6 +4830,115 @@ export function useSearchOntologiesLazyQuery(baseOptions?: ApolloReactHooks.Lazy
 export type SearchOntologiesQueryHookResult = ReturnType<typeof useSearchOntologiesQuery>;
 export type SearchOntologiesLazyQueryHookResult = ReturnType<typeof useSearchOntologiesLazyQuery>;
 export type SearchOntologiesQueryResult = Apollo.QueryResult<SearchOntologiesQuery, SearchOntologiesQueryVariables>;
+export const GetPlotViewDocument = gql`
+    query GetPlotView($id: ID!) {
+  plotView(id: $id) {
+    ...PlotView
+  }
+}
+    ${PlotViewFragmentDoc}`;
+
+/**
+ * __useGetPlotViewQuery__
+ *
+ * To run a query within a React component, call `useGetPlotViewQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetPlotViewQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetPlotViewQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetPlotViewQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetPlotViewQuery, GetPlotViewQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetPlotViewQuery, GetPlotViewQueryVariables>(GetPlotViewDocument, options);
+      }
+export function useGetPlotViewLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetPlotViewQuery, GetPlotViewQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetPlotViewQuery, GetPlotViewQueryVariables>(GetPlotViewDocument, options);
+        }
+export type GetPlotViewQueryHookResult = ReturnType<typeof useGetPlotViewQuery>;
+export type GetPlotViewLazyQueryHookResult = ReturnType<typeof useGetPlotViewLazyQuery>;
+export type GetPlotViewQueryResult = Apollo.QueryResult<GetPlotViewQuery, GetPlotViewQueryVariables>;
+export const LatestPlotViewsDocument = gql`
+    query LatestPlotViews {
+  plotViews(pagination: {limit: 10}) {
+    ...CarouselPlotView
+  }
+}
+    ${CarouselPlotViewFragmentDoc}`;
+
+/**
+ * __useLatestPlotViewsQuery__
+ *
+ * To run a query within a React component, call `useLatestPlotViewsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useLatestPlotViewsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useLatestPlotViewsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useLatestPlotViewsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<LatestPlotViewsQuery, LatestPlotViewsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<LatestPlotViewsQuery, LatestPlotViewsQueryVariables>(LatestPlotViewsDocument, options);
+      }
+export function useLatestPlotViewsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<LatestPlotViewsQuery, LatestPlotViewsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<LatestPlotViewsQuery, LatestPlotViewsQueryVariables>(LatestPlotViewsDocument, options);
+        }
+export type LatestPlotViewsQueryHookResult = ReturnType<typeof useLatestPlotViewsQuery>;
+export type LatestPlotViewsLazyQueryHookResult = ReturnType<typeof useLatestPlotViewsLazyQuery>;
+export type LatestPlotViewsQueryResult = Apollo.QueryResult<LatestPlotViewsQuery, LatestPlotViewsQueryVariables>;
+export const SearchPlotViewsDocument = gql`
+    query SearchPlotViews($search: String, $values: [ID!]) {
+  options: plotViews(
+    filters: {search: $search, ids: $values}
+    pagination: {limit: 10}
+  ) {
+    value: id
+    label: name
+  }
+}
+    `;
+
+/**
+ * __useSearchPlotViewsQuery__
+ *
+ * To run a query within a React component, call `useSearchPlotViewsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchPlotViewsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchPlotViewsQuery({
+ *   variables: {
+ *      search: // value for 'search'
+ *      values: // value for 'values'
+ *   },
+ * });
+ */
+export function useSearchPlotViewsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchPlotViewsQuery, SearchPlotViewsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<SearchPlotViewsQuery, SearchPlotViewsQueryVariables>(SearchPlotViewsDocument, options);
+      }
+export function useSearchPlotViewsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchPlotViewsQuery, SearchPlotViewsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<SearchPlotViewsQuery, SearchPlotViewsQueryVariables>(SearchPlotViewsDocument, options);
+        }
+export type SearchPlotViewsQueryHookResult = ReturnType<typeof useSearchPlotViewsQuery>;
+export type SearchPlotViewsLazyQueryHookResult = ReturnType<typeof useSearchPlotViewsLazyQuery>;
+export type SearchPlotViewsQueryResult = Apollo.QueryResult<SearchPlotViewsQuery, SearchPlotViewsQueryVariables>;
 export const GetProtocolStepTemplateDocument = gql`
     query GetProtocolStepTemplate($id: ID!) {
   protocolStepTemplate(id: $id) {

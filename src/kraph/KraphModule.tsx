@@ -21,6 +21,7 @@ import StandardPane from "./panes/StandardPane";
 import NodePage from "./pages/NodePage";
 import GraphViewPage from "./pages/GraphViewPage";
 import NodeViewPage from "./pages/NodeViewPage";
+import PlotViewPage from "./pages/PlotViewPage";
 interface Props {}
 
 export const KraphModule: React.FC<Props> = (props) => {
@@ -36,6 +37,7 @@ export const KraphModule: React.FC<Props> = (props) => {
           <Route path="graphs" element={<GraphsPage />} />
           <Route path="graphs/:id" element={<GraphPage />} />
           <Route path="graphviews/:id" element={<GraphViewPage />} />
+          <Route path="plotviews/:id" element={<PlotViewPage />} />
           <Route path="nodeviews/:id" element={<NodeViewPage />} />
           <Route path="graphs/:id/view/:viewid" element={<GraphPage />} />
           <Route path="reagents" element={<ReagentsPage />} />

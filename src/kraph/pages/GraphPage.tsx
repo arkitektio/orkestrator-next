@@ -37,11 +37,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import GraphViewCard from "../components/cards/GraphViewCard";
+import PopularePlotViewsCarousel from "../components/carousels/PopularePlotViewsCarousel";
 
 export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
-  const [view, setView] = useState<string | undefined>(
-    data.graph.graphViews[0]?.id,
-  );
+ 
 
   const [createGraphView] = useCreateGraphViewMutation();
   const nagivate = useNavigate();
@@ -84,19 +83,7 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
         />
       }
     >
-      <div className=" grid md:grid-cols-12 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
-        <div className="col-span-4">
-          <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl ">
-            {data.graph.name}
-          </h1>
-          <p className="mt-3 text-xl text-muted-foreground">
-            {data.graph.description}
-          </p>
-        </div>
-        <Card className="p-6 h-96 col-span-8 overflow-y-hidden">
-          {view && <GraphViewRenderer id={view} />}
-        </Card>
-      </div>
+       <PopularePlotViewsCarousel plots={data.graph.plotViews} />
 
       <div className="p-6">
         <KraphGraph.DetailLink

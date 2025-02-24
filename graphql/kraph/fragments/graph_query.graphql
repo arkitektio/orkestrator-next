@@ -1,7 +1,16 @@
 fragment DetailGraphQuery on GraphQuery {
+  id
   name
   query
   description
+  ontology {
+    id
+    name
+  }
+  scatterPlots {
+    id
+    name
+  }
 }
 
 fragment ListGraphQuery on GraphQuery {

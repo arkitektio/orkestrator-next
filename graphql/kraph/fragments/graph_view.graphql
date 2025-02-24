@@ -15,6 +15,9 @@ fragment GraphView on GraphView {
     ...Pairs
     ...Table
   }
+  plotViews {
+    ...PlotView
+  }
 }
 
 fragment ListGraphView on GraphView {

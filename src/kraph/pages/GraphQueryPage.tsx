@@ -1,7 +1,7 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
-import { KraphGraph, KraphGraphQuery, KraphGraphView } from "@/linkers";
+import { KraphGraph, KraphGraphQuery, KraphGraphView, KraphOntology } from "@/linkers";
 import { useGetGraphQueryQuery } from "../api/graphql";
 
 import { PathGraph } from "../components/renderers/graph/KnowledgeGraph";
@@ -9,6 +9,8 @@ import { GraphTable } from "../components/renderers/table/GraphTable";
 
 import ScatterPlot from "../components/charts/scatterplot/ScatterPlot";
 import { CypherSidebar } from "../components/sidebars/CypherSidebar";
+import { CypherEditor } from "../components/cypher/CypherEditor";
+import { Card } from "@/components/ui/card";
 
 export default asDetailQueryRoute(useGetGraphQueryQuery, ({ data, refetch }) => {
   return (
@@ -43,38 +45,22 @@ export default asDetailQueryRoute(useGetGraphQueryQuery, ({ data, refetch }) => 
       <div className="grid md:grid-cols-12 gap-4 md:gap-8 xl:gap-20 md:items-center px-6 py-2">
         <div className="col-span-5">
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-            {data.graphView.label}
+            {data.graphQuery.name}
           </h1>
           <p className="mt-3 text-xl text-muted-foreground">
-            <KraphGraph.DetailLink object={data.graphView.graph.id}>
-              {data.graphView.graph.name}
-            </KraphGraph.DetailLink>
+            <KraphOntology.DetailLink object={data.graphQuery.ontology.id}>
+              {data.graphQuery.ontology.name}
+            </KraphOntology.DetailLink>
           </p>
         </div>
       </div>
+      <Card className="p-6 h-96">
+      <CypherEditor cypher={data.graphQuery.query}  />
+      </Card>
+
+      
 
     
-
-      <div className="p-6 h-full">
-        {data.graphView.render.__typename === "Pairs" && (
-          <div>Pair Rendering</div>
-        )}
-
-        {data.graphView.render.__typename === "Path" && (
-          <PathGraph path={data.graphView.render} />
-        )}
-
-        {data.graphView.render.__typename === "Table" && (
-          <>
-            <div className="p-6">
-        {data.graphView.query.scatterPlots.map((scatterPlot) => (
-          <ScatterPlot scatterPlot={scatterPlot} table={data.graphView.render}/>
-        ))}
-</div>
-<GraphTable table={data.graphView.render} /></>
-          
-        )}
-      </div>
     </KraphGraphQuery.ModelPage>
   );
 });

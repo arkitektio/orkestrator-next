@@ -10,6 +10,12 @@ query LatestPlotViews {
   }
 }
 
+query ListPlotViews {
+  plotViews {
+    ...ListPlotView
+  }
+}
+
 query SearchPlotViews($search: String, $values: [ID!]) {
   options: plotViews(
     filters: { search: $search, ids: $values }

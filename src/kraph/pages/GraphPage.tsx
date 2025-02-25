@@ -8,6 +8,7 @@ import {
   KraphGraph,
   KraphLinkedExpression,
   KraphGraphView,
+  KraphOntology,
 } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { Divide, PlusIcon } from "lucide-react";
@@ -40,8 +41,6 @@ import GraphViewCard from "../components/cards/GraphViewCard";
 import PopularePlotViewsCarousel from "../components/carousels/PopularePlotViewsCarousel";
 
 export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
- 
-
   const [createGraphView] = useCreateGraphViewMutation();
   const nagivate = useNavigate();
 
@@ -64,11 +63,11 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
       title={data.graph.name}
       pageActions={
         <div className="flex flex-row gap-2">
-          <KraphGraph.DetailLink object={data.graph.id} subroute="entities">
+          <KraphOntology.DetailLink object={data.graph.ontology.id}>
             <Button variant={"outline"} size={"sm"}>
-              All Entities
+              Ontology{" "}
             </Button>
-          </KraphGraph.DetailLink>
+          </KraphOntology.DetailLink>
           <FormSheet trigger={<HobbyKnifeIcon />}>
             {data?.graph && <UpdateGraphForm graph={data?.graph} />}
           </FormSheet>
@@ -83,7 +82,7 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
         />
       }
     >
-       <PopularePlotViewsCarousel plots={data.graph.plotViews} />
+      <PopularePlotViewsCarousel plots={data.graph.plotViews} />
 
       <div className="p-6">
         <KraphGraph.DetailLink

@@ -1,0 +1,5 @@
+mutation PinGraphQuery($input: PinGraphQueryInput!) {
+  pinGraphQuery(input: $input) {
+    ...DetailGraphQuery
+  }
+}

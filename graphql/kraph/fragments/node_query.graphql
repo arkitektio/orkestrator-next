@@ -6,4 +6,6 @@ fragment DetailNodeQuery on NodeQuery {
 fragment ListNodeQuery on NodeQuery {
   id
   name
+  description
+  pinned
 }

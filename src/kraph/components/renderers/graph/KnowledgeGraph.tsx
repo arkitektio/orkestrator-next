@@ -59,14 +59,13 @@ export const PathGraph: React.FC<Props> = ({ path, ...props }) => {
     const graph = {
       id: "root",
       layoutOptions: {
-        "elk.algorithm": "layered",
+        "elk.algorithm": "mrtree",
+        "elk.spacing.nodeNode": "100",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "100",
         "elk.direction": "DOWN",
-        "elk.layered.spacing.nodeNode": "50",
-        "elk.layered.spacing.edgeNode": "50",
-        "elk.padding": "50",
       },
       children: currentPath.nodes.map((node) => ({
-        id: props.root && props.root == node.id ? "root" : node.id,
+        id: node.id,
         x: node.position.x,
         y: node.position.y,
         width: 200,

@@ -46,6 +46,7 @@ fragment SearchAssignWidget on SearchAssignWidget {
   filters {
     ...FilterPort
   }
+  dependencies
 }
 
 fragment CustomAssignWidget on CustomAssignWidget {

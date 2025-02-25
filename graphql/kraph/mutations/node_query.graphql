@@ -1,0 +1,5 @@
+mutation PinNodeQuery($input: PinNodeQueryInput!) {
+  pinNodeQuery(input: $input) {
+    ...DetailNodeQuery
+  }
+}

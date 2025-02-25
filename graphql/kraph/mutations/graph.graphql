@@ -9,9 +9,13 @@ mutation DeleteGraph($id: ID!) {
 }
 
 mutation UpdateGraph($input: UpdateGraphInput!) {
-  updateGraph(
-    input: $input
-  ) {
+  updateGraph(input: $input) {
+    ...Graph
+  }
+}
+
+mutation PinGraph($input: PinGraphInput!) {
+  pinGraph(input: $input) {
     ...Graph
   }
 }

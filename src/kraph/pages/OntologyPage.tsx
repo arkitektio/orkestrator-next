@@ -26,6 +26,7 @@ import RelationCategoryCard from "../components/cards/RelationCategoryCard";
 import StructureCategoryCard from "../components/cards/StructureCategoryCard";
 import CreateExpressionForm from "../forms/CreateStructureCategoryForm";
 import { UpdateOntologyForm } from "../forms/UpdateOntologyForm";
+import NodeQueryCard from "../components/cards/NodeQueryCard";
 
 cytoscape.use(cola);
 
@@ -162,6 +163,16 @@ export default asDetailQueryRoute(useGetOntologyQuery, ({ data, refetch }) => {
           <div className="grid grid-cols-5 gap-4">
             {data.ontology.graphQueries.map((graph) => (
               <GraphQueryCard key={graph.id} item={graph} />
+            ))}
+          </div>
+        </div>
+        <h3 className="text-2xl font-bold p-2">
+          Queries for for Nodes in this Graph
+        </h3>
+        <div className="p-2">
+          <div className="grid grid-cols-5 gap-4">
+            {data.ontology.nodeQueries.map((graph) => (
+              <NodeQueryCard key={graph.id} item={graph} />
             ))}
           </div>
         </div>

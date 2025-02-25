@@ -1,11 +1,13 @@
 fragment Graph on Graph {
   id
   name
+  pinned
   description
   latestNodes(pagination: { limit: 10 }) {
     ...ListNode
   }
   ontology {
+    id
     graphQueries {
       id
       name
@@ -26,4 +28,5 @@ fragment Graph on Graph {
 fragment ListGraph on Graph {
   id
   name
+  pinned
 }

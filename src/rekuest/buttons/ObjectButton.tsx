@@ -54,6 +54,8 @@ import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
 import { NodeAssignForm } from "../forms/NodeAssignForm";
 import { useAssign } from "../hooks/useAssign";
 import { BiRun } from "react-icons/bi";
+import { useHashAction } from "../hooks/useHashActions";
+import { KABINET_INSTALL_DEFINITION_HASH } from "@/constants";
 
 export const DirectTemplateAssignment = (
   props: SmartContextProps & { node: PrimaryNodeFragment },
@@ -131,6 +133,25 @@ export const AssignButton = (
   );
 };
 
+export const AutoInstallButton = (props: { definition: string }) => {
+  const { assign } = useHashAction({
+    hash: KABINET_INSTALL_DEFINITION_HASH,
+  });
+
+  return (
+    <Button
+      className="group-hover:block hidden"
+      variant={"outline"}
+      onClick={(e) => {
+        e.preventDefault();
+        assign({ args: { definition: props.definition } });
+      }}
+    >
+      Auto Install
+    </Button>
+  );
+};
+
 export const InstallButton = (props: {
   definition: ListDefinitionFragment;
   children: React.ReactNode;
@@ -153,13 +174,17 @@ export const InstallButton = (props: {
       className="flex-1 "
     >
       <Tooltip>
-        <TooltipTrigger className="flex flex-col">
-          <span className="mr-auto text-md text-gray-100 flex">
-            {props.definition.name}
-          </span>
-          <span className="mr-auto text-xs text-gray-400">
-            {props.definition.description}
-          </span>
+        <TooltipTrigger className="flex flex-row group w-full">
+          <div className="flex-col">
+            <div className="text-md text-gray-100 text-left">
+              {props.definition.name}
+            </div>
+            <div className="text-xs text-gray-400 text-left">
+              {props.definition.description}
+            </div>
+          </div>
+          <div className="flex-grow"></div>
+          <AutoInstallButton definition={props.definition.id} />
         </TooltipTrigger>
         <TooltipContent>{props.definition.description}</TooltipContent>
       </Tooltip>
@@ -492,7 +517,7 @@ export const ObjectButton = (props: ObjectButtonProps) => {
                 </Button>
               )}
             </PopoverTrigger>
-            <PopoverContent className="text-white border-gray-800 px-2 py-2 items-center">
+            <PopoverContent className="text-white border-gray-800 px-2 py-2 items-left">
               <SmartContext
                 {...props}
                 onSelectNode={conditionalAssign}

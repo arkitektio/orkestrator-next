@@ -204,6 +204,8 @@ export type Entity = Node & {
   /** The unique identifier of the entity within its graph */
   leftEdges: Array<Edge>;
   nodeViews: Array<NodeView>;
+  /** Protocol steps where this entity was the target */
+  pinnedViews: Array<NodeView>;
   /** The unique identifier of the entity within its graph */
   rightEdges: Array<Edge>;
   /** Protocol steps where this entity was the target */
@@ -376,6 +378,7 @@ export type Graph = {
   name: Scalars['String']['output'];
   nodeViews: Array<NodeView>;
   ontology: Ontology;
+  pinned: Scalars['Boolean']['output'];
   plotViews: Array<PlotView>;
 };
 
@@ -413,6 +416,7 @@ export type GraphFilter = {
   id?: InputMaybe<Scalars['ID']['input']>;
   /** Filter by list of IDs */
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  pinned?: InputMaybe<Scalars['Boolean']['input']>;
   /** Search by text */
   search?: InputMaybe<Scalars['String']['input']>;
 };
@@ -421,7 +425,7 @@ export type GraphInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   experiment?: InputMaybe<Scalars['ID']['input']>;
   name: Scalars['String']['input'];
-  ontology: Scalars['ID']['input'];
+  ontology?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type GraphPaginationInput = {
@@ -437,6 +441,7 @@ export type GraphQuery = {
   kind: ViewKind;
   name: Scalars['String']['output'];
   ontology: Ontology;
+  pinned: Scalars['Boolean']['output'];
   query: Scalars['String']['output'];
   scatterPlots: Array<ScatterPlot>;
   views: Array<GraphView>;
@@ -744,6 +749,12 @@ export type Mutation = {
   deleteScatterPlot: Scalars['ID']['output'];
   /** Delete an existing expression */
   deleteStructureCategory: Scalars['ID']['output'];
+  /** Pin or unpin a graph */
+  pinGraph: Graph;
+  /** Pin or unpin a graph query */
+  pinGraphQuery: GraphQuery;
+  /** Pin or unpin a node query */
+  pinNodeQuery: NodeQuery;
   /** Request a new file upload */
   requestUpload: PresignedPostCredentials;
   /** Update an existing expression */
@@ -925,6 +936,21 @@ export type MutationDeleteStructureCategoryArgs = {
 };
 
 
+export type MutationPinGraphArgs = {
+  input: PinGraphInput;
+};
+
+
+export type MutationPinGraphQueryArgs = {
+  input: PinGraphQueryInput;
+};
+
+
+export type MutationPinNodeQueryArgs = {
+  input: PinNodeQueryInput;
+};
+
+
 export type MutationRequestUploadArgs = {
   input: RequestMediaUploadInput;
 };
@@ -982,6 +1008,8 @@ export type Node = {
   /** The unique identifier of the entity within its graph */
   leftEdges: Array<Edge>;
   nodeViews: Array<NodeView>;
+  /** Protocol steps where this entity was the target */
+  pinnedViews: Array<NodeView>;
   /** The unique identifier of the entity within its graph */
   rightEdges: Array<Edge>;
 };
@@ -1007,6 +1035,7 @@ export type NodeQuery = {
   kind: ViewKind;
   name: Scalars['String']['output'];
   ontology: Ontology;
+  pinned: Scalars['Boolean']['output'];
   query: Scalars['String']['output'];
 };
 
@@ -1268,6 +1297,21 @@ export type Path = {
   __typename?: 'Path';
   edges: Array<Edge>;
   nodes: Array<Node>;
+};
+
+export type PinGraphInput = {
+  id: Scalars['ID']['input'];
+  pinned: Scalars['Boolean']['input'];
+};
+
+export type PinGraphQueryInput = {
+  id: Scalars['ID']['input'];
+  pinned: Scalars['Boolean']['input'];
+};
+
+export type PinNodeQueryInput = {
+  id: Scalars['ID']['input'];
+  pinned: Scalars['Boolean']['input'];
 };
 
 export type PlateChildInput = {
@@ -1737,8 +1781,9 @@ export type QueryScatterPlotsArgs = {
 
 
 export type QueryStructureArgs = {
-  graph: Scalars['ID']['input'];
-  structure: Scalars['StructureString']['input'];
+  graph?: InputMaybe<Scalars['ID']['input']>;
+  identifier: Scalars['StructureIdentifier']['input'];
+  object: Scalars['ID']['input'];
 };
 
 
@@ -1959,6 +2004,8 @@ export type Structure = Node & {
   nodeViews: Array<NodeView>;
   /** The expression that defines this entity's type */
   object: Scalars['String']['output'];
+  /** Protocol steps where this entity was the target */
+  pinnedViews: Array<NodeView>;
   /** The unique identifier of the entity within its graph */
   rightEdges: Array<Edge>;
 };
@@ -2010,7 +2057,7 @@ export type StructureCategoryInput = {
 };
 
 export type StructureInput = {
-  graph: Scalars['ID']['input'];
+  graph?: InputMaybe<Scalars['ID']['input']>;
   structure: Scalars['StructureString']['input'];
 };
 
@@ -2210,13 +2257,13 @@ export type ListEntityFragment = { __typename?: 'Entity', id: any, label: string
 
 export type EntityGraphNodeFragment = { __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', color?: Array<number> | null } };
 
-export type GraphFragment = { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, ontology: { __typename?: 'Ontology', graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> }, graphViews: Array<{ __typename?: 'GraphView', id: string, label: string }>, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> };
+export type GraphFragment = { __typename?: 'Graph', id: string, name: string, pinned: boolean, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, ontology: { __typename?: 'Ontology', id: string, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> }, graphViews: Array<{ __typename?: 'GraphView', id: string, label: string }>, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> };
 
-export type ListGraphFragment = { __typename?: 'Graph', id: string, name: string };
+export type ListGraphFragment = { __typename?: 'Graph', id: string, name: string, pinned: boolean };
 
 export type DetailGraphQueryFragment = { __typename?: 'GraphQuery', id: string, name: string, query: string, description?: string | null, ontology: { __typename?: 'Ontology', id: string, name: string }, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string }> };
 
-export type ListGraphQueryFragment = { __typename?: 'GraphQuery', id: string, name: string, description?: string | null };
+export type ListGraphQueryFragment = { __typename?: 'GraphQuery', id: string, name: string, description?: string | null, pinned: boolean };
 
 export type GraphViewFragment = { __typename?: 'GraphView', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string }, query: { __typename?: 'GraphQuery', id: string, name: string, query: string }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } }, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> };
 
@@ -2272,9 +2319,9 @@ type Node_Structure_Fragment = { __typename?: 'Structure', id: any, label: strin
 
 export type NodeFragment = Node_Entity_Fragment | Node_Structure_Fragment;
 
-type DetailNode_Entity_Fragment = { __typename?: 'Entity', id: any, label: string, graph: { __typename?: 'Graph', id: string, name: string, ontology: { __typename?: 'Ontology', nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string }> } }, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> };
+type DetailNode_Entity_Fragment = { __typename?: 'Entity', id: any, label: string, graph: { __typename?: 'Graph', id: string, name: string, ontology: { __typename?: 'Ontology', nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> } }, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> };
 
-type DetailNode_Structure_Fragment = { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, graph: { __typename?: 'Graph', id: string, name: string, ontology: { __typename?: 'Ontology', nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string }> } }, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, category: { __typename?: 'StructureCategory', identifier: string } };
+type DetailNode_Structure_Fragment = { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, graph: { __typename?: 'Graph', id: string, name: string, ontology: { __typename?: 'Ontology', nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> } }, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, category: { __typename?: 'StructureCategory', identifier: string } };
 
 export type DetailNodeFragment = DetailNode_Entity_Fragment | DetailNode_Structure_Fragment;
 
@@ -2286,13 +2333,13 @@ export type ListNodeFragment = ListNode_Entity_Fragment | ListNode_Structure_Fra
 
 export type DetailNodeQueryFragment = { __typename?: 'NodeQuery', name: string, query: string };
 
-export type ListNodeQueryFragment = { __typename?: 'NodeQuery', id: string, name: string };
+export type ListNodeQueryFragment = { __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean };
 
 export type NodeViewFragment = { __typename?: 'NodeView', id: string, label: string, node: { __typename?: 'Entity', id: any, graphId: string } | { __typename?: 'Structure', id: any, graphId: string }, query: { __typename?: 'NodeQuery', id: string, name: string, query: string }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } };
 
 export type ListNodeViewFragment = { __typename?: 'NodeView', id: string, label: string };
 
-export type OntologyFragment = { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, structureCategories: Array<{ __typename?: 'StructureCategory', identifier: string, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, genericCategories: Array<{ __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, relationCategories: Array<{ __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, description?: string | null }> };
+export type OntologyFragment = { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, structureCategories: Array<{ __typename?: 'StructureCategory', identifier: string, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, genericCategories: Array<{ __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, relationCategories: Array<{ __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string, pinned: boolean }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, description?: string | null, pinned: boolean }>, nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> };
 
 export type ListOntologyFragment = { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null };
 
@@ -2327,6 +2374,8 @@ export type RelationFragment = { __typename?: 'Relation', id: any, label: string
 export type ScatterPlotFragment = { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null };
 
 export type MediaStoreFragment = { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string };
+
+export type KnowledgeStructureFragment = { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string }, pinnedViews: Array<{ __typename?: 'NodeView', id: string, label: string, node: { __typename?: 'Entity', id: any, graphId: string } | { __typename?: 'Structure', id: any, graphId: string }, query: { __typename?: 'NodeQuery', id: string, name: string, query: string }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }> };
 
 export type StructureFragment = { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } };
 
@@ -2385,7 +2434,7 @@ export type CreateGraphMutationVariables = Exact<{
 }>;
 
 
-export type CreateGraphMutation = { __typename?: 'Mutation', createGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, ontology: { __typename?: 'Ontology', graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> }, graphViews: Array<{ __typename?: 'GraphView', id: string, label: string }>, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> } };
+export type CreateGraphMutation = { __typename?: 'Mutation', createGraph: { __typename?: 'Graph', id: string, name: string, pinned: boolean, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, ontology: { __typename?: 'Ontology', id: string, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> }, graphViews: Array<{ __typename?: 'GraphView', id: string, label: string }>, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> } };
 
 export type DeleteGraphMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2399,7 +2448,21 @@ export type UpdateGraphMutationVariables = Exact<{
 }>;
 
 
-export type UpdateGraphMutation = { __typename?: 'Mutation', updateGraph: { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, ontology: { __typename?: 'Ontology', graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> }, graphViews: Array<{ __typename?: 'GraphView', id: string, label: string }>, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> } };
+export type UpdateGraphMutation = { __typename?: 'Mutation', updateGraph: { __typename?: 'Graph', id: string, name: string, pinned: boolean, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, ontology: { __typename?: 'Ontology', id: string, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> }, graphViews: Array<{ __typename?: 'GraphView', id: string, label: string }>, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> } };
+
+export type PinGraphMutationVariables = Exact<{
+  input: PinGraphInput;
+}>;
+
+
+export type PinGraphMutation = { __typename?: 'Mutation', pinGraph: { __typename?: 'Graph', id: string, name: string, pinned: boolean, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, ontology: { __typename?: 'Ontology', id: string, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> }, graphViews: Array<{ __typename?: 'GraphView', id: string, label: string }>, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> } };
+
+export type PinGraphQueryMutationVariables = Exact<{
+  input: PinGraphQueryInput;
+}>;
+
+
+export type PinGraphQueryMutation = { __typename?: 'Mutation', pinGraphQuery: { __typename?: 'GraphQuery', id: string, name: string, query: string, description?: string | null, ontology: { __typename?: 'Ontology', id: string, name: string }, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string }> } };
 
 export type CreateGraphViewMutationVariables = Exact<{
   input: GraphViewInput;
@@ -2407,6 +2470,13 @@ export type CreateGraphViewMutationVariables = Exact<{
 
 
 export type CreateGraphViewMutation = { __typename?: 'Mutation', createGraphView: { __typename?: 'GraphView', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string }, query: { __typename?: 'GraphQuery', id: string, name: string, query: string }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } }, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> } };
+
+export type PinNodeQueryMutationVariables = Exact<{
+  input: PinNodeQueryInput;
+}>;
+
+
+export type PinNodeQueryMutation = { __typename?: 'Mutation', pinNodeQuery: { __typename?: 'NodeQuery', name: string, query: string } };
 
 export type CreateNodeViewMutationVariables = Exact<{
   input: NodeViewInput;
@@ -2420,14 +2490,14 @@ export type CreateOntologyMutationVariables = Exact<{
 }>;
 
 
-export type CreateOntologyMutation = { __typename?: 'Mutation', createOntology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, structureCategories: Array<{ __typename?: 'StructureCategory', identifier: string, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, genericCategories: Array<{ __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, relationCategories: Array<{ __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, description?: string | null }> } };
+export type CreateOntologyMutation = { __typename?: 'Mutation', createOntology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, structureCategories: Array<{ __typename?: 'StructureCategory', identifier: string, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, genericCategories: Array<{ __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, relationCategories: Array<{ __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string, pinned: boolean }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, description?: string | null, pinned: boolean }>, nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> } };
 
 export type UpdateOntologyMutationVariables = Exact<{
   input: UpdateOntologyInput;
 }>;
 
 
-export type UpdateOntologyMutation = { __typename?: 'Mutation', updateOntology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, structureCategories: Array<{ __typename?: 'StructureCategory', identifier: string, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, genericCategories: Array<{ __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, relationCategories: Array<{ __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, description?: string | null }> } };
+export type UpdateOntologyMutation = { __typename?: 'Mutation', updateOntology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, structureCategories: Array<{ __typename?: 'StructureCategory', identifier: string, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, genericCategories: Array<{ __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, relationCategories: Array<{ __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string, pinned: boolean }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, description?: string | null, pinned: boolean }>, nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> } };
 
 export type DeleteOntologyMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2520,12 +2590,12 @@ export type GetGraphQueryVariables = Exact<{
 }>;
 
 
-export type GetGraphQuery = { __typename?: 'Query', graph: { __typename?: 'Graph', id: string, name: string, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, ontology: { __typename?: 'Ontology', graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> }, graphViews: Array<{ __typename?: 'GraphView', id: string, label: string }>, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> } };
+export type GetGraphQuery = { __typename?: 'Query', graph: { __typename?: 'Graph', id: string, name: string, pinned: boolean, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, ontology: { __typename?: 'Ontology', id: string, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> }, graphViews: Array<{ __typename?: 'GraphView', id: string, label: string }>, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> } };
 
 export type MyActiveGraphQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MyActiveGraphQuery = { __typename?: 'Query', myActiveGraph: { __typename?: 'Graph', id: string, name: string } };
+export type MyActiveGraphQuery = { __typename?: 'Query', myActiveGraph: { __typename?: 'Graph', id: string, name: string, pinned: boolean } };
 
 export type ListGraphsQueryVariables = Exact<{
   filters?: InputMaybe<GraphFilter>;
@@ -2533,7 +2603,7 @@ export type ListGraphsQueryVariables = Exact<{
 }>;
 
 
-export type ListGraphsQuery = { __typename?: 'Query', graphs: Array<{ __typename?: 'Graph', id: string, name: string }> };
+export type ListGraphsQuery = { __typename?: 'Query', graphs: Array<{ __typename?: 'Graph', id: string, name: string, pinned: boolean }> };
 
 export type SearchGraphsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -2593,7 +2663,7 @@ export type GetNodeQueryVariables = Exact<{
 }>;
 
 
-export type GetNodeQuery = { __typename?: 'Query', node: { __typename?: 'Entity', id: any, label: string, graph: { __typename?: 'Graph', id: string, name: string, ontology: { __typename?: 'Ontology', nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string }> } }, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, graph: { __typename?: 'Graph', id: string, name: string, ontology: { __typename?: 'Ontology', nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string }> } }, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, category: { __typename?: 'StructureCategory', identifier: string } } };
+export type GetNodeQuery = { __typename?: 'Query', node: { __typename?: 'Entity', id: any, label: string, graph: { __typename?: 'Graph', id: string, name: string, ontology: { __typename?: 'Ontology', nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> } }, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, graph: { __typename?: 'Graph', id: string, name: string, ontology: { __typename?: 'Ontology', nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> } }, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, category: { __typename?: 'StructureCategory', identifier: string } } };
 
 export type GetNodeViewQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2615,7 +2685,7 @@ export type GetOntologyQueryVariables = Exact<{
 }>;
 
 
-export type GetOntologyQuery = { __typename?: 'Query', ontology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, structureCategories: Array<{ __typename?: 'StructureCategory', identifier: string, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, genericCategories: Array<{ __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, relationCategories: Array<{ __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, description?: string | null }> } };
+export type GetOntologyQuery = { __typename?: 'Query', ontology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, structureCategories: Array<{ __typename?: 'StructureCategory', identifier: string, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, genericCategories: Array<{ __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, relationCategories: Array<{ __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string, pinned: boolean }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, description?: string | null, pinned: boolean }>, nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> } };
 
 export type ListOntologiesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -2755,15 +2825,16 @@ export type GlobalSearchQueryVariables = Exact<{
 }>;
 
 
-export type GlobalSearchQuery = { __typename?: 'Query', graphs: Array<{ __typename?: 'Graph', id: string, name: string }>, ontologies: Array<{ __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null }> };
+export type GlobalSearchQuery = { __typename?: 'Query', graphs: Array<{ __typename?: 'Graph', id: string, name: string, pinned: boolean }>, ontologies: Array<{ __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null }> };
 
 export type GetStructureQueryVariables = Exact<{
-  graph: Scalars['ID']['input'];
-  structure: Scalars['StructureString']['input'];
+  identifier: Scalars['StructureIdentifier']['input'];
+  object: Scalars['ID']['input'];
+  graph?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
 
-export type GetStructureQuery = { __typename?: 'Query', structure: { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } } };
+export type GetStructureQuery = { __typename?: 'Query', structure: { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string }, pinnedViews: Array<{ __typename?: 'NodeView', id: string, label: string, node: { __typename?: 'Entity', id: any, graphId: string } | { __typename?: 'Structure', id: any, graphId: string }, query: { __typename?: 'NodeQuery', id: string, name: string, query: string }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }> } };
 
 export type GetStructureCategoryQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2969,11 +3040,13 @@ export const GraphFragmentDoc = gql`
     fragment Graph on Graph {
   id
   name
+  pinned
   description
   latestNodes(pagination: {limit: 10}) {
     ...ListNode
   }
   ontology {
+    id
     graphQueries {
       id
       name
@@ -3183,6 +3256,8 @@ export const ListNodeQueryFragmentDoc = gql`
     fragment ListNodeQuery on NodeQuery {
   id
   name
+  description
+  pinned
 }
     `;
 export const DetailNodeFragmentDoc = gql`
@@ -3210,28 +3285,6 @@ export const DetailNodeQueryFragmentDoc = gql`
   query
 }
     `;
-export const NodeViewFragmentDoc = gql`
-    fragment NodeView on NodeView {
-  id
-  label
-  node {
-    id
-    graphId
-  }
-  query {
-    id
-    name
-    query
-  }
-  render {
-    ...Path
-    ...Pairs
-    ...Table
-  }
-}
-    ${PathFragmentDoc}
-${PairsFragmentDoc}
-${TableFragmentDoc}`;
 export const MediaStoreFragmentDoc = gql`
     fragment MediaStore on MediaStore {
   id
@@ -3243,6 +3296,7 @@ export const ListGraphFragmentDoc = gql`
     fragment ListGraph on Graph {
   id
   name
+  pinned
 }
     `;
 export const ListGraphQueryFragmentDoc = gql`
@@ -3250,6 +3304,7 @@ export const ListGraphQueryFragmentDoc = gql`
   id
   name
   description
+  pinned
 }
     `;
 export const OntologyFragmentDoc = gql`
@@ -3279,6 +3334,9 @@ export const OntologyFragmentDoc = gql`
   graphQueries {
     ...ListGraphQuery
   }
+  nodeQueries {
+    ...ListNodeQuery
+  }
 }
     ${ListStructureCategoryFragmentDoc}
 ${ListGenericCategoryFragmentDoc}
@@ -3286,7 +3344,8 @@ ${ListRelationCategoryFragmentDoc}
 ${ListMeasurementCategoryFragmentDoc}
 ${MediaStoreFragmentDoc}
 ${ListGraphFragmentDoc}
-${ListGraphQueryFragmentDoc}`;
+${ListGraphQueryFragmentDoc}
+${ListNodeQueryFragmentDoc}`;
 export const ListOntologyFragmentDoc = gql`
     fragment ListOntology on Ontology {
   id
@@ -3393,6 +3452,42 @@ export const ListReagentFragmentDoc = gql`
   label
 }
     `;
+export const NodeViewFragmentDoc = gql`
+    fragment NodeView on NodeView {
+  id
+  label
+  node {
+    id
+    graphId
+  }
+  query {
+    id
+    name
+    query
+  }
+  render {
+    ...Path
+    ...Pairs
+    ...Table
+  }
+}
+    ${PathFragmentDoc}
+${PairsFragmentDoc}
+${TableFragmentDoc}`;
+export const KnowledgeStructureFragmentDoc = gql`
+    fragment KnowledgeStructure on Structure {
+  id
+  label
+  identifier
+  object
+  category {
+    identifier
+  }
+  pinnedViews {
+    ...NodeView
+  }
+}
+    ${NodeViewFragmentDoc}`;
 export const ListStructureFragmentDoc = gql`
     fragment ListStructure on Structure {
   identifier
@@ -3705,6 +3800,72 @@ export function useUpdateGraphMutation(baseOptions?: ApolloReactHooks.MutationHo
 export type UpdateGraphMutationHookResult = ReturnType<typeof useUpdateGraphMutation>;
 export type UpdateGraphMutationResult = Apollo.MutationResult<UpdateGraphMutation>;
 export type UpdateGraphMutationOptions = Apollo.BaseMutationOptions<UpdateGraphMutation, UpdateGraphMutationVariables>;
+export const PinGraphDocument = gql`
+    mutation PinGraph($input: PinGraphInput!) {
+  pinGraph(input: $input) {
+    ...Graph
+  }
+}
+    ${GraphFragmentDoc}`;
+export type PinGraphMutationFn = Apollo.MutationFunction<PinGraphMutation, PinGraphMutationVariables>;
+
+/**
+ * __usePinGraphMutation__
+ *
+ * To run a mutation, you first call `usePinGraphMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `usePinGraphMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [pinGraphMutation, { data, loading, error }] = usePinGraphMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function usePinGraphMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PinGraphMutation, PinGraphMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<PinGraphMutation, PinGraphMutationVariables>(PinGraphDocument, options);
+      }
+export type PinGraphMutationHookResult = ReturnType<typeof usePinGraphMutation>;
+export type PinGraphMutationResult = Apollo.MutationResult<PinGraphMutation>;
+export type PinGraphMutationOptions = Apollo.BaseMutationOptions<PinGraphMutation, PinGraphMutationVariables>;
+export const PinGraphQueryDocument = gql`
+    mutation PinGraphQuery($input: PinGraphQueryInput!) {
+  pinGraphQuery(input: $input) {
+    ...DetailGraphQuery
+  }
+}
+    ${DetailGraphQueryFragmentDoc}`;
+export type PinGraphQueryMutationFn = Apollo.MutationFunction<PinGraphQueryMutation, PinGraphQueryMutationVariables>;
+
+/**
+ * __usePinGraphQueryMutation__
+ *
+ * To run a mutation, you first call `usePinGraphQueryMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `usePinGraphQueryMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [pinGraphQueryMutation, { data, loading, error }] = usePinGraphQueryMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function usePinGraphQueryMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PinGraphQueryMutation, PinGraphQueryMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<PinGraphQueryMutation, PinGraphQueryMutationVariables>(PinGraphQueryDocument, options);
+      }
+export type PinGraphQueryMutationHookResult = ReturnType<typeof usePinGraphQueryMutation>;
+export type PinGraphQueryMutationResult = Apollo.MutationResult<PinGraphQueryMutation>;
+export type PinGraphQueryMutationOptions = Apollo.BaseMutationOptions<PinGraphQueryMutation, PinGraphQueryMutationVariables>;
 export const CreateGraphViewDocument = gql`
     mutation CreateGraphView($input: GraphViewInput!) {
   createGraphView(input: $input) {
@@ -3738,6 +3899,39 @@ export function useCreateGraphViewMutation(baseOptions?: ApolloReactHooks.Mutati
 export type CreateGraphViewMutationHookResult = ReturnType<typeof useCreateGraphViewMutation>;
 export type CreateGraphViewMutationResult = Apollo.MutationResult<CreateGraphViewMutation>;
 export type CreateGraphViewMutationOptions = Apollo.BaseMutationOptions<CreateGraphViewMutation, CreateGraphViewMutationVariables>;
+export const PinNodeQueryDocument = gql`
+    mutation PinNodeQuery($input: PinNodeQueryInput!) {
+  pinNodeQuery(input: $input) {
+    ...DetailNodeQuery
+  }
+}
+    ${DetailNodeQueryFragmentDoc}`;
+export type PinNodeQueryMutationFn = Apollo.MutationFunction<PinNodeQueryMutation, PinNodeQueryMutationVariables>;
+
+/**
+ * __usePinNodeQueryMutation__
+ *
+ * To run a mutation, you first call `usePinNodeQueryMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `usePinNodeQueryMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [pinNodeQueryMutation, { data, loading, error }] = usePinNodeQueryMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function usePinNodeQueryMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PinNodeQueryMutation, PinNodeQueryMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<PinNodeQueryMutation, PinNodeQueryMutationVariables>(PinNodeQueryDocument, options);
+      }
+export type PinNodeQueryMutationHookResult = ReturnType<typeof usePinNodeQueryMutation>;
+export type PinNodeQueryMutationResult = Apollo.MutationResult<PinNodeQueryMutation>;
+export type PinNodeQueryMutationOptions = Apollo.BaseMutationOptions<PinNodeQueryMutation, PinNodeQueryMutationVariables>;
 export const CreateNodeViewDocument = gql`
     mutation CreateNodeView($input: NodeViewInput!) {
   createNodeView(input: $input) {
@@ -5459,12 +5653,12 @@ export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery
 export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>;
 export type GlobalSearchQueryResult = Apollo.QueryResult<GlobalSearchQuery, GlobalSearchQueryVariables>;
 export const GetStructureDocument = gql`
-    query GetStructure($graph: ID!, $structure: StructureString!) {
-  structure(graph: $graph, structure: $structure) {
-    ...Structure
+    query GetStructure($identifier: StructureIdentifier!, $object: ID!, $graph: ID) {
+  structure(graph: $graph, identifier: $identifier, object: $object) {
+    ...KnowledgeStructure
   }
 }
-    ${StructureFragmentDoc}`;
+    ${KnowledgeStructureFragmentDoc}`;
 
 /**
  * __useGetStructureQuery__
@@ -5478,8 +5672,9 @@ export const GetStructureDocument = gql`
  * @example
  * const { data, loading, error } = useGetStructureQuery({
  *   variables: {
+ *      identifier: // value for 'identifier'
+ *      object: // value for 'object'
  *      graph: // value for 'graph'
- *      structure: // value for 'structure'
  *   },
  * });
  */

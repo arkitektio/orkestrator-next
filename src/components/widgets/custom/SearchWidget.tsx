@@ -26,10 +26,21 @@ export const SearchWidget = (
 
   const values = useMemo(() => form.getValues(), [form.formState]);
 
+  const foundValues = useMemo(() => {
+    return (
+      props.widget?.dependencies
+        ?.map((dep) => {
+          return values[dep];
+        })
+        .filter((predicate) => predicate !== undefined) || []
+    );
+  }, [values, props.widget?.dependencies]);
+
   const search = useCallback(
     async (searching: SearchOptions) => {
       console.log("searching", searching, theward, wardKey, query);
       if (!theward.search) throw new Error("Ward does not support search");
+
       let options = await theward.search({
         query: query,
         variables: { ...searching, ...values },
@@ -40,6 +51,10 @@ export const SearchWidget = (
     },
     [theward, query, values],
   );
+
+  if (foundValues?.length < (props.widget?.dependencies?.length || 0)) {
+    return <>Waiting for {props.widget?.dependencies?.join(",")}</>;
+  }
 
   if (props.widget?.filters) {
     return (

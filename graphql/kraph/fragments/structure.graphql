@@ -1,3 +1,16 @@
+fragment KnowledgeStructure on Structure {
+  id
+  label
+  identifier
+  object
+  category {
+    identifier
+  }
+  pinnedViews {
+    ...NodeView
+  }
+}
+
 fragment Structure on Structure {
   id
   label

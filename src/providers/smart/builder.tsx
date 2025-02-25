@@ -21,6 +21,7 @@ import {
   OmitedNavLinkProps,
 } from "./types";
 import { SearchFunction, smartRegistry } from "./registry";
+import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
 
 const buildBaseLink = (to: string) => {
   return ({ children, ...props }: BaseLinkProps) => {
@@ -85,7 +86,7 @@ const buildKomments = (model: Identifier) => {
 
 const buildKnowledge = (model: Identifier) => {
   return ({ ...props }: ObjectProps) => {
-    return <> Currently not implemented</>;
+    return <KnowledgeSidebar identifier={model} object={props.object} />;
   };
 };
 

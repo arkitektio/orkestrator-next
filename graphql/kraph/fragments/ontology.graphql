@@ -24,6 +24,9 @@ fragment Ontology on Ontology {
   graphQueries {
     ...ListGraphQuery
   }
+  nodeQueries {
+    ...ListNodeQuery
+  }
 }
 
 fragment ListOntology on Ontology {

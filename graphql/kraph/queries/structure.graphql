@@ -1,5 +1,9 @@
-query GetStructure($graph: ID!, $structure: StructureString!) {
-  structure(graph: $graph, structure: $structure) {
-    ...Structure
+query GetStructure(
+  $identifier: StructureIdentifier!
+  $object: ID!
+  $graph: ID
+) {
+  structure(graph: $graph, identifier: $identifier, object: $object) {
+    ...KnowledgeStructure
   }
 }

@@ -17,4 +17,5 @@ fragment ListGraphQuery on GraphQuery {
   id
   name
   description
+  pinned
 }

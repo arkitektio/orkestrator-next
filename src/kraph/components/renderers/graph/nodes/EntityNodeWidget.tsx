@@ -24,7 +24,7 @@ export default memo(({ data, isConnectable }: EntityNodeWidgetProps) => {
         style={{ padding: 10, width: 200, height: 200 }}
         className="flex flex-col justify-center items-center"
       >
-        <KraphNode.DetailLink object={data.id}>
+        <KraphNode.DetailLink object={data.id} className={"text-xl"}>
           {data.label}
         </KraphNode.DetailLink>
       </Card>

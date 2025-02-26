@@ -1,9 +1,8 @@
 import { Card } from "@/components/ui/card";
-import { KraphGraphQuery, KraphNodeView } from "@/linkers";
+import { KraphNodeView } from "@/linkers";
 import { MateFinder } from "@/mates/types";
 import {
-  ListGraphQueryFragment,
-  ListNodeViewFragment,
+  ListNodeViewFragment
 } from "../../api/graphql";
 
 interface Props {
@@ -14,7 +13,7 @@ interface Props {
 const TheCard = ({ item, mates }: Props) => {
   return (
     <KraphNodeView.Smart object={item?.id} mates={mates}>
-      <Card className="px-2 py-2 h-20 transition-all ease-in-out duration-200 truncate group">
+      <Card className="px-2 py-2  aspect-square transition-all ease-in-out duration-200 truncate group">
         <KraphNodeView.DetailLink
           className={({ isActive } /*  */) =>
             "z-10 font-bold text-md mb-2 cursor-pointer " +

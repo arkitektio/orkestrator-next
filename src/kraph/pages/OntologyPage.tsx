@@ -9,60 +9,23 @@ import { useResolve } from "@/datalayer/hooks/useResolve";
 import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import { KraphExpression, KraphOntology } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
-import cytoscape from "cytoscape";
-import cola from "cytoscape-cola";
 import { PlusIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
-  GetKnowledgeGraphQuery,
   useGetOntologyQuery,
-  useUpdateOntologyMutation,
+  useUpdateOntologyMutation
 } from "../api/graphql";
 import GenericCategoryCard from "../components/cards/GenericCategoryCard";
 import GraphCard from "../components/cards/GraphCard";
 import GraphQueryCard from "../components/cards/GraphQueryCard";
 import MeasurementCategoryCard from "../components/cards/MeasurementCategoryCard";
+import NodeQueryCard from "../components/cards/NodeQueryCard";
 import RelationCategoryCard from "../components/cards/RelationCategoryCard";
 import StructureCategoryCard from "../components/cards/StructureCategoryCard";
 import CreateExpressionForm from "../forms/CreateStructureCategoryForm";
 import { UpdateOntologyForm } from "../forms/UpdateOntologyForm";
-import NodeQueryCard from "../components/cards/NodeQueryCard";
+import { ListRender } from "@/components/layout/ListRender";
 
-cytoscape.use(cola);
-
-export const graphToElements: (graph: GetKnowledgeGraphQuery) => any = (
-  graph,
-) => {
-  return {
-    nodes: graph.knowledgeGraph.nodes.map((node) => ({
-      data: {
-        id: node.id,
-        label: node.label,
-      },
-    })),
-    edges: graph.knowledgeGraph.edges.map((edge) => ({
-      data: {
-        source: edge.source,
-        target: edge.target,
-        label: edge.label,
-      },
-    })),
-  };
-};
-
-const nodeStyle = {
-  shape: "round-rectangle",
-  width: "100px",
-  height: "40px",
-  label: "data(label)",
-  backgroundColor: "#121E2B",
-  "text-valign": "center",
-  color: "#94A3B8",
-  "border-color": "#94A3B8",
-  "border-width": 0.5,
-  "font-family":
-    'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
-};
 
 export default asDetailQueryRoute(useGetOntologyQuery, ({ data, refetch }) => {
   const uploadFile = useMediaUpload();
@@ -150,64 +113,58 @@ export default asDetailQueryRoute(useGetOntologyQuery, ({ data, refetch }) => {
           </div>
         </div>
         <DragZone uploadFile={uploadFile} createFile={createFile} />
-        <h3 className="text-2xl font-bold p-2">Graphs</h3>
-        <div className="p-2">
-          <div className="grid grid-cols-5 gap-4">
-            {data.ontology.graphs.map((graph) => (
-              <GraphCard key={graph.id} item={graph} />
-            ))}
-          </div>
-        </div>
-        <h3 className="text-2xl font-bold p-2">Queries for this Graph</h3>
-        <div className="p-2">
-          <div className="grid grid-cols-5 gap-4">
-            {data.ontology.graphQueries.map((graph) => (
-              <GraphQueryCard key={graph.id} item={graph} />
-            ))}
-          </div>
-        </div>
-        <h3 className="text-2xl font-bold p-2">
-          Queries for for Nodes in this Graph
-        </h3>
-        <div className="p-2">
-          <div className="grid grid-cols-5 gap-4">
-            {data.ontology.nodeQueries.map((graph) => (
-              <NodeQueryCard key={graph.id} item={graph} />
-            ))}
-          </div>
-        </div>
-        <h3 className="text-2xl p-2">Entities</h3>
-        <div className="p-2">
-          <div className="grid grid-cols-5 gap-4">
-            {data.ontology.genericCategories.map((expression) => (
-              <GenericCategoryCard key={expression.id} item={expression} />
-            ))}
-          </div>
-        </div>
-        <h3 className="text-2xl p-2">Structures</h3>
-        <div className="p-2">
-          <div className="grid grid-cols-5 gap-4">
-            {data.ontology.structureCategories.map((expression) => (
-              <StructureCategoryCard key={expression.id} item={expression} />
-            ))}
-          </div>
-        </div>
-        <h3 className="text-2xl p-2">Measurements</h3>
-        <div className="p-2">
-          <div className="grid grid-cols-5 gap-4">
-            {data.ontology.measurementCategories.map((expression) => (
-              <MeasurementCategoryCard key={expression.id} item={expression} />
-            ))}
-          </div>
-        </div>
-        <h3 className="text-2xl  p-2">Relations</h3>
-        <div className="p-2">
-          <div className="grid grid-cols-5 gap-4">
-            {data.ontology.relationCategories.map((expression) => (
-              <RelationCategoryCard key={expression.id} item={expression} />
-            ))}
-          </div>
-        </div>
+
+        
+          <ListRender
+          title="Entities"
+          array={data.ontology.genericCategories}
+          refetch={refetch}
+          >
+          {item => <GenericCategoryCard item={item} />}
+          </ListRender>
+          <ListRender
+          title="Structures"
+          array={data.ontology.structureCategories}
+          refetch={refetch}
+          >
+          {item => <StructureCategoryCard item={item} />}
+          </ListRender>
+          <ListRender
+          title="Measurements"
+          array={data.ontology.measurementCategories}
+          refetch={refetch}
+          >
+          {item => <MeasurementCategoryCard item={item} />}
+          </ListRender>
+          <ListRender
+          title="Relations"
+          array={data.ontology.relationCategories}
+          refetch={refetch}
+          >
+          {item => <RelationCategoryCard item={item} />}
+          </ListRender>
+          <ListRender 
+          title="Graphs"
+          array={data.ontology.graphs}
+          refetch={refetch}
+          >
+          {item => <GraphCard item={item} />}
+          </ListRender>
+          <ListRender
+          title="Queries"
+          array={data.ontology.graphQueries}
+          refetch={refetch}
+          >
+          {item => <GraphQueryCard item={item} />}
+          </ListRender>
+          <ListRender
+          title="Node Queries"
+          array={data.ontology.nodeQueries}
+          refetch={refetch}
+          >
+          {item => <NodeQueryCard item={item} />}
+          </ListRender>
+          
       </div>
     </KraphOntology.ModelPage>
   );

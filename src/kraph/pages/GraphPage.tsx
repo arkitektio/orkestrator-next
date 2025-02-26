@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/popover";
 import GraphViewCard from "../components/cards/GraphViewCard";
 import PopularePlotViewsCarousel from "../components/carousels/PopularePlotViewsCarousel";
+import { ListRender } from "@/components/layout/ListRender";
 
 export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
   const [createGraphView] = useCreateGraphViewMutation();
@@ -102,29 +103,12 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
         >
           Views
         </KraphGraph.DetailLink>
-        <div className="grid grid-cols-6 gap-2">
-          {data?.graph?.graphViews?.map((item, i) => (
-            <GraphViewCard item={item} />
-          ))}
-        </div>
-
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline">Views</Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-56">
-            {data.graph.ontology.graphQueries.map((item) => (
-              <Button
-                key={item.id}
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => createView(item.id)}
-              >
-                {item.name}
-              </Button>
-            ))}
-          </PopoverContent>
-        </Popover>
+        <ListRender
+         title="Views"
+          array={data.graph.graphViews}
+          >
+          {item => <GraphViewCard item={item} />}
+          </ListRender>
       </div>
     </KraphGraph.ModelPage>
   );

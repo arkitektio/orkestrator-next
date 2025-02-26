@@ -158,7 +158,7 @@ export const AccessorDiplay = (props: {
   return (
     <div>
       <div className="text-sm font-semibold">{props.accessor.__typename}</div>
-      <div className="text-xs text-muted-foreground">{props.children}</div>
+      <div className="text-xs text-muted-foreground">{props.value}</div>
     </div>
   );
 };
@@ -247,7 +247,7 @@ export const TableTable = (props: { table: TableFragment }) => {
 
   const initialVariables = {};
 
-  const { metrics, kinds, search } = form.watch();
+  const {  kinds, search } = form.watch();
 
   const { data, loading, refetch, error } = useRowsQuery({
     variables: {
@@ -307,6 +307,7 @@ export const TableTable = (props: { table: TableFragment }) => {
   return (
     <div className="w-full h-full flex flex-col">
       <div className="flex items-center py-4 gap-2 flex-initial">
+        {JSON.stringify(error)}
         <Input
           placeholder="Search..."
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
@@ -315,6 +316,7 @@ export const TableTable = (props: { table: TableFragment }) => {
           }
           className="max-w-sm w-full bg-background"
         />
+    
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">

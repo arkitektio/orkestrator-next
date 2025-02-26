@@ -1,7 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { FormSheet } from "@/components/dialog/FormDialog";
 import { MikroTable } from "@/linkers";
-import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { useGetTableQuery } from "../api/graphql";
 import { TableTable } from "../components/tables/TableTable";
 

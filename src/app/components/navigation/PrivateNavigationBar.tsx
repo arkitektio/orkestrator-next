@@ -35,6 +35,7 @@ import { TbBugOff } from "react-icons/tb";
 import { ModeToggle } from "../ModeToggle";
 import { Icons } from "@/components/icons";
 import { BiSolidWidget } from "react-icons/bi";
+import { BsLightning } from "react-icons/bs";
 
 export type INavigationBarProps = {
   children?: React.ReactNode;
@@ -64,6 +65,8 @@ export const matchIcon = (key: string) => {
       return (
         <ChatBubbleIcon className="w-8 h-8 mx-auto  text-foreground p-[0.5]" />
       );
+    case "elektro":
+      return <BsLightning className="w-8 h-8 mx-auto  text-foreground" />;
     default:
       return <HomeIcon className="w-8 h-8 mx-auto  text-foreground" />;
   }

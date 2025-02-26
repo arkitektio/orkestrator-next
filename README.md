@@ -56,10 +56,9 @@ Before the new version of Orkestrator can be merged into the main repository, th
 - [ ] Basic UI Testing
 - [ ] User Stories (e.g. documentation for specific user stories)
 - [ ] Documentation, Documentation, Documentation
-- [ ] Move to React Query (suggested)
-- [ ] Move to React TanStack Router (suggested)
 - [x] Lazy Load Modules (only if corresponding service in Deployment)
-- [ ] Hosted Deployment (e.g. on Vercel)
+- [ ] Hosted Deployment (e.g. on Goethe Cluster)
+- [x] CI/CD Pipeline
 
 
 ## Service Specific Next Features
@@ -73,7 +72,7 @@ Before the new version of Orkestrator can be merged into the main repository, th
 
 - [x] Move to Mikro Next
 - [X] Establish "Views" as central concept
-- [ ] Deprecated OMERO metadata support
+- [X] Deprecated OMERO metadata support
 
 ### Fluss
 
@@ -92,7 +91,7 @@ Before the new version of Orkestrator can be merged into the main repository, th
 
 - [x] Establish Kabinet
 - [X] Create App Store like Feature
-- [ ] Create App Store UI
+- [X] Create App Store UI
 
 ### Omero-Ark
 
@@ -108,5 +107,9 @@ Before the new version of Orkestrator can be merged into the main repository, th
 - [ ] Build Kluster UI
 - [ ] Elaborate on Dask-Cluster integration
 - [ ] Provide support for other cluster 
+
+### Elektro
+
+- [ ] Implement basic trace visualization
  
 

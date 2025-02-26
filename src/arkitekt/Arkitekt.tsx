@@ -22,6 +22,7 @@ import { App, ServiceMap } from "./types";
 import { createLivekitClient } from "@/lib/livekit/client";
 import { createKraphClient } from "@/lib/kraph/client";
 import { createAlpakaClient } from "@/lib/alpaka/client";
+import { createElektroClient } from "@/lib/elektro/client";
 
 export const electronRedirect = async (
   url: string,
@@ -151,6 +152,21 @@ export const serviceMap: ServiceBuilderMap = {
       };
     },
   },
+  elektro: {
+    key: "elektro",
+    service: "live.arkitekt.elektro",
+    optional: true,
+    builder: (manifest, fakts: any, token) => {
+      return {
+        client: createElektroClient({
+          wsEndpointUrl: fakts.alpaka.ws_endpoint_url,
+          endpointUrl: fakts.alpaka.endpoint_url,
+          possibleTypes: alpakaResult.possibleTypes,
+          retrieveToken: () => token,
+        }),
+      };
+    },
+  },
   livekit: {
     key: "livekit",
     service: "io.livekit.livekit",
@@ -195,6 +211,7 @@ export const Guard = {
   Livekit: buildGuard("livekit"),
   Kraph: buildGuard("kraph"),
   Alpaka: buildGuard("alpaka"),
+  Elektro: buildGuard("elektro"),
 };
 
 export const useMikro = (): ApolloClient<NormalizedCache> => {
@@ -275,6 +292,16 @@ export const useAlpaka = (): ApolloClient<NormalizedCache> => {
   }
 
   return clients.alpaka?.client;
+};
+
+export const useElektro = (): ApolloClient<NormalizedCache> => {
+  const { clients } = useArkitekt();
+
+  if (!clients.elektro?.client) {
+    throw new Error("Elektro client not available");
+  }
+
+  return clients.elektro?.client;
 };
 
 export const useLivekit = (): LivekitClient => {

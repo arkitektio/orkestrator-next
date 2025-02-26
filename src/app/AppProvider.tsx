@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { ShadnWigets } from "@/components/widgets/ShadnWigets";
 import { baseName, Router, WELL_KNOWN_ENDPOINTS } from "@/constants";
+import { ElektroWard } from "@/elektro/ElektroWard";
 import { KabinetWard } from "@/kabinet/KabinetWard";
 import { KraphWard } from "@/kraph/KraphWard";
 import { WellKnownDiscovery } from "@/lib/fakts";
@@ -124,6 +125,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                         <Guard.Alpaka fallback={<></>}>
                           <AlpakaWard key="alpaka" />
                         </Guard.Alpaka>
+                        <Guard.Elektro fallback={<></>}>
+                          <ElektroWard key="elektro" />
+                        </Guard.Elektro>
                         <Guard.Mikro fallback={<></>}>
                           <MikroNextWard key="mikro" />
                         </Guard.Mikro>

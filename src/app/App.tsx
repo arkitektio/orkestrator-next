@@ -22,6 +22,7 @@ import { PrivateNavigationBar } from "./components/navigation/PrivateNavigationB
 import KraphModule from "@/kraph/KraphModule";
 import BlokModule from "@/blok/BlokModule";
 import AlpakaModule from "@/alpaka/AlpakaModule";
+import ElektroModule from "@/elektro/ElektroModule";
 // Entrypoint of the application.
 // We provide two main routers, one for the public routes, and one for the private routes.
 export const protect = (component: React.ReactNode) => {
@@ -51,6 +52,7 @@ function App() {
               {/* This is the callback route for the herre provider, and needs to be publicalyl available. (Represents Oauth2 Callback)*/}
               <Route index element={<Hero />} />
               <Route path="mikro/*" element={protect(<MikroNextModule />)} />
+              <Route path="elektro/*" element={protect(<ElektroModule />)} />
               <Route
                 path="rekuest/*"
                 element={protect(<RekuestNextModule />)}

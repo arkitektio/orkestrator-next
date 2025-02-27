@@ -80,6 +80,8 @@ export const MikroRenderTree = buildSmart(
 
 export const MikroDataset = buildSmart("@mikro/dataset", "mikro/datasets");
 
+export const ElektroTrace = buildSmart("@elekto/trace", "elektro/traces");
+
 export const KraphMetric = buildSmart("@kraph/metric", "kraph/metrics");
 
 export const KraphNode = buildSmart("@kraph/node", "kraph/nodes");

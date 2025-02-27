@@ -1,9 +1,7 @@
 import { PageLayout } from "@/components/layout/PageLayout";
-import { ActionButton } from "@/components/ui/action";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import React from "react";
-import { useCreateRoomMutation } from "../api/graphql";
-import RoomsCarousel from "../components/carousels/RoomsCarousel";
+import TraceList from "../components/lists/TraceList";
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
@@ -17,7 +15,8 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
         </>
       }
     >
-      No Datatypes yet, come back later
+
+      <TraceList/>
 
       <Separator />
     </PageLayout>

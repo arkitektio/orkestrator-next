@@ -11,7 +11,7 @@ import {
   GlobalSearchQueryVariables,
   useGlobalSearchQuery
 } from "../api/graphql";
-import RoomCard from "../components/cards/RoomCard";
+import TraceCard from "../components/cards/TraceCard";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
 
 interface IDataSidebarProps {}
@@ -82,8 +82,8 @@ const Pane: React.FunctionComponent<IDataSidebarProps> = (props) => {
           </>
         ) : (
           <>
-            <ListRender array={data?.rooms}>
-              {(item, i) => <RoomCard item={item} key={i} />}
+            <ListRender array={data?.traces}>
+              {(item, i) => <TraceCard item={item} key={i} />}
             </ListRender>
           </>
         )}

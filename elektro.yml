@@ -1,11 +1,11 @@
 overwrite: true
-schema: "http://jhnnsrs-lab/alpaka/graphql"
-documents: "graphql/alpaka/**/*.graphql"
+schema: "http://jhnnsrs-lab/elektro/graphql"
+documents: "graphql/elektro/**/*.graphql"
 generates:
-  src/alpaka/api/fragments.ts:
+  src/elektro/api/fragments.ts:
     plugins:
       - "fragment-matcher"
-  src/alpaka/api/graphql.ts:
+  src/elektro/api/graphql.ts:
     plugins:
       - "typescript"
       - "typescript-operations"
@@ -13,8 +13,8 @@ generates:
     config:
       withHooks: true
       reactApolloVersion: 3
-      apolloReactHooksImportFrom: "@/lib/alpaka/funcs"
+      apolloReactHooksImportFrom: "@/lib/elektro/funcs"
 
-  src/alpaka/graphql.schema.json:
+  src/elektro/graphql.schema.json:
     plugins:
       - "introspection"

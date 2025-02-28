@@ -154,7 +154,10 @@ function openSecondaryWindow(path: string): void {
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-    secondaryWindow.loadURL(process.env["ELECTRON_RENDERER_URL"] + path);
+
+    let loaded_url = process.env["ELECTRON_RENDERER_URL"] + "#" + path;
+    console.log("Loading URL", loaded_url);
+    secondaryWindow.loadURL(loaded_url);
   } else {
     secondaryWindow
       .loadFile(join(__dirname, "../renderer/index.html"))

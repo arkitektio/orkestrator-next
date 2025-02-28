@@ -21,7 +21,7 @@ export const AppLayout = ({ children, navigationBar }: AppLayoutProps) => {
 
   return (
     <div className="flex flex-col h-screen sm:flex-row bg-background  dark:text-white">
-      <div className="flex-initial flex flex-row md:flex-col mt-1 z-10 md:w-[60px] shadow shadow-xl bg-background">
+      <div className="flex-initial md:flex-col mt-1 z-10 md:w-[60px] shadow shadow-xl bg-background hidden md:block">
         <div className="flex-initial h-12 w-12 border-b-gray-600 mt-2 mx-auto my-auto md:block hidden">
           <div onClick={onClick} className="cursor-pointer">
             {location.pathname == "/" ? (

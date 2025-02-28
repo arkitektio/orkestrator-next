@@ -12,6 +12,7 @@ import React from "react";
 import { useParams } from "react-router-dom";
 import { DebugPage } from "../components/fallbacks/DebugPage";
 import { ErrorPage } from "../components/fallbacks/ErrorPage";
+import { LoadingPage } from "../components/fallbacks/LoadingPage";
 
 export type DetailVariables = {
   id: string;
@@ -84,7 +85,7 @@ export const asDetailQueryRoute = <T extends any>(
       }
     }
 
-    const { data, error, refetch, subscribeToMore } = hook({
+    const { data, error, refetch, loading, subscribeToMore } = hook({
       variables: { id: id },
       ...options.queryOptions,
     });
@@ -92,6 +93,9 @@ export const asDetailQueryRoute = <T extends any>(
     if (error) {
       return <ErrorPage error={error} />;
     }
+
+    if (loading)
+      return <LoadingPage/>;
 
     if (data) {
       if (debug) {
@@ -107,6 +111,5 @@ export const asDetailQueryRoute = <T extends any>(
       );
     }
 
-    return <> Loadding ...</>;
   };
 };

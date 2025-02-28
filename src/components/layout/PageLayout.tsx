@@ -16,6 +16,8 @@ import {
   ResizablePanelGroup,
 } from "../ui/resizable";
 import { Actionbar } from "./Actionbar";
+import { Separator } from "@radix-ui/react-dropdown-menu";
+import { PanelLeft } from "lucide-react";
 
 export type PageVariant = "black" | "default";
 
@@ -63,7 +65,7 @@ export const PageLayout = ({
 
   return (
     <ResizablePanelGroup autoSaveId="page" direction="horizontal">
-      <ResizablePanel className="" defaultSize={80}>
+      <ResizablePanel className="" defaultSize={80} id="page">
         <div
           className={cn(
             "h-full w-full flex flex-col  relative",
@@ -78,7 +80,13 @@ export const PageLayout = ({
                 : "border-0 bg-black bg-clip-padding backdrop-filter backdrop-blur-3xl bg-opacity-20 ",
             )}
           >
-            <div className="flex flex flex-col">
+            <Button onClick={toggleSidebar} variant={"ghost"}>
+            <PanelLeft />
+            <span className="sr-only">Toggle Sidebar</span>
+            </Button>
+            <Separator dir="vertical" className="w-2"/>
+            <div className="flex-grow flex flex-col">
+              
               <h1 className="scroll-m-20 text-2xl font-extrabold tracking-tight lg:text-2xl truncate">
                 {title}
               </h1>

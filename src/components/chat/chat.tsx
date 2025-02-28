@@ -30,6 +30,7 @@ export function Chat({ messages, selectedUser, isMobile, room }: ChatProps) {
     });
   };
 
+  
   const [{ isOver, canDrop }, drop] = useSmartDrop((structures) => {
     send({
       variables: {

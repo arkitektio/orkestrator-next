@@ -5,17 +5,7 @@
         }
       }
       const result: PossibleTypesResultData = {
-  "possibleTypes": {
-    "Descendant": [
-      "LeafDescendant",
-      "MentionDescendant",
-      "ParagraphDescendant"
-    ],
-    "SocialAccount": [
-      "GenericAccount",
-      "OrcidAccount"
-    ]
-  }
+  "possibleTypes": {}
 };
       export default result;
     

@@ -1,6 +1,7 @@
 import { SMART_MODEL_DROP_TYPE } from "@/constants";
 import { Structure } from "@/types";
 import { DropTargetMonitor, useDrop } from "react-dnd";
+import { NativeTypes } from "react-dnd-html5-backend";
 
 export const useSmartDrop = (
   callback: (
@@ -11,46 +12,22 @@ export const useSmartDrop = (
 ) =>
   useDrop(() => {
     return {
-      accept: [SMART_MODEL_DROP_TYPE],
-      drop: (item, monitor) => {
-        if (item && Array.isArray(item)) {
-          // We are dealing with a Smart model in the same window
-          return callback(item as Structure[], monitor);
-        }
-
-        console.log("fff");
-
-        // We might be dealing with a remote window object
-
-        let text = monitor.getItem()?.text;
-
-        console.log("External drop", text);
-        if (text) {
-          let structure: Structure = JSON.parse(text);
-          return callback([structure], monitor);
-        }
-        return {};
-      },
-      collect: (monitor) => {
-        let text = monitor.getItem()?.text;
-        if (text) {
-          let structure: Structure = JSON.parse(text);
-          return {
-            isOver: monitor.isOver(),
-            canDrop: monitor.canDrop(),
-            overItems: [structure],
-            position: monitor.getClientOffset(),
-          };
-        }
-
-        let item = monitor.getItem() as Structure[] | null;
-        console.log(item);
-        return {
-          isOver: !!monitor.isOver(),
-          overItems: [],
-          position: monitor.getClientOffset(),
-          canDrop: !!monitor.canDrop(),
-        };
-      },
+      accept: [SMART_MODEL_DROP_TYPE, NativeTypes.TEXT],
+            drop: (item, monitor) => {
+            console.log("drop", item);
+            let text = item.text;
+      
+            if (text) {
+              let structure: Structure = JSON.parse(text);
+              callback([structure], monitor);
+            } else callback(item, monitor);
+            return {};
+            },
+            collect: (monitor) => {
+            return {
+              isOver: !!monitor.isOver(),
+              canDrop: !!monitor.canDrop(),
+            };
+            },
     };
   }, deps);

@@ -195,9 +195,7 @@ export type DetailRoomFragment = { __typename?: 'Room', id: string, title: strin
 export type ListRoomFragment = { __typename?: 'Room', id: string, title: string, description: string };
 
 export type SendMessageMutationVariables = Exact<{
-  text: Scalars['String']['input'];
-  room: Scalars['ID']['input'];
-  agentId: Scalars['String']['input'];
+  input: SendMessageInput;
 }>;
 
 
@@ -290,8 +288,8 @@ export const ListRoomFragmentDoc = gql`
 }
     `;
 export const SendMessageDocument = gql`
-    mutation SendMessage($text: String!, $room: ID!, $agentId: String!) {
-  send(input: {text: $text, room: $room, agentId: $agentId}) {
+    mutation SendMessage($input: SendMessageInput!) {
+  send(input: $input) {
     ...Message
   }
 }
@@ -311,9 +309,7 @@ export type SendMessageMutationFn = Apollo.MutationFunction<SendMessageMutation,
  * @example
  * const [sendMessageMutation, { data, loading, error }] = useSendMessageMutation({
  *   variables: {
- *      text: // value for 'text'
- *      room: // value for 'room'
- *      agentId: // value for 'agentId'
+ *      input: // value for 'input'
  *   },
  * });
  */

@@ -10,7 +10,7 @@ import {
 } from "../ui/collapsible";
 
 export type FilledGroup = PortGroup & {
-  ports: Port[];
+  filledPorts: Port[];
 };
 
 export const portHash = (port: Port[]) => {
@@ -39,25 +39,22 @@ export const ArgsContainer = ({
   let hash = portHash(ports.filter(notEmpty));
 
   const filledGroups = useMemo(() => {
-    let argGroups: FilledGroup[] = [
-      { key: "default", ports: [], hidden: false },
-    ].concat(groups?.filter(notEmpty).map((g) => ({ ...g, ports: [] })) || []);
-    let defaultGroup = argGroups.find((g) => g.key === "default");
-    for (let port of ports) {
-      if (!port) continue;
-      if (!port?.groups) {
-        argGroups.find((g) => g.key === "default")?.ports.push(port);
-      } else {
-        for (let group of port.groups) {
-          let renderGroup = argGroups.find((g) => g.key === group);
-          if (renderGroup) {
-            renderGroup.ports.push(port);
-          } else if (defaultGroup) {
-            defaultGroup.ports.push(port);
-          }
-        }
-      }
+    if (!groups || groups.length === 0) {
+      groups = [
+        {
+          key: "default",
+          ports: ports.filter(notEmpty).map((p) => p.key),
+        },
+      ];
     }
+
+    let argGroups: FilledGroup[] = groups.filter(notEmpty).map((g) => ({
+      ...g,
+      filledPorts: ports
+        .filter(notEmpty)
+        .filter((x) => g.ports.includes(x?.key)),
+    }));
+
     return argGroups;
   }, [ports, hash]);
 
@@ -75,16 +72,19 @@ export const ArgsContainer = ({
     >
       {filledGroups.map((group, index) => {
         return (
-          <Collapsible
-            defaultOpen={!group.hidden}
-            key={index}
-            className="@container"
-          >
+          <Collapsible key={index} className="@container" defaultOpen={true}>
             {group.key != "default" && (
-              <CollapsibleTrigger>{group.key}</CollapsibleTrigger>
+              <div className="mb-2">
+                <CollapsibleTrigger className="text-xs">
+                  {group.key}
+                </CollapsibleTrigger>
+                <p className="text-muted-foreground text-xs">
+                  {group.description}
+                </p>
+              </div>
             )}
             <CollapsibleContent>
-              {group.ports.map((port, index) => {
+              {group.filledPorts.map((port, index) => {
                 const Widget = registry.getInputWidgetForPort(port);
                 if (hidden && hidden[port.key]) return null;
 

@@ -1,3 +1,4 @@
+import { ValidatorFragment, ValidatorInput } from "@/reaktion/api/graphql";
 import {
   AssignWidgetFragment,
   AssignWidgetInput,
@@ -50,6 +51,14 @@ export const assignWidgetToInput = (
       }))),
     ];
 
+  return input;
+};
+
+export const validatorToInput = (widget: ValidatorFragment): ValidatorInput => {
+  const { __typename, ...rest } = widget;
+  const input: ValidatorInput = {
+    ...rest,
+  };
   return input;
 };
 
@@ -136,6 +145,7 @@ export const convertPortToInput = (port: PortFragment): PortInput => {
     children: children && children.map((c) => cleanChild(c)),
     assignWidget: assignWidget && assignWidgetToInput(assignWidget),
     returnWidget: returnWidget && returnWidgetToInput(returnWidget),
+    validators: rest.validators?.map(validatorToInput) || [],
   };
   return input;
 };

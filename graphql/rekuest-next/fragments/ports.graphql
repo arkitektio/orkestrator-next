@@ -111,12 +111,6 @@ fragment ChildPort on ChildPort {
   description
 }
 
-fragment EffectDependency on EffectDependency {
-  key
-  condition
-  value
-}
-
 fragment CustomEffect on CustomEffect {
   __typename
   kind
@@ -133,9 +127,8 @@ fragment MessageEffect on MessageEffect {
 fragment PortEffect on Effect {
   __typename
   kind
-  dependencies {
-    ...EffectDependency
-  }
+  dependencies
+  function
   ...CustomEffect
   ...MessageEffect
 }
@@ -181,7 +174,6 @@ fragment Port on Port {
   }
   default
   nullable
-  groups
   validators {
     ...Validator
   }
@@ -212,7 +204,12 @@ fragment ReturnWidget on ReturnWidget {
 
 fragment PortGroup on PortGroup {
   key
-  hidden
+  title
+  description
+  effects {
+    ...PortEffect
+  }
+  ports
 }
 
 fragment Ports on Node {

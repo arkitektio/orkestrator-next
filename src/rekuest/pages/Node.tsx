@@ -74,6 +74,7 @@ export const DoNodeForm = ({ node }: { node: DetailNodeFragment }) => {
                 <div className="w-full">
                   <ArgsContainer
                     registry={registry}
+                    groups={node?.portGroups || []}
                     ports={node?.args || []}
                     path={[]}
                   />

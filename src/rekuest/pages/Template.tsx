@@ -72,6 +72,7 @@ export const DoFormBackup = (props: { id: string }) => {
           )}
           <ArgsContainer
             registry={registry}
+            groups={template?.node.portGroups}
             ports={template?.node.args || []}
             path={[]}
           />

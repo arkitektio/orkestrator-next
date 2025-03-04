@@ -74,6 +74,7 @@ export const TemplateAssignForm = (props: TemplateAssignFormProps) => {
             ports={template?.node.args || []}
             path={[]}
             bound={template?.id}
+            groups={template?.node.portGroups}
           />
 
           <DialogFooter>

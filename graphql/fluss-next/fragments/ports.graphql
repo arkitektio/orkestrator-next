@@ -90,12 +90,6 @@ fragment FlussChildPort on ChildPort {
   nullable
 }
 
-fragment FlussEffectDependency on EffectDependency {
-  key
-  condition
-  value
-}
-
 fragment FlussCustomEffect on CustomEffect {
   __typename
   kind
@@ -112,9 +106,7 @@ fragment FlussMessageEffect on MessageEffect {
 fragment FlussPortEffect on Effect {
   __typename
   kind
-  dependencies {
-    ...FlussEffectDependency
-  }
+  dependencies
   ...FlussCustomEffect
   ...FlussMessageEffect
 }
@@ -132,6 +124,14 @@ fragment FlussAssignWidget on AssignWidget {
 fragment Validator on Validator {
   function
   dependencies
+}
+
+fragment FlussPortGroup on PortGroup {
+  __typename
+  key
+  label
+  description
+  ports
 }
 
 fragment FlussPort on Port {
@@ -155,9 +155,11 @@ fragment FlussPort on Port {
   children {
     ...FlussChildPort
   }
+  groups {
+    ...FlussPortGroup
+  }
   default
   nullable
-  groups
   validators {
     ...Validator
   }

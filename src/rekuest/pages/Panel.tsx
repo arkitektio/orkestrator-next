@@ -70,6 +70,7 @@ const Fake = (props: { template: string }) => {
           )}
           <ArgsContainer
             registry={registry}
+            groups={template?.node?.portGroups || []}
             ports={template?.node.args || []}
             path={[]}
             bound={props.template}

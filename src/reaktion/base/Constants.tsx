@@ -46,6 +46,16 @@ export const ArgsContainer = ({
 }) => {
   let hash = portHash(ports.filter(notEmpty));
 
+  if (!groups || groups.length === 0) {
+    groups = [
+      {
+        key: "default",
+        ports: [ports.filter(notEmpty).map((p) => p.key)],
+        hidden: false,
+      },
+    ];
+  }
+
   const filledGroups = useMemo(() => {
     let argGroups: FilledGroup[] = [
       { key: "default", ports: [], hidden: false },

@@ -1,11 +1,6 @@
 import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
 import { Button } from "@/components/ui/button";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -14,7 +9,6 @@ import {
 import { Form } from "@/components/ui/form";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 import { NodeDescription } from "@/lib/rekuest/NodeDescription";
-import { ChevronsUpDown } from "lucide-react";
 import { useHooksSearchLazyQuery } from "../api/graphql";
 import { useNodeAction } from "../hooks/useNodeAction";
 import { usePortForm } from "../hooks/usePortForm";
@@ -74,6 +68,7 @@ export const NodeAssignForm = (props: {
             )}
             <ArgsContainer
               registry={registry}
+              groups={node?.portGroups || []}
               ports={node?.args || []}
               hidden={props.args}
               path={[]}

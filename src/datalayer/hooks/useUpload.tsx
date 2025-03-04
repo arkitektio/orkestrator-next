@@ -89,7 +89,6 @@ const uploadToStore = async (
   console.log("uploadToStore", z);
 
   let data = new FormData();
-  data.append("file", file);
   data.append("key", z.key);
   data.append("bucket", z.bucket);
   data.append("X-Amz-Algorithm", z.xAmzAlgorithm);
@@ -97,6 +96,8 @@ const uploadToStore = async (
   data.append("X-Amz-Date", z.xAmzDate);
   data.append("X-Amz-Signature", z.xAmzSignature);
   data.append("Policy", z.policy);
+
+  data.append("file", file); // HYPER IMPORTANT TO BE THE LAST ITEM FOR FUCKS SAKE; HOW CAN THIS BE A STANDARD?
 
   let x = customFetch(`${endpointUrl}/${z.bucket}`, {
     body: data,

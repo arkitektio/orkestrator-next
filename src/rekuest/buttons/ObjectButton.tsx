@@ -18,6 +18,7 @@ import {
   ContextMenuContent,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import {
   Popover,
   PopoverContent,
@@ -28,13 +29,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { KABINET_INSTALL_DEFINITION_HASH } from "@/constants";
 import {
   ListDefinitionFragment,
   useAllPrimaryDefinitionsQuery,
 } from "@/kabinet/api/graphql";
-import { cn } from "@/lib/utils";
 import { KabinetDefinition } from "@/linkers";
-import { CaretDownIcon } from "@radix-ui/react-icons";
 import { CommandGroup } from "cmdk";
 import React from "react";
 import { useNavigate } from "react-router-dom";
@@ -47,15 +47,10 @@ import {
   useAllPrimaryNodesQuery,
   useTemplatesQuery,
 } from "../api/graphql";
-import { useLiveAssignation } from "../hooks/useAssignations";
-import { useNodeAction } from "../hooks/useNodeAction";
-import { TemplateActionButton } from "./TemplateActionButton";
-import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
 import { NodeAssignForm } from "../forms/NodeAssignForm";
 import { useAssign } from "../hooks/useAssign";
-import { BiRun } from "react-icons/bi";
+import { useLiveAssignation } from "../hooks/useAssignations";
 import { useHashAction } from "../hooks/useHashActions";
-import { KABINET_INSTALL_DEFINITION_HASH } from "@/constants";
 
 export const DirectTemplateAssignment = (
   props: SmartContextProps & { node: PrimaryNodeFragment },
@@ -63,7 +58,7 @@ export const DirectTemplateAssignment = (
   const templates = useTemplatesQuery({
     variables: {
       filters: {
-        nodeHash: props.node,
+        nodeHash: props.node.hash,
       },
     },
   });
@@ -76,16 +71,12 @@ export const DirectTemplateAssignment = (
           <>
             <Button
               variant={"outline"}
-              size={"sm"}
-              className="flex flex-col"
+              size={"lg"}
+              className="flex flex-col gap-1"
               onClick={() => props.onSelectTemplate(props.node, x)}
             >
-              <span className="mr-auto text-md text-gray-100">
-                {x.agent.name}
-              </span>
-              <span className="mr-auto text-xs text-gray-400">
-                {x.interface}
-              </span>
+              <div className="text-md text-gray-100">{x.agent.name}</div>
+              <div className="text-xs text-gray-400">{x.interface}</div>
             </Button>
           </>
         ))}
@@ -127,14 +118,18 @@ export const AssignButton = (
         </CommandItem>
       </ContextMenuTrigger>
       <ContextMenuContent className="text-white border-gray-800 px-2 py-2 items-center">
-        <DirectTemplateAssignment {...props} node={props.node} />
+        <DirectTemplateAssignment
+          {...props}
+          node={props.node}
+          onSelectTemplate={props.onSelectTemplate}
+        />
       </ContextMenuContent>
     </ContextMenu>
   );
 };
 
 export const AutoInstallButton = (props: { definition: string }) => {
-  const { assign } = useHashAction({
+  const { assign, node } = useHashAction({
     hash: KABINET_INSTALL_DEFINITION_HASH,
   });
 
@@ -144,8 +139,9 @@ export const AutoInstallButton = (props: { definition: string }) => {
       variant={"outline"}
       onClick={(e) => {
         e.preventDefault();
-        assign({ args: { definition: props.definition } });
+        assign({ node: node?.id, args: { definition: props.definition } });
       }}
+      disabled={!node}
     >
       Auto Install
     </Button>
@@ -279,6 +275,7 @@ export const ApplicableDefinitions = (props: PassDownProps) => {
         search: props.filter && props.filter != "" ? props.filter : undefined,
       },
     },
+    fetchPolicy: "cache-and-network",
   });
 
   if (!data) {
@@ -565,7 +562,11 @@ export const SmartContext = (props: SmartContextProps) => {
         <CommandList>
           <CommandEmpty>{"No Action available"}</CommandEmpty>
           <ApplicableActions {...props} filter={filter} />
-          <ApplicableNodes {...props} onSelectNode={props.onSelectNode} />
+          <ApplicableNodes
+            {...props}
+            onSelectNode={props.onSelectNode}
+            onSelectTemplate={props.onSelectTemplate}
+          />
           <ApplicableDefinitions {...props} partners={props.partners} />
         </CommandList>
       </Command>

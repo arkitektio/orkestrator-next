@@ -250,8 +250,7 @@ export default asDetailQueryRoute(
         }
       >
         <div className="flex h-full w-full relative">
-          {data?.assignation?.provision?.template?.extension ===
-          "reaktion_next" ? (
+          {data?.assignation?.provision?.template?.extension === "reaktion" ? (
             <AssignationFlow
               id={data?.assignation?.provision.template?.params["flow"]}
               assignation={data.assignation}

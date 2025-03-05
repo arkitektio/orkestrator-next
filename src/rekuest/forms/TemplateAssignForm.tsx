@@ -15,6 +15,7 @@ export type TemplateAssignFormProps = {
   onAssign?: (assignation: PostmanAssignationFragment) => void;
   onError?: (error: any) => void;
   args?: any;
+  hidden?: { [key: string]: any };
 };
 
 export const TemplateAssignForm = (props: TemplateAssignFormProps) => {
@@ -75,6 +76,7 @@ export const TemplateAssignForm = (props: TemplateAssignFormProps) => {
             path={[]}
             bound={template?.id}
             groups={template?.node.portGroups}
+            hidden={props.hidden}
           />
 
           <DialogFooter>

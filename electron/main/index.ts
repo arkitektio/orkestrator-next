@@ -154,7 +154,6 @@ function openSecondaryWindow(path: string): void {
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-
     let loaded_url = process.env["ELECTRON_RENDERER_URL"] + "#" + path;
     console.log("Loading URL", loaded_url);
     secondaryWindow.loadURL(loaded_url);
@@ -205,10 +204,12 @@ function createAuthWindow(url: string): void {
 
     const code = parsedUrl.searchParams.get("code");
     if (!code) {
+      console.log("Received no code in the response");
       mainWindow?.webContents.send("oauth-error", "No code in the response");
     }
     // Do the rest of the authorization flow with the code.
     else {
+      console.log("Received code", code);
       mainWindow?.webContents.send("oauth-response", code);
     }
 
@@ -251,10 +252,10 @@ if (!gotTheLock) {
   });
 }
 
-app.on('window-all-closed', () => {
+app.on("window-all-closed", () => {
   console.log("All windows closed");
-  app.quit()
-})
+  app.quit();
+});
 
 app.on("certificate-error", (event, _, __, ___, ____, callback) => {
   // Prevent having error
@@ -288,8 +289,6 @@ app.whenReady().then(() => {
     openSecondaryWindow(path),
   );
 });
-
-
 
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.

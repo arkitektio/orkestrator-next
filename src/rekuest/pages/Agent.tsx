@@ -21,6 +21,7 @@ import { TemplateActionButton } from "../buttons/TemplateActionButton";
 import TemplateCard from "../components/cards/TemplateCard";
 import AgentCarousel from "../components/carousels/AgentCarousel";
 import { StateDisplay } from "../components/State";
+import { Badge } from "@/components/ui/badge";
 
 export const sizer = (length: number, index: number): string => {
   const divider = 3;
@@ -191,6 +192,14 @@ export default asDetailQueryRoute(
         }
       >
         <AgentCarousel agent={data.agent} />
+
+        <div className="p-6 mt-2">
+          {data.agent.extensions.map((extension) => (
+            <Badge key={extension} className="mr-2">
+              {extension}
+            </Badge>
+          ))}
+        </div>
 
         <div className="p-6 mt-2">
           {data.agent.states.map((state) => (

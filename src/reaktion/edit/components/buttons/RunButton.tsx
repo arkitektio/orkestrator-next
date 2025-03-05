@@ -24,7 +24,7 @@ export const DeployButton = (props: {
   const { data } = useTemplateAtQuery({
     variables: {
       agent: props.agent.id,
-      extension: "reaktion_next",
+      extension: "reaktion",
       interface: props.flow.id,
     },
   });
@@ -33,7 +33,7 @@ export const DeployButton = (props: {
     variables: {
       input: {
         agent: props.agent.id,
-        extension: "reaktion_next",
+        extension: "reaktion",
         template: {
           definition: flowToDefinition(props.flow),
           dependencies: flowToDependencies(props.flow),
@@ -74,7 +74,7 @@ export const RunButton = (props: { flow: FlowFragment }) => {
   const { data } = useTemplatesQuery({
     variables: {
       filters: {
-        extension: "reaktion_next",
+        extension: "reaktion",
         parameters: [
           {
             key: "flow",

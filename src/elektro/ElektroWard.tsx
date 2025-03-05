@@ -1,4 +1,4 @@
-import { useAlpaka } from "@/arkitekt/Arkitekt";
+import { useElektro } from "@/arkitekt/Arkitekt";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { gql } from "@apollo/client";
 import { useEffect } from "react";
@@ -7,7 +7,7 @@ export const ElektroWard: React.FC<{
   fallback?: React.ReactNode;
   key: string;
 }> = ({ key, fallback }) => {
-  const client = useAlpaka();
+  const client = useElektro();
   const { registry } = useWidgetRegistry();
 
   useEffect(() => {

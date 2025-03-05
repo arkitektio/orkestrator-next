@@ -22,7 +22,7 @@ export const DeployButton = (props: {
     variables: {
       input: {
         agent: props.agent.id,
-        extension: "reaktion_next",
+        extension: "reaktion",
         template: {
           definition: flowToDefinition(props.flow),
           dependencies: flowToDependencies(props.flow),
@@ -58,7 +58,7 @@ export const DeployInterfaceButton = (props: { flow: FlowFragment }) => {
   const { data } = useAgentsQuery({
     variables: {
       filters: {
-        extensions: ["reaktion_next"],
+        extensions: ["reaktion"],
       },
     },
   });

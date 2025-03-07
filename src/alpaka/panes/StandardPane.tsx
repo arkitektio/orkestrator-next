@@ -33,25 +33,18 @@ export const NavigationPane = (props: {}) => {
       <SubTreeTitle>Explore</SubTreeTitle>
       <SubTree>
         <DroppableNavLink
-          to="/lok"
+          to="/alpaka"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <Home className="h-4 w-4" />
           Home
         </DroppableNavLink>
-        <DroppableNavLink
-          to="/lok/me"
-          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-        >
-          <RiProfileFill className="h-4 w-4" />
-          Me
-        </DroppableNavLink>
       </SubTree>
 
-      <SubTreeTitle>Users</SubTreeTitle>
+      <SubTreeTitle>Conversations</SubTreeTitle>
       <SubTree>
         <DroppableNavLink
-          to="/lok/rooms"
+          to="/alpaka/rooms"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <CubeIcon className="h-4 w-4" />

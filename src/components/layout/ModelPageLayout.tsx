@@ -107,8 +107,6 @@ export const ModelPageLayout = ({
         }
       };
 
-
-
   return (
     <Dialog open={!!dialogNode} onOpenChange={() => setDialogNode(null)}>
     <div className="h-full w-full" ref={drop}>

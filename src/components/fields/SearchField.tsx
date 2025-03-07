@@ -23,9 +23,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn, notEmpty } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { FieldProps } from "./types";
+import { set } from "date-fns";
 
 export type Option = {
   label: string;
@@ -88,6 +89,9 @@ export const SearchField = ({
 
   const [options, setOptions] = useState<(Option | null | undefined)[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>();
+  const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState("");
 
   const query = (string: string) => {
     search({ search: string })
@@ -113,6 +117,26 @@ export const SearchField = ({
       });
   }, [name, search]);
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      const input = inputRef.current;
+      if (input) {
+        if (e.key === "Delete" || e.key === "Backspace") {
+          if (input.value === "") {
+            form.setValue(name, undefined, {
+              shouldValidate: true,
+            });
+          }
+        }
+        // This is not a default behaviour of the <input /> field
+        if (e.key === "Escape") {
+          input.blur();
+        }
+      }
+    },
+    [],
+  );
+
   return (
     <FormField
       control={form.control}
@@ -122,70 +146,93 @@ export const SearchField = ({
         <>
           <FormItem className="flex flex-col dark:text-white">
             {label != undefined && <FormLabel>{label}</FormLabel>}
-            <Popover>
-              <PopoverTrigger asChild>
-                <FormControl>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    className={cn(
-                      "justify-between overflow-hidden truncate ellipsis",
-                      !field.value && "text-muted-foreground",
-                    )}
-                  >
-                    {field.value ? (
-                      <ButtonLabel search={search} value={field.value} />
-                    ) : (
-                      <> {error ? error : placeholder}</>
-                    )}
-                    <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </FormControl>
-              </PopoverTrigger>
-              <PopoverContent className="w-[80%] p-0">
-                <Command shouldFilter={false}>
+            <Command
+              shouldFilter={false}
+              className="overflow-visible bg-transparent"
+            >
+              <div className="group rounded-md border border-input text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                <div className="w-full relative h-10">
                   <CommandInput
+                    onKeyDown={handleKeyDown}
                     placeholder={commandPlaceholder}
-                    className="h-9"
+                    ref={inputRef}
                     onValueChange={(e) => {
+                      setInputValue(e);
                       query(e);
                     }}
+                    value={inputValue}
+                    onBlur={() => setOpen(false)}
+                    onFocus={() => setOpen(true)}
                   />
+                  {field.value && (
+                    <div
+                      className={cn(
+                        "absolute w-full h-full flex flex-row items-center bg-slate-800 top-0 left-0 rounded-md px-2 flex h-10 w-full rounded-md  py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
+                      )}
+                      onClick={() => {
+                        setInputValue("");
+                        form.setValue(name, undefined, {
+                          shouldValidate: true,
+                        });
+                        inputRef.current.focus();
+                      }}
+                    >
+                      <ButtonLabel search={search} value={field.value} />
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="relative mt-2">
+                {open && (
                   <CommandList>
-                    <CommandEmpty>{noOptionFoundPlaceholder}</CommandEmpty>
-                    {error && (
-                      <CommandGroup heading="Error">
-                        {error && <CommandItem>{error}</CommandItem>}
+                    <div className="absolute top-0 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
+                      <CommandEmpty>{noOptionFoundPlaceholder}</CommandEmpty>
+                      {error && (
+                        <CommandGroup heading="Error">
+                          {error && <CommandItem>{error}</CommandItem>}
+                        </CommandGroup>
+                      )}
+                      <CommandGroup>
+                        {options.filter(notEmpty).map((option) => (
+                          <CommandItem
+                            value={option.value}
+                            key={option.value}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                            onSelect={() => {
+                              if (field.value !== option.value) {
+                                form.setValue(name, option.value, {
+                                  shouldValidate: true,
+                                });
+                                setInputValue("");
+                              } else {
+                                form.setValue(name, undefined, {
+                                  shouldValidate: true,
+                                });
+                                setInputValue("");
+                              }
+                              setOpen(false);
+                            }}
+                          >
+                            {option.label}
+                            <CheckIcon
+                              className={cn(
+                                "ml-auto h-4 w-4",
+                                option.value === field.value
+                                  ? "opacity-100"
+                                  : "opacity-0",
+                              )}
+                            />
+                          </CommandItem>
+                        ))}
                       </CommandGroup>
-                    )}
-                    <CommandGroup>
-                      {options.filter(notEmpty).map((option) => (
-                        <CommandItem
-                          value={option.value}
-                          key={option.value}
-                          onSelect={() => {
-                            console.log(option.value);
-                            form.setValue(name, option.value, {
-                              shouldValidate: true,
-                            });
-                          }}
-                        >
-                          {option.label}
-                          <CheckIcon
-                            className={cn(
-                              "ml-auto h-4 w-4",
-                              option.value === field.value
-                                ? "opacity-100"
-                                : "opacity-0",
-                            )}
-                          />
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
+                    </div>
                   </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+                )}
+              </div>
+            </Command>
             {description && <FormDescription>{description}</FormDescription>}
             <FormMessage />
           </FormItem>

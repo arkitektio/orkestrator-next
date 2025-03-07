@@ -19,6 +19,7 @@ export const usePortForm = (props: {
   ports: Port[];
   overwrites?: { [key: string]: any };
   doNotAutoReset?: boolean;
+  additionalSchema?: Zod.ZodObject<any>;
   mode?: "onChange" | "onBlur" | "onSubmit" | "onTouched" | "all";
   reValidateMode?: "onChange" | "onBlur" | "onSubmit";
 }) => {
@@ -29,8 +30,12 @@ export const usePortForm = (props: {
   }, [hash, props.overwrites]);
 
   const myResolver = useCallback(() => {
-    return zodResolver(buildZodSchema(props.ports));
-  }, [hash]);
+    const zodSchema = buildZodSchema(props.ports);
+    if (props.additionalSchema) {
+      return zodResolver(zodSchema.merge(props.additionalSchema));
+    }
+    return zodResolver(zodSchema);
+  }, [hash, props.additionalSchema]);
 
   const { handleSubmit, ...form } = useForm({
     defaultValues: defaultValues,
@@ -42,7 +47,17 @@ export const usePortForm = (props: {
     (onSubmit: any) => {
       return handleSubmit(
         (data) => {
-          onSubmit(submittedDataToRekuestFormat(data, props.ports));
+          const additionalData = Object.keys(data).reduce((acc, key) => {
+            if (props.additionalSchema?.shape[key]) {
+              acc[key] = data[key];
+            }
+            return acc;
+          }, {});
+
+          onSubmit({
+            ...submittedDataToRekuestFormat(data, props.ports),
+            ...additionalData,
+          });
         },
         (e) => {
           toast.error(JSON.stringify(e));

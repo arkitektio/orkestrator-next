@@ -33,6 +33,8 @@ import { useNavigate } from "react-router-dom";
 import * as THREE from "three";
 import { additiveBlending, bitmapToBlob, viewHasher } from "./TwoDRGBRender";
 import { useViewRenderFunction } from "./hooks/useViewRender";
+import { DelegatingStructureWidget } from "@/components/widgets/returns/DelegatingStructureWidget";
+import { PortKind, PortScope } from "@/rekuest/api/graphql";
 
 export interface RGBDProps {
   context: ListRgbContextFragment;
@@ -47,9 +49,10 @@ export type PassThroughProps = {
 };
 
 export interface Panel {
+  identifier: string;
+  object: string;
   positionX: number;
   positionY: number;
-  roi: ListRoiFragment;
 }
 
 function Box(props: ThreeElements["mesh"]) {
@@ -205,15 +208,22 @@ const ROIPolygon = (
     const y = -(vector.y * 0.5 - 0.5) * gl.domElement.clientHeight;
 
     props.setOpenPanels((panels) => {
-      if (panels.find((x) => x.roi.id === roi.id)) {
-        return panels.filter((x) => x.roi.id !== roi.id);
+      if (
+        panels.find(
+          (x) => x.object === roi.id && x.identifier === MikroROI.identifier,
+        )
+      ) {
+        return panels.filter(
+          (x) => x.object !== roi.id && x.identifier !== MikroROI.identifier,
+        );
       } else {
         return [
           ...panels,
           {
             positionX: x,
             positionY: y,
-            roi: roi,
+            identifier: MikroROI.identifier,
+            object: roi.id,
           },
         ];
       }
@@ -353,19 +363,27 @@ export const RGBD = (props: RGBDProps) => {
       </Canvas>
 
       {openPanels.map((panel) => (
-        <div
+        <Card
           style={{
             position: "absolute",
             top: `${panel.positionY}px`,
             left: `${panel.positionX + 20}px`,
             zIndex: 10,
           }}
-          className="transform -translate-y-1/2 max-w-[400px]"
+          className="transform -translate-y-1/2 max-w-[400px] p-2"
         >
-          <MikroROI.DetailLink object={panel.roi.id}>
-            <Card className="p-3">Open {panel.roi.id}</Card>
-          </MikroROI.DetailLink>
-        </div>
+          <DelegatingStructureWidget
+            port={{
+              key: "x",
+              nullable: false,
+              kind: PortKind.Structure,
+              identifier: panel.identifier,
+              __typename: "Port",
+              scope: PortScope.Global,
+            }}
+            value={panel.object}
+          />
+        </Card>
       ))}
     </div>
   );

@@ -46,6 +46,7 @@ export const NodeAssignForm = (props: {
 
   const data = form.watch();
   const isSubmitting = form.formState.isSubmitting;
+  const isValid = form.formState.isValid;
 
   const { registry } = useWidgetRegistry();
 
@@ -75,7 +76,7 @@ export const NodeAssignForm = (props: {
             />
 
             <DialogFooter>
-              <Button type="submit" variant={"outline"}>
+              <Button type="submit" variant={"outline"} disabled={!isValid}>
                 {" "}
                 Do {isSubmitting && "ing"}
               </Button>

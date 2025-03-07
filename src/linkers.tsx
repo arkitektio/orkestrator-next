@@ -46,6 +46,15 @@ export const RekuestProvision = buildSmart(
 );
 export const RekuestAgent = buildSmart("@rekuest/agent", "rekuest/agents");
 
+export const RekuestShortcut = buildSmart(
+  "@rekuest/shortcut",
+  "rekuest/shortcuts",
+);
+export const RekuestToolbox = buildSmart(
+  "@rekuest/toolbox",
+  "rekuest/toolboxes",
+);
+
 export const RekuestDescriptor = buildSmart(
   "@rekuest/descriptor",
   "rekuest/descriptors",
@@ -122,10 +131,7 @@ export const KraphGraphView = buildSmart(
   "@kraph/graphview",
   "kraph/graphviews",
 );
-export const KraphPlotView = buildSmart(
-  "@kraph/plotview",
-  "kraph/plotviews",
-);
+export const KraphPlotView = buildSmart("@kraph/plotview", "kraph/plotviews");
 export const KraphNodeView = buildSmart("@kraph/nodeview", "kraph/nodeviews");
 export const KraphGraphQuery = buildSmart(
   "@kraph/graphquery",

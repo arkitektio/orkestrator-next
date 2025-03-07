@@ -1,7 +1,7 @@
 import { useGetPodQuery } from "@/kabinet/api/graphql";
 import GraphViewWidget from "@/kraph/widgets/GraphViewWidget";
 import OntologyWidget from "@/kraph/widgets/OntologyWidget";
-import { KabinetPod, MikroImage, RekuestNode } from "@/linkers";
+import { KabinetPod, MikroImage, MikroROI, RekuestNode } from "@/linkers";
 import { useGetImageQuery, useGetRoiQuery } from "@/mikro-next/api/graphql";
 import { RGBD } from "@/mikro-next/components/render/TwoDThree";
 import { useDetailNodeQuery } from "@/rekuest/api/graphql";
@@ -39,13 +39,13 @@ export const RoiWidget = (props: ReturnWidgetProps) => {
   const roi = data?.roi;
 
   return (
-    <MikroImage.DetailLink object={props.value}>
+    <MikroROI.DetailLink object={props.value}>
       <div className="w-[200px] h-[200px]">
         {defaultContext && roi && (
           <RGBD context={defaultContext} rois={[roi]} />
         )}
       </div>
-    </MikroImage.DetailLink>
+    </MikroROI.DetailLink>
   );
 };
 

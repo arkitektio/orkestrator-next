@@ -79,7 +79,7 @@ export const ArgsContainer = ({
     return argGroups;
   }, [ports, hash]);
 
-  let len = ports.length;
+  let len = filledGroups.length;
 
   let lg_size = len < 2 ? len : 2;
   let xl_size = len < 3 ? len : 3;
@@ -89,7 +89,7 @@ export const ArgsContainer = ({
 
   return (
     <div
-      className={`grid @lg:grid-cols-${lg_size} @xl:grid-cols-${xl_size} @2xl:grid-cols-${xxl_size}  @3xl:grid-cols-${xxxl_size}   @5xl:grid-cols-${xxxxl_size} gap-5 `}
+      className={`grid @lg:grid-cols-${lg_size} @xl:grid-cols-${xl_size} @2xl:grid-cols-${xxl_size}  @3xl:grid-cols-${xxxl_size}   @5xl:grid-cols-${xxxxl_size} gap-1 `}
     >
       {filledGroups.map((group, index) => {
         return (
@@ -97,7 +97,9 @@ export const ArgsContainer = ({
             {group.key != "default" && (
               <CollapsibleTrigger>{group.key}</CollapsibleTrigger>
             )}
-            <CollapsibleContent>
+            <CollapsibleContent
+              className={`grid  @2xl:grid-cols-2   @5xl:grid-cols-2 gap-1 `}
+            >
               {group.ports.map((port, index) => {
                 const Widget = registry.getInputWidgetForPort(port);
 
@@ -108,8 +110,8 @@ export const ArgsContainer = ({
                     port={port}
                     registry={registry}
                   >
-                    <div className="flex flex-row gap-2 justify-between">
-                      <div className="flex-grow">
+                    <div className="flex flex-row gap-2 justify-between w-full min-w-[200px]">
+                      <div className="flex-grow ">
                         <Widget
                           key={index}
                           port={port}
@@ -191,7 +193,10 @@ export const Constants = (props: {
   return (
     <>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-1">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-1 w-full"
+        >
           <ArgsContainer
             registry={registry}
             ports={props.ports}

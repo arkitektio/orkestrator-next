@@ -8,7 +8,7 @@ fragment Agent on Agent {
   templates {
     ...ListTemplate
   }
-  
+
   states {
     ...State
   }
@@ -44,5 +44,15 @@ fragment ListAgent on Agent {
     user {
       id
     }
+  }
+}
+
+query AgentOptions($search: String, $values: [ID!]) {
+  options: agents(
+    filters: { search: $search, ids: $values }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: name
   }
 }

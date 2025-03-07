@@ -1,0 +1,21 @@
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { DialogTrigger } from "@radix-ui/react-dialog";
+import { ReserveForm, ReserveFormDialog } from "../forms/ShortcutForm";
+
+export const ReserveActionButton = (props: {
+  id: string;
+  children: React.ReactNode;
+}) => {
+  return (
+    <>
+      <>
+        <Dialog>
+          <DialogTrigger asChild>{props.children}</DialogTrigger>
+          <DialogContent className="text-white">
+            <ReserveForm id={props.id} />
+          </DialogContent>
+        </Dialog>
+      </>
+    </>
+  );
+};

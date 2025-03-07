@@ -1,0 +1,32 @@
+fragment Shortcut on Shortcut {
+  id
+  name
+  description
+  node {
+    ...DetailNode
+  }
+  savedArgs
+  args {
+    ...Port
+  }
+  returns {
+    ...Port
+  }
+  allowQuick
+}
+
+fragment ListShortcut on Shortcut {
+  id
+  name
+  description
+  node {
+    id
+  }
+  args {
+    ...Port
+  }
+  returns {
+    ...Port
+  }
+  allowQuick
+}

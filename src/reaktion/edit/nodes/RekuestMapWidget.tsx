@@ -206,7 +206,7 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
           <NodeDescription description={description} />
         </CardDescription>
         {expanded && (
-          <div>
+          <div className="w-full @container">
             {ins.at(0) && ins.at(0).length > 0 && (
               <>
                 <div className="text-xs text-muted-foreground inline ">

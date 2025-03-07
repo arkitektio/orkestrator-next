@@ -19,6 +19,10 @@ import Template from "./pages/Template";
 import Standardpane from "./panes/StandardPane";
 import Interfaces from "./pages/Interfaces";
 import Interface from "./pages/Interface";
+import Shortcut from "./pages/Shortcut";
+import Shortcuts from "./pages/Shortcuts";
+import Toolboxes from "./pages/Toolboxes";
+import Toolbox from "./pages/Toolbox";
 
 interface Props {}
 /**
@@ -34,6 +38,10 @@ const Module: React.FC<Props> = () => {
           <Route index element={<Home />} />
           <Route path="nodes/:id" element={<Node />} />
           <Route path="reservations/:id" element={<Reservation />} />
+          <Route path="shortcuts/:id" element={<Shortcut />} />
+          <Route path="shortcuts" element={<Shortcuts />} />
+          <Route path="toolboxes" element={<Toolboxes />} />
+          <Route path="toolboxes/:id" element={<Toolbox />} />
           <Route path="reservations" element={<Reservations />} />
           <Route path="nodes" element={<Nodes />} />
           <Route path="dashboards" element={<Dashboards />} />

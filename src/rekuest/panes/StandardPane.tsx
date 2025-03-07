@@ -3,7 +3,7 @@ import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { DroppableNavLink } from "@/components/ui/link";
 import { RekuestAgent } from "@/linkers";
 import { CardStackIcon, CubeIcon } from "@radix-ui/react-icons";
-import { FunctionSquare, Home } from "lucide-react";
+import { Box, FunctionSquare, Home, ShoppingCart } from "lucide-react";
 import * as React from "react";
 import {
   AgentStatus,
@@ -78,18 +78,18 @@ export const NavigationPane = (props: {}) => {
             Nodes
           </DroppableNavLink>
           <DroppableNavLink
-            to="/rekuest/dashboards"
+            to="/rekuest/toolboxes"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
-            <Home className="h-4 w-4" />
-            Dashboards
+            <Box className="h-4 w-4" />
+            Toolboxes
           </DroppableNavLink>
           <DroppableNavLink
-            to="/rekuest/interfaces"
+            to="/rekuest/shortcuts"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
-            <Home className="h-4 w-4" />
-            Interfaces
+            <ShoppingCart className="h-4 w-4" />
+            Shortcuts
           </DroppableNavLink>
           <DroppableNavLink
             to="/rekuest/panels"

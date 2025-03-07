@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -11,6 +12,7 @@ import { useReserveMate } from "@/mates/reserve/useReserveMate";
 import { MateFinder } from "@/mates/types";
 import { ListNodeFragment } from "@/rekuest/api/graphql";
 import { NodeActionButton } from "@/rekuest/buttons/NodeActionButton";
+import { ReserveActionButton } from "@/rekuest/buttons/ReserveActionButton";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 
 interface Props {
@@ -50,13 +52,18 @@ const TheCard = ({ node, mates }: Props) => {
               )}
             </CardDescription>
           </div>
-          <CardTitle>
+          <CardFooter className="flex justify-between gap-2">
             <NodeActionButton id={node.id}>
               <Button variant="outline" size="sm">
                 Assign
               </Button>
             </NodeActionButton>
-          </CardTitle>
+            <ReserveActionButton id={node.id}>
+              <Button variant="outline" size="sm">
+                Reserve
+              </Button>
+            </ReserveActionButton>
+          </CardFooter>
         </CardHeader>
       </Card>
     </RekuestNode.Smart>

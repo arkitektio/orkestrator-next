@@ -41,16 +41,20 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
   DemandKind,
+  ListShortcutFragment,
   ListTemplateFragment,
   PortKind,
   PrimaryNodeFragment,
+  ShortcutFragment,
   useAllPrimaryNodesQuery,
+  useShortcutsQuery,
   useTemplatesQuery,
 } from "../api/graphql";
 import { NodeAssignForm } from "../forms/NodeAssignForm";
 import { useAssign } from "../hooks/useAssign";
 import { useLiveAssignation } from "../hooks/useAssignations";
 import { useHashAction } from "../hooks/useHashActions";
+import { LightningBoltIcon } from "@radix-ui/react-icons";
 
 export const DirectTemplateAssignment = (
   props: SmartContextProps & { node: PrimaryNodeFragment },
@@ -125,6 +129,37 @@ export const AssignButton = (
         />
       </ContextMenuContent>
     </ContextMenu>
+  );
+};
+
+export const ShortcutButton = (
+  props: SmartContextProps & { shortcut: ListShortcutFragment },
+) => {
+  const status = useLiveAssignation({
+    identifier: props.identifier,
+    object: props.object,
+    node: props.shortcut.node.id,
+  });
+
+  return (
+    <CommandItem
+      onSelect={() => props.onSelectNode(props.shortcut.node)}
+      value={props.shortcut.id}
+      key={props.shortcut.id}
+      className="flex-initial flex flex-row group cursor-pointer border border-1 rounded rounded-full bg-slate-800 shadow-xl  h-8 overflow-hidden truncate max-w-[100px] ellipsis px-2"
+      style={{
+        backgroundSize: `${status?.progress || 0}% 100%`,
+        backgroundImage: `linear-gradient(to right, #10b981 ${status?.progress}%, #10b981 ${status?.progress}%)`,
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "left center",
+        borderColor: props.shortcut.allowQuick ? "#10b981" : "#4B5563",
+      }}
+    >
+      {props.shortcut.allowQuick && <LightningBoltIcon className="w-4 h-4" />}
+      <span className="mr-auto text-md text-gray-100 ellipsis truncate w-full">
+        {props.shortcut.name}
+      </span>
+    </CommandItem>
   );
 };
 
@@ -213,21 +248,33 @@ export const ApplicableNodes = (props: PassDownProps) => {
     });
   }
 
-  const { data } = useAllPrimaryNodesQuery({
+  const { data, error } = useAllPrimaryNodesQuery({
     variables: {
       filters: {
         demands: demands,
         search: props.filter && props.filter != "" ? props.filter : undefined,
       },
     },
+    fetchPolicy: "cache-and-network",
   });
+
+  if (error)
+    return (
+      <span className="font-light text-xs w-full items-center ml-2 w-full">
+        Error
+      </span>
+    );
 
   if (!data) {
     return null;
   }
 
   if (data.nodes.length === 0) {
-    return null;
+    return (
+      <span className="font-light text-xs w-full items-center ml-2 w-full">
+        No nodes...
+      </span>
+    );
   }
 
   return (
@@ -240,6 +287,67 @@ export const ApplicableNodes = (props: PassDownProps) => {
     >
       {data?.nodes.map((x) => <AssignButton node={x} {...props} />)}
     </CommandGroup>
+  );
+};
+
+export const AppicableShortcuts = (props: PassDownProps) => {
+  const demands = [
+    {
+      kind: DemandKind.Args,
+      matches: [
+        { at: 0, kind: PortKind.Structure, identifier: props.identifier },
+      ],
+    },
+  ];
+
+  let firstPartner = props.partners?.at(0);
+
+  if (firstPartner) {
+    demands.push({
+      kind: DemandKind.Args,
+      matches: [
+        {
+          at: 1,
+          kind: PortKind.Structure,
+          identifier: firstPartner.identifier,
+        },
+      ],
+    });
+  }
+
+  const { data, error } = useShortcutsQuery({
+    variables: {
+      filters: {
+        demands: demands,
+        search: props.filter && props.filter != "" ? props.filter : undefined,
+      },
+    },
+    fetchPolicy: "cache-and-network",
+  });
+
+  if (error)
+    return (
+      <span className="font-light text-xs w-full items-center ml-2 w-full">
+        Error
+      </span>
+    );
+
+  if (!data) {
+    return null;
+  }
+
+  if (data.shortcuts.length === 0) {
+    return (
+      <span className="font-light text-xs w-full items-center ml-2 w-full">
+        No nodes...
+      </span>
+    );
+  }
+
+  return (
+    <div className="flex flex-row gap-2 p-2">
+      {data?.shortcuts.map((x) => <ShortcutButton shortcut={x} {...props} />)}
+    </div>
   );
 };
 
@@ -559,15 +667,29 @@ export const SmartContext = (props: SmartContextProps) => {
           }}
           autoFocus
         />
+
         <CommandList>
-          <CommandEmpty>{"No Action available"}</CommandEmpty>
-          <ApplicableActions {...props} filter={filter} />
-          <ApplicableNodes
+          <AppicableShortcuts
             {...props}
+            filter={filter}
             onSelectNode={props.onSelectNode}
             onSelectTemplate={props.onSelectTemplate}
           />
-          <ApplicableDefinitions {...props} partners={props.partners} />
+          <CommandEmpty>{"No Action available"}</CommandEmpty>
+
+          <ApplicableActions {...props} filter={filter} />
+          <ApplicableNodes
+            {...props}
+            filter={filter}
+            onSelectNode={props.onSelectNode}
+            onSelectTemplate={props.onSelectTemplate}
+          />
+
+          <ApplicableDefinitions
+            {...props}
+            partners={props.partners}
+            filter={filter}
+          />
         </CommandList>
       </Command>
     </>

@@ -56,7 +56,7 @@ export const SearchWidget = (
     return <>Waiting for {props.widget?.dependencies?.join(",")}</>;
   }
 
-  if (props.widget?.filters) {
+  if (props.widget?.filters && props.widget.filters.length > 0) {
     return (
       <FilterSearchField
         name={pathToName(props.path)}

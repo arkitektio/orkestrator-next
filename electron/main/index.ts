@@ -162,7 +162,7 @@ function openSecondaryWindow(path: string): void {
       .loadFile(join(__dirname, "../renderer/index.html"))
       .then(() => {
         secondaryWindow.webContents.executeJavaScript(
-          `window.location = '${path}'`,
+          `window.location = '#${path}'`,
         );
       });
   }

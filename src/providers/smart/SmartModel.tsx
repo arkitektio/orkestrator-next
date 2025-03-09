@@ -23,6 +23,8 @@ import { toast } from "sonner";
 import { NodeAssignForm } from "@/rekuest/forms/NodeAssignForm";
 import { NativeTypes } from "react-dnd-html5-backend";
 import { TemplateAssignForm } from "@/rekuest/forms/TemplateAssignForm";
+import { p } from "node_modules/@udecode/plate-media/dist/BasePlaceholderPlugin-Huy5PFfu";
+import { el } from "date-fns/locale";
 
 export const SmartModel = ({
   showSelfMates = true,
@@ -69,15 +71,52 @@ export const SmartModel = ({
 
   const [{ isOver, canDrop }, drop] = useDrop(() => {
     return {
-      accept: [SMART_MODEL_DROP_TYPE, NativeTypes.TEXT],
+      accept: [SMART_MODEL_DROP_TYPE, NativeTypes.TEXT, NativeTypes.URL],
       drop: (item, monitor) => {
         console.log("drop", item);
+
+        if  (monitor.getItemType() === SMART_MODEL_DROP_TYPE) {
+          console.log("SMART", item);
+          setPartners(items); 
+          return {};
+        }
+
+        if (monitor.getItemType() === NativeTypes.URL) {
+          console.log("URL", item);
+          let url = item.urls;
+          let partners: Structure[] = [];
+          for (let i = 0; i < url.length; i++) {
+            let the_url = url[i];
+            console.log("URL", the_url);
+            let match = the_url.match(/arkitekt:\/\/([^:]+):([^\/]+)/);
+            if (match) {
+              console.log("MATCH", match);
+              let [_, identifier, object] = match;
+              let structure: Structure = { identifier, object };
+              partners.push(structure);
+            }
+          }
+          if (partners.length > 0) {
+            setPartners(partners);
+            return {};
+          }
+        }
+
         let text = item.text;
 
-        if (text) {
-          let structure: Structure = JSON.parse(text);
-          setPartners([structure]);
-        } else setPartners(item);
+        if (item.text) {
+          try {
+            let structure: Structure = JSON.parse(text);
+            setPartners([structure]);
+            return {};
+          }
+          catch (e) {
+            console.error(e);
+          }
+        }
+
+        alert(`Drop unkonwn ${item}`);
+
         return {};
       },
       collect: (monitor) => {
@@ -186,6 +225,7 @@ export const SmartModel = ({
         // Package the data as text/uri-list
         const data = JSON.stringify(self);
         e.dataTransfer.setData("text/plain", data);
+        e.dataTransfer.setData("text/uri-list", `arkitekt://${props.identifier}:${props.object}`);
       }}
       data-identifier={props.identifier}
       data-object={props.object}

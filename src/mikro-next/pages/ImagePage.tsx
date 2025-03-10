@@ -41,6 +41,7 @@ import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { PinToggle } from "../components/ui/PinToggle";
 import { AddImageViewForm } from "../forms/AddImageViewForm";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
+import { FinalRender } from "../components/render/FInalRender";
 
 export type IRepresentationScreenProps = {};
 
@@ -128,7 +129,7 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
             {data?.image?.rgbContexts?.map((context, index) => (
               <div className={"h-full w-full mt-0 rounded rounded-md relative"}>
                 <div className="w-full h-full items-center flex justify-center flex-col">
-                  <DelegatingImageRender
+                  <FinalRender
                     context={context}
                     rois={data.image.rois}
                     modelMatrix={modelMatrix}

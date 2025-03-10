@@ -14,7 +14,7 @@ import { Dispatch, SetStateAction, Suspense, useEffect, useRef, useState } from 
 import { useNavigate } from "react-router-dom";
 import * as THREE from "three";
 import { additiveBlending, viewHasher } from "./TwoDRGBRender";
-import { blueColormap, greenColormap, redColormap, viridisColormap } from "./final/colormaps";
+import { blueColormap, createColormapTexture, greenColormap, redColormap, viridisColormap } from "./final/colormaps";
 import { useArray } from "./final/useArray";
 import { useAsyncChunk } from "./final/useChunkTexture";
 import { useViewRenderFunction } from "./hooks/useViewRender";
@@ -332,6 +332,13 @@ const getColormapForView = (view: RgbViewFragment) => {
   case ColorMap.Red: {
     return redColormap;
   }
+  case ColorMap.Intensity: {
+    return createColormapTexture(
+      Array.from({ length: 256 }, (_, i) => [(view.baseColor?.at(0) || 0) * i, (view.baseColor?.at(1) || 0) * i, (view.baseColor?.at(2) || 0) * i] )
+    );
+  }
+
+
   default: {
     return viridisColormap;
   }

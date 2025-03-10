@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-const createColormapTexture = (colors: number[][]) => {
+export const createColormapTexture = (colors: number[][]) => {
     const size = colors.length;
     const data = new Uint8Array(size * 4);
     

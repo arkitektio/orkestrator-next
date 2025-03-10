@@ -14,13 +14,11 @@ import { Dispatch, SetStateAction, Suspense, useEffect, useRef, useState } from 
 import { useNavigate } from "react-router-dom";
 import * as THREE from "three";
 import { additiveBlending, viewHasher } from "./TwoDRGBRender";
-import { useArray, useAsyncChunk } from "./final/useChunkTexture";
+import { blueColormap, greenColormap, redColormap, viridisColormap } from "./final/colormaps";
+import { useArray } from "./final/useArray";
+import { useAsyncChunk } from "./final/useChunkTexture";
 import { useViewRenderFunction } from "./hooks/useViewRender";
 import { BasicIndexer, IndexerProjection, Slice } from "./indexer";
-import { colorMapperMap, FourDColour } from "./final/utils";
-import { blueColormap, greenColormap, redColormap, viridisColormap } from "./final/colormaps";
-import { ca } from "date-fns/locale";
-import { c } from "node_modules/@udecode/plate-emoji/dist/IndexSearch-Dvqq913n";
 
 
 
@@ -524,7 +522,7 @@ export const FinalRender = (props: RGBDProps) => {
                 2/props.context.image.store.shape[3],
                 -2/props.context.image.store.shape[4],
                 1
-              ]} rotation={[0, 0, 3*Math.PI]} key={index}>
+              ]}>
           {chunk_loaders.map((chunk_loader, index) => {
 
             return <ChunkBitmapTexture renderFunc={renderView} chunk_coords={chunk_loader.chunk_coords} chunk_shape={chunk_shape} key={`${index}-${z}-${t}`} view={view} t={t} z={z}/>

@@ -19,6 +19,9 @@ import { useArray } from "./final/useArray";
 import { useAsyncChunk } from "./final/useChunkTexture";
 import { useViewRenderFunction } from "./hooks/useViewRender";
 import { BasicIndexer, IndexerProjection, Slice } from "./indexer";
+import { Card } from "@/components/ui/card";
+import { DelegatingStructureWidget } from "@/components/widgets/returns/DelegatingStructureWidget";
+import { PortKind, PortScope } from "@/rekuest/api/graphql";
 
 
 
@@ -150,17 +153,15 @@ export const useAspectRatio = (context: ListRgbContextFragment) => {
 };
 
 const convertToThreeJSCoords = (
-  vertices: [number, number, number, number, number][],
-  imageWidth: number,
-  imageHeight: number,
+  vertices: [number, number, number, number, number][]
 ): [number, number][] => {
   console.log(vertices);
   let tr = vertices.map((v) => {
     console.log(v);
-    let [c, t, z, x, y] = v;
+    let [c, t, z, y, x] = v;
     return [
-      (x / imageWidth) * 2 - 1, // Convert x to range [-1, 1]
-      -(y / imageHeight) * 2 + 1, // Convert y to range [-1, 1] and invert
+      x,
+     y,
     ] as [number, number];
   });
   console.log(tr);
@@ -201,7 +202,7 @@ const ROIPolygon = (
   const popoverRef = useRef(null); // Ref for popover content
 
   // Convert ROI vectors to Three.js coordinates
-  const vertices = convertToThreeJSCoords(roi.vectors, width, height);
+  const vertices = convertToThreeJSCoords(roi.vectors);
 
   // Create shape from vertices
   const shape = new THREE.Shape();
@@ -381,6 +382,7 @@ export const ChunkBitmapTexture = ({
 
   return (
     <mesh position={[
+
       box_position[1],
       box_position[0],
       box_position[2]
@@ -445,11 +447,13 @@ export const FinalRender = (props: RGBDProps) => {
   const [t, setT] = useState(0);
 
   const version = props.context.image.store.version;
-  const zSize = props.context.image.store.shape.at(2) || 1;
-  const tSize = props.context.image.store.shape.at(1) || 1;
-  const cSize = props.context.image.store.shape.at(0) || 1;
+  const cSize = props.context.image?.store.shape?.at(0) || 1;
+  const zSize = props.context.image?.store.shape?.at(2) || 1;
+  const tSize = props.context.image?.store.shape?.at(1) || 1;
+  const ySize = props.context.image?.store.shape?.at(3) || 1;
+  const xSize = props.context.image?.store.shape?.at(4) || 1;
 
-  if (props.context.image.store.chunks?.length != props.context.image.store.shape.length) {
+  if (props.context.image.store.chunks?.length != props.context.image.store.shape?.length) {
     return <div>This new chunk loader needs chunks to be present. update mikro </div>;
   }
 
@@ -518,27 +522,68 @@ export const FinalRender = (props: RGBDProps) => {
       <Canvas style={{ width: "100%", height: "100%" }}>
         <AutoZoomCamera setOpenPanels={setOpenPanels} />
         <OrbitControls enableRotate={false} enablePan={true} regress={false} />
-        {props.context.views.map((view, index) => {
+        <group scale={[
+                1/xSize,
+                1/ySize,
+                1
+              ]}
+              position={[
+                -xSize/2,
+                -ySize/2,
+                0
+              ]}
 
-          const selection = [{start: view.cMin, stop: view.cMax, step: null}, t, z, {start: null, stop: null, step: null}, {start: null, stop: null, step: null} ];
+              
+        >
+        {props.context.views.map((view, viewIndex) => {
+
+          const selection = [{start: view.cMin || null, stop: view.cMax || null, step: null}, t, z, {start: null, stop: null, step: null}, {start: null, stop: null, step: null} ];
         
           const chunk_loaders = calculateChunkGrid(selection, props.context.image.store.shape, chunk_shape);
 
           
-          return <group scale={[
-                2/props.context.image.store.shape[3],
-                -2/props.context.image.store.shape[4],
-                1
-              ]}>
+          return <>
           {chunk_loaders.map((chunk_loader, index) => {
 
-            return <ChunkBitmapTexture renderFunc={renderView} chunk_coords={chunk_loader.chunk_coords} chunk_shape={chunk_shape} key={`${index}-${z}-${t}`} view={view} t={t} z={z}/>
+            return <ChunkBitmapTexture renderFunc={renderView} chunk_coords={chunk_loader.chunk_coords} chunk_shape={chunk_shape} key={`${index}-${z}-${t}-${viewIndex}`} view={view} t={t} z={z}/>
           })}
+          </>
+          })}
+
+          {props.rois.map((roi) => (
+            <ROIPolygon
+              key={roi.id}
+              roi={roi}
+              setOpenPanels={setOpenPanels}
+            />
+          ))}
+
           </group>
-          }
-        )}
       </Canvas>
       </Suspense>
+      {openPanels.map((panel) => (
+        <Card
+          style={{
+            position: "absolute",
+            top: `${panel.positionY}px`,
+            left: `${panel.positionX + 20}px`,
+            zIndex: 10,
+          }}
+          className="transform -translate-y-1/2 max-w-[400px] p-2"
+        >
+          <DelegatingStructureWidget
+            port={{
+              key: "x",
+              nullable: false,
+              kind: PortKind.Structure,
+              identifier: panel.identifier,
+              __typename: "Port",
+              scope: PortScope.Global,
+            }}
+            value={panel.object}
+          />
+        </Card>
+      ))}
 
     </div>
   );
@@ -547,6 +592,6 @@ export const FinalRender = (props: RGBDProps) => {
 export const ImageRGBD = (props: { image: RgbImageFragment }) => {
   const context = props.image.rgbContexts.at(0);
 
-  return <>{context && <RGBD context={context} rois={[]} />}</>;
+  return <>{context && <FinalRender context={context} rois={[]} />}</>;
 };
 

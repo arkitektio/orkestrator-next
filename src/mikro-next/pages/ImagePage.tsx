@@ -138,7 +138,8 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
               </div>
             ))}
           </div>
-          <DetailPane className="col-span-3 @container p-2 ml-4 bg-black bg-clip-padding backdrop-filter backdrop-blur-2xl bg-opacity-10 z-100 overflow-hidden flex flex-col h-max-[400px]">
+          <div className="col-span-3">
+          <DetailPane className="col-span-3 @container p-2 bg-black bg-clip-padding backdrop-filter backdrop-blur-2xl bg-opacity-10 z-100 overflow-hidden flex flex-col h-max-[400px]">
             <DetailPaneHeader>
               <DetailPaneTitle
                 actions={
@@ -170,32 +171,8 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
               </DetailPaneTitle>
             </DetailPaneHeader>
 
-            <DetailPaneContent className="ml-3 flex flex-col">
-              {data?.image?.dataset && (
-                <>
-                  <div className="font-light">In Dataset</div>
-                  <Card className="flex flex-row mb-2 px-2 py-1">
-                    <MikroDataset.DetailLink
-                      className="text-xl cursor-pointer"
-                      object={data?.image?.dataset?.id}
-                    >
-                      {data?.image?.dataset.name}
-                    </MikroDataset.DetailLink>
-                  </Card>
-                </>
-              )}
-
-              <div className="font-light mt-2 ">Created At</div>
-              <div className="text-md mt-2 ">
-                <Timestamp date={data?.image?.createdAt} />
-              </div>
-              <div className="font-light mt-2 ">Created by</div>
-              <div className="text-md mt-2 ">
-                {data?.image?.creator?.sub && (
-                  <UserInfo sub={data?.image?.creator?.sub} />
-                )}
-              </div>
-              <div className="font-light">Shape</div>
+            <DetailPaneContent className="flex flex-col">
+            <div className="font-light">Shape</div>
               <div className="text-xl flex mb-2">
                 {data?.image?.store?.shape?.map((val, index) => (
                   <div key={index}>
@@ -210,15 +187,17 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
               <div className="font-light text-xs mb-2">
                 ZarrV {data?.image?.store?.version}
               </div>
-              <div className="font-light">Tags</div>
-              <div className="text-xl flex mb-2">
-                {data?.image?.tags?.map((tag, index) => (
-                  <>
-                    <span className="font-semibold mr-2">#{tag} </span>
-                  </>
-                ))}
+
+              <div className="font-light mt-2 font-semibold ">Creation</div>
+              <div className="flex-row flex gap-2 mt-2">
+                <Timestamp date={data?.image?.createdAt} className="my-auto"/>
+                {data?.image?.creator?.sub && (
+                  <UserInfo sub={data?.image?.creator?.sub} />
+                )}
               </div>
-              <div className="font-light">Views</div>
+              
+             
+              <div className="font-light mb-2">Views</div>
               <ResponsiveContainerGrid className="gap-3 ">
                 {data?.image.views?.map((view, index) => (
                   <>
@@ -293,6 +272,7 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
               )}
             </DetailPaneContent>
           </DetailPane>
+          </div>
         </div>
       </TwoDViewProvider>
     </MikroImage.ModelPage>

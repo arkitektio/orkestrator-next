@@ -84,6 +84,7 @@ export const useArray = (props: {store: ZarrStoreFragment}) => {
 
   const renderView = useCallback(
     async (
+      signal: AbortSignal,
       chunk_coords: number[],
       chunk_shape: number[],
       c: number,
@@ -108,7 +109,9 @@ export const useArray = (props: {store: ZarrStoreFragment}) => {
 
 
 
-      let chunk = await get(array, selection) as Chunk<DataType>;
+      let chunk = await get(array, selection, {
+        opts: {signal: signal},
+      }) as Chunk<DataType>;
 
       return { chunk, dtype: array.dtype };
       

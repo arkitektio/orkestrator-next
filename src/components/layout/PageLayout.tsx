@@ -81,12 +81,11 @@ export const PageLayout = ({
             )}
           >
             <Button onClick={toggleSidebar} variant={"ghost"}>
-            <PanelLeft />
-            <span className="sr-only">Toggle Sidebar</span>
+              <PanelLeft />
+              <span className="sr-only">Toggle Sidebar</span>
             </Button>
-            <Separator dir="vertical" className="w-2"/>
+            <Separator dir="vertical" className="w-2" />
             <div className="flex-grow flex flex-col">
-              
               <h1 className="scroll-m-20 text-2xl font-extrabold tracking-tight lg:text-2xl truncate">
                 {title}
               </h1>

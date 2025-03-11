@@ -1,5 +1,3 @@
-
-
 mutation RequestUpload($key: String!, $datalayer: String!) {
   requestUpload(input: { key: $key, datalayer: $datalayer }) {
     ...Credentials
@@ -24,7 +22,6 @@ mutation UpdateImage($input: UpdateImageInput!) {
   }
 }
 
-
 mutation DeleteImage($id: ID!) {
-  deleteImage(input: { id: $id }) 
+  deleteImage(input: { id: $id })
 }

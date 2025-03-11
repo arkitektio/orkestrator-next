@@ -23,13 +23,12 @@ mutation RequestFileUploadPresigned($key: String!, $datalayer: String!) {
   }
 }
 
-
 mutation RequestFileAccess($store: ID!, $duration: Int) {
   requestFileAccess(input: { store: $store, duration: $duration }) {
     ...AccessCredentials
   }
 }
 
-mutation DeleteFile($id: ID!){
-  deleteFile(input: {id: $id})
+mutation DeleteFile($id: ID!) {
+  deleteFile(input: { id: $id })
 }

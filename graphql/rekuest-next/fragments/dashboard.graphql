@@ -1,28 +1,28 @@
 fragment Dashboard on Dashboard {
-    id
-    name
-    uiTree {
-        child {
-            ... on UIGrid {
-                rowHeight
-                children {
-                    x
-                    y
-                    w
-                    h
-                }
-            }
-            ... on UIState {
-                state
-            }
+  id
+  name
+  uiTree {
+    child {
+      ... on UIGrid {
+        rowHeight
+        children {
+          x
+          y
+          w
+          h
         }
-    } 
-    panels {
-        ...Panel
+      }
+      ... on UIState {
+        state
+      }
     }
+  }
+  panels {
+    ...Panel
+  }
 }
 
 fragment ListDashboard on Dashboard {
-    id
-    name
+  id
+  name
 }

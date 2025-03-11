@@ -4,8 +4,10 @@ query GetProtocol($id: ID!) {
   }
 }
 
-
-query ListProtocols($filters: ProtocolFilter, $pagination: OffsetPaginationInput) {
+query ListProtocols(
+  $filters: ProtocolFilter
+  $pagination: OffsetPaginationInput
+) {
   protocols(filters: $filters, pagination: $pagination) {
     ...ListProtocol
   }

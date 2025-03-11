@@ -9,7 +9,7 @@ fragment ListFlavour on Flavour {
     }
   }
   selectors {
-      ...CudaSelector
-      ...RocmSelector
+    ...CudaSelector
+    ...RocmSelector
   }
 }

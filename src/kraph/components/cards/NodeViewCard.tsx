@@ -1,9 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { KraphNodeView } from "@/linkers";
 import { MateFinder } from "@/mates/types";
-import {
-  ListNodeViewFragment
-} from "../../api/graphql";
+import { ListNodeViewFragment } from "../../api/graphql";
 
 interface Props {
   item: ListNodeViewFragment;

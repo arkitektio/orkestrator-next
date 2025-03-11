@@ -1,15 +1,12 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
 
 /* Add this to your CSS */
 .smartdraggable {
   -webkit-user-drag: none;
   user-select: none;
 }
-
 
 @layer base {
   :root {
@@ -83,45 +80,40 @@
   }
 }
 
-
 ::-webkit-scrollbar {
   @apply w-2 h-2;
-
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-transparent
+  @apply bg-transparent;
 }
 
 ::-webkit-scrollbar-thumb {
   @apply rounded-full bg-border border-[1px] border-transparent border-solid bg-clip-padding;
 }
 
-
 .dockview-theme-abyss {
   --dv-tab-divider-color: hsl(var(--pane));
   --dv-tabs-and-actions-container-background-color: hsl(var(--pane));
   --dv-separator-border: hsl(var(--pane));
   .groupview {
-      &.active-group {
-          > .tabs-and-actions-container {
-              border-bottom: 2px solid var(--dv-activegroup-visiblepanel-tab-background-color);
-          }
+    &.active-group {
+      > .tabs-and-actions-container {
+        border-bottom: 2px solid
+          var(--dv-activegroup-visiblepanel-tab-background-color);
       }
-      &.inactive-group {
-          > .tabs-and-actions-container {
-              border-bottom: 2px solid var(--dv-inactivegroup-visiblepanel-tab-background-color);
-          }
+    }
+    &.inactive-group {
+      > .tabs-and-actions-container {
+        border-bottom: 2px solid
+          var(--dv-inactivegroup-visiblepanel-tab-background-color);
       }
+    }
   }
   .tabs-container {
     background-color: black;
   }
 }
-
-
-
-
 
 @layer base {
   * {

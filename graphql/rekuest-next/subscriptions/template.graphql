@@ -4,7 +4,6 @@ subscription WatchTemplate($template: ID!) {
   }
 }
 
-
 subscription WatchTemplates($agent: ID!) {
   templates(agent: $agent) {
     create {
@@ -13,6 +12,6 @@ subscription WatchTemplates($agent: ID!) {
     update {
       ...ListTemplate
     }
-    delete 
+    delete
   }
 }

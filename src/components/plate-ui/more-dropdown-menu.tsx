@@ -1,14 +1,14 @@
-import React from 'react';
+import React from "react";
 
-import type { DropdownMenuProps } from '@radix-ui/react-dropdown-menu';
+import type { DropdownMenuProps } from "@radix-ui/react-dropdown-menu";
 
 import {
   SubscriptPlugin,
   SuperscriptPlugin,
-} from '@udecode/plate-basic-marks/react';
-import { focusEditor, useEditorRef } from '@udecode/plate-common/react';
+} from "@udecode/plate-basic-marks/react";
+import { focusEditor, useEditorRef } from "@udecode/plate-common/react";
 
-import { Icons } from '@/components/icons';
+import { Icons } from "@/components/icons";
 
 import {
   DropdownMenu,
@@ -16,8 +16,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   useOpenState,
-} from './dropdown-menu';
-import { ToolbarButton } from './toolbar';
+} from "./dropdown-menu";
+import { ToolbarButton } from "./toolbar";
 
 export function MoreDropdownMenu(props: DropdownMenuProps) {
   const editor = useEditorRef();

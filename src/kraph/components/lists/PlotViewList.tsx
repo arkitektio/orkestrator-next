@@ -25,7 +25,9 @@ const List = ({ filters, pagination }: Props) => {
     <ListRender
       array={data?.plotViews}
       title={
-        <KraphPlotView.ListLink className="flex-0">Views</KraphPlotView.ListLink>
+        <KraphPlotView.ListLink className="flex-0">
+          Views
+        </KraphPlotView.ListLink>
       }
       refetch={refetch}
     >

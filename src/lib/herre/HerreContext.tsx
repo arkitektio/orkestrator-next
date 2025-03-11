@@ -9,12 +9,10 @@ export type HerreContextType = {
   user?: HerreUser;
 };
 
-
 export type CancelableRequest<T> = {
   cancel: () => void;
   promise: Promise<T>;
-}
-
+};
 
 export type LoginRequest = {
   grant: HerreGrant;
@@ -22,11 +20,13 @@ export type LoginRequest = {
   onProgress?: (progress: string) => void;
 };
 
-
 export const HerreContext = React.createContext<HerreContextType>({
   logout: () => {},
   login: () => {
-    return {promise: Promise.reject(Error("No FaktsProvider found")), cancel: () => {}};
+    return {
+      promise: Promise.reject(Error("No FaktsProvider found")),
+      cancel: () => {},
+    };
   },
   refresh: () => new Promise((resolve, reject) => reject()),
 });

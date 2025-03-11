@@ -32,8 +32,7 @@ const Filter: React.FC<FilterProps> = ({ onFilterChanged, defaultValue }) => {
   const onSubmit = (values: GlobalSearchQueryVariables) => {
     onFilterChanged(values);
     console.log(values);
-  }
-
+  };
 
   return (
     <Form {...form}>

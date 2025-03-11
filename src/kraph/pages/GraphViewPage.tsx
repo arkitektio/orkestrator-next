@@ -56,8 +56,6 @@ export default asDetailQueryRoute(useGetGraphViewQuery, ({ data, refetch }) => {
         </div>
       </div>
 
-    
-
       <div className="p-6 h-full">
         {data.graphView.render.__typename === "Pairs" && (
           <div>Pair Rendering</div>
@@ -70,12 +68,15 @@ export default asDetailQueryRoute(useGetGraphViewQuery, ({ data, refetch }) => {
         {data.graphView.render.__typename === "Table" && (
           <>
             <div className="p-6">
-        {data.graphView.plotViews.map((view) => (
-          <ScatterPlot scatterPlot={view.plot} table={data.graphView.render}/>
-        ))}
-</div>
-<GraphTable table={data.graphView.render} /></>
-          
+              {data.graphView.plotViews.map((view) => (
+                <ScatterPlot
+                  scatterPlot={view.plot}
+                  table={data.graphView.render}
+                />
+              ))}
+            </div>
+            <GraphTable table={data.graphView.render} />
+          </>
         )}
       </div>
     </KraphGraphView.ModelPage>

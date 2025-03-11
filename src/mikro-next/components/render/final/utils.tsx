@@ -5,7 +5,7 @@ import {
   RequestAccessMutation,
   RequestAccessMutationVariables,
   RgbViewFragment,
-  ZarrStoreFragment
+  ZarrStoreFragment,
 } from "@/mikro-next/api/graphql";
 import { AvailableColormap } from "@/mikro-next/providers/xarray/provider";
 import c from "colormap";
@@ -14,7 +14,6 @@ import { NestedArray, TypedArray } from "zarr";
 import { ArraySelection, Slice } from "zarr/types/core/types";
 import { DtypeString } from "zarr/types/types";
 import { DataType } from "zarrita";
-
 
 export const available_color_maps = [
   "jet",
@@ -82,14 +81,10 @@ export const mapDTypeToMinMax = (dtype: DataType): [number, number] => {
     case "bool":
       return [0, 1];
 
-
-    
     default:
       throw new Error(`Unsupported dtype: ${dtype}`);
   }
 };
-
-
 
 export type ImageArray = {
   min: number;
@@ -113,9 +108,6 @@ export type Overwrites = {
   x?: Slice;
   y?: Slice;
 };
-
-
-
 
 export type FourDColour = [number, number, number, number];
 

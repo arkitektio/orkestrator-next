@@ -1,12 +1,11 @@
-
-mutation AcknowledgeMessage($id: ID!, $ack: Boolean!){
- acknowledgeMessage(input: {id: $id, acknowledged: $ack}){
-     id
+mutation AcknowledgeMessage($id: ID!, $ack: Boolean!) {
+  acknowledgeMessage(input: { id: $id, acknowledged: $ack }) {
     id
- }
+    id
+  }
 }
-mutation SendMessage($text: String!, $room: ID!, $agentId: String!){
-    send(input: {text: $text, room: $room, agentId: $agentId}){
-        ...Message
-    }
+mutation SendMessage($text: String!, $room: ID!, $agentId: String!) {
+  send(input: { text: $text, room: $room, agentId: $agentId }) {
+    ...Message
+  }
 }

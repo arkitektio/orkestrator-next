@@ -15,7 +15,7 @@ export const HerreGuard: React.FC<{
 
 export const herreGuarded = <T extends {}>(
   Child: React.ComponentType<T>,
-  fallback?: React.ReactNode
+  fallback?: React.ReactNode,
 ) => {
   return (props: any) => (
     <HerreGuard fallback={fallback}>

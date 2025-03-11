@@ -98,7 +98,7 @@ export default function pkceChallenge(length?: number): {
  */
 export function verifyChallenge(
   code_verifier: string,
-  expectedChallenge: string
+  expectedChallenge: string,
 ) {
   const actualChallenge = generateChallenge(code_verifier);
   return actualChallenge === expectedChallenge;
@@ -132,7 +132,7 @@ export const toUrlEncoded = (obj: any): string => {
   return Object.keys(obj)
     .map(
       (k) =>
-        encodeURIComponent(toSnakeCase(k)) + "=" + encodeURIComponent(obj[k])
+        encodeURIComponent(toSnakeCase(k)) + "=" + encodeURIComponent(obj[k]),
     )
     .join("&");
 };

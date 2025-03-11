@@ -1,15 +1,15 @@
-import React from 'react';
+import React from "react";
 
-import type { UseEmojiPickerType } from '@udecode/plate-emoji';
+import type { UseEmojiPickerType } from "@udecode/plate-emoji";
 
 export type EmojiPickerPreviewProps = Pick<
   UseEmojiPickerType,
-  'emoji' | 'hasFound' | 'i18n' | 'isSearching'
+  "emoji" | "hasFound" | "i18n" | "isSearching"
 >;
 
-export type EmojiPreviewProps = Pick<UseEmojiPickerType, 'emoji'>;
+export type EmojiPreviewProps = Pick<UseEmojiPickerType, "emoji">;
 
-export type NoEmojiPreviewProps = Pick<UseEmojiPickerType, 'i18n'>;
+export type NoEmojiPreviewProps = Pick<UseEmojiPickerType, "i18n">;
 
 export type PickAnEmojiPreviewProps = NoEmojiPreviewProps;
 

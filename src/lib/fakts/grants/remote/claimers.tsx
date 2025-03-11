@@ -1,32 +1,37 @@
-import { Claimer, Fakts, FaktsEndpoint, FaktsRequest } from '../../FaktsContext'
+import {
+  Claimer,
+  Fakts,
+  FaktsEndpoint,
+  FaktsRequest,
+} from "../../FaktsContext";
 
 export const claimClaimer: Claimer = async (
   request: FaktsRequest,
   endpoint: FaktsEndpoint,
   token: string,
-  controller: AbortController
+  controller: AbortController,
 ): Promise<Fakts> => {
-  console.log('Claiming Fakts', request, endpoint, token)
+  console.log("Claiming Fakts", request, endpoint, token);
   let response = await fetch(`${endpoint.base_url}claim/`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json'
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       token: token,
-      secure: true
+      secure: true,
     }),
-    signal: controller.signal
-  })
+    signal: controller.signal,
+  });
   if (response.ok) {
-    let json = await response.json()
+    let json = await response.json();
     if (json.config) {
-      return json.config as Fakts
+      return json.config as Fakts;
     } else {
-      console.error('Malformed Claim Answer', response)
-      throw Error('Malformed answered when claiming Fakts')
+      console.error("Malformed Claim Answer", response);
+      throw Error("Malformed answered when claiming Fakts");
     }
   }
 
-  throw Error('Received non 200 when claiming Fakts from token')
-}
+  throw Error("Received non 200 when claiming Fakts from token");
+};

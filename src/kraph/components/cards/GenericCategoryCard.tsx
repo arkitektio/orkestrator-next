@@ -24,7 +24,6 @@ const TheCard = ({ item, mates }: Props) => {
           />
         )}
         <div className="p-3 h-full w-full bg-opacity-20 hover:bg-opacity-10 transition-all ease-in-out duration-200 flex flex-col break-all overflow-y-hidden truncate">
-          
           <KraphGenericCategory.DetailLink
             className={({ isActive }) =>
               "z-10 font-bold text-md mb-2 cursor-pointer " +
@@ -34,7 +33,9 @@ const TheCard = ({ item, mates }: Props) => {
           >
             {item?.label}
           </KraphGenericCategory.DetailLink>
-            <div className="text-sm flex-grow text-muted-foreground break-words">{item?.description}</div>
+          <div className="text-sm flex-grow text-muted-foreground break-words">
+            {item?.description}
+          </div>
         </div>
       </Card>
     </KraphGenericCategory.Smart>

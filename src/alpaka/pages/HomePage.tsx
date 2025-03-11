@@ -15,22 +15,24 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
 
   const navigate = useNavigate();
 
-
-
   const handleCreateRoom = async () => {
     const { data } = await createRoom();
     if (data?.createRoom) {
       navigate(AlpakaRoom.linkBuilder(data.createRoom.id));
     }
-  }
-
+  };
 
   return (
     <PageLayout
       title="Alpaka"
       pageActions={
         <>
-          <ActionButton run={handleCreateRoom} title="Create Room" variant={"outline"} label="Create Room">
+          <ActionButton
+            run={handleCreateRoom}
+            title="Create Room"
+            variant={"outline"}
+            label="Create Room"
+          >
             Create Room
           </ActionButton>
         </>

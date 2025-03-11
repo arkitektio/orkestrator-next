@@ -8,16 +8,18 @@ import {
 } from "@/components/ui/carousel";
 import { KraphPlotView, KraphProtocolStepTemplate } from "@/linkers";
 import { PlateDisplay } from "@/kraph/pages/ProtocolStepTemplatePage";
-import { CarouselPlotViewFragment, ListPlotViewFragment, useListProtocolStepTemplatesQuery } from "@/kraph/api/graphql";
+import {
+  CarouselPlotViewFragment,
+  ListPlotViewFragment,
+  useListProtocolStepTemplatesQuery,
+} from "@/kraph/api/graphql";
 import ScatterPlot from "../charts/scatterplot/ScatterPlot";
 
 export const Test = () => {
   return <div>Hallo</div>;
 };
 
-export default  (props: {plots: CarouselPlotViewFragment[]}) => {
-  
-
+export default (props: { plots: CarouselPlotViewFragment[] }) => {
   return (
     <div className="w-full">
       <Carousel className="w-full dark:text-white">
@@ -33,17 +35,15 @@ export default  (props: {plots: CarouselPlotViewFragment[]}) => {
                   >
                     {item.name}
                   </KraphProtocolStepTemplate.DetailLink>
-                  <p>
-                    {item.plot.description || item.view.label}
-                  </p>
+                  <p>{item.plot.description || item.view.label}</p>
                 </div>
               </div>
               <div className="col-span-8">
-                <KraphPlotView.DetailLink
-                  object={item.id}
-                  className="p-1"
-                >
-                  <ScatterPlot scatterPlot={item.plot} table={item.view.render}/>
+                <KraphPlotView.DetailLink object={item.id} className="p-1">
+                  <ScatterPlot
+                    scatterPlot={item.plot}
+                    table={item.view.render}
+                  />
                 </KraphPlotView.DetailLink>
               </div>
             </CarouselItem>

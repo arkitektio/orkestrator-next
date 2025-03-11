@@ -16,7 +16,7 @@ import { nodeIdBuilder } from "@/reaktion/utils";
 import {
   PortKind,
   PortScope,
-  useProtocolOptionsLazyQuery
+  useProtocolOptionsLazyQuery,
 } from "@/rekuest/api/graphql";
 import { Tooltip } from "@radix-ui/react-tooltip";
 import { ArrowDown } from "lucide-react";
@@ -49,7 +49,6 @@ export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
     }
   }, [formState, formdata, isValidating]);
 
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(props.onSubmit)} className="">
@@ -80,9 +79,7 @@ export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
               )}
             />
             <PopoverContent>
-              <div className="flex flex-row gap-2">
-                No no
-              </div>
+              <div className="flex flex-row gap-2">No no</div>
             </PopoverContent>
           </Popover>
         </div>
@@ -91,12 +88,10 @@ export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   );
 };
 
-
 const ClickReactiveNodes = (props: {
   search: string | undefined;
   setRegistation: (registration: Registration) => void;
 }) => {
-
   const models = useModels(props.search);
 
   return (
@@ -109,7 +104,10 @@ const ClickReactiveNodes = (props: {
               {node.description ? (
                 <Popover>
                   <PopoverTrigger>
-                    <Card className="px-2 py-1 border-solid border-2 border-green-300 border " onClick={() => props.setRegistation(node)}>
+                    <Card
+                      className="px-2 py-1 border-solid border-2 border-green-300 border "
+                      onClick={() => props.setRegistation(node)}
+                    >
                       {node.identifier}
                     </Card>
                   </PopoverTrigger>
@@ -137,11 +135,12 @@ const ClickReactiveNodes = (props: {
   );
 };
 
-
-export const ClickContextual = (props: {  }) => {
+export const ClickContextual = (props: {}) => {
   const [search, setSearch] = useState<string | undefined>(undefined);
   const [localSearch, setLocalSearch] = useState<string | undefined>(undefined);
-  const [registration, setRegistration] = useState<Registration | undefined>(undefined);
+  const [registration, setRegistration] = useState<Registration | undefined>(
+    undefined,
+  );
 
   const onSubmit = (data: any) => {
     setSearch(data.search);
@@ -149,24 +148,27 @@ export const ClickContextual = (props: {  }) => {
 
   const onLocalSubmit = (data: any) => {
     setLocalSearch(data.search);
-  }
+  };
 
   return (
     <>
-    {!registration ? 
-    <div className="flex flex-col gap-2">
-      <SearchForm onSubmit={onSubmit} />
-      <Separator />
-      <ClickReactiveNodes search={search} setRegistation={(reg) => setRegistration(reg)} />
-    </div> : <div>
-      <Button onClick={() => setRegistration(undefined)}>Back</Button>
-      <SearchForm onSubmit={onLocalSubmit} />
-      <Separator />
-      <div>{registration.identifier}</div>
-      
-      
-      
-      </div>}
+      {!registration ? (
+        <div className="flex flex-col gap-2">
+          <SearchForm onSubmit={onSubmit} />
+          <Separator />
+          <ClickReactiveNodes
+            search={search}
+            setRegistation={(reg) => setRegistration(reg)}
+          />
+        </div>
+      ) : (
+        <div>
+          <Button onClick={() => setRegistration(undefined)}>Back</Button>
+          <SearchForm onSubmit={onLocalSubmit} />
+          <Separator />
+          <div>{registration.identifier}</div>
+        </div>
+      )}
     </>
   );
 };

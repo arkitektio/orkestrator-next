@@ -1,17 +1,16 @@
-query DetailRoom($id: ID!){
-    room(id: $id){
-        ...DetailRoom
-    }
+query DetailRoom($id: ID!) {
+  room(id: $id) {
+    ...DetailRoom
+  }
 }
 
 query Rooms {
-    rooms(pagination: {limit: 10}) {
-        id
-        title
-        description
-        messages(pagination: {limit: 4}) {
-            ...ListMessage
-        }
-
+  rooms(pagination: { limit: 10 }) {
+    id
+    title
+    description
+    messages(pagination: { limit: 4 }) {
+      ...ListMessage
     }
+  }
 }

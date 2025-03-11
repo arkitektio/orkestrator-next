@@ -63,7 +63,7 @@ export const localStorageProvider = {
 
 export const windowRedirect = (
   url: string,
-  abortController: AbortController
+  abortController: AbortController,
 ) => {
   localStorage.setItem(CODE_STRING, "");
   window.open(url, "_blank", "noreferrer, popup");
@@ -122,7 +122,7 @@ export const HerreProvider = ({
   const refreshToken = async (
     grant: HerreGrant,
     endpoint: HerreEndpoint,
-    token: Auth
+    token: Auth,
   ) => {
     let payload: TokenRequestBody = {
       clientId: grant.clientId.trim(),
@@ -216,7 +216,7 @@ export const HerreProvider = ({
     endpoint: HerreEndpoint,
     grant: HerreGrant,
     pkce: PKCECodePair,
-    code: string
+    code: string,
   ) => {
     // We use the stored grant and endpoint here, because the
 
@@ -251,11 +251,7 @@ export const HerreProvider = ({
     return token as Auth;
   };
 
-  const prepareCodeRequest = async ({
-    grant,
-    endpoint
-  }: LoginRequest
-  ) => {
+  const prepareCodeRequest = async ({ grant, endpoint }: LoginRequest) => {
     const pkce = await codeProvider();
     const codeChallenge = pkce.codeChallenge;
 
@@ -275,24 +271,27 @@ export const HerreProvider = ({
   };
 
   const login = (request: LoginRequest) => {
-
     let abortController = new AbortController();
 
     let result = new Promise<Token>(async (resolve, reject) => {
       try {
+        let answer = await prepareCodeRequest(request);
+        let { pkce, authUri } = answer;
 
-        let answer = await prepareCodeRequest(request)
-        let {pkce, authUri} = answer
-
-        let retrievedCode = await doRedirect(authUri, abortController)
+        let retrievedCode = await doRedirect(authUri, abortController);
 
         if (!retrievedCode) {
-          throw new Error("No code retrieved")
+          throw new Error("No code retrieved");
         }
 
-        let token = await challengeCode(request.endpoint, request.grant, pkce, retrievedCode)
+        let token = await challengeCode(
+          request.endpoint,
+          request.grant,
+          pkce,
+          retrievedCode,
+        );
 
-        let user = await fetchUserWithToken(request.endpoint, token)
+        let user = await fetchUserWithToken(request.endpoint, token);
 
         setLoginState({
           user: user,
@@ -317,7 +316,6 @@ export const HerreProvider = ({
       },
       promise: result,
     };
-
   };
   return (
     <HerreContext.Provider

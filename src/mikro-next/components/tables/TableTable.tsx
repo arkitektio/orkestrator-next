@@ -247,7 +247,7 @@ export const TableTable = (props: { table: TableFragment }) => {
 
   const initialVariables = {};
 
-  const {  kinds, search } = form.watch();
+  const { kinds, search } = form.watch();
 
   const { data, loading, refetch, error } = useRowsQuery({
     variables: {
@@ -316,7 +316,7 @@ export const TableTable = (props: { table: TableFragment }) => {
           }
           className="max-w-sm w-full bg-background"
         />
-    
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">

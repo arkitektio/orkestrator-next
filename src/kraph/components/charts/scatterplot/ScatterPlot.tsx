@@ -1,14 +1,22 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Area, AreaChart, CartesianGrid, Scatter, ScatterChart, XAxis, YAxis } from "recharts"
+import * as React from "react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Scatter,
+  ScatterChart,
+  XAxis,
+  YAxis,
+} from "recharts";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
@@ -16,18 +24,21 @@ import {
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart"
+} from "@/components/ui/chart";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { ScatterPlotFragment, TableFragment, useDeleteScatterPlotMutation } from "@/kraph/api/graphql"
-import { calculateColumns, calculateRows } from "../../renderers/utils"
-import { Button } from "@/components/ui/button"
-
+} from "@/components/ui/select";
+import {
+  ScatterPlotFragment,
+  TableFragment,
+  useDeleteScatterPlotMutation,
+} from "@/kraph/api/graphql";
+import { calculateColumns, calculateRows } from "../../renderers/utils";
+import { Button } from "@/components/ui/button";
 
 const chartConfig = {
   visitors: {
@@ -41,28 +52,32 @@ const chartConfig = {
     label: "Mobile",
     color: "hsl(var(--chart-2))",
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
-export default (props: {table: TableFragment, scatterPlot: ScatterPlotFragment}) => {
-  const [timeRange, setTimeRange] = React.useState("90d")
+export default (props: {
+  table: TableFragment;
+  scatterPlot: ScatterPlotFragment;
+}) => {
+  const [timeRange, setTimeRange] = React.useState("90d");
 
-  const [del] = useDeleteScatterPlotMutation()
-
+  const [del] = useDeleteScatterPlotMutation();
 
   const columns = calculateColumns(props.table);
   const rows = calculateRows(props.table);
-
 
   return (
     <Card>
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-center sm:text-left">
           <CardTitle>{props.scatterPlot.name}</CardTitle>
-          <CardDescription>
-            {props.scatterPlot.description}
-          </CardDescription>
+          <CardDescription>{props.scatterPlot.description}</CardDescription>
         </div>
-        <Button variant="destructive" onClick={() => del({variables: {id: props.scatterPlot.id}})}>Delete</Button>
+        <Button
+          variant="destructive"
+          onClick={() => del({ variables: { id: props.scatterPlot.id } })}
+        >
+          Delete
+        </Button>
         <Select value={timeRange} onValueChange={setTimeRange}>
           <SelectTrigger
             className="w-[160px] rounded-lg sm:ml-auto"
@@ -90,20 +105,38 @@ export default (props: {table: TableFragment, scatterPlot: ScatterPlotFragment})
         >
           <ScatterChart
             margin={{
-                top: 20,
-                right: 20,
-                bottom: 20,
-                left: 20,
+              top: 20,
+              right: 20,
+              bottom: 20,
+              left: 20,
             }}
-            >
-          <CartesianGrid />
-          <XAxis type="number" dataKey={props.scatterPlot.xColumn} name={props.table.columns.find(n => n.name == props.scatterPlot.xColumn)?.name || "No Label" } unit="µm" />
-          <YAxis type="number" dataKey={props.scatterPlot.yColumn} name={props.table.columns.find(n => n.name == props.scatterPlot.yColumn)?.name  || " No Label"} unit="µm" />
-          <ChartTooltip cursor={{ strokeDasharray: '3 3' }} />
-          <Scatter name={props.scatterPlot.name} data={rows} fill="#8884d8" />
-        </ScatterChart>
+          >
+            <CartesianGrid />
+            <XAxis
+              type="number"
+              dataKey={props.scatterPlot.xColumn}
+              name={
+                props.table.columns.find(
+                  (n) => n.name == props.scatterPlot.xColumn,
+                )?.name || "No Label"
+              }
+              unit="µm"
+            />
+            <YAxis
+              type="number"
+              dataKey={props.scatterPlot.yColumn}
+              name={
+                props.table.columns.find(
+                  (n) => n.name == props.scatterPlot.yColumn,
+                )?.name || " No Label"
+              }
+              unit="µm"
+            />
+            <ChartTooltip cursor={{ strokeDasharray: "3 3" }} />
+            <Scatter name={props.scatterPlot.name} data={rows} fill="#8884d8" />
+          </ScatterChart>
         </ChartContainer>
       </CardContent>
     </Card>
-  )
-}
+  );
+};

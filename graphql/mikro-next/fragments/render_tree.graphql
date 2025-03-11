@@ -1,80 +1,70 @@
-
 fragment ContextNodeNested on ContextNode {
-    label
-    context {
-        ...RGBContext
-    }
+  label
+  context {
+    ...RGBContext
+  }
 }
 
-
-
 fragment OverlayNodeNested on OverlayNode {
-    label
+  label
 }
 
 fragment GridNodeNested on GridNode {
-    label
-    gap
+  label
+  gap
 }
 
 fragment RenderNodeNested on RenderNode {
-    kind
-    ...ContextNodeNested
-    ...GridNodeNested
-    ...OverlayNodeNested
+  kind
+  ...ContextNodeNested
+  ...GridNodeNested
+  ...OverlayNodeNested
 }
-
-
 
 fragment ContextNode on ContextNode {
-    label
-    context {
-        ...RGBContext
-    }
+  label
+  context {
+    ...RGBContext
+  }
 }
 
-
-
 fragment OverlayNode on OverlayNode {
-    label
-    children {
-        ...RenderNodeNested
-    }
+  label
+  children {
+    ...RenderNodeNested
+  }
 }
 
 fragment GridNode on GridNode {
-    label
-    gap
-    children {
-        ...RenderNodeNested
-    }
+  label
+  gap
+  children {
+    ...RenderNodeNested
+  }
 }
 
-
 fragment RenderNode on RenderNode {
-    kind
-    ...ContextNode
-    ...GridNode
-    ...OverlayNode
-
+  kind
+  ...ContextNode
+  ...GridNode
+  ...OverlayNode
 }
 
 fragment Tree on Tree {
-    children {
-        ...RenderNode
-    }
+  children {
+    ...RenderNode
+  }
 }
 
-
 fragment RenderTree on RenderTree {
-    id
-    name
-    tree {
-        ...Tree
-    }
+  id
+  name
+  tree {
+    ...Tree
+  }
 }
 
 fragment ListRenderTree on RenderTree {
-    id
-    name
+  id
+  name
 }

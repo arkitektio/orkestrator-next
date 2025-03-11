@@ -361,16 +361,15 @@ export const RGBD = (props: RGBDProps) => {
           onValueClick={props.onValueClick}
         />
       </Canvas>
-
       {openPanels.map((panel) => (
         <Card
           style={{
             position: "absolute",
             top: `${panel.positionY}px`,
-            left: `${panel.positionX + 20}px`,
+            left: `${panel.positionX}px`,
             zIndex: 10,
           }}
-          className="transform -translate-y-1/2 max-w-[400px] p-2"
+          className="p-2"
         >
           <DelegatingStructureWidget
             port={{

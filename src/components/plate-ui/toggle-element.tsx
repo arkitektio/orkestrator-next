@@ -1,13 +1,13 @@
-import { cn, withRef } from '@udecode/cn';
-import { useElement } from '@udecode/plate-common/react';
+import { cn, withRef } from "@udecode/cn";
+import { useElement } from "@udecode/plate-common/react";
 import {
   useToggleButton,
   useToggleButtonState,
-} from '@udecode/plate-toggle/react';
+} from "@udecode/plate-toggle/react";
 
-import { Icons } from '@/components/icons';
+import { Icons } from "@/components/icons";
 
-import { PlateElement } from './plate-element';
+import { PlateElement } from "./plate-element";
 
 export const ToggleElement = withRef<typeof PlateElement>(
   ({ children, className, ...props }, ref) => {
@@ -18,7 +18,7 @@ export const ToggleElement = withRef<typeof PlateElement>(
     return (
       <PlateElement
         ref={ref}
-        className={cn('relative pl-6', className)}
+        className={cn("relative pl-6", className)}
         {...props}
       >
         <span
@@ -31,5 +31,5 @@ export const ToggleElement = withRef<typeof PlateElement>(
         {children}
       </PlateElement>
     );
-  }
+  },
 );

@@ -1,10 +1,10 @@
 fragment ListServiceInstanceMapping on ServiceInstanceMapping {
-    id
-    key
-        instance {
-            service {
-                identifier
-            }
-            backend
-        }
+  id
+  key
+  instance {
+    service {
+      identifier
+    }
+    backend
+  }
 }

@@ -2,7 +2,7 @@ fragment PlotView on PlotView {
   id
   name
   view {
-    id 
+    id
     label
     render {
       ...Table
@@ -11,14 +11,13 @@ fragment PlotView on PlotView {
   plot {
     ...ScatterPlot
   }
-
 }
 
 fragment CarouselPlotView on PlotView {
   id
   name
   view {
-    id 
+    id
     label
     render {
       ...Table
@@ -27,7 +26,6 @@ fragment CarouselPlotView on PlotView {
   plot {
     ...ScatterPlot
   }
-
 }
 
 fragment ListPlotView on PlotView {

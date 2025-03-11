@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 import {
   BoldPlugin,
@@ -6,16 +6,16 @@ import {
   ItalicPlugin,
   StrikethroughPlugin,
   UnderlinePlugin,
-} from '@udecode/plate-basic-marks/react';
-import { useEditorReadOnly } from '@udecode/plate-common/react';
+} from "@udecode/plate-basic-marks/react";
+import { useEditorReadOnly } from "@udecode/plate-common/react";
 
-import { Icons } from '@/components/icons';
+import { Icons } from "@/components/icons";
 
-import { ToolbarGroup } from './toolbar';
+import { ToolbarGroup } from "./toolbar";
 
 // import { AIToolbarButton } from './ai-toolbar-button';
-import { MarkToolbarButton } from './mark-toolbar-button';
-import { TurnIntoDropdownMenu } from './turn-into-dropdown-menu';
+import { MarkToolbarButton } from "./mark-toolbar-button";
+import { TurnIntoDropdownMenu } from "./turn-into-dropdown-menu";
 
 export function FloatingToolbarButtons() {
   const readOnly = useEditorReadOnly();

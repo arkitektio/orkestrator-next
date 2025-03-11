@@ -5,18 +5,9 @@ import TraceList from "../components/lists/TraceList";
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
-  
-
   return (
-    <PageLayout
-      title="Elektro"
-      actions={
-        <>
-        </>
-      }
-    >
-
-      <TraceList/>
+    <PageLayout title="Elektro" actions={<></>}>
+      <TraceList />
 
       <Separator />
     </PageLayout>

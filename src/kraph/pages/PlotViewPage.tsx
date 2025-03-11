@@ -1,7 +1,12 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
-import { KraphGraph, KraphGraphQuery, KraphGraphView, KraphPlotView } from "@/linkers";
+import {
+  KraphGraph,
+  KraphGraphQuery,
+  KraphGraphView,
+  KraphPlotView,
+} from "@/linkers";
 import { useGetGraphViewQuery, useGetPlotViewQuery } from "../api/graphql";
 
 import { PathGraph } from "../components/renderers/graph/KnowledgeGraph";
@@ -19,7 +24,10 @@ export default asDetailQueryRoute(useGetPlotViewQuery, ({ data, refetch }) => {
       title={data.plotView.name}
       pageActions={
         <div className="flex flex-row gap-2">
-          <KraphGraphView.DetailLink object={data.plotView.view.id} subroute="entities">
+          <KraphGraphView.DetailLink
+            object={data.plotView.view.id}
+            subroute="entities"
+          >
             <Button variant="outline" size="sm">
               Table
             </Button>
@@ -55,13 +63,12 @@ export default asDetailQueryRoute(useGetPlotViewQuery, ({ data, refetch }) => {
         </div>
       </div>
 
-    
-
       <div className="p-6 h-full">
-        <ScatterPlot scatterPlot={data.plotView.plot} table={data.plotView.view.render}/>
-        </div>
-        
-
+        <ScatterPlot
+          scatterPlot={data.plotView.plot}
+          table={data.plotView.view.render}
+        />
+      </div>
     </KraphPlotView.ModelPage>
   );
 });

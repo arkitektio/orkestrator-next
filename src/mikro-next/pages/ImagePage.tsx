@@ -11,7 +11,7 @@ import {
   DetailPaneTitle,
 } from "@/components/ui/pane";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { MikroDataset, MikroImage } from "@/linkers";
+import { MikroImage } from "@/linkers";
 import { UserInfo } from "@/lok-next/components/protected/UserInfo";
 import { TwoDViewProvider } from "@/providers/view/ViewProvider";
 import { Matrix4 } from "@math.gl/core";
@@ -33,15 +33,13 @@ import OpticsViewCard from "../components/cards/OpticsViewCard";
 import PixelViewCard from "../components/cards/PixelViewCard";
 import RGBViewCard from "../components/cards/RGBViewCard";
 import ROIViewCard from "../components/cards/ROIViewCard";
-import SpecimenViewCard from "../components/cards/SpecimenViewCard";
 import TransformationViewCard from "../components/cards/TransformationViewCard";
 import WellPositionViewCard from "../components/cards/WellPositionViewCard";
-import { DelegatingImageRender } from "../components/render/DelegatingImageRender";
+import { FinalRender } from "../components/render/FInalRender";
 import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { PinToggle } from "../components/ui/PinToggle";
 import { AddImageViewForm } from "../forms/AddImageViewForm";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
-import { FinalRender } from "../components/render/FInalRender";
 
 export type IRepresentationScreenProps = {};
 
@@ -138,140 +136,147 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
               </div>
             ))}
           </div>
-          <div className="col-span-3">
-          <DetailPane className="col-span-3 @container p-2 bg-black bg-clip-padding backdrop-filter backdrop-blur-2xl bg-opacity-10 z-100 overflow-hidden flex flex-col h-max-[400px]">
-            <DetailPaneHeader>
-              <DetailPaneTitle
-                actions={
-                  <>
-                    <PinToggle
-                      onPin={(e) => {
-                        data?.image.id &&
-                          pinImage({
-                            variables: {
-                              id: data?.image?.id,
-                              pin: e,
-                            },
-                          });
-                      }}
-                      pinned={data?.image?.pinned || false}
-                    />
-                  </>
-                }
-                className="group "
-              >
-                <FormSheet
-                  trigger={
-                    <HobbyKnifeIcon className="w-full group-hover:block hidden" />
-                  }
-                >
-                  {data?.image && <UpdateImageForm image={data?.image} />}
-                </FormSheet>
-                {data?.image?.name}
-              </DetailPaneTitle>
-            </DetailPaneHeader>
-
-            <DetailPaneContent className="flex flex-col">
-            <div className="font-light">Shape</div>
-              <div className="text-xl flex mb-2">
-                {data?.image?.store?.shape?.map((val, index) => (
-                  <div key={index}>
-                    <span className="font-semibold">{val}</span>{" "}
-                    <span className="text-xs font-light mr-1 ml-1 my-auto">
-                      {" "}
-                      {dimensionOrder[index]}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div className="font-light text-xs mb-2">
-                ZarrV {data?.image?.store?.version}
-              </div>
-
-              <div className="font-light mt-2 font-semibold ">Creation</div>
-              <div className="flex-row flex gap-2 mt-2">
-                <Timestamp date={data?.image?.createdAt} className="my-auto"/>
-                {data?.image?.creator?.sub && (
-                  <UserInfo sub={data?.image?.creator?.sub} />
-                )}
-              </div>
-              
-             
-              <div className="font-light mb-2">Views</div>
-              <ResponsiveContainerGrid className="gap-3 ">
-                {data?.image.views?.map((view, index) => (
-                  <>
-                    {view.__typename == "AffineTransformationView" && (
-                      <TransformationViewCard view={view} key={index} />
-                    )}
-                    {view.__typename == "LabelView" && (
-                      <LabelViewCard view={view} key={index} />
-                    )}
-                    {view.__typename == "OpticsView" && (
-                      <OpticsViewCard view={view} key={index} />
-                    )}
-                    {view.__typename == "ChannelView" && (
-                      <ChannelViewCard view={view} key={index} />
-                    )}
-                    {view.__typename == "RGBView" && (
-                      <RGBViewCard view={view} key={index} />
-                    )}
-                    {view.__typename == "AcquisitionView" && (
-                      <AcquisitionViewCard view={view} key={index} />
-                    )}
-                    {view.__typename == "WellPositionView" && (
-                      <WellPositionViewCard view={view} key={index} />
-                    )}
-                    {view.__typename == "ROIView" && (
-                      <ROIViewCard view={view} key={index} />
-                    )}
-                    {view.__typename == "FileView" && (
-                      <FileViewCard view={view} key={index} />
-                    )}
-                    {view.__typename == "DerivedView" && (
-                      <DerivedViewCard view={view} key={index} />
-                    )}
-                    {view.__typename == "PixelView" && (
-                      <PixelViewCard view={view} key={index} />
-                    )}
-                  </>
-                ))}
-                {data?.image && (
-                  <Card className="opacity-0 hover:opacity-100 relative">
-                    <CardContent className="grid place-items-center w-full h-full">
-                      <FormDialog
-                        trigger={<PlusIcon className="text-xl" />}
-                        onSubmit={async (data) => {
-                          await refetch();
+          <div className="lg:col-span-3 col-span-12 flex flex-row items-end lg:items-start">
+            <DetailPane className="w-full col-span-3 @container p-2 bg-black bg-clip-padding backdrop-filter backdrop-blur-2xl bg-opacity-10 z-100 overflow-hidden flex flex-col h-max-[400px]">
+              <DetailPaneHeader>
+                <DetailPaneTitle
+                  actions={
+                    <>
+                      <PinToggle
+                        onPin={(e) => {
+                          data?.image.id &&
+                            pinImage({
+                              variables: {
+                                id: data?.image?.id,
+                                pin: e,
+                              },
+                            });
                         }}
-                      >
-                        <AddImageViewForm image={data?.image.id} />
-                      </FormDialog>
-                    </CardContent>
-                  </Card>
-                )}
-              </ResponsiveContainerGrid>
-              {data?.image.derivedFromViews?.length > 0 && (
-                <>
-                  <div className="font-light">Derived Images</div>
-                  <div className="flex flex-col gap-2 mt-2">
-                    {data?.image.derivedFromViews?.map((view, index) => (
-                      <MikroImage.Smart object={view.image.id}>
-                        <MikroImage.DetailLink
-                          object={view.image?.id}
-                          className="cursor-pointer"
+                        pinned={data?.image?.pinned || false}
+                      />
+                    </>
+                  }
+                  className="group "
+                >
+                  <FormSheet
+                    trigger={
+                      <HobbyKnifeIcon className="w-full group-hover:block hidden" />
+                    }
+                  >
+                    {data?.image && <UpdateImageForm image={data?.image} />}
+                  </FormSheet>
+                  {data?.image?.name}
+                </DetailPaneTitle>
+              </DetailPaneHeader>
+
+              <DetailPaneContent className="flex flex-col">
+                <div className="font-light">Shape</div>
+                <div className="text-xl flex mb-2">
+                  {data?.image?.store?.shape?.map((val, index) => (
+                    <div key={index}>
+                      <span className="font-semibold">{val}</span>{" "}
+                      <span className="text-xs font-light mr-1 ml-1 my-auto">
+                        {" "}
+                        {dimensionOrder[index]}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="font-light text-xs mb-2">
+                  ZarrV {data?.image?.store?.version}
+                </div>
+
+                <div className="font-light mt-2 font-semibold ">Creation</div>
+                <div className="flex-row flex gap-2 mt-2">
+                  <Timestamp
+                    date={data?.image?.createdAt}
+                    className="my-auto"
+                  />
+                  {data?.image?.creator?.sub && (
+                    <UserInfo sub={data?.image?.creator?.sub} />
+                  )}
+                </div>
+
+                <div className="font-light mb-2">Views</div>
+              
+
+
+                <ResponsiveContainerGrid className="gap-3 ">
+                  {data?.image.views?.map((view, index) => (
+                    <>
+                      {view.__typename == "AffineTransformationView" && (
+                        <TransformationViewCard view={view} key={index} />
+                      )}
+                      {view.__typename == "LabelView" && (
+                        <LabelViewCard view={view} key={index} />
+                      )}
+                      {view.__typename == "OpticsView" && (
+                        <OpticsViewCard view={view} key={index} />
+                      )}
+                      {view.__typename == "ChannelView" && (
+                        <ChannelViewCard view={view} key={index} />
+                      )}
+                      {view.__typename == "RGBView" && (
+                        <RGBViewCard view={view} key={index} />
+                      )}
+                      {view.__typename == "AcquisitionView" && (
+                        <AcquisitionViewCard view={view} key={index} />
+                      )}
+                      {view.__typename == "WellPositionView" && (
+                        <WellPositionViewCard view={view} key={index} />
+                      )}
+                      {view.__typename == "ROIView" && (
+                        <ROIViewCard view={view} key={index} />
+                      )}
+                      {view.__typename == "FileView" && (
+                        <FileViewCard view={view} key={index} />
+                      )}
+                      {view.__typename == "DerivedView" && (
+                        <DerivedViewCard view={view} key={index} />
+                      )}
+                      {view.__typename == "PixelView" && (
+                        <PixelViewCard view={view} key={index} />
+                      )}
+                    </>
+                  ))}
+                  {data?.image && (
+                    <Card className="opacity-0 hover:opacity-100 relative">
+                      <CardContent className="grid place-items-center w-full h-full">
+                        <FormDialog
+                          trigger={<PlusIcon className="text-xl" />}
+                          onSubmit={async (data) => {
+                            await refetch();
+                          }}
                         >
-                          <Card className="flex flex-row gap-2 px-2 py-1">
-                            <span className="text-md">{view.image?.name}</span>
-                          </Card>
-                        </MikroImage.DetailLink>
-                      </MikroImage.Smart>
-                    ))}
-                  </div>
-                </>
-              )}
-            </DetailPaneContent>
-          </DetailPane>
+                          <AddImageViewForm image={data?.image.id} />
+                        </FormDialog>
+                      </CardContent>
+                    </Card>
+                  )}
+                </ResponsiveContainerGrid>
+                {data?.image.derivedFromViews?.length > 0 && (
+                  <>
+                    <div className="font-light">Derived Images</div>
+                    <div className="flex flex-col gap-2 mt-2">
+                      {data?.image.derivedFromViews?.map((view, index) => (
+                        <MikroImage.Smart object={view.image.id}>
+                          <MikroImage.DetailLink
+                            object={view.image?.id}
+                            className="cursor-pointer"
+                          >
+                            <Card className="flex flex-row gap-2 px-2 py-1">
+                              <span className="text-md">
+                                {view.image?.name}
+                              </span>
+                            </Card>
+                          </MikroImage.DetailLink>
+                        </MikroImage.Smart>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </DetailPaneContent>
+            </DetailPane>
           </div>
         </div>
       </TwoDViewProvider>

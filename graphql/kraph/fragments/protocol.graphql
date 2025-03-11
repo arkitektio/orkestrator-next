@@ -9,7 +9,6 @@ fragment Protocol on Protocol {
   description
 }
 
-
 fragment ListProtocol on Protocol {
   id
   name

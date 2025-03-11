@@ -1,10 +1,10 @@
 import { Arkitekt, useElektro } from "@/arkitekt/Arkitekt";
 import {
-    AccessCredentialsFragment,
-    RequestAccessDocument,
-    RequestAccessMutation,
-    RequestAccessMutationVariables,
-    ZarrStoreFragment,
+  AccessCredentialsFragment,
+  RequestAccessDocument,
+  RequestAccessMutation,
+  RequestAccessMutationVariables,
+  ZarrStoreFragment,
 } from "@/elektro/api/graphql";
 import { S3Store } from "@/mikro-next/providers/xarray/store";
 import { useSettings } from "@/providers/settings/SettingsContext";
@@ -63,12 +63,7 @@ export const downloadSelectionFromStore = async (
   };
 };
 
-
-
-export const viewToSlices = (
-  t: number,
-  z: number,
-): Slice[] => {
+export const viewToSlices = (t: number, z: number): Slice[] => {
   let selection: Slice[] = [
     {
       _slice: true,
@@ -91,7 +86,7 @@ export const slicesToString = (slice: Slice[]): string => {
   return slice.map((x) => x.start + ":" + x.stop).join(",");
 };
 
-export type Plot = {[key: string]: number}[];
+export type Plot = { [key: string]: number }[];
 
 export const renderArray = async (
   credentials: AccessCredentialsFragment,
@@ -111,16 +106,15 @@ export const renderArray = async (
     abortSignal,
   );
 
-console.log("Array is", selection.out.data)
-const reduced = Array.from(selection.out.data).map((x, i) => {
-    return {  "t" : i, "c": x };
-})
+  console.log("Array is", selection.out.data);
+  const reduced = Array.from(selection.out.data).map((x, i) => {
+    return { t: i, c: x };
+  });
 
-console.log("Reduced array", reduced);
-  
+  console.log("Reduced array", reduced);
 
   return reduced as Plot;
-}
+};
 
 const downloadArray = async (
   client: ApolloClient<any> | undefined,
@@ -148,13 +142,7 @@ const downloadArray = async (
     throw Error("No credentials loaded");
   }
 
-  return await renderArray(
-    data.requestAccess,
-    endpoint_url,
-    store,
-    t,
-    signal,
-  );
+  return await renderArray(data.requestAccess, endpoint_url, store, t, signal);
 };
 
 export const useTraceArray = () => {
@@ -165,12 +153,7 @@ export const useTraceArray = () => {
   const fakts = Arkitekt.useFakts();
 
   const renderView = useCallback(
-    async (
-      trace: DetailTraceFragment,
-      t: number,
-      signal?: AbortSignal,
-    ) => {
-
+    async (trace: DetailTraceFragment, t: number, signal?: AbortSignal) => {
       if (!client) {
         throw Error("No client found");
       }
@@ -196,5 +179,3 @@ export const useTraceArray = () => {
     renderView,
   };
 };
-
-

@@ -1,19 +1,19 @@
-import React from 'react';
+import React from "react";
 
-import type { DropdownMenuProps } from '@radix-ui/react-dropdown-menu';
+import type { DropdownMenuProps } from "@radix-ui/react-dropdown-menu";
 
-import { BlockquotePlugin } from '@udecode/plate-block-quote/react';
-import { getNodeEntries, isBlock } from '@udecode/plate-common';
+import { BlockquotePlugin } from "@udecode/plate-block-quote/react";
+import { getNodeEntries, isBlock } from "@udecode/plate-common";
 import {
   ParagraphPlugin,
   focusEditor,
   useEditorRef,
   useEditorSelector,
-} from '@udecode/plate-common/react';
-import { HEADING_KEYS } from '@udecode/plate-heading';
-import { ListStyleType, toggleIndentList } from '@udecode/plate-indent-list';
+} from "@udecode/plate-common/react";
+import { HEADING_KEYS } from "@udecode/plate-heading";
+import { ListStyleType, toggleIndentList } from "@udecode/plate-indent-list";
 
-import { Icons } from '@/components/icons';
+import { Icons } from "@/components/icons";
 
 import {
   DropdownMenu,
@@ -23,50 +23,50 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
   useOpenState,
-} from './dropdown-menu';
-import { ToolbarButton } from './toolbar';
+} from "./dropdown-menu";
+import { ToolbarButton } from "./toolbar";
 
 const items = [
   {
-    description: 'Paragraph',
+    description: "Paragraph",
     icon: Icons.paragraph,
-    label: 'Paragraph',
+    label: "Paragraph",
     value: ParagraphPlugin.key,
   },
   {
-    description: 'Heading 1',
+    description: "Heading 1",
     icon: Icons.h1,
-    label: 'Heading 1',
+    label: "Heading 1",
     value: HEADING_KEYS.h1,
   },
   {
-    description: 'Heading 2',
+    description: "Heading 2",
     icon: Icons.h2,
-    label: 'Heading 2',
+    label: "Heading 2",
     value: HEADING_KEYS.h2,
   },
   {
-    description: 'Heading 3',
+    description: "Heading 3",
     icon: Icons.h3,
-    label: 'Heading 3',
+    label: "Heading 3",
     value: HEADING_KEYS.h3,
   },
   {
-    description: 'Quote (⌘+⇧+.)',
+    description: "Quote (⌘+⇧+.)",
     icon: Icons.blockquote,
-    label: 'Quote',
+    label: "Quote",
     value: BlockquotePlugin.key,
   },
   {
-    description: 'Bulleted list',
+    description: "Bulleted list",
     icon: Icons.ul,
-    label: 'Bulleted list',
+    label: "Bulleted list",
     value: ListStyleType.Disc,
   },
   {
-    description: 'Numbered list',
+    description: "Numbered list",
     icon: Icons.ol,
-    label: 'Numbered list',
+    label: "Numbered list",
     value: ListStyleType.Decimal,
   },
 ];
@@ -79,7 +79,7 @@ export function TurnIntoDropdownMenu(props: DropdownMenuProps) {
     let allNodesMatchInitialNodeType = false;
     const codeBlockEntries = getNodeEntries(editor, {
       match: (n) => isBlock(editor, n),
-      mode: 'highest',
+      mode: "highest",
     });
     const nodes = Array.from(codeBlockEntries);
 

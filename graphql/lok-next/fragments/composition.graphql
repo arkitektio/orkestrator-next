@@ -1,6 +1,6 @@
 fragment DetailComposition on Composition {
-    name
-    mappings {
-        ...ListServiceInstanceMapping
-    }
+  name
+  mappings {
+    ...ListServiceInstanceMapping
+  }
 }

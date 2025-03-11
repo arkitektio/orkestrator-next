@@ -1,201 +1,212 @@
-import { gql } from '@apollo/client';
-import * as Apollo from '@apollo/client';
-import * as ApolloReactHooks from '@/lib/mikro/funcs';
+import { gql } from "@apollo/client";
+import * as Apollo from "@apollo/client";
+import * as ApolloReactHooks from "@/lib/mikro/funcs";
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
-export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
-export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
-export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
+export type Exact<T extends { [key: string]: unknown }> = {
+  [K in keyof T]: T[K];
+};
+export type MakeOptional<T, K extends keyof T> = Omit<T, K> & {
+  [SubKey in K]?: Maybe<T[SubKey]>;
+};
+export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & {
+  [SubKey in K]: Maybe<T[SubKey]>;
+};
+export type MakeEmpty<
+  T extends { [key: string]: unknown },
+  K extends keyof T,
+> = { [_ in K]?: never };
+export type Incremental<T> =
+  | T
+  | {
+      [P in keyof T]?: P extends " $fragmentName" | "__typename" ? T[P] : never;
+    };
 const defaultOptions = {} as const;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string; output: string; }
-  String: { input: string; output: string; }
-  Boolean: { input: boolean; output: boolean; }
-  Int: { input: number; output: number; }
-  Float: { input: number; output: number; }
-  Any: { input: any; output: any; }
-  ArrayLike: { input: any; output: any; }
-  DateTime: { input: any; output: any; }
-  FileLike: { input: any; output: any; }
-  FiveDVector: { input: any; output: any; }
-  FourByFourMatrix: { input: any; output: any; }
-  JSON: { input: any; output: any; }
-  MeshLike: { input: any; output: any; }
-  MetricMap: { input: any; output: any; }
-  Micrometers: { input: any; output: any; }
-  Milliseconds: { input: any; output: any; }
-  ParquetLike: { input: any; output: any; }
-  StructureString: { input: any; output: any; }
-  ThreeDVector: { input: any; output: any; }
-  Upload: { input: any; output: any; }
+  ID: { input: string; output: string };
+  String: { input: string; output: string };
+  Boolean: { input: boolean; output: boolean };
+  Int: { input: number; output: number };
+  Float: { input: number; output: number };
+  Any: { input: any; output: any };
+  ArrayLike: { input: any; output: any };
+  DateTime: { input: any; output: any };
+  FileLike: { input: any; output: any };
+  FiveDVector: { input: any; output: any };
+  FourByFourMatrix: { input: any; output: any };
+  JSON: { input: any; output: any };
+  MeshLike: { input: any; output: any };
+  MetricMap: { input: any; output: any };
+  Micrometers: { input: any; output: any };
+  Milliseconds: { input: any; output: any };
+  ParquetLike: { input: any; output: any };
+  StructureString: { input: any; output: any };
+  ThreeDVector: { input: any; output: any };
+  Upload: { input: any; output: any };
 };
 
 /** Temporary Credentials for a file download that can be used by a Client (e.g. in a python datalayer) */
 export type AccessCredentials = {
-  __typename?: 'AccessCredentials';
-  accessKey: Scalars['String']['output'];
-  bucket: Scalars['String']['output'];
-  key: Scalars['String']['output'];
-  path: Scalars['String']['output'];
-  secretKey: Scalars['String']['output'];
-  sessionToken: Scalars['String']['output'];
+  __typename?: "AccessCredentials";
+  accessKey: Scalars["String"]["output"];
+  bucket: Scalars["String"]["output"];
+  key: Scalars["String"]["output"];
+  path: Scalars["String"]["output"];
+  secretKey: Scalars["String"]["output"];
+  sessionToken: Scalars["String"]["output"];
 };
 
 export type Accessor = {
-  id: Scalars['ID']['output'];
-  keys: Array<Scalars['String']['output']>;
-  maxIndex?: Maybe<Scalars['Int']['output']>;
-  minIndex?: Maybe<Scalars['Int']['output']>;
+  id: Scalars["ID"]["output"];
+  keys: Array<Scalars["String"]["output"]>;
+  maxIndex?: Maybe<Scalars["Int"]["output"]>;
+  minIndex?: Maybe<Scalars["Int"]["output"]>;
   table: Table;
 };
 
 export type AccessorFilter = {
   AND?: InputMaybe<AccessorFilter>;
   OR?: InputMaybe<AccessorFilter>;
-  keys?: InputMaybe<Scalars['JSON']['input']>;
+  keys?: InputMaybe<Scalars["JSON"]["input"]>;
   provenance?: InputMaybe<ProvenanceFilter>;
 };
 
 export enum AccessorKind {
-  Image = 'IMAGE',
-  Label = 'LABEL'
+  Image = "IMAGE",
+  Label = "LABEL",
 }
 
 export type AcquisitionView = View & {
-  __typename?: 'AcquisitionView';
+  __typename?: "AcquisitionView";
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  acquiredAt?: Maybe<Scalars['DateTime']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
-  description?: Maybe<Scalars['String']['output']>;
-  id: Scalars['ID']['output'];
+  accessor: Array<Scalars["String"]["output"]>;
+  acquiredAt?: Maybe<Scalars["DateTime"]["output"]>;
+  cMax?: Maybe<Scalars["Int"]["output"]>;
+  cMin?: Maybe<Scalars["Int"]["output"]>;
+  description?: Maybe<Scalars["String"]["output"]>;
+  id: Scalars["ID"]["output"];
   image: Image;
-  isGlobal: Scalars['Boolean']['output'];
+  isGlobal: Scalars["Boolean"]["output"];
   operator?: Maybe<User>;
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
+  tMax?: Maybe<Scalars["Int"]["output"]>;
+  tMin?: Maybe<Scalars["Int"]["output"]>;
+  xMax?: Maybe<Scalars["Int"]["output"]>;
+  xMin?: Maybe<Scalars["Int"]["output"]>;
+  yMax?: Maybe<Scalars["Int"]["output"]>;
+  yMin?: Maybe<Scalars["Int"]["output"]>;
+  zMax?: Maybe<Scalars["Int"]["output"]>;
+  zMin?: Maybe<Scalars["Int"]["output"]>;
 };
 
 export type AffineTransformationView = View & {
-  __typename?: 'AffineTransformationView';
+  __typename?: "AffineTransformationView";
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  affineMatrix: Scalars['FourByFourMatrix']['output'];
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
-  id: Scalars['ID']['output'];
+  accessor: Array<Scalars["String"]["output"]>;
+  affineMatrix: Scalars["FourByFourMatrix"]["output"];
+  cMax?: Maybe<Scalars["Int"]["output"]>;
+  cMin?: Maybe<Scalars["Int"]["output"]>;
+  id: Scalars["ID"]["output"];
   image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  pixelSize: Scalars['ThreeDVector']['output'];
-  pixelSizeX: Scalars['Micrometers']['output'];
-  pixelSizeY: Scalars['Micrometers']['output'];
-  position: Scalars['ThreeDVector']['output'];
+  isGlobal: Scalars["Boolean"]["output"];
+  pixelSize: Scalars["ThreeDVector"]["output"];
+  pixelSizeX: Scalars["Micrometers"]["output"];
+  pixelSizeY: Scalars["Micrometers"]["output"];
+  position: Scalars["ThreeDVector"]["output"];
   stage: Stage;
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
+  tMax?: Maybe<Scalars["Int"]["output"]>;
+  tMin?: Maybe<Scalars["Int"]["output"]>;
+  xMax?: Maybe<Scalars["Int"]["output"]>;
+  xMin?: Maybe<Scalars["Int"]["output"]>;
+  yMax?: Maybe<Scalars["Int"]["output"]>;
+  yMin?: Maybe<Scalars["Int"]["output"]>;
+  zMax?: Maybe<Scalars["Int"]["output"]>;
+  zMin?: Maybe<Scalars["Int"]["output"]>;
 };
 
 export type AffineTransformationViewFilter = {
   AND?: InputMaybe<AffineTransformationViewFilter>;
   OR?: InputMaybe<AffineTransformationViewFilter>;
-  isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  isGlobal?: InputMaybe<Scalars["Boolean"]["input"]>;
   pixelSize?: InputMaybe<FloatFilterLookup>;
   provenance?: InputMaybe<ProvenanceFilter>;
   stage?: InputMaybe<StageFilter>;
 };
 
 export type AffineTransformationViewInput = {
-  affineMatrix: Scalars['FourByFourMatrix']['input'];
+  affineMatrix: Scalars["FourByFourMatrix"]["input"];
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  image: Scalars['ID']['input'];
-  stage?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
+  image: Scalars["ID"]["input"];
+  stage?: InputMaybe<Scalars["ID"]["input"]>;
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 /** An app. */
 export type App = {
-  __typename?: 'App';
-  clientId: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
+  __typename?: "App";
+  clientId: Scalars["String"]["output"];
+  id: Scalars["ID"]["output"];
+  name: Scalars["String"]["output"];
 };
 
 export type AssociateInput = {
-  other: Scalars['ID']['input'];
-  selfs: Array<Scalars['ID']['input']>;
+  other: Scalars["ID"]["input"];
+  selfs: Array<Scalars["ID"]["input"]>;
 };
 
 export type BigFileStore = {
-  __typename?: 'BigFileStore';
-  bucket: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  key: Scalars['String']['output'];
-  path: Scalars['String']['output'];
-  presignedUrl: Scalars['String']['output'];
+  __typename?: "BigFileStore";
+  bucket: Scalars["String"]["output"];
+  id: Scalars["ID"]["output"];
+  key: Scalars["String"]["output"];
+  path: Scalars["String"]["output"];
+  presignedUrl: Scalars["String"]["output"];
 };
 
 export enum Blending {
-  Additive = 'ADDITIVE',
-  Multiplicative = 'MULTIPLICATIVE'
+  Additive = "ADDITIVE",
+  Multiplicative = "MULTIPLICATIVE",
 }
 
 export type Camera = {
-  __typename?: 'Camera';
-  bitDepth?: Maybe<Scalars['Int']['output']>;
+  __typename?: "Camera";
+  bitDepth?: Maybe<Scalars["Int"]["output"]>;
   history: Array<History>;
-  id: Scalars['ID']['output'];
-  manufacturer?: Maybe<Scalars['String']['output']>;
-  model?: Maybe<Scalars['String']['output']>;
-  name: Scalars['String']['output'];
-  pixelSizeX?: Maybe<Scalars['Micrometers']['output']>;
-  pixelSizeY?: Maybe<Scalars['Micrometers']['output']>;
-  sensorSizeX?: Maybe<Scalars['Int']['output']>;
-  sensorSizeY?: Maybe<Scalars['Int']['output']>;
-  serialNumber: Scalars['String']['output'];
+  id: Scalars["ID"]["output"];
+  manufacturer?: Maybe<Scalars["String"]["output"]>;
+  model?: Maybe<Scalars["String"]["output"]>;
+  name: Scalars["String"]["output"];
+  pixelSizeX?: Maybe<Scalars["Micrometers"]["output"]>;
+  pixelSizeY?: Maybe<Scalars["Micrometers"]["output"]>;
+  sensorSizeX?: Maybe<Scalars["Int"]["output"]>;
+  sensorSizeY?: Maybe<Scalars["Int"]["output"]>;
+  serialNumber: Scalars["String"]["output"];
   views: Array<OpticsView>;
 };
-
 
 export type CameraHistoryArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type CameraViewsArgs = {
   filters?: InputMaybe<OpticsViewFilter>;
@@ -205,256 +216,251 @@ export type CameraViewsArgs = {
 export type CameraFilter = {
   AND?: InputMaybe<CameraFilter>;
   OR?: InputMaybe<CameraFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
+  name?: InputMaybe<Scalars["String"]["input"]>;
   provenance?: InputMaybe<ProvenanceFilter>;
 };
 
 export type CameraInput = {
-  bitDepth?: InputMaybe<Scalars['Int']['input']>;
-  manufacturer?: InputMaybe<Scalars['String']['input']>;
-  model?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  pixelSizeX?: InputMaybe<Scalars['Micrometers']['input']>;
-  pixelSizeY?: InputMaybe<Scalars['Micrometers']['input']>;
-  sensorSizeX?: InputMaybe<Scalars['Int']['input']>;
-  sensorSizeY?: InputMaybe<Scalars['Int']['input']>;
-  serialNumber: Scalars['String']['input'];
+  bitDepth?: InputMaybe<Scalars["Int"]["input"]>;
+  manufacturer?: InputMaybe<Scalars["String"]["input"]>;
+  model?: InputMaybe<Scalars["String"]["input"]>;
+  name?: InputMaybe<Scalars["String"]["input"]>;
+  pixelSizeX?: InputMaybe<Scalars["Micrometers"]["input"]>;
+  pixelSizeY?: InputMaybe<Scalars["Micrometers"]["input"]>;
+  sensorSizeX?: InputMaybe<Scalars["Int"]["input"]>;
+  sensorSizeY?: InputMaybe<Scalars["Int"]["input"]>;
+  serialNumber: Scalars["String"]["input"];
 };
 
 export type ChangeDatasetInput = {
-  id: Scalars['ID']['input'];
-  name: Scalars['String']['input'];
+  id: Scalars["ID"]["input"];
+  name: Scalars["String"]["input"];
 };
 
 export type Channel = {
-  __typename?: 'Channel';
-  acquisitionMode?: Maybe<Scalars['String']['output']>;
-  color?: Maybe<Scalars['String']['output']>;
-  emissionWavelength?: Maybe<Scalars['Float']['output']>;
-  excitationWavelength?: Maybe<Scalars['Float']['output']>;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
+  __typename?: "Channel";
+  acquisitionMode?: Maybe<Scalars["String"]["output"]>;
+  color?: Maybe<Scalars["String"]["output"]>;
+  emissionWavelength?: Maybe<Scalars["Float"]["output"]>;
+  excitationWavelength?: Maybe<Scalars["Float"]["output"]>;
+  id: Scalars["ID"]["output"];
+  name: Scalars["String"]["output"];
   views: Array<ChannelView>;
 };
 
 /** A channel descriptor */
 export type ChannelInfo = {
-  __typename?: 'ChannelInfo';
-  label: Scalars['String']['output'];
+  __typename?: "ChannelInfo";
+  label: Scalars["String"]["output"];
 };
-
 
 /** A channel descriptor */
 export type ChannelInfoLabelArgs = {
-  withColorName?: Scalars['Boolean']['input'];
+  withColorName?: Scalars["Boolean"]["input"];
 };
 
 export type ChannelInput = {
-  name: Scalars['String']['input'];
+  name: Scalars["String"]["input"];
 };
 
 export type ChannelView = View & {
-  __typename?: 'ChannelView';
+  __typename?: "ChannelView";
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars["String"]["output"]>;
+  cMax?: Maybe<Scalars["Int"]["output"]>;
+  cMin?: Maybe<Scalars["Int"]["output"]>;
   channel: Channel;
-  id: Scalars['ID']['output'];
+  id: Scalars["ID"]["output"];
   image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
+  isGlobal: Scalars["Boolean"]["output"];
+  tMax?: Maybe<Scalars["Int"]["output"]>;
+  tMin?: Maybe<Scalars["Int"]["output"]>;
+  xMax?: Maybe<Scalars["Int"]["output"]>;
+  xMin?: Maybe<Scalars["Int"]["output"]>;
+  yMax?: Maybe<Scalars["Int"]["output"]>;
+  yMin?: Maybe<Scalars["Int"]["output"]>;
+  zMax?: Maybe<Scalars["Int"]["output"]>;
+  zMin?: Maybe<Scalars["Int"]["output"]>;
 };
 
 export type ChannelViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The ID of the channel this view is for */
-  channel: Scalars['ID']['input'];
+  channel: Scalars["ID"]["input"];
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
   /** The ID of the image this view is for */
-  image: Scalars['ID']['input'];
+  image: Scalars["ID"]["input"];
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type ChildrenPaginationInput = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars["Int"]["input"]>;
+  offset?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export enum ColorFormat {
-  Hsl = 'HSL',
-  Rgb = 'RGB'
+  Hsl = "HSL",
+  Rgb = "RGB",
 }
 
 export enum ColorMap {
-  Blue = 'BLUE',
-  Green = 'GREEN',
-  Inferno = 'INFERNO',
-  Intensity = 'INTENSITY',
-  Magma = 'MAGMA',
-  Plasma = 'PLASMA',
-  Red = 'RED',
-  Viridis = 'VIRIDIS'
+  Blue = "BLUE",
+  Green = "GREEN",
+  Inferno = "INFERNO",
+  Intensity = "INTENSITY",
+  Magma = "MAGMA",
+  Plasma = "PLASMA",
+  Red = "RED",
+  Viridis = "VIRIDIS",
 }
 
 export type ContextNode = RenderNode & {
-  __typename?: 'ContextNode';
+  __typename?: "ContextNode";
   context: RgbContext;
-  kind: Scalars['String']['output'];
-  label?: Maybe<Scalars['String']['output']>;
+  kind: Scalars["String"]["output"];
+  label?: Maybe<Scalars["String"]["output"]>;
 };
 
 export enum ContinousScanDirection {
-  ColumnRowSlice = 'COLUMN_ROW_SLICE',
-  ColumnRowSliceSnake = 'COLUMN_ROW_SLICE_SNAKE',
-  RowColumnSlice = 'ROW_COLUMN_SLICE',
-  RowColumnSliceSnake = 'ROW_COLUMN_SLICE_SNAKE',
-  SliceRowColumn = 'SLICE_ROW_COLUMN',
-  SliceRowColumnSnake = 'SLICE_ROW_COLUMN_SNAKE'
+  ColumnRowSlice = "COLUMN_ROW_SLICE",
+  ColumnRowSliceSnake = "COLUMN_ROW_SLICE_SNAKE",
+  RowColumnSlice = "ROW_COLUMN_SLICE",
+  RowColumnSliceSnake = "ROW_COLUMN_SLICE_SNAKE",
+  SliceRowColumn = "SLICE_ROW_COLUMN",
+  SliceRowColumnSnake = "SLICE_ROW_COLUMN_SNAKE",
 }
 
 export type ContinousScanView = View & {
-  __typename?: 'ContinousScanView';
+  __typename?: "ContinousScanView";
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars["String"]["output"]>;
+  cMax?: Maybe<Scalars["Int"]["output"]>;
+  cMin?: Maybe<Scalars["Int"]["output"]>;
   direction: ScanDirection;
-  id: Scalars['ID']['output'];
+  id: Scalars["ID"]["output"];
   image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
+  isGlobal: Scalars["Boolean"]["output"];
+  tMax?: Maybe<Scalars["Int"]["output"]>;
+  tMin?: Maybe<Scalars["Int"]["output"]>;
+  xMax?: Maybe<Scalars["Int"]["output"]>;
+  xMin?: Maybe<Scalars["Int"]["output"]>;
+  yMax?: Maybe<Scalars["Int"]["output"]>;
+  yMin?: Maybe<Scalars["Int"]["output"]>;
+  zMax?: Maybe<Scalars["Int"]["output"]>;
+  zMin?: Maybe<Scalars["Int"]["output"]>;
 };
 
 export type ContinousScanViewFilter = {
   AND?: InputMaybe<ContinousScanViewFilter>;
   OR?: InputMaybe<ContinousScanViewFilter>;
   direction?: InputMaybe<ContinousScanDirection>;
-  isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  isGlobal?: InputMaybe<Scalars["Boolean"]["input"]>;
   provenance?: InputMaybe<ProvenanceFilter>;
 };
 
 export type ContinousScanViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
   direction: ScanDirection;
-  image: Scalars['ID']['input'];
+  image: Scalars["ID"]["input"];
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type CreateDatasetInput = {
-  name: Scalars['String']['input'];
+  name: Scalars["String"]["input"];
 };
 
 export type CreateRgbContextInput = {
-  c?: InputMaybe<Scalars['Int']['input']>;
-  image: Scalars['ID']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
-  t?: InputMaybe<Scalars['Int']['input']>;
-  thumbnail?: InputMaybe<Scalars['ID']['input']>;
+  c?: InputMaybe<Scalars["Int"]["input"]>;
+  image: Scalars["ID"]["input"];
+  name?: InputMaybe<Scalars["String"]["input"]>;
+  t?: InputMaybe<Scalars["Int"]["input"]>;
+  thumbnail?: InputMaybe<Scalars["ID"]["input"]>;
   views?: InputMaybe<Array<PartialRgbViewInput>>;
-  z?: InputMaybe<Scalars['Int']['input']>;
+  z?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 /** Temporary Credentials for a file upload that can be used by a Client (e.g. in a python datalayer) */
 export type Credentials = {
-  __typename?: 'Credentials';
-  accessKey: Scalars['String']['output'];
-  bucket: Scalars['String']['output'];
-  datalayer: Scalars['String']['output'];
-  key: Scalars['String']['output'];
-  secretKey: Scalars['String']['output'];
-  sessionToken: Scalars['String']['output'];
-  status: Scalars['String']['output'];
-  store: Scalars['String']['output'];
+  __typename?: "Credentials";
+  accessKey: Scalars["String"]["output"];
+  bucket: Scalars["String"]["output"];
+  datalayer: Scalars["String"]["output"];
+  key: Scalars["String"]["output"];
+  secretKey: Scalars["String"]["output"];
+  sessionToken: Scalars["String"]["output"];
+  status: Scalars["String"]["output"];
+  store: Scalars["String"]["output"];
 };
 
 export type Dataset = {
-  __typename?: 'Dataset';
+  __typename?: "Dataset";
   children: Array<Dataset>;
-  createdAt: Scalars['DateTime']['output'];
+  createdAt: Scalars["DateTime"]["output"];
   creator?: Maybe<User>;
-  description?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars["String"]["output"]>;
   files: Array<File>;
   history: Array<History>;
-  id: Scalars['ID']['output'];
+  id: Scalars["ID"]["output"];
   images: Array<Image>;
-  isDefault: Scalars['Boolean']['output'];
-  name: Scalars['String']['output'];
-  pinned: Scalars['Boolean']['output'];
-  tags: Array<Scalars['String']['output']>;
+  isDefault: Scalars["Boolean"]["output"];
+  name: Scalars["String"]["output"];
+  pinned: Scalars["Boolean"]["output"];
+  tags: Array<Scalars["String"]["output"]>;
 };
-
 
 export type DatasetChildrenArgs = {
   filters?: InputMaybe<DatasetFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type DatasetFilesArgs = {
   filters?: InputMaybe<FileFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type DatasetHistoryArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type DatasetImagesArgs = {
   filters?: InputMaybe<ImageFilter>;
@@ -463,13 +469,13 @@ export type DatasetImagesArgs = {
 };
 
 export type DatasetChildrenFilter = {
-  showChildren?: InputMaybe<Scalars['Boolean']['input']>;
+  showChildren?: InputMaybe<Scalars["Boolean"]["input"]>;
 };
 
 export type DatasetFilter = {
   AND?: InputMaybe<DatasetFilter>;
   OR?: InputMaybe<DatasetFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
   name?: InputMaybe<StrFilterLookup>;
   provenance?: InputMaybe<ProvenanceFilter>;
 };
@@ -477,154 +483,152 @@ export type DatasetFilter = {
 export type DatasetImageFile = Dataset | File | Image;
 
 export type DeleteCameraInput = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 export type DeleteChannelInput = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 export type DeleteDatasetInput = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 export type DeleteEraInput = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 export type DeleteFileInput = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 export type DeleteImageInput = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 export type DeleteInstrumentInput = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 export type DeleteMeshInput = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 export type DeleteMultiWellInput = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 export type DeleteObjectiveInput = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 export type DeleteRgbContextInput = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 export type DeleteRenderedPlot = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 export type DeleteRoiInput = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 export type DeleteStageInput = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 export type DeleteViewCollectionInput = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 export type DeleteViewInput = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 export type DerivedView = View & {
-  __typename?: 'DerivedView';
+  __typename?: "DerivedView";
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
-  id: Scalars['ID']['output'];
+  accessor: Array<Scalars["String"]["output"]>;
+  cMax?: Maybe<Scalars["Int"]["output"]>;
+  cMin?: Maybe<Scalars["Int"]["output"]>;
+  id: Scalars["ID"]["output"];
   image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  operation?: Maybe<Scalars['String']['output']>;
+  isGlobal: Scalars["Boolean"]["output"];
+  operation?: Maybe<Scalars["String"]["output"]>;
   originImage: Image;
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
+  tMax?: Maybe<Scalars["Int"]["output"]>;
+  tMin?: Maybe<Scalars["Int"]["output"]>;
+  xMax?: Maybe<Scalars["Int"]["output"]>;
+  xMin?: Maybe<Scalars["Int"]["output"]>;
+  yMax?: Maybe<Scalars["Int"]["output"]>;
+  yMin?: Maybe<Scalars["Int"]["output"]>;
+  zMax?: Maybe<Scalars["Int"]["output"]>;
+  zMin?: Maybe<Scalars["Int"]["output"]>;
 };
 
 export type DesociateInput = {
-  other: Scalars['ID']['input'];
-  selfs: Array<Scalars['ID']['input']>;
+  other: Scalars["ID"]["input"];
+  selfs: Array<Scalars["ID"]["input"]>;
 };
 
 export enum DuckDbDataType {
   /** Large integer for large numeric values */
-  Bigint = 'BIGINT',
+  Bigint = "BIGINT",
   /** Binary large object for storing binary data */
-  Blob = 'BLOB',
+  Blob = "BLOB",
   /** Represents a True/False value */
-  Boolean = 'BOOLEAN',
+  Boolean = "BOOLEAN",
   /** Specific date (year, month, day) */
-  Date = 'DATE',
+  Date = "DATE",
   /** Exact decimal number with defined precision and scale */
-  Decimal = 'DECIMAL',
+  Decimal = "DECIMAL",
   /** Double-precision floating point number */
-  Double = 'DOUBLE',
+  Double = "DOUBLE",
   /** Enumeration of predefined values */
-  Enum = 'ENUM',
+  Enum = "ENUM",
   /** Single-precision floating point number */
-  Float = 'FLOAT',
+  Float = "FLOAT",
   /** Extremely large integer for very large numeric ranges */
-  Hugeint = 'HUGEINT',
+  Hugeint = "HUGEINT",
   /** Standard integer (-2,147,483,648 to 2,147,483,647) */
-  Integer = 'INTEGER',
+  Integer = "INTEGER",
   /** Span of time between two dates or times */
-  Interval = 'INTERVAL',
+  Interval = "INTERVAL",
   /** JSON object, a structured text format used for representing data */
-  Json = 'JSON',
+  Json = "JSON",
   /** A list of values of the same data type */
-  List = 'LIST',
+  List = "LIST",
   /** A collection of key-value pairs where each key is unique */
-  Map = 'MAP',
+  Map = "MAP",
   /** Small integer (-32,768 to 32,767) */
-  Smallint = 'SMALLINT',
+  Smallint = "SMALLINT",
   /** Composite type grouping several fields with different data types */
-  Struct = 'STRUCT',
+  Struct = "STRUCT",
   /** Specific time of the day (hours, minutes, seconds) */
-  Time = 'TIME',
+  Time = "TIME",
   /** Date and time with precision */
-  Timestamp = 'TIMESTAMP',
+  Timestamp = "TIMESTAMP",
   /** Very small integer (-128 to 127) */
-  Tinyint = 'TINYINT',
+  Tinyint = "TINYINT",
   /** Universally Unique Identifier used to uniquely identify objects */
-  Uuid = 'UUID',
+  Uuid = "UUID",
   /** Variable-length string (text) */
-  Varchar = 'VARCHAR'
+  Varchar = "VARCHAR",
 }
 
 export type Era = {
-  __typename?: 'Era';
-  begin?: Maybe<Scalars['DateTime']['output']>;
+  __typename?: "Era";
+  begin?: Maybe<Scalars["DateTime"]["output"]>;
   history: Array<History>;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
+  id: Scalars["ID"]["output"];
+  name: Scalars["String"]["output"];
   views: Array<TimepointView>;
 };
-
 
 export type EraHistoryArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type EraViewsArgs = {
   filters?: InputMaybe<TimepointViewFilter>;
@@ -634,26 +638,25 @@ export type EraViewsArgs = {
 export type EraFilter = {
   AND?: InputMaybe<EraFilter>;
   OR?: InputMaybe<EraFilter>;
-  begin?: InputMaybe<Scalars['DateTime']['input']>;
-  id?: InputMaybe<Scalars['ID']['input']>;
+  begin?: InputMaybe<Scalars["DateTime"]["input"]>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
   provenance?: InputMaybe<ProvenanceFilter>;
 };
 
 export type EraInput = {
-  begin?: InputMaybe<Scalars['DateTime']['input']>;
-  name: Scalars['String']['input'];
+  begin?: InputMaybe<Scalars["DateTime"]["input"]>;
+  name: Scalars["String"]["input"];
 };
 
 export type Experiment = {
-  __typename?: 'Experiment';
-  createdAt: Scalars['DateTime']['output'];
+  __typename?: "Experiment";
+  createdAt: Scalars["DateTime"]["output"];
   creator?: Maybe<User>;
-  description?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars["String"]["output"]>;
   history: Array<History>;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
+  id: Scalars["ID"]["output"];
+  name: Scalars["String"]["output"];
 };
-
 
 export type ExperimentHistoryArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -662,20 +665,19 @@ export type ExperimentHistoryArgs = {
 export type ExperimentFilter = {
   AND?: InputMaybe<ExperimentFilter>;
   OR?: InputMaybe<ExperimentFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type File = {
-  __typename?: 'File';
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
+  __typename?: "File";
+  id: Scalars["ID"]["output"];
+  name: Scalars["String"]["output"];
   origins: Array<Image>;
   store: BigFileStore;
   views: Array<FileView>;
 };
-
 
 export type FileOriginsArgs = {
   filters?: InputMaybe<ImageFilter>;
@@ -684,9 +686,9 @@ export type FileOriginsArgs = {
 };
 
 export type FileEvent = {
-  __typename?: 'FileEvent';
+  __typename?: "FileEvent";
   create?: Maybe<File>;
-  delete?: Maybe<Scalars['ID']['output']>;
+  delete?: Maybe<Scalars["ID"]["output"]>;
   moved?: Maybe<File>;
   update?: Maybe<File>;
 };
@@ -694,103 +696,103 @@ export type FileEvent = {
 export type FileFilter = {
   AND?: InputMaybe<FileFilter>;
   OR?: InputMaybe<FileFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
   name?: InputMaybe<StrFilterLookup>;
   provenance?: InputMaybe<ProvenanceFilter>;
-  search?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type FileView = View & {
-  __typename?: 'FileView';
+  __typename?: "FileView";
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars["String"]["output"]>;
+  cMax?: Maybe<Scalars["Int"]["output"]>;
+  cMin?: Maybe<Scalars["Int"]["output"]>;
   file: File;
-  id: Scalars['ID']['output'];
+  id: Scalars["ID"]["output"];
   image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  seriesIdentifier?: Maybe<Scalars['String']['output']>;
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
+  isGlobal: Scalars["Boolean"]["output"];
+  seriesIdentifier?: Maybe<Scalars["String"]["output"]>;
+  tMax?: Maybe<Scalars["Int"]["output"]>;
+  tMin?: Maybe<Scalars["Int"]["output"]>;
+  xMax?: Maybe<Scalars["Int"]["output"]>;
+  xMin?: Maybe<Scalars["Int"]["output"]>;
+  yMax?: Maybe<Scalars["Int"]["output"]>;
+  yMin?: Maybe<Scalars["Int"]["output"]>;
+  zMax?: Maybe<Scalars["Int"]["output"]>;
+  zMin?: Maybe<Scalars["Int"]["output"]>;
 };
 
 export type FileViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  file: Scalars['ID']['input'];
-  image: Scalars['ID']['input'];
-  seriesIdentifier?: InputMaybe<Scalars['String']['input']>;
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
+  file: Scalars["ID"]["input"];
+  image: Scalars["ID"]["input"];
+  seriesIdentifier?: InputMaybe<Scalars["String"]["input"]>;
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type FloatFilterLookup = {
-  contains?: InputMaybe<Scalars['Float']['input']>;
-  endsWith?: InputMaybe<Scalars['Float']['input']>;
-  exact?: InputMaybe<Scalars['Float']['input']>;
-  gt?: InputMaybe<Scalars['Float']['input']>;
-  gte?: InputMaybe<Scalars['Float']['input']>;
-  iContains?: InputMaybe<Scalars['Float']['input']>;
-  iEndsWith?: InputMaybe<Scalars['Float']['input']>;
-  iExact?: InputMaybe<Scalars['Float']['input']>;
-  iRegex?: InputMaybe<Scalars['String']['input']>;
-  iStartsWith?: InputMaybe<Scalars['Float']['input']>;
-  inList?: InputMaybe<Array<Scalars['Float']['input']>>;
-  isNull?: InputMaybe<Scalars['Boolean']['input']>;
-  lt?: InputMaybe<Scalars['Float']['input']>;
-  lte?: InputMaybe<Scalars['Float']['input']>;
-  nContains?: InputMaybe<Scalars['Float']['input']>;
-  nEndsWith?: InputMaybe<Scalars['Float']['input']>;
-  nExact?: InputMaybe<Scalars['Float']['input']>;
-  nGt?: InputMaybe<Scalars['Float']['input']>;
-  nGte?: InputMaybe<Scalars['Float']['input']>;
-  nIContains?: InputMaybe<Scalars['Float']['input']>;
-  nIEndsWith?: InputMaybe<Scalars['Float']['input']>;
-  nIExact?: InputMaybe<Scalars['Float']['input']>;
-  nIRegex?: InputMaybe<Scalars['String']['input']>;
-  nIStartsWith?: InputMaybe<Scalars['Float']['input']>;
-  nInList?: InputMaybe<Array<Scalars['Float']['input']>>;
-  nIsNull?: InputMaybe<Scalars['Boolean']['input']>;
-  nLt?: InputMaybe<Scalars['Float']['input']>;
-  nLte?: InputMaybe<Scalars['Float']['input']>;
-  nRange?: InputMaybe<Array<Scalars['Float']['input']>>;
-  nRegex?: InputMaybe<Scalars['String']['input']>;
-  nStartsWith?: InputMaybe<Scalars['Float']['input']>;
-  range?: InputMaybe<Array<Scalars['Float']['input']>>;
-  regex?: InputMaybe<Scalars['String']['input']>;
-  startsWith?: InputMaybe<Scalars['Float']['input']>;
+  contains?: InputMaybe<Scalars["Float"]["input"]>;
+  endsWith?: InputMaybe<Scalars["Float"]["input"]>;
+  exact?: InputMaybe<Scalars["Float"]["input"]>;
+  gt?: InputMaybe<Scalars["Float"]["input"]>;
+  gte?: InputMaybe<Scalars["Float"]["input"]>;
+  iContains?: InputMaybe<Scalars["Float"]["input"]>;
+  iEndsWith?: InputMaybe<Scalars["Float"]["input"]>;
+  iExact?: InputMaybe<Scalars["Float"]["input"]>;
+  iRegex?: InputMaybe<Scalars["String"]["input"]>;
+  iStartsWith?: InputMaybe<Scalars["Float"]["input"]>;
+  inList?: InputMaybe<Array<Scalars["Float"]["input"]>>;
+  isNull?: InputMaybe<Scalars["Boolean"]["input"]>;
+  lt?: InputMaybe<Scalars["Float"]["input"]>;
+  lte?: InputMaybe<Scalars["Float"]["input"]>;
+  nContains?: InputMaybe<Scalars["Float"]["input"]>;
+  nEndsWith?: InputMaybe<Scalars["Float"]["input"]>;
+  nExact?: InputMaybe<Scalars["Float"]["input"]>;
+  nGt?: InputMaybe<Scalars["Float"]["input"]>;
+  nGte?: InputMaybe<Scalars["Float"]["input"]>;
+  nIContains?: InputMaybe<Scalars["Float"]["input"]>;
+  nIEndsWith?: InputMaybe<Scalars["Float"]["input"]>;
+  nIExact?: InputMaybe<Scalars["Float"]["input"]>;
+  nIRegex?: InputMaybe<Scalars["String"]["input"]>;
+  nIStartsWith?: InputMaybe<Scalars["Float"]["input"]>;
+  nInList?: InputMaybe<Array<Scalars["Float"]["input"]>>;
+  nIsNull?: InputMaybe<Scalars["Boolean"]["input"]>;
+  nLt?: InputMaybe<Scalars["Float"]["input"]>;
+  nLte?: InputMaybe<Scalars["Float"]["input"]>;
+  nRange?: InputMaybe<Array<Scalars["Float"]["input"]>>;
+  nRegex?: InputMaybe<Scalars["String"]["input"]>;
+  nStartsWith?: InputMaybe<Scalars["Float"]["input"]>;
+  range?: InputMaybe<Array<Scalars["Float"]["input"]>>;
+  regex?: InputMaybe<Scalars["String"]["input"]>;
+  startsWith?: InputMaybe<Scalars["Float"]["input"]>;
 };
 
 /** A channel descriptor */
 export type FrameInfo = {
-  __typename?: 'FrameInfo';
-  label: Scalars['String']['output'];
+  __typename?: "FrameInfo";
+  label: Scalars["String"]["output"];
 };
 
 /** Input type for creating an image from an array-like object */
@@ -798,17 +800,17 @@ export type FromArrayLikeInput = {
   /** Optional list of acquisition views */
   acquisitionViews?: InputMaybe<Array<PartialAcquisitionViewInput>>;
   /** The array-like object to create the image from */
-  array: Scalars['ArrayLike']['input'];
+  array: Scalars["ArrayLike"]["input"];
   /** Optional list of channel views */
   channelViews?: InputMaybe<Array<PartialChannelViewInput>>;
   /** Optional dataset ID to associate the image with */
-  dataset?: InputMaybe<Scalars['ID']['input']>;
+  dataset?: InputMaybe<Scalars["ID"]["input"]>;
   /** Optional list of derived views */
   derivedViews?: InputMaybe<Array<PartialDerivedViewInput>>;
   /** Optional list of file views */
   fileViews?: InputMaybe<Array<PartialFileViewInput>>;
   /** The name of the image */
-  name: Scalars['String']['input'];
+  name: Scalars["String"]["input"];
   /** Optional list of optics views */
   opticsViews?: InputMaybe<Array<PartialOpticsViewInput>>;
   /** Optional list of pixel views */
@@ -822,7 +824,7 @@ export type FromArrayLikeInput = {
   /** Optional list of structure views */
   structureViews?: InputMaybe<Array<PartialStructureViewInput>>;
   /** Optional list of tags to associate with the image */
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  tags?: InputMaybe<Array<Scalars["String"]["input"]>>;
   /** Optional list of timepoint views */
   timepointViews?: InputMaybe<Array<PartialTimepointViewInput>>;
   /** Optional list of affine transformation views */
@@ -830,54 +832,54 @@ export type FromArrayLikeInput = {
 };
 
 export type FromFileLike = {
-  dataset?: InputMaybe<Scalars['ID']['input']>;
-  file: Scalars['FileLike']['input'];
-  name: Scalars['String']['input'];
-  origins?: InputMaybe<Array<Scalars['ID']['input']>>;
+  dataset?: InputMaybe<Scalars["ID"]["input"]>;
+  file: Scalars["FileLike"]["input"];
+  name: Scalars["String"]["input"];
+  origins?: InputMaybe<Array<Scalars["ID"]["input"]>>;
 };
 
 export type FromParquetLike = {
   /** The parquet dataframe to create the table from */
-  dataframe: Scalars['ParquetLike']['input'];
+  dataframe: Scalars["ParquetLike"]["input"];
   /** The dataset ID this table belongs to */
-  dataset?: InputMaybe<Scalars['ID']['input']>;
+  dataset?: InputMaybe<Scalars["ID"]["input"]>;
   /** Image accessors to create for this table */
   imageAccessors?: InputMaybe<Array<PartialImageAccessorInput>>;
   /** Label accessors to create for this table */
   labelAccessors?: InputMaybe<Array<PartialLabelAccessorInput>>;
   /** The name of the table */
-  name: Scalars['String']['input'];
+  name: Scalars["String"]["input"];
   /** The IDs of tables this table was derived from */
-  origins?: InputMaybe<Array<Scalars['ID']['input']>>;
+  origins?: InputMaybe<Array<Scalars["ID"]["input"]>>;
 };
 
 export type GridNode = RenderNode & {
-  __typename?: 'GridNode';
+  __typename?: "GridNode";
   children: Array<RenderNode>;
-  gap?: Maybe<Scalars['Int']['output']>;
-  kind: Scalars['String']['output'];
-  label?: Maybe<Scalars['String']['output']>;
+  gap?: Maybe<Scalars["Int"]["output"]>;
+  kind: Scalars["String"]["output"];
+  label?: Maybe<Scalars["String"]["output"]>;
 };
 
 export type History = {
-  __typename?: 'History';
+  __typename?: "History";
   app?: Maybe<App>;
-  date: Scalars['DateTime']['output'];
-  during?: Maybe<Scalars['String']['output']>;
+  date: Scalars["DateTime"]["output"];
+  during?: Maybe<Scalars["String"]["output"]>;
   effectiveChanges: Array<ModelChange>;
-  id: Scalars['ID']['output'];
+  id: Scalars["ID"]["output"];
   kind: HistoryKind;
   user?: Maybe<User>;
 };
 
 export enum HistoryKind {
-  Create = 'CREATE',
-  Delete = 'DELETE',
-  Update = 'UPDATE'
+  Create = "CREATE",
+  Delete = "DELETE",
+  Update = "UPDATE",
 }
 
 export type Image = {
-  __typename?: 'Image';
+  __typename?: "Image";
   /** The affine transformation views describing position and scale */
   affineTransformationViews: Array<AffineTransformationView>;
   /** Channel views relating to acquisition channels */
@@ -885,7 +887,7 @@ export type Image = {
   /** The channels of this image */
   channels: Array<ChannelInfo>;
   /** When this image was created */
-  createdAt: Scalars['DateTime']['output'];
+  createdAt: Scalars["DateTime"]["output"];
   /** Who created this image */
   creator?: Maybe<User>;
   /** The dataset this image belongs to */
@@ -902,17 +904,17 @@ export type Image = {
   frames: Array<FrameInfo>;
   /** History of changes to this image */
   history: Array<History>;
-  id: Scalars['ID']['output'];
+  id: Scalars["ID"]["output"];
   /** Label views mapping channels to labels */
   labelViews: Array<LabelView>;
   /** The latest snapshot of this image */
   latestSnapshot?: Maybe<Snapshot>;
   /** The name of the image */
-  name: Scalars['String']['output'];
+  name: Scalars["String"]["output"];
   /** Optics views describing acquisition settings */
   opticsViews: Array<OpticsView>;
   /** Is this image pinned by the current user */
-  pinned: Scalars['Boolean']['output'];
+  pinned: Scalars["Boolean"]["output"];
   /** Pixel views describing pixel value semantics */
   pixelViews: Array<PixelView>;
   /** The channels of this image */
@@ -932,7 +934,7 @@ export type Image = {
   /** Structure views relating other Arkitekt types to a subsection of the image */
   structureViews: Array<StructureView>;
   /** The tags of this image */
-  tags: Array<Scalars['String']['output']>;
+  tags: Array<Scalars["String"]["output"]>;
   /** Timepoint views describing temporal relationships */
   timepointViews: Array<TimepointView>;
   /** Associated videos */
@@ -941,69 +943,57 @@ export type Image = {
   views: Array<View>;
 };
 
-
 export type ImageAffineTransformationViewsArgs = {
   filters?: InputMaybe<AffineTransformationViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type ImageHistoryArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type ImageOpticsViewsArgs = {
   filters?: InputMaybe<OpticsViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type ImagePixelViewsArgs = {
   filters?: InputMaybe<PixelViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type ImageRendersArgs = {
   filters?: InputMaybe<ViewFilter>;
   types?: InputMaybe<Array<RenderKind>>;
 };
 
-
 export type ImageRgbContextsArgs = {
   filters?: InputMaybe<RgbContextFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type ImageRoisArgs = {
   filters?: InputMaybe<RoiFilter>;
 };
-
 
 export type ImageSnapshotsArgs = {
   filters?: InputMaybe<SnapshotFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type ImageStructureViewsArgs = {
   filters?: InputMaybe<StructureViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type ImageTimepointViewsArgs = {
   filters?: InputMaybe<TimepointViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type ImageVideosArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type ImageViewsArgs = {
   filters?: InputMaybe<ViewFilter>;
@@ -1011,18 +1001,18 @@ export type ImageViewsArgs = {
 };
 
 export type ImageAccessor = Accessor & {
-  __typename?: 'ImageAccessor';
-  id: Scalars['ID']['output'];
-  keys: Array<Scalars['String']['output']>;
-  maxIndex?: Maybe<Scalars['Int']['output']>;
-  minIndex?: Maybe<Scalars['Int']['output']>;
+  __typename?: "ImageAccessor";
+  id: Scalars["ID"]["output"];
+  keys: Array<Scalars["String"]["output"]>;
+  maxIndex?: Maybe<Scalars["Int"]["output"]>;
+  minIndex?: Maybe<Scalars["Int"]["output"]>;
   table: Table;
 };
 
 export type ImageEvent = {
-  __typename?: 'ImageEvent';
+  __typename?: "ImageEvent";
   create?: Maybe<Image>;
-  delete?: Maybe<Scalars['ID']['output']>;
+  delete?: Maybe<Scalars["ID"]["output"]>;
   update?: Maybe<Image>;
 };
 
@@ -1030,9 +1020,9 @@ export type ImageFilter = {
   AND?: InputMaybe<ImageFilter>;
   OR?: InputMaybe<ImageFilter>;
   dataset?: InputMaybe<DatasetFilter>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
   name?: InputMaybe<StrFilterLookup>;
-  notDerived?: InputMaybe<Scalars['Boolean']['input']>;
+  notDerived?: InputMaybe<Scalars["Boolean"]["input"]>;
   provenance?: InputMaybe<ProvenanceFilter>;
   store?: InputMaybe<ZarrStoreFilter>;
   timepointViews?: InputMaybe<TimepointViewFilter>;
@@ -1044,15 +1034,14 @@ export type ImageOrder = {
 };
 
 export type Instrument = {
-  __typename?: 'Instrument';
-  id: Scalars['ID']['output'];
-  manufacturer?: Maybe<Scalars['String']['output']>;
-  model?: Maybe<Scalars['String']['output']>;
-  name: Scalars['String']['output'];
-  serialNumber: Scalars['String']['output'];
+  __typename?: "Instrument";
+  id: Scalars["ID"]["output"];
+  manufacturer?: Maybe<Scalars["String"]["output"]>;
+  model?: Maybe<Scalars["String"]["output"]>;
+  name: Scalars["String"]["output"];
+  serialNumber: Scalars["String"]["output"];
   views: Array<OpticsView>;
 };
-
 
 export type InstrumentViewsArgs = {
   filters?: InputMaybe<OpticsViewFilter>;
@@ -1062,177 +1051,174 @@ export type InstrumentViewsArgs = {
 export type InstrumentFilter = {
   AND?: InputMaybe<InstrumentFilter>;
   OR?: InputMaybe<InstrumentFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
+  name?: InputMaybe<Scalars["String"]["input"]>;
   provenance?: InputMaybe<ProvenanceFilter>;
 };
 
 export type InstrumentInput = {
-  manufacturer?: InputMaybe<Scalars['String']['input']>;
-  model?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  serialNumber: Scalars['String']['input'];
+  manufacturer?: InputMaybe<Scalars["String"]["input"]>;
+  model?: InputMaybe<Scalars["String"]["input"]>;
+  name?: InputMaybe<Scalars["String"]["input"]>;
+  serialNumber: Scalars["String"]["input"];
 };
 
 export type IntFilterLookup = {
-  contains?: InputMaybe<Scalars['Int']['input']>;
-  endsWith?: InputMaybe<Scalars['Int']['input']>;
-  exact?: InputMaybe<Scalars['Int']['input']>;
-  gt?: InputMaybe<Scalars['Int']['input']>;
-  gte?: InputMaybe<Scalars['Int']['input']>;
-  iContains?: InputMaybe<Scalars['Int']['input']>;
-  iEndsWith?: InputMaybe<Scalars['Int']['input']>;
-  iExact?: InputMaybe<Scalars['Int']['input']>;
-  iRegex?: InputMaybe<Scalars['String']['input']>;
-  iStartsWith?: InputMaybe<Scalars['Int']['input']>;
-  inList?: InputMaybe<Array<Scalars['Int']['input']>>;
-  isNull?: InputMaybe<Scalars['Boolean']['input']>;
-  lt?: InputMaybe<Scalars['Int']['input']>;
-  lte?: InputMaybe<Scalars['Int']['input']>;
-  nContains?: InputMaybe<Scalars['Int']['input']>;
-  nEndsWith?: InputMaybe<Scalars['Int']['input']>;
-  nExact?: InputMaybe<Scalars['Int']['input']>;
-  nGt?: InputMaybe<Scalars['Int']['input']>;
-  nGte?: InputMaybe<Scalars['Int']['input']>;
-  nIContains?: InputMaybe<Scalars['Int']['input']>;
-  nIEndsWith?: InputMaybe<Scalars['Int']['input']>;
-  nIExact?: InputMaybe<Scalars['Int']['input']>;
-  nIRegex?: InputMaybe<Scalars['String']['input']>;
-  nIStartsWith?: InputMaybe<Scalars['Int']['input']>;
-  nInList?: InputMaybe<Array<Scalars['Int']['input']>>;
-  nIsNull?: InputMaybe<Scalars['Boolean']['input']>;
-  nLt?: InputMaybe<Scalars['Int']['input']>;
-  nLte?: InputMaybe<Scalars['Int']['input']>;
-  nRange?: InputMaybe<Array<Scalars['Int']['input']>>;
-  nRegex?: InputMaybe<Scalars['String']['input']>;
-  nStartsWith?: InputMaybe<Scalars['Int']['input']>;
-  range?: InputMaybe<Array<Scalars['Int']['input']>>;
-  regex?: InputMaybe<Scalars['String']['input']>;
-  startsWith?: InputMaybe<Scalars['Int']['input']>;
+  contains?: InputMaybe<Scalars["Int"]["input"]>;
+  endsWith?: InputMaybe<Scalars["Int"]["input"]>;
+  exact?: InputMaybe<Scalars["Int"]["input"]>;
+  gt?: InputMaybe<Scalars["Int"]["input"]>;
+  gte?: InputMaybe<Scalars["Int"]["input"]>;
+  iContains?: InputMaybe<Scalars["Int"]["input"]>;
+  iEndsWith?: InputMaybe<Scalars["Int"]["input"]>;
+  iExact?: InputMaybe<Scalars["Int"]["input"]>;
+  iRegex?: InputMaybe<Scalars["String"]["input"]>;
+  iStartsWith?: InputMaybe<Scalars["Int"]["input"]>;
+  inList?: InputMaybe<Array<Scalars["Int"]["input"]>>;
+  isNull?: InputMaybe<Scalars["Boolean"]["input"]>;
+  lt?: InputMaybe<Scalars["Int"]["input"]>;
+  lte?: InputMaybe<Scalars["Int"]["input"]>;
+  nContains?: InputMaybe<Scalars["Int"]["input"]>;
+  nEndsWith?: InputMaybe<Scalars["Int"]["input"]>;
+  nExact?: InputMaybe<Scalars["Int"]["input"]>;
+  nGt?: InputMaybe<Scalars["Int"]["input"]>;
+  nGte?: InputMaybe<Scalars["Int"]["input"]>;
+  nIContains?: InputMaybe<Scalars["Int"]["input"]>;
+  nIEndsWith?: InputMaybe<Scalars["Int"]["input"]>;
+  nIExact?: InputMaybe<Scalars["Int"]["input"]>;
+  nIRegex?: InputMaybe<Scalars["String"]["input"]>;
+  nIStartsWith?: InputMaybe<Scalars["Int"]["input"]>;
+  nInList?: InputMaybe<Array<Scalars["Int"]["input"]>>;
+  nIsNull?: InputMaybe<Scalars["Boolean"]["input"]>;
+  nLt?: InputMaybe<Scalars["Int"]["input"]>;
+  nLte?: InputMaybe<Scalars["Int"]["input"]>;
+  nRange?: InputMaybe<Array<Scalars["Int"]["input"]>>;
+  nRegex?: InputMaybe<Scalars["String"]["input"]>;
+  nStartsWith?: InputMaybe<Scalars["Int"]["input"]>;
+  range?: InputMaybe<Array<Scalars["Int"]["input"]>>;
+  regex?: InputMaybe<Scalars["String"]["input"]>;
+  startsWith?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type LabelAccessor = Accessor & {
-  __typename?: 'LabelAccessor';
-  id: Scalars['ID']['output'];
-  keys: Array<Scalars['String']['output']>;
-  maxIndex?: Maybe<Scalars['Int']['output']>;
-  minIndex?: Maybe<Scalars['Int']['output']>;
+  __typename?: "LabelAccessor";
+  id: Scalars["ID"]["output"];
+  keys: Array<Scalars["String"]["output"]>;
+  maxIndex?: Maybe<Scalars["Int"]["output"]>;
+  minIndex?: Maybe<Scalars["Int"]["output"]>;
   pixelView: PixelView;
   table: Table;
 };
 
 export type LabelView = View & {
-  __typename?: 'LabelView';
+  __typename?: "LabelView";
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
-  id: Scalars['ID']['output'];
+  accessor: Array<Scalars["String"]["output"]>;
+  cMax?: Maybe<Scalars["Int"]["output"]>;
+  cMin?: Maybe<Scalars["Int"]["output"]>;
+  id: Scalars["ID"]["output"];
   image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  label: Scalars['String']['output'];
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
+  isGlobal: Scalars["Boolean"]["output"];
+  label: Scalars["String"]["output"];
+  tMax?: Maybe<Scalars["Int"]["output"]>;
+  tMin?: Maybe<Scalars["Int"]["output"]>;
+  xMax?: Maybe<Scalars["Int"]["output"]>;
+  xMin?: Maybe<Scalars["Int"]["output"]>;
+  yMax?: Maybe<Scalars["Int"]["output"]>;
+  yMin?: Maybe<Scalars["Int"]["output"]>;
+  zMax?: Maybe<Scalars["Int"]["output"]>;
+  zMin?: Maybe<Scalars["Int"]["output"]>;
 };
 
 export type LabelViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  image: Scalars['ID']['input'];
-  label: Scalars['String']['input'];
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
+  image: Scalars["ID"]["input"];
+  label: Scalars["String"]["input"];
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type MediaStore = {
-  __typename?: 'MediaStore';
-  bucket: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  key: Scalars['String']['output'];
-  path: Scalars['String']['output'];
-  presignedUrl: Scalars['String']['output'];
+  __typename?: "MediaStore";
+  bucket: Scalars["String"]["output"];
+  id: Scalars["ID"]["output"];
+  key: Scalars["String"]["output"];
+  path: Scalars["String"]["output"];
+  presignedUrl: Scalars["String"]["output"];
 };
 
-
 export type MediaStorePresignedUrlArgs = {
-  host?: InputMaybe<Scalars['String']['input']>;
+  host?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type Mesh = {
-  __typename?: 'Mesh';
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
+  __typename?: "Mesh";
+  id: Scalars["ID"]["output"];
+  name: Scalars["String"]["output"];
   store: MeshStore;
 };
 
 export type MeshFilter = {
   AND?: InputMaybe<MeshFilter>;
   OR?: InputMaybe<MeshFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type MeshInput = {
-  mesh: Scalars['MeshLike']['input'];
-  name: Scalars['String']['input'];
+  mesh: Scalars["MeshLike"]["input"];
+  name: Scalars["String"]["input"];
 };
 
 export type MeshStore = {
-  __typename?: 'MeshStore';
-  bucket: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  key: Scalars['String']['output'];
-  path: Scalars['String']['output'];
-  presignedUrl: Scalars['String']['output'];
+  __typename?: "MeshStore";
+  bucket: Scalars["String"]["output"];
+  id: Scalars["ID"]["output"];
+  key: Scalars["String"]["output"];
+  path: Scalars["String"]["output"];
+  presignedUrl: Scalars["String"]["output"];
 };
 
-
 export type MeshStorePresignedUrlArgs = {
-  host?: InputMaybe<Scalars['String']['input']>;
+  host?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type ModelChange = {
-  __typename?: 'ModelChange';
-  field: Scalars['String']['output'];
-  newValue?: Maybe<Scalars['String']['output']>;
-  oldValue?: Maybe<Scalars['String']['output']>;
+  __typename?: "ModelChange";
+  field: Scalars["String"]["output"];
+  newValue?: Maybe<Scalars["String"]["output"]>;
+  oldValue?: Maybe<Scalars["String"]["output"]>;
 };
 
 export type MultiWellPlate = {
-  __typename?: 'MultiWellPlate';
-  columns?: Maybe<Scalars['Int']['output']>;
-  description?: Maybe<Scalars['String']['output']>;
-  id: Scalars['ID']['output'];
-  name?: Maybe<Scalars['String']['output']>;
-  rows?: Maybe<Scalars['Int']['output']>;
+  __typename?: "MultiWellPlate";
+  columns?: Maybe<Scalars["Int"]["output"]>;
+  description?: Maybe<Scalars["String"]["output"]>;
+  id: Scalars["ID"]["output"];
+  name?: Maybe<Scalars["String"]["output"]>;
+  rows?: Maybe<Scalars["Int"]["output"]>;
   views: Array<WellPositionView>;
 };
-
 
 export type MultiWellPlateViewsArgs = {
   filters?: InputMaybe<WellPositionViewFilter>;
@@ -1242,20 +1228,20 @@ export type MultiWellPlateViewsArgs = {
 export type MultiWellPlateFilter = {
   AND?: InputMaybe<MultiWellPlateFilter>;
   OR?: InputMaybe<MultiWellPlateFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
   name?: InputMaybe<StrFilterLookup>;
-  search?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type MultiWellPlateInput = {
-  columns?: InputMaybe<Scalars['Int']['input']>;
-  name: Scalars['String']['input'];
-  rows?: InputMaybe<Scalars['Int']['input']>;
+  columns?: InputMaybe<Scalars["Int"]["input"]>;
+  name: Scalars["String"]["input"];
+  rows?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type Mutation = {
-  __typename?: 'Mutation';
+  __typename?: "Mutation";
   /** Create a new view for affine transformation data */
   createAffineTransformationView: AffineTransformationView;
   /** Create a new camera configuration */
@@ -1309,47 +1295,47 @@ export type Mutation = {
   /** Create a new view for well position data */
   createWellPositionView: WellPositionView;
   /** Delete an existing affine transformation view */
-  deleteAffineTransformationView: Scalars['ID']['output'];
+  deleteAffineTransformationView: Scalars["ID"]["output"];
   /** Delete an existing camera */
-  deleteCamera: Scalars['ID']['output'];
+  deleteCamera: Scalars["ID"]["output"];
   /** Delete an existing channel */
-  deleteChannel: Scalars['ID']['output'];
+  deleteChannel: Scalars["ID"]["output"];
   /** Delete an existing channel view */
-  deleteChannelView: Scalars['ID']['output'];
+  deleteChannelView: Scalars["ID"]["output"];
   /** Delete an existing dataset */
-  deleteDataset: Scalars['ID']['output'];
+  deleteDataset: Scalars["ID"]["output"];
   /** Delete an existing era */
-  deleteEra: Scalars['ID']['output'];
+  deleteEra: Scalars["ID"]["output"];
   /** Delete an existing file */
-  deleteFile: Scalars['ID']['output'];
+  deleteFile: Scalars["ID"]["output"];
   /** Delete an existing image */
-  deleteImage: Scalars['ID']['output'];
+  deleteImage: Scalars["ID"]["output"];
   /** Delete an existing instrument */
-  deleteInstrument: Scalars['ID']['output'];
+  deleteInstrument: Scalars["ID"]["output"];
   /** Delete an existing mesh */
-  deleteMesh: Scalars['ID']['output'];
+  deleteMesh: Scalars["ID"]["output"];
   /** Delete an existing multi-well plate configuration */
-  deleteMultiWellPlate: Scalars['ID']['output'];
+  deleteMultiWellPlate: Scalars["ID"]["output"];
   /** Delete an existing objective */
-  deleteObjective: Scalars['ID']['output'];
+  deleteObjective: Scalars["ID"]["output"];
   /** Delete an existing optics view */
-  deleteOpticsView: Scalars['ID']['output'];
+  deleteOpticsView: Scalars["ID"]["output"];
   /** Delete an existing RGB context */
-  deleteRgbContext: Scalars['ID']['output'];
+  deleteRgbContext: Scalars["ID"]["output"];
   /** Delete an existing RGB view */
-  deleteRgbView: Scalars['ID']['output'];
+  deleteRgbView: Scalars["ID"]["output"];
   /** Delete an existing region of interest */
-  deleteRoi: Scalars['ID']['output'];
+  deleteRoi: Scalars["ID"]["output"];
   /** Delete an existing snapshot */
-  deleteSnapshot: Scalars['ID']['output'];
+  deleteSnapshot: Scalars["ID"]["output"];
   /** Delete an existing stage */
-  deleteStage: Scalars['ID']['output'];
+  deleteStage: Scalars["ID"]["output"];
   /** Delete an existing timepoint view */
-  deleteTimepointView: Scalars['ID']['output'];
+  deleteTimepointView: Scalars["ID"]["output"];
   /** Delete any type of view */
-  deleteView: Scalars['ID']['output'];
+  deleteView: Scalars["ID"]["output"];
   /** Delete an existing view collection */
-  deleteViewCollection: Scalars['ID']['output'];
+  deleteViewCollection: Scalars["ID"]["output"];
   /** Ensure a camera exists, creating if needed */
   ensureCamera: Camera;
   /** Ensure a channel exists, creating if needed */
@@ -1438,467 +1424,376 @@ export type Mutation = {
   updateRoi: Roi;
 };
 
-
 export type MutationCreateAffineTransformationViewArgs = {
   input: AffineTransformationViewInput;
 };
-
 
 export type MutationCreateCameraArgs = {
   input: CameraInput;
 };
 
-
 export type MutationCreateChannelArgs = {
   input: ChannelInput;
 };
-
 
 export type MutationCreateChannelViewArgs = {
   input: ChannelViewInput;
 };
 
-
 export type MutationCreateContinousScanViewArgs = {
   input: ContinousScanViewInput;
 };
-
 
 export type MutationCreateDatasetArgs = {
   input: CreateDatasetInput;
 };
 
-
 export type MutationCreateEraArgs = {
   input: EraInput;
 };
-
 
 export type MutationCreateFileViewArgs = {
   input: FileViewInput;
 };
 
-
 export type MutationCreateInstrumentArgs = {
   input: InstrumentInput;
 };
-
 
 export type MutationCreateLabelViewArgs = {
   input: LabelViewInput;
 };
 
-
 export type MutationCreateMeshArgs = {
   input: MeshInput;
 };
-
 
 export type MutationCreateMultiWellPlateArgs = {
   input: MultiWellPlateInput;
 };
 
-
 export type MutationCreateObjectiveArgs = {
   input: ObjectiveInput;
 };
-
 
 export type MutationCreateOpticsViewArgs = {
   input: OpticsViewInput;
 };
 
-
 export type MutationCreateRenderTreeArgs = {
   input: RenderTreeInput;
 };
-
 
 export type MutationCreateRenderedPlotArgs = {
   input: RenderedPlotInput;
 };
 
-
 export type MutationCreateRgbContextArgs = {
   input: CreateRgbContextInput;
 };
-
 
 export type MutationCreateRgbViewArgs = {
   input: RgbViewInput;
 };
 
-
 export type MutationCreateRoiArgs = {
   input: RoiInput;
 };
-
 
 export type MutationCreateRoiViewArgs = {
   input: RoiViewInput;
 };
 
-
 export type MutationCreateSnapshotArgs = {
   input: SnapshotInput;
 };
-
 
 export type MutationCreateStageArgs = {
   input: StageInput;
 };
 
-
 export type MutationCreateStructureViewArgs = {
   input: StructureViewInput;
 };
-
 
 export type MutationCreateTimepointViewArgs = {
   input: TimepointViewInput;
 };
 
-
 export type MutationCreateViewCollectionArgs = {
   input: ViewCollectionInput;
 };
-
 
 export type MutationCreateWellPositionViewArgs = {
   input: WellPositionViewInput;
 };
 
-
 export type MutationDeleteAffineTransformationViewArgs = {
   input: DeleteViewInput;
 };
-
 
 export type MutationDeleteCameraArgs = {
   input: DeleteCameraInput;
 };
 
-
 export type MutationDeleteChannelArgs = {
   input: DeleteChannelInput;
 };
-
 
 export type MutationDeleteChannelViewArgs = {
   input: DeleteViewInput;
 };
 
-
 export type MutationDeleteDatasetArgs = {
   input: DeleteDatasetInput;
 };
-
 
 export type MutationDeleteEraArgs = {
   input: DeleteEraInput;
 };
 
-
 export type MutationDeleteFileArgs = {
   input: DeleteFileInput;
 };
-
 
 export type MutationDeleteImageArgs = {
   input: DeleteImageInput;
 };
 
-
 export type MutationDeleteInstrumentArgs = {
   input: DeleteInstrumentInput;
 };
-
 
 export type MutationDeleteMeshArgs = {
   input: DeleteMeshInput;
 };
 
-
 export type MutationDeleteMultiWellPlateArgs = {
   input: DeleteMultiWellInput;
 };
-
 
 export type MutationDeleteObjectiveArgs = {
   input: DeleteObjectiveInput;
 };
 
-
 export type MutationDeleteOpticsViewArgs = {
   input: DeleteViewInput;
 };
-
 
 export type MutationDeleteRgbContextArgs = {
   input: DeleteRgbContextInput;
 };
 
-
 export type MutationDeleteRgbViewArgs = {
   input: DeleteViewInput;
 };
-
 
 export type MutationDeleteRoiArgs = {
   input: DeleteRoiInput;
 };
 
-
 export type MutationDeleteSnapshotArgs = {
   input: DeleteRenderedPlot;
 };
-
 
 export type MutationDeleteStageArgs = {
   input: DeleteStageInput;
 };
 
-
 export type MutationDeleteTimepointViewArgs = {
   input: DeleteViewInput;
 };
-
 
 export type MutationDeleteViewArgs = {
   input: DeleteViewInput;
 };
 
-
 export type MutationDeleteViewCollectionArgs = {
   input: DeleteViewCollectionInput;
 };
-
 
 export type MutationEnsureCameraArgs = {
   input: CameraInput;
 };
 
-
 export type MutationEnsureChannelArgs = {
   input: ChannelInput;
 };
-
 
 export type MutationEnsureInstrumentArgs = {
   input: InstrumentInput;
 };
 
-
 export type MutationEnsureMultiWellPlateArgs = {
   input: MultiWellPlateInput;
 };
-
 
 export type MutationEnsureObjectiveArgs = {
   input: ObjectiveInput;
 };
 
-
 export type MutationFromArrayLikeArgs = {
   input: FromArrayLikeInput;
 };
-
 
 export type MutationFromFileLikeArgs = {
   input: FromFileLike;
 };
 
-
 export type MutationFromParquetLikeArgs = {
   input: FromParquetLike;
 };
-
 
 export type MutationPinCameraArgs = {
   input: PinCameraInput;
 };
 
-
 export type MutationPinChannelArgs = {
   input: PinChannelInput;
 };
-
 
 export type MutationPinDatasetArgs = {
   input: PinDatasetInput;
 };
 
-
 export type MutationPinEraArgs = {
   input: PinEraInput;
 };
-
 
 export type MutationPinImageArgs = {
   input: PinImageInput;
 };
 
-
 export type MutationPinInstrumentArgs = {
   input: PinInstrumentInput;
 };
-
 
 export type MutationPinMeshArgs = {
   input: DeleteMeshInput;
 };
 
-
 export type MutationPinMultiWellPlateArgs = {
   input: PintMultiWellPlateInput;
 };
-
 
 export type MutationPinObjectiveArgs = {
   input: PinObjectiveInput;
 };
 
-
 export type MutationPinRoiArgs = {
   input: PinRoiInput;
 };
-
 
 export type MutationPinSnapshotArgs = {
   input: PinSnapshotInput;
 };
 
-
 export type MutationPinStageArgs = {
   input: PinStageInput;
 };
-
 
 export type MutationPinViewArgs = {
   input: PinViewInput;
 };
 
-
 export type MutationPinViewCollectionArgs = {
   input: PinViewCollectionInput;
 };
-
 
 export type MutationPutDatasetsInDatasetArgs = {
   input: AssociateInput;
 };
 
-
 export type MutationPutFilesInDatasetArgs = {
   input: AssociateInput;
 };
-
 
 export type MutationPutImagesInDatasetArgs = {
   input: AssociateInput;
 };
 
-
 export type MutationRelateToDatasetArgs = {
   input: RelateToDatasetInput;
 };
-
 
 export type MutationReleaseDatasetsFromDatasetArgs = {
   input: DesociateInput;
 };
 
-
 export type MutationReleaseFilesFromDatasetArgs = {
   input: DesociateInput;
 };
-
 
 export type MutationReleaseImagesFromDatasetArgs = {
   input: DesociateInput;
 };
 
-
 export type MutationRequestAccessArgs = {
   input: RequestAccessInput;
 };
-
 
 export type MutationRequestFileAccessArgs = {
   input: RequestFileAccessInput;
 };
 
-
 export type MutationRequestFileUploadArgs = {
   input: RequestFileUploadInput;
 };
-
 
 export type MutationRequestFileUploadPresignedArgs = {
   input: RequestFileUploadInput;
 };
 
-
 export type MutationRequestMediaUploadArgs = {
   input: RequestMediaUploadInput;
 };
-
 
 export type MutationRequestMeshUploadArgs = {
   input: RequestMeshUploadInput;
 };
 
-
 export type MutationRequestTableAccessArgs = {
   input: RequestTableAccessInput;
 };
-
 
 export type MutationRequestTableUploadArgs = {
   input: RequestTableUploadInput;
 };
 
-
 export type MutationRequestUploadArgs = {
   input: RequestUploadInput;
 };
-
 
 export type MutationRevertDatasetArgs = {
   input: RevertInput;
 };
 
-
 export type MutationUpdateDatasetArgs = {
   input: ChangeDatasetInput;
 };
-
 
 export type MutationUpdateImageArgs = {
   input: UpdateImageInput;
 };
 
-
 export type MutationUpdateRgbContextArgs = {
   input: UpdateRgbContextInput;
 };
-
 
 export type MutationUpdateRoiArgs = {
   input: UpdateRoiInput;
 };
 
 export type Objective = {
-  __typename?: 'Objective';
-  id: Scalars['ID']['output'];
-  immersion?: Maybe<Scalars['String']['output']>;
-  magnification?: Maybe<Scalars['Float']['output']>;
-  na?: Maybe<Scalars['Float']['output']>;
-  name: Scalars['String']['output'];
-  serialNumber: Scalars['String']['output'];
+  __typename?: "Objective";
+  id: Scalars["ID"]["output"];
+  immersion?: Maybe<Scalars["String"]["output"]>;
+  magnification?: Maybe<Scalars["Float"]["output"]>;
+  na?: Maybe<Scalars["Float"]["output"]>;
+  name: Scalars["String"]["output"];
+  serialNumber: Scalars["String"]["output"];
   views: Array<OpticsView>;
 };
-
 
 export type ObjectiveViewsArgs = {
   filters?: InputMaybe<OpticsViewFilter>;
@@ -1908,44 +1803,44 @@ export type ObjectiveViewsArgs = {
 export type ObjectiveFilter = {
   AND?: InputMaybe<ObjectiveFilter>;
   OR?: InputMaybe<ObjectiveFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
+  name?: InputMaybe<Scalars["String"]["input"]>;
   provenance?: InputMaybe<ProvenanceFilter>;
 };
 
 export type ObjectiveInput = {
-  immersion?: InputMaybe<Scalars['String']['input']>;
-  magnification?: InputMaybe<Scalars['Float']['input']>;
-  na?: InputMaybe<Scalars['Float']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  serialNumber: Scalars['String']['input'];
+  immersion?: InputMaybe<Scalars["String"]["input"]>;
+  magnification?: InputMaybe<Scalars["Float"]["input"]>;
+  na?: InputMaybe<Scalars["Float"]["input"]>;
+  name?: InputMaybe<Scalars["String"]["input"]>;
+  serialNumber: Scalars["String"]["input"];
 };
 
 export type OffsetPaginationInput = {
-  limit?: Scalars['Int']['input'];
-  offset?: Scalars['Int']['input'];
+  limit?: Scalars["Int"]["input"];
+  offset?: Scalars["Int"]["input"];
 };
 
 export type OpticsView = View & {
-  __typename?: 'OpticsView';
+  __typename?: "OpticsView";
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars["String"]["output"]>;
+  cMax?: Maybe<Scalars["Int"]["output"]>;
+  cMin?: Maybe<Scalars["Int"]["output"]>;
   camera?: Maybe<Camera>;
-  id: Scalars['ID']['output'];
+  id: Scalars["ID"]["output"];
   image: Image;
   instrument?: Maybe<Instrument>;
-  isGlobal: Scalars['Boolean']['output'];
+  isGlobal: Scalars["Boolean"]["output"];
   objective?: Maybe<Objective>;
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
+  tMax?: Maybe<Scalars["Int"]["output"]>;
+  tMin?: Maybe<Scalars["Int"]["output"]>;
+  xMax?: Maybe<Scalars["Int"]["output"]>;
+  xMin?: Maybe<Scalars["Int"]["output"]>;
+  yMax?: Maybe<Scalars["Int"]["output"]>;
+  yMin?: Maybe<Scalars["Int"]["output"]>;
+  zMax?: Maybe<Scalars["Int"]["output"]>;
+  zMin?: Maybe<Scalars["Int"]["output"]>;
 };
 
 export type OpticsViewFilter = {
@@ -1953,528 +1848,527 @@ export type OpticsViewFilter = {
   OR?: InputMaybe<OpticsViewFilter>;
   camera?: InputMaybe<CameraFilter>;
   instrument?: InputMaybe<InstrumentFilter>;
-  isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  isGlobal?: InputMaybe<Scalars["Boolean"]["input"]>;
   objective?: InputMaybe<ObjectiveFilter>;
   provenance?: InputMaybe<ProvenanceFilter>;
 };
 
 export type OpticsViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
-  camera?: InputMaybe<Scalars['ID']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
+  camera?: InputMaybe<Scalars["ID"]["input"]>;
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  image: Scalars['ID']['input'];
-  instrument?: InputMaybe<Scalars['ID']['input']>;
-  objective?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
+  image: Scalars["ID"]["input"];
+  instrument?: InputMaybe<Scalars["ID"]["input"]>;
+  objective?: InputMaybe<Scalars["ID"]["input"]>;
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export enum Ordering {
-  Asc = 'ASC',
-  Desc = 'DESC'
+  Asc = "ASC",
+  Desc = "DESC",
 }
 
 export type Overlay = {
-  __typename?: 'Overlay';
-  color: Scalars['String']['output'];
-  identifier: Scalars['String']['output'];
-  object: Scalars['String']['output'];
-  x: Scalars['Int']['output'];
-  y: Scalars['Int']['output'];
+  __typename?: "Overlay";
+  color: Scalars["String"]["output"];
+  identifier: Scalars["String"]["output"];
+  object: Scalars["String"]["output"];
+  x: Scalars["Int"]["output"];
+  y: Scalars["Int"]["output"];
 };
 
 export type OverlayInput = {
-  color: Scalars['String']['input'];
-  identifier: Scalars['String']['input'];
-  object: Scalars['String']['input'];
-  x: Scalars['Int']['input'];
-  y: Scalars['Int']['input'];
+  color: Scalars["String"]["input"];
+  identifier: Scalars["String"]["input"];
+  object: Scalars["String"]["input"];
+  x: Scalars["Int"]["input"];
+  y: Scalars["Int"]["input"];
 };
 
 export type OverlayNode = RenderNode & {
-  __typename?: 'OverlayNode';
+  __typename?: "OverlayNode";
   children: Array<RenderNode>;
-  kind: Scalars['String']['output'];
-  label?: Maybe<Scalars['String']['output']>;
+  kind: Scalars["String"]["output"];
+  label?: Maybe<Scalars["String"]["output"]>;
 };
 
 export type ParquetStore = {
-  __typename?: 'ParquetStore';
-  bucket: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  key: Scalars['String']['output'];
-  path: Scalars['String']['output'];
+  __typename?: "ParquetStore";
+  bucket: Scalars["String"]["output"];
+  id: Scalars["ID"]["output"];
+  key: Scalars["String"]["output"];
+  path: Scalars["String"]["output"];
 };
 
 export type PartialAcquisitionViewInput = {
-  acquiredAt?: InputMaybe<Scalars['DateTime']['input']>;
+  acquiredAt?: InputMaybe<Scalars["DateTime"]["input"]>;
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  description?: InputMaybe<Scalars['String']['input']>;
-  operator?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
+  description?: InputMaybe<Scalars["String"]["input"]>;
+  operator?: InputMaybe<Scalars["ID"]["input"]>;
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type PartialAffineTransformationViewInput = {
-  affineMatrix: Scalars['FourByFourMatrix']['input'];
+  affineMatrix: Scalars["FourByFourMatrix"]["input"];
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  stage?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
+  stage?: InputMaybe<Scalars["ID"]["input"]>;
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type PartialChannelViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The ID of the channel this view is for */
-  channel: Scalars['ID']['input'];
+  channel: Scalars["ID"]["input"];
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type PartialDerivedViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  originImage: Scalars['ID']['input'];
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
+  originImage: Scalars["ID"]["input"];
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type PartialFileViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  file: Scalars['ID']['input'];
-  seriesIdentifier?: InputMaybe<Scalars['String']['input']>;
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
+  file: Scalars["ID"]["input"];
+  seriesIdentifier?: InputMaybe<Scalars["String"]["input"]>;
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type PartialImageAccessorInput = {
-  image: Scalars['ID']['input'];
-  keys: Array<Scalars['String']['input']>;
-  maxIndex?: InputMaybe<Scalars['Int']['input']>;
-  minIndex?: InputMaybe<Scalars['Int']['input']>;
+  image: Scalars["ID"]["input"];
+  keys: Array<Scalars["String"]["input"]>;
+  maxIndex?: InputMaybe<Scalars["Int"]["input"]>;
+  minIndex?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type PartialLabelAccessorInput = {
-  keys: Array<Scalars['String']['input']>;
-  maxIndex?: InputMaybe<Scalars['Int']['input']>;
-  minIndex?: InputMaybe<Scalars['Int']['input']>;
-  pixelView: Scalars['ID']['input'];
+  keys: Array<Scalars["String"]["input"]>;
+  maxIndex?: InputMaybe<Scalars["Int"]["input"]>;
+  minIndex?: InputMaybe<Scalars["Int"]["input"]>;
+  pixelView: Scalars["ID"]["input"];
 };
 
 export type PartialOpticsViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
-  camera?: InputMaybe<Scalars['ID']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
+  camera?: InputMaybe<Scalars["ID"]["input"]>;
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  instrument?: InputMaybe<Scalars['ID']['input']>;
-  objective?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
+  instrument?: InputMaybe<Scalars["ID"]["input"]>;
+  objective?: InputMaybe<Scalars["ID"]["input"]>;
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type PartialPixelViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  linkedView?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
+  linkedView?: InputMaybe<Scalars["ID"]["input"]>;
   rangeLabels?: InputMaybe<Array<RangePixelLabel>>;
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type PartialRgbViewInput = {
-  active?: InputMaybe<Scalars['Boolean']['input']>;
-  baseColor?: InputMaybe<Array<Scalars['Float']['input']>>;
+  active?: InputMaybe<Scalars["Boolean"]["input"]>;
+  baseColor?: InputMaybe<Array<Scalars["Float"]["input"]>>;
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
   colorMap?: InputMaybe<ColorMap>;
-  context?: InputMaybe<Scalars['ID']['input']>;
-  contrastLimitMax?: InputMaybe<Scalars['Float']['input']>;
-  contrastLimitMin?: InputMaybe<Scalars['Float']['input']>;
-  gamma?: InputMaybe<Scalars['Float']['input']>;
-  rescale?: InputMaybe<Scalars['Boolean']['input']>;
-  scale?: InputMaybe<Scalars['Float']['input']>;
+  context?: InputMaybe<Scalars["ID"]["input"]>;
+  contrastLimitMax?: InputMaybe<Scalars["Float"]["input"]>;
+  contrastLimitMin?: InputMaybe<Scalars["Float"]["input"]>;
+  gamma?: InputMaybe<Scalars["Float"]["input"]>;
+  rescale?: InputMaybe<Scalars["Boolean"]["input"]>;
+  scale?: InputMaybe<Scalars["Float"]["input"]>;
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type PartialRoiViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  roi: Scalars['ID']['input'];
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
+  roi: Scalars["ID"]["input"];
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type PartialScaleViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  parent?: InputMaybe<Scalars['ID']['input']>;
-  scaleC?: InputMaybe<Scalars['Float']['input']>;
-  scaleT?: InputMaybe<Scalars['Float']['input']>;
-  scaleX?: InputMaybe<Scalars['Float']['input']>;
-  scaleY?: InputMaybe<Scalars['Float']['input']>;
-  scaleZ?: InputMaybe<Scalars['Float']['input']>;
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
+  parent?: InputMaybe<Scalars["ID"]["input"]>;
+  scaleC?: InputMaybe<Scalars["Float"]["input"]>;
+  scaleT?: InputMaybe<Scalars["Float"]["input"]>;
+  scaleX?: InputMaybe<Scalars["Float"]["input"]>;
+  scaleY?: InputMaybe<Scalars["Float"]["input"]>;
+  scaleZ?: InputMaybe<Scalars["Float"]["input"]>;
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type PartialStructureViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  structure: Scalars['StructureString']['input'];
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
+  structure: Scalars["StructureString"]["input"];
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type PartialTimepointViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  era?: InputMaybe<Scalars['ID']['input']>;
-  indexSinceStart?: InputMaybe<Scalars['Int']['input']>;
-  msSinceStart?: InputMaybe<Scalars['Milliseconds']['input']>;
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
+  era?: InputMaybe<Scalars["ID"]["input"]>;
+  indexSinceStart?: InputMaybe<Scalars["Int"]["input"]>;
+  msSinceStart?: InputMaybe<Scalars["Milliseconds"]["input"]>;
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type PinCameraInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
+  id: Scalars["ID"]["input"];
+  pin: Scalars["Boolean"]["input"];
 };
 
 export type PinChannelInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
+  id: Scalars["ID"]["input"];
+  pin: Scalars["Boolean"]["input"];
 };
 
 export type PinDatasetInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
+  id: Scalars["ID"]["input"];
+  pin: Scalars["Boolean"]["input"];
 };
 
 export type PinEraInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
+  id: Scalars["ID"]["input"];
+  pin: Scalars["Boolean"]["input"];
 };
 
 export type PinImageInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
+  id: Scalars["ID"]["input"];
+  pin: Scalars["Boolean"]["input"];
 };
 
 export type PinInstrumentInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
+  id: Scalars["ID"]["input"];
+  pin: Scalars["Boolean"]["input"];
 };
 
 export type PinObjectiveInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
+  id: Scalars["ID"]["input"];
+  pin: Scalars["Boolean"]["input"];
 };
 
 export type PinRoiInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
+  id: Scalars["ID"]["input"];
+  pin: Scalars["Boolean"]["input"];
 };
 
 export type PinSnapshotInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
+  id: Scalars["ID"]["input"];
+  pin: Scalars["Boolean"]["input"];
 };
 
 export type PinStageInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
+  id: Scalars["ID"]["input"];
+  pin: Scalars["Boolean"]["input"];
 };
 
 export type PinViewCollectionInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
+  id: Scalars["ID"]["input"];
+  pin: Scalars["Boolean"]["input"];
 };
 
 export type PinViewInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
+  id: Scalars["ID"]["input"];
+  pin: Scalars["Boolean"]["input"];
 };
 
 export type PintMultiWellPlateInput = {
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
+  id: Scalars["ID"]["input"];
+  pin: Scalars["Boolean"]["input"];
 };
 
 export type PixelLabel = {
-  __typename?: 'PixelLabel';
-  id: Scalars['ID']['output'];
-  value: Scalars['Int']['output'];
+  __typename?: "PixelLabel";
+  id: Scalars["ID"]["output"];
+  value: Scalars["Int"]["output"];
   view: PixelView;
 };
 
 export type PixelLabelFilter = {
   AND?: InputMaybe<PixelLabelFilter>;
   OR?: InputMaybe<PixelLabelFilter>;
-  entity?: InputMaybe<Scalars['ID']['input']>;
-  entityKind?: InputMaybe<Scalars['ID']['input']>;
-  value?: InputMaybe<Scalars['Float']['input']>;
-  view?: InputMaybe<Scalars['ID']['input']>;
+  entity?: InputMaybe<Scalars["ID"]["input"]>;
+  entityKind?: InputMaybe<Scalars["ID"]["input"]>;
+  value?: InputMaybe<Scalars["Float"]["input"]>;
+  view?: InputMaybe<Scalars["ID"]["input"]>;
 };
 
 export type PixelView = View & {
-  __typename?: 'PixelView';
+  __typename?: "PixelView";
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
-  id: Scalars['ID']['output'];
+  accessor: Array<Scalars["String"]["output"]>;
+  cMax?: Maybe<Scalars["Int"]["output"]>;
+  cMin?: Maybe<Scalars["Int"]["output"]>;
+  id: Scalars["ID"]["output"];
   image: Image;
-  isGlobal: Scalars['Boolean']['output'];
+  isGlobal: Scalars["Boolean"]["output"];
   labelAccessors: Array<LabelAccessor>;
   labels: Array<PixelLabel>;
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
+  tMax?: Maybe<Scalars["Int"]["output"]>;
+  tMin?: Maybe<Scalars["Int"]["output"]>;
+  xMax?: Maybe<Scalars["Int"]["output"]>;
+  xMin?: Maybe<Scalars["Int"]["output"]>;
+  yMax?: Maybe<Scalars["Int"]["output"]>;
+  yMin?: Maybe<Scalars["Int"]["output"]>;
+  zMax?: Maybe<Scalars["Int"]["output"]>;
+  zMin?: Maybe<Scalars["Int"]["output"]>;
 };
-
 
 export type PixelViewLabelsArgs = {
   filters?: InputMaybe<PixelLabelFilter>;
@@ -2484,42 +2378,42 @@ export type PixelViewLabelsArgs = {
 export type PixelViewFilter = {
   AND?: InputMaybe<PixelViewFilter>;
   OR?: InputMaybe<PixelViewFilter>;
-  isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  isGlobal?: InputMaybe<Scalars["Boolean"]["input"]>;
   provenance?: InputMaybe<ProvenanceFilter>;
 };
 
 /** A channel descriptor */
 export type PlaneInfo = {
-  __typename?: 'PlaneInfo';
-  label: Scalars['String']['output'];
+  __typename?: "PlaneInfo";
+  label: Scalars["String"]["output"];
 };
 
 export type Plot = {
-  entity: Scalars['String']['output'];
+  entity: Scalars["String"]["output"];
 };
 
 /** Temporary Credentials for a file upload that can be used by a Client (e.g. in a python datalayer) */
 export type PresignedPostCredentials = {
-  __typename?: 'PresignedPostCredentials';
-  bucket: Scalars['String']['output'];
-  datalayer: Scalars['String']['output'];
-  key: Scalars['String']['output'];
-  policy: Scalars['String']['output'];
-  store: Scalars['String']['output'];
-  xAmzAlgorithm: Scalars['String']['output'];
-  xAmzCredential: Scalars['String']['output'];
-  xAmzDate: Scalars['String']['output'];
-  xAmzSignature: Scalars['String']['output'];
+  __typename?: "PresignedPostCredentials";
+  bucket: Scalars["String"]["output"];
+  datalayer: Scalars["String"]["output"];
+  key: Scalars["String"]["output"];
+  policy: Scalars["String"]["output"];
+  store: Scalars["String"]["output"];
+  xAmzAlgorithm: Scalars["String"]["output"];
+  xAmzCredential: Scalars["String"]["output"];
+  xAmzDate: Scalars["String"]["output"];
+  xAmzSignature: Scalars["String"]["output"];
 };
 
 export type ProvenanceFilter = {
   AND?: InputMaybe<ProvenanceFilter>;
   OR?: InputMaybe<ProvenanceFilter>;
-  during?: InputMaybe<Scalars['String']['input']>;
+  during?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type Query = {
-  __typename?: 'Query';
+  __typename?: "Query";
   acquisitionViews: Array<AcquisitionView>;
   affineTransformationViews: Array<AffineTransformationView>;
   camera: Camera;
@@ -2567,7 +2461,7 @@ export type Query = {
   rgbcontexts: Array<RgbContext>;
   roi: Roi;
   rois: Array<Roi>;
-  rows: Array<Scalars['MetricMap']['output']>;
+  rows: Array<Scalars["MetricMap"]["output"]>;
   scaleViews: Array<ScaleView>;
   snapshot: Snapshot;
   snapshots: Array<Snapshot>;
@@ -2584,74 +2478,61 @@ export type Query = {
   wellPositionViews: Array<WellPositionView>;
 };
 
-
 export type QueryAffineTransformationViewsArgs = {
   filters?: InputMaybe<AffineTransformationViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryCameraArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryChildrenArgs = {
   filters?: InputMaybe<DatasetChildrenFilter>;
   pagination?: InputMaybe<ChildrenPaginationInput>;
-  parent: Scalars['ID']['input'];
+  parent: Scalars["ID"]["input"];
 };
-
 
 export type QueryContinousScanViewsArgs = {
   filters?: InputMaybe<ContinousScanViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryDatasetArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryDatasetsArgs = {
   filters?: InputMaybe<DatasetFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryErasArgs = {
   filters?: InputMaybe<EraFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryExperimentArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryExperimentsArgs = {
   filters?: InputMaybe<ExperimentFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryFileArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryFilesArgs = {
   filters?: InputMaybe<FileFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryImageArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryImagesArgs = {
   filters?: InputMaybe<ImageFilter>;
@@ -2659,51 +2540,42 @@ export type QueryImagesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryInstrumentArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryMeshArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryMeshesArgs = {
   filters?: InputMaybe<MeshFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryMultiWellPlateArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryMultiWellPlatesArgs = {
   filters?: InputMaybe<MultiWellPlateFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryMydatasetsArgs = {
   filters?: InputMaybe<DatasetFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type QueryMyerasArgs = {
   filters?: InputMaybe<EraFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryMyfilesArgs = {
   filters?: InputMaybe<FileFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type QueryMyimagesArgs = {
   filters?: InputMaybe<ImageFilter>;
@@ -2711,33 +2583,27 @@ export type QueryMyimagesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryMysnapshotsArgs = {
   filters?: InputMaybe<SnapshotFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type QueryMytablesArgs = {
   filters?: InputMaybe<TableFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryObjectiveArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryPixelViewArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryRenderTreeArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryRenderTreesArgs = {
   filters?: InputMaybe<RenderTreeFilter>;
@@ -2745,113 +2611,93 @@ export type QueryRenderTreesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryRenderedPlotArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryRenderedPlotsArgs = {
   filters?: InputMaybe<RenderedPlotFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryRgbcontextArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryRgbcontextsArgs = {
   filters?: InputMaybe<RgbContextFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryRoiArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryRoisArgs = {
   filters?: InputMaybe<RoiFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryRowsArgs = {
   filters?: InputMaybe<RowFilter>;
   pagination?: InputMaybe<TablePaginationInput>;
-  table: Scalars['ID']['input'];
+  table: Scalars["ID"]["input"];
 };
-
 
 export type QuerySnapshotArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QuerySnapshotsArgs = {
   filters?: InputMaybe<SnapshotFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QuerySpecimenViewsArgs = {
   filters?: InputMaybe<StructureViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryStageArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryStagesArgs = {
   filters?: InputMaybe<StageFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryTableArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryTableCellArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryTableCellsArgs = {
   filters: TableCellFilter;
   pagination: OffsetPaginationInput;
 };
 
-
 export type QueryTableRowArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryTableRowsArgs = {
   filters: TableRowFilter;
   pagination: OffsetPaginationInput;
 };
 
-
 export type QueryTablesArgs = {
   filters?: InputMaybe<TableFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryTimepointViewsArgs = {
   filters?: InputMaybe<TimepointViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type QueryWellPositionViewsArgs = {
   filters?: InputMaybe<WellPositionViewFilter>;
@@ -2859,19 +2705,18 @@ export type QueryWellPositionViewsArgs = {
 };
 
 export type RgbContext = {
-  __typename?: 'RGBContext';
+  __typename?: "RGBContext";
   blending: Blending;
-  c: Scalars['Int']['output'];
-  id: Scalars['ID']['output'];
+  c: Scalars["Int"]["output"];
+  id: Scalars["ID"]["output"];
   image: Image;
-  name: Scalars['String']['output'];
-  pinned: Scalars['Boolean']['output'];
+  name: Scalars["String"]["output"];
+  pinned: Scalars["Boolean"]["output"];
   snapshots: Array<Snapshot>;
-  t: Scalars['Int']['output'];
+  t: Scalars["Int"]["output"];
   views: Array<RgbView>;
-  z: Scalars['Int']['output'];
+  z: Scalars["Int"]["output"];
 };
-
 
 export type RgbContextSnapshotsArgs = {
   filters?: InputMaybe<SnapshotFilter>;
@@ -2881,105 +2726,101 @@ export type RgbContextSnapshotsArgs = {
 export type RgbContextFilter = {
   AND?: InputMaybe<RgbContextFilter>;
   OR?: InputMaybe<RgbContextFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
   provenance?: InputMaybe<ProvenanceFilter>;
-  search?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type RgbView = View & {
-  __typename?: 'RGBView';
+  __typename?: "RGBView";
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  active: Scalars['Boolean']['output'];
-  baseColor?: Maybe<Array<Scalars['Int']['output']>>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars["String"]["output"]>;
+  active: Scalars["Boolean"]["output"];
+  baseColor?: Maybe<Array<Scalars["Int"]["output"]>>;
+  cMax?: Maybe<Scalars["Int"]["output"]>;
+  cMin?: Maybe<Scalars["Int"]["output"]>;
   colorMap: ColorMap;
   contexts: Array<RgbContext>;
-  contrastLimitMax?: Maybe<Scalars['Float']['output']>;
-  contrastLimitMin?: Maybe<Scalars['Float']['output']>;
-  fullColour: Scalars['String']['output'];
-  gamma?: Maybe<Scalars['Float']['output']>;
-  id: Scalars['ID']['output'];
+  contrastLimitMax?: Maybe<Scalars["Float"]["output"]>;
+  contrastLimitMin?: Maybe<Scalars["Float"]["output"]>;
+  fullColour: Scalars["String"]["output"];
+  gamma?: Maybe<Scalars["Float"]["output"]>;
+  id: Scalars["ID"]["output"];
   image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  name: Scalars['String']['output'];
-  rescale: Scalars['Boolean']['output'];
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
+  isGlobal: Scalars["Boolean"]["output"];
+  name: Scalars["String"]["output"];
+  rescale: Scalars["Boolean"]["output"];
+  tMax?: Maybe<Scalars["Int"]["output"]>;
+  tMin?: Maybe<Scalars["Int"]["output"]>;
+  xMax?: Maybe<Scalars["Int"]["output"]>;
+  xMin?: Maybe<Scalars["Int"]["output"]>;
+  yMax?: Maybe<Scalars["Int"]["output"]>;
+  yMin?: Maybe<Scalars["Int"]["output"]>;
+  zMax?: Maybe<Scalars["Int"]["output"]>;
+  zMin?: Maybe<Scalars["Int"]["output"]>;
 };
-
 
 export type RgbViewContextsArgs = {
   filters?: InputMaybe<RgbContextFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type RgbViewFullColourArgs = {
   format?: InputMaybe<ColorFormat>;
 };
 
-
 export type RgbViewNameArgs = {
-  long?: Scalars['Boolean']['input'];
+  long?: Scalars["Boolean"]["input"];
 };
 
 export type RgbViewInput = {
-  active?: InputMaybe<Scalars['Boolean']['input']>;
-  baseColor?: InputMaybe<Array<Scalars['Float']['input']>>;
+  active?: InputMaybe<Scalars["Boolean"]["input"]>;
+  baseColor?: InputMaybe<Array<Scalars["Float"]["input"]>>;
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
   colorMap?: InputMaybe<ColorMap>;
-  context: Scalars['ID']['input'];
-  contrastLimitMax?: InputMaybe<Scalars['Float']['input']>;
-  contrastLimitMin?: InputMaybe<Scalars['Float']['input']>;
-  gamma?: InputMaybe<Scalars['Float']['input']>;
-  image: Scalars['ID']['input'];
-  rescale?: InputMaybe<Scalars['Boolean']['input']>;
-  scale?: InputMaybe<Scalars['Float']['input']>;
+  context: Scalars["ID"]["input"];
+  contrastLimitMax?: InputMaybe<Scalars["Float"]["input"]>;
+  contrastLimitMin?: InputMaybe<Scalars["Float"]["input"]>;
+  gamma?: InputMaybe<Scalars["Float"]["input"]>;
+  image: Scalars["ID"]["input"];
+  rescale?: InputMaybe<Scalars["Boolean"]["input"]>;
+  scale?: InputMaybe<Scalars["Float"]["input"]>;
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type Roi = {
-  __typename?: 'ROI';
-  createdAt: Scalars['DateTime']['output'];
+  __typename?: "ROI";
+  createdAt: Scalars["DateTime"]["output"];
   creator?: Maybe<User>;
   history: Array<History>;
-  id: Scalars['ID']['output'];
+  id: Scalars["ID"]["output"];
   image: Image;
   kind: RoiKind;
-  name: Scalars['String']['output'];
-  pinned: Scalars['Boolean']['output'];
-  vectors: Array<Scalars['FiveDVector']['output']>;
+  name: Scalars["String"]["output"];
+  pinned: Scalars["Boolean"]["output"];
+  vectors: Array<Scalars["FiveDVector"]["output"]>;
 };
-
 
 export type RoiHistoryArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -2988,101 +2829,100 @@ export type RoiHistoryArgs = {
 export type RoiFilter = {
   AND?: InputMaybe<RoiFilter>;
   OR?: InputMaybe<RoiFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  image?: InputMaybe<Scalars['ID']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
+  image?: InputMaybe<Scalars["ID"]["input"]>;
   kind?: InputMaybe<RoiKindChoices>;
-  search?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type RoiView = View & {
-  __typename?: 'ROIView';
+  __typename?: "ROIView";
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
-  id: Scalars['ID']['output'];
+  accessor: Array<Scalars["String"]["output"]>;
+  cMax?: Maybe<Scalars["Int"]["output"]>;
+  cMin?: Maybe<Scalars["Int"]["output"]>;
+  id: Scalars["ID"]["output"];
   image: Image;
-  isGlobal: Scalars['Boolean']['output'];
+  isGlobal: Scalars["Boolean"]["output"];
   roi: Roi;
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
+  tMax?: Maybe<Scalars["Int"]["output"]>;
+  tMin?: Maybe<Scalars["Int"]["output"]>;
+  xMax?: Maybe<Scalars["Int"]["output"]>;
+  xMin?: Maybe<Scalars["Int"]["output"]>;
+  yMax?: Maybe<Scalars["Int"]["output"]>;
+  yMin?: Maybe<Scalars["Int"]["output"]>;
+  zMax?: Maybe<Scalars["Int"]["output"]>;
+  zMin?: Maybe<Scalars["Int"]["output"]>;
 };
 
 export type RoiViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  image: Scalars['ID']['input'];
-  roi: Scalars['ID']['input'];
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
+  image: Scalars["ID"]["input"];
+  roi: Scalars["ID"]["input"];
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type RangePixelLabel = {
-  entityKind: Scalars['ID']['input'];
-  group?: InputMaybe<Scalars['ID']['input']>;
-  max: Scalars['Int']['input'];
-  min: Scalars['Int']['input'];
+  entityKind: Scalars["ID"]["input"];
+  group?: InputMaybe<Scalars["ID"]["input"]>;
+  max: Scalars["Int"]["input"];
+  min: Scalars["Int"]["input"];
 };
 
 export type RelateToDatasetInput = {
-  id: Scalars['ID']['input'];
-  other: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
+  other: Scalars["ID"]["input"];
 };
 
 export type Render = {
-  createdAt: Scalars['DateTime']['output'];
+  createdAt: Scalars["DateTime"]["output"];
   creator?: Maybe<User>;
 };
 
 export enum RenderKind {
-  Snapshot = 'SNAPSHOT',
-  Video = 'VIDEO'
+  Snapshot = "SNAPSHOT",
+  Video = "VIDEO",
 }
 
 export type RenderNode = {
-  kind: Scalars['String']['output'];
+  kind: Scalars["String"]["output"];
 };
 
 export enum RenderNodeKind {
-  Context = 'CONTEXT',
-  Grid = 'GRID',
-  Overlay = 'OVERLAY',
-  Spit = 'SPIT'
+  Context = "CONTEXT",
+  Grid = "GRID",
+  Overlay = "OVERLAY",
+  Spit = "SPIT",
 }
 
 export type RenderTree = {
-  __typename?: 'RenderTree';
-  id: Scalars['ID']['output'];
+  __typename?: "RenderTree";
+  id: Scalars["ID"]["output"];
   linkedContexts: Array<RgbContext>;
-  name: Scalars['String']['output'];
+  name: Scalars["String"]["output"];
   tree: Tree;
 };
-
 
 export type RenderTreeLinkedContextsArgs = {
   filters?: InputMaybe<RgbContextFilter>;
@@ -3092,12 +2932,12 @@ export type RenderTreeLinkedContextsArgs = {
 export type RenderTreeFilter = {
   AND?: InputMaybe<RenderTreeFilter>;
   OR?: InputMaybe<RenderTreeFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
   provenance?: InputMaybe<ProvenanceFilter>;
 };
 
 export type RenderTreeInput = {
-  name: Scalars['String']['input'];
+  name: Scalars["String"]["input"];
   tree: TreeInput;
 };
 
@@ -3106,11 +2946,11 @@ export type RenderTreeOrder = {
 };
 
 export type RenderedPlot = Plot & {
-  __typename?: 'RenderedPlot';
-  description?: Maybe<Scalars['String']['output']>;
-  entity: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
+  __typename?: "RenderedPlot";
+  description?: Maybe<Scalars["String"]["output"]>;
+  entity: Scalars["String"]["output"];
+  id: Scalars["ID"]["output"];
+  name: Scalars["String"]["output"];
   overlays?: Maybe<Array<Overlay>>;
   store: MediaStore;
 };
@@ -3118,197 +2958,195 @@ export type RenderedPlot = Plot & {
 export type RenderedPlotFilter = {
   AND?: InputMaybe<RenderedPlotFilter>;
   OR?: InputMaybe<RenderedPlotFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type RenderedPlotInput = {
-  name: Scalars['String']['input'];
+  name: Scalars["String"]["input"];
   overlays?: InputMaybe<Array<OverlayInput>>;
-  plot: Scalars['Upload']['input'];
+  plot: Scalars["Upload"]["input"];
 };
 
 export type RequestAccessInput = {
-  duration?: InputMaybe<Scalars['Int']['input']>;
-  store: Scalars['ID']['input'];
+  duration?: InputMaybe<Scalars["Int"]["input"]>;
+  store: Scalars["ID"]["input"];
 };
 
 export type RequestFileAccessInput = {
-  duration?: InputMaybe<Scalars['Int']['input']>;
-  store: Scalars['ID']['input'];
+  duration?: InputMaybe<Scalars["Int"]["input"]>;
+  store: Scalars["ID"]["input"];
 };
 
 export type RequestFileUploadInput = {
-  datalayer: Scalars['String']['input'];
-  key: Scalars['String']['input'];
+  datalayer: Scalars["String"]["input"];
+  key: Scalars["String"]["input"];
 };
 
 export type RequestMediaUploadInput = {
-  datalayer: Scalars['String']['input'];
-  key: Scalars['String']['input'];
+  datalayer: Scalars["String"]["input"];
+  key: Scalars["String"]["input"];
 };
 
 export type RequestMeshUploadInput = {
-  datalayer: Scalars['String']['input'];
-  key: Scalars['String']['input'];
+  datalayer: Scalars["String"]["input"];
+  key: Scalars["String"]["input"];
 };
 
 export type RequestTableAccessInput = {
-  duration?: InputMaybe<Scalars['Int']['input']>;
-  store: Scalars['ID']['input'];
+  duration?: InputMaybe<Scalars["Int"]["input"]>;
+  store: Scalars["ID"]["input"];
 };
 
 export type RequestTableUploadInput = {
-  datalayer: Scalars['String']['input'];
-  key: Scalars['String']['input'];
+  datalayer: Scalars["String"]["input"];
+  key: Scalars["String"]["input"];
 };
 
 export type RequestUploadInput = {
-  datalayer: Scalars['String']['input'];
-  key: Scalars['String']['input'];
+  datalayer: Scalars["String"]["input"];
+  key: Scalars["String"]["input"];
 };
 
 export type RevertInput = {
-  historyId: Scalars['ID']['input'];
-  id: Scalars['ID']['input'];
+  historyId: Scalars["ID"]["input"];
+  id: Scalars["ID"]["input"];
 };
 
 export type RoiEvent = {
-  __typename?: 'RoiEvent';
+  __typename?: "RoiEvent";
   create?: Maybe<Roi>;
-  delete?: Maybe<Scalars['ID']['output']>;
+  delete?: Maybe<Scalars["ID"]["output"]>;
   update?: Maybe<Roi>;
 };
 
 export type RoiInput = {
   /** The image this ROI belongs to */
-  image: Scalars['ID']['input'];
+  image: Scalars["ID"]["input"];
   /** The type/kind of ROI */
   kind: RoiKind;
   /** The vector coordinates defining the ROI */
-  vectors: Array<Scalars['FiveDVector']['input']>;
+  vectors: Array<Scalars["FiveDVector"]["input"]>;
 };
 
 export enum RoiKind {
-  Cube = 'CUBE',
-  Ellipsis = 'ELLIPSIS',
-  Frame = 'FRAME',
-  Hypercube = 'HYPERCUBE',
-  Line = 'LINE',
-  Path = 'PATH',
-  Point = 'POINT',
-  Polygon = 'POLYGON',
-  Rectangle = 'RECTANGLE',
-  Slice = 'SLICE',
-  SpectralCube = 'SPECTRAL_CUBE',
-  SpectralHypercube = 'SPECTRAL_HYPERCUBE',
-  SpectralRectangle = 'SPECTRAL_RECTANGLE',
-  TemporalCube = 'TEMPORAL_CUBE',
-  TemporalRectangle = 'TEMPORAL_RECTANGLE'
+  Cube = "CUBE",
+  Ellipsis = "ELLIPSIS",
+  Frame = "FRAME",
+  Hypercube = "HYPERCUBE",
+  Line = "LINE",
+  Path = "PATH",
+  Point = "POINT",
+  Polygon = "POLYGON",
+  Rectangle = "RECTANGLE",
+  Slice = "SLICE",
+  SpectralCube = "SPECTRAL_CUBE",
+  SpectralHypercube = "SPECTRAL_HYPERCUBE",
+  SpectralRectangle = "SPECTRAL_RECTANGLE",
+  TemporalCube = "TEMPORAL_CUBE",
+  TemporalRectangle = "TEMPORAL_RECTANGLE",
 }
 
 export enum RoiKindChoices {
-  Cube = 'CUBE',
-  Ellipsis = 'ELLIPSIS',
-  Frame = 'FRAME',
-  Hypercube = 'HYPERCUBE',
-  Line = 'LINE',
-  Path = 'PATH',
-  Point = 'POINT',
-  Polygon = 'POLYGON',
-  Rectangle = 'RECTANGLE',
-  Slice = 'SLICE',
-  SpectralCube = 'SPECTRAL_CUBE',
-  SpectralHypercube = 'SPECTRAL_HYPERCUBE',
-  SpectralRectangle = 'SPECTRAL_RECTANGLE',
-  TemporalCube = 'TEMPORAL_CUBE',
-  TemporalRectangle = 'TEMPORAL_RECTANGLE',
-  Unknown = 'UNKNOWN'
+  Cube = "CUBE",
+  Ellipsis = "ELLIPSIS",
+  Frame = "FRAME",
+  Hypercube = "HYPERCUBE",
+  Line = "LINE",
+  Path = "PATH",
+  Point = "POINT",
+  Polygon = "POLYGON",
+  Rectangle = "RECTANGLE",
+  Slice = "SLICE",
+  SpectralCube = "SPECTRAL_CUBE",
+  SpectralHypercube = "SPECTRAL_HYPERCUBE",
+  SpectralRectangle = "SPECTRAL_RECTANGLE",
+  TemporalCube = "TEMPORAL_CUBE",
+  TemporalRectangle = "TEMPORAL_RECTANGLE",
+  Unknown = "UNKNOWN",
 }
 
 export type RowFilter = {
-  clause?: InputMaybe<Scalars['String']['input']>;
+  clause?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type ScaleView = View & {
-  __typename?: 'ScaleView';
+  __typename?: "ScaleView";
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
-  id: Scalars['ID']['output'];
+  accessor: Array<Scalars["String"]["output"]>;
+  cMax?: Maybe<Scalars["Int"]["output"]>;
+  cMin?: Maybe<Scalars["Int"]["output"]>;
+  id: Scalars["ID"]["output"];
   image: Image;
-  isGlobal: Scalars['Boolean']['output'];
+  isGlobal: Scalars["Boolean"]["output"];
   parent: Image;
-  scaleC: Scalars['Float']['output'];
-  scaleT: Scalars['Float']['output'];
-  scaleX: Scalars['Float']['output'];
-  scaleY: Scalars['Float']['output'];
-  scaleZ: Scalars['Float']['output'];
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
+  scaleC: Scalars["Float"]["output"];
+  scaleT: Scalars["Float"]["output"];
+  scaleX: Scalars["Float"]["output"];
+  scaleY: Scalars["Float"]["output"];
+  scaleZ: Scalars["Float"]["output"];
+  tMax?: Maybe<Scalars["Int"]["output"]>;
+  tMin?: Maybe<Scalars["Int"]["output"]>;
+  xMax?: Maybe<Scalars["Int"]["output"]>;
+  xMin?: Maybe<Scalars["Int"]["output"]>;
+  yMax?: Maybe<Scalars["Int"]["output"]>;
+  yMin?: Maybe<Scalars["Int"]["output"]>;
+  zMax?: Maybe<Scalars["Int"]["output"]>;
+  zMin?: Maybe<Scalars["Int"]["output"]>;
 };
 
 export enum ScanDirection {
-  ColumnRowSlice = 'COLUMN_ROW_SLICE',
-  ColumnRowSliceSnake = 'COLUMN_ROW_SLICE_SNAKE',
-  RowColumnSlice = 'ROW_COLUMN_SLICE',
-  RowColumnSliceSnake = 'ROW_COLUMN_SLICE_SNAKE',
-  SliceRowColumn = 'SLICE_ROW_COLUMN',
-  SliceRowColumnSnake = 'SLICE_ROW_COLUMN_SNAKE'
+  ColumnRowSlice = "COLUMN_ROW_SLICE",
+  ColumnRowSliceSnake = "COLUMN_ROW_SLICE_SNAKE",
+  RowColumnSlice = "ROW_COLUMN_SLICE",
+  RowColumnSliceSnake = "ROW_COLUMN_SLICE_SNAKE",
+  SliceRowColumn = "SLICE_ROW_COLUMN",
+  SliceRowColumnSnake = "SLICE_ROW_COLUMN_SNAKE",
 }
 
 export type Snapshot = Render & {
-  __typename?: 'Snapshot';
-  createdAt: Scalars['DateTime']['output'];
+  __typename?: "Snapshot";
+  createdAt: Scalars["DateTime"]["output"];
   creator?: Maybe<User>;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
+  id: Scalars["ID"]["output"];
+  name: Scalars["String"]["output"];
   store: MediaStore;
 };
 
 export type SnapshotFilter = {
   AND?: InputMaybe<SnapshotFilter>;
   OR?: InputMaybe<SnapshotFilter>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
   name?: InputMaybe<StrFilterLookup>;
 };
 
 export type SnapshotInput = {
-  file: Scalars['Upload']['input'];
-  image: Scalars['ID']['input'];
+  file: Scalars["Upload"]["input"];
+  image: Scalars["ID"]["input"];
 };
 
 export type SplitNode = RenderNode & {
-  __typename?: 'SplitNode';
+  __typename?: "SplitNode";
   children: Array<RenderNode>;
-  kind: Scalars['String']['output'];
-  label?: Maybe<Scalars['String']['output']>;
+  kind: Scalars["String"]["output"];
+  label?: Maybe<Scalars["String"]["output"]>;
 };
 
 export type Stage = {
-  __typename?: 'Stage';
+  __typename?: "Stage";
   affineViews: Array<AffineTransformationView>;
-  description?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars["String"]["output"]>;
   history: Array<History>;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
-  pinned: Scalars['Boolean']['output'];
+  id: Scalars["ID"]["output"];
+  name: Scalars["String"]["output"];
+  pinned: Scalars["Boolean"]["output"];
 };
-
 
 export type StageAffineViewsArgs = {
   filters?: InputMaybe<AffineTransformationViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type StageHistoryArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -3317,113 +3155,113 @@ export type StageHistoryArgs = {
 export type StageFilter = {
   AND?: InputMaybe<StageFilter>;
   OR?: InputMaybe<StageFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  kind?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
+  kind?: InputMaybe<Scalars["String"]["input"]>;
   name?: InputMaybe<StrFilterLookup>;
   provenance?: InputMaybe<ProvenanceFilter>;
-  search?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type StageInput = {
-  instrument?: InputMaybe<Scalars['ID']['input']>;
-  name: Scalars['String']['input'];
+  instrument?: InputMaybe<Scalars["ID"]["input"]>;
+  name: Scalars["String"]["input"];
 };
 
 export type StrFilterLookup = {
-  contains?: InputMaybe<Scalars['String']['input']>;
-  endsWith?: InputMaybe<Scalars['String']['input']>;
-  exact?: InputMaybe<Scalars['String']['input']>;
-  gt?: InputMaybe<Scalars['String']['input']>;
-  gte?: InputMaybe<Scalars['String']['input']>;
-  iContains?: InputMaybe<Scalars['String']['input']>;
-  iEndsWith?: InputMaybe<Scalars['String']['input']>;
-  iExact?: InputMaybe<Scalars['String']['input']>;
-  iRegex?: InputMaybe<Scalars['String']['input']>;
-  iStartsWith?: InputMaybe<Scalars['String']['input']>;
-  inList?: InputMaybe<Array<Scalars['String']['input']>>;
-  isNull?: InputMaybe<Scalars['Boolean']['input']>;
-  lt?: InputMaybe<Scalars['String']['input']>;
-  lte?: InputMaybe<Scalars['String']['input']>;
-  nContains?: InputMaybe<Scalars['String']['input']>;
-  nEndsWith?: InputMaybe<Scalars['String']['input']>;
-  nExact?: InputMaybe<Scalars['String']['input']>;
-  nGt?: InputMaybe<Scalars['String']['input']>;
-  nGte?: InputMaybe<Scalars['String']['input']>;
-  nIContains?: InputMaybe<Scalars['String']['input']>;
-  nIEndsWith?: InputMaybe<Scalars['String']['input']>;
-  nIExact?: InputMaybe<Scalars['String']['input']>;
-  nIRegex?: InputMaybe<Scalars['String']['input']>;
-  nIStartsWith?: InputMaybe<Scalars['String']['input']>;
-  nInList?: InputMaybe<Array<Scalars['String']['input']>>;
-  nIsNull?: InputMaybe<Scalars['Boolean']['input']>;
-  nLt?: InputMaybe<Scalars['String']['input']>;
-  nLte?: InputMaybe<Scalars['String']['input']>;
-  nRange?: InputMaybe<Array<Scalars['String']['input']>>;
-  nRegex?: InputMaybe<Scalars['String']['input']>;
-  nStartsWith?: InputMaybe<Scalars['String']['input']>;
-  range?: InputMaybe<Array<Scalars['String']['input']>>;
-  regex?: InputMaybe<Scalars['String']['input']>;
-  startsWith?: InputMaybe<Scalars['String']['input']>;
+  contains?: InputMaybe<Scalars["String"]["input"]>;
+  endsWith?: InputMaybe<Scalars["String"]["input"]>;
+  exact?: InputMaybe<Scalars["String"]["input"]>;
+  gt?: InputMaybe<Scalars["String"]["input"]>;
+  gte?: InputMaybe<Scalars["String"]["input"]>;
+  iContains?: InputMaybe<Scalars["String"]["input"]>;
+  iEndsWith?: InputMaybe<Scalars["String"]["input"]>;
+  iExact?: InputMaybe<Scalars["String"]["input"]>;
+  iRegex?: InputMaybe<Scalars["String"]["input"]>;
+  iStartsWith?: InputMaybe<Scalars["String"]["input"]>;
+  inList?: InputMaybe<Array<Scalars["String"]["input"]>>;
+  isNull?: InputMaybe<Scalars["Boolean"]["input"]>;
+  lt?: InputMaybe<Scalars["String"]["input"]>;
+  lte?: InputMaybe<Scalars["String"]["input"]>;
+  nContains?: InputMaybe<Scalars["String"]["input"]>;
+  nEndsWith?: InputMaybe<Scalars["String"]["input"]>;
+  nExact?: InputMaybe<Scalars["String"]["input"]>;
+  nGt?: InputMaybe<Scalars["String"]["input"]>;
+  nGte?: InputMaybe<Scalars["String"]["input"]>;
+  nIContains?: InputMaybe<Scalars["String"]["input"]>;
+  nIEndsWith?: InputMaybe<Scalars["String"]["input"]>;
+  nIExact?: InputMaybe<Scalars["String"]["input"]>;
+  nIRegex?: InputMaybe<Scalars["String"]["input"]>;
+  nIStartsWith?: InputMaybe<Scalars["String"]["input"]>;
+  nInList?: InputMaybe<Array<Scalars["String"]["input"]>>;
+  nIsNull?: InputMaybe<Scalars["Boolean"]["input"]>;
+  nLt?: InputMaybe<Scalars["String"]["input"]>;
+  nLte?: InputMaybe<Scalars["String"]["input"]>;
+  nRange?: InputMaybe<Array<Scalars["String"]["input"]>>;
+  nRegex?: InputMaybe<Scalars["String"]["input"]>;
+  nStartsWith?: InputMaybe<Scalars["String"]["input"]>;
+  range?: InputMaybe<Array<Scalars["String"]["input"]>>;
+  regex?: InputMaybe<Scalars["String"]["input"]>;
+  startsWith?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type StructureView = View & {
-  __typename?: 'StructureView';
+  __typename?: "StructureView";
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
-  id: Scalars['ID']['output'];
+  accessor: Array<Scalars["String"]["output"]>;
+  cMax?: Maybe<Scalars["Int"]["output"]>;
+  cMin?: Maybe<Scalars["Int"]["output"]>;
+  id: Scalars["ID"]["output"];
   image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  structure: Scalars['StructureString']['output'];
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
+  isGlobal: Scalars["Boolean"]["output"];
+  structure: Scalars["StructureString"]["output"];
+  tMax?: Maybe<Scalars["Int"]["output"]>;
+  tMin?: Maybe<Scalars["Int"]["output"]>;
+  xMax?: Maybe<Scalars["Int"]["output"]>;
+  xMin?: Maybe<Scalars["Int"]["output"]>;
+  yMax?: Maybe<Scalars["Int"]["output"]>;
+  yMin?: Maybe<Scalars["Int"]["output"]>;
+  zMax?: Maybe<Scalars["Int"]["output"]>;
+  zMin?: Maybe<Scalars["Int"]["output"]>;
 };
 
 export type StructureViewFilter = {
   AND?: InputMaybe<StructureViewFilter>;
   OR?: InputMaybe<StructureViewFilter>;
-  isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  isGlobal?: InputMaybe<Scalars["Boolean"]["input"]>;
   provenance?: InputMaybe<ProvenanceFilter>;
-  structure?: InputMaybe<Scalars['StructureString']['input']>;
+  structure?: InputMaybe<Scalars["StructureString"]["input"]>;
 };
 
 export type StructureViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  image: Scalars['ID']['input'];
-  structure: Scalars['StructureString']['input'];
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
+  image: Scalars["ID"]["input"];
+  structure: Scalars["StructureString"]["input"];
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type Subscription = {
-  __typename?: 'Subscription';
+  __typename?: "Subscription";
   /** Subscribe to real-time file updates */
   files: FileEvent;
   /** Subscribe to real-time image history events */
@@ -3434,38 +3272,33 @@ export type Subscription = {
   rois: RoiEvent;
 };
 
-
 export type SubscriptionFilesArgs = {
-  dataset?: InputMaybe<Scalars['ID']['input']>;
+  dataset?: InputMaybe<Scalars["ID"]["input"]>;
 };
-
 
 export type SubscriptionImagesArgs = {
-  dataset?: InputMaybe<Scalars['ID']['input']>;
+  dataset?: InputMaybe<Scalars["ID"]["input"]>;
 };
 
-
 export type SubscriptionRoisArgs = {
-  image: Scalars['ID']['input'];
+  image: Scalars["ID"]["input"];
 };
 
 export type Table = {
-  __typename?: 'Table';
+  __typename?: "Table";
   accessors: Array<Accessor>;
   columns: Array<TableColumn>;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
+  id: Scalars["ID"]["output"];
+  name: Scalars["String"]["output"];
   origins: Array<Image>;
-  rows: Array<Scalars['MetricMap']['output']>;
+  rows: Array<Scalars["MetricMap"]["output"]>;
   store: ParquetStore;
 };
-
 
 export type TableAccessorsArgs = {
   filters?: InputMaybe<AccessorFilter>;
   types?: InputMaybe<Array<AccessorKind>>;
 };
-
 
 export type TableOriginsArgs = {
   filters?: InputMaybe<ImageFilter>;
@@ -3475,32 +3308,31 @@ export type TableOriginsArgs = {
 
 /** A cell of a table */
 export type TableCell = {
-  __typename?: 'TableCell';
+  __typename?: "TableCell";
   column: TableColumn;
-  columnId: Scalars['Int']['output'];
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
-  rowId: Scalars['Int']['output'];
+  columnId: Scalars["Int"]["output"];
+  id: Scalars["ID"]["output"];
+  name: Scalars["String"]["output"];
+  rowId: Scalars["Int"]["output"];
   table: Table;
-  value: Scalars['Any']['output'];
+  value: Scalars["Any"]["output"];
 };
 
 export type TableCellFilter = {
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 /** A column descriptor */
 export type TableColumn = {
-  __typename?: 'TableColumn';
+  __typename?: "TableColumn";
   accessors: Array<Accessor>;
-  default?: Maybe<Scalars['String']['output']>;
-  key?: Maybe<Scalars['String']['output']>;
-  name: Scalars['String']['output'];
-  nullable: Scalars['Boolean']['output'];
+  default?: Maybe<Scalars["String"]["output"]>;
+  key?: Maybe<Scalars["String"]["output"]>;
+  name: Scalars["String"]["output"];
+  nullable: Scalars["Boolean"]["output"];
   type: DuckDbDataType;
 };
-
 
 /** A column descriptor */
 export type TableColumnAccessorsArgs = {
@@ -3511,294 +3343,292 @@ export type TableColumnAccessorsArgs = {
 export type TableFilter = {
   AND?: InputMaybe<TableFilter>;
   OR?: InputMaybe<TableFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type TablePaginationInput = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars["Int"]["input"]>;
+  offset?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 /** A cell of a table */
 export type TableRow = {
-  __typename?: 'TableRow';
+  __typename?: "TableRow";
   columns: Array<TableColumn>;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
-  rowId: Scalars['Int']['output'];
+  id: Scalars["ID"]["output"];
+  name: Scalars["String"]["output"];
+  rowId: Scalars["Int"]["output"];
   table: Table;
-  values: Array<Scalars['Any']['output']>;
+  values: Array<Scalars["Any"]["output"]>;
 };
 
 export type TableRowFilter = {
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type TimepointView = View & {
-  __typename?: 'TimepointView';
+  __typename?: "TimepointView";
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars["String"]["output"]>;
+  cMax?: Maybe<Scalars["Int"]["output"]>;
+  cMin?: Maybe<Scalars["Int"]["output"]>;
   era: Era;
-  id: Scalars['ID']['output'];
+  id: Scalars["ID"]["output"];
   image: Image;
-  indexSinceStart?: Maybe<Scalars['Int']['output']>;
-  isGlobal: Scalars['Boolean']['output'];
-  msSinceStart?: Maybe<Scalars['Milliseconds']['output']>;
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
+  indexSinceStart?: Maybe<Scalars["Int"]["output"]>;
+  isGlobal: Scalars["Boolean"]["output"];
+  msSinceStart?: Maybe<Scalars["Milliseconds"]["output"]>;
+  tMax?: Maybe<Scalars["Int"]["output"]>;
+  tMin?: Maybe<Scalars["Int"]["output"]>;
+  xMax?: Maybe<Scalars["Int"]["output"]>;
+  xMin?: Maybe<Scalars["Int"]["output"]>;
+  yMax?: Maybe<Scalars["Int"]["output"]>;
+  yMin?: Maybe<Scalars["Int"]["output"]>;
+  zMax?: Maybe<Scalars["Int"]["output"]>;
+  zMin?: Maybe<Scalars["Int"]["output"]>;
 };
 
 export type TimepointViewFilter = {
   AND?: InputMaybe<TimepointViewFilter>;
   OR?: InputMaybe<TimepointViewFilter>;
   era?: InputMaybe<EraFilter>;
-  indexSinceStart?: InputMaybe<Scalars['Int']['input']>;
-  isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
-  msSinceStart?: InputMaybe<Scalars['Float']['input']>;
+  indexSinceStart?: InputMaybe<Scalars["Int"]["input"]>;
+  isGlobal?: InputMaybe<Scalars["Boolean"]["input"]>;
+  msSinceStart?: InputMaybe<Scalars["Float"]["input"]>;
   provenance?: InputMaybe<ProvenanceFilter>;
 };
 
 export type TimepointViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  era?: InputMaybe<Scalars['ID']['input']>;
-  image: Scalars['ID']['input'];
-  indexSinceStart?: InputMaybe<Scalars['Int']['input']>;
-  msSinceStart?: InputMaybe<Scalars['Milliseconds']['input']>;
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
+  era?: InputMaybe<Scalars["ID"]["input"]>;
+  image: Scalars["ID"]["input"];
+  indexSinceStart?: InputMaybe<Scalars["Int"]["input"]>;
+  msSinceStart?: InputMaybe<Scalars["Milliseconds"]["input"]>;
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type Tree = {
-  __typename?: 'Tree';
+  __typename?: "Tree";
   children: Array<RenderNode>;
 };
 
 export type TreeInput = {
   children: Array<TreeNodeInput>;
-  id?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type TreeNodeInput = {
   children?: InputMaybe<Array<TreeNodeInput>>;
-  context?: InputMaybe<Scalars['String']['input']>;
-  gap?: InputMaybe<Scalars['Int']['input']>;
+  context?: InputMaybe<Scalars["String"]["input"]>;
+  gap?: InputMaybe<Scalars["Int"]["input"]>;
   kind: RenderNodeKind;
-  label?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type UpdateImageInput = {
-  id: Scalars['ID']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  id: Scalars["ID"]["input"];
+  name?: InputMaybe<Scalars["String"]["input"]>;
+  tags?: InputMaybe<Array<Scalars["String"]["input"]>>;
 };
 
 export type UpdateRgbContextInput = {
-  c?: InputMaybe<Scalars['Int']['input']>;
-  id: Scalars['ID']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
-  t?: InputMaybe<Scalars['Int']['input']>;
-  thumbnail?: InputMaybe<Scalars['ID']['input']>;
+  c?: InputMaybe<Scalars["Int"]["input"]>;
+  id: Scalars["ID"]["input"];
+  name?: InputMaybe<Scalars["String"]["input"]>;
+  t?: InputMaybe<Scalars["Int"]["input"]>;
+  thumbnail?: InputMaybe<Scalars["ID"]["input"]>;
   views?: InputMaybe<Array<PartialRgbViewInput>>;
-  z?: InputMaybe<Scalars['Int']['input']>;
+  z?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type UpdateRoiInput = {
-  entity?: InputMaybe<Scalars['ID']['input']>;
-  entityGroup?: InputMaybe<Scalars['ID']['input']>;
-  entityKind?: InputMaybe<Scalars['ID']['input']>;
-  entityParent?: InputMaybe<Scalars['ID']['input']>;
+  entity?: InputMaybe<Scalars["ID"]["input"]>;
+  entityGroup?: InputMaybe<Scalars["ID"]["input"]>;
+  entityKind?: InputMaybe<Scalars["ID"]["input"]>;
+  entityParent?: InputMaybe<Scalars["ID"]["input"]>;
   kind?: InputMaybe<RoiKind>;
-  roi: Scalars['ID']['input'];
-  vectors?: InputMaybe<Array<Scalars['FiveDVector']['input']>>;
+  roi: Scalars["ID"]["input"];
+  vectors?: InputMaybe<Array<Scalars["FiveDVector"]["input"]>>;
 };
 
 /** A user. */
 export type User = {
-  __typename?: 'User';
-  email: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  password: Scalars['String']['output'];
-  sub: Scalars['String']['output'];
-  username: Scalars['String']['output'];
+  __typename?: "User";
+  email: Scalars["String"]["output"];
+  id: Scalars["ID"]["output"];
+  password: Scalars["String"]["output"];
+  sub: Scalars["String"]["output"];
+  username: Scalars["String"]["output"];
 };
 
 export type Video = Render & {
-  __typename?: 'Video';
-  createdAt: Scalars['DateTime']['output'];
+  __typename?: "Video";
+  createdAt: Scalars["DateTime"]["output"];
   creator?: Maybe<User>;
-  id: Scalars['ID']['output'];
+  id: Scalars["ID"]["output"];
   store: MediaStore;
   thumbnail: MediaStore;
 };
 
 export type View = {
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
+  accessor: Array<Scalars["String"]["output"]>;
+  cMax?: Maybe<Scalars["Int"]["output"]>;
+  cMin?: Maybe<Scalars["Int"]["output"]>;
   image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
+  isGlobal: Scalars["Boolean"]["output"];
+  tMax?: Maybe<Scalars["Int"]["output"]>;
+  tMin?: Maybe<Scalars["Int"]["output"]>;
+  xMax?: Maybe<Scalars["Int"]["output"]>;
+  xMin?: Maybe<Scalars["Int"]["output"]>;
+  yMax?: Maybe<Scalars["Int"]["output"]>;
+  yMin?: Maybe<Scalars["Int"]["output"]>;
+  zMax?: Maybe<Scalars["Int"]["output"]>;
+  zMin?: Maybe<Scalars["Int"]["output"]>;
 };
 
 export type ViewCollection = {
-  __typename?: 'ViewCollection';
+  __typename?: "ViewCollection";
   affineTransformationViews: Array<AffineTransformationView>;
   channelViews: Array<ChannelView>;
   history: Array<History>;
-  id: Scalars['ID']['output'];
+  id: Scalars["ID"]["output"];
   labelViews: Array<LabelView>;
-  name: Scalars['String']['output'];
+  name: Scalars["String"]["output"];
   views: Array<View>;
 };
-
 
 export type ViewCollectionAffineTransformationViewsArgs = {
   filters?: InputMaybe<AffineTransformationViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type ViewCollectionHistoryArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 export type ViewCollectionInput = {
-  name: Scalars['String']['input'];
+  name: Scalars["String"]["input"];
 };
 
 export type ViewFilter = {
   AND?: InputMaybe<ViewFilter>;
   OR?: InputMaybe<ViewFilter>;
-  isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  isGlobal?: InputMaybe<Scalars["Boolean"]["input"]>;
   provenance?: InputMaybe<ProvenanceFilter>;
 };
 
 export enum ViewKind {
-  AffineTransformation = 'AFFINE_TRANSFORMATION',
-  Channel = 'CHANNEL',
-  Label = 'LABEL',
-  Optics = 'OPTICS',
-  Timepoint = 'TIMEPOINT'
+  AffineTransformation = "AFFINE_TRANSFORMATION",
+  Channel = "CHANNEL",
+  Label = "LABEL",
+  Optics = "OPTICS",
+  Timepoint = "TIMEPOINT",
 }
 
 export type WellPositionView = View & {
-  __typename?: 'WellPositionView';
+  __typename?: "WellPositionView";
   /** The accessor */
-  accessor: Array<Scalars['String']['output']>;
-  cMax?: Maybe<Scalars['Int']['output']>;
-  cMin?: Maybe<Scalars['Int']['output']>;
-  column?: Maybe<Scalars['Int']['output']>;
-  id: Scalars['ID']['output'];
+  accessor: Array<Scalars["String"]["output"]>;
+  cMax?: Maybe<Scalars["Int"]["output"]>;
+  cMin?: Maybe<Scalars["Int"]["output"]>;
+  column?: Maybe<Scalars["Int"]["output"]>;
+  id: Scalars["ID"]["output"];
   image: Image;
-  isGlobal: Scalars['Boolean']['output'];
-  row?: Maybe<Scalars['Int']['output']>;
-  tMax?: Maybe<Scalars['Int']['output']>;
-  tMin?: Maybe<Scalars['Int']['output']>;
+  isGlobal: Scalars["Boolean"]["output"];
+  row?: Maybe<Scalars["Int"]["output"]>;
+  tMax?: Maybe<Scalars["Int"]["output"]>;
+  tMin?: Maybe<Scalars["Int"]["output"]>;
   well?: Maybe<MultiWellPlate>;
-  xMax?: Maybe<Scalars['Int']['output']>;
-  xMin?: Maybe<Scalars['Int']['output']>;
-  yMax?: Maybe<Scalars['Int']['output']>;
-  yMin?: Maybe<Scalars['Int']['output']>;
-  zMax?: Maybe<Scalars['Int']['output']>;
-  zMin?: Maybe<Scalars['Int']['output']>;
+  xMax?: Maybe<Scalars["Int"]["output"]>;
+  xMin?: Maybe<Scalars["Int"]["output"]>;
+  yMax?: Maybe<Scalars["Int"]["output"]>;
+  yMin?: Maybe<Scalars["Int"]["output"]>;
+  zMax?: Maybe<Scalars["Int"]["output"]>;
+  zMin?: Maybe<Scalars["Int"]["output"]>;
 };
 
 export type WellPositionViewFilter = {
   AND?: InputMaybe<WellPositionViewFilter>;
   OR?: InputMaybe<WellPositionViewFilter>;
-  column?: InputMaybe<Scalars['Int']['input']>;
-  isGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  column?: InputMaybe<Scalars["Int"]["input"]>;
+  isGlobal?: InputMaybe<Scalars["Boolean"]["input"]>;
   provenance?: InputMaybe<ProvenanceFilter>;
-  row?: InputMaybe<Scalars['Int']['input']>;
+  row?: InputMaybe<Scalars["Int"]["input"]>;
   well?: InputMaybe<MultiWellPlateFilter>;
 };
 
 export type WellPositionViewInput = {
   /** The maximum c (channel) coordinate of the view */
-  cMax?: InputMaybe<Scalars['Int']['input']>;
+  cMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum c (channel) coordinate of the view */
-  cMin?: InputMaybe<Scalars['Int']['input']>;
+  cMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The collection this view belongs to */
-  collection?: InputMaybe<Scalars['ID']['input']>;
-  column?: InputMaybe<Scalars['Int']['input']>;
-  image: Scalars['ID']['input'];
-  row?: InputMaybe<Scalars['Int']['input']>;
+  collection?: InputMaybe<Scalars["ID"]["input"]>;
+  column?: InputMaybe<Scalars["Int"]["input"]>;
+  image: Scalars["ID"]["input"];
+  row?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum t coordinate of the view */
-  tMax?: InputMaybe<Scalars['Int']['input']>;
+  tMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum t coordinate of the view */
-  tMin?: InputMaybe<Scalars['Int']['input']>;
-  well?: InputMaybe<Scalars['ID']['input']>;
+  tMin?: InputMaybe<Scalars["Int"]["input"]>;
+  well?: InputMaybe<Scalars["ID"]["input"]>;
   /** The maximum x coordinate of the view */
-  xMax?: InputMaybe<Scalars['Int']['input']>;
+  xMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum x coordinate of the view */
-  xMin?: InputMaybe<Scalars['Int']['input']>;
+  xMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum y coordinate of the view */
-  yMax?: InputMaybe<Scalars['Int']['input']>;
+  yMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum y coordinate of the view */
-  yMin?: InputMaybe<Scalars['Int']['input']>;
+  yMin?: InputMaybe<Scalars["Int"]["input"]>;
   /** The maximum z coordinate of the view */
-  zMax?: InputMaybe<Scalars['Int']['input']>;
+  zMax?: InputMaybe<Scalars["Int"]["input"]>;
   /** The minimum z coordinate of the view */
-  zMin?: InputMaybe<Scalars['Int']['input']>;
+  zMin?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type ZarrStore = {
-  __typename?: 'ZarrStore';
+  __typename?: "ZarrStore";
   /** The bucket where the data is stored. */
-  bucket: Scalars['String']['output'];
+  bucket: Scalars["String"]["output"];
   /** The chunks of the data. */
-  chunks?: Maybe<Array<Scalars['Int']['output']>>;
+  chunks?: Maybe<Array<Scalars["Int"]["output"]>>;
   /** The dtype of the data. */
-  dtype?: Maybe<Scalars['String']['output']>;
-  id: Scalars['ID']['output'];
+  dtype?: Maybe<Scalars["String"]["output"]>;
+  id: Scalars["ID"]["output"];
   /** The key where the data is stored. */
-  key: Scalars['String']['output'];
+  key: Scalars["String"]["output"];
   /** The path to the data. Relative to the bucket. */
-  path?: Maybe<Scalars['String']['output']>;
+  path?: Maybe<Scalars["String"]["output"]>;
   /** Whether the zarr store was populated (e.g. was a dataset created). */
-  populated: Scalars['Boolean']['output'];
+  populated: Scalars["Boolean"]["output"];
   /** The shape of the data. */
-  shape?: Maybe<Array<Scalars['Int']['output']>>;
+  shape?: Maybe<Array<Scalars["Int"]["output"]>>;
   /** The version of the zarr store (e.g. the version of the dataset). */
-  version: Scalars['String']['output'];
+  version: Scalars["String"]["output"];
 };
 
 export type ZarrStoreFilter = {
@@ -3807,663 +3637,7285 @@ export type ZarrStoreFilter = {
   shape?: InputMaybe<IntFilterLookup>;
 };
 
-type Accessor_ImageAccessor_Fragment = { __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null };
-
-type Accessor_LabelAccessor_Fragment = { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null };
-
-export type AccessorFragment = Accessor_ImageAccessor_Fragment | Accessor_LabelAccessor_Fragment;
-
-export type LabelAccessorFragment = { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, pixelView: { __typename?: 'PixelView', id: string } };
-
-export type ImageAccessorFragment = { __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null };
-
-export type CameraFragment = { __typename?: 'Camera', sensorSizeX?: number | null, sensorSizeY?: number | null, pixelSizeX?: any | null, pixelSizeY?: any | null, name: string, serialNumber: string };
-
-export type ChannelFragment = { __typename?: 'Channel', id: string, name: string, excitationWavelength?: number | null };
-
-export type CredentialsFragment = { __typename?: 'Credentials', accessKey: string, status: string, secretKey: string, bucket: string, key: string, sessionToken: string, store: string };
-
-export type AccessCredentialsFragment = { __typename?: 'AccessCredentials', accessKey: string, secretKey: string, bucket: string, key: string, sessionToken: string, path: string };
-
-export type PresignedPostCredentialsFragment = { __typename?: 'PresignedPostCredentials', xAmzAlgorithm: string, xAmzCredential: string, xAmzDate: string, xAmzSignature: string, key: string, bucket: string, datalayer: string, policy: string, store: string };
-
-export type DatasetFragment = { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null };
-
-export type ListDatasetFragment = { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean };
-
-export type EraFragment = { __typename?: 'Era', id: string, begin?: any | null, name: string };
-
-export type FileFragment = { __typename?: 'File', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null } }> };
-
-export type ListFileFragment = { __typename?: 'File', id: string, name: string };
-
-export type HistoryFragment = { __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> };
-
-export type ImageFragment = { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, views: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channel: { __typename?: 'Channel', id: string, name: string, excitationWavelength?: number | null } } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView', id: string, operation?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, originImage: { __typename?: 'Image', id: string, name: string } } | { __typename?: 'FileView', id: string, seriesIdentifier?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, file: { __typename?: 'File', id: string, name: string } } | { __typename?: 'LabelView', id: string, label: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'PixelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } | { __typename?: 'ROIView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, roi: { __typename?: 'ROI', id: string, name: string } } | { __typename?: 'ScaleView' } | { __typename?: 'StructureView', id: string, structure: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }>, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }> }>, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> };
-
-export type RgbImageFragment = { __typename?: 'Image', name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }> }> };
-
-export type ListImageFragment = { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null };
-
-export type InstrumentFragment = { __typename?: 'Instrument', model?: string | null, name: string, serialNumber: string };
-
-export type MeshFragment = { __typename?: 'Mesh', id: string, name: string, store: { __typename?: 'MeshStore', id: string, key: string, presignedUrl: string } };
-
-export type ListMeshFragment = { __typename?: 'Mesh', id: string, name: string };
-
-export type MultiWellPlateFragment = { __typename?: 'MultiWellPlate', id: string, name?: string | null, views: Array<{ __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }> };
-
-export type ListMultiWellPlateFragment = { __typename?: 'MultiWellPlate', id: string, name?: string | null };
-
-export type ObjectiveFragment = { __typename?: 'Objective', na?: number | null, name: string, serialNumber: string };
-
-export type ContextNodeNestedFragment = { __typename?: 'ContextNode', label?: string | null, context: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } };
-
-export type OverlayNodeNestedFragment = { __typename?: 'OverlayNode', label?: string | null };
-
-export type GridNodeNestedFragment = { __typename?: 'GridNode', label?: string | null, gap?: number | null };
-
-type RenderNodeNested_ContextNode_Fragment = { __typename?: 'ContextNode', kind: string, label?: string | null, context: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } };
-
-type RenderNodeNested_GridNode_Fragment = { __typename?: 'GridNode', kind: string, label?: string | null, gap?: number | null };
-
-type RenderNodeNested_OverlayNode_Fragment = { __typename?: 'OverlayNode', kind: string, label?: string | null };
-
-type RenderNodeNested_SplitNode_Fragment = { __typename?: 'SplitNode', kind: string };
-
-export type RenderNodeNestedFragment = RenderNodeNested_ContextNode_Fragment | RenderNodeNested_GridNode_Fragment | RenderNodeNested_OverlayNode_Fragment | RenderNodeNested_SplitNode_Fragment;
-
-export type ContextNodeFragment = { __typename?: 'ContextNode', label?: string | null, context: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } };
-
-export type OverlayNodeFragment = { __typename?: 'OverlayNode', label?: string | null, children: Array<{ __typename?: 'ContextNode', kind: string, label?: string | null, context: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } } | { __typename?: 'GridNode', kind: string, label?: string | null, gap?: number | null } | { __typename?: 'OverlayNode', kind: string, label?: string | null } | { __typename?: 'SplitNode', kind: string }> };
-
-export type GridNodeFragment = { __typename?: 'GridNode', label?: string | null, gap?: number | null, children: Array<{ __typename?: 'ContextNode', kind: string, label?: string | null, context: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } } | { __typename?: 'GridNode', kind: string, label?: string | null, gap?: number | null } | { __typename?: 'OverlayNode', kind: string, label?: string | null } | { __typename?: 'SplitNode', kind: string }> };
-
-type RenderNode_ContextNode_Fragment = { __typename?: 'ContextNode', kind: string, label?: string | null, context: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } };
-
-type RenderNode_GridNode_Fragment = { __typename?: 'GridNode', kind: string, label?: string | null, gap?: number | null, children: Array<{ __typename?: 'ContextNode', kind: string, label?: string | null, context: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } } | { __typename?: 'GridNode', kind: string, label?: string | null, gap?: number | null } | { __typename?: 'OverlayNode', kind: string, label?: string | null } | { __typename?: 'SplitNode', kind: string }> };
-
-type RenderNode_OverlayNode_Fragment = { __typename?: 'OverlayNode', kind: string, label?: string | null, children: Array<{ __typename?: 'ContextNode', kind: string, label?: string | null, context: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } } | { __typename?: 'GridNode', kind: string, label?: string | null, gap?: number | null } | { __typename?: 'OverlayNode', kind: string, label?: string | null } | { __typename?: 'SplitNode', kind: string }> };
-
-type RenderNode_SplitNode_Fragment = { __typename?: 'SplitNode', kind: string };
-
-export type RenderNodeFragment = RenderNode_ContextNode_Fragment | RenderNode_GridNode_Fragment | RenderNode_OverlayNode_Fragment | RenderNode_SplitNode_Fragment;
-
-export type TreeFragment = { __typename?: 'Tree', children: Array<{ __typename?: 'ContextNode', kind: string, label?: string | null, context: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } } | { __typename?: 'GridNode', kind: string, label?: string | null, gap?: number | null, children: Array<{ __typename?: 'ContextNode', kind: string, label?: string | null, context: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } } | { __typename?: 'GridNode', kind: string, label?: string | null, gap?: number | null } | { __typename?: 'OverlayNode', kind: string, label?: string | null } | { __typename?: 'SplitNode', kind: string }> } | { __typename?: 'OverlayNode', kind: string, label?: string | null, children: Array<{ __typename?: 'ContextNode', kind: string, label?: string | null, context: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } } | { __typename?: 'GridNode', kind: string, label?: string | null, gap?: number | null } | { __typename?: 'OverlayNode', kind: string, label?: string | null } | { __typename?: 'SplitNode', kind: string }> } | { __typename?: 'SplitNode', kind: string }> };
-
-export type RenderTreeFragment = { __typename?: 'RenderTree', id: string, name: string, tree: { __typename?: 'Tree', children: Array<{ __typename?: 'ContextNode', kind: string, label?: string | null, context: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } } | { __typename?: 'GridNode', kind: string, label?: string | null, gap?: number | null, children: Array<{ __typename?: 'ContextNode', kind: string, label?: string | null, context: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } } | { __typename?: 'GridNode', kind: string, label?: string | null, gap?: number | null } | { __typename?: 'OverlayNode', kind: string, label?: string | null } | { __typename?: 'SplitNode', kind: string }> } | { __typename?: 'OverlayNode', kind: string, label?: string | null, children: Array<{ __typename?: 'ContextNode', kind: string, label?: string | null, context: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } } | { __typename?: 'GridNode', kind: string, label?: string | null, gap?: number | null } | { __typename?: 'OverlayNode', kind: string, label?: string | null } | { __typename?: 'SplitNode', kind: string }> } | { __typename?: 'SplitNode', kind: string }> } };
-
-export type ListRenderTreeFragment = { __typename?: 'RenderTree', id: string, name: string };
-
-export type RenderedPlotFragment = { __typename?: 'RenderedPlot', id: string, name: string, store: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } };
-
-export type ListRenderedPlotFragment = { __typename?: 'RenderedPlot', id: string, name: string, store: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } };
-
-export type RgbContextFragment = { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } };
-
-export type ListRgbContextFragment = { __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }> };
-
-export type ListRoiFragment = { __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } };
-
-export type RoiFragment = { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }> }> }, creator?: { __typename?: 'User', sub: string } | null, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> };
-
-export type SnapshotFragment = { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } };
-
-export type StageFragment = { __typename?: 'Stage', id: string, pinned: boolean, name: string, affineViews: Array<{ __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, image: { __typename?: 'Image', id: string, name: string, store: { __typename?: 'ZarrStore', shape?: Array<number> | null } }, stage: { __typename?: 'Stage', id: string, name: string } }> };
-
-export type ListStageFragment = { __typename?: 'Stage', id: string, name: string };
-
-export type ZarrStoreFragment = { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string };
-
-export type ParquetStoreFragment = { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string };
-
-export type BigFileStoreFragment = { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string };
-
-export type MediaStoreFragment = { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string };
-
-export type MeshStoreFragment = { __typename?: 'MeshStore', id: string, key: string, presignedUrl: string };
-
-export type TableFragment = { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, pixelView: { __typename?: 'PixelView', id: string } }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, pixelView: { __typename?: 'PixelView', id: string } }> };
-
-export type ListTableFragment = { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string } };
-
-export type VideoFragment = { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } };
-
-type View_AcquisitionView_Fragment = { __typename?: 'AcquisitionView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_AffineTransformationView_Fragment = { __typename?: 'AffineTransformationView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_ChannelView_Fragment = { __typename?: 'ChannelView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_ContinousScanView_Fragment = { __typename?: 'ContinousScanView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_DerivedView_Fragment = { __typename?: 'DerivedView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_FileView_Fragment = { __typename?: 'FileView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_LabelView_Fragment = { __typename?: 'LabelView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_OpticsView_Fragment = { __typename?: 'OpticsView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_PixelView_Fragment = { __typename?: 'PixelView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_RgbView_Fragment = { __typename?: 'RGBView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_RoiView_Fragment = { __typename?: 'ROIView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_ScaleView_Fragment = { __typename?: 'ScaleView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_StructureView_Fragment = { __typename?: 'StructureView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_TimepointView_Fragment = { __typename?: 'TimepointView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-type View_WellPositionView_Fragment = { __typename?: 'WellPositionView', xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-export type ViewFragment = View_AcquisitionView_Fragment | View_AffineTransformationView_Fragment | View_ChannelView_Fragment | View_ContinousScanView_Fragment | View_DerivedView_Fragment | View_FileView_Fragment | View_LabelView_Fragment | View_OpticsView_Fragment | View_PixelView_Fragment | View_RgbView_Fragment | View_RoiView_Fragment | View_ScaleView_Fragment | View_StructureView_Fragment | View_TimepointView_Fragment | View_WellPositionView_Fragment;
-
-export type ChannelViewFragment = { __typename?: 'ChannelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channel: { __typename?: 'Channel', id: string, name: string, excitationWavelength?: number | null } };
-
-export type DerivedViewFragment = { __typename?: 'DerivedView', id: string, operation?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, originImage: { __typename?: 'Image', id: string, name: string } };
-
-export type RoiViewFragment = { __typename?: 'ROIView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, roi: { __typename?: 'ROI', id: string, name: string } };
-
-export type FileViewFragment = { __typename?: 'FileView', id: string, seriesIdentifier?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, file: { __typename?: 'File', id: string, name: string } };
-
-export type AffineTransformationViewFragment = { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } };
-
-export type RgbViewFragment = { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } };
-
-export type TimepointViewFragment = { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } };
-
-export type OpticsViewFragment = { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null };
-
-export type LabelViewFragment = { __typename?: 'LabelView', id: string, label: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-export type StructureViewFragment = { __typename?: 'StructureView', id: string, structure: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-export type AcquisitionViewFragment = { __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null };
-
-export type WellPositionViewFragment = { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null };
-
-export type ContinousScanViewFragment = { __typename?: 'ContinousScanView', id: string, direction: ScanDirection, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-export type PixelViewFragment = { __typename?: 'PixelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null };
-
-export type DetailPixelViewFragment = { __typename?: 'PixelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, image: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, views: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channel: { __typename?: 'Channel', id: string, name: string, excitationWavelength?: number | null } } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView', id: string, operation?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, originImage: { __typename?: 'Image', id: string, name: string } } | { __typename?: 'FileView', id: string, seriesIdentifier?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, file: { __typename?: 'File', id: string, name: string } } | { __typename?: 'LabelView', id: string, label: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'PixelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } | { __typename?: 'ROIView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, roi: { __typename?: 'ROI', id: string, name: string } } | { __typename?: 'ScaleView' } | { __typename?: 'StructureView', id: string, structure: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }>, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }> }>, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> }, labelAccessors: Array<{ __typename?: 'LabelAccessor', keys: Array<string>, table: { __typename?: 'Table', id: string, name: string } }> };
+type Accessor_ImageAccessor_Fragment = {
+  __typename?: "ImageAccessor";
+  id: string;
+  keys: Array<string>;
+  minIndex?: number | null;
+  maxIndex?: number | null;
+};
+
+type Accessor_LabelAccessor_Fragment = {
+  __typename?: "LabelAccessor";
+  id: string;
+  keys: Array<string>;
+  minIndex?: number | null;
+  maxIndex?: number | null;
+};
+
+export type AccessorFragment =
+  | Accessor_ImageAccessor_Fragment
+  | Accessor_LabelAccessor_Fragment;
+
+export type LabelAccessorFragment = {
+  __typename?: "LabelAccessor";
+  id: string;
+  keys: Array<string>;
+  minIndex?: number | null;
+  maxIndex?: number | null;
+  pixelView: { __typename?: "PixelView"; id: string };
+};
+
+export type ImageAccessorFragment = {
+  __typename?: "ImageAccessor";
+  id: string;
+  keys: Array<string>;
+  minIndex?: number | null;
+  maxIndex?: number | null;
+};
+
+export type CameraFragment = {
+  __typename?: "Camera";
+  sensorSizeX?: number | null;
+  sensorSizeY?: number | null;
+  pixelSizeX?: any | null;
+  pixelSizeY?: any | null;
+  name: string;
+  serialNumber: string;
+};
+
+export type ChannelFragment = {
+  __typename?: "Channel";
+  id: string;
+  name: string;
+  excitationWavelength?: number | null;
+};
+
+export type CredentialsFragment = {
+  __typename?: "Credentials";
+  accessKey: string;
+  status: string;
+  secretKey: string;
+  bucket: string;
+  key: string;
+  sessionToken: string;
+  store: string;
+};
+
+export type AccessCredentialsFragment = {
+  __typename?: "AccessCredentials";
+  accessKey: string;
+  secretKey: string;
+  bucket: string;
+  key: string;
+  sessionToken: string;
+  path: string;
+};
+
+export type PresignedPostCredentialsFragment = {
+  __typename?: "PresignedPostCredentials";
+  xAmzAlgorithm: string;
+  xAmzCredential: string;
+  xAmzDate: string;
+  xAmzSignature: string;
+  key: string;
+  bucket: string;
+  datalayer: string;
+  policy: string;
+  store: string;
+};
+
+export type DatasetFragment = {
+  __typename?: "Dataset";
+  id: string;
+  name: string;
+  description?: string | null;
+  isDefault: boolean;
+  pinned: boolean;
+  createdAt: any;
+  tags: Array<string>;
+  history: Array<{
+    __typename?: "History";
+    id: string;
+    during?: string | null;
+    kind: HistoryKind;
+    date: any;
+    user?: { __typename?: "User"; sub: string } | null;
+    app?: { __typename?: "App"; clientId: string } | null;
+    effectiveChanges: Array<{
+      __typename?: "ModelChange";
+      field: string;
+      oldValue?: string | null;
+      newValue?: string | null;
+    }>;
+  }>;
+  images: Array<{
+    __typename?: "Image";
+    id: string;
+    name: string;
+    latestSnapshot?: {
+      __typename?: "Snapshot";
+      id: string;
+      store: { __typename?: "MediaStore"; key: string; presignedUrl: string };
+    } | null;
+  }>;
+  files: Array<{ __typename?: "File"; id: string; name: string }>;
+  children: Array<{
+    __typename?: "Dataset";
+    id: string;
+    name: string;
+    description?: string | null;
+    isDefault: boolean;
+  }>;
+  creator?: { __typename?: "User"; sub: string } | null;
+};
+
+export type ListDatasetFragment = {
+  __typename?: "Dataset";
+  id: string;
+  name: string;
+  description?: string | null;
+  isDefault: boolean;
+};
+
+export type EraFragment = {
+  __typename?: "Era";
+  id: string;
+  begin?: any | null;
+  name: string;
+};
+
+export type FileFragment = {
+  __typename?: "File";
+  id: string;
+  name: string;
+  origins: Array<{ __typename?: "Image"; id: string }>;
+  store: {
+    __typename?: "BigFileStore";
+    id: string;
+    key: string;
+    bucket: string;
+    path: string;
+    presignedUrl: string;
+  };
+  views: Array<{
+    __typename?: "FileView";
+    id: string;
+    seriesIdentifier?: string | null;
+    image: {
+      __typename?: "Image";
+      id: string;
+      name: string;
+      latestSnapshot?: {
+        __typename?: "Snapshot";
+        id: string;
+        store: { __typename?: "MediaStore"; key: string; presignedUrl: string };
+      } | null;
+    };
+  }>;
+};
+
+export type ListFileFragment = {
+  __typename?: "File";
+  id: string;
+  name: string;
+};
+
+export type HistoryFragment = {
+  __typename?: "History";
+  id: string;
+  during?: string | null;
+  kind: HistoryKind;
+  date: any;
+  user?: { __typename?: "User"; sub: string } | null;
+  app?: { __typename?: "App"; clientId: string } | null;
+  effectiveChanges: Array<{
+    __typename?: "ModelChange";
+    field: string;
+    oldValue?: string | null;
+    newValue?: string | null;
+  }>;
+};
+
+export type ImageFragment = {
+  __typename?: "Image";
+  id: string;
+  name: string;
+  pinned: boolean;
+  createdAt: any;
+  tags: Array<string>;
+  store: {
+    __typename?: "ZarrStore";
+    id: string;
+    key: string;
+    bucket: string;
+    path?: string | null;
+    shape?: Array<number> | null;
+    dtype?: string | null;
+    chunks?: Array<number> | null;
+    version: string;
+  };
+  views: Array<
+    | {
+        __typename?: "AcquisitionView";
+        id: string;
+        description?: string | null;
+        acquiredAt?: any | null;
+        xMin?: number | null;
+        xMax?: number | null;
+        yMin?: number | null;
+        yMax?: number | null;
+        tMin?: number | null;
+        tMax?: number | null;
+        cMin?: number | null;
+        cMax?: number | null;
+        zMin?: number | null;
+        zMax?: number | null;
+        operator?: { __typename?: "User"; sub: string } | null;
+      }
+    | {
+        __typename?: "AffineTransformationView";
+        id: string;
+        affineMatrix: any;
+        xMin?: number | null;
+        xMax?: number | null;
+        yMin?: number | null;
+        yMax?: number | null;
+        tMin?: number | null;
+        tMax?: number | null;
+        cMin?: number | null;
+        cMax?: number | null;
+        zMin?: number | null;
+        zMax?: number | null;
+        stage: { __typename?: "Stage"; id: string; name: string };
+      }
+    | {
+        __typename?: "ChannelView";
+        id: string;
+        xMin?: number | null;
+        xMax?: number | null;
+        yMin?: number | null;
+        yMax?: number | null;
+        tMin?: number | null;
+        tMax?: number | null;
+        cMin?: number | null;
+        cMax?: number | null;
+        zMin?: number | null;
+        zMax?: number | null;
+        channel: {
+          __typename?: "Channel";
+          id: string;
+          name: string;
+          excitationWavelength?: number | null;
+        };
+      }
+    | { __typename?: "ContinousScanView" }
+    | {
+        __typename?: "DerivedView";
+        id: string;
+        operation?: string | null;
+        xMin?: number | null;
+        xMax?: number | null;
+        yMin?: number | null;
+        yMax?: number | null;
+        tMin?: number | null;
+        tMax?: number | null;
+        cMin?: number | null;
+        cMax?: number | null;
+        zMin?: number | null;
+        zMax?: number | null;
+        originImage: { __typename?: "Image"; id: string; name: string };
+      }
+    | {
+        __typename?: "FileView";
+        id: string;
+        seriesIdentifier?: string | null;
+        xMin?: number | null;
+        xMax?: number | null;
+        yMin?: number | null;
+        yMax?: number | null;
+        tMin?: number | null;
+        tMax?: number | null;
+        cMin?: number | null;
+        cMax?: number | null;
+        zMin?: number | null;
+        zMax?: number | null;
+        file: { __typename?: "File"; id: string; name: string };
+      }
+    | {
+        __typename?: "LabelView";
+        id: string;
+        label: string;
+        xMin?: number | null;
+        xMax?: number | null;
+        yMin?: number | null;
+        yMax?: number | null;
+        tMin?: number | null;
+        tMax?: number | null;
+        cMin?: number | null;
+        cMax?: number | null;
+        zMin?: number | null;
+        zMax?: number | null;
+      }
+    | {
+        __typename?: "OpticsView";
+        id: string;
+        xMin?: number | null;
+        xMax?: number | null;
+        yMin?: number | null;
+        yMax?: number | null;
+        tMin?: number | null;
+        tMax?: number | null;
+        cMin?: number | null;
+        cMax?: number | null;
+        zMin?: number | null;
+        zMax?: number | null;
+        objective?: {
+          __typename?: "Objective";
+          id: string;
+          name: string;
+          serialNumber: string;
+        } | null;
+        camera?: {
+          __typename?: "Camera";
+          id: string;
+          name: string;
+          serialNumber: string;
+        } | null;
+        instrument?: {
+          __typename?: "Instrument";
+          id: string;
+          name: string;
+          serialNumber: string;
+        } | null;
+      }
+    | {
+        __typename?: "PixelView";
+        id: string;
+        xMin?: number | null;
+        xMax?: number | null;
+        yMin?: number | null;
+        yMax?: number | null;
+        tMin?: number | null;
+        tMax?: number | null;
+        cMin?: number | null;
+        cMax?: number | null;
+        zMin?: number | null;
+        zMax?: number | null;
+      }
+    | {
+        __typename?: "RGBView";
+        id: string;
+        name: string;
+        colorMap: ColorMap;
+        contrastLimitMin?: number | null;
+        contrastLimitMax?: number | null;
+        gamma?: number | null;
+        rescale: boolean;
+        active: boolean;
+        fullColour: string;
+        baseColor?: Array<number> | null;
+        xMin?: number | null;
+        xMax?: number | null;
+        yMin?: number | null;
+        yMax?: number | null;
+        tMin?: number | null;
+        tMax?: number | null;
+        cMin?: number | null;
+        cMax?: number | null;
+        zMin?: number | null;
+        zMax?: number | null;
+        contexts: Array<{
+          __typename?: "RGBContext";
+          id: string;
+          name: string;
+        }>;
+        image: {
+          __typename?: "Image";
+          id: string;
+          store: {
+            __typename?: "ZarrStore";
+            id: string;
+            key: string;
+            bucket: string;
+            path?: string | null;
+            shape?: Array<number> | null;
+            dtype?: string | null;
+            chunks?: Array<number> | null;
+            version: string;
+          };
+          derivedScaleViews: Array<{
+            __typename?: "ScaleView";
+            id: string;
+            scaleX: number;
+            scaleY: number;
+            scaleZ: number;
+            scaleT: number;
+            scaleC: number;
+            image: {
+              __typename?: "Image";
+              id: string;
+              store: {
+                __typename?: "ZarrStore";
+                id: string;
+                key: string;
+                bucket: string;
+                path?: string | null;
+                shape?: Array<number> | null;
+                dtype?: string | null;
+                chunks?: Array<number> | null;
+                version: string;
+              };
+            };
+          }>;
+        };
+      }
+    | {
+        __typename?: "ROIView";
+        id: string;
+        xMin?: number | null;
+        xMax?: number | null;
+        yMin?: number | null;
+        yMax?: number | null;
+        tMin?: number | null;
+        tMax?: number | null;
+        cMin?: number | null;
+        cMax?: number | null;
+        zMin?: number | null;
+        zMax?: number | null;
+        roi: { __typename?: "ROI"; id: string; name: string };
+      }
+    | { __typename?: "ScaleView" }
+    | {
+        __typename?: "StructureView";
+        id: string;
+        structure: any;
+        xMin?: number | null;
+        xMax?: number | null;
+        yMin?: number | null;
+        yMax?: number | null;
+        tMin?: number | null;
+        tMax?: number | null;
+        cMin?: number | null;
+        cMax?: number | null;
+        zMin?: number | null;
+        zMax?: number | null;
+      }
+    | {
+        __typename?: "TimepointView";
+        id: string;
+        msSinceStart?: any | null;
+        indexSinceStart?: number | null;
+        xMin?: number | null;
+        xMax?: number | null;
+        yMin?: number | null;
+        yMax?: number | null;
+        tMin?: number | null;
+        tMax?: number | null;
+        cMin?: number | null;
+        cMax?: number | null;
+        zMin?: number | null;
+        zMax?: number | null;
+        era: {
+          __typename?: "Era";
+          id: string;
+          begin?: any | null;
+          name: string;
+        };
+      }
+    | {
+        __typename?: "WellPositionView";
+        id: string;
+        column?: number | null;
+        row?: number | null;
+        xMin?: number | null;
+        xMax?: number | null;
+        yMin?: number | null;
+        yMax?: number | null;
+        tMin?: number | null;
+        tMax?: number | null;
+        cMin?: number | null;
+        cMax?: number | null;
+        zMin?: number | null;
+        zMax?: number | null;
+        well?: {
+          __typename?: "MultiWellPlate";
+          id: string;
+          rows?: number | null;
+          columns?: number | null;
+          name?: string | null;
+        } | null;
+      }
+  >;
+  derivedFromViews: Array<{
+    __typename?: "DerivedView";
+    image: { __typename?: "Image"; id: string; name: string };
+  }>;
+  renders: Array<
+    | {
+        __typename?: "Snapshot";
+        id: string;
+        store: { __typename?: "MediaStore"; key: string; presignedUrl: string };
+      }
+    | {
+        __typename?: "Video";
+        id: string;
+        store: { __typename?: "MediaStore"; key: string; presignedUrl: string };
+      }
+  >;
+  dataset?: { __typename?: "Dataset"; name: string; id: string } | null;
+  history: Array<{
+    __typename?: "History";
+    id: string;
+    during?: string | null;
+    kind: HistoryKind;
+    date: any;
+    user?: { __typename?: "User"; sub: string } | null;
+    app?: { __typename?: "App"; clientId: string } | null;
+    effectiveChanges: Array<{
+      __typename?: "ModelChange";
+      field: string;
+      oldValue?: string | null;
+      newValue?: string | null;
+    }>;
+  }>;
+  creator?: { __typename?: "User"; sub: string } | null;
+  rgbContexts: Array<{
+    __typename?: "RGBContext";
+    id: string;
+    name: string;
+    blending: Blending;
+    t: number;
+    z: number;
+    c: number;
+    image: {
+      __typename?: "Image";
+      id: string;
+      store: {
+        __typename?: "ZarrStore";
+        id: string;
+        key: string;
+        bucket: string;
+        path?: string | null;
+        shape?: Array<number> | null;
+        dtype?: string | null;
+        chunks?: Array<number> | null;
+        version: string;
+      };
+      derivedScaleViews: Array<{
+        __typename?: "ScaleView";
+        id: string;
+        image: {
+          __typename?: "Image";
+          id: string;
+          store: {
+            __typename?: "ZarrStore";
+            id: string;
+            key: string;
+            bucket: string;
+            path?: string | null;
+            shape?: Array<number> | null;
+            dtype?: string | null;
+            chunks?: Array<number> | null;
+            version: string;
+          };
+        };
+      }>;
+    };
+    views: Array<{
+      __typename?: "RGBView";
+      id: string;
+      name: string;
+      colorMap: ColorMap;
+      contrastLimitMin?: number | null;
+      contrastLimitMax?: number | null;
+      gamma?: number | null;
+      rescale: boolean;
+      active: boolean;
+      fullColour: string;
+      baseColor?: Array<number> | null;
+      xMin?: number | null;
+      xMax?: number | null;
+      yMin?: number | null;
+      yMax?: number | null;
+      tMin?: number | null;
+      tMax?: number | null;
+      cMin?: number | null;
+      cMax?: number | null;
+      zMin?: number | null;
+      zMax?: number | null;
+      contexts: Array<{ __typename?: "RGBContext"; id: string; name: string }>;
+      image: {
+        __typename?: "Image";
+        id: string;
+        store: {
+          __typename?: "ZarrStore";
+          id: string;
+          key: string;
+          bucket: string;
+          path?: string | null;
+          shape?: Array<number> | null;
+          dtype?: string | null;
+          chunks?: Array<number> | null;
+          version: string;
+        };
+        derivedScaleViews: Array<{
+          __typename?: "ScaleView";
+          id: string;
+          scaleX: number;
+          scaleY: number;
+          scaleZ: number;
+          scaleT: number;
+          scaleC: number;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+          };
+        }>;
+      };
+    }>;
+  }>;
+  rois: Array<{
+    __typename?: "ROI";
+    id: string;
+    vectors: Array<any>;
+    image: { __typename?: "Image"; id: string; name: string };
+  }>;
+};
+
+export type RgbImageFragment = {
+  __typename?: "Image";
+  name: string;
+  rgbContexts: Array<{
+    __typename?: "RGBContext";
+    id: string;
+    name: string;
+    blending: Blending;
+    t: number;
+    z: number;
+    c: number;
+    image: {
+      __typename?: "Image";
+      id: string;
+      store: {
+        __typename?: "ZarrStore";
+        id: string;
+        key: string;
+        bucket: string;
+        path?: string | null;
+        shape?: Array<number> | null;
+        dtype?: string | null;
+        chunks?: Array<number> | null;
+        version: string;
+      };
+      derivedScaleViews: Array<{
+        __typename?: "ScaleView";
+        id: string;
+        image: {
+          __typename?: "Image";
+          id: string;
+          store: {
+            __typename?: "ZarrStore";
+            id: string;
+            key: string;
+            bucket: string;
+            path?: string | null;
+            shape?: Array<number> | null;
+            dtype?: string | null;
+            chunks?: Array<number> | null;
+            version: string;
+          };
+        };
+      }>;
+    };
+    views: Array<{
+      __typename?: "RGBView";
+      id: string;
+      name: string;
+      colorMap: ColorMap;
+      contrastLimitMin?: number | null;
+      contrastLimitMax?: number | null;
+      gamma?: number | null;
+      rescale: boolean;
+      active: boolean;
+      fullColour: string;
+      baseColor?: Array<number> | null;
+      xMin?: number | null;
+      xMax?: number | null;
+      yMin?: number | null;
+      yMax?: number | null;
+      tMin?: number | null;
+      tMax?: number | null;
+      cMin?: number | null;
+      cMax?: number | null;
+      zMin?: number | null;
+      zMax?: number | null;
+      contexts: Array<{ __typename?: "RGBContext"; id: string; name: string }>;
+      image: {
+        __typename?: "Image";
+        id: string;
+        store: {
+          __typename?: "ZarrStore";
+          id: string;
+          key: string;
+          bucket: string;
+          path?: string | null;
+          shape?: Array<number> | null;
+          dtype?: string | null;
+          chunks?: Array<number> | null;
+          version: string;
+        };
+        derivedScaleViews: Array<{
+          __typename?: "ScaleView";
+          id: string;
+          scaleX: number;
+          scaleY: number;
+          scaleZ: number;
+          scaleT: number;
+          scaleC: number;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+          };
+        }>;
+      };
+    }>;
+  }>;
+};
+
+export type ListImageFragment = {
+  __typename?: "Image";
+  id: string;
+  name: string;
+  latestSnapshot?: {
+    __typename?: "Snapshot";
+    id: string;
+    store: { __typename?: "MediaStore"; key: string; presignedUrl: string };
+  } | null;
+};
+
+export type InstrumentFragment = {
+  __typename?: "Instrument";
+  model?: string | null;
+  name: string;
+  serialNumber: string;
+};
+
+export type MeshFragment = {
+  __typename?: "Mesh";
+  id: string;
+  name: string;
+  store: {
+    __typename?: "MeshStore";
+    id: string;
+    key: string;
+    presignedUrl: string;
+  };
+};
+
+export type ListMeshFragment = {
+  __typename?: "Mesh";
+  id: string;
+  name: string;
+};
+
+export type MultiWellPlateFragment = {
+  __typename?: "MultiWellPlate";
+  id: string;
+  name?: string | null;
+  views: Array<{
+    __typename?: "WellPositionView";
+    id: string;
+    column?: number | null;
+    row?: number | null;
+    xMin?: number | null;
+    xMax?: number | null;
+    yMin?: number | null;
+    yMax?: number | null;
+    tMin?: number | null;
+    tMax?: number | null;
+    cMin?: number | null;
+    cMax?: number | null;
+    zMin?: number | null;
+    zMax?: number | null;
+    well?: {
+      __typename?: "MultiWellPlate";
+      id: string;
+      rows?: number | null;
+      columns?: number | null;
+      name?: string | null;
+    } | null;
+  }>;
+};
+
+export type ListMultiWellPlateFragment = {
+  __typename?: "MultiWellPlate";
+  id: string;
+  name?: string | null;
+};
+
+export type ObjectiveFragment = {
+  __typename?: "Objective";
+  na?: number | null;
+  name: string;
+  serialNumber: string;
+};
+
+export type ContextNodeNestedFragment = {
+  __typename?: "ContextNode";
+  label?: string | null;
+  context: {
+    __typename?: "RGBContext";
+    id: string;
+    pinned: boolean;
+    name: string;
+    z: number;
+    t: number;
+    c: number;
+    blending: Blending;
+    views: Array<{
+      __typename?: "RGBView";
+      id: string;
+      name: string;
+      colorMap: ColorMap;
+      contrastLimitMin?: number | null;
+      contrastLimitMax?: number | null;
+      gamma?: number | null;
+      rescale: boolean;
+      active: boolean;
+      fullColour: string;
+      baseColor?: Array<number> | null;
+      xMin?: number | null;
+      xMax?: number | null;
+      yMin?: number | null;
+      yMax?: number | null;
+      tMin?: number | null;
+      tMax?: number | null;
+      cMin?: number | null;
+      cMax?: number | null;
+      zMin?: number | null;
+      zMax?: number | null;
+      contexts: Array<{ __typename?: "RGBContext"; id: string; name: string }>;
+      image: {
+        __typename?: "Image";
+        id: string;
+        store: {
+          __typename?: "ZarrStore";
+          id: string;
+          key: string;
+          bucket: string;
+          path?: string | null;
+          shape?: Array<number> | null;
+          dtype?: string | null;
+          chunks?: Array<number> | null;
+          version: string;
+        };
+        derivedScaleViews: Array<{
+          __typename?: "ScaleView";
+          id: string;
+          scaleX: number;
+          scaleY: number;
+          scaleZ: number;
+          scaleT: number;
+          scaleC: number;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+          };
+        }>;
+      };
+    }>;
+    image: {
+      __typename?: "Image";
+      id: string;
+      store: {
+        __typename?: "ZarrStore";
+        id: string;
+        key: string;
+        bucket: string;
+        path?: string | null;
+        shape?: Array<number> | null;
+        dtype?: string | null;
+        chunks?: Array<number> | null;
+        version: string;
+      };
+      derivedScaleViews: Array<{
+        __typename?: "ScaleView";
+        id: string;
+        image: {
+          __typename?: "Image";
+          id: string;
+          store: {
+            __typename?: "ZarrStore";
+            id: string;
+            key: string;
+            bucket: string;
+            path?: string | null;
+            shape?: Array<number> | null;
+            dtype?: string | null;
+            chunks?: Array<number> | null;
+            version: string;
+          };
+        };
+      }>;
+    };
+  };
+};
+
+export type OverlayNodeNestedFragment = {
+  __typename?: "OverlayNode";
+  label?: string | null;
+};
+
+export type GridNodeNestedFragment = {
+  __typename?: "GridNode";
+  label?: string | null;
+  gap?: number | null;
+};
+
+type RenderNodeNested_ContextNode_Fragment = {
+  __typename?: "ContextNode";
+  kind: string;
+  label?: string | null;
+  context: {
+    __typename?: "RGBContext";
+    id: string;
+    pinned: boolean;
+    name: string;
+    z: number;
+    t: number;
+    c: number;
+    blending: Blending;
+    views: Array<{
+      __typename?: "RGBView";
+      id: string;
+      name: string;
+      colorMap: ColorMap;
+      contrastLimitMin?: number | null;
+      contrastLimitMax?: number | null;
+      gamma?: number | null;
+      rescale: boolean;
+      active: boolean;
+      fullColour: string;
+      baseColor?: Array<number> | null;
+      xMin?: number | null;
+      xMax?: number | null;
+      yMin?: number | null;
+      yMax?: number | null;
+      tMin?: number | null;
+      tMax?: number | null;
+      cMin?: number | null;
+      cMax?: number | null;
+      zMin?: number | null;
+      zMax?: number | null;
+      contexts: Array<{ __typename?: "RGBContext"; id: string; name: string }>;
+      image: {
+        __typename?: "Image";
+        id: string;
+        store: {
+          __typename?: "ZarrStore";
+          id: string;
+          key: string;
+          bucket: string;
+          path?: string | null;
+          shape?: Array<number> | null;
+          dtype?: string | null;
+          chunks?: Array<number> | null;
+          version: string;
+        };
+        derivedScaleViews: Array<{
+          __typename?: "ScaleView";
+          id: string;
+          scaleX: number;
+          scaleY: number;
+          scaleZ: number;
+          scaleT: number;
+          scaleC: number;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+          };
+        }>;
+      };
+    }>;
+    image: {
+      __typename?: "Image";
+      id: string;
+      store: {
+        __typename?: "ZarrStore";
+        id: string;
+        key: string;
+        bucket: string;
+        path?: string | null;
+        shape?: Array<number> | null;
+        dtype?: string | null;
+        chunks?: Array<number> | null;
+        version: string;
+      };
+      derivedScaleViews: Array<{
+        __typename?: "ScaleView";
+        id: string;
+        image: {
+          __typename?: "Image";
+          id: string;
+          store: {
+            __typename?: "ZarrStore";
+            id: string;
+            key: string;
+            bucket: string;
+            path?: string | null;
+            shape?: Array<number> | null;
+            dtype?: string | null;
+            chunks?: Array<number> | null;
+            version: string;
+          };
+        };
+      }>;
+    };
+  };
+};
+
+type RenderNodeNested_GridNode_Fragment = {
+  __typename?: "GridNode";
+  kind: string;
+  label?: string | null;
+  gap?: number | null;
+};
+
+type RenderNodeNested_OverlayNode_Fragment = {
+  __typename?: "OverlayNode";
+  kind: string;
+  label?: string | null;
+};
+
+type RenderNodeNested_SplitNode_Fragment = {
+  __typename?: "SplitNode";
+  kind: string;
+};
+
+export type RenderNodeNestedFragment =
+  | RenderNodeNested_ContextNode_Fragment
+  | RenderNodeNested_GridNode_Fragment
+  | RenderNodeNested_OverlayNode_Fragment
+  | RenderNodeNested_SplitNode_Fragment;
+
+export type ContextNodeFragment = {
+  __typename?: "ContextNode";
+  label?: string | null;
+  context: {
+    __typename?: "RGBContext";
+    id: string;
+    pinned: boolean;
+    name: string;
+    z: number;
+    t: number;
+    c: number;
+    blending: Blending;
+    views: Array<{
+      __typename?: "RGBView";
+      id: string;
+      name: string;
+      colorMap: ColorMap;
+      contrastLimitMin?: number | null;
+      contrastLimitMax?: number | null;
+      gamma?: number | null;
+      rescale: boolean;
+      active: boolean;
+      fullColour: string;
+      baseColor?: Array<number> | null;
+      xMin?: number | null;
+      xMax?: number | null;
+      yMin?: number | null;
+      yMax?: number | null;
+      tMin?: number | null;
+      tMax?: number | null;
+      cMin?: number | null;
+      cMax?: number | null;
+      zMin?: number | null;
+      zMax?: number | null;
+      contexts: Array<{ __typename?: "RGBContext"; id: string; name: string }>;
+      image: {
+        __typename?: "Image";
+        id: string;
+        store: {
+          __typename?: "ZarrStore";
+          id: string;
+          key: string;
+          bucket: string;
+          path?: string | null;
+          shape?: Array<number> | null;
+          dtype?: string | null;
+          chunks?: Array<number> | null;
+          version: string;
+        };
+        derivedScaleViews: Array<{
+          __typename?: "ScaleView";
+          id: string;
+          scaleX: number;
+          scaleY: number;
+          scaleZ: number;
+          scaleT: number;
+          scaleC: number;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+          };
+        }>;
+      };
+    }>;
+    image: {
+      __typename?: "Image";
+      id: string;
+      store: {
+        __typename?: "ZarrStore";
+        id: string;
+        key: string;
+        bucket: string;
+        path?: string | null;
+        shape?: Array<number> | null;
+        dtype?: string | null;
+        chunks?: Array<number> | null;
+        version: string;
+      };
+      derivedScaleViews: Array<{
+        __typename?: "ScaleView";
+        id: string;
+        image: {
+          __typename?: "Image";
+          id: string;
+          store: {
+            __typename?: "ZarrStore";
+            id: string;
+            key: string;
+            bucket: string;
+            path?: string | null;
+            shape?: Array<number> | null;
+            dtype?: string | null;
+            chunks?: Array<number> | null;
+            version: string;
+          };
+        };
+      }>;
+    };
+  };
+};
+
+export type OverlayNodeFragment = {
+  __typename?: "OverlayNode";
+  label?: string | null;
+  children: Array<
+    | {
+        __typename?: "ContextNode";
+        kind: string;
+        label?: string | null;
+        context: {
+          __typename?: "RGBContext";
+          id: string;
+          pinned: boolean;
+          name: string;
+          z: number;
+          t: number;
+          c: number;
+          blending: Blending;
+          views: Array<{
+            __typename?: "RGBView";
+            id: string;
+            name: string;
+            colorMap: ColorMap;
+            contrastLimitMin?: number | null;
+            contrastLimitMax?: number | null;
+            gamma?: number | null;
+            rescale: boolean;
+            active: boolean;
+            fullColour: string;
+            baseColor?: Array<number> | null;
+            xMin?: number | null;
+            xMax?: number | null;
+            yMin?: number | null;
+            yMax?: number | null;
+            tMin?: number | null;
+            tMax?: number | null;
+            cMin?: number | null;
+            cMax?: number | null;
+            zMin?: number | null;
+            zMax?: number | null;
+            contexts: Array<{
+              __typename?: "RGBContext";
+              id: string;
+              name: string;
+            }>;
+            image: {
+              __typename?: "Image";
+              id: string;
+              store: {
+                __typename?: "ZarrStore";
+                id: string;
+                key: string;
+                bucket: string;
+                path?: string | null;
+                shape?: Array<number> | null;
+                dtype?: string | null;
+                chunks?: Array<number> | null;
+                version: string;
+              };
+              derivedScaleViews: Array<{
+                __typename?: "ScaleView";
+                id: string;
+                scaleX: number;
+                scaleY: number;
+                scaleZ: number;
+                scaleT: number;
+                scaleC: number;
+                image: {
+                  __typename?: "Image";
+                  id: string;
+                  store: {
+                    __typename?: "ZarrStore";
+                    id: string;
+                    key: string;
+                    bucket: string;
+                    path?: string | null;
+                    shape?: Array<number> | null;
+                    dtype?: string | null;
+                    chunks?: Array<number> | null;
+                    version: string;
+                  };
+                };
+              }>;
+            };
+          }>;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+            derivedScaleViews: Array<{
+              __typename?: "ScaleView";
+              id: string;
+              image: {
+                __typename?: "Image";
+                id: string;
+                store: {
+                  __typename?: "ZarrStore";
+                  id: string;
+                  key: string;
+                  bucket: string;
+                  path?: string | null;
+                  shape?: Array<number> | null;
+                  dtype?: string | null;
+                  chunks?: Array<number> | null;
+                  version: string;
+                };
+              };
+            }>;
+          };
+        };
+      }
+    | {
+        __typename?: "GridNode";
+        kind: string;
+        label?: string | null;
+        gap?: number | null;
+      }
+    | { __typename?: "OverlayNode"; kind: string; label?: string | null }
+    | { __typename?: "SplitNode"; kind: string }
+  >;
+};
+
+export type GridNodeFragment = {
+  __typename?: "GridNode";
+  label?: string | null;
+  gap?: number | null;
+  children: Array<
+    | {
+        __typename?: "ContextNode";
+        kind: string;
+        label?: string | null;
+        context: {
+          __typename?: "RGBContext";
+          id: string;
+          pinned: boolean;
+          name: string;
+          z: number;
+          t: number;
+          c: number;
+          blending: Blending;
+          views: Array<{
+            __typename?: "RGBView";
+            id: string;
+            name: string;
+            colorMap: ColorMap;
+            contrastLimitMin?: number | null;
+            contrastLimitMax?: number | null;
+            gamma?: number | null;
+            rescale: boolean;
+            active: boolean;
+            fullColour: string;
+            baseColor?: Array<number> | null;
+            xMin?: number | null;
+            xMax?: number | null;
+            yMin?: number | null;
+            yMax?: number | null;
+            tMin?: number | null;
+            tMax?: number | null;
+            cMin?: number | null;
+            cMax?: number | null;
+            zMin?: number | null;
+            zMax?: number | null;
+            contexts: Array<{
+              __typename?: "RGBContext";
+              id: string;
+              name: string;
+            }>;
+            image: {
+              __typename?: "Image";
+              id: string;
+              store: {
+                __typename?: "ZarrStore";
+                id: string;
+                key: string;
+                bucket: string;
+                path?: string | null;
+                shape?: Array<number> | null;
+                dtype?: string | null;
+                chunks?: Array<number> | null;
+                version: string;
+              };
+              derivedScaleViews: Array<{
+                __typename?: "ScaleView";
+                id: string;
+                scaleX: number;
+                scaleY: number;
+                scaleZ: number;
+                scaleT: number;
+                scaleC: number;
+                image: {
+                  __typename?: "Image";
+                  id: string;
+                  store: {
+                    __typename?: "ZarrStore";
+                    id: string;
+                    key: string;
+                    bucket: string;
+                    path?: string | null;
+                    shape?: Array<number> | null;
+                    dtype?: string | null;
+                    chunks?: Array<number> | null;
+                    version: string;
+                  };
+                };
+              }>;
+            };
+          }>;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+            derivedScaleViews: Array<{
+              __typename?: "ScaleView";
+              id: string;
+              image: {
+                __typename?: "Image";
+                id: string;
+                store: {
+                  __typename?: "ZarrStore";
+                  id: string;
+                  key: string;
+                  bucket: string;
+                  path?: string | null;
+                  shape?: Array<number> | null;
+                  dtype?: string | null;
+                  chunks?: Array<number> | null;
+                  version: string;
+                };
+              };
+            }>;
+          };
+        };
+      }
+    | {
+        __typename?: "GridNode";
+        kind: string;
+        label?: string | null;
+        gap?: number | null;
+      }
+    | { __typename?: "OverlayNode"; kind: string; label?: string | null }
+    | { __typename?: "SplitNode"; kind: string }
+  >;
+};
+
+type RenderNode_ContextNode_Fragment = {
+  __typename?: "ContextNode";
+  kind: string;
+  label?: string | null;
+  context: {
+    __typename?: "RGBContext";
+    id: string;
+    pinned: boolean;
+    name: string;
+    z: number;
+    t: number;
+    c: number;
+    blending: Blending;
+    views: Array<{
+      __typename?: "RGBView";
+      id: string;
+      name: string;
+      colorMap: ColorMap;
+      contrastLimitMin?: number | null;
+      contrastLimitMax?: number | null;
+      gamma?: number | null;
+      rescale: boolean;
+      active: boolean;
+      fullColour: string;
+      baseColor?: Array<number> | null;
+      xMin?: number | null;
+      xMax?: number | null;
+      yMin?: number | null;
+      yMax?: number | null;
+      tMin?: number | null;
+      tMax?: number | null;
+      cMin?: number | null;
+      cMax?: number | null;
+      zMin?: number | null;
+      zMax?: number | null;
+      contexts: Array<{ __typename?: "RGBContext"; id: string; name: string }>;
+      image: {
+        __typename?: "Image";
+        id: string;
+        store: {
+          __typename?: "ZarrStore";
+          id: string;
+          key: string;
+          bucket: string;
+          path?: string | null;
+          shape?: Array<number> | null;
+          dtype?: string | null;
+          chunks?: Array<number> | null;
+          version: string;
+        };
+        derivedScaleViews: Array<{
+          __typename?: "ScaleView";
+          id: string;
+          scaleX: number;
+          scaleY: number;
+          scaleZ: number;
+          scaleT: number;
+          scaleC: number;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+          };
+        }>;
+      };
+    }>;
+    image: {
+      __typename?: "Image";
+      id: string;
+      store: {
+        __typename?: "ZarrStore";
+        id: string;
+        key: string;
+        bucket: string;
+        path?: string | null;
+        shape?: Array<number> | null;
+        dtype?: string | null;
+        chunks?: Array<number> | null;
+        version: string;
+      };
+      derivedScaleViews: Array<{
+        __typename?: "ScaleView";
+        id: string;
+        image: {
+          __typename?: "Image";
+          id: string;
+          store: {
+            __typename?: "ZarrStore";
+            id: string;
+            key: string;
+            bucket: string;
+            path?: string | null;
+            shape?: Array<number> | null;
+            dtype?: string | null;
+            chunks?: Array<number> | null;
+            version: string;
+          };
+        };
+      }>;
+    };
+  };
+};
+
+type RenderNode_GridNode_Fragment = {
+  __typename?: "GridNode";
+  kind: string;
+  label?: string | null;
+  gap?: number | null;
+  children: Array<
+    | {
+        __typename?: "ContextNode";
+        kind: string;
+        label?: string | null;
+        context: {
+          __typename?: "RGBContext";
+          id: string;
+          pinned: boolean;
+          name: string;
+          z: number;
+          t: number;
+          c: number;
+          blending: Blending;
+          views: Array<{
+            __typename?: "RGBView";
+            id: string;
+            name: string;
+            colorMap: ColorMap;
+            contrastLimitMin?: number | null;
+            contrastLimitMax?: number | null;
+            gamma?: number | null;
+            rescale: boolean;
+            active: boolean;
+            fullColour: string;
+            baseColor?: Array<number> | null;
+            xMin?: number | null;
+            xMax?: number | null;
+            yMin?: number | null;
+            yMax?: number | null;
+            tMin?: number | null;
+            tMax?: number | null;
+            cMin?: number | null;
+            cMax?: number | null;
+            zMin?: number | null;
+            zMax?: number | null;
+            contexts: Array<{
+              __typename?: "RGBContext";
+              id: string;
+              name: string;
+            }>;
+            image: {
+              __typename?: "Image";
+              id: string;
+              store: {
+                __typename?: "ZarrStore";
+                id: string;
+                key: string;
+                bucket: string;
+                path?: string | null;
+                shape?: Array<number> | null;
+                dtype?: string | null;
+                chunks?: Array<number> | null;
+                version: string;
+              };
+              derivedScaleViews: Array<{
+                __typename?: "ScaleView";
+                id: string;
+                scaleX: number;
+                scaleY: number;
+                scaleZ: number;
+                scaleT: number;
+                scaleC: number;
+                image: {
+                  __typename?: "Image";
+                  id: string;
+                  store: {
+                    __typename?: "ZarrStore";
+                    id: string;
+                    key: string;
+                    bucket: string;
+                    path?: string | null;
+                    shape?: Array<number> | null;
+                    dtype?: string | null;
+                    chunks?: Array<number> | null;
+                    version: string;
+                  };
+                };
+              }>;
+            };
+          }>;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+            derivedScaleViews: Array<{
+              __typename?: "ScaleView";
+              id: string;
+              image: {
+                __typename?: "Image";
+                id: string;
+                store: {
+                  __typename?: "ZarrStore";
+                  id: string;
+                  key: string;
+                  bucket: string;
+                  path?: string | null;
+                  shape?: Array<number> | null;
+                  dtype?: string | null;
+                  chunks?: Array<number> | null;
+                  version: string;
+                };
+              };
+            }>;
+          };
+        };
+      }
+    | {
+        __typename?: "GridNode";
+        kind: string;
+        label?: string | null;
+        gap?: number | null;
+      }
+    | { __typename?: "OverlayNode"; kind: string; label?: string | null }
+    | { __typename?: "SplitNode"; kind: string }
+  >;
+};
+
+type RenderNode_OverlayNode_Fragment = {
+  __typename?: "OverlayNode";
+  kind: string;
+  label?: string | null;
+  children: Array<
+    | {
+        __typename?: "ContextNode";
+        kind: string;
+        label?: string | null;
+        context: {
+          __typename?: "RGBContext";
+          id: string;
+          pinned: boolean;
+          name: string;
+          z: number;
+          t: number;
+          c: number;
+          blending: Blending;
+          views: Array<{
+            __typename?: "RGBView";
+            id: string;
+            name: string;
+            colorMap: ColorMap;
+            contrastLimitMin?: number | null;
+            contrastLimitMax?: number | null;
+            gamma?: number | null;
+            rescale: boolean;
+            active: boolean;
+            fullColour: string;
+            baseColor?: Array<number> | null;
+            xMin?: number | null;
+            xMax?: number | null;
+            yMin?: number | null;
+            yMax?: number | null;
+            tMin?: number | null;
+            tMax?: number | null;
+            cMin?: number | null;
+            cMax?: number | null;
+            zMin?: number | null;
+            zMax?: number | null;
+            contexts: Array<{
+              __typename?: "RGBContext";
+              id: string;
+              name: string;
+            }>;
+            image: {
+              __typename?: "Image";
+              id: string;
+              store: {
+                __typename?: "ZarrStore";
+                id: string;
+                key: string;
+                bucket: string;
+                path?: string | null;
+                shape?: Array<number> | null;
+                dtype?: string | null;
+                chunks?: Array<number> | null;
+                version: string;
+              };
+              derivedScaleViews: Array<{
+                __typename?: "ScaleView";
+                id: string;
+                scaleX: number;
+                scaleY: number;
+                scaleZ: number;
+                scaleT: number;
+                scaleC: number;
+                image: {
+                  __typename?: "Image";
+                  id: string;
+                  store: {
+                    __typename?: "ZarrStore";
+                    id: string;
+                    key: string;
+                    bucket: string;
+                    path?: string | null;
+                    shape?: Array<number> | null;
+                    dtype?: string | null;
+                    chunks?: Array<number> | null;
+                    version: string;
+                  };
+                };
+              }>;
+            };
+          }>;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+            derivedScaleViews: Array<{
+              __typename?: "ScaleView";
+              id: string;
+              image: {
+                __typename?: "Image";
+                id: string;
+                store: {
+                  __typename?: "ZarrStore";
+                  id: string;
+                  key: string;
+                  bucket: string;
+                  path?: string | null;
+                  shape?: Array<number> | null;
+                  dtype?: string | null;
+                  chunks?: Array<number> | null;
+                  version: string;
+                };
+              };
+            }>;
+          };
+        };
+      }
+    | {
+        __typename?: "GridNode";
+        kind: string;
+        label?: string | null;
+        gap?: number | null;
+      }
+    | { __typename?: "OverlayNode"; kind: string; label?: string | null }
+    | { __typename?: "SplitNode"; kind: string }
+  >;
+};
+
+type RenderNode_SplitNode_Fragment = { __typename?: "SplitNode"; kind: string };
+
+export type RenderNodeFragment =
+  | RenderNode_ContextNode_Fragment
+  | RenderNode_GridNode_Fragment
+  | RenderNode_OverlayNode_Fragment
+  | RenderNode_SplitNode_Fragment;
+
+export type TreeFragment = {
+  __typename?: "Tree";
+  children: Array<
+    | {
+        __typename?: "ContextNode";
+        kind: string;
+        label?: string | null;
+        context: {
+          __typename?: "RGBContext";
+          id: string;
+          pinned: boolean;
+          name: string;
+          z: number;
+          t: number;
+          c: number;
+          blending: Blending;
+          views: Array<{
+            __typename?: "RGBView";
+            id: string;
+            name: string;
+            colorMap: ColorMap;
+            contrastLimitMin?: number | null;
+            contrastLimitMax?: number | null;
+            gamma?: number | null;
+            rescale: boolean;
+            active: boolean;
+            fullColour: string;
+            baseColor?: Array<number> | null;
+            xMin?: number | null;
+            xMax?: number | null;
+            yMin?: number | null;
+            yMax?: number | null;
+            tMin?: number | null;
+            tMax?: number | null;
+            cMin?: number | null;
+            cMax?: number | null;
+            zMin?: number | null;
+            zMax?: number | null;
+            contexts: Array<{
+              __typename?: "RGBContext";
+              id: string;
+              name: string;
+            }>;
+            image: {
+              __typename?: "Image";
+              id: string;
+              store: {
+                __typename?: "ZarrStore";
+                id: string;
+                key: string;
+                bucket: string;
+                path?: string | null;
+                shape?: Array<number> | null;
+                dtype?: string | null;
+                chunks?: Array<number> | null;
+                version: string;
+              };
+              derivedScaleViews: Array<{
+                __typename?: "ScaleView";
+                id: string;
+                scaleX: number;
+                scaleY: number;
+                scaleZ: number;
+                scaleT: number;
+                scaleC: number;
+                image: {
+                  __typename?: "Image";
+                  id: string;
+                  store: {
+                    __typename?: "ZarrStore";
+                    id: string;
+                    key: string;
+                    bucket: string;
+                    path?: string | null;
+                    shape?: Array<number> | null;
+                    dtype?: string | null;
+                    chunks?: Array<number> | null;
+                    version: string;
+                  };
+                };
+              }>;
+            };
+          }>;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+            derivedScaleViews: Array<{
+              __typename?: "ScaleView";
+              id: string;
+              image: {
+                __typename?: "Image";
+                id: string;
+                store: {
+                  __typename?: "ZarrStore";
+                  id: string;
+                  key: string;
+                  bucket: string;
+                  path?: string | null;
+                  shape?: Array<number> | null;
+                  dtype?: string | null;
+                  chunks?: Array<number> | null;
+                  version: string;
+                };
+              };
+            }>;
+          };
+        };
+      }
+    | {
+        __typename?: "GridNode";
+        kind: string;
+        label?: string | null;
+        gap?: number | null;
+        children: Array<
+          | {
+              __typename?: "ContextNode";
+              kind: string;
+              label?: string | null;
+              context: {
+                __typename?: "RGBContext";
+                id: string;
+                pinned: boolean;
+                name: string;
+                z: number;
+                t: number;
+                c: number;
+                blending: Blending;
+                views: Array<{
+                  __typename?: "RGBView";
+                  id: string;
+                  name: string;
+                  colorMap: ColorMap;
+                  contrastLimitMin?: number | null;
+                  contrastLimitMax?: number | null;
+                  gamma?: number | null;
+                  rescale: boolean;
+                  active: boolean;
+                  fullColour: string;
+                  baseColor?: Array<number> | null;
+                  xMin?: number | null;
+                  xMax?: number | null;
+                  yMin?: number | null;
+                  yMax?: number | null;
+                  tMin?: number | null;
+                  tMax?: number | null;
+                  cMin?: number | null;
+                  cMax?: number | null;
+                  zMin?: number | null;
+                  zMax?: number | null;
+                  contexts: Array<{
+                    __typename?: "RGBContext";
+                    id: string;
+                    name: string;
+                  }>;
+                  image: {
+                    __typename?: "Image";
+                    id: string;
+                    store: {
+                      __typename?: "ZarrStore";
+                      id: string;
+                      key: string;
+                      bucket: string;
+                      path?: string | null;
+                      shape?: Array<number> | null;
+                      dtype?: string | null;
+                      chunks?: Array<number> | null;
+                      version: string;
+                    };
+                    derivedScaleViews: Array<{
+                      __typename?: "ScaleView";
+                      id: string;
+                      scaleX: number;
+                      scaleY: number;
+                      scaleZ: number;
+                      scaleT: number;
+                      scaleC: number;
+                      image: {
+                        __typename?: "Image";
+                        id: string;
+                        store: {
+                          __typename?: "ZarrStore";
+                          id: string;
+                          key: string;
+                          bucket: string;
+                          path?: string | null;
+                          shape?: Array<number> | null;
+                          dtype?: string | null;
+                          chunks?: Array<number> | null;
+                          version: string;
+                        };
+                      };
+                    }>;
+                  };
+                }>;
+                image: {
+                  __typename?: "Image";
+                  id: string;
+                  store: {
+                    __typename?: "ZarrStore";
+                    id: string;
+                    key: string;
+                    bucket: string;
+                    path?: string | null;
+                    shape?: Array<number> | null;
+                    dtype?: string | null;
+                    chunks?: Array<number> | null;
+                    version: string;
+                  };
+                  derivedScaleViews: Array<{
+                    __typename?: "ScaleView";
+                    id: string;
+                    image: {
+                      __typename?: "Image";
+                      id: string;
+                      store: {
+                        __typename?: "ZarrStore";
+                        id: string;
+                        key: string;
+                        bucket: string;
+                        path?: string | null;
+                        shape?: Array<number> | null;
+                        dtype?: string | null;
+                        chunks?: Array<number> | null;
+                        version: string;
+                      };
+                    };
+                  }>;
+                };
+              };
+            }
+          | {
+              __typename?: "GridNode";
+              kind: string;
+              label?: string | null;
+              gap?: number | null;
+            }
+          | { __typename?: "OverlayNode"; kind: string; label?: string | null }
+          | { __typename?: "SplitNode"; kind: string }
+        >;
+      }
+    | {
+        __typename?: "OverlayNode";
+        kind: string;
+        label?: string | null;
+        children: Array<
+          | {
+              __typename?: "ContextNode";
+              kind: string;
+              label?: string | null;
+              context: {
+                __typename?: "RGBContext";
+                id: string;
+                pinned: boolean;
+                name: string;
+                z: number;
+                t: number;
+                c: number;
+                blending: Blending;
+                views: Array<{
+                  __typename?: "RGBView";
+                  id: string;
+                  name: string;
+                  colorMap: ColorMap;
+                  contrastLimitMin?: number | null;
+                  contrastLimitMax?: number | null;
+                  gamma?: number | null;
+                  rescale: boolean;
+                  active: boolean;
+                  fullColour: string;
+                  baseColor?: Array<number> | null;
+                  xMin?: number | null;
+                  xMax?: number | null;
+                  yMin?: number | null;
+                  yMax?: number | null;
+                  tMin?: number | null;
+                  tMax?: number | null;
+                  cMin?: number | null;
+                  cMax?: number | null;
+                  zMin?: number | null;
+                  zMax?: number | null;
+                  contexts: Array<{
+                    __typename?: "RGBContext";
+                    id: string;
+                    name: string;
+                  }>;
+                  image: {
+                    __typename?: "Image";
+                    id: string;
+                    store: {
+                      __typename?: "ZarrStore";
+                      id: string;
+                      key: string;
+                      bucket: string;
+                      path?: string | null;
+                      shape?: Array<number> | null;
+                      dtype?: string | null;
+                      chunks?: Array<number> | null;
+                      version: string;
+                    };
+                    derivedScaleViews: Array<{
+                      __typename?: "ScaleView";
+                      id: string;
+                      scaleX: number;
+                      scaleY: number;
+                      scaleZ: number;
+                      scaleT: number;
+                      scaleC: number;
+                      image: {
+                        __typename?: "Image";
+                        id: string;
+                        store: {
+                          __typename?: "ZarrStore";
+                          id: string;
+                          key: string;
+                          bucket: string;
+                          path?: string | null;
+                          shape?: Array<number> | null;
+                          dtype?: string | null;
+                          chunks?: Array<number> | null;
+                          version: string;
+                        };
+                      };
+                    }>;
+                  };
+                }>;
+                image: {
+                  __typename?: "Image";
+                  id: string;
+                  store: {
+                    __typename?: "ZarrStore";
+                    id: string;
+                    key: string;
+                    bucket: string;
+                    path?: string | null;
+                    shape?: Array<number> | null;
+                    dtype?: string | null;
+                    chunks?: Array<number> | null;
+                    version: string;
+                  };
+                  derivedScaleViews: Array<{
+                    __typename?: "ScaleView";
+                    id: string;
+                    image: {
+                      __typename?: "Image";
+                      id: string;
+                      store: {
+                        __typename?: "ZarrStore";
+                        id: string;
+                        key: string;
+                        bucket: string;
+                        path?: string | null;
+                        shape?: Array<number> | null;
+                        dtype?: string | null;
+                        chunks?: Array<number> | null;
+                        version: string;
+                      };
+                    };
+                  }>;
+                };
+              };
+            }
+          | {
+              __typename?: "GridNode";
+              kind: string;
+              label?: string | null;
+              gap?: number | null;
+            }
+          | { __typename?: "OverlayNode"; kind: string; label?: string | null }
+          | { __typename?: "SplitNode"; kind: string }
+        >;
+      }
+    | { __typename?: "SplitNode"; kind: string }
+  >;
+};
+
+export type RenderTreeFragment = {
+  __typename?: "RenderTree";
+  id: string;
+  name: string;
+  tree: {
+    __typename?: "Tree";
+    children: Array<
+      | {
+          __typename?: "ContextNode";
+          kind: string;
+          label?: string | null;
+          context: {
+            __typename?: "RGBContext";
+            id: string;
+            pinned: boolean;
+            name: string;
+            z: number;
+            t: number;
+            c: number;
+            blending: Blending;
+            views: Array<{
+              __typename?: "RGBView";
+              id: string;
+              name: string;
+              colorMap: ColorMap;
+              contrastLimitMin?: number | null;
+              contrastLimitMax?: number | null;
+              gamma?: number | null;
+              rescale: boolean;
+              active: boolean;
+              fullColour: string;
+              baseColor?: Array<number> | null;
+              xMin?: number | null;
+              xMax?: number | null;
+              yMin?: number | null;
+              yMax?: number | null;
+              tMin?: number | null;
+              tMax?: number | null;
+              cMin?: number | null;
+              cMax?: number | null;
+              zMin?: number | null;
+              zMax?: number | null;
+              contexts: Array<{
+                __typename?: "RGBContext";
+                id: string;
+                name: string;
+              }>;
+              image: {
+                __typename?: "Image";
+                id: string;
+                store: {
+                  __typename?: "ZarrStore";
+                  id: string;
+                  key: string;
+                  bucket: string;
+                  path?: string | null;
+                  shape?: Array<number> | null;
+                  dtype?: string | null;
+                  chunks?: Array<number> | null;
+                  version: string;
+                };
+                derivedScaleViews: Array<{
+                  __typename?: "ScaleView";
+                  id: string;
+                  scaleX: number;
+                  scaleY: number;
+                  scaleZ: number;
+                  scaleT: number;
+                  scaleC: number;
+                  image: {
+                    __typename?: "Image";
+                    id: string;
+                    store: {
+                      __typename?: "ZarrStore";
+                      id: string;
+                      key: string;
+                      bucket: string;
+                      path?: string | null;
+                      shape?: Array<number> | null;
+                      dtype?: string | null;
+                      chunks?: Array<number> | null;
+                      version: string;
+                    };
+                  };
+                }>;
+              };
+            }>;
+            image: {
+              __typename?: "Image";
+              id: string;
+              store: {
+                __typename?: "ZarrStore";
+                id: string;
+                key: string;
+                bucket: string;
+                path?: string | null;
+                shape?: Array<number> | null;
+                dtype?: string | null;
+                chunks?: Array<number> | null;
+                version: string;
+              };
+              derivedScaleViews: Array<{
+                __typename?: "ScaleView";
+                id: string;
+                image: {
+                  __typename?: "Image";
+                  id: string;
+                  store: {
+                    __typename?: "ZarrStore";
+                    id: string;
+                    key: string;
+                    bucket: string;
+                    path?: string | null;
+                    shape?: Array<number> | null;
+                    dtype?: string | null;
+                    chunks?: Array<number> | null;
+                    version: string;
+                  };
+                };
+              }>;
+            };
+          };
+        }
+      | {
+          __typename?: "GridNode";
+          kind: string;
+          label?: string | null;
+          gap?: number | null;
+          children: Array<
+            | {
+                __typename?: "ContextNode";
+                kind: string;
+                label?: string | null;
+                context: {
+                  __typename?: "RGBContext";
+                  id: string;
+                  pinned: boolean;
+                  name: string;
+                  z: number;
+                  t: number;
+                  c: number;
+                  blending: Blending;
+                  views: Array<{
+                    __typename?: "RGBView";
+                    id: string;
+                    name: string;
+                    colorMap: ColorMap;
+                    contrastLimitMin?: number | null;
+                    contrastLimitMax?: number | null;
+                    gamma?: number | null;
+                    rescale: boolean;
+                    active: boolean;
+                    fullColour: string;
+                    baseColor?: Array<number> | null;
+                    xMin?: number | null;
+                    xMax?: number | null;
+                    yMin?: number | null;
+                    yMax?: number | null;
+                    tMin?: number | null;
+                    tMax?: number | null;
+                    cMin?: number | null;
+                    cMax?: number | null;
+                    zMin?: number | null;
+                    zMax?: number | null;
+                    contexts: Array<{
+                      __typename?: "RGBContext";
+                      id: string;
+                      name: string;
+                    }>;
+                    image: {
+                      __typename?: "Image";
+                      id: string;
+                      store: {
+                        __typename?: "ZarrStore";
+                        id: string;
+                        key: string;
+                        bucket: string;
+                        path?: string | null;
+                        shape?: Array<number> | null;
+                        dtype?: string | null;
+                        chunks?: Array<number> | null;
+                        version: string;
+                      };
+                      derivedScaleViews: Array<{
+                        __typename?: "ScaleView";
+                        id: string;
+                        scaleX: number;
+                        scaleY: number;
+                        scaleZ: number;
+                        scaleT: number;
+                        scaleC: number;
+                        image: {
+                          __typename?: "Image";
+                          id: string;
+                          store: {
+                            __typename?: "ZarrStore";
+                            id: string;
+                            key: string;
+                            bucket: string;
+                            path?: string | null;
+                            shape?: Array<number> | null;
+                            dtype?: string | null;
+                            chunks?: Array<number> | null;
+                            version: string;
+                          };
+                        };
+                      }>;
+                    };
+                  }>;
+                  image: {
+                    __typename?: "Image";
+                    id: string;
+                    store: {
+                      __typename?: "ZarrStore";
+                      id: string;
+                      key: string;
+                      bucket: string;
+                      path?: string | null;
+                      shape?: Array<number> | null;
+                      dtype?: string | null;
+                      chunks?: Array<number> | null;
+                      version: string;
+                    };
+                    derivedScaleViews: Array<{
+                      __typename?: "ScaleView";
+                      id: string;
+                      image: {
+                        __typename?: "Image";
+                        id: string;
+                        store: {
+                          __typename?: "ZarrStore";
+                          id: string;
+                          key: string;
+                          bucket: string;
+                          path?: string | null;
+                          shape?: Array<number> | null;
+                          dtype?: string | null;
+                          chunks?: Array<number> | null;
+                          version: string;
+                        };
+                      };
+                    }>;
+                  };
+                };
+              }
+            | {
+                __typename?: "GridNode";
+                kind: string;
+                label?: string | null;
+                gap?: number | null;
+              }
+            | {
+                __typename?: "OverlayNode";
+                kind: string;
+                label?: string | null;
+              }
+            | { __typename?: "SplitNode"; kind: string }
+          >;
+        }
+      | {
+          __typename?: "OverlayNode";
+          kind: string;
+          label?: string | null;
+          children: Array<
+            | {
+                __typename?: "ContextNode";
+                kind: string;
+                label?: string | null;
+                context: {
+                  __typename?: "RGBContext";
+                  id: string;
+                  pinned: boolean;
+                  name: string;
+                  z: number;
+                  t: number;
+                  c: number;
+                  blending: Blending;
+                  views: Array<{
+                    __typename?: "RGBView";
+                    id: string;
+                    name: string;
+                    colorMap: ColorMap;
+                    contrastLimitMin?: number | null;
+                    contrastLimitMax?: number | null;
+                    gamma?: number | null;
+                    rescale: boolean;
+                    active: boolean;
+                    fullColour: string;
+                    baseColor?: Array<number> | null;
+                    xMin?: number | null;
+                    xMax?: number | null;
+                    yMin?: number | null;
+                    yMax?: number | null;
+                    tMin?: number | null;
+                    tMax?: number | null;
+                    cMin?: number | null;
+                    cMax?: number | null;
+                    zMin?: number | null;
+                    zMax?: number | null;
+                    contexts: Array<{
+                      __typename?: "RGBContext";
+                      id: string;
+                      name: string;
+                    }>;
+                    image: {
+                      __typename?: "Image";
+                      id: string;
+                      store: {
+                        __typename?: "ZarrStore";
+                        id: string;
+                        key: string;
+                        bucket: string;
+                        path?: string | null;
+                        shape?: Array<number> | null;
+                        dtype?: string | null;
+                        chunks?: Array<number> | null;
+                        version: string;
+                      };
+                      derivedScaleViews: Array<{
+                        __typename?: "ScaleView";
+                        id: string;
+                        scaleX: number;
+                        scaleY: number;
+                        scaleZ: number;
+                        scaleT: number;
+                        scaleC: number;
+                        image: {
+                          __typename?: "Image";
+                          id: string;
+                          store: {
+                            __typename?: "ZarrStore";
+                            id: string;
+                            key: string;
+                            bucket: string;
+                            path?: string | null;
+                            shape?: Array<number> | null;
+                            dtype?: string | null;
+                            chunks?: Array<number> | null;
+                            version: string;
+                          };
+                        };
+                      }>;
+                    };
+                  }>;
+                  image: {
+                    __typename?: "Image";
+                    id: string;
+                    store: {
+                      __typename?: "ZarrStore";
+                      id: string;
+                      key: string;
+                      bucket: string;
+                      path?: string | null;
+                      shape?: Array<number> | null;
+                      dtype?: string | null;
+                      chunks?: Array<number> | null;
+                      version: string;
+                    };
+                    derivedScaleViews: Array<{
+                      __typename?: "ScaleView";
+                      id: string;
+                      image: {
+                        __typename?: "Image";
+                        id: string;
+                        store: {
+                          __typename?: "ZarrStore";
+                          id: string;
+                          key: string;
+                          bucket: string;
+                          path?: string | null;
+                          shape?: Array<number> | null;
+                          dtype?: string | null;
+                          chunks?: Array<number> | null;
+                          version: string;
+                        };
+                      };
+                    }>;
+                  };
+                };
+              }
+            | {
+                __typename?: "GridNode";
+                kind: string;
+                label?: string | null;
+                gap?: number | null;
+              }
+            | {
+                __typename?: "OverlayNode";
+                kind: string;
+                label?: string | null;
+              }
+            | { __typename?: "SplitNode"; kind: string }
+          >;
+        }
+      | { __typename?: "SplitNode"; kind: string }
+    >;
+  };
+};
+
+export type ListRenderTreeFragment = {
+  __typename?: "RenderTree";
+  id: string;
+  name: string;
+};
+
+export type RenderedPlotFragment = {
+  __typename?: "RenderedPlot";
+  id: string;
+  name: string;
+  store: {
+    __typename?: "MediaStore";
+    id: string;
+    key: string;
+    presignedUrl: string;
+  };
+};
+
+export type ListRenderedPlotFragment = {
+  __typename?: "RenderedPlot";
+  id: string;
+  name: string;
+  store: {
+    __typename?: "MediaStore";
+    id: string;
+    key: string;
+    presignedUrl: string;
+  };
+};
+
+export type RgbContextFragment = {
+  __typename?: "RGBContext";
+  id: string;
+  pinned: boolean;
+  name: string;
+  z: number;
+  t: number;
+  c: number;
+  blending: Blending;
+  views: Array<{
+    __typename?: "RGBView";
+    id: string;
+    name: string;
+    colorMap: ColorMap;
+    contrastLimitMin?: number | null;
+    contrastLimitMax?: number | null;
+    gamma?: number | null;
+    rescale: boolean;
+    active: boolean;
+    fullColour: string;
+    baseColor?: Array<number> | null;
+    xMin?: number | null;
+    xMax?: number | null;
+    yMin?: number | null;
+    yMax?: number | null;
+    tMin?: number | null;
+    tMax?: number | null;
+    cMin?: number | null;
+    cMax?: number | null;
+    zMin?: number | null;
+    zMax?: number | null;
+    contexts: Array<{ __typename?: "RGBContext"; id: string; name: string }>;
+    image: {
+      __typename?: "Image";
+      id: string;
+      store: {
+        __typename?: "ZarrStore";
+        id: string;
+        key: string;
+        bucket: string;
+        path?: string | null;
+        shape?: Array<number> | null;
+        dtype?: string | null;
+        chunks?: Array<number> | null;
+        version: string;
+      };
+      derivedScaleViews: Array<{
+        __typename?: "ScaleView";
+        id: string;
+        scaleX: number;
+        scaleY: number;
+        scaleZ: number;
+        scaleT: number;
+        scaleC: number;
+        image: {
+          __typename?: "Image";
+          id: string;
+          store: {
+            __typename?: "ZarrStore";
+            id: string;
+            key: string;
+            bucket: string;
+            path?: string | null;
+            shape?: Array<number> | null;
+            dtype?: string | null;
+            chunks?: Array<number> | null;
+            version: string;
+          };
+        };
+      }>;
+    };
+  }>;
+  image: {
+    __typename?: "Image";
+    id: string;
+    store: {
+      __typename?: "ZarrStore";
+      id: string;
+      key: string;
+      bucket: string;
+      path?: string | null;
+      shape?: Array<number> | null;
+      dtype?: string | null;
+      chunks?: Array<number> | null;
+      version: string;
+    };
+    derivedScaleViews: Array<{
+      __typename?: "ScaleView";
+      id: string;
+      image: {
+        __typename?: "Image";
+        id: string;
+        store: {
+          __typename?: "ZarrStore";
+          id: string;
+          key: string;
+          bucket: string;
+          path?: string | null;
+          shape?: Array<number> | null;
+          dtype?: string | null;
+          chunks?: Array<number> | null;
+          version: string;
+        };
+      };
+    }>;
+  };
+};
+
+export type ListRgbContextFragment = {
+  __typename?: "RGBContext";
+  id: string;
+  name: string;
+  blending: Blending;
+  t: number;
+  z: number;
+  c: number;
+  image: {
+    __typename?: "Image";
+    id: string;
+    store: {
+      __typename?: "ZarrStore";
+      id: string;
+      key: string;
+      bucket: string;
+      path?: string | null;
+      shape?: Array<number> | null;
+      dtype?: string | null;
+      chunks?: Array<number> | null;
+      version: string;
+    };
+    derivedScaleViews: Array<{
+      __typename?: "ScaleView";
+      id: string;
+      image: {
+        __typename?: "Image";
+        id: string;
+        store: {
+          __typename?: "ZarrStore";
+          id: string;
+          key: string;
+          bucket: string;
+          path?: string | null;
+          shape?: Array<number> | null;
+          dtype?: string | null;
+          chunks?: Array<number> | null;
+          version: string;
+        };
+      };
+    }>;
+  };
+  views: Array<{
+    __typename?: "RGBView";
+    id: string;
+    name: string;
+    colorMap: ColorMap;
+    contrastLimitMin?: number | null;
+    contrastLimitMax?: number | null;
+    gamma?: number | null;
+    rescale: boolean;
+    active: boolean;
+    fullColour: string;
+    baseColor?: Array<number> | null;
+    xMin?: number | null;
+    xMax?: number | null;
+    yMin?: number | null;
+    yMax?: number | null;
+    tMin?: number | null;
+    tMax?: number | null;
+    cMin?: number | null;
+    cMax?: number | null;
+    zMin?: number | null;
+    zMax?: number | null;
+    contexts: Array<{ __typename?: "RGBContext"; id: string; name: string }>;
+    image: {
+      __typename?: "Image";
+      id: string;
+      store: {
+        __typename?: "ZarrStore";
+        id: string;
+        key: string;
+        bucket: string;
+        path?: string | null;
+        shape?: Array<number> | null;
+        dtype?: string | null;
+        chunks?: Array<number> | null;
+        version: string;
+      };
+      derivedScaleViews: Array<{
+        __typename?: "ScaleView";
+        id: string;
+        scaleX: number;
+        scaleY: number;
+        scaleZ: number;
+        scaleT: number;
+        scaleC: number;
+        image: {
+          __typename?: "Image";
+          id: string;
+          store: {
+            __typename?: "ZarrStore";
+            id: string;
+            key: string;
+            bucket: string;
+            path?: string | null;
+            shape?: Array<number> | null;
+            dtype?: string | null;
+            chunks?: Array<number> | null;
+            version: string;
+          };
+        };
+      }>;
+    };
+  }>;
+};
+
+export type ListRoiFragment = {
+  __typename?: "ROI";
+  id: string;
+  vectors: Array<any>;
+  image: { __typename?: "Image"; id: string; name: string };
+};
+
+export type RoiFragment = {
+  __typename?: "ROI";
+  id: string;
+  pinned: boolean;
+  createdAt: any;
+  vectors: Array<any>;
+  image: {
+    __typename?: "Image";
+    id: string;
+    name: string;
+    rgbContexts: Array<{
+      __typename?: "RGBContext";
+      id: string;
+      name: string;
+      blending: Blending;
+      t: number;
+      z: number;
+      c: number;
+      image: {
+        __typename?: "Image";
+        id: string;
+        store: {
+          __typename?: "ZarrStore";
+          id: string;
+          key: string;
+          bucket: string;
+          path?: string | null;
+          shape?: Array<number> | null;
+          dtype?: string | null;
+          chunks?: Array<number> | null;
+          version: string;
+        };
+        derivedScaleViews: Array<{
+          __typename?: "ScaleView";
+          id: string;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+          };
+        }>;
+      };
+      views: Array<{
+        __typename?: "RGBView";
+        id: string;
+        name: string;
+        colorMap: ColorMap;
+        contrastLimitMin?: number | null;
+        contrastLimitMax?: number | null;
+        gamma?: number | null;
+        rescale: boolean;
+        active: boolean;
+        fullColour: string;
+        baseColor?: Array<number> | null;
+        xMin?: number | null;
+        xMax?: number | null;
+        yMin?: number | null;
+        yMax?: number | null;
+        tMin?: number | null;
+        tMax?: number | null;
+        cMin?: number | null;
+        cMax?: number | null;
+        zMin?: number | null;
+        zMax?: number | null;
+        contexts: Array<{
+          __typename?: "RGBContext";
+          id: string;
+          name: string;
+        }>;
+        image: {
+          __typename?: "Image";
+          id: string;
+          store: {
+            __typename?: "ZarrStore";
+            id: string;
+            key: string;
+            bucket: string;
+            path?: string | null;
+            shape?: Array<number> | null;
+            dtype?: string | null;
+            chunks?: Array<number> | null;
+            version: string;
+          };
+          derivedScaleViews: Array<{
+            __typename?: "ScaleView";
+            id: string;
+            scaleX: number;
+            scaleY: number;
+            scaleZ: number;
+            scaleT: number;
+            scaleC: number;
+            image: {
+              __typename?: "Image";
+              id: string;
+              store: {
+                __typename?: "ZarrStore";
+                id: string;
+                key: string;
+                bucket: string;
+                path?: string | null;
+                shape?: Array<number> | null;
+                dtype?: string | null;
+                chunks?: Array<number> | null;
+                version: string;
+              };
+            };
+          }>;
+        };
+      }>;
+    }>;
+  };
+  creator?: { __typename?: "User"; sub: string } | null;
+  history: Array<{
+    __typename?: "History";
+    id: string;
+    during?: string | null;
+    kind: HistoryKind;
+    date: any;
+    user?: { __typename?: "User"; sub: string } | null;
+    app?: { __typename?: "App"; clientId: string } | null;
+    effectiveChanges: Array<{
+      __typename?: "ModelChange";
+      field: string;
+      oldValue?: string | null;
+      newValue?: string | null;
+    }>;
+  }>;
+};
+
+export type SnapshotFragment = {
+  __typename?: "Snapshot";
+  id: string;
+  store: { __typename?: "MediaStore"; key: string; presignedUrl: string };
+};
+
+export type StageFragment = {
+  __typename?: "Stage";
+  id: string;
+  pinned: boolean;
+  name: string;
+  affineViews: Array<{
+    __typename?: "AffineTransformationView";
+    id: string;
+    affineMatrix: any;
+    xMin?: number | null;
+    xMax?: number | null;
+    yMin?: number | null;
+    yMax?: number | null;
+    tMin?: number | null;
+    tMax?: number | null;
+    cMin?: number | null;
+    cMax?: number | null;
+    zMin?: number | null;
+    zMax?: number | null;
+    image: {
+      __typename?: "Image";
+      id: string;
+      name: string;
+      store: { __typename?: "ZarrStore"; shape?: Array<number> | null };
+    };
+    stage: { __typename?: "Stage"; id: string; name: string };
+  }>;
+};
+
+export type ListStageFragment = {
+  __typename?: "Stage";
+  id: string;
+  name: string;
+};
+
+export type ZarrStoreFragment = {
+  __typename?: "ZarrStore";
+  id: string;
+  key: string;
+  bucket: string;
+  path?: string | null;
+  shape?: Array<number> | null;
+  dtype?: string | null;
+  chunks?: Array<number> | null;
+  version: string;
+};
+
+export type ParquetStoreFragment = {
+  __typename?: "ParquetStore";
+  id: string;
+  key: string;
+  bucket: string;
+  path: string;
+};
+
+export type BigFileStoreFragment = {
+  __typename?: "BigFileStore";
+  id: string;
+  key: string;
+  bucket: string;
+  path: string;
+  presignedUrl: string;
+};
+
+export type MediaStoreFragment = {
+  __typename?: "MediaStore";
+  id: string;
+  key: string;
+  presignedUrl: string;
+};
+
+export type MeshStoreFragment = {
+  __typename?: "MeshStore";
+  id: string;
+  key: string;
+  presignedUrl: string;
+};
+
+export type TableFragment = {
+  __typename?: "Table";
+  id: string;
+  name: string;
+  origins: Array<{ __typename?: "Image"; id: string }>;
+  store: {
+    __typename?: "ParquetStore";
+    id: string;
+    key: string;
+    bucket: string;
+    path: string;
+  };
+  columns: Array<{
+    __typename?: "TableColumn";
+    name: string;
+    type: DuckDbDataType;
+    accessors: Array<
+      | {
+          __typename?: "ImageAccessor";
+          id: string;
+          keys: Array<string>;
+          minIndex?: number | null;
+          maxIndex?: number | null;
+        }
+      | {
+          __typename?: "LabelAccessor";
+          id: string;
+          keys: Array<string>;
+          minIndex?: number | null;
+          maxIndex?: number | null;
+          pixelView: { __typename?: "PixelView"; id: string };
+        }
+    >;
+  }>;
+  accessors: Array<
+    | {
+        __typename?: "ImageAccessor";
+        id: string;
+        keys: Array<string>;
+        minIndex?: number | null;
+        maxIndex?: number | null;
+      }
+    | {
+        __typename?: "LabelAccessor";
+        id: string;
+        keys: Array<string>;
+        minIndex?: number | null;
+        maxIndex?: number | null;
+        pixelView: { __typename?: "PixelView"; id: string };
+      }
+  >;
+};
+
+export type ListTableFragment = {
+  __typename?: "Table";
+  id: string;
+  name: string;
+  origins: Array<{ __typename?: "Image"; id: string }>;
+  store: {
+    __typename?: "ParquetStore";
+    id: string;
+    key: string;
+    bucket: string;
+    path: string;
+  };
+};
+
+export type VideoFragment = {
+  __typename?: "Video";
+  id: string;
+  store: { __typename?: "MediaStore"; key: string; presignedUrl: string };
+};
+
+type View_AcquisitionView_Fragment = {
+  __typename?: "AcquisitionView";
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+};
+
+type View_AffineTransformationView_Fragment = {
+  __typename?: "AffineTransformationView";
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+};
+
+type View_ChannelView_Fragment = {
+  __typename?: "ChannelView";
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+};
+
+type View_ContinousScanView_Fragment = {
+  __typename?: "ContinousScanView";
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+};
+
+type View_DerivedView_Fragment = {
+  __typename?: "DerivedView";
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+};
+
+type View_FileView_Fragment = {
+  __typename?: "FileView";
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+};
+
+type View_LabelView_Fragment = {
+  __typename?: "LabelView";
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+};
+
+type View_OpticsView_Fragment = {
+  __typename?: "OpticsView";
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+};
+
+type View_PixelView_Fragment = {
+  __typename?: "PixelView";
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+};
+
+type View_RgbView_Fragment = {
+  __typename?: "RGBView";
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+};
+
+type View_RoiView_Fragment = {
+  __typename?: "ROIView";
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+};
+
+type View_ScaleView_Fragment = {
+  __typename?: "ScaleView";
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+};
+
+type View_StructureView_Fragment = {
+  __typename?: "StructureView";
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+};
+
+type View_TimepointView_Fragment = {
+  __typename?: "TimepointView";
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+};
+
+type View_WellPositionView_Fragment = {
+  __typename?: "WellPositionView";
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+};
+
+export type ViewFragment =
+  | View_AcquisitionView_Fragment
+  | View_AffineTransformationView_Fragment
+  | View_ChannelView_Fragment
+  | View_ContinousScanView_Fragment
+  | View_DerivedView_Fragment
+  | View_FileView_Fragment
+  | View_LabelView_Fragment
+  | View_OpticsView_Fragment
+  | View_PixelView_Fragment
+  | View_RgbView_Fragment
+  | View_RoiView_Fragment
+  | View_ScaleView_Fragment
+  | View_StructureView_Fragment
+  | View_TimepointView_Fragment
+  | View_WellPositionView_Fragment;
+
+export type ChannelViewFragment = {
+  __typename?: "ChannelView";
+  id: string;
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+  channel: {
+    __typename?: "Channel";
+    id: string;
+    name: string;
+    excitationWavelength?: number | null;
+  };
+};
+
+export type DerivedViewFragment = {
+  __typename?: "DerivedView";
+  id: string;
+  operation?: string | null;
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+  originImage: { __typename?: "Image"; id: string; name: string };
+};
+
+export type RoiViewFragment = {
+  __typename?: "ROIView";
+  id: string;
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+  roi: { __typename?: "ROI"; id: string; name: string };
+};
+
+export type FileViewFragment = {
+  __typename?: "FileView";
+  id: string;
+  seriesIdentifier?: string | null;
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+  file: { __typename?: "File"; id: string; name: string };
+};
+
+export type AffineTransformationViewFragment = {
+  __typename?: "AffineTransformationView";
+  id: string;
+  affineMatrix: any;
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+  stage: { __typename?: "Stage"; id: string; name: string };
+};
+
+export type RgbViewFragment = {
+  __typename?: "RGBView";
+  id: string;
+  name: string;
+  colorMap: ColorMap;
+  contrastLimitMin?: number | null;
+  contrastLimitMax?: number | null;
+  gamma?: number | null;
+  rescale: boolean;
+  active: boolean;
+  fullColour: string;
+  baseColor?: Array<number> | null;
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+  contexts: Array<{ __typename?: "RGBContext"; id: string; name: string }>;
+  image: {
+    __typename?: "Image";
+    id: string;
+    store: {
+      __typename?: "ZarrStore";
+      id: string;
+      key: string;
+      bucket: string;
+      path?: string | null;
+      shape?: Array<number> | null;
+      dtype?: string | null;
+      chunks?: Array<number> | null;
+      version: string;
+    };
+    derivedScaleViews: Array<{
+      __typename?: "ScaleView";
+      id: string;
+      scaleX: number;
+      scaleY: number;
+      scaleZ: number;
+      scaleT: number;
+      scaleC: number;
+      image: {
+        __typename?: "Image";
+        id: string;
+        store: {
+          __typename?: "ZarrStore";
+          id: string;
+          key: string;
+          bucket: string;
+          path?: string | null;
+          shape?: Array<number> | null;
+          dtype?: string | null;
+          chunks?: Array<number> | null;
+          version: string;
+        };
+      };
+    }>;
+  };
+};
+
+export type TimepointViewFragment = {
+  __typename?: "TimepointView";
+  id: string;
+  msSinceStart?: any | null;
+  indexSinceStart?: number | null;
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+  era: { __typename?: "Era"; id: string; begin?: any | null; name: string };
+};
+
+export type OpticsViewFragment = {
+  __typename?: "OpticsView";
+  id: string;
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+  objective?: {
+    __typename?: "Objective";
+    id: string;
+    name: string;
+    serialNumber: string;
+  } | null;
+  camera?: {
+    __typename?: "Camera";
+    id: string;
+    name: string;
+    serialNumber: string;
+  } | null;
+  instrument?: {
+    __typename?: "Instrument";
+    id: string;
+    name: string;
+    serialNumber: string;
+  } | null;
+};
+
+export type LabelViewFragment = {
+  __typename?: "LabelView";
+  id: string;
+  label: string;
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+};
+
+export type StructureViewFragment = {
+  __typename?: "StructureView";
+  id: string;
+  structure: any;
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+};
+
+export type AcquisitionViewFragment = {
+  __typename?: "AcquisitionView";
+  id: string;
+  description?: string | null;
+  acquiredAt?: any | null;
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+  operator?: { __typename?: "User"; sub: string } | null;
+};
+
+export type WellPositionViewFragment = {
+  __typename?: "WellPositionView";
+  id: string;
+  column?: number | null;
+  row?: number | null;
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+  well?: {
+    __typename?: "MultiWellPlate";
+    id: string;
+    rows?: number | null;
+    columns?: number | null;
+    name?: string | null;
+  } | null;
+};
+
+export type ContinousScanViewFragment = {
+  __typename?: "ContinousScanView";
+  id: string;
+  direction: ScanDirection;
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+};
+
+export type PixelViewFragment = {
+  __typename?: "PixelView";
+  id: string;
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+};
+
+export type DetailPixelViewFragment = {
+  __typename?: "PixelView";
+  id: string;
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
+  tMin?: number | null;
+  tMax?: number | null;
+  cMin?: number | null;
+  cMax?: number | null;
+  zMin?: number | null;
+  zMax?: number | null;
+  image: {
+    __typename?: "Image";
+    id: string;
+    name: string;
+    pinned: boolean;
+    createdAt: any;
+    tags: Array<string>;
+    store: {
+      __typename?: "ZarrStore";
+      id: string;
+      key: string;
+      bucket: string;
+      path?: string | null;
+      shape?: Array<number> | null;
+      dtype?: string | null;
+      chunks?: Array<number> | null;
+      version: string;
+    };
+    views: Array<
+      | {
+          __typename?: "AcquisitionView";
+          id: string;
+          description?: string | null;
+          acquiredAt?: any | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          operator?: { __typename?: "User"; sub: string } | null;
+        }
+      | {
+          __typename?: "AffineTransformationView";
+          id: string;
+          affineMatrix: any;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          stage: { __typename?: "Stage"; id: string; name: string };
+        }
+      | {
+          __typename?: "ChannelView";
+          id: string;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          channel: {
+            __typename?: "Channel";
+            id: string;
+            name: string;
+            excitationWavelength?: number | null;
+          };
+        }
+      | { __typename?: "ContinousScanView" }
+      | {
+          __typename?: "DerivedView";
+          id: string;
+          operation?: string | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          originImage: { __typename?: "Image"; id: string; name: string };
+        }
+      | {
+          __typename?: "FileView";
+          id: string;
+          seriesIdentifier?: string | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          file: { __typename?: "File"; id: string; name: string };
+        }
+      | {
+          __typename?: "LabelView";
+          id: string;
+          label: string;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+        }
+      | {
+          __typename?: "OpticsView";
+          id: string;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          objective?: {
+            __typename?: "Objective";
+            id: string;
+            name: string;
+            serialNumber: string;
+          } | null;
+          camera?: {
+            __typename?: "Camera";
+            id: string;
+            name: string;
+            serialNumber: string;
+          } | null;
+          instrument?: {
+            __typename?: "Instrument";
+            id: string;
+            name: string;
+            serialNumber: string;
+          } | null;
+        }
+      | {
+          __typename?: "PixelView";
+          id: string;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+        }
+      | {
+          __typename?: "RGBView";
+          id: string;
+          name: string;
+          colorMap: ColorMap;
+          contrastLimitMin?: number | null;
+          contrastLimitMax?: number | null;
+          gamma?: number | null;
+          rescale: boolean;
+          active: boolean;
+          fullColour: string;
+          baseColor?: Array<number> | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          contexts: Array<{
+            __typename?: "RGBContext";
+            id: string;
+            name: string;
+          }>;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+            derivedScaleViews: Array<{
+              __typename?: "ScaleView";
+              id: string;
+              scaleX: number;
+              scaleY: number;
+              scaleZ: number;
+              scaleT: number;
+              scaleC: number;
+              image: {
+                __typename?: "Image";
+                id: string;
+                store: {
+                  __typename?: "ZarrStore";
+                  id: string;
+                  key: string;
+                  bucket: string;
+                  path?: string | null;
+                  shape?: Array<number> | null;
+                  dtype?: string | null;
+                  chunks?: Array<number> | null;
+                  version: string;
+                };
+              };
+            }>;
+          };
+        }
+      | {
+          __typename?: "ROIView";
+          id: string;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          roi: { __typename?: "ROI"; id: string; name: string };
+        }
+      | { __typename?: "ScaleView" }
+      | {
+          __typename?: "StructureView";
+          id: string;
+          structure: any;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+        }
+      | {
+          __typename?: "TimepointView";
+          id: string;
+          msSinceStart?: any | null;
+          indexSinceStart?: number | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          era: {
+            __typename?: "Era";
+            id: string;
+            begin?: any | null;
+            name: string;
+          };
+        }
+      | {
+          __typename?: "WellPositionView";
+          id: string;
+          column?: number | null;
+          row?: number | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          well?: {
+            __typename?: "MultiWellPlate";
+            id: string;
+            rows?: number | null;
+            columns?: number | null;
+            name?: string | null;
+          } | null;
+        }
+    >;
+    derivedFromViews: Array<{
+      __typename?: "DerivedView";
+      image: { __typename?: "Image"; id: string; name: string };
+    }>;
+    renders: Array<
+      | {
+          __typename?: "Snapshot";
+          id: string;
+          store: {
+            __typename?: "MediaStore";
+            key: string;
+            presignedUrl: string;
+          };
+        }
+      | {
+          __typename?: "Video";
+          id: string;
+          store: {
+            __typename?: "MediaStore";
+            key: string;
+            presignedUrl: string;
+          };
+        }
+    >;
+    dataset?: { __typename?: "Dataset"; name: string; id: string } | null;
+    history: Array<{
+      __typename?: "History";
+      id: string;
+      during?: string | null;
+      kind: HistoryKind;
+      date: any;
+      user?: { __typename?: "User"; sub: string } | null;
+      app?: { __typename?: "App"; clientId: string } | null;
+      effectiveChanges: Array<{
+        __typename?: "ModelChange";
+        field: string;
+        oldValue?: string | null;
+        newValue?: string | null;
+      }>;
+    }>;
+    creator?: { __typename?: "User"; sub: string } | null;
+    rgbContexts: Array<{
+      __typename?: "RGBContext";
+      id: string;
+      name: string;
+      blending: Blending;
+      t: number;
+      z: number;
+      c: number;
+      image: {
+        __typename?: "Image";
+        id: string;
+        store: {
+          __typename?: "ZarrStore";
+          id: string;
+          key: string;
+          bucket: string;
+          path?: string | null;
+          shape?: Array<number> | null;
+          dtype?: string | null;
+          chunks?: Array<number> | null;
+          version: string;
+        };
+        derivedScaleViews: Array<{
+          __typename?: "ScaleView";
+          id: string;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+          };
+        }>;
+      };
+      views: Array<{
+        __typename?: "RGBView";
+        id: string;
+        name: string;
+        colorMap: ColorMap;
+        contrastLimitMin?: number | null;
+        contrastLimitMax?: number | null;
+        gamma?: number | null;
+        rescale: boolean;
+        active: boolean;
+        fullColour: string;
+        baseColor?: Array<number> | null;
+        xMin?: number | null;
+        xMax?: number | null;
+        yMin?: number | null;
+        yMax?: number | null;
+        tMin?: number | null;
+        tMax?: number | null;
+        cMin?: number | null;
+        cMax?: number | null;
+        zMin?: number | null;
+        zMax?: number | null;
+        contexts: Array<{
+          __typename?: "RGBContext";
+          id: string;
+          name: string;
+        }>;
+        image: {
+          __typename?: "Image";
+          id: string;
+          store: {
+            __typename?: "ZarrStore";
+            id: string;
+            key: string;
+            bucket: string;
+            path?: string | null;
+            shape?: Array<number> | null;
+            dtype?: string | null;
+            chunks?: Array<number> | null;
+            version: string;
+          };
+          derivedScaleViews: Array<{
+            __typename?: "ScaleView";
+            id: string;
+            scaleX: number;
+            scaleY: number;
+            scaleZ: number;
+            scaleT: number;
+            scaleC: number;
+            image: {
+              __typename?: "Image";
+              id: string;
+              store: {
+                __typename?: "ZarrStore";
+                id: string;
+                key: string;
+                bucket: string;
+                path?: string | null;
+                shape?: Array<number> | null;
+                dtype?: string | null;
+                chunks?: Array<number> | null;
+                version: string;
+              };
+            };
+          }>;
+        };
+      }>;
+    }>;
+    rois: Array<{
+      __typename?: "ROI";
+      id: string;
+      vectors: Array<any>;
+      image: { __typename?: "Image"; id: string; name: string };
+    }>;
+  };
+  labelAccessors: Array<{
+    __typename?: "LabelAccessor";
+    keys: Array<string>;
+    table: { __typename?: "Table"; id: string; name: string };
+  }>;
+};
 
 export type CreateCameraMutationVariables = Exact<{
-  serialNumber: Scalars['String']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
-  pixelSizeX?: InputMaybe<Scalars['Micrometers']['input']>;
-  pixelSizeY?: InputMaybe<Scalars['Micrometers']['input']>;
-  sensorSizeX?: InputMaybe<Scalars['Int']['input']>;
-  sensorSizeY?: InputMaybe<Scalars['Int']['input']>;
+  serialNumber: Scalars["String"]["input"];
+  name?: InputMaybe<Scalars["String"]["input"]>;
+  pixelSizeX?: InputMaybe<Scalars["Micrometers"]["input"]>;
+  pixelSizeY?: InputMaybe<Scalars["Micrometers"]["input"]>;
+  sensorSizeX?: InputMaybe<Scalars["Int"]["input"]>;
+  sensorSizeY?: InputMaybe<Scalars["Int"]["input"]>;
 }>;
 
-
-export type CreateCameraMutation = { __typename?: 'Mutation', createCamera: { __typename?: 'Camera', id: string, name: string } };
+export type CreateCameraMutation = {
+  __typename?: "Mutation";
+  createCamera: { __typename?: "Camera"; id: string; name: string };
+};
 
 export type EnsureCameraMutationVariables = Exact<{
-  serialNumber: Scalars['String']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
-  pixelSizeX?: InputMaybe<Scalars['Micrometers']['input']>;
-  pixelSizeY?: InputMaybe<Scalars['Micrometers']['input']>;
-  sensorSizeX?: InputMaybe<Scalars['Int']['input']>;
-  sensorSizeY?: InputMaybe<Scalars['Int']['input']>;
+  serialNumber: Scalars["String"]["input"];
+  name?: InputMaybe<Scalars["String"]["input"]>;
+  pixelSizeX?: InputMaybe<Scalars["Micrometers"]["input"]>;
+  pixelSizeY?: InputMaybe<Scalars["Micrometers"]["input"]>;
+  sensorSizeX?: InputMaybe<Scalars["Int"]["input"]>;
+  sensorSizeY?: InputMaybe<Scalars["Int"]["input"]>;
 }>;
 
-
-export type EnsureCameraMutation = { __typename?: 'Mutation', ensureCamera: { __typename?: 'Camera', id: string, name: string } };
+export type EnsureCameraMutation = {
+  __typename?: "Mutation";
+  ensureCamera: { __typename?: "Camera"; id: string; name: string };
+};
 
 export type CreateChannelMutationVariables = Exact<{
-  name: Scalars['String']['input'];
+  name: Scalars["String"]["input"];
 }>;
 
-
-export type CreateChannelMutation = { __typename?: 'Mutation', createChannel: { __typename?: 'Channel', id: string, name: string } };
+export type CreateChannelMutation = {
+  __typename?: "Mutation";
+  createChannel: { __typename?: "Channel"; id: string; name: string };
+};
 
 export type EnsureChannelMutationVariables = Exact<{
-  name: Scalars['String']['input'];
+  name: Scalars["String"]["input"];
 }>;
 
-
-export type EnsureChannelMutation = { __typename?: 'Mutation', ensureChannel: { __typename?: 'Channel', id: string, name: string } };
+export type EnsureChannelMutation = {
+  __typename?: "Mutation";
+  ensureChannel: { __typename?: "Channel"; id: string; name: string };
+};
 
 export type CreateDatasetMutationVariables = Exact<{
-  name: Scalars['String']['input'];
+  name: Scalars["String"]["input"];
 }>;
 
-
-export type CreateDatasetMutation = { __typename?: 'Mutation', createDataset: { __typename?: 'Dataset', id: string, name: string } };
+export type CreateDatasetMutation = {
+  __typename?: "Mutation";
+  createDataset: { __typename?: "Dataset"; id: string; name: string };
+};
 
 export type UpdateDatasetMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  name: Scalars['String']['input'];
+  id: Scalars["ID"]["input"];
+  name: Scalars["String"]["input"];
 }>;
 
-
-export type UpdateDatasetMutation = { __typename?: 'Mutation', updateDataset: { __typename?: 'Dataset', id: string, name: string } };
+export type UpdateDatasetMutation = {
+  __typename?: "Mutation";
+  updateDataset: { __typename?: "Dataset"; id: string; name: string };
+};
 
 export type PinDatasetMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
+  id: Scalars["ID"]["input"];
+  pin: Scalars["Boolean"]["input"];
 }>;
 
-
-export type PinDatasetMutation = { __typename?: 'Mutation', pinDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type PinDatasetMutation = {
+  __typename?: "Mutation";
+  pinDataset: {
+    __typename?: "Dataset";
+    id: string;
+    name: string;
+    description?: string | null;
+    isDefault: boolean;
+    pinned: boolean;
+    createdAt: any;
+    tags: Array<string>;
+    history: Array<{
+      __typename?: "History";
+      id: string;
+      during?: string | null;
+      kind: HistoryKind;
+      date: any;
+      user?: { __typename?: "User"; sub: string } | null;
+      app?: { __typename?: "App"; clientId: string } | null;
+      effectiveChanges: Array<{
+        __typename?: "ModelChange";
+        field: string;
+        oldValue?: string | null;
+        newValue?: string | null;
+      }>;
+    }>;
+    images: Array<{
+      __typename?: "Image";
+      id: string;
+      name: string;
+      latestSnapshot?: {
+        __typename?: "Snapshot";
+        id: string;
+        store: { __typename?: "MediaStore"; key: string; presignedUrl: string };
+      } | null;
+    }>;
+    files: Array<{ __typename?: "File"; id: string; name: string }>;
+    children: Array<{
+      __typename?: "Dataset";
+      id: string;
+      name: string;
+      description?: string | null;
+      isDefault: boolean;
+    }>;
+    creator?: { __typename?: "User"; sub: string } | null;
+  };
+};
 
 export type PutDatasetsInDatasetMutationVariables = Exact<{
-  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
-  other: Scalars['ID']['input'];
+  selfs: Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"];
+  other: Scalars["ID"]["input"];
 }>;
 
-
-export type PutDatasetsInDatasetMutation = { __typename?: 'Mutation', putDatasetsInDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type PutDatasetsInDatasetMutation = {
+  __typename?: "Mutation";
+  putDatasetsInDataset: {
+    __typename?: "Dataset";
+    id: string;
+    name: string;
+    description?: string | null;
+    isDefault: boolean;
+    pinned: boolean;
+    createdAt: any;
+    tags: Array<string>;
+    history: Array<{
+      __typename?: "History";
+      id: string;
+      during?: string | null;
+      kind: HistoryKind;
+      date: any;
+      user?: { __typename?: "User"; sub: string } | null;
+      app?: { __typename?: "App"; clientId: string } | null;
+      effectiveChanges: Array<{
+        __typename?: "ModelChange";
+        field: string;
+        oldValue?: string | null;
+        newValue?: string | null;
+      }>;
+    }>;
+    images: Array<{
+      __typename?: "Image";
+      id: string;
+      name: string;
+      latestSnapshot?: {
+        __typename?: "Snapshot";
+        id: string;
+        store: { __typename?: "MediaStore"; key: string; presignedUrl: string };
+      } | null;
+    }>;
+    files: Array<{ __typename?: "File"; id: string; name: string }>;
+    children: Array<{
+      __typename?: "Dataset";
+      id: string;
+      name: string;
+      description?: string | null;
+      isDefault: boolean;
+    }>;
+    creator?: { __typename?: "User"; sub: string } | null;
+  };
+};
 
 export type ReleaseDatasetsFromDatasetMutationVariables = Exact<{
-  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
-  other: Scalars['ID']['input'];
+  selfs: Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"];
+  other: Scalars["ID"]["input"];
 }>;
 
-
-export type ReleaseDatasetsFromDatasetMutation = { __typename?: 'Mutation', releaseDatasetsFromDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type ReleaseDatasetsFromDatasetMutation = {
+  __typename?: "Mutation";
+  releaseDatasetsFromDataset: {
+    __typename?: "Dataset";
+    id: string;
+    name: string;
+    description?: string | null;
+    isDefault: boolean;
+    pinned: boolean;
+    createdAt: any;
+    tags: Array<string>;
+    history: Array<{
+      __typename?: "History";
+      id: string;
+      during?: string | null;
+      kind: HistoryKind;
+      date: any;
+      user?: { __typename?: "User"; sub: string } | null;
+      app?: { __typename?: "App"; clientId: string } | null;
+      effectiveChanges: Array<{
+        __typename?: "ModelChange";
+        field: string;
+        oldValue?: string | null;
+        newValue?: string | null;
+      }>;
+    }>;
+    images: Array<{
+      __typename?: "Image";
+      id: string;
+      name: string;
+      latestSnapshot?: {
+        __typename?: "Snapshot";
+        id: string;
+        store: { __typename?: "MediaStore"; key: string; presignedUrl: string };
+      } | null;
+    }>;
+    files: Array<{ __typename?: "File"; id: string; name: string }>;
+    children: Array<{
+      __typename?: "Dataset";
+      id: string;
+      name: string;
+      description?: string | null;
+      isDefault: boolean;
+    }>;
+    creator?: { __typename?: "User"; sub: string } | null;
+  };
+};
 
 export type PutImagesInDatasetMutationVariables = Exact<{
-  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
-  other: Scalars['ID']['input'];
+  selfs: Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"];
+  other: Scalars["ID"]["input"];
 }>;
 
-
-export type PutImagesInDatasetMutation = { __typename?: 'Mutation', putImagesInDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type PutImagesInDatasetMutation = {
+  __typename?: "Mutation";
+  putImagesInDataset: {
+    __typename?: "Dataset";
+    id: string;
+    name: string;
+    description?: string | null;
+    isDefault: boolean;
+    pinned: boolean;
+    createdAt: any;
+    tags: Array<string>;
+    history: Array<{
+      __typename?: "History";
+      id: string;
+      during?: string | null;
+      kind: HistoryKind;
+      date: any;
+      user?: { __typename?: "User"; sub: string } | null;
+      app?: { __typename?: "App"; clientId: string } | null;
+      effectiveChanges: Array<{
+        __typename?: "ModelChange";
+        field: string;
+        oldValue?: string | null;
+        newValue?: string | null;
+      }>;
+    }>;
+    images: Array<{
+      __typename?: "Image";
+      id: string;
+      name: string;
+      latestSnapshot?: {
+        __typename?: "Snapshot";
+        id: string;
+        store: { __typename?: "MediaStore"; key: string; presignedUrl: string };
+      } | null;
+    }>;
+    files: Array<{ __typename?: "File"; id: string; name: string }>;
+    children: Array<{
+      __typename?: "Dataset";
+      id: string;
+      name: string;
+      description?: string | null;
+      isDefault: boolean;
+    }>;
+    creator?: { __typename?: "User"; sub: string } | null;
+  };
+};
 
 export type ReleaseImagesFromDatasetMutationVariables = Exact<{
-  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
-  other: Scalars['ID']['input'];
+  selfs: Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"];
+  other: Scalars["ID"]["input"];
 }>;
 
-
-export type ReleaseImagesFromDatasetMutation = { __typename?: 'Mutation', releaseImagesFromDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type ReleaseImagesFromDatasetMutation = {
+  __typename?: "Mutation";
+  releaseImagesFromDataset: {
+    __typename?: "Dataset";
+    id: string;
+    name: string;
+    description?: string | null;
+    isDefault: boolean;
+    pinned: boolean;
+    createdAt: any;
+    tags: Array<string>;
+    history: Array<{
+      __typename?: "History";
+      id: string;
+      during?: string | null;
+      kind: HistoryKind;
+      date: any;
+      user?: { __typename?: "User"; sub: string } | null;
+      app?: { __typename?: "App"; clientId: string } | null;
+      effectiveChanges: Array<{
+        __typename?: "ModelChange";
+        field: string;
+        oldValue?: string | null;
+        newValue?: string | null;
+      }>;
+    }>;
+    images: Array<{
+      __typename?: "Image";
+      id: string;
+      name: string;
+      latestSnapshot?: {
+        __typename?: "Snapshot";
+        id: string;
+        store: { __typename?: "MediaStore"; key: string; presignedUrl: string };
+      } | null;
+    }>;
+    files: Array<{ __typename?: "File"; id: string; name: string }>;
+    children: Array<{
+      __typename?: "Dataset";
+      id: string;
+      name: string;
+      description?: string | null;
+      isDefault: boolean;
+    }>;
+    creator?: { __typename?: "User"; sub: string } | null;
+  };
+};
 
 export type PutFilesInDatasetMutationVariables = Exact<{
-  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
-  other: Scalars['ID']['input'];
+  selfs: Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"];
+  other: Scalars["ID"]["input"];
 }>;
 
-
-export type PutFilesInDatasetMutation = { __typename?: 'Mutation', putFilesInDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type PutFilesInDatasetMutation = {
+  __typename?: "Mutation";
+  putFilesInDataset: {
+    __typename?: "Dataset";
+    id: string;
+    name: string;
+    description?: string | null;
+    isDefault: boolean;
+    pinned: boolean;
+    createdAt: any;
+    tags: Array<string>;
+    history: Array<{
+      __typename?: "History";
+      id: string;
+      during?: string | null;
+      kind: HistoryKind;
+      date: any;
+      user?: { __typename?: "User"; sub: string } | null;
+      app?: { __typename?: "App"; clientId: string } | null;
+      effectiveChanges: Array<{
+        __typename?: "ModelChange";
+        field: string;
+        oldValue?: string | null;
+        newValue?: string | null;
+      }>;
+    }>;
+    images: Array<{
+      __typename?: "Image";
+      id: string;
+      name: string;
+      latestSnapshot?: {
+        __typename?: "Snapshot";
+        id: string;
+        store: { __typename?: "MediaStore"; key: string; presignedUrl: string };
+      } | null;
+    }>;
+    files: Array<{ __typename?: "File"; id: string; name: string }>;
+    children: Array<{
+      __typename?: "Dataset";
+      id: string;
+      name: string;
+      description?: string | null;
+      isDefault: boolean;
+    }>;
+    creator?: { __typename?: "User"; sub: string } | null;
+  };
+};
 
 export type ReleaseFilesFromDatasetMutationVariables = Exact<{
-  selfs: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
-  other: Scalars['ID']['input'];
+  selfs: Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"];
+  other: Scalars["ID"]["input"];
 }>;
 
-
-export type ReleaseFilesFromDatasetMutation = { __typename?: 'Mutation', releaseFilesFromDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type ReleaseFilesFromDatasetMutation = {
+  __typename?: "Mutation";
+  releaseFilesFromDataset: {
+    __typename?: "Dataset";
+    id: string;
+    name: string;
+    description?: string | null;
+    isDefault: boolean;
+    pinned: boolean;
+    createdAt: any;
+    tags: Array<string>;
+    history: Array<{
+      __typename?: "History";
+      id: string;
+      during?: string | null;
+      kind: HistoryKind;
+      date: any;
+      user?: { __typename?: "User"; sub: string } | null;
+      app?: { __typename?: "App"; clientId: string } | null;
+      effectiveChanges: Array<{
+        __typename?: "ModelChange";
+        field: string;
+        oldValue?: string | null;
+        newValue?: string | null;
+      }>;
+    }>;
+    images: Array<{
+      __typename?: "Image";
+      id: string;
+      name: string;
+      latestSnapshot?: {
+        __typename?: "Snapshot";
+        id: string;
+        store: { __typename?: "MediaStore"; key: string; presignedUrl: string };
+      } | null;
+    }>;
+    files: Array<{ __typename?: "File"; id: string; name: string }>;
+    children: Array<{
+      __typename?: "Dataset";
+      id: string;
+      name: string;
+      description?: string | null;
+      isDefault: boolean;
+    }>;
+    creator?: { __typename?: "User"; sub: string } | null;
+  };
+};
 
 export type RevertDatasetMutationVariables = Exact<{
-  dataset: Scalars['ID']['input'];
-  history: Scalars['ID']['input'];
+  dataset: Scalars["ID"]["input"];
+  history: Scalars["ID"]["input"];
 }>;
 
-
-export type RevertDatasetMutation = { __typename?: 'Mutation', revertDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null } };
+export type RevertDatasetMutation = {
+  __typename?: "Mutation";
+  revertDataset: {
+    __typename?: "Dataset";
+    id: string;
+    name: string;
+    description?: string | null;
+  };
+};
 
 export type CreateEraMutationVariables = Exact<{
-  name: Scalars['String']['input'];
-  begin?: InputMaybe<Scalars['DateTime']['input']>;
+  name: Scalars["String"]["input"];
+  begin?: InputMaybe<Scalars["DateTime"]["input"]>;
 }>;
 
-
-export type CreateEraMutation = { __typename?: 'Mutation', createEra: { __typename?: 'Era', id: string, begin?: any | null } };
+export type CreateEraMutation = {
+  __typename?: "Mutation";
+  createEra: { __typename?: "Era"; id: string; begin?: any | null };
+};
 
 export type From_File_LikeMutationVariables = Exact<{
-  file: Scalars['FileLike']['input'];
-  name: Scalars['String']['input'];
-  origins?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
-  dataset?: InputMaybe<Scalars['ID']['input']>;
+  file: Scalars["FileLike"]["input"];
+  name: Scalars["String"]["input"];
+  origins?: InputMaybe<Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"]>;
+  dataset?: InputMaybe<Scalars["ID"]["input"]>;
 }>;
 
-
-export type From_File_LikeMutation = { __typename?: 'Mutation', fromFileLike: { __typename?: 'File', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null } }> } };
+export type From_File_LikeMutation = {
+  __typename?: "Mutation";
+  fromFileLike: {
+    __typename?: "File";
+    id: string;
+    name: string;
+    origins: Array<{ __typename?: "Image"; id: string }>;
+    store: {
+      __typename?: "BigFileStore";
+      id: string;
+      key: string;
+      bucket: string;
+      path: string;
+      presignedUrl: string;
+    };
+    views: Array<{
+      __typename?: "FileView";
+      id: string;
+      seriesIdentifier?: string | null;
+      image: {
+        __typename?: "Image";
+        id: string;
+        name: string;
+        latestSnapshot?: {
+          __typename?: "Snapshot";
+          id: string;
+          store: {
+            __typename?: "MediaStore";
+            key: string;
+            presignedUrl: string;
+          };
+        } | null;
+      };
+    }>;
+  };
+};
 
 export type RequestFileUploadMutationVariables = Exact<{
-  key: Scalars['String']['input'];
-  datalayer: Scalars['String']['input'];
+  key: Scalars["String"]["input"];
+  datalayer: Scalars["String"]["input"];
 }>;
 
-
-export type RequestFileUploadMutation = { __typename?: 'Mutation', requestFileUpload: { __typename?: 'Credentials', accessKey: string, status: string, secretKey: string, bucket: string, key: string, sessionToken: string, store: string } };
+export type RequestFileUploadMutation = {
+  __typename?: "Mutation";
+  requestFileUpload: {
+    __typename?: "Credentials";
+    accessKey: string;
+    status: string;
+    secretKey: string;
+    bucket: string;
+    key: string;
+    sessionToken: string;
+    store: string;
+  };
+};
 
 export type RequestFileUploadPresignedMutationVariables = Exact<{
-  key: Scalars['String']['input'];
-  datalayer: Scalars['String']['input'];
+  key: Scalars["String"]["input"];
+  datalayer: Scalars["String"]["input"];
 }>;
 
-
-export type RequestFileUploadPresignedMutation = { __typename?: 'Mutation', requestFileUploadPresigned: { __typename?: 'PresignedPostCredentials', xAmzAlgorithm: string, xAmzCredential: string, xAmzDate: string, xAmzSignature: string, key: string, bucket: string, datalayer: string, policy: string, store: string } };
+export type RequestFileUploadPresignedMutation = {
+  __typename?: "Mutation";
+  requestFileUploadPresigned: {
+    __typename?: "PresignedPostCredentials";
+    xAmzAlgorithm: string;
+    xAmzCredential: string;
+    xAmzDate: string;
+    xAmzSignature: string;
+    key: string;
+    bucket: string;
+    datalayer: string;
+    policy: string;
+    store: string;
+  };
+};
 
 export type RequestFileAccessMutationVariables = Exact<{
-  store: Scalars['ID']['input'];
-  duration?: InputMaybe<Scalars['Int']['input']>;
+  store: Scalars["ID"]["input"];
+  duration?: InputMaybe<Scalars["Int"]["input"]>;
 }>;
 
-
-export type RequestFileAccessMutation = { __typename?: 'Mutation', requestFileAccess: { __typename?: 'AccessCredentials', accessKey: string, secretKey: string, bucket: string, key: string, sessionToken: string, path: string } };
+export type RequestFileAccessMutation = {
+  __typename?: "Mutation";
+  requestFileAccess: {
+    __typename?: "AccessCredentials";
+    accessKey: string;
+    secretKey: string;
+    bucket: string;
+    key: string;
+    sessionToken: string;
+    path: string;
+  };
+};
 
 export type DeleteFileMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type DeleteFileMutation = { __typename?: 'Mutation', deleteFile: string };
+export type DeleteFileMutation = {
+  __typename?: "Mutation";
+  deleteFile: string;
+};
 
 export type RequestUploadMutationVariables = Exact<{
-  key: Scalars['String']['input'];
-  datalayer: Scalars['String']['input'];
+  key: Scalars["String"]["input"];
+  datalayer: Scalars["String"]["input"];
 }>;
 
-
-export type RequestUploadMutation = { __typename?: 'Mutation', requestUpload: { __typename?: 'Credentials', accessKey: string, status: string, secretKey: string, bucket: string, key: string, sessionToken: string, store: string } };
+export type RequestUploadMutation = {
+  __typename?: "Mutation";
+  requestUpload: {
+    __typename?: "Credentials";
+    accessKey: string;
+    status: string;
+    secretKey: string;
+    bucket: string;
+    key: string;
+    sessionToken: string;
+    store: string;
+  };
+};
 
 export type RequestAccessMutationVariables = Exact<{
-  store: Scalars['ID']['input'];
-  duration?: InputMaybe<Scalars['Int']['input']>;
+  store: Scalars["ID"]["input"];
+  duration?: InputMaybe<Scalars["Int"]["input"]>;
 }>;
 
-
-export type RequestAccessMutation = { __typename?: 'Mutation', requestAccess: { __typename?: 'AccessCredentials', accessKey: string, secretKey: string, bucket: string, key: string, sessionToken: string, path: string } };
+export type RequestAccessMutation = {
+  __typename?: "Mutation";
+  requestAccess: {
+    __typename?: "AccessCredentials";
+    accessKey: string;
+    secretKey: string;
+    bucket: string;
+    key: string;
+    sessionToken: string;
+    path: string;
+  };
+};
 
 export type PinImageMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
+  id: Scalars["ID"]["input"];
+  pin: Scalars["Boolean"]["input"];
 }>;
 
-
-export type PinImageMutation = { __typename?: 'Mutation', pinImage: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, views: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channel: { __typename?: 'Channel', id: string, name: string, excitationWavelength?: number | null } } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView', id: string, operation?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, originImage: { __typename?: 'Image', id: string, name: string } } | { __typename?: 'FileView', id: string, seriesIdentifier?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, file: { __typename?: 'File', id: string, name: string } } | { __typename?: 'LabelView', id: string, label: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'PixelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } | { __typename?: 'ROIView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, roi: { __typename?: 'ROI', id: string, name: string } } | { __typename?: 'ScaleView' } | { __typename?: 'StructureView', id: string, structure: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }>, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }> }>, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
+export type PinImageMutation = {
+  __typename?: "Mutation";
+  pinImage: {
+    __typename?: "Image";
+    id: string;
+    name: string;
+    pinned: boolean;
+    createdAt: any;
+    tags: Array<string>;
+    store: {
+      __typename?: "ZarrStore";
+      id: string;
+      key: string;
+      bucket: string;
+      path?: string | null;
+      shape?: Array<number> | null;
+      dtype?: string | null;
+      chunks?: Array<number> | null;
+      version: string;
+    };
+    views: Array<
+      | {
+          __typename?: "AcquisitionView";
+          id: string;
+          description?: string | null;
+          acquiredAt?: any | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          operator?: { __typename?: "User"; sub: string } | null;
+        }
+      | {
+          __typename?: "AffineTransformationView";
+          id: string;
+          affineMatrix: any;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          stage: { __typename?: "Stage"; id: string; name: string };
+        }
+      | {
+          __typename?: "ChannelView";
+          id: string;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          channel: {
+            __typename?: "Channel";
+            id: string;
+            name: string;
+            excitationWavelength?: number | null;
+          };
+        }
+      | { __typename?: "ContinousScanView" }
+      | {
+          __typename?: "DerivedView";
+          id: string;
+          operation?: string | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          originImage: { __typename?: "Image"; id: string; name: string };
+        }
+      | {
+          __typename?: "FileView";
+          id: string;
+          seriesIdentifier?: string | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          file: { __typename?: "File"; id: string; name: string };
+        }
+      | {
+          __typename?: "LabelView";
+          id: string;
+          label: string;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+        }
+      | {
+          __typename?: "OpticsView";
+          id: string;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          objective?: {
+            __typename?: "Objective";
+            id: string;
+            name: string;
+            serialNumber: string;
+          } | null;
+          camera?: {
+            __typename?: "Camera";
+            id: string;
+            name: string;
+            serialNumber: string;
+          } | null;
+          instrument?: {
+            __typename?: "Instrument";
+            id: string;
+            name: string;
+            serialNumber: string;
+          } | null;
+        }
+      | {
+          __typename?: "PixelView";
+          id: string;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+        }
+      | {
+          __typename?: "RGBView";
+          id: string;
+          name: string;
+          colorMap: ColorMap;
+          contrastLimitMin?: number | null;
+          contrastLimitMax?: number | null;
+          gamma?: number | null;
+          rescale: boolean;
+          active: boolean;
+          fullColour: string;
+          baseColor?: Array<number> | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          contexts: Array<{
+            __typename?: "RGBContext";
+            id: string;
+            name: string;
+          }>;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+            derivedScaleViews: Array<{
+              __typename?: "ScaleView";
+              id: string;
+              scaleX: number;
+              scaleY: number;
+              scaleZ: number;
+              scaleT: number;
+              scaleC: number;
+              image: {
+                __typename?: "Image";
+                id: string;
+                store: {
+                  __typename?: "ZarrStore";
+                  id: string;
+                  key: string;
+                  bucket: string;
+                  path?: string | null;
+                  shape?: Array<number> | null;
+                  dtype?: string | null;
+                  chunks?: Array<number> | null;
+                  version: string;
+                };
+              };
+            }>;
+          };
+        }
+      | {
+          __typename?: "ROIView";
+          id: string;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          roi: { __typename?: "ROI"; id: string; name: string };
+        }
+      | { __typename?: "ScaleView" }
+      | {
+          __typename?: "StructureView";
+          id: string;
+          structure: any;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+        }
+      | {
+          __typename?: "TimepointView";
+          id: string;
+          msSinceStart?: any | null;
+          indexSinceStart?: number | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          era: {
+            __typename?: "Era";
+            id: string;
+            begin?: any | null;
+            name: string;
+          };
+        }
+      | {
+          __typename?: "WellPositionView";
+          id: string;
+          column?: number | null;
+          row?: number | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          well?: {
+            __typename?: "MultiWellPlate";
+            id: string;
+            rows?: number | null;
+            columns?: number | null;
+            name?: string | null;
+          } | null;
+        }
+    >;
+    derivedFromViews: Array<{
+      __typename?: "DerivedView";
+      image: { __typename?: "Image"; id: string; name: string };
+    }>;
+    renders: Array<
+      | {
+          __typename?: "Snapshot";
+          id: string;
+          store: {
+            __typename?: "MediaStore";
+            key: string;
+            presignedUrl: string;
+          };
+        }
+      | {
+          __typename?: "Video";
+          id: string;
+          store: {
+            __typename?: "MediaStore";
+            key: string;
+            presignedUrl: string;
+          };
+        }
+    >;
+    dataset?: { __typename?: "Dataset"; name: string; id: string } | null;
+    history: Array<{
+      __typename?: "History";
+      id: string;
+      during?: string | null;
+      kind: HistoryKind;
+      date: any;
+      user?: { __typename?: "User"; sub: string } | null;
+      app?: { __typename?: "App"; clientId: string } | null;
+      effectiveChanges: Array<{
+        __typename?: "ModelChange";
+        field: string;
+        oldValue?: string | null;
+        newValue?: string | null;
+      }>;
+    }>;
+    creator?: { __typename?: "User"; sub: string } | null;
+    rgbContexts: Array<{
+      __typename?: "RGBContext";
+      id: string;
+      name: string;
+      blending: Blending;
+      t: number;
+      z: number;
+      c: number;
+      image: {
+        __typename?: "Image";
+        id: string;
+        store: {
+          __typename?: "ZarrStore";
+          id: string;
+          key: string;
+          bucket: string;
+          path?: string | null;
+          shape?: Array<number> | null;
+          dtype?: string | null;
+          chunks?: Array<number> | null;
+          version: string;
+        };
+        derivedScaleViews: Array<{
+          __typename?: "ScaleView";
+          id: string;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+          };
+        }>;
+      };
+      views: Array<{
+        __typename?: "RGBView";
+        id: string;
+        name: string;
+        colorMap: ColorMap;
+        contrastLimitMin?: number | null;
+        contrastLimitMax?: number | null;
+        gamma?: number | null;
+        rescale: boolean;
+        active: boolean;
+        fullColour: string;
+        baseColor?: Array<number> | null;
+        xMin?: number | null;
+        xMax?: number | null;
+        yMin?: number | null;
+        yMax?: number | null;
+        tMin?: number | null;
+        tMax?: number | null;
+        cMin?: number | null;
+        cMax?: number | null;
+        zMin?: number | null;
+        zMax?: number | null;
+        contexts: Array<{
+          __typename?: "RGBContext";
+          id: string;
+          name: string;
+        }>;
+        image: {
+          __typename?: "Image";
+          id: string;
+          store: {
+            __typename?: "ZarrStore";
+            id: string;
+            key: string;
+            bucket: string;
+            path?: string | null;
+            shape?: Array<number> | null;
+            dtype?: string | null;
+            chunks?: Array<number> | null;
+            version: string;
+          };
+          derivedScaleViews: Array<{
+            __typename?: "ScaleView";
+            id: string;
+            scaleX: number;
+            scaleY: number;
+            scaleZ: number;
+            scaleT: number;
+            scaleC: number;
+            image: {
+              __typename?: "Image";
+              id: string;
+              store: {
+                __typename?: "ZarrStore";
+                id: string;
+                key: string;
+                bucket: string;
+                path?: string | null;
+                shape?: Array<number> | null;
+                dtype?: string | null;
+                chunks?: Array<number> | null;
+                version: string;
+              };
+            };
+          }>;
+        };
+      }>;
+    }>;
+    rois: Array<{
+      __typename?: "ROI";
+      id: string;
+      vectors: Array<any>;
+      image: { __typename?: "Image"; id: string; name: string };
+    }>;
+  };
+};
 
 export type UpdateImageMutationVariables = Exact<{
   input: UpdateImageInput;
 }>;
 
-
-export type UpdateImageMutation = { __typename?: 'Mutation', updateImage: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, views: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channel: { __typename?: 'Channel', id: string, name: string, excitationWavelength?: number | null } } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView', id: string, operation?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, originImage: { __typename?: 'Image', id: string, name: string } } | { __typename?: 'FileView', id: string, seriesIdentifier?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, file: { __typename?: 'File', id: string, name: string } } | { __typename?: 'LabelView', id: string, label: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'PixelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } | { __typename?: 'ROIView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, roi: { __typename?: 'ROI', id: string, name: string } } | { __typename?: 'ScaleView' } | { __typename?: 'StructureView', id: string, structure: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }>, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }> }>, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
+export type UpdateImageMutation = {
+  __typename?: "Mutation";
+  updateImage: {
+    __typename?: "Image";
+    id: string;
+    name: string;
+    pinned: boolean;
+    createdAt: any;
+    tags: Array<string>;
+    store: {
+      __typename?: "ZarrStore";
+      id: string;
+      key: string;
+      bucket: string;
+      path?: string | null;
+      shape?: Array<number> | null;
+      dtype?: string | null;
+      chunks?: Array<number> | null;
+      version: string;
+    };
+    views: Array<
+      | {
+          __typename?: "AcquisitionView";
+          id: string;
+          description?: string | null;
+          acquiredAt?: any | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          operator?: { __typename?: "User"; sub: string } | null;
+        }
+      | {
+          __typename?: "AffineTransformationView";
+          id: string;
+          affineMatrix: any;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          stage: { __typename?: "Stage"; id: string; name: string };
+        }
+      | {
+          __typename?: "ChannelView";
+          id: string;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          channel: {
+            __typename?: "Channel";
+            id: string;
+            name: string;
+            excitationWavelength?: number | null;
+          };
+        }
+      | { __typename?: "ContinousScanView" }
+      | {
+          __typename?: "DerivedView";
+          id: string;
+          operation?: string | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          originImage: { __typename?: "Image"; id: string; name: string };
+        }
+      | {
+          __typename?: "FileView";
+          id: string;
+          seriesIdentifier?: string | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          file: { __typename?: "File"; id: string; name: string };
+        }
+      | {
+          __typename?: "LabelView";
+          id: string;
+          label: string;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+        }
+      | {
+          __typename?: "OpticsView";
+          id: string;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          objective?: {
+            __typename?: "Objective";
+            id: string;
+            name: string;
+            serialNumber: string;
+          } | null;
+          camera?: {
+            __typename?: "Camera";
+            id: string;
+            name: string;
+            serialNumber: string;
+          } | null;
+          instrument?: {
+            __typename?: "Instrument";
+            id: string;
+            name: string;
+            serialNumber: string;
+          } | null;
+        }
+      | {
+          __typename?: "PixelView";
+          id: string;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+        }
+      | {
+          __typename?: "RGBView";
+          id: string;
+          name: string;
+          colorMap: ColorMap;
+          contrastLimitMin?: number | null;
+          contrastLimitMax?: number | null;
+          gamma?: number | null;
+          rescale: boolean;
+          active: boolean;
+          fullColour: string;
+          baseColor?: Array<number> | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          contexts: Array<{
+            __typename?: "RGBContext";
+            id: string;
+            name: string;
+          }>;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+            derivedScaleViews: Array<{
+              __typename?: "ScaleView";
+              id: string;
+              scaleX: number;
+              scaleY: number;
+              scaleZ: number;
+              scaleT: number;
+              scaleC: number;
+              image: {
+                __typename?: "Image";
+                id: string;
+                store: {
+                  __typename?: "ZarrStore";
+                  id: string;
+                  key: string;
+                  bucket: string;
+                  path?: string | null;
+                  shape?: Array<number> | null;
+                  dtype?: string | null;
+                  chunks?: Array<number> | null;
+                  version: string;
+                };
+              };
+            }>;
+          };
+        }
+      | {
+          __typename?: "ROIView";
+          id: string;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          roi: { __typename?: "ROI"; id: string; name: string };
+        }
+      | { __typename?: "ScaleView" }
+      | {
+          __typename?: "StructureView";
+          id: string;
+          structure: any;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+        }
+      | {
+          __typename?: "TimepointView";
+          id: string;
+          msSinceStart?: any | null;
+          indexSinceStart?: number | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          era: {
+            __typename?: "Era";
+            id: string;
+            begin?: any | null;
+            name: string;
+          };
+        }
+      | {
+          __typename?: "WellPositionView";
+          id: string;
+          column?: number | null;
+          row?: number | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          well?: {
+            __typename?: "MultiWellPlate";
+            id: string;
+            rows?: number | null;
+            columns?: number | null;
+            name?: string | null;
+          } | null;
+        }
+    >;
+    derivedFromViews: Array<{
+      __typename?: "DerivedView";
+      image: { __typename?: "Image"; id: string; name: string };
+    }>;
+    renders: Array<
+      | {
+          __typename?: "Snapshot";
+          id: string;
+          store: {
+            __typename?: "MediaStore";
+            key: string;
+            presignedUrl: string;
+          };
+        }
+      | {
+          __typename?: "Video";
+          id: string;
+          store: {
+            __typename?: "MediaStore";
+            key: string;
+            presignedUrl: string;
+          };
+        }
+    >;
+    dataset?: { __typename?: "Dataset"; name: string; id: string } | null;
+    history: Array<{
+      __typename?: "History";
+      id: string;
+      during?: string | null;
+      kind: HistoryKind;
+      date: any;
+      user?: { __typename?: "User"; sub: string } | null;
+      app?: { __typename?: "App"; clientId: string } | null;
+      effectiveChanges: Array<{
+        __typename?: "ModelChange";
+        field: string;
+        oldValue?: string | null;
+        newValue?: string | null;
+      }>;
+    }>;
+    creator?: { __typename?: "User"; sub: string } | null;
+    rgbContexts: Array<{
+      __typename?: "RGBContext";
+      id: string;
+      name: string;
+      blending: Blending;
+      t: number;
+      z: number;
+      c: number;
+      image: {
+        __typename?: "Image";
+        id: string;
+        store: {
+          __typename?: "ZarrStore";
+          id: string;
+          key: string;
+          bucket: string;
+          path?: string | null;
+          shape?: Array<number> | null;
+          dtype?: string | null;
+          chunks?: Array<number> | null;
+          version: string;
+        };
+        derivedScaleViews: Array<{
+          __typename?: "ScaleView";
+          id: string;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+          };
+        }>;
+      };
+      views: Array<{
+        __typename?: "RGBView";
+        id: string;
+        name: string;
+        colorMap: ColorMap;
+        contrastLimitMin?: number | null;
+        contrastLimitMax?: number | null;
+        gamma?: number | null;
+        rescale: boolean;
+        active: boolean;
+        fullColour: string;
+        baseColor?: Array<number> | null;
+        xMin?: number | null;
+        xMax?: number | null;
+        yMin?: number | null;
+        yMax?: number | null;
+        tMin?: number | null;
+        tMax?: number | null;
+        cMin?: number | null;
+        cMax?: number | null;
+        zMin?: number | null;
+        zMax?: number | null;
+        contexts: Array<{
+          __typename?: "RGBContext";
+          id: string;
+          name: string;
+        }>;
+        image: {
+          __typename?: "Image";
+          id: string;
+          store: {
+            __typename?: "ZarrStore";
+            id: string;
+            key: string;
+            bucket: string;
+            path?: string | null;
+            shape?: Array<number> | null;
+            dtype?: string | null;
+            chunks?: Array<number> | null;
+            version: string;
+          };
+          derivedScaleViews: Array<{
+            __typename?: "ScaleView";
+            id: string;
+            scaleX: number;
+            scaleY: number;
+            scaleZ: number;
+            scaleT: number;
+            scaleC: number;
+            image: {
+              __typename?: "Image";
+              id: string;
+              store: {
+                __typename?: "ZarrStore";
+                id: string;
+                key: string;
+                bucket: string;
+                path?: string | null;
+                shape?: Array<number> | null;
+                dtype?: string | null;
+                chunks?: Array<number> | null;
+                version: string;
+              };
+            };
+          }>;
+        };
+      }>;
+    }>;
+    rois: Array<{
+      __typename?: "ROI";
+      id: string;
+      vectors: Array<any>;
+      image: { __typename?: "Image"; id: string; name: string };
+    }>;
+  };
+};
 
 export type DeleteImageMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type DeleteImageMutation = { __typename?: 'Mutation', deleteImage: string };
+export type DeleteImageMutation = {
+  __typename?: "Mutation";
+  deleteImage: string;
+};
 
 export type CreateInstrumentMutationVariables = Exact<{
-  serialNumber: Scalars['String']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
-  model?: InputMaybe<Scalars['String']['input']>;
+  serialNumber: Scalars["String"]["input"];
+  name?: InputMaybe<Scalars["String"]["input"]>;
+  model?: InputMaybe<Scalars["String"]["input"]>;
 }>;
 
-
-export type CreateInstrumentMutation = { __typename?: 'Mutation', createInstrument: { __typename?: 'Instrument', id: string, name: string } };
+export type CreateInstrumentMutation = {
+  __typename?: "Mutation";
+  createInstrument: { __typename?: "Instrument"; id: string; name: string };
+};
 
 export type EnsureInstrumentMutationVariables = Exact<{
-  serialNumber: Scalars['String']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
-  model?: InputMaybe<Scalars['String']['input']>;
+  serialNumber: Scalars["String"]["input"];
+  name?: InputMaybe<Scalars["String"]["input"]>;
+  model?: InputMaybe<Scalars["String"]["input"]>;
 }>;
 
-
-export type EnsureInstrumentMutation = { __typename?: 'Mutation', ensureInstrument: { __typename?: 'Instrument', id: string, name: string } };
+export type EnsureInstrumentMutation = {
+  __typename?: "Mutation";
+  ensureInstrument: { __typename?: "Instrument"; id: string; name: string };
+};
 
 export type RequestMediaUploadMutationVariables = Exact<{
-  key: Scalars['String']['input'];
-  datalayer: Scalars['String']['input'];
+  key: Scalars["String"]["input"];
+  datalayer: Scalars["String"]["input"];
 }>;
 
-
-export type RequestMediaUploadMutation = { __typename?: 'Mutation', requestMediaUpload: { __typename?: 'PresignedPostCredentials', xAmzAlgorithm: string, xAmzCredential: string, xAmzDate: string, xAmzSignature: string, key: string, bucket: string, datalayer: string, policy: string, store: string } };
+export type RequestMediaUploadMutation = {
+  __typename?: "Mutation";
+  requestMediaUpload: {
+    __typename?: "PresignedPostCredentials";
+    xAmzAlgorithm: string;
+    xAmzCredential: string;
+    xAmzDate: string;
+    xAmzSignature: string;
+    key: string;
+    bucket: string;
+    datalayer: string;
+    policy: string;
+    store: string;
+  };
+};
 
 export type CreateMultiWellPlateMutationVariables = Exact<{
   input: MultiWellPlateInput;
 }>;
 
-
-export type CreateMultiWellPlateMutation = { __typename?: 'Mutation', createMultiWellPlate: { __typename?: 'MultiWellPlate', id: string, name?: string | null, views: Array<{ __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }> } };
+export type CreateMultiWellPlateMutation = {
+  __typename?: "Mutation";
+  createMultiWellPlate: {
+    __typename?: "MultiWellPlate";
+    id: string;
+    name?: string | null;
+    views: Array<{
+      __typename?: "WellPositionView";
+      id: string;
+      column?: number | null;
+      row?: number | null;
+      xMin?: number | null;
+      xMax?: number | null;
+      yMin?: number | null;
+      yMax?: number | null;
+      tMin?: number | null;
+      tMax?: number | null;
+      cMin?: number | null;
+      cMax?: number | null;
+      zMin?: number | null;
+      zMax?: number | null;
+      well?: {
+        __typename?: "MultiWellPlate";
+        id: string;
+        rows?: number | null;
+        columns?: number | null;
+        name?: string | null;
+      } | null;
+    }>;
+  };
+};
 
 export type AutoCreateMultiWellPlateMutationVariables = Exact<{
-  input: Scalars['String']['input'];
+  input: Scalars["String"]["input"];
 }>;
 
-
-export type AutoCreateMultiWellPlateMutation = { __typename?: 'Mutation', result: { __typename?: 'MultiWellPlate', label?: string | null, value: string } };
+export type AutoCreateMultiWellPlateMutation = {
+  __typename?: "Mutation";
+  result: {
+    __typename?: "MultiWellPlate";
+    label?: string | null;
+    value: string;
+  };
+};
 
 export type CreateObjectiveMutationVariables = Exact<{
-  serialNumber: Scalars['String']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
-  na?: InputMaybe<Scalars['Float']['input']>;
-  magnification?: InputMaybe<Scalars['Float']['input']>;
+  serialNumber: Scalars["String"]["input"];
+  name?: InputMaybe<Scalars["String"]["input"]>;
+  na?: InputMaybe<Scalars["Float"]["input"]>;
+  magnification?: InputMaybe<Scalars["Float"]["input"]>;
 }>;
 
-
-export type CreateObjectiveMutation = { __typename?: 'Mutation', createObjective: { __typename?: 'Objective', id: string, name: string } };
+export type CreateObjectiveMutation = {
+  __typename?: "Mutation";
+  createObjective: { __typename?: "Objective"; id: string; name: string };
+};
 
 export type EnsureObjectiveMutationVariables = Exact<{
-  serialNumber: Scalars['String']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
-  na?: InputMaybe<Scalars['Float']['input']>;
-  magnification?: InputMaybe<Scalars['Float']['input']>;
+  serialNumber: Scalars["String"]["input"];
+  name?: InputMaybe<Scalars["String"]["input"]>;
+  na?: InputMaybe<Scalars["Float"]["input"]>;
+  magnification?: InputMaybe<Scalars["Float"]["input"]>;
 }>;
 
-
-export type EnsureObjectiveMutation = { __typename?: 'Mutation', ensureObjective: { __typename?: 'Objective', id: string, name: string } };
+export type EnsureObjectiveMutation = {
+  __typename?: "Mutation";
+  ensureObjective: { __typename?: "Objective"; id: string; name: string };
+};
 
 export type CreateRgbContextMutationVariables = Exact<{
   input: CreateRgbContextInput;
 }>;
 
-
-export type CreateRgbContextMutation = { __typename?: 'Mutation', createRgbContext: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } };
+export type CreateRgbContextMutation = {
+  __typename?: "Mutation";
+  createRgbContext: {
+    __typename?: "RGBContext";
+    id: string;
+    pinned: boolean;
+    name: string;
+    z: number;
+    t: number;
+    c: number;
+    blending: Blending;
+    views: Array<{
+      __typename?: "RGBView";
+      id: string;
+      name: string;
+      colorMap: ColorMap;
+      contrastLimitMin?: number | null;
+      contrastLimitMax?: number | null;
+      gamma?: number | null;
+      rescale: boolean;
+      active: boolean;
+      fullColour: string;
+      baseColor?: Array<number> | null;
+      xMin?: number | null;
+      xMax?: number | null;
+      yMin?: number | null;
+      yMax?: number | null;
+      tMin?: number | null;
+      tMax?: number | null;
+      cMin?: number | null;
+      cMax?: number | null;
+      zMin?: number | null;
+      zMax?: number | null;
+      contexts: Array<{ __typename?: "RGBContext"; id: string; name: string }>;
+      image: {
+        __typename?: "Image";
+        id: string;
+        store: {
+          __typename?: "ZarrStore";
+          id: string;
+          key: string;
+          bucket: string;
+          path?: string | null;
+          shape?: Array<number> | null;
+          dtype?: string | null;
+          chunks?: Array<number> | null;
+          version: string;
+        };
+        derivedScaleViews: Array<{
+          __typename?: "ScaleView";
+          id: string;
+          scaleX: number;
+          scaleY: number;
+          scaleZ: number;
+          scaleT: number;
+          scaleC: number;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+          };
+        }>;
+      };
+    }>;
+    image: {
+      __typename?: "Image";
+      id: string;
+      store: {
+        __typename?: "ZarrStore";
+        id: string;
+        key: string;
+        bucket: string;
+        path?: string | null;
+        shape?: Array<number> | null;
+        dtype?: string | null;
+        chunks?: Array<number> | null;
+        version: string;
+      };
+      derivedScaleViews: Array<{
+        __typename?: "ScaleView";
+        id: string;
+        image: {
+          __typename?: "Image";
+          id: string;
+          store: {
+            __typename?: "ZarrStore";
+            id: string;
+            key: string;
+            bucket: string;
+            path?: string | null;
+            shape?: Array<number> | null;
+            dtype?: string | null;
+            chunks?: Array<number> | null;
+            version: string;
+          };
+        };
+      }>;
+    };
+  };
+};
 
 export type UpdateRgbContextMutationVariables = Exact<{
   input: UpdateRgbContextInput;
 }>;
 
-
-export type UpdateRgbContextMutation = { __typename?: 'Mutation', updateRgbContext: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } };
+export type UpdateRgbContextMutation = {
+  __typename?: "Mutation";
+  updateRgbContext: {
+    __typename?: "RGBContext";
+    id: string;
+    pinned: boolean;
+    name: string;
+    z: number;
+    t: number;
+    c: number;
+    blending: Blending;
+    views: Array<{
+      __typename?: "RGBView";
+      id: string;
+      name: string;
+      colorMap: ColorMap;
+      contrastLimitMin?: number | null;
+      contrastLimitMax?: number | null;
+      gamma?: number | null;
+      rescale: boolean;
+      active: boolean;
+      fullColour: string;
+      baseColor?: Array<number> | null;
+      xMin?: number | null;
+      xMax?: number | null;
+      yMin?: number | null;
+      yMax?: number | null;
+      tMin?: number | null;
+      tMax?: number | null;
+      cMin?: number | null;
+      cMax?: number | null;
+      zMin?: number | null;
+      zMax?: number | null;
+      contexts: Array<{ __typename?: "RGBContext"; id: string; name: string }>;
+      image: {
+        __typename?: "Image";
+        id: string;
+        store: {
+          __typename?: "ZarrStore";
+          id: string;
+          key: string;
+          bucket: string;
+          path?: string | null;
+          shape?: Array<number> | null;
+          dtype?: string | null;
+          chunks?: Array<number> | null;
+          version: string;
+        };
+        derivedScaleViews: Array<{
+          __typename?: "ScaleView";
+          id: string;
+          scaleX: number;
+          scaleY: number;
+          scaleZ: number;
+          scaleT: number;
+          scaleC: number;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+          };
+        }>;
+      };
+    }>;
+    image: {
+      __typename?: "Image";
+      id: string;
+      store: {
+        __typename?: "ZarrStore";
+        id: string;
+        key: string;
+        bucket: string;
+        path?: string | null;
+        shape?: Array<number> | null;
+        dtype?: string | null;
+        chunks?: Array<number> | null;
+        version: string;
+      };
+      derivedScaleViews: Array<{
+        __typename?: "ScaleView";
+        id: string;
+        image: {
+          __typename?: "Image";
+          id: string;
+          store: {
+            __typename?: "ZarrStore";
+            id: string;
+            key: string;
+            bucket: string;
+            path?: string | null;
+            shape?: Array<number> | null;
+            dtype?: string | null;
+            chunks?: Array<number> | null;
+            version: string;
+          };
+        };
+      }>;
+    };
+  };
+};
 
 export type PinRoiMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
+  id: Scalars["ID"]["input"];
+  pin: Scalars["Boolean"]["input"];
 }>;
 
-
-export type PinRoiMutation = { __typename?: 'Mutation', pinRoi: { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }> }> }, creator?: { __typename?: 'User', sub: string } | null, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
+export type PinRoiMutation = {
+  __typename?: "Mutation";
+  pinRoi: {
+    __typename?: "ROI";
+    id: string;
+    pinned: boolean;
+    createdAt: any;
+    vectors: Array<any>;
+    image: {
+      __typename?: "Image";
+      id: string;
+      name: string;
+      rgbContexts: Array<{
+        __typename?: "RGBContext";
+        id: string;
+        name: string;
+        blending: Blending;
+        t: number;
+        z: number;
+        c: number;
+        image: {
+          __typename?: "Image";
+          id: string;
+          store: {
+            __typename?: "ZarrStore";
+            id: string;
+            key: string;
+            bucket: string;
+            path?: string | null;
+            shape?: Array<number> | null;
+            dtype?: string | null;
+            chunks?: Array<number> | null;
+            version: string;
+          };
+          derivedScaleViews: Array<{
+            __typename?: "ScaleView";
+            id: string;
+            image: {
+              __typename?: "Image";
+              id: string;
+              store: {
+                __typename?: "ZarrStore";
+                id: string;
+                key: string;
+                bucket: string;
+                path?: string | null;
+                shape?: Array<number> | null;
+                dtype?: string | null;
+                chunks?: Array<number> | null;
+                version: string;
+              };
+            };
+          }>;
+        };
+        views: Array<{
+          __typename?: "RGBView";
+          id: string;
+          name: string;
+          colorMap: ColorMap;
+          contrastLimitMin?: number | null;
+          contrastLimitMax?: number | null;
+          gamma?: number | null;
+          rescale: boolean;
+          active: boolean;
+          fullColour: string;
+          baseColor?: Array<number> | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          contexts: Array<{
+            __typename?: "RGBContext";
+            id: string;
+            name: string;
+          }>;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+            derivedScaleViews: Array<{
+              __typename?: "ScaleView";
+              id: string;
+              scaleX: number;
+              scaleY: number;
+              scaleZ: number;
+              scaleT: number;
+              scaleC: number;
+              image: {
+                __typename?: "Image";
+                id: string;
+                store: {
+                  __typename?: "ZarrStore";
+                  id: string;
+                  key: string;
+                  bucket: string;
+                  path?: string | null;
+                  shape?: Array<number> | null;
+                  dtype?: string | null;
+                  chunks?: Array<number> | null;
+                  version: string;
+                };
+              };
+            }>;
+          };
+        }>;
+      }>;
+    };
+    creator?: { __typename?: "User"; sub: string } | null;
+    history: Array<{
+      __typename?: "History";
+      id: string;
+      during?: string | null;
+      kind: HistoryKind;
+      date: any;
+      user?: { __typename?: "User"; sub: string } | null;
+      app?: { __typename?: "App"; clientId: string } | null;
+      effectiveChanges: Array<{
+        __typename?: "ModelChange";
+        field: string;
+        oldValue?: string | null;
+        newValue?: string | null;
+      }>;
+    }>;
+  };
+};
 
 export type CreateSnapshotMutationVariables = Exact<{
-  image: Scalars['ID']['input'];
-  file: Scalars['Upload']['input'];
+  image: Scalars["ID"]["input"];
+  file: Scalars["Upload"]["input"];
 }>;
 
-
-export type CreateSnapshotMutation = { __typename?: 'Mutation', createSnapshot: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } };
+export type CreateSnapshotMutation = {
+  __typename?: "Mutation";
+  createSnapshot: {
+    __typename?: "Snapshot";
+    id: string;
+    store: { __typename?: "MediaStore"; key: string; presignedUrl: string };
+  };
+};
 
 export type CreateStageMutationVariables = Exact<{
-  name: Scalars['String']['input'];
+  name: Scalars["String"]["input"];
 }>;
 
-
-export type CreateStageMutation = { __typename?: 'Mutation', createStage: { __typename?: 'Stage', id: string, name: string } };
+export type CreateStageMutation = {
+  __typename?: "Mutation";
+  createStage: { __typename?: "Stage"; id: string; name: string };
+};
 
 export type PinStageMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  pin: Scalars['Boolean']['input'];
+  id: Scalars["ID"]["input"];
+  pin: Scalars["Boolean"]["input"];
 }>;
 
-
-export type PinStageMutation = { __typename?: 'Mutation', pinStage: { __typename?: 'Stage', id: string, pinned: boolean, name: string, affineViews: Array<{ __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, image: { __typename?: 'Image', id: string, name: string, store: { __typename?: 'ZarrStore', shape?: Array<number> | null } }, stage: { __typename?: 'Stage', id: string, name: string } }> } };
+export type PinStageMutation = {
+  __typename?: "Mutation";
+  pinStage: {
+    __typename?: "Stage";
+    id: string;
+    pinned: boolean;
+    name: string;
+    affineViews: Array<{
+      __typename?: "AffineTransformationView";
+      id: string;
+      affineMatrix: any;
+      xMin?: number | null;
+      xMax?: number | null;
+      yMin?: number | null;
+      yMax?: number | null;
+      tMin?: number | null;
+      tMax?: number | null;
+      cMin?: number | null;
+      cMax?: number | null;
+      zMin?: number | null;
+      zMax?: number | null;
+      image: {
+        __typename?: "Image";
+        id: string;
+        name: string;
+        store: { __typename?: "ZarrStore"; shape?: Array<number> | null };
+      };
+      stage: { __typename?: "Stage"; id: string; name: string };
+    }>;
+  };
+};
 
 export type From_Parquet_LikeMutationVariables = Exact<{
-  dataframe: Scalars['ParquetLike']['input'];
-  name: Scalars['String']['input'];
-  origins?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
-  dataset?: InputMaybe<Scalars['ID']['input']>;
+  dataframe: Scalars["ParquetLike"]["input"];
+  name: Scalars["String"]["input"];
+  origins?: InputMaybe<Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"]>;
+  dataset?: InputMaybe<Scalars["ID"]["input"]>;
 }>;
 
-
-export type From_Parquet_LikeMutation = { __typename?: 'Mutation', fromParquetLike: { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, pixelView: { __typename?: 'PixelView', id: string } }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, pixelView: { __typename?: 'PixelView', id: string } }> } };
+export type From_Parquet_LikeMutation = {
+  __typename?: "Mutation";
+  fromParquetLike: {
+    __typename?: "Table";
+    id: string;
+    name: string;
+    origins: Array<{ __typename?: "Image"; id: string }>;
+    store: {
+      __typename?: "ParquetStore";
+      id: string;
+      key: string;
+      bucket: string;
+      path: string;
+    };
+    columns: Array<{
+      __typename?: "TableColumn";
+      name: string;
+      type: DuckDbDataType;
+      accessors: Array<
+        | {
+            __typename?: "ImageAccessor";
+            id: string;
+            keys: Array<string>;
+            minIndex?: number | null;
+            maxIndex?: number | null;
+          }
+        | {
+            __typename?: "LabelAccessor";
+            id: string;
+            keys: Array<string>;
+            minIndex?: number | null;
+            maxIndex?: number | null;
+            pixelView: { __typename?: "PixelView"; id: string };
+          }
+      >;
+    }>;
+    accessors: Array<
+      | {
+          __typename?: "ImageAccessor";
+          id: string;
+          keys: Array<string>;
+          minIndex?: number | null;
+          maxIndex?: number | null;
+        }
+      | {
+          __typename?: "LabelAccessor";
+          id: string;
+          keys: Array<string>;
+          minIndex?: number | null;
+          maxIndex?: number | null;
+          pixelView: { __typename?: "PixelView"; id: string };
+        }
+    >;
+  };
+};
 
 export type RequestTableUploadMutationVariables = Exact<{
-  key: Scalars['String']['input'];
-  datalayer: Scalars['String']['input'];
+  key: Scalars["String"]["input"];
+  datalayer: Scalars["String"]["input"];
 }>;
 
-
-export type RequestTableUploadMutation = { __typename?: 'Mutation', requestTableUpload: { __typename?: 'Credentials', accessKey: string, status: string, secretKey: string, bucket: string, key: string, sessionToken: string, store: string } };
+export type RequestTableUploadMutation = {
+  __typename?: "Mutation";
+  requestTableUpload: {
+    __typename?: "Credentials";
+    accessKey: string;
+    status: string;
+    secretKey: string;
+    bucket: string;
+    key: string;
+    sessionToken: string;
+    store: string;
+  };
+};
 
 export type RequestTableAccessMutationVariables = Exact<{
-  store: Scalars['ID']['input'];
-  duration?: InputMaybe<Scalars['Int']['input']>;
+  store: Scalars["ID"]["input"];
+  duration?: InputMaybe<Scalars["Int"]["input"]>;
 }>;
 
-
-export type RequestTableAccessMutation = { __typename?: 'Mutation', requestTableAccess: { __typename?: 'AccessCredentials', accessKey: string, secretKey: string, bucket: string, key: string, sessionToken: string, path: string } };
+export type RequestTableAccessMutation = {
+  __typename?: "Mutation";
+  requestTableAccess: {
+    __typename?: "AccessCredentials";
+    accessKey: string;
+    secretKey: string;
+    bucket: string;
+    key: string;
+    sessionToken: string;
+    path: string;
+  };
+};
 
 export type CreateAffineTransformationViewMutationVariables = Exact<{
-  image: Scalars['ID']['input'];
-  affineMatrix: Scalars['FourByFourMatrix']['input'];
-  stage?: InputMaybe<Scalars['ID']['input']>;
+  image: Scalars["ID"]["input"];
+  affineMatrix: Scalars["FourByFourMatrix"]["input"];
+  stage?: InputMaybe<Scalars["ID"]["input"]>;
 }>;
 
-
-export type CreateAffineTransformationViewMutation = { __typename?: 'Mutation', createAffineTransformationView: { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } };
+export type CreateAffineTransformationViewMutation = {
+  __typename?: "Mutation";
+  createAffineTransformationView: {
+    __typename?: "AffineTransformationView";
+    id: string;
+    affineMatrix: any;
+    xMin?: number | null;
+    xMax?: number | null;
+    yMin?: number | null;
+    yMax?: number | null;
+    tMin?: number | null;
+    tMax?: number | null;
+    cMin?: number | null;
+    cMax?: number | null;
+    zMin?: number | null;
+    zMax?: number | null;
+    stage: { __typename?: "Stage"; id: string; name: string };
+  };
+};
 
 export type DeleteAffineTransformationViewMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type DeleteAffineTransformationViewMutation = { __typename?: 'Mutation', deleteAffineTransformationView: string };
+export type DeleteAffineTransformationViewMutation = {
+  __typename?: "Mutation";
+  deleteAffineTransformationView: string;
+};
 
 export type DeleteRgbViewMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type DeleteRgbViewMutation = { __typename?: 'Mutation', deleteRgbView: string };
+export type DeleteRgbViewMutation = {
+  __typename?: "Mutation";
+  deleteRgbView: string;
+};
 
 export type DeleteChannelViewMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type DeleteChannelViewMutation = { __typename?: 'Mutation', deleteChannelView: string };
+export type DeleteChannelViewMutation = {
+  __typename?: "Mutation";
+  deleteChannelView: string;
+};
 
 export type CreateRgbViewMutationVariables = Exact<{
-  image: Scalars['ID']['input'];
-  context: Scalars['ID']['input'];
-  gamma?: InputMaybe<Scalars['Float']['input']>;
-  contrastLimitMax?: InputMaybe<Scalars['Float']['input']>;
-  contrastLimitMin?: InputMaybe<Scalars['Float']['input']>;
-  rescale?: InputMaybe<Scalars['Boolean']['input']>;
-  active?: InputMaybe<Scalars['Boolean']['input']>;
+  image: Scalars["ID"]["input"];
+  context: Scalars["ID"]["input"];
+  gamma?: InputMaybe<Scalars["Float"]["input"]>;
+  contrastLimitMax?: InputMaybe<Scalars["Float"]["input"]>;
+  contrastLimitMin?: InputMaybe<Scalars["Float"]["input"]>;
+  rescale?: InputMaybe<Scalars["Boolean"]["input"]>;
+  active?: InputMaybe<Scalars["Boolean"]["input"]>;
   colorMap?: InputMaybe<ColorMap>;
 }>;
 
-
-export type CreateRgbViewMutation = { __typename?: 'Mutation', createRgbView: { __typename?: 'RGBView', id: string } };
+export type CreateRgbViewMutation = {
+  __typename?: "Mutation";
+  createRgbView: { __typename?: "RGBView"; id: string };
+};
 
 export type CreateWellPositionViewMutationVariables = Exact<{
   input: WellPositionViewInput;
 }>;
 
-
-export type CreateWellPositionViewMutation = { __typename?: 'Mutation', createWellPositionView: { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null } };
+export type CreateWellPositionViewMutation = {
+  __typename?: "Mutation";
+  createWellPositionView: {
+    __typename?: "WellPositionView";
+    id: string;
+    column?: number | null;
+    row?: number | null;
+    xMin?: number | null;
+    xMax?: number | null;
+    yMin?: number | null;
+    yMax?: number | null;
+    tMin?: number | null;
+    tMax?: number | null;
+    cMin?: number | null;
+    cMax?: number | null;
+    zMin?: number | null;
+    zMax?: number | null;
+    well?: {
+      __typename?: "MultiWellPlate";
+      id: string;
+      rows?: number | null;
+      columns?: number | null;
+      name?: string | null;
+    } | null;
+  };
+};
 
 export type CreateContinousScanViewMutationVariables = Exact<{
   input: ContinousScanViewInput;
 }>;
 
-
-export type CreateContinousScanViewMutation = { __typename?: 'Mutation', createContinousScanView: { __typename?: 'ContinousScanView', id: string, direction: ScanDirection, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } };
+export type CreateContinousScanViewMutation = {
+  __typename?: "Mutation";
+  createContinousScanView: {
+    __typename?: "ContinousScanView";
+    id: string;
+    direction: ScanDirection;
+    xMin?: number | null;
+    xMax?: number | null;
+    yMin?: number | null;
+    yMax?: number | null;
+    tMin?: number | null;
+    tMax?: number | null;
+    cMin?: number | null;
+    cMax?: number | null;
+    zMin?: number | null;
+    zMax?: number | null;
+  };
+};
 
 export type CreateStructureViewMutationVariables = Exact<{
   input: StructureViewInput;
 }>;
 
-
-export type CreateStructureViewMutation = { __typename?: 'Mutation', createStructureView: { __typename?: 'StructureView', id: string, structure: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } };
+export type CreateStructureViewMutation = {
+  __typename?: "Mutation";
+  createStructureView: {
+    __typename?: "StructureView";
+    id: string;
+    structure: any;
+    xMin?: number | null;
+    xMax?: number | null;
+    yMin?: number | null;
+    yMax?: number | null;
+    tMin?: number | null;
+    tMax?: number | null;
+    cMin?: number | null;
+    cMax?: number | null;
+    zMin?: number | null;
+    zMax?: number | null;
+  };
+};
 
 export type CreateViewCollectionMutationVariables = Exact<{
-  name: Scalars['String']['input'];
+  name: Scalars["String"]["input"];
 }>;
 
-
-export type CreateViewCollectionMutation = { __typename?: 'Mutation', createViewCollection: { __typename?: 'ViewCollection', id: string, name: string } };
+export type CreateViewCollectionMutation = {
+  __typename?: "Mutation";
+  createViewCollection: {
+    __typename?: "ViewCollection";
+    id: string;
+    name: string;
+  };
+};
 
 export type GetCameraQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetCameraQuery = { __typename?: 'Query', camera: { __typename?: 'Camera', sensorSizeX?: number | null, sensorSizeY?: number | null, pixelSizeX?: any | null, pixelSizeY?: any | null, name: string, serialNumber: string } };
+export type GetCameraQuery = {
+  __typename?: "Query";
+  camera: {
+    __typename?: "Camera";
+    sensorSizeX?: number | null;
+    sensorSizeY?: number | null;
+    pixelSizeX?: any | null;
+    pixelSizeY?: any | null;
+    name: string;
+    serialNumber: string;
+  };
+};
 
 export type ChildrenQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
   pagination?: InputMaybe<ChildrenPaginationInput>;
 }>;
 
-
-export type ChildrenQuery = { __typename?: 'Query', children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean } | { __typename?: 'File', id: string, name: string } | { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }> };
+export type ChildrenQuery = {
+  __typename?: "Query";
+  children: Array<
+    | {
+        __typename?: "Dataset";
+        id: string;
+        name: string;
+        description?: string | null;
+        isDefault: boolean;
+      }
+    | { __typename?: "File"; id: string; name: string }
+    | {
+        __typename?: "Image";
+        id: string;
+        name: string;
+        latestSnapshot?: {
+          __typename?: "Snapshot";
+          id: string;
+          store: {
+            __typename?: "MediaStore";
+            key: string;
+            presignedUrl: string;
+          };
+        } | null;
+      }
+  >;
+};
 
 export type GetDatasetQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetDatasetQuery = { __typename?: 'Query', dataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean, pinned: boolean, createdAt: any, tags: Array<string>, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }>, children: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }>, creator?: { __typename?: 'User', sub: string } | null } };
+export type GetDatasetQuery = {
+  __typename?: "Query";
+  dataset: {
+    __typename?: "Dataset";
+    id: string;
+    name: string;
+    description?: string | null;
+    isDefault: boolean;
+    pinned: boolean;
+    createdAt: any;
+    tags: Array<string>;
+    history: Array<{
+      __typename?: "History";
+      id: string;
+      during?: string | null;
+      kind: HistoryKind;
+      date: any;
+      user?: { __typename?: "User"; sub: string } | null;
+      app?: { __typename?: "App"; clientId: string } | null;
+      effectiveChanges: Array<{
+        __typename?: "ModelChange";
+        field: string;
+        oldValue?: string | null;
+        newValue?: string | null;
+      }>;
+    }>;
+    images: Array<{
+      __typename?: "Image";
+      id: string;
+      name: string;
+      latestSnapshot?: {
+        __typename?: "Snapshot";
+        id: string;
+        store: { __typename?: "MediaStore"; key: string; presignedUrl: string };
+      } | null;
+    }>;
+    files: Array<{ __typename?: "File"; id: string; name: string }>;
+    children: Array<{
+      __typename?: "Dataset";
+      id: string;
+      name: string;
+      description?: string | null;
+      isDefault: boolean;
+    }>;
+    creator?: { __typename?: "User"; sub: string } | null;
+  };
+};
 
 export type GetDatasetsQueryVariables = Exact<{
   filters?: InputMaybe<DatasetFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 }>;
 
-
-export type GetDatasetsQuery = { __typename?: 'Query', datasets: Array<{ __typename?: 'Dataset', id: string, name: string, description?: string | null, isDefault: boolean }> };
+export type GetDatasetsQuery = {
+  __typename?: "Query";
+  datasets: Array<{
+    __typename?: "Dataset";
+    id: string;
+    name: string;
+    description?: string | null;
+    isDefault: boolean;
+  }>;
+};
 
 export type GetFileQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetFileQuery = { __typename?: 'Query', file: { __typename?: 'File', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null } }> } };
+export type GetFileQuery = {
+  __typename?: "Query";
+  file: {
+    __typename?: "File";
+    id: string;
+    name: string;
+    origins: Array<{ __typename?: "Image"; id: string }>;
+    store: {
+      __typename?: "BigFileStore";
+      id: string;
+      key: string;
+      bucket: string;
+      path: string;
+      presignedUrl: string;
+    };
+    views: Array<{
+      __typename?: "FileView";
+      id: string;
+      seriesIdentifier?: string | null;
+      image: {
+        __typename?: "Image";
+        id: string;
+        name: string;
+        latestSnapshot?: {
+          __typename?: "Snapshot";
+          id: string;
+          store: {
+            __typename?: "MediaStore";
+            key: string;
+            presignedUrl: string;
+          };
+        } | null;
+      };
+    }>;
+  };
+};
 
 export type GetFilesQueryVariables = Exact<{
   filters?: InputMaybe<FileFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 }>;
 
-
-export type GetFilesQuery = { __typename?: 'Query', files: Array<{ __typename?: 'File', id: string, name: string }> };
+export type GetFilesQuery = {
+  __typename?: "Query";
+  files: Array<{ __typename?: "File"; id: string; name: string }>;
+};
 
 export type GlobalSearchQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  noImages: Scalars['Boolean']['input'];
-  noFiles: Scalars['Boolean']['input'];
+  search?: InputMaybe<Scalars["String"]["input"]>;
+  noImages: Scalars["Boolean"]["input"];
+  noFiles: Scalars["Boolean"]["input"];
   pagination?: InputMaybe<OffsetPaginationInput>;
 }>;
 
+export type GlobalSearchQuery = {
+  __typename?: "Query";
+  images?: Array<{
+    __typename?: "Image";
+    id: string;
+    name: string;
+    latestSnapshot?: {
+      __typename?: "Snapshot";
+      id: string;
+      store: { __typename?: "MediaStore"; key: string; presignedUrl: string };
+    } | null;
+  }>;
+  files?: Array<{ __typename?: "File"; id: string; name: string }>;
+};
 
-export type GlobalSearchQuery = { __typename?: 'Query', images?: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files?: Array<{ __typename?: 'File', id: string, name: string }> };
+export type ImagesQueryVariables = Exact<{ [key: string]: never }>;
 
-export type ImagesQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type ImagesQuery = { __typename?: 'Query', images: Array<{ __typename?: 'Image', id: string }> };
+export type ImagesQuery = {
+  __typename?: "Query";
+  images: Array<{ __typename?: "Image"; id: string }>;
+};
 
 export type GetImageQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetImageQuery = { __typename?: 'Query', image: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, views: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channel: { __typename?: 'Channel', id: string, name: string, excitationWavelength?: number | null } } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView', id: string, operation?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, originImage: { __typename?: 'Image', id: string, name: string } } | { __typename?: 'FileView', id: string, seriesIdentifier?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, file: { __typename?: 'File', id: string, name: string } } | { __typename?: 'LabelView', id: string, label: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'PixelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } | { __typename?: 'ROIView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, roi: { __typename?: 'ROI', id: string, name: string } } | { __typename?: 'ScaleView' } | { __typename?: 'StructureView', id: string, structure: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }>, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }> }>, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
+export type GetImageQuery = {
+  __typename?: "Query";
+  image: {
+    __typename?: "Image";
+    id: string;
+    name: string;
+    pinned: boolean;
+    createdAt: any;
+    tags: Array<string>;
+    store: {
+      __typename?: "ZarrStore";
+      id: string;
+      key: string;
+      bucket: string;
+      path?: string | null;
+      shape?: Array<number> | null;
+      dtype?: string | null;
+      chunks?: Array<number> | null;
+      version: string;
+    };
+    views: Array<
+      | {
+          __typename?: "AcquisitionView";
+          id: string;
+          description?: string | null;
+          acquiredAt?: any | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          operator?: { __typename?: "User"; sub: string } | null;
+        }
+      | {
+          __typename?: "AffineTransformationView";
+          id: string;
+          affineMatrix: any;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          stage: { __typename?: "Stage"; id: string; name: string };
+        }
+      | {
+          __typename?: "ChannelView";
+          id: string;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          channel: {
+            __typename?: "Channel";
+            id: string;
+            name: string;
+            excitationWavelength?: number | null;
+          };
+        }
+      | { __typename?: "ContinousScanView" }
+      | {
+          __typename?: "DerivedView";
+          id: string;
+          operation?: string | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          originImage: { __typename?: "Image"; id: string; name: string };
+        }
+      | {
+          __typename?: "FileView";
+          id: string;
+          seriesIdentifier?: string | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          file: { __typename?: "File"; id: string; name: string };
+        }
+      | {
+          __typename?: "LabelView";
+          id: string;
+          label: string;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+        }
+      | {
+          __typename?: "OpticsView";
+          id: string;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          objective?: {
+            __typename?: "Objective";
+            id: string;
+            name: string;
+            serialNumber: string;
+          } | null;
+          camera?: {
+            __typename?: "Camera";
+            id: string;
+            name: string;
+            serialNumber: string;
+          } | null;
+          instrument?: {
+            __typename?: "Instrument";
+            id: string;
+            name: string;
+            serialNumber: string;
+          } | null;
+        }
+      | {
+          __typename?: "PixelView";
+          id: string;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+        }
+      | {
+          __typename?: "RGBView";
+          id: string;
+          name: string;
+          colorMap: ColorMap;
+          contrastLimitMin?: number | null;
+          contrastLimitMax?: number | null;
+          gamma?: number | null;
+          rescale: boolean;
+          active: boolean;
+          fullColour: string;
+          baseColor?: Array<number> | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          contexts: Array<{
+            __typename?: "RGBContext";
+            id: string;
+            name: string;
+          }>;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+            derivedScaleViews: Array<{
+              __typename?: "ScaleView";
+              id: string;
+              scaleX: number;
+              scaleY: number;
+              scaleZ: number;
+              scaleT: number;
+              scaleC: number;
+              image: {
+                __typename?: "Image";
+                id: string;
+                store: {
+                  __typename?: "ZarrStore";
+                  id: string;
+                  key: string;
+                  bucket: string;
+                  path?: string | null;
+                  shape?: Array<number> | null;
+                  dtype?: string | null;
+                  chunks?: Array<number> | null;
+                  version: string;
+                };
+              };
+            }>;
+          };
+        }
+      | {
+          __typename?: "ROIView";
+          id: string;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          roi: { __typename?: "ROI"; id: string; name: string };
+        }
+      | { __typename?: "ScaleView" }
+      | {
+          __typename?: "StructureView";
+          id: string;
+          structure: any;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+        }
+      | {
+          __typename?: "TimepointView";
+          id: string;
+          msSinceStart?: any | null;
+          indexSinceStart?: number | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          era: {
+            __typename?: "Era";
+            id: string;
+            begin?: any | null;
+            name: string;
+          };
+        }
+      | {
+          __typename?: "WellPositionView";
+          id: string;
+          column?: number | null;
+          row?: number | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          well?: {
+            __typename?: "MultiWellPlate";
+            id: string;
+            rows?: number | null;
+            columns?: number | null;
+            name?: string | null;
+          } | null;
+        }
+    >;
+    derivedFromViews: Array<{
+      __typename?: "DerivedView";
+      image: { __typename?: "Image"; id: string; name: string };
+    }>;
+    renders: Array<
+      | {
+          __typename?: "Snapshot";
+          id: string;
+          store: {
+            __typename?: "MediaStore";
+            key: string;
+            presignedUrl: string;
+          };
+        }
+      | {
+          __typename?: "Video";
+          id: string;
+          store: {
+            __typename?: "MediaStore";
+            key: string;
+            presignedUrl: string;
+          };
+        }
+    >;
+    dataset?: { __typename?: "Dataset"; name: string; id: string } | null;
+    history: Array<{
+      __typename?: "History";
+      id: string;
+      during?: string | null;
+      kind: HistoryKind;
+      date: any;
+      user?: { __typename?: "User"; sub: string } | null;
+      app?: { __typename?: "App"; clientId: string } | null;
+      effectiveChanges: Array<{
+        __typename?: "ModelChange";
+        field: string;
+        oldValue?: string | null;
+        newValue?: string | null;
+      }>;
+    }>;
+    creator?: { __typename?: "User"; sub: string } | null;
+    rgbContexts: Array<{
+      __typename?: "RGBContext";
+      id: string;
+      name: string;
+      blending: Blending;
+      t: number;
+      z: number;
+      c: number;
+      image: {
+        __typename?: "Image";
+        id: string;
+        store: {
+          __typename?: "ZarrStore";
+          id: string;
+          key: string;
+          bucket: string;
+          path?: string | null;
+          shape?: Array<number> | null;
+          dtype?: string | null;
+          chunks?: Array<number> | null;
+          version: string;
+        };
+        derivedScaleViews: Array<{
+          __typename?: "ScaleView";
+          id: string;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+          };
+        }>;
+      };
+      views: Array<{
+        __typename?: "RGBView";
+        id: string;
+        name: string;
+        colorMap: ColorMap;
+        contrastLimitMin?: number | null;
+        contrastLimitMax?: number | null;
+        gamma?: number | null;
+        rescale: boolean;
+        active: boolean;
+        fullColour: string;
+        baseColor?: Array<number> | null;
+        xMin?: number | null;
+        xMax?: number | null;
+        yMin?: number | null;
+        yMax?: number | null;
+        tMin?: number | null;
+        tMax?: number | null;
+        cMin?: number | null;
+        cMax?: number | null;
+        zMin?: number | null;
+        zMax?: number | null;
+        contexts: Array<{
+          __typename?: "RGBContext";
+          id: string;
+          name: string;
+        }>;
+        image: {
+          __typename?: "Image";
+          id: string;
+          store: {
+            __typename?: "ZarrStore";
+            id: string;
+            key: string;
+            bucket: string;
+            path?: string | null;
+            shape?: Array<number> | null;
+            dtype?: string | null;
+            chunks?: Array<number> | null;
+            version: string;
+          };
+          derivedScaleViews: Array<{
+            __typename?: "ScaleView";
+            id: string;
+            scaleX: number;
+            scaleY: number;
+            scaleZ: number;
+            scaleT: number;
+            scaleC: number;
+            image: {
+              __typename?: "Image";
+              id: string;
+              store: {
+                __typename?: "ZarrStore";
+                id: string;
+                key: string;
+                bucket: string;
+                path?: string | null;
+                shape?: Array<number> | null;
+                dtype?: string | null;
+                chunks?: Array<number> | null;
+                version: string;
+              };
+            };
+          }>;
+        };
+      }>;
+    }>;
+    rois: Array<{
+      __typename?: "ROI";
+      id: string;
+      vectors: Array<any>;
+      image: { __typename?: "Image"; id: string; name: string };
+    }>;
+  };
+};
 
 export type GetImagesQueryVariables = Exact<{
   filters?: InputMaybe<ImageFilter>;
@@ -4471,1021 +10923,2557 @@ export type GetImagesQueryVariables = Exact<{
   order?: InputMaybe<ImageOrder>;
 }>;
 
-
-export type GetImagesQuery = { __typename?: 'Query', images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }> };
+export type GetImagesQuery = {
+  __typename?: "Query";
+  images: Array<{
+    __typename?: "Image";
+    id: string;
+    name: string;
+    latestSnapshot?: {
+      __typename?: "Snapshot";
+      id: string;
+      store: { __typename?: "MediaStore"; key: string; presignedUrl: string };
+    } | null;
+  }>;
+};
 
 export type GetInstrumentQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetInstrumentQuery = { __typename?: 'Query', instrument: { __typename?: 'Instrument', model?: string | null, name: string, serialNumber: string } };
+export type GetInstrumentQuery = {
+  __typename?: "Query";
+  instrument: {
+    __typename?: "Instrument";
+    model?: string | null;
+    name: string;
+    serialNumber: string;
+  };
+};
 
 export type DetailMeshQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type DetailMeshQuery = { __typename?: 'Query', mesh: { __typename?: 'Mesh', id: string, name: string, store: { __typename?: 'MeshStore', id: string, key: string, presignedUrl: string } } };
+export type DetailMeshQuery = {
+  __typename?: "Query";
+  mesh: {
+    __typename?: "Mesh";
+    id: string;
+    name: string;
+    store: {
+      __typename?: "MeshStore";
+      id: string;
+      key: string;
+      presignedUrl: string;
+    };
+  };
+};
 
 export type ListMeshesQueryVariables = Exact<{
   filters?: InputMaybe<MeshFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 }>;
 
-
-export type ListMeshesQuery = { __typename?: 'Query', meshes: Array<{ __typename?: 'Mesh', id: string, name: string }> };
+export type ListMeshesQuery = {
+  __typename?: "Query";
+  meshes: Array<{ __typename?: "Mesh"; id: string; name: string }>;
+};
 
 export type GetMultiWellPlateQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetMultiWellPlateQuery = { __typename?: 'Query', multiWellPlate: { __typename?: 'MultiWellPlate', id: string, name?: string | null, views: Array<{ __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }> } };
+export type GetMultiWellPlateQuery = {
+  __typename?: "Query";
+  multiWellPlate: {
+    __typename?: "MultiWellPlate";
+    id: string;
+    name?: string | null;
+    views: Array<{
+      __typename?: "WellPositionView";
+      id: string;
+      column?: number | null;
+      row?: number | null;
+      xMin?: number | null;
+      xMax?: number | null;
+      yMin?: number | null;
+      yMax?: number | null;
+      tMin?: number | null;
+      tMax?: number | null;
+      cMin?: number | null;
+      cMax?: number | null;
+      zMin?: number | null;
+      zMax?: number | null;
+      well?: {
+        __typename?: "MultiWellPlate";
+        id: string;
+        rows?: number | null;
+        columns?: number | null;
+        name?: string | null;
+      } | null;
+    }>;
+  };
+};
 
 export type GetMultiWellPlatesQueryVariables = Exact<{
   filters?: InputMaybe<MultiWellPlateFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 }>;
 
-
-export type GetMultiWellPlatesQuery = { __typename?: 'Query', multiWellPlates: Array<{ __typename?: 'MultiWellPlate', id: string, name?: string | null }> };
+export type GetMultiWellPlatesQuery = {
+  __typename?: "Query";
+  multiWellPlates: Array<{
+    __typename?: "MultiWellPlate";
+    id: string;
+    name?: string | null;
+  }>;
+};
 
 export type MultiWellPlateOptionsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
+  values?: InputMaybe<Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"]>;
 }>;
 
-
-export type MultiWellPlateOptionsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'MultiWellPlate', value: string, label?: string | null }> };
+export type MultiWellPlateOptionsQuery = {
+  __typename?: "Query";
+  options: Array<{
+    __typename?: "MultiWellPlate";
+    value: string;
+    label?: string | null;
+  }>;
+};
 
 export type GetObjectiveQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetObjectiveQuery = { __typename?: 'Query', objective: { __typename?: 'Objective', na?: number | null, name: string, serialNumber: string } };
+export type GetObjectiveQuery = {
+  __typename?: "Query";
+  objective: {
+    __typename?: "Objective";
+    na?: number | null;
+    name: string;
+    serialNumber: string;
+  };
+};
 
 export type GetPixelViewQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetPixelViewQuery = { __typename?: 'Query', pixelView: { __typename?: 'PixelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, image: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, views: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channel: { __typename?: 'Channel', id: string, name: string, excitationWavelength?: number | null } } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView', id: string, operation?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, originImage: { __typename?: 'Image', id: string, name: string } } | { __typename?: 'FileView', id: string, seriesIdentifier?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, file: { __typename?: 'File', id: string, name: string } } | { __typename?: 'LabelView', id: string, label: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'PixelView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } | { __typename?: 'ROIView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, roi: { __typename?: 'ROI', id: string, name: string } } | { __typename?: 'ScaleView' } | { __typename?: 'StructureView', id: string, structure: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }>, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }> }>, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> }, labelAccessors: Array<{ __typename?: 'LabelAccessor', keys: Array<string>, table: { __typename?: 'Table', id: string, name: string } }> } };
+export type GetPixelViewQuery = {
+  __typename?: "Query";
+  pixelView: {
+    __typename?: "PixelView";
+    id: string;
+    xMin?: number | null;
+    xMax?: number | null;
+    yMin?: number | null;
+    yMax?: number | null;
+    tMin?: number | null;
+    tMax?: number | null;
+    cMin?: number | null;
+    cMax?: number | null;
+    zMin?: number | null;
+    zMax?: number | null;
+    image: {
+      __typename?: "Image";
+      id: string;
+      name: string;
+      pinned: boolean;
+      createdAt: any;
+      tags: Array<string>;
+      store: {
+        __typename?: "ZarrStore";
+        id: string;
+        key: string;
+        bucket: string;
+        path?: string | null;
+        shape?: Array<number> | null;
+        dtype?: string | null;
+        chunks?: Array<number> | null;
+        version: string;
+      };
+      views: Array<
+        | {
+            __typename?: "AcquisitionView";
+            id: string;
+            description?: string | null;
+            acquiredAt?: any | null;
+            xMin?: number | null;
+            xMax?: number | null;
+            yMin?: number | null;
+            yMax?: number | null;
+            tMin?: number | null;
+            tMax?: number | null;
+            cMin?: number | null;
+            cMax?: number | null;
+            zMin?: number | null;
+            zMax?: number | null;
+            operator?: { __typename?: "User"; sub: string } | null;
+          }
+        | {
+            __typename?: "AffineTransformationView";
+            id: string;
+            affineMatrix: any;
+            xMin?: number | null;
+            xMax?: number | null;
+            yMin?: number | null;
+            yMax?: number | null;
+            tMin?: number | null;
+            tMax?: number | null;
+            cMin?: number | null;
+            cMax?: number | null;
+            zMin?: number | null;
+            zMax?: number | null;
+            stage: { __typename?: "Stage"; id: string; name: string };
+          }
+        | {
+            __typename?: "ChannelView";
+            id: string;
+            xMin?: number | null;
+            xMax?: number | null;
+            yMin?: number | null;
+            yMax?: number | null;
+            tMin?: number | null;
+            tMax?: number | null;
+            cMin?: number | null;
+            cMax?: number | null;
+            zMin?: number | null;
+            zMax?: number | null;
+            channel: {
+              __typename?: "Channel";
+              id: string;
+              name: string;
+              excitationWavelength?: number | null;
+            };
+          }
+        | { __typename?: "ContinousScanView" }
+        | {
+            __typename?: "DerivedView";
+            id: string;
+            operation?: string | null;
+            xMin?: number | null;
+            xMax?: number | null;
+            yMin?: number | null;
+            yMax?: number | null;
+            tMin?: number | null;
+            tMax?: number | null;
+            cMin?: number | null;
+            cMax?: number | null;
+            zMin?: number | null;
+            zMax?: number | null;
+            originImage: { __typename?: "Image"; id: string; name: string };
+          }
+        | {
+            __typename?: "FileView";
+            id: string;
+            seriesIdentifier?: string | null;
+            xMin?: number | null;
+            xMax?: number | null;
+            yMin?: number | null;
+            yMax?: number | null;
+            tMin?: number | null;
+            tMax?: number | null;
+            cMin?: number | null;
+            cMax?: number | null;
+            zMin?: number | null;
+            zMax?: number | null;
+            file: { __typename?: "File"; id: string; name: string };
+          }
+        | {
+            __typename?: "LabelView";
+            id: string;
+            label: string;
+            xMin?: number | null;
+            xMax?: number | null;
+            yMin?: number | null;
+            yMax?: number | null;
+            tMin?: number | null;
+            tMax?: number | null;
+            cMin?: number | null;
+            cMax?: number | null;
+            zMin?: number | null;
+            zMax?: number | null;
+          }
+        | {
+            __typename?: "OpticsView";
+            id: string;
+            xMin?: number | null;
+            xMax?: number | null;
+            yMin?: number | null;
+            yMax?: number | null;
+            tMin?: number | null;
+            tMax?: number | null;
+            cMin?: number | null;
+            cMax?: number | null;
+            zMin?: number | null;
+            zMax?: number | null;
+            objective?: {
+              __typename?: "Objective";
+              id: string;
+              name: string;
+              serialNumber: string;
+            } | null;
+            camera?: {
+              __typename?: "Camera";
+              id: string;
+              name: string;
+              serialNumber: string;
+            } | null;
+            instrument?: {
+              __typename?: "Instrument";
+              id: string;
+              name: string;
+              serialNumber: string;
+            } | null;
+          }
+        | {
+            __typename?: "PixelView";
+            id: string;
+            xMin?: number | null;
+            xMax?: number | null;
+            yMin?: number | null;
+            yMax?: number | null;
+            tMin?: number | null;
+            tMax?: number | null;
+            cMin?: number | null;
+            cMax?: number | null;
+            zMin?: number | null;
+            zMax?: number | null;
+          }
+        | {
+            __typename?: "RGBView";
+            id: string;
+            name: string;
+            colorMap: ColorMap;
+            contrastLimitMin?: number | null;
+            contrastLimitMax?: number | null;
+            gamma?: number | null;
+            rescale: boolean;
+            active: boolean;
+            fullColour: string;
+            baseColor?: Array<number> | null;
+            xMin?: number | null;
+            xMax?: number | null;
+            yMin?: number | null;
+            yMax?: number | null;
+            tMin?: number | null;
+            tMax?: number | null;
+            cMin?: number | null;
+            cMax?: number | null;
+            zMin?: number | null;
+            zMax?: number | null;
+            contexts: Array<{
+              __typename?: "RGBContext";
+              id: string;
+              name: string;
+            }>;
+            image: {
+              __typename?: "Image";
+              id: string;
+              store: {
+                __typename?: "ZarrStore";
+                id: string;
+                key: string;
+                bucket: string;
+                path?: string | null;
+                shape?: Array<number> | null;
+                dtype?: string | null;
+                chunks?: Array<number> | null;
+                version: string;
+              };
+              derivedScaleViews: Array<{
+                __typename?: "ScaleView";
+                id: string;
+                scaleX: number;
+                scaleY: number;
+                scaleZ: number;
+                scaleT: number;
+                scaleC: number;
+                image: {
+                  __typename?: "Image";
+                  id: string;
+                  store: {
+                    __typename?: "ZarrStore";
+                    id: string;
+                    key: string;
+                    bucket: string;
+                    path?: string | null;
+                    shape?: Array<number> | null;
+                    dtype?: string | null;
+                    chunks?: Array<number> | null;
+                    version: string;
+                  };
+                };
+              }>;
+            };
+          }
+        | {
+            __typename?: "ROIView";
+            id: string;
+            xMin?: number | null;
+            xMax?: number | null;
+            yMin?: number | null;
+            yMax?: number | null;
+            tMin?: number | null;
+            tMax?: number | null;
+            cMin?: number | null;
+            cMax?: number | null;
+            zMin?: number | null;
+            zMax?: number | null;
+            roi: { __typename?: "ROI"; id: string; name: string };
+          }
+        | { __typename?: "ScaleView" }
+        | {
+            __typename?: "StructureView";
+            id: string;
+            structure: any;
+            xMin?: number | null;
+            xMax?: number | null;
+            yMin?: number | null;
+            yMax?: number | null;
+            tMin?: number | null;
+            tMax?: number | null;
+            cMin?: number | null;
+            cMax?: number | null;
+            zMin?: number | null;
+            zMax?: number | null;
+          }
+        | {
+            __typename?: "TimepointView";
+            id: string;
+            msSinceStart?: any | null;
+            indexSinceStart?: number | null;
+            xMin?: number | null;
+            xMax?: number | null;
+            yMin?: number | null;
+            yMax?: number | null;
+            tMin?: number | null;
+            tMax?: number | null;
+            cMin?: number | null;
+            cMax?: number | null;
+            zMin?: number | null;
+            zMax?: number | null;
+            era: {
+              __typename?: "Era";
+              id: string;
+              begin?: any | null;
+              name: string;
+            };
+          }
+        | {
+            __typename?: "WellPositionView";
+            id: string;
+            column?: number | null;
+            row?: number | null;
+            xMin?: number | null;
+            xMax?: number | null;
+            yMin?: number | null;
+            yMax?: number | null;
+            tMin?: number | null;
+            tMax?: number | null;
+            cMin?: number | null;
+            cMax?: number | null;
+            zMin?: number | null;
+            zMax?: number | null;
+            well?: {
+              __typename?: "MultiWellPlate";
+              id: string;
+              rows?: number | null;
+              columns?: number | null;
+              name?: string | null;
+            } | null;
+          }
+      >;
+      derivedFromViews: Array<{
+        __typename?: "DerivedView";
+        image: { __typename?: "Image"; id: string; name: string };
+      }>;
+      renders: Array<
+        | {
+            __typename?: "Snapshot";
+            id: string;
+            store: {
+              __typename?: "MediaStore";
+              key: string;
+              presignedUrl: string;
+            };
+          }
+        | {
+            __typename?: "Video";
+            id: string;
+            store: {
+              __typename?: "MediaStore";
+              key: string;
+              presignedUrl: string;
+            };
+          }
+      >;
+      dataset?: { __typename?: "Dataset"; name: string; id: string } | null;
+      history: Array<{
+        __typename?: "History";
+        id: string;
+        during?: string | null;
+        kind: HistoryKind;
+        date: any;
+        user?: { __typename?: "User"; sub: string } | null;
+        app?: { __typename?: "App"; clientId: string } | null;
+        effectiveChanges: Array<{
+          __typename?: "ModelChange";
+          field: string;
+          oldValue?: string | null;
+          newValue?: string | null;
+        }>;
+      }>;
+      creator?: { __typename?: "User"; sub: string } | null;
+      rgbContexts: Array<{
+        __typename?: "RGBContext";
+        id: string;
+        name: string;
+        blending: Blending;
+        t: number;
+        z: number;
+        c: number;
+        image: {
+          __typename?: "Image";
+          id: string;
+          store: {
+            __typename?: "ZarrStore";
+            id: string;
+            key: string;
+            bucket: string;
+            path?: string | null;
+            shape?: Array<number> | null;
+            dtype?: string | null;
+            chunks?: Array<number> | null;
+            version: string;
+          };
+          derivedScaleViews: Array<{
+            __typename?: "ScaleView";
+            id: string;
+            image: {
+              __typename?: "Image";
+              id: string;
+              store: {
+                __typename?: "ZarrStore";
+                id: string;
+                key: string;
+                bucket: string;
+                path?: string | null;
+                shape?: Array<number> | null;
+                dtype?: string | null;
+                chunks?: Array<number> | null;
+                version: string;
+              };
+            };
+          }>;
+        };
+        views: Array<{
+          __typename?: "RGBView";
+          id: string;
+          name: string;
+          colorMap: ColorMap;
+          contrastLimitMin?: number | null;
+          contrastLimitMax?: number | null;
+          gamma?: number | null;
+          rescale: boolean;
+          active: boolean;
+          fullColour: string;
+          baseColor?: Array<number> | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          contexts: Array<{
+            __typename?: "RGBContext";
+            id: string;
+            name: string;
+          }>;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+            derivedScaleViews: Array<{
+              __typename?: "ScaleView";
+              id: string;
+              scaleX: number;
+              scaleY: number;
+              scaleZ: number;
+              scaleT: number;
+              scaleC: number;
+              image: {
+                __typename?: "Image";
+                id: string;
+                store: {
+                  __typename?: "ZarrStore";
+                  id: string;
+                  key: string;
+                  bucket: string;
+                  path?: string | null;
+                  shape?: Array<number> | null;
+                  dtype?: string | null;
+                  chunks?: Array<number> | null;
+                  version: string;
+                };
+              };
+            }>;
+          };
+        }>;
+      }>;
+      rois: Array<{
+        __typename?: "ROI";
+        id: string;
+        vectors: Array<any>;
+        image: { __typename?: "Image"; id: string; name: string };
+      }>;
+    };
+    labelAccessors: Array<{
+      __typename?: "LabelAccessor";
+      keys: Array<string>;
+      table: { __typename?: "Table"; id: string; name: string };
+    }>;
+  };
+};
 
 export type RenderTreeQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type RenderTreeQuery = { __typename?: 'Query', renderTree: { __typename?: 'RenderTree', id: string, name: string, tree: { __typename?: 'Tree', children: Array<{ __typename?: 'ContextNode', kind: string, label?: string | null, context: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } } | { __typename?: 'GridNode', kind: string, label?: string | null, gap?: number | null, children: Array<{ __typename?: 'ContextNode', kind: string, label?: string | null, context: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } } | { __typename?: 'GridNode', kind: string, label?: string | null, gap?: number | null } | { __typename?: 'OverlayNode', kind: string, label?: string | null } | { __typename?: 'SplitNode', kind: string }> } | { __typename?: 'OverlayNode', kind: string, label?: string | null, children: Array<{ __typename?: 'ContextNode', kind: string, label?: string | null, context: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } } | { __typename?: 'GridNode', kind: string, label?: string | null, gap?: number | null } | { __typename?: 'OverlayNode', kind: string, label?: string | null } | { __typename?: 'SplitNode', kind: string }> } | { __typename?: 'SplitNode', kind: string }> } } };
+export type RenderTreeQuery = {
+  __typename?: "Query";
+  renderTree: {
+    __typename?: "RenderTree";
+    id: string;
+    name: string;
+    tree: {
+      __typename?: "Tree";
+      children: Array<
+        | {
+            __typename?: "ContextNode";
+            kind: string;
+            label?: string | null;
+            context: {
+              __typename?: "RGBContext";
+              id: string;
+              pinned: boolean;
+              name: string;
+              z: number;
+              t: number;
+              c: number;
+              blending: Blending;
+              views: Array<{
+                __typename?: "RGBView";
+                id: string;
+                name: string;
+                colorMap: ColorMap;
+                contrastLimitMin?: number | null;
+                contrastLimitMax?: number | null;
+                gamma?: number | null;
+                rescale: boolean;
+                active: boolean;
+                fullColour: string;
+                baseColor?: Array<number> | null;
+                xMin?: number | null;
+                xMax?: number | null;
+                yMin?: number | null;
+                yMax?: number | null;
+                tMin?: number | null;
+                tMax?: number | null;
+                cMin?: number | null;
+                cMax?: number | null;
+                zMin?: number | null;
+                zMax?: number | null;
+                contexts: Array<{
+                  __typename?: "RGBContext";
+                  id: string;
+                  name: string;
+                }>;
+                image: {
+                  __typename?: "Image";
+                  id: string;
+                  store: {
+                    __typename?: "ZarrStore";
+                    id: string;
+                    key: string;
+                    bucket: string;
+                    path?: string | null;
+                    shape?: Array<number> | null;
+                    dtype?: string | null;
+                    chunks?: Array<number> | null;
+                    version: string;
+                  };
+                  derivedScaleViews: Array<{
+                    __typename?: "ScaleView";
+                    id: string;
+                    scaleX: number;
+                    scaleY: number;
+                    scaleZ: number;
+                    scaleT: number;
+                    scaleC: number;
+                    image: {
+                      __typename?: "Image";
+                      id: string;
+                      store: {
+                        __typename?: "ZarrStore";
+                        id: string;
+                        key: string;
+                        bucket: string;
+                        path?: string | null;
+                        shape?: Array<number> | null;
+                        dtype?: string | null;
+                        chunks?: Array<number> | null;
+                        version: string;
+                      };
+                    };
+                  }>;
+                };
+              }>;
+              image: {
+                __typename?: "Image";
+                id: string;
+                store: {
+                  __typename?: "ZarrStore";
+                  id: string;
+                  key: string;
+                  bucket: string;
+                  path?: string | null;
+                  shape?: Array<number> | null;
+                  dtype?: string | null;
+                  chunks?: Array<number> | null;
+                  version: string;
+                };
+                derivedScaleViews: Array<{
+                  __typename?: "ScaleView";
+                  id: string;
+                  image: {
+                    __typename?: "Image";
+                    id: string;
+                    store: {
+                      __typename?: "ZarrStore";
+                      id: string;
+                      key: string;
+                      bucket: string;
+                      path?: string | null;
+                      shape?: Array<number> | null;
+                      dtype?: string | null;
+                      chunks?: Array<number> | null;
+                      version: string;
+                    };
+                  };
+                }>;
+              };
+            };
+          }
+        | {
+            __typename?: "GridNode";
+            kind: string;
+            label?: string | null;
+            gap?: number | null;
+            children: Array<
+              | {
+                  __typename?: "ContextNode";
+                  kind: string;
+                  label?: string | null;
+                  context: {
+                    __typename?: "RGBContext";
+                    id: string;
+                    pinned: boolean;
+                    name: string;
+                    z: number;
+                    t: number;
+                    c: number;
+                    blending: Blending;
+                    views: Array<{
+                      __typename?: "RGBView";
+                      id: string;
+                      name: string;
+                      colorMap: ColorMap;
+                      contrastLimitMin?: number | null;
+                      contrastLimitMax?: number | null;
+                      gamma?: number | null;
+                      rescale: boolean;
+                      active: boolean;
+                      fullColour: string;
+                      baseColor?: Array<number> | null;
+                      xMin?: number | null;
+                      xMax?: number | null;
+                      yMin?: number | null;
+                      yMax?: number | null;
+                      tMin?: number | null;
+                      tMax?: number | null;
+                      cMin?: number | null;
+                      cMax?: number | null;
+                      zMin?: number | null;
+                      zMax?: number | null;
+                      contexts: Array<{
+                        __typename?: "RGBContext";
+                        id: string;
+                        name: string;
+                      }>;
+                      image: {
+                        __typename?: "Image";
+                        id: string;
+                        store: {
+                          __typename?: "ZarrStore";
+                          id: string;
+                          key: string;
+                          bucket: string;
+                          path?: string | null;
+                          shape?: Array<number> | null;
+                          dtype?: string | null;
+                          chunks?: Array<number> | null;
+                          version: string;
+                        };
+                        derivedScaleViews: Array<{
+                          __typename?: "ScaleView";
+                          id: string;
+                          scaleX: number;
+                          scaleY: number;
+                          scaleZ: number;
+                          scaleT: number;
+                          scaleC: number;
+                          image: {
+                            __typename?: "Image";
+                            id: string;
+                            store: {
+                              __typename?: "ZarrStore";
+                              id: string;
+                              key: string;
+                              bucket: string;
+                              path?: string | null;
+                              shape?: Array<number> | null;
+                              dtype?: string | null;
+                              chunks?: Array<number> | null;
+                              version: string;
+                            };
+                          };
+                        }>;
+                      };
+                    }>;
+                    image: {
+                      __typename?: "Image";
+                      id: string;
+                      store: {
+                        __typename?: "ZarrStore";
+                        id: string;
+                        key: string;
+                        bucket: string;
+                        path?: string | null;
+                        shape?: Array<number> | null;
+                        dtype?: string | null;
+                        chunks?: Array<number> | null;
+                        version: string;
+                      };
+                      derivedScaleViews: Array<{
+                        __typename?: "ScaleView";
+                        id: string;
+                        image: {
+                          __typename?: "Image";
+                          id: string;
+                          store: {
+                            __typename?: "ZarrStore";
+                            id: string;
+                            key: string;
+                            bucket: string;
+                            path?: string | null;
+                            shape?: Array<number> | null;
+                            dtype?: string | null;
+                            chunks?: Array<number> | null;
+                            version: string;
+                          };
+                        };
+                      }>;
+                    };
+                  };
+                }
+              | {
+                  __typename?: "GridNode";
+                  kind: string;
+                  label?: string | null;
+                  gap?: number | null;
+                }
+              | {
+                  __typename?: "OverlayNode";
+                  kind: string;
+                  label?: string | null;
+                }
+              | { __typename?: "SplitNode"; kind: string }
+            >;
+          }
+        | {
+            __typename?: "OverlayNode";
+            kind: string;
+            label?: string | null;
+            children: Array<
+              | {
+                  __typename?: "ContextNode";
+                  kind: string;
+                  label?: string | null;
+                  context: {
+                    __typename?: "RGBContext";
+                    id: string;
+                    pinned: boolean;
+                    name: string;
+                    z: number;
+                    t: number;
+                    c: number;
+                    blending: Blending;
+                    views: Array<{
+                      __typename?: "RGBView";
+                      id: string;
+                      name: string;
+                      colorMap: ColorMap;
+                      contrastLimitMin?: number | null;
+                      contrastLimitMax?: number | null;
+                      gamma?: number | null;
+                      rescale: boolean;
+                      active: boolean;
+                      fullColour: string;
+                      baseColor?: Array<number> | null;
+                      xMin?: number | null;
+                      xMax?: number | null;
+                      yMin?: number | null;
+                      yMax?: number | null;
+                      tMin?: number | null;
+                      tMax?: number | null;
+                      cMin?: number | null;
+                      cMax?: number | null;
+                      zMin?: number | null;
+                      zMax?: number | null;
+                      contexts: Array<{
+                        __typename?: "RGBContext";
+                        id: string;
+                        name: string;
+                      }>;
+                      image: {
+                        __typename?: "Image";
+                        id: string;
+                        store: {
+                          __typename?: "ZarrStore";
+                          id: string;
+                          key: string;
+                          bucket: string;
+                          path?: string | null;
+                          shape?: Array<number> | null;
+                          dtype?: string | null;
+                          chunks?: Array<number> | null;
+                          version: string;
+                        };
+                        derivedScaleViews: Array<{
+                          __typename?: "ScaleView";
+                          id: string;
+                          scaleX: number;
+                          scaleY: number;
+                          scaleZ: number;
+                          scaleT: number;
+                          scaleC: number;
+                          image: {
+                            __typename?: "Image";
+                            id: string;
+                            store: {
+                              __typename?: "ZarrStore";
+                              id: string;
+                              key: string;
+                              bucket: string;
+                              path?: string | null;
+                              shape?: Array<number> | null;
+                              dtype?: string | null;
+                              chunks?: Array<number> | null;
+                              version: string;
+                            };
+                          };
+                        }>;
+                      };
+                    }>;
+                    image: {
+                      __typename?: "Image";
+                      id: string;
+                      store: {
+                        __typename?: "ZarrStore";
+                        id: string;
+                        key: string;
+                        bucket: string;
+                        path?: string | null;
+                        shape?: Array<number> | null;
+                        dtype?: string | null;
+                        chunks?: Array<number> | null;
+                        version: string;
+                      };
+                      derivedScaleViews: Array<{
+                        __typename?: "ScaleView";
+                        id: string;
+                        image: {
+                          __typename?: "Image";
+                          id: string;
+                          store: {
+                            __typename?: "ZarrStore";
+                            id: string;
+                            key: string;
+                            bucket: string;
+                            path?: string | null;
+                            shape?: Array<number> | null;
+                            dtype?: string | null;
+                            chunks?: Array<number> | null;
+                            version: string;
+                          };
+                        };
+                      }>;
+                    };
+                  };
+                }
+              | {
+                  __typename?: "GridNode";
+                  kind: string;
+                  label?: string | null;
+                  gap?: number | null;
+                }
+              | {
+                  __typename?: "OverlayNode";
+                  kind: string;
+                  label?: string | null;
+                }
+              | { __typename?: "SplitNode"; kind: string }
+            >;
+          }
+        | { __typename?: "SplitNode"; kind: string }
+      >;
+    };
+  };
+};
 
 export type RenderTreesQueryVariables = Exact<{
   filters?: InputMaybe<RenderTreeFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 }>;
 
-
-export type RenderTreesQuery = { __typename?: 'Query', renderTrees: Array<{ __typename?: 'RenderTree', id: string, name: string }> };
+export type RenderTreesQuery = {
+  __typename?: "Query";
+  renderTrees: Array<{ __typename?: "RenderTree"; id: string; name: string }>;
+};
 
 export type GetRenderedPlotQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
+export type GetRenderedPlotQuery = {
+  __typename?: "Query";
+  renderedPlot: {
+    __typename?: "RenderedPlot";
+    id: string;
+    name: string;
+    store: {
+      __typename?: "MediaStore";
+      id: string;
+      key: string;
+      presignedUrl: string;
+    };
+  };
+};
 
-export type GetRenderedPlotQuery = { __typename?: 'Query', renderedPlot: { __typename?: 'RenderedPlot', id: string, name: string, store: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } } };
+export type ListRenderedPlotsQueryVariables = Exact<{ [key: string]: never }>;
 
-export type ListRenderedPlotsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type ListRenderedPlotsQuery = { __typename?: 'Query', renderedPlots: Array<{ __typename?: 'RenderedPlot', id: string, name: string, store: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } }> };
+export type ListRenderedPlotsQuery = {
+  __typename?: "Query";
+  renderedPlots: Array<{
+    __typename?: "RenderedPlot";
+    id: string;
+    name: string;
+    store: {
+      __typename?: "MediaStore";
+      id: string;
+      key: string;
+      presignedUrl: string;
+    };
+  }>;
+};
 
 export type GetRgbContextQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetRgbContextQuery = { __typename?: 'Query', rgbcontext: { __typename?: 'RGBContext', id: string, pinned: boolean, name: string, z: number, t: number, c: number, blending: Blending, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } } };
+export type GetRgbContextQuery = {
+  __typename?: "Query";
+  rgbcontext: {
+    __typename?: "RGBContext";
+    id: string;
+    pinned: boolean;
+    name: string;
+    z: number;
+    t: number;
+    c: number;
+    blending: Blending;
+    views: Array<{
+      __typename?: "RGBView";
+      id: string;
+      name: string;
+      colorMap: ColorMap;
+      contrastLimitMin?: number | null;
+      contrastLimitMax?: number | null;
+      gamma?: number | null;
+      rescale: boolean;
+      active: boolean;
+      fullColour: string;
+      baseColor?: Array<number> | null;
+      xMin?: number | null;
+      xMax?: number | null;
+      yMin?: number | null;
+      yMax?: number | null;
+      tMin?: number | null;
+      tMax?: number | null;
+      cMin?: number | null;
+      cMax?: number | null;
+      zMin?: number | null;
+      zMax?: number | null;
+      contexts: Array<{ __typename?: "RGBContext"; id: string; name: string }>;
+      image: {
+        __typename?: "Image";
+        id: string;
+        store: {
+          __typename?: "ZarrStore";
+          id: string;
+          key: string;
+          bucket: string;
+          path?: string | null;
+          shape?: Array<number> | null;
+          dtype?: string | null;
+          chunks?: Array<number> | null;
+          version: string;
+        };
+        derivedScaleViews: Array<{
+          __typename?: "ScaleView";
+          id: string;
+          scaleX: number;
+          scaleY: number;
+          scaleZ: number;
+          scaleT: number;
+          scaleC: number;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+          };
+        }>;
+      };
+    }>;
+    image: {
+      __typename?: "Image";
+      id: string;
+      store: {
+        __typename?: "ZarrStore";
+        id: string;
+        key: string;
+        bucket: string;
+        path?: string | null;
+        shape?: Array<number> | null;
+        dtype?: string | null;
+        chunks?: Array<number> | null;
+        version: string;
+      };
+      derivedScaleViews: Array<{
+        __typename?: "ScaleView";
+        id: string;
+        image: {
+          __typename?: "Image";
+          id: string;
+          store: {
+            __typename?: "ZarrStore";
+            id: string;
+            key: string;
+            bucket: string;
+            path?: string | null;
+            shape?: Array<number> | null;
+            dtype?: string | null;
+            chunks?: Array<number> | null;
+            version: string;
+          };
+        };
+      }>;
+    };
+  };
+};
 
 export type GetRgbContextsQueryVariables = Exact<{
   filters?: InputMaybe<RgbContextFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 }>;
 
-
-export type GetRgbContextsQuery = { __typename?: 'Query', rgbcontexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }> }> };
+export type GetRgbContextsQuery = {
+  __typename?: "Query";
+  rgbcontexts: Array<{
+    __typename?: "RGBContext";
+    id: string;
+    name: string;
+    blending: Blending;
+    t: number;
+    z: number;
+    c: number;
+    image: {
+      __typename?: "Image";
+      id: string;
+      store: {
+        __typename?: "ZarrStore";
+        id: string;
+        key: string;
+        bucket: string;
+        path?: string | null;
+        shape?: Array<number> | null;
+        dtype?: string | null;
+        chunks?: Array<number> | null;
+        version: string;
+      };
+      derivedScaleViews: Array<{
+        __typename?: "ScaleView";
+        id: string;
+        image: {
+          __typename?: "Image";
+          id: string;
+          store: {
+            __typename?: "ZarrStore";
+            id: string;
+            key: string;
+            bucket: string;
+            path?: string | null;
+            shape?: Array<number> | null;
+            dtype?: string | null;
+            chunks?: Array<number> | null;
+            version: string;
+          };
+        };
+      }>;
+    };
+    views: Array<{
+      __typename?: "RGBView";
+      id: string;
+      name: string;
+      colorMap: ColorMap;
+      contrastLimitMin?: number | null;
+      contrastLimitMax?: number | null;
+      gamma?: number | null;
+      rescale: boolean;
+      active: boolean;
+      fullColour: string;
+      baseColor?: Array<number> | null;
+      xMin?: number | null;
+      xMax?: number | null;
+      yMin?: number | null;
+      yMax?: number | null;
+      tMin?: number | null;
+      tMax?: number | null;
+      cMin?: number | null;
+      cMax?: number | null;
+      zMin?: number | null;
+      zMax?: number | null;
+      contexts: Array<{ __typename?: "RGBContext"; id: string; name: string }>;
+      image: {
+        __typename?: "Image";
+        id: string;
+        store: {
+          __typename?: "ZarrStore";
+          id: string;
+          key: string;
+          bucket: string;
+          path?: string | null;
+          shape?: Array<number> | null;
+          dtype?: string | null;
+          chunks?: Array<number> | null;
+          version: string;
+        };
+        derivedScaleViews: Array<{
+          __typename?: "ScaleView";
+          id: string;
+          scaleX: number;
+          scaleY: number;
+          scaleZ: number;
+          scaleT: number;
+          scaleC: number;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+          };
+        }>;
+      };
+    }>;
+  }>;
+};
 
 export type RgbContextOptionsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
+  values?: InputMaybe<Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"]>;
 }>;
 
-
-export type RgbContextOptionsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'RGBContext', value: string, label: string }> };
+export type RgbContextOptionsQuery = {
+  __typename?: "Query";
+  options: Array<{ __typename?: "RGBContext"; value: string; label: string }>;
+};
 
 export type GetRoiQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetRoiQuery = { __typename?: 'Query', roi: { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> } }> }> }, creator?: { __typename?: 'User', sub: string } | null, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
+export type GetRoiQuery = {
+  __typename?: "Query";
+  roi: {
+    __typename?: "ROI";
+    id: string;
+    pinned: boolean;
+    createdAt: any;
+    vectors: Array<any>;
+    image: {
+      __typename?: "Image";
+      id: string;
+      name: string;
+      rgbContexts: Array<{
+        __typename?: "RGBContext";
+        id: string;
+        name: string;
+        blending: Blending;
+        t: number;
+        z: number;
+        c: number;
+        image: {
+          __typename?: "Image";
+          id: string;
+          store: {
+            __typename?: "ZarrStore";
+            id: string;
+            key: string;
+            bucket: string;
+            path?: string | null;
+            shape?: Array<number> | null;
+            dtype?: string | null;
+            chunks?: Array<number> | null;
+            version: string;
+          };
+          derivedScaleViews: Array<{
+            __typename?: "ScaleView";
+            id: string;
+            image: {
+              __typename?: "Image";
+              id: string;
+              store: {
+                __typename?: "ZarrStore";
+                id: string;
+                key: string;
+                bucket: string;
+                path?: string | null;
+                shape?: Array<number> | null;
+                dtype?: string | null;
+                chunks?: Array<number> | null;
+                version: string;
+              };
+            };
+          }>;
+        };
+        views: Array<{
+          __typename?: "RGBView";
+          id: string;
+          name: string;
+          colorMap: ColorMap;
+          contrastLimitMin?: number | null;
+          contrastLimitMax?: number | null;
+          gamma?: number | null;
+          rescale: boolean;
+          active: boolean;
+          fullColour: string;
+          baseColor?: Array<number> | null;
+          xMin?: number | null;
+          xMax?: number | null;
+          yMin?: number | null;
+          yMax?: number | null;
+          tMin?: number | null;
+          tMax?: number | null;
+          cMin?: number | null;
+          cMax?: number | null;
+          zMin?: number | null;
+          zMax?: number | null;
+          contexts: Array<{
+            __typename?: "RGBContext";
+            id: string;
+            name: string;
+          }>;
+          image: {
+            __typename?: "Image";
+            id: string;
+            store: {
+              __typename?: "ZarrStore";
+              id: string;
+              key: string;
+              bucket: string;
+              path?: string | null;
+              shape?: Array<number> | null;
+              dtype?: string | null;
+              chunks?: Array<number> | null;
+              version: string;
+            };
+            derivedScaleViews: Array<{
+              __typename?: "ScaleView";
+              id: string;
+              scaleX: number;
+              scaleY: number;
+              scaleZ: number;
+              scaleT: number;
+              scaleC: number;
+              image: {
+                __typename?: "Image";
+                id: string;
+                store: {
+                  __typename?: "ZarrStore";
+                  id: string;
+                  key: string;
+                  bucket: string;
+                  path?: string | null;
+                  shape?: Array<number> | null;
+                  dtype?: string | null;
+                  chunks?: Array<number> | null;
+                  version: string;
+                };
+              };
+            }>;
+          };
+        }>;
+      }>;
+    };
+    creator?: { __typename?: "User"; sub: string } | null;
+    history: Array<{
+      __typename?: "History";
+      id: string;
+      during?: string | null;
+      kind: HistoryKind;
+      date: any;
+      user?: { __typename?: "User"; sub: string } | null;
+      app?: { __typename?: "App"; clientId: string } | null;
+      effectiveChanges: Array<{
+        __typename?: "ModelChange";
+        field: string;
+        oldValue?: string | null;
+        newValue?: string | null;
+      }>;
+    }>;
+  };
+};
 
 export type GetRoIsQueryVariables = Exact<{
   filters?: InputMaybe<RoiFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 }>;
 
-
-export type GetRoIsQuery = { __typename?: 'Query', rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> };
+export type GetRoIsQuery = {
+  __typename?: "Query";
+  rois: Array<{
+    __typename?: "ROI";
+    id: string;
+    vectors: Array<any>;
+    image: { __typename?: "Image"; id: string; name: string };
+  }>;
+};
 
 export type RowsQueryVariables = Exact<{
-  table: Scalars['ID']['input'];
+  table: Scalars["ID"]["input"];
   filters?: InputMaybe<RowFilter>;
   pagination?: InputMaybe<TablePaginationInput>;
 }>;
 
-
-export type RowsQuery = { __typename?: 'Query', rows: Array<any> };
+export type RowsQuery = { __typename?: "Query"; rows: Array<any> };
 
 export type GetStageQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetStageQuery = { __typename?: 'Query', stage: { __typename?: 'Stage', id: string, pinned: boolean, name: string, affineViews: Array<{ __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, image: { __typename?: 'Image', id: string, name: string, store: { __typename?: 'ZarrStore', shape?: Array<number> | null } }, stage: { __typename?: 'Stage', id: string, name: string } }> } };
+export type GetStageQuery = {
+  __typename?: "Query";
+  stage: {
+    __typename?: "Stage";
+    id: string;
+    pinned: boolean;
+    name: string;
+    affineViews: Array<{
+      __typename?: "AffineTransformationView";
+      id: string;
+      affineMatrix: any;
+      xMin?: number | null;
+      xMax?: number | null;
+      yMin?: number | null;
+      yMax?: number | null;
+      tMin?: number | null;
+      tMax?: number | null;
+      cMin?: number | null;
+      cMax?: number | null;
+      zMin?: number | null;
+      zMax?: number | null;
+      image: {
+        __typename?: "Image";
+        id: string;
+        name: string;
+        store: { __typename?: "ZarrStore"; shape?: Array<number> | null };
+      };
+      stage: { __typename?: "Stage"; id: string; name: string };
+    }>;
+  };
+};
 
 export type GetStagesQueryVariables = Exact<{
   filters?: InputMaybe<StageFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 }>;
 
-
-export type GetStagesQuery = { __typename?: 'Query', stages: Array<{ __typename?: 'Stage', id: string, name: string }> };
+export type GetStagesQuery = {
+  __typename?: "Query";
+  stages: Array<{ __typename?: "Stage"; id: string; name: string }>;
+};
 
 export type StageOptionsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
+  values?: InputMaybe<Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"]>;
 }>;
 
-
-export type StageOptionsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Stage', value: string, label: string }> };
+export type StageOptionsQuery = {
+  __typename?: "Query";
+  options: Array<{ __typename?: "Stage"; value: string; label: string }>;
+};
 
 export type GetTableQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetTableQuery = { __typename?: 'Query', table: { __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string }, columns: Array<{ __typename?: 'TableColumn', name: string, type: DuckDbDataType, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, pixelView: { __typename?: 'PixelView', id: string } }> }>, accessors: Array<{ __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null } | { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null, pixelView: { __typename?: 'PixelView', id: string } }> } };
+export type GetTableQuery = {
+  __typename?: "Query";
+  table: {
+    __typename?: "Table";
+    id: string;
+    name: string;
+    origins: Array<{ __typename?: "Image"; id: string }>;
+    store: {
+      __typename?: "ParquetStore";
+      id: string;
+      key: string;
+      bucket: string;
+      path: string;
+    };
+    columns: Array<{
+      __typename?: "TableColumn";
+      name: string;
+      type: DuckDbDataType;
+      accessors: Array<
+        | {
+            __typename?: "ImageAccessor";
+            id: string;
+            keys: Array<string>;
+            minIndex?: number | null;
+            maxIndex?: number | null;
+          }
+        | {
+            __typename?: "LabelAccessor";
+            id: string;
+            keys: Array<string>;
+            minIndex?: number | null;
+            maxIndex?: number | null;
+            pixelView: { __typename?: "PixelView"; id: string };
+          }
+      >;
+    }>;
+    accessors: Array<
+      | {
+          __typename?: "ImageAccessor";
+          id: string;
+          keys: Array<string>;
+          minIndex?: number | null;
+          maxIndex?: number | null;
+        }
+      | {
+          __typename?: "LabelAccessor";
+          id: string;
+          keys: Array<string>;
+          minIndex?: number | null;
+          maxIndex?: number | null;
+          pixelView: { __typename?: "PixelView"; id: string };
+        }
+    >;
+  };
+};
 
 export type GetTablesQueryVariables = Exact<{
   filters?: InputMaybe<TableFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 }>;
 
-
-export type GetTablesQuery = { __typename?: 'Query', tables: Array<{ __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string } }> };
+export type GetTablesQuery = {
+  __typename?: "Query";
+  tables: Array<{
+    __typename?: "Table";
+    id: string;
+    name: string;
+    origins: Array<{ __typename?: "Image"; id: string }>;
+    store: {
+      __typename?: "ParquetStore";
+      id: string;
+      key: string;
+      bucket: string;
+      path: string;
+    };
+  }>;
+};
 
 export type WatchImagesSubscriptionVariables = Exact<{
-  dataset?: InputMaybe<Scalars['ID']['input']>;
+  dataset?: InputMaybe<Scalars["ID"]["input"]>;
 }>;
 
-
-export type WatchImagesSubscription = { __typename?: 'Subscription', images: { __typename?: 'ImageEvent', delete?: string | null, create?: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null } | null, update?: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null } | null } };
+export type WatchImagesSubscription = {
+  __typename?: "Subscription";
+  images: {
+    __typename?: "ImageEvent";
+    delete?: string | null;
+    create?: {
+      __typename?: "Image";
+      id: string;
+      name: string;
+      latestSnapshot?: {
+        __typename?: "Snapshot";
+        id: string;
+        store: { __typename?: "MediaStore"; key: string; presignedUrl: string };
+      } | null;
+    } | null;
+    update?: {
+      __typename?: "Image";
+      id: string;
+      name: string;
+      latestSnapshot?: {
+        __typename?: "Snapshot";
+        id: string;
+        store: { __typename?: "MediaStore"; key: string; presignedUrl: string };
+      } | null;
+    } | null;
+  };
+};
 
 export const CameraFragmentDoc = gql`
-    fragment Camera on Camera {
-  sensorSizeX
-  sensorSizeY
-  pixelSizeX
-  pixelSizeY
-  name
-  serialNumber
-}
-    `;
+  fragment Camera on Camera {
+    sensorSizeX
+    sensorSizeY
+    pixelSizeX
+    pixelSizeY
+    name
+    serialNumber
+  }
+`;
 export const CredentialsFragmentDoc = gql`
-    fragment Credentials on Credentials {
-  accessKey
-  status
-  secretKey
-  bucket
-  key
-  sessionToken
-  store
-}
-    `;
+  fragment Credentials on Credentials {
+    accessKey
+    status
+    secretKey
+    bucket
+    key
+    sessionToken
+    store
+  }
+`;
 export const AccessCredentialsFragmentDoc = gql`
-    fragment AccessCredentials on AccessCredentials {
-  accessKey
-  secretKey
-  bucket
-  key
-  sessionToken
-  path
-}
-    `;
+  fragment AccessCredentials on AccessCredentials {
+    accessKey
+    secretKey
+    bucket
+    key
+    sessionToken
+    path
+  }
+`;
 export const PresignedPostCredentialsFragmentDoc = gql`
-    fragment PresignedPostCredentials on PresignedPostCredentials {
-  xAmzAlgorithm
-  xAmzCredential
-  xAmzDate
-  xAmzSignature
-  key
-  bucket
-  datalayer
-  policy
-  store
-}
-    `;
+  fragment PresignedPostCredentials on PresignedPostCredentials {
+    xAmzAlgorithm
+    xAmzCredential
+    xAmzDate
+    xAmzSignature
+    key
+    bucket
+    datalayer
+    policy
+    store
+  }
+`;
 export const HistoryFragmentDoc = gql`
-    fragment History on History {
-  id
-  during
-  kind
-  user {
-    sub
+  fragment History on History {
+    id
+    during
+    kind
+    user {
+      sub
+    }
+    app {
+      clientId
+    }
+    date
+    effectiveChanges {
+      field
+      oldValue
+      newValue
+    }
   }
-  app {
-    clientId
-  }
-  date
-  effectiveChanges {
-    field
-    oldValue
-    newValue
-  }
-}
-    `;
+`;
 export const ListImageFragmentDoc = gql`
-    fragment ListImage on Image {
-  latestSnapshot {
+  fragment ListImage on Image {
+    latestSnapshot {
+      id
+      store {
+        key
+        presignedUrl
+      }
+    }
+    id
+    name
+  }
+`;
+export const ListFileFragmentDoc = gql`
+  fragment ListFile on File {
+    id
+    name
+  }
+`;
+export const ListDatasetFragmentDoc = gql`
+  fragment ListDataset on Dataset {
+    id
+    name
+    description
+    isDefault
+  }
+`;
+export const DatasetFragmentDoc = gql`
+  fragment Dataset on Dataset {
+    id
+    name
+    description
+    history {
+      ...History
+    }
+    images {
+      ...ListImage
+    }
+    files {
+      ...ListFile
+    }
+    children {
+      ...ListDataset
+    }
+    isDefault
+    pinned
+    createdAt
+    creator {
+      sub
+    }
+    tags
+  }
+  ${HistoryFragmentDoc}
+  ${ListImageFragmentDoc}
+  ${ListFileFragmentDoc}
+  ${ListDatasetFragmentDoc}
+`;
+export const BigFileStoreFragmentDoc = gql`
+  fragment BigFileStore on BigFileStore {
+    id
+    key
+    bucket
+    path
+    presignedUrl
+  }
+`;
+export const FileFragmentDoc = gql`
+  fragment File on File {
+    origins {
+      id
+    }
+    id
+    name
+    store {
+      ...BigFileStore
+    }
+    views {
+      id
+      seriesIdentifier
+      image {
+        ...ListImage
+      }
+    }
+  }
+  ${BigFileStoreFragmentDoc}
+  ${ListImageFragmentDoc}
+`;
+export const InstrumentFragmentDoc = gql`
+  fragment Instrument on Instrument {
+    model
+    name
+    serialNumber
+  }
+`;
+export const MeshStoreFragmentDoc = gql`
+  fragment MeshStore on MeshStore {
+    id
+    key
+    presignedUrl
+  }
+`;
+export const MeshFragmentDoc = gql`
+  fragment Mesh on Mesh {
+    id
+    name
+    store {
+      ...MeshStore
+    }
+  }
+  ${MeshStoreFragmentDoc}
+`;
+export const ListMeshFragmentDoc = gql`
+  fragment ListMesh on Mesh {
+    id
+    name
+  }
+`;
+export const ViewFragmentDoc = gql`
+  fragment View on View {
+    xMin
+    xMax
+    yMin
+    yMax
+    tMin
+    tMax
+    cMin
+    cMax
+    zMin
+    zMax
+  }
+`;
+export const WellPositionViewFragmentDoc = gql`
+  fragment WellPositionView on WellPositionView {
+    ...View
+    id
+    column
+    row
+    well {
+      id
+      rows
+      columns
+      name
+    }
+  }
+  ${ViewFragmentDoc}
+`;
+export const MultiWellPlateFragmentDoc = gql`
+  fragment MultiWellPlate on MultiWellPlate {
+    id
+    views {
+      ...WellPositionView
+    }
+    name
+  }
+  ${WellPositionViewFragmentDoc}
+`;
+export const ListMultiWellPlateFragmentDoc = gql`
+  fragment ListMultiWellPlate on MultiWellPlate {
+    id
+    name
+  }
+`;
+export const ObjectiveFragmentDoc = gql`
+  fragment Objective on Objective {
+    na
+    name
+    serialNumber
+  }
+`;
+export const ZarrStoreFragmentDoc = gql`
+  fragment ZarrStore on ZarrStore {
+    id
+    key
+    bucket
+    path
+    shape
+    dtype
+    chunks
+    version
+  }
+`;
+export const RgbViewFragmentDoc = gql`
+  fragment RGBView on RGBView {
+    ...View
+    id
+    contexts {
+      id
+      name
+    }
+    name
+    image {
+      id
+      store {
+        ...ZarrStore
+      }
+      derivedScaleViews {
+        id
+        image {
+          id
+          store {
+            ...ZarrStore
+          }
+        }
+        scaleX
+        scaleY
+        scaleZ
+        scaleT
+        scaleC
+      }
+    }
+    colorMap
+    contrastLimitMin
+    contrastLimitMax
+    gamma
+    rescale
+    active
+    fullColour
+    baseColor
+  }
+  ${ViewFragmentDoc}
+  ${ZarrStoreFragmentDoc}
+`;
+export const RgbContextFragmentDoc = gql`
+  fragment RGBContext on RGBContext {
+    id
+    views {
+      ...RGBView
+    }
+    image {
+      id
+      store {
+        ...ZarrStore
+      }
+      derivedScaleViews {
+        id
+        image {
+          id
+          store {
+            ...ZarrStore
+          }
+        }
+      }
+    }
+    pinned
+    name
+    z
+    t
+    c
+    blending
+  }
+  ${RgbViewFragmentDoc}
+  ${ZarrStoreFragmentDoc}
+`;
+export const ContextNodeFragmentDoc = gql`
+  fragment ContextNode on ContextNode {
+    label
+    context {
+      ...RGBContext
+    }
+  }
+  ${RgbContextFragmentDoc}
+`;
+export const ContextNodeNestedFragmentDoc = gql`
+  fragment ContextNodeNested on ContextNode {
+    label
+    context {
+      ...RGBContext
+    }
+  }
+  ${RgbContextFragmentDoc}
+`;
+export const GridNodeNestedFragmentDoc = gql`
+  fragment GridNodeNested on GridNode {
+    label
+    gap
+  }
+`;
+export const OverlayNodeNestedFragmentDoc = gql`
+  fragment OverlayNodeNested on OverlayNode {
+    label
+  }
+`;
+export const RenderNodeNestedFragmentDoc = gql`
+  fragment RenderNodeNested on RenderNode {
+    kind
+    ...ContextNodeNested
+    ...GridNodeNested
+    ...OverlayNodeNested
+  }
+  ${ContextNodeNestedFragmentDoc}
+  ${GridNodeNestedFragmentDoc}
+  ${OverlayNodeNestedFragmentDoc}
+`;
+export const GridNodeFragmentDoc = gql`
+  fragment GridNode on GridNode {
+    label
+    gap
+    children {
+      ...RenderNodeNested
+    }
+  }
+  ${RenderNodeNestedFragmentDoc}
+`;
+export const OverlayNodeFragmentDoc = gql`
+  fragment OverlayNode on OverlayNode {
+    label
+    children {
+      ...RenderNodeNested
+    }
+  }
+  ${RenderNodeNestedFragmentDoc}
+`;
+export const RenderNodeFragmentDoc = gql`
+  fragment RenderNode on RenderNode {
+    kind
+    ...ContextNode
+    ...GridNode
+    ...OverlayNode
+  }
+  ${ContextNodeFragmentDoc}
+  ${GridNodeFragmentDoc}
+  ${OverlayNodeFragmentDoc}
+`;
+export const TreeFragmentDoc = gql`
+  fragment Tree on Tree {
+    children {
+      ...RenderNode
+    }
+  }
+  ${RenderNodeFragmentDoc}
+`;
+export const RenderTreeFragmentDoc = gql`
+  fragment RenderTree on RenderTree {
+    id
+    name
+    tree {
+      ...Tree
+    }
+  }
+  ${TreeFragmentDoc}
+`;
+export const ListRenderTreeFragmentDoc = gql`
+  fragment ListRenderTree on RenderTree {
+    id
+    name
+  }
+`;
+export const MediaStoreFragmentDoc = gql`
+  fragment MediaStore on MediaStore {
+    id
+    key
+    presignedUrl
+  }
+`;
+export const RenderedPlotFragmentDoc = gql`
+  fragment RenderedPlot on RenderedPlot {
+    id
+    store {
+      ...MediaStore
+    }
+    name
+  }
+  ${MediaStoreFragmentDoc}
+`;
+export const ListRenderedPlotFragmentDoc = gql`
+  fragment ListRenderedPlot on RenderedPlot {
+    id
+    store {
+      ...MediaStore
+    }
+    name
+  }
+  ${MediaStoreFragmentDoc}
+`;
+export const ListRgbContextFragmentDoc = gql`
+  fragment ListRGBContext on RGBContext {
+    image {
+      id
+      store {
+        ...ZarrStore
+      }
+      derivedScaleViews {
+        id
+        image {
+          id
+          store {
+            ...ZarrStore
+          }
+        }
+      }
+    }
+    id
+    name
+    views {
+      ...RGBView
+    }
+    blending
+    t
+    z
+    c
+  }
+  ${ZarrStoreFragmentDoc}
+  ${RgbViewFragmentDoc}
+`;
+export const RgbImageFragmentDoc = gql`
+  fragment RGBImage on Image {
+    name
+    rgbContexts {
+      ...ListRGBContext
+    }
+  }
+  ${ListRgbContextFragmentDoc}
+`;
+export const RoiFragmentDoc = gql`
+  fragment ROI on ROI {
+    id
+    pinned
+    image {
+      id
+      ...RGBImage
+    }
+    createdAt
+    creator {
+      sub
+    }
+    history {
+      ...History
+    }
+    vectors
+  }
+  ${RgbImageFragmentDoc}
+  ${HistoryFragmentDoc}
+`;
+export const AffineTransformationViewFragmentDoc = gql`
+  fragment AffineTransformationView on AffineTransformationView {
+    ...View
+    id
+    affineMatrix
+    stage {
+      id
+      name
+    }
+  }
+  ${ViewFragmentDoc}
+`;
+export const StageFragmentDoc = gql`
+  fragment Stage on Stage {
+    id
+    affineViews {
+      ...AffineTransformationView
+      image {
+        id
+        store {
+          shape
+        }
+        name
+      }
+    }
+    pinned
+    name
+  }
+  ${AffineTransformationViewFragmentDoc}
+`;
+export const ListStageFragmentDoc = gql`
+  fragment ListStage on Stage {
+    id
+    name
+  }
+`;
+export const ParquetStoreFragmentDoc = gql`
+  fragment ParquetStore on ParquetStore {
+    id
+    key
+    bucket
+    path
+  }
+`;
+export const AccessorFragmentDoc = gql`
+  fragment Accessor on Accessor {
+    id
+    keys
+    minIndex
+    maxIndex
+  }
+`;
+export const ImageAccessorFragmentDoc = gql`
+  fragment ImageAccessor on ImageAccessor {
+    ...Accessor
+    id
+  }
+  ${AccessorFragmentDoc}
+`;
+export const LabelAccessorFragmentDoc = gql`
+  fragment LabelAccessor on LabelAccessor {
+    ...Accessor
+    pixelView {
+      id
+    }
+  }
+  ${AccessorFragmentDoc}
+`;
+export const TableFragmentDoc = gql`
+  fragment Table on Table {
+    origins {
+      id
+    }
+    id
+    name
+    store {
+      ...ParquetStore
+    }
+    columns {
+      name
+      type
+      accessors {
+        ...Accessor
+        ...ImageAccessor
+        ...LabelAccessor
+      }
+    }
+    accessors {
+      ...ImageAccessor
+      ...LabelAccessor
+    }
+  }
+  ${ParquetStoreFragmentDoc}
+  ${AccessorFragmentDoc}
+  ${ImageAccessorFragmentDoc}
+  ${LabelAccessorFragmentDoc}
+`;
+export const ListTableFragmentDoc = gql`
+  fragment ListTable on Table {
+    origins {
+      id
+    }
+    id
+    name
+    store {
+      ...ParquetStore
+    }
+  }
+  ${ParquetStoreFragmentDoc}
+`;
+export const ContinousScanViewFragmentDoc = gql`
+  fragment ContinousScanView on ContinousScanView {
+    ...View
+    id
+    direction
+  }
+  ${ViewFragmentDoc}
+`;
+export const ChannelFragmentDoc = gql`
+  fragment Channel on Channel {
+    id
+    name
+    excitationWavelength
+  }
+`;
+export const ChannelViewFragmentDoc = gql`
+  fragment ChannelView on ChannelView {
+    ...View
+    id
+    channel {
+      ...Channel
+    }
+  }
+  ${ViewFragmentDoc}
+  ${ChannelFragmentDoc}
+`;
+export const LabelViewFragmentDoc = gql`
+  fragment LabelView on LabelView {
+    ...View
+    id
+    label
+  }
+  ${ViewFragmentDoc}
+`;
+export const EraFragmentDoc = gql`
+  fragment Era on Era {
+    id
+    begin
+    name
+  }
+`;
+export const TimepointViewFragmentDoc = gql`
+  fragment TimepointView on TimepointView {
+    ...View
+    id
+    msSinceStart
+    indexSinceStart
+    era {
+      ...Era
+    }
+  }
+  ${ViewFragmentDoc}
+  ${EraFragmentDoc}
+`;
+export const OpticsViewFragmentDoc = gql`
+  fragment OpticsView on OpticsView {
+    ...View
+    id
+    objective {
+      id
+      name
+      serialNumber
+    }
+    camera {
+      id
+      name
+      serialNumber
+    }
+    instrument {
+      id
+      name
+      serialNumber
+    }
+  }
+  ${ViewFragmentDoc}
+`;
+export const AcquisitionViewFragmentDoc = gql`
+  fragment AcquisitionView on AcquisitionView {
+    ...View
+    id
+    description
+    acquiredAt
+    operator {
+      sub
+    }
+  }
+  ${ViewFragmentDoc}
+`;
+export const StructureViewFragmentDoc = gql`
+  fragment StructureView on StructureView {
+    ...View
+    id
+    structure
+  }
+  ${ViewFragmentDoc}
+`;
+export const DerivedViewFragmentDoc = gql`
+  fragment DerivedView on DerivedView {
+    ...View
+    id
+    originImage {
+      id
+      name
+    }
+    operation
+  }
+  ${ViewFragmentDoc}
+`;
+export const RoiViewFragmentDoc = gql`
+  fragment ROIView on ROIView {
+    ...View
+    id
+    roi {
+      id
+      name
+    }
+  }
+  ${ViewFragmentDoc}
+`;
+export const FileViewFragmentDoc = gql`
+  fragment FileView on FileView {
+    ...View
+    id
+    seriesIdentifier
+    file {
+      id
+      name
+    }
+  }
+  ${ViewFragmentDoc}
+`;
+export const PixelViewFragmentDoc = gql`
+  fragment PixelView on PixelView {
+    ...View
+    id
+  }
+  ${ViewFragmentDoc}
+`;
+export const SnapshotFragmentDoc = gql`
+  fragment Snapshot on Snapshot {
     id
     store {
       key
       presignedUrl
     }
   }
-  id
-  name
-}
-    `;
-export const ListFileFragmentDoc = gql`
-    fragment ListFile on File {
-  id
-  name
-}
-    `;
-export const ListDatasetFragmentDoc = gql`
-    fragment ListDataset on Dataset {
-  id
-  name
-  description
-  isDefault
-}
-    `;
-export const DatasetFragmentDoc = gql`
-    fragment Dataset on Dataset {
-  id
-  name
-  description
-  history {
-    ...History
-  }
-  images {
-    ...ListImage
-  }
-  files {
-    ...ListFile
-  }
-  children {
-    ...ListDataset
-  }
-  isDefault
-  pinned
-  createdAt
-  creator {
-    sub
-  }
-  tags
-}
-    ${HistoryFragmentDoc}
-${ListImageFragmentDoc}
-${ListFileFragmentDoc}
-${ListDatasetFragmentDoc}`;
-export const BigFileStoreFragmentDoc = gql`
-    fragment BigFileStore on BigFileStore {
-  id
-  key
-  bucket
-  path
-  presignedUrl
-}
-    `;
-export const FileFragmentDoc = gql`
-    fragment File on File {
-  origins {
-    id
-  }
-  id
-  name
-  store {
-    ...BigFileStore
-  }
-  views {
-    id
-    seriesIdentifier
-    image {
-      ...ListImage
-    }
-  }
-}
-    ${BigFileStoreFragmentDoc}
-${ListImageFragmentDoc}`;
-export const InstrumentFragmentDoc = gql`
-    fragment Instrument on Instrument {
-  model
-  name
-  serialNumber
-}
-    `;
-export const MeshStoreFragmentDoc = gql`
-    fragment MeshStore on MeshStore {
-  id
-  key
-  presignedUrl
-}
-    `;
-export const MeshFragmentDoc = gql`
-    fragment Mesh on Mesh {
-  id
-  name
-  store {
-    ...MeshStore
-  }
-}
-    ${MeshStoreFragmentDoc}`;
-export const ListMeshFragmentDoc = gql`
-    fragment ListMesh on Mesh {
-  id
-  name
-}
-    `;
-export const ViewFragmentDoc = gql`
-    fragment View on View {
-  xMin
-  xMax
-  yMin
-  yMax
-  tMin
-  tMax
-  cMin
-  cMax
-  zMin
-  zMax
-}
-    `;
-export const WellPositionViewFragmentDoc = gql`
-    fragment WellPositionView on WellPositionView {
-  ...View
-  id
-  column
-  row
-  well {
-    id
-    rows
-    columns
-    name
-  }
-}
-    ${ViewFragmentDoc}`;
-export const MultiWellPlateFragmentDoc = gql`
-    fragment MultiWellPlate on MultiWellPlate {
-  id
-  views {
-    ...WellPositionView
-  }
-  name
-}
-    ${WellPositionViewFragmentDoc}`;
-export const ListMultiWellPlateFragmentDoc = gql`
-    fragment ListMultiWellPlate on MultiWellPlate {
-  id
-  name
-}
-    `;
-export const ObjectiveFragmentDoc = gql`
-    fragment Objective on Objective {
-  na
-  name
-  serialNumber
-}
-    `;
-export const ZarrStoreFragmentDoc = gql`
-    fragment ZarrStore on ZarrStore {
-  id
-  key
-  bucket
-  path
-  shape
-  dtype
-  chunks
-  version
-}
-    `;
-export const RgbViewFragmentDoc = gql`
-    fragment RGBView on RGBView {
-  ...View
-  id
-  contexts {
-    id
-    name
-  }
-  name
-  image {
-    id
-    store {
-      ...ZarrStore
-    }
-    derivedScaleViews {
-      id
-      image {
-        id
-        store {
-          ...ZarrStore
-        }
-      }
-      scaleX
-      scaleY
-      scaleZ
-      scaleT
-      scaleC
-    }
-  }
-  colorMap
-  contrastLimitMin
-  contrastLimitMax
-  gamma
-  rescale
-  active
-  fullColour
-  baseColor
-}
-    ${ViewFragmentDoc}
-${ZarrStoreFragmentDoc}`;
-export const RgbContextFragmentDoc = gql`
-    fragment RGBContext on RGBContext {
-  id
-  views {
-    ...RGBView
-  }
-  image {
-    id
-    store {
-      ...ZarrStore
-    }
-    derivedScaleViews {
-      id
-      image {
-        id
-        store {
-          ...ZarrStore
-        }
-      }
-    }
-  }
-  pinned
-  name
-  z
-  t
-  c
-  blending
-}
-    ${RgbViewFragmentDoc}
-${ZarrStoreFragmentDoc}`;
-export const ContextNodeFragmentDoc = gql`
-    fragment ContextNode on ContextNode {
-  label
-  context {
-    ...RGBContext
-  }
-}
-    ${RgbContextFragmentDoc}`;
-export const ContextNodeNestedFragmentDoc = gql`
-    fragment ContextNodeNested on ContextNode {
-  label
-  context {
-    ...RGBContext
-  }
-}
-    ${RgbContextFragmentDoc}`;
-export const GridNodeNestedFragmentDoc = gql`
-    fragment GridNodeNested on GridNode {
-  label
-  gap
-}
-    `;
-export const OverlayNodeNestedFragmentDoc = gql`
-    fragment OverlayNodeNested on OverlayNode {
-  label
-}
-    `;
-export const RenderNodeNestedFragmentDoc = gql`
-    fragment RenderNodeNested on RenderNode {
-  kind
-  ...ContextNodeNested
-  ...GridNodeNested
-  ...OverlayNodeNested
-}
-    ${ContextNodeNestedFragmentDoc}
-${GridNodeNestedFragmentDoc}
-${OverlayNodeNestedFragmentDoc}`;
-export const GridNodeFragmentDoc = gql`
-    fragment GridNode on GridNode {
-  label
-  gap
-  children {
-    ...RenderNodeNested
-  }
-}
-    ${RenderNodeNestedFragmentDoc}`;
-export const OverlayNodeFragmentDoc = gql`
-    fragment OverlayNode on OverlayNode {
-  label
-  children {
-    ...RenderNodeNested
-  }
-}
-    ${RenderNodeNestedFragmentDoc}`;
-export const RenderNodeFragmentDoc = gql`
-    fragment RenderNode on RenderNode {
-  kind
-  ...ContextNode
-  ...GridNode
-  ...OverlayNode
-}
-    ${ContextNodeFragmentDoc}
-${GridNodeFragmentDoc}
-${OverlayNodeFragmentDoc}`;
-export const TreeFragmentDoc = gql`
-    fragment Tree on Tree {
-  children {
-    ...RenderNode
-  }
-}
-    ${RenderNodeFragmentDoc}`;
-export const RenderTreeFragmentDoc = gql`
-    fragment RenderTree on RenderTree {
-  id
-  name
-  tree {
-    ...Tree
-  }
-}
-    ${TreeFragmentDoc}`;
-export const ListRenderTreeFragmentDoc = gql`
-    fragment ListRenderTree on RenderTree {
-  id
-  name
-}
-    `;
-export const MediaStoreFragmentDoc = gql`
-    fragment MediaStore on MediaStore {
-  id
-  key
-  presignedUrl
-}
-    `;
-export const RenderedPlotFragmentDoc = gql`
-    fragment RenderedPlot on RenderedPlot {
-  id
-  store {
-    ...MediaStore
-  }
-  name
-}
-    ${MediaStoreFragmentDoc}`;
-export const ListRenderedPlotFragmentDoc = gql`
-    fragment ListRenderedPlot on RenderedPlot {
-  id
-  store {
-    ...MediaStore
-  }
-  name
-}
-    ${MediaStoreFragmentDoc}`;
-export const ListRgbContextFragmentDoc = gql`
-    fragment ListRGBContext on RGBContext {
-  image {
-    id
-    store {
-      ...ZarrStore
-    }
-    derivedScaleViews {
-      id
-      image {
-        id
-        store {
-          ...ZarrStore
-        }
-      }
-    }
-  }
-  id
-  name
-  views {
-    ...RGBView
-  }
-  blending
-  t
-  z
-  c
-}
-    ${ZarrStoreFragmentDoc}
-${RgbViewFragmentDoc}`;
-export const RgbImageFragmentDoc = gql`
-    fragment RGBImage on Image {
-  name
-  rgbContexts {
-    ...ListRGBContext
-  }
-}
-    ${ListRgbContextFragmentDoc}`;
-export const RoiFragmentDoc = gql`
-    fragment ROI on ROI {
-  id
-  pinned
-  image {
-    id
-    ...RGBImage
-  }
-  createdAt
-  creator {
-    sub
-  }
-  history {
-    ...History
-  }
-  vectors
-}
-    ${RgbImageFragmentDoc}
-${HistoryFragmentDoc}`;
-export const AffineTransformationViewFragmentDoc = gql`
-    fragment AffineTransformationView on AffineTransformationView {
-  ...View
-  id
-  affineMatrix
-  stage {
-    id
-    name
-  }
-}
-    ${ViewFragmentDoc}`;
-export const StageFragmentDoc = gql`
-    fragment Stage on Stage {
-  id
-  affineViews {
-    ...AffineTransformationView
-    image {
-      id
-      store {
-        shape
-      }
-      name
-    }
-  }
-  pinned
-  name
-}
-    ${AffineTransformationViewFragmentDoc}`;
-export const ListStageFragmentDoc = gql`
-    fragment ListStage on Stage {
-  id
-  name
-}
-    `;
-export const ParquetStoreFragmentDoc = gql`
-    fragment ParquetStore on ParquetStore {
-  id
-  key
-  bucket
-  path
-}
-    `;
-export const AccessorFragmentDoc = gql`
-    fragment Accessor on Accessor {
-  id
-  keys
-  minIndex
-  maxIndex
-}
-    `;
-export const ImageAccessorFragmentDoc = gql`
-    fragment ImageAccessor on ImageAccessor {
-  ...Accessor
-  id
-}
-    ${AccessorFragmentDoc}`;
-export const LabelAccessorFragmentDoc = gql`
-    fragment LabelAccessor on LabelAccessor {
-  ...Accessor
-  pixelView {
-    id
-  }
-}
-    ${AccessorFragmentDoc}`;
-export const TableFragmentDoc = gql`
-    fragment Table on Table {
-  origins {
-    id
-  }
-  id
-  name
-  store {
-    ...ParquetStore
-  }
-  columns {
-    name
-    type
-    accessors {
-      ...Accessor
-      ...ImageAccessor
-      ...LabelAccessor
-    }
-  }
-  accessors {
-    ...ImageAccessor
-    ...LabelAccessor
-  }
-}
-    ${ParquetStoreFragmentDoc}
-${AccessorFragmentDoc}
-${ImageAccessorFragmentDoc}
-${LabelAccessorFragmentDoc}`;
-export const ListTableFragmentDoc = gql`
-    fragment ListTable on Table {
-  origins {
-    id
-  }
-  id
-  name
-  store {
-    ...ParquetStore
-  }
-}
-    ${ParquetStoreFragmentDoc}`;
-export const ContinousScanViewFragmentDoc = gql`
-    fragment ContinousScanView on ContinousScanView {
-  ...View
-  id
-  direction
-}
-    ${ViewFragmentDoc}`;
-export const ChannelFragmentDoc = gql`
-    fragment Channel on Channel {
-  id
-  name
-  excitationWavelength
-}
-    `;
-export const ChannelViewFragmentDoc = gql`
-    fragment ChannelView on ChannelView {
-  ...View
-  id
-  channel {
-    ...Channel
-  }
-}
-    ${ViewFragmentDoc}
-${ChannelFragmentDoc}`;
-export const LabelViewFragmentDoc = gql`
-    fragment LabelView on LabelView {
-  ...View
-  id
-  label
-}
-    ${ViewFragmentDoc}`;
-export const EraFragmentDoc = gql`
-    fragment Era on Era {
-  id
-  begin
-  name
-}
-    `;
-export const TimepointViewFragmentDoc = gql`
-    fragment TimepointView on TimepointView {
-  ...View
-  id
-  msSinceStart
-  indexSinceStart
-  era {
-    ...Era
-  }
-}
-    ${ViewFragmentDoc}
-${EraFragmentDoc}`;
-export const OpticsViewFragmentDoc = gql`
-    fragment OpticsView on OpticsView {
-  ...View
-  id
-  objective {
-    id
-    name
-    serialNumber
-  }
-  camera {
-    id
-    name
-    serialNumber
-  }
-  instrument {
-    id
-    name
-    serialNumber
-  }
-}
-    ${ViewFragmentDoc}`;
-export const AcquisitionViewFragmentDoc = gql`
-    fragment AcquisitionView on AcquisitionView {
-  ...View
-  id
-  description
-  acquiredAt
-  operator {
-    sub
-  }
-}
-    ${ViewFragmentDoc}`;
-export const StructureViewFragmentDoc = gql`
-    fragment StructureView on StructureView {
-  ...View
-  id
-  structure
-}
-    ${ViewFragmentDoc}`;
-export const DerivedViewFragmentDoc = gql`
-    fragment DerivedView on DerivedView {
-  ...View
-  id
-  originImage {
-    id
-    name
-  }
-  operation
-}
-    ${ViewFragmentDoc}`;
-export const RoiViewFragmentDoc = gql`
-    fragment ROIView on ROIView {
-  ...View
-  id
-  roi {
-    id
-    name
-  }
-}
-    ${ViewFragmentDoc}`;
-export const FileViewFragmentDoc = gql`
-    fragment FileView on FileView {
-  ...View
-  id
-  seriesIdentifier
-  file {
-    id
-    name
-  }
-}
-    ${ViewFragmentDoc}`;
-export const PixelViewFragmentDoc = gql`
-    fragment PixelView on PixelView {
-  ...View
-  id
-}
-    ${ViewFragmentDoc}`;
-export const SnapshotFragmentDoc = gql`
-    fragment Snapshot on Snapshot {
-  id
-  store {
-    key
-    presignedUrl
-  }
-}
-    `;
+`;
 export const VideoFragmentDoc = gql`
-    fragment Video on Video {
-  id
-  store {
-    key
-    presignedUrl
-  }
-}
-    `;
-export const ListRoiFragmentDoc = gql`
-    fragment ListROI on ROI {
-  id
-  image {
+  fragment Video on Video {
     id
-    name
+    store {
+      key
+      presignedUrl
+    }
   }
-  vectors
-}
-    `;
-export const ImageFragmentDoc = gql`
-    fragment Image on Image {
-  id
-  name
-  store {
-    ...ZarrStore
-  }
-  views {
-    ...ChannelView
-    ...AffineTransformationView
-    ...LabelView
-    ...TimepointView
-    ...OpticsView
-    ...AcquisitionView
-    ...RGBView
-    ...WellPositionView
-    ...StructureView
-    ...DerivedView
-    ...ROIView
-    ...FileView
-    ...PixelView
-  }
-  derivedFromViews {
+`;
+export const ListRoiFragmentDoc = gql`
+  fragment ListROI on ROI {
+    id
     image {
       id
       name
     }
+    vectors
   }
-  pinned
-  renders {
-    ...Snapshot
-    ...Video
-  }
-  dataset {
-    name
+`;
+export const ImageFragmentDoc = gql`
+  fragment Image on Image {
     id
+    name
+    store {
+      ...ZarrStore
+    }
+    views {
+      ...ChannelView
+      ...AffineTransformationView
+      ...LabelView
+      ...TimepointView
+      ...OpticsView
+      ...AcquisitionView
+      ...RGBView
+      ...WellPositionView
+      ...StructureView
+      ...DerivedView
+      ...ROIView
+      ...FileView
+      ...PixelView
+    }
+    derivedFromViews {
+      image {
+        id
+        name
+      }
+    }
+    pinned
+    renders {
+      ...Snapshot
+      ...Video
+    }
+    dataset {
+      name
+      id
+    }
+    createdAt
+    history(pagination: { limit: 3 }) {
+      ...History
+    }
+    creator {
+      sub
+    }
+    tags
+    rgbContexts {
+      ...ListRGBContext
+    }
+    rois {
+      ...ListROI
+    }
   }
-  createdAt
-  history(pagination: {limit: 3}) {
-    ...History
-  }
-  creator {
-    sub
-  }
-  tags
-  rgbContexts {
-    ...ListRGBContext
-  }
-  rois {
-    ...ListROI
-  }
-}
-    ${ZarrStoreFragmentDoc}
-${ChannelViewFragmentDoc}
-${AffineTransformationViewFragmentDoc}
-${LabelViewFragmentDoc}
-${TimepointViewFragmentDoc}
-${OpticsViewFragmentDoc}
-${AcquisitionViewFragmentDoc}
-${RgbViewFragmentDoc}
-${WellPositionViewFragmentDoc}
-${StructureViewFragmentDoc}
-${DerivedViewFragmentDoc}
-${RoiViewFragmentDoc}
-${FileViewFragmentDoc}
-${PixelViewFragmentDoc}
-${SnapshotFragmentDoc}
-${VideoFragmentDoc}
-${HistoryFragmentDoc}
-${ListRgbContextFragmentDoc}
-${ListRoiFragmentDoc}`;
+  ${ZarrStoreFragmentDoc}
+  ${ChannelViewFragmentDoc}
+  ${AffineTransformationViewFragmentDoc}
+  ${LabelViewFragmentDoc}
+  ${TimepointViewFragmentDoc}
+  ${OpticsViewFragmentDoc}
+  ${AcquisitionViewFragmentDoc}
+  ${RgbViewFragmentDoc}
+  ${WellPositionViewFragmentDoc}
+  ${StructureViewFragmentDoc}
+  ${DerivedViewFragmentDoc}
+  ${RoiViewFragmentDoc}
+  ${FileViewFragmentDoc}
+  ${PixelViewFragmentDoc}
+  ${SnapshotFragmentDoc}
+  ${VideoFragmentDoc}
+  ${HistoryFragmentDoc}
+  ${ListRgbContextFragmentDoc}
+  ${ListRoiFragmentDoc}
+`;
 export const DetailPixelViewFragmentDoc = gql`
-    fragment DetailPixelView on PixelView {
-  ...View
-  id
-  image {
-    ...Image
+  fragment DetailPixelView on PixelView {
+    ...View
+    id
+    image {
+      ...Image
+    }
+    labelAccessors {
+      keys
+      table {
+        id
+        name
+      }
+    }
   }
-  labelAccessors {
-    keys
-    table {
+  ${ViewFragmentDoc}
+  ${ImageFragmentDoc}
+`;
+export const CreateCameraDocument = gql`
+  mutation CreateCamera(
+    $serialNumber: String!
+    $name: String
+    $pixelSizeX: Micrometers
+    $pixelSizeY: Micrometers
+    $sensorSizeX: Int
+    $sensorSizeY: Int
+  ) {
+    createCamera(
+      input: {
+        name: $name
+        pixelSizeX: $pixelSizeX
+        serialNumber: $serialNumber
+        pixelSizeY: $pixelSizeY
+        sensorSizeX: $sensorSizeX
+        sensorSizeY: $sensorSizeY
+      }
+    ) {
       id
       name
     }
   }
-}
-    ${ViewFragmentDoc}
-${ImageFragmentDoc}`;
-export const CreateCameraDocument = gql`
-    mutation CreateCamera($serialNumber: String!, $name: String, $pixelSizeX: Micrometers, $pixelSizeY: Micrometers, $sensorSizeX: Int, $sensorSizeY: Int) {
-  createCamera(
-    input: {name: $name, pixelSizeX: $pixelSizeX, serialNumber: $serialNumber, pixelSizeY: $pixelSizeY, sensorSizeX: $sensorSizeX, sensorSizeY: $sensorSizeY}
-  ) {
-    id
-    name
-  }
-}
-    `;
-export type CreateCameraMutationFn = Apollo.MutationFunction<CreateCameraMutation, CreateCameraMutationVariables>;
+`;
+export type CreateCameraMutationFn = Apollo.MutationFunction<
+  CreateCameraMutation,
+  CreateCameraMutationVariables
+>;
 
 /**
  * __useCreateCameraMutation__
@@ -5509,24 +13497,55 @@ export type CreateCameraMutationFn = Apollo.MutationFunction<CreateCameraMutatio
  *   },
  * });
  */
-export function useCreateCameraMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateCameraMutation, CreateCameraMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateCameraMutation, CreateCameraMutationVariables>(CreateCameraDocument, options);
-      }
-export type CreateCameraMutationHookResult = ReturnType<typeof useCreateCameraMutation>;
-export type CreateCameraMutationResult = Apollo.MutationResult<CreateCameraMutation>;
-export type CreateCameraMutationOptions = Apollo.BaseMutationOptions<CreateCameraMutation, CreateCameraMutationVariables>;
-export const EnsureCameraDocument = gql`
-    mutation EnsureCamera($serialNumber: String!, $name: String, $pixelSizeX: Micrometers, $pixelSizeY: Micrometers, $sensorSizeX: Int, $sensorSizeY: Int) {
-  ensureCamera(
-    input: {name: $name, pixelSizeX: $pixelSizeX, serialNumber: $serialNumber, pixelSizeY: $pixelSizeY, sensorSizeX: $sensorSizeX, sensorSizeY: $sensorSizeY}
-  ) {
-    id
-    name
-  }
+export function useCreateCameraMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateCameraMutation,
+    CreateCameraMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateCameraMutation,
+    CreateCameraMutationVariables
+  >(CreateCameraDocument, options);
 }
-    `;
-export type EnsureCameraMutationFn = Apollo.MutationFunction<EnsureCameraMutation, EnsureCameraMutationVariables>;
+export type CreateCameraMutationHookResult = ReturnType<
+  typeof useCreateCameraMutation
+>;
+export type CreateCameraMutationResult =
+  Apollo.MutationResult<CreateCameraMutation>;
+export type CreateCameraMutationOptions = Apollo.BaseMutationOptions<
+  CreateCameraMutation,
+  CreateCameraMutationVariables
+>;
+export const EnsureCameraDocument = gql`
+  mutation EnsureCamera(
+    $serialNumber: String!
+    $name: String
+    $pixelSizeX: Micrometers
+    $pixelSizeY: Micrometers
+    $sensorSizeX: Int
+    $sensorSizeY: Int
+  ) {
+    ensureCamera(
+      input: {
+        name: $name
+        pixelSizeX: $pixelSizeX
+        serialNumber: $serialNumber
+        pixelSizeY: $pixelSizeY
+        sensorSizeX: $sensorSizeX
+        sensorSizeY: $sensorSizeY
+      }
+    ) {
+      id
+      name
+    }
+  }
+`;
+export type EnsureCameraMutationFn = Apollo.MutationFunction<
+  EnsureCameraMutation,
+  EnsureCameraMutationVariables
+>;
 
 /**
  * __useEnsureCameraMutation__
@@ -5550,22 +13569,39 @@ export type EnsureCameraMutationFn = Apollo.MutationFunction<EnsureCameraMutatio
  *   },
  * });
  */
-export function useEnsureCameraMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<EnsureCameraMutation, EnsureCameraMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<EnsureCameraMutation, EnsureCameraMutationVariables>(EnsureCameraDocument, options);
-      }
-export type EnsureCameraMutationHookResult = ReturnType<typeof useEnsureCameraMutation>;
-export type EnsureCameraMutationResult = Apollo.MutationResult<EnsureCameraMutation>;
-export type EnsureCameraMutationOptions = Apollo.BaseMutationOptions<EnsureCameraMutation, EnsureCameraMutationVariables>;
-export const CreateChannelDocument = gql`
-    mutation CreateChannel($name: String!) {
-  createChannel(input: {name: $name}) {
-    id
-    name
-  }
+export function useEnsureCameraMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    EnsureCameraMutation,
+    EnsureCameraMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    EnsureCameraMutation,
+    EnsureCameraMutationVariables
+  >(EnsureCameraDocument, options);
 }
-    `;
-export type CreateChannelMutationFn = Apollo.MutationFunction<CreateChannelMutation, CreateChannelMutationVariables>;
+export type EnsureCameraMutationHookResult = ReturnType<
+  typeof useEnsureCameraMutation
+>;
+export type EnsureCameraMutationResult =
+  Apollo.MutationResult<EnsureCameraMutation>;
+export type EnsureCameraMutationOptions = Apollo.BaseMutationOptions<
+  EnsureCameraMutation,
+  EnsureCameraMutationVariables
+>;
+export const CreateChannelDocument = gql`
+  mutation CreateChannel($name: String!) {
+    createChannel(input: { name: $name }) {
+      id
+      name
+    }
+  }
+`;
+export type CreateChannelMutationFn = Apollo.MutationFunction<
+  CreateChannelMutation,
+  CreateChannelMutationVariables
+>;
 
 /**
  * __useCreateChannelMutation__
@@ -5584,22 +13620,39 @@ export type CreateChannelMutationFn = Apollo.MutationFunction<CreateChannelMutat
  *   },
  * });
  */
-export function useCreateChannelMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateChannelMutation, CreateChannelMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateChannelMutation, CreateChannelMutationVariables>(CreateChannelDocument, options);
-      }
-export type CreateChannelMutationHookResult = ReturnType<typeof useCreateChannelMutation>;
-export type CreateChannelMutationResult = Apollo.MutationResult<CreateChannelMutation>;
-export type CreateChannelMutationOptions = Apollo.BaseMutationOptions<CreateChannelMutation, CreateChannelMutationVariables>;
-export const EnsureChannelDocument = gql`
-    mutation EnsureChannel($name: String!) {
-  ensureChannel(input: {name: $name}) {
-    id
-    name
-  }
+export function useCreateChannelMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateChannelMutation,
+    CreateChannelMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateChannelMutation,
+    CreateChannelMutationVariables
+  >(CreateChannelDocument, options);
 }
-    `;
-export type EnsureChannelMutationFn = Apollo.MutationFunction<EnsureChannelMutation, EnsureChannelMutationVariables>;
+export type CreateChannelMutationHookResult = ReturnType<
+  typeof useCreateChannelMutation
+>;
+export type CreateChannelMutationResult =
+  Apollo.MutationResult<CreateChannelMutation>;
+export type CreateChannelMutationOptions = Apollo.BaseMutationOptions<
+  CreateChannelMutation,
+  CreateChannelMutationVariables
+>;
+export const EnsureChannelDocument = gql`
+  mutation EnsureChannel($name: String!) {
+    ensureChannel(input: { name: $name }) {
+      id
+      name
+    }
+  }
+`;
+export type EnsureChannelMutationFn = Apollo.MutationFunction<
+  EnsureChannelMutation,
+  EnsureChannelMutationVariables
+>;
 
 /**
  * __useEnsureChannelMutation__
@@ -5618,22 +13671,39 @@ export type EnsureChannelMutationFn = Apollo.MutationFunction<EnsureChannelMutat
  *   },
  * });
  */
-export function useEnsureChannelMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<EnsureChannelMutation, EnsureChannelMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<EnsureChannelMutation, EnsureChannelMutationVariables>(EnsureChannelDocument, options);
-      }
-export type EnsureChannelMutationHookResult = ReturnType<typeof useEnsureChannelMutation>;
-export type EnsureChannelMutationResult = Apollo.MutationResult<EnsureChannelMutation>;
-export type EnsureChannelMutationOptions = Apollo.BaseMutationOptions<EnsureChannelMutation, EnsureChannelMutationVariables>;
-export const CreateDatasetDocument = gql`
-    mutation CreateDataset($name: String!) {
-  createDataset(input: {name: $name}) {
-    id
-    name
-  }
+export function useEnsureChannelMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    EnsureChannelMutation,
+    EnsureChannelMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    EnsureChannelMutation,
+    EnsureChannelMutationVariables
+  >(EnsureChannelDocument, options);
 }
-    `;
-export type CreateDatasetMutationFn = Apollo.MutationFunction<CreateDatasetMutation, CreateDatasetMutationVariables>;
+export type EnsureChannelMutationHookResult = ReturnType<
+  typeof useEnsureChannelMutation
+>;
+export type EnsureChannelMutationResult =
+  Apollo.MutationResult<EnsureChannelMutation>;
+export type EnsureChannelMutationOptions = Apollo.BaseMutationOptions<
+  EnsureChannelMutation,
+  EnsureChannelMutationVariables
+>;
+export const CreateDatasetDocument = gql`
+  mutation CreateDataset($name: String!) {
+    createDataset(input: { name: $name }) {
+      id
+      name
+    }
+  }
+`;
+export type CreateDatasetMutationFn = Apollo.MutationFunction<
+  CreateDatasetMutation,
+  CreateDatasetMutationVariables
+>;
 
 /**
  * __useCreateDatasetMutation__
@@ -5652,22 +13722,39 @@ export type CreateDatasetMutationFn = Apollo.MutationFunction<CreateDatasetMutat
  *   },
  * });
  */
-export function useCreateDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateDatasetMutation, CreateDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateDatasetMutation, CreateDatasetMutationVariables>(CreateDatasetDocument, options);
-      }
-export type CreateDatasetMutationHookResult = ReturnType<typeof useCreateDatasetMutation>;
-export type CreateDatasetMutationResult = Apollo.MutationResult<CreateDatasetMutation>;
-export type CreateDatasetMutationOptions = Apollo.BaseMutationOptions<CreateDatasetMutation, CreateDatasetMutationVariables>;
-export const UpdateDatasetDocument = gql`
-    mutation UpdateDataset($id: ID!, $name: String!) {
-  updateDataset(input: {id: $id, name: $name}) {
-    id
-    name
-  }
+export function useCreateDatasetMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateDatasetMutation,
+    CreateDatasetMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateDatasetMutation,
+    CreateDatasetMutationVariables
+  >(CreateDatasetDocument, options);
 }
-    `;
-export type UpdateDatasetMutationFn = Apollo.MutationFunction<UpdateDatasetMutation, UpdateDatasetMutationVariables>;
+export type CreateDatasetMutationHookResult = ReturnType<
+  typeof useCreateDatasetMutation
+>;
+export type CreateDatasetMutationResult =
+  Apollo.MutationResult<CreateDatasetMutation>;
+export type CreateDatasetMutationOptions = Apollo.BaseMutationOptions<
+  CreateDatasetMutation,
+  CreateDatasetMutationVariables
+>;
+export const UpdateDatasetDocument = gql`
+  mutation UpdateDataset($id: ID!, $name: String!) {
+    updateDataset(input: { id: $id, name: $name }) {
+      id
+      name
+    }
+  }
+`;
+export type UpdateDatasetMutationFn = Apollo.MutationFunction<
+  UpdateDatasetMutation,
+  UpdateDatasetMutationVariables
+>;
 
 /**
  * __useUpdateDatasetMutation__
@@ -5687,21 +13774,39 @@ export type UpdateDatasetMutationFn = Apollo.MutationFunction<UpdateDatasetMutat
  *   },
  * });
  */
-export function useUpdateDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateDatasetMutation, UpdateDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<UpdateDatasetMutation, UpdateDatasetMutationVariables>(UpdateDatasetDocument, options);
-      }
-export type UpdateDatasetMutationHookResult = ReturnType<typeof useUpdateDatasetMutation>;
-export type UpdateDatasetMutationResult = Apollo.MutationResult<UpdateDatasetMutation>;
-export type UpdateDatasetMutationOptions = Apollo.BaseMutationOptions<UpdateDatasetMutation, UpdateDatasetMutationVariables>;
-export const PinDatasetDocument = gql`
-    mutation PinDataset($id: ID!, $pin: Boolean!) {
-  pinDataset(input: {id: $id, pin: $pin}) {
-    ...Dataset
-  }
+export function useUpdateDatasetMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    UpdateDatasetMutation,
+    UpdateDatasetMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    UpdateDatasetMutation,
+    UpdateDatasetMutationVariables
+  >(UpdateDatasetDocument, options);
 }
-    ${DatasetFragmentDoc}`;
-export type PinDatasetMutationFn = Apollo.MutationFunction<PinDatasetMutation, PinDatasetMutationVariables>;
+export type UpdateDatasetMutationHookResult = ReturnType<
+  typeof useUpdateDatasetMutation
+>;
+export type UpdateDatasetMutationResult =
+  Apollo.MutationResult<UpdateDatasetMutation>;
+export type UpdateDatasetMutationOptions = Apollo.BaseMutationOptions<
+  UpdateDatasetMutation,
+  UpdateDatasetMutationVariables
+>;
+export const PinDatasetDocument = gql`
+  mutation PinDataset($id: ID!, $pin: Boolean!) {
+    pinDataset(input: { id: $id, pin: $pin }) {
+      ...Dataset
+    }
+  }
+  ${DatasetFragmentDoc}
+`;
+export type PinDatasetMutationFn = Apollo.MutationFunction<
+  PinDatasetMutation,
+  PinDatasetMutationVariables
+>;
 
 /**
  * __usePinDatasetMutation__
@@ -5721,21 +13826,39 @@ export type PinDatasetMutationFn = Apollo.MutationFunction<PinDatasetMutation, P
  *   },
  * });
  */
-export function usePinDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PinDatasetMutation, PinDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PinDatasetMutation, PinDatasetMutationVariables>(PinDatasetDocument, options);
-      }
-export type PinDatasetMutationHookResult = ReturnType<typeof usePinDatasetMutation>;
-export type PinDatasetMutationResult = Apollo.MutationResult<PinDatasetMutation>;
-export type PinDatasetMutationOptions = Apollo.BaseMutationOptions<PinDatasetMutation, PinDatasetMutationVariables>;
-export const PutDatasetsInDatasetDocument = gql`
-    mutation PutDatasetsInDataset($selfs: [ID!]!, $other: ID!) {
-  putDatasetsInDataset(input: {selfs: $selfs, other: $other}) {
-    ...Dataset
-  }
+export function usePinDatasetMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    PinDatasetMutation,
+    PinDatasetMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    PinDatasetMutation,
+    PinDatasetMutationVariables
+  >(PinDatasetDocument, options);
 }
-    ${DatasetFragmentDoc}`;
-export type PutDatasetsInDatasetMutationFn = Apollo.MutationFunction<PutDatasetsInDatasetMutation, PutDatasetsInDatasetMutationVariables>;
+export type PinDatasetMutationHookResult = ReturnType<
+  typeof usePinDatasetMutation
+>;
+export type PinDatasetMutationResult =
+  Apollo.MutationResult<PinDatasetMutation>;
+export type PinDatasetMutationOptions = Apollo.BaseMutationOptions<
+  PinDatasetMutation,
+  PinDatasetMutationVariables
+>;
+export const PutDatasetsInDatasetDocument = gql`
+  mutation PutDatasetsInDataset($selfs: [ID!]!, $other: ID!) {
+    putDatasetsInDataset(input: { selfs: $selfs, other: $other }) {
+      ...Dataset
+    }
+  }
+  ${DatasetFragmentDoc}
+`;
+export type PutDatasetsInDatasetMutationFn = Apollo.MutationFunction<
+  PutDatasetsInDatasetMutation,
+  PutDatasetsInDatasetMutationVariables
+>;
 
 /**
  * __usePutDatasetsInDatasetMutation__
@@ -5755,21 +13878,39 @@ export type PutDatasetsInDatasetMutationFn = Apollo.MutationFunction<PutDatasets
  *   },
  * });
  */
-export function usePutDatasetsInDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PutDatasetsInDatasetMutation, PutDatasetsInDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PutDatasetsInDatasetMutation, PutDatasetsInDatasetMutationVariables>(PutDatasetsInDatasetDocument, options);
-      }
-export type PutDatasetsInDatasetMutationHookResult = ReturnType<typeof usePutDatasetsInDatasetMutation>;
-export type PutDatasetsInDatasetMutationResult = Apollo.MutationResult<PutDatasetsInDatasetMutation>;
-export type PutDatasetsInDatasetMutationOptions = Apollo.BaseMutationOptions<PutDatasetsInDatasetMutation, PutDatasetsInDatasetMutationVariables>;
-export const ReleaseDatasetsFromDatasetDocument = gql`
-    mutation ReleaseDatasetsFromDataset($selfs: [ID!]!, $other: ID!) {
-  releaseDatasetsFromDataset(input: {selfs: $selfs, other: $other}) {
-    ...Dataset
-  }
+export function usePutDatasetsInDatasetMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    PutDatasetsInDatasetMutation,
+    PutDatasetsInDatasetMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    PutDatasetsInDatasetMutation,
+    PutDatasetsInDatasetMutationVariables
+  >(PutDatasetsInDatasetDocument, options);
 }
-    ${DatasetFragmentDoc}`;
-export type ReleaseDatasetsFromDatasetMutationFn = Apollo.MutationFunction<ReleaseDatasetsFromDatasetMutation, ReleaseDatasetsFromDatasetMutationVariables>;
+export type PutDatasetsInDatasetMutationHookResult = ReturnType<
+  typeof usePutDatasetsInDatasetMutation
+>;
+export type PutDatasetsInDatasetMutationResult =
+  Apollo.MutationResult<PutDatasetsInDatasetMutation>;
+export type PutDatasetsInDatasetMutationOptions = Apollo.BaseMutationOptions<
+  PutDatasetsInDatasetMutation,
+  PutDatasetsInDatasetMutationVariables
+>;
+export const ReleaseDatasetsFromDatasetDocument = gql`
+  mutation ReleaseDatasetsFromDataset($selfs: [ID!]!, $other: ID!) {
+    releaseDatasetsFromDataset(input: { selfs: $selfs, other: $other }) {
+      ...Dataset
+    }
+  }
+  ${DatasetFragmentDoc}
+`;
+export type ReleaseDatasetsFromDatasetMutationFn = Apollo.MutationFunction<
+  ReleaseDatasetsFromDatasetMutation,
+  ReleaseDatasetsFromDatasetMutationVariables
+>;
 
 /**
  * __useReleaseDatasetsFromDatasetMutation__
@@ -5789,21 +13930,40 @@ export type ReleaseDatasetsFromDatasetMutationFn = Apollo.MutationFunction<Relea
  *   },
  * });
  */
-export function useReleaseDatasetsFromDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ReleaseDatasetsFromDatasetMutation, ReleaseDatasetsFromDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ReleaseDatasetsFromDatasetMutation, ReleaseDatasetsFromDatasetMutationVariables>(ReleaseDatasetsFromDatasetDocument, options);
-      }
-export type ReleaseDatasetsFromDatasetMutationHookResult = ReturnType<typeof useReleaseDatasetsFromDatasetMutation>;
-export type ReleaseDatasetsFromDatasetMutationResult = Apollo.MutationResult<ReleaseDatasetsFromDatasetMutation>;
-export type ReleaseDatasetsFromDatasetMutationOptions = Apollo.BaseMutationOptions<ReleaseDatasetsFromDatasetMutation, ReleaseDatasetsFromDatasetMutationVariables>;
-export const PutImagesInDatasetDocument = gql`
-    mutation PutImagesInDataset($selfs: [ID!]!, $other: ID!) {
-  putImagesInDataset(input: {selfs: $selfs, other: $other}) {
-    ...Dataset
-  }
+export function useReleaseDatasetsFromDatasetMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    ReleaseDatasetsFromDatasetMutation,
+    ReleaseDatasetsFromDatasetMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    ReleaseDatasetsFromDatasetMutation,
+    ReleaseDatasetsFromDatasetMutationVariables
+  >(ReleaseDatasetsFromDatasetDocument, options);
 }
-    ${DatasetFragmentDoc}`;
-export type PutImagesInDatasetMutationFn = Apollo.MutationFunction<PutImagesInDatasetMutation, PutImagesInDatasetMutationVariables>;
+export type ReleaseDatasetsFromDatasetMutationHookResult = ReturnType<
+  typeof useReleaseDatasetsFromDatasetMutation
+>;
+export type ReleaseDatasetsFromDatasetMutationResult =
+  Apollo.MutationResult<ReleaseDatasetsFromDatasetMutation>;
+export type ReleaseDatasetsFromDatasetMutationOptions =
+  Apollo.BaseMutationOptions<
+    ReleaseDatasetsFromDatasetMutation,
+    ReleaseDatasetsFromDatasetMutationVariables
+  >;
+export const PutImagesInDatasetDocument = gql`
+  mutation PutImagesInDataset($selfs: [ID!]!, $other: ID!) {
+    putImagesInDataset(input: { selfs: $selfs, other: $other }) {
+      ...Dataset
+    }
+  }
+  ${DatasetFragmentDoc}
+`;
+export type PutImagesInDatasetMutationFn = Apollo.MutationFunction<
+  PutImagesInDatasetMutation,
+  PutImagesInDatasetMutationVariables
+>;
 
 /**
  * __usePutImagesInDatasetMutation__
@@ -5823,21 +13983,39 @@ export type PutImagesInDatasetMutationFn = Apollo.MutationFunction<PutImagesInDa
  *   },
  * });
  */
-export function usePutImagesInDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PutImagesInDatasetMutation, PutImagesInDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PutImagesInDatasetMutation, PutImagesInDatasetMutationVariables>(PutImagesInDatasetDocument, options);
-      }
-export type PutImagesInDatasetMutationHookResult = ReturnType<typeof usePutImagesInDatasetMutation>;
-export type PutImagesInDatasetMutationResult = Apollo.MutationResult<PutImagesInDatasetMutation>;
-export type PutImagesInDatasetMutationOptions = Apollo.BaseMutationOptions<PutImagesInDatasetMutation, PutImagesInDatasetMutationVariables>;
-export const ReleaseImagesFromDatasetDocument = gql`
-    mutation ReleaseImagesFromDataset($selfs: [ID!]!, $other: ID!) {
-  releaseImagesFromDataset(input: {selfs: $selfs, other: $other}) {
-    ...Dataset
-  }
+export function usePutImagesInDatasetMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    PutImagesInDatasetMutation,
+    PutImagesInDatasetMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    PutImagesInDatasetMutation,
+    PutImagesInDatasetMutationVariables
+  >(PutImagesInDatasetDocument, options);
 }
-    ${DatasetFragmentDoc}`;
-export type ReleaseImagesFromDatasetMutationFn = Apollo.MutationFunction<ReleaseImagesFromDatasetMutation, ReleaseImagesFromDatasetMutationVariables>;
+export type PutImagesInDatasetMutationHookResult = ReturnType<
+  typeof usePutImagesInDatasetMutation
+>;
+export type PutImagesInDatasetMutationResult =
+  Apollo.MutationResult<PutImagesInDatasetMutation>;
+export type PutImagesInDatasetMutationOptions = Apollo.BaseMutationOptions<
+  PutImagesInDatasetMutation,
+  PutImagesInDatasetMutationVariables
+>;
+export const ReleaseImagesFromDatasetDocument = gql`
+  mutation ReleaseImagesFromDataset($selfs: [ID!]!, $other: ID!) {
+    releaseImagesFromDataset(input: { selfs: $selfs, other: $other }) {
+      ...Dataset
+    }
+  }
+  ${DatasetFragmentDoc}
+`;
+export type ReleaseImagesFromDatasetMutationFn = Apollo.MutationFunction<
+  ReleaseImagesFromDatasetMutation,
+  ReleaseImagesFromDatasetMutationVariables
+>;
 
 /**
  * __useReleaseImagesFromDatasetMutation__
@@ -5857,21 +14035,40 @@ export type ReleaseImagesFromDatasetMutationFn = Apollo.MutationFunction<Release
  *   },
  * });
  */
-export function useReleaseImagesFromDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ReleaseImagesFromDatasetMutation, ReleaseImagesFromDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ReleaseImagesFromDatasetMutation, ReleaseImagesFromDatasetMutationVariables>(ReleaseImagesFromDatasetDocument, options);
-      }
-export type ReleaseImagesFromDatasetMutationHookResult = ReturnType<typeof useReleaseImagesFromDatasetMutation>;
-export type ReleaseImagesFromDatasetMutationResult = Apollo.MutationResult<ReleaseImagesFromDatasetMutation>;
-export type ReleaseImagesFromDatasetMutationOptions = Apollo.BaseMutationOptions<ReleaseImagesFromDatasetMutation, ReleaseImagesFromDatasetMutationVariables>;
-export const PutFilesInDatasetDocument = gql`
-    mutation PutFilesInDataset($selfs: [ID!]!, $other: ID!) {
-  putFilesInDataset(input: {selfs: $selfs, other: $other}) {
-    ...Dataset
-  }
+export function useReleaseImagesFromDatasetMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    ReleaseImagesFromDatasetMutation,
+    ReleaseImagesFromDatasetMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    ReleaseImagesFromDatasetMutation,
+    ReleaseImagesFromDatasetMutationVariables
+  >(ReleaseImagesFromDatasetDocument, options);
 }
-    ${DatasetFragmentDoc}`;
-export type PutFilesInDatasetMutationFn = Apollo.MutationFunction<PutFilesInDatasetMutation, PutFilesInDatasetMutationVariables>;
+export type ReleaseImagesFromDatasetMutationHookResult = ReturnType<
+  typeof useReleaseImagesFromDatasetMutation
+>;
+export type ReleaseImagesFromDatasetMutationResult =
+  Apollo.MutationResult<ReleaseImagesFromDatasetMutation>;
+export type ReleaseImagesFromDatasetMutationOptions =
+  Apollo.BaseMutationOptions<
+    ReleaseImagesFromDatasetMutation,
+    ReleaseImagesFromDatasetMutationVariables
+  >;
+export const PutFilesInDatasetDocument = gql`
+  mutation PutFilesInDataset($selfs: [ID!]!, $other: ID!) {
+    putFilesInDataset(input: { selfs: $selfs, other: $other }) {
+      ...Dataset
+    }
+  }
+  ${DatasetFragmentDoc}
+`;
+export type PutFilesInDatasetMutationFn = Apollo.MutationFunction<
+  PutFilesInDatasetMutation,
+  PutFilesInDatasetMutationVariables
+>;
 
 /**
  * __usePutFilesInDatasetMutation__
@@ -5891,21 +14088,39 @@ export type PutFilesInDatasetMutationFn = Apollo.MutationFunction<PutFilesInData
  *   },
  * });
  */
-export function usePutFilesInDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PutFilesInDatasetMutation, PutFilesInDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PutFilesInDatasetMutation, PutFilesInDatasetMutationVariables>(PutFilesInDatasetDocument, options);
-      }
-export type PutFilesInDatasetMutationHookResult = ReturnType<typeof usePutFilesInDatasetMutation>;
-export type PutFilesInDatasetMutationResult = Apollo.MutationResult<PutFilesInDatasetMutation>;
-export type PutFilesInDatasetMutationOptions = Apollo.BaseMutationOptions<PutFilesInDatasetMutation, PutFilesInDatasetMutationVariables>;
-export const ReleaseFilesFromDatasetDocument = gql`
-    mutation ReleaseFilesFromDataset($selfs: [ID!]!, $other: ID!) {
-  releaseFilesFromDataset(input: {selfs: $selfs, other: $other}) {
-    ...Dataset
-  }
+export function usePutFilesInDatasetMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    PutFilesInDatasetMutation,
+    PutFilesInDatasetMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    PutFilesInDatasetMutation,
+    PutFilesInDatasetMutationVariables
+  >(PutFilesInDatasetDocument, options);
 }
-    ${DatasetFragmentDoc}`;
-export type ReleaseFilesFromDatasetMutationFn = Apollo.MutationFunction<ReleaseFilesFromDatasetMutation, ReleaseFilesFromDatasetMutationVariables>;
+export type PutFilesInDatasetMutationHookResult = ReturnType<
+  typeof usePutFilesInDatasetMutation
+>;
+export type PutFilesInDatasetMutationResult =
+  Apollo.MutationResult<PutFilesInDatasetMutation>;
+export type PutFilesInDatasetMutationOptions = Apollo.BaseMutationOptions<
+  PutFilesInDatasetMutation,
+  PutFilesInDatasetMutationVariables
+>;
+export const ReleaseFilesFromDatasetDocument = gql`
+  mutation ReleaseFilesFromDataset($selfs: [ID!]!, $other: ID!) {
+    releaseFilesFromDataset(input: { selfs: $selfs, other: $other }) {
+      ...Dataset
+    }
+  }
+  ${DatasetFragmentDoc}
+`;
+export type ReleaseFilesFromDatasetMutationFn = Apollo.MutationFunction<
+  ReleaseFilesFromDatasetMutation,
+  ReleaseFilesFromDatasetMutationVariables
+>;
 
 /**
  * __useReleaseFilesFromDatasetMutation__
@@ -5925,23 +14140,40 @@ export type ReleaseFilesFromDatasetMutationFn = Apollo.MutationFunction<ReleaseF
  *   },
  * });
  */
-export function useReleaseFilesFromDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ReleaseFilesFromDatasetMutation, ReleaseFilesFromDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ReleaseFilesFromDatasetMutation, ReleaseFilesFromDatasetMutationVariables>(ReleaseFilesFromDatasetDocument, options);
-      }
-export type ReleaseFilesFromDatasetMutationHookResult = ReturnType<typeof useReleaseFilesFromDatasetMutation>;
-export type ReleaseFilesFromDatasetMutationResult = Apollo.MutationResult<ReleaseFilesFromDatasetMutation>;
-export type ReleaseFilesFromDatasetMutationOptions = Apollo.BaseMutationOptions<ReleaseFilesFromDatasetMutation, ReleaseFilesFromDatasetMutationVariables>;
-export const RevertDatasetDocument = gql`
-    mutation RevertDataset($dataset: ID!, $history: ID!) {
-  revertDataset(input: {id: $dataset, historyId: $history}) {
-    id
-    name
-    description
-  }
+export function useReleaseFilesFromDatasetMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    ReleaseFilesFromDatasetMutation,
+    ReleaseFilesFromDatasetMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    ReleaseFilesFromDatasetMutation,
+    ReleaseFilesFromDatasetMutationVariables
+  >(ReleaseFilesFromDatasetDocument, options);
 }
-    `;
-export type RevertDatasetMutationFn = Apollo.MutationFunction<RevertDatasetMutation, RevertDatasetMutationVariables>;
+export type ReleaseFilesFromDatasetMutationHookResult = ReturnType<
+  typeof useReleaseFilesFromDatasetMutation
+>;
+export type ReleaseFilesFromDatasetMutationResult =
+  Apollo.MutationResult<ReleaseFilesFromDatasetMutation>;
+export type ReleaseFilesFromDatasetMutationOptions = Apollo.BaseMutationOptions<
+  ReleaseFilesFromDatasetMutation,
+  ReleaseFilesFromDatasetMutationVariables
+>;
+export const RevertDatasetDocument = gql`
+  mutation RevertDataset($dataset: ID!, $history: ID!) {
+    revertDataset(input: { id: $dataset, historyId: $history }) {
+      id
+      name
+      description
+    }
+  }
+`;
+export type RevertDatasetMutationFn = Apollo.MutationFunction<
+  RevertDatasetMutation,
+  RevertDatasetMutationVariables
+>;
 
 /**
  * __useRevertDatasetMutation__
@@ -5961,22 +14193,39 @@ export type RevertDatasetMutationFn = Apollo.MutationFunction<RevertDatasetMutat
  *   },
  * });
  */
-export function useRevertDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RevertDatasetMutation, RevertDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RevertDatasetMutation, RevertDatasetMutationVariables>(RevertDatasetDocument, options);
-      }
-export type RevertDatasetMutationHookResult = ReturnType<typeof useRevertDatasetMutation>;
-export type RevertDatasetMutationResult = Apollo.MutationResult<RevertDatasetMutation>;
-export type RevertDatasetMutationOptions = Apollo.BaseMutationOptions<RevertDatasetMutation, RevertDatasetMutationVariables>;
-export const CreateEraDocument = gql`
-    mutation CreateEra($name: String!, $begin: DateTime) {
-  createEra(input: {name: $name, begin: $begin}) {
-    id
-    begin
-  }
+export function useRevertDatasetMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    RevertDatasetMutation,
+    RevertDatasetMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    RevertDatasetMutation,
+    RevertDatasetMutationVariables
+  >(RevertDatasetDocument, options);
 }
-    `;
-export type CreateEraMutationFn = Apollo.MutationFunction<CreateEraMutation, CreateEraMutationVariables>;
+export type RevertDatasetMutationHookResult = ReturnType<
+  typeof useRevertDatasetMutation
+>;
+export type RevertDatasetMutationResult =
+  Apollo.MutationResult<RevertDatasetMutation>;
+export type RevertDatasetMutationOptions = Apollo.BaseMutationOptions<
+  RevertDatasetMutation,
+  RevertDatasetMutationVariables
+>;
+export const CreateEraDocument = gql`
+  mutation CreateEra($name: String!, $begin: DateTime) {
+    createEra(input: { name: $name, begin: $begin }) {
+      id
+      begin
+    }
+  }
+`;
+export type CreateEraMutationFn = Apollo.MutationFunction<
+  CreateEraMutation,
+  CreateEraMutationVariables
+>;
 
 /**
  * __useCreateEraMutation__
@@ -5996,23 +14245,45 @@ export type CreateEraMutationFn = Apollo.MutationFunction<CreateEraMutation, Cre
  *   },
  * });
  */
-export function useCreateEraMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateEraMutation, CreateEraMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateEraMutation, CreateEraMutationVariables>(CreateEraDocument, options);
-      }
-export type CreateEraMutationHookResult = ReturnType<typeof useCreateEraMutation>;
-export type CreateEraMutationResult = Apollo.MutationResult<CreateEraMutation>;
-export type CreateEraMutationOptions = Apollo.BaseMutationOptions<CreateEraMutation, CreateEraMutationVariables>;
-export const From_File_LikeDocument = gql`
-    mutation from_file_like($file: FileLike!, $name: String!, $origins: [ID!], $dataset: ID) {
-  fromFileLike(
-    input: {file: $file, name: $name, origins: $origins, dataset: $dataset}
-  ) {
-    ...File
-  }
+export function useCreateEraMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateEraMutation,
+    CreateEraMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateEraMutation,
+    CreateEraMutationVariables
+  >(CreateEraDocument, options);
 }
-    ${FileFragmentDoc}`;
-export type From_File_LikeMutationFn = Apollo.MutationFunction<From_File_LikeMutation, From_File_LikeMutationVariables>;
+export type CreateEraMutationHookResult = ReturnType<
+  typeof useCreateEraMutation
+>;
+export type CreateEraMutationResult = Apollo.MutationResult<CreateEraMutation>;
+export type CreateEraMutationOptions = Apollo.BaseMutationOptions<
+  CreateEraMutation,
+  CreateEraMutationVariables
+>;
+export const From_File_LikeDocument = gql`
+  mutation from_file_like(
+    $file: FileLike!
+    $name: String!
+    $origins: [ID!]
+    $dataset: ID
+  ) {
+    fromFileLike(
+      input: { file: $file, name: $name, origins: $origins, dataset: $dataset }
+    ) {
+      ...File
+    }
+  }
+  ${FileFragmentDoc}
+`;
+export type From_File_LikeMutationFn = Apollo.MutationFunction<
+  From_File_LikeMutation,
+  From_File_LikeMutationVariables
+>;
 
 /**
  * __useFrom_File_LikeMutation__
@@ -6034,21 +14305,39 @@ export type From_File_LikeMutationFn = Apollo.MutationFunction<From_File_LikeMut
  *   },
  * });
  */
-export function useFrom_File_LikeMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<From_File_LikeMutation, From_File_LikeMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<From_File_LikeMutation, From_File_LikeMutationVariables>(From_File_LikeDocument, options);
-      }
-export type From_File_LikeMutationHookResult = ReturnType<typeof useFrom_File_LikeMutation>;
-export type From_File_LikeMutationResult = Apollo.MutationResult<From_File_LikeMutation>;
-export type From_File_LikeMutationOptions = Apollo.BaseMutationOptions<From_File_LikeMutation, From_File_LikeMutationVariables>;
-export const RequestFileUploadDocument = gql`
-    mutation RequestFileUpload($key: String!, $datalayer: String!) {
-  requestFileUpload(input: {key: $key, datalayer: $datalayer}) {
-    ...Credentials
-  }
+export function useFrom_File_LikeMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    From_File_LikeMutation,
+    From_File_LikeMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    From_File_LikeMutation,
+    From_File_LikeMutationVariables
+  >(From_File_LikeDocument, options);
 }
-    ${CredentialsFragmentDoc}`;
-export type RequestFileUploadMutationFn = Apollo.MutationFunction<RequestFileUploadMutation, RequestFileUploadMutationVariables>;
+export type From_File_LikeMutationHookResult = ReturnType<
+  typeof useFrom_File_LikeMutation
+>;
+export type From_File_LikeMutationResult =
+  Apollo.MutationResult<From_File_LikeMutation>;
+export type From_File_LikeMutationOptions = Apollo.BaseMutationOptions<
+  From_File_LikeMutation,
+  From_File_LikeMutationVariables
+>;
+export const RequestFileUploadDocument = gql`
+  mutation RequestFileUpload($key: String!, $datalayer: String!) {
+    requestFileUpload(input: { key: $key, datalayer: $datalayer }) {
+      ...Credentials
+    }
+  }
+  ${CredentialsFragmentDoc}
+`;
+export type RequestFileUploadMutationFn = Apollo.MutationFunction<
+  RequestFileUploadMutation,
+  RequestFileUploadMutationVariables
+>;
 
 /**
  * __useRequestFileUploadMutation__
@@ -6068,21 +14357,39 @@ export type RequestFileUploadMutationFn = Apollo.MutationFunction<RequestFileUpl
  *   },
  * });
  */
-export function useRequestFileUploadMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestFileUploadMutation, RequestFileUploadMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestFileUploadMutation, RequestFileUploadMutationVariables>(RequestFileUploadDocument, options);
-      }
-export type RequestFileUploadMutationHookResult = ReturnType<typeof useRequestFileUploadMutation>;
-export type RequestFileUploadMutationResult = Apollo.MutationResult<RequestFileUploadMutation>;
-export type RequestFileUploadMutationOptions = Apollo.BaseMutationOptions<RequestFileUploadMutation, RequestFileUploadMutationVariables>;
-export const RequestFileUploadPresignedDocument = gql`
-    mutation RequestFileUploadPresigned($key: String!, $datalayer: String!) {
-  requestFileUploadPresigned(input: {key: $key, datalayer: $datalayer}) {
-    ...PresignedPostCredentials
-  }
+export function useRequestFileUploadMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    RequestFileUploadMutation,
+    RequestFileUploadMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    RequestFileUploadMutation,
+    RequestFileUploadMutationVariables
+  >(RequestFileUploadDocument, options);
 }
-    ${PresignedPostCredentialsFragmentDoc}`;
-export type RequestFileUploadPresignedMutationFn = Apollo.MutationFunction<RequestFileUploadPresignedMutation, RequestFileUploadPresignedMutationVariables>;
+export type RequestFileUploadMutationHookResult = ReturnType<
+  typeof useRequestFileUploadMutation
+>;
+export type RequestFileUploadMutationResult =
+  Apollo.MutationResult<RequestFileUploadMutation>;
+export type RequestFileUploadMutationOptions = Apollo.BaseMutationOptions<
+  RequestFileUploadMutation,
+  RequestFileUploadMutationVariables
+>;
+export const RequestFileUploadPresignedDocument = gql`
+  mutation RequestFileUploadPresigned($key: String!, $datalayer: String!) {
+    requestFileUploadPresigned(input: { key: $key, datalayer: $datalayer }) {
+      ...PresignedPostCredentials
+    }
+  }
+  ${PresignedPostCredentialsFragmentDoc}
+`;
+export type RequestFileUploadPresignedMutationFn = Apollo.MutationFunction<
+  RequestFileUploadPresignedMutation,
+  RequestFileUploadPresignedMutationVariables
+>;
 
 /**
  * __useRequestFileUploadPresignedMutation__
@@ -6102,21 +14409,40 @@ export type RequestFileUploadPresignedMutationFn = Apollo.MutationFunction<Reque
  *   },
  * });
  */
-export function useRequestFileUploadPresignedMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestFileUploadPresignedMutation, RequestFileUploadPresignedMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestFileUploadPresignedMutation, RequestFileUploadPresignedMutationVariables>(RequestFileUploadPresignedDocument, options);
-      }
-export type RequestFileUploadPresignedMutationHookResult = ReturnType<typeof useRequestFileUploadPresignedMutation>;
-export type RequestFileUploadPresignedMutationResult = Apollo.MutationResult<RequestFileUploadPresignedMutation>;
-export type RequestFileUploadPresignedMutationOptions = Apollo.BaseMutationOptions<RequestFileUploadPresignedMutation, RequestFileUploadPresignedMutationVariables>;
-export const RequestFileAccessDocument = gql`
-    mutation RequestFileAccess($store: ID!, $duration: Int) {
-  requestFileAccess(input: {store: $store, duration: $duration}) {
-    ...AccessCredentials
-  }
+export function useRequestFileUploadPresignedMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    RequestFileUploadPresignedMutation,
+    RequestFileUploadPresignedMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    RequestFileUploadPresignedMutation,
+    RequestFileUploadPresignedMutationVariables
+  >(RequestFileUploadPresignedDocument, options);
 }
-    ${AccessCredentialsFragmentDoc}`;
-export type RequestFileAccessMutationFn = Apollo.MutationFunction<RequestFileAccessMutation, RequestFileAccessMutationVariables>;
+export type RequestFileUploadPresignedMutationHookResult = ReturnType<
+  typeof useRequestFileUploadPresignedMutation
+>;
+export type RequestFileUploadPresignedMutationResult =
+  Apollo.MutationResult<RequestFileUploadPresignedMutation>;
+export type RequestFileUploadPresignedMutationOptions =
+  Apollo.BaseMutationOptions<
+    RequestFileUploadPresignedMutation,
+    RequestFileUploadPresignedMutationVariables
+  >;
+export const RequestFileAccessDocument = gql`
+  mutation RequestFileAccess($store: ID!, $duration: Int) {
+    requestFileAccess(input: { store: $store, duration: $duration }) {
+      ...AccessCredentials
+    }
+  }
+  ${AccessCredentialsFragmentDoc}
+`;
+export type RequestFileAccessMutationFn = Apollo.MutationFunction<
+  RequestFileAccessMutation,
+  RequestFileAccessMutationVariables
+>;
 
 /**
  * __useRequestFileAccessMutation__
@@ -6136,19 +14462,36 @@ export type RequestFileAccessMutationFn = Apollo.MutationFunction<RequestFileAcc
  *   },
  * });
  */
-export function useRequestFileAccessMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestFileAccessMutation, RequestFileAccessMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestFileAccessMutation, RequestFileAccessMutationVariables>(RequestFileAccessDocument, options);
-      }
-export type RequestFileAccessMutationHookResult = ReturnType<typeof useRequestFileAccessMutation>;
-export type RequestFileAccessMutationResult = Apollo.MutationResult<RequestFileAccessMutation>;
-export type RequestFileAccessMutationOptions = Apollo.BaseMutationOptions<RequestFileAccessMutation, RequestFileAccessMutationVariables>;
-export const DeleteFileDocument = gql`
-    mutation DeleteFile($id: ID!) {
-  deleteFile(input: {id: $id})
+export function useRequestFileAccessMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    RequestFileAccessMutation,
+    RequestFileAccessMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    RequestFileAccessMutation,
+    RequestFileAccessMutationVariables
+  >(RequestFileAccessDocument, options);
 }
-    `;
-export type DeleteFileMutationFn = Apollo.MutationFunction<DeleteFileMutation, DeleteFileMutationVariables>;
+export type RequestFileAccessMutationHookResult = ReturnType<
+  typeof useRequestFileAccessMutation
+>;
+export type RequestFileAccessMutationResult =
+  Apollo.MutationResult<RequestFileAccessMutation>;
+export type RequestFileAccessMutationOptions = Apollo.BaseMutationOptions<
+  RequestFileAccessMutation,
+  RequestFileAccessMutationVariables
+>;
+export const DeleteFileDocument = gql`
+  mutation DeleteFile($id: ID!) {
+    deleteFile(input: { id: $id })
+  }
+`;
+export type DeleteFileMutationFn = Apollo.MutationFunction<
+  DeleteFileMutation,
+  DeleteFileMutationVariables
+>;
 
 /**
  * __useDeleteFileMutation__
@@ -6167,21 +14510,39 @@ export type DeleteFileMutationFn = Apollo.MutationFunction<DeleteFileMutation, D
  *   },
  * });
  */
-export function useDeleteFileMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteFileMutation, DeleteFileMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteFileMutation, DeleteFileMutationVariables>(DeleteFileDocument, options);
-      }
-export type DeleteFileMutationHookResult = ReturnType<typeof useDeleteFileMutation>;
-export type DeleteFileMutationResult = Apollo.MutationResult<DeleteFileMutation>;
-export type DeleteFileMutationOptions = Apollo.BaseMutationOptions<DeleteFileMutation, DeleteFileMutationVariables>;
-export const RequestUploadDocument = gql`
-    mutation RequestUpload($key: String!, $datalayer: String!) {
-  requestUpload(input: {key: $key, datalayer: $datalayer}) {
-    ...Credentials
-  }
+export function useDeleteFileMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    DeleteFileMutation,
+    DeleteFileMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    DeleteFileMutation,
+    DeleteFileMutationVariables
+  >(DeleteFileDocument, options);
 }
-    ${CredentialsFragmentDoc}`;
-export type RequestUploadMutationFn = Apollo.MutationFunction<RequestUploadMutation, RequestUploadMutationVariables>;
+export type DeleteFileMutationHookResult = ReturnType<
+  typeof useDeleteFileMutation
+>;
+export type DeleteFileMutationResult =
+  Apollo.MutationResult<DeleteFileMutation>;
+export type DeleteFileMutationOptions = Apollo.BaseMutationOptions<
+  DeleteFileMutation,
+  DeleteFileMutationVariables
+>;
+export const RequestUploadDocument = gql`
+  mutation RequestUpload($key: String!, $datalayer: String!) {
+    requestUpload(input: { key: $key, datalayer: $datalayer }) {
+      ...Credentials
+    }
+  }
+  ${CredentialsFragmentDoc}
+`;
+export type RequestUploadMutationFn = Apollo.MutationFunction<
+  RequestUploadMutation,
+  RequestUploadMutationVariables
+>;
 
 /**
  * __useRequestUploadMutation__
@@ -6201,21 +14562,39 @@ export type RequestUploadMutationFn = Apollo.MutationFunction<RequestUploadMutat
  *   },
  * });
  */
-export function useRequestUploadMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestUploadMutation, RequestUploadMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestUploadMutation, RequestUploadMutationVariables>(RequestUploadDocument, options);
-      }
-export type RequestUploadMutationHookResult = ReturnType<typeof useRequestUploadMutation>;
-export type RequestUploadMutationResult = Apollo.MutationResult<RequestUploadMutation>;
-export type RequestUploadMutationOptions = Apollo.BaseMutationOptions<RequestUploadMutation, RequestUploadMutationVariables>;
-export const RequestAccessDocument = gql`
-    mutation RequestAccess($store: ID!, $duration: Int) {
-  requestAccess(input: {store: $store, duration: $duration}) {
-    ...AccessCredentials
-  }
+export function useRequestUploadMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    RequestUploadMutation,
+    RequestUploadMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    RequestUploadMutation,
+    RequestUploadMutationVariables
+  >(RequestUploadDocument, options);
 }
-    ${AccessCredentialsFragmentDoc}`;
-export type RequestAccessMutationFn = Apollo.MutationFunction<RequestAccessMutation, RequestAccessMutationVariables>;
+export type RequestUploadMutationHookResult = ReturnType<
+  typeof useRequestUploadMutation
+>;
+export type RequestUploadMutationResult =
+  Apollo.MutationResult<RequestUploadMutation>;
+export type RequestUploadMutationOptions = Apollo.BaseMutationOptions<
+  RequestUploadMutation,
+  RequestUploadMutationVariables
+>;
+export const RequestAccessDocument = gql`
+  mutation RequestAccess($store: ID!, $duration: Int) {
+    requestAccess(input: { store: $store, duration: $duration }) {
+      ...AccessCredentials
+    }
+  }
+  ${AccessCredentialsFragmentDoc}
+`;
+export type RequestAccessMutationFn = Apollo.MutationFunction<
+  RequestAccessMutation,
+  RequestAccessMutationVariables
+>;
 
 /**
  * __useRequestAccessMutation__
@@ -6235,21 +14614,39 @@ export type RequestAccessMutationFn = Apollo.MutationFunction<RequestAccessMutat
  *   },
  * });
  */
-export function useRequestAccessMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestAccessMutation, RequestAccessMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestAccessMutation, RequestAccessMutationVariables>(RequestAccessDocument, options);
-      }
-export type RequestAccessMutationHookResult = ReturnType<typeof useRequestAccessMutation>;
-export type RequestAccessMutationResult = Apollo.MutationResult<RequestAccessMutation>;
-export type RequestAccessMutationOptions = Apollo.BaseMutationOptions<RequestAccessMutation, RequestAccessMutationVariables>;
-export const PinImageDocument = gql`
-    mutation PinImage($id: ID!, $pin: Boolean!) {
-  pinImage(input: {id: $id, pin: $pin}) {
-    ...Image
-  }
+export function useRequestAccessMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    RequestAccessMutation,
+    RequestAccessMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    RequestAccessMutation,
+    RequestAccessMutationVariables
+  >(RequestAccessDocument, options);
 }
-    ${ImageFragmentDoc}`;
-export type PinImageMutationFn = Apollo.MutationFunction<PinImageMutation, PinImageMutationVariables>;
+export type RequestAccessMutationHookResult = ReturnType<
+  typeof useRequestAccessMutation
+>;
+export type RequestAccessMutationResult =
+  Apollo.MutationResult<RequestAccessMutation>;
+export type RequestAccessMutationOptions = Apollo.BaseMutationOptions<
+  RequestAccessMutation,
+  RequestAccessMutationVariables
+>;
+export const PinImageDocument = gql`
+  mutation PinImage($id: ID!, $pin: Boolean!) {
+    pinImage(input: { id: $id, pin: $pin }) {
+      ...Image
+    }
+  }
+  ${ImageFragmentDoc}
+`;
+export type PinImageMutationFn = Apollo.MutationFunction<
+  PinImageMutation,
+  PinImageMutationVariables
+>;
 
 /**
  * __usePinImageMutation__
@@ -6269,21 +14666,36 @@ export type PinImageMutationFn = Apollo.MutationFunction<PinImageMutation, PinIm
  *   },
  * });
  */
-export function usePinImageMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PinImageMutation, PinImageMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PinImageMutation, PinImageMutationVariables>(PinImageDocument, options);
-      }
+export function usePinImageMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    PinImageMutation,
+    PinImageMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    PinImageMutation,
+    PinImageMutationVariables
+  >(PinImageDocument, options);
+}
 export type PinImageMutationHookResult = ReturnType<typeof usePinImageMutation>;
 export type PinImageMutationResult = Apollo.MutationResult<PinImageMutation>;
-export type PinImageMutationOptions = Apollo.BaseMutationOptions<PinImageMutation, PinImageMutationVariables>;
+export type PinImageMutationOptions = Apollo.BaseMutationOptions<
+  PinImageMutation,
+  PinImageMutationVariables
+>;
 export const UpdateImageDocument = gql`
-    mutation UpdateImage($input: UpdateImageInput!) {
-  updateImage(input: $input) {
-    ...Image
+  mutation UpdateImage($input: UpdateImageInput!) {
+    updateImage(input: $input) {
+      ...Image
+    }
   }
-}
-    ${ImageFragmentDoc}`;
-export type UpdateImageMutationFn = Apollo.MutationFunction<UpdateImageMutation, UpdateImageMutationVariables>;
+  ${ImageFragmentDoc}
+`;
+export type UpdateImageMutationFn = Apollo.MutationFunction<
+  UpdateImageMutation,
+  UpdateImageMutationVariables
+>;
 
 /**
  * __useUpdateImageMutation__
@@ -6302,19 +14714,36 @@ export type UpdateImageMutationFn = Apollo.MutationFunction<UpdateImageMutation,
  *   },
  * });
  */
-export function useUpdateImageMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateImageMutation, UpdateImageMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<UpdateImageMutation, UpdateImageMutationVariables>(UpdateImageDocument, options);
-      }
-export type UpdateImageMutationHookResult = ReturnType<typeof useUpdateImageMutation>;
-export type UpdateImageMutationResult = Apollo.MutationResult<UpdateImageMutation>;
-export type UpdateImageMutationOptions = Apollo.BaseMutationOptions<UpdateImageMutation, UpdateImageMutationVariables>;
-export const DeleteImageDocument = gql`
-    mutation DeleteImage($id: ID!) {
-  deleteImage(input: {id: $id})
+export function useUpdateImageMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    UpdateImageMutation,
+    UpdateImageMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    UpdateImageMutation,
+    UpdateImageMutationVariables
+  >(UpdateImageDocument, options);
 }
-    `;
-export type DeleteImageMutationFn = Apollo.MutationFunction<DeleteImageMutation, DeleteImageMutationVariables>;
+export type UpdateImageMutationHookResult = ReturnType<
+  typeof useUpdateImageMutation
+>;
+export type UpdateImageMutationResult =
+  Apollo.MutationResult<UpdateImageMutation>;
+export type UpdateImageMutationOptions = Apollo.BaseMutationOptions<
+  UpdateImageMutation,
+  UpdateImageMutationVariables
+>;
+export const DeleteImageDocument = gql`
+  mutation DeleteImage($id: ID!) {
+    deleteImage(input: { id: $id })
+  }
+`;
+export type DeleteImageMutationFn = Apollo.MutationFunction<
+  DeleteImageMutation,
+  DeleteImageMutationVariables
+>;
 
 /**
  * __useDeleteImageMutation__
@@ -6333,24 +14762,45 @@ export type DeleteImageMutationFn = Apollo.MutationFunction<DeleteImageMutation,
  *   },
  * });
  */
-export function useDeleteImageMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteImageMutation, DeleteImageMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteImageMutation, DeleteImageMutationVariables>(DeleteImageDocument, options);
-      }
-export type DeleteImageMutationHookResult = ReturnType<typeof useDeleteImageMutation>;
-export type DeleteImageMutationResult = Apollo.MutationResult<DeleteImageMutation>;
-export type DeleteImageMutationOptions = Apollo.BaseMutationOptions<DeleteImageMutation, DeleteImageMutationVariables>;
-export const CreateInstrumentDocument = gql`
-    mutation CreateInstrument($serialNumber: String!, $name: String, $model: String) {
-  createInstrument(
-    input: {name: $name, model: $model, serialNumber: $serialNumber}
-  ) {
-    id
-    name
-  }
+export function useDeleteImageMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    DeleteImageMutation,
+    DeleteImageMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    DeleteImageMutation,
+    DeleteImageMutationVariables
+  >(DeleteImageDocument, options);
 }
-    `;
-export type CreateInstrumentMutationFn = Apollo.MutationFunction<CreateInstrumentMutation, CreateInstrumentMutationVariables>;
+export type DeleteImageMutationHookResult = ReturnType<
+  typeof useDeleteImageMutation
+>;
+export type DeleteImageMutationResult =
+  Apollo.MutationResult<DeleteImageMutation>;
+export type DeleteImageMutationOptions = Apollo.BaseMutationOptions<
+  DeleteImageMutation,
+  DeleteImageMutationVariables
+>;
+export const CreateInstrumentDocument = gql`
+  mutation CreateInstrument(
+    $serialNumber: String!
+    $name: String
+    $model: String
+  ) {
+    createInstrument(
+      input: { name: $name, model: $model, serialNumber: $serialNumber }
+    ) {
+      id
+      name
+    }
+  }
+`;
+export type CreateInstrumentMutationFn = Apollo.MutationFunction<
+  CreateInstrumentMutation,
+  CreateInstrumentMutationVariables
+>;
 
 /**
  * __useCreateInstrumentMutation__
@@ -6371,24 +14821,45 @@ export type CreateInstrumentMutationFn = Apollo.MutationFunction<CreateInstrumen
  *   },
  * });
  */
-export function useCreateInstrumentMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateInstrumentMutation, CreateInstrumentMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateInstrumentMutation, CreateInstrumentMutationVariables>(CreateInstrumentDocument, options);
-      }
-export type CreateInstrumentMutationHookResult = ReturnType<typeof useCreateInstrumentMutation>;
-export type CreateInstrumentMutationResult = Apollo.MutationResult<CreateInstrumentMutation>;
-export type CreateInstrumentMutationOptions = Apollo.BaseMutationOptions<CreateInstrumentMutation, CreateInstrumentMutationVariables>;
-export const EnsureInstrumentDocument = gql`
-    mutation EnsureInstrument($serialNumber: String!, $name: String, $model: String) {
-  ensureInstrument(
-    input: {name: $name, model: $model, serialNumber: $serialNumber}
-  ) {
-    id
-    name
-  }
+export function useCreateInstrumentMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateInstrumentMutation,
+    CreateInstrumentMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateInstrumentMutation,
+    CreateInstrumentMutationVariables
+  >(CreateInstrumentDocument, options);
 }
-    `;
-export type EnsureInstrumentMutationFn = Apollo.MutationFunction<EnsureInstrumentMutation, EnsureInstrumentMutationVariables>;
+export type CreateInstrumentMutationHookResult = ReturnType<
+  typeof useCreateInstrumentMutation
+>;
+export type CreateInstrumentMutationResult =
+  Apollo.MutationResult<CreateInstrumentMutation>;
+export type CreateInstrumentMutationOptions = Apollo.BaseMutationOptions<
+  CreateInstrumentMutation,
+  CreateInstrumentMutationVariables
+>;
+export const EnsureInstrumentDocument = gql`
+  mutation EnsureInstrument(
+    $serialNumber: String!
+    $name: String
+    $model: String
+  ) {
+    ensureInstrument(
+      input: { name: $name, model: $model, serialNumber: $serialNumber }
+    ) {
+      id
+      name
+    }
+  }
+`;
+export type EnsureInstrumentMutationFn = Apollo.MutationFunction<
+  EnsureInstrumentMutation,
+  EnsureInstrumentMutationVariables
+>;
 
 /**
  * __useEnsureInstrumentMutation__
@@ -6409,21 +14880,39 @@ export type EnsureInstrumentMutationFn = Apollo.MutationFunction<EnsureInstrumen
  *   },
  * });
  */
-export function useEnsureInstrumentMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<EnsureInstrumentMutation, EnsureInstrumentMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<EnsureInstrumentMutation, EnsureInstrumentMutationVariables>(EnsureInstrumentDocument, options);
-      }
-export type EnsureInstrumentMutationHookResult = ReturnType<typeof useEnsureInstrumentMutation>;
-export type EnsureInstrumentMutationResult = Apollo.MutationResult<EnsureInstrumentMutation>;
-export type EnsureInstrumentMutationOptions = Apollo.BaseMutationOptions<EnsureInstrumentMutation, EnsureInstrumentMutationVariables>;
-export const RequestMediaUploadDocument = gql`
-    mutation RequestMediaUpload($key: String!, $datalayer: String!) {
-  requestMediaUpload(input: {key: $key, datalayer: $datalayer}) {
-    ...PresignedPostCredentials
-  }
+export function useEnsureInstrumentMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    EnsureInstrumentMutation,
+    EnsureInstrumentMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    EnsureInstrumentMutation,
+    EnsureInstrumentMutationVariables
+  >(EnsureInstrumentDocument, options);
 }
-    ${PresignedPostCredentialsFragmentDoc}`;
-export type RequestMediaUploadMutationFn = Apollo.MutationFunction<RequestMediaUploadMutation, RequestMediaUploadMutationVariables>;
+export type EnsureInstrumentMutationHookResult = ReturnType<
+  typeof useEnsureInstrumentMutation
+>;
+export type EnsureInstrumentMutationResult =
+  Apollo.MutationResult<EnsureInstrumentMutation>;
+export type EnsureInstrumentMutationOptions = Apollo.BaseMutationOptions<
+  EnsureInstrumentMutation,
+  EnsureInstrumentMutationVariables
+>;
+export const RequestMediaUploadDocument = gql`
+  mutation RequestMediaUpload($key: String!, $datalayer: String!) {
+    requestMediaUpload(input: { key: $key, datalayer: $datalayer }) {
+      ...PresignedPostCredentials
+    }
+  }
+  ${PresignedPostCredentialsFragmentDoc}
+`;
+export type RequestMediaUploadMutationFn = Apollo.MutationFunction<
+  RequestMediaUploadMutation,
+  RequestMediaUploadMutationVariables
+>;
 
 /**
  * __useRequestMediaUploadMutation__
@@ -6443,21 +14932,39 @@ export type RequestMediaUploadMutationFn = Apollo.MutationFunction<RequestMediaU
  *   },
  * });
  */
-export function useRequestMediaUploadMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestMediaUploadMutation, RequestMediaUploadMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestMediaUploadMutation, RequestMediaUploadMutationVariables>(RequestMediaUploadDocument, options);
-      }
-export type RequestMediaUploadMutationHookResult = ReturnType<typeof useRequestMediaUploadMutation>;
-export type RequestMediaUploadMutationResult = Apollo.MutationResult<RequestMediaUploadMutation>;
-export type RequestMediaUploadMutationOptions = Apollo.BaseMutationOptions<RequestMediaUploadMutation, RequestMediaUploadMutationVariables>;
-export const CreateMultiWellPlateDocument = gql`
-    mutation CreateMultiWellPlate($input: MultiWellPlateInput!) {
-  createMultiWellPlate(input: $input) {
-    ...MultiWellPlate
-  }
+export function useRequestMediaUploadMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    RequestMediaUploadMutation,
+    RequestMediaUploadMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    RequestMediaUploadMutation,
+    RequestMediaUploadMutationVariables
+  >(RequestMediaUploadDocument, options);
 }
-    ${MultiWellPlateFragmentDoc}`;
-export type CreateMultiWellPlateMutationFn = Apollo.MutationFunction<CreateMultiWellPlateMutation, CreateMultiWellPlateMutationVariables>;
+export type RequestMediaUploadMutationHookResult = ReturnType<
+  typeof useRequestMediaUploadMutation
+>;
+export type RequestMediaUploadMutationResult =
+  Apollo.MutationResult<RequestMediaUploadMutation>;
+export type RequestMediaUploadMutationOptions = Apollo.BaseMutationOptions<
+  RequestMediaUploadMutation,
+  RequestMediaUploadMutationVariables
+>;
+export const CreateMultiWellPlateDocument = gql`
+  mutation CreateMultiWellPlate($input: MultiWellPlateInput!) {
+    createMultiWellPlate(input: $input) {
+      ...MultiWellPlate
+    }
+  }
+  ${MultiWellPlateFragmentDoc}
+`;
+export type CreateMultiWellPlateMutationFn = Apollo.MutationFunction<
+  CreateMultiWellPlateMutation,
+  CreateMultiWellPlateMutationVariables
+>;
 
 /**
  * __useCreateMultiWellPlateMutation__
@@ -6476,22 +14983,39 @@ export type CreateMultiWellPlateMutationFn = Apollo.MutationFunction<CreateMulti
  *   },
  * });
  */
-export function useCreateMultiWellPlateMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateMultiWellPlateMutation, CreateMultiWellPlateMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateMultiWellPlateMutation, CreateMultiWellPlateMutationVariables>(CreateMultiWellPlateDocument, options);
-      }
-export type CreateMultiWellPlateMutationHookResult = ReturnType<typeof useCreateMultiWellPlateMutation>;
-export type CreateMultiWellPlateMutationResult = Apollo.MutationResult<CreateMultiWellPlateMutation>;
-export type CreateMultiWellPlateMutationOptions = Apollo.BaseMutationOptions<CreateMultiWellPlateMutation, CreateMultiWellPlateMutationVariables>;
-export const AutoCreateMultiWellPlateDocument = gql`
-    mutation AutoCreateMultiWellPlate($input: String!) {
-  result: createMultiWellPlate(input: {name: $input}) {
-    label: name
-    value: id
-  }
+export function useCreateMultiWellPlateMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateMultiWellPlateMutation,
+    CreateMultiWellPlateMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateMultiWellPlateMutation,
+    CreateMultiWellPlateMutationVariables
+  >(CreateMultiWellPlateDocument, options);
 }
-    `;
-export type AutoCreateMultiWellPlateMutationFn = Apollo.MutationFunction<AutoCreateMultiWellPlateMutation, AutoCreateMultiWellPlateMutationVariables>;
+export type CreateMultiWellPlateMutationHookResult = ReturnType<
+  typeof useCreateMultiWellPlateMutation
+>;
+export type CreateMultiWellPlateMutationResult =
+  Apollo.MutationResult<CreateMultiWellPlateMutation>;
+export type CreateMultiWellPlateMutationOptions = Apollo.BaseMutationOptions<
+  CreateMultiWellPlateMutation,
+  CreateMultiWellPlateMutationVariables
+>;
+export const AutoCreateMultiWellPlateDocument = gql`
+  mutation AutoCreateMultiWellPlate($input: String!) {
+    result: createMultiWellPlate(input: { name: $input }) {
+      label: name
+      value: id
+    }
+  }
+`;
+export type AutoCreateMultiWellPlateMutationFn = Apollo.MutationFunction<
+  AutoCreateMultiWellPlateMutation,
+  AutoCreateMultiWellPlateMutationVariables
+>;
 
 /**
  * __useAutoCreateMultiWellPlateMutation__
@@ -6510,24 +15034,52 @@ export type AutoCreateMultiWellPlateMutationFn = Apollo.MutationFunction<AutoCre
  *   },
  * });
  */
-export function useAutoCreateMultiWellPlateMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AutoCreateMultiWellPlateMutation, AutoCreateMultiWellPlateMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<AutoCreateMultiWellPlateMutation, AutoCreateMultiWellPlateMutationVariables>(AutoCreateMultiWellPlateDocument, options);
-      }
-export type AutoCreateMultiWellPlateMutationHookResult = ReturnType<typeof useAutoCreateMultiWellPlateMutation>;
-export type AutoCreateMultiWellPlateMutationResult = Apollo.MutationResult<AutoCreateMultiWellPlateMutation>;
-export type AutoCreateMultiWellPlateMutationOptions = Apollo.BaseMutationOptions<AutoCreateMultiWellPlateMutation, AutoCreateMultiWellPlateMutationVariables>;
-export const CreateObjectiveDocument = gql`
-    mutation CreateObjective($serialNumber: String!, $name: String, $na: Float, $magnification: Float) {
-  createObjective(
-    input: {name: $name, na: $na, serialNumber: $serialNumber, magnification: $magnification}
-  ) {
-    id
-    name
-  }
+export function useAutoCreateMultiWellPlateMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    AutoCreateMultiWellPlateMutation,
+    AutoCreateMultiWellPlateMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    AutoCreateMultiWellPlateMutation,
+    AutoCreateMultiWellPlateMutationVariables
+  >(AutoCreateMultiWellPlateDocument, options);
 }
-    `;
-export type CreateObjectiveMutationFn = Apollo.MutationFunction<CreateObjectiveMutation, CreateObjectiveMutationVariables>;
+export type AutoCreateMultiWellPlateMutationHookResult = ReturnType<
+  typeof useAutoCreateMultiWellPlateMutation
+>;
+export type AutoCreateMultiWellPlateMutationResult =
+  Apollo.MutationResult<AutoCreateMultiWellPlateMutation>;
+export type AutoCreateMultiWellPlateMutationOptions =
+  Apollo.BaseMutationOptions<
+    AutoCreateMultiWellPlateMutation,
+    AutoCreateMultiWellPlateMutationVariables
+  >;
+export const CreateObjectiveDocument = gql`
+  mutation CreateObjective(
+    $serialNumber: String!
+    $name: String
+    $na: Float
+    $magnification: Float
+  ) {
+    createObjective(
+      input: {
+        name: $name
+        na: $na
+        serialNumber: $serialNumber
+        magnification: $magnification
+      }
+    ) {
+      id
+      name
+    }
+  }
+`;
+export type CreateObjectiveMutationFn = Apollo.MutationFunction<
+  CreateObjectiveMutation,
+  CreateObjectiveMutationVariables
+>;
 
 /**
  * __useCreateObjectiveMutation__
@@ -6549,24 +15101,51 @@ export type CreateObjectiveMutationFn = Apollo.MutationFunction<CreateObjectiveM
  *   },
  * });
  */
-export function useCreateObjectiveMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateObjectiveMutation, CreateObjectiveMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateObjectiveMutation, CreateObjectiveMutationVariables>(CreateObjectiveDocument, options);
-      }
-export type CreateObjectiveMutationHookResult = ReturnType<typeof useCreateObjectiveMutation>;
-export type CreateObjectiveMutationResult = Apollo.MutationResult<CreateObjectiveMutation>;
-export type CreateObjectiveMutationOptions = Apollo.BaseMutationOptions<CreateObjectiveMutation, CreateObjectiveMutationVariables>;
-export const EnsureObjectiveDocument = gql`
-    mutation EnsureObjective($serialNumber: String!, $name: String, $na: Float, $magnification: Float) {
-  ensureObjective(
-    input: {name: $name, na: $na, serialNumber: $serialNumber, magnification: $magnification}
-  ) {
-    id
-    name
-  }
+export function useCreateObjectiveMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateObjectiveMutation,
+    CreateObjectiveMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateObjectiveMutation,
+    CreateObjectiveMutationVariables
+  >(CreateObjectiveDocument, options);
 }
-    `;
-export type EnsureObjectiveMutationFn = Apollo.MutationFunction<EnsureObjectiveMutation, EnsureObjectiveMutationVariables>;
+export type CreateObjectiveMutationHookResult = ReturnType<
+  typeof useCreateObjectiveMutation
+>;
+export type CreateObjectiveMutationResult =
+  Apollo.MutationResult<CreateObjectiveMutation>;
+export type CreateObjectiveMutationOptions = Apollo.BaseMutationOptions<
+  CreateObjectiveMutation,
+  CreateObjectiveMutationVariables
+>;
+export const EnsureObjectiveDocument = gql`
+  mutation EnsureObjective(
+    $serialNumber: String!
+    $name: String
+    $na: Float
+    $magnification: Float
+  ) {
+    ensureObjective(
+      input: {
+        name: $name
+        na: $na
+        serialNumber: $serialNumber
+        magnification: $magnification
+      }
+    ) {
+      id
+      name
+    }
+  }
+`;
+export type EnsureObjectiveMutationFn = Apollo.MutationFunction<
+  EnsureObjectiveMutation,
+  EnsureObjectiveMutationVariables
+>;
 
 /**
  * __useEnsureObjectiveMutation__
@@ -6588,21 +15167,39 @@ export type EnsureObjectiveMutationFn = Apollo.MutationFunction<EnsureObjectiveM
  *   },
  * });
  */
-export function useEnsureObjectiveMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<EnsureObjectiveMutation, EnsureObjectiveMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<EnsureObjectiveMutation, EnsureObjectiveMutationVariables>(EnsureObjectiveDocument, options);
-      }
-export type EnsureObjectiveMutationHookResult = ReturnType<typeof useEnsureObjectiveMutation>;
-export type EnsureObjectiveMutationResult = Apollo.MutationResult<EnsureObjectiveMutation>;
-export type EnsureObjectiveMutationOptions = Apollo.BaseMutationOptions<EnsureObjectiveMutation, EnsureObjectiveMutationVariables>;
-export const CreateRgbContextDocument = gql`
-    mutation CreateRGBContext($input: CreateRGBContextInput!) {
-  createRgbContext(input: $input) {
-    ...RGBContext
-  }
+export function useEnsureObjectiveMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    EnsureObjectiveMutation,
+    EnsureObjectiveMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    EnsureObjectiveMutation,
+    EnsureObjectiveMutationVariables
+  >(EnsureObjectiveDocument, options);
 }
-    ${RgbContextFragmentDoc}`;
-export type CreateRgbContextMutationFn = Apollo.MutationFunction<CreateRgbContextMutation, CreateRgbContextMutationVariables>;
+export type EnsureObjectiveMutationHookResult = ReturnType<
+  typeof useEnsureObjectiveMutation
+>;
+export type EnsureObjectiveMutationResult =
+  Apollo.MutationResult<EnsureObjectiveMutation>;
+export type EnsureObjectiveMutationOptions = Apollo.BaseMutationOptions<
+  EnsureObjectiveMutation,
+  EnsureObjectiveMutationVariables
+>;
+export const CreateRgbContextDocument = gql`
+  mutation CreateRGBContext($input: CreateRGBContextInput!) {
+    createRgbContext(input: $input) {
+      ...RGBContext
+    }
+  }
+  ${RgbContextFragmentDoc}
+`;
+export type CreateRgbContextMutationFn = Apollo.MutationFunction<
+  CreateRgbContextMutation,
+  CreateRgbContextMutationVariables
+>;
 
 /**
  * __useCreateRgbContextMutation__
@@ -6621,21 +15218,39 @@ export type CreateRgbContextMutationFn = Apollo.MutationFunction<CreateRgbContex
  *   },
  * });
  */
-export function useCreateRgbContextMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateRgbContextMutation, CreateRgbContextMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateRgbContextMutation, CreateRgbContextMutationVariables>(CreateRgbContextDocument, options);
-      }
-export type CreateRgbContextMutationHookResult = ReturnType<typeof useCreateRgbContextMutation>;
-export type CreateRgbContextMutationResult = Apollo.MutationResult<CreateRgbContextMutation>;
-export type CreateRgbContextMutationOptions = Apollo.BaseMutationOptions<CreateRgbContextMutation, CreateRgbContextMutationVariables>;
-export const UpdateRgbContextDocument = gql`
-    mutation UpdateRGBContext($input: UpdateRGBContextInput!) {
-  updateRgbContext(input: $input) {
-    ...RGBContext
-  }
+export function useCreateRgbContextMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateRgbContextMutation,
+    CreateRgbContextMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateRgbContextMutation,
+    CreateRgbContextMutationVariables
+  >(CreateRgbContextDocument, options);
 }
-    ${RgbContextFragmentDoc}`;
-export type UpdateRgbContextMutationFn = Apollo.MutationFunction<UpdateRgbContextMutation, UpdateRgbContextMutationVariables>;
+export type CreateRgbContextMutationHookResult = ReturnType<
+  typeof useCreateRgbContextMutation
+>;
+export type CreateRgbContextMutationResult =
+  Apollo.MutationResult<CreateRgbContextMutation>;
+export type CreateRgbContextMutationOptions = Apollo.BaseMutationOptions<
+  CreateRgbContextMutation,
+  CreateRgbContextMutationVariables
+>;
+export const UpdateRgbContextDocument = gql`
+  mutation UpdateRGBContext($input: UpdateRGBContextInput!) {
+    updateRgbContext(input: $input) {
+      ...RGBContext
+    }
+  }
+  ${RgbContextFragmentDoc}
+`;
+export type UpdateRgbContextMutationFn = Apollo.MutationFunction<
+  UpdateRgbContextMutation,
+  UpdateRgbContextMutationVariables
+>;
 
 /**
  * __useUpdateRgbContextMutation__
@@ -6654,21 +15269,39 @@ export type UpdateRgbContextMutationFn = Apollo.MutationFunction<UpdateRgbContex
  *   },
  * });
  */
-export function useUpdateRgbContextMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateRgbContextMutation, UpdateRgbContextMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<UpdateRgbContextMutation, UpdateRgbContextMutationVariables>(UpdateRgbContextDocument, options);
-      }
-export type UpdateRgbContextMutationHookResult = ReturnType<typeof useUpdateRgbContextMutation>;
-export type UpdateRgbContextMutationResult = Apollo.MutationResult<UpdateRgbContextMutation>;
-export type UpdateRgbContextMutationOptions = Apollo.BaseMutationOptions<UpdateRgbContextMutation, UpdateRgbContextMutationVariables>;
-export const PinRoiDocument = gql`
-    mutation PinROI($id: ID!, $pin: Boolean!) {
-  pinRoi(input: {id: $id, pin: $pin}) {
-    ...ROI
-  }
+export function useUpdateRgbContextMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    UpdateRgbContextMutation,
+    UpdateRgbContextMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    UpdateRgbContextMutation,
+    UpdateRgbContextMutationVariables
+  >(UpdateRgbContextDocument, options);
 }
-    ${RoiFragmentDoc}`;
-export type PinRoiMutationFn = Apollo.MutationFunction<PinRoiMutation, PinRoiMutationVariables>;
+export type UpdateRgbContextMutationHookResult = ReturnType<
+  typeof useUpdateRgbContextMutation
+>;
+export type UpdateRgbContextMutationResult =
+  Apollo.MutationResult<UpdateRgbContextMutation>;
+export type UpdateRgbContextMutationOptions = Apollo.BaseMutationOptions<
+  UpdateRgbContextMutation,
+  UpdateRgbContextMutationVariables
+>;
+export const PinRoiDocument = gql`
+  mutation PinROI($id: ID!, $pin: Boolean!) {
+    pinRoi(input: { id: $id, pin: $pin }) {
+      ...ROI
+    }
+  }
+  ${RoiFragmentDoc}
+`;
+export type PinRoiMutationFn = Apollo.MutationFunction<
+  PinRoiMutation,
+  PinRoiMutationVariables
+>;
 
 /**
  * __usePinRoiMutation__
@@ -6688,21 +15321,36 @@ export type PinRoiMutationFn = Apollo.MutationFunction<PinRoiMutation, PinRoiMut
  *   },
  * });
  */
-export function usePinRoiMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PinRoiMutation, PinRoiMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PinRoiMutation, PinRoiMutationVariables>(PinRoiDocument, options);
-      }
+export function usePinRoiMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    PinRoiMutation,
+    PinRoiMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<PinRoiMutation, PinRoiMutationVariables>(
+    PinRoiDocument,
+    options,
+  );
+}
 export type PinRoiMutationHookResult = ReturnType<typeof usePinRoiMutation>;
 export type PinRoiMutationResult = Apollo.MutationResult<PinRoiMutation>;
-export type PinRoiMutationOptions = Apollo.BaseMutationOptions<PinRoiMutation, PinRoiMutationVariables>;
+export type PinRoiMutationOptions = Apollo.BaseMutationOptions<
+  PinRoiMutation,
+  PinRoiMutationVariables
+>;
 export const CreateSnapshotDocument = gql`
-    mutation CreateSnapshot($image: ID!, $file: Upload!) {
-  createSnapshot(input: {file: $file, image: $image}) {
-    ...Snapshot
+  mutation CreateSnapshot($image: ID!, $file: Upload!) {
+    createSnapshot(input: { file: $file, image: $image }) {
+      ...Snapshot
+    }
   }
-}
-    ${SnapshotFragmentDoc}`;
-export type CreateSnapshotMutationFn = Apollo.MutationFunction<CreateSnapshotMutation, CreateSnapshotMutationVariables>;
+  ${SnapshotFragmentDoc}
+`;
+export type CreateSnapshotMutationFn = Apollo.MutationFunction<
+  CreateSnapshotMutation,
+  CreateSnapshotMutationVariables
+>;
 
 /**
  * __useCreateSnapshotMutation__
@@ -6722,22 +15370,39 @@ export type CreateSnapshotMutationFn = Apollo.MutationFunction<CreateSnapshotMut
  *   },
  * });
  */
-export function useCreateSnapshotMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateSnapshotMutation, CreateSnapshotMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateSnapshotMutation, CreateSnapshotMutationVariables>(CreateSnapshotDocument, options);
-      }
-export type CreateSnapshotMutationHookResult = ReturnType<typeof useCreateSnapshotMutation>;
-export type CreateSnapshotMutationResult = Apollo.MutationResult<CreateSnapshotMutation>;
-export type CreateSnapshotMutationOptions = Apollo.BaseMutationOptions<CreateSnapshotMutation, CreateSnapshotMutationVariables>;
-export const CreateStageDocument = gql`
-    mutation CreateStage($name: String!) {
-  createStage(input: {name: $name}) {
-    id
-    name
-  }
+export function useCreateSnapshotMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateSnapshotMutation,
+    CreateSnapshotMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateSnapshotMutation,
+    CreateSnapshotMutationVariables
+  >(CreateSnapshotDocument, options);
 }
-    `;
-export type CreateStageMutationFn = Apollo.MutationFunction<CreateStageMutation, CreateStageMutationVariables>;
+export type CreateSnapshotMutationHookResult = ReturnType<
+  typeof useCreateSnapshotMutation
+>;
+export type CreateSnapshotMutationResult =
+  Apollo.MutationResult<CreateSnapshotMutation>;
+export type CreateSnapshotMutationOptions = Apollo.BaseMutationOptions<
+  CreateSnapshotMutation,
+  CreateSnapshotMutationVariables
+>;
+export const CreateStageDocument = gql`
+  mutation CreateStage($name: String!) {
+    createStage(input: { name: $name }) {
+      id
+      name
+    }
+  }
+`;
+export type CreateStageMutationFn = Apollo.MutationFunction<
+  CreateStageMutation,
+  CreateStageMutationVariables
+>;
 
 /**
  * __useCreateStageMutation__
@@ -6756,21 +15421,39 @@ export type CreateStageMutationFn = Apollo.MutationFunction<CreateStageMutation,
  *   },
  * });
  */
-export function useCreateStageMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateStageMutation, CreateStageMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateStageMutation, CreateStageMutationVariables>(CreateStageDocument, options);
-      }
-export type CreateStageMutationHookResult = ReturnType<typeof useCreateStageMutation>;
-export type CreateStageMutationResult = Apollo.MutationResult<CreateStageMutation>;
-export type CreateStageMutationOptions = Apollo.BaseMutationOptions<CreateStageMutation, CreateStageMutationVariables>;
-export const PinStageDocument = gql`
-    mutation PinStage($id: ID!, $pin: Boolean!) {
-  pinStage(input: {id: $id, pin: $pin}) {
-    ...Stage
-  }
+export function useCreateStageMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateStageMutation,
+    CreateStageMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateStageMutation,
+    CreateStageMutationVariables
+  >(CreateStageDocument, options);
 }
-    ${StageFragmentDoc}`;
-export type PinStageMutationFn = Apollo.MutationFunction<PinStageMutation, PinStageMutationVariables>;
+export type CreateStageMutationHookResult = ReturnType<
+  typeof useCreateStageMutation
+>;
+export type CreateStageMutationResult =
+  Apollo.MutationResult<CreateStageMutation>;
+export type CreateStageMutationOptions = Apollo.BaseMutationOptions<
+  CreateStageMutation,
+  CreateStageMutationVariables
+>;
+export const PinStageDocument = gql`
+  mutation PinStage($id: ID!, $pin: Boolean!) {
+    pinStage(input: { id: $id, pin: $pin }) {
+      ...Stage
+    }
+  }
+  ${StageFragmentDoc}
+`;
+export type PinStageMutationFn = Apollo.MutationFunction<
+  PinStageMutation,
+  PinStageMutationVariables
+>;
 
 /**
  * __usePinStageMutation__
@@ -6790,23 +15473,48 @@ export type PinStageMutationFn = Apollo.MutationFunction<PinStageMutation, PinSt
  *   },
  * });
  */
-export function usePinStageMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PinStageMutation, PinStageMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PinStageMutation, PinStageMutationVariables>(PinStageDocument, options);
-      }
+export function usePinStageMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    PinStageMutation,
+    PinStageMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    PinStageMutation,
+    PinStageMutationVariables
+  >(PinStageDocument, options);
+}
 export type PinStageMutationHookResult = ReturnType<typeof usePinStageMutation>;
 export type PinStageMutationResult = Apollo.MutationResult<PinStageMutation>;
-export type PinStageMutationOptions = Apollo.BaseMutationOptions<PinStageMutation, PinStageMutationVariables>;
+export type PinStageMutationOptions = Apollo.BaseMutationOptions<
+  PinStageMutation,
+  PinStageMutationVariables
+>;
 export const From_Parquet_LikeDocument = gql`
-    mutation from_parquet_like($dataframe: ParquetLike!, $name: String!, $origins: [ID!], $dataset: ID) {
-  fromParquetLike(
-    input: {dataframe: $dataframe, name: $name, origins: $origins, dataset: $dataset}
+  mutation from_parquet_like(
+    $dataframe: ParquetLike!
+    $name: String!
+    $origins: [ID!]
+    $dataset: ID
   ) {
-    ...Table
+    fromParquetLike(
+      input: {
+        dataframe: $dataframe
+        name: $name
+        origins: $origins
+        dataset: $dataset
+      }
+    ) {
+      ...Table
+    }
   }
-}
-    ${TableFragmentDoc}`;
-export type From_Parquet_LikeMutationFn = Apollo.MutationFunction<From_Parquet_LikeMutation, From_Parquet_LikeMutationVariables>;
+  ${TableFragmentDoc}
+`;
+export type From_Parquet_LikeMutationFn = Apollo.MutationFunction<
+  From_Parquet_LikeMutation,
+  From_Parquet_LikeMutationVariables
+>;
 
 /**
  * __useFrom_Parquet_LikeMutation__
@@ -6828,21 +15536,39 @@ export type From_Parquet_LikeMutationFn = Apollo.MutationFunction<From_Parquet_L
  *   },
  * });
  */
-export function useFrom_Parquet_LikeMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<From_Parquet_LikeMutation, From_Parquet_LikeMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<From_Parquet_LikeMutation, From_Parquet_LikeMutationVariables>(From_Parquet_LikeDocument, options);
-      }
-export type From_Parquet_LikeMutationHookResult = ReturnType<typeof useFrom_Parquet_LikeMutation>;
-export type From_Parquet_LikeMutationResult = Apollo.MutationResult<From_Parquet_LikeMutation>;
-export type From_Parquet_LikeMutationOptions = Apollo.BaseMutationOptions<From_Parquet_LikeMutation, From_Parquet_LikeMutationVariables>;
-export const RequestTableUploadDocument = gql`
-    mutation RequestTableUpload($key: String!, $datalayer: String!) {
-  requestTableUpload(input: {key: $key, datalayer: $datalayer}) {
-    ...Credentials
-  }
+export function useFrom_Parquet_LikeMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    From_Parquet_LikeMutation,
+    From_Parquet_LikeMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    From_Parquet_LikeMutation,
+    From_Parquet_LikeMutationVariables
+  >(From_Parquet_LikeDocument, options);
 }
-    ${CredentialsFragmentDoc}`;
-export type RequestTableUploadMutationFn = Apollo.MutationFunction<RequestTableUploadMutation, RequestTableUploadMutationVariables>;
+export type From_Parquet_LikeMutationHookResult = ReturnType<
+  typeof useFrom_Parquet_LikeMutation
+>;
+export type From_Parquet_LikeMutationResult =
+  Apollo.MutationResult<From_Parquet_LikeMutation>;
+export type From_Parquet_LikeMutationOptions = Apollo.BaseMutationOptions<
+  From_Parquet_LikeMutation,
+  From_Parquet_LikeMutationVariables
+>;
+export const RequestTableUploadDocument = gql`
+  mutation RequestTableUpload($key: String!, $datalayer: String!) {
+    requestTableUpload(input: { key: $key, datalayer: $datalayer }) {
+      ...Credentials
+    }
+  }
+  ${CredentialsFragmentDoc}
+`;
+export type RequestTableUploadMutationFn = Apollo.MutationFunction<
+  RequestTableUploadMutation,
+  RequestTableUploadMutationVariables
+>;
 
 /**
  * __useRequestTableUploadMutation__
@@ -6862,21 +15588,39 @@ export type RequestTableUploadMutationFn = Apollo.MutationFunction<RequestTableU
  *   },
  * });
  */
-export function useRequestTableUploadMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestTableUploadMutation, RequestTableUploadMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestTableUploadMutation, RequestTableUploadMutationVariables>(RequestTableUploadDocument, options);
-      }
-export type RequestTableUploadMutationHookResult = ReturnType<typeof useRequestTableUploadMutation>;
-export type RequestTableUploadMutationResult = Apollo.MutationResult<RequestTableUploadMutation>;
-export type RequestTableUploadMutationOptions = Apollo.BaseMutationOptions<RequestTableUploadMutation, RequestTableUploadMutationVariables>;
-export const RequestTableAccessDocument = gql`
-    mutation RequestTableAccess($store: ID!, $duration: Int) {
-  requestTableAccess(input: {store: $store, duration: $duration}) {
-    ...AccessCredentials
-  }
+export function useRequestTableUploadMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    RequestTableUploadMutation,
+    RequestTableUploadMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    RequestTableUploadMutation,
+    RequestTableUploadMutationVariables
+  >(RequestTableUploadDocument, options);
 }
-    ${AccessCredentialsFragmentDoc}`;
-export type RequestTableAccessMutationFn = Apollo.MutationFunction<RequestTableAccessMutation, RequestTableAccessMutationVariables>;
+export type RequestTableUploadMutationHookResult = ReturnType<
+  typeof useRequestTableUploadMutation
+>;
+export type RequestTableUploadMutationResult =
+  Apollo.MutationResult<RequestTableUploadMutation>;
+export type RequestTableUploadMutationOptions = Apollo.BaseMutationOptions<
+  RequestTableUploadMutation,
+  RequestTableUploadMutationVariables
+>;
+export const RequestTableAccessDocument = gql`
+  mutation RequestTableAccess($store: ID!, $duration: Int) {
+    requestTableAccess(input: { store: $store, duration: $duration }) {
+      ...AccessCredentials
+    }
+  }
+  ${AccessCredentialsFragmentDoc}
+`;
+export type RequestTableAccessMutationFn = Apollo.MutationFunction<
+  RequestTableAccessMutation,
+  RequestTableAccessMutationVariables
+>;
 
 /**
  * __useRequestTableAccessMutation__
@@ -6896,23 +15640,45 @@ export type RequestTableAccessMutationFn = Apollo.MutationFunction<RequestTableA
  *   },
  * });
  */
-export function useRequestTableAccessMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestTableAccessMutation, RequestTableAccessMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestTableAccessMutation, RequestTableAccessMutationVariables>(RequestTableAccessDocument, options);
-      }
-export type RequestTableAccessMutationHookResult = ReturnType<typeof useRequestTableAccessMutation>;
-export type RequestTableAccessMutationResult = Apollo.MutationResult<RequestTableAccessMutation>;
-export type RequestTableAccessMutationOptions = Apollo.BaseMutationOptions<RequestTableAccessMutation, RequestTableAccessMutationVariables>;
-export const CreateAffineTransformationViewDocument = gql`
-    mutation CreateAffineTransformationView($image: ID!, $affineMatrix: FourByFourMatrix!, $stage: ID) {
-  createAffineTransformationView(
-    input: {image: $image, affineMatrix: $affineMatrix, stage: $stage}
-  ) {
-    ...AffineTransformationView
-  }
+export function useRequestTableAccessMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    RequestTableAccessMutation,
+    RequestTableAccessMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    RequestTableAccessMutation,
+    RequestTableAccessMutationVariables
+  >(RequestTableAccessDocument, options);
 }
-    ${AffineTransformationViewFragmentDoc}`;
-export type CreateAffineTransformationViewMutationFn = Apollo.MutationFunction<CreateAffineTransformationViewMutation, CreateAffineTransformationViewMutationVariables>;
+export type RequestTableAccessMutationHookResult = ReturnType<
+  typeof useRequestTableAccessMutation
+>;
+export type RequestTableAccessMutationResult =
+  Apollo.MutationResult<RequestTableAccessMutation>;
+export type RequestTableAccessMutationOptions = Apollo.BaseMutationOptions<
+  RequestTableAccessMutation,
+  RequestTableAccessMutationVariables
+>;
+export const CreateAffineTransformationViewDocument = gql`
+  mutation CreateAffineTransformationView(
+    $image: ID!
+    $affineMatrix: FourByFourMatrix!
+    $stage: ID
+  ) {
+    createAffineTransformationView(
+      input: { image: $image, affineMatrix: $affineMatrix, stage: $stage }
+    ) {
+      ...AffineTransformationView
+    }
+  }
+  ${AffineTransformationViewFragmentDoc}
+`;
+export type CreateAffineTransformationViewMutationFn = Apollo.MutationFunction<
+  CreateAffineTransformationViewMutation,
+  CreateAffineTransformationViewMutationVariables
+>;
 
 /**
  * __useCreateAffineTransformationViewMutation__
@@ -6933,19 +15699,37 @@ export type CreateAffineTransformationViewMutationFn = Apollo.MutationFunction<C
  *   },
  * });
  */
-export function useCreateAffineTransformationViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateAffineTransformationViewMutation, CreateAffineTransformationViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateAffineTransformationViewMutation, CreateAffineTransformationViewMutationVariables>(CreateAffineTransformationViewDocument, options);
-      }
-export type CreateAffineTransformationViewMutationHookResult = ReturnType<typeof useCreateAffineTransformationViewMutation>;
-export type CreateAffineTransformationViewMutationResult = Apollo.MutationResult<CreateAffineTransformationViewMutation>;
-export type CreateAffineTransformationViewMutationOptions = Apollo.BaseMutationOptions<CreateAffineTransformationViewMutation, CreateAffineTransformationViewMutationVariables>;
-export const DeleteAffineTransformationViewDocument = gql`
-    mutation DeleteAffineTransformationView($id: ID!) {
-  deleteAffineTransformationView(input: {id: $id})
+export function useCreateAffineTransformationViewMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateAffineTransformationViewMutation,
+    CreateAffineTransformationViewMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateAffineTransformationViewMutation,
+    CreateAffineTransformationViewMutationVariables
+  >(CreateAffineTransformationViewDocument, options);
 }
-    `;
-export type DeleteAffineTransformationViewMutationFn = Apollo.MutationFunction<DeleteAffineTransformationViewMutation, DeleteAffineTransformationViewMutationVariables>;
+export type CreateAffineTransformationViewMutationHookResult = ReturnType<
+  typeof useCreateAffineTransformationViewMutation
+>;
+export type CreateAffineTransformationViewMutationResult =
+  Apollo.MutationResult<CreateAffineTransformationViewMutation>;
+export type CreateAffineTransformationViewMutationOptions =
+  Apollo.BaseMutationOptions<
+    CreateAffineTransformationViewMutation,
+    CreateAffineTransformationViewMutationVariables
+  >;
+export const DeleteAffineTransformationViewDocument = gql`
+  mutation DeleteAffineTransformationView($id: ID!) {
+    deleteAffineTransformationView(input: { id: $id })
+  }
+`;
+export type DeleteAffineTransformationViewMutationFn = Apollo.MutationFunction<
+  DeleteAffineTransformationViewMutation,
+  DeleteAffineTransformationViewMutationVariables
+>;
 
 /**
  * __useDeleteAffineTransformationViewMutation__
@@ -6964,19 +15748,37 @@ export type DeleteAffineTransformationViewMutationFn = Apollo.MutationFunction<D
  *   },
  * });
  */
-export function useDeleteAffineTransformationViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteAffineTransformationViewMutation, DeleteAffineTransformationViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteAffineTransformationViewMutation, DeleteAffineTransformationViewMutationVariables>(DeleteAffineTransformationViewDocument, options);
-      }
-export type DeleteAffineTransformationViewMutationHookResult = ReturnType<typeof useDeleteAffineTransformationViewMutation>;
-export type DeleteAffineTransformationViewMutationResult = Apollo.MutationResult<DeleteAffineTransformationViewMutation>;
-export type DeleteAffineTransformationViewMutationOptions = Apollo.BaseMutationOptions<DeleteAffineTransformationViewMutation, DeleteAffineTransformationViewMutationVariables>;
-export const DeleteRgbViewDocument = gql`
-    mutation DeleteRGBView($id: ID!) {
-  deleteRgbView(input: {id: $id})
+export function useDeleteAffineTransformationViewMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    DeleteAffineTransformationViewMutation,
+    DeleteAffineTransformationViewMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    DeleteAffineTransformationViewMutation,
+    DeleteAffineTransformationViewMutationVariables
+  >(DeleteAffineTransformationViewDocument, options);
 }
-    `;
-export type DeleteRgbViewMutationFn = Apollo.MutationFunction<DeleteRgbViewMutation, DeleteRgbViewMutationVariables>;
+export type DeleteAffineTransformationViewMutationHookResult = ReturnType<
+  typeof useDeleteAffineTransformationViewMutation
+>;
+export type DeleteAffineTransformationViewMutationResult =
+  Apollo.MutationResult<DeleteAffineTransformationViewMutation>;
+export type DeleteAffineTransformationViewMutationOptions =
+  Apollo.BaseMutationOptions<
+    DeleteAffineTransformationViewMutation,
+    DeleteAffineTransformationViewMutationVariables
+  >;
+export const DeleteRgbViewDocument = gql`
+  mutation DeleteRGBView($id: ID!) {
+    deleteRgbView(input: { id: $id })
+  }
+`;
+export type DeleteRgbViewMutationFn = Apollo.MutationFunction<
+  DeleteRgbViewMutation,
+  DeleteRgbViewMutationVariables
+>;
 
 /**
  * __useDeleteRgbViewMutation__
@@ -6995,19 +15797,36 @@ export type DeleteRgbViewMutationFn = Apollo.MutationFunction<DeleteRgbViewMutat
  *   },
  * });
  */
-export function useDeleteRgbViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteRgbViewMutation, DeleteRgbViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteRgbViewMutation, DeleteRgbViewMutationVariables>(DeleteRgbViewDocument, options);
-      }
-export type DeleteRgbViewMutationHookResult = ReturnType<typeof useDeleteRgbViewMutation>;
-export type DeleteRgbViewMutationResult = Apollo.MutationResult<DeleteRgbViewMutation>;
-export type DeleteRgbViewMutationOptions = Apollo.BaseMutationOptions<DeleteRgbViewMutation, DeleteRgbViewMutationVariables>;
-export const DeleteChannelViewDocument = gql`
-    mutation DeleteChannelView($id: ID!) {
-  deleteChannelView(input: {id: $id})
+export function useDeleteRgbViewMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    DeleteRgbViewMutation,
+    DeleteRgbViewMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    DeleteRgbViewMutation,
+    DeleteRgbViewMutationVariables
+  >(DeleteRgbViewDocument, options);
 }
-    `;
-export type DeleteChannelViewMutationFn = Apollo.MutationFunction<DeleteChannelViewMutation, DeleteChannelViewMutationVariables>;
+export type DeleteRgbViewMutationHookResult = ReturnType<
+  typeof useDeleteRgbViewMutation
+>;
+export type DeleteRgbViewMutationResult =
+  Apollo.MutationResult<DeleteRgbViewMutation>;
+export type DeleteRgbViewMutationOptions = Apollo.BaseMutationOptions<
+  DeleteRgbViewMutation,
+  DeleteRgbViewMutationVariables
+>;
+export const DeleteChannelViewDocument = gql`
+  mutation DeleteChannelView($id: ID!) {
+    deleteChannelView(input: { id: $id })
+  }
+`;
+export type DeleteChannelViewMutationFn = Apollo.MutationFunction<
+  DeleteChannelViewMutation,
+  DeleteChannelViewMutationVariables
+>;
 
 /**
  * __useDeleteChannelViewMutation__
@@ -7026,23 +15845,58 @@ export type DeleteChannelViewMutationFn = Apollo.MutationFunction<DeleteChannelV
  *   },
  * });
  */
-export function useDeleteChannelViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteChannelViewMutation, DeleteChannelViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteChannelViewMutation, DeleteChannelViewMutationVariables>(DeleteChannelViewDocument, options);
-      }
-export type DeleteChannelViewMutationHookResult = ReturnType<typeof useDeleteChannelViewMutation>;
-export type DeleteChannelViewMutationResult = Apollo.MutationResult<DeleteChannelViewMutation>;
-export type DeleteChannelViewMutationOptions = Apollo.BaseMutationOptions<DeleteChannelViewMutation, DeleteChannelViewMutationVariables>;
-export const CreateRgbViewDocument = gql`
-    mutation CreateRgbView($image: ID!, $context: ID!, $gamma: Float, $contrastLimitMax: Float, $contrastLimitMin: Float, $rescale: Boolean, $active: Boolean, $colorMap: ColorMap) {
-  createRgbView(
-    input: {image: $image, context: $context, gamma: $gamma, contrastLimitMax: $contrastLimitMax, contrastLimitMin: $contrastLimitMin, rescale: $rescale, active: $active, colorMap: $colorMap}
-  ) {
-    id
-  }
+export function useDeleteChannelViewMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    DeleteChannelViewMutation,
+    DeleteChannelViewMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    DeleteChannelViewMutation,
+    DeleteChannelViewMutationVariables
+  >(DeleteChannelViewDocument, options);
 }
-    `;
-export type CreateRgbViewMutationFn = Apollo.MutationFunction<CreateRgbViewMutation, CreateRgbViewMutationVariables>;
+export type DeleteChannelViewMutationHookResult = ReturnType<
+  typeof useDeleteChannelViewMutation
+>;
+export type DeleteChannelViewMutationResult =
+  Apollo.MutationResult<DeleteChannelViewMutation>;
+export type DeleteChannelViewMutationOptions = Apollo.BaseMutationOptions<
+  DeleteChannelViewMutation,
+  DeleteChannelViewMutationVariables
+>;
+export const CreateRgbViewDocument = gql`
+  mutation CreateRgbView(
+    $image: ID!
+    $context: ID!
+    $gamma: Float
+    $contrastLimitMax: Float
+    $contrastLimitMin: Float
+    $rescale: Boolean
+    $active: Boolean
+    $colorMap: ColorMap
+  ) {
+    createRgbView(
+      input: {
+        image: $image
+        context: $context
+        gamma: $gamma
+        contrastLimitMax: $contrastLimitMax
+        contrastLimitMin: $contrastLimitMin
+        rescale: $rescale
+        active: $active
+        colorMap: $colorMap
+      }
+    ) {
+      id
+    }
+  }
+`;
+export type CreateRgbViewMutationFn = Apollo.MutationFunction<
+  CreateRgbViewMutation,
+  CreateRgbViewMutationVariables
+>;
 
 /**
  * __useCreateRgbViewMutation__
@@ -7068,21 +15922,39 @@ export type CreateRgbViewMutationFn = Apollo.MutationFunction<CreateRgbViewMutat
  *   },
  * });
  */
-export function useCreateRgbViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateRgbViewMutation, CreateRgbViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateRgbViewMutation, CreateRgbViewMutationVariables>(CreateRgbViewDocument, options);
-      }
-export type CreateRgbViewMutationHookResult = ReturnType<typeof useCreateRgbViewMutation>;
-export type CreateRgbViewMutationResult = Apollo.MutationResult<CreateRgbViewMutation>;
-export type CreateRgbViewMutationOptions = Apollo.BaseMutationOptions<CreateRgbViewMutation, CreateRgbViewMutationVariables>;
-export const CreateWellPositionViewDocument = gql`
-    mutation CreateWellPositionView($input: WellPositionViewInput!) {
-  createWellPositionView(input: $input) {
-    ...WellPositionView
-  }
+export function useCreateRgbViewMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateRgbViewMutation,
+    CreateRgbViewMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateRgbViewMutation,
+    CreateRgbViewMutationVariables
+  >(CreateRgbViewDocument, options);
 }
-    ${WellPositionViewFragmentDoc}`;
-export type CreateWellPositionViewMutationFn = Apollo.MutationFunction<CreateWellPositionViewMutation, CreateWellPositionViewMutationVariables>;
+export type CreateRgbViewMutationHookResult = ReturnType<
+  typeof useCreateRgbViewMutation
+>;
+export type CreateRgbViewMutationResult =
+  Apollo.MutationResult<CreateRgbViewMutation>;
+export type CreateRgbViewMutationOptions = Apollo.BaseMutationOptions<
+  CreateRgbViewMutation,
+  CreateRgbViewMutationVariables
+>;
+export const CreateWellPositionViewDocument = gql`
+  mutation CreateWellPositionView($input: WellPositionViewInput!) {
+    createWellPositionView(input: $input) {
+      ...WellPositionView
+    }
+  }
+  ${WellPositionViewFragmentDoc}
+`;
+export type CreateWellPositionViewMutationFn = Apollo.MutationFunction<
+  CreateWellPositionViewMutation,
+  CreateWellPositionViewMutationVariables
+>;
 
 /**
  * __useCreateWellPositionViewMutation__
@@ -7101,21 +15973,39 @@ export type CreateWellPositionViewMutationFn = Apollo.MutationFunction<CreateWel
  *   },
  * });
  */
-export function useCreateWellPositionViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateWellPositionViewMutation, CreateWellPositionViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateWellPositionViewMutation, CreateWellPositionViewMutationVariables>(CreateWellPositionViewDocument, options);
-      }
-export type CreateWellPositionViewMutationHookResult = ReturnType<typeof useCreateWellPositionViewMutation>;
-export type CreateWellPositionViewMutationResult = Apollo.MutationResult<CreateWellPositionViewMutation>;
-export type CreateWellPositionViewMutationOptions = Apollo.BaseMutationOptions<CreateWellPositionViewMutation, CreateWellPositionViewMutationVariables>;
-export const CreateContinousScanViewDocument = gql`
-    mutation CreateContinousScanView($input: ContinousScanViewInput!) {
-  createContinousScanView(input: $input) {
-    ...ContinousScanView
-  }
+export function useCreateWellPositionViewMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateWellPositionViewMutation,
+    CreateWellPositionViewMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateWellPositionViewMutation,
+    CreateWellPositionViewMutationVariables
+  >(CreateWellPositionViewDocument, options);
 }
-    ${ContinousScanViewFragmentDoc}`;
-export type CreateContinousScanViewMutationFn = Apollo.MutationFunction<CreateContinousScanViewMutation, CreateContinousScanViewMutationVariables>;
+export type CreateWellPositionViewMutationHookResult = ReturnType<
+  typeof useCreateWellPositionViewMutation
+>;
+export type CreateWellPositionViewMutationResult =
+  Apollo.MutationResult<CreateWellPositionViewMutation>;
+export type CreateWellPositionViewMutationOptions = Apollo.BaseMutationOptions<
+  CreateWellPositionViewMutation,
+  CreateWellPositionViewMutationVariables
+>;
+export const CreateContinousScanViewDocument = gql`
+  mutation CreateContinousScanView($input: ContinousScanViewInput!) {
+    createContinousScanView(input: $input) {
+      ...ContinousScanView
+    }
+  }
+  ${ContinousScanViewFragmentDoc}
+`;
+export type CreateContinousScanViewMutationFn = Apollo.MutationFunction<
+  CreateContinousScanViewMutation,
+  CreateContinousScanViewMutationVariables
+>;
 
 /**
  * __useCreateContinousScanViewMutation__
@@ -7134,21 +16024,39 @@ export type CreateContinousScanViewMutationFn = Apollo.MutationFunction<CreateCo
  *   },
  * });
  */
-export function useCreateContinousScanViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateContinousScanViewMutation, CreateContinousScanViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateContinousScanViewMutation, CreateContinousScanViewMutationVariables>(CreateContinousScanViewDocument, options);
-      }
-export type CreateContinousScanViewMutationHookResult = ReturnType<typeof useCreateContinousScanViewMutation>;
-export type CreateContinousScanViewMutationResult = Apollo.MutationResult<CreateContinousScanViewMutation>;
-export type CreateContinousScanViewMutationOptions = Apollo.BaseMutationOptions<CreateContinousScanViewMutation, CreateContinousScanViewMutationVariables>;
-export const CreateStructureViewDocument = gql`
-    mutation CreateStructureView($input: StructureViewInput!) {
-  createStructureView(input: $input) {
-    ...StructureView
-  }
+export function useCreateContinousScanViewMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateContinousScanViewMutation,
+    CreateContinousScanViewMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateContinousScanViewMutation,
+    CreateContinousScanViewMutationVariables
+  >(CreateContinousScanViewDocument, options);
 }
-    ${StructureViewFragmentDoc}`;
-export type CreateStructureViewMutationFn = Apollo.MutationFunction<CreateStructureViewMutation, CreateStructureViewMutationVariables>;
+export type CreateContinousScanViewMutationHookResult = ReturnType<
+  typeof useCreateContinousScanViewMutation
+>;
+export type CreateContinousScanViewMutationResult =
+  Apollo.MutationResult<CreateContinousScanViewMutation>;
+export type CreateContinousScanViewMutationOptions = Apollo.BaseMutationOptions<
+  CreateContinousScanViewMutation,
+  CreateContinousScanViewMutationVariables
+>;
+export const CreateStructureViewDocument = gql`
+  mutation CreateStructureView($input: StructureViewInput!) {
+    createStructureView(input: $input) {
+      ...StructureView
+    }
+  }
+  ${StructureViewFragmentDoc}
+`;
+export type CreateStructureViewMutationFn = Apollo.MutationFunction<
+  CreateStructureViewMutation,
+  CreateStructureViewMutationVariables
+>;
 
 /**
  * __useCreateStructureViewMutation__
@@ -7167,22 +16075,39 @@ export type CreateStructureViewMutationFn = Apollo.MutationFunction<CreateStruct
  *   },
  * });
  */
-export function useCreateStructureViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateStructureViewMutation, CreateStructureViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateStructureViewMutation, CreateStructureViewMutationVariables>(CreateStructureViewDocument, options);
-      }
-export type CreateStructureViewMutationHookResult = ReturnType<typeof useCreateStructureViewMutation>;
-export type CreateStructureViewMutationResult = Apollo.MutationResult<CreateStructureViewMutation>;
-export type CreateStructureViewMutationOptions = Apollo.BaseMutationOptions<CreateStructureViewMutation, CreateStructureViewMutationVariables>;
-export const CreateViewCollectionDocument = gql`
-    mutation CreateViewCollection($name: String!) {
-  createViewCollection(input: {name: $name}) {
-    id
-    name
-  }
+export function useCreateStructureViewMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateStructureViewMutation,
+    CreateStructureViewMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateStructureViewMutation,
+    CreateStructureViewMutationVariables
+  >(CreateStructureViewDocument, options);
 }
-    `;
-export type CreateViewCollectionMutationFn = Apollo.MutationFunction<CreateViewCollectionMutation, CreateViewCollectionMutationVariables>;
+export type CreateStructureViewMutationHookResult = ReturnType<
+  typeof useCreateStructureViewMutation
+>;
+export type CreateStructureViewMutationResult =
+  Apollo.MutationResult<CreateStructureViewMutation>;
+export type CreateStructureViewMutationOptions = Apollo.BaseMutationOptions<
+  CreateStructureViewMutation,
+  CreateStructureViewMutationVariables
+>;
+export const CreateViewCollectionDocument = gql`
+  mutation CreateViewCollection($name: String!) {
+    createViewCollection(input: { name: $name }) {
+      id
+      name
+    }
+  }
+`;
+export type CreateViewCollectionMutationFn = Apollo.MutationFunction<
+  CreateViewCollectionMutation,
+  CreateViewCollectionMutationVariables
+>;
 
 /**
  * __useCreateViewCollectionMutation__
@@ -7201,20 +16126,35 @@ export type CreateViewCollectionMutationFn = Apollo.MutationFunction<CreateViewC
  *   },
  * });
  */
-export function useCreateViewCollectionMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateViewCollectionMutation, CreateViewCollectionMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateViewCollectionMutation, CreateViewCollectionMutationVariables>(CreateViewCollectionDocument, options);
-      }
-export type CreateViewCollectionMutationHookResult = ReturnType<typeof useCreateViewCollectionMutation>;
-export type CreateViewCollectionMutationResult = Apollo.MutationResult<CreateViewCollectionMutation>;
-export type CreateViewCollectionMutationOptions = Apollo.BaseMutationOptions<CreateViewCollectionMutation, CreateViewCollectionMutationVariables>;
-export const GetCameraDocument = gql`
-    query GetCamera($id: ID!) {
-  camera(id: $id) {
-    ...Camera
-  }
+export function useCreateViewCollectionMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateViewCollectionMutation,
+    CreateViewCollectionMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateViewCollectionMutation,
+    CreateViewCollectionMutationVariables
+  >(CreateViewCollectionDocument, options);
 }
-    ${CameraFragmentDoc}`;
+export type CreateViewCollectionMutationHookResult = ReturnType<
+  typeof useCreateViewCollectionMutation
+>;
+export type CreateViewCollectionMutationResult =
+  Apollo.MutationResult<CreateViewCollectionMutation>;
+export type CreateViewCollectionMutationOptions = Apollo.BaseMutationOptions<
+  CreateViewCollectionMutation,
+  CreateViewCollectionMutationVariables
+>;
+export const GetCameraDocument = gql`
+  query GetCamera($id: ID!) {
+    camera(id: $id) {
+      ...Camera
+    }
+  }
+  ${CameraFragmentDoc}
+`;
 
 /**
  * __useGetCameraQuery__
@@ -7232,28 +16172,50 @@ export const GetCameraDocument = gql`
  *   },
  * });
  */
-export function useGetCameraQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetCameraQuery, GetCameraQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetCameraQuery, GetCameraQueryVariables>(GetCameraDocument, options);
-      }
-export function useGetCameraLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetCameraQuery, GetCameraQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetCameraQuery, GetCameraQueryVariables>(GetCameraDocument, options);
-        }
-export type GetCameraQueryHookResult = ReturnType<typeof useGetCameraQuery>;
-export type GetCameraLazyQueryHookResult = ReturnType<typeof useGetCameraLazyQuery>;
-export type GetCameraQueryResult = Apollo.QueryResult<GetCameraQuery, GetCameraQueryVariables>;
-export const ChildrenDocument = gql`
-    query Children($id: ID!, $pagination: ChildrenPaginationInput) {
-  children(parent: $id, pagination: $pagination) {
-    ...ListFile
-    ...ListImage
-    ...ListDataset
-  }
+export function useGetCameraQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetCameraQuery,
+    GetCameraQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<GetCameraQuery, GetCameraQueryVariables>(
+    GetCameraDocument,
+    options,
+  );
 }
-    ${ListFileFragmentDoc}
-${ListImageFragmentDoc}
-${ListDatasetFragmentDoc}`;
+export function useGetCameraLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetCameraQuery,
+    GetCameraQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<GetCameraQuery, GetCameraQueryVariables>(
+    GetCameraDocument,
+    options,
+  );
+}
+export type GetCameraQueryHookResult = ReturnType<typeof useGetCameraQuery>;
+export type GetCameraLazyQueryHookResult = ReturnType<
+  typeof useGetCameraLazyQuery
+>;
+export type GetCameraQueryResult = Apollo.QueryResult<
+  GetCameraQuery,
+  GetCameraQueryVariables
+>;
+export const ChildrenDocument = gql`
+  query Children($id: ID!, $pagination: ChildrenPaginationInput) {
+    children(parent: $id, pagination: $pagination) {
+      ...ListFile
+      ...ListImage
+      ...ListDataset
+    }
+  }
+  ${ListFileFragmentDoc}
+  ${ListImageFragmentDoc}
+  ${ListDatasetFragmentDoc}
+`;
 
 /**
  * __useChildrenQuery__
@@ -7272,24 +16234,46 @@ ${ListDatasetFragmentDoc}`;
  *   },
  * });
  */
-export function useChildrenQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ChildrenQuery, ChildrenQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ChildrenQuery, ChildrenQueryVariables>(ChildrenDocument, options);
-      }
-export function useChildrenLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ChildrenQuery, ChildrenQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ChildrenQuery, ChildrenQueryVariables>(ChildrenDocument, options);
-        }
-export type ChildrenQueryHookResult = ReturnType<typeof useChildrenQuery>;
-export type ChildrenLazyQueryHookResult = ReturnType<typeof useChildrenLazyQuery>;
-export type ChildrenQueryResult = Apollo.QueryResult<ChildrenQuery, ChildrenQueryVariables>;
-export const GetDatasetDocument = gql`
-    query GetDataset($id: ID!) {
-  dataset(id: $id) {
-    ...Dataset
-  }
+export function useChildrenQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    ChildrenQuery,
+    ChildrenQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<ChildrenQuery, ChildrenQueryVariables>(
+    ChildrenDocument,
+    options,
+  );
 }
-    ${DatasetFragmentDoc}`;
+export function useChildrenLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    ChildrenQuery,
+    ChildrenQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<ChildrenQuery, ChildrenQueryVariables>(
+    ChildrenDocument,
+    options,
+  );
+}
+export type ChildrenQueryHookResult = ReturnType<typeof useChildrenQuery>;
+export type ChildrenLazyQueryHookResult = ReturnType<
+  typeof useChildrenLazyQuery
+>;
+export type ChildrenQueryResult = Apollo.QueryResult<
+  ChildrenQuery,
+  ChildrenQueryVariables
+>;
+export const GetDatasetDocument = gql`
+  query GetDataset($id: ID!) {
+    dataset(id: $id) {
+      ...Dataset
+    }
+  }
+  ${DatasetFragmentDoc}
+`;
 
 /**
  * __useGetDatasetQuery__
@@ -7307,24 +16291,49 @@ export const GetDatasetDocument = gql`
  *   },
  * });
  */
-export function useGetDatasetQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetDatasetQuery, GetDatasetQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetDatasetQuery, GetDatasetQueryVariables>(GetDatasetDocument, options);
-      }
-export function useGetDatasetLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetDatasetQuery, GetDatasetQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetDatasetQuery, GetDatasetQueryVariables>(GetDatasetDocument, options);
-        }
-export type GetDatasetQueryHookResult = ReturnType<typeof useGetDatasetQuery>;
-export type GetDatasetLazyQueryHookResult = ReturnType<typeof useGetDatasetLazyQuery>;
-export type GetDatasetQueryResult = Apollo.QueryResult<GetDatasetQuery, GetDatasetQueryVariables>;
-export const GetDatasetsDocument = gql`
-    query GetDatasets($filters: DatasetFilter, $pagination: OffsetPaginationInput) {
-  datasets(filters: $filters, pagination: $pagination) {
-    ...ListDataset
-  }
+export function useGetDatasetQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetDatasetQuery,
+    GetDatasetQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<GetDatasetQuery, GetDatasetQueryVariables>(
+    GetDatasetDocument,
+    options,
+  );
 }
-    ${ListDatasetFragmentDoc}`;
+export function useGetDatasetLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetDatasetQuery,
+    GetDatasetQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetDatasetQuery,
+    GetDatasetQueryVariables
+  >(GetDatasetDocument, options);
+}
+export type GetDatasetQueryHookResult = ReturnType<typeof useGetDatasetQuery>;
+export type GetDatasetLazyQueryHookResult = ReturnType<
+  typeof useGetDatasetLazyQuery
+>;
+export type GetDatasetQueryResult = Apollo.QueryResult<
+  GetDatasetQuery,
+  GetDatasetQueryVariables
+>;
+export const GetDatasetsDocument = gql`
+  query GetDatasets(
+    $filters: DatasetFilter
+    $pagination: OffsetPaginationInput
+  ) {
+    datasets(filters: $filters, pagination: $pagination) {
+      ...ListDataset
+    }
+  }
+  ${ListDatasetFragmentDoc}
+`;
 
 /**
  * __useGetDatasetsQuery__
@@ -7343,24 +16352,46 @@ export const GetDatasetsDocument = gql`
  *   },
  * });
  */
-export function useGetDatasetsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetDatasetsQuery, GetDatasetsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetDatasetsQuery, GetDatasetsQueryVariables>(GetDatasetsDocument, options);
-      }
-export function useGetDatasetsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetDatasetsQuery, GetDatasetsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetDatasetsQuery, GetDatasetsQueryVariables>(GetDatasetsDocument, options);
-        }
-export type GetDatasetsQueryHookResult = ReturnType<typeof useGetDatasetsQuery>;
-export type GetDatasetsLazyQueryHookResult = ReturnType<typeof useGetDatasetsLazyQuery>;
-export type GetDatasetsQueryResult = Apollo.QueryResult<GetDatasetsQuery, GetDatasetsQueryVariables>;
-export const GetFileDocument = gql`
-    query GetFile($id: ID!) {
-  file(id: $id) {
-    ...File
-  }
+export function useGetDatasetsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    GetDatasetsQuery,
+    GetDatasetsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<GetDatasetsQuery, GetDatasetsQueryVariables>(
+    GetDatasetsDocument,
+    options,
+  );
 }
-    ${FileFragmentDoc}`;
+export function useGetDatasetsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetDatasetsQuery,
+    GetDatasetsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetDatasetsQuery,
+    GetDatasetsQueryVariables
+  >(GetDatasetsDocument, options);
+}
+export type GetDatasetsQueryHookResult = ReturnType<typeof useGetDatasetsQuery>;
+export type GetDatasetsLazyQueryHookResult = ReturnType<
+  typeof useGetDatasetsLazyQuery
+>;
+export type GetDatasetsQueryResult = Apollo.QueryResult<
+  GetDatasetsQuery,
+  GetDatasetsQueryVariables
+>;
+export const GetFileDocument = gql`
+  query GetFile($id: ID!) {
+    file(id: $id) {
+      ...File
+    }
+  }
+  ${FileFragmentDoc}
+`;
 
 /**
  * __useGetFileQuery__
@@ -7378,24 +16409,44 @@ export const GetFileDocument = gql`
  *   },
  * });
  */
-export function useGetFileQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetFileQuery, GetFileQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetFileQuery, GetFileQueryVariables>(GetFileDocument, options);
-      }
-export function useGetFileLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetFileQuery, GetFileQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetFileQuery, GetFileQueryVariables>(GetFileDocument, options);
-        }
+export function useGetFileQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetFileQuery,
+    GetFileQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<GetFileQuery, GetFileQueryVariables>(
+    GetFileDocument,
+    options,
+  );
+}
+export function useGetFileLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetFileQuery,
+    GetFileQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<GetFileQuery, GetFileQueryVariables>(
+    GetFileDocument,
+    options,
+  );
+}
 export type GetFileQueryHookResult = ReturnType<typeof useGetFileQuery>;
 export type GetFileLazyQueryHookResult = ReturnType<typeof useGetFileLazyQuery>;
-export type GetFileQueryResult = Apollo.QueryResult<GetFileQuery, GetFileQueryVariables>;
+export type GetFileQueryResult = Apollo.QueryResult<
+  GetFileQuery,
+  GetFileQueryVariables
+>;
 export const GetFilesDocument = gql`
-    query GetFiles($filters: FileFilter, $pagination: OffsetPaginationInput) {
-  files(filters: $filters, pagination: $pagination) {
-    ...ListFile
+  query GetFiles($filters: FileFilter, $pagination: OffsetPaginationInput) {
+    files(filters: $filters, pagination: $pagination) {
+      ...ListFile
+    }
   }
-}
-    ${ListFileFragmentDoc}`;
+  ${ListFileFragmentDoc}
+`;
 
 /**
  * __useGetFilesQuery__
@@ -7414,28 +16465,61 @@ export const GetFilesDocument = gql`
  *   },
  * });
  */
-export function useGetFilesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetFilesQuery, GetFilesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetFilesQuery, GetFilesQueryVariables>(GetFilesDocument, options);
-      }
-export function useGetFilesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetFilesQuery, GetFilesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetFilesQuery, GetFilesQueryVariables>(GetFilesDocument, options);
-        }
-export type GetFilesQueryHookResult = ReturnType<typeof useGetFilesQuery>;
-export type GetFilesLazyQueryHookResult = ReturnType<typeof useGetFilesLazyQuery>;
-export type GetFilesQueryResult = Apollo.QueryResult<GetFilesQuery, GetFilesQueryVariables>;
-export const GlobalSearchDocument = gql`
-    query GlobalSearch($search: String, $noImages: Boolean!, $noFiles: Boolean!, $pagination: OffsetPaginationInput) {
-  images: images(filters: {name: {iContains: $search}}, pagination: $pagination) @skip(if: $noImages) {
-    ...ListImage
-  }
-  files: files(filters: {name: {iContains: $search}}, pagination: $pagination) @skip(if: $noFiles) {
-    ...ListFile
-  }
+export function useGetFilesQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    GetFilesQuery,
+    GetFilesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<GetFilesQuery, GetFilesQueryVariables>(
+    GetFilesDocument,
+    options,
+  );
 }
-    ${ListImageFragmentDoc}
-${ListFileFragmentDoc}`;
+export function useGetFilesLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetFilesQuery,
+    GetFilesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<GetFilesQuery, GetFilesQueryVariables>(
+    GetFilesDocument,
+    options,
+  );
+}
+export type GetFilesQueryHookResult = ReturnType<typeof useGetFilesQuery>;
+export type GetFilesLazyQueryHookResult = ReturnType<
+  typeof useGetFilesLazyQuery
+>;
+export type GetFilesQueryResult = Apollo.QueryResult<
+  GetFilesQuery,
+  GetFilesQueryVariables
+>;
+export const GlobalSearchDocument = gql`
+  query GlobalSearch(
+    $search: String
+    $noImages: Boolean!
+    $noFiles: Boolean!
+    $pagination: OffsetPaginationInput
+  ) {
+    images: images(
+      filters: { name: { iContains: $search } }
+      pagination: $pagination
+    ) @skip(if: $noImages) {
+      ...ListImage
+    }
+    files: files(
+      filters: { name: { iContains: $search } }
+      pagination: $pagination
+    ) @skip(if: $noFiles) {
+      ...ListFile
+    }
+  }
+  ${ListImageFragmentDoc}
+  ${ListFileFragmentDoc}
+`;
 
 /**
  * __useGlobalSearchQuery__
@@ -7456,24 +16540,47 @@ ${ListFileFragmentDoc}`;
  *   },
  * });
  */
-export function useGlobalSearchQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
-      }
-export function useGlobalSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
-        }
-export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>;
-export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>;
-export type GlobalSearchQueryResult = Apollo.QueryResult<GlobalSearchQuery, GlobalSearchQueryVariables>;
-export const ImagesDocument = gql`
-    query Images {
-  images {
-    id
-  }
+export function useGlobalSearchQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GlobalSearchQuery,
+    GlobalSearchQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    GlobalSearchQuery,
+    GlobalSearchQueryVariables
+  >(GlobalSearchDocument, options);
 }
-    `;
+export function useGlobalSearchLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GlobalSearchQuery,
+    GlobalSearchQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GlobalSearchQuery,
+    GlobalSearchQueryVariables
+  >(GlobalSearchDocument, options);
+}
+export type GlobalSearchQueryHookResult = ReturnType<
+  typeof useGlobalSearchQuery
+>;
+export type GlobalSearchLazyQueryHookResult = ReturnType<
+  typeof useGlobalSearchLazyQuery
+>;
+export type GlobalSearchQueryResult = Apollo.QueryResult<
+  GlobalSearchQuery,
+  GlobalSearchQueryVariables
+>;
+export const ImagesDocument = gql`
+  query Images {
+    images {
+      id
+    }
+  }
+`;
 
 /**
  * __useImagesQuery__
@@ -7490,24 +16597,44 @@ export const ImagesDocument = gql`
  *   },
  * });
  */
-export function useImagesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ImagesQuery, ImagesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ImagesQuery, ImagesQueryVariables>(ImagesDocument, options);
-      }
-export function useImagesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ImagesQuery, ImagesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ImagesQuery, ImagesQueryVariables>(ImagesDocument, options);
-        }
+export function useImagesQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    ImagesQuery,
+    ImagesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<ImagesQuery, ImagesQueryVariables>(
+    ImagesDocument,
+    options,
+  );
+}
+export function useImagesLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    ImagesQuery,
+    ImagesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<ImagesQuery, ImagesQueryVariables>(
+    ImagesDocument,
+    options,
+  );
+}
 export type ImagesQueryHookResult = ReturnType<typeof useImagesQuery>;
 export type ImagesLazyQueryHookResult = ReturnType<typeof useImagesLazyQuery>;
-export type ImagesQueryResult = Apollo.QueryResult<ImagesQuery, ImagesQueryVariables>;
+export type ImagesQueryResult = Apollo.QueryResult<
+  ImagesQuery,
+  ImagesQueryVariables
+>;
 export const GetImageDocument = gql`
-    query GetImage($id: ID!) {
-  image(id: $id) {
-    ...Image
+  query GetImage($id: ID!) {
+    image(id: $id) {
+      ...Image
+    }
   }
-}
-    ${ImageFragmentDoc}`;
+  ${ImageFragmentDoc}
+`;
 
 /**
  * __useGetImageQuery__
@@ -7525,24 +16652,50 @@ export const GetImageDocument = gql`
  *   },
  * });
  */
-export function useGetImageQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetImageQuery, GetImageQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetImageQuery, GetImageQueryVariables>(GetImageDocument, options);
-      }
-export function useGetImageLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetImageQuery, GetImageQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetImageQuery, GetImageQueryVariables>(GetImageDocument, options);
-        }
-export type GetImageQueryHookResult = ReturnType<typeof useGetImageQuery>;
-export type GetImageLazyQueryHookResult = ReturnType<typeof useGetImageLazyQuery>;
-export type GetImageQueryResult = Apollo.QueryResult<GetImageQuery, GetImageQueryVariables>;
-export const GetImagesDocument = gql`
-    query GetImages($filters: ImageFilter, $pagination: OffsetPaginationInput, $order: ImageOrder) {
-  images(filters: $filters, pagination: $pagination, order: $order) {
-    ...ListImage
-  }
+export function useGetImageQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetImageQuery,
+    GetImageQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<GetImageQuery, GetImageQueryVariables>(
+    GetImageDocument,
+    options,
+  );
 }
-    ${ListImageFragmentDoc}`;
+export function useGetImageLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetImageQuery,
+    GetImageQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<GetImageQuery, GetImageQueryVariables>(
+    GetImageDocument,
+    options,
+  );
+}
+export type GetImageQueryHookResult = ReturnType<typeof useGetImageQuery>;
+export type GetImageLazyQueryHookResult = ReturnType<
+  typeof useGetImageLazyQuery
+>;
+export type GetImageQueryResult = Apollo.QueryResult<
+  GetImageQuery,
+  GetImageQueryVariables
+>;
+export const GetImagesDocument = gql`
+  query GetImages(
+    $filters: ImageFilter
+    $pagination: OffsetPaginationInput
+    $order: ImageOrder
+  ) {
+    images(filters: $filters, pagination: $pagination, order: $order) {
+      ...ListImage
+    }
+  }
+  ${ListImageFragmentDoc}
+`;
 
 /**
  * __useGetImagesQuery__
@@ -7562,24 +16715,46 @@ export const GetImagesDocument = gql`
  *   },
  * });
  */
-export function useGetImagesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetImagesQuery, GetImagesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetImagesQuery, GetImagesQueryVariables>(GetImagesDocument, options);
-      }
-export function useGetImagesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetImagesQuery, GetImagesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetImagesQuery, GetImagesQueryVariables>(GetImagesDocument, options);
-        }
-export type GetImagesQueryHookResult = ReturnType<typeof useGetImagesQuery>;
-export type GetImagesLazyQueryHookResult = ReturnType<typeof useGetImagesLazyQuery>;
-export type GetImagesQueryResult = Apollo.QueryResult<GetImagesQuery, GetImagesQueryVariables>;
-export const GetInstrumentDocument = gql`
-    query GetInstrument($id: ID!) {
-  instrument(id: $id) {
-    ...Instrument
-  }
+export function useGetImagesQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    GetImagesQuery,
+    GetImagesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<GetImagesQuery, GetImagesQueryVariables>(
+    GetImagesDocument,
+    options,
+  );
 }
-    ${InstrumentFragmentDoc}`;
+export function useGetImagesLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetImagesQuery,
+    GetImagesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<GetImagesQuery, GetImagesQueryVariables>(
+    GetImagesDocument,
+    options,
+  );
+}
+export type GetImagesQueryHookResult = ReturnType<typeof useGetImagesQuery>;
+export type GetImagesLazyQueryHookResult = ReturnType<
+  typeof useGetImagesLazyQuery
+>;
+export type GetImagesQueryResult = Apollo.QueryResult<
+  GetImagesQuery,
+  GetImagesQueryVariables
+>;
+export const GetInstrumentDocument = gql`
+  query GetInstrument($id: ID!) {
+    instrument(id: $id) {
+      ...Instrument
+    }
+  }
+  ${InstrumentFragmentDoc}
+`;
 
 /**
  * __useGetInstrumentQuery__
@@ -7597,24 +16772,48 @@ export const GetInstrumentDocument = gql`
  *   },
  * });
  */
-export function useGetInstrumentQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetInstrumentQuery, GetInstrumentQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetInstrumentQuery, GetInstrumentQueryVariables>(GetInstrumentDocument, options);
-      }
-export function useGetInstrumentLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetInstrumentQuery, GetInstrumentQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetInstrumentQuery, GetInstrumentQueryVariables>(GetInstrumentDocument, options);
-        }
-export type GetInstrumentQueryHookResult = ReturnType<typeof useGetInstrumentQuery>;
-export type GetInstrumentLazyQueryHookResult = ReturnType<typeof useGetInstrumentLazyQuery>;
-export type GetInstrumentQueryResult = Apollo.QueryResult<GetInstrumentQuery, GetInstrumentQueryVariables>;
-export const DetailMeshDocument = gql`
-    query DetailMesh($id: ID!) {
-  mesh(id: $id) {
-    ...Mesh
-  }
+export function useGetInstrumentQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetInstrumentQuery,
+    GetInstrumentQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    GetInstrumentQuery,
+    GetInstrumentQueryVariables
+  >(GetInstrumentDocument, options);
 }
-    ${MeshFragmentDoc}`;
+export function useGetInstrumentLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetInstrumentQuery,
+    GetInstrumentQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetInstrumentQuery,
+    GetInstrumentQueryVariables
+  >(GetInstrumentDocument, options);
+}
+export type GetInstrumentQueryHookResult = ReturnType<
+  typeof useGetInstrumentQuery
+>;
+export type GetInstrumentLazyQueryHookResult = ReturnType<
+  typeof useGetInstrumentLazyQuery
+>;
+export type GetInstrumentQueryResult = Apollo.QueryResult<
+  GetInstrumentQuery,
+  GetInstrumentQueryVariables
+>;
+export const DetailMeshDocument = gql`
+  query DetailMesh($id: ID!) {
+    mesh(id: $id) {
+      ...Mesh
+    }
+  }
+  ${MeshFragmentDoc}
+`;
 
 /**
  * __useDetailMeshQuery__
@@ -7632,24 +16831,46 @@ export const DetailMeshDocument = gql`
  *   },
  * });
  */
-export function useDetailMeshQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailMeshQuery, DetailMeshQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<DetailMeshQuery, DetailMeshQueryVariables>(DetailMeshDocument, options);
-      }
-export function useDetailMeshLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailMeshQuery, DetailMeshQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<DetailMeshQuery, DetailMeshQueryVariables>(DetailMeshDocument, options);
-        }
-export type DetailMeshQueryHookResult = ReturnType<typeof useDetailMeshQuery>;
-export type DetailMeshLazyQueryHookResult = ReturnType<typeof useDetailMeshLazyQuery>;
-export type DetailMeshQueryResult = Apollo.QueryResult<DetailMeshQuery, DetailMeshQueryVariables>;
-export const ListMeshesDocument = gql`
-    query ListMeshes($filters: MeshFilter, $pagination: OffsetPaginationInput) {
-  meshes(filters: $filters, pagination: $pagination) {
-    ...ListMesh
-  }
+export function useDetailMeshQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    DetailMeshQuery,
+    DetailMeshQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<DetailMeshQuery, DetailMeshQueryVariables>(
+    DetailMeshDocument,
+    options,
+  );
 }
-    ${ListMeshFragmentDoc}`;
+export function useDetailMeshLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    DetailMeshQuery,
+    DetailMeshQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    DetailMeshQuery,
+    DetailMeshQueryVariables
+  >(DetailMeshDocument, options);
+}
+export type DetailMeshQueryHookResult = ReturnType<typeof useDetailMeshQuery>;
+export type DetailMeshLazyQueryHookResult = ReturnType<
+  typeof useDetailMeshLazyQuery
+>;
+export type DetailMeshQueryResult = Apollo.QueryResult<
+  DetailMeshQuery,
+  DetailMeshQueryVariables
+>;
+export const ListMeshesDocument = gql`
+  query ListMeshes($filters: MeshFilter, $pagination: OffsetPaginationInput) {
+    meshes(filters: $filters, pagination: $pagination) {
+      ...ListMesh
+    }
+  }
+  ${ListMeshFragmentDoc}
+`;
 
 /**
  * __useListMeshesQuery__
@@ -7668,24 +16889,46 @@ export const ListMeshesDocument = gql`
  *   },
  * });
  */
-export function useListMeshesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListMeshesQuery, ListMeshesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListMeshesQuery, ListMeshesQueryVariables>(ListMeshesDocument, options);
-      }
-export function useListMeshesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListMeshesQuery, ListMeshesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListMeshesQuery, ListMeshesQueryVariables>(ListMeshesDocument, options);
-        }
-export type ListMeshesQueryHookResult = ReturnType<typeof useListMeshesQuery>;
-export type ListMeshesLazyQueryHookResult = ReturnType<typeof useListMeshesLazyQuery>;
-export type ListMeshesQueryResult = Apollo.QueryResult<ListMeshesQuery, ListMeshesQueryVariables>;
-export const GetMultiWellPlateDocument = gql`
-    query GetMultiWellPlate($id: ID!) {
-  multiWellPlate(id: $id) {
-    ...MultiWellPlate
-  }
+export function useListMeshesQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    ListMeshesQuery,
+    ListMeshesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<ListMeshesQuery, ListMeshesQueryVariables>(
+    ListMeshesDocument,
+    options,
+  );
 }
-    ${MultiWellPlateFragmentDoc}`;
+export function useListMeshesLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    ListMeshesQuery,
+    ListMeshesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    ListMeshesQuery,
+    ListMeshesQueryVariables
+  >(ListMeshesDocument, options);
+}
+export type ListMeshesQueryHookResult = ReturnType<typeof useListMeshesQuery>;
+export type ListMeshesLazyQueryHookResult = ReturnType<
+  typeof useListMeshesLazyQuery
+>;
+export type ListMeshesQueryResult = Apollo.QueryResult<
+  ListMeshesQuery,
+  ListMeshesQueryVariables
+>;
+export const GetMultiWellPlateDocument = gql`
+  query GetMultiWellPlate($id: ID!) {
+    multiWellPlate(id: $id) {
+      ...MultiWellPlate
+    }
+  }
+  ${MultiWellPlateFragmentDoc}
+`;
 
 /**
  * __useGetMultiWellPlateQuery__
@@ -7703,24 +16946,51 @@ export const GetMultiWellPlateDocument = gql`
  *   },
  * });
  */
-export function useGetMultiWellPlateQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetMultiWellPlateQuery, GetMultiWellPlateQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetMultiWellPlateQuery, GetMultiWellPlateQueryVariables>(GetMultiWellPlateDocument, options);
-      }
-export function useGetMultiWellPlateLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetMultiWellPlateQuery, GetMultiWellPlateQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetMultiWellPlateQuery, GetMultiWellPlateQueryVariables>(GetMultiWellPlateDocument, options);
-        }
-export type GetMultiWellPlateQueryHookResult = ReturnType<typeof useGetMultiWellPlateQuery>;
-export type GetMultiWellPlateLazyQueryHookResult = ReturnType<typeof useGetMultiWellPlateLazyQuery>;
-export type GetMultiWellPlateQueryResult = Apollo.QueryResult<GetMultiWellPlateQuery, GetMultiWellPlateQueryVariables>;
-export const GetMultiWellPlatesDocument = gql`
-    query GetMultiWellPlates($filters: MultiWellPlateFilter, $pagination: OffsetPaginationInput) {
-  multiWellPlates(filters: $filters, pagination: $pagination) {
-    ...ListMultiWellPlate
-  }
+export function useGetMultiWellPlateQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetMultiWellPlateQuery,
+    GetMultiWellPlateQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    GetMultiWellPlateQuery,
+    GetMultiWellPlateQueryVariables
+  >(GetMultiWellPlateDocument, options);
 }
-    ${ListMultiWellPlateFragmentDoc}`;
+export function useGetMultiWellPlateLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetMultiWellPlateQuery,
+    GetMultiWellPlateQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetMultiWellPlateQuery,
+    GetMultiWellPlateQueryVariables
+  >(GetMultiWellPlateDocument, options);
+}
+export type GetMultiWellPlateQueryHookResult = ReturnType<
+  typeof useGetMultiWellPlateQuery
+>;
+export type GetMultiWellPlateLazyQueryHookResult = ReturnType<
+  typeof useGetMultiWellPlateLazyQuery
+>;
+export type GetMultiWellPlateQueryResult = Apollo.QueryResult<
+  GetMultiWellPlateQuery,
+  GetMultiWellPlateQueryVariables
+>;
+export const GetMultiWellPlatesDocument = gql`
+  query GetMultiWellPlates(
+    $filters: MultiWellPlateFilter
+    $pagination: OffsetPaginationInput
+  ) {
+    multiWellPlates(filters: $filters, pagination: $pagination) {
+      ...ListMultiWellPlate
+    }
+  }
+  ${ListMultiWellPlateFragmentDoc}
+`;
 
 /**
  * __useGetMultiWellPlatesQuery__
@@ -7739,28 +17009,51 @@ export const GetMultiWellPlatesDocument = gql`
  *   },
  * });
  */
-export function useGetMultiWellPlatesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetMultiWellPlatesQuery, GetMultiWellPlatesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetMultiWellPlatesQuery, GetMultiWellPlatesQueryVariables>(GetMultiWellPlatesDocument, options);
-      }
-export function useGetMultiWellPlatesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetMultiWellPlatesQuery, GetMultiWellPlatesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetMultiWellPlatesQuery, GetMultiWellPlatesQueryVariables>(GetMultiWellPlatesDocument, options);
-        }
-export type GetMultiWellPlatesQueryHookResult = ReturnType<typeof useGetMultiWellPlatesQuery>;
-export type GetMultiWellPlatesLazyQueryHookResult = ReturnType<typeof useGetMultiWellPlatesLazyQuery>;
-export type GetMultiWellPlatesQueryResult = Apollo.QueryResult<GetMultiWellPlatesQuery, GetMultiWellPlatesQueryVariables>;
-export const MultiWellPlateOptionsDocument = gql`
-    query MultiWellPlateOptions($search: String, $values: [ID!]) {
-  options: multiWellPlates(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: name
-  }
+export function useGetMultiWellPlatesQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    GetMultiWellPlatesQuery,
+    GetMultiWellPlatesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    GetMultiWellPlatesQuery,
+    GetMultiWellPlatesQueryVariables
+  >(GetMultiWellPlatesDocument, options);
 }
-    `;
+export function useGetMultiWellPlatesLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetMultiWellPlatesQuery,
+    GetMultiWellPlatesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetMultiWellPlatesQuery,
+    GetMultiWellPlatesQueryVariables
+  >(GetMultiWellPlatesDocument, options);
+}
+export type GetMultiWellPlatesQueryHookResult = ReturnType<
+  typeof useGetMultiWellPlatesQuery
+>;
+export type GetMultiWellPlatesLazyQueryHookResult = ReturnType<
+  typeof useGetMultiWellPlatesLazyQuery
+>;
+export type GetMultiWellPlatesQueryResult = Apollo.QueryResult<
+  GetMultiWellPlatesQuery,
+  GetMultiWellPlatesQueryVariables
+>;
+export const MultiWellPlateOptionsDocument = gql`
+  query MultiWellPlateOptions($search: String, $values: [ID!]) {
+    options: multiWellPlates(
+      filters: { search: $search, ids: $values }
+      pagination: { limit: 10 }
+    ) {
+      value: id
+      label: name
+    }
+  }
+`;
 
 /**
  * __useMultiWellPlateOptionsQuery__
@@ -7779,24 +17072,48 @@ export const MultiWellPlateOptionsDocument = gql`
  *   },
  * });
  */
-export function useMultiWellPlateOptionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<MultiWellPlateOptionsQuery, MultiWellPlateOptionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<MultiWellPlateOptionsQuery, MultiWellPlateOptionsQueryVariables>(MultiWellPlateOptionsDocument, options);
-      }
-export function useMultiWellPlateOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<MultiWellPlateOptionsQuery, MultiWellPlateOptionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<MultiWellPlateOptionsQuery, MultiWellPlateOptionsQueryVariables>(MultiWellPlateOptionsDocument, options);
-        }
-export type MultiWellPlateOptionsQueryHookResult = ReturnType<typeof useMultiWellPlateOptionsQuery>;
-export type MultiWellPlateOptionsLazyQueryHookResult = ReturnType<typeof useMultiWellPlateOptionsLazyQuery>;
-export type MultiWellPlateOptionsQueryResult = Apollo.QueryResult<MultiWellPlateOptionsQuery, MultiWellPlateOptionsQueryVariables>;
-export const GetObjectiveDocument = gql`
-    query GetObjective($id: ID!) {
-  objective(id: $id) {
-    ...Objective
-  }
+export function useMultiWellPlateOptionsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    MultiWellPlateOptionsQuery,
+    MultiWellPlateOptionsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    MultiWellPlateOptionsQuery,
+    MultiWellPlateOptionsQueryVariables
+  >(MultiWellPlateOptionsDocument, options);
 }
-    ${ObjectiveFragmentDoc}`;
+export function useMultiWellPlateOptionsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    MultiWellPlateOptionsQuery,
+    MultiWellPlateOptionsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    MultiWellPlateOptionsQuery,
+    MultiWellPlateOptionsQueryVariables
+  >(MultiWellPlateOptionsDocument, options);
+}
+export type MultiWellPlateOptionsQueryHookResult = ReturnType<
+  typeof useMultiWellPlateOptionsQuery
+>;
+export type MultiWellPlateOptionsLazyQueryHookResult = ReturnType<
+  typeof useMultiWellPlateOptionsLazyQuery
+>;
+export type MultiWellPlateOptionsQueryResult = Apollo.QueryResult<
+  MultiWellPlateOptionsQuery,
+  MultiWellPlateOptionsQueryVariables
+>;
+export const GetObjectiveDocument = gql`
+  query GetObjective($id: ID!) {
+    objective(id: $id) {
+      ...Objective
+    }
+  }
+  ${ObjectiveFragmentDoc}
+`;
 
 /**
  * __useGetObjectiveQuery__
@@ -7814,24 +17131,48 @@ export const GetObjectiveDocument = gql`
  *   },
  * });
  */
-export function useGetObjectiveQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetObjectiveQuery, GetObjectiveQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetObjectiveQuery, GetObjectiveQueryVariables>(GetObjectiveDocument, options);
-      }
-export function useGetObjectiveLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetObjectiveQuery, GetObjectiveQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetObjectiveQuery, GetObjectiveQueryVariables>(GetObjectiveDocument, options);
-        }
-export type GetObjectiveQueryHookResult = ReturnType<typeof useGetObjectiveQuery>;
-export type GetObjectiveLazyQueryHookResult = ReturnType<typeof useGetObjectiveLazyQuery>;
-export type GetObjectiveQueryResult = Apollo.QueryResult<GetObjectiveQuery, GetObjectiveQueryVariables>;
-export const GetPixelViewDocument = gql`
-    query GetPixelView($id: ID!) {
-  pixelView(id: $id) {
-    ...DetailPixelView
-  }
+export function useGetObjectiveQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetObjectiveQuery,
+    GetObjectiveQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    GetObjectiveQuery,
+    GetObjectiveQueryVariables
+  >(GetObjectiveDocument, options);
 }
-    ${DetailPixelViewFragmentDoc}`;
+export function useGetObjectiveLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetObjectiveQuery,
+    GetObjectiveQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetObjectiveQuery,
+    GetObjectiveQueryVariables
+  >(GetObjectiveDocument, options);
+}
+export type GetObjectiveQueryHookResult = ReturnType<
+  typeof useGetObjectiveQuery
+>;
+export type GetObjectiveLazyQueryHookResult = ReturnType<
+  typeof useGetObjectiveLazyQuery
+>;
+export type GetObjectiveQueryResult = Apollo.QueryResult<
+  GetObjectiveQuery,
+  GetObjectiveQueryVariables
+>;
+export const GetPixelViewDocument = gql`
+  query GetPixelView($id: ID!) {
+    pixelView(id: $id) {
+      ...DetailPixelView
+    }
+  }
+  ${DetailPixelViewFragmentDoc}
+`;
 
 /**
  * __useGetPixelViewQuery__
@@ -7849,24 +17190,48 @@ export const GetPixelViewDocument = gql`
  *   },
  * });
  */
-export function useGetPixelViewQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetPixelViewQuery, GetPixelViewQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetPixelViewQuery, GetPixelViewQueryVariables>(GetPixelViewDocument, options);
-      }
-export function useGetPixelViewLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetPixelViewQuery, GetPixelViewQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetPixelViewQuery, GetPixelViewQueryVariables>(GetPixelViewDocument, options);
-        }
-export type GetPixelViewQueryHookResult = ReturnType<typeof useGetPixelViewQuery>;
-export type GetPixelViewLazyQueryHookResult = ReturnType<typeof useGetPixelViewLazyQuery>;
-export type GetPixelViewQueryResult = Apollo.QueryResult<GetPixelViewQuery, GetPixelViewQueryVariables>;
-export const RenderTreeDocument = gql`
-    query RenderTree($id: ID!) {
-  renderTree(id: $id) {
-    ...RenderTree
-  }
+export function useGetPixelViewQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetPixelViewQuery,
+    GetPixelViewQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    GetPixelViewQuery,
+    GetPixelViewQueryVariables
+  >(GetPixelViewDocument, options);
 }
-    ${RenderTreeFragmentDoc}`;
+export function useGetPixelViewLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetPixelViewQuery,
+    GetPixelViewQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetPixelViewQuery,
+    GetPixelViewQueryVariables
+  >(GetPixelViewDocument, options);
+}
+export type GetPixelViewQueryHookResult = ReturnType<
+  typeof useGetPixelViewQuery
+>;
+export type GetPixelViewLazyQueryHookResult = ReturnType<
+  typeof useGetPixelViewLazyQuery
+>;
+export type GetPixelViewQueryResult = Apollo.QueryResult<
+  GetPixelViewQuery,
+  GetPixelViewQueryVariables
+>;
+export const RenderTreeDocument = gql`
+  query RenderTree($id: ID!) {
+    renderTree(id: $id) {
+      ...RenderTree
+    }
+  }
+  ${RenderTreeFragmentDoc}
+`;
 
 /**
  * __useRenderTreeQuery__
@@ -7884,24 +17249,49 @@ export const RenderTreeDocument = gql`
  *   },
  * });
  */
-export function useRenderTreeQuery(baseOptions: ApolloReactHooks.QueryHookOptions<RenderTreeQuery, RenderTreeQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<RenderTreeQuery, RenderTreeQueryVariables>(RenderTreeDocument, options);
-      }
-export function useRenderTreeLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<RenderTreeQuery, RenderTreeQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<RenderTreeQuery, RenderTreeQueryVariables>(RenderTreeDocument, options);
-        }
-export type RenderTreeQueryHookResult = ReturnType<typeof useRenderTreeQuery>;
-export type RenderTreeLazyQueryHookResult = ReturnType<typeof useRenderTreeLazyQuery>;
-export type RenderTreeQueryResult = Apollo.QueryResult<RenderTreeQuery, RenderTreeQueryVariables>;
-export const RenderTreesDocument = gql`
-    query RenderTrees($filters: RenderTreeFilter, $pagination: OffsetPaginationInput) {
-  renderTrees(filters: $filters, pagination: $pagination) {
-    ...ListRenderTree
-  }
+export function useRenderTreeQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    RenderTreeQuery,
+    RenderTreeQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<RenderTreeQuery, RenderTreeQueryVariables>(
+    RenderTreeDocument,
+    options,
+  );
 }
-    ${ListRenderTreeFragmentDoc}`;
+export function useRenderTreeLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    RenderTreeQuery,
+    RenderTreeQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    RenderTreeQuery,
+    RenderTreeQueryVariables
+  >(RenderTreeDocument, options);
+}
+export type RenderTreeQueryHookResult = ReturnType<typeof useRenderTreeQuery>;
+export type RenderTreeLazyQueryHookResult = ReturnType<
+  typeof useRenderTreeLazyQuery
+>;
+export type RenderTreeQueryResult = Apollo.QueryResult<
+  RenderTreeQuery,
+  RenderTreeQueryVariables
+>;
+export const RenderTreesDocument = gql`
+  query RenderTrees(
+    $filters: RenderTreeFilter
+    $pagination: OffsetPaginationInput
+  ) {
+    renderTrees(filters: $filters, pagination: $pagination) {
+      ...ListRenderTree
+    }
+  }
+  ${ListRenderTreeFragmentDoc}
+`;
 
 /**
  * __useRenderTreesQuery__
@@ -7920,24 +17310,46 @@ export const RenderTreesDocument = gql`
  *   },
  * });
  */
-export function useRenderTreesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<RenderTreesQuery, RenderTreesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<RenderTreesQuery, RenderTreesQueryVariables>(RenderTreesDocument, options);
-      }
-export function useRenderTreesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<RenderTreesQuery, RenderTreesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<RenderTreesQuery, RenderTreesQueryVariables>(RenderTreesDocument, options);
-        }
-export type RenderTreesQueryHookResult = ReturnType<typeof useRenderTreesQuery>;
-export type RenderTreesLazyQueryHookResult = ReturnType<typeof useRenderTreesLazyQuery>;
-export type RenderTreesQueryResult = Apollo.QueryResult<RenderTreesQuery, RenderTreesQueryVariables>;
-export const GetRenderedPlotDocument = gql`
-    query GetRenderedPlot($id: ID!) {
-  renderedPlot(id: $id) {
-    ...RenderedPlot
-  }
+export function useRenderTreesQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    RenderTreesQuery,
+    RenderTreesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<RenderTreesQuery, RenderTreesQueryVariables>(
+    RenderTreesDocument,
+    options,
+  );
 }
-    ${RenderedPlotFragmentDoc}`;
+export function useRenderTreesLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    RenderTreesQuery,
+    RenderTreesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    RenderTreesQuery,
+    RenderTreesQueryVariables
+  >(RenderTreesDocument, options);
+}
+export type RenderTreesQueryHookResult = ReturnType<typeof useRenderTreesQuery>;
+export type RenderTreesLazyQueryHookResult = ReturnType<
+  typeof useRenderTreesLazyQuery
+>;
+export type RenderTreesQueryResult = Apollo.QueryResult<
+  RenderTreesQuery,
+  RenderTreesQueryVariables
+>;
+export const GetRenderedPlotDocument = gql`
+  query GetRenderedPlot($id: ID!) {
+    renderedPlot(id: $id) {
+      ...RenderedPlot
+    }
+  }
+  ${RenderedPlotFragmentDoc}
+`;
 
 /**
  * __useGetRenderedPlotQuery__
@@ -7955,24 +17367,48 @@ export const GetRenderedPlotDocument = gql`
  *   },
  * });
  */
-export function useGetRenderedPlotQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetRenderedPlotQuery, GetRenderedPlotQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetRenderedPlotQuery, GetRenderedPlotQueryVariables>(GetRenderedPlotDocument, options);
-      }
-export function useGetRenderedPlotLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRenderedPlotQuery, GetRenderedPlotQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetRenderedPlotQuery, GetRenderedPlotQueryVariables>(GetRenderedPlotDocument, options);
-        }
-export type GetRenderedPlotQueryHookResult = ReturnType<typeof useGetRenderedPlotQuery>;
-export type GetRenderedPlotLazyQueryHookResult = ReturnType<typeof useGetRenderedPlotLazyQuery>;
-export type GetRenderedPlotQueryResult = Apollo.QueryResult<GetRenderedPlotQuery, GetRenderedPlotQueryVariables>;
-export const ListRenderedPlotsDocument = gql`
-    query ListRenderedPlots {
-  renderedPlots {
-    ...ListRenderedPlot
-  }
+export function useGetRenderedPlotQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetRenderedPlotQuery,
+    GetRenderedPlotQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    GetRenderedPlotQuery,
+    GetRenderedPlotQueryVariables
+  >(GetRenderedPlotDocument, options);
 }
-    ${ListRenderedPlotFragmentDoc}`;
+export function useGetRenderedPlotLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetRenderedPlotQuery,
+    GetRenderedPlotQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetRenderedPlotQuery,
+    GetRenderedPlotQueryVariables
+  >(GetRenderedPlotDocument, options);
+}
+export type GetRenderedPlotQueryHookResult = ReturnType<
+  typeof useGetRenderedPlotQuery
+>;
+export type GetRenderedPlotLazyQueryHookResult = ReturnType<
+  typeof useGetRenderedPlotLazyQuery
+>;
+export type GetRenderedPlotQueryResult = Apollo.QueryResult<
+  GetRenderedPlotQuery,
+  GetRenderedPlotQueryVariables
+>;
+export const ListRenderedPlotsDocument = gql`
+  query ListRenderedPlots {
+    renderedPlots {
+      ...ListRenderedPlot
+    }
+  }
+  ${ListRenderedPlotFragmentDoc}
+`;
 
 /**
  * __useListRenderedPlotsQuery__
@@ -7989,24 +17425,48 @@ export const ListRenderedPlotsDocument = gql`
  *   },
  * });
  */
-export function useListRenderedPlotsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListRenderedPlotsQuery, ListRenderedPlotsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListRenderedPlotsQuery, ListRenderedPlotsQueryVariables>(ListRenderedPlotsDocument, options);
-      }
-export function useListRenderedPlotsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListRenderedPlotsQuery, ListRenderedPlotsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListRenderedPlotsQuery, ListRenderedPlotsQueryVariables>(ListRenderedPlotsDocument, options);
-        }
-export type ListRenderedPlotsQueryHookResult = ReturnType<typeof useListRenderedPlotsQuery>;
-export type ListRenderedPlotsLazyQueryHookResult = ReturnType<typeof useListRenderedPlotsLazyQuery>;
-export type ListRenderedPlotsQueryResult = Apollo.QueryResult<ListRenderedPlotsQuery, ListRenderedPlotsQueryVariables>;
-export const GetRgbContextDocument = gql`
-    query GetRGBContext($id: ID!) {
-  rgbcontext(id: $id) {
-    ...RGBContext
-  }
+export function useListRenderedPlotsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    ListRenderedPlotsQuery,
+    ListRenderedPlotsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    ListRenderedPlotsQuery,
+    ListRenderedPlotsQueryVariables
+  >(ListRenderedPlotsDocument, options);
 }
-    ${RgbContextFragmentDoc}`;
+export function useListRenderedPlotsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    ListRenderedPlotsQuery,
+    ListRenderedPlotsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    ListRenderedPlotsQuery,
+    ListRenderedPlotsQueryVariables
+  >(ListRenderedPlotsDocument, options);
+}
+export type ListRenderedPlotsQueryHookResult = ReturnType<
+  typeof useListRenderedPlotsQuery
+>;
+export type ListRenderedPlotsLazyQueryHookResult = ReturnType<
+  typeof useListRenderedPlotsLazyQuery
+>;
+export type ListRenderedPlotsQueryResult = Apollo.QueryResult<
+  ListRenderedPlotsQuery,
+  ListRenderedPlotsQueryVariables
+>;
+export const GetRgbContextDocument = gql`
+  query GetRGBContext($id: ID!) {
+    rgbcontext(id: $id) {
+      ...RGBContext
+    }
+  }
+  ${RgbContextFragmentDoc}
+`;
 
 /**
  * __useGetRgbContextQuery__
@@ -8024,24 +17484,51 @@ export const GetRgbContextDocument = gql`
  *   },
  * });
  */
-export function useGetRgbContextQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetRgbContextQuery, GetRgbContextQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetRgbContextQuery, GetRgbContextQueryVariables>(GetRgbContextDocument, options);
-      }
-export function useGetRgbContextLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRgbContextQuery, GetRgbContextQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetRgbContextQuery, GetRgbContextQueryVariables>(GetRgbContextDocument, options);
-        }
-export type GetRgbContextQueryHookResult = ReturnType<typeof useGetRgbContextQuery>;
-export type GetRgbContextLazyQueryHookResult = ReturnType<typeof useGetRgbContextLazyQuery>;
-export type GetRgbContextQueryResult = Apollo.QueryResult<GetRgbContextQuery, GetRgbContextQueryVariables>;
-export const GetRgbContextsDocument = gql`
-    query GetRGBContexts($filters: RGBContextFilter, $pagination: OffsetPaginationInput) {
-  rgbcontexts(filters: $filters, pagination: $pagination) {
-    ...ListRGBContext
-  }
+export function useGetRgbContextQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetRgbContextQuery,
+    GetRgbContextQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    GetRgbContextQuery,
+    GetRgbContextQueryVariables
+  >(GetRgbContextDocument, options);
 }
-    ${ListRgbContextFragmentDoc}`;
+export function useGetRgbContextLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetRgbContextQuery,
+    GetRgbContextQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetRgbContextQuery,
+    GetRgbContextQueryVariables
+  >(GetRgbContextDocument, options);
+}
+export type GetRgbContextQueryHookResult = ReturnType<
+  typeof useGetRgbContextQuery
+>;
+export type GetRgbContextLazyQueryHookResult = ReturnType<
+  typeof useGetRgbContextLazyQuery
+>;
+export type GetRgbContextQueryResult = Apollo.QueryResult<
+  GetRgbContextQuery,
+  GetRgbContextQueryVariables
+>;
+export const GetRgbContextsDocument = gql`
+  query GetRGBContexts(
+    $filters: RGBContextFilter
+    $pagination: OffsetPaginationInput
+  ) {
+    rgbcontexts(filters: $filters, pagination: $pagination) {
+      ...ListRGBContext
+    }
+  }
+  ${ListRgbContextFragmentDoc}
+`;
 
 /**
  * __useGetRgbContextsQuery__
@@ -8060,28 +17547,51 @@ export const GetRgbContextsDocument = gql`
  *   },
  * });
  */
-export function useGetRgbContextsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetRgbContextsQuery, GetRgbContextsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetRgbContextsQuery, GetRgbContextsQueryVariables>(GetRgbContextsDocument, options);
-      }
-export function useGetRgbContextsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRgbContextsQuery, GetRgbContextsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetRgbContextsQuery, GetRgbContextsQueryVariables>(GetRgbContextsDocument, options);
-        }
-export type GetRgbContextsQueryHookResult = ReturnType<typeof useGetRgbContextsQuery>;
-export type GetRgbContextsLazyQueryHookResult = ReturnType<typeof useGetRgbContextsLazyQuery>;
-export type GetRgbContextsQueryResult = Apollo.QueryResult<GetRgbContextsQuery, GetRgbContextsQueryVariables>;
-export const RgbContextOptionsDocument = gql`
-    query RGBContextOptions($search: String, $values: [ID!]) {
-  options: rgbcontexts(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: name
-  }
+export function useGetRgbContextsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    GetRgbContextsQuery,
+    GetRgbContextsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    GetRgbContextsQuery,
+    GetRgbContextsQueryVariables
+  >(GetRgbContextsDocument, options);
 }
-    `;
+export function useGetRgbContextsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetRgbContextsQuery,
+    GetRgbContextsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetRgbContextsQuery,
+    GetRgbContextsQueryVariables
+  >(GetRgbContextsDocument, options);
+}
+export type GetRgbContextsQueryHookResult = ReturnType<
+  typeof useGetRgbContextsQuery
+>;
+export type GetRgbContextsLazyQueryHookResult = ReturnType<
+  typeof useGetRgbContextsLazyQuery
+>;
+export type GetRgbContextsQueryResult = Apollo.QueryResult<
+  GetRgbContextsQuery,
+  GetRgbContextsQueryVariables
+>;
+export const RgbContextOptionsDocument = gql`
+  query RGBContextOptions($search: String, $values: [ID!]) {
+    options: rgbcontexts(
+      filters: { search: $search, ids: $values }
+      pagination: { limit: 10 }
+    ) {
+      value: id
+      label: name
+    }
+  }
+`;
 
 /**
  * __useRgbContextOptionsQuery__
@@ -8100,24 +17610,48 @@ export const RgbContextOptionsDocument = gql`
  *   },
  * });
  */
-export function useRgbContextOptionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<RgbContextOptionsQuery, RgbContextOptionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<RgbContextOptionsQuery, RgbContextOptionsQueryVariables>(RgbContextOptionsDocument, options);
-      }
-export function useRgbContextOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<RgbContextOptionsQuery, RgbContextOptionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<RgbContextOptionsQuery, RgbContextOptionsQueryVariables>(RgbContextOptionsDocument, options);
-        }
-export type RgbContextOptionsQueryHookResult = ReturnType<typeof useRgbContextOptionsQuery>;
-export type RgbContextOptionsLazyQueryHookResult = ReturnType<typeof useRgbContextOptionsLazyQuery>;
-export type RgbContextOptionsQueryResult = Apollo.QueryResult<RgbContextOptionsQuery, RgbContextOptionsQueryVariables>;
-export const GetRoiDocument = gql`
-    query GetROI($id: ID!) {
-  roi(id: $id) {
-    ...ROI
-  }
+export function useRgbContextOptionsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    RgbContextOptionsQuery,
+    RgbContextOptionsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    RgbContextOptionsQuery,
+    RgbContextOptionsQueryVariables
+  >(RgbContextOptionsDocument, options);
 }
-    ${RoiFragmentDoc}`;
+export function useRgbContextOptionsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    RgbContextOptionsQuery,
+    RgbContextOptionsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    RgbContextOptionsQuery,
+    RgbContextOptionsQueryVariables
+  >(RgbContextOptionsDocument, options);
+}
+export type RgbContextOptionsQueryHookResult = ReturnType<
+  typeof useRgbContextOptionsQuery
+>;
+export type RgbContextOptionsLazyQueryHookResult = ReturnType<
+  typeof useRgbContextOptionsLazyQuery
+>;
+export type RgbContextOptionsQueryResult = Apollo.QueryResult<
+  RgbContextOptionsQuery,
+  RgbContextOptionsQueryVariables
+>;
+export const GetRoiDocument = gql`
+  query GetROI($id: ID!) {
+    roi(id: $id) {
+      ...ROI
+    }
+  }
+  ${RoiFragmentDoc}
+`;
 
 /**
  * __useGetRoiQuery__
@@ -8135,24 +17669,44 @@ export const GetRoiDocument = gql`
  *   },
  * });
  */
-export function useGetRoiQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetRoiQuery, GetRoiQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetRoiQuery, GetRoiQueryVariables>(GetRoiDocument, options);
-      }
-export function useGetRoiLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRoiQuery, GetRoiQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetRoiQuery, GetRoiQueryVariables>(GetRoiDocument, options);
-        }
+export function useGetRoiQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetRoiQuery,
+    GetRoiQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<GetRoiQuery, GetRoiQueryVariables>(
+    GetRoiDocument,
+    options,
+  );
+}
+export function useGetRoiLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetRoiQuery,
+    GetRoiQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<GetRoiQuery, GetRoiQueryVariables>(
+    GetRoiDocument,
+    options,
+  );
+}
 export type GetRoiQueryHookResult = ReturnType<typeof useGetRoiQuery>;
 export type GetRoiLazyQueryHookResult = ReturnType<typeof useGetRoiLazyQuery>;
-export type GetRoiQueryResult = Apollo.QueryResult<GetRoiQuery, GetRoiQueryVariables>;
+export type GetRoiQueryResult = Apollo.QueryResult<
+  GetRoiQuery,
+  GetRoiQueryVariables
+>;
 export const GetRoIsDocument = gql`
-    query GetROIs($filters: ROIFilter, $pagination: OffsetPaginationInput) {
-  rois(filters: $filters, pagination: $pagination) {
-    ...ListROI
+  query GetROIs($filters: ROIFilter, $pagination: OffsetPaginationInput) {
+    rois(filters: $filters, pagination: $pagination) {
+      ...ListROI
+    }
   }
-}
-    ${ListRoiFragmentDoc}`;
+  ${ListRoiFragmentDoc}
+`;
 
 /**
  * __useGetRoIsQuery__
@@ -8171,22 +17725,45 @@ export const GetRoIsDocument = gql`
  *   },
  * });
  */
-export function useGetRoIsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetRoIsQuery, GetRoIsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetRoIsQuery, GetRoIsQueryVariables>(GetRoIsDocument, options);
-      }
-export function useGetRoIsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRoIsQuery, GetRoIsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetRoIsQuery, GetRoIsQueryVariables>(GetRoIsDocument, options);
-        }
+export function useGetRoIsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    GetRoIsQuery,
+    GetRoIsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<GetRoIsQuery, GetRoIsQueryVariables>(
+    GetRoIsDocument,
+    options,
+  );
+}
+export function useGetRoIsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetRoIsQuery,
+    GetRoIsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<GetRoIsQuery, GetRoIsQueryVariables>(
+    GetRoIsDocument,
+    options,
+  );
+}
 export type GetRoIsQueryHookResult = ReturnType<typeof useGetRoIsQuery>;
 export type GetRoIsLazyQueryHookResult = ReturnType<typeof useGetRoIsLazyQuery>;
-export type GetRoIsQueryResult = Apollo.QueryResult<GetRoIsQuery, GetRoIsQueryVariables>;
+export type GetRoIsQueryResult = Apollo.QueryResult<
+  GetRoIsQuery,
+  GetRoIsQueryVariables
+>;
 export const RowsDocument = gql`
-    query Rows($table: ID!, $filters: RowFilter, $pagination: TablePaginationInput) {
-  rows(table: $table, filters: $filters, pagination: $pagination)
-}
-    `;
+  query Rows(
+    $table: ID!
+    $filters: RowFilter
+    $pagination: TablePaginationInput
+  ) {
+    rows(table: $table, filters: $filters, pagination: $pagination)
+  }
+`;
 
 /**
  * __useRowsQuery__
@@ -8206,24 +17783,38 @@ export const RowsDocument = gql`
  *   },
  * });
  */
-export function useRowsQuery(baseOptions: ApolloReactHooks.QueryHookOptions<RowsQuery, RowsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<RowsQuery, RowsQueryVariables>(RowsDocument, options);
-      }
-export function useRowsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<RowsQuery, RowsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<RowsQuery, RowsQueryVariables>(RowsDocument, options);
-        }
+export function useRowsQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<RowsQuery, RowsQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<RowsQuery, RowsQueryVariables>(
+    RowsDocument,
+    options,
+  );
+}
+export function useRowsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    RowsQuery,
+    RowsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<RowsQuery, RowsQueryVariables>(
+    RowsDocument,
+    options,
+  );
+}
 export type RowsQueryHookResult = ReturnType<typeof useRowsQuery>;
 export type RowsLazyQueryHookResult = ReturnType<typeof useRowsLazyQuery>;
 export type RowsQueryResult = Apollo.QueryResult<RowsQuery, RowsQueryVariables>;
 export const GetStageDocument = gql`
-    query GetStage($id: ID!) {
-  stage(id: $id) {
-    ...Stage
+  query GetStage($id: ID!) {
+    stage(id: $id) {
+      ...Stage
+    }
   }
-}
-    ${StageFragmentDoc}`;
+  ${StageFragmentDoc}
+`;
 
 /**
  * __useGetStageQuery__
@@ -8241,24 +17832,46 @@ export const GetStageDocument = gql`
  *   },
  * });
  */
-export function useGetStageQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetStageQuery, GetStageQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetStageQuery, GetStageQueryVariables>(GetStageDocument, options);
-      }
-export function useGetStageLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStageQuery, GetStageQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetStageQuery, GetStageQueryVariables>(GetStageDocument, options);
-        }
-export type GetStageQueryHookResult = ReturnType<typeof useGetStageQuery>;
-export type GetStageLazyQueryHookResult = ReturnType<typeof useGetStageLazyQuery>;
-export type GetStageQueryResult = Apollo.QueryResult<GetStageQuery, GetStageQueryVariables>;
-export const GetStagesDocument = gql`
-    query GetStages($filters: StageFilter, $pagination: OffsetPaginationInput) {
-  stages(filters: $filters, pagination: $pagination) {
-    ...ListStage
-  }
+export function useGetStageQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetStageQuery,
+    GetStageQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<GetStageQuery, GetStageQueryVariables>(
+    GetStageDocument,
+    options,
+  );
 }
-    ${ListStageFragmentDoc}`;
+export function useGetStageLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetStageQuery,
+    GetStageQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<GetStageQuery, GetStageQueryVariables>(
+    GetStageDocument,
+    options,
+  );
+}
+export type GetStageQueryHookResult = ReturnType<typeof useGetStageQuery>;
+export type GetStageLazyQueryHookResult = ReturnType<
+  typeof useGetStageLazyQuery
+>;
+export type GetStageQueryResult = Apollo.QueryResult<
+  GetStageQuery,
+  GetStageQueryVariables
+>;
+export const GetStagesDocument = gql`
+  query GetStages($filters: StageFilter, $pagination: OffsetPaginationInput) {
+    stages(filters: $filters, pagination: $pagination) {
+      ...ListStage
+    }
+  }
+  ${ListStageFragmentDoc}
+`;
 
 /**
  * __useGetStagesQuery__
@@ -8277,28 +17890,49 @@ export const GetStagesDocument = gql`
  *   },
  * });
  */
-export function useGetStagesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetStagesQuery, GetStagesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetStagesQuery, GetStagesQueryVariables>(GetStagesDocument, options);
-      }
-export function useGetStagesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStagesQuery, GetStagesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetStagesQuery, GetStagesQueryVariables>(GetStagesDocument, options);
-        }
-export type GetStagesQueryHookResult = ReturnType<typeof useGetStagesQuery>;
-export type GetStagesLazyQueryHookResult = ReturnType<typeof useGetStagesLazyQuery>;
-export type GetStagesQueryResult = Apollo.QueryResult<GetStagesQuery, GetStagesQueryVariables>;
-export const StageOptionsDocument = gql`
-    query StageOptions($search: String, $values: [ID!]) {
-  options: stages(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: name
-  }
+export function useGetStagesQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    GetStagesQuery,
+    GetStagesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<GetStagesQuery, GetStagesQueryVariables>(
+    GetStagesDocument,
+    options,
+  );
 }
-    `;
+export function useGetStagesLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetStagesQuery,
+    GetStagesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<GetStagesQuery, GetStagesQueryVariables>(
+    GetStagesDocument,
+    options,
+  );
+}
+export type GetStagesQueryHookResult = ReturnType<typeof useGetStagesQuery>;
+export type GetStagesLazyQueryHookResult = ReturnType<
+  typeof useGetStagesLazyQuery
+>;
+export type GetStagesQueryResult = Apollo.QueryResult<
+  GetStagesQuery,
+  GetStagesQueryVariables
+>;
+export const StageOptionsDocument = gql`
+  query StageOptions($search: String, $values: [ID!]) {
+    options: stages(
+      filters: { search: $search, ids: $values }
+      pagination: { limit: 10 }
+    ) {
+      value: id
+      label: name
+    }
+  }
+`;
 
 /**
  * __useStageOptionsQuery__
@@ -8317,24 +17951,48 @@ export const StageOptionsDocument = gql`
  *   },
  * });
  */
-export function useStageOptionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<StageOptionsQuery, StageOptionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<StageOptionsQuery, StageOptionsQueryVariables>(StageOptionsDocument, options);
-      }
-export function useStageOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<StageOptionsQuery, StageOptionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<StageOptionsQuery, StageOptionsQueryVariables>(StageOptionsDocument, options);
-        }
-export type StageOptionsQueryHookResult = ReturnType<typeof useStageOptionsQuery>;
-export type StageOptionsLazyQueryHookResult = ReturnType<typeof useStageOptionsLazyQuery>;
-export type StageOptionsQueryResult = Apollo.QueryResult<StageOptionsQuery, StageOptionsQueryVariables>;
-export const GetTableDocument = gql`
-    query GetTable($id: ID!) {
-  table(id: $id) {
-    ...Table
-  }
+export function useStageOptionsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    StageOptionsQuery,
+    StageOptionsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    StageOptionsQuery,
+    StageOptionsQueryVariables
+  >(StageOptionsDocument, options);
 }
-    ${TableFragmentDoc}`;
+export function useStageOptionsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    StageOptionsQuery,
+    StageOptionsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    StageOptionsQuery,
+    StageOptionsQueryVariables
+  >(StageOptionsDocument, options);
+}
+export type StageOptionsQueryHookResult = ReturnType<
+  typeof useStageOptionsQuery
+>;
+export type StageOptionsLazyQueryHookResult = ReturnType<
+  typeof useStageOptionsLazyQuery
+>;
+export type StageOptionsQueryResult = Apollo.QueryResult<
+  StageOptionsQuery,
+  StageOptionsQueryVariables
+>;
+export const GetTableDocument = gql`
+  query GetTable($id: ID!) {
+    table(id: $id) {
+      ...Table
+    }
+  }
+  ${TableFragmentDoc}
+`;
 
 /**
  * __useGetTableQuery__
@@ -8352,24 +18010,46 @@ export const GetTableDocument = gql`
  *   },
  * });
  */
-export function useGetTableQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetTableQuery, GetTableQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetTableQuery, GetTableQueryVariables>(GetTableDocument, options);
-      }
-export function useGetTableLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetTableQuery, GetTableQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetTableQuery, GetTableQueryVariables>(GetTableDocument, options);
-        }
-export type GetTableQueryHookResult = ReturnType<typeof useGetTableQuery>;
-export type GetTableLazyQueryHookResult = ReturnType<typeof useGetTableLazyQuery>;
-export type GetTableQueryResult = Apollo.QueryResult<GetTableQuery, GetTableQueryVariables>;
-export const GetTablesDocument = gql`
-    query GetTables($filters: TableFilter, $pagination: OffsetPaginationInput) {
-  tables(filters: $filters, pagination: $pagination) {
-    ...ListTable
-  }
+export function useGetTableQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetTableQuery,
+    GetTableQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<GetTableQuery, GetTableQueryVariables>(
+    GetTableDocument,
+    options,
+  );
 }
-    ${ListTableFragmentDoc}`;
+export function useGetTableLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetTableQuery,
+    GetTableQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<GetTableQuery, GetTableQueryVariables>(
+    GetTableDocument,
+    options,
+  );
+}
+export type GetTableQueryHookResult = ReturnType<typeof useGetTableQuery>;
+export type GetTableLazyQueryHookResult = ReturnType<
+  typeof useGetTableLazyQuery
+>;
+export type GetTableQueryResult = Apollo.QueryResult<
+  GetTableQuery,
+  GetTableQueryVariables
+>;
+export const GetTablesDocument = gql`
+  query GetTables($filters: TableFilter, $pagination: OffsetPaginationInput) {
+    tables(filters: $filters, pagination: $pagination) {
+      ...ListTable
+    }
+  }
+  ${ListTableFragmentDoc}
+`;
 
 /**
  * __useGetTablesQuery__
@@ -8388,30 +18068,52 @@ export const GetTablesDocument = gql`
  *   },
  * });
  */
-export function useGetTablesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetTablesQuery, GetTablesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetTablesQuery, GetTablesQueryVariables>(GetTablesDocument, options);
-      }
-export function useGetTablesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetTablesQuery, GetTablesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetTablesQuery, GetTablesQueryVariables>(GetTablesDocument, options);
-        }
+export function useGetTablesQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    GetTablesQuery,
+    GetTablesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<GetTablesQuery, GetTablesQueryVariables>(
+    GetTablesDocument,
+    options,
+  );
+}
+export function useGetTablesLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetTablesQuery,
+    GetTablesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<GetTablesQuery, GetTablesQueryVariables>(
+    GetTablesDocument,
+    options,
+  );
+}
 export type GetTablesQueryHookResult = ReturnType<typeof useGetTablesQuery>;
-export type GetTablesLazyQueryHookResult = ReturnType<typeof useGetTablesLazyQuery>;
-export type GetTablesQueryResult = Apollo.QueryResult<GetTablesQuery, GetTablesQueryVariables>;
+export type GetTablesLazyQueryHookResult = ReturnType<
+  typeof useGetTablesLazyQuery
+>;
+export type GetTablesQueryResult = Apollo.QueryResult<
+  GetTablesQuery,
+  GetTablesQueryVariables
+>;
 export const WatchImagesDocument = gql`
-    subscription WatchImages($dataset: ID) {
-  images(dataset: $dataset) {
-    create {
-      ...ListImage
-    }
-    delete
-    update {
-      ...ListImage
+  subscription WatchImages($dataset: ID) {
+    images(dataset: $dataset) {
+      create {
+        ...ListImage
+      }
+      delete
+      update {
+        ...ListImage
+      }
     }
   }
-}
-    ${ListImageFragmentDoc}`;
+  ${ListImageFragmentDoc}
+`;
 
 /**
  * __useWatchImagesSubscription__
@@ -8429,9 +18131,20 @@ export const WatchImagesDocument = gql`
  *   },
  * });
  */
-export function useWatchImagesSubscription(baseOptions?: ApolloReactHooks.SubscriptionHookOptions<WatchImagesSubscription, WatchImagesSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<WatchImagesSubscription, WatchImagesSubscriptionVariables>(WatchImagesDocument, options);
-      }
-export type WatchImagesSubscriptionHookResult = ReturnType<typeof useWatchImagesSubscription>;
-export type WatchImagesSubscriptionResult = Apollo.SubscriptionResult<WatchImagesSubscription>;
+export function useWatchImagesSubscription(
+  baseOptions?: ApolloReactHooks.SubscriptionHookOptions<
+    WatchImagesSubscription,
+    WatchImagesSubscriptionVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useSubscription<
+    WatchImagesSubscription,
+    WatchImagesSubscriptionVariables
+  >(WatchImagesDocument, options);
+}
+export type WatchImagesSubscriptionHookResult = ReturnType<
+  typeof useWatchImagesSubscription
+>;
+export type WatchImagesSubscriptionResult =
+  Apollo.SubscriptionResult<WatchImagesSubscription>;

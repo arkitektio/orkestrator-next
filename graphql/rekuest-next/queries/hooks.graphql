@@ -1,11 +1,7 @@
-
-
 query HooksSearch($search: String, $values: [ID!]) {
-  options: nodes(filters: {
-    protocols: ["hook"]
-    ids: $values
-    search: $search
-  }) {
+  options: nodes(
+    filters: { protocols: ["hook"], ids: $values, search: $search }
+  ) {
     value: id
     label: name
     description: description

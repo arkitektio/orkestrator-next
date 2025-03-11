@@ -31,7 +31,9 @@ export const ModuleLayout = ({ pane, children }: ModuleLayoutProps) => {
         </>
       )}
 
-      <ResizablePanel defaultSize={90} id="module">{children}</ResizablePanel>
+      <ResizablePanel defaultSize={90} id="module">
+        {children}
+      </ResizablePanel>
     </ResizablePanelGroup>
   );
 };

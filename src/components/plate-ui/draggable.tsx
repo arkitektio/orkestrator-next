@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 
-import type { TEditor } from '@udecode/plate-common';
-import type { DropTargetMonitor } from 'react-dnd';
+import type { TEditor } from "@udecode/plate-common";
+import type { DropTargetMonitor } from "react-dnd";
 
-import { cn, withRef } from '@udecode/cn';
+import { cn, withRef } from "@udecode/cn";
 import {
   type PlateElementProps,
   MemoizedChildren,
   useEditorPlugin,
   useEditorRef,
   withHOC,
-} from '@udecode/plate-common/react';
+} from "@udecode/plate-common/react";
 import {
   type DragItemNode,
   DraggableProvider,
@@ -20,11 +20,11 @@ import {
   useDraggableGutter,
   useDraggableState,
   useDropLine,
-} from '@udecode/plate-dnd';
-import { BlockSelectionPlugin } from '@udecode/plate-selection/react';
+} from "@udecode/plate-dnd";
+import { BlockSelectionPlugin } from "@udecode/plate-selection/react";
 
-import { Icons } from '@/components/icons';
-import { useMounted } from '@/hooks/use-mounted';
+import { Icons } from "@/components/icons";
+import { useMounted } from "@/hooks/use-mounted";
 
 import {
   Tooltip,
@@ -32,7 +32,7 @@ import {
   TooltipPortal,
   TooltipProvider,
   TooltipTrigger,
-} from './tooltip';
+} from "./tooltip";
 
 export interface DraggableProps extends PlateElementProps {
   /**
@@ -47,13 +47,13 @@ export interface DraggableProps extends PlateElementProps {
       dragItem: DragItemNode;
       monitor: DropTargetMonitor<DragItemNode, unknown>;
       nodeRef: any;
-    }
+    },
   ) => boolean;
 }
 
 export const Draggable = withHOC(
   DraggableProvider,
-  withRef<'div', DraggableProps>(
+  withRef<"div", DraggableProps>(
     ({ className, onDropHandler, ...props }, ref) => {
       const { children, element } = props;
 
@@ -66,18 +66,18 @@ export const Draggable = withHOC(
         <div
           ref={ref}
           className={cn(
-            'relative',
-            isDragging && 'opacity-50',
-            'group',
-            className
+            "relative",
+            isDragging && "opacity-50",
+            "group",
+            className,
           )}
         >
           <Gutter>
-            <div className={cn('slate-blockToolbarWrapper', 'flex h-[1.5em]')}>
+            <div className={cn("slate-blockToolbarWrapper", "flex h-[1.5em]")}>
               <div
                 className={cn(
-                  'slate-blockToolbar',
-                  'pointer-events-auto mr-1 flex items-center'
+                  "slate-blockToolbar",
+                  "pointer-events-auto mr-1 flex items-center",
                 )}
               >
                 <div
@@ -98,8 +98,8 @@ export const Draggable = withHOC(
           </div>
         </div>
       );
-    }
-  )
+    },
+  ),
 );
 
 const Gutter = React.forwardRef<
@@ -107,17 +107,17 @@ const Gutter = React.forwardRef<
   React.HTMLAttributes<HTMLDivElement>
 >(({ children, className, ...props }, ref) => {
   const { useOption } = useEditorPlugin(BlockSelectionPlugin);
-  const isSelectionAreaVisible = useOption('isSelectionAreaVisible');
+  const isSelectionAreaVisible = useOption("isSelectionAreaVisible");
   const gutter = useDraggableGutter();
 
   return (
     <div
       ref={ref}
       className={cn(
-        'slate-gutterLeft',
-        'absolute -top-px z-50 flex h-full -translate-x-full cursor-text opacity-0 hover:opacity-100 group-hover:opacity-100',
-        isSelectionAreaVisible && 'hidden',
-        className
+        "slate-gutterLeft",
+        "absolute -top-px z-50 flex h-full -translate-x-full cursor-text opacity-0 hover:opacity-100 group-hover:opacity-100",
+        isSelectionAreaVisible && "hidden",
+        className,
       )}
       {...props}
       {...gutter.props}
@@ -168,17 +168,17 @@ const DropLine = React.memo(
           {...props}
           {...state.props}
           className={cn(
-            'slate-dropLine',
-            'absolute inset-x-0 h-0.5 opacity-100 transition-opacity',
-            'bg-brand/50',
-            state.dropLine === 'top' && '-top-px',
-            state.dropLine === 'bottom' && '-bottom-px',
-            className
+            "slate-dropLine",
+            "absolute inset-x-0 h-0.5 opacity-100 transition-opacity",
+            "bg-brand/50",
+            state.dropLine === "top" && "-top-px",
+            state.dropLine === "bottom" && "-bottom-px",
+            className,
           )}
         >
           {children}
         </div>
       );
-    }
-  )
+    },
+  ),
 );

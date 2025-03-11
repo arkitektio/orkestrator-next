@@ -1,24 +1,24 @@
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback } from "react";
 
-import { cn } from '@udecode/cn';
+import { cn } from "@udecode/cn";
 import {
   type Emoji,
   EmojiSettings,
   type GridRow,
   type UseEmojiPickerType,
-} from '@udecode/plate-emoji';
+} from "@udecode/plate-emoji";
 
 export type EmojiPickerContentProps = Pick<
   UseEmojiPickerType,
-  | 'emojiLibrary'
-  | 'i18n'
-  | 'isSearching'
-  | 'onMouseOver'
-  | 'onSelectEmoji'
-  | 'refs'
-  | 'searchResult'
-  | 'settings'
-  | 'visibleCategories'
+  | "emojiLibrary"
+  | "i18n"
+  | "isSearching"
+  | "onMouseOver"
+  | "onSelectEmoji"
+  | "refs"
+  | "searchResult"
+  | "settings"
+  | "visibleCategories"
 >;
 
 export type EmojiButtonProps = {
@@ -30,7 +30,7 @@ export type EmojiButtonProps = {
 
 export type RowOfButtonsProps = {
   row: GridRow;
-} & Pick<UseEmojiPickerType, 'emojiLibrary' | 'onMouseOver' | 'onSelectEmoji'>;
+} & Pick<UseEmojiPickerType, "emojiLibrary" | "onMouseOver" | "onSelectEmoji">;
 
 const Button = memo(
   ({ emoji, index, onMouseOver, onSelect }: EmojiButtonProps) => {
@@ -49,14 +49,14 @@ const Button = memo(
           aria-hidden="true"
           className="absolute inset-0 rounded-full bg-[rgba(0,0,0,0.05)] opacity-0 group-hover:opacity-100"
         />
-        <span data-emoji-set="native" style={{ position: 'relative' }}>
+        <span data-emoji-set="native" style={{ position: "relative" }}>
           {emoji.skins[0].native}
         </span>
       </button>
     );
-  }
+  },
 );
-Button.displayName = 'Button';
+Button.displayName = "Button";
 
 const RowOfButtons = memo(
   ({ emojiLibrary, onMouseOver, onSelectEmoji, row }: RowOfButtonsProps) => (
@@ -71,9 +71,9 @@ const RowOfButtons = memo(
         />
       ))}
     </div>
-  )
+  ),
 );
-RowOfButtons.displayName = 'RowOfButtons';
+RowOfButtons.displayName = "RowOfButtons";
 
 export function EmojiPickerContent({
   emojiLibrary,
@@ -94,7 +94,7 @@ export function EmojiPickerContent({
         ? visibleCategories.get(categoryId)
         : false;
     },
-    [visibleCategories]
+    [visibleCategories],
   );
 
   const EmojiList = useCallback(() => {
@@ -176,12 +176,12 @@ export function EmojiPickerContent({
   return (
     <div
       className={cn(
-        'h-full min-h-[50%] overflow-y-auto overflow-x-hidden px-3',
-        '[&::-webkit-scrollbar]:w-4',
-        '[&::-webkit-scrollbar-button]:hidden [&::-webkit-scrollbar-button]:size-0',
-        ':hover:[&::-webkit-scrollbar-thumb]:bg-[#f3f4f6]',
-        '[&::-webkit-scrollbar-thumb]:min-h-[65px] [&::-webkit-scrollbar-thumb]:rounded-2xl [&::-webkit-scrollbar-thumb]:border-4 [&::-webkit-scrollbar-thumb]:border-white',
-        '[&::-webkit-scrollbar-track]:border-0'
+        "h-full min-h-[50%] overflow-y-auto overflow-x-hidden px-3",
+        "[&::-webkit-scrollbar]:w-4",
+        "[&::-webkit-scrollbar-button]:hidden [&::-webkit-scrollbar-button]:size-0",
+        ":hover:[&::-webkit-scrollbar-thumb]:bg-[#f3f4f6]",
+        "[&::-webkit-scrollbar-thumb]:min-h-[65px] [&::-webkit-scrollbar-thumb]:rounded-2xl [&::-webkit-scrollbar-thumb]:border-4 [&::-webkit-scrollbar-thumb]:border-white",
+        "[&::-webkit-scrollbar-track]:border-0",
       )}
       data-id="scroll"
       ref={refs.current.contentRoot}

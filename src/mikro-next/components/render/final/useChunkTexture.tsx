@@ -1,19 +1,34 @@
 import { useEffect, useState } from "react";
-import * as THREE from 'three';
+import * as THREE from "three";
 import { Chunk, DataType } from "zarrita";
 import { mapDTypeToMinMax } from "./utils";
 
-
-
-
-export const useAsyncChunk = (props: {renderFunc: any, chunk_coords: number[], chunk_shape: number[], c: number, t: number, z: number}) => {
-  const [texture, setTexture] = useState<{texture: THREE.Texture | null, min: number, max: number} | null>(null);
+export const useAsyncChunk = (props: {
+  renderFunc: any;
+  chunk_coords: number[];
+  chunk_shape: number[];
+  c: number;
+  t: number;
+  z: number;
+}) => {
+  const [texture, setTexture] = useState<{
+    texture: THREE.Texture | null;
+    min: number;
+    max: number;
+  } | null>(null);
 
   const calculateImageData = async (signal: AbortSignal) => {
     // Sequentially render each view to ensure proper blending
 
     // Fetch all ImageData objects for the views
-    const {chunk, dtype} = await props.renderFunc(signal, props.chunk_coords, props.chunk_shape, props.c, props.t, props.z,) as {chunk: Chunk<DataType>, dtype: DataType};
+    const { chunk, dtype } = (await props.renderFunc(
+      signal,
+      props.chunk_coords,
+      props.chunk_shape,
+      props.c,
+      props.t,
+      props.z,
+    )) as { chunk: Chunk<DataType>; dtype: DataType };
     // Create a float32 texture
     let array = chunk as Chunk<DataType>;
     let textureData;
@@ -32,7 +47,6 @@ export const useAsyncChunk = (props: {renderFunc: any, chunk_coords: number[], c
       textureData = array.data;
       format = THREE.RedFormat;
       type = THREE.FloatType;
-    
     } else if (array.data instanceof Int16Array) {
       textureData = new Float32Array(array.data);
       format = THREE.RedFormat;
@@ -56,13 +70,20 @@ export const useAsyncChunk = (props: {renderFunc: any, chunk_coords: number[], c
     );
 
     texture.needsUpdate = true;
-    console.log("RESEEÉ")
-    setTexture({texture, min: min, max: max, });
+    console.log("RESEEÉ");
+    setTexture({ texture, min: min, max: max });
   };
 
   useEffect(() => {
     let abortController = new AbortController();
-    console.log("Rendering chunk", props.chunk_coords, props.chunk_shape, props.c, props.t, props.z);
+    console.log(
+      "Rendering chunk",
+      props.chunk_coords,
+      props.chunk_shape,
+      props.c,
+      props.t,
+      props.z,
+    );
     calculateImageData(abortController.signal);
 
     return () => {

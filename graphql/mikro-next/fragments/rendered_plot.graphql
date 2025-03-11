@@ -1,15 +1,15 @@
 fragment RenderedPlot on RenderedPlot {
-    id 
-    store {
-        ...MediaStore
-    }
-    name
+  id
+  store {
+    ...MediaStore
+  }
+  name
 }
 
 fragment ListRenderedPlot on RenderedPlot {
-    id 
-    store {
-        ...MediaStore
-    }
-    name
+  id
+  store {
+    ...MediaStore
+  }
+  name
 }

@@ -9,6 +9,7 @@ import Timestamp from "react-timestamp";
 import { useGetRoiQuery, usePinRoiMutation } from "../api/graphql";
 import { RoiRGBD } from "../components/render/TwoDThree";
 import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
+import { DelegatingImageRender } from "../components/render/DelegatingImageRender";
 
 export type IRepresentationScreenProps = {};
 
@@ -16,10 +17,12 @@ export const dimensionOrder = ["c", "t", "z", "y", "x"];
 
 export default asDetailQueryRoute(useGetRoiQuery, ({ data, refetch }) => {
   const [pinRoi] = usePinRoiMutation();
+
+  const context = data.roi.image.rgbContexts.at(0)
   return (
     <MikroROI.ModelPage
       title={
-        data?.roi?.entity?.linkedExpression?.label || "ROI " + data?.roi?.id
+        data?.roi?.id
       }
       object={data?.roi?.id}
       sidebars={
@@ -35,7 +38,7 @@ export default asDetailQueryRoute(useGetRoiQuery, ({ data, refetch }) => {
       <TwoDViewProvider initialC={0} initialT={0} initialZ={0}>
         <div className="grid grid-cols-12 grid-reverse flex-col rounded-md gap-4 mt-2 h-full">
           <div className="absolute w-full h-full overflow-hidden border-0">
-            <RoiRGBD roi={data.roi} />
+            {context && <DelegatingImageRender context={context} rois={[data.roi]} />}
           </div>
           <DetailPane className="col-span-3 p-3 @container bg-black max-h-[40%] bg-clip-padding backdrop-filter backdrop-blur-2xl bg-opacity-10 z-100 overflow-hidden">
             <DetailPaneContent>
@@ -52,19 +55,7 @@ export default asDetailQueryRoute(useGetRoiQuery, ({ data, refetch }) => {
                   </Card>
                 </>
               )}
-              {data?.roi?.entity && (
-                <>
-                  <div className="font-light">Marks</div>
-                  <Card className="truncate ellipsis p-3">
-                    <KraphNode.DetailLink
-                      className="text-xl cursor-pointer p-1"
-                      object={data?.roi?.entity?.id}
-                    >
-                      {data?.roi?.entity?.label}
-                    </KraphNode.DetailLink>
-                  </Card>
-                </>
-              )}
+
 
               <div className="font-light mt-2 ">Created At</div>
               <div className="text-md mt-2 ">

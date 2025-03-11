@@ -4,13 +4,12 @@
 
 # Orkestrator (Next)
 
-This repository includes the Next version of Orkestrator frontend 
-for the arkitekt platform. It is currently under development and not ready for production. 
+This repository includes the Next version of Orkestrator frontend
+for the arkitekt platform. It is currently under development and not ready for production.
 If you are looking for the current version of Orkestrator, you can find it [here](https://github.com/arkitektio/orkestrator).
 
 > [!IMPORTANT]
 > This version of Orkestrator is only working with the next version of the arkitekt platform. It is not compatible with the released version of the platform.
-
 
 # Installation
 
@@ -51,7 +50,7 @@ Before the new version of Orkestrator can be merged into the main repository, th
 - [x] Move to React 18
 - [x] Move to Electron (Allows us to finally use SSL on the network)
 - [x] New Workflow Engine (Fluss)
-- [x] Integrate Kabinet App Store 
+- [x] Integrate Kabinet App Store
 - [x] Move to new GraphQL Protocols (subscriptions based on graphql-ws, standardized error and param handling (pagination(filter))
 - [ ] Basic UI Testing
 - [ ] User Stories (e.g. documentation for specific user stories)
@@ -59,7 +58,6 @@ Before the new version of Orkestrator can be merged into the main repository, th
 - [x] Lazy Load Modules (only if corresponding service in Deployment)
 - [ ] Hosted Deployment (e.g. on Goethe Cluster)
 - [x] CI/CD Pipeline
-
 
 ## Service Specific Next Features
 
@@ -71,13 +69,13 @@ Before the new version of Orkestrator can be merged into the main repository, th
 ### Mikro
 
 - [x] Move to Mikro Next
-- [X] Establish "Views" as central concept
-- [X] Deprecated OMERO metadata support
+- [x] Establish "Views" as central concept
+- [x] Deprecated OMERO metadata support
 
 ### Fluss
 
 - [x] Establish new Workflow UI + Engine (typesafe, wizard, ...) (looks nice)
-- [X] Move to Fluss Next
+- [x] Move to Fluss Next
 - [x] More tighlty integrate Schedulers in UI
 - [ ] Allow Resource Management in UI ( provisional UI for resource management)
 
@@ -90,8 +88,8 @@ Before the new version of Orkestrator can be merged into the main repository, th
 ### Kabinet
 
 - [x] Establish Kabinet
-- [X] Create App Store like Feature
-- [X] Create App Store UI
+- [x] Create App Store like Feature
+- [x] Create App Store UI
 
 ### Omero-Ark
 
@@ -106,10 +104,8 @@ Before the new version of Orkestrator can be merged into the main repository, th
 
 - [ ] Build Kluster UI
 - [ ] Elaborate on Dask-Cluster integration
-- [ ] Provide support for other cluster 
+- [ ] Provide support for other cluster
 
 ### Elektro
 
 - [ ] Implement basic trace visualization
- 
-

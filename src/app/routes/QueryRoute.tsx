@@ -46,7 +46,10 @@ export const PassedDownComponent = <T extends DocumentNode>(props: {
   return errors ? <>{errors}</> : props.component({ data: data });
 };
 
-export const asDynamicQueryRoute = <T extends any, V extends OperationVariables>(
+export const asDynamicQueryRoute = <
+  T extends any,
+  V extends OperationVariables,
+>(
   hook: HookFunction<T, V>,
   Component: React.FC<{
     data: T;

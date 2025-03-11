@@ -41,8 +41,6 @@ import { useForm } from "react-hook-form";
 import { KraphNode } from "@/linkers";
 import { calculateColumns, calculateRows } from "../utils";
 
-
-
 export type FormValues = {
   metrics?: string[];
   kinds?: string[];

@@ -23,7 +23,7 @@ export const FaktsGuard: React.FC<{
 
 export const faktsGuarded = <T extends {}>(
   Child: React.ComponentType<T>,
-  fallback?: React.ReactNode
+  fallback?: React.ReactNode,
 ) => {
   return (props: T) => (
     <FaktsGuard fallback={fallback}>

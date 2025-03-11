@@ -13,7 +13,11 @@ export const WellKnownDiscovery = (props: {
 
     for (let endpoint of props.endpoints) {
       try {
-        let introspected = await introspectUrl(endpoint, props.timeout || 2000, new AbortController());
+        let introspected = await introspectUrl(
+          endpoint,
+          props.timeout || 2000,
+          new AbortController(),
+        );
         endpoints.push(introspected);
       } catch (e) {
         console.error(e);
@@ -23,9 +27,6 @@ export const WellKnownDiscovery = (props: {
   };
 
   useEffect(() => {
-
-
-
     let x = introspectAll().then((endpoints) => {
       return registerEndpoints(endpoints);
     });

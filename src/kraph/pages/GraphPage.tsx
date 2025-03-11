@@ -103,12 +103,9 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
         >
           Views
         </KraphGraph.DetailLink>
-        <ListRender
-         title="Views"
-          array={data.graph.graphViews}
-          >
-          {item => <GraphViewCard item={item} />}
-          </ListRender>
+        <ListRender title="Views" array={data.graph.graphViews}>
+          {(item) => <GraphViewCard item={item} />}
+        </ListRender>
       </div>
     </KraphGraph.ModelPage>
   );

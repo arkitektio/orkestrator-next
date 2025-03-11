@@ -1,10 +1,8 @@
-
-
 query MyActiveMessages {
-    myActiveMessages {
-        id
-        title
-        message
-        action
-    }
+  myActiveMessages {
+    id
+    title
+    message
+    action
+  }
 }

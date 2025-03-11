@@ -1,14 +1,14 @@
-import React from 'react';
+import React from "react";
 
-import type { UseEmojiPickerType } from '@udecode/plate-emoji';
+import type { UseEmojiPickerType } from "@udecode/plate-emoji";
 
-import { cn } from '@udecode/cn';
+import { cn } from "@udecode/cn";
 
-import { Icons } from '@/components/icons';
+import { Icons } from "@/components/icons";
 
 export type EmojiPickerSearchAndClearProps = Pick<
   UseEmojiPickerType,
-  'clearSearch' | 'i18n' | 'searchValue'
+  "clearSearch" | "i18n" | "searchValue"
 >;
 
 export function EmojiPickerSearchAndClear({
@@ -20,7 +20,7 @@ export function EmojiPickerSearchAndClear({
     <>
       <span
         className={cn(
-          'absolute left-2 top-1/2 z-10 flex size-5 -translate-y-1/2'
+          "absolute left-2 top-1/2 z-10 flex size-5 -translate-y-1/2",
         )}
       >
         <Icons.search />
@@ -29,7 +29,7 @@ export function EmojiPickerSearchAndClear({
         <button
           aria-label="Clear"
           className={cn(
-            'absolute right-0 top-1/2 flex size-8 -translate-y-1/2 cursor-pointer border-none bg-transparent'
+            "absolute right-0 top-1/2 flex size-8 -translate-y-1/2 cursor-pointer border-none bg-transparent",
           )}
           onClick={clearSearch}
           title={i18n.clear}

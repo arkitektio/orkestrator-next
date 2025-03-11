@@ -1,7 +1,11 @@
 import { Card } from "@/components/ui/card";
 import { KraphGraph, KraphOntology, KraphPlotView } from "@/linkers";
 import { MateFinder } from "@/mates/types";
-import { ListGraphFragment, ListOntologyFragment, ListPlotViewFragment } from "../../api/graphql";
+import {
+  ListGraphFragment,
+  ListOntologyFragment,
+  ListPlotViewFragment,
+} from "../../api/graphql";
 
 interface Props {
   item: ListPlotViewFragment;

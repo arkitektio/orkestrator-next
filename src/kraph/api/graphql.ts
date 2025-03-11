@@ -1,52 +1,65 @@
-import { gql } from '@apollo/client';
-import * as Apollo from '@apollo/client';
-import * as ApolloReactHooks from '@/lib/kraph/funcs';
+import { gql } from "@apollo/client";
+import * as Apollo from "@apollo/client";
+import * as ApolloReactHooks from "@/lib/kraph/funcs";
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
-export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
-export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
-export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
+export type Exact<T extends { [key: string]: unknown }> = {
+  [K in keyof T]: T[K];
+};
+export type MakeOptional<T, K extends keyof T> = Omit<T, K> & {
+  [SubKey in K]?: Maybe<T[SubKey]>;
+};
+export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & {
+  [SubKey in K]: Maybe<T[SubKey]>;
+};
+export type MakeEmpty<
+  T extends { [key: string]: unknown },
+  K extends keyof T,
+> = { [_ in K]?: never };
+export type Incremental<T> =
+  | T
+  | {
+      [P in keyof T]?: P extends " $fragmentName" | "__typename" ? T[P] : never;
+    };
 const defaultOptions = {} as const;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string; output: string; }
-  String: { input: string; output: string; }
-  Boolean: { input: boolean; output: boolean; }
-  Int: { input: number; output: number; }
-  Float: { input: number; output: number; }
-  Any: { input: any; output: any; }
-  Cypher: { input: any; output: any; }
-  DateTime: { input: any; output: any; }
-  Metric: { input: any; output: any; }
-  NodeID: { input: any; output: any; }
-  RemoteUpload: { input: any; output: any; }
-  StructureIdentifier: { input: any; output: any; }
-  StructureString: { input: any; output: any; }
-  UntypedPlateChild: { input: any; output: any; }
+  ID: { input: string; output: string };
+  String: { input: string; output: string };
+  Boolean: { input: boolean; output: boolean };
+  Int: { input: number; output: number };
+  Float: { input: number; output: number };
+  Any: { input: any; output: any };
+  Cypher: { input: any; output: any };
+  DateTime: { input: any; output: any };
+  Metric: { input: any; output: any };
+  NodeID: { input: any; output: any };
+  RemoteUpload: { input: any; output: any };
+  StructureIdentifier: { input: any; output: any };
+  StructureString: { input: any; output: any };
+  UntypedPlateChild: { input: any; output: any };
 };
 
 /** An app. */
 export type App = {
-  __typename?: 'App';
-  clientId: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
+  __typename?: "App";
+  clientId: Scalars["String"]["output"];
+  id: Scalars["ID"]["output"];
+  name: Scalars["String"]["output"];
 };
 
 export type Category = {
   /** The unique identifier of the expression within its graph */
-  ageName: Scalars['String']['output'];
-  color?: Maybe<Array<Scalars['Float']['output']>>;
+  ageName: Scalars["String"]["output"];
+  color?: Maybe<Array<Scalars["Float"]["output"]>>;
   /** A description of the expression. */
-  description?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars["String"]["output"]>;
   /** The unique identifier of the expression within its graph */
-  id: Scalars['ID']['output'];
+  id: Scalars["ID"]["output"];
   /** The kind of expression */
   kind: ExpressionKind;
   /** The unique identifier of the expression within its graph */
-  label: Scalars['String']['output'];
+  label: Scalars["String"]["output"];
   /** The ontology the expression belongs to. */
   ontology: Ontology;
   /** An image or other media file that can be used to represent the expression. */
@@ -55,132 +68,132 @@ export type Category = {
 
 /** A column definition for a table view. */
 export type Column = {
-  __typename?: 'Column';
-  description?: Maybe<Scalars['String']['output']>;
-  expression?: Maybe<Scalars['ID']['output']>;
+  __typename?: "Column";
+  description?: Maybe<Scalars["String"]["output"]>;
+  expression?: Maybe<Scalars["ID"]["output"]>;
   kind: ColumnKind;
-  label?: Maybe<Scalars['String']['output']>;
-  name: Scalars['String']['output'];
-  searchable?: Maybe<Scalars['Boolean']['output']>;
+  label?: Maybe<Scalars["String"]["output"]>;
+  name: Scalars["String"]["output"];
+  searchable?: Maybe<Scalars["Boolean"]["output"]>;
   valueKind?: Maybe<MeasurementKind>;
 };
 
 export type ColumnInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  expression?: InputMaybe<Scalars['ID']['input']>;
+  description?: InputMaybe<Scalars["String"]["input"]>;
+  expression?: InputMaybe<Scalars["ID"]["input"]>;
   kind: ColumnKind;
-  label?: InputMaybe<Scalars['String']['input']>;
-  name: Scalars['String']['input'];
-  searchable?: InputMaybe<Scalars['Boolean']['input']>;
+  label?: InputMaybe<Scalars["String"]["input"]>;
+  name: Scalars["String"]["input"];
+  searchable?: InputMaybe<Scalars["Boolean"]["input"]>;
   valueKind?: InputMaybe<MeasurementKind>;
 };
 
 export enum ColumnKind {
-  Edge = 'EDGE',
-  Node = 'NODE',
-  Value = 'VALUE'
+  Edge = "EDGE",
+  Node = "NODE",
+  Value = "VALUE",
 }
 
 /**  A ComputedMeasurement is a measurement that is computed from other measurements. It is a special kind of measurement that is derived from other measurements. */
 export type ComputedMeasurement = Edge & {
-  __typename?: 'ComputedMeasurement';
+  __typename?: "ComputedMeasurement";
   category: MeasurementCategory;
   /** When this entity was created */
   computedFrom: Array<Measurement>;
   /** When this entity was created */
-  createdAt: Scalars['DateTime']['output'];
+  createdAt: Scalars["DateTime"]["output"];
   /** The unique identifier of the entity within its graph */
-  id: Scalars['NodeID']['output'];
+  id: Scalars["NodeID"]["output"];
   inferedBy: Edge;
-  label: Scalars['String']['output'];
-  leftId: Scalars['String']['output'];
-  rightId: Scalars['String']['output'];
+  label: Scalars["String"]["output"];
+  leftId: Scalars["String"]["output"];
+  rightId: Scalars["String"]["output"];
   /** Timestamp from when this entity is valid */
-  validFrom: Scalars['DateTime']['output'];
+  validFrom: Scalars["DateTime"]["output"];
   /** Timestamp until when this entity is valid */
-  validTo: Scalars['DateTime']['output'];
+  validTo: Scalars["DateTime"]["output"];
   /** The value of the measurement */
-  value: Scalars['Metric']['output'];
+  value: Scalars["Metric"]["output"];
 };
 
 /** Input type for creating a new model */
 export type CreateModelInput = {
   /** The uploaded model file (e.g. .h5, .onnx, .pt) */
-  model: Scalars['RemoteUpload']['input'];
+  model: Scalars["RemoteUpload"]["input"];
   /** The name of the model */
-  name: Scalars['String']['input'];
+  name: Scalars["String"]["input"];
   /** Optional view ID to associate with the model */
-  view?: InputMaybe<Scalars['ID']['input']>;
+  view?: InputMaybe<Scalars["ID"]["input"]>;
 };
 
 export type DeleteEntityInput = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 /** Input for deleting a generic category */
 export type DeleteGenericCategoryInput = {
   /** The ID of the expression to delete */
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 export type DeleteGraphInput = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 /** Input for deleting an expression */
 export type DeleteMeasurementCategoryInput = {
   /** The ID of the expression to delete */
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 /** Input type for deleting an ontology */
 export type DeleteOntologyInput = {
   /** The ID of the ontology to delete */
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 export type DeleteProtocolInput = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 export type DeleteProtocolStepInput = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 export type DeleteProtocolStepTemplateInput = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 /** Input for deleting an expression */
 export type DeleteRelationCategoryInput = {
   /** The ID of the expression to delete */
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 /** Input for deleting an expression */
 export type DeleteScatterPlotInput = {
   /** The ID of the expression to delete */
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 /** Input for deleting an expression */
 export type DeleteStructureCategoryInput = {
   /** The ID of the expression to delete */
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 export type Edge = {
   /** The unique identifier of the entity within its graph */
-  id: Scalars['NodeID']['output'];
+  id: Scalars["NodeID"]["output"];
   inferedBy: Edge;
-  label: Scalars['String']['output'];
-  leftId: Scalars['String']['output'];
-  rightId: Scalars['String']['output'];
+  label: Scalars["String"]["output"];
+  leftId: Scalars["String"]["output"];
+  rightId: Scalars["String"]["output"];
 };
 
 export type EdgeCategory = {
   /** The unique identifier of the expression within its graph */
-  id: Scalars['ID']['output'];
+  id: Scalars["ID"]["output"];
   /** The category of the left entity */
   left?: Maybe<NodeCategory>;
   /** The category of the right entity */
@@ -189,7 +202,7 @@ export type EdgeCategory = {
 
 /** A Entity is a recorded data point in a graph. It can measure a property of an entity through a direct measurement edge, that connects the entity to the structure. It of course can relate to other structures through relation edges. */
 export type Entity = Node & {
-  __typename?: 'Entity';
+  __typename?: "Entity";
   /** Protocol steps where this entity was the target */
   category: GenericCategory;
   /** The unique identifier of the entity within its graph */
@@ -197,10 +210,10 @@ export type Entity = Node & {
   /** The unique identifier of the entity within its graph */
   graph: Graph;
   /** The unique identifier of the entity within its graph */
-  graphId: Scalars['ID']['output'];
+  graphId: Scalars["ID"]["output"];
   /** The unique identifier of the entity within its graph */
-  id: Scalars['NodeID']['output'];
-  label: Scalars['String']['output'];
+  id: Scalars["NodeID"]["output"];
+  label: Scalars["String"]["output"];
   /** The unique identifier of the entity within its graph */
   leftEdges: Array<Edge>;
   nodeViews: Array<NodeView>;
@@ -214,7 +227,6 @@ export type Entity = Node & {
   usedIn: Array<ProtocolStep>;
 };
 
-
 /** A Entity is a recorded data point in a graph. It can measure a property of an entity through a direct measurement edge, that connects the entity to the structure. It of course can relate to other structures through relation edges. */
 export type EntityEdgesArgs = {
   filter?: InputMaybe<EntityRelationFilter>;
@@ -224,66 +236,64 @@ export type EntityEdgesArgs = {
 /** Filter for entities in the graph */
 export type EntityFilter = {
   /** Filter by graph ID */
-  graph?: InputMaybe<Scalars['ID']['input']>;
+  graph?: InputMaybe<Scalars["ID"]["input"]>;
   /** Filter by structure identifier */
-  identifier?: InputMaybe<Scalars['String']['input']>;
+  identifier?: InputMaybe<Scalars["String"]["input"]>;
   /** Filter by list of entity IDs */
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
   /** Filter by entity kind */
-  kind?: InputMaybe<Scalars['ID']['input']>;
+  kind?: InputMaybe<Scalars["ID"]["input"]>;
   /** Filter by linked expression ID */
-  linkedExpression?: InputMaybe<Scalars['ID']['input']>;
+  linkedExpression?: InputMaybe<Scalars["ID"]["input"]>;
   /** Filter by associated object ID */
-  object?: InputMaybe<Scalars['ID']['input']>;
+  object?: InputMaybe<Scalars["ID"]["input"]>;
   /** Search entities by text */
-  search?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 /** Input type for creating a new entity */
 export type EntityInput = {
   /** The ID of the kind (LinkedExpression) to create the entity from */
-  expression: Scalars['ID']['input'];
-  graph: Scalars['ID']['input'];
+  expression: Scalars["ID"]["input"];
+  graph: Scalars["ID"]["input"];
   /** Optional name for the entity */
-  name?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 /** Filter for entity relations in the graph */
 export type EntityRelationFilter = {
   /** Filter by graph ID */
-  graph?: InputMaybe<Scalars['ID']['input']>;
+  graph?: InputMaybe<Scalars["ID"]["input"]>;
   /** Filter by list of relation IDs */
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
   /** Filter by relation kind */
-  kind?: InputMaybe<Scalars['ID']['input']>;
+  kind?: InputMaybe<Scalars["ID"]["input"]>;
   /** Filter by left entity ID */
-  leftId?: InputMaybe<Scalars['ID']['input']>;
+  leftId?: InputMaybe<Scalars["ID"]["input"]>;
   /** Filter by linked expression ID */
-  linkedExpression?: InputMaybe<Scalars['ID']['input']>;
+  linkedExpression?: InputMaybe<Scalars["ID"]["input"]>;
   /** Filter by right entity ID */
-  rightId?: InputMaybe<Scalars['ID']['input']>;
+  rightId?: InputMaybe<Scalars["ID"]["input"]>;
   /** Search relations by text */
-  search?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
   /** Include self-relations */
-  withSelf?: InputMaybe<Scalars['Boolean']['input']>;
+  withSelf?: InputMaybe<Scalars["Boolean"]["input"]>;
 };
 
 export type Experiment = {
-  __typename?: 'Experiment';
-  createdAt: Scalars['DateTime']['output'];
+  __typename?: "Experiment";
+  createdAt: Scalars["DateTime"]["output"];
   creator?: Maybe<User>;
-  description?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars["String"]["output"]>;
   history: Array<History>;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
+  id: Scalars["ID"]["output"];
+  name: Scalars["String"]["output"];
   protocols: Array<Protocol>;
 };
-
 
 export type ExperimentHistoryArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type ExperimentProtocolsArgs = {
   filters?: InputMaybe<ProtocolFilter>;
@@ -291,97 +301,97 @@ export type ExperimentProtocolsArgs = {
 };
 
 export type Expression = {
-  __typename?: 'Expression';
+  __typename?: "Expression";
   /** The unique identifier of the expression within its graph */
-  ageName: Scalars['String']['output'];
-  color?: Maybe<Array<Scalars['Float']['output']>>;
+  ageName: Scalars["String"]["output"];
+  color?: Maybe<Array<Scalars["Float"]["output"]>>;
   /** A description of the expression. */
-  description?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars["String"]["output"]>;
   /** The unique identifier of the expression within its graph */
-  id: Scalars['ID']['output'];
+  id: Scalars["ID"]["output"];
   /** The kind of expression */
   kind: ExpressionKind;
   /** The unique identifier of the expression within its graph */
-  label: Scalars['String']['output'];
+  label: Scalars["String"]["output"];
   /** The ontology the expression belongs to. */
   ontology: Ontology;
   /** An image or other media file that can be used to represent the expression. */
   store?: Maybe<MediaStore>;
   /**  The unit  type of the metric */
-  unit?: Maybe<Scalars['String']['output']>;
+  unit?: Maybe<Scalars["String"]["output"]>;
 };
 
 export type ExpressionFilter = {
   AND?: InputMaybe<ExpressionFilter>;
   OR?: InputMaybe<ExpressionFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
   kind?: InputMaybe<ExpressionKind>;
-  search?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export enum ExpressionKind {
-  Concept = 'CONCEPT',
-  Entity = 'ENTITY',
-  Measurement = 'MEASUREMENT',
-  Metric = 'METRIC',
-  Relation = 'RELATION',
-  RelationMetric = 'RELATION_METRIC',
-  Structure = 'STRUCTURE'
+  Concept = "CONCEPT",
+  Entity = "ENTITY",
+  Measurement = "MEASUREMENT",
+  Metric = "METRIC",
+  Relation = "RELATION",
+  RelationMetric = "RELATION_METRIC",
+  Structure = "STRUCTURE",
 }
 
-export type GenericCategory = Category & NodeCategory & {
-  __typename?: 'GenericCategory';
-  /** The unique identifier of the expression within its graph */
-  ageName: Scalars['String']['output'];
-  color?: Maybe<Array<Scalars['Float']['output']>>;
-  /** A description of the expression. */
-  description?: Maybe<Scalars['String']['output']>;
-  /** The unique identifier of the expression within its graph */
-  id: Scalars['ID']['output'];
-  /** The kind of instance this expression creates */
-  instanceKind: InstanceKind;
-  /** The kind of expression */
-  kind: ExpressionKind;
-  /** The unique identifier of the expression within its graph */
-  label: Scalars['String']['output'];
-  /** The ontology the expression belongs to. */
-  ontology: Ontology;
-  /** An image or other media file that can be used to represent the expression. */
-  store?: Maybe<MediaStore>;
-};
+export type GenericCategory = Category &
+  NodeCategory & {
+    __typename?: "GenericCategory";
+    /** The unique identifier of the expression within its graph */
+    ageName: Scalars["String"]["output"];
+    color?: Maybe<Array<Scalars["Float"]["output"]>>;
+    /** A description of the expression. */
+    description?: Maybe<Scalars["String"]["output"]>;
+    /** The unique identifier of the expression within its graph */
+    id: Scalars["ID"]["output"];
+    /** The kind of instance this expression creates */
+    instanceKind: InstanceKind;
+    /** The kind of expression */
+    kind: ExpressionKind;
+    /** The unique identifier of the expression within its graph */
+    label: Scalars["String"]["output"];
+    /** The ontology the expression belongs to. */
+    ontology: Ontology;
+    /** An image or other media file that can be used to represent the expression. */
+    store?: Maybe<MediaStore>;
+  };
 
 /** Input for creating a new expression */
 export type GenericCategoryInput = {
   /** RGBA color values as list of 3 or 4 integers */
-  color?: InputMaybe<Array<Scalars['Int']['input']>>;
+  color?: InputMaybe<Array<Scalars["Int"]["input"]>>;
   /** A detailed description of the expression */
-  description?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars["String"]["input"]>;
   /** An optional image associated with this expression */
-  image?: InputMaybe<Scalars['RemoteUpload']['input']>;
+  image?: InputMaybe<Scalars["RemoteUpload"]["input"]>;
   /** The label/name of the expression */
-  label: Scalars['String']['input'];
+  label: Scalars["String"]["input"];
   /** The ID of the ontology this expression belongs to. If not provided, uses default ontology */
-  ontology?: InputMaybe<Scalars['ID']['input']>;
+  ontology?: InputMaybe<Scalars["ID"]["input"]>;
   /** Permanent URL identifier for the expression */
-  purl?: InputMaybe<Scalars['String']['input']>;
+  purl?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 /** A graph, that contains entities and relations. */
 export type Graph = {
-  __typename?: 'Graph';
-  ageName: Scalars['String']['output'];
-  description?: Maybe<Scalars['String']['output']>;
+  __typename?: "Graph";
+  ageName: Scalars["String"]["output"];
+  description?: Maybe<Scalars["String"]["output"]>;
   graphViews: Array<GraphView>;
-  id: Scalars['ID']['output'];
+  id: Scalars["ID"]["output"];
   latestNodes: Array<Node>;
-  name: Scalars['String']['output'];
+  name: Scalars["String"]["output"];
   nodeViews: Array<NodeView>;
   ontology: Ontology;
-  pinned: Scalars['Boolean']['output'];
+  pinned: Scalars["Boolean"]["output"];
   plotViews: Array<PlotView>;
 };
-
 
 /** A graph, that contains entities and relations. */
 export type GraphGraphViewsArgs = {
@@ -389,20 +399,17 @@ export type GraphGraphViewsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 /** A graph, that contains entities and relations. */
 export type GraphLatestNodesArgs = {
   filters?: InputMaybe<EntityFilter>;
   pagination?: InputMaybe<GraphPaginationInput>;
 };
 
-
 /** A graph, that contains entities and relations. */
 export type GraphNodeViewsArgs = {
   filters?: InputMaybe<NodeViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 /** A graph, that contains entities and relations. */
 export type GraphPlotViewsArgs = {
@@ -413,47 +420,45 @@ export type GraphPlotViewsArgs = {
 export type GraphFilter = {
   AND?: InputMaybe<GraphFilter>;
   OR?: InputMaybe<GraphFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
   /** Filter by list of IDs */
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  pinned?: InputMaybe<Scalars['Boolean']['input']>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
+  pinned?: InputMaybe<Scalars["Boolean"]["input"]>;
   /** Search by text */
-  search?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type GraphInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  experiment?: InputMaybe<Scalars['ID']['input']>;
-  name: Scalars['String']['input'];
-  ontology?: InputMaybe<Scalars['ID']['input']>;
+  description?: InputMaybe<Scalars["String"]["input"]>;
+  experiment?: InputMaybe<Scalars["ID"]["input"]>;
+  name: Scalars["String"]["input"];
+  ontology?: InputMaybe<Scalars["ID"]["input"]>;
 };
 
 export type GraphPaginationInput = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars["Int"]["input"]>;
+  offset?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 /** A view of a graph, that contains entities and relations. */
 export type GraphQuery = {
-  __typename?: 'GraphQuery';
-  description?: Maybe<Scalars['String']['output']>;
-  id: Scalars['ID']['output'];
+  __typename?: "GraphQuery";
+  description?: Maybe<Scalars["String"]["output"]>;
+  id: Scalars["ID"]["output"];
   kind: ViewKind;
-  name: Scalars['String']['output'];
+  name: Scalars["String"]["output"];
   ontology: Ontology;
-  pinned: Scalars['Boolean']['output'];
-  query: Scalars['String']['output'];
+  pinned: Scalars["Boolean"]["output"];
+  query: Scalars["String"]["output"];
   scatterPlots: Array<ScatterPlot>;
   views: Array<GraphView>;
 };
-
 
 /** A view of a graph, that contains entities and relations. */
 export type GraphQueryScatterPlotsArgs = {
   filters?: InputMaybe<ScatterPlotFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 /** A view of a graph, that contains entities and relations. */
 export type GraphQueryViewsArgs = {
@@ -464,11 +469,11 @@ export type GraphQueryViewsArgs = {
 export type GraphQueryFilter = {
   AND?: InputMaybe<GraphQueryFilter>;
   OR?: InputMaybe<GraphQueryFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
   /** Filter by list of IDs */
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
   /** Search by text */
-  search?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 /** Input for creating a new expression */
@@ -476,30 +481,29 @@ export type GraphQueryInput = {
   /** The columns (if ViewKind is Table) */
   columns?: InputMaybe<Array<ColumnInput>>;
   /** A detailed description of the expression */
-  description?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars["String"]["input"]>;
   /** The kind/type of this expression */
   kind: ViewKind;
   /** The label/name of the expression */
-  name: Scalars['String']['input'];
+  name: Scalars["String"]["input"];
   /** The ID of the ontology this expression belongs to. If not provided, uses default ontology */
-  ontology?: InputMaybe<Scalars['ID']['input']>;
+  ontology?: InputMaybe<Scalars["ID"]["input"]>;
   /** The label/name of the expression */
-  query: Scalars['Cypher']['input'];
+  query: Scalars["Cypher"]["input"];
   /** The graph to test against */
-  testAgainst?: InputMaybe<Scalars['ID']['input']>;
+  testAgainst?: InputMaybe<Scalars["ID"]["input"]>;
 };
 
 /** A view of a graph, that contains entities and relations. */
 export type GraphView = {
-  __typename?: 'GraphView';
+  __typename?: "GraphView";
   graph: Graph;
-  id: Scalars['ID']['output'];
-  label: Scalars['String']['output'];
+  id: Scalars["ID"]["output"];
+  label: Scalars["String"]["output"];
   plotViews: Array<PlotView>;
   query: GraphQuery;
   render: PairsPathTable;
 };
-
 
 /** A view of a graph, that contains entities and relations. */
 export type GraphViewPlotViewsArgs = {
@@ -510,41 +514,41 @@ export type GraphViewPlotViewsArgs = {
 export type GraphViewFilter = {
   AND?: InputMaybe<GraphViewFilter>;
   OR?: InputMaybe<GraphViewFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
   /** Filter by list of IDs */
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
   /** Search by text */
-  search?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 /** Input for creating a new expression */
 export type GraphViewInput = {
-  graph: Scalars['ID']['input'];
-  query: Scalars['ID']['input'];
+  graph: Scalars["ID"]["input"];
+  query: Scalars["ID"]["input"];
 };
 
 export type History = {
-  __typename?: 'History';
+  __typename?: "History";
   app?: Maybe<App>;
-  date: Scalars['DateTime']['output'];
-  during?: Maybe<Scalars['String']['output']>;
+  date: Scalars["DateTime"]["output"];
+  during?: Maybe<Scalars["String"]["output"]>;
   effectiveChanges: Array<ModelChange>;
-  id: Scalars['ID']['output'];
+  id: Scalars["ID"]["output"];
   kind: HistoryKind;
   user?: Maybe<User>;
 };
 
 export enum HistoryKind {
-  Create = 'CREATE',
-  Delete = 'DELETE',
-  Update = 'UPDATE'
+  Create = "CREATE",
+  Delete = "DELETE",
+  Update = "UPDATE",
 }
 
 export enum InstanceKind {
-  Entity = 'ENTITY',
-  Lot = 'LOT',
-  Sample = 'SAMPLE',
-  Unknown = 'UNKNOWN'
+  Entity = "ENTITY",
+  Lot = "LOT",
+  Sample = "SAMPLE",
+  Unknown = "UNKNOWN",
 }
 
 /**
@@ -558,133 +562,133 @@ export enum InstanceKind {
  *
  */
 export type Measurement = Edge & {
-  __typename?: 'Measurement';
+  __typename?: "Measurement";
   category: MeasurementCategory;
   /** When this entity was created */
-  createdAt: Scalars['DateTime']['output'];
+  createdAt: Scalars["DateTime"]["output"];
   /** The unique identifier of the entity within its graph */
-  id: Scalars['NodeID']['output'];
+  id: Scalars["NodeID"]["output"];
   inferedBy: Edge;
-  label: Scalars['String']['output'];
-  leftId: Scalars['String']['output'];
-  rightId: Scalars['String']['output'];
+  label: Scalars["String"]["output"];
+  leftId: Scalars["String"]["output"];
+  rightId: Scalars["String"]["output"];
   /** Timestamp from when this entity is valid */
-  validFrom: Scalars['DateTime']['output'];
+  validFrom: Scalars["DateTime"]["output"];
   /** Timestamp until when this entity is valid */
-  validTo: Scalars['DateTime']['output'];
+  validTo: Scalars["DateTime"]["output"];
   /** The value of the measurement */
-  value: Scalars['Metric']['output'];
+  value: Scalars["Metric"]["output"];
 };
 
-export type MeasurementCategory = Category & EdgeCategory & {
-  __typename?: 'MeasurementCategory';
-  /** The unique identifier of the expression within its graph */
-  ageName: Scalars['String']['output'];
-  color?: Maybe<Array<Scalars['Float']['output']>>;
-  /** A description of the expression. */
-  description?: Maybe<Scalars['String']['output']>;
-  /** The unique identifier of the expression within its graph */
-  id: Scalars['ID']['output'];
-  /** The kind of expression */
-  kind: ExpressionKind;
-  /** The unique identifier of the expression within its graph */
-  label: Scalars['String']['output'];
-  /** The category of the left entity */
-  left?: Maybe<NodeCategory>;
-  /** The kind of metric this expression represents */
-  metricKind: MeasurementKind;
-  /** The ontology the expression belongs to. */
-  ontology: Ontology;
-  /** The category of the right entity */
-  right?: Maybe<NodeCategory>;
-  /** An image or other media file that can be used to represent the expression. */
-  store?: Maybe<MediaStore>;
-};
+export type MeasurementCategory = Category &
+  EdgeCategory & {
+    __typename?: "MeasurementCategory";
+    /** The unique identifier of the expression within its graph */
+    ageName: Scalars["String"]["output"];
+    color?: Maybe<Array<Scalars["Float"]["output"]>>;
+    /** A description of the expression. */
+    description?: Maybe<Scalars["String"]["output"]>;
+    /** The unique identifier of the expression within its graph */
+    id: Scalars["ID"]["output"];
+    /** The kind of expression */
+    kind: ExpressionKind;
+    /** The unique identifier of the expression within its graph */
+    label: Scalars["String"]["output"];
+    /** The category of the left entity */
+    left?: Maybe<NodeCategory>;
+    /** The kind of metric this expression represents */
+    metricKind: MeasurementKind;
+    /** The ontology the expression belongs to. */
+    ontology: Ontology;
+    /** The category of the right entity */
+    right?: Maybe<NodeCategory>;
+    /** An image or other media file that can be used to represent the expression. */
+    store?: Maybe<MediaStore>;
+  };
 
 /** Input for creating a new expression */
 export type MeasurementCategoryInput = {
   /** RGBA color values as list of 3 or 4 integers */
-  color?: InputMaybe<Array<Scalars['Int']['input']>>;
+  color?: InputMaybe<Array<Scalars["Int"]["input"]>>;
   /** A detailed description of the expression */
-  description?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars["String"]["input"]>;
   /** An optional image associated with this expression */
-  image?: InputMaybe<Scalars['RemoteUpload']['input']>;
+  image?: InputMaybe<Scalars["RemoteUpload"]["input"]>;
   /** The type of metric data this expression represents */
   kind: MeasurementKind;
   /** The label/name of the expression */
-  label: Scalars['String']['input'];
+  label: Scalars["String"]["input"];
   /** The ID of the ontology this expression belongs to. If not provided, uses default ontology */
-  ontology?: InputMaybe<Scalars['ID']['input']>;
+  ontology?: InputMaybe<Scalars["ID"]["input"]>;
   /** Permanent URL identifier for the expression */
-  purl?: InputMaybe<Scalars['String']['input']>;
+  purl?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type MeasurementInput = {
-  entity: Scalars['NodeID']['input'];
-  expression: Scalars['ID']['input'];
-  structure: Scalars['NodeID']['input'];
-  validFrom?: InputMaybe<Scalars['DateTime']['input']>;
-  validTo?: InputMaybe<Scalars['DateTime']['input']>;
-  value?: InputMaybe<Scalars['Metric']['input']>;
+  entity: Scalars["NodeID"]["input"];
+  expression: Scalars["ID"]["input"];
+  structure: Scalars["NodeID"]["input"];
+  validFrom?: InputMaybe<Scalars["DateTime"]["input"]>;
+  validTo?: InputMaybe<Scalars["DateTime"]["input"]>;
+  value?: InputMaybe<Scalars["Metric"]["input"]>;
 };
 
 export enum MeasurementKind {
-  Boolean = 'BOOLEAN',
-  Category = 'CATEGORY',
-  Datetime = 'DATETIME',
-  Float = 'FLOAT',
-  FourDVector = 'FOUR_D_VECTOR',
-  Int = 'INT',
-  NVector = 'N_VECTOR',
-  OneDVector = 'ONE_D_VECTOR',
-  String = 'STRING',
-  ThreeDVector = 'THREE_D_VECTOR',
-  TwoDVector = 'TWO_D_VECTOR'
+  Boolean = "BOOLEAN",
+  Category = "CATEGORY",
+  Datetime = "DATETIME",
+  Float = "FLOAT",
+  FourDVector = "FOUR_D_VECTOR",
+  Int = "INT",
+  NVector = "N_VECTOR",
+  OneDVector = "ONE_D_VECTOR",
+  String = "STRING",
+  ThreeDVector = "THREE_D_VECTOR",
+  TwoDVector = "TWO_D_VECTOR",
 }
 
 export type MediaStore = {
-  __typename?: 'MediaStore';
-  bucket: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  key: Scalars['String']['output'];
-  path: Scalars['String']['output'];
-  presignedUrl: Scalars['String']['output'];
+  __typename?: "MediaStore";
+  bucket: Scalars["String"]["output"];
+  id: Scalars["ID"]["output"];
+  key: Scalars["String"]["output"];
+  path: Scalars["String"]["output"];
+  presignedUrl: Scalars["String"]["output"];
 };
 
-
 export type MediaStorePresignedUrlArgs = {
-  host?: InputMaybe<Scalars['String']['input']>;
+  host?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 /** A model represents a trained machine learning model that can be used for analysis. */
 export type Model = {
-  __typename?: 'Model';
+  __typename?: "Model";
   /** The unique identifier of the model */
-  id: Scalars['ID']['output'];
+  id: Scalars["ID"]["output"];
   /** The name of the model */
-  name: Scalars['String']['output'];
+  name: Scalars["String"]["output"];
   /** Optional file storage location containing the model weights/parameters */
   store?: Maybe<MediaStore>;
 };
 
 export type ModelChange = {
-  __typename?: 'ModelChange';
-  field: Scalars['String']['output'];
-  newValue?: Maybe<Scalars['String']['output']>;
-  oldValue?: Maybe<Scalars['String']['output']>;
+  __typename?: "ModelChange";
+  field: Scalars["String"]["output"];
+  newValue?: Maybe<Scalars["String"]["output"]>;
+  oldValue?: Maybe<Scalars["String"]["output"]>;
 };
 
 export type ModelFilter = {
   AND?: InputMaybe<ModelFilter>;
   OR?: InputMaybe<ModelFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
   /** Filter by list of IDs */
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type Mutation = {
-  __typename?: 'Mutation';
+  __typename?: "Mutation";
   /** Create a new entity */
   createEntity: Entity;
   /** Create a new expression */
@@ -728,27 +732,27 @@ export type Mutation = {
   /** Create a new expression */
   createStructureCategory: StructureCategory;
   /** Delete an existing entity */
-  deleteEntity: Scalars['ID']['output'];
+  deleteEntity: Scalars["ID"]["output"];
   /** Delete an existing expression */
-  deleteGenericCategory: Scalars['ID']['output'];
+  deleteGenericCategory: Scalars["ID"]["output"];
   /** Delete an existing graph */
-  deleteGraph: Scalars['ID']['output'];
+  deleteGraph: Scalars["ID"]["output"];
   /** Delete an existing expression */
-  deleteMeasurementCategory: Scalars['ID']['output'];
+  deleteMeasurementCategory: Scalars["ID"]["output"];
   /** Delete an existing ontology */
-  deleteOntology: Scalars['ID']['output'];
+  deleteOntology: Scalars["ID"]["output"];
   /** Delete an existing protocol */
-  deleteProtocol: Scalars['ID']['output'];
+  deleteProtocol: Scalars["ID"]["output"];
   /** Delete an existing protocol step */
-  deleteProtocolStep: Scalars['ID']['output'];
+  deleteProtocolStep: Scalars["ID"]["output"];
   /** Delete an existing protocol step template */
-  deleteProtocolStepTemplate: Scalars['ID']['output'];
+  deleteProtocolStepTemplate: Scalars["ID"]["output"];
   /** Delete an existing expression */
-  deleteRelationCategory: Scalars['ID']['output'];
+  deleteRelationCategory: Scalars["ID"]["output"];
   /** Delete an existing scatter plot */
-  deleteScatterPlot: Scalars['ID']['output'];
+  deleteScatterPlot: Scalars["ID"]["output"];
   /** Delete an existing expression */
-  deleteStructureCategory: Scalars['ID']['output'];
+  deleteStructureCategory: Scalars["ID"]["output"];
   /** Pin or unpin a graph */
   pinGraph: Graph;
   /** Pin or unpin a graph query */
@@ -775,221 +779,177 @@ export type Mutation = {
   updateStructureCategory: Expression;
 };
 
-
 export type MutationCreateEntityArgs = {
   input: EntityInput;
 };
-
 
 export type MutationCreateGenericCategoryArgs = {
   input: GenericCategoryInput;
 };
 
-
 export type MutationCreateGraphArgs = {
   input: GraphInput;
 };
-
 
 export type MutationCreateGraphQueryArgs = {
   input: GraphQueryInput;
 };
 
-
 export type MutationCreateGraphViewArgs = {
   input: GraphViewInput;
 };
-
 
 export type MutationCreateMeasurementArgs = {
   input: MeasurementInput;
 };
 
-
 export type MutationCreateMeasurementCategoryArgs = {
   input: MeasurementCategoryInput;
 };
-
 
 export type MutationCreateModelArgs = {
   input: CreateModelInput;
 };
 
-
 export type MutationCreateNodeQueryArgs = {
   input: NodeQueryInput;
 };
-
 
 export type MutationCreateNodeViewArgs = {
   input: NodeViewInput;
 };
 
-
 export type MutationCreateOntologyArgs = {
   input: OntologyInput;
 };
-
 
 export type MutationCreatePlotViewArgs = {
   input: PlotViewInput;
 };
 
-
 export type MutationCreateProtocolArgs = {
   input: ProtocolInput;
 };
-
 
 export type MutationCreateProtocolStepArgs = {
   input: ProtocolStepInput;
 };
 
-
 export type MutationCreateProtocolStepTemplateArgs = {
   input: ProtocolStepTemplateInput;
 };
-
 
 export type MutationCreateReagentArgs = {
   input: ReagentInput;
 };
 
-
 export type MutationCreateRelationArgs = {
   input: RelationInput;
 };
-
 
 export type MutationCreateRelationCategoryArgs = {
   input: RelationCategoryInput;
 };
 
-
 export type MutationCreateScatterPlotArgs = {
   input: ScatterPlotInput;
 };
-
 
 export type MutationCreateStructureArgs = {
   input: StructureInput;
 };
 
-
 export type MutationCreateStructureCategoryArgs = {
   input: StructureCategoryInput;
 };
-
 
 export type MutationDeleteEntityArgs = {
   input: DeleteEntityInput;
 };
 
-
 export type MutationDeleteGenericCategoryArgs = {
   input: DeleteGenericCategoryInput;
 };
-
 
 export type MutationDeleteGraphArgs = {
   input: DeleteGraphInput;
 };
 
-
 export type MutationDeleteMeasurementCategoryArgs = {
   input: DeleteMeasurementCategoryInput;
 };
-
 
 export type MutationDeleteOntologyArgs = {
   input: DeleteOntologyInput;
 };
 
-
 export type MutationDeleteProtocolArgs = {
   input: DeleteProtocolInput;
 };
-
 
 export type MutationDeleteProtocolStepArgs = {
   input: DeleteProtocolStepInput;
 };
 
-
 export type MutationDeleteProtocolStepTemplateArgs = {
   input: DeleteProtocolStepTemplateInput;
 };
-
 
 export type MutationDeleteRelationCategoryArgs = {
   input: DeleteRelationCategoryInput;
 };
 
-
 export type MutationDeleteScatterPlotArgs = {
   input: DeleteScatterPlotInput;
 };
-
 
 export type MutationDeleteStructureCategoryArgs = {
   input: DeleteStructureCategoryInput;
 };
 
-
 export type MutationPinGraphArgs = {
   input: PinGraphInput;
 };
-
 
 export type MutationPinGraphQueryArgs = {
   input: PinGraphQueryInput;
 };
 
-
 export type MutationPinNodeQueryArgs = {
   input: PinNodeQueryInput;
 };
-
 
 export type MutationRequestUploadArgs = {
   input: RequestMediaUploadInput;
 };
 
-
 export type MutationUpdateGenericCategoryArgs = {
   input: UpdateGenericCategoryInput;
 };
-
 
 export type MutationUpdateGraphArgs = {
   input: UpdateGraphInput;
 };
 
-
 export type MutationUpdateMeasurementCategoryArgs = {
   input: UpdateMeasurementCategoryInput;
 };
-
 
 export type MutationUpdateOntologyArgs = {
   input: UpdateOntologyInput;
 };
 
-
 export type MutationUpdateProtocolStepArgs = {
   input: UpdateProtocolStepInput;
 };
-
 
 export type MutationUpdateProtocolStepTemplateArgs = {
   input: UpdateProtocolStepTemplateInput;
 };
 
-
 export type MutationUpdateRelationCategoryArgs = {
   input: UpdateRelationCategoryInput;
 };
-
 
 export type MutationUpdateStructureCategoryArgs = {
   input: StructureCategoryInput;
@@ -1001,10 +961,10 @@ export type Node = {
   /** The unique identifier of the entity within its graph */
   graph: Graph;
   /** The unique identifier of the entity within its graph */
-  graphId: Scalars['ID']['output'];
+  graphId: Scalars["ID"]["output"];
   /** The unique identifier of the entity within its graph */
-  id: Scalars['NodeID']['output'];
-  label: Scalars['String']['output'];
+  id: Scalars["NodeID"]["output"];
+  label: Scalars["String"]["output"];
   /** The unique identifier of the entity within its graph */
   leftEdges: Array<Edge>;
   nodeViews: Array<NodeView>;
@@ -1014,7 +974,6 @@ export type Node = {
   rightEdges: Array<Edge>;
 };
 
-
 export type NodeEdgesArgs = {
   filter?: InputMaybe<EntityRelationFilter>;
   pagination?: InputMaybe<GraphPaginationInput>;
@@ -1022,58 +981,58 @@ export type NodeEdgesArgs = {
 
 export type NodeCategory = {
   /** The unique identifier of the expression within its graph */
-  id: Scalars['ID']['output'];
+  id: Scalars["ID"]["output"];
   /** The kind of instance this expression creates */
   instanceKind: InstanceKind;
 };
 
 /** A view of a node entities and relations. */
 export type NodeQuery = {
-  __typename?: 'NodeQuery';
-  description?: Maybe<Scalars['String']['output']>;
-  id: Scalars['ID']['output'];
+  __typename?: "NodeQuery";
+  description?: Maybe<Scalars["String"]["output"]>;
+  id: Scalars["ID"]["output"];
   kind: ViewKind;
-  name: Scalars['String']['output'];
+  name: Scalars["String"]["output"];
   ontology: Ontology;
-  pinned: Scalars['Boolean']['output'];
-  query: Scalars['String']['output'];
+  pinned: Scalars["Boolean"]["output"];
+  query: Scalars["String"]["output"];
 };
 
 export type NodeQueryFilter = {
   AND?: InputMaybe<NodeQueryFilter>;
   OR?: InputMaybe<NodeQueryFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
   /** Filter by list of IDs */
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
   /** Search by text */
-  search?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 /** Input for creating a new expression */
 export type NodeQueryInput = {
   /** The allowed entitie classes for this query */
-  allowedEntities?: InputMaybe<Array<Scalars['ID']['input']>>;
+  allowedEntities?: InputMaybe<Array<Scalars["ID"]["input"]>>;
   /** The columns (if ViewKind is Table) */
   columns?: InputMaybe<Array<ColumnInput>>;
   /** A detailed description of the expression */
-  description?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars["String"]["input"]>;
   /** The kind/type of this expression */
   kind: ViewKind;
   /** The label/name of the expression */
-  name: Scalars['String']['input'];
+  name: Scalars["String"]["input"];
   /** The ID of the ontology this expression belongs to. If not provided, uses default ontology */
-  ontology?: InputMaybe<Scalars['ID']['input']>;
+  ontology?: InputMaybe<Scalars["ID"]["input"]>;
   /** The label/name of the expression */
-  query: Scalars['Cypher']['input'];
+  query: Scalars["Cypher"]["input"];
   /** The node to test against */
-  testAgainst?: InputMaybe<Scalars['ID']['input']>;
+  testAgainst?: InputMaybe<Scalars["ID"]["input"]>;
 };
 
 /** A view of a graph, that contains entities and relations. */
 export type NodeView = {
-  __typename?: 'NodeView';
-  id: Scalars['ID']['output'];
-  label: Scalars['String']['output'];
+  __typename?: "NodeView";
+  id: Scalars["ID"]["output"];
+  label: Scalars["String"]["output"];
   node: Node;
   query: NodeQuery;
   render: PairsPathTable;
@@ -1082,22 +1041,22 @@ export type NodeView = {
 export type NodeViewFilter = {
   AND?: InputMaybe<NodeViewFilter>;
   OR?: InputMaybe<NodeViewFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
   /** Filter by list of IDs */
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
   /** Search by text */
-  search?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 /** Input for creating a new expression */
 export type NodeViewInput = {
-  node: Scalars['ID']['input'];
-  query: Scalars['ID']['input'];
+  node: Scalars["ID"]["input"];
+  query: Scalars["ID"]["input"];
 };
 
 export type OffsetPaginationInput = {
-  limit?: Scalars['Int']['input'];
-  offset?: Scalars['Int']['input'];
+  limit?: Scalars["Int"]["input"];
+  offset?: Scalars["Int"]["input"];
 };
 
 /**
@@ -1106,9 +1065,9 @@ export type OffsetPaginationInput = {
  *     and semantic structure for organizing data across graphs.
  */
 export type Ontology = {
-  __typename?: 'Ontology';
+  __typename?: "Ontology";
   /** A detailed description of what this ontology represents and how it should be used */
-  description?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars["String"]["output"]>;
   edgeCategories: Array<EdgeCategory>;
   /** The list of expressions (terms/concepts) defined in this ontology */
   expressions: Array<Expression>;
@@ -1119,16 +1078,16 @@ export type Ontology = {
   /** The list of graphs defined in this ontology */
   graphs: Array<Graph>;
   /** The unique identifier of the ontology */
-  id: Scalars['ID']['output'];
+  id: Scalars["ID"]["output"];
   /** The list of measurement exprdessions defined in this ontology */
   measurementCategories: Array<MeasurementCategory>;
   /** The name of the ontology */
-  name: Scalars['String']['output'];
+  name: Scalars["String"]["output"];
   nodeCategories: Array<NodeCategory>;
   /** The list of node queries defined in this ontology */
   nodeQueries: Array<NodeQuery>;
   /** The Persistent URL (PURL) that uniquely identifies this ontology globally */
-  purl?: Maybe<Scalars['String']['output']>;
+  purl?: Maybe<Scalars["String"]["output"]>;
   /** The list of relation expressions defined in this ontology */
   relationCategories: Array<RelationCategory>;
   /** Optional associated media files like documentation or diagrams */
@@ -1136,7 +1095,6 @@ export type Ontology = {
   /** The list of structure expressions defined in this ontology */
   structureCategories: Array<StructureCategory>;
 };
-
 
 /**
  * An ontology represents a formal naming and definition of types, properties, and
@@ -1148,7 +1106,6 @@ export type OntologyEdgeCategoriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 /**
  * An ontology represents a formal naming and definition of types, properties, and
  *     interrelationships between entities in a specific domain. In kraph, ontologies provide the vocabulary
@@ -1158,7 +1115,6 @@ export type OntologyExpressionsArgs = {
   filters?: InputMaybe<ExpressionFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 /**
  * An ontology represents a formal naming and definition of types, properties, and
@@ -1170,7 +1126,6 @@ export type OntologyGenericCategoriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 /**
  * An ontology represents a formal naming and definition of types, properties, and
  *     interrelationships between entities in a specific domain. In kraph, ontologies provide the vocabulary
@@ -1180,7 +1135,6 @@ export type OntologyGraphQueriesArgs = {
   filters?: InputMaybe<GraphQueryFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 /**
  * An ontology represents a formal naming and definition of types, properties, and
@@ -1192,7 +1146,6 @@ export type OntologyGraphsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 /**
  * An ontology represents a formal naming and definition of types, properties, and
  *     interrelationships between entities in a specific domain. In kraph, ontologies provide the vocabulary
@@ -1202,7 +1155,6 @@ export type OntologyMeasurementCategoriesArgs = {
   filters?: InputMaybe<ExpressionFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 /**
  * An ontology represents a formal naming and definition of types, properties, and
@@ -1214,7 +1166,6 @@ export type OntologyNodeCategoriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 /**
  * An ontology represents a formal naming and definition of types, properties, and
  *     interrelationships between entities in a specific domain. In kraph, ontologies provide the vocabulary
@@ -1225,7 +1176,6 @@ export type OntologyNodeQueriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 /**
  * An ontology represents a formal naming and definition of types, properties, and
  *     interrelationships between entities in a specific domain. In kraph, ontologies provide the vocabulary
@@ -1235,7 +1185,6 @@ export type OntologyRelationCategoriesArgs = {
   filters?: InputMaybe<ExpressionFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 /**
  * An ontology represents a formal naming and definition of types, properties, and
@@ -1252,28 +1201,28 @@ export type OntologyFilter = {
   AND?: InputMaybe<OntologyFilter>;
   OR?: InputMaybe<OntologyFilter>;
   /** Filter by ontology ID */
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
   /** Filter by list of IDs */
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
   /** Search by text */
-  search?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 /** Input type for creating a new ontology */
 export type OntologyInput = {
   /** An optional description of the ontology */
-  description?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars["String"]["input"]>;
   /** An optional ID reference to an associated image */
-  image?: InputMaybe<Scalars['ID']['input']>;
+  image?: InputMaybe<Scalars["ID"]["input"]>;
   /** The name of the ontology (will be converted to snake_case) */
-  name: Scalars['String']['input'];
+  name: Scalars["String"]["input"];
   /** An optional PURL (Persistent URL) for the ontology */
-  purl?: InputMaybe<Scalars['String']['input']>;
+  purl?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 /** A paired structure two entities and the relation between them. */
 export type Pair = {
-  __typename?: 'Pair';
+  __typename?: "Pair";
   /** The relation between the two entities. */
   edge: Edge;
   /** The left entity. */
@@ -1284,7 +1233,7 @@ export type Pair = {
 
 /** A collection of paired entities. */
 export type Pairs = {
-  __typename?: 'Pairs';
+  __typename?: "Pairs";
   /** The graph this table was queried from. */
   graph: Graph;
   /** The paired entities. */
@@ -1294,45 +1243,45 @@ export type Pairs = {
 export type PairsPathTable = Pairs | Path | Table;
 
 export type Path = {
-  __typename?: 'Path';
+  __typename?: "Path";
   edges: Array<Edge>;
   nodes: Array<Node>;
 };
 
 export type PinGraphInput = {
-  id: Scalars['ID']['input'];
-  pinned: Scalars['Boolean']['input'];
+  id: Scalars["ID"]["input"];
+  pinned: Scalars["Boolean"]["input"];
 };
 
 export type PinGraphQueryInput = {
-  id: Scalars['ID']['input'];
-  pinned: Scalars['Boolean']['input'];
+  id: Scalars["ID"]["input"];
+  pinned: Scalars["Boolean"]["input"];
 };
 
 export type PinNodeQueryInput = {
-  id: Scalars['ID']['input'];
-  pinned: Scalars['Boolean']['input'];
+  id: Scalars["ID"]["input"];
+  pinned: Scalars["Boolean"]["input"];
 };
 
 export type PlateChildInput = {
-  backgroundColor?: InputMaybe<Scalars['String']['input']>;
-  bold?: InputMaybe<Scalars['Boolean']['input']>;
+  backgroundColor?: InputMaybe<Scalars["String"]["input"]>;
+  bold?: InputMaybe<Scalars["Boolean"]["input"]>;
   children?: InputMaybe<Array<PlateChildInput>>;
-  color?: InputMaybe<Scalars['String']['input']>;
-  fontSize?: InputMaybe<Scalars['String']['input']>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  italic?: InputMaybe<Scalars['Boolean']['input']>;
-  text?: InputMaybe<Scalars['String']['input']>;
-  type?: InputMaybe<Scalars['String']['input']>;
-  underline?: InputMaybe<Scalars['Boolean']['input']>;
-  value?: InputMaybe<Scalars['String']['input']>;
+  color?: InputMaybe<Scalars["String"]["input"]>;
+  fontSize?: InputMaybe<Scalars["String"]["input"]>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
+  italic?: InputMaybe<Scalars["Boolean"]["input"]>;
+  text?: InputMaybe<Scalars["String"]["input"]>;
+  type?: InputMaybe<Scalars["String"]["input"]>;
+  underline?: InputMaybe<Scalars["Boolean"]["input"]>;
+  value?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 /** A view of a graph, that contains entities and relations. */
 export type PlotView = {
-  __typename?: 'PlotView';
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
+  __typename?: "PlotView";
+  id: Scalars["ID"]["output"];
+  name: Scalars["String"]["output"];
   plot: ScatterPlot;
   view: GraphView;
 };
@@ -1340,44 +1289,43 @@ export type PlotView = {
 export type PlotViewFilter = {
   AND?: InputMaybe<PlotViewFilter>;
   OR?: InputMaybe<PlotViewFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
   /** Filter by list of IDs */
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
   /** Search by text */
-  search?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 /** Input for creating a new expression */
 export type PlotViewInput = {
-  plot: Scalars['ID']['input'];
-  view: Scalars['ID']['input'];
+  plot: Scalars["ID"]["input"];
+  view: Scalars["ID"]["input"];
 };
 
 /** Temporary Credentials for a file upload that can be used by a Client (e.g. in a python datalayer) */
 export type PresignedPostCredentials = {
-  __typename?: 'PresignedPostCredentials';
-  bucket: Scalars['String']['output'];
-  datalayer: Scalars['String']['output'];
-  key: Scalars['String']['output'];
-  policy: Scalars['String']['output'];
-  store: Scalars['String']['output'];
-  xAmzAlgorithm: Scalars['String']['output'];
-  xAmzCredential: Scalars['String']['output'];
-  xAmzDate: Scalars['String']['output'];
-  xAmzSignature: Scalars['String']['output'];
+  __typename?: "PresignedPostCredentials";
+  bucket: Scalars["String"]["output"];
+  datalayer: Scalars["String"]["output"];
+  key: Scalars["String"]["output"];
+  policy: Scalars["String"]["output"];
+  store: Scalars["String"]["output"];
+  xAmzAlgorithm: Scalars["String"]["output"];
+  xAmzCredential: Scalars["String"]["output"];
+  xAmzDate: Scalars["String"]["output"];
+  xAmzSignature: Scalars["String"]["output"];
 };
 
 export type Protocol = {
-  __typename?: 'Protocol';
-  createdAt: Scalars['DateTime']['output'];
+  __typename?: "Protocol";
+  createdAt: Scalars["DateTime"]["output"];
   creator?: Maybe<User>;
-  description?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars["String"]["output"]>;
   experiment: Experiment;
   history: Array<History>;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
+  id: Scalars["ID"]["output"];
+  name: Scalars["String"]["output"];
 };
-
 
 export type ProtocolHistoryArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -1386,38 +1334,36 @@ export type ProtocolHistoryArgs = {
 export type ProtocolFilter = {
   AND?: InputMaybe<ProtocolFilter>;
   OR?: InputMaybe<ProtocolFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
   /** Filter by list of IDs */
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
   /** Search by text */
-  search?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type ProtocolInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  experiment: Scalars['ID']['input'];
-  name: Scalars['String']['input'];
+  description?: InputMaybe<Scalars["String"]["input"]>;
+  experiment: Scalars["ID"]["input"];
+  name: Scalars["String"]["input"];
 };
 
 export type ProtocolStep = {
-  __typename?: 'ProtocolStep';
+  __typename?: "ProtocolStep";
   forEntity?: Maybe<Entity>;
   forReagent?: Maybe<Reagent>;
   history: Array<History>;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
-  performedAt?: Maybe<Scalars['DateTime']['output']>;
+  id: Scalars["ID"]["output"];
+  name: Scalars["String"]["output"];
+  performedAt?: Maybe<Scalars["DateTime"]["output"]>;
   performedBy?: Maybe<User>;
   reagentMappings: Array<ReagentMapping>;
   template: ProtocolStepTemplate;
   usedEntity?: Maybe<Entity>;
 };
 
-
 export type ProtocolStepHistoryArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type ProtocolStepReagentMappingsArgs = {
   filters?: InputMaybe<ProtocolStepFilter>;
@@ -1427,54 +1373,54 @@ export type ProtocolStepReagentMappingsArgs = {
 export type ProtocolStepFilter = {
   AND?: InputMaybe<ProtocolStepFilter>;
   OR?: InputMaybe<ProtocolStepFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
   /** Filter by list of IDs */
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  protocol?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
+  protocol?: InputMaybe<Scalars["ID"]["input"]>;
   /** Search by text */
-  search?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 /** Input type for creating a new protocol step */
 export type ProtocolStepInput = {
   /** ID of the entity this step is performed on */
-  entity: Scalars['ID']['input'];
+  entity: Scalars["ID"]["input"];
   /** When the step was performed */
-  performedAt?: InputMaybe<Scalars['DateTime']['input']>;
+  performedAt?: InputMaybe<Scalars["DateTime"]["input"]>;
   /** ID of the user who performed the step */
-  performedBy?: InputMaybe<Scalars['ID']['input']>;
+  performedBy?: InputMaybe<Scalars["ID"]["input"]>;
   /** List of reagent mappings */
   reagentMappings: Array<ReagentMappingInput>;
   /** ID of the protocol step template */
-  template: Scalars['ID']['input'];
+  template: Scalars["ID"]["input"];
   /** List of variable mappings */
   valueMappings: Array<VariableInput>;
 };
 
 export type ProtocolStepTemplate = {
-  __typename?: 'ProtocolStepTemplate';
-  createdAt: Scalars['DateTime']['output'];
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
-  plateChildren: Array<Scalars['UntypedPlateChild']['output']>;
+  __typename?: "ProtocolStepTemplate";
+  createdAt: Scalars["DateTime"]["output"];
+  id: Scalars["ID"]["output"];
+  name: Scalars["String"]["output"];
+  plateChildren: Array<Scalars["UntypedPlateChild"]["output"]>;
 };
 
 export type ProtocolStepTemplateFilter = {
   AND?: InputMaybe<ProtocolStepTemplateFilter>;
   OR?: InputMaybe<ProtocolStepTemplateFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
   /** Filter by list of IDs */
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type ProtocolStepTemplateInput = {
-  name: Scalars['String']['input'];
+  name: Scalars["String"]["input"];
   plateChildren: Array<PlateChildInput>;
 };
 
 export type Query = {
-  __typename?: 'Query';
+  __typename?: "Query";
   categories: Array<Category>;
   edge: Edge;
   edgeCategories: Array<EdgeCategory>;
@@ -1545,276 +1491,228 @@ export type Query = {
   structureCategory: StructureCategory;
 };
 
-
 export type QueryCategoriesArgs = {
   input: OffsetPaginationInput;
 };
 
-
 export type QueryEdgeArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryEdgeCategoriesArgs = {
   input: OffsetPaginationInput;
 };
 
-
 export type QueryEdgeCategoryArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryEdgesArgs = {
   filters?: InputMaybe<EntityRelationFilter>;
   pagination?: InputMaybe<GraphPaginationInput>;
 };
 
-
 export type QueryExpressionArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryExpressionsArgs = {
   filters?: InputMaybe<ExpressionFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryGenericCategoriesArgs = {
   filters?: InputMaybe<ExpressionFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryGenericCategoryArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryGraphArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryGraphQueriesArgs = {
   filters?: InputMaybe<GraphQueryFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryGraphQueryArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryGraphViewArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryGraphViewsArgs = {
   filters?: InputMaybe<GraphViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryGraphsArgs = {
   filters?: InputMaybe<GraphFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type QueryMeasurementCategoriesArgs = {
   filters?: InputMaybe<ExpressionFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryMeasurementCategoryArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryModelArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryModelsArgs = {
   filters?: InputMaybe<ModelFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryNodeArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryNodeCategoriesArgs = {
   input: OffsetPaginationInput;
 };
 
-
 export type QueryNodeCategoryArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryNodeQueriesArgs = {
   filters?: InputMaybe<NodeQueryFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryNodeQueryArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryNodeViewArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryNodeViewsArgs = {
   filters?: InputMaybe<NodeViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryNodesArgs = {
   filters?: InputMaybe<EntityFilter>;
   pagination?: InputMaybe<GraphPaginationInput>;
 };
-
 
 export type QueryOntologiesArgs = {
   filters?: InputMaybe<OntologyFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryOntologyArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryPlotViewArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryPlotViewsArgs = {
   filters?: InputMaybe<PlotViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryProtocolArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryProtocolStepArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryProtocolStepTemplateArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryProtocolStepTemplatesArgs = {
   filters?: InputMaybe<ProtocolStepTemplateFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryProtocolStepsArgs = {
   filters?: InputMaybe<ProtocolStepFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type QueryProtocolsArgs = {
   filters?: InputMaybe<ProtocolFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryReagentArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryReagentsArgs = {
   filters?: InputMaybe<ReagentFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryRelationCategoriesArgs = {
   filters?: InputMaybe<ExpressionFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryRelationCategoryArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryScatterPlotArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
-
 
 export type QueryScatterPlotsArgs = {
   filters?: InputMaybe<ScatterPlotFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryStructureArgs = {
-  graph?: InputMaybe<Scalars['ID']['input']>;
-  identifier: Scalars['StructureIdentifier']['input'];
-  object: Scalars['ID']['input'];
+  graph?: InputMaybe<Scalars["ID"]["input"]>;
+  identifier: Scalars["StructureIdentifier"]["input"];
+  object: Scalars["ID"]["input"];
 };
-
 
 export type QueryStructureCategoriesArgs = {
   filters?: InputMaybe<ExpressionFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryStructureCategoryArgs = {
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 };
 
 export type Reagent = {
-  __typename?: 'Reagent';
+  __typename?: "Reagent";
   creationSteps: Array<ProtocolStep>;
   expression?: Maybe<Expression>;
-  id: Scalars['ID']['output'];
-  label: Scalars['String']['output'];
-  lotId: Scalars['String']['output'];
-  orderId?: Maybe<Scalars['String']['output']>;
+  id: Scalars["ID"]["output"];
+  label: Scalars["String"]["output"];
+  lotId: Scalars["String"]["output"];
+  orderId?: Maybe<Scalars["String"]["output"]>;
   protocol?: Maybe<Protocol>;
   usedIn: Array<ReagentMapping>;
 };
-
 
 export type ReagentCreationStepsArgs = {
   filters?: InputMaybe<ProtocolStepFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type ReagentUsedInArgs = {
   filters?: InputMaybe<ProtocolStepFilter>;
@@ -1825,19 +1723,19 @@ export type ReagentFilter = {
   AND?: InputMaybe<ReagentFilter>;
   OR?: InputMaybe<ReagentFilter>;
   /** Filter by list of reagent IDs */
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
   /** Search reagents by text */
-  search?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type ReagentInput = {
-  expression: Scalars['ID']['input'];
-  lotId: Scalars['String']['input'];
+  expression: Scalars["ID"]["input"];
+  lotId: Scalars["String"]["input"];
 };
 
 export type ReagentMapping = {
-  __typename?: 'ReagentMapping';
-  id: Scalars['ID']['output'];
+  __typename?: "ReagentMapping";
+  id: Scalars["ID"]["output"];
   protocolStep: ProtocolStep;
   reagent: Reagent;
 };
@@ -1845,9 +1743,9 @@ export type ReagentMapping = {
 /** Input type for mapping reagents to protocol steps */
 export type ReagentMappingInput = {
   /** ID of the reagent to map */
-  reagent: Scalars['ID']['input'];
+  reagent: Scalars["ID"]["input"];
   /** Volume of the reagent in microliters */
-  volume: Scalars['Int']['input'];
+  volume: Scalars["Int"]["input"];
 };
 
 /**
@@ -1859,133 +1757,134 @@ export type ReagentMappingInput = {
  *
  */
 export type Relation = Edge & {
-  __typename?: 'Relation';
+  __typename?: "Relation";
   category: RelationCategory;
   /** When this entity was created */
-  createdAt: Scalars['DateTime']['output'];
+  createdAt: Scalars["DateTime"]["output"];
   /** The unique identifier of the entity within its graph */
-  id: Scalars['NodeID']['output'];
+  id: Scalars["NodeID"]["output"];
   inferedBy: Edge;
-  label: Scalars['String']['output'];
-  leftId: Scalars['String']['output'];
-  rightId: Scalars['String']['output'];
+  label: Scalars["String"]["output"];
+  leftId: Scalars["String"]["output"];
+  rightId: Scalars["String"]["output"];
   /** Timestamp from when this entity is valid */
-  validFrom: Scalars['DateTime']['output'];
+  validFrom: Scalars["DateTime"]["output"];
   /** Timestamp until when this entity is valid */
-  validTo: Scalars['DateTime']['output'];
+  validTo: Scalars["DateTime"]["output"];
 };
 
-export type RelationCategory = Category & EdgeCategory & {
-  __typename?: 'RelationCategory';
-  /** The unique identifier of the expression within its graph */
-  ageName: Scalars['String']['output'];
-  color?: Maybe<Array<Scalars['Float']['output']>>;
-  /** A description of the expression. */
-  description?: Maybe<Scalars['String']['output']>;
-  /** The unique identifier of the expression within its graph */
-  id: Scalars['ID']['output'];
-  /** The kind of expression */
-  kind: ExpressionKind;
-  /** The unique identifier of the expression within its graph */
-  label: Scalars['String']['output'];
-  /** The category of the left entity */
-  left?: Maybe<NodeCategory>;
-  /** The ontology the expression belongs to. */
-  ontology: Ontology;
-  /** The category of the right entity */
-  right?: Maybe<NodeCategory>;
-  /** An image or other media file that can be used to represent the expression. */
-  store?: Maybe<MediaStore>;
-};
+export type RelationCategory = Category &
+  EdgeCategory & {
+    __typename?: "RelationCategory";
+    /** The unique identifier of the expression within its graph */
+    ageName: Scalars["String"]["output"];
+    color?: Maybe<Array<Scalars["Float"]["output"]>>;
+    /** A description of the expression. */
+    description?: Maybe<Scalars["String"]["output"]>;
+    /** The unique identifier of the expression within its graph */
+    id: Scalars["ID"]["output"];
+    /** The kind of expression */
+    kind: ExpressionKind;
+    /** The unique identifier of the expression within its graph */
+    label: Scalars["String"]["output"];
+    /** The category of the left entity */
+    left?: Maybe<NodeCategory>;
+    /** The ontology the expression belongs to. */
+    ontology: Ontology;
+    /** The category of the right entity */
+    right?: Maybe<NodeCategory>;
+    /** An image or other media file that can be used to represent the expression. */
+    store?: Maybe<MediaStore>;
+  };
 
 /** Input for creating a new expression */
 export type RelationCategoryInput = {
   /** RGBA color values as list of 3 or 4 integers */
-  color?: InputMaybe<Array<Scalars['Int']['input']>>;
+  color?: InputMaybe<Array<Scalars["Int"]["input"]>>;
   /** A detailed description of the expression */
-  description?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars["String"]["input"]>;
   /** An optional image associated with this expression */
-  image?: InputMaybe<Scalars['RemoteUpload']['input']>;
+  image?: InputMaybe<Scalars["RemoteUpload"]["input"]>;
   /** The label/name of the expression */
-  label: Scalars['String']['input'];
+  label: Scalars["String"]["input"];
   /** The ID of the ontology this expression belongs to. If not provided, uses default ontology */
-  ontology?: InputMaybe<Scalars['ID']['input']>;
+  ontology?: InputMaybe<Scalars["ID"]["input"]>;
   /** Permanent URL identifier for the expression */
-  purl?: InputMaybe<Scalars['String']['input']>;
+  purl?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 /** Input type for creating a relation between two entities */
 export type RelationInput = {
   /** ID of the relation kind (LinkedExpression) */
-  kind: Scalars['ID']['input'];
+  kind: Scalars["ID"]["input"];
   /** ID of the left entity (format: graph:id) */
-  left: Scalars['ID']['input'];
+  left: Scalars["ID"]["input"];
   /** ID of the right entity (format: graph:id) */
-  right: Scalars['ID']['input'];
+  right: Scalars["ID"]["input"];
 };
 
 export type RequestMediaUploadInput = {
-  datalayer: Scalars['String']['input'];
-  key: Scalars['String']['input'];
+  datalayer: Scalars["String"]["input"];
+  key: Scalars["String"]["input"];
 };
 
 /** A scatter plot of a table graph, that contains entities and relations. */
 export type ScatterPlot = {
-  __typename?: 'ScatterPlot';
-  colorColumn?: Maybe<Scalars['String']['output']>;
-  createdAt: Scalars['DateTime']['output'];
-  description?: Maybe<Scalars['String']['output']>;
+  __typename?: "ScatterPlot";
+  colorColumn?: Maybe<Scalars["String"]["output"]>;
+  createdAt: Scalars["DateTime"]["output"];
+  description?: Maybe<Scalars["String"]["output"]>;
   graph: GraphQuery;
-  id: Scalars['ID']['output'];
-  idColumn: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-  shapeColumn?: Maybe<Scalars['String']['output']>;
-  sizeColumn?: Maybe<Scalars['String']['output']>;
-  xColumn: Scalars['String']['output'];
-  yColumn: Scalars['String']['output'];
+  id: Scalars["ID"]["output"];
+  idColumn: Scalars["String"]["output"];
+  name: Scalars["String"]["output"];
+  shapeColumn?: Maybe<Scalars["String"]["output"]>;
+  sizeColumn?: Maybe<Scalars["String"]["output"]>;
+  xColumn: Scalars["String"]["output"];
+  yColumn: Scalars["String"]["output"];
 };
 
 export type ScatterPlotFilter = {
   AND?: InputMaybe<ScatterPlotFilter>;
   OR?: InputMaybe<ScatterPlotFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id?: InputMaybe<Scalars["ID"]["input"]>;
   /** Filter by list of IDs */
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  ids?: InputMaybe<Array<Scalars["ID"]["input"]>>;
   /** Search by text */
-  search?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 /** Input for creating a new expression */
 export type ScatterPlotInput = {
   /** The column to use for the color of the points */
-  colorColumn?: InputMaybe<Scalars['String']['input']>;
+  colorColumn?: InputMaybe<Scalars["String"]["input"]>;
   /** A detailed description of the expression */
-  description?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars["String"]["input"]>;
   /** The column to use for the ID of the points */
-  idColumn: Scalars['String']['input'];
+  idColumn: Scalars["String"]["input"];
   /** The label/name of the expression */
-  name: Scalars['String']['input'];
+  name: Scalars["String"]["input"];
   /** The query to use */
-  query: Scalars['ID']['input'];
+  query: Scalars["ID"]["input"];
   /** The column to use for the shape of the points */
-  shapeColumn?: InputMaybe<Scalars['String']['input']>;
+  shapeColumn?: InputMaybe<Scalars["String"]["input"]>;
   /** The column to use for the size of the points */
-  sizeColumn?: InputMaybe<Scalars['String']['input']>;
+  sizeColumn?: InputMaybe<Scalars["String"]["input"]>;
   /** The graph to test against */
-  testAgainst?: InputMaybe<Scalars['ID']['input']>;
+  testAgainst?: InputMaybe<Scalars["ID"]["input"]>;
   /** The column to use for the x-axis */
-  xColumn: Scalars['String']['input'];
+  xColumn: Scalars["String"]["input"];
   /** The column to use for the x-axis ID (node, or edge) */
-  xIdColumn?: InputMaybe<Scalars['String']['input']>;
+  xIdColumn?: InputMaybe<Scalars["String"]["input"]>;
   /** The column to use for the y-axis */
-  yColumn: Scalars['String']['input'];
+  yColumn: Scalars["String"]["input"];
   /** The column to use for the y-axis ID (node, or edge) */
-  yIdColumn?: InputMaybe<Scalars['String']['input']>;
+  yIdColumn?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 /** A Structure is a recorded data point in a graph. It can measure a property of an entity through a direct measurement edge, that connects the entity to the structure. It of course can relate to other structures through relation edges. */
 export type Structure = Node & {
-  __typename?: 'Structure';
+  __typename?: "Structure";
   /** Protocol steps where this entity was the target */
   category: StructureCategory;
   /** The unique identifier of the entity within its graph */
@@ -1993,23 +1892,22 @@ export type Structure = Node & {
   /** The unique identifier of the entity within its graph */
   graph: Graph;
   /** The unique identifier of the entity within its graph */
-  graphId: Scalars['ID']['output'];
+  graphId: Scalars["ID"]["output"];
   /** The unique identifier of the entity within its graph */
-  id: Scalars['NodeID']['output'];
+  id: Scalars["NodeID"]["output"];
   /** The unique identifier of the entity within its graph */
-  identifier: Scalars['String']['output'];
-  label: Scalars['String']['output'];
+  identifier: Scalars["String"]["output"];
+  label: Scalars["String"]["output"];
   /** The unique identifier of the entity within its graph */
   leftEdges: Array<Edge>;
   nodeViews: Array<NodeView>;
   /** The expression that defines this entity's type */
-  object: Scalars['String']['output'];
+  object: Scalars["String"]["output"];
   /** Protocol steps where this entity was the target */
   pinnedViews: Array<NodeView>;
   /** The unique identifier of the entity within its graph */
   rightEdges: Array<Edge>;
 };
-
 
 /** A Structure is a recorded data point in a graph. It can measure a property of an entity through a direct measurement edge, that connects the entity to the structure. It of course can relate to other structures through relation edges. */
 export type StructureEdgesArgs = {
@@ -2017,1123 +1915,3837 @@ export type StructureEdgesArgs = {
   pagination?: InputMaybe<GraphPaginationInput>;
 };
 
-export type StructureCategory = Category & NodeCategory & {
-  __typename?: 'StructureCategory';
-  /** The unique identifier of the expression within its graph */
-  ageName: Scalars['String']['output'];
-  color?: Maybe<Array<Scalars['Float']['output']>>;
-  /** A description of the expression. */
-  description?: Maybe<Scalars['String']['output']>;
-  /** The unique identifier of the expression within its graph */
-  id: Scalars['ID']['output'];
-  /** The structure that this class represents */
-  identifier: Scalars['String']['output'];
-  /** The kind of instance this expression creates */
-  instanceKind: InstanceKind;
-  /** The kind of expression */
-  kind: ExpressionKind;
-  /** The unique identifier of the expression within its graph */
-  label: Scalars['String']['output'];
-  /** The ontology the expression belongs to. */
-  ontology: Ontology;
-  /** An image or other media file that can be used to represent the expression. */
-  store?: Maybe<MediaStore>;
-};
+export type StructureCategory = Category &
+  NodeCategory & {
+    __typename?: "StructureCategory";
+    /** The unique identifier of the expression within its graph */
+    ageName: Scalars["String"]["output"];
+    color?: Maybe<Array<Scalars["Float"]["output"]>>;
+    /** A description of the expression. */
+    description?: Maybe<Scalars["String"]["output"]>;
+    /** The unique identifier of the expression within its graph */
+    id: Scalars["ID"]["output"];
+    /** The structure that this class represents */
+    identifier: Scalars["String"]["output"];
+    /** The kind of instance this expression creates */
+    instanceKind: InstanceKind;
+    /** The kind of expression */
+    kind: ExpressionKind;
+    /** The unique identifier of the expression within its graph */
+    label: Scalars["String"]["output"];
+    /** The ontology the expression belongs to. */
+    ontology: Ontology;
+    /** An image or other media file that can be used to represent the expression. */
+    store?: Maybe<MediaStore>;
+  };
 
 /** Input for creating a new expression */
 export type StructureCategoryInput = {
   /** RGBA color values as list of 3 or 4 integers */
-  color?: InputMaybe<Array<Scalars['Int']['input']>>;
+  color?: InputMaybe<Array<Scalars["Int"]["input"]>>;
   /** A detailed description of the expression */
-  description?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars["String"]["input"]>;
   /** The label/name of the expression */
-  identifier: Scalars['StructureIdentifier']['input'];
+  identifier: Scalars["StructureIdentifier"]["input"];
   /** An optional image associated with this expression */
-  image?: InputMaybe<Scalars['RemoteUpload']['input']>;
+  image?: InputMaybe<Scalars["RemoteUpload"]["input"]>;
   /** The ID of the ontology this expression belongs to. If not provided, uses default ontology */
-  ontology?: InputMaybe<Scalars['ID']['input']>;
+  ontology?: InputMaybe<Scalars["ID"]["input"]>;
   /** Permanent URL identifier for the expression */
-  purl?: InputMaybe<Scalars['String']['input']>;
+  purl?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type StructureInput = {
-  graph?: InputMaybe<Scalars['ID']['input']>;
-  structure: Scalars['StructureString']['input'];
+  graph?: InputMaybe<Scalars["ID"]["input"]>;
+  structure: Scalars["StructureString"]["input"];
 };
 
 export type Subscription = {
-  __typename?: 'Subscription';
+  __typename?: "Subscription";
   historyEvents: Entity;
 };
 
-
 export type SubscriptionHistoryEventsArgs = {
-  user: Scalars['String']['input'];
+  user: Scalars["String"]["input"];
 };
 
 /** A collection of paired entities. */
 export type Table = {
-  __typename?: 'Table';
+  __typename?: "Table";
   /** The columns describind this table. */
   columns: Array<Column>;
   /** The graph this table was queried from. */
   graph: Graph;
   /** The paired entities. */
-  rows: Array<Scalars['Any']['output']>;
+  rows: Array<Scalars["Any"]["output"]>;
 };
 
 /** Input for updating an existing generic category */
 export type UpdateGenericCategoryInput = {
   /** New RGBA color values as list of 3 or 4 integers */
-  color?: InputMaybe<Array<Scalars['Int']['input']>>;
+  color?: InputMaybe<Array<Scalars["Int"]["input"]>>;
   /** New description for the expression */
-  description?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars["String"]["input"]>;
   /** The ID of the expression to update */
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
   /** New image ID for the expression */
-  image?: InputMaybe<Scalars['ID']['input']>;
+  image?: InputMaybe<Scalars["ID"]["input"]>;
   /** New label for the generic category */
-  label?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars["String"]["input"]>;
   /** New permanent URL for the expression */
-  purl?: InputMaybe<Scalars['String']['input']>;
+  purl?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type UpdateGraphInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  experiment?: InputMaybe<Scalars['ID']['input']>;
-  id: Scalars['String']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars["String"]["input"]>;
+  experiment?: InputMaybe<Scalars["ID"]["input"]>;
+  id: Scalars["String"]["input"];
+  name?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 /** Input for updating an existing expression */
 export type UpdateMeasurementCategoryInput = {
   /** New RGBA color values as list of 3 or 4 integers */
-  color?: InputMaybe<Array<Scalars['Int']['input']>>;
+  color?: InputMaybe<Array<Scalars["Int"]["input"]>>;
   /** New description for the expression */
-  description?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars["String"]["input"]>;
   /** The ID of the expression to update */
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
   /** New image ID for the expression */
-  image?: InputMaybe<Scalars['ID']['input']>;
+  image?: InputMaybe<Scalars["ID"]["input"]>;
   /** New label for the expression */
-  label?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars["String"]["input"]>;
   /** New permanent URL for the expression */
-  purl?: InputMaybe<Scalars['String']['input']>;
+  purl?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 /** Input type for updating an existing ontology */
 export type UpdateOntologyInput = {
   /** New description for the ontology */
-  description?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars["String"]["input"]>;
   /** The ID of the ontology to update */
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
   /** New ID reference to an associated image */
-  image?: InputMaybe<Scalars['ID']['input']>;
+  image?: InputMaybe<Scalars["ID"]["input"]>;
   /** New name for the ontology (will be converted to snake_case) */
-  name?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars["String"]["input"]>;
   /** New PURL (Persistent URL) for the ontology */
-  purl?: InputMaybe<Scalars['String']['input']>;
+  purl?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 /** Input type for updating an existing protocol step */
 export type UpdateProtocolStepInput = {
   /** ID of the protocol step to update */
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
   /** New name for the protocol step */
-  name: Scalars['String']['input'];
+  name: Scalars["String"]["input"];
   /** When the step was performed */
-  performedAt?: InputMaybe<Scalars['DateTime']['input']>;
+  performedAt?: InputMaybe<Scalars["DateTime"]["input"]>;
   /** ID of the user who performed the step */
-  performedBy?: InputMaybe<Scalars['ID']['input']>;
+  performedBy?: InputMaybe<Scalars["ID"]["input"]>;
   /** Updated list of reagent mappings */
   reagentMappings: Array<ReagentMappingInput>;
   /** ID of the new protocol step template */
-  template: Scalars['ID']['input'];
+  template: Scalars["ID"]["input"];
   /** Updated list of variable mappings */
   valueMappings: Array<VariableInput>;
 };
 
 export type UpdateProtocolStepTemplateInput = {
-  id: Scalars['ID']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars["ID"]["input"];
+  name?: InputMaybe<Scalars["String"]["input"]>;
   plateChildren: Array<PlateChildInput>;
 };
 
 /** Input for updating an existing expression */
 export type UpdateRelationCategoryInput = {
   /** New RGBA color values as list of 3 or 4 integers */
-  color?: InputMaybe<Array<Scalars['Int']['input']>>;
+  color?: InputMaybe<Array<Scalars["Int"]["input"]>>;
   /** New description for the expression */
-  description?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars["String"]["input"]>;
   /** The ID of the expression to update */
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
   /** New image ID for the expression */
-  image?: InputMaybe<Scalars['ID']['input']>;
+  image?: InputMaybe<Scalars["ID"]["input"]>;
   /** New label for the expression */
-  label?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars["String"]["input"]>;
   /** New permanent URL for the expression */
-  purl?: InputMaybe<Scalars['String']['input']>;
+  purl?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 /** A user. */
 export type User = {
-  __typename?: 'User';
-  email: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  password: Scalars['String']['output'];
-  sub: Scalars['String']['output'];
-  username: Scalars['String']['output'];
+  __typename?: "User";
+  email: Scalars["String"]["output"];
+  id: Scalars["ID"]["output"];
+  password: Scalars["String"]["output"];
+  sub: Scalars["String"]["output"];
+  username: Scalars["String"]["output"];
 };
 
 /** Input type for mapping variables to protocol steps */
 export type VariableInput = {
   /** Key of the variable */
-  key: Scalars['String']['input'];
+  key: Scalars["String"]["input"];
   /** Value of the variable */
-  value: Scalars['String']['input'];
+  value: Scalars["String"]["input"];
 };
 
 export enum ViewKind {
-  FloatMetric = 'FLOAT_METRIC',
-  IntMetric = 'INT_METRIC',
-  Pairs = 'PAIRS',
-  Path = 'PATH',
-  Table = 'TABLE'
+  FloatMetric = "FLOAT_METRIC",
+  IntMetric = "INT_METRIC",
+  Pairs = "PAIRS",
+  Path = "PATH",
+  Table = "TABLE",
 }
 
-type BaseCategory_GenericCategory_Fragment = { __typename?: 'GenericCategory', id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+type BaseCategory_GenericCategory_Fragment = {
+  __typename?: "GenericCategory";
+  id: string;
+  label: string;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+};
 
-type BaseCategory_MeasurementCategory_Fragment = { __typename?: 'MeasurementCategory', id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+type BaseCategory_MeasurementCategory_Fragment = {
+  __typename?: "MeasurementCategory";
+  id: string;
+  label: string;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+};
 
-type BaseCategory_RelationCategory_Fragment = { __typename?: 'RelationCategory', id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+type BaseCategory_RelationCategory_Fragment = {
+  __typename?: "RelationCategory";
+  id: string;
+  label: string;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+};
 
-type BaseCategory_StructureCategory_Fragment = { __typename?: 'StructureCategory', id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+type BaseCategory_StructureCategory_Fragment = {
+  __typename?: "StructureCategory";
+  id: string;
+  label: string;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+};
 
-export type BaseCategoryFragment = BaseCategory_GenericCategory_Fragment | BaseCategory_MeasurementCategory_Fragment | BaseCategory_RelationCategory_Fragment | BaseCategory_StructureCategory_Fragment;
+export type BaseCategoryFragment =
+  | BaseCategory_GenericCategory_Fragment
+  | BaseCategory_MeasurementCategory_Fragment
+  | BaseCategory_RelationCategory_Fragment
+  | BaseCategory_StructureCategory_Fragment;
 
-type BaseNodeCategory_GenericCategory_Fragment = { __typename?: 'GenericCategory', id: string };
+type BaseNodeCategory_GenericCategory_Fragment = {
+  __typename?: "GenericCategory";
+  id: string;
+};
 
-type BaseNodeCategory_StructureCategory_Fragment = { __typename?: 'StructureCategory', id: string };
+type BaseNodeCategory_StructureCategory_Fragment = {
+  __typename?: "StructureCategory";
+  id: string;
+};
 
-export type BaseNodeCategoryFragment = BaseNodeCategory_GenericCategory_Fragment | BaseNodeCategory_StructureCategory_Fragment;
+export type BaseNodeCategoryFragment =
+  | BaseNodeCategory_GenericCategory_Fragment
+  | BaseNodeCategory_StructureCategory_Fragment;
 
-type BaseEdgeCategory_MeasurementCategory_Fragment = { __typename?: 'MeasurementCategory', left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null };
+type BaseEdgeCategory_MeasurementCategory_Fragment = {
+  __typename?: "MeasurementCategory";
+  left?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+  right?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+};
 
-type BaseEdgeCategory_RelationCategory_Fragment = { __typename?: 'RelationCategory', left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null };
+type BaseEdgeCategory_RelationCategory_Fragment = {
+  __typename?: "RelationCategory";
+  left?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+  right?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+};
 
-export type BaseEdgeCategoryFragment = BaseEdgeCategory_MeasurementCategory_Fragment | BaseEdgeCategory_RelationCategory_Fragment;
+export type BaseEdgeCategoryFragment =
+  | BaseEdgeCategory_MeasurementCategory_Fragment
+  | BaseEdgeCategory_RelationCategory_Fragment;
 
-export type MeasurementCategoryFragment = { __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null };
+export type MeasurementCategoryFragment = {
+  __typename?: "MeasurementCategory";
+  metricKind: MeasurementKind;
+  id: string;
+  label: string;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+  left?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+  right?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+};
 
-export type RelationCategoryFragment = { __typename?: 'RelationCategory', id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null };
+export type RelationCategoryFragment = {
+  __typename?: "RelationCategory";
+  id: string;
+  label: string;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+  left?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+  right?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+};
 
-export type StructureCategoryFragment = { __typename?: 'StructureCategory', identifier: string, id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+export type StructureCategoryFragment = {
+  __typename?: "StructureCategory";
+  identifier: string;
+  id: string;
+  label: string;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+};
 
-export type GenericCategoryFragment = { __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+export type GenericCategoryFragment = {
+  __typename?: "GenericCategory";
+  instanceKind: InstanceKind;
+  id: string;
+  label: string;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+};
 
-type NodeCategory_GenericCategory_Fragment = { __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+type NodeCategory_GenericCategory_Fragment = {
+  __typename?: "GenericCategory";
+  instanceKind: InstanceKind;
+  id: string;
+  label: string;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+};
 
-type NodeCategory_StructureCategory_Fragment = { __typename?: 'StructureCategory', identifier: string, id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+type NodeCategory_StructureCategory_Fragment = {
+  __typename?: "StructureCategory";
+  identifier: string;
+  id: string;
+  label: string;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+};
 
-export type NodeCategoryFragment = NodeCategory_GenericCategory_Fragment | NodeCategory_StructureCategory_Fragment;
+export type NodeCategoryFragment =
+  | NodeCategory_GenericCategory_Fragment
+  | NodeCategory_StructureCategory_Fragment;
 
-type EdgeCategory_MeasurementCategory_Fragment = { __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null };
+type EdgeCategory_MeasurementCategory_Fragment = {
+  __typename?: "MeasurementCategory";
+  metricKind: MeasurementKind;
+  id: string;
+  label: string;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+  left?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+  right?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+};
 
-type EdgeCategory_RelationCategory_Fragment = { __typename?: 'RelationCategory', id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null };
+type EdgeCategory_RelationCategory_Fragment = {
+  __typename?: "RelationCategory";
+  id: string;
+  label: string;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+  left?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+  right?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+};
 
-export type EdgeCategoryFragment = EdgeCategory_MeasurementCategory_Fragment | EdgeCategory_RelationCategory_Fragment;
+export type EdgeCategoryFragment =
+  | EdgeCategory_MeasurementCategory_Fragment
+  | EdgeCategory_RelationCategory_Fragment;
 
-type Edge_ComputedMeasurement_Fragment = { __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string };
+type Edge_ComputedMeasurement_Fragment = {
+  __typename?: "ComputedMeasurement";
+  id: any;
+  label: string;
+  leftId: string;
+  rightId: string;
+};
 
-type Edge_Measurement_Fragment = { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any };
+type Edge_Measurement_Fragment = {
+  __typename?: "Measurement";
+  id: any;
+  label: string;
+  leftId: string;
+  rightId: string;
+  value: any;
+};
 
-type Edge_Relation_Fragment = { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string };
+type Edge_Relation_Fragment = {
+  __typename?: "Relation";
+  id: any;
+  label: string;
+  leftId: string;
+  rightId: string;
+};
 
-export type EdgeFragment = Edge_ComputedMeasurement_Fragment | Edge_Measurement_Fragment | Edge_Relation_Fragment;
+export type EdgeFragment =
+  | Edge_ComputedMeasurement_Fragment
+  | Edge_Measurement_Fragment
+  | Edge_Relation_Fragment;
 
-export type EntityFragment = { __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> };
+export type EntityFragment = {
+  __typename?: "Entity";
+  id: any;
+  label: string;
+  category: { __typename?: "GenericCategory"; id: string; label: string };
+  subjectedTo: Array<{
+    __typename?: "ProtocolStep";
+    id: string;
+    performedAt?: any | null;
+    name: string;
+  }>;
+};
 
-export type ListEntityFragment = { __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string } };
+export type ListEntityFragment = {
+  __typename?: "Entity";
+  id: any;
+  label: string;
+  category: { __typename?: "GenericCategory"; id: string; label: string };
+};
 
-export type EntityGraphNodeFragment = { __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', color?: Array<number> | null } };
+export type EntityGraphNodeFragment = {
+  __typename?: "Entity";
+  id: any;
+  label: string;
+  category: { __typename?: "GenericCategory"; color?: Array<number> | null };
+};
 
-export type GraphFragment = { __typename?: 'Graph', id: string, name: string, pinned: boolean, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, ontology: { __typename?: 'Ontology', id: string, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> }, graphViews: Array<{ __typename?: 'GraphView', id: string, label: string }>, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> };
+export type GraphFragment = {
+  __typename?: "Graph";
+  id: string;
+  name: string;
+  pinned: boolean;
+  description?: string | null;
+  latestNodes: Array<
+    | {
+        __typename?: "Entity";
+        id: any;
+        label: string;
+        category: { __typename?: "GenericCategory"; id: string; label: string };
+        subjectedTo: Array<{
+          __typename?: "ProtocolStep";
+          id: string;
+          performedAt?: any | null;
+          name: string;
+        }>;
+      }
+    | {
+        __typename?: "Structure";
+        id: any;
+        label: string;
+        identifier: string;
+        object: string;
+        category: { __typename?: "StructureCategory"; identifier: string };
+      }
+  >;
+  ontology: {
+    __typename?: "Ontology";
+    id: string;
+    graphQueries: Array<{
+      __typename?: "GraphQuery";
+      id: string;
+      name: string;
+      query: string;
+    }>;
+  };
+  graphViews: Array<{ __typename?: "GraphView"; id: string; label: string }>;
+  nodeViews: Array<{ __typename?: "NodeView"; id: string; label: string }>;
+  plotViews: Array<{
+    __typename?: "PlotView";
+    id: string;
+    name: string;
+    view: {
+      __typename?: "GraphView";
+      id: string;
+      label: string;
+      render:
+        | { __typename?: "Pairs" }
+        | { __typename?: "Path" }
+        | {
+            __typename?: "Table";
+            rows: Array<any>;
+            columns: Array<{
+              __typename?: "Column";
+              name: string;
+              kind: ColumnKind;
+              valueKind?: MeasurementKind | null;
+              description?: string | null;
+              label?: string | null;
+            }>;
+            graph: { __typename?: "Graph"; id: string; ageName: string };
+          };
+    };
+    plot: {
+      __typename?: "ScatterPlot";
+      id: string;
+      name: string;
+      description?: string | null;
+      xColumn: string;
+      yColumn: string;
+      colorColumn?: string | null;
+      sizeColumn?: string | null;
+    };
+  }>;
+};
 
-export type ListGraphFragment = { __typename?: 'Graph', id: string, name: string, pinned: boolean };
+export type ListGraphFragment = {
+  __typename?: "Graph";
+  id: string;
+  name: string;
+  pinned: boolean;
+};
 
-export type DetailGraphQueryFragment = { __typename?: 'GraphQuery', id: string, name: string, query: string, description?: string | null, ontology: { __typename?: 'Ontology', id: string, name: string }, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string }> };
+export type DetailGraphQueryFragment = {
+  __typename?: "GraphQuery";
+  id: string;
+  name: string;
+  query: string;
+  description?: string | null;
+  ontology: { __typename?: "Ontology"; id: string; name: string };
+  scatterPlots: Array<{ __typename?: "ScatterPlot"; id: string; name: string }>;
+};
 
-export type ListGraphQueryFragment = { __typename?: 'GraphQuery', id: string, name: string, description?: string | null, pinned: boolean };
+export type ListGraphQueryFragment = {
+  __typename?: "GraphQuery";
+  id: string;
+  name: string;
+  description?: string | null;
+  pinned: boolean;
+};
 
-export type GraphViewFragment = { __typename?: 'GraphView', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string }, query: { __typename?: 'GraphQuery', id: string, name: string, query: string }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } }, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> };
+export type GraphViewFragment = {
+  __typename?: "GraphView";
+  id: string;
+  label: string;
+  graph: { __typename?: "Graph"; id: string; name: string };
+  query: { __typename?: "GraphQuery"; id: string; name: string; query: string };
+  render:
+    | {
+        __typename?: "Pairs";
+        pairs: Array<{
+          __typename?: "Pair";
+          left:
+            | { __typename?: "Entity"; id: any }
+            | { __typename?: "Structure"; id: any };
+          right:
+            | { __typename?: "Entity"; id: any }
+            | { __typename?: "Structure"; id: any };
+        }>;
+      }
+    | {
+        __typename?: "Path";
+        nodes: Array<
+          | {
+              __typename?: "Entity";
+              id: any;
+              label: string;
+              category: {
+                __typename?: "GenericCategory";
+                id: string;
+                label: string;
+              };
+              subjectedTo: Array<{
+                __typename?: "ProtocolStep";
+                id: string;
+                performedAt?: any | null;
+                name: string;
+              }>;
+            }
+          | {
+              __typename?: "Structure";
+              id: any;
+              label: string;
+              identifier: string;
+              object: string;
+              category: {
+                __typename?: "StructureCategory";
+                identifier: string;
+              };
+            }
+        >;
+        edges: Array<
+          | {
+              __typename?: "ComputedMeasurement";
+              id: any;
+              label: string;
+              leftId: string;
+              rightId: string;
+            }
+          | {
+              __typename?: "Measurement";
+              id: any;
+              label: string;
+              leftId: string;
+              rightId: string;
+              value: any;
+            }
+          | {
+              __typename?: "Relation";
+              id: any;
+              label: string;
+              leftId: string;
+              rightId: string;
+            }
+        >;
+      }
+    | {
+        __typename?: "Table";
+        rows: Array<any>;
+        columns: Array<{
+          __typename?: "Column";
+          name: string;
+          kind: ColumnKind;
+          valueKind?: MeasurementKind | null;
+          description?: string | null;
+          label?: string | null;
+        }>;
+        graph: { __typename?: "Graph"; id: string; ageName: string };
+      };
+  plotViews: Array<{
+    __typename?: "PlotView";
+    id: string;
+    name: string;
+    view: {
+      __typename?: "GraphView";
+      id: string;
+      label: string;
+      render:
+        | { __typename?: "Pairs" }
+        | { __typename?: "Path" }
+        | {
+            __typename?: "Table";
+            rows: Array<any>;
+            columns: Array<{
+              __typename?: "Column";
+              name: string;
+              kind: ColumnKind;
+              valueKind?: MeasurementKind | null;
+              description?: string | null;
+              label?: string | null;
+            }>;
+            graph: { __typename?: "Graph"; id: string; ageName: string };
+          };
+    };
+    plot: {
+      __typename?: "ScatterPlot";
+      id: string;
+      name: string;
+      description?: string | null;
+      xColumn: string;
+      yColumn: string;
+      colorColumn?: string | null;
+      sizeColumn?: string | null;
+    };
+  }>;
+};
 
-export type ListGraphViewFragment = { __typename?: 'GraphView', id: string, label: string };
+export type ListGraphViewFragment = {
+  __typename?: "GraphView";
+  id: string;
+  label: string;
+};
 
-type BaseListCategory_GenericCategory_Fragment = { __typename?: 'GenericCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+type BaseListCategory_GenericCategory_Fragment = {
+  __typename?: "GenericCategory";
+  id: string;
+  label: string;
+  description?: string | null;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+};
 
-type BaseListCategory_MeasurementCategory_Fragment = { __typename?: 'MeasurementCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+type BaseListCategory_MeasurementCategory_Fragment = {
+  __typename?: "MeasurementCategory";
+  id: string;
+  label: string;
+  description?: string | null;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+};
 
-type BaseListCategory_RelationCategory_Fragment = { __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+type BaseListCategory_RelationCategory_Fragment = {
+  __typename?: "RelationCategory";
+  id: string;
+  label: string;
+  description?: string | null;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+};
 
-type BaseListCategory_StructureCategory_Fragment = { __typename?: 'StructureCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+type BaseListCategory_StructureCategory_Fragment = {
+  __typename?: "StructureCategory";
+  id: string;
+  label: string;
+  description?: string | null;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+};
 
-export type BaseListCategoryFragment = BaseListCategory_GenericCategory_Fragment | BaseListCategory_MeasurementCategory_Fragment | BaseListCategory_RelationCategory_Fragment | BaseListCategory_StructureCategory_Fragment;
+export type BaseListCategoryFragment =
+  | BaseListCategory_GenericCategory_Fragment
+  | BaseListCategory_MeasurementCategory_Fragment
+  | BaseListCategory_RelationCategory_Fragment
+  | BaseListCategory_StructureCategory_Fragment;
 
-type BaseListNodeCategory_GenericCategory_Fragment = { __typename?: 'GenericCategory', id: string };
+type BaseListNodeCategory_GenericCategory_Fragment = {
+  __typename?: "GenericCategory";
+  id: string;
+};
 
-type BaseListNodeCategory_StructureCategory_Fragment = { __typename?: 'StructureCategory', id: string };
+type BaseListNodeCategory_StructureCategory_Fragment = {
+  __typename?: "StructureCategory";
+  id: string;
+};
 
-export type BaseListNodeCategoryFragment = BaseListNodeCategory_GenericCategory_Fragment | BaseListNodeCategory_StructureCategory_Fragment;
+export type BaseListNodeCategoryFragment =
+  | BaseListNodeCategory_GenericCategory_Fragment
+  | BaseListNodeCategory_StructureCategory_Fragment;
 
-type BaseListEdgeCategory_MeasurementCategory_Fragment = { __typename?: 'MeasurementCategory', left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null };
+type BaseListEdgeCategory_MeasurementCategory_Fragment = {
+  __typename?: "MeasurementCategory";
+  left?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+  right?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+};
 
-type BaseListEdgeCategory_RelationCategory_Fragment = { __typename?: 'RelationCategory', left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null };
+type BaseListEdgeCategory_RelationCategory_Fragment = {
+  __typename?: "RelationCategory";
+  left?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+  right?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+};
 
-export type BaseListEdgeCategoryFragment = BaseListEdgeCategory_MeasurementCategory_Fragment | BaseListEdgeCategory_RelationCategory_Fragment;
+export type BaseListEdgeCategoryFragment =
+  | BaseListEdgeCategory_MeasurementCategory_Fragment
+  | BaseListEdgeCategory_RelationCategory_Fragment;
 
-export type ListMeasurementCategoryFragment = { __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null };
+export type ListMeasurementCategoryFragment = {
+  __typename?: "MeasurementCategory";
+  metricKind: MeasurementKind;
+  id: string;
+  label: string;
+  description?: string | null;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+  left?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+  right?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+};
 
-export type ListRelationCategoryFragment = { __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null };
+export type ListRelationCategoryFragment = {
+  __typename?: "RelationCategory";
+  id: string;
+  label: string;
+  description?: string | null;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+  left?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+  right?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+};
 
-export type ListStructureCategoryFragment = { __typename?: 'StructureCategory', identifier: string, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+export type ListStructureCategoryFragment = {
+  __typename?: "StructureCategory";
+  identifier: string;
+  id: string;
+  label: string;
+  description?: string | null;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+};
 
-export type ListGenericCategoryFragment = { __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+export type ListGenericCategoryFragment = {
+  __typename?: "GenericCategory";
+  instanceKind: InstanceKind;
+  id: string;
+  label: string;
+  description?: string | null;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+};
 
-type ListNodeCategory_GenericCategory_Fragment = { __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+type ListNodeCategory_GenericCategory_Fragment = {
+  __typename?: "GenericCategory";
+  instanceKind: InstanceKind;
+  id: string;
+  label: string;
+  description?: string | null;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+};
 
-type ListNodeCategory_StructureCategory_Fragment = { __typename?: 'StructureCategory', identifier: string, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+type ListNodeCategory_StructureCategory_Fragment = {
+  __typename?: "StructureCategory";
+  identifier: string;
+  id: string;
+  label: string;
+  description?: string | null;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+};
 
-export type ListNodeCategoryFragment = ListNodeCategory_GenericCategory_Fragment | ListNodeCategory_StructureCategory_Fragment;
+export type ListNodeCategoryFragment =
+  | ListNodeCategory_GenericCategory_Fragment
+  | ListNodeCategory_StructureCategory_Fragment;
 
-type ListEdgeCategory_MeasurementCategory_Fragment = { __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null };
+type ListEdgeCategory_MeasurementCategory_Fragment = {
+  __typename?: "MeasurementCategory";
+  metricKind: MeasurementKind;
+  id: string;
+  label: string;
+  description?: string | null;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+  left?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+  right?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+};
 
-type ListEdgeCategory_RelationCategory_Fragment = { __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null };
+type ListEdgeCategory_RelationCategory_Fragment = {
+  __typename?: "RelationCategory";
+  id: string;
+  label: string;
+  description?: string | null;
+  ageName: string;
+  store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+  left?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+  right?:
+    | { __typename?: "GenericCategory"; id: string }
+    | { __typename?: "StructureCategory"; id: string }
+    | null;
+};
 
-export type ListEdgeCategoryFragment = ListEdgeCategory_MeasurementCategory_Fragment | ListEdgeCategory_RelationCategory_Fragment;
+export type ListEdgeCategoryFragment =
+  | ListEdgeCategory_MeasurementCategory_Fragment
+  | ListEdgeCategory_RelationCategory_Fragment;
 
-export type MeasurementFragment = { __typename?: 'Measurement', id: any, value: any };
+export type MeasurementFragment = {
+  __typename?: "Measurement";
+  id: any;
+  value: any;
+};
 
-type Node_Entity_Fragment = { __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> };
+type Node_Entity_Fragment = {
+  __typename?: "Entity";
+  id: any;
+  label: string;
+  category: { __typename?: "GenericCategory"; id: string; label: string };
+  subjectedTo: Array<{
+    __typename?: "ProtocolStep";
+    id: string;
+    performedAt?: any | null;
+    name: string;
+  }>;
+};
 
-type Node_Structure_Fragment = { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } };
+type Node_Structure_Fragment = {
+  __typename?: "Structure";
+  id: any;
+  label: string;
+  identifier: string;
+  object: string;
+  category: { __typename?: "StructureCategory"; identifier: string };
+};
 
 export type NodeFragment = Node_Entity_Fragment | Node_Structure_Fragment;
 
-type DetailNode_Entity_Fragment = { __typename?: 'Entity', id: any, label: string, graph: { __typename?: 'Graph', id: string, name: string, ontology: { __typename?: 'Ontology', nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> } }, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> };
+type DetailNode_Entity_Fragment = {
+  __typename?: "Entity";
+  id: any;
+  label: string;
+  graph: {
+    __typename?: "Graph";
+    id: string;
+    name: string;
+    ontology: {
+      __typename?: "Ontology";
+      nodeQueries: Array<{
+        __typename?: "NodeQuery";
+        id: string;
+        name: string;
+        description?: string | null;
+        pinned: boolean;
+      }>;
+    };
+  };
+  nodeViews: Array<{ __typename?: "NodeView"; id: string; label: string }>;
+  category: { __typename?: "GenericCategory"; id: string; label: string };
+  subjectedTo: Array<{
+    __typename?: "ProtocolStep";
+    id: string;
+    performedAt?: any | null;
+    name: string;
+  }>;
+};
 
-type DetailNode_Structure_Fragment = { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, graph: { __typename?: 'Graph', id: string, name: string, ontology: { __typename?: 'Ontology', nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> } }, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, category: { __typename?: 'StructureCategory', identifier: string } };
+type DetailNode_Structure_Fragment = {
+  __typename?: "Structure";
+  id: any;
+  label: string;
+  identifier: string;
+  object: string;
+  graph: {
+    __typename?: "Graph";
+    id: string;
+    name: string;
+    ontology: {
+      __typename?: "Ontology";
+      nodeQueries: Array<{
+        __typename?: "NodeQuery";
+        id: string;
+        name: string;
+        description?: string | null;
+        pinned: boolean;
+      }>;
+    };
+  };
+  nodeViews: Array<{ __typename?: "NodeView"; id: string; label: string }>;
+  category: { __typename?: "StructureCategory"; identifier: string };
+};
 
-export type DetailNodeFragment = DetailNode_Entity_Fragment | DetailNode_Structure_Fragment;
+export type DetailNodeFragment =
+  | DetailNode_Entity_Fragment
+  | DetailNode_Structure_Fragment;
 
-type ListNode_Entity_Fragment = { __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> };
+type ListNode_Entity_Fragment = {
+  __typename?: "Entity";
+  id: any;
+  label: string;
+  category: { __typename?: "GenericCategory"; id: string; label: string };
+  subjectedTo: Array<{
+    __typename?: "ProtocolStep";
+    id: string;
+    performedAt?: any | null;
+    name: string;
+  }>;
+};
 
-type ListNode_Structure_Fragment = { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } };
+type ListNode_Structure_Fragment = {
+  __typename?: "Structure";
+  id: any;
+  label: string;
+  identifier: string;
+  object: string;
+  category: { __typename?: "StructureCategory"; identifier: string };
+};
 
-export type ListNodeFragment = ListNode_Entity_Fragment | ListNode_Structure_Fragment;
+export type ListNodeFragment =
+  | ListNode_Entity_Fragment
+  | ListNode_Structure_Fragment;
 
-export type DetailNodeQueryFragment = { __typename?: 'NodeQuery', name: string, query: string };
+export type DetailNodeQueryFragment = {
+  __typename?: "NodeQuery";
+  name: string;
+  query: string;
+};
 
-export type ListNodeQueryFragment = { __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean };
+export type ListNodeQueryFragment = {
+  __typename?: "NodeQuery";
+  id: string;
+  name: string;
+  description?: string | null;
+  pinned: boolean;
+};
 
-export type NodeViewFragment = { __typename?: 'NodeView', id: string, label: string, node: { __typename?: 'Entity', id: any, graphId: string } | { __typename?: 'Structure', id: any, graphId: string }, query: { __typename?: 'NodeQuery', id: string, name: string, query: string }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } };
+export type NodeViewFragment = {
+  __typename?: "NodeView";
+  id: string;
+  label: string;
+  node:
+    | { __typename?: "Entity"; id: any; graphId: string }
+    | { __typename?: "Structure"; id: any; graphId: string };
+  query: { __typename?: "NodeQuery"; id: string; name: string; query: string };
+  render:
+    | {
+        __typename?: "Pairs";
+        pairs: Array<{
+          __typename?: "Pair";
+          left:
+            | { __typename?: "Entity"; id: any }
+            | { __typename?: "Structure"; id: any };
+          right:
+            | { __typename?: "Entity"; id: any }
+            | { __typename?: "Structure"; id: any };
+        }>;
+      }
+    | {
+        __typename?: "Path";
+        nodes: Array<
+          | {
+              __typename?: "Entity";
+              id: any;
+              label: string;
+              category: {
+                __typename?: "GenericCategory";
+                id: string;
+                label: string;
+              };
+              subjectedTo: Array<{
+                __typename?: "ProtocolStep";
+                id: string;
+                performedAt?: any | null;
+                name: string;
+              }>;
+            }
+          | {
+              __typename?: "Structure";
+              id: any;
+              label: string;
+              identifier: string;
+              object: string;
+              category: {
+                __typename?: "StructureCategory";
+                identifier: string;
+              };
+            }
+        >;
+        edges: Array<
+          | {
+              __typename?: "ComputedMeasurement";
+              id: any;
+              label: string;
+              leftId: string;
+              rightId: string;
+            }
+          | {
+              __typename?: "Measurement";
+              id: any;
+              label: string;
+              leftId: string;
+              rightId: string;
+              value: any;
+            }
+          | {
+              __typename?: "Relation";
+              id: any;
+              label: string;
+              leftId: string;
+              rightId: string;
+            }
+        >;
+      }
+    | {
+        __typename?: "Table";
+        rows: Array<any>;
+        columns: Array<{
+          __typename?: "Column";
+          name: string;
+          kind: ColumnKind;
+          valueKind?: MeasurementKind | null;
+          description?: string | null;
+          label?: string | null;
+        }>;
+        graph: { __typename?: "Graph"; id: string; ageName: string };
+      };
+};
 
-export type ListNodeViewFragment = { __typename?: 'NodeView', id: string, label: string };
+export type ListNodeViewFragment = {
+  __typename?: "NodeView";
+  id: string;
+  label: string;
+};
 
-export type OntologyFragment = { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, structureCategories: Array<{ __typename?: 'StructureCategory', identifier: string, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, genericCategories: Array<{ __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, relationCategories: Array<{ __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string, pinned: boolean }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, description?: string | null, pinned: boolean }>, nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> };
+export type OntologyFragment = {
+  __typename?: "Ontology";
+  id: string;
+  name: string;
+  description?: string | null;
+  purl?: string | null;
+  structureCategories: Array<{
+    __typename?: "StructureCategory";
+    identifier: string;
+    id: string;
+    label: string;
+    description?: string | null;
+    ageName: string;
+    store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+  }>;
+  genericCategories: Array<{
+    __typename?: "GenericCategory";
+    instanceKind: InstanceKind;
+    id: string;
+    label: string;
+    description?: string | null;
+    ageName: string;
+    store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+  }>;
+  relationCategories: Array<{
+    __typename?: "RelationCategory";
+    id: string;
+    label: string;
+    description?: string | null;
+    ageName: string;
+    store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+    left?:
+      | { __typename?: "GenericCategory"; id: string }
+      | { __typename?: "StructureCategory"; id: string }
+      | null;
+    right?:
+      | { __typename?: "GenericCategory"; id: string }
+      | { __typename?: "StructureCategory"; id: string }
+      | null;
+  }>;
+  measurementCategories: Array<{
+    __typename?: "MeasurementCategory";
+    metricKind: MeasurementKind;
+    id: string;
+    label: string;
+    description?: string | null;
+    ageName: string;
+    store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+    left?:
+      | { __typename?: "GenericCategory"; id: string }
+      | { __typename?: "StructureCategory"; id: string }
+      | null;
+    right?:
+      | { __typename?: "GenericCategory"; id: string }
+      | { __typename?: "StructureCategory"; id: string }
+      | null;
+  }>;
+  store?: {
+    __typename?: "MediaStore";
+    id: string;
+    key: string;
+    presignedUrl: string;
+  } | null;
+  graphs: Array<{
+    __typename?: "Graph";
+    id: string;
+    name: string;
+    pinned: boolean;
+  }>;
+  graphQueries: Array<{
+    __typename?: "GraphQuery";
+    id: string;
+    name: string;
+    description?: string | null;
+    pinned: boolean;
+  }>;
+  nodeQueries: Array<{
+    __typename?: "NodeQuery";
+    id: string;
+    name: string;
+    description?: string | null;
+    pinned: boolean;
+  }>;
+};
 
-export type ListOntologyFragment = { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null };
+export type ListOntologyFragment = {
+  __typename?: "Ontology";
+  id: string;
+  name: string;
+  description?: string | null;
+  purl?: string | null;
+};
 
-export type PairsFragment = { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> };
+export type PairsFragment = {
+  __typename?: "Pairs";
+  pairs: Array<{
+    __typename?: "Pair";
+    left:
+      | { __typename?: "Entity"; id: any }
+      | { __typename?: "Structure"; id: any };
+    right:
+      | { __typename?: "Entity"; id: any }
+      | { __typename?: "Structure"; id: any };
+  }>;
+};
 
-export type PathFragment = { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> };
+export type PathFragment = {
+  __typename?: "Path";
+  nodes: Array<
+    | {
+        __typename?: "Entity";
+        id: any;
+        label: string;
+        category: { __typename?: "GenericCategory"; id: string; label: string };
+        subjectedTo: Array<{
+          __typename?: "ProtocolStep";
+          id: string;
+          performedAt?: any | null;
+          name: string;
+        }>;
+      }
+    | {
+        __typename?: "Structure";
+        id: any;
+        label: string;
+        identifier: string;
+        object: string;
+        category: { __typename?: "StructureCategory"; identifier: string };
+      }
+  >;
+  edges: Array<
+    | {
+        __typename?: "ComputedMeasurement";
+        id: any;
+        label: string;
+        leftId: string;
+        rightId: string;
+      }
+    | {
+        __typename?: "Measurement";
+        id: any;
+        label: string;
+        leftId: string;
+        rightId: string;
+        value: any;
+      }
+    | {
+        __typename?: "Relation";
+        id: any;
+        label: string;
+        leftId: string;
+        rightId: string;
+      }
+  >;
+};
 
-export type PlotViewFragment = { __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } };
+export type PlotViewFragment = {
+  __typename?: "PlotView";
+  id: string;
+  name: string;
+  view: {
+    __typename?: "GraphView";
+    id: string;
+    label: string;
+    render:
+      | { __typename?: "Pairs" }
+      | { __typename?: "Path" }
+      | {
+          __typename?: "Table";
+          rows: Array<any>;
+          columns: Array<{
+            __typename?: "Column";
+            name: string;
+            kind: ColumnKind;
+            valueKind?: MeasurementKind | null;
+            description?: string | null;
+            label?: string | null;
+          }>;
+          graph: { __typename?: "Graph"; id: string; ageName: string };
+        };
+  };
+  plot: {
+    __typename?: "ScatterPlot";
+    id: string;
+    name: string;
+    description?: string | null;
+    xColumn: string;
+    yColumn: string;
+    colorColumn?: string | null;
+    sizeColumn?: string | null;
+  };
+};
 
-export type CarouselPlotViewFragment = { __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } };
+export type CarouselPlotViewFragment = {
+  __typename?: "PlotView";
+  id: string;
+  name: string;
+  view: {
+    __typename?: "GraphView";
+    id: string;
+    label: string;
+    render:
+      | { __typename?: "Pairs" }
+      | { __typename?: "Path" }
+      | {
+          __typename?: "Table";
+          rows: Array<any>;
+          columns: Array<{
+            __typename?: "Column";
+            name: string;
+            kind: ColumnKind;
+            valueKind?: MeasurementKind | null;
+            description?: string | null;
+            label?: string | null;
+          }>;
+          graph: { __typename?: "Graph"; id: string; ageName: string };
+        };
+  };
+  plot: {
+    __typename?: "ScatterPlot";
+    id: string;
+    name: string;
+    description?: string | null;
+    xColumn: string;
+    yColumn: string;
+    colorColumn?: string | null;
+    sizeColumn?: string | null;
+  };
+};
 
-export type ListPlotViewFragment = { __typename?: 'PlotView', id: string, name: string, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } };
+export type ListPlotViewFragment = {
+  __typename?: "PlotView";
+  id: string;
+  name: string;
+  plot: {
+    __typename?: "ScatterPlot";
+    id: string;
+    name: string;
+    description?: string | null;
+    xColumn: string;
+    yColumn: string;
+    colorColumn?: string | null;
+    sizeColumn?: string | null;
+  };
+};
 
-export type ProtocolFragment = { __typename?: 'Protocol', id: string, name: string, description?: string | null, experiment: { __typename?: 'Experiment', id: string, name: string, description?: string | null } };
+export type ProtocolFragment = {
+  __typename?: "Protocol";
+  id: string;
+  name: string;
+  description?: string | null;
+  experiment: {
+    __typename?: "Experiment";
+    id: string;
+    name: string;
+    description?: string | null;
+  };
+};
 
-export type ListProtocolFragment = { __typename?: 'Protocol', id: string, name: string, experiment: { __typename?: 'Experiment', id: string, name: string } };
+export type ListProtocolFragment = {
+  __typename?: "Protocol";
+  id: string;
+  name: string;
+  experiment: { __typename?: "Experiment"; id: string; name: string };
+};
 
-export type ProtocolStepFragment = { __typename?: 'ProtocolStep', id: string, name: string, performedAt?: any | null, template: { __typename?: 'ProtocolStepTemplate', name: string, plateChildren: Array<any> }, forReagent?: { __typename?: 'Reagent', id: string } | null, forEntity?: { __typename?: 'Entity', id: any } | null, performedBy?: { __typename?: 'User', id: string } | null };
+export type ProtocolStepFragment = {
+  __typename?: "ProtocolStep";
+  id: string;
+  name: string;
+  performedAt?: any | null;
+  template: {
+    __typename?: "ProtocolStepTemplate";
+    name: string;
+    plateChildren: Array<any>;
+  };
+  forReagent?: { __typename?: "Reagent"; id: string } | null;
+  forEntity?: { __typename?: "Entity"; id: any } | null;
+  performedBy?: { __typename?: "User"; id: string } | null;
+};
 
-export type ListProtocolStepFragment = { __typename?: 'ProtocolStep', id: string, name: string, performedAt?: any | null, performedBy?: { __typename?: 'User', id: string } | null };
+export type ListProtocolStepFragment = {
+  __typename?: "ProtocolStep";
+  id: string;
+  name: string;
+  performedAt?: any | null;
+  performedBy?: { __typename?: "User"; id: string } | null;
+};
 
-export type ProtocolStepTemplateFragment = { __typename?: 'ProtocolStepTemplate', id: string, name: string, plateChildren: Array<any> };
+export type ProtocolStepTemplateFragment = {
+  __typename?: "ProtocolStepTemplate";
+  id: string;
+  name: string;
+  plateChildren: Array<any>;
+};
 
-export type ListProtocolStepTemplateFragment = { __typename?: 'ProtocolStepTemplate', id: string, name: string, plateChildren: Array<any> };
+export type ListProtocolStepTemplateFragment = {
+  __typename?: "ProtocolStepTemplate";
+  id: string;
+  name: string;
+  plateChildren: Array<any>;
+};
 
-export type ReagentFragment = { __typename?: 'Reagent', id: string, label: string, creationSteps: Array<{ __typename?: 'ProtocolStep', id: string, name: string }>, usedIn: Array<{ __typename?: 'ReagentMapping', id: string, protocolStep: { __typename?: 'ProtocolStep', performedAt?: any | null, name: string } }> };
+export type ReagentFragment = {
+  __typename?: "Reagent";
+  id: string;
+  label: string;
+  creationSteps: Array<{
+    __typename?: "ProtocolStep";
+    id: string;
+    name: string;
+  }>;
+  usedIn: Array<{
+    __typename?: "ReagentMapping";
+    id: string;
+    protocolStep: {
+      __typename?: "ProtocolStep";
+      performedAt?: any | null;
+      name: string;
+    };
+  }>;
+};
 
-export type ListReagentFragment = { __typename?: 'Reagent', id: string, label: string };
+export type ListReagentFragment = {
+  __typename?: "Reagent";
+  id: string;
+  label: string;
+};
 
-export type RelationFragment = { __typename?: 'Relation', id: any, label: string };
+export type RelationFragment = {
+  __typename?: "Relation";
+  id: any;
+  label: string;
+};
 
-export type ScatterPlotFragment = { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null };
+export type ScatterPlotFragment = {
+  __typename?: "ScatterPlot";
+  id: string;
+  name: string;
+  description?: string | null;
+  xColumn: string;
+  yColumn: string;
+  colorColumn?: string | null;
+  sizeColumn?: string | null;
+};
 
-export type MediaStoreFragment = { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string };
+export type MediaStoreFragment = {
+  __typename?: "MediaStore";
+  id: string;
+  key: string;
+  presignedUrl: string;
+};
 
-export type KnowledgeStructureFragment = { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string }, pinnedViews: Array<{ __typename?: 'NodeView', id: string, label: string, node: { __typename?: 'Entity', id: any, graphId: string } | { __typename?: 'Structure', id: any, graphId: string }, query: { __typename?: 'NodeQuery', id: string, name: string, query: string }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }> };
+export type KnowledgeStructureFragment = {
+  __typename?: "Structure";
+  id: any;
+  label: string;
+  identifier: string;
+  object: string;
+  category: { __typename?: "StructureCategory"; identifier: string };
+  pinnedViews: Array<{
+    __typename?: "NodeView";
+    id: string;
+    label: string;
+    node:
+      | { __typename?: "Entity"; id: any; graphId: string }
+      | { __typename?: "Structure"; id: any; graphId: string };
+    query: {
+      __typename?: "NodeQuery";
+      id: string;
+      name: string;
+      query: string;
+    };
+    render:
+      | {
+          __typename?: "Pairs";
+          pairs: Array<{
+            __typename?: "Pair";
+            left:
+              | { __typename?: "Entity"; id: any }
+              | { __typename?: "Structure"; id: any };
+            right:
+              | { __typename?: "Entity"; id: any }
+              | { __typename?: "Structure"; id: any };
+          }>;
+        }
+      | {
+          __typename?: "Path";
+          nodes: Array<
+            | {
+                __typename?: "Entity";
+                id: any;
+                label: string;
+                category: {
+                  __typename?: "GenericCategory";
+                  id: string;
+                  label: string;
+                };
+                subjectedTo: Array<{
+                  __typename?: "ProtocolStep";
+                  id: string;
+                  performedAt?: any | null;
+                  name: string;
+                }>;
+              }
+            | {
+                __typename?: "Structure";
+                id: any;
+                label: string;
+                identifier: string;
+                object: string;
+                category: {
+                  __typename?: "StructureCategory";
+                  identifier: string;
+                };
+              }
+          >;
+          edges: Array<
+            | {
+                __typename?: "ComputedMeasurement";
+                id: any;
+                label: string;
+                leftId: string;
+                rightId: string;
+              }
+            | {
+                __typename?: "Measurement";
+                id: any;
+                label: string;
+                leftId: string;
+                rightId: string;
+                value: any;
+              }
+            | {
+                __typename?: "Relation";
+                id: any;
+                label: string;
+                leftId: string;
+                rightId: string;
+              }
+          >;
+        }
+      | {
+          __typename?: "Table";
+          rows: Array<any>;
+          columns: Array<{
+            __typename?: "Column";
+            name: string;
+            kind: ColumnKind;
+            valueKind?: MeasurementKind | null;
+            description?: string | null;
+            label?: string | null;
+          }>;
+          graph: { __typename?: "Graph"; id: string; ageName: string };
+        };
+  }>;
+};
 
-export type StructureFragment = { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } };
+export type StructureFragment = {
+  __typename?: "Structure";
+  id: any;
+  label: string;
+  identifier: string;
+  object: string;
+  category: { __typename?: "StructureCategory"; identifier: string };
+};
 
-export type ListStructureFragment = { __typename?: 'Structure', identifier: string, object: string, id: any, category: { __typename?: 'StructureCategory', identifier: string } };
+export type ListStructureFragment = {
+  __typename?: "Structure";
+  identifier: string;
+  object: string;
+  id: any;
+  category: { __typename?: "StructureCategory"; identifier: string };
+};
 
-export type StructureGraphNodeFragment = { __typename?: 'Structure', identifier: string, object: string, id: any };
+export type StructureGraphNodeFragment = {
+  __typename?: "Structure";
+  identifier: string;
+  object: string;
+  id: any;
+};
 
-export type ColumnFragment = { __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null };
+export type ColumnFragment = {
+  __typename?: "Column";
+  name: string;
+  kind: ColumnKind;
+  valueKind?: MeasurementKind | null;
+  description?: string | null;
+  label?: string | null;
+};
 
-export type TableFragment = { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } };
+export type TableFragment = {
+  __typename?: "Table";
+  rows: Array<any>;
+  columns: Array<{
+    __typename?: "Column";
+    name: string;
+    kind: ColumnKind;
+    valueKind?: MeasurementKind | null;
+    description?: string | null;
+    label?: string | null;
+  }>;
+  graph: { __typename?: "Graph"; id: string; ageName: string };
+};
 
 export type CreateMeasurementCategoryMutationVariables = Exact<{
   input: MeasurementCategoryInput;
 }>;
 
-
-export type CreateMeasurementCategoryMutation = { __typename?: 'Mutation', createMeasurementCategory: { __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null } };
+export type CreateMeasurementCategoryMutation = {
+  __typename?: "Mutation";
+  createMeasurementCategory: {
+    __typename?: "MeasurementCategory";
+    metricKind: MeasurementKind;
+    id: string;
+    label: string;
+    ageName: string;
+    store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+    left?:
+      | { __typename?: "GenericCategory"; id: string }
+      | { __typename?: "StructureCategory"; id: string }
+      | null;
+    right?:
+      | { __typename?: "GenericCategory"; id: string }
+      | { __typename?: "StructureCategory"; id: string }
+      | null;
+  };
+};
 
 export type CreateStructureCategoryMutationVariables = Exact<{
   input: StructureCategoryInput;
 }>;
 
-
-export type CreateStructureCategoryMutation = { __typename?: 'Mutation', createStructureCategory: { __typename?: 'StructureCategory', identifier: string, id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } };
+export type CreateStructureCategoryMutation = {
+  __typename?: "Mutation";
+  createStructureCategory: {
+    __typename?: "StructureCategory";
+    identifier: string;
+    id: string;
+    label: string;
+    ageName: string;
+    store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+  };
+};
 
 export type CreateGenericCategoryMutationVariables = Exact<{
   input: GenericCategoryInput;
 }>;
 
-
-export type CreateGenericCategoryMutation = { __typename?: 'Mutation', createGenericCategory: { __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } };
+export type CreateGenericCategoryMutation = {
+  __typename?: "Mutation";
+  createGenericCategory: {
+    __typename?: "GenericCategory";
+    instanceKind: InstanceKind;
+    id: string;
+    label: string;
+    ageName: string;
+    store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+  };
+};
 
 export type CreateRelationCategoryMutationVariables = Exact<{
   input: RelationCategoryInput;
 }>;
 
-
-export type CreateRelationCategoryMutation = { __typename?: 'Mutation', createRelationCategory: { __typename?: 'RelationCategory', id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null } };
+export type CreateRelationCategoryMutation = {
+  __typename?: "Mutation";
+  createRelationCategory: {
+    __typename?: "RelationCategory";
+    id: string;
+    label: string;
+    ageName: string;
+    store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+    left?:
+      | { __typename?: "GenericCategory"; id: string }
+      | { __typename?: "StructureCategory"; id: string }
+      | null;
+    right?:
+      | { __typename?: "GenericCategory"; id: string }
+      | { __typename?: "StructureCategory"; id: string }
+      | null;
+  };
+};
 
 export type CreateEntityMutationVariables = Exact<{
   input: EntityInput;
 }>;
 
-
-export type CreateEntityMutation = { __typename?: 'Mutation', createEntity: { __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } };
+export type CreateEntityMutation = {
+  __typename?: "Mutation";
+  createEntity: {
+    __typename?: "Entity";
+    id: any;
+    label: string;
+    category: { __typename?: "GenericCategory"; id: string; label: string };
+    subjectedTo: Array<{
+      __typename?: "ProtocolStep";
+      id: string;
+      performedAt?: any | null;
+      name: string;
+    }>;
+  };
+};
 
 export type CreateRelationMutationVariables = Exact<{
   input: RelationInput;
 }>;
 
-
-export type CreateRelationMutation = { __typename?: 'Mutation', createRelation: { __typename?: 'Relation', id: any, label: string } };
+export type CreateRelationMutation = {
+  __typename?: "Mutation";
+  createRelation: { __typename?: "Relation"; id: any; label: string };
+};
 
 export type CreateGraphMutationVariables = Exact<{
   input: GraphInput;
 }>;
 
-
-export type CreateGraphMutation = { __typename?: 'Mutation', createGraph: { __typename?: 'Graph', id: string, name: string, pinned: boolean, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, ontology: { __typename?: 'Ontology', id: string, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> }, graphViews: Array<{ __typename?: 'GraphView', id: string, label: string }>, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> } };
+export type CreateGraphMutation = {
+  __typename?: "Mutation";
+  createGraph: {
+    __typename?: "Graph";
+    id: string;
+    name: string;
+    pinned: boolean;
+    description?: string | null;
+    latestNodes: Array<
+      | {
+          __typename?: "Entity";
+          id: any;
+          label: string;
+          category: {
+            __typename?: "GenericCategory";
+            id: string;
+            label: string;
+          };
+          subjectedTo: Array<{
+            __typename?: "ProtocolStep";
+            id: string;
+            performedAt?: any | null;
+            name: string;
+          }>;
+        }
+      | {
+          __typename?: "Structure";
+          id: any;
+          label: string;
+          identifier: string;
+          object: string;
+          category: { __typename?: "StructureCategory"; identifier: string };
+        }
+    >;
+    ontology: {
+      __typename?: "Ontology";
+      id: string;
+      graphQueries: Array<{
+        __typename?: "GraphQuery";
+        id: string;
+        name: string;
+        query: string;
+      }>;
+    };
+    graphViews: Array<{ __typename?: "GraphView"; id: string; label: string }>;
+    nodeViews: Array<{ __typename?: "NodeView"; id: string; label: string }>;
+    plotViews: Array<{
+      __typename?: "PlotView";
+      id: string;
+      name: string;
+      view: {
+        __typename?: "GraphView";
+        id: string;
+        label: string;
+        render:
+          | { __typename?: "Pairs" }
+          | { __typename?: "Path" }
+          | {
+              __typename?: "Table";
+              rows: Array<any>;
+              columns: Array<{
+                __typename?: "Column";
+                name: string;
+                kind: ColumnKind;
+                valueKind?: MeasurementKind | null;
+                description?: string | null;
+                label?: string | null;
+              }>;
+              graph: { __typename?: "Graph"; id: string; ageName: string };
+            };
+      };
+      plot: {
+        __typename?: "ScatterPlot";
+        id: string;
+        name: string;
+        description?: string | null;
+        xColumn: string;
+        yColumn: string;
+        colorColumn?: string | null;
+        sizeColumn?: string | null;
+      };
+    }>;
+  };
+};
 
 export type DeleteGraphMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type DeleteGraphMutation = { __typename?: 'Mutation', deleteGraph: string };
+export type DeleteGraphMutation = {
+  __typename?: "Mutation";
+  deleteGraph: string;
+};
 
 export type UpdateGraphMutationVariables = Exact<{
   input: UpdateGraphInput;
 }>;
 
-
-export type UpdateGraphMutation = { __typename?: 'Mutation', updateGraph: { __typename?: 'Graph', id: string, name: string, pinned: boolean, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, ontology: { __typename?: 'Ontology', id: string, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> }, graphViews: Array<{ __typename?: 'GraphView', id: string, label: string }>, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> } };
+export type UpdateGraphMutation = {
+  __typename?: "Mutation";
+  updateGraph: {
+    __typename?: "Graph";
+    id: string;
+    name: string;
+    pinned: boolean;
+    description?: string | null;
+    latestNodes: Array<
+      | {
+          __typename?: "Entity";
+          id: any;
+          label: string;
+          category: {
+            __typename?: "GenericCategory";
+            id: string;
+            label: string;
+          };
+          subjectedTo: Array<{
+            __typename?: "ProtocolStep";
+            id: string;
+            performedAt?: any | null;
+            name: string;
+          }>;
+        }
+      | {
+          __typename?: "Structure";
+          id: any;
+          label: string;
+          identifier: string;
+          object: string;
+          category: { __typename?: "StructureCategory"; identifier: string };
+        }
+    >;
+    ontology: {
+      __typename?: "Ontology";
+      id: string;
+      graphQueries: Array<{
+        __typename?: "GraphQuery";
+        id: string;
+        name: string;
+        query: string;
+      }>;
+    };
+    graphViews: Array<{ __typename?: "GraphView"; id: string; label: string }>;
+    nodeViews: Array<{ __typename?: "NodeView"; id: string; label: string }>;
+    plotViews: Array<{
+      __typename?: "PlotView";
+      id: string;
+      name: string;
+      view: {
+        __typename?: "GraphView";
+        id: string;
+        label: string;
+        render:
+          | { __typename?: "Pairs" }
+          | { __typename?: "Path" }
+          | {
+              __typename?: "Table";
+              rows: Array<any>;
+              columns: Array<{
+                __typename?: "Column";
+                name: string;
+                kind: ColumnKind;
+                valueKind?: MeasurementKind | null;
+                description?: string | null;
+                label?: string | null;
+              }>;
+              graph: { __typename?: "Graph"; id: string; ageName: string };
+            };
+      };
+      plot: {
+        __typename?: "ScatterPlot";
+        id: string;
+        name: string;
+        description?: string | null;
+        xColumn: string;
+        yColumn: string;
+        colorColumn?: string | null;
+        sizeColumn?: string | null;
+      };
+    }>;
+  };
+};
 
 export type PinGraphMutationVariables = Exact<{
   input: PinGraphInput;
 }>;
 
-
-export type PinGraphMutation = { __typename?: 'Mutation', pinGraph: { __typename?: 'Graph', id: string, name: string, pinned: boolean, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, ontology: { __typename?: 'Ontology', id: string, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> }, graphViews: Array<{ __typename?: 'GraphView', id: string, label: string }>, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> } };
+export type PinGraphMutation = {
+  __typename?: "Mutation";
+  pinGraph: {
+    __typename?: "Graph";
+    id: string;
+    name: string;
+    pinned: boolean;
+    description?: string | null;
+    latestNodes: Array<
+      | {
+          __typename?: "Entity";
+          id: any;
+          label: string;
+          category: {
+            __typename?: "GenericCategory";
+            id: string;
+            label: string;
+          };
+          subjectedTo: Array<{
+            __typename?: "ProtocolStep";
+            id: string;
+            performedAt?: any | null;
+            name: string;
+          }>;
+        }
+      | {
+          __typename?: "Structure";
+          id: any;
+          label: string;
+          identifier: string;
+          object: string;
+          category: { __typename?: "StructureCategory"; identifier: string };
+        }
+    >;
+    ontology: {
+      __typename?: "Ontology";
+      id: string;
+      graphQueries: Array<{
+        __typename?: "GraphQuery";
+        id: string;
+        name: string;
+        query: string;
+      }>;
+    };
+    graphViews: Array<{ __typename?: "GraphView"; id: string; label: string }>;
+    nodeViews: Array<{ __typename?: "NodeView"; id: string; label: string }>;
+    plotViews: Array<{
+      __typename?: "PlotView";
+      id: string;
+      name: string;
+      view: {
+        __typename?: "GraphView";
+        id: string;
+        label: string;
+        render:
+          | { __typename?: "Pairs" }
+          | { __typename?: "Path" }
+          | {
+              __typename?: "Table";
+              rows: Array<any>;
+              columns: Array<{
+                __typename?: "Column";
+                name: string;
+                kind: ColumnKind;
+                valueKind?: MeasurementKind | null;
+                description?: string | null;
+                label?: string | null;
+              }>;
+              graph: { __typename?: "Graph"; id: string; ageName: string };
+            };
+      };
+      plot: {
+        __typename?: "ScatterPlot";
+        id: string;
+        name: string;
+        description?: string | null;
+        xColumn: string;
+        yColumn: string;
+        colorColumn?: string | null;
+        sizeColumn?: string | null;
+      };
+    }>;
+  };
+};
 
 export type PinGraphQueryMutationVariables = Exact<{
   input: PinGraphQueryInput;
 }>;
 
-
-export type PinGraphQueryMutation = { __typename?: 'Mutation', pinGraphQuery: { __typename?: 'GraphQuery', id: string, name: string, query: string, description?: string | null, ontology: { __typename?: 'Ontology', id: string, name: string }, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string }> } };
+export type PinGraphQueryMutation = {
+  __typename?: "Mutation";
+  pinGraphQuery: {
+    __typename?: "GraphQuery";
+    id: string;
+    name: string;
+    query: string;
+    description?: string | null;
+    ontology: { __typename?: "Ontology"; id: string; name: string };
+    scatterPlots: Array<{
+      __typename?: "ScatterPlot";
+      id: string;
+      name: string;
+    }>;
+  };
+};
 
 export type CreateGraphViewMutationVariables = Exact<{
   input: GraphViewInput;
 }>;
 
-
-export type CreateGraphViewMutation = { __typename?: 'Mutation', createGraphView: { __typename?: 'GraphView', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string }, query: { __typename?: 'GraphQuery', id: string, name: string, query: string }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } }, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> } };
+export type CreateGraphViewMutation = {
+  __typename?: "Mutation";
+  createGraphView: {
+    __typename?: "GraphView";
+    id: string;
+    label: string;
+    graph: { __typename?: "Graph"; id: string; name: string };
+    query: {
+      __typename?: "GraphQuery";
+      id: string;
+      name: string;
+      query: string;
+    };
+    render:
+      | {
+          __typename?: "Pairs";
+          pairs: Array<{
+            __typename?: "Pair";
+            left:
+              | { __typename?: "Entity"; id: any }
+              | { __typename?: "Structure"; id: any };
+            right:
+              | { __typename?: "Entity"; id: any }
+              | { __typename?: "Structure"; id: any };
+          }>;
+        }
+      | {
+          __typename?: "Path";
+          nodes: Array<
+            | {
+                __typename?: "Entity";
+                id: any;
+                label: string;
+                category: {
+                  __typename?: "GenericCategory";
+                  id: string;
+                  label: string;
+                };
+                subjectedTo: Array<{
+                  __typename?: "ProtocolStep";
+                  id: string;
+                  performedAt?: any | null;
+                  name: string;
+                }>;
+              }
+            | {
+                __typename?: "Structure";
+                id: any;
+                label: string;
+                identifier: string;
+                object: string;
+                category: {
+                  __typename?: "StructureCategory";
+                  identifier: string;
+                };
+              }
+          >;
+          edges: Array<
+            | {
+                __typename?: "ComputedMeasurement";
+                id: any;
+                label: string;
+                leftId: string;
+                rightId: string;
+              }
+            | {
+                __typename?: "Measurement";
+                id: any;
+                label: string;
+                leftId: string;
+                rightId: string;
+                value: any;
+              }
+            | {
+                __typename?: "Relation";
+                id: any;
+                label: string;
+                leftId: string;
+                rightId: string;
+              }
+          >;
+        }
+      | {
+          __typename?: "Table";
+          rows: Array<any>;
+          columns: Array<{
+            __typename?: "Column";
+            name: string;
+            kind: ColumnKind;
+            valueKind?: MeasurementKind | null;
+            description?: string | null;
+            label?: string | null;
+          }>;
+          graph: { __typename?: "Graph"; id: string; ageName: string };
+        };
+    plotViews: Array<{
+      __typename?: "PlotView";
+      id: string;
+      name: string;
+      view: {
+        __typename?: "GraphView";
+        id: string;
+        label: string;
+        render:
+          | { __typename?: "Pairs" }
+          | { __typename?: "Path" }
+          | {
+              __typename?: "Table";
+              rows: Array<any>;
+              columns: Array<{
+                __typename?: "Column";
+                name: string;
+                kind: ColumnKind;
+                valueKind?: MeasurementKind | null;
+                description?: string | null;
+                label?: string | null;
+              }>;
+              graph: { __typename?: "Graph"; id: string; ageName: string };
+            };
+      };
+      plot: {
+        __typename?: "ScatterPlot";
+        id: string;
+        name: string;
+        description?: string | null;
+        xColumn: string;
+        yColumn: string;
+        colorColumn?: string | null;
+        sizeColumn?: string | null;
+      };
+    }>;
+  };
+};
 
 export type PinNodeQueryMutationVariables = Exact<{
   input: PinNodeQueryInput;
 }>;
 
-
-export type PinNodeQueryMutation = { __typename?: 'Mutation', pinNodeQuery: { __typename?: 'NodeQuery', name: string, query: string } };
+export type PinNodeQueryMutation = {
+  __typename?: "Mutation";
+  pinNodeQuery: { __typename?: "NodeQuery"; name: string; query: string };
+};
 
 export type CreateNodeViewMutationVariables = Exact<{
   input: NodeViewInput;
 }>;
 
-
-export type CreateNodeViewMutation = { __typename?: 'Mutation', createNodeView: { __typename?: 'NodeView', id: string, label: string, node: { __typename?: 'Entity', id: any, graphId: string } | { __typename?: 'Structure', id: any, graphId: string }, query: { __typename?: 'NodeQuery', id: string, name: string, query: string }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } } };
+export type CreateNodeViewMutation = {
+  __typename?: "Mutation";
+  createNodeView: {
+    __typename?: "NodeView";
+    id: string;
+    label: string;
+    node:
+      | { __typename?: "Entity"; id: any; graphId: string }
+      | { __typename?: "Structure"; id: any; graphId: string };
+    query: {
+      __typename?: "NodeQuery";
+      id: string;
+      name: string;
+      query: string;
+    };
+    render:
+      | {
+          __typename?: "Pairs";
+          pairs: Array<{
+            __typename?: "Pair";
+            left:
+              | { __typename?: "Entity"; id: any }
+              | { __typename?: "Structure"; id: any };
+            right:
+              | { __typename?: "Entity"; id: any }
+              | { __typename?: "Structure"; id: any };
+          }>;
+        }
+      | {
+          __typename?: "Path";
+          nodes: Array<
+            | {
+                __typename?: "Entity";
+                id: any;
+                label: string;
+                category: {
+                  __typename?: "GenericCategory";
+                  id: string;
+                  label: string;
+                };
+                subjectedTo: Array<{
+                  __typename?: "ProtocolStep";
+                  id: string;
+                  performedAt?: any | null;
+                  name: string;
+                }>;
+              }
+            | {
+                __typename?: "Structure";
+                id: any;
+                label: string;
+                identifier: string;
+                object: string;
+                category: {
+                  __typename?: "StructureCategory";
+                  identifier: string;
+                };
+              }
+          >;
+          edges: Array<
+            | {
+                __typename?: "ComputedMeasurement";
+                id: any;
+                label: string;
+                leftId: string;
+                rightId: string;
+              }
+            | {
+                __typename?: "Measurement";
+                id: any;
+                label: string;
+                leftId: string;
+                rightId: string;
+                value: any;
+              }
+            | {
+                __typename?: "Relation";
+                id: any;
+                label: string;
+                leftId: string;
+                rightId: string;
+              }
+          >;
+        }
+      | {
+          __typename?: "Table";
+          rows: Array<any>;
+          columns: Array<{
+            __typename?: "Column";
+            name: string;
+            kind: ColumnKind;
+            valueKind?: MeasurementKind | null;
+            description?: string | null;
+            label?: string | null;
+          }>;
+          graph: { __typename?: "Graph"; id: string; ageName: string };
+        };
+  };
+};
 
 export type CreateOntologyMutationVariables = Exact<{
   input: OntologyInput;
 }>;
 
-
-export type CreateOntologyMutation = { __typename?: 'Mutation', createOntology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, structureCategories: Array<{ __typename?: 'StructureCategory', identifier: string, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, genericCategories: Array<{ __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, relationCategories: Array<{ __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string, pinned: boolean }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, description?: string | null, pinned: boolean }>, nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> } };
+export type CreateOntologyMutation = {
+  __typename?: "Mutation";
+  createOntology: {
+    __typename?: "Ontology";
+    id: string;
+    name: string;
+    description?: string | null;
+    purl?: string | null;
+    structureCategories: Array<{
+      __typename?: "StructureCategory";
+      identifier: string;
+      id: string;
+      label: string;
+      description?: string | null;
+      ageName: string;
+      store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+    }>;
+    genericCategories: Array<{
+      __typename?: "GenericCategory";
+      instanceKind: InstanceKind;
+      id: string;
+      label: string;
+      description?: string | null;
+      ageName: string;
+      store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+    }>;
+    relationCategories: Array<{
+      __typename?: "RelationCategory";
+      id: string;
+      label: string;
+      description?: string | null;
+      ageName: string;
+      store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+      left?:
+        | { __typename?: "GenericCategory"; id: string }
+        | { __typename?: "StructureCategory"; id: string }
+        | null;
+      right?:
+        | { __typename?: "GenericCategory"; id: string }
+        | { __typename?: "StructureCategory"; id: string }
+        | null;
+    }>;
+    measurementCategories: Array<{
+      __typename?: "MeasurementCategory";
+      metricKind: MeasurementKind;
+      id: string;
+      label: string;
+      description?: string | null;
+      ageName: string;
+      store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+      left?:
+        | { __typename?: "GenericCategory"; id: string }
+        | { __typename?: "StructureCategory"; id: string }
+        | null;
+      right?:
+        | { __typename?: "GenericCategory"; id: string }
+        | { __typename?: "StructureCategory"; id: string }
+        | null;
+    }>;
+    store?: {
+      __typename?: "MediaStore";
+      id: string;
+      key: string;
+      presignedUrl: string;
+    } | null;
+    graphs: Array<{
+      __typename?: "Graph";
+      id: string;
+      name: string;
+      pinned: boolean;
+    }>;
+    graphQueries: Array<{
+      __typename?: "GraphQuery";
+      id: string;
+      name: string;
+      description?: string | null;
+      pinned: boolean;
+    }>;
+    nodeQueries: Array<{
+      __typename?: "NodeQuery";
+      id: string;
+      name: string;
+      description?: string | null;
+      pinned: boolean;
+    }>;
+  };
+};
 
 export type UpdateOntologyMutationVariables = Exact<{
   input: UpdateOntologyInput;
 }>;
 
-
-export type UpdateOntologyMutation = { __typename?: 'Mutation', updateOntology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, structureCategories: Array<{ __typename?: 'StructureCategory', identifier: string, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, genericCategories: Array<{ __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, relationCategories: Array<{ __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string, pinned: boolean }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, description?: string | null, pinned: boolean }>, nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> } };
+export type UpdateOntologyMutation = {
+  __typename?: "Mutation";
+  updateOntology: {
+    __typename?: "Ontology";
+    id: string;
+    name: string;
+    description?: string | null;
+    purl?: string | null;
+    structureCategories: Array<{
+      __typename?: "StructureCategory";
+      identifier: string;
+      id: string;
+      label: string;
+      description?: string | null;
+      ageName: string;
+      store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+    }>;
+    genericCategories: Array<{
+      __typename?: "GenericCategory";
+      instanceKind: InstanceKind;
+      id: string;
+      label: string;
+      description?: string | null;
+      ageName: string;
+      store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+    }>;
+    relationCategories: Array<{
+      __typename?: "RelationCategory";
+      id: string;
+      label: string;
+      description?: string | null;
+      ageName: string;
+      store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+      left?:
+        | { __typename?: "GenericCategory"; id: string }
+        | { __typename?: "StructureCategory"; id: string }
+        | null;
+      right?:
+        | { __typename?: "GenericCategory"; id: string }
+        | { __typename?: "StructureCategory"; id: string }
+        | null;
+    }>;
+    measurementCategories: Array<{
+      __typename?: "MeasurementCategory";
+      metricKind: MeasurementKind;
+      id: string;
+      label: string;
+      description?: string | null;
+      ageName: string;
+      store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+      left?:
+        | { __typename?: "GenericCategory"; id: string }
+        | { __typename?: "StructureCategory"; id: string }
+        | null;
+      right?:
+        | { __typename?: "GenericCategory"; id: string }
+        | { __typename?: "StructureCategory"; id: string }
+        | null;
+    }>;
+    store?: {
+      __typename?: "MediaStore";
+      id: string;
+      key: string;
+      presignedUrl: string;
+    } | null;
+    graphs: Array<{
+      __typename?: "Graph";
+      id: string;
+      name: string;
+      pinned: boolean;
+    }>;
+    graphQueries: Array<{
+      __typename?: "GraphQuery";
+      id: string;
+      name: string;
+      description?: string | null;
+      pinned: boolean;
+    }>;
+    nodeQueries: Array<{
+      __typename?: "NodeQuery";
+      id: string;
+      name: string;
+      description?: string | null;
+      pinned: boolean;
+    }>;
+  };
+};
 
 export type DeleteOntologyMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type DeleteOntologyMutation = { __typename?: 'Mutation', deleteOntology: string };
+export type DeleteOntologyMutation = {
+  __typename?: "Mutation";
+  deleteOntology: string;
+};
 
 export type CreateProtocolMutationVariables = Exact<{
-  name: Scalars['String']['input'];
-  experiment: Scalars['ID']['input'];
+  name: Scalars["String"]["input"];
+  experiment: Scalars["ID"]["input"];
 }>;
 
-
-export type CreateProtocolMutation = { __typename?: 'Mutation', createProtocol: { __typename?: 'Protocol', id: string, name: string, description?: string | null, experiment: { __typename?: 'Experiment', id: string, name: string, description?: string | null } } };
+export type CreateProtocolMutation = {
+  __typename?: "Mutation";
+  createProtocol: {
+    __typename?: "Protocol";
+    id: string;
+    name: string;
+    description?: string | null;
+    experiment: {
+      __typename?: "Experiment";
+      id: string;
+      name: string;
+      description?: string | null;
+    };
+  };
+};
 
 export type CreateProtocolStepMutationVariables = Exact<{
   input: ProtocolStepInput;
 }>;
 
-
-export type CreateProtocolStepMutation = { __typename?: 'Mutation', createProtocolStep: { __typename?: 'ProtocolStep', id: string, name: string, performedAt?: any | null, template: { __typename?: 'ProtocolStepTemplate', name: string, plateChildren: Array<any> }, forReagent?: { __typename?: 'Reagent', id: string } | null, forEntity?: { __typename?: 'Entity', id: any } | null, performedBy?: { __typename?: 'User', id: string } | null } };
+export type CreateProtocolStepMutation = {
+  __typename?: "Mutation";
+  createProtocolStep: {
+    __typename?: "ProtocolStep";
+    id: string;
+    name: string;
+    performedAt?: any | null;
+    template: {
+      __typename?: "ProtocolStepTemplate";
+      name: string;
+      plateChildren: Array<any>;
+    };
+    forReagent?: { __typename?: "Reagent"; id: string } | null;
+    forEntity?: { __typename?: "Entity"; id: any } | null;
+    performedBy?: { __typename?: "User"; id: string } | null;
+  };
+};
 
 export type UpdateProtocolStepMutationVariables = Exact<{
   input: UpdateProtocolStepInput;
 }>;
 
-
-export type UpdateProtocolStepMutation = { __typename?: 'Mutation', updateProtocolStep: { __typename?: 'ProtocolStep', id: string, name: string, performedAt?: any | null, template: { __typename?: 'ProtocolStepTemplate', name: string, plateChildren: Array<any> }, forReagent?: { __typename?: 'Reagent', id: string } | null, forEntity?: { __typename?: 'Entity', id: any } | null, performedBy?: { __typename?: 'User', id: string } | null } };
+export type UpdateProtocolStepMutation = {
+  __typename?: "Mutation";
+  updateProtocolStep: {
+    __typename?: "ProtocolStep";
+    id: string;
+    name: string;
+    performedAt?: any | null;
+    template: {
+      __typename?: "ProtocolStepTemplate";
+      name: string;
+      plateChildren: Array<any>;
+    };
+    forReagent?: { __typename?: "Reagent"; id: string } | null;
+    forEntity?: { __typename?: "Entity"; id: any } | null;
+    performedBy?: { __typename?: "User"; id: string } | null;
+  };
+};
 
 export type CreateProtocolStepTemplateMutationVariables = Exact<{
   input: ProtocolStepTemplateInput;
 }>;
 
-
-export type CreateProtocolStepTemplateMutation = { __typename?: 'Mutation', createProtocolStepTemplate: { __typename?: 'ProtocolStepTemplate', id: string, name: string, plateChildren: Array<any> } };
+export type CreateProtocolStepTemplateMutation = {
+  __typename?: "Mutation";
+  createProtocolStepTemplate: {
+    __typename?: "ProtocolStepTemplate";
+    id: string;
+    name: string;
+    plateChildren: Array<any>;
+  };
+};
 
 export type UpdateProtocolStepTemplateMutationVariables = Exact<{
   input: UpdateProtocolStepTemplateInput;
 }>;
 
-
-export type UpdateProtocolStepTemplateMutation = { __typename?: 'Mutation', updateProtocolStepTemplate: { __typename?: 'ProtocolStepTemplate', id: string, name: string, plateChildren: Array<any> } };
+export type UpdateProtocolStepTemplateMutation = {
+  __typename?: "Mutation";
+  updateProtocolStepTemplate: {
+    __typename?: "ProtocolStepTemplate";
+    id: string;
+    name: string;
+    plateChildren: Array<any>;
+  };
+};
 
 export type CreateReagentMutationVariables = Exact<{
   input: ReagentInput;
 }>;
 
-
-export type CreateReagentMutation = { __typename?: 'Mutation', createReagent: { __typename?: 'Reagent', id: string, label: string, creationSteps: Array<{ __typename?: 'ProtocolStep', id: string, name: string }>, usedIn: Array<{ __typename?: 'ReagentMapping', id: string, protocolStep: { __typename?: 'ProtocolStep', performedAt?: any | null, name: string } }> } };
+export type CreateReagentMutation = {
+  __typename?: "Mutation";
+  createReagent: {
+    __typename?: "Reagent";
+    id: string;
+    label: string;
+    creationSteps: Array<{
+      __typename?: "ProtocolStep";
+      id: string;
+      name: string;
+    }>;
+    usedIn: Array<{
+      __typename?: "ReagentMapping";
+      id: string;
+      protocolStep: {
+        __typename?: "ProtocolStep";
+        performedAt?: any | null;
+        name: string;
+      };
+    }>;
+  };
+};
 
 export type DeleteScatterPlotMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type DeleteScatterPlotMutation = { __typename?: 'Mutation', deleteScatterPlot: string };
+export type DeleteScatterPlotMutation = {
+  __typename?: "Mutation";
+  deleteScatterPlot: string;
+};
 
 export type CreateStructureMutationVariables = Exact<{
   input: StructureInput;
 }>;
 
-
-export type CreateStructureMutation = { __typename?: 'Mutation', createStructure: { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } } };
+export type CreateStructureMutation = {
+  __typename?: "Mutation";
+  createStructure: {
+    __typename?: "Structure";
+    id: any;
+    label: string;
+    identifier: string;
+    object: string;
+    category: { __typename?: "StructureCategory"; identifier: string };
+  };
+};
 
 export type GetEdgeQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetEdgeQuery = { __typename?: 'Query', edge: { __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string } };
+export type GetEdgeQuery = {
+  __typename?: "Query";
+  edge:
+    | {
+        __typename?: "ComputedMeasurement";
+        id: any;
+        label: string;
+        leftId: string;
+        rightId: string;
+      }
+    | {
+        __typename?: "Measurement";
+        id: any;
+        label: string;
+        leftId: string;
+        rightId: string;
+        value: any;
+      }
+    | {
+        __typename?: "Relation";
+        id: any;
+        label: string;
+        leftId: string;
+        rightId: string;
+      };
+};
 
 export type GetGenericCategoryQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetGenericCategoryQuery = { __typename?: 'Query', genericCategory: { __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } };
+export type GetGenericCategoryQuery = {
+  __typename?: "Query";
+  genericCategory: {
+    __typename?: "GenericCategory";
+    instanceKind: InstanceKind;
+    id: string;
+    label: string;
+    ageName: string;
+    store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+  };
+};
 
 export type SearchGenericCategoryQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
+  values?: InputMaybe<Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"]>;
 }>;
 
-
-export type SearchGenericCategoryQuery = { __typename?: 'Query', options: Array<{ __typename?: 'GenericCategory', value: string, label: string }> };
+export type SearchGenericCategoryQuery = {
+  __typename?: "Query";
+  options: Array<{
+    __typename?: "GenericCategory";
+    value: string;
+    label: string;
+  }>;
+};
 
 export type GetGraphQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
+export type GetGraphQuery = {
+  __typename?: "Query";
+  graph: {
+    __typename?: "Graph";
+    id: string;
+    name: string;
+    pinned: boolean;
+    description?: string | null;
+    latestNodes: Array<
+      | {
+          __typename?: "Entity";
+          id: any;
+          label: string;
+          category: {
+            __typename?: "GenericCategory";
+            id: string;
+            label: string;
+          };
+          subjectedTo: Array<{
+            __typename?: "ProtocolStep";
+            id: string;
+            performedAt?: any | null;
+            name: string;
+          }>;
+        }
+      | {
+          __typename?: "Structure";
+          id: any;
+          label: string;
+          identifier: string;
+          object: string;
+          category: { __typename?: "StructureCategory"; identifier: string };
+        }
+    >;
+    ontology: {
+      __typename?: "Ontology";
+      id: string;
+      graphQueries: Array<{
+        __typename?: "GraphQuery";
+        id: string;
+        name: string;
+        query: string;
+      }>;
+    };
+    graphViews: Array<{ __typename?: "GraphView"; id: string; label: string }>;
+    nodeViews: Array<{ __typename?: "NodeView"; id: string; label: string }>;
+    plotViews: Array<{
+      __typename?: "PlotView";
+      id: string;
+      name: string;
+      view: {
+        __typename?: "GraphView";
+        id: string;
+        label: string;
+        render:
+          | { __typename?: "Pairs" }
+          | { __typename?: "Path" }
+          | {
+              __typename?: "Table";
+              rows: Array<any>;
+              columns: Array<{
+                __typename?: "Column";
+                name: string;
+                kind: ColumnKind;
+                valueKind?: MeasurementKind | null;
+                description?: string | null;
+                label?: string | null;
+              }>;
+              graph: { __typename?: "Graph"; id: string; ageName: string };
+            };
+      };
+      plot: {
+        __typename?: "ScatterPlot";
+        id: string;
+        name: string;
+        description?: string | null;
+        xColumn: string;
+        yColumn: string;
+        colorColumn?: string | null;
+        sizeColumn?: string | null;
+      };
+    }>;
+  };
+};
 
-export type GetGraphQuery = { __typename?: 'Query', graph: { __typename?: 'Graph', id: string, name: string, pinned: boolean, description?: string | null, latestNodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, ontology: { __typename?: 'Ontology', id: string, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string }> }, graphViews: Array<{ __typename?: 'GraphView', id: string, label: string }>, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> } };
+export type MyActiveGraphQueryVariables = Exact<{ [key: string]: never }>;
 
-export type MyActiveGraphQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type MyActiveGraphQuery = { __typename?: 'Query', myActiveGraph: { __typename?: 'Graph', id: string, name: string, pinned: boolean } };
+export type MyActiveGraphQuery = {
+  __typename?: "Query";
+  myActiveGraph: {
+    __typename?: "Graph";
+    id: string;
+    name: string;
+    pinned: boolean;
+  };
+};
 
 export type ListGraphsQueryVariables = Exact<{
   filters?: InputMaybe<GraphFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 }>;
 
-
-export type ListGraphsQuery = { __typename?: 'Query', graphs: Array<{ __typename?: 'Graph', id: string, name: string, pinned: boolean }> };
+export type ListGraphsQuery = {
+  __typename?: "Query";
+  graphs: Array<{
+    __typename?: "Graph";
+    id: string;
+    name: string;
+    pinned: boolean;
+  }>;
+};
 
 export type SearchGraphsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
+  values?: InputMaybe<Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"]>;
 }>;
 
-
-export type SearchGraphsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Graph', value: string, label: string }> };
+export type SearchGraphsQuery = {
+  __typename?: "Query";
+  options: Array<{ __typename?: "Graph"; value: string; label: string }>;
+};
 
 export type GetGraphQueryQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetGraphQueryQuery = { __typename?: 'Query', graphQuery: { __typename?: 'GraphQuery', id: string, name: string, query: string, description?: string | null, ontology: { __typename?: 'Ontology', id: string, name: string }, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string }> } };
+export type GetGraphQueryQuery = {
+  __typename?: "Query";
+  graphQuery: {
+    __typename?: "GraphQuery";
+    id: string;
+    name: string;
+    query: string;
+    description?: string | null;
+    ontology: { __typename?: "Ontology"; id: string; name: string };
+    scatterPlots: Array<{
+      __typename?: "ScatterPlot";
+      id: string;
+      name: string;
+    }>;
+  };
+};
 
 export type SearchGraphQueriesQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
+  values?: InputMaybe<Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"]>;
 }>;
 
-
-export type SearchGraphQueriesQuery = { __typename?: 'Query', options: Array<{ __typename?: 'GraphQuery', value: string, label: string }> };
+export type SearchGraphQueriesQuery = {
+  __typename?: "Query";
+  options: Array<{ __typename?: "GraphQuery"; value: string; label: string }>;
+};
 
 export type GetGraphViewQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetGraphViewQuery = { __typename?: 'Query', graphView: { __typename?: 'GraphView', id: string, label: string, graph: { __typename?: 'Graph', id: string, name: string }, query: { __typename?: 'GraphQuery', id: string, name: string, query: string }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } }, plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> } };
+export type GetGraphViewQuery = {
+  __typename?: "Query";
+  graphView: {
+    __typename?: "GraphView";
+    id: string;
+    label: string;
+    graph: { __typename?: "Graph"; id: string; name: string };
+    query: {
+      __typename?: "GraphQuery";
+      id: string;
+      name: string;
+      query: string;
+    };
+    render:
+      | {
+          __typename?: "Pairs";
+          pairs: Array<{
+            __typename?: "Pair";
+            left:
+              | { __typename?: "Entity"; id: any }
+              | { __typename?: "Structure"; id: any };
+            right:
+              | { __typename?: "Entity"; id: any }
+              | { __typename?: "Structure"; id: any };
+          }>;
+        }
+      | {
+          __typename?: "Path";
+          nodes: Array<
+            | {
+                __typename?: "Entity";
+                id: any;
+                label: string;
+                category: {
+                  __typename?: "GenericCategory";
+                  id: string;
+                  label: string;
+                };
+                subjectedTo: Array<{
+                  __typename?: "ProtocolStep";
+                  id: string;
+                  performedAt?: any | null;
+                  name: string;
+                }>;
+              }
+            | {
+                __typename?: "Structure";
+                id: any;
+                label: string;
+                identifier: string;
+                object: string;
+                category: {
+                  __typename?: "StructureCategory";
+                  identifier: string;
+                };
+              }
+          >;
+          edges: Array<
+            | {
+                __typename?: "ComputedMeasurement";
+                id: any;
+                label: string;
+                leftId: string;
+                rightId: string;
+              }
+            | {
+                __typename?: "Measurement";
+                id: any;
+                label: string;
+                leftId: string;
+                rightId: string;
+                value: any;
+              }
+            | {
+                __typename?: "Relation";
+                id: any;
+                label: string;
+                leftId: string;
+                rightId: string;
+              }
+          >;
+        }
+      | {
+          __typename?: "Table";
+          rows: Array<any>;
+          columns: Array<{
+            __typename?: "Column";
+            name: string;
+            kind: ColumnKind;
+            valueKind?: MeasurementKind | null;
+            description?: string | null;
+            label?: string | null;
+          }>;
+          graph: { __typename?: "Graph"; id: string; ageName: string };
+        };
+    plotViews: Array<{
+      __typename?: "PlotView";
+      id: string;
+      name: string;
+      view: {
+        __typename?: "GraphView";
+        id: string;
+        label: string;
+        render:
+          | { __typename?: "Pairs" }
+          | { __typename?: "Path" }
+          | {
+              __typename?: "Table";
+              rows: Array<any>;
+              columns: Array<{
+                __typename?: "Column";
+                name: string;
+                kind: ColumnKind;
+                valueKind?: MeasurementKind | null;
+                description?: string | null;
+                label?: string | null;
+              }>;
+              graph: { __typename?: "Graph"; id: string; ageName: string };
+            };
+      };
+      plot: {
+        __typename?: "ScatterPlot";
+        id: string;
+        name: string;
+        description?: string | null;
+        xColumn: string;
+        yColumn: string;
+        colorColumn?: string | null;
+        sizeColumn?: string | null;
+      };
+    }>;
+  };
+};
 
 export type SearchGraphViewsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
+  values?: InputMaybe<Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"]>;
 }>;
 
-
-export type SearchGraphViewsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'GraphView', value: string, label: string }> };
+export type SearchGraphViewsQuery = {
+  __typename?: "Query";
+  options: Array<{ __typename?: "GraphView"; value: string; label: string }>;
+};
 
 export type GetMeasurmentCategoryQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetMeasurmentCategoryQuery = { __typename?: 'Query', measurementCategory: { __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null } };
+export type GetMeasurmentCategoryQuery = {
+  __typename?: "Query";
+  measurementCategory: {
+    __typename?: "MeasurementCategory";
+    metricKind: MeasurementKind;
+    id: string;
+    label: string;
+    ageName: string;
+    store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+    left?:
+      | { __typename?: "GenericCategory"; id: string }
+      | { __typename?: "StructureCategory"; id: string }
+      | null;
+    right?:
+      | { __typename?: "GenericCategory"; id: string }
+      | { __typename?: "StructureCategory"; id: string }
+      | null;
+  };
+};
 
 export type SearchMeasurmentCategoryQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
+  values?: InputMaybe<Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"]>;
 }>;
 
-
-export type SearchMeasurmentCategoryQuery = { __typename?: 'Query', options: Array<{ __typename?: 'MeasurementCategory', value: string, label: string }> };
+export type SearchMeasurmentCategoryQuery = {
+  __typename?: "Query";
+  options: Array<{
+    __typename?: "MeasurementCategory";
+    value: string;
+    label: string;
+  }>;
+};
 
 export type GetNodeQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetNodeQuery = { __typename?: 'Query', node: { __typename?: 'Entity', id: any, label: string, graph: { __typename?: 'Graph', id: string, name: string, ontology: { __typename?: 'Ontology', nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> } }, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, graph: { __typename?: 'Graph', id: string, name: string, ontology: { __typename?: 'Ontology', nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> } }, nodeViews: Array<{ __typename?: 'NodeView', id: string, label: string }>, category: { __typename?: 'StructureCategory', identifier: string } } };
+export type GetNodeQuery = {
+  __typename?: "Query";
+  node:
+    | {
+        __typename?: "Entity";
+        id: any;
+        label: string;
+        graph: {
+          __typename?: "Graph";
+          id: string;
+          name: string;
+          ontology: {
+            __typename?: "Ontology";
+            nodeQueries: Array<{
+              __typename?: "NodeQuery";
+              id: string;
+              name: string;
+              description?: string | null;
+              pinned: boolean;
+            }>;
+          };
+        };
+        nodeViews: Array<{
+          __typename?: "NodeView";
+          id: string;
+          label: string;
+        }>;
+        category: { __typename?: "GenericCategory"; id: string; label: string };
+        subjectedTo: Array<{
+          __typename?: "ProtocolStep";
+          id: string;
+          performedAt?: any | null;
+          name: string;
+        }>;
+      }
+    | {
+        __typename?: "Structure";
+        id: any;
+        label: string;
+        identifier: string;
+        object: string;
+        graph: {
+          __typename?: "Graph";
+          id: string;
+          name: string;
+          ontology: {
+            __typename?: "Ontology";
+            nodeQueries: Array<{
+              __typename?: "NodeQuery";
+              id: string;
+              name: string;
+              description?: string | null;
+              pinned: boolean;
+            }>;
+          };
+        };
+        nodeViews: Array<{
+          __typename?: "NodeView";
+          id: string;
+          label: string;
+        }>;
+        category: { __typename?: "StructureCategory"; identifier: string };
+      };
+};
 
 export type GetNodeViewQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetNodeViewQuery = { __typename?: 'Query', nodeView: { __typename?: 'NodeView', id: string, label: string, node: { __typename?: 'Entity', id: any, graphId: string } | { __typename?: 'Structure', id: any, graphId: string }, query: { __typename?: 'NodeQuery', id: string, name: string, query: string }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } } };
+export type GetNodeViewQuery = {
+  __typename?: "Query";
+  nodeView: {
+    __typename?: "NodeView";
+    id: string;
+    label: string;
+    node:
+      | { __typename?: "Entity"; id: any; graphId: string }
+      | { __typename?: "Structure"; id: any; graphId: string };
+    query: {
+      __typename?: "NodeQuery";
+      id: string;
+      name: string;
+      query: string;
+    };
+    render:
+      | {
+          __typename?: "Pairs";
+          pairs: Array<{
+            __typename?: "Pair";
+            left:
+              | { __typename?: "Entity"; id: any }
+              | { __typename?: "Structure"; id: any };
+            right:
+              | { __typename?: "Entity"; id: any }
+              | { __typename?: "Structure"; id: any };
+          }>;
+        }
+      | {
+          __typename?: "Path";
+          nodes: Array<
+            | {
+                __typename?: "Entity";
+                id: any;
+                label: string;
+                category: {
+                  __typename?: "GenericCategory";
+                  id: string;
+                  label: string;
+                };
+                subjectedTo: Array<{
+                  __typename?: "ProtocolStep";
+                  id: string;
+                  performedAt?: any | null;
+                  name: string;
+                }>;
+              }
+            | {
+                __typename?: "Structure";
+                id: any;
+                label: string;
+                identifier: string;
+                object: string;
+                category: {
+                  __typename?: "StructureCategory";
+                  identifier: string;
+                };
+              }
+          >;
+          edges: Array<
+            | {
+                __typename?: "ComputedMeasurement";
+                id: any;
+                label: string;
+                leftId: string;
+                rightId: string;
+              }
+            | {
+                __typename?: "Measurement";
+                id: any;
+                label: string;
+                leftId: string;
+                rightId: string;
+                value: any;
+              }
+            | {
+                __typename?: "Relation";
+                id: any;
+                label: string;
+                leftId: string;
+                rightId: string;
+              }
+          >;
+        }
+      | {
+          __typename?: "Table";
+          rows: Array<any>;
+          columns: Array<{
+            __typename?: "Column";
+            name: string;
+            kind: ColumnKind;
+            valueKind?: MeasurementKind | null;
+            description?: string | null;
+            label?: string | null;
+          }>;
+          graph: { __typename?: "Graph"; id: string; ageName: string };
+        };
+  };
+};
 
 export type SearchNodeViewsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
+  values?: InputMaybe<Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"]>;
 }>;
 
-
-export type SearchNodeViewsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'NodeView', value: string, label: string }> };
+export type SearchNodeViewsQuery = {
+  __typename?: "Query";
+  options: Array<{ __typename?: "NodeView"; value: string; label: string }>;
+};
 
 export type GetOntologyQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
+export type GetOntologyQuery = {
+  __typename?: "Query";
+  ontology: {
+    __typename?: "Ontology";
+    id: string;
+    name: string;
+    description?: string | null;
+    purl?: string | null;
+    structureCategories: Array<{
+      __typename?: "StructureCategory";
+      identifier: string;
+      id: string;
+      label: string;
+      description?: string | null;
+      ageName: string;
+      store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+    }>;
+    genericCategories: Array<{
+      __typename?: "GenericCategory";
+      instanceKind: InstanceKind;
+      id: string;
+      label: string;
+      description?: string | null;
+      ageName: string;
+      store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+    }>;
+    relationCategories: Array<{
+      __typename?: "RelationCategory";
+      id: string;
+      label: string;
+      description?: string | null;
+      ageName: string;
+      store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+      left?:
+        | { __typename?: "GenericCategory"; id: string }
+        | { __typename?: "StructureCategory"; id: string }
+        | null;
+      right?:
+        | { __typename?: "GenericCategory"; id: string }
+        | { __typename?: "StructureCategory"; id: string }
+        | null;
+    }>;
+    measurementCategories: Array<{
+      __typename?: "MeasurementCategory";
+      metricKind: MeasurementKind;
+      id: string;
+      label: string;
+      description?: string | null;
+      ageName: string;
+      store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+      left?:
+        | { __typename?: "GenericCategory"; id: string }
+        | { __typename?: "StructureCategory"; id: string }
+        | null;
+      right?:
+        | { __typename?: "GenericCategory"; id: string }
+        | { __typename?: "StructureCategory"; id: string }
+        | null;
+    }>;
+    store?: {
+      __typename?: "MediaStore";
+      id: string;
+      key: string;
+      presignedUrl: string;
+    } | null;
+    graphs: Array<{
+      __typename?: "Graph";
+      id: string;
+      name: string;
+      pinned: boolean;
+    }>;
+    graphQueries: Array<{
+      __typename?: "GraphQuery";
+      id: string;
+      name: string;
+      description?: string | null;
+      pinned: boolean;
+    }>;
+    nodeQueries: Array<{
+      __typename?: "NodeQuery";
+      id: string;
+      name: string;
+      description?: string | null;
+      pinned: boolean;
+    }>;
+  };
+};
 
-export type GetOntologyQuery = { __typename?: 'Query', ontology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, structureCategories: Array<{ __typename?: 'StructureCategory', identifier: string, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, genericCategories: Array<{ __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, relationCategories: Array<{ __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string, pinned: boolean }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, description?: string | null, pinned: boolean }>, nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> } };
+export type ListOntologiesQueryVariables = Exact<{ [key: string]: never }>;
 
-export type ListOntologiesQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type ListOntologiesQuery = { __typename?: 'Query', ontologies: Array<{ __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null }> };
+export type ListOntologiesQuery = {
+  __typename?: "Query";
+  ontologies: Array<{
+    __typename?: "Ontology";
+    id: string;
+    name: string;
+    description?: string | null;
+    purl?: string | null;
+  }>;
+};
 
 export type SearchOntologiesQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
+  values?: InputMaybe<Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"]>;
 }>;
 
-
-export type SearchOntologiesQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Ontology', value: string, label: string }> };
+export type SearchOntologiesQuery = {
+  __typename?: "Query";
+  options: Array<{ __typename?: "Ontology"; value: string; label: string }>;
+};
 
 export type GetPlotViewQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
+export type GetPlotViewQuery = {
+  __typename?: "Query";
+  plotView: {
+    __typename?: "PlotView";
+    id: string;
+    name: string;
+    view: {
+      __typename?: "GraphView";
+      id: string;
+      label: string;
+      render:
+        | { __typename?: "Pairs" }
+        | { __typename?: "Path" }
+        | {
+            __typename?: "Table";
+            rows: Array<any>;
+            columns: Array<{
+              __typename?: "Column";
+              name: string;
+              kind: ColumnKind;
+              valueKind?: MeasurementKind | null;
+              description?: string | null;
+              label?: string | null;
+            }>;
+            graph: { __typename?: "Graph"; id: string; ageName: string };
+          };
+    };
+    plot: {
+      __typename?: "ScatterPlot";
+      id: string;
+      name: string;
+      description?: string | null;
+      xColumn: string;
+      yColumn: string;
+      colorColumn?: string | null;
+      sizeColumn?: string | null;
+    };
+  };
+};
 
-export type GetPlotViewQuery = { __typename?: 'Query', plotView: { __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } } };
+export type LatestPlotViewsQueryVariables = Exact<{ [key: string]: never }>;
 
-export type LatestPlotViewsQueryVariables = Exact<{ [key: string]: never; }>;
+export type LatestPlotViewsQuery = {
+  __typename?: "Query";
+  plotViews: Array<{
+    __typename?: "PlotView";
+    id: string;
+    name: string;
+    view: {
+      __typename?: "GraphView";
+      id: string;
+      label: string;
+      render:
+        | { __typename?: "Pairs" }
+        | { __typename?: "Path" }
+        | {
+            __typename?: "Table";
+            rows: Array<any>;
+            columns: Array<{
+              __typename?: "Column";
+              name: string;
+              kind: ColumnKind;
+              valueKind?: MeasurementKind | null;
+              description?: string | null;
+              label?: string | null;
+            }>;
+            graph: { __typename?: "Graph"; id: string; ageName: string };
+          };
+    };
+    plot: {
+      __typename?: "ScatterPlot";
+      id: string;
+      name: string;
+      description?: string | null;
+      xColumn: string;
+      yColumn: string;
+      colorColumn?: string | null;
+      sizeColumn?: string | null;
+    };
+  }>;
+};
 
+export type ListPlotViewsQueryVariables = Exact<{ [key: string]: never }>;
 
-export type LatestPlotViewsQuery = { __typename?: 'Query', plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, view: { __typename?: 'GraphView', id: string, label: string, render: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> };
-
-export type ListPlotViewsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type ListPlotViewsQuery = { __typename?: 'Query', plotViews: Array<{ __typename?: 'PlotView', id: string, name: string, plot: { __typename?: 'ScatterPlot', id: string, name: string, description?: string | null, xColumn: string, yColumn: string, colorColumn?: string | null, sizeColumn?: string | null } }> };
+export type ListPlotViewsQuery = {
+  __typename?: "Query";
+  plotViews: Array<{
+    __typename?: "PlotView";
+    id: string;
+    name: string;
+    plot: {
+      __typename?: "ScatterPlot";
+      id: string;
+      name: string;
+      description?: string | null;
+      xColumn: string;
+      yColumn: string;
+      colorColumn?: string | null;
+      sizeColumn?: string | null;
+    };
+  }>;
+};
 
 export type SearchPlotViewsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
+  values?: InputMaybe<Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"]>;
 }>;
 
-
-export type SearchPlotViewsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'PlotView', value: string, label: string }> };
+export type SearchPlotViewsQuery = {
+  __typename?: "Query";
+  options: Array<{ __typename?: "PlotView"; value: string; label: string }>;
+};
 
 export type GetProtocolStepTemplateQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetProtocolStepTemplateQuery = { __typename?: 'Query', protocolStepTemplate: { __typename?: 'ProtocolStepTemplate', id: string, name: string, plateChildren: Array<any> } };
+export type GetProtocolStepTemplateQuery = {
+  __typename?: "Query";
+  protocolStepTemplate: {
+    __typename?: "ProtocolStepTemplate";
+    id: string;
+    name: string;
+    plateChildren: Array<any>;
+  };
+};
 
 export type ListProtocolStepTemplatesQueryVariables = Exact<{
   filters?: InputMaybe<ProtocolStepTemplateFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 }>;
 
-
-export type ListProtocolStepTemplatesQuery = { __typename?: 'Query', protocolStepTemplates: Array<{ __typename?: 'ProtocolStepTemplate', id: string, name: string, plateChildren: Array<any> }> };
+export type ListProtocolStepTemplatesQuery = {
+  __typename?: "Query";
+  protocolStepTemplates: Array<{
+    __typename?: "ProtocolStepTemplate";
+    id: string;
+    name: string;
+    plateChildren: Array<any>;
+  }>;
+};
 
 export type SearchProtocolStepTemplatesQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
+  values?: InputMaybe<Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"]>;
 }>;
 
-
-export type SearchProtocolStepTemplatesQuery = { __typename?: 'Query', options: Array<{ __typename?: 'ProtocolStepTemplate', value: string, label: string }> };
+export type SearchProtocolStepTemplatesQuery = {
+  __typename?: "Query";
+  options: Array<{
+    __typename?: "ProtocolStepTemplate";
+    value: string;
+    label: string;
+  }>;
+};
 
 export type GetProtocolStepQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetProtocolStepQuery = { __typename?: 'Query', protocolStep: { __typename?: 'ProtocolStep', id: string, name: string, performedAt?: any | null, template: { __typename?: 'ProtocolStepTemplate', name: string, plateChildren: Array<any> }, forReagent?: { __typename?: 'Reagent', id: string } | null, forEntity?: { __typename?: 'Entity', id: any } | null, performedBy?: { __typename?: 'User', id: string } | null } };
+export type GetProtocolStepQuery = {
+  __typename?: "Query";
+  protocolStep: {
+    __typename?: "ProtocolStep";
+    id: string;
+    name: string;
+    performedAt?: any | null;
+    template: {
+      __typename?: "ProtocolStepTemplate";
+      name: string;
+      plateChildren: Array<any>;
+    };
+    forReagent?: { __typename?: "Reagent"; id: string } | null;
+    forEntity?: { __typename?: "Entity"; id: any } | null;
+    performedBy?: { __typename?: "User"; id: string } | null;
+  };
+};
 
 export type ListProtocolStepsQueryVariables = Exact<{
   filters?: InputMaybe<ProtocolStepFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 }>;
 
-
-export type ListProtocolStepsQuery = { __typename?: 'Query', protocolSteps: Array<{ __typename?: 'ProtocolStep', id: string, name: string, performedAt?: any | null, performedBy?: { __typename?: 'User', id: string } | null }> };
+export type ListProtocolStepsQuery = {
+  __typename?: "Query";
+  protocolSteps: Array<{
+    __typename?: "ProtocolStep";
+    id: string;
+    name: string;
+    performedAt?: any | null;
+    performedBy?: { __typename?: "User"; id: string } | null;
+  }>;
+};
 
 export type SearchProtocolStepsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
+  values?: InputMaybe<Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"]>;
 }>;
 
-
-export type SearchProtocolStepsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'ProtocolStep', value: string, label: string }> };
+export type SearchProtocolStepsQuery = {
+  __typename?: "Query";
+  options: Array<{ __typename?: "ProtocolStep"; value: string; label: string }>;
+};
 
 export type GetProtocolQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetProtocolQuery = { __typename?: 'Query', protocol: { __typename?: 'Protocol', id: string, name: string, description?: string | null, experiment: { __typename?: 'Experiment', id: string, name: string, description?: string | null } } };
+export type GetProtocolQuery = {
+  __typename?: "Query";
+  protocol: {
+    __typename?: "Protocol";
+    id: string;
+    name: string;
+    description?: string | null;
+    experiment: {
+      __typename?: "Experiment";
+      id: string;
+      name: string;
+      description?: string | null;
+    };
+  };
+};
 
 export type ListProtocolsQueryVariables = Exact<{
   filters?: InputMaybe<ProtocolFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 }>;
 
-
-export type ListProtocolsQuery = { __typename?: 'Query', protocols: Array<{ __typename?: 'Protocol', id: string, name: string, experiment: { __typename?: 'Experiment', id: string, name: string } }> };
+export type ListProtocolsQuery = {
+  __typename?: "Query";
+  protocols: Array<{
+    __typename?: "Protocol";
+    id: string;
+    name: string;
+    experiment: { __typename?: "Experiment"; id: string; name: string };
+  }>;
+};
 
 export type GetReagentQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetReagentQuery = { __typename?: 'Query', reagent: { __typename?: 'Reagent', id: string, label: string, creationSteps: Array<{ __typename?: 'ProtocolStep', id: string, name: string }>, usedIn: Array<{ __typename?: 'ReagentMapping', id: string, protocolStep: { __typename?: 'ProtocolStep', performedAt?: any | null, name: string } }> } };
+export type GetReagentQuery = {
+  __typename?: "Query";
+  reagent: {
+    __typename?: "Reagent";
+    id: string;
+    label: string;
+    creationSteps: Array<{
+      __typename?: "ProtocolStep";
+      id: string;
+      name: string;
+    }>;
+    usedIn: Array<{
+      __typename?: "ReagentMapping";
+      id: string;
+      protocolStep: {
+        __typename?: "ProtocolStep";
+        performedAt?: any | null;
+        name: string;
+      };
+    }>;
+  };
+};
 
 export type ListReagentsQueryVariables = Exact<{
   filters?: InputMaybe<ReagentFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 }>;
 
-
-export type ListReagentsQuery = { __typename?: 'Query', reagents: Array<{ __typename?: 'Reagent', id: string, label: string }> };
+export type ListReagentsQuery = {
+  __typename?: "Query";
+  reagents: Array<{ __typename?: "Reagent"; id: string; label: string }>;
+};
 
 export type SearchReagentsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
+  values?: InputMaybe<Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"]>;
 }>;
 
-
-export type SearchReagentsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Reagent', value: string, label: string }> };
+export type SearchReagentsQuery = {
+  __typename?: "Query";
+  options: Array<{ __typename?: "Reagent"; value: string; label: string }>;
+};
 
 export type GetRelationCategoryQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetRelationCategoryQuery = { __typename?: 'Query', relationCategory: { __typename?: 'RelationCategory', id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null, right?: { __typename?: 'GenericCategory', id: string } | { __typename?: 'StructureCategory', id: string } | null } };
+export type GetRelationCategoryQuery = {
+  __typename?: "Query";
+  relationCategory: {
+    __typename?: "RelationCategory";
+    id: string;
+    label: string;
+    ageName: string;
+    store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+    left?:
+      | { __typename?: "GenericCategory"; id: string }
+      | { __typename?: "StructureCategory"; id: string }
+      | null;
+    right?:
+      | { __typename?: "GenericCategory"; id: string }
+      | { __typename?: "StructureCategory"; id: string }
+      | null;
+  };
+};
 
 export type SearchRelationCategoryQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
+  values?: InputMaybe<Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"]>;
 }>;
 
-
-export type SearchRelationCategoryQuery = { __typename?: 'Query', options: Array<{ __typename?: 'RelationCategory', value: string, label: string }> };
+export type SearchRelationCategoryQuery = {
+  __typename?: "Query";
+  options: Array<{
+    __typename?: "RelationCategory";
+    value: string;
+    label: string;
+  }>;
+};
 
 export type GlobalSearchQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 }>;
 
-
-export type GlobalSearchQuery = { __typename?: 'Query', graphs: Array<{ __typename?: 'Graph', id: string, name: string, pinned: boolean }>, ontologies: Array<{ __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null }> };
+export type GlobalSearchQuery = {
+  __typename?: "Query";
+  graphs: Array<{
+    __typename?: "Graph";
+    id: string;
+    name: string;
+    pinned: boolean;
+  }>;
+  ontologies: Array<{
+    __typename?: "Ontology";
+    id: string;
+    name: string;
+    description?: string | null;
+    purl?: string | null;
+  }>;
+};
 
 export type GetStructureQueryVariables = Exact<{
-  identifier: Scalars['StructureIdentifier']['input'];
-  object: Scalars['ID']['input'];
-  graph?: InputMaybe<Scalars['ID']['input']>;
+  identifier: Scalars["StructureIdentifier"]["input"];
+  object: Scalars["ID"]["input"];
+  graph?: InputMaybe<Scalars["ID"]["input"]>;
 }>;
 
-
-export type GetStructureQuery = { __typename?: 'Query', structure: { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string }, pinnedViews: Array<{ __typename?: 'NodeView', id: string, label: string, node: { __typename?: 'Entity', id: any, graphId: string } | { __typename?: 'Structure', id: any, graphId: string }, query: { __typename?: 'NodeQuery', id: string, name: string, query: string }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }> } };
+export type GetStructureQuery = {
+  __typename?: "Query";
+  structure: {
+    __typename?: "Structure";
+    id: any;
+    label: string;
+    identifier: string;
+    object: string;
+    category: { __typename?: "StructureCategory"; identifier: string };
+    pinnedViews: Array<{
+      __typename?: "NodeView";
+      id: string;
+      label: string;
+      node:
+        | { __typename?: "Entity"; id: any; graphId: string }
+        | { __typename?: "Structure"; id: any; graphId: string };
+      query: {
+        __typename?: "NodeQuery";
+        id: string;
+        name: string;
+        query: string;
+      };
+      render:
+        | {
+            __typename?: "Pairs";
+            pairs: Array<{
+              __typename?: "Pair";
+              left:
+                | { __typename?: "Entity"; id: any }
+                | { __typename?: "Structure"; id: any };
+              right:
+                | { __typename?: "Entity"; id: any }
+                | { __typename?: "Structure"; id: any };
+            }>;
+          }
+        | {
+            __typename?: "Path";
+            nodes: Array<
+              | {
+                  __typename?: "Entity";
+                  id: any;
+                  label: string;
+                  category: {
+                    __typename?: "GenericCategory";
+                    id: string;
+                    label: string;
+                  };
+                  subjectedTo: Array<{
+                    __typename?: "ProtocolStep";
+                    id: string;
+                    performedAt?: any | null;
+                    name: string;
+                  }>;
+                }
+              | {
+                  __typename?: "Structure";
+                  id: any;
+                  label: string;
+                  identifier: string;
+                  object: string;
+                  category: {
+                    __typename?: "StructureCategory";
+                    identifier: string;
+                  };
+                }
+            >;
+            edges: Array<
+              | {
+                  __typename?: "ComputedMeasurement";
+                  id: any;
+                  label: string;
+                  leftId: string;
+                  rightId: string;
+                }
+              | {
+                  __typename?: "Measurement";
+                  id: any;
+                  label: string;
+                  leftId: string;
+                  rightId: string;
+                  value: any;
+                }
+              | {
+                  __typename?: "Relation";
+                  id: any;
+                  label: string;
+                  leftId: string;
+                  rightId: string;
+                }
+            >;
+          }
+        | {
+            __typename?: "Table";
+            rows: Array<any>;
+            columns: Array<{
+              __typename?: "Column";
+              name: string;
+              kind: ColumnKind;
+              valueKind?: MeasurementKind | null;
+              description?: string | null;
+              label?: string | null;
+            }>;
+            graph: { __typename?: "Graph"; id: string; ageName: string };
+          };
+    }>;
+  };
+};
 
 export type GetStructureCategoryQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id: Scalars["ID"]["input"];
 }>;
 
-
-export type GetStructureCategoryQuery = { __typename?: 'Query', structureCategory: { __typename?: 'StructureCategory', identifier: string, id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } };
+export type GetStructureCategoryQuery = {
+  __typename?: "Query";
+  structureCategory: {
+    __typename?: "StructureCategory";
+    identifier: string;
+    id: string;
+    label: string;
+    ageName: string;
+    store?: { __typename?: "MediaStore"; presignedUrl: string } | null;
+  };
+};
 
 export type SearchStructureCategoryQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars["String"]["input"]>;
+  values?: InputMaybe<Array<Scalars["ID"]["input"]> | Scalars["ID"]["input"]>;
 }>;
 
-
-export type SearchStructureCategoryQuery = { __typename?: 'Query', options: Array<{ __typename?: 'StructureCategory', value: string, label: string }> };
+export type SearchStructureCategoryQuery = {
+  __typename?: "Query";
+  options: Array<{
+    __typename?: "StructureCategory";
+    value: string;
+    label: string;
+  }>;
+};
 
 export const BaseCategoryFragmentDoc = gql`
-    fragment BaseCategory on Category {
-  id
-  label
-  ageName
-  store {
-    presignedUrl
+  fragment BaseCategory on Category {
+    id
+    label
+    ageName
+    store {
+      presignedUrl
+    }
   }
-}
-    `;
+`;
 export const BaseNodeCategoryFragmentDoc = gql`
-    fragment BaseNodeCategory on NodeCategory {
-  id
-}
-    `;
+  fragment BaseNodeCategory on NodeCategory {
+    id
+  }
+`;
 export const StructureCategoryFragmentDoc = gql`
-    fragment StructureCategory on StructureCategory {
-  ...BaseCategory
-  ...BaseNodeCategory
-  identifier
-}
-    ${BaseCategoryFragmentDoc}
-${BaseNodeCategoryFragmentDoc}`;
-export const GenericCategoryFragmentDoc = gql`
-    fragment GenericCategory on GenericCategory {
-  ...BaseCategory
-  ...BaseNodeCategory
-  instanceKind
-}
-    ${BaseCategoryFragmentDoc}
-${BaseNodeCategoryFragmentDoc}`;
-export const NodeCategoryFragmentDoc = gql`
-    fragment NodeCategory on NodeCategory {
-  ...StructureCategory
-  ...GenericCategory
-}
-    ${StructureCategoryFragmentDoc}
-${GenericCategoryFragmentDoc}`;
-export const BaseEdgeCategoryFragmentDoc = gql`
-    fragment BaseEdgeCategory on EdgeCategory {
-  left {
-    id
-  }
-  right {
-    id
-  }
-}
-    `;
-export const RelationCategoryFragmentDoc = gql`
-    fragment RelationCategory on RelationCategory {
-  ...BaseCategory
-  ...BaseEdgeCategory
-}
-    ${BaseCategoryFragmentDoc}
-${BaseEdgeCategoryFragmentDoc}`;
-export const MeasurementCategoryFragmentDoc = gql`
-    fragment MeasurementCategory on MeasurementCategory {
-  ...BaseCategory
-  ...BaseEdgeCategory
-  metricKind
-}
-    ${BaseCategoryFragmentDoc}
-${BaseEdgeCategoryFragmentDoc}`;
-export const EdgeCategoryFragmentDoc = gql`
-    fragment EdgeCategory on EdgeCategory {
-  ...RelationCategory
-  ...MeasurementCategory
-}
-    ${RelationCategoryFragmentDoc}
-${MeasurementCategoryFragmentDoc}`;
-export const ListEntityFragmentDoc = gql`
-    fragment ListEntity on Entity {
-  id
-  label
-  category {
-    id
-    label
-  }
-}
-    `;
-export const EntityGraphNodeFragmentDoc = gql`
-    fragment EntityGraphNode on Entity {
-  id
-  label
-  category {
-    color
-  }
-}
-    `;
-export const EntityFragmentDoc = gql`
-    fragment Entity on Entity {
-  id
-  label
-  category {
-    id
-    label
-  }
-  subjectedTo {
-    id
-    performedAt
-    name
-  }
-}
-    `;
-export const StructureFragmentDoc = gql`
-    fragment Structure on Structure {
-  id
-  label
-  identifier
-  object
-  category {
+  fragment StructureCategory on StructureCategory {
+    ...BaseCategory
+    ...BaseNodeCategory
     identifier
   }
-}
-    `;
-export const ListNodeFragmentDoc = gql`
-    fragment ListNode on Node {
-  id
-  label
-  ...Entity
-  ...Structure
-}
-    ${EntityFragmentDoc}
-${StructureFragmentDoc}`;
-export const ListGraphViewFragmentDoc = gql`
-    fragment ListGraphView on GraphView {
-  id
-  label
-}
-    `;
-export const ListNodeViewFragmentDoc = gql`
-    fragment ListNodeView on NodeView {
-  id
-  label
-}
-    `;
-export const ColumnFragmentDoc = gql`
-    fragment Column on Column {
-  name
-  kind
-  valueKind
-  description
-  label
-}
-    `;
-export const TableFragmentDoc = gql`
-    fragment Table on Table {
-  rows
-  columns {
-    ...Column
+  ${BaseCategoryFragmentDoc}
+  ${BaseNodeCategoryFragmentDoc}
+`;
+export const GenericCategoryFragmentDoc = gql`
+  fragment GenericCategory on GenericCategory {
+    ...BaseCategory
+    ...BaseNodeCategory
+    instanceKind
   }
-  graph {
-    id
-    ageName
+  ${BaseCategoryFragmentDoc}
+  ${BaseNodeCategoryFragmentDoc}
+`;
+export const NodeCategoryFragmentDoc = gql`
+  fragment NodeCategory on NodeCategory {
+    ...StructureCategory
+    ...GenericCategory
   }
-}
-    ${ColumnFragmentDoc}`;
-export const ScatterPlotFragmentDoc = gql`
-    fragment ScatterPlot on ScatterPlot {
-  id
-  name
-  description
-  xColumn
-  yColumn
-  colorColumn
-  sizeColumn
-}
-    `;
-export const CarouselPlotViewFragmentDoc = gql`
-    fragment CarouselPlotView on PlotView {
-  id
-  name
-  view {
-    id
-    label
-    render {
-      ...Table
-    }
-  }
-  plot {
-    ...ScatterPlot
-  }
-}
-    ${TableFragmentDoc}
-${ScatterPlotFragmentDoc}`;
-export const GraphFragmentDoc = gql`
-    fragment Graph on Graph {
-  id
-  name
-  pinned
-  description
-  latestNodes(pagination: {limit: 10}) {
-    ...ListNode
-  }
-  ontology {
-    id
-    graphQueries {
-      id
-      name
-      query
-    }
-  }
-  graphViews {
-    ...ListGraphView
-  }
-  nodeViews {
-    ...ListNodeView
-  }
-  plotViews(pagination: {limit: 2}) {
-    ...CarouselPlotView
-  }
-}
-    ${ListNodeFragmentDoc}
-${ListGraphViewFragmentDoc}
-${ListNodeViewFragmentDoc}
-${CarouselPlotViewFragmentDoc}`;
-export const DetailGraphQueryFragmentDoc = gql`
-    fragment DetailGraphQuery on GraphQuery {
-  id
-  name
-  query
-  description
-  ontology {
-    id
-    name
-  }
-  scatterPlots {
-    id
-    name
-  }
-}
-    `;
-export const NodeFragmentDoc = gql`
-    fragment Node on Node {
-  id
-  label
-  ...Entity
-  ...Structure
-}
-    ${EntityFragmentDoc}
-${StructureFragmentDoc}`;
-export const MeasurementFragmentDoc = gql`
-    fragment Measurement on Measurement {
-  id
-  value
-}
-    `;
-export const RelationFragmentDoc = gql`
-    fragment Relation on Relation {
-  id
-  label
-}
-    `;
-export const EdgeFragmentDoc = gql`
-    fragment Edge on Edge {
-  id
-  label
-  leftId
-  rightId
-  ...Measurement
-  ...Relation
-}
-    ${MeasurementFragmentDoc}
-${RelationFragmentDoc}`;
-export const PathFragmentDoc = gql`
-    fragment Path on Path {
-  nodes {
-    ...Node
-  }
-  edges {
-    ...Edge
-  }
-}
-    ${NodeFragmentDoc}
-${EdgeFragmentDoc}`;
-export const PairsFragmentDoc = gql`
-    fragment Pairs on Pairs {
-  pairs {
+  ${StructureCategoryFragmentDoc}
+  ${GenericCategoryFragmentDoc}
+`;
+export const BaseEdgeCategoryFragmentDoc = gql`
+  fragment BaseEdgeCategory on EdgeCategory {
     left {
       id
     }
@@ -3141,383 +5753,648 @@ export const PairsFragmentDoc = gql`
       id
     }
   }
-}
-    `;
-export const PlotViewFragmentDoc = gql`
-    fragment PlotView on PlotView {
-  id
-  name
-  view {
+`;
+export const RelationCategoryFragmentDoc = gql`
+  fragment RelationCategory on RelationCategory {
+    ...BaseCategory
+    ...BaseEdgeCategory
+  }
+  ${BaseCategoryFragmentDoc}
+  ${BaseEdgeCategoryFragmentDoc}
+`;
+export const MeasurementCategoryFragmentDoc = gql`
+  fragment MeasurementCategory on MeasurementCategory {
+    ...BaseCategory
+    ...BaseEdgeCategory
+    metricKind
+  }
+  ${BaseCategoryFragmentDoc}
+  ${BaseEdgeCategoryFragmentDoc}
+`;
+export const EdgeCategoryFragmentDoc = gql`
+  fragment EdgeCategory on EdgeCategory {
+    ...RelationCategory
+    ...MeasurementCategory
+  }
+  ${RelationCategoryFragmentDoc}
+  ${MeasurementCategoryFragmentDoc}
+`;
+export const ListEntityFragmentDoc = gql`
+  fragment ListEntity on Entity {
     id
     label
-    render {
-      ...Table
+    category {
+      id
+      label
     }
   }
-  plot {
-    ...ScatterPlot
-  }
-}
-    ${TableFragmentDoc}
-${ScatterPlotFragmentDoc}`;
-export const GraphViewFragmentDoc = gql`
-    fragment GraphView on GraphView {
-  id
-  label
-  graph {
+`;
+export const EntityGraphNodeFragmentDoc = gql`
+  fragment EntityGraphNode on Entity {
     id
-    name
-  }
-  query {
-    id
-    name
-    query
-  }
-  render {
-    ...Path
-    ...Pairs
-    ...Table
-  }
-  plotViews {
-    ...PlotView
-  }
-}
-    ${PathFragmentDoc}
-${PairsFragmentDoc}
-${TableFragmentDoc}
-${PlotViewFragmentDoc}`;
-export const BaseListCategoryFragmentDoc = gql`
-    fragment BaseListCategory on Category {
-  id
-  label
-  description
-  ageName
-  store {
-    presignedUrl
-  }
-}
-    `;
-export const BaseListNodeCategoryFragmentDoc = gql`
-    fragment BaseListNodeCategory on NodeCategory {
-  id
-}
-    `;
-export const ListStructureCategoryFragmentDoc = gql`
-    fragment ListStructureCategory on StructureCategory {
-  ...BaseListCategory
-  ...BaseListNodeCategory
-  identifier
-}
-    ${BaseListCategoryFragmentDoc}
-${BaseListNodeCategoryFragmentDoc}`;
-export const ListGenericCategoryFragmentDoc = gql`
-    fragment ListGenericCategory on GenericCategory {
-  ...BaseListCategory
-  ...BaseNodeCategory
-  instanceKind
-}
-    ${BaseListCategoryFragmentDoc}
-${BaseNodeCategoryFragmentDoc}`;
-export const ListNodeCategoryFragmentDoc = gql`
-    fragment ListNodeCategory on NodeCategory {
-  ...ListStructureCategory
-  ...ListGenericCategory
-}
-    ${ListStructureCategoryFragmentDoc}
-${ListGenericCategoryFragmentDoc}`;
-export const BaseListEdgeCategoryFragmentDoc = gql`
-    fragment BaseListEdgeCategory on EdgeCategory {
-  left {
-    id
-  }
-  right {
-    id
-  }
-}
-    `;
-export const ListRelationCategoryFragmentDoc = gql`
-    fragment ListRelationCategory on RelationCategory {
-  ...BaseListCategory
-  ...BaseListEdgeCategory
-}
-    ${BaseListCategoryFragmentDoc}
-${BaseListEdgeCategoryFragmentDoc}`;
-export const ListMeasurementCategoryFragmentDoc = gql`
-    fragment ListMeasurementCategory on MeasurementCategory {
-  ...BaseListCategory
-  ...BaseListEdgeCategory
-  metricKind
-}
-    ${BaseListCategoryFragmentDoc}
-${BaseListEdgeCategoryFragmentDoc}`;
-export const ListEdgeCategoryFragmentDoc = gql`
-    fragment ListEdgeCategory on EdgeCategory {
-  ...ListRelationCategory
-  ...ListMeasurementCategory
-}
-    ${ListRelationCategoryFragmentDoc}
-${ListMeasurementCategoryFragmentDoc}`;
-export const ListNodeQueryFragmentDoc = gql`
-    fragment ListNodeQuery on NodeQuery {
-  id
-  name
-  description
-  pinned
-}
-    `;
-export const DetailNodeFragmentDoc = gql`
-    fragment DetailNode on Node {
-  ...Node
-  graph {
-    id
-    name
-    ontology {
-      nodeQueries {
-        ...ListNodeQuery
-      }
+    label
+    category {
+      color
     }
   }
-  nodeViews {
-    ...ListNodeView
-  }
-}
-    ${NodeFragmentDoc}
-${ListNodeQueryFragmentDoc}
-${ListNodeViewFragmentDoc}`;
-export const DetailNodeQueryFragmentDoc = gql`
-    fragment DetailNodeQuery on NodeQuery {
-  name
-  query
-}
-    `;
-export const MediaStoreFragmentDoc = gql`
-    fragment MediaStore on MediaStore {
-  id
-  key
-  presignedUrl
-}
-    `;
-export const ListGraphFragmentDoc = gql`
-    fragment ListGraph on Graph {
-  id
-  name
-  pinned
-}
-    `;
-export const ListGraphQueryFragmentDoc = gql`
-    fragment ListGraphQuery on GraphQuery {
-  id
-  name
-  description
-  pinned
-}
-    `;
-export const OntologyFragmentDoc = gql`
-    fragment Ontology on Ontology {
-  id
-  name
-  description
-  purl
-  structureCategories {
-    ...ListStructureCategory
-  }
-  genericCategories {
-    ...ListGenericCategory
-  }
-  relationCategories {
-    ...ListRelationCategory
-  }
-  measurementCategories {
-    ...ListMeasurementCategory
-  }
-  store {
-    ...MediaStore
-  }
-  graphs {
-    ...ListGraph
-  }
-  graphQueries {
-    ...ListGraphQuery
-  }
-  nodeQueries {
-    ...ListNodeQuery
-  }
-}
-    ${ListStructureCategoryFragmentDoc}
-${ListGenericCategoryFragmentDoc}
-${ListRelationCategoryFragmentDoc}
-${ListMeasurementCategoryFragmentDoc}
-${MediaStoreFragmentDoc}
-${ListGraphFragmentDoc}
-${ListGraphQueryFragmentDoc}
-${ListNodeQueryFragmentDoc}`;
-export const ListOntologyFragmentDoc = gql`
-    fragment ListOntology on Ontology {
-  id
-  name
-  description
-  purl
-}
-    `;
-export const ListPlotViewFragmentDoc = gql`
-    fragment ListPlotView on PlotView {
-  id
-  name
-  plot {
-    ...ScatterPlot
-  }
-}
-    ${ScatterPlotFragmentDoc}`;
-export const ProtocolFragmentDoc = gql`
-    fragment Protocol on Protocol {
-  id
-  name
-  experiment {
+`;
+export const EntityFragmentDoc = gql`
+  fragment Entity on Entity {
     id
-    name
-    description
-  }
-  description
-}
-    `;
-export const ListProtocolFragmentDoc = gql`
-    fragment ListProtocol on Protocol {
-  id
-  name
-  experiment {
-    id
-    name
-  }
-}
-    `;
-export const ProtocolStepFragmentDoc = gql`
-    fragment ProtocolStep on ProtocolStep {
-  id
-  name
-  template {
-    name
-    plateChildren
-  }
-  forReagent {
-    id
-  }
-  forEntity {
-    id
-  }
-  performedAt
-  performedBy {
-    id
-  }
-}
-    `;
-export const ListProtocolStepFragmentDoc = gql`
-    fragment ListProtocolStep on ProtocolStep {
-  id
-  name
-  performedAt
-  performedBy {
-    id
-  }
-}
-    `;
-export const ProtocolStepTemplateFragmentDoc = gql`
-    fragment ProtocolStepTemplate on ProtocolStepTemplate {
-  id
-  name
-  plateChildren
-}
-    `;
-export const ListProtocolStepTemplateFragmentDoc = gql`
-    fragment ListProtocolStepTemplate on ProtocolStepTemplate {
-  id
-  name
-  plateChildren
-}
-    `;
-export const ReagentFragmentDoc = gql`
-    fragment Reagent on Reagent {
-  id
-  label
-  creationSteps {
-    id
-    name
-  }
-  usedIn {
-    id
-    protocolStep {
+    label
+    category {
+      id
+      label
+    }
+    subjectedTo {
+      id
       performedAt
       name
     }
   }
-}
-    `;
-export const ListReagentFragmentDoc = gql`
-    fragment ListReagent on Reagent {
-  id
-  label
-}
-    `;
-export const NodeViewFragmentDoc = gql`
-    fragment NodeView on NodeView {
-  id
-  label
-  node {
+`;
+export const StructureFragmentDoc = gql`
+  fragment Structure on Structure {
     id
-    graphId
+    label
+    identifier
+    object
+    category {
+      identifier
+    }
   }
-  query {
+`;
+export const ListNodeFragmentDoc = gql`
+  fragment ListNode on Node {
+    id
+    label
+    ...Entity
+    ...Structure
+  }
+  ${EntityFragmentDoc}
+  ${StructureFragmentDoc}
+`;
+export const ListGraphViewFragmentDoc = gql`
+  fragment ListGraphView on GraphView {
+    id
+    label
+  }
+`;
+export const ListNodeViewFragmentDoc = gql`
+  fragment ListNodeView on NodeView {
+    id
+    label
+  }
+`;
+export const ColumnFragmentDoc = gql`
+  fragment Column on Column {
+    name
+    kind
+    valueKind
+    description
+    label
+  }
+`;
+export const TableFragmentDoc = gql`
+  fragment Table on Table {
+    rows
+    columns {
+      ...Column
+    }
+    graph {
+      id
+      ageName
+    }
+  }
+  ${ColumnFragmentDoc}
+`;
+export const ScatterPlotFragmentDoc = gql`
+  fragment ScatterPlot on ScatterPlot {
+    id
+    name
+    description
+    xColumn
+    yColumn
+    colorColumn
+    sizeColumn
+  }
+`;
+export const CarouselPlotViewFragmentDoc = gql`
+  fragment CarouselPlotView on PlotView {
+    id
+    name
+    view {
+      id
+      label
+      render {
+        ...Table
+      }
+    }
+    plot {
+      ...ScatterPlot
+    }
+  }
+  ${TableFragmentDoc}
+  ${ScatterPlotFragmentDoc}
+`;
+export const GraphFragmentDoc = gql`
+  fragment Graph on Graph {
+    id
+    name
+    pinned
+    description
+    latestNodes(pagination: { limit: 10 }) {
+      ...ListNode
+    }
+    ontology {
+      id
+      graphQueries {
+        id
+        name
+        query
+      }
+    }
+    graphViews {
+      ...ListGraphView
+    }
+    nodeViews {
+      ...ListNodeView
+    }
+    plotViews(pagination: { limit: 2 }) {
+      ...CarouselPlotView
+    }
+  }
+  ${ListNodeFragmentDoc}
+  ${ListGraphViewFragmentDoc}
+  ${ListNodeViewFragmentDoc}
+  ${CarouselPlotViewFragmentDoc}
+`;
+export const DetailGraphQueryFragmentDoc = gql`
+  fragment DetailGraphQuery on GraphQuery {
     id
     name
     query
+    description
+    ontology {
+      id
+      name
+    }
+    scatterPlots {
+      id
+      name
+    }
   }
-  render {
-    ...Path
-    ...Pairs
-    ...Table
+`;
+export const NodeFragmentDoc = gql`
+  fragment Node on Node {
+    id
+    label
+    ...Entity
+    ...Structure
   }
-}
-    ${PathFragmentDoc}
-${PairsFragmentDoc}
-${TableFragmentDoc}`;
+  ${EntityFragmentDoc}
+  ${StructureFragmentDoc}
+`;
+export const MeasurementFragmentDoc = gql`
+  fragment Measurement on Measurement {
+    id
+    value
+  }
+`;
+export const RelationFragmentDoc = gql`
+  fragment Relation on Relation {
+    id
+    label
+  }
+`;
+export const EdgeFragmentDoc = gql`
+  fragment Edge on Edge {
+    id
+    label
+    leftId
+    rightId
+    ...Measurement
+    ...Relation
+  }
+  ${MeasurementFragmentDoc}
+  ${RelationFragmentDoc}
+`;
+export const PathFragmentDoc = gql`
+  fragment Path on Path {
+    nodes {
+      ...Node
+    }
+    edges {
+      ...Edge
+    }
+  }
+  ${NodeFragmentDoc}
+  ${EdgeFragmentDoc}
+`;
+export const PairsFragmentDoc = gql`
+  fragment Pairs on Pairs {
+    pairs {
+      left {
+        id
+      }
+      right {
+        id
+      }
+    }
+  }
+`;
+export const PlotViewFragmentDoc = gql`
+  fragment PlotView on PlotView {
+    id
+    name
+    view {
+      id
+      label
+      render {
+        ...Table
+      }
+    }
+    plot {
+      ...ScatterPlot
+    }
+  }
+  ${TableFragmentDoc}
+  ${ScatterPlotFragmentDoc}
+`;
+export const GraphViewFragmentDoc = gql`
+  fragment GraphView on GraphView {
+    id
+    label
+    graph {
+      id
+      name
+    }
+    query {
+      id
+      name
+      query
+    }
+    render {
+      ...Path
+      ...Pairs
+      ...Table
+    }
+    plotViews {
+      ...PlotView
+    }
+  }
+  ${PathFragmentDoc}
+  ${PairsFragmentDoc}
+  ${TableFragmentDoc}
+  ${PlotViewFragmentDoc}
+`;
+export const BaseListCategoryFragmentDoc = gql`
+  fragment BaseListCategory on Category {
+    id
+    label
+    description
+    ageName
+    store {
+      presignedUrl
+    }
+  }
+`;
+export const BaseListNodeCategoryFragmentDoc = gql`
+  fragment BaseListNodeCategory on NodeCategory {
+    id
+  }
+`;
+export const ListStructureCategoryFragmentDoc = gql`
+  fragment ListStructureCategory on StructureCategory {
+    ...BaseListCategory
+    ...BaseListNodeCategory
+    identifier
+  }
+  ${BaseListCategoryFragmentDoc}
+  ${BaseListNodeCategoryFragmentDoc}
+`;
+export const ListGenericCategoryFragmentDoc = gql`
+  fragment ListGenericCategory on GenericCategory {
+    ...BaseListCategory
+    ...BaseNodeCategory
+    instanceKind
+  }
+  ${BaseListCategoryFragmentDoc}
+  ${BaseNodeCategoryFragmentDoc}
+`;
+export const ListNodeCategoryFragmentDoc = gql`
+  fragment ListNodeCategory on NodeCategory {
+    ...ListStructureCategory
+    ...ListGenericCategory
+  }
+  ${ListStructureCategoryFragmentDoc}
+  ${ListGenericCategoryFragmentDoc}
+`;
+export const BaseListEdgeCategoryFragmentDoc = gql`
+  fragment BaseListEdgeCategory on EdgeCategory {
+    left {
+      id
+    }
+    right {
+      id
+    }
+  }
+`;
+export const ListRelationCategoryFragmentDoc = gql`
+  fragment ListRelationCategory on RelationCategory {
+    ...BaseListCategory
+    ...BaseListEdgeCategory
+  }
+  ${BaseListCategoryFragmentDoc}
+  ${BaseListEdgeCategoryFragmentDoc}
+`;
+export const ListMeasurementCategoryFragmentDoc = gql`
+  fragment ListMeasurementCategory on MeasurementCategory {
+    ...BaseListCategory
+    ...BaseListEdgeCategory
+    metricKind
+  }
+  ${BaseListCategoryFragmentDoc}
+  ${BaseListEdgeCategoryFragmentDoc}
+`;
+export const ListEdgeCategoryFragmentDoc = gql`
+  fragment ListEdgeCategory on EdgeCategory {
+    ...ListRelationCategory
+    ...ListMeasurementCategory
+  }
+  ${ListRelationCategoryFragmentDoc}
+  ${ListMeasurementCategoryFragmentDoc}
+`;
+export const ListNodeQueryFragmentDoc = gql`
+  fragment ListNodeQuery on NodeQuery {
+    id
+    name
+    description
+    pinned
+  }
+`;
+export const DetailNodeFragmentDoc = gql`
+  fragment DetailNode on Node {
+    ...Node
+    graph {
+      id
+      name
+      ontology {
+        nodeQueries {
+          ...ListNodeQuery
+        }
+      }
+    }
+    nodeViews {
+      ...ListNodeView
+    }
+  }
+  ${NodeFragmentDoc}
+  ${ListNodeQueryFragmentDoc}
+  ${ListNodeViewFragmentDoc}
+`;
+export const DetailNodeQueryFragmentDoc = gql`
+  fragment DetailNodeQuery on NodeQuery {
+    name
+    query
+  }
+`;
+export const MediaStoreFragmentDoc = gql`
+  fragment MediaStore on MediaStore {
+    id
+    key
+    presignedUrl
+  }
+`;
+export const ListGraphFragmentDoc = gql`
+  fragment ListGraph on Graph {
+    id
+    name
+    pinned
+  }
+`;
+export const ListGraphQueryFragmentDoc = gql`
+  fragment ListGraphQuery on GraphQuery {
+    id
+    name
+    description
+    pinned
+  }
+`;
+export const OntologyFragmentDoc = gql`
+  fragment Ontology on Ontology {
+    id
+    name
+    description
+    purl
+    structureCategories {
+      ...ListStructureCategory
+    }
+    genericCategories {
+      ...ListGenericCategory
+    }
+    relationCategories {
+      ...ListRelationCategory
+    }
+    measurementCategories {
+      ...ListMeasurementCategory
+    }
+    store {
+      ...MediaStore
+    }
+    graphs {
+      ...ListGraph
+    }
+    graphQueries {
+      ...ListGraphQuery
+    }
+    nodeQueries {
+      ...ListNodeQuery
+    }
+  }
+  ${ListStructureCategoryFragmentDoc}
+  ${ListGenericCategoryFragmentDoc}
+  ${ListRelationCategoryFragmentDoc}
+  ${ListMeasurementCategoryFragmentDoc}
+  ${MediaStoreFragmentDoc}
+  ${ListGraphFragmentDoc}
+  ${ListGraphQueryFragmentDoc}
+  ${ListNodeQueryFragmentDoc}
+`;
+export const ListOntologyFragmentDoc = gql`
+  fragment ListOntology on Ontology {
+    id
+    name
+    description
+    purl
+  }
+`;
+export const ListPlotViewFragmentDoc = gql`
+  fragment ListPlotView on PlotView {
+    id
+    name
+    plot {
+      ...ScatterPlot
+    }
+  }
+  ${ScatterPlotFragmentDoc}
+`;
+export const ProtocolFragmentDoc = gql`
+  fragment Protocol on Protocol {
+    id
+    name
+    experiment {
+      id
+      name
+      description
+    }
+    description
+  }
+`;
+export const ListProtocolFragmentDoc = gql`
+  fragment ListProtocol on Protocol {
+    id
+    name
+    experiment {
+      id
+      name
+    }
+  }
+`;
+export const ProtocolStepFragmentDoc = gql`
+  fragment ProtocolStep on ProtocolStep {
+    id
+    name
+    template {
+      name
+      plateChildren
+    }
+    forReagent {
+      id
+    }
+    forEntity {
+      id
+    }
+    performedAt
+    performedBy {
+      id
+    }
+  }
+`;
+export const ListProtocolStepFragmentDoc = gql`
+  fragment ListProtocolStep on ProtocolStep {
+    id
+    name
+    performedAt
+    performedBy {
+      id
+    }
+  }
+`;
+export const ProtocolStepTemplateFragmentDoc = gql`
+  fragment ProtocolStepTemplate on ProtocolStepTemplate {
+    id
+    name
+    plateChildren
+  }
+`;
+export const ListProtocolStepTemplateFragmentDoc = gql`
+  fragment ListProtocolStepTemplate on ProtocolStepTemplate {
+    id
+    name
+    plateChildren
+  }
+`;
+export const ReagentFragmentDoc = gql`
+  fragment Reagent on Reagent {
+    id
+    label
+    creationSteps {
+      id
+      name
+    }
+    usedIn {
+      id
+      protocolStep {
+        performedAt
+        name
+      }
+    }
+  }
+`;
+export const ListReagentFragmentDoc = gql`
+  fragment ListReagent on Reagent {
+    id
+    label
+  }
+`;
+export const NodeViewFragmentDoc = gql`
+  fragment NodeView on NodeView {
+    id
+    label
+    node {
+      id
+      graphId
+    }
+    query {
+      id
+      name
+      query
+    }
+    render {
+      ...Path
+      ...Pairs
+      ...Table
+    }
+  }
+  ${PathFragmentDoc}
+  ${PairsFragmentDoc}
+  ${TableFragmentDoc}
+`;
 export const KnowledgeStructureFragmentDoc = gql`
-    fragment KnowledgeStructure on Structure {
-  id
-  label
-  identifier
-  object
-  category {
+  fragment KnowledgeStructure on Structure {
+    id
+    label
     identifier
+    object
+    category {
+      identifier
+    }
+    pinnedViews {
+      ...NodeView
+    }
   }
-  pinnedViews {
-    ...NodeView
-  }
-}
-    ${NodeViewFragmentDoc}`;
+  ${NodeViewFragmentDoc}
+`;
 export const ListStructureFragmentDoc = gql`
-    fragment ListStructure on Structure {
-  identifier
-  object
-  id
-  category {
+  fragment ListStructure on Structure {
     identifier
+    object
+    id
+    category {
+      identifier
+    }
   }
-}
-    `;
+`;
 export const StructureGraphNodeFragmentDoc = gql`
-    fragment StructureGraphNode on Structure {
-  identifier
-  object
-  id
-}
-    `;
-export const CreateMeasurementCategoryDocument = gql`
-    mutation CreateMeasurementCategory($input: MeasurementCategoryInput!) {
-  createMeasurementCategory(input: $input) {
-    ...MeasurementCategory
+  fragment StructureGraphNode on Structure {
+    identifier
+    object
+    id
   }
-}
-    ${MeasurementCategoryFragmentDoc}`;
-export type CreateMeasurementCategoryMutationFn = Apollo.MutationFunction<CreateMeasurementCategoryMutation, CreateMeasurementCategoryMutationVariables>;
+`;
+export const CreateMeasurementCategoryDocument = gql`
+  mutation CreateMeasurementCategory($input: MeasurementCategoryInput!) {
+    createMeasurementCategory(input: $input) {
+      ...MeasurementCategory
+    }
+  }
+  ${MeasurementCategoryFragmentDoc}
+`;
+export type CreateMeasurementCategoryMutationFn = Apollo.MutationFunction<
+  CreateMeasurementCategoryMutation,
+  CreateMeasurementCategoryMutationVariables
+>;
 
 /**
  * __useCreateMeasurementCategoryMutation__
@@ -3536,21 +6413,40 @@ export type CreateMeasurementCategoryMutationFn = Apollo.MutationFunction<Create
  *   },
  * });
  */
-export function useCreateMeasurementCategoryMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateMeasurementCategoryMutation, CreateMeasurementCategoryMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateMeasurementCategoryMutation, CreateMeasurementCategoryMutationVariables>(CreateMeasurementCategoryDocument, options);
-      }
-export type CreateMeasurementCategoryMutationHookResult = ReturnType<typeof useCreateMeasurementCategoryMutation>;
-export type CreateMeasurementCategoryMutationResult = Apollo.MutationResult<CreateMeasurementCategoryMutation>;
-export type CreateMeasurementCategoryMutationOptions = Apollo.BaseMutationOptions<CreateMeasurementCategoryMutation, CreateMeasurementCategoryMutationVariables>;
-export const CreateStructureCategoryDocument = gql`
-    mutation CreateStructureCategory($input: StructureCategoryInput!) {
-  createStructureCategory(input: $input) {
-    ...StructureCategory
-  }
+export function useCreateMeasurementCategoryMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateMeasurementCategoryMutation,
+    CreateMeasurementCategoryMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateMeasurementCategoryMutation,
+    CreateMeasurementCategoryMutationVariables
+  >(CreateMeasurementCategoryDocument, options);
 }
-    ${StructureCategoryFragmentDoc}`;
-export type CreateStructureCategoryMutationFn = Apollo.MutationFunction<CreateStructureCategoryMutation, CreateStructureCategoryMutationVariables>;
+export type CreateMeasurementCategoryMutationHookResult = ReturnType<
+  typeof useCreateMeasurementCategoryMutation
+>;
+export type CreateMeasurementCategoryMutationResult =
+  Apollo.MutationResult<CreateMeasurementCategoryMutation>;
+export type CreateMeasurementCategoryMutationOptions =
+  Apollo.BaseMutationOptions<
+    CreateMeasurementCategoryMutation,
+    CreateMeasurementCategoryMutationVariables
+  >;
+export const CreateStructureCategoryDocument = gql`
+  mutation CreateStructureCategory($input: StructureCategoryInput!) {
+    createStructureCategory(input: $input) {
+      ...StructureCategory
+    }
+  }
+  ${StructureCategoryFragmentDoc}
+`;
+export type CreateStructureCategoryMutationFn = Apollo.MutationFunction<
+  CreateStructureCategoryMutation,
+  CreateStructureCategoryMutationVariables
+>;
 
 /**
  * __useCreateStructureCategoryMutation__
@@ -3569,21 +6465,39 @@ export type CreateStructureCategoryMutationFn = Apollo.MutationFunction<CreateSt
  *   },
  * });
  */
-export function useCreateStructureCategoryMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateStructureCategoryMutation, CreateStructureCategoryMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateStructureCategoryMutation, CreateStructureCategoryMutationVariables>(CreateStructureCategoryDocument, options);
-      }
-export type CreateStructureCategoryMutationHookResult = ReturnType<typeof useCreateStructureCategoryMutation>;
-export type CreateStructureCategoryMutationResult = Apollo.MutationResult<CreateStructureCategoryMutation>;
-export type CreateStructureCategoryMutationOptions = Apollo.BaseMutationOptions<CreateStructureCategoryMutation, CreateStructureCategoryMutationVariables>;
-export const CreateGenericCategoryDocument = gql`
-    mutation CreateGenericCategory($input: GenericCategoryInput!) {
-  createGenericCategory(input: $input) {
-    ...GenericCategory
-  }
+export function useCreateStructureCategoryMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateStructureCategoryMutation,
+    CreateStructureCategoryMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateStructureCategoryMutation,
+    CreateStructureCategoryMutationVariables
+  >(CreateStructureCategoryDocument, options);
 }
-    ${GenericCategoryFragmentDoc}`;
-export type CreateGenericCategoryMutationFn = Apollo.MutationFunction<CreateGenericCategoryMutation, CreateGenericCategoryMutationVariables>;
+export type CreateStructureCategoryMutationHookResult = ReturnType<
+  typeof useCreateStructureCategoryMutation
+>;
+export type CreateStructureCategoryMutationResult =
+  Apollo.MutationResult<CreateStructureCategoryMutation>;
+export type CreateStructureCategoryMutationOptions = Apollo.BaseMutationOptions<
+  CreateStructureCategoryMutation,
+  CreateStructureCategoryMutationVariables
+>;
+export const CreateGenericCategoryDocument = gql`
+  mutation CreateGenericCategory($input: GenericCategoryInput!) {
+    createGenericCategory(input: $input) {
+      ...GenericCategory
+    }
+  }
+  ${GenericCategoryFragmentDoc}
+`;
+export type CreateGenericCategoryMutationFn = Apollo.MutationFunction<
+  CreateGenericCategoryMutation,
+  CreateGenericCategoryMutationVariables
+>;
 
 /**
  * __useCreateGenericCategoryMutation__
@@ -3602,21 +6516,39 @@ export type CreateGenericCategoryMutationFn = Apollo.MutationFunction<CreateGene
  *   },
  * });
  */
-export function useCreateGenericCategoryMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateGenericCategoryMutation, CreateGenericCategoryMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateGenericCategoryMutation, CreateGenericCategoryMutationVariables>(CreateGenericCategoryDocument, options);
-      }
-export type CreateGenericCategoryMutationHookResult = ReturnType<typeof useCreateGenericCategoryMutation>;
-export type CreateGenericCategoryMutationResult = Apollo.MutationResult<CreateGenericCategoryMutation>;
-export type CreateGenericCategoryMutationOptions = Apollo.BaseMutationOptions<CreateGenericCategoryMutation, CreateGenericCategoryMutationVariables>;
-export const CreateRelationCategoryDocument = gql`
-    mutation CreateRelationCategory($input: RelationCategoryInput!) {
-  createRelationCategory(input: $input) {
-    ...RelationCategory
-  }
+export function useCreateGenericCategoryMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateGenericCategoryMutation,
+    CreateGenericCategoryMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateGenericCategoryMutation,
+    CreateGenericCategoryMutationVariables
+  >(CreateGenericCategoryDocument, options);
 }
-    ${RelationCategoryFragmentDoc}`;
-export type CreateRelationCategoryMutationFn = Apollo.MutationFunction<CreateRelationCategoryMutation, CreateRelationCategoryMutationVariables>;
+export type CreateGenericCategoryMutationHookResult = ReturnType<
+  typeof useCreateGenericCategoryMutation
+>;
+export type CreateGenericCategoryMutationResult =
+  Apollo.MutationResult<CreateGenericCategoryMutation>;
+export type CreateGenericCategoryMutationOptions = Apollo.BaseMutationOptions<
+  CreateGenericCategoryMutation,
+  CreateGenericCategoryMutationVariables
+>;
+export const CreateRelationCategoryDocument = gql`
+  mutation CreateRelationCategory($input: RelationCategoryInput!) {
+    createRelationCategory(input: $input) {
+      ...RelationCategory
+    }
+  }
+  ${RelationCategoryFragmentDoc}
+`;
+export type CreateRelationCategoryMutationFn = Apollo.MutationFunction<
+  CreateRelationCategoryMutation,
+  CreateRelationCategoryMutationVariables
+>;
 
 /**
  * __useCreateRelationCategoryMutation__
@@ -3635,21 +6567,39 @@ export type CreateRelationCategoryMutationFn = Apollo.MutationFunction<CreateRel
  *   },
  * });
  */
-export function useCreateRelationCategoryMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateRelationCategoryMutation, CreateRelationCategoryMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateRelationCategoryMutation, CreateRelationCategoryMutationVariables>(CreateRelationCategoryDocument, options);
-      }
-export type CreateRelationCategoryMutationHookResult = ReturnType<typeof useCreateRelationCategoryMutation>;
-export type CreateRelationCategoryMutationResult = Apollo.MutationResult<CreateRelationCategoryMutation>;
-export type CreateRelationCategoryMutationOptions = Apollo.BaseMutationOptions<CreateRelationCategoryMutation, CreateRelationCategoryMutationVariables>;
-export const CreateEntityDocument = gql`
-    mutation CreateEntity($input: EntityInput!) {
-  createEntity(input: $input) {
-    ...Entity
-  }
+export function useCreateRelationCategoryMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateRelationCategoryMutation,
+    CreateRelationCategoryMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateRelationCategoryMutation,
+    CreateRelationCategoryMutationVariables
+  >(CreateRelationCategoryDocument, options);
 }
-    ${EntityFragmentDoc}`;
-export type CreateEntityMutationFn = Apollo.MutationFunction<CreateEntityMutation, CreateEntityMutationVariables>;
+export type CreateRelationCategoryMutationHookResult = ReturnType<
+  typeof useCreateRelationCategoryMutation
+>;
+export type CreateRelationCategoryMutationResult =
+  Apollo.MutationResult<CreateRelationCategoryMutation>;
+export type CreateRelationCategoryMutationOptions = Apollo.BaseMutationOptions<
+  CreateRelationCategoryMutation,
+  CreateRelationCategoryMutationVariables
+>;
+export const CreateEntityDocument = gql`
+  mutation CreateEntity($input: EntityInput!) {
+    createEntity(input: $input) {
+      ...Entity
+    }
+  }
+  ${EntityFragmentDoc}
+`;
+export type CreateEntityMutationFn = Apollo.MutationFunction<
+  CreateEntityMutation,
+  CreateEntityMutationVariables
+>;
 
 /**
  * __useCreateEntityMutation__
@@ -3668,21 +6618,39 @@ export type CreateEntityMutationFn = Apollo.MutationFunction<CreateEntityMutatio
  *   },
  * });
  */
-export function useCreateEntityMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateEntityMutation, CreateEntityMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateEntityMutation, CreateEntityMutationVariables>(CreateEntityDocument, options);
-      }
-export type CreateEntityMutationHookResult = ReturnType<typeof useCreateEntityMutation>;
-export type CreateEntityMutationResult = Apollo.MutationResult<CreateEntityMutation>;
-export type CreateEntityMutationOptions = Apollo.BaseMutationOptions<CreateEntityMutation, CreateEntityMutationVariables>;
-export const CreateRelationDocument = gql`
-    mutation CreateRelation($input: RelationInput!) {
-  createRelation(input: $input) {
-    ...Relation
-  }
+export function useCreateEntityMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateEntityMutation,
+    CreateEntityMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateEntityMutation,
+    CreateEntityMutationVariables
+  >(CreateEntityDocument, options);
 }
-    ${RelationFragmentDoc}`;
-export type CreateRelationMutationFn = Apollo.MutationFunction<CreateRelationMutation, CreateRelationMutationVariables>;
+export type CreateEntityMutationHookResult = ReturnType<
+  typeof useCreateEntityMutation
+>;
+export type CreateEntityMutationResult =
+  Apollo.MutationResult<CreateEntityMutation>;
+export type CreateEntityMutationOptions = Apollo.BaseMutationOptions<
+  CreateEntityMutation,
+  CreateEntityMutationVariables
+>;
+export const CreateRelationDocument = gql`
+  mutation CreateRelation($input: RelationInput!) {
+    createRelation(input: $input) {
+      ...Relation
+    }
+  }
+  ${RelationFragmentDoc}
+`;
+export type CreateRelationMutationFn = Apollo.MutationFunction<
+  CreateRelationMutation,
+  CreateRelationMutationVariables
+>;
 
 /**
  * __useCreateRelationMutation__
@@ -3701,21 +6669,39 @@ export type CreateRelationMutationFn = Apollo.MutationFunction<CreateRelationMut
  *   },
  * });
  */
-export function useCreateRelationMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateRelationMutation, CreateRelationMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateRelationMutation, CreateRelationMutationVariables>(CreateRelationDocument, options);
-      }
-export type CreateRelationMutationHookResult = ReturnType<typeof useCreateRelationMutation>;
-export type CreateRelationMutationResult = Apollo.MutationResult<CreateRelationMutation>;
-export type CreateRelationMutationOptions = Apollo.BaseMutationOptions<CreateRelationMutation, CreateRelationMutationVariables>;
-export const CreateGraphDocument = gql`
-    mutation CreateGraph($input: GraphInput!) {
-  createGraph(input: $input) {
-    ...Graph
-  }
+export function useCreateRelationMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateRelationMutation,
+    CreateRelationMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateRelationMutation,
+    CreateRelationMutationVariables
+  >(CreateRelationDocument, options);
 }
-    ${GraphFragmentDoc}`;
-export type CreateGraphMutationFn = Apollo.MutationFunction<CreateGraphMutation, CreateGraphMutationVariables>;
+export type CreateRelationMutationHookResult = ReturnType<
+  typeof useCreateRelationMutation
+>;
+export type CreateRelationMutationResult =
+  Apollo.MutationResult<CreateRelationMutation>;
+export type CreateRelationMutationOptions = Apollo.BaseMutationOptions<
+  CreateRelationMutation,
+  CreateRelationMutationVariables
+>;
+export const CreateGraphDocument = gql`
+  mutation CreateGraph($input: GraphInput!) {
+    createGraph(input: $input) {
+      ...Graph
+    }
+  }
+  ${GraphFragmentDoc}
+`;
+export type CreateGraphMutationFn = Apollo.MutationFunction<
+  CreateGraphMutation,
+  CreateGraphMutationVariables
+>;
 
 /**
  * __useCreateGraphMutation__
@@ -3734,19 +6720,36 @@ export type CreateGraphMutationFn = Apollo.MutationFunction<CreateGraphMutation,
  *   },
  * });
  */
-export function useCreateGraphMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateGraphMutation, CreateGraphMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateGraphMutation, CreateGraphMutationVariables>(CreateGraphDocument, options);
-      }
-export type CreateGraphMutationHookResult = ReturnType<typeof useCreateGraphMutation>;
-export type CreateGraphMutationResult = Apollo.MutationResult<CreateGraphMutation>;
-export type CreateGraphMutationOptions = Apollo.BaseMutationOptions<CreateGraphMutation, CreateGraphMutationVariables>;
-export const DeleteGraphDocument = gql`
-    mutation DeleteGraph($id: ID!) {
-  deleteGraph(input: {id: $id})
+export function useCreateGraphMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateGraphMutation,
+    CreateGraphMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateGraphMutation,
+    CreateGraphMutationVariables
+  >(CreateGraphDocument, options);
 }
-    `;
-export type DeleteGraphMutationFn = Apollo.MutationFunction<DeleteGraphMutation, DeleteGraphMutationVariables>;
+export type CreateGraphMutationHookResult = ReturnType<
+  typeof useCreateGraphMutation
+>;
+export type CreateGraphMutationResult =
+  Apollo.MutationResult<CreateGraphMutation>;
+export type CreateGraphMutationOptions = Apollo.BaseMutationOptions<
+  CreateGraphMutation,
+  CreateGraphMutationVariables
+>;
+export const DeleteGraphDocument = gql`
+  mutation DeleteGraph($id: ID!) {
+    deleteGraph(input: { id: $id })
+  }
+`;
+export type DeleteGraphMutationFn = Apollo.MutationFunction<
+  DeleteGraphMutation,
+  DeleteGraphMutationVariables
+>;
 
 /**
  * __useDeleteGraphMutation__
@@ -3765,21 +6768,39 @@ export type DeleteGraphMutationFn = Apollo.MutationFunction<DeleteGraphMutation,
  *   },
  * });
  */
-export function useDeleteGraphMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteGraphMutation, DeleteGraphMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteGraphMutation, DeleteGraphMutationVariables>(DeleteGraphDocument, options);
-      }
-export type DeleteGraphMutationHookResult = ReturnType<typeof useDeleteGraphMutation>;
-export type DeleteGraphMutationResult = Apollo.MutationResult<DeleteGraphMutation>;
-export type DeleteGraphMutationOptions = Apollo.BaseMutationOptions<DeleteGraphMutation, DeleteGraphMutationVariables>;
-export const UpdateGraphDocument = gql`
-    mutation UpdateGraph($input: UpdateGraphInput!) {
-  updateGraph(input: $input) {
-    ...Graph
-  }
+export function useDeleteGraphMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    DeleteGraphMutation,
+    DeleteGraphMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    DeleteGraphMutation,
+    DeleteGraphMutationVariables
+  >(DeleteGraphDocument, options);
 }
-    ${GraphFragmentDoc}`;
-export type UpdateGraphMutationFn = Apollo.MutationFunction<UpdateGraphMutation, UpdateGraphMutationVariables>;
+export type DeleteGraphMutationHookResult = ReturnType<
+  typeof useDeleteGraphMutation
+>;
+export type DeleteGraphMutationResult =
+  Apollo.MutationResult<DeleteGraphMutation>;
+export type DeleteGraphMutationOptions = Apollo.BaseMutationOptions<
+  DeleteGraphMutation,
+  DeleteGraphMutationVariables
+>;
+export const UpdateGraphDocument = gql`
+  mutation UpdateGraph($input: UpdateGraphInput!) {
+    updateGraph(input: $input) {
+      ...Graph
+    }
+  }
+  ${GraphFragmentDoc}
+`;
+export type UpdateGraphMutationFn = Apollo.MutationFunction<
+  UpdateGraphMutation,
+  UpdateGraphMutationVariables
+>;
 
 /**
  * __useUpdateGraphMutation__
@@ -3798,21 +6819,39 @@ export type UpdateGraphMutationFn = Apollo.MutationFunction<UpdateGraphMutation,
  *   },
  * });
  */
-export function useUpdateGraphMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateGraphMutation, UpdateGraphMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<UpdateGraphMutation, UpdateGraphMutationVariables>(UpdateGraphDocument, options);
-      }
-export type UpdateGraphMutationHookResult = ReturnType<typeof useUpdateGraphMutation>;
-export type UpdateGraphMutationResult = Apollo.MutationResult<UpdateGraphMutation>;
-export type UpdateGraphMutationOptions = Apollo.BaseMutationOptions<UpdateGraphMutation, UpdateGraphMutationVariables>;
-export const PinGraphDocument = gql`
-    mutation PinGraph($input: PinGraphInput!) {
-  pinGraph(input: $input) {
-    ...Graph
-  }
+export function useUpdateGraphMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    UpdateGraphMutation,
+    UpdateGraphMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    UpdateGraphMutation,
+    UpdateGraphMutationVariables
+  >(UpdateGraphDocument, options);
 }
-    ${GraphFragmentDoc}`;
-export type PinGraphMutationFn = Apollo.MutationFunction<PinGraphMutation, PinGraphMutationVariables>;
+export type UpdateGraphMutationHookResult = ReturnType<
+  typeof useUpdateGraphMutation
+>;
+export type UpdateGraphMutationResult =
+  Apollo.MutationResult<UpdateGraphMutation>;
+export type UpdateGraphMutationOptions = Apollo.BaseMutationOptions<
+  UpdateGraphMutation,
+  UpdateGraphMutationVariables
+>;
+export const PinGraphDocument = gql`
+  mutation PinGraph($input: PinGraphInput!) {
+    pinGraph(input: $input) {
+      ...Graph
+    }
+  }
+  ${GraphFragmentDoc}
+`;
+export type PinGraphMutationFn = Apollo.MutationFunction<
+  PinGraphMutation,
+  PinGraphMutationVariables
+>;
 
 /**
  * __usePinGraphMutation__
@@ -3831,21 +6870,36 @@ export type PinGraphMutationFn = Apollo.MutationFunction<PinGraphMutation, PinGr
  *   },
  * });
  */
-export function usePinGraphMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PinGraphMutation, PinGraphMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PinGraphMutation, PinGraphMutationVariables>(PinGraphDocument, options);
-      }
+export function usePinGraphMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    PinGraphMutation,
+    PinGraphMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    PinGraphMutation,
+    PinGraphMutationVariables
+  >(PinGraphDocument, options);
+}
 export type PinGraphMutationHookResult = ReturnType<typeof usePinGraphMutation>;
 export type PinGraphMutationResult = Apollo.MutationResult<PinGraphMutation>;
-export type PinGraphMutationOptions = Apollo.BaseMutationOptions<PinGraphMutation, PinGraphMutationVariables>;
+export type PinGraphMutationOptions = Apollo.BaseMutationOptions<
+  PinGraphMutation,
+  PinGraphMutationVariables
+>;
 export const PinGraphQueryDocument = gql`
-    mutation PinGraphQuery($input: PinGraphQueryInput!) {
-  pinGraphQuery(input: $input) {
-    ...DetailGraphQuery
+  mutation PinGraphQuery($input: PinGraphQueryInput!) {
+    pinGraphQuery(input: $input) {
+      ...DetailGraphQuery
+    }
   }
-}
-    ${DetailGraphQueryFragmentDoc}`;
-export type PinGraphQueryMutationFn = Apollo.MutationFunction<PinGraphQueryMutation, PinGraphQueryMutationVariables>;
+  ${DetailGraphQueryFragmentDoc}
+`;
+export type PinGraphQueryMutationFn = Apollo.MutationFunction<
+  PinGraphQueryMutation,
+  PinGraphQueryMutationVariables
+>;
 
 /**
  * __usePinGraphQueryMutation__
@@ -3864,21 +6918,39 @@ export type PinGraphQueryMutationFn = Apollo.MutationFunction<PinGraphQueryMutat
  *   },
  * });
  */
-export function usePinGraphQueryMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PinGraphQueryMutation, PinGraphQueryMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PinGraphQueryMutation, PinGraphQueryMutationVariables>(PinGraphQueryDocument, options);
-      }
-export type PinGraphQueryMutationHookResult = ReturnType<typeof usePinGraphQueryMutation>;
-export type PinGraphQueryMutationResult = Apollo.MutationResult<PinGraphQueryMutation>;
-export type PinGraphQueryMutationOptions = Apollo.BaseMutationOptions<PinGraphQueryMutation, PinGraphQueryMutationVariables>;
-export const CreateGraphViewDocument = gql`
-    mutation CreateGraphView($input: GraphViewInput!) {
-  createGraphView(input: $input) {
-    ...GraphView
-  }
+export function usePinGraphQueryMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    PinGraphQueryMutation,
+    PinGraphQueryMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    PinGraphQueryMutation,
+    PinGraphQueryMutationVariables
+  >(PinGraphQueryDocument, options);
 }
-    ${GraphViewFragmentDoc}`;
-export type CreateGraphViewMutationFn = Apollo.MutationFunction<CreateGraphViewMutation, CreateGraphViewMutationVariables>;
+export type PinGraphQueryMutationHookResult = ReturnType<
+  typeof usePinGraphQueryMutation
+>;
+export type PinGraphQueryMutationResult =
+  Apollo.MutationResult<PinGraphQueryMutation>;
+export type PinGraphQueryMutationOptions = Apollo.BaseMutationOptions<
+  PinGraphQueryMutation,
+  PinGraphQueryMutationVariables
+>;
+export const CreateGraphViewDocument = gql`
+  mutation CreateGraphView($input: GraphViewInput!) {
+    createGraphView(input: $input) {
+      ...GraphView
+    }
+  }
+  ${GraphViewFragmentDoc}
+`;
+export type CreateGraphViewMutationFn = Apollo.MutationFunction<
+  CreateGraphViewMutation,
+  CreateGraphViewMutationVariables
+>;
 
 /**
  * __useCreateGraphViewMutation__
@@ -3897,21 +6969,39 @@ export type CreateGraphViewMutationFn = Apollo.MutationFunction<CreateGraphViewM
  *   },
  * });
  */
-export function useCreateGraphViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateGraphViewMutation, CreateGraphViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateGraphViewMutation, CreateGraphViewMutationVariables>(CreateGraphViewDocument, options);
-      }
-export type CreateGraphViewMutationHookResult = ReturnType<typeof useCreateGraphViewMutation>;
-export type CreateGraphViewMutationResult = Apollo.MutationResult<CreateGraphViewMutation>;
-export type CreateGraphViewMutationOptions = Apollo.BaseMutationOptions<CreateGraphViewMutation, CreateGraphViewMutationVariables>;
-export const PinNodeQueryDocument = gql`
-    mutation PinNodeQuery($input: PinNodeQueryInput!) {
-  pinNodeQuery(input: $input) {
-    ...DetailNodeQuery
-  }
+export function useCreateGraphViewMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateGraphViewMutation,
+    CreateGraphViewMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateGraphViewMutation,
+    CreateGraphViewMutationVariables
+  >(CreateGraphViewDocument, options);
 }
-    ${DetailNodeQueryFragmentDoc}`;
-export type PinNodeQueryMutationFn = Apollo.MutationFunction<PinNodeQueryMutation, PinNodeQueryMutationVariables>;
+export type CreateGraphViewMutationHookResult = ReturnType<
+  typeof useCreateGraphViewMutation
+>;
+export type CreateGraphViewMutationResult =
+  Apollo.MutationResult<CreateGraphViewMutation>;
+export type CreateGraphViewMutationOptions = Apollo.BaseMutationOptions<
+  CreateGraphViewMutation,
+  CreateGraphViewMutationVariables
+>;
+export const PinNodeQueryDocument = gql`
+  mutation PinNodeQuery($input: PinNodeQueryInput!) {
+    pinNodeQuery(input: $input) {
+      ...DetailNodeQuery
+    }
+  }
+  ${DetailNodeQueryFragmentDoc}
+`;
+export type PinNodeQueryMutationFn = Apollo.MutationFunction<
+  PinNodeQueryMutation,
+  PinNodeQueryMutationVariables
+>;
 
 /**
  * __usePinNodeQueryMutation__
@@ -3930,21 +7020,39 @@ export type PinNodeQueryMutationFn = Apollo.MutationFunction<PinNodeQueryMutatio
  *   },
  * });
  */
-export function usePinNodeQueryMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PinNodeQueryMutation, PinNodeQueryMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PinNodeQueryMutation, PinNodeQueryMutationVariables>(PinNodeQueryDocument, options);
-      }
-export type PinNodeQueryMutationHookResult = ReturnType<typeof usePinNodeQueryMutation>;
-export type PinNodeQueryMutationResult = Apollo.MutationResult<PinNodeQueryMutation>;
-export type PinNodeQueryMutationOptions = Apollo.BaseMutationOptions<PinNodeQueryMutation, PinNodeQueryMutationVariables>;
-export const CreateNodeViewDocument = gql`
-    mutation CreateNodeView($input: NodeViewInput!) {
-  createNodeView(input: $input) {
-    ...NodeView
-  }
+export function usePinNodeQueryMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    PinNodeQueryMutation,
+    PinNodeQueryMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    PinNodeQueryMutation,
+    PinNodeQueryMutationVariables
+  >(PinNodeQueryDocument, options);
 }
-    ${NodeViewFragmentDoc}`;
-export type CreateNodeViewMutationFn = Apollo.MutationFunction<CreateNodeViewMutation, CreateNodeViewMutationVariables>;
+export type PinNodeQueryMutationHookResult = ReturnType<
+  typeof usePinNodeQueryMutation
+>;
+export type PinNodeQueryMutationResult =
+  Apollo.MutationResult<PinNodeQueryMutation>;
+export type PinNodeQueryMutationOptions = Apollo.BaseMutationOptions<
+  PinNodeQueryMutation,
+  PinNodeQueryMutationVariables
+>;
+export const CreateNodeViewDocument = gql`
+  mutation CreateNodeView($input: NodeViewInput!) {
+    createNodeView(input: $input) {
+      ...NodeView
+    }
+  }
+  ${NodeViewFragmentDoc}
+`;
+export type CreateNodeViewMutationFn = Apollo.MutationFunction<
+  CreateNodeViewMutation,
+  CreateNodeViewMutationVariables
+>;
 
 /**
  * __useCreateNodeViewMutation__
@@ -3963,21 +7071,39 @@ export type CreateNodeViewMutationFn = Apollo.MutationFunction<CreateNodeViewMut
  *   },
  * });
  */
-export function useCreateNodeViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateNodeViewMutation, CreateNodeViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateNodeViewMutation, CreateNodeViewMutationVariables>(CreateNodeViewDocument, options);
-      }
-export type CreateNodeViewMutationHookResult = ReturnType<typeof useCreateNodeViewMutation>;
-export type CreateNodeViewMutationResult = Apollo.MutationResult<CreateNodeViewMutation>;
-export type CreateNodeViewMutationOptions = Apollo.BaseMutationOptions<CreateNodeViewMutation, CreateNodeViewMutationVariables>;
-export const CreateOntologyDocument = gql`
-    mutation CreateOntology($input: OntologyInput!) {
-  createOntology(input: $input) {
-    ...Ontology
-  }
+export function useCreateNodeViewMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateNodeViewMutation,
+    CreateNodeViewMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateNodeViewMutation,
+    CreateNodeViewMutationVariables
+  >(CreateNodeViewDocument, options);
 }
-    ${OntologyFragmentDoc}`;
-export type CreateOntologyMutationFn = Apollo.MutationFunction<CreateOntologyMutation, CreateOntologyMutationVariables>;
+export type CreateNodeViewMutationHookResult = ReturnType<
+  typeof useCreateNodeViewMutation
+>;
+export type CreateNodeViewMutationResult =
+  Apollo.MutationResult<CreateNodeViewMutation>;
+export type CreateNodeViewMutationOptions = Apollo.BaseMutationOptions<
+  CreateNodeViewMutation,
+  CreateNodeViewMutationVariables
+>;
+export const CreateOntologyDocument = gql`
+  mutation CreateOntology($input: OntologyInput!) {
+    createOntology(input: $input) {
+      ...Ontology
+    }
+  }
+  ${OntologyFragmentDoc}
+`;
+export type CreateOntologyMutationFn = Apollo.MutationFunction<
+  CreateOntologyMutation,
+  CreateOntologyMutationVariables
+>;
 
 /**
  * __useCreateOntologyMutation__
@@ -3996,21 +7122,39 @@ export type CreateOntologyMutationFn = Apollo.MutationFunction<CreateOntologyMut
  *   },
  * });
  */
-export function useCreateOntologyMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateOntologyMutation, CreateOntologyMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateOntologyMutation, CreateOntologyMutationVariables>(CreateOntologyDocument, options);
-      }
-export type CreateOntologyMutationHookResult = ReturnType<typeof useCreateOntologyMutation>;
-export type CreateOntologyMutationResult = Apollo.MutationResult<CreateOntologyMutation>;
-export type CreateOntologyMutationOptions = Apollo.BaseMutationOptions<CreateOntologyMutation, CreateOntologyMutationVariables>;
-export const UpdateOntologyDocument = gql`
-    mutation UpdateOntology($input: UpdateOntologyInput!) {
-  updateOntology(input: $input) {
-    ...Ontology
-  }
+export function useCreateOntologyMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateOntologyMutation,
+    CreateOntologyMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateOntologyMutation,
+    CreateOntologyMutationVariables
+  >(CreateOntologyDocument, options);
 }
-    ${OntologyFragmentDoc}`;
-export type UpdateOntologyMutationFn = Apollo.MutationFunction<UpdateOntologyMutation, UpdateOntologyMutationVariables>;
+export type CreateOntologyMutationHookResult = ReturnType<
+  typeof useCreateOntologyMutation
+>;
+export type CreateOntologyMutationResult =
+  Apollo.MutationResult<CreateOntologyMutation>;
+export type CreateOntologyMutationOptions = Apollo.BaseMutationOptions<
+  CreateOntologyMutation,
+  CreateOntologyMutationVariables
+>;
+export const UpdateOntologyDocument = gql`
+  mutation UpdateOntology($input: UpdateOntologyInput!) {
+    updateOntology(input: $input) {
+      ...Ontology
+    }
+  }
+  ${OntologyFragmentDoc}
+`;
+export type UpdateOntologyMutationFn = Apollo.MutationFunction<
+  UpdateOntologyMutation,
+  UpdateOntologyMutationVariables
+>;
 
 /**
  * __useUpdateOntologyMutation__
@@ -4029,19 +7173,36 @@ export type UpdateOntologyMutationFn = Apollo.MutationFunction<UpdateOntologyMut
  *   },
  * });
  */
-export function useUpdateOntologyMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateOntologyMutation, UpdateOntologyMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<UpdateOntologyMutation, UpdateOntologyMutationVariables>(UpdateOntologyDocument, options);
-      }
-export type UpdateOntologyMutationHookResult = ReturnType<typeof useUpdateOntologyMutation>;
-export type UpdateOntologyMutationResult = Apollo.MutationResult<UpdateOntologyMutation>;
-export type UpdateOntologyMutationOptions = Apollo.BaseMutationOptions<UpdateOntologyMutation, UpdateOntologyMutationVariables>;
-export const DeleteOntologyDocument = gql`
-    mutation DeleteOntology($id: ID!) {
-  deleteOntology(input: {id: $id})
+export function useUpdateOntologyMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    UpdateOntologyMutation,
+    UpdateOntologyMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    UpdateOntologyMutation,
+    UpdateOntologyMutationVariables
+  >(UpdateOntologyDocument, options);
 }
-    `;
-export type DeleteOntologyMutationFn = Apollo.MutationFunction<DeleteOntologyMutation, DeleteOntologyMutationVariables>;
+export type UpdateOntologyMutationHookResult = ReturnType<
+  typeof useUpdateOntologyMutation
+>;
+export type UpdateOntologyMutationResult =
+  Apollo.MutationResult<UpdateOntologyMutation>;
+export type UpdateOntologyMutationOptions = Apollo.BaseMutationOptions<
+  UpdateOntologyMutation,
+  UpdateOntologyMutationVariables
+>;
+export const DeleteOntologyDocument = gql`
+  mutation DeleteOntology($id: ID!) {
+    deleteOntology(input: { id: $id })
+  }
+`;
+export type DeleteOntologyMutationFn = Apollo.MutationFunction<
+  DeleteOntologyMutation,
+  DeleteOntologyMutationVariables
+>;
 
 /**
  * __useDeleteOntologyMutation__
@@ -4060,21 +7221,39 @@ export type DeleteOntologyMutationFn = Apollo.MutationFunction<DeleteOntologyMut
  *   },
  * });
  */
-export function useDeleteOntologyMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteOntologyMutation, DeleteOntologyMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteOntologyMutation, DeleteOntologyMutationVariables>(DeleteOntologyDocument, options);
-      }
-export type DeleteOntologyMutationHookResult = ReturnType<typeof useDeleteOntologyMutation>;
-export type DeleteOntologyMutationResult = Apollo.MutationResult<DeleteOntologyMutation>;
-export type DeleteOntologyMutationOptions = Apollo.BaseMutationOptions<DeleteOntologyMutation, DeleteOntologyMutationVariables>;
-export const CreateProtocolDocument = gql`
-    mutation CreateProtocol($name: String!, $experiment: ID!) {
-  createProtocol(input: {name: $name, experiment: $experiment}) {
-    ...Protocol
-  }
+export function useDeleteOntologyMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    DeleteOntologyMutation,
+    DeleteOntologyMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    DeleteOntologyMutation,
+    DeleteOntologyMutationVariables
+  >(DeleteOntologyDocument, options);
 }
-    ${ProtocolFragmentDoc}`;
-export type CreateProtocolMutationFn = Apollo.MutationFunction<CreateProtocolMutation, CreateProtocolMutationVariables>;
+export type DeleteOntologyMutationHookResult = ReturnType<
+  typeof useDeleteOntologyMutation
+>;
+export type DeleteOntologyMutationResult =
+  Apollo.MutationResult<DeleteOntologyMutation>;
+export type DeleteOntologyMutationOptions = Apollo.BaseMutationOptions<
+  DeleteOntologyMutation,
+  DeleteOntologyMutationVariables
+>;
+export const CreateProtocolDocument = gql`
+  mutation CreateProtocol($name: String!, $experiment: ID!) {
+    createProtocol(input: { name: $name, experiment: $experiment }) {
+      ...Protocol
+    }
+  }
+  ${ProtocolFragmentDoc}
+`;
+export type CreateProtocolMutationFn = Apollo.MutationFunction<
+  CreateProtocolMutation,
+  CreateProtocolMutationVariables
+>;
 
 /**
  * __useCreateProtocolMutation__
@@ -4094,21 +7273,39 @@ export type CreateProtocolMutationFn = Apollo.MutationFunction<CreateProtocolMut
  *   },
  * });
  */
-export function useCreateProtocolMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateProtocolMutation, CreateProtocolMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateProtocolMutation, CreateProtocolMutationVariables>(CreateProtocolDocument, options);
-      }
-export type CreateProtocolMutationHookResult = ReturnType<typeof useCreateProtocolMutation>;
-export type CreateProtocolMutationResult = Apollo.MutationResult<CreateProtocolMutation>;
-export type CreateProtocolMutationOptions = Apollo.BaseMutationOptions<CreateProtocolMutation, CreateProtocolMutationVariables>;
-export const CreateProtocolStepDocument = gql`
-    mutation CreateProtocolStep($input: ProtocolStepInput!) {
-  createProtocolStep(input: $input) {
-    ...ProtocolStep
-  }
+export function useCreateProtocolMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateProtocolMutation,
+    CreateProtocolMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateProtocolMutation,
+    CreateProtocolMutationVariables
+  >(CreateProtocolDocument, options);
 }
-    ${ProtocolStepFragmentDoc}`;
-export type CreateProtocolStepMutationFn = Apollo.MutationFunction<CreateProtocolStepMutation, CreateProtocolStepMutationVariables>;
+export type CreateProtocolMutationHookResult = ReturnType<
+  typeof useCreateProtocolMutation
+>;
+export type CreateProtocolMutationResult =
+  Apollo.MutationResult<CreateProtocolMutation>;
+export type CreateProtocolMutationOptions = Apollo.BaseMutationOptions<
+  CreateProtocolMutation,
+  CreateProtocolMutationVariables
+>;
+export const CreateProtocolStepDocument = gql`
+  mutation CreateProtocolStep($input: ProtocolStepInput!) {
+    createProtocolStep(input: $input) {
+      ...ProtocolStep
+    }
+  }
+  ${ProtocolStepFragmentDoc}
+`;
+export type CreateProtocolStepMutationFn = Apollo.MutationFunction<
+  CreateProtocolStepMutation,
+  CreateProtocolStepMutationVariables
+>;
 
 /**
  * __useCreateProtocolStepMutation__
@@ -4127,21 +7324,39 @@ export type CreateProtocolStepMutationFn = Apollo.MutationFunction<CreateProtoco
  *   },
  * });
  */
-export function useCreateProtocolStepMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateProtocolStepMutation, CreateProtocolStepMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateProtocolStepMutation, CreateProtocolStepMutationVariables>(CreateProtocolStepDocument, options);
-      }
-export type CreateProtocolStepMutationHookResult = ReturnType<typeof useCreateProtocolStepMutation>;
-export type CreateProtocolStepMutationResult = Apollo.MutationResult<CreateProtocolStepMutation>;
-export type CreateProtocolStepMutationOptions = Apollo.BaseMutationOptions<CreateProtocolStepMutation, CreateProtocolStepMutationVariables>;
-export const UpdateProtocolStepDocument = gql`
-    mutation UpdateProtocolStep($input: UpdateProtocolStepInput!) {
-  updateProtocolStep(input: $input) {
-    ...ProtocolStep
-  }
+export function useCreateProtocolStepMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateProtocolStepMutation,
+    CreateProtocolStepMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateProtocolStepMutation,
+    CreateProtocolStepMutationVariables
+  >(CreateProtocolStepDocument, options);
 }
-    ${ProtocolStepFragmentDoc}`;
-export type UpdateProtocolStepMutationFn = Apollo.MutationFunction<UpdateProtocolStepMutation, UpdateProtocolStepMutationVariables>;
+export type CreateProtocolStepMutationHookResult = ReturnType<
+  typeof useCreateProtocolStepMutation
+>;
+export type CreateProtocolStepMutationResult =
+  Apollo.MutationResult<CreateProtocolStepMutation>;
+export type CreateProtocolStepMutationOptions = Apollo.BaseMutationOptions<
+  CreateProtocolStepMutation,
+  CreateProtocolStepMutationVariables
+>;
+export const UpdateProtocolStepDocument = gql`
+  mutation UpdateProtocolStep($input: UpdateProtocolStepInput!) {
+    updateProtocolStep(input: $input) {
+      ...ProtocolStep
+    }
+  }
+  ${ProtocolStepFragmentDoc}
+`;
+export type UpdateProtocolStepMutationFn = Apollo.MutationFunction<
+  UpdateProtocolStepMutation,
+  UpdateProtocolStepMutationVariables
+>;
 
 /**
  * __useUpdateProtocolStepMutation__
@@ -4160,21 +7375,39 @@ export type UpdateProtocolStepMutationFn = Apollo.MutationFunction<UpdateProtoco
  *   },
  * });
  */
-export function useUpdateProtocolStepMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateProtocolStepMutation, UpdateProtocolStepMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<UpdateProtocolStepMutation, UpdateProtocolStepMutationVariables>(UpdateProtocolStepDocument, options);
-      }
-export type UpdateProtocolStepMutationHookResult = ReturnType<typeof useUpdateProtocolStepMutation>;
-export type UpdateProtocolStepMutationResult = Apollo.MutationResult<UpdateProtocolStepMutation>;
-export type UpdateProtocolStepMutationOptions = Apollo.BaseMutationOptions<UpdateProtocolStepMutation, UpdateProtocolStepMutationVariables>;
-export const CreateProtocolStepTemplateDocument = gql`
-    mutation CreateProtocolStepTemplate($input: ProtocolStepTemplateInput!) {
-  createProtocolStepTemplate(input: $input) {
-    ...ProtocolStepTemplate
-  }
+export function useUpdateProtocolStepMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    UpdateProtocolStepMutation,
+    UpdateProtocolStepMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    UpdateProtocolStepMutation,
+    UpdateProtocolStepMutationVariables
+  >(UpdateProtocolStepDocument, options);
 }
-    ${ProtocolStepTemplateFragmentDoc}`;
-export type CreateProtocolStepTemplateMutationFn = Apollo.MutationFunction<CreateProtocolStepTemplateMutation, CreateProtocolStepTemplateMutationVariables>;
+export type UpdateProtocolStepMutationHookResult = ReturnType<
+  typeof useUpdateProtocolStepMutation
+>;
+export type UpdateProtocolStepMutationResult =
+  Apollo.MutationResult<UpdateProtocolStepMutation>;
+export type UpdateProtocolStepMutationOptions = Apollo.BaseMutationOptions<
+  UpdateProtocolStepMutation,
+  UpdateProtocolStepMutationVariables
+>;
+export const CreateProtocolStepTemplateDocument = gql`
+  mutation CreateProtocolStepTemplate($input: ProtocolStepTemplateInput!) {
+    createProtocolStepTemplate(input: $input) {
+      ...ProtocolStepTemplate
+    }
+  }
+  ${ProtocolStepTemplateFragmentDoc}
+`;
+export type CreateProtocolStepTemplateMutationFn = Apollo.MutationFunction<
+  CreateProtocolStepTemplateMutation,
+  CreateProtocolStepTemplateMutationVariables
+>;
 
 /**
  * __useCreateProtocolStepTemplateMutation__
@@ -4193,21 +7426,42 @@ export type CreateProtocolStepTemplateMutationFn = Apollo.MutationFunction<Creat
  *   },
  * });
  */
-export function useCreateProtocolStepTemplateMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateProtocolStepTemplateMutation, CreateProtocolStepTemplateMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateProtocolStepTemplateMutation, CreateProtocolStepTemplateMutationVariables>(CreateProtocolStepTemplateDocument, options);
-      }
-export type CreateProtocolStepTemplateMutationHookResult = ReturnType<typeof useCreateProtocolStepTemplateMutation>;
-export type CreateProtocolStepTemplateMutationResult = Apollo.MutationResult<CreateProtocolStepTemplateMutation>;
-export type CreateProtocolStepTemplateMutationOptions = Apollo.BaseMutationOptions<CreateProtocolStepTemplateMutation, CreateProtocolStepTemplateMutationVariables>;
-export const UpdateProtocolStepTemplateDocument = gql`
-    mutation UpdateProtocolStepTemplate($input: UpdateProtocolStepTemplateInput!) {
-  updateProtocolStepTemplate(input: $input) {
-    ...ProtocolStepTemplate
-  }
+export function useCreateProtocolStepTemplateMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateProtocolStepTemplateMutation,
+    CreateProtocolStepTemplateMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateProtocolStepTemplateMutation,
+    CreateProtocolStepTemplateMutationVariables
+  >(CreateProtocolStepTemplateDocument, options);
 }
-    ${ProtocolStepTemplateFragmentDoc}`;
-export type UpdateProtocolStepTemplateMutationFn = Apollo.MutationFunction<UpdateProtocolStepTemplateMutation, UpdateProtocolStepTemplateMutationVariables>;
+export type CreateProtocolStepTemplateMutationHookResult = ReturnType<
+  typeof useCreateProtocolStepTemplateMutation
+>;
+export type CreateProtocolStepTemplateMutationResult =
+  Apollo.MutationResult<CreateProtocolStepTemplateMutation>;
+export type CreateProtocolStepTemplateMutationOptions =
+  Apollo.BaseMutationOptions<
+    CreateProtocolStepTemplateMutation,
+    CreateProtocolStepTemplateMutationVariables
+  >;
+export const UpdateProtocolStepTemplateDocument = gql`
+  mutation UpdateProtocolStepTemplate(
+    $input: UpdateProtocolStepTemplateInput!
+  ) {
+    updateProtocolStepTemplate(input: $input) {
+      ...ProtocolStepTemplate
+    }
+  }
+  ${ProtocolStepTemplateFragmentDoc}
+`;
+export type UpdateProtocolStepTemplateMutationFn = Apollo.MutationFunction<
+  UpdateProtocolStepTemplateMutation,
+  UpdateProtocolStepTemplateMutationVariables
+>;
 
 /**
  * __useUpdateProtocolStepTemplateMutation__
@@ -4226,21 +7480,40 @@ export type UpdateProtocolStepTemplateMutationFn = Apollo.MutationFunction<Updat
  *   },
  * });
  */
-export function useUpdateProtocolStepTemplateMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateProtocolStepTemplateMutation, UpdateProtocolStepTemplateMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<UpdateProtocolStepTemplateMutation, UpdateProtocolStepTemplateMutationVariables>(UpdateProtocolStepTemplateDocument, options);
-      }
-export type UpdateProtocolStepTemplateMutationHookResult = ReturnType<typeof useUpdateProtocolStepTemplateMutation>;
-export type UpdateProtocolStepTemplateMutationResult = Apollo.MutationResult<UpdateProtocolStepTemplateMutation>;
-export type UpdateProtocolStepTemplateMutationOptions = Apollo.BaseMutationOptions<UpdateProtocolStepTemplateMutation, UpdateProtocolStepTemplateMutationVariables>;
-export const CreateReagentDocument = gql`
-    mutation CreateReagent($input: ReagentInput!) {
-  createReagent(input: $input) {
-    ...Reagent
-  }
+export function useUpdateProtocolStepTemplateMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    UpdateProtocolStepTemplateMutation,
+    UpdateProtocolStepTemplateMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    UpdateProtocolStepTemplateMutation,
+    UpdateProtocolStepTemplateMutationVariables
+  >(UpdateProtocolStepTemplateDocument, options);
 }
-    ${ReagentFragmentDoc}`;
-export type CreateReagentMutationFn = Apollo.MutationFunction<CreateReagentMutation, CreateReagentMutationVariables>;
+export type UpdateProtocolStepTemplateMutationHookResult = ReturnType<
+  typeof useUpdateProtocolStepTemplateMutation
+>;
+export type UpdateProtocolStepTemplateMutationResult =
+  Apollo.MutationResult<UpdateProtocolStepTemplateMutation>;
+export type UpdateProtocolStepTemplateMutationOptions =
+  Apollo.BaseMutationOptions<
+    UpdateProtocolStepTemplateMutation,
+    UpdateProtocolStepTemplateMutationVariables
+  >;
+export const CreateReagentDocument = gql`
+  mutation CreateReagent($input: ReagentInput!) {
+    createReagent(input: $input) {
+      ...Reagent
+    }
+  }
+  ${ReagentFragmentDoc}
+`;
+export type CreateReagentMutationFn = Apollo.MutationFunction<
+  CreateReagentMutation,
+  CreateReagentMutationVariables
+>;
 
 /**
  * __useCreateReagentMutation__
@@ -4259,19 +7532,36 @@ export type CreateReagentMutationFn = Apollo.MutationFunction<CreateReagentMutat
  *   },
  * });
  */
-export function useCreateReagentMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateReagentMutation, CreateReagentMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateReagentMutation, CreateReagentMutationVariables>(CreateReagentDocument, options);
-      }
-export type CreateReagentMutationHookResult = ReturnType<typeof useCreateReagentMutation>;
-export type CreateReagentMutationResult = Apollo.MutationResult<CreateReagentMutation>;
-export type CreateReagentMutationOptions = Apollo.BaseMutationOptions<CreateReagentMutation, CreateReagentMutationVariables>;
-export const DeleteScatterPlotDocument = gql`
-    mutation DeleteScatterPlot($id: ID!) {
-  deleteScatterPlot(input: {id: $id})
+export function useCreateReagentMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateReagentMutation,
+    CreateReagentMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateReagentMutation,
+    CreateReagentMutationVariables
+  >(CreateReagentDocument, options);
 }
-    `;
-export type DeleteScatterPlotMutationFn = Apollo.MutationFunction<DeleteScatterPlotMutation, DeleteScatterPlotMutationVariables>;
+export type CreateReagentMutationHookResult = ReturnType<
+  typeof useCreateReagentMutation
+>;
+export type CreateReagentMutationResult =
+  Apollo.MutationResult<CreateReagentMutation>;
+export type CreateReagentMutationOptions = Apollo.BaseMutationOptions<
+  CreateReagentMutation,
+  CreateReagentMutationVariables
+>;
+export const DeleteScatterPlotDocument = gql`
+  mutation DeleteScatterPlot($id: ID!) {
+    deleteScatterPlot(input: { id: $id })
+  }
+`;
+export type DeleteScatterPlotMutationFn = Apollo.MutationFunction<
+  DeleteScatterPlotMutation,
+  DeleteScatterPlotMutationVariables
+>;
 
 /**
  * __useDeleteScatterPlotMutation__
@@ -4290,21 +7580,39 @@ export type DeleteScatterPlotMutationFn = Apollo.MutationFunction<DeleteScatterP
  *   },
  * });
  */
-export function useDeleteScatterPlotMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteScatterPlotMutation, DeleteScatterPlotMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteScatterPlotMutation, DeleteScatterPlotMutationVariables>(DeleteScatterPlotDocument, options);
-      }
-export type DeleteScatterPlotMutationHookResult = ReturnType<typeof useDeleteScatterPlotMutation>;
-export type DeleteScatterPlotMutationResult = Apollo.MutationResult<DeleteScatterPlotMutation>;
-export type DeleteScatterPlotMutationOptions = Apollo.BaseMutationOptions<DeleteScatterPlotMutation, DeleteScatterPlotMutationVariables>;
-export const CreateStructureDocument = gql`
-    mutation CreateStructure($input: StructureInput!) {
-  createStructure(input: $input) {
-    ...Structure
-  }
+export function useDeleteScatterPlotMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    DeleteScatterPlotMutation,
+    DeleteScatterPlotMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    DeleteScatterPlotMutation,
+    DeleteScatterPlotMutationVariables
+  >(DeleteScatterPlotDocument, options);
 }
-    ${StructureFragmentDoc}`;
-export type CreateStructureMutationFn = Apollo.MutationFunction<CreateStructureMutation, CreateStructureMutationVariables>;
+export type DeleteScatterPlotMutationHookResult = ReturnType<
+  typeof useDeleteScatterPlotMutation
+>;
+export type DeleteScatterPlotMutationResult =
+  Apollo.MutationResult<DeleteScatterPlotMutation>;
+export type DeleteScatterPlotMutationOptions = Apollo.BaseMutationOptions<
+  DeleteScatterPlotMutation,
+  DeleteScatterPlotMutationVariables
+>;
+export const CreateStructureDocument = gql`
+  mutation CreateStructure($input: StructureInput!) {
+    createStructure(input: $input) {
+      ...Structure
+    }
+  }
+  ${StructureFragmentDoc}
+`;
+export type CreateStructureMutationFn = Apollo.MutationFunction<
+  CreateStructureMutation,
+  CreateStructureMutationVariables
+>;
 
 /**
  * __useCreateStructureMutation__
@@ -4323,20 +7631,35 @@ export type CreateStructureMutationFn = Apollo.MutationFunction<CreateStructureM
  *   },
  * });
  */
-export function useCreateStructureMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateStructureMutation, CreateStructureMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateStructureMutation, CreateStructureMutationVariables>(CreateStructureDocument, options);
-      }
-export type CreateStructureMutationHookResult = ReturnType<typeof useCreateStructureMutation>;
-export type CreateStructureMutationResult = Apollo.MutationResult<CreateStructureMutation>;
-export type CreateStructureMutationOptions = Apollo.BaseMutationOptions<CreateStructureMutation, CreateStructureMutationVariables>;
-export const GetEdgeDocument = gql`
-    query GetEdge($id: ID!) {
-  edge(id: $id) {
-    ...Edge
-  }
+export function useCreateStructureMutation(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<
+    CreateStructureMutation,
+    CreateStructureMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useMutation<
+    CreateStructureMutation,
+    CreateStructureMutationVariables
+  >(CreateStructureDocument, options);
 }
-    ${EdgeFragmentDoc}`;
+export type CreateStructureMutationHookResult = ReturnType<
+  typeof useCreateStructureMutation
+>;
+export type CreateStructureMutationResult =
+  Apollo.MutationResult<CreateStructureMutation>;
+export type CreateStructureMutationOptions = Apollo.BaseMutationOptions<
+  CreateStructureMutation,
+  CreateStructureMutationVariables
+>;
+export const GetEdgeDocument = gql`
+  query GetEdge($id: ID!) {
+    edge(id: $id) {
+      ...Edge
+    }
+  }
+  ${EdgeFragmentDoc}
+`;
 
 /**
  * __useGetEdgeQuery__
@@ -4354,24 +7677,44 @@ export const GetEdgeDocument = gql`
  *   },
  * });
  */
-export function useGetEdgeQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetEdgeQuery, GetEdgeQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetEdgeQuery, GetEdgeQueryVariables>(GetEdgeDocument, options);
-      }
-export function useGetEdgeLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetEdgeQuery, GetEdgeQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetEdgeQuery, GetEdgeQueryVariables>(GetEdgeDocument, options);
-        }
+export function useGetEdgeQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetEdgeQuery,
+    GetEdgeQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<GetEdgeQuery, GetEdgeQueryVariables>(
+    GetEdgeDocument,
+    options,
+  );
+}
+export function useGetEdgeLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetEdgeQuery,
+    GetEdgeQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<GetEdgeQuery, GetEdgeQueryVariables>(
+    GetEdgeDocument,
+    options,
+  );
+}
 export type GetEdgeQueryHookResult = ReturnType<typeof useGetEdgeQuery>;
 export type GetEdgeLazyQueryHookResult = ReturnType<typeof useGetEdgeLazyQuery>;
-export type GetEdgeQueryResult = Apollo.QueryResult<GetEdgeQuery, GetEdgeQueryVariables>;
+export type GetEdgeQueryResult = Apollo.QueryResult<
+  GetEdgeQuery,
+  GetEdgeQueryVariables
+>;
 export const GetGenericCategoryDocument = gql`
-    query GetGenericCategory($id: ID!) {
-  genericCategory(id: $id) {
-    ...GenericCategory
+  query GetGenericCategory($id: ID!) {
+    genericCategory(id: $id) {
+      ...GenericCategory
+    }
   }
-}
-    ${GenericCategoryFragmentDoc}`;
+  ${GenericCategoryFragmentDoc}
+`;
 
 /**
  * __useGetGenericCategoryQuery__
@@ -4389,28 +7732,51 @@ export const GetGenericCategoryDocument = gql`
  *   },
  * });
  */
-export function useGetGenericCategoryQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetGenericCategoryQuery, GetGenericCategoryQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetGenericCategoryQuery, GetGenericCategoryQueryVariables>(GetGenericCategoryDocument, options);
-      }
-export function useGetGenericCategoryLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetGenericCategoryQuery, GetGenericCategoryQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetGenericCategoryQuery, GetGenericCategoryQueryVariables>(GetGenericCategoryDocument, options);
-        }
-export type GetGenericCategoryQueryHookResult = ReturnType<typeof useGetGenericCategoryQuery>;
-export type GetGenericCategoryLazyQueryHookResult = ReturnType<typeof useGetGenericCategoryLazyQuery>;
-export type GetGenericCategoryQueryResult = Apollo.QueryResult<GetGenericCategoryQuery, GetGenericCategoryQueryVariables>;
-export const SearchGenericCategoryDocument = gql`
-    query SearchGenericCategory($search: String, $values: [ID!]) {
-  options: genericCategories(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: label
-  }
+export function useGetGenericCategoryQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetGenericCategoryQuery,
+    GetGenericCategoryQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    GetGenericCategoryQuery,
+    GetGenericCategoryQueryVariables
+  >(GetGenericCategoryDocument, options);
 }
-    `;
+export function useGetGenericCategoryLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetGenericCategoryQuery,
+    GetGenericCategoryQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetGenericCategoryQuery,
+    GetGenericCategoryQueryVariables
+  >(GetGenericCategoryDocument, options);
+}
+export type GetGenericCategoryQueryHookResult = ReturnType<
+  typeof useGetGenericCategoryQuery
+>;
+export type GetGenericCategoryLazyQueryHookResult = ReturnType<
+  typeof useGetGenericCategoryLazyQuery
+>;
+export type GetGenericCategoryQueryResult = Apollo.QueryResult<
+  GetGenericCategoryQuery,
+  GetGenericCategoryQueryVariables
+>;
+export const SearchGenericCategoryDocument = gql`
+  query SearchGenericCategory($search: String, $values: [ID!]) {
+    options: genericCategories(
+      filters: { search: $search, ids: $values }
+      pagination: { limit: 10 }
+    ) {
+      value: id
+      label: label
+    }
+  }
+`;
 
 /**
  * __useSearchGenericCategoryQuery__
@@ -4429,24 +7795,48 @@ export const SearchGenericCategoryDocument = gql`
  *   },
  * });
  */
-export function useSearchGenericCategoryQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchGenericCategoryQuery, SearchGenericCategoryQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchGenericCategoryQuery, SearchGenericCategoryQueryVariables>(SearchGenericCategoryDocument, options);
-      }
-export function useSearchGenericCategoryLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchGenericCategoryQuery, SearchGenericCategoryQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchGenericCategoryQuery, SearchGenericCategoryQueryVariables>(SearchGenericCategoryDocument, options);
-        }
-export type SearchGenericCategoryQueryHookResult = ReturnType<typeof useSearchGenericCategoryQuery>;
-export type SearchGenericCategoryLazyQueryHookResult = ReturnType<typeof useSearchGenericCategoryLazyQuery>;
-export type SearchGenericCategoryQueryResult = Apollo.QueryResult<SearchGenericCategoryQuery, SearchGenericCategoryQueryVariables>;
-export const GetGraphDocument = gql`
-    query GetGraph($id: ID!) {
-  graph(id: $id) {
-    ...Graph
-  }
+export function useSearchGenericCategoryQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    SearchGenericCategoryQuery,
+    SearchGenericCategoryQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    SearchGenericCategoryQuery,
+    SearchGenericCategoryQueryVariables
+  >(SearchGenericCategoryDocument, options);
 }
-    ${GraphFragmentDoc}`;
+export function useSearchGenericCategoryLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    SearchGenericCategoryQuery,
+    SearchGenericCategoryQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    SearchGenericCategoryQuery,
+    SearchGenericCategoryQueryVariables
+  >(SearchGenericCategoryDocument, options);
+}
+export type SearchGenericCategoryQueryHookResult = ReturnType<
+  typeof useSearchGenericCategoryQuery
+>;
+export type SearchGenericCategoryLazyQueryHookResult = ReturnType<
+  typeof useSearchGenericCategoryLazyQuery
+>;
+export type SearchGenericCategoryQueryResult = Apollo.QueryResult<
+  SearchGenericCategoryQuery,
+  SearchGenericCategoryQueryVariables
+>;
+export const GetGraphDocument = gql`
+  query GetGraph($id: ID!) {
+    graph(id: $id) {
+      ...Graph
+    }
+  }
+  ${GraphFragmentDoc}
+`;
 
 /**
  * __useGetGraphQuery__
@@ -4464,24 +7854,46 @@ export const GetGraphDocument = gql`
  *   },
  * });
  */
-export function useGetGraphQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetGraphQuery, GetGraphQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetGraphQuery, GetGraphQueryVariables>(GetGraphDocument, options);
-      }
-export function useGetGraphLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetGraphQuery, GetGraphQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetGraphQuery, GetGraphQueryVariables>(GetGraphDocument, options);
-        }
-export type GetGraphQueryHookResult = ReturnType<typeof useGetGraphQuery>;
-export type GetGraphLazyQueryHookResult = ReturnType<typeof useGetGraphLazyQuery>;
-export type GetGraphQueryResult = Apollo.QueryResult<GetGraphQuery, GetGraphQueryVariables>;
-export const MyActiveGraphDocument = gql`
-    query MyActiveGraph {
-  myActiveGraph {
-    ...ListGraph
-  }
+export function useGetGraphQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetGraphQuery,
+    GetGraphQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<GetGraphQuery, GetGraphQueryVariables>(
+    GetGraphDocument,
+    options,
+  );
 }
-    ${ListGraphFragmentDoc}`;
+export function useGetGraphLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetGraphQuery,
+    GetGraphQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<GetGraphQuery, GetGraphQueryVariables>(
+    GetGraphDocument,
+    options,
+  );
+}
+export type GetGraphQueryHookResult = ReturnType<typeof useGetGraphQuery>;
+export type GetGraphLazyQueryHookResult = ReturnType<
+  typeof useGetGraphLazyQuery
+>;
+export type GetGraphQueryResult = Apollo.QueryResult<
+  GetGraphQuery,
+  GetGraphQueryVariables
+>;
+export const MyActiveGraphDocument = gql`
+  query MyActiveGraph {
+    myActiveGraph {
+      ...ListGraph
+    }
+  }
+  ${ListGraphFragmentDoc}
+`;
 
 /**
  * __useMyActiveGraphQuery__
@@ -4498,24 +7910,48 @@ export const MyActiveGraphDocument = gql`
  *   },
  * });
  */
-export function useMyActiveGraphQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<MyActiveGraphQuery, MyActiveGraphQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<MyActiveGraphQuery, MyActiveGraphQueryVariables>(MyActiveGraphDocument, options);
-      }
-export function useMyActiveGraphLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<MyActiveGraphQuery, MyActiveGraphQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<MyActiveGraphQuery, MyActiveGraphQueryVariables>(MyActiveGraphDocument, options);
-        }
-export type MyActiveGraphQueryHookResult = ReturnType<typeof useMyActiveGraphQuery>;
-export type MyActiveGraphLazyQueryHookResult = ReturnType<typeof useMyActiveGraphLazyQuery>;
-export type MyActiveGraphQueryResult = Apollo.QueryResult<MyActiveGraphQuery, MyActiveGraphQueryVariables>;
-export const ListGraphsDocument = gql`
-    query ListGraphs($filters: GraphFilter, $pagination: OffsetPaginationInput) {
-  graphs(filters: $filters, pagination: $pagination) {
-    ...ListGraph
-  }
+export function useMyActiveGraphQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    MyActiveGraphQuery,
+    MyActiveGraphQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    MyActiveGraphQuery,
+    MyActiveGraphQueryVariables
+  >(MyActiveGraphDocument, options);
 }
-    ${ListGraphFragmentDoc}`;
+export function useMyActiveGraphLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    MyActiveGraphQuery,
+    MyActiveGraphQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    MyActiveGraphQuery,
+    MyActiveGraphQueryVariables
+  >(MyActiveGraphDocument, options);
+}
+export type MyActiveGraphQueryHookResult = ReturnType<
+  typeof useMyActiveGraphQuery
+>;
+export type MyActiveGraphLazyQueryHookResult = ReturnType<
+  typeof useMyActiveGraphLazyQuery
+>;
+export type MyActiveGraphQueryResult = Apollo.QueryResult<
+  MyActiveGraphQuery,
+  MyActiveGraphQueryVariables
+>;
+export const ListGraphsDocument = gql`
+  query ListGraphs($filters: GraphFilter, $pagination: OffsetPaginationInput) {
+    graphs(filters: $filters, pagination: $pagination) {
+      ...ListGraph
+    }
+  }
+  ${ListGraphFragmentDoc}
+`;
 
 /**
  * __useListGraphsQuery__
@@ -4534,28 +7970,49 @@ export const ListGraphsDocument = gql`
  *   },
  * });
  */
-export function useListGraphsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListGraphsQuery, ListGraphsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListGraphsQuery, ListGraphsQueryVariables>(ListGraphsDocument, options);
-      }
-export function useListGraphsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListGraphsQuery, ListGraphsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListGraphsQuery, ListGraphsQueryVariables>(ListGraphsDocument, options);
-        }
-export type ListGraphsQueryHookResult = ReturnType<typeof useListGraphsQuery>;
-export type ListGraphsLazyQueryHookResult = ReturnType<typeof useListGraphsLazyQuery>;
-export type ListGraphsQueryResult = Apollo.QueryResult<ListGraphsQuery, ListGraphsQueryVariables>;
-export const SearchGraphsDocument = gql`
-    query SearchGraphs($search: String, $values: [ID!]) {
-  options: graphs(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: name
-  }
+export function useListGraphsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    ListGraphsQuery,
+    ListGraphsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<ListGraphsQuery, ListGraphsQueryVariables>(
+    ListGraphsDocument,
+    options,
+  );
 }
-    `;
+export function useListGraphsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    ListGraphsQuery,
+    ListGraphsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    ListGraphsQuery,
+    ListGraphsQueryVariables
+  >(ListGraphsDocument, options);
+}
+export type ListGraphsQueryHookResult = ReturnType<typeof useListGraphsQuery>;
+export type ListGraphsLazyQueryHookResult = ReturnType<
+  typeof useListGraphsLazyQuery
+>;
+export type ListGraphsQueryResult = Apollo.QueryResult<
+  ListGraphsQuery,
+  ListGraphsQueryVariables
+>;
+export const SearchGraphsDocument = gql`
+  query SearchGraphs($search: String, $values: [ID!]) {
+    options: graphs(
+      filters: { search: $search, ids: $values }
+      pagination: { limit: 10 }
+    ) {
+      value: id
+      label: name
+    }
+  }
+`;
 
 /**
  * __useSearchGraphsQuery__
@@ -4574,24 +8031,48 @@ export const SearchGraphsDocument = gql`
  *   },
  * });
  */
-export function useSearchGraphsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchGraphsQuery, SearchGraphsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchGraphsQuery, SearchGraphsQueryVariables>(SearchGraphsDocument, options);
-      }
-export function useSearchGraphsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchGraphsQuery, SearchGraphsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchGraphsQuery, SearchGraphsQueryVariables>(SearchGraphsDocument, options);
-        }
-export type SearchGraphsQueryHookResult = ReturnType<typeof useSearchGraphsQuery>;
-export type SearchGraphsLazyQueryHookResult = ReturnType<typeof useSearchGraphsLazyQuery>;
-export type SearchGraphsQueryResult = Apollo.QueryResult<SearchGraphsQuery, SearchGraphsQueryVariables>;
-export const GetGraphQueryDocument = gql`
-    query GetGraphQuery($id: ID!) {
-  graphQuery(id: $id) {
-    ...DetailGraphQuery
-  }
+export function useSearchGraphsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    SearchGraphsQuery,
+    SearchGraphsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    SearchGraphsQuery,
+    SearchGraphsQueryVariables
+  >(SearchGraphsDocument, options);
 }
-    ${DetailGraphQueryFragmentDoc}`;
+export function useSearchGraphsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    SearchGraphsQuery,
+    SearchGraphsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    SearchGraphsQuery,
+    SearchGraphsQueryVariables
+  >(SearchGraphsDocument, options);
+}
+export type SearchGraphsQueryHookResult = ReturnType<
+  typeof useSearchGraphsQuery
+>;
+export type SearchGraphsLazyQueryHookResult = ReturnType<
+  typeof useSearchGraphsLazyQuery
+>;
+export type SearchGraphsQueryResult = Apollo.QueryResult<
+  SearchGraphsQuery,
+  SearchGraphsQueryVariables
+>;
+export const GetGraphQueryDocument = gql`
+  query GetGraphQuery($id: ID!) {
+    graphQuery(id: $id) {
+      ...DetailGraphQuery
+    }
+  }
+  ${DetailGraphQueryFragmentDoc}
+`;
 
 /**
  * __useGetGraphQueryQuery__
@@ -4609,28 +8090,51 @@ export const GetGraphQueryDocument = gql`
  *   },
  * });
  */
-export function useGetGraphQueryQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetGraphQueryQuery, GetGraphQueryQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetGraphQueryQuery, GetGraphQueryQueryVariables>(GetGraphQueryDocument, options);
-      }
-export function useGetGraphQueryLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetGraphQueryQuery, GetGraphQueryQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetGraphQueryQuery, GetGraphQueryQueryVariables>(GetGraphQueryDocument, options);
-        }
-export type GetGraphQueryQueryHookResult = ReturnType<typeof useGetGraphQueryQuery>;
-export type GetGraphQueryLazyQueryHookResult = ReturnType<typeof useGetGraphQueryLazyQuery>;
-export type GetGraphQueryQueryResult = Apollo.QueryResult<GetGraphQueryQuery, GetGraphQueryQueryVariables>;
-export const SearchGraphQueriesDocument = gql`
-    query SearchGraphQueries($search: String, $values: [ID!]) {
-  options: graphQueries(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: name
-  }
+export function useGetGraphQueryQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetGraphQueryQuery,
+    GetGraphQueryQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    GetGraphQueryQuery,
+    GetGraphQueryQueryVariables
+  >(GetGraphQueryDocument, options);
 }
-    `;
+export function useGetGraphQueryLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetGraphQueryQuery,
+    GetGraphQueryQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetGraphQueryQuery,
+    GetGraphQueryQueryVariables
+  >(GetGraphQueryDocument, options);
+}
+export type GetGraphQueryQueryHookResult = ReturnType<
+  typeof useGetGraphQueryQuery
+>;
+export type GetGraphQueryLazyQueryHookResult = ReturnType<
+  typeof useGetGraphQueryLazyQuery
+>;
+export type GetGraphQueryQueryResult = Apollo.QueryResult<
+  GetGraphQueryQuery,
+  GetGraphQueryQueryVariables
+>;
+export const SearchGraphQueriesDocument = gql`
+  query SearchGraphQueries($search: String, $values: [ID!]) {
+    options: graphQueries(
+      filters: { search: $search, ids: $values }
+      pagination: { limit: 10 }
+    ) {
+      value: id
+      label: name
+    }
+  }
+`;
 
 /**
  * __useSearchGraphQueriesQuery__
@@ -4649,24 +8153,48 @@ export const SearchGraphQueriesDocument = gql`
  *   },
  * });
  */
-export function useSearchGraphQueriesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchGraphQueriesQuery, SearchGraphQueriesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchGraphQueriesQuery, SearchGraphQueriesQueryVariables>(SearchGraphQueriesDocument, options);
-      }
-export function useSearchGraphQueriesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchGraphQueriesQuery, SearchGraphQueriesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchGraphQueriesQuery, SearchGraphQueriesQueryVariables>(SearchGraphQueriesDocument, options);
-        }
-export type SearchGraphQueriesQueryHookResult = ReturnType<typeof useSearchGraphQueriesQuery>;
-export type SearchGraphQueriesLazyQueryHookResult = ReturnType<typeof useSearchGraphQueriesLazyQuery>;
-export type SearchGraphQueriesQueryResult = Apollo.QueryResult<SearchGraphQueriesQuery, SearchGraphQueriesQueryVariables>;
-export const GetGraphViewDocument = gql`
-    query GetGraphView($id: ID!) {
-  graphView(id: $id) {
-    ...GraphView
-  }
+export function useSearchGraphQueriesQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    SearchGraphQueriesQuery,
+    SearchGraphQueriesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    SearchGraphQueriesQuery,
+    SearchGraphQueriesQueryVariables
+  >(SearchGraphQueriesDocument, options);
 }
-    ${GraphViewFragmentDoc}`;
+export function useSearchGraphQueriesLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    SearchGraphQueriesQuery,
+    SearchGraphQueriesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    SearchGraphQueriesQuery,
+    SearchGraphQueriesQueryVariables
+  >(SearchGraphQueriesDocument, options);
+}
+export type SearchGraphQueriesQueryHookResult = ReturnType<
+  typeof useSearchGraphQueriesQuery
+>;
+export type SearchGraphQueriesLazyQueryHookResult = ReturnType<
+  typeof useSearchGraphQueriesLazyQuery
+>;
+export type SearchGraphQueriesQueryResult = Apollo.QueryResult<
+  SearchGraphQueriesQuery,
+  SearchGraphQueriesQueryVariables
+>;
+export const GetGraphViewDocument = gql`
+  query GetGraphView($id: ID!) {
+    graphView(id: $id) {
+      ...GraphView
+    }
+  }
+  ${GraphViewFragmentDoc}
+`;
 
 /**
  * __useGetGraphViewQuery__
@@ -4684,28 +8212,51 @@ export const GetGraphViewDocument = gql`
  *   },
  * });
  */
-export function useGetGraphViewQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetGraphViewQuery, GetGraphViewQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetGraphViewQuery, GetGraphViewQueryVariables>(GetGraphViewDocument, options);
-      }
-export function useGetGraphViewLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetGraphViewQuery, GetGraphViewQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetGraphViewQuery, GetGraphViewQueryVariables>(GetGraphViewDocument, options);
-        }
-export type GetGraphViewQueryHookResult = ReturnType<typeof useGetGraphViewQuery>;
-export type GetGraphViewLazyQueryHookResult = ReturnType<typeof useGetGraphViewLazyQuery>;
-export type GetGraphViewQueryResult = Apollo.QueryResult<GetGraphViewQuery, GetGraphViewQueryVariables>;
-export const SearchGraphViewsDocument = gql`
-    query SearchGraphViews($search: String, $values: [ID!]) {
-  options: graphViews(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: label
-  }
+export function useGetGraphViewQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetGraphViewQuery,
+    GetGraphViewQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    GetGraphViewQuery,
+    GetGraphViewQueryVariables
+  >(GetGraphViewDocument, options);
 }
-    `;
+export function useGetGraphViewLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetGraphViewQuery,
+    GetGraphViewQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetGraphViewQuery,
+    GetGraphViewQueryVariables
+  >(GetGraphViewDocument, options);
+}
+export type GetGraphViewQueryHookResult = ReturnType<
+  typeof useGetGraphViewQuery
+>;
+export type GetGraphViewLazyQueryHookResult = ReturnType<
+  typeof useGetGraphViewLazyQuery
+>;
+export type GetGraphViewQueryResult = Apollo.QueryResult<
+  GetGraphViewQuery,
+  GetGraphViewQueryVariables
+>;
+export const SearchGraphViewsDocument = gql`
+  query SearchGraphViews($search: String, $values: [ID!]) {
+    options: graphViews(
+      filters: { search: $search, ids: $values }
+      pagination: { limit: 10 }
+    ) {
+      value: id
+      label: label
+    }
+  }
+`;
 
 /**
  * __useSearchGraphViewsQuery__
@@ -4724,24 +8275,48 @@ export const SearchGraphViewsDocument = gql`
  *   },
  * });
  */
-export function useSearchGraphViewsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchGraphViewsQuery, SearchGraphViewsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchGraphViewsQuery, SearchGraphViewsQueryVariables>(SearchGraphViewsDocument, options);
-      }
-export function useSearchGraphViewsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchGraphViewsQuery, SearchGraphViewsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchGraphViewsQuery, SearchGraphViewsQueryVariables>(SearchGraphViewsDocument, options);
-        }
-export type SearchGraphViewsQueryHookResult = ReturnType<typeof useSearchGraphViewsQuery>;
-export type SearchGraphViewsLazyQueryHookResult = ReturnType<typeof useSearchGraphViewsLazyQuery>;
-export type SearchGraphViewsQueryResult = Apollo.QueryResult<SearchGraphViewsQuery, SearchGraphViewsQueryVariables>;
-export const GetMeasurmentCategoryDocument = gql`
-    query GetMeasurmentCategory($id: ID!) {
-  measurementCategory(id: $id) {
-    ...MeasurementCategory
-  }
+export function useSearchGraphViewsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    SearchGraphViewsQuery,
+    SearchGraphViewsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    SearchGraphViewsQuery,
+    SearchGraphViewsQueryVariables
+  >(SearchGraphViewsDocument, options);
 }
-    ${MeasurementCategoryFragmentDoc}`;
+export function useSearchGraphViewsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    SearchGraphViewsQuery,
+    SearchGraphViewsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    SearchGraphViewsQuery,
+    SearchGraphViewsQueryVariables
+  >(SearchGraphViewsDocument, options);
+}
+export type SearchGraphViewsQueryHookResult = ReturnType<
+  typeof useSearchGraphViewsQuery
+>;
+export type SearchGraphViewsLazyQueryHookResult = ReturnType<
+  typeof useSearchGraphViewsLazyQuery
+>;
+export type SearchGraphViewsQueryResult = Apollo.QueryResult<
+  SearchGraphViewsQuery,
+  SearchGraphViewsQueryVariables
+>;
+export const GetMeasurmentCategoryDocument = gql`
+  query GetMeasurmentCategory($id: ID!) {
+    measurementCategory(id: $id) {
+      ...MeasurementCategory
+    }
+  }
+  ${MeasurementCategoryFragmentDoc}
+`;
 
 /**
  * __useGetMeasurmentCategoryQuery__
@@ -4759,28 +8334,51 @@ export const GetMeasurmentCategoryDocument = gql`
  *   },
  * });
  */
-export function useGetMeasurmentCategoryQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetMeasurmentCategoryQuery, GetMeasurmentCategoryQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetMeasurmentCategoryQuery, GetMeasurmentCategoryQueryVariables>(GetMeasurmentCategoryDocument, options);
-      }
-export function useGetMeasurmentCategoryLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetMeasurmentCategoryQuery, GetMeasurmentCategoryQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetMeasurmentCategoryQuery, GetMeasurmentCategoryQueryVariables>(GetMeasurmentCategoryDocument, options);
-        }
-export type GetMeasurmentCategoryQueryHookResult = ReturnType<typeof useGetMeasurmentCategoryQuery>;
-export type GetMeasurmentCategoryLazyQueryHookResult = ReturnType<typeof useGetMeasurmentCategoryLazyQuery>;
-export type GetMeasurmentCategoryQueryResult = Apollo.QueryResult<GetMeasurmentCategoryQuery, GetMeasurmentCategoryQueryVariables>;
-export const SearchMeasurmentCategoryDocument = gql`
-    query SearchMeasurmentCategory($search: String, $values: [ID!]) {
-  options: measurementCategories(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: label
-  }
+export function useGetMeasurmentCategoryQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetMeasurmentCategoryQuery,
+    GetMeasurmentCategoryQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    GetMeasurmentCategoryQuery,
+    GetMeasurmentCategoryQueryVariables
+  >(GetMeasurmentCategoryDocument, options);
 }
-    `;
+export function useGetMeasurmentCategoryLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetMeasurmentCategoryQuery,
+    GetMeasurmentCategoryQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetMeasurmentCategoryQuery,
+    GetMeasurmentCategoryQueryVariables
+  >(GetMeasurmentCategoryDocument, options);
+}
+export type GetMeasurmentCategoryQueryHookResult = ReturnType<
+  typeof useGetMeasurmentCategoryQuery
+>;
+export type GetMeasurmentCategoryLazyQueryHookResult = ReturnType<
+  typeof useGetMeasurmentCategoryLazyQuery
+>;
+export type GetMeasurmentCategoryQueryResult = Apollo.QueryResult<
+  GetMeasurmentCategoryQuery,
+  GetMeasurmentCategoryQueryVariables
+>;
+export const SearchMeasurmentCategoryDocument = gql`
+  query SearchMeasurmentCategory($search: String, $values: [ID!]) {
+    options: measurementCategories(
+      filters: { search: $search, ids: $values }
+      pagination: { limit: 10 }
+    ) {
+      value: id
+      label: label
+    }
+  }
+`;
 
 /**
  * __useSearchMeasurmentCategoryQuery__
@@ -4799,24 +8397,48 @@ export const SearchMeasurmentCategoryDocument = gql`
  *   },
  * });
  */
-export function useSearchMeasurmentCategoryQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchMeasurmentCategoryQuery, SearchMeasurmentCategoryQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchMeasurmentCategoryQuery, SearchMeasurmentCategoryQueryVariables>(SearchMeasurmentCategoryDocument, options);
-      }
-export function useSearchMeasurmentCategoryLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchMeasurmentCategoryQuery, SearchMeasurmentCategoryQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchMeasurmentCategoryQuery, SearchMeasurmentCategoryQueryVariables>(SearchMeasurmentCategoryDocument, options);
-        }
-export type SearchMeasurmentCategoryQueryHookResult = ReturnType<typeof useSearchMeasurmentCategoryQuery>;
-export type SearchMeasurmentCategoryLazyQueryHookResult = ReturnType<typeof useSearchMeasurmentCategoryLazyQuery>;
-export type SearchMeasurmentCategoryQueryResult = Apollo.QueryResult<SearchMeasurmentCategoryQuery, SearchMeasurmentCategoryQueryVariables>;
-export const GetNodeDocument = gql`
-    query GetNode($id: ID!) {
-  node(id: $id) {
-    ...DetailNode
-  }
+export function useSearchMeasurmentCategoryQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    SearchMeasurmentCategoryQuery,
+    SearchMeasurmentCategoryQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    SearchMeasurmentCategoryQuery,
+    SearchMeasurmentCategoryQueryVariables
+  >(SearchMeasurmentCategoryDocument, options);
 }
-    ${DetailNodeFragmentDoc}`;
+export function useSearchMeasurmentCategoryLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    SearchMeasurmentCategoryQuery,
+    SearchMeasurmentCategoryQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    SearchMeasurmentCategoryQuery,
+    SearchMeasurmentCategoryQueryVariables
+  >(SearchMeasurmentCategoryDocument, options);
+}
+export type SearchMeasurmentCategoryQueryHookResult = ReturnType<
+  typeof useSearchMeasurmentCategoryQuery
+>;
+export type SearchMeasurmentCategoryLazyQueryHookResult = ReturnType<
+  typeof useSearchMeasurmentCategoryLazyQuery
+>;
+export type SearchMeasurmentCategoryQueryResult = Apollo.QueryResult<
+  SearchMeasurmentCategoryQuery,
+  SearchMeasurmentCategoryQueryVariables
+>;
+export const GetNodeDocument = gql`
+  query GetNode($id: ID!) {
+    node(id: $id) {
+      ...DetailNode
+    }
+  }
+  ${DetailNodeFragmentDoc}
+`;
 
 /**
  * __useGetNodeQuery__
@@ -4834,24 +8456,44 @@ export const GetNodeDocument = gql`
  *   },
  * });
  */
-export function useGetNodeQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetNodeQuery, GetNodeQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetNodeQuery, GetNodeQueryVariables>(GetNodeDocument, options);
-      }
-export function useGetNodeLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetNodeQuery, GetNodeQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetNodeQuery, GetNodeQueryVariables>(GetNodeDocument, options);
-        }
+export function useGetNodeQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetNodeQuery,
+    GetNodeQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<GetNodeQuery, GetNodeQueryVariables>(
+    GetNodeDocument,
+    options,
+  );
+}
+export function useGetNodeLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetNodeQuery,
+    GetNodeQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<GetNodeQuery, GetNodeQueryVariables>(
+    GetNodeDocument,
+    options,
+  );
+}
 export type GetNodeQueryHookResult = ReturnType<typeof useGetNodeQuery>;
 export type GetNodeLazyQueryHookResult = ReturnType<typeof useGetNodeLazyQuery>;
-export type GetNodeQueryResult = Apollo.QueryResult<GetNodeQuery, GetNodeQueryVariables>;
+export type GetNodeQueryResult = Apollo.QueryResult<
+  GetNodeQuery,
+  GetNodeQueryVariables
+>;
 export const GetNodeViewDocument = gql`
-    query GetNodeView($id: ID!) {
-  nodeView(id: $id) {
-    ...NodeView
+  query GetNodeView($id: ID!) {
+    nodeView(id: $id) {
+      ...NodeView
+    }
   }
-}
-    ${NodeViewFragmentDoc}`;
+  ${NodeViewFragmentDoc}
+`;
 
 /**
  * __useGetNodeViewQuery__
@@ -4869,28 +8511,49 @@ export const GetNodeViewDocument = gql`
  *   },
  * });
  */
-export function useGetNodeViewQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetNodeViewQuery, GetNodeViewQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetNodeViewQuery, GetNodeViewQueryVariables>(GetNodeViewDocument, options);
-      }
-export function useGetNodeViewLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetNodeViewQuery, GetNodeViewQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetNodeViewQuery, GetNodeViewQueryVariables>(GetNodeViewDocument, options);
-        }
-export type GetNodeViewQueryHookResult = ReturnType<typeof useGetNodeViewQuery>;
-export type GetNodeViewLazyQueryHookResult = ReturnType<typeof useGetNodeViewLazyQuery>;
-export type GetNodeViewQueryResult = Apollo.QueryResult<GetNodeViewQuery, GetNodeViewQueryVariables>;
-export const SearchNodeViewsDocument = gql`
-    query SearchNodeViews($search: String, $values: [ID!]) {
-  options: nodeViews(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: label
-  }
+export function useGetNodeViewQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetNodeViewQuery,
+    GetNodeViewQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<GetNodeViewQuery, GetNodeViewQueryVariables>(
+    GetNodeViewDocument,
+    options,
+  );
 }
-    `;
+export function useGetNodeViewLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetNodeViewQuery,
+    GetNodeViewQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetNodeViewQuery,
+    GetNodeViewQueryVariables
+  >(GetNodeViewDocument, options);
+}
+export type GetNodeViewQueryHookResult = ReturnType<typeof useGetNodeViewQuery>;
+export type GetNodeViewLazyQueryHookResult = ReturnType<
+  typeof useGetNodeViewLazyQuery
+>;
+export type GetNodeViewQueryResult = Apollo.QueryResult<
+  GetNodeViewQuery,
+  GetNodeViewQueryVariables
+>;
+export const SearchNodeViewsDocument = gql`
+  query SearchNodeViews($search: String, $values: [ID!]) {
+    options: nodeViews(
+      filters: { search: $search, ids: $values }
+      pagination: { limit: 10 }
+    ) {
+      value: id
+      label: label
+    }
+  }
+`;
 
 /**
  * __useSearchNodeViewsQuery__
@@ -4909,24 +8572,48 @@ export const SearchNodeViewsDocument = gql`
  *   },
  * });
  */
-export function useSearchNodeViewsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchNodeViewsQuery, SearchNodeViewsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchNodeViewsQuery, SearchNodeViewsQueryVariables>(SearchNodeViewsDocument, options);
-      }
-export function useSearchNodeViewsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchNodeViewsQuery, SearchNodeViewsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchNodeViewsQuery, SearchNodeViewsQueryVariables>(SearchNodeViewsDocument, options);
-        }
-export type SearchNodeViewsQueryHookResult = ReturnType<typeof useSearchNodeViewsQuery>;
-export type SearchNodeViewsLazyQueryHookResult = ReturnType<typeof useSearchNodeViewsLazyQuery>;
-export type SearchNodeViewsQueryResult = Apollo.QueryResult<SearchNodeViewsQuery, SearchNodeViewsQueryVariables>;
-export const GetOntologyDocument = gql`
-    query GetOntology($id: ID!) {
-  ontology(id: $id) {
-    ...Ontology
-  }
+export function useSearchNodeViewsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    SearchNodeViewsQuery,
+    SearchNodeViewsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    SearchNodeViewsQuery,
+    SearchNodeViewsQueryVariables
+  >(SearchNodeViewsDocument, options);
 }
-    ${OntologyFragmentDoc}`;
+export function useSearchNodeViewsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    SearchNodeViewsQuery,
+    SearchNodeViewsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    SearchNodeViewsQuery,
+    SearchNodeViewsQueryVariables
+  >(SearchNodeViewsDocument, options);
+}
+export type SearchNodeViewsQueryHookResult = ReturnType<
+  typeof useSearchNodeViewsQuery
+>;
+export type SearchNodeViewsLazyQueryHookResult = ReturnType<
+  typeof useSearchNodeViewsLazyQuery
+>;
+export type SearchNodeViewsQueryResult = Apollo.QueryResult<
+  SearchNodeViewsQuery,
+  SearchNodeViewsQueryVariables
+>;
+export const GetOntologyDocument = gql`
+  query GetOntology($id: ID!) {
+    ontology(id: $id) {
+      ...Ontology
+    }
+  }
+  ${OntologyFragmentDoc}
+`;
 
 /**
  * __useGetOntologyQuery__
@@ -4944,24 +8631,46 @@ export const GetOntologyDocument = gql`
  *   },
  * });
  */
-export function useGetOntologyQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetOntologyQuery, GetOntologyQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetOntologyQuery, GetOntologyQueryVariables>(GetOntologyDocument, options);
-      }
-export function useGetOntologyLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetOntologyQuery, GetOntologyQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetOntologyQuery, GetOntologyQueryVariables>(GetOntologyDocument, options);
-        }
-export type GetOntologyQueryHookResult = ReturnType<typeof useGetOntologyQuery>;
-export type GetOntologyLazyQueryHookResult = ReturnType<typeof useGetOntologyLazyQuery>;
-export type GetOntologyQueryResult = Apollo.QueryResult<GetOntologyQuery, GetOntologyQueryVariables>;
-export const ListOntologiesDocument = gql`
-    query ListOntologies {
-  ontologies {
-    ...ListOntology
-  }
+export function useGetOntologyQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetOntologyQuery,
+    GetOntologyQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<GetOntologyQuery, GetOntologyQueryVariables>(
+    GetOntologyDocument,
+    options,
+  );
 }
-    ${ListOntologyFragmentDoc}`;
+export function useGetOntologyLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetOntologyQuery,
+    GetOntologyQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetOntologyQuery,
+    GetOntologyQueryVariables
+  >(GetOntologyDocument, options);
+}
+export type GetOntologyQueryHookResult = ReturnType<typeof useGetOntologyQuery>;
+export type GetOntologyLazyQueryHookResult = ReturnType<
+  typeof useGetOntologyLazyQuery
+>;
+export type GetOntologyQueryResult = Apollo.QueryResult<
+  GetOntologyQuery,
+  GetOntologyQueryVariables
+>;
+export const ListOntologiesDocument = gql`
+  query ListOntologies {
+    ontologies {
+      ...ListOntology
+    }
+  }
+  ${ListOntologyFragmentDoc}
+`;
 
 /**
  * __useListOntologiesQuery__
@@ -4978,28 +8687,51 @@ export const ListOntologiesDocument = gql`
  *   },
  * });
  */
-export function useListOntologiesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListOntologiesQuery, ListOntologiesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListOntologiesQuery, ListOntologiesQueryVariables>(ListOntologiesDocument, options);
-      }
-export function useListOntologiesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListOntologiesQuery, ListOntologiesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListOntologiesQuery, ListOntologiesQueryVariables>(ListOntologiesDocument, options);
-        }
-export type ListOntologiesQueryHookResult = ReturnType<typeof useListOntologiesQuery>;
-export type ListOntologiesLazyQueryHookResult = ReturnType<typeof useListOntologiesLazyQuery>;
-export type ListOntologiesQueryResult = Apollo.QueryResult<ListOntologiesQuery, ListOntologiesQueryVariables>;
-export const SearchOntologiesDocument = gql`
-    query SearchOntologies($search: String, $values: [ID!]) {
-  options: ontologies(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: name
-  }
+export function useListOntologiesQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    ListOntologiesQuery,
+    ListOntologiesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    ListOntologiesQuery,
+    ListOntologiesQueryVariables
+  >(ListOntologiesDocument, options);
 }
-    `;
+export function useListOntologiesLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    ListOntologiesQuery,
+    ListOntologiesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    ListOntologiesQuery,
+    ListOntologiesQueryVariables
+  >(ListOntologiesDocument, options);
+}
+export type ListOntologiesQueryHookResult = ReturnType<
+  typeof useListOntologiesQuery
+>;
+export type ListOntologiesLazyQueryHookResult = ReturnType<
+  typeof useListOntologiesLazyQuery
+>;
+export type ListOntologiesQueryResult = Apollo.QueryResult<
+  ListOntologiesQuery,
+  ListOntologiesQueryVariables
+>;
+export const SearchOntologiesDocument = gql`
+  query SearchOntologies($search: String, $values: [ID!]) {
+    options: ontologies(
+      filters: { search: $search, ids: $values }
+      pagination: { limit: 10 }
+    ) {
+      value: id
+      label: name
+    }
+  }
+`;
 
 /**
  * __useSearchOntologiesQuery__
@@ -5018,24 +8750,48 @@ export const SearchOntologiesDocument = gql`
  *   },
  * });
  */
-export function useSearchOntologiesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchOntologiesQuery, SearchOntologiesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchOntologiesQuery, SearchOntologiesQueryVariables>(SearchOntologiesDocument, options);
-      }
-export function useSearchOntologiesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchOntologiesQuery, SearchOntologiesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchOntologiesQuery, SearchOntologiesQueryVariables>(SearchOntologiesDocument, options);
-        }
-export type SearchOntologiesQueryHookResult = ReturnType<typeof useSearchOntologiesQuery>;
-export type SearchOntologiesLazyQueryHookResult = ReturnType<typeof useSearchOntologiesLazyQuery>;
-export type SearchOntologiesQueryResult = Apollo.QueryResult<SearchOntologiesQuery, SearchOntologiesQueryVariables>;
-export const GetPlotViewDocument = gql`
-    query GetPlotView($id: ID!) {
-  plotView(id: $id) {
-    ...PlotView
-  }
+export function useSearchOntologiesQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    SearchOntologiesQuery,
+    SearchOntologiesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    SearchOntologiesQuery,
+    SearchOntologiesQueryVariables
+  >(SearchOntologiesDocument, options);
 }
-    ${PlotViewFragmentDoc}`;
+export function useSearchOntologiesLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    SearchOntologiesQuery,
+    SearchOntologiesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    SearchOntologiesQuery,
+    SearchOntologiesQueryVariables
+  >(SearchOntologiesDocument, options);
+}
+export type SearchOntologiesQueryHookResult = ReturnType<
+  typeof useSearchOntologiesQuery
+>;
+export type SearchOntologiesLazyQueryHookResult = ReturnType<
+  typeof useSearchOntologiesLazyQuery
+>;
+export type SearchOntologiesQueryResult = Apollo.QueryResult<
+  SearchOntologiesQuery,
+  SearchOntologiesQueryVariables
+>;
+export const GetPlotViewDocument = gql`
+  query GetPlotView($id: ID!) {
+    plotView(id: $id) {
+      ...PlotView
+    }
+  }
+  ${PlotViewFragmentDoc}
+`;
 
 /**
  * __useGetPlotViewQuery__
@@ -5053,24 +8809,46 @@ export const GetPlotViewDocument = gql`
  *   },
  * });
  */
-export function useGetPlotViewQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetPlotViewQuery, GetPlotViewQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetPlotViewQuery, GetPlotViewQueryVariables>(GetPlotViewDocument, options);
-      }
-export function useGetPlotViewLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetPlotViewQuery, GetPlotViewQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetPlotViewQuery, GetPlotViewQueryVariables>(GetPlotViewDocument, options);
-        }
-export type GetPlotViewQueryHookResult = ReturnType<typeof useGetPlotViewQuery>;
-export type GetPlotViewLazyQueryHookResult = ReturnType<typeof useGetPlotViewLazyQuery>;
-export type GetPlotViewQueryResult = Apollo.QueryResult<GetPlotViewQuery, GetPlotViewQueryVariables>;
-export const LatestPlotViewsDocument = gql`
-    query LatestPlotViews {
-  plotViews(pagination: {limit: 10}) {
-    ...CarouselPlotView
-  }
+export function useGetPlotViewQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetPlotViewQuery,
+    GetPlotViewQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<GetPlotViewQuery, GetPlotViewQueryVariables>(
+    GetPlotViewDocument,
+    options,
+  );
 }
-    ${CarouselPlotViewFragmentDoc}`;
+export function useGetPlotViewLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetPlotViewQuery,
+    GetPlotViewQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetPlotViewQuery,
+    GetPlotViewQueryVariables
+  >(GetPlotViewDocument, options);
+}
+export type GetPlotViewQueryHookResult = ReturnType<typeof useGetPlotViewQuery>;
+export type GetPlotViewLazyQueryHookResult = ReturnType<
+  typeof useGetPlotViewLazyQuery
+>;
+export type GetPlotViewQueryResult = Apollo.QueryResult<
+  GetPlotViewQuery,
+  GetPlotViewQueryVariables
+>;
+export const LatestPlotViewsDocument = gql`
+  query LatestPlotViews {
+    plotViews(pagination: { limit: 10 }) {
+      ...CarouselPlotView
+    }
+  }
+  ${CarouselPlotViewFragmentDoc}
+`;
 
 /**
  * __useLatestPlotViewsQuery__
@@ -5087,24 +8865,48 @@ export const LatestPlotViewsDocument = gql`
  *   },
  * });
  */
-export function useLatestPlotViewsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<LatestPlotViewsQuery, LatestPlotViewsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<LatestPlotViewsQuery, LatestPlotViewsQueryVariables>(LatestPlotViewsDocument, options);
-      }
-export function useLatestPlotViewsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<LatestPlotViewsQuery, LatestPlotViewsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<LatestPlotViewsQuery, LatestPlotViewsQueryVariables>(LatestPlotViewsDocument, options);
-        }
-export type LatestPlotViewsQueryHookResult = ReturnType<typeof useLatestPlotViewsQuery>;
-export type LatestPlotViewsLazyQueryHookResult = ReturnType<typeof useLatestPlotViewsLazyQuery>;
-export type LatestPlotViewsQueryResult = Apollo.QueryResult<LatestPlotViewsQuery, LatestPlotViewsQueryVariables>;
-export const ListPlotViewsDocument = gql`
-    query ListPlotViews {
-  plotViews {
-    ...ListPlotView
-  }
+export function useLatestPlotViewsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    LatestPlotViewsQuery,
+    LatestPlotViewsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    LatestPlotViewsQuery,
+    LatestPlotViewsQueryVariables
+  >(LatestPlotViewsDocument, options);
 }
-    ${ListPlotViewFragmentDoc}`;
+export function useLatestPlotViewsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    LatestPlotViewsQuery,
+    LatestPlotViewsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    LatestPlotViewsQuery,
+    LatestPlotViewsQueryVariables
+  >(LatestPlotViewsDocument, options);
+}
+export type LatestPlotViewsQueryHookResult = ReturnType<
+  typeof useLatestPlotViewsQuery
+>;
+export type LatestPlotViewsLazyQueryHookResult = ReturnType<
+  typeof useLatestPlotViewsLazyQuery
+>;
+export type LatestPlotViewsQueryResult = Apollo.QueryResult<
+  LatestPlotViewsQuery,
+  LatestPlotViewsQueryVariables
+>;
+export const ListPlotViewsDocument = gql`
+  query ListPlotViews {
+    plotViews {
+      ...ListPlotView
+    }
+  }
+  ${ListPlotViewFragmentDoc}
+`;
 
 /**
  * __useListPlotViewsQuery__
@@ -5121,28 +8923,51 @@ export const ListPlotViewsDocument = gql`
  *   },
  * });
  */
-export function useListPlotViewsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListPlotViewsQuery, ListPlotViewsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListPlotViewsQuery, ListPlotViewsQueryVariables>(ListPlotViewsDocument, options);
-      }
-export function useListPlotViewsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListPlotViewsQuery, ListPlotViewsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListPlotViewsQuery, ListPlotViewsQueryVariables>(ListPlotViewsDocument, options);
-        }
-export type ListPlotViewsQueryHookResult = ReturnType<typeof useListPlotViewsQuery>;
-export type ListPlotViewsLazyQueryHookResult = ReturnType<typeof useListPlotViewsLazyQuery>;
-export type ListPlotViewsQueryResult = Apollo.QueryResult<ListPlotViewsQuery, ListPlotViewsQueryVariables>;
-export const SearchPlotViewsDocument = gql`
-    query SearchPlotViews($search: String, $values: [ID!]) {
-  options: plotViews(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: name
-  }
+export function useListPlotViewsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    ListPlotViewsQuery,
+    ListPlotViewsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    ListPlotViewsQuery,
+    ListPlotViewsQueryVariables
+  >(ListPlotViewsDocument, options);
 }
-    `;
+export function useListPlotViewsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    ListPlotViewsQuery,
+    ListPlotViewsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    ListPlotViewsQuery,
+    ListPlotViewsQueryVariables
+  >(ListPlotViewsDocument, options);
+}
+export type ListPlotViewsQueryHookResult = ReturnType<
+  typeof useListPlotViewsQuery
+>;
+export type ListPlotViewsLazyQueryHookResult = ReturnType<
+  typeof useListPlotViewsLazyQuery
+>;
+export type ListPlotViewsQueryResult = Apollo.QueryResult<
+  ListPlotViewsQuery,
+  ListPlotViewsQueryVariables
+>;
+export const SearchPlotViewsDocument = gql`
+  query SearchPlotViews($search: String, $values: [ID!]) {
+    options: plotViews(
+      filters: { search: $search, ids: $values }
+      pagination: { limit: 10 }
+    ) {
+      value: id
+      label: name
+    }
+  }
+`;
 
 /**
  * __useSearchPlotViewsQuery__
@@ -5161,24 +8986,48 @@ export const SearchPlotViewsDocument = gql`
  *   },
  * });
  */
-export function useSearchPlotViewsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchPlotViewsQuery, SearchPlotViewsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchPlotViewsQuery, SearchPlotViewsQueryVariables>(SearchPlotViewsDocument, options);
-      }
-export function useSearchPlotViewsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchPlotViewsQuery, SearchPlotViewsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchPlotViewsQuery, SearchPlotViewsQueryVariables>(SearchPlotViewsDocument, options);
-        }
-export type SearchPlotViewsQueryHookResult = ReturnType<typeof useSearchPlotViewsQuery>;
-export type SearchPlotViewsLazyQueryHookResult = ReturnType<typeof useSearchPlotViewsLazyQuery>;
-export type SearchPlotViewsQueryResult = Apollo.QueryResult<SearchPlotViewsQuery, SearchPlotViewsQueryVariables>;
-export const GetProtocolStepTemplateDocument = gql`
-    query GetProtocolStepTemplate($id: ID!) {
-  protocolStepTemplate(id: $id) {
-    ...ProtocolStepTemplate
-  }
+export function useSearchPlotViewsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    SearchPlotViewsQuery,
+    SearchPlotViewsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    SearchPlotViewsQuery,
+    SearchPlotViewsQueryVariables
+  >(SearchPlotViewsDocument, options);
 }
-    ${ProtocolStepTemplateFragmentDoc}`;
+export function useSearchPlotViewsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    SearchPlotViewsQuery,
+    SearchPlotViewsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    SearchPlotViewsQuery,
+    SearchPlotViewsQueryVariables
+  >(SearchPlotViewsDocument, options);
+}
+export type SearchPlotViewsQueryHookResult = ReturnType<
+  typeof useSearchPlotViewsQuery
+>;
+export type SearchPlotViewsLazyQueryHookResult = ReturnType<
+  typeof useSearchPlotViewsLazyQuery
+>;
+export type SearchPlotViewsQueryResult = Apollo.QueryResult<
+  SearchPlotViewsQuery,
+  SearchPlotViewsQueryVariables
+>;
+export const GetProtocolStepTemplateDocument = gql`
+  query GetProtocolStepTemplate($id: ID!) {
+    protocolStepTemplate(id: $id) {
+      ...ProtocolStepTemplate
+    }
+  }
+  ${ProtocolStepTemplateFragmentDoc}
+`;
 
 /**
  * __useGetProtocolStepTemplateQuery__
@@ -5196,24 +9045,51 @@ export const GetProtocolStepTemplateDocument = gql`
  *   },
  * });
  */
-export function useGetProtocolStepTemplateQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetProtocolStepTemplateQuery, GetProtocolStepTemplateQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetProtocolStepTemplateQuery, GetProtocolStepTemplateQueryVariables>(GetProtocolStepTemplateDocument, options);
-      }
-export function useGetProtocolStepTemplateLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetProtocolStepTemplateQuery, GetProtocolStepTemplateQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetProtocolStepTemplateQuery, GetProtocolStepTemplateQueryVariables>(GetProtocolStepTemplateDocument, options);
-        }
-export type GetProtocolStepTemplateQueryHookResult = ReturnType<typeof useGetProtocolStepTemplateQuery>;
-export type GetProtocolStepTemplateLazyQueryHookResult = ReturnType<typeof useGetProtocolStepTemplateLazyQuery>;
-export type GetProtocolStepTemplateQueryResult = Apollo.QueryResult<GetProtocolStepTemplateQuery, GetProtocolStepTemplateQueryVariables>;
-export const ListProtocolStepTemplatesDocument = gql`
-    query ListProtocolStepTemplates($filters: ProtocolStepTemplateFilter, $pagination: OffsetPaginationInput) {
-  protocolStepTemplates(filters: $filters, pagination: $pagination) {
-    ...ListProtocolStepTemplate
-  }
+export function useGetProtocolStepTemplateQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetProtocolStepTemplateQuery,
+    GetProtocolStepTemplateQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    GetProtocolStepTemplateQuery,
+    GetProtocolStepTemplateQueryVariables
+  >(GetProtocolStepTemplateDocument, options);
 }
-    ${ListProtocolStepTemplateFragmentDoc}`;
+export function useGetProtocolStepTemplateLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetProtocolStepTemplateQuery,
+    GetProtocolStepTemplateQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetProtocolStepTemplateQuery,
+    GetProtocolStepTemplateQueryVariables
+  >(GetProtocolStepTemplateDocument, options);
+}
+export type GetProtocolStepTemplateQueryHookResult = ReturnType<
+  typeof useGetProtocolStepTemplateQuery
+>;
+export type GetProtocolStepTemplateLazyQueryHookResult = ReturnType<
+  typeof useGetProtocolStepTemplateLazyQuery
+>;
+export type GetProtocolStepTemplateQueryResult = Apollo.QueryResult<
+  GetProtocolStepTemplateQuery,
+  GetProtocolStepTemplateQueryVariables
+>;
+export const ListProtocolStepTemplatesDocument = gql`
+  query ListProtocolStepTemplates(
+    $filters: ProtocolStepTemplateFilter
+    $pagination: OffsetPaginationInput
+  ) {
+    protocolStepTemplates(filters: $filters, pagination: $pagination) {
+      ...ListProtocolStepTemplate
+    }
+  }
+  ${ListProtocolStepTemplateFragmentDoc}
+`;
 
 /**
  * __useListProtocolStepTemplatesQuery__
@@ -5232,28 +9108,51 @@ export const ListProtocolStepTemplatesDocument = gql`
  *   },
  * });
  */
-export function useListProtocolStepTemplatesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListProtocolStepTemplatesQuery, ListProtocolStepTemplatesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListProtocolStepTemplatesQuery, ListProtocolStepTemplatesQueryVariables>(ListProtocolStepTemplatesDocument, options);
-      }
-export function useListProtocolStepTemplatesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListProtocolStepTemplatesQuery, ListProtocolStepTemplatesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListProtocolStepTemplatesQuery, ListProtocolStepTemplatesQueryVariables>(ListProtocolStepTemplatesDocument, options);
-        }
-export type ListProtocolStepTemplatesQueryHookResult = ReturnType<typeof useListProtocolStepTemplatesQuery>;
-export type ListProtocolStepTemplatesLazyQueryHookResult = ReturnType<typeof useListProtocolStepTemplatesLazyQuery>;
-export type ListProtocolStepTemplatesQueryResult = Apollo.QueryResult<ListProtocolStepTemplatesQuery, ListProtocolStepTemplatesQueryVariables>;
-export const SearchProtocolStepTemplatesDocument = gql`
-    query SearchProtocolStepTemplates($search: String, $values: [ID!]) {
-  options: protocolStepTemplates(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: name
-  }
+export function useListProtocolStepTemplatesQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    ListProtocolStepTemplatesQuery,
+    ListProtocolStepTemplatesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    ListProtocolStepTemplatesQuery,
+    ListProtocolStepTemplatesQueryVariables
+  >(ListProtocolStepTemplatesDocument, options);
 }
-    `;
+export function useListProtocolStepTemplatesLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    ListProtocolStepTemplatesQuery,
+    ListProtocolStepTemplatesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    ListProtocolStepTemplatesQuery,
+    ListProtocolStepTemplatesQueryVariables
+  >(ListProtocolStepTemplatesDocument, options);
+}
+export type ListProtocolStepTemplatesQueryHookResult = ReturnType<
+  typeof useListProtocolStepTemplatesQuery
+>;
+export type ListProtocolStepTemplatesLazyQueryHookResult = ReturnType<
+  typeof useListProtocolStepTemplatesLazyQuery
+>;
+export type ListProtocolStepTemplatesQueryResult = Apollo.QueryResult<
+  ListProtocolStepTemplatesQuery,
+  ListProtocolStepTemplatesQueryVariables
+>;
+export const SearchProtocolStepTemplatesDocument = gql`
+  query SearchProtocolStepTemplates($search: String, $values: [ID!]) {
+    options: protocolStepTemplates(
+      filters: { search: $search, ids: $values }
+      pagination: { limit: 10 }
+    ) {
+      value: id
+      label: name
+    }
+  }
+`;
 
 /**
  * __useSearchProtocolStepTemplatesQuery__
@@ -5272,24 +9171,48 @@ export const SearchProtocolStepTemplatesDocument = gql`
  *   },
  * });
  */
-export function useSearchProtocolStepTemplatesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchProtocolStepTemplatesQuery, SearchProtocolStepTemplatesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchProtocolStepTemplatesQuery, SearchProtocolStepTemplatesQueryVariables>(SearchProtocolStepTemplatesDocument, options);
-      }
-export function useSearchProtocolStepTemplatesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchProtocolStepTemplatesQuery, SearchProtocolStepTemplatesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchProtocolStepTemplatesQuery, SearchProtocolStepTemplatesQueryVariables>(SearchProtocolStepTemplatesDocument, options);
-        }
-export type SearchProtocolStepTemplatesQueryHookResult = ReturnType<typeof useSearchProtocolStepTemplatesQuery>;
-export type SearchProtocolStepTemplatesLazyQueryHookResult = ReturnType<typeof useSearchProtocolStepTemplatesLazyQuery>;
-export type SearchProtocolStepTemplatesQueryResult = Apollo.QueryResult<SearchProtocolStepTemplatesQuery, SearchProtocolStepTemplatesQueryVariables>;
-export const GetProtocolStepDocument = gql`
-    query GetProtocolStep($id: ID!) {
-  protocolStep(id: $id) {
-    ...ProtocolStep
-  }
+export function useSearchProtocolStepTemplatesQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    SearchProtocolStepTemplatesQuery,
+    SearchProtocolStepTemplatesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    SearchProtocolStepTemplatesQuery,
+    SearchProtocolStepTemplatesQueryVariables
+  >(SearchProtocolStepTemplatesDocument, options);
 }
-    ${ProtocolStepFragmentDoc}`;
+export function useSearchProtocolStepTemplatesLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    SearchProtocolStepTemplatesQuery,
+    SearchProtocolStepTemplatesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    SearchProtocolStepTemplatesQuery,
+    SearchProtocolStepTemplatesQueryVariables
+  >(SearchProtocolStepTemplatesDocument, options);
+}
+export type SearchProtocolStepTemplatesQueryHookResult = ReturnType<
+  typeof useSearchProtocolStepTemplatesQuery
+>;
+export type SearchProtocolStepTemplatesLazyQueryHookResult = ReturnType<
+  typeof useSearchProtocolStepTemplatesLazyQuery
+>;
+export type SearchProtocolStepTemplatesQueryResult = Apollo.QueryResult<
+  SearchProtocolStepTemplatesQuery,
+  SearchProtocolStepTemplatesQueryVariables
+>;
+export const GetProtocolStepDocument = gql`
+  query GetProtocolStep($id: ID!) {
+    protocolStep(id: $id) {
+      ...ProtocolStep
+    }
+  }
+  ${ProtocolStepFragmentDoc}
+`;
 
 /**
  * __useGetProtocolStepQuery__
@@ -5307,24 +9230,51 @@ export const GetProtocolStepDocument = gql`
  *   },
  * });
  */
-export function useGetProtocolStepQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetProtocolStepQuery, GetProtocolStepQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetProtocolStepQuery, GetProtocolStepQueryVariables>(GetProtocolStepDocument, options);
-      }
-export function useGetProtocolStepLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetProtocolStepQuery, GetProtocolStepQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetProtocolStepQuery, GetProtocolStepQueryVariables>(GetProtocolStepDocument, options);
-        }
-export type GetProtocolStepQueryHookResult = ReturnType<typeof useGetProtocolStepQuery>;
-export type GetProtocolStepLazyQueryHookResult = ReturnType<typeof useGetProtocolStepLazyQuery>;
-export type GetProtocolStepQueryResult = Apollo.QueryResult<GetProtocolStepQuery, GetProtocolStepQueryVariables>;
-export const ListProtocolStepsDocument = gql`
-    query ListProtocolSteps($filters: ProtocolStepFilter, $pagination: OffsetPaginationInput) {
-  protocolSteps(filters: $filters, pagination: $pagination) {
-    ...ListProtocolStep
-  }
+export function useGetProtocolStepQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetProtocolStepQuery,
+    GetProtocolStepQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    GetProtocolStepQuery,
+    GetProtocolStepQueryVariables
+  >(GetProtocolStepDocument, options);
 }
-    ${ListProtocolStepFragmentDoc}`;
+export function useGetProtocolStepLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetProtocolStepQuery,
+    GetProtocolStepQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetProtocolStepQuery,
+    GetProtocolStepQueryVariables
+  >(GetProtocolStepDocument, options);
+}
+export type GetProtocolStepQueryHookResult = ReturnType<
+  typeof useGetProtocolStepQuery
+>;
+export type GetProtocolStepLazyQueryHookResult = ReturnType<
+  typeof useGetProtocolStepLazyQuery
+>;
+export type GetProtocolStepQueryResult = Apollo.QueryResult<
+  GetProtocolStepQuery,
+  GetProtocolStepQueryVariables
+>;
+export const ListProtocolStepsDocument = gql`
+  query ListProtocolSteps(
+    $filters: ProtocolStepFilter
+    $pagination: OffsetPaginationInput
+  ) {
+    protocolSteps(filters: $filters, pagination: $pagination) {
+      ...ListProtocolStep
+    }
+  }
+  ${ListProtocolStepFragmentDoc}
+`;
 
 /**
  * __useListProtocolStepsQuery__
@@ -5343,28 +9293,51 @@ export const ListProtocolStepsDocument = gql`
  *   },
  * });
  */
-export function useListProtocolStepsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListProtocolStepsQuery, ListProtocolStepsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListProtocolStepsQuery, ListProtocolStepsQueryVariables>(ListProtocolStepsDocument, options);
-      }
-export function useListProtocolStepsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListProtocolStepsQuery, ListProtocolStepsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListProtocolStepsQuery, ListProtocolStepsQueryVariables>(ListProtocolStepsDocument, options);
-        }
-export type ListProtocolStepsQueryHookResult = ReturnType<typeof useListProtocolStepsQuery>;
-export type ListProtocolStepsLazyQueryHookResult = ReturnType<typeof useListProtocolStepsLazyQuery>;
-export type ListProtocolStepsQueryResult = Apollo.QueryResult<ListProtocolStepsQuery, ListProtocolStepsQueryVariables>;
-export const SearchProtocolStepsDocument = gql`
-    query SearchProtocolSteps($search: String, $values: [ID!]) {
-  options: protocolSteps(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: name
-  }
+export function useListProtocolStepsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    ListProtocolStepsQuery,
+    ListProtocolStepsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    ListProtocolStepsQuery,
+    ListProtocolStepsQueryVariables
+  >(ListProtocolStepsDocument, options);
 }
-    `;
+export function useListProtocolStepsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    ListProtocolStepsQuery,
+    ListProtocolStepsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    ListProtocolStepsQuery,
+    ListProtocolStepsQueryVariables
+  >(ListProtocolStepsDocument, options);
+}
+export type ListProtocolStepsQueryHookResult = ReturnType<
+  typeof useListProtocolStepsQuery
+>;
+export type ListProtocolStepsLazyQueryHookResult = ReturnType<
+  typeof useListProtocolStepsLazyQuery
+>;
+export type ListProtocolStepsQueryResult = Apollo.QueryResult<
+  ListProtocolStepsQuery,
+  ListProtocolStepsQueryVariables
+>;
+export const SearchProtocolStepsDocument = gql`
+  query SearchProtocolSteps($search: String, $values: [ID!]) {
+    options: protocolSteps(
+      filters: { search: $search, ids: $values }
+      pagination: { limit: 10 }
+    ) {
+      value: id
+      label: name
+    }
+  }
+`;
 
 /**
  * __useSearchProtocolStepsQuery__
@@ -5383,24 +9356,48 @@ export const SearchProtocolStepsDocument = gql`
  *   },
  * });
  */
-export function useSearchProtocolStepsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchProtocolStepsQuery, SearchProtocolStepsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchProtocolStepsQuery, SearchProtocolStepsQueryVariables>(SearchProtocolStepsDocument, options);
-      }
-export function useSearchProtocolStepsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchProtocolStepsQuery, SearchProtocolStepsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchProtocolStepsQuery, SearchProtocolStepsQueryVariables>(SearchProtocolStepsDocument, options);
-        }
-export type SearchProtocolStepsQueryHookResult = ReturnType<typeof useSearchProtocolStepsQuery>;
-export type SearchProtocolStepsLazyQueryHookResult = ReturnType<typeof useSearchProtocolStepsLazyQuery>;
-export type SearchProtocolStepsQueryResult = Apollo.QueryResult<SearchProtocolStepsQuery, SearchProtocolStepsQueryVariables>;
-export const GetProtocolDocument = gql`
-    query GetProtocol($id: ID!) {
-  protocol(id: $id) {
-    ...Protocol
-  }
+export function useSearchProtocolStepsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    SearchProtocolStepsQuery,
+    SearchProtocolStepsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    SearchProtocolStepsQuery,
+    SearchProtocolStepsQueryVariables
+  >(SearchProtocolStepsDocument, options);
 }
-    ${ProtocolFragmentDoc}`;
+export function useSearchProtocolStepsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    SearchProtocolStepsQuery,
+    SearchProtocolStepsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    SearchProtocolStepsQuery,
+    SearchProtocolStepsQueryVariables
+  >(SearchProtocolStepsDocument, options);
+}
+export type SearchProtocolStepsQueryHookResult = ReturnType<
+  typeof useSearchProtocolStepsQuery
+>;
+export type SearchProtocolStepsLazyQueryHookResult = ReturnType<
+  typeof useSearchProtocolStepsLazyQuery
+>;
+export type SearchProtocolStepsQueryResult = Apollo.QueryResult<
+  SearchProtocolStepsQuery,
+  SearchProtocolStepsQueryVariables
+>;
+export const GetProtocolDocument = gql`
+  query GetProtocol($id: ID!) {
+    protocol(id: $id) {
+      ...Protocol
+    }
+  }
+  ${ProtocolFragmentDoc}
+`;
 
 /**
  * __useGetProtocolQuery__
@@ -5418,24 +9415,49 @@ export const GetProtocolDocument = gql`
  *   },
  * });
  */
-export function useGetProtocolQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetProtocolQuery, GetProtocolQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetProtocolQuery, GetProtocolQueryVariables>(GetProtocolDocument, options);
-      }
-export function useGetProtocolLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetProtocolQuery, GetProtocolQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetProtocolQuery, GetProtocolQueryVariables>(GetProtocolDocument, options);
-        }
-export type GetProtocolQueryHookResult = ReturnType<typeof useGetProtocolQuery>;
-export type GetProtocolLazyQueryHookResult = ReturnType<typeof useGetProtocolLazyQuery>;
-export type GetProtocolQueryResult = Apollo.QueryResult<GetProtocolQuery, GetProtocolQueryVariables>;
-export const ListProtocolsDocument = gql`
-    query ListProtocols($filters: ProtocolFilter, $pagination: OffsetPaginationInput) {
-  protocols(filters: $filters, pagination: $pagination) {
-    ...ListProtocol
-  }
+export function useGetProtocolQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetProtocolQuery,
+    GetProtocolQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<GetProtocolQuery, GetProtocolQueryVariables>(
+    GetProtocolDocument,
+    options,
+  );
 }
-    ${ListProtocolFragmentDoc}`;
+export function useGetProtocolLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetProtocolQuery,
+    GetProtocolQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetProtocolQuery,
+    GetProtocolQueryVariables
+  >(GetProtocolDocument, options);
+}
+export type GetProtocolQueryHookResult = ReturnType<typeof useGetProtocolQuery>;
+export type GetProtocolLazyQueryHookResult = ReturnType<
+  typeof useGetProtocolLazyQuery
+>;
+export type GetProtocolQueryResult = Apollo.QueryResult<
+  GetProtocolQuery,
+  GetProtocolQueryVariables
+>;
+export const ListProtocolsDocument = gql`
+  query ListProtocols(
+    $filters: ProtocolFilter
+    $pagination: OffsetPaginationInput
+  ) {
+    protocols(filters: $filters, pagination: $pagination) {
+      ...ListProtocol
+    }
+  }
+  ${ListProtocolFragmentDoc}
+`;
 
 /**
  * __useListProtocolsQuery__
@@ -5454,24 +9476,48 @@ export const ListProtocolsDocument = gql`
  *   },
  * });
  */
-export function useListProtocolsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListProtocolsQuery, ListProtocolsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListProtocolsQuery, ListProtocolsQueryVariables>(ListProtocolsDocument, options);
-      }
-export function useListProtocolsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListProtocolsQuery, ListProtocolsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListProtocolsQuery, ListProtocolsQueryVariables>(ListProtocolsDocument, options);
-        }
-export type ListProtocolsQueryHookResult = ReturnType<typeof useListProtocolsQuery>;
-export type ListProtocolsLazyQueryHookResult = ReturnType<typeof useListProtocolsLazyQuery>;
-export type ListProtocolsQueryResult = Apollo.QueryResult<ListProtocolsQuery, ListProtocolsQueryVariables>;
-export const GetReagentDocument = gql`
-    query GetReagent($id: ID!) {
-  reagent(id: $id) {
-    ...Reagent
-  }
+export function useListProtocolsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    ListProtocolsQuery,
+    ListProtocolsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    ListProtocolsQuery,
+    ListProtocolsQueryVariables
+  >(ListProtocolsDocument, options);
 }
-    ${ReagentFragmentDoc}`;
+export function useListProtocolsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    ListProtocolsQuery,
+    ListProtocolsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    ListProtocolsQuery,
+    ListProtocolsQueryVariables
+  >(ListProtocolsDocument, options);
+}
+export type ListProtocolsQueryHookResult = ReturnType<
+  typeof useListProtocolsQuery
+>;
+export type ListProtocolsLazyQueryHookResult = ReturnType<
+  typeof useListProtocolsLazyQuery
+>;
+export type ListProtocolsQueryResult = Apollo.QueryResult<
+  ListProtocolsQuery,
+  ListProtocolsQueryVariables
+>;
+export const GetReagentDocument = gql`
+  query GetReagent($id: ID!) {
+    reagent(id: $id) {
+      ...Reagent
+    }
+  }
+  ${ReagentFragmentDoc}
+`;
 
 /**
  * __useGetReagentQuery__
@@ -5489,24 +9535,49 @@ export const GetReagentDocument = gql`
  *   },
  * });
  */
-export function useGetReagentQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetReagentQuery, GetReagentQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetReagentQuery, GetReagentQueryVariables>(GetReagentDocument, options);
-      }
-export function useGetReagentLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetReagentQuery, GetReagentQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetReagentQuery, GetReagentQueryVariables>(GetReagentDocument, options);
-        }
-export type GetReagentQueryHookResult = ReturnType<typeof useGetReagentQuery>;
-export type GetReagentLazyQueryHookResult = ReturnType<typeof useGetReagentLazyQuery>;
-export type GetReagentQueryResult = Apollo.QueryResult<GetReagentQuery, GetReagentQueryVariables>;
-export const ListReagentsDocument = gql`
-    query ListReagents($filters: ReagentFilter, $pagination: OffsetPaginationInput) {
-  reagents(filters: $filters, pagination: $pagination) {
-    ...ListReagent
-  }
+export function useGetReagentQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetReagentQuery,
+    GetReagentQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<GetReagentQuery, GetReagentQueryVariables>(
+    GetReagentDocument,
+    options,
+  );
 }
-    ${ListReagentFragmentDoc}`;
+export function useGetReagentLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetReagentQuery,
+    GetReagentQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetReagentQuery,
+    GetReagentQueryVariables
+  >(GetReagentDocument, options);
+}
+export type GetReagentQueryHookResult = ReturnType<typeof useGetReagentQuery>;
+export type GetReagentLazyQueryHookResult = ReturnType<
+  typeof useGetReagentLazyQuery
+>;
+export type GetReagentQueryResult = Apollo.QueryResult<
+  GetReagentQuery,
+  GetReagentQueryVariables
+>;
+export const ListReagentsDocument = gql`
+  query ListReagents(
+    $filters: ReagentFilter
+    $pagination: OffsetPaginationInput
+  ) {
+    reagents(filters: $filters, pagination: $pagination) {
+      ...ListReagent
+    }
+  }
+  ${ListReagentFragmentDoc}
+`;
 
 /**
  * __useListReagentsQuery__
@@ -5525,28 +9596,51 @@ export const ListReagentsDocument = gql`
  *   },
  * });
  */
-export function useListReagentsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListReagentsQuery, ListReagentsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListReagentsQuery, ListReagentsQueryVariables>(ListReagentsDocument, options);
-      }
-export function useListReagentsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListReagentsQuery, ListReagentsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListReagentsQuery, ListReagentsQueryVariables>(ListReagentsDocument, options);
-        }
-export type ListReagentsQueryHookResult = ReturnType<typeof useListReagentsQuery>;
-export type ListReagentsLazyQueryHookResult = ReturnType<typeof useListReagentsLazyQuery>;
-export type ListReagentsQueryResult = Apollo.QueryResult<ListReagentsQuery, ListReagentsQueryVariables>;
-export const SearchReagentsDocument = gql`
-    query SearchReagents($search: String, $values: [ID!]) {
-  options: reagents(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: label
-  }
+export function useListReagentsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    ListReagentsQuery,
+    ListReagentsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    ListReagentsQuery,
+    ListReagentsQueryVariables
+  >(ListReagentsDocument, options);
 }
-    `;
+export function useListReagentsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    ListReagentsQuery,
+    ListReagentsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    ListReagentsQuery,
+    ListReagentsQueryVariables
+  >(ListReagentsDocument, options);
+}
+export type ListReagentsQueryHookResult = ReturnType<
+  typeof useListReagentsQuery
+>;
+export type ListReagentsLazyQueryHookResult = ReturnType<
+  typeof useListReagentsLazyQuery
+>;
+export type ListReagentsQueryResult = Apollo.QueryResult<
+  ListReagentsQuery,
+  ListReagentsQueryVariables
+>;
+export const SearchReagentsDocument = gql`
+  query SearchReagents($search: String, $values: [ID!]) {
+    options: reagents(
+      filters: { search: $search, ids: $values }
+      pagination: { limit: 10 }
+    ) {
+      value: id
+      label: label
+    }
+  }
+`;
 
 /**
  * __useSearchReagentsQuery__
@@ -5565,24 +9659,48 @@ export const SearchReagentsDocument = gql`
  *   },
  * });
  */
-export function useSearchReagentsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchReagentsQuery, SearchReagentsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchReagentsQuery, SearchReagentsQueryVariables>(SearchReagentsDocument, options);
-      }
-export function useSearchReagentsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchReagentsQuery, SearchReagentsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchReagentsQuery, SearchReagentsQueryVariables>(SearchReagentsDocument, options);
-        }
-export type SearchReagentsQueryHookResult = ReturnType<typeof useSearchReagentsQuery>;
-export type SearchReagentsLazyQueryHookResult = ReturnType<typeof useSearchReagentsLazyQuery>;
-export type SearchReagentsQueryResult = Apollo.QueryResult<SearchReagentsQuery, SearchReagentsQueryVariables>;
-export const GetRelationCategoryDocument = gql`
-    query GetRelationCategory($id: ID!) {
-  relationCategory(id: $id) {
-    ...RelationCategory
-  }
+export function useSearchReagentsQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    SearchReagentsQuery,
+    SearchReagentsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    SearchReagentsQuery,
+    SearchReagentsQueryVariables
+  >(SearchReagentsDocument, options);
 }
-    ${RelationCategoryFragmentDoc}`;
+export function useSearchReagentsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    SearchReagentsQuery,
+    SearchReagentsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    SearchReagentsQuery,
+    SearchReagentsQueryVariables
+  >(SearchReagentsDocument, options);
+}
+export type SearchReagentsQueryHookResult = ReturnType<
+  typeof useSearchReagentsQuery
+>;
+export type SearchReagentsLazyQueryHookResult = ReturnType<
+  typeof useSearchReagentsLazyQuery
+>;
+export type SearchReagentsQueryResult = Apollo.QueryResult<
+  SearchReagentsQuery,
+  SearchReagentsQueryVariables
+>;
+export const GetRelationCategoryDocument = gql`
+  query GetRelationCategory($id: ID!) {
+    relationCategory(id: $id) {
+      ...RelationCategory
+    }
+  }
+  ${RelationCategoryFragmentDoc}
+`;
 
 /**
  * __useGetRelationCategoryQuery__
@@ -5600,28 +9718,51 @@ export const GetRelationCategoryDocument = gql`
  *   },
  * });
  */
-export function useGetRelationCategoryQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetRelationCategoryQuery, GetRelationCategoryQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetRelationCategoryQuery, GetRelationCategoryQueryVariables>(GetRelationCategoryDocument, options);
-      }
-export function useGetRelationCategoryLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRelationCategoryQuery, GetRelationCategoryQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetRelationCategoryQuery, GetRelationCategoryQueryVariables>(GetRelationCategoryDocument, options);
-        }
-export type GetRelationCategoryQueryHookResult = ReturnType<typeof useGetRelationCategoryQuery>;
-export type GetRelationCategoryLazyQueryHookResult = ReturnType<typeof useGetRelationCategoryLazyQuery>;
-export type GetRelationCategoryQueryResult = Apollo.QueryResult<GetRelationCategoryQuery, GetRelationCategoryQueryVariables>;
-export const SearchRelationCategoryDocument = gql`
-    query SearchRelationCategory($search: String, $values: [ID!]) {
-  options: relationCategories(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: label
-  }
+export function useGetRelationCategoryQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetRelationCategoryQuery,
+    GetRelationCategoryQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    GetRelationCategoryQuery,
+    GetRelationCategoryQueryVariables
+  >(GetRelationCategoryDocument, options);
 }
-    `;
+export function useGetRelationCategoryLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetRelationCategoryQuery,
+    GetRelationCategoryQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetRelationCategoryQuery,
+    GetRelationCategoryQueryVariables
+  >(GetRelationCategoryDocument, options);
+}
+export type GetRelationCategoryQueryHookResult = ReturnType<
+  typeof useGetRelationCategoryQuery
+>;
+export type GetRelationCategoryLazyQueryHookResult = ReturnType<
+  typeof useGetRelationCategoryLazyQuery
+>;
+export type GetRelationCategoryQueryResult = Apollo.QueryResult<
+  GetRelationCategoryQuery,
+  GetRelationCategoryQueryVariables
+>;
+export const SearchRelationCategoryDocument = gql`
+  query SearchRelationCategory($search: String, $values: [ID!]) {
+    options: relationCategories(
+      filters: { search: $search, ids: $values }
+      pagination: { limit: 10 }
+    ) {
+      value: id
+      label: label
+    }
+  }
+`;
 
 /**
  * __useSearchRelationCategoryQuery__
@@ -5640,28 +9781,55 @@ export const SearchRelationCategoryDocument = gql`
  *   },
  * });
  */
-export function useSearchRelationCategoryQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchRelationCategoryQuery, SearchRelationCategoryQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchRelationCategoryQuery, SearchRelationCategoryQueryVariables>(SearchRelationCategoryDocument, options);
-      }
-export function useSearchRelationCategoryLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchRelationCategoryQuery, SearchRelationCategoryQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchRelationCategoryQuery, SearchRelationCategoryQueryVariables>(SearchRelationCategoryDocument, options);
-        }
-export type SearchRelationCategoryQueryHookResult = ReturnType<typeof useSearchRelationCategoryQuery>;
-export type SearchRelationCategoryLazyQueryHookResult = ReturnType<typeof useSearchRelationCategoryLazyQuery>;
-export type SearchRelationCategoryQueryResult = Apollo.QueryResult<SearchRelationCategoryQuery, SearchRelationCategoryQueryVariables>;
-export const GlobalSearchDocument = gql`
-    query GlobalSearch($search: String, $pagination: OffsetPaginationInput) {
-  graphs: graphs(filters: {search: $search}, pagination: $pagination) {
-    ...ListGraph
-  }
-  ontologies: ontologies(filters: {search: $search}, pagination: $pagination) {
-    ...ListOntology
-  }
+export function useSearchRelationCategoryQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    SearchRelationCategoryQuery,
+    SearchRelationCategoryQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    SearchRelationCategoryQuery,
+    SearchRelationCategoryQueryVariables
+  >(SearchRelationCategoryDocument, options);
 }
-    ${ListGraphFragmentDoc}
-${ListOntologyFragmentDoc}`;
+export function useSearchRelationCategoryLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    SearchRelationCategoryQuery,
+    SearchRelationCategoryQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    SearchRelationCategoryQuery,
+    SearchRelationCategoryQueryVariables
+  >(SearchRelationCategoryDocument, options);
+}
+export type SearchRelationCategoryQueryHookResult = ReturnType<
+  typeof useSearchRelationCategoryQuery
+>;
+export type SearchRelationCategoryLazyQueryHookResult = ReturnType<
+  typeof useSearchRelationCategoryLazyQuery
+>;
+export type SearchRelationCategoryQueryResult = Apollo.QueryResult<
+  SearchRelationCategoryQuery,
+  SearchRelationCategoryQueryVariables
+>;
+export const GlobalSearchDocument = gql`
+  query GlobalSearch($search: String, $pagination: OffsetPaginationInput) {
+    graphs: graphs(filters: { search: $search }, pagination: $pagination) {
+      ...ListGraph
+    }
+    ontologies: ontologies(
+      filters: { search: $search }
+      pagination: $pagination
+    ) {
+      ...ListOntology
+    }
+  }
+  ${ListGraphFragmentDoc}
+  ${ListOntologyFragmentDoc}
+`;
 
 /**
  * __useGlobalSearchQuery__
@@ -5680,24 +9848,52 @@ ${ListOntologyFragmentDoc}`;
  *   },
  * });
  */
-export function useGlobalSearchQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
-      }
-export function useGlobalSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
-        }
-export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>;
-export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>;
-export type GlobalSearchQueryResult = Apollo.QueryResult<GlobalSearchQuery, GlobalSearchQueryVariables>;
-export const GetStructureDocument = gql`
-    query GetStructure($identifier: StructureIdentifier!, $object: ID!, $graph: ID) {
-  structure(graph: $graph, identifier: $identifier, object: $object) {
-    ...KnowledgeStructure
-  }
+export function useGlobalSearchQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    GlobalSearchQuery,
+    GlobalSearchQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    GlobalSearchQuery,
+    GlobalSearchQueryVariables
+  >(GlobalSearchDocument, options);
 }
-    ${KnowledgeStructureFragmentDoc}`;
+export function useGlobalSearchLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GlobalSearchQuery,
+    GlobalSearchQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GlobalSearchQuery,
+    GlobalSearchQueryVariables
+  >(GlobalSearchDocument, options);
+}
+export type GlobalSearchQueryHookResult = ReturnType<
+  typeof useGlobalSearchQuery
+>;
+export type GlobalSearchLazyQueryHookResult = ReturnType<
+  typeof useGlobalSearchLazyQuery
+>;
+export type GlobalSearchQueryResult = Apollo.QueryResult<
+  GlobalSearchQuery,
+  GlobalSearchQueryVariables
+>;
+export const GetStructureDocument = gql`
+  query GetStructure(
+    $identifier: StructureIdentifier!
+    $object: ID!
+    $graph: ID
+  ) {
+    structure(graph: $graph, identifier: $identifier, object: $object) {
+      ...KnowledgeStructure
+    }
+  }
+  ${KnowledgeStructureFragmentDoc}
+`;
 
 /**
  * __useGetStructureQuery__
@@ -5717,24 +9913,48 @@ export const GetStructureDocument = gql`
  *   },
  * });
  */
-export function useGetStructureQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetStructureQuery, GetStructureQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetStructureQuery, GetStructureQueryVariables>(GetStructureDocument, options);
-      }
-export function useGetStructureLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStructureQuery, GetStructureQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetStructureQuery, GetStructureQueryVariables>(GetStructureDocument, options);
-        }
-export type GetStructureQueryHookResult = ReturnType<typeof useGetStructureQuery>;
-export type GetStructureLazyQueryHookResult = ReturnType<typeof useGetStructureLazyQuery>;
-export type GetStructureQueryResult = Apollo.QueryResult<GetStructureQuery, GetStructureQueryVariables>;
-export const GetStructureCategoryDocument = gql`
-    query GetStructureCategory($id: ID!) {
-  structureCategory(id: $id) {
-    ...StructureCategory
-  }
+export function useGetStructureQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetStructureQuery,
+    GetStructureQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    GetStructureQuery,
+    GetStructureQueryVariables
+  >(GetStructureDocument, options);
 }
-    ${StructureCategoryFragmentDoc}`;
+export function useGetStructureLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetStructureQuery,
+    GetStructureQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetStructureQuery,
+    GetStructureQueryVariables
+  >(GetStructureDocument, options);
+}
+export type GetStructureQueryHookResult = ReturnType<
+  typeof useGetStructureQuery
+>;
+export type GetStructureLazyQueryHookResult = ReturnType<
+  typeof useGetStructureLazyQuery
+>;
+export type GetStructureQueryResult = Apollo.QueryResult<
+  GetStructureQuery,
+  GetStructureQueryVariables
+>;
+export const GetStructureCategoryDocument = gql`
+  query GetStructureCategory($id: ID!) {
+    structureCategory(id: $id) {
+      ...StructureCategory
+    }
+  }
+  ${StructureCategoryFragmentDoc}
+`;
 
 /**
  * __useGetStructureCategoryQuery__
@@ -5752,28 +9972,51 @@ export const GetStructureCategoryDocument = gql`
  *   },
  * });
  */
-export function useGetStructureCategoryQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetStructureCategoryQuery, GetStructureCategoryQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetStructureCategoryQuery, GetStructureCategoryQueryVariables>(GetStructureCategoryDocument, options);
-      }
-export function useGetStructureCategoryLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStructureCategoryQuery, GetStructureCategoryQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetStructureCategoryQuery, GetStructureCategoryQueryVariables>(GetStructureCategoryDocument, options);
-        }
-export type GetStructureCategoryQueryHookResult = ReturnType<typeof useGetStructureCategoryQuery>;
-export type GetStructureCategoryLazyQueryHookResult = ReturnType<typeof useGetStructureCategoryLazyQuery>;
-export type GetStructureCategoryQueryResult = Apollo.QueryResult<GetStructureCategoryQuery, GetStructureCategoryQueryVariables>;
-export const SearchStructureCategoryDocument = gql`
-    query SearchStructureCategory($search: String, $values: [ID!]) {
-  options: structureCategories(
-    filters: {search: $search, ids: $values}
-    pagination: {limit: 10}
-  ) {
-    value: id
-    label: label
-  }
+export function useGetStructureCategoryQuery(
+  baseOptions: ApolloReactHooks.QueryHookOptions<
+    GetStructureCategoryQuery,
+    GetStructureCategoryQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    GetStructureCategoryQuery,
+    GetStructureCategoryQueryVariables
+  >(GetStructureCategoryDocument, options);
 }
-    `;
+export function useGetStructureCategoryLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetStructureCategoryQuery,
+    GetStructureCategoryQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    GetStructureCategoryQuery,
+    GetStructureCategoryQueryVariables
+  >(GetStructureCategoryDocument, options);
+}
+export type GetStructureCategoryQueryHookResult = ReturnType<
+  typeof useGetStructureCategoryQuery
+>;
+export type GetStructureCategoryLazyQueryHookResult = ReturnType<
+  typeof useGetStructureCategoryLazyQuery
+>;
+export type GetStructureCategoryQueryResult = Apollo.QueryResult<
+  GetStructureCategoryQuery,
+  GetStructureCategoryQueryVariables
+>;
+export const SearchStructureCategoryDocument = gql`
+  query SearchStructureCategory($search: String, $values: [ID!]) {
+    options: structureCategories(
+      filters: { search: $search, ids: $values }
+      pagination: { limit: 10 }
+    ) {
+      value: id
+      label: label
+    }
+  }
+`;
 
 /**
  * __useSearchStructureCategoryQuery__
@@ -5792,14 +10035,37 @@ export const SearchStructureCategoryDocument = gql`
  *   },
  * });
  */
-export function useSearchStructureCategoryQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchStructureCategoryQuery, SearchStructureCategoryQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchStructureCategoryQuery, SearchStructureCategoryQueryVariables>(SearchStructureCategoryDocument, options);
-      }
-export function useSearchStructureCategoryLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchStructureCategoryQuery, SearchStructureCategoryQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchStructureCategoryQuery, SearchStructureCategoryQueryVariables>(SearchStructureCategoryDocument, options);
-        }
-export type SearchStructureCategoryQueryHookResult = ReturnType<typeof useSearchStructureCategoryQuery>;
-export type SearchStructureCategoryLazyQueryHookResult = ReturnType<typeof useSearchStructureCategoryLazyQuery>;
-export type SearchStructureCategoryQueryResult = Apollo.QueryResult<SearchStructureCategoryQuery, SearchStructureCategoryQueryVariables>;
+export function useSearchStructureCategoryQuery(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<
+    SearchStructureCategoryQuery,
+    SearchStructureCategoryQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useQuery<
+    SearchStructureCategoryQuery,
+    SearchStructureCategoryQueryVariables
+  >(SearchStructureCategoryDocument, options);
+}
+export function useSearchStructureCategoryLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    SearchStructureCategoryQuery,
+    SearchStructureCategoryQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return ApolloReactHooks.useLazyQuery<
+    SearchStructureCategoryQuery,
+    SearchStructureCategoryQueryVariables
+  >(SearchStructureCategoryDocument, options);
+}
+export type SearchStructureCategoryQueryHookResult = ReturnType<
+  typeof useSearchStructureCategoryQuery
+>;
+export type SearchStructureCategoryLazyQueryHookResult = ReturnType<
+  typeof useSearchStructureCategoryLazyQuery
+>;
+export type SearchStructureCategoryQueryResult = Apollo.QueryResult<
+  SearchStructureCategoryQuery,
+  SearchStructureCategoryQueryVariables
+>;

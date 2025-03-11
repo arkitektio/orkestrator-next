@@ -4,7 +4,6 @@ query ListBackends {
   }
 }
 
-
 query GetBackend($id: ID!) {
   backend(id: $id) {
     ...Backend

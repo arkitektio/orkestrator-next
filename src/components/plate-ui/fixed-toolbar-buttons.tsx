@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 import {
   BoldPlugin,
@@ -6,16 +6,16 @@ import {
   ItalicPlugin,
   StrikethroughPlugin,
   UnderlinePlugin,
-} from '@udecode/plate-basic-marks/react';
-import { useEditorReadOnly } from '@udecode/plate-common/react';
+} from "@udecode/plate-basic-marks/react";
+import { useEditorReadOnly } from "@udecode/plate-common/react";
 
-import { Icons } from '@/components/icons';
+import { Icons } from "@/components/icons";
 
-import { InsertDropdownMenu } from './insert-dropdown-menu';
-import { MarkToolbarButton } from './mark-toolbar-button';
-import { ModeDropdownMenu } from './mode-dropdown-menu';
-import { ToolbarGroup } from './toolbar';
-import { TurnIntoDropdownMenu } from './turn-into-dropdown-menu';
+import { InsertDropdownMenu } from "./insert-dropdown-menu";
+import { MarkToolbarButton } from "./mark-toolbar-button";
+import { ModeDropdownMenu } from "./mode-dropdown-menu";
+import { ToolbarGroup } from "./toolbar";
+import { TurnIntoDropdownMenu } from "./turn-into-dropdown-menu";
 
 export function FixedToolbarButtons() {
   const readOnly = useEditorReadOnly();
@@ -25,7 +25,7 @@ export function FixedToolbarButtons() {
       <div
         className="flex flex-wrap"
         style={{
-          transform: 'translateX(calc(-1px))',
+          transform: "translateX(calc(-1px))",
         }}
       >
         {!readOnly && (

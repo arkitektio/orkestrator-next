@@ -73,7 +73,7 @@ query PrimaryNodes(
           kind: ARGS
           matches: [{ at: 0, kind: STRUCTURE, identifier: $identifier }]
         }
-      ],
+      ]
       search: $search
     }
   ) {

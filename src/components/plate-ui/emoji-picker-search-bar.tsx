@@ -1,10 +1,10 @@
-import React, { type ReactNode } from 'react';
+import React, { type ReactNode } from "react";
 
-import type { UseEmojiPickerType } from '@udecode/plate-emoji';
+import type { UseEmojiPickerType } from "@udecode/plate-emoji";
 
 export type EmojiPickerSearchBarProps = {
   children: ReactNode;
-} & Pick<UseEmojiPickerType, 'i18n' | 'searchValue' | 'setSearch'>;
+} & Pick<UseEmojiPickerType, "i18n" | "searchValue" | "setSearch">;
 
 export function EmojiPickerSearchBar({
   children,

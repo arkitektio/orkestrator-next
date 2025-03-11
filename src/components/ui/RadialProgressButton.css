@@ -1,13 +1,11 @@
 .progress-button-wrapper {
-    position: relative;
-    display: inline-block;
-    width: 100px; /* Adjust size as needed */
-    height: 100px; /* Adjust size as needed */
+  position: relative;
+  display: inline-block;
+  width: 100px; /* Adjust size as needed */
+  height: 100px; /* Adjust size as needed */
 }
 
-
-
 .progress-circle {
-    position: absolute;
-    inset: 0;
+  position: absolute;
+  inset: 0;
 }

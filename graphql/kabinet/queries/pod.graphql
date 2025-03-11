@@ -4,7 +4,6 @@ query ListPod {
   }
 }
 
-
 query GetPod($id: ID!) {
   pod(id: $id) {
     ...Pod

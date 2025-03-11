@@ -67,7 +67,6 @@ fragment ListRun on Run {
   }
 }
 
-
 fragment CarouselRun on Run {
   id
   assignation

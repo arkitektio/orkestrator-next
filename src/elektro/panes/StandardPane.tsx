@@ -9,7 +9,7 @@ import { Home } from "lucide-react";
 import * as React from "react";
 import {
   GlobalSearchQueryVariables,
-  useGlobalSearchQuery
+  useGlobalSearchQuery,
 } from "../api/graphql";
 import TraceCard from "../components/cards/TraceCard";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
@@ -17,7 +17,6 @@ import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
 interface IDataSidebarProps {}
 
 export const NavigationPane = (props: {}) => {
-
   return (
     <Tree>
       <SubTreeTitle>Explore</SubTreeTitle>

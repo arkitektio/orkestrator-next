@@ -11,10 +11,7 @@ import { KraphExpression, KraphOntology } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { PlusIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {
-  useGetOntologyQuery,
-  useUpdateOntologyMutation
-} from "../api/graphql";
+import { useGetOntologyQuery, useUpdateOntologyMutation } from "../api/graphql";
 import GenericCategoryCard from "../components/cards/GenericCategoryCard";
 import GraphCard from "../components/cards/GraphCard";
 import GraphQueryCard from "../components/cards/GraphQueryCard";
@@ -25,7 +22,6 @@ import StructureCategoryCard from "../components/cards/StructureCategoryCard";
 import CreateExpressionForm from "../forms/CreateStructureCategoryForm";
 import { UpdateOntologyForm } from "../forms/UpdateOntologyForm";
 import { ListRender } from "@/components/layout/ListRender";
-
 
 export default asDetailQueryRoute(useGetOntologyQuery, ({ data, refetch }) => {
   const uploadFile = useMediaUpload();
@@ -114,57 +110,55 @@ export default asDetailQueryRoute(useGetOntologyQuery, ({ data, refetch }) => {
         </div>
         <DragZone uploadFile={uploadFile} createFile={createFile} />
 
-        
-          <ListRender
+        <ListRender
           title="Entities"
           array={data.ontology.genericCategories}
           refetch={refetch}
-          >
-          {item => <GenericCategoryCard item={item} />}
-          </ListRender>
-          <ListRender
+        >
+          {(item) => <GenericCategoryCard item={item} />}
+        </ListRender>
+        <ListRender
           title="Structures"
           array={data.ontology.structureCategories}
           refetch={refetch}
-          >
-          {item => <StructureCategoryCard item={item} />}
-          </ListRender>
-          <ListRender
+        >
+          {(item) => <StructureCategoryCard item={item} />}
+        </ListRender>
+        <ListRender
           title="Measurements"
           array={data.ontology.measurementCategories}
           refetch={refetch}
-          >
-          {item => <MeasurementCategoryCard item={item} />}
-          </ListRender>
-          <ListRender
+        >
+          {(item) => <MeasurementCategoryCard item={item} />}
+        </ListRender>
+        <ListRender
           title="Relations"
           array={data.ontology.relationCategories}
           refetch={refetch}
-          >
-          {item => <RelationCategoryCard item={item} />}
-          </ListRender>
-          <ListRender 
+        >
+          {(item) => <RelationCategoryCard item={item} />}
+        </ListRender>
+        <ListRender
           title="Graphs"
           array={data.ontology.graphs}
           refetch={refetch}
-          >
-          {item => <GraphCard item={item} />}
-          </ListRender>
-          <ListRender
+        >
+          {(item) => <GraphCard item={item} />}
+        </ListRender>
+        <ListRender
           title="Queries"
           array={data.ontology.graphQueries}
           refetch={refetch}
-          >
-          {item => <GraphQueryCard item={item} />}
-          </ListRender>
-          <ListRender
+        >
+          {(item) => <GraphQueryCard item={item} />}
+        </ListRender>
+        <ListRender
           title="Node Queries"
           array={data.ontology.nodeQueries}
           refetch={refetch}
-          >
-          {item => <NodeQueryCard item={item} />}
-          </ListRender>
-          
+        >
+          {(item) => <NodeQueryCard item={item} />}
+        </ListRender>
       </div>
     </KraphOntology.ModelPage>
   );

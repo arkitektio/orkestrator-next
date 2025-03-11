@@ -3,6 +3,8 @@ import GraphViewWidget from "@/kraph/widgets/GraphViewWidget";
 import OntologyWidget from "@/kraph/widgets/OntologyWidget";
 import { KabinetPod, MikroImage, MikroROI, RekuestNode } from "@/linkers";
 import { useGetImageQuery, useGetRoiQuery } from "@/mikro-next/api/graphql";
+import { DelegatingImageRender } from "@/mikro-next/components/render/DelegatingImageRender";
+import { FinalRender } from "@/mikro-next/components/render/FInalRender";
 import { RGBD } from "@/mikro-next/components/render/TwoDThree";
 import { useDetailNodeQuery } from "@/rekuest/api/graphql";
 import { ReturnWidgetProps } from "@/rekuest/widgets/types";
@@ -22,7 +24,7 @@ export const ImageWidget = (props: ReturnWidgetProps) => {
   return (
     <MikroImage.DetailLink object={props.value}>
       <div className="w-[200px] h-[200px]">
-        {defaultContext && <RGBD context={defaultContext} rois={[]} />}
+        {defaultContext && <DelegatingImageRender context={defaultContext} rois={[]} />}
       </div>
     </MikroImage.DetailLink>
   );
@@ -42,7 +44,7 @@ export const RoiWidget = (props: ReturnWidgetProps) => {
     <MikroROI.DetailLink object={props.value}>
       <div className="w-[200px] h-[200px]">
         {defaultContext && roi && (
-          <RGBD context={defaultContext} rois={[roi]} />
+          <DelegatingImageRender context={defaultContext} rois={[roi]} />
         )}
       </div>
     </MikroROI.DetailLink>

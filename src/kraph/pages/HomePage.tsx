@@ -11,8 +11,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   const performDataLayerUpload = useBigFileUpload();
   const createFile = useCreateFile();
 
-  const {data} = useLatestPlotViewsQuery();
-
+  const { data } = useLatestPlotViewsQuery();
 
   return (
     <PageLayout actions={<></>} title="Your data">

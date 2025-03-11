@@ -13,21 +13,21 @@ export const useSmartDrop = (
   useDrop(() => {
     return {
       accept: [SMART_MODEL_DROP_TYPE, NativeTypes.TEXT],
-            drop: (item, monitor) => {
-            console.log("drop", item);
-            let text = item.text;
-      
-            if (text) {
-              let structure: Structure = JSON.parse(text);
-              callback([structure], monitor);
-            } else callback(item, monitor);
-            return {};
-            },
-            collect: (monitor) => {
-            return {
-              isOver: !!monitor.isOver(),
-              canDrop: !!monitor.canDrop(),
-            };
-            },
+      drop: (item, monitor) => {
+        console.log("drop", item);
+        let text = item.text;
+
+        if (text) {
+          let structure: Structure = JSON.parse(text);
+          callback([structure], monitor);
+        } else callback(item, monitor);
+        return {};
+      },
+      collect: (monitor) => {
+        return {
+          isOver: !!monitor.isOver(),
+          canDrop: !!monitor.canDrop(),
+        };
+      },
     };
   }, deps);

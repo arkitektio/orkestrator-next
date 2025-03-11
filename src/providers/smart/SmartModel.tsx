@@ -75,9 +75,9 @@ export const SmartModel = ({
       drop: (item, monitor) => {
         console.log("drop", item);
 
-        if  (monitor.getItemType() === SMART_MODEL_DROP_TYPE) {
+        if (monitor.getItemType() === SMART_MODEL_DROP_TYPE) {
           console.log("SMART", item);
-          setPartners(items); 
+          setPartners(items);
           return {};
         }
 
@@ -109,8 +109,7 @@ export const SmartModel = ({
             let structure: Structure = JSON.parse(text);
             setPartners([structure]);
             return {};
-          }
-          catch (e) {
+          } catch (e) {
             console.error(e);
           }
         }
@@ -225,7 +224,10 @@ export const SmartModel = ({
         // Package the data as text/uri-list
         const data = JSON.stringify(self);
         e.dataTransfer.setData("text/plain", data);
-        e.dataTransfer.setData("text/uri-list", `arkitekt://${props.identifier}:${props.object}`);
+        e.dataTransfer.setData(
+          "text/uri-list",
+          `arkitekt://${props.identifier}:${props.object}`,
+        );
       }}
       data-identifier={props.identifier}
       data-object={props.object}

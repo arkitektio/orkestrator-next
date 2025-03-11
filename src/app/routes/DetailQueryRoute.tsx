@@ -94,8 +94,7 @@ export const asDetailQueryRoute = <T extends any>(
       return <ErrorPage error={error} />;
     }
 
-    if (loading)
-      return <LoadingPage/>;
+    if (loading) return <LoadingPage />;
 
     if (data) {
       if (debug) {
@@ -110,6 +109,5 @@ export const asDetailQueryRoute = <T extends any>(
         />
       );
     }
-
   };
 };

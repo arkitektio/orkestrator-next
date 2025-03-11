@@ -7,11 +7,7 @@ import {
   FaktsInstance,
   FaktsRequest,
 } from "./FaktsContext";
-import {
-  FaktsProvider,
-  FaktsProps,
-  
-} from "./FaktsProvider";
+import { FaktsProvider, FaktsProps } from "./FaktsProvider";
 import { FaktsGuard } from "./FaktsGuard";
 import { WellKnownDiscovery } from "./WellKnownDiscovery";
 import { awaitWithTimeout } from "./helpers";

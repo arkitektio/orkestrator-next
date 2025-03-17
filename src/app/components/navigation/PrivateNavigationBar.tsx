@@ -110,7 +110,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
 
   return (
     <NavigationMenu
-      className="mx-auto px-1 max-w-[40px] mt-3 flex flex-grow sm:flex-col flex-row gap-8  items-center justify-start h-full py-3"
+      className="mx-auto px-1 max-w-[40px] flex flex-grow sm:flex-col flex-row gap-8  items-center justify-start h-auto py-3"
       orientation="horizontal"
     >
       <IconContext.Provider
@@ -156,9 +156,9 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
           )}
         </DroppableNavLink>
 
-        <Guard.Lok fallback={<></>}>
+        <Guard.Lok fallback={<>No lok?</>}>
           <DropdownMenu>
-            <DropdownMenuTrigger className="mb-2">
+            <DropdownMenuTrigger className="md:block text-foreground hidden">
               <Me />
             </DropdownMenuTrigger>
             <DropdownMenuContent

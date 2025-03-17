@@ -17,11 +17,12 @@ const TheCard = ({ item, mates }: Props) => {
   return (
     <LokServiceInstance.Smart object={item?.id} mates={mates}>
       <Card className="p-3">
+        {item.identifier}<br />
         <LokServiceInstance.DetailLink object={item.id} className="">
           {item.backend}
         </LokServiceInstance.DetailLink>
         {item.backend != BackendType.UserDefined && (
-          <p className="text-xs mt-2"> This backend is handled internally </p>
+          <p className="text-xs mt-2"> This backend is handled internally and you cannot change its configuration</p>
         )}
       </Card>
     </LokServiceInstance.Smart>

@@ -1,6 +1,19 @@
 fragment ServiceInstance on ServiceInstance {
   id
   backend
+  identifier
+  allowedUsers {
+    ...ListUser
+  }
+  deniedUsers {
+    ...ListUser
+  }
+  allowedGroups {
+    ...ListGroup
+  }
+  deniedGroups {
+    ...ListGroup
+  }
   userDefinitions {
     ...ListUserDefinedServiceInstance
   }
@@ -9,4 +22,11 @@ fragment ServiceInstance on ServiceInstance {
 fragment ListServiceInstance on ServiceInstance {
   id
   backend
+  identifier
+  allowedUsers {
+    ...ListUser
+  }
+  deniedUsers {
+    ...ListUser
+  }
 }

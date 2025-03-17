@@ -9,6 +9,7 @@ import StandardPane from "./panes/StandardPane";
 import ServicesPage from "./pages/ServicesPage";
 import ServicePage from "./pages/ServicePage";
 import ServiceInstancePage from "./pages/ServiceInstancePage";
+import InstancesPage from "./pages/InstancesPage";
 interface Props {}
 
 export const LokNextModule: React.FC<Props> = (props) => {
@@ -19,6 +20,7 @@ export const LokNextModule: React.FC<Props> = (props) => {
           <Route path="users/:id" element={<UserPage />} />
           <Route path="clients/:id" element={<ClientPage />} />
           <Route path="services" element={<ServicesPage />} />
+          <Route path="instances" element={<InstancesPage />} />
           <Route path="services/:id" element={<ServicePage />} />
           <Route
             path="serviceinstances/:id"

@@ -34,8 +34,8 @@ export type Option = {
 
 export const ListButtonLabel = (props: {
   search: SearchFunction;
-  value: { __value: string }[] | undefined;
-  setValue: (value: { __value: string }[]) => void;
+  value: string[] | undefined;
+  setValue: (value: string[]) => void;
   placeholder?: string;
 }) => {
   const [options, setOptions] = useState<Option[]>([]);
@@ -51,7 +51,7 @@ export const ListButtonLabel = (props: {
       return;
     }
     props
-      .search({ values: props.value.map((v) => v.__value) })
+      .search({ values: props.value})
       .then((res) => {
         setOptions(res.filter(notEmpty));
       })
@@ -61,7 +61,7 @@ export const ListButtonLabel = (props: {
   }, [props.value, props.search]);
 
   const remove = (value: string) => {
-    props.setValue(props.value?.filter((v) => v.__value !== value) || []);
+    props.setValue(props.value?.filter((v) => v !== value) || []);
   };
 
   return (
@@ -191,17 +191,17 @@ export const ListSearchField = ({
                           onSelect={() => {
                             console.log(option.value);
                             if (field.value == undefined) {
-                              field.onChange([{ __value: option.value }]);
+                              field.onChange([option.value]);
                             } else {
                               if (
                                 field.value.find(
-                                  (v) => v.__value == option.value,
+                                  (v) => v == option.value,
                                 )
                               ) {
                                 form.setValue(
                                   name,
                                   field.value.filter(
-                                    (v) => v.__value !== option.value,
+                                    (v) => v !== option.value,
                                   ),
                                   { shouldValidate: true },
                                 );
@@ -210,7 +210,7 @@ export const ListSearchField = ({
                                   name,
                                   [
                                     ...field.value,
-                                    { __value: option.value },
+                                    option.value,
                                   ].filter(notEmpty),
                                   { shouldValidate: true },
                                 );

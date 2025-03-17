@@ -16,8 +16,8 @@ query DetailUser($id: ID!) {
   }
 }
 
-query UserOptions($search: String) {
-  options: users(filters: { search: $search }) {
+query UserOptions($search: String, $values: [ID!]) {
+  options: users(filters: { search: $search, ids: $values }) {
     value: id
     label: username
   }

@@ -1,25 +1,21 @@
-import { PageLayout } from "@/components/layout/PageLayout";
-import { ActionButton } from "@/components/ui/action";
-import { Separator } from "@radix-ui/react-dropdown-menu";
-import React from "react";
-import {
-  BackendType,
-  useCreateRoomMutation,
-  useGetServiceInstanceQuery,
-  useGetServiceQuery,
-  useMeQuery,
-} from "../api/graphql";
-import { ThreadsCarousel } from "../components/carousels/ThreadsCarousel";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
-import { PlusIcon } from "lucide-react";
-import { LokService } from "@/linkers";
-import { useNavigate } from "react-router-dom";
-import { CreateServiceInstanceForm } from "../forms/CreateServiceInstance";
-import ServiceList from "../components/lists/ServiceList";
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
-import ServiceInstanceCard from "../components/cards/ServiceInstanceCard";
+import { PageLayout } from "@/components/layout/PageLayout";
 import { Card } from "@/components/ui/card";
+import { FormDialogAction } from "@/components/ui/form-dialog-action";
+import { LokService } from "@/linkers";
+import { Separator } from "@radix-ui/react-dropdown-menu";
+import { PlusIcon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  BackendType,
+  useGetServiceInstanceQuery
+} from "../api/graphql";
+import { CreateServiceInstanceForm } from "../forms/CreateServiceInstance";
+import UserCard from "../components/cards/UserCard";
+import { UpdateServiceInstanceForm } from "../forms/UpdateServiceInstanceForm";
+import { FormSheetAction } from "@/components/ui/form-sheet-action";
+import GroupCard from "../components/cards/GroupCard";
 export type IRepresentationScreenProps = {};
 
 const Page = asDetailQueryRoute(useGetServiceInstanceQuery, (props) => {
@@ -30,30 +26,51 @@ const Page = asDetailQueryRoute(useGetServiceInstanceQuery, (props) => {
       title="Lok"
       pageActions={
         <>
-          <FormDialogAction
+          <FormSheetAction
             variant={"outline"}
             size={"sm"}
             label="Create"
-            description="Create a new Graph"
+            description="Update a new Graph"
             buttonChildren={
               <>
                 <PlusIcon className="h-4 w-4 mr-2" />
-                New Service
+                Update Service
               </>
             }
-            onSubmit={(item) => {
-              console.log(item);
-              navigate(LokService.linkBuilder(item.linkedExpression.id));
-            }}
           >
-            <CreateServiceInstanceForm />
-          </FormDialogAction>
+            <UpdateServiceInstanceForm instance={props.data.serviceInstance}/>
+          </FormSheetAction>
         </>
       }
     >
       {props.data?.serviceInstance?.backend != BackendType.UserDefined && (
         <> This backend is handled internally </>
       )}
+
+      <ListRender array={props.data?.serviceInstance?.allowedUsers} title="Allowed Users">
+        {(item, index) => {
+          return <UserCard item={item} key={index}/>;
+        }}
+      </ListRender>
+
+      <ListRender array={props.data?.serviceInstance?.deniedUsers} title="Denied Users">
+        {(item, index) => {
+          return <UserCard item={item} key={index}/>;
+        }}
+      </ListRender>
+
+      <ListRender array={props.data?.serviceInstance?.allowedGroups} title="Allowed Groups">
+        {(item, index) => {
+          return <GroupCard item={item} key={index}/>;
+        }}
+      </ListRender>
+
+      <ListRender array={props.data?.serviceInstance?.deniedGroups} title="Denied Groups">
+        {(item, index) => {
+          return <GroupCard item={item} key={index}/>;
+        }}
+      </ListRender>
+
 
       <ListRender array={props.data?.serviceInstance?.userDefinitions}>
         {(item) => {

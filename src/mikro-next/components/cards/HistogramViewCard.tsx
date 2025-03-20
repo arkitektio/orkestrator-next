@@ -70,7 +70,7 @@ const TheCard = ({ view, mates }: Props) => {
                     <Line
                       dataKey="count"
                       type="natural"
-                      stroke="hsl(var(--primary))"
+                      className="bg-gray-800"
                       strokeWidth={1}
                       dot={false}
                       activeDot={false}

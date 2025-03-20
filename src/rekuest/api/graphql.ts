@@ -1570,6 +1570,7 @@ export type ShortcutFilter = {
   demands?: InputMaybe<Array<PortDemandInput>>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
+  toolbox?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type ShortcutOrder = {

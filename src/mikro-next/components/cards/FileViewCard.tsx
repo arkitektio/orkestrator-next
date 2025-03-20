@@ -36,7 +36,6 @@ const TheCard = ({ view, mates }: Props) => {
                 </MikroFile.DetailLink>
               )}
             </p>
-            {view.seriesIdentifier && <Badge>{view.seriesIdentifier}</Badge>}
           </CardTitle>
         </CardHeader>
       </ViewCard>

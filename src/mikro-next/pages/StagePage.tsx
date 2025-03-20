@@ -6,7 +6,7 @@ import {
   DetailPaneHeader,
   DetailPaneTitle,
 } from "@/components/ui/pane";
-import { MikroImage } from "@/linkers";
+import { MikroImage, MikroStage } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
@@ -127,10 +127,10 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   const [pinStage] = usePinStageMutation();
 
   return (
-    <ModelPageLayout
-      actions={<MikroImage.Actions id={id} />}
-      identifier="@mikro/image"
+    <MikroStage.ModelPage
+      actions={<MikroStage.Actions object={id} />}
       object={id}
+      title={data?.stage?.name}
     >
       <DetailPane className="p-3 @container">
         <DetailPaneHeader>
@@ -168,7 +168,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       <div className="w-full h-full">
         <MyCanvasComponent data={data} />
       </div>
-    </ModelPageLayout>
+    </MikroStage.ModelPage>
   );
 };
 

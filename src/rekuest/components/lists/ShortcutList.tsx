@@ -3,12 +3,13 @@ import { RekuestNode } from "@/linkers";
 import {
   AgentFilter,
   OffsetPaginationInput,
+  ShortcutFilter,
   useShortcutsQuery,
 } from "@/rekuest/api/graphql";
 import ShortcutCard from "../cards/ShortcutCard";
 
 export type Props = {
-  filters?: AgentFilter;
+  filters?: ShortcutFilter;
   pagination?: OffsetPaginationInput;
 };
 

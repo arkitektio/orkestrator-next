@@ -1,15 +1,13 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { useNodeDescription } from "@/lib/rekuest/NodeDescription";
-import { RekuestShortcut, RekuestToolbox } from "@/linkers";
+import { RekuestToolbox } from "@/linkers";
 import { useToolboxQuery } from "@/rekuest/api/graphql";
-import { useCallback, useState } from "react";
+import ShortcutList from "../components/lists/ShortcutList";
 
 export default asDetailQueryRoute(useToolboxQuery, ({ data, refetch }) => {
   return (
-    <ModelPageLayout
-      identifier="@rekuest/toolbox"
+    <RekuestToolbox.ModelPage
       title={data.toolbox.name}
       object={data.toolbox.id}
       sidebars={
@@ -29,7 +27,9 @@ export default asDetailQueryRoute(useToolboxQuery, ({ data, refetch }) => {
             {data.toolbox.description}
           </p>
         </div>
+
       </div>
-    </ModelPageLayout>
+      <ShortcutList filters={{ toolbox: data.toolbox.id }} />
+    </RekuestToolbox.ModelPage>
   );
 });

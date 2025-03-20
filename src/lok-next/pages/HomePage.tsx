@@ -5,26 +5,15 @@ import React from "react";
 import { useCreateRoomMutation, useMeQuery } from "../api/graphql";
 import { ThreadsCarousel } from "../components/carousels/ThreadsCarousel";
 import ServiceList from "../components/lists/ServiceList";
+import AppList from "../components/lists/AppList";
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
-  const [createRoom] = useCreateRoomMutation({
-    refetchQueries: ["Rooms"],
-  });
-  const { data } = useMeQuery();
-
   return (
-    <PageLayout
-      title="Lok"
-      actions={
-        <>
-          <ActionButton run={createRoom} title="Create Room">
-            Create Room
-          </ActionButton>
-        </>
-      }
-    >
+    <PageLayout title="Lok">
       <ThreadsCarousel />
+
+      <AppList />
 
       <Separator />
     </PageLayout>

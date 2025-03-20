@@ -4,9 +4,19 @@ fragment DetailGroup on Group {
   users {
     ...ListUser
   }
+  profile {
+    ...GroupProfile
+  }
 }
 
 fragment ListGroup on Group {
   id
   name
+  profile {
+    id
+    bio
+    avatar {
+      presignedUrl
+    }
+  }
 }

@@ -44,7 +44,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
     >
       <Explainer
         title="Services"
-        description="Services are the building blocks of every arkitekt server. They define data sources, data sinks, and allow to add in functionality that all apps can use."
+        description="Services are the building blocks of every arkitekt server. They define data endpoints, that your apps can interact with. These as the currently available services in your federation."
       />
       <ServiceList />
 

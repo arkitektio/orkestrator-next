@@ -30,7 +30,6 @@ export type LoginState = {
   grant: HerreGrant;
   endpoint: HerreEndpoint;
   auth: Auth;
-  user: HerreUser;
 };
 
 export const CODE_STRING = "herre-code";
@@ -153,8 +152,7 @@ export const HerreProvider = ({
   };
 
   const fetchUserWithToken = async (endpoint: HerreEndpoint, auth: Auth) => {
-    const userInfoUrl =
-      endpoint.userInfoEndpoint || endpoint.base_url + "/userinfo";
+    const userInfoUrl = endpoint.base_url + "/userinfo";
     console.log(`Fetching user from ${userInfoUrl}`);
     const response = await fetch(`${userInfoUrl}`, {
       headers: {
@@ -181,8 +179,8 @@ export const HerreProvider = ({
       if (persistedState) {
         const { grant, endpoint, auth } = persistedState || {};
         try {
-          let user = await fetchUserWithToken(endpoint, auth);
-          setLoginState({ ...persistedState, user: user });
+          // TODO: Check if token is still valid
+          setLoginState({ ...persistedState });
         } catch (e) {
           // Lets try to refresh the token
           const new_auth = await refreshToken(grant, endpoint, auth);
@@ -275,32 +273,40 @@ export const HerreProvider = ({
 
     let result = new Promise<Token>(async (resolve, reject) => {
       try {
-        let answer = await prepareCodeRequest(request);
-        let { pkce, authUri } = answer;
+        let payload: TokenRequestBody = {
+          clientId: request.grant.clientId.trim(),
+          clientSecret: request.grant.clientSecret?.trim(),
+          grantType: "client_credentials",
+        };
 
-        let retrievedCode = await doRedirect(authUri, abortController);
+        let tokenUrl =
+          request.endpoint.tokenUrl || request.endpoint.base_url + "/token";
+        const response = await fetch(tokenUrl, {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          method: "POST",
+          body: toUrlEncoded(payload),
+        });
 
-        if (!retrievedCode) {
-          throw new Error("No code retrieved");
+        const tokenresponse = await response.json();
+        if (tokenresponse.error) {
+          throw new Error(tokenresponse.error);
         }
 
-        let token = await challengeCode(
-          request.endpoint,
-          request.grant,
-          pkce,
-          retrievedCode,
-        );
+        console.log("Token response received", tokenresponse);
 
-        let user = await fetchUserWithToken(request.endpoint, token);
+        let token = tokenresponse as Auth;
 
         setLoginState({
-          user: user,
           auth: token,
           endpoint: request.endpoint,
           grant: request.grant,
         });
 
         resolve(token.access_token);
+
+        return resolve(token.access_token);
       } catch (e) {
         setLoginState(undefined);
 

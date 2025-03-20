@@ -19,7 +19,11 @@ export const useResolve = () => {
   const fakts = Arkitekt.useFakts();
 
   const s3resolve = useCallback(
-    (key: string) => {
+    (key: string | undefined) => {
+      if (key == undefined || key == null || key == "") {
+        return "";
+      }
+
       const endPointUrl = fakts?.datalayer?.endpoint_url;
       if (!endPointUrl) {
         console.error(fakts);

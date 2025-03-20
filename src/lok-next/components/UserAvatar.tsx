@@ -3,6 +3,7 @@ import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { LokUser } from "@/linkers";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import { useUserQuery } from "../api/graphql";
+import { useResolve } from "@/datalayer/hooks/useResolve";
 
 export const UserAvatar = (props: { sub: string }) => {
   const { data } = useUserQuery({
@@ -11,10 +12,16 @@ export const UserAvatar = (props: { sub: string }) => {
     },
   });
 
+  const resolve = useResolve();
+
   return (
     <Avatar>
       <AvatarImage
-        src={data?.user?.avatar as string | undefined}
+        src={
+          resolve(data?.user?.profile.avatar?.presignedUrl) as
+            | string
+            | undefined
+        }
         alt={data?.user?.username}
       />
       <AvatarFallback>{data?.user.username.slice(0, 2)}</AvatarFallback>
@@ -29,6 +36,8 @@ export const UserAvatarUsername = (props: { sub: string }) => {
     },
   });
 
+  const resolve = useResolve();
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -36,7 +45,11 @@ export const UserAvatarUsername = (props: { sub: string }) => {
           <Avatar className="h-10 w-10 cursor-pointer">
             <AvatarImage
               className="rounded-md"
-              src={data?.user?.avatar as string | undefined}
+              src={
+                resolve(data?.user?.profile.avatar?.presignedUrl) as
+                  | string
+                  | undefined
+              }
               alt={data?.user?.username}
             />
             <AvatarFallback>{data?.user.username.slice(0, 2)}</AvatarFallback>

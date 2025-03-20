@@ -25,15 +25,6 @@ export const useLoadFakts = () => {
       } else {
         let manifest = request.manifest;
 
-        if (
-          request.requestedClientType == "website" &&
-          !request.requestedRedirectURIs
-        ) {
-          throw new Error(
-            "No redirect URI specified, but requested website, please set requestedRedirectURIs",
-          );
-        }
-
         if (!manifest) {
           throw new Error("No manifest");
         }

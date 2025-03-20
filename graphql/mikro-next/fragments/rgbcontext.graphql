@@ -16,6 +16,11 @@ fragment RGBContext on RGBContext {
           ...ZarrStore
         }
       }
+      scaleX
+      scaleY
+      scaleZ
+      scaleT
+      scaleC
     }
   }
   pinned
@@ -40,6 +45,11 @@ fragment ListRGBContext on RGBContext {
           ...ZarrStore
         }
       }
+      scaleX
+      scaleY
+      scaleZ
+      scaleT
+      scaleC
     }
   }
   id

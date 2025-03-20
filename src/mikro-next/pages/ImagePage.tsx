@@ -40,6 +40,7 @@ import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { PinToggle } from "../components/ui/PinToggle";
 import { AddImageViewForm } from "../forms/AddImageViewForm";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
+import HistogramViewCard from "../components/cards/HistogramViewCard";
 
 export type IRepresentationScreenProps = {};
 
@@ -198,8 +199,6 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                 </div>
 
                 <div className="font-light mb-2">Views</div>
-              
-
 
                 <ResponsiveContainerGrid className="gap-3 ">
                   {data?.image.views?.map((view, index) => (
@@ -236,6 +235,9 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                       )}
                       {view.__typename == "PixelView" && (
                         <PixelViewCard view={view} key={index} />
+                      )}
+                      {view.__typename == "HistogramView" && (
+                        <HistogramViewCard view={view} key={index} />
                       )}
                     </>
                   ))}

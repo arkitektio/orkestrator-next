@@ -19,3 +19,9 @@ query Release(
     ...DetailRelease
   }
 }
+
+query DetailRelease($id: ID!) {
+  release(id: $id) {
+    ...DetailRelease
+  }
+}

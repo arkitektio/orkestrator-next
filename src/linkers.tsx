@@ -192,6 +192,10 @@ export const MikroSpecimenView = buildSmart(
 );
 
 export const MikroFileView = buildSmart("@mikro/fileview", "mikro/fileviews");
+export const MikroHistogramView = buildSmart(
+  "@mikro/histogramview",
+  "mikro/histogramviews",
+);
 export const MikroPixelView = buildSmart(
   "@mikro/pixelview",
   "mikro/pixelviews",
@@ -269,11 +273,15 @@ export const LokUser = buildSmart("@lok/user", "lok/users");
 export const LokRedeemToken = buildSmart("@lok/redeem_token", "lok/users");
 export const LokGroup = buildSmart("@lok/group", "lok/groups");
 export const LokClient = buildSmart("@lok/client", "lok/clients");
+export const LokApp = buildSmart("@lok/app", "lok/apps");
+export const LokRelease = buildSmart("@lok/release", "lok/releases");
 export const LokService = buildSmart("@lok/service", "lok/services");
+export const LokBackend = buildSmart("@lok/backend", "lok/backends");
 export const LokServiceInstance = buildSmart(
   "@lok/serviceinstance",
   "lok/serviceinstances",
 );
+export const LokLayer = buildSmart("@lok/layer", "lok/layers");
 
 export const AlpakaRoom = buildSmart("@alpaka/room", "alpaka/rooms");
 export const LokComment = buildSmart("@lok/comment", "lok/comments");

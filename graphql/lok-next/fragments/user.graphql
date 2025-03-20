@@ -18,6 +18,9 @@ fragment DetailUser on User {
     id
     name
   }
+  profile {
+    ...Profile
+  }
 }
 
 fragment MeUser on User {

@@ -9,6 +9,11 @@ fragment CommentUser on User {
   id
   username
   avatar
+  profile {
+    avatar {
+      presignedUrl
+    }
+  }
 }
 
 fragment Mention on MentionDescendant {

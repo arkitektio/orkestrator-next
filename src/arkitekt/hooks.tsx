@@ -52,23 +52,11 @@ export const useArkitektLogin = () => {
         }
       }
 
-      let redirectUri: string;
-      if (window.electron) {
-        redirectUri = "http://127.0.0.1:9999/callback";
-      } else {
-        if (baseName && baseName !== "") {
-          redirectUri = window.location.origin + "/" + baseName + "/callback";
-        } else {
-          redirectUri = window.location.origin + "/callback";
-        }
-      }
-
       return login({
         grant: {
           clientId: configGroup.client_id,
           clientSecret: configGroup.client_secret,
           scopes: configGroup.scopes,
-          redirectUri: redirectUri,
         },
         endpoint: {
           base_url: configGroup.base_url,
@@ -114,25 +102,7 @@ export const buildArkitektConnect =
         request.manifest.requirements = requirements;
 
         if (window.electron) {
-          request.requestedClientType = "desktop";
-        } else {
-          request.requestedClientType = "website";
-        }
-
-        if (
-          request.requestedClientType == "website" &&
-          (!request.requestedRedirectURIs ||
-            request.requestedRedirectURIs.length === 0)
-        ) {
-          if (baseName && baseName !== "") {
-            request.requestedRedirectURIs = [
-              window.location.origin + "/" + baseName + "/callback",
-            ];
-          } else {
-            request.requestedRedirectURIs = [
-              window.location.origin + "/callback",
-            ];
-          }
+          request.requestedClientType = "development";
         }
 
         return load(request as FaktsRequest);

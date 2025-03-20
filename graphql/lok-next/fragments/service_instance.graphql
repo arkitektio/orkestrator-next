@@ -2,6 +2,13 @@ fragment ServiceInstance on ServiceInstance {
   id
   backend
   identifier
+  service {
+    identifier
+    id
+    description
+    name
+  }
+
   allowedUsers {
     ...ListUser
   }
@@ -17,6 +24,17 @@ fragment ServiceInstance on ServiceInstance {
   userDefinitions {
     ...ListUserDefinedServiceInstance
   }
+  mappings {
+    ...ListServiceInstanceMapping
+  }
+
+  layer {
+    id
+    name
+  }
+  logo {
+    presignedUrl
+  }
 }
 
 fragment ListServiceInstance on ServiceInstance {
@@ -28,5 +46,9 @@ fragment ListServiceInstance on ServiceInstance {
   }
   deniedUsers {
     ...ListUser
+  }
+  layer {
+    id
+    name
   }
 }

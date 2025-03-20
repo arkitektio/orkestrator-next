@@ -1,26 +1,26 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { Card } from "@/components/ui/card";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
-import { LokService } from "@/linkers";
+import { Card, CardContent } from "@/components/ui/card";
+import { FormSheetAction } from "@/components/ui/form-sheet-action";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { PlusIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {
-  BackendType,
-  useGetServiceInstanceQuery
-} from "../api/graphql";
-import { CreateServiceInstanceForm } from "../forms/CreateServiceInstance";
-import UserCard from "../components/cards/UserCard";
-import { UpdateServiceInstanceForm } from "../forms/UpdateServiceInstanceForm";
-import { FormSheetAction } from "@/components/ui/form-sheet-action";
+import { useGetServiceInstanceQuery } from "../api/graphql";
 import GroupCard from "../components/cards/GroupCard";
+import UserCard from "../components/cards/UserCard";
+import InstanceCompositionGraph from "../components/graphs/InstanceCompositionGraph";
+import { UpdateServiceInstanceForm } from "../forms/UpdateServiceInstanceForm";
+
+import { Image } from "@/components/ui/image";
+import { useResolve } from "@/datalayer/hooks/useResolve";
+import { LokLayer } from "@/linkers";
+
 export type IRepresentationScreenProps = {};
 
-const Page = asDetailQueryRoute(useGetServiceInstanceQuery, (props) => {
+const Page = asDetailQueryRoute(useGetServiceInstanceQuery, ({ data }) => {
   const navigate = useNavigate();
-
+  const resolve = useResolve();
   return (
     <PageLayout
       title="Lok"
@@ -38,51 +38,87 @@ const Page = asDetailQueryRoute(useGetServiceInstanceQuery, (props) => {
               </>
             }
           >
-            <UpdateServiceInstanceForm instance={props.data.serviceInstance}/>
+            <UpdateServiceInstanceForm instance={data.serviceInstance} />
           </FormSheetAction>
         </>
       }
     >
-      {props.data?.serviceInstance?.backend != BackendType.UserDefined && (
-        <> This backend is handled internally </>
-      )}
-
-      <ListRender array={props.data?.serviceInstance?.allowedUsers} title="Allowed Users">
-        {(item, index) => {
-          return <UserCard item={item} key={index}/>;
-        }}
-      </ListRender>
-
-      <ListRender array={props.data?.serviceInstance?.deniedUsers} title="Denied Users">
-        {(item, index) => {
-          return <UserCard item={item} key={index}/>;
-        }}
-      </ListRender>
-
-      <ListRender array={props.data?.serviceInstance?.allowedGroups} title="Allowed Groups">
-        {(item, index) => {
-          return <GroupCard item={item} key={index}/>;
-        }}
-      </ListRender>
-
-      <ListRender array={props.data?.serviceInstance?.deniedGroups} title="Denied Groups">
-        {(item, index) => {
-          return <GroupCard item={item} key={index}/>;
-        }}
-      </ListRender>
-
-
-      <ListRender array={props.data?.serviceInstance?.userDefinitions}>
-        {(item) => {
-          return (
-            <Card className="p-3">
-              {item.values.map((x) => (
-                <div>{x.key}</div>
-              ))}
+      <div className="grid grid-cols-6">
+        <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
+          <div>
+            <div className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl flex flex-col">
+              {data.serviceInstance.identifier}
+              <div className="text-lg text-gray-500">
+                {data.serviceInstance.backend}
+              </div>
+              <div className="text-lg text-gray-700 font-light">
+                Provides {data.serviceInstance.service.identifier}
+              </div>
+              <div className="text-lg text-gray-700 font-light">
+                {data.serviceInstance.service.description}
+              </div>
+              <LokLayer.DetailLink
+                object={data.serviceInstance.layer.id}
+                className="text-lg text-gray-700 font-light"
+              >
+                Reachable through {data.serviceInstance.layer.name}
+              </LokLayer.DetailLink>
+            </div>
+          </div>
+        </div>
+        <div className="col-span-2">
+          <div className="p-1">
+            <Card>
+              <CardContent className="flex aspect-[3/2] items-center justify-center p-6 max-h-[200px]">
+                {data.serviceInstance.logo && (
+                  <Image
+                    src={resolve(data?.serviceInstance?.logo.presignedUrl)}
+                    className="my-auto"
+                  />
+                )}
+              </CardContent>
             </Card>
-          );
+          </div>
+        </div>
+      </div>
+
+      <ListRender
+        array={data?.serviceInstance?.allowedUsers}
+        title="Allowed Users"
+      >
+        {(item, index) => {
+          return <UserCard item={item} key={index} />;
         }}
       </ListRender>
+
+      <ListRender
+        array={data?.serviceInstance?.deniedUsers}
+        title="Denied Users"
+      >
+        {(item, index) => {
+          return <UserCard item={item} key={index} />;
+        }}
+      </ListRender>
+
+      <ListRender
+        array={data?.serviceInstance?.allowedGroups}
+        title="Allowed Groups"
+      >
+        {(item, index) => {
+          return <GroupCard item={item} key={index} />;
+        }}
+      </ListRender>
+
+      <ListRender
+        array={data?.serviceInstance?.deniedGroups}
+        title="Denied Groups"
+      >
+        {(item, index) => {
+          return <GroupCard item={item} key={index} />;
+        }}
+      </ListRender>
+
+      <InstanceCompositionGraph service={data.serviceInstance} />
 
       <Separator />
     </PageLayout>

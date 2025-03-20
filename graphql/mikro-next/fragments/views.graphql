@@ -172,6 +172,15 @@ fragment PixelView on PixelView {
   id
 }
 
+fragment HistogramView on HistogramView {
+  ...View
+  id
+  bins
+  min
+  max
+  histogram
+}
+
 fragment DetailPixelView on PixelView {
   ...View
   id

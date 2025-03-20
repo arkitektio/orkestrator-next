@@ -19,7 +19,7 @@ import {
   Suspense,
   useCallback,
   useRef,
-  useState
+  useState,
 } from "react";
 import { useNavigate } from "react-router-dom";
 import * as THREE from "three";
@@ -57,8 +57,6 @@ export interface Panel {
   positionY: number;
 }
 
-
-
 export const calculateChunkGrid = (
   selection: (number | Slice | null)[],
   shape,
@@ -81,7 +79,6 @@ export const calculateChunkGrid = (
 
   return chunk_loaders;
 };
-
 
 export const useImageDimensions = (
   context: ListRgbContextFragment,
@@ -106,32 +103,88 @@ export const useAspectRatio = (context: ListRgbContextFragment) => {
   return width / height;
 };
 
+export const LayerRender = (props: {
+  derivedScaleView: ListRgbContextFragment["image"]["derivedScaleViews"][0];
+  view: RgbViewFragment;
+  z: number;
+  t: number;
+  xSize: number;
+  ySize: number;
+}) => {
+  const { derivedScaleView, view, z, t, xSize, ySize } = props;
 
+  const selection = [
+    {
+      start: view.cMin || null,
+      stop: view.cMax || null,
+      step: null,
+    },
+    t,
+    z,
+    { start: null, stop: null, step: null },
+    { start: null, stop: null, step: null },
+  ];
 
+  const chunk_loaders = calculateChunkGrid(
+    selection,
+    derivedScaleView.image.store.shape,
+    derivedScaleView.image.store.chunks,
+  );
 
+  const { renderView } = useArray({
+    store: derivedScaleView.image.store,
+  });
 
+  if (!derivedScaleView.image.store.chunks) {
+    return <div>Chunk shape not found</div>;
+  }
 
-
+  return (
+    <group key={`${z}-${t}-${view.id}`}>
+      {chunk_loaders.map((chunk_loader, index) => {
+        return (
+          <ChunkBitmapTexture
+            renderFunc={renderView}
+            chunk_coords={chunk_loader.chunk_coords}
+            chunk_shape={derivedScaleView.image.store.chunks}
+            key={`${index}-${z}-${t}-${view.id}`}
+            view={view}
+            t={t}
+            z={z}
+            cLimMin={view.contrastLimitMin}
+            cLimMax={view.contrastLimitMax}
+            imageWidth={xSize}
+            imageHeight={ySize}
+            scaleX={derivedScaleView.scaleX}
+            scaleY={derivedScaleView.scaleY}
+          />
+        );
+      })}
+    </group>
+  );
+};
 export const FinalRender = (props: RGBDProps) => {
   const [openPanels, setOpenPanels] = useState<Panel[]>([]);
 
+  const [rbgContext, setRgbContext] = useState(props.context);
+
   const [z, setZ] = useState(0);
   const [t, setT] = useState(0);
+  const [selectedScale, setSelectedScale] = useState(0);
 
-  const version = props.context.image.store.version;
-  const cSize = props.context.image?.store.shape?.at(0) || 1;
-  const zSize = props.context.image?.store.shape?.at(2) || 1;
-  const tSize = props.context.image?.store.shape?.at(1) || 1;
-  const xSize = props.context.image?.store.shape?.at(3) || 1;
-  const ySize = props.context.image?.store.shape?.at(4) || 1;
+  const version = rbgContext.image.store.version;
+  const cSize = rbgContext.image?.store.shape?.at(0) || 1;
+  const zSize = rbgContext.image?.store.shape?.at(2) || 1;
+  const tSize = rbgContext.image?.store.shape?.at(1) || 1;
+  const xSize = rbgContext.image?.store.shape?.at(3) || 1;
+  const ySize = rbgContext.image?.store.shape?.at(4) || 1;
 
-   // Get image dimensions for the auto-zoom camera
-   const imageDimensions = useImageDimensions(props.context);
-
+  // Get image dimensions for the auto-zoom camera
+  const imageDimensions = useImageDimensions(props.context);
 
   if (
-    props.context.image.store.chunks?.length !=
-    props.context.image.store.shape?.length
+    rbgContext.image.store.chunks?.length !=
+    rbgContext.image.store.shape?.length
   ) {
     return (
       <div>This new chunk loader needs chunks to be present. update mikro </div>
@@ -144,11 +197,19 @@ export const FinalRender = (props: RGBDProps) => {
 
   console.log("Views", props.context.views);
 
-  // Calculate which chunks are needed for the view
-
-  const { renderView } = useArray({
-    store: props.context.image.store,
+  const layers = props.context.image.derivedScaleViews.concat({
+    image: props.context.image,
+    scaleX: 1,
+    scaleY: 1,
+    scaleC: 1,
+    scaleT: 1,
+    scaleZ: 1,
+    __typename: "ScaleView",
+    id: "extra",
   });
+
+  const selectedLayers = layers;
+  // Calculate which chunks are needed for the view
 
   const chunk_shape = props.context.image.store.chunks;
 
@@ -196,6 +257,27 @@ export const FinalRender = (props: RGBDProps) => {
               </button>
             )}
           </div>
+          <div className="flex flex-col">
+            {layers.length > 1 && (
+              <>
+                <div className="flex flex-col">
+                  {layers.map((layer, index) => {
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          setSelectedScale(index);
+                        }}
+                        className="bg-blue-500 text-white"
+                      >
+                        {layer.scaleX}xl
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -210,90 +292,78 @@ export const FinalRender = (props: RGBDProps) => {
             regress={false}
           />
 
-            {props.context.views.map((view, viewIndex) => {
-              const selection = [
-                {
-                  start: view.cMin || null,
-                  stop: view.cMax || null,
-                  step: null,
-                },
-                t,
-                z,
-                { start: null, stop: null, step: null },
-                { start: null, stop: null, step: null },
-              ];
+          {props.context.views.map((view, viewIndex) => {
+            return (
+              <group key={view.id}>
+                {selectedLayers.map((layer) => {
+                  return (
+                    <LayerRender
+                      key={`${z}-${t}-${viewIndex}-${layer.id}`}
+                      derivedScaleView={layer}
+                      view={view}
+                      z={z}
+                      t={t}
+                      xSize={xSize}
+                      ySize={ySize}
+                    />
+                  );
+                })}
+              </group>
+            );
+          })}
 
-              const chunk_loaders = calculateChunkGrid(
-                selection,
-                props.context.image.store.shape,
-                chunk_shape,
-              );
-
-              return (
-                <>
-                  {chunk_loaders.map((chunk_loader, index) => {
-                    return (
-                      <ChunkBitmapTexture
-                        renderFunc={renderView}
-                        chunk_coords={chunk_loader.chunk_coords}
-                        chunk_shape={chunk_shape}
-                        key={`${index}-${z}-${t}-${viewIndex}`}
-                        view={view}
-                        t={t}
-                        z={z}
-                        imageWidth={xSize}
-                        imageHeight={ySize}
-                      />
-                    );
-                  })}
-                </>
-              );
-            })}
-
-            {props.rois.map((roi) => (
-              <ROIPolygon
-                key={roi.id}
-                roi={roi}
-                setOpenPanels={setOpenPanels}
-                imageWidth={xSize}
-                imageHeight={ySize}
-              />
-            ))}
+          {props.rois.map((roi) => (
+            <ROIPolygon
+              key={roi.id}
+              roi={roi}
+              setOpenPanels={setOpenPanels}
+              imageWidth={xSize}
+              imageHeight={ySize}
+            />
+          ))}
         </Canvas>
       </Suspense>
       {openPanels.map((panel) => (
-  <Card
-    key={`panel-${panel.identifier}-${panel.object}`}
-    style={{
-      position: "fixed",
-      top: `${panel.positionY}px`,
-      left: `${panel.positionX}px`, // Removed the +20px offset
-      zIndex: 10,
-      transform: "translate(-50%, -50%)", // Center the card on the calculated position
-    }}
-    className="p-2 shadow-lg"
-  >
-    <button 
-      className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
-      onClick={() => setOpenPanels(panels => 
-        panels.filter(p => !(p.identifier === panel.identifier && p.object === panel.object))
-      )}
-    >
-      ×
-    </button>
-    <DelegatingStructureWidget
-      port={{
-        key: "x",
-        nullable: false,
-        kind: PortKind.Structure,
-        identifier: panel.identifier,
-        __typename: "Port",
-        scope: PortScope.Global,
-      }}
-      value={panel.object}
-    />
-  </Card>
-))}
+        <Card
+          key={`panel-${panel.identifier}-${panel.object}`}
+          style={{
+            position: "fixed",
+            top: `${panel.positionY}px`,
+            left: `${panel.positionX}px`, // Removed the +20px offset
+            zIndex: 10,
+            transform: "translate(-50%, -50%)", // Center the card on the calculated position
+          }}
+          className="p-2 shadow-lg"
+        >
+          <button
+            className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
+            onClick={() =>
+              setOpenPanels((panels) =>
+                panels.filter(
+                  (p) =>
+                    !(
+                      p.identifier === panel.identifier &&
+                      p.object === panel.object
+                    ),
+                ),
+              )
+            }
+          >
+            ×
+          </button>
+          <DelegatingStructureWidget
+            port={{
+              key: "x",
+              nullable: false,
+              kind: PortKind.Structure,
+              identifier: panel.identifier,
+              __typename: "Port",
+              scope: PortScope.Global,
+            }}
+            value={panel.object}
+          />
+        </Card>
+      ))}
     </div>
   );
 };

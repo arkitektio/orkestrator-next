@@ -1,22 +1,41 @@
-export interface PossibleTypesResultData {
-  possibleTypes: {
-    [key: string]: string[];
-  };
-}
-const result: PossibleTypesResultData = {
-  possibleTypes: {
-    Accessor: ["ImageAccessor", "LabelAccessor"],
-    DatasetImageFile: ["Dataset", "File", "Image"],
-    Plot: ["RenderedPlot"],
-    Render: ["Snapshot", "Video"],
-    RenderNode: ["ContextNode", "GridNode", "OverlayNode", "SplitNode"],
-    View: [
+
+      export interface PossibleTypesResultData {
+        possibleTypes: {
+          [key: string]: string[]
+        }
+      }
+      const result: PossibleTypesResultData = {
+  "possibleTypes": {
+    "Accessor": [
+      "ImageAccessor",
+      "LabelAccessor"
+    ],
+    "DatasetImageFile": [
+      "Dataset",
+      "File",
+      "Image"
+    ],
+    "Plot": [
+      "RenderedPlot"
+    ],
+    "Render": [
+      "Snapshot",
+      "Video"
+    ],
+    "RenderNode": [
+      "ContextNode",
+      "GridNode",
+      "OverlayNode",
+      "SplitNode"
+    ],
+    "View": [
       "AcquisitionView",
       "AffineTransformationView",
       "ChannelView",
       "ContinousScanView",
       "DerivedView",
       "FileView",
+      "HistogramView",
       "LabelView",
       "OpticsView",
       "PixelView",
@@ -25,8 +44,9 @@ const result: PossibleTypesResultData = {
       "ScaleView",
       "StructureView",
       "TimepointView",
-      "WellPositionView",
-    ],
-  },
+      "WellPositionView"
+    ]
+  }
 };
-export default result;
+      export default result;
+    

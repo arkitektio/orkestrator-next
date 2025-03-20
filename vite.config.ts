@@ -17,4 +17,8 @@ export default defineConfig({
       "@": resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    include: ["zstd"],
+    force: true,
+  },
 });

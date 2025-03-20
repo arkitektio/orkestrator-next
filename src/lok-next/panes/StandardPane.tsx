@@ -59,6 +59,13 @@ export const NavigationPane = (props: {}) => {
           Users
         </DroppableNavLink>
         <DroppableNavLink
+          to="/lok/apps"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <User className="h-4 w-4" />
+          Apps
+        </DroppableNavLink>
+        <DroppableNavLink
           to="/lok/rooms"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >

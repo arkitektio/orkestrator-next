@@ -53,8 +53,8 @@ export const Comment = ({ comment }: { comment: ListCommentType }) => {
               <AvatarImage
                 className="h-10 w-10 rounded-full hover:ring-pink-500 hover:ring-2 cursor-pointer"
                 src={
-                  comment?.user?.avatar
-                    ? s3resolve(comment?.user?.avatar)
+                  comment?.user?.profile.avatar?.presignedUrl
+                    ? s3resolve(comment?.user?.profile.avatar?.presignedUrl)
                     : `https://eu.ui-avatars.com/api/?name=${comment?.user?.username}&background=random`
                 }
                 alt=""
@@ -121,11 +121,11 @@ export const Comment = ({ comment }: { comment: ListCommentType }) => {
           {showReply && (
             <div className="text-black mt-2 flex flex-row">
               <button type="button" onClick={() => setShowReply(false)}>
-                hide{" "}
+                x{" "}
               </button>
-              <div className="flex-grow">
+              <Card className="flex-grow">
                 <CommentEdit parent={comment?.id} />
-              </div>
+              </Card>
             </div>
           )}
         </div>

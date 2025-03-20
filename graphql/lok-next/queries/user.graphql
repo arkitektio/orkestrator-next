@@ -16,6 +16,12 @@ query DetailUser($id: ID!) {
   }
 }
 
+query Users($filters: UserFilter, $pagination: OffsetPaginationInput) {
+  users(filters: $filters, pagination: $pagination) {
+    ...ListUser
+  }
+}
+
 query UserOptions($search: String, $values: [ID!]) {
   options: users(filters: { search: $search, ids: $values }) {
     value: id

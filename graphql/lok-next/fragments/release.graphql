@@ -1,7 +1,9 @@
 fragment DetailRelease on Release {
   id
   version
-  logo
+  logo {
+    presignedUrl
+  }
   app {
     ...ListApp
   }
@@ -13,7 +15,9 @@ fragment DetailRelease on Release {
 fragment ListRelease on Release {
   id
   version
-  logo
+  logo {
+    presignedUrl
+  }
   app {
     ...ListApp
   }

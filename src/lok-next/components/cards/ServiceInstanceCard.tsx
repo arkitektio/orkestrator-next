@@ -1,12 +1,7 @@
-import { LokClient, LokService, LokServiceInstance } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
-import {
-  BackendType,
-  ListClientFragment,
-  ListServiceFragment,
-  ListServiceInstanceFragment,
-} from "../../api/graphql";
 import { Card } from "@/components/ui/card";
+import { LokServiceInstance } from "@/linkers";
+import { MateFinder } from "../../../mates/types";
+import { ListServiceInstanceFragment } from "../../api/graphql";
 
 interface Props {
   item: ListServiceInstanceFragment;
@@ -16,14 +11,11 @@ interface Props {
 const TheCard = ({ item, mates }: Props) => {
   return (
     <LokServiceInstance.Smart object={item?.id} mates={mates}>
-      <Card className="p-3">
-        {item.identifier}<br />
+      <Card className="p-3 flex flex-col">
         <LokServiceInstance.DetailLink object={item.id} className="">
-          {item.backend}
+          {item.identifier}
         </LokServiceInstance.DetailLink>
-        {item.backend != BackendType.UserDefined && (
-          <p className="text-xs mt-2"> This backend is handled internally and you cannot change its configuration</p>
-        )}
+        <div className="text-xs">configured by {item.backend}</div>
       </Card>
     </LokServiceInstance.Smart>
   );

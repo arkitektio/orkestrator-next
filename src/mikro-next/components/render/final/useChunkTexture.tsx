@@ -2,15 +2,31 @@ import { useEffect, useState } from "react";
 import * as THREE from "three";
 import { Chunk, DataType } from "zarrita";
 import { mapDTypeToMinMax } from "./utils";
+import { useFrame } from "@react-three/fiber";
+
+const f = 2;
+
+const isScaled = (zoom: number, xScale: number, yScale: number) => {
+  const window = (1 / zoom) * f;
+  console.log("window", window, xScale, yScale);
+
+  return xScale == 1;
+};
 
 export const useAsyncChunk = (props: {
   renderFunc: any;
   chunk_coords: number[];
   chunk_shape: number[];
+  scaleX: number;
+  scaleY: number;
+  imageHeight: number;
+  imageWidth: number;
   c: number;
   t: number;
   z: number;
 }) => {
+  const [render, setRender] = useState(false);
+
   const [texture, setTexture] = useState<{
     texture: THREE.Texture | null;
     min: number;
@@ -74,22 +90,76 @@ export const useAsyncChunk = (props: {
     setTexture({ texture, min: min, max: max });
   };
 
-  useEffect(() => {
-    let abortController = new AbortController();
-    console.log(
-      "Rendering chunk",
-      props.chunk_coords,
-      props.chunk_shape,
-      props.c,
-      props.t,
-      props.z,
-    );
-    calculateImageData(abortController.signal);
+  const shouldRender = true;
 
-    return () => {
-      abortController.abort();
-    };
-  }, [props.chunk_coords, props.chunk_shape, props.c, props.t, props.z]);
+  const box_shape_3d = props.chunk_shape?.slice(3, 5);
+  const box_shape = [
+    box_shape_3d[0] * props.scaleX,
+    box_shape_3d[1] * props.scaleY,
+    1,
+  ];
+
+  // Get the position from coordinates
+  const box_position_3d = props.chunk_coords.slice(3, 5);
+
+  const xPosition =
+    box_position_3d[1] * box_shape[1] + box_shape[1] / 2 - props.imageWidth / 2;
+  const yPosition =
+    box_position_3d[0] * box_shape[0] +
+    box_shape[0] / 2 -
+    props.imageHeight / 2;
+
+  useFrame((state) => {
+    if (state.camera.projectionMatrix) {
+      // Convert world position to normalized device coordinates (NDC)
+      const vector = new THREE.Vector3(xPosition, yPosition, 0);
+      vector.project(state.camera);
+
+      // If the vector is within the visible range (-1 to 1 for both x and y), it's in view
+      const isInView =
+        vector.x >= -1 &&
+        vector.x <= 1 &&
+        vector.y >= -1 &&
+        vector.y <= 1 &&
+        isScaled(state.camera.zoom, props.scaleX, props.scaleX);
+
+      if (isInView && !render) {
+        setRender(isInView);
+        console.log("Starting rendering chunk", props.chunk_coords);
+      } else if (!isInView && render) {
+        console.log("Stopping rendering chunk", props.chunk_coords);
+        setRender(false);
+      }
+    }
+  });
+
+  useEffect(() => {
+    if (shouldRender) {
+      let abortController = new AbortController();
+      console.log(
+        "Rendering chunk",
+        props.chunk_coords,
+        props.chunk_shape,
+        props.c,
+        props.t,
+        props.z,
+      );
+      calculateImageData(abortController.signal);
+
+      return () => {
+        abortController.abort();
+      };
+    } else {
+      setTexture(null);
+    }
+  }, [
+    props.chunk_coords,
+    props.chunk_shape,
+    props.c,
+    props.t,
+    props.z,
+    shouldRender,
+  ]);
 
   return texture;
 };

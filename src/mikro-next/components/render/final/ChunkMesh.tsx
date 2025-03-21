@@ -97,6 +97,20 @@ export const ChunkBitmapTexture = ({
 
   const gl = useThree((state) => state.gl);
 
+  const congruentView = view.congruentViews?.at(0);
+  console.log(congruentView);
+
+  cLimMax =
+    cLimMax ||
+    (congruentView?.__typename == "HistogramView"
+      ? congruentView?.max
+      : undefined);
+  cLimMin =
+    cLimMin ||
+    (congruentView?.__typename == "HistogramView"
+      ? congruentView?.min
+      : undefined);
+
   return (
     <mesh ref={meshRef} position={[xPosition, yPosition, 0]} scale={[1, 1, 1]}>
       <planeGeometry args={[box_shape[1], box_shape[0]]} />

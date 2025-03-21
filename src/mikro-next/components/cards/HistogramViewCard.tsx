@@ -1,7 +1,10 @@
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { MikroHistogramView } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
-import { HistogramViewFragment } from "../../api/graphql";
+import {
+  HistogramViewFragment,
+  useDeleteHistogramViewMutation,
+} from "../../api/graphql";
 import { ViewCard } from "./meta/ViewCard";
 import {
   Bar,
@@ -18,6 +21,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { c } from "node_modules/@udecode/plate-emoji/dist/IndexSearch-Dvqq913n";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   view: HistogramViewFragment;
@@ -41,6 +45,8 @@ const chartConfig = {
 };
 
 const TheCard = ({ view, mates }: Props) => {
+  const [deleteHistogram] = useDeleteHistogramViewMutation();
+
   return (
     <MikroHistogramView.Smart object={view?.id} mates={mates}>
       <ViewCard view={view}>
@@ -52,6 +58,13 @@ const TheCard = ({ view, mates }: Props) => {
                   Histogram
                 </MikroHistogramView.DetailLink>
               )}
+              <Button
+                onClick={() => deleteHistogram({ variables: { id: view.id } })}
+                variant={"outline"}
+                size={"sm"}
+              >
+                x
+              </Button>
               <div className="w-full h-[80px] mt-2">
                 <ChartContainer
                   config={chartConfig}

@@ -86,6 +86,10 @@ fragment RGBView on RGBView {
       scaleC
     }
   }
+  congruentViews(types: [HISTOGRAM]) {
+    ...HistogramView
+  }
+
   colorMap
   contrastLimitMin
   contrastLimitMax

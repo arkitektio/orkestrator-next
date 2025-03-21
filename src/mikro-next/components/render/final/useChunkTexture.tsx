@@ -8,8 +8,6 @@ const f = 2;
 
 const isScaled = (zoom: number, xScale: number, yScale: number) => {
   const window = (1 / zoom) * f;
-  console.log("window", window, xScale, yScale);
-
   return xScale == 1;
 };
 
@@ -53,6 +51,8 @@ export const useAsyncChunk = (props: {
 
     let [min, max] = mapDTypeToMinMax(dtype);
 
+    console.log(chunk.data);
+
     if (chunk.data instanceof Uint8Array) {
       textureData = array.data;
       format = THREE.RedFormat;
@@ -67,6 +67,18 @@ export const useAsyncChunk = (props: {
       textureData = new Float32Array(array.data);
       format = THREE.RedFormat;
       type = THREE.FloatType;
+    } else if (array.data instanceof Uint16Array) {
+      textureData = new Float32Array(array.data);
+      format = THREE.RedFormat;
+      type = THREE.FloatType;
+    } else if (array.data instanceof Uint32Array) {
+      textureData = new Float32Array(array.data);
+      format = THREE.RedFormat;
+      type = THREE.FloatType;
+    } else if (array.data instanceof Int32Array) {
+      textureData = new Int32Array(array.data);
+      format = THREE.RedFormat;
+      type = THREE.IntType;
     } else if (array.data instanceof Uint16Array) {
       textureData = new Float32Array(array.data);
       format = THREE.RedFormat;
@@ -125,9 +137,7 @@ export const useAsyncChunk = (props: {
 
       if (isInView && !render) {
         setRender(isInView);
-        console.log("Starting rendering chunk", props.chunk_coords);
       } else if (!isInView && render) {
-        console.log("Stopping rendering chunk", props.chunk_coords);
         setRender(false);
       }
     }

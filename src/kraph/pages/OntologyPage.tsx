@@ -22,6 +22,7 @@ import StructureCategoryCard from "../components/cards/StructureCategoryCard";
 import CreateExpressionForm from "../forms/CreateStructureCategoryForm";
 import { UpdateOntologyForm } from "../forms/UpdateOntologyForm";
 import { ListRender } from "@/components/layout/ListRender";
+import OntologyGraph from "../components/designer/OntologyGraph";
 
 export default asDetailQueryRoute(useGetOntologyQuery, ({ data, refetch }) => {
   const uploadFile = useMediaUpload();
@@ -109,6 +110,8 @@ export default asDetailQueryRoute(useGetOntologyQuery, ({ data, refetch }) => {
           </div>
         </div>
         <DragZone uploadFile={uploadFile} createFile={createFile} />
+
+        <OntologyGraph ontology={data.ontology} />
 
         <ListRender
           title="Entities"

@@ -22,6 +22,10 @@ mutation DeleteChannelView($id: ID!) {
   deleteChannelView(input: { id: $id })
 }
 
+mutation DeleteHistogramView($id: ID!) {
+  deleteHistogramView(input: { id: $id })
+}
+
 mutation CreateRgbView(
   $image: ID!
   $context: ID!

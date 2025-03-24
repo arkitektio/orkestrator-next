@@ -258,7 +258,7 @@ export default asDetailQueryRoute(useGetImageQuery, ({ data, refetch }) => {
                 </ResponsiveContainerGrid>
                 {data?.image.derivedFromViews?.length > 0 && (
                   <>
-                    <div className="font-light">Derived Images</div>
+                    <div className="font-light">Derived images</div>
                     <div className="flex flex-col gap-2 mt-2">
                       {data?.image.derivedFromViews?.map((view, index) => (
                         <MikroImage.Smart object={view.image.id}>

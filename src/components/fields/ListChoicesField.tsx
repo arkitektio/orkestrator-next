@@ -27,6 +27,7 @@ import {
 } from "../ui/form";
 import { FieldProps } from "./types";
 import { SearchField } from "./SearchField";
+import { ListSearchField } from "./ListSearchField";
 
 export type Option = {
   label: string;
@@ -34,7 +35,7 @@ export type Option = {
   description?: string;
 };
 
-export const ChoicesField = (props: FieldProps & { options: Option[] }) => {
+export const ListChoicesField = (props: FieldProps & { options: Option[] }) => {
   const [open, setOpen] = React.useState(false);
 
   console.log(props.options);
@@ -56,5 +57,5 @@ export const ChoicesField = (props: FieldProps & { options: Option[] }) => {
 
   const form = useFormContext();
 
-  return <SearchField search={search} {...props} />;
+  return <ListSearchField search={search} {...props} />;
 };

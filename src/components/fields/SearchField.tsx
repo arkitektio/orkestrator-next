@@ -1,6 +1,5 @@
-import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
+import { CheckIcon } from "@radix-ui/react-icons";
 
-import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -10,23 +9,16 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import {
-  FormControl,
   FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { cn, notEmpty } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { FieldProps } from "./types";
-import { set } from "date-fns";
 
 export type Option = {
   label: string;
@@ -44,7 +36,7 @@ export const ButtonLabel = (props: {
     props
       .search({ values: [props.value] })
       .then((res) => {
-        setOption(res[0]);
+        setOption(res[0] || null);
       })
       .catch((err) => {
         setError(err.message);
@@ -89,7 +81,7 @@ export const SearchField = ({
 
   const [options, setOptions] = useState<(Option | null | undefined)[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>();
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
 
@@ -155,7 +147,6 @@ export const SearchField = ({
                   <CommandInput
                     onKeyDown={handleKeyDown}
                     placeholder={commandPlaceholder}
-                    ref={inputRef}
                     onValueChange={(e) => {
                       setInputValue(e);
                       query(e);
@@ -174,7 +165,7 @@ export const SearchField = ({
                         form.setValue(name, undefined, {
                           shouldValidate: true,
                         });
-                        inputRef.current.focus();
+                        inputRef.current?.focus();
                       }}
                     >
                       <ButtonLabel search={search} value={field.value} />
@@ -184,7 +175,7 @@ export const SearchField = ({
               </div>
               <div className="relative mt-2">
                 {open && (
-                  <CommandList>
+                  <CommandList slot="list" className="w-full">
                     <div className="absolute top-0 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
                       <CommandEmpty>{noOptionFoundPlaceholder}</CommandEmpty>
                       {error && (
@@ -192,42 +183,44 @@ export const SearchField = ({
                           {error && <CommandItem>{error}</CommandItem>}
                         </CommandGroup>
                       )}
-                      <CommandGroup>
-                        {options.filter(notEmpty).map((option) => (
-                          <CommandItem
-                            value={option.value}
-                            key={option.value}
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                            }}
-                            onSelect={() => {
-                              if (field.value !== option.value) {
-                                form.setValue(name, option.value, {
-                                  shouldValidate: true,
-                                });
-                                setInputValue("");
-                              } else {
-                                form.setValue(name, undefined, {
-                                  shouldValidate: true,
-                                });
-                                setInputValue("");
-                              }
-                              setOpen(false);
-                            }}
-                          >
-                            {option.label}
-                            <CheckIcon
-                              className={cn(
-                                "ml-auto h-4 w-4",
-                                option.value === field.value
-                                  ? "opacity-100"
-                                  : "opacity-0",
-                              )}
-                            />
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
+                      {options.length > 0 && (
+                        <CommandGroup heading="Options">
+                          {options?.filter(notEmpty).map((option, index) => (
+                            <CommandItem
+                              value={option.value}
+                              key={index}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                              }}
+                              onSelect={() => {
+                                if (field.value !== option.value) {
+                                  form.setValue(name, option.value, {
+                                    shouldValidate: true,
+                                  });
+                                  setInputValue("");
+                                } else {
+                                  form.setValue(name, null, {
+                                    shouldValidate: false,
+                                  });
+                                  setInputValue("");
+                                }
+                                setOpen(false);
+                              }}
+                            >
+                              {option.label}
+                              <CheckIcon
+                                className={cn(
+                                  "ml-auto h-4 w-4",
+                                  option.value === field.value
+                                    ? "opacity-100"
+                                    : "opacity-0",
+                                )}
+                              />
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      )}
                     </div>
                   </CommandList>
                 )}

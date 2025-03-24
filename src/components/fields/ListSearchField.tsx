@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
+  CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
@@ -22,7 +23,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn, notEmpty } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { Badge } from "../ui/badge";
 import { FieldProps } from "./types";
@@ -51,7 +52,7 @@ export const ListButtonLabel = (props: {
       return;
     }
     props
-      .search({ values: props.value})
+      .search({ values: props.value })
       .then((res) => {
         setOptions(res.filter(notEmpty));
       })
@@ -65,15 +66,16 @@ export const ListButtonLabel = (props: {
   };
 
   return (
-    <div className="gap-2 flex flex-row flex-wrap">
+    <div className="gap-2 flex flex-row p-1">
       {options.map((l, index) => (
-        <Badge key={index} onDoubleClick={() => remove(l.value)}>
+        <Badge
+          key={index}
+          onClick={() => remove(l.value)}
+          className="cursor-pointer px-1 py-1 bg-slate-300 my-2"
+        >
           {l.label}
         </Badge>
       ))}
-      {options.length == 0 && (
-        <span className="text-muted-foreground">No options selected</span>
-      )}
       {error}
     </div>
   );
@@ -93,6 +95,7 @@ export type ListSearchFieldProps = {
   commandPlaceholder?: string;
   noOptionFoundPlaceholder?: string;
   search: SearchFunction;
+  className?: string;
 } & FieldProps;
 
 export const ListSearchField = ({
@@ -100,6 +103,7 @@ export const ListSearchField = ({
   label,
   validate,
   search,
+  className,
   placeholder = "Please Select",
   commandPlaceholder = "Search...",
   noOptionFoundPlaceholder = "No options found",
@@ -109,26 +113,54 @@ export const ListSearchField = ({
 
   const [options, setOptions] = useState<(Option | null | undefined)[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState("");
 
   const query = (string: string) => {
     search({ search: string })
       .then((res) => {
-        setOptions(res);
+        setOptions(res || []);
+        setOpen(true);
+        setError(null);
       })
       .catch((err) => {
         setError(err.message);
+        setOptions([]);
       });
   };
 
   useEffect(() => {
     search({})
       .then((res) => {
-        setOptions(res);
+        setOptions(res || []);
+        setError(null);
       })
       .catch((err) => {
-        setError(err.message);
+        setError(err.message || "Error");
+        setOptions([]);
       });
   }, [name, search]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      const input = inputRef.current;
+      if (input) {
+        if (e.key === "Delete" || e.key === "Backspace") {
+          if (input.value === "") {
+            form.setValue(name, undefined, {
+              shouldValidate: true,
+            });
+          }
+        }
+        // This is not a default behaviour of the <input /> field
+        if (e.key === "Escape") {
+          input.blur();
+        }
+      }
+    },
+    [],
+  );
 
   return (
     <FormField
@@ -136,109 +168,119 @@ export const ListSearchField = ({
       name={name}
       rules={{ validate: validate }}
       render={({ field }) => (
-        <FormItem>
-          <Popover>
-            <FormItem className="flex flex-col">
-              {label && <FormLabel>{label ? label : name}</FormLabel>}
-              {error}
-              <PopoverTrigger asChild>
-                <FormControl>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    className={cn(
-                      "justify-between overflow-hidden truncate ellipsis",
-                      !field.value && "text-muted-foreground",
-                    )}
-                  >
-                    {field.value ? (
-                      <ListButtonLabel
-                        search={search}
-                        value={field.value}
-                        placeholder={placeholder}
-                        setValue={(value) => {
-                          form.setValue(name, value, { shouldValidate: true });
-                        }}
-                      />
-                    ) : (
-                      <>{error ? error : placeholder}</>
-                    )}
-                    <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </FormControl>
-              </PopoverTrigger>
-
-              {description && <FormDescription>{description}</FormDescription>}
-              <FormMessage />
-            </FormItem>
-            <PopoverContent className="w-[400px] p-0">
-              <Command shouldFilter={false}>
-                <CommandInput
-                  placeholder={commandPlaceholder}
-                  className="h-9"
-                  onValueChange={(e) => {
-                    query(e);
-                  }}
-                />
-                <CommandEmpty>{noOptionFoundPlaceholder}</CommandEmpty>
-                <CommandList className="z-50 pointer-events-auto">
-                  {options.length > 0 && (
-                    <>
-                      {options.filter(notEmpty).map((option) => (
-                        <CommandItem
-                          value={option.value}
-                          key={option.value}
-                          onSelect={() => {
-                            console.log(option.value);
-                            if (field.value == undefined) {
-                              field.onChange([option.value]);
-                            } else {
-                              if (
-                                field.value.find(
-                                  (v) => v == option.value,
-                                )
-                              ) {
-                                form.setValue(
-                                  name,
-                                  field.value.filter(
-                                    (v) => v !== option.value,
-                                  ),
-                                  { shouldValidate: true },
-                                );
-                              } else {
-                                form.setValue(
-                                  name,
-                                  [
-                                    ...field.value,
-                                    option.value,
-                                  ].filter(notEmpty),
-                                  { shouldValidate: true },
-                                );
-                              }
-                            }
-                          }}
-                          onClick={() => {
-                            console.log(option.value);
-                          }}
-                        >
-                          {option.label}
-                          <CheckIcon
-                            className={cn(
-                              "ml-auto h-4 w-4",
-                              field.value && field.value.includes(option.value)
-                                ? "opacity-100"
-                                : "opacity-0",
-                            )}
-                          />
-                        </CommandItem>
-                      ))}
-                    </>
+        <>
+          <FormItem className={cn("flex flex-col dark:text-white", className)}>
+            {label != undefined && <FormLabel>{label}</FormLabel>}
+            <Command
+              shouldFilter={false}
+              className="overflow-visible bg-transparent"
+            >
+              <div className="group rounded-md border border-input text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                <div className="w-full relative flex flex-row flex-wrap w-full">
+                  {field.value && (
+                    <ListButtonLabel
+                      search={search}
+                      value={field.value}
+                      setValue={(value) => {
+                        form.setValue(name, value, { shouldValidate: true });
+                        setInputValue("");
+                        inputRef.current?.focus();
+                        setOpen(true);
+                      }}
+                    />
                   )}
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-        </FormItem>
+                  <CommandInput
+                    onKeyDown={handleKeyDown}
+                    placeholder={placeholder || commandPlaceholder}
+                    onValueChange={(e) => {
+                      setInputValue(e);
+                      query(e);
+                    }}
+                    value={inputValue}
+                    onBlur={() => setOpen(false)}
+                    onFocus={() => setOpen(true)}
+                    className="flex-grow"
+                  />
+                </div>
+              </div>
+              <div className="relative mt-2">
+                {open && (
+                  <CommandList slot="list" className="w-full">
+                    <div className="absolute top-0 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
+                      <CommandEmpty>{noOptionFoundPlaceholder}</CommandEmpty>
+                      {error && (
+                        <CommandGroup heading="Error">
+                          {error && <CommandItem>{error}</CommandItem>}
+                        </CommandGroup>
+                      )}
+                      {options.length > 0 && (
+                        <CommandGroup heading="Options">
+                          {options?.filter(notEmpty).map((option, index) => (
+                            <CommandItem
+                              value={option.value}
+                              key={index}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                              }}
+                              onSelect={() => {
+                                if (
+                                  field.value &&
+                                  Array.isArray(field.value) &&
+                                  field.value.includes(option.value)
+                                ) {
+                                  form.setValue(
+                                    name,
+                                    field.value.filter(
+                                      (val) => val !== option.value,
+                                    ),
+                                    {
+                                      shouldValidate: true,
+                                    },
+                                  );
+                                  setInputValue("");
+                                } else {
+                                  form.setValue(
+                                    name,
+                                    [
+                                      ...(field.value &&
+                                      Array.isArray(field.value)
+                                        ? field.value
+                                        : []),
+                                      option.value,
+                                    ],
+                                    {
+                                      shouldValidate: false,
+                                    },
+                                  );
+                                  setInputValue("");
+                                }
+                              }}
+                            >
+                              {option.label}
+                              <CheckIcon
+                                className={cn(
+                                  "ml-auto h-4 w-4",
+                                  field.value &&
+                                    Array.isArray(field.value) &&
+                                    field.value.includes(option.value)
+                                    ? "opacity-100"
+                                    : "opacity-0",
+                                )}
+                              />
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      )}
+                    </div>
+                  </CommandList>
+                )}
+              </div>
+            </Command>
+            {description && <FormDescription>{description}</FormDescription>}
+            <FormMessage />
+          </FormItem>
+        </>
       )}
     />
   );

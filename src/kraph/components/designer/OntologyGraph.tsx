@@ -1,27 +1,34 @@
-import React, { useCallback, useState } from "react";
-import ReactFlow, {
-  addEdge,
-  Node,
+import { OntologyFragment } from "@/kraph/api/graphql";
+import {
+  Connection,
+  ReactFlow,
   ReactFlowInstance,
   useEdgesState,
   useNodesState,
-} from "reactflow";
-import StructureCategoryNode from "./nodes/StructureCategoryNode";
-import GenericCategoryNode from "./nodes/GenericCategoryNode";
-import MeasurementEdge from "./edges/MeasurementEdge";
-import {
-  ListGenericCategoryFragment,
-  ListStructureCategoryFragment,
-  ListStructureCategoryFragmentDoc,
-  OntologyFragment,
-} from "@/kraph/api/graphql";
-import { ClickContextualParams, NodeData, StagingNodeParams } from "./types";
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import React, { useState } from "react";
 import { ClickContextual } from "./contextuals/ClickContextuals";
-import StagingStructureNode from "./nodes/StagingStructureNode";
-import StagingGenericNode from "./nodes/StagingGenericNode";
+import { ConnectContextual } from "./contextuals/ConnectContextual";
+import MeasurementEdge from "./edges/MeasurementEdge";
 import "./index.css";
+import GenericCategoryNode from "./nodes/GenericCategoryNode";
+import StagingGenericNode from "./nodes/StagingGenericNode";
+import StagingStructureNode from "./nodes/StagingStructureNode";
+import StructureCategoryNode from "./nodes/StructureCategoryNode";
+import {
+  ClickContextualParams,
+  ConnectContextualParams,
+  MyEdge,
+  MyNode,
+  StagingEdgeParams,
+  StagingNodeParams,
+} from "./types";
+import RelationEdge from "./edges/RelationEdge";
+import StagingRelationEdge from "./edges/StagingRelationEdge";
+import StagingMeasurementEdge from "./edges/StagingMeasurementEdge";
 
-const ontologyToNodes = (ontology: OntologyFragment) => {
+const ontologyToNodes = (ontology: OntologyFragment): MyNode[] => {
   const structureNodes = ontology.structureCategories.map((cat, index) => ({
     id: cat.id,
     position: {
@@ -39,7 +46,7 @@ const ontologyToNodes = (ontology: OntologyFragment) => {
           200,
     },
     data: cat,
-    type: "structurecategory",
+    type: "structurecategory" as const,
   }));
 
   const genericNodes = ontology.genericCategories.map((entity, index) => ({
@@ -55,7 +62,7 @@ const ontologyToNodes = (ontology: OntologyFragment) => {
           200,
     },
     data: entity,
-    type: "genericcategory",
+    type: "genericcategory" as const,
   }));
 
   return [...structureNodes, ...genericNodes];
@@ -67,7 +74,7 @@ const ontologyToEdges = (ontology: OntologyFragment) => {
     source: cat.left?.id || "start",
     target: cat.right?.id || "end",
     data: cat,
-    type: "measurementcategory",
+    type: "measurement" as const,
   }));
 
   return edges;
@@ -81,28 +88,36 @@ const nodeTypes = {
 };
 
 const edgeTypes = {
-  measurementcategory: MeasurementEdge,
+  measurement: MeasurementEdge,
+  stagingrelation: StagingRelationEdge,
+  stagingmeasurement: StagingMeasurementEdge,
+  relation: RelationEdge,
 };
+
+function calculateMidpoint(
+  p1: { x: number; y: number },
+  p2: { x: number; y: number },
+) {
+  return {
+    x: (p1.x + p2.x) / 2,
+    y: (p1.y + p2.y) / 2,
+  };
+}
 
 export default ({ ontology }: { ontology: OntologyFragment }) => {
   const reactFlowWrapper = React.useRef<HTMLDivElement | null>(null);
   const [reactFlowInstance, setReactFlowInstance] =
     React.useState<ReactFlowInstance | null>(null);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState<NodeData>(
+  const [nodes, setNodes, onNodesChange] = useNodesState<MyNode>(
     ontologyToNodes(ontology),
   );
-  const [edges, setEdges, onEdgesChange] = useEdgesState(
+  const [edges, setEdges, onEdgesChange] = useEdgesState<MyEdge>(
     ontologyToEdges(ontology),
   );
 
-  const onConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges],
-  );
-
   const [showClickContextual, setShowClickContextual] = useState<
-    undefined | ClickContextualParams
+    undefined | ClickContextualParams | ConnectContextualParams
   >();
 
   React.useEffect(() => {
@@ -110,6 +125,10 @@ export default ({ ontology }: { ontology: OntologyFragment }) => {
       reactFlowInstance.fitView({ padding: 0.2 });
     }
   }, [reactFlowInstance]);
+
+  const save = () => {
+    console.log("Save");
+  };
 
   const onPaneClick = (event: React.MouseEvent) => {
     console.log("onPaneClick", event);
@@ -134,6 +153,7 @@ export default ({ ontology }: { ontology: OntologyFragment }) => {
       console.log("onPaneClick", position);
 
       setShowClickContextual({
+        type: "click",
         event: event,
         position: position,
       });
@@ -142,18 +162,57 @@ export default ({ ontology }: { ontology: OntologyFragment }) => {
     }
   };
 
-  const addStagingNode = (params: StagingNodeParams) => {
-    if (!reactFlowWrapper.current) {
-      return;
-    }
+  const onConnect = (connection: Connection) => {
+    console.log("onConnect", connection);
     if (!reactFlowInstance) {
       return;
     }
+
+    // Once we have a connection we resset the
+
+    const nodes = (reactFlowInstance?.getNodes() as MyNode[]) || [];
+
+    let leftNode = nodes.find((n) => n.id == connection.source);
+    let rightNode = nodes.find((n) => n.id == connection.target);
+
+    if (!leftNode || !rightNode) {
+      return;
+    }
+
+    console.log(leftNode.position);
+    console.log(rightNode.position);
+    console.log(leftNode.position);
+    console.log(rightNode.position);
+
+    // Calcluate to Screen Position
+    let screenposition = reactFlowInstance.flowToScreenPosition(
+      calculateMidpoint(leftNode.position, rightNode.position),
+    );
+
     const reactFlowBounds = reactFlowWrapper?.current?.getBoundingClientRect();
 
-    let position = reactFlowInstance.project({
-      x: params.event.clientX - (reactFlowBounds?.left || 0),
-      y: params.event.clientY - (reactFlowBounds?.top || 0),
+    let position = {
+      x: screenposition.x - (reactFlowBounds?.left || 0),
+      y: screenposition.y - (reactFlowBounds?.top || 0),
+    };
+
+    setShowClickContextual({
+      type: "connect",
+      leftNode: leftNode,
+      rightNode: rightNode,
+      connection: connection,
+      position: position,
+    });
+  };
+
+  const addStagingNode = (params: StagingNodeParams) => {
+    if (!reactFlowInstance) {
+      return;
+    }
+
+    let position = reactFlowInstance.screenToFlowPosition({
+      x: params.event.clientX,
+      y: params.event.clientY,
     });
 
     setNodes((prevNodes) => [
@@ -162,8 +221,26 @@ export default ({ ontology }: { ontology: OntologyFragment }) => {
         data: params.data,
         position,
         id: "staging-" + Date.now(),
-        type: params.type,
-      },
+        type: params.type as MyNode["type"],
+      } as MyNode,
+    ]);
+    setShowClickContextual(undefined);
+  };
+
+  const addStagingEdge = (params: StagingEdgeParams) => {
+    if (!reactFlowInstance) {
+      return;
+    }
+
+    setEdges((prevEdges) => [
+      ...prevEdges,
+      {
+        data: params.data,
+        source: params.source,
+        target: params.target,
+        id: "staging-" + Date.now(),
+        type: params.type as MyEdge["type"],
+      } as MyEdge,
     ]);
     setShowClickContextual(undefined);
   };
@@ -186,11 +263,20 @@ export default ({ ontology }: { ontology: OntologyFragment }) => {
         onInit={setReactFlowInstance}
         fitView
       />
-      {showClickContextual && (
+      {showClickContextual && showClickContextual.type == "click" && (
         <ClickContextual
           params={showClickContextual}
           ontology={ontology}
           addStagingNode={addStagingNode}
+          onCancel={() => setShowClickContextual(undefined)}
+        />
+      )}
+      {showClickContextual && showClickContextual.type == "connect" && (
+        <ConnectContextual
+          params={showClickContextual}
+          ontology={ontology}
+          addStagingEdge={addStagingEdge}
+          onCancel={() => setShowClickContextual(undefined)}
         />
       )}
     </div>

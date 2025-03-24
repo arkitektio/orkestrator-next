@@ -5,52 +5,49 @@ import {
   StructureCategoryInput,
 } from "@/kraph/api/graphql";
 import { memo } from "react";
-import { Handle, NodeProps, Position } from "reactflow";
+import { Handle, NodeProps, Position, useConnection } from "@xyflow/react";
+import { StagingGenericNode } from "../types";
+import { cn } from "@/lib/utils";
 
-export default memo(
-  ({ data, isConnectable }: NodeProps<GenericCategoryInput>) => {
-    const resolve = useResolve();
+export default memo(({ data, id }: NodeProps<GenericCategoryInput>) => {
+  const resolve = useResolve();
 
-    return (
-      <>
-        <Handle
-          type="target"
-          position={Position.Top}
-          style={{
-            left: "50%",
-            top: "50%",
-            zIndex: 0,
-            color: "transparent",
-            background: "transparent",
-            stroke: "transparent",
+  const connection = useConnection();
 
-            border: "0px solid transparent",
-          }}
-          className="customHandle"
-        />
-        <Handle
-          type="source"
-          position={Position.Bottom}
-          style={{
-            left: "50%",
-            top: "50%",
-            zIndex: 0,
-            color: "transparent",
-            background: "transparent",
-            stroke: "transparent",
+  const isTarget = connection.inProgress && connection.fromNode.id !== id;
 
-            border: "0px solid transparent",
-          }}
-          className="customHandle"
-          isConnectable={isConnectable}
-        />
-        <Card
-          style={{ padding: 10, width: 100, height: 100, zIndex: 100 }}
-          className="flex flex-col justify-center items-center bg-black p-3 animate-pulse"
+  return (
+    <Card className="customNode">
+      <div className="customNodeBody">
+        {/* If handles are conditionally rendered and not present initially, you need to update the node internals https://reactflow.dev/docs/api/hooks/use-update-node-internals/ */}
+        {/* In this case we don't need to use useUpdateNodeInternals, since !isConnecting is true at the beginning and all handles are rendered initially. */}
+
+        <div
+          className={cn(
+            "h-full w-full justify-center items-center p-3",
+            isTarget && "animate-pulse",
+          )}
         >
           {data.label}
-        </Card>
-      </>
-    );
-  },
-);
+        </div>
+
+        {!connection.inProgress && (
+          <Handle
+            className="customHandle"
+            position={Position.Right}
+            type="source"
+          />
+        )}
+        {/* We want to disable the target handle, if the connection was started from this node */}
+        {(!connection.inProgress || isTarget) && (
+          <Handle
+            className="customHandle"
+            position={Position.Left}
+            type="target"
+            isConnectableStart={false}
+          />
+        )}
+      </div>
+    </Card>
+  );
+});

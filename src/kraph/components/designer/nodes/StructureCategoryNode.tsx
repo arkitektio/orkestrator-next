@@ -1,49 +1,68 @@
 import { Card } from "@/components/ui/card";
-import { useResolve } from "@/datalayer/hooks/useResolve";
-import { KraphStructureCategory, LokClient, LokUser } from "@/linkers";
-import { DetailClientFragment } from "@/lok-next/api/graphql";
-import { memo } from "react";
-import { Handle, NodeProps, Position } from "reactflow";
 import { Image } from "@/components/ui/image";
-import { ListStructureCategoryFragment } from "@/kraph/api/graphql";
+import { useResolve } from "@/datalayer/hooks/useResolve";
+import { KraphStructureCategory } from "@/linkers";
+import {
+  Handle,
+  NodeProps,
+  Position,
+  useConnection,
+  useNodes,
+} from "@xyflow/react";
+import { memo } from "react";
+import { StructureNode } from "../types";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
-export default memo(
-  ({ data, isConnectable }: NodeProps<ListStructureCategoryFragment>) => {
-    const resolve = useResolve();
+export default memo(({ data, id }: NodeProps<StructureNode>) => {
+  const resolve = useResolve();
 
-    return (
-      <div className=" ">
-        <Handle
-          type="target"
-          position={Position.Top}
-          className="customHandle"
-          isConnectable={isConnectable}
-        />
-        <Handle
-          type="source"
-          position={Position.Bottom}
-          className="customHandle"
-          isConnectable={isConnectable}
-        />
-        <Card
-          style={{ padding: 10, width: 100, height: 100, zIndex: 100 }}
-          className="flex flex-col justify-center items-center bg-black p-3"
+  const connection = useConnection();
+
+  const isTarget = connection.inProgress && connection.fromNode.id !== id;
+
+  return (
+    <Card className="customNode">
+      <div className="customNodeBody">
+        {/* If handles are conditionally rendered and not present initially, you need to update the node internals https://reactflow.dev/docs/api/hooks/use-update-node-internals/ */}
+        {/* In this case we don't need to use useUpdateNodeInternals, since !isConnecting is true at the beginning and all handles are rendered initially. */}
+        {!connection.inProgress && (
+          <Handle
+            className="customHandle"
+            position={Position.Right}
+            type="source"
+          />
+        )}
+        {/* We want to disable the target handle, if the connection was started from this node */}
+        {(!connection.inProgress || isTarget) && (
+          <Handle
+            className="customHandle"
+            position={Position.Left}
+            type="target"
+            isConnectableStart={false}
+          />
+        )}
+        <div
+          className={cn(
+            "h-full w-full justify-center items-center p-3",
+            isTarget && "animate-pulse",
+          )}
         >
           {data.store?.presignedUrl && (
             <Image
               src={resolve(data.store?.presignedUrl)}
-              className="m-3  h-20 w-20"
+              className="m-3 h-10  w-10"
             />
           )}
-          <KraphStructureCategory.DetailLink
-            object={data.id}
-            className={"text-xs absolute bottom-2"}
-          >
-            {data.identifier}
-            <div className="text-xs text-foreground-muted">{data.ageName}</div>
-          </KraphStructureCategory.DetailLink>
-        </Card>
+          {data.label}
+        </div>
+        <Button
+          onClick={() => alert("Add Measurement")}
+          className="text-xs px-1 py-0.5"
+        >
+          Add Measurement
+        </Button>
       </div>
-    );
-  },
-);
+    </Card>
+  );
+});

@@ -2,44 +2,23 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
 import {
-  KraphNode,
   KraphGraph,
-  KraphLinkedExpression,
   KraphGraphView,
-  KraphOntology,
+  KraphOntology
 } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
-import { Divide, PlusIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
-  PathFragment,
   useCreateGraphViewMutation,
-  useGetGraphQuery,
-  useRenderGraphQuery,
+  useGetGraphQuery
 } from "../api/graphql";
 
-import { UpdateGraphForm } from "../forms/UpdateGraphForm";
-import { useState } from "react";
-import { PathGraph } from "../components/renderers/graph/KnowledgeGraph";
-import { Card } from "@/components/ui/card";
-import { GraphViewRenderer } from "../components/renderers/GraphQueryRenderer";
-import NodeCard from "../components/cards/NodeCard";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import GraphViewCard from "../components/cards/GraphViewCard";
-import PopularePlotViewsCarousel from "../components/carousels/PopularePlotViewsCarousel";
 import { ListRender } from "@/components/layout/ListRender";
+import GraphViewCard from "../components/cards/GraphViewCard";
+import NodeCard from "../components/cards/NodeCard";
+import PopularePlotViewsCarousel from "../components/carousels/PopularePlotViewsCarousel";
+import { UpdateGraphForm } from "../forms/UpdateGraphForm";
 
 export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
   const [createGraphView] = useCreateGraphViewMutation();

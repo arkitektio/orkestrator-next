@@ -33,6 +33,11 @@ export default asDetailQueryRoute(useGetRoiQuery, ({ data, refetch }) => {
           }}
         />
       }
+      pageActions={
+        <>
+          <MikroROI.ObjectButton object={data?.roi?.id} />
+        </>
+      }
       variant="black"
     >
       <TwoDViewProvider initialC={0} initialT={0} initialZ={0}>

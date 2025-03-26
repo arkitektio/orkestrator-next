@@ -10,14 +10,25 @@ fragment BaseListCategory on Category {
 
 fragment BaseListNodeCategory on NodeCategory {
   id
+  positionX
+  positionY
+  height
+  width
+  color
 }
 
 fragment BaseListEdgeCategory on EdgeCategory {
   left {
     id
+    ... on Category {
+    ageName
+    }
   }
   right {
     id
+    ... on Category {
+    ageName
+    }
   }
 }
 
@@ -40,7 +51,7 @@ fragment ListStructureCategory on StructureCategory {
 
 fragment ListGenericCategory on GenericCategory {
   ...BaseListCategory
-  ...BaseNodeCategory
+  ...BaseListNodeCategory
   instanceKind
 }
 

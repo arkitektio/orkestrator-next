@@ -2,6 +2,7 @@ import { useGetPodQuery } from "@/kabinet/api/graphql";
 import GraphViewWidget from "@/kraph/widgets/GraphViewWidget";
 import OntologyWidget from "@/kraph/widgets/OntologyWidget";
 import { KabinetPod, MikroImage, MikroROI, RekuestNode } from "@/linkers";
+import { UserAvatar } from "@/lok-next/components/UserAvatar";
 import { useGetImageQuery, useGetRoiQuery } from "@/mikro-next/api/graphql";
 import { DelegatingImageRender } from "@/mikro-next/components/render/DelegatingImageRender";
 import { FinalRender } from "@/mikro-next/components/render/FInalRender";
@@ -11,6 +12,7 @@ import { ReturnWidgetProps } from "@/rekuest/widgets/types";
 import { MeshWidget } from "@/widgets/MeshWidget";
 import { RenderedPlotWidget } from "@/widgets/RenderedPlotWidget";
 import { StreamWidget } from "@/widgets/StreamWidget";
+import Timestamp from "react-timestamp";
 
 export const ImageWidget = (props: ReturnWidgetProps) => {
   const { data } = useGetImageQuery({
@@ -42,11 +44,8 @@ export const RoiWidget = (props: ReturnWidgetProps) => {
 
   return (
     <MikroROI.DetailLink object={props.value}>
-      <div className="w-[200px] h-[200px]">
-        {defaultContext && roi && (
-          <DelegatingImageRender context={defaultContext} rois={[roi]} />
-        )}
-      </div>
+       {roi?.creator && <UserAvatar sub={roi.creator.sub} />}
+       {roi?.createdAt && <p>Marked <Timestamp date={roi.createdAt} relative/></p>}
     </MikroROI.DetailLink>
   );
 };

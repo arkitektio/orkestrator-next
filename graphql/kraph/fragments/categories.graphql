@@ -14,9 +14,15 @@ fragment BaseNodeCategory on NodeCategory {
 fragment BaseEdgeCategory on EdgeCategory {
   left {
     id
+    ... on Category {
+      ageName
+    }
   }
   right {
     id
+    ... on Category {
+      ageName
+    }
   }
 }
 

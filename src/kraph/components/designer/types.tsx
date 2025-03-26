@@ -71,13 +71,13 @@ export type ConnectContextualParams = {
 export type StagingNodeParams = {
   event: React.MouseEvent;
   data: NodeData;
-  id: string;
+  ageName: string;
   type: MyNode["type"];
 };
 
 export type StagingEdgeParams = {
   data: EdgeData;
-  id: string;
+  ageName: string;
   type: MyEdge["type"];
   source: string;
   target: string;

@@ -1,40 +1,28 @@
-import { ConnectContextualParams, StagingEdgeParams } from "../types";
-import { SearchField } from "@/components/fields/SearchField";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Form } from "@/components/ui/form";
-import {
-  CreateGenericCategoryMutationOptions,
-  CreateGenericCategoryMutationVariables,
-  CreateMeasurementCategoryMutationVariables,
-  CreateRelationCategoryMutation,
-  CreateRelationCategoryMutationVariables,
-  CreateStructureCategoryMutationVariables,
-  MeasurementKind,
-  OntologyFragment,
-} from "@/kraph/api/graphql";
-import { cn } from "@/lib/utils";
-import { smartRegistry } from "@/providers/smart/registry";
-import { NodeData } from "@/reaktion/types";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { ClickContextualParams, StagingNodeParams } from "../types";
-import { Node } from "reactflow";
 import { FormDialog, useFormDialog } from "@/components/dialog/FormDialog";
-import { StringField } from "@/components/fields/StringField";
-import { ParagraphField } from "@/components/fields/ParagraphField";
-import { Keybutton } from "@/components/ui/keybutton";
-import { ContextualContainer } from "@/reaktion/edit/components/ContextualContainer";
 import { ChoicesField } from "@/components/fields/ChoicesField";
 import {
   ListSearchField,
   SearchOptions,
 } from "@/components/fields/ListSearchField";
+import { ParagraphField } from "@/components/fields/ParagraphField";
+import { StringField } from "@/components/fields/StringField";
+import { Button } from "@/components/ui/button";
+import {
+  DialogFooter
+} from "@/components/ui/dialog";
+import { Form } from "@/components/ui/form";
+import {
+  CreateMeasurementCategoryMutationVariables,
+  CreateRelationCategoryMutationVariables,
+  MeasurementKind,
+  OntologyFragment
+} from "@/kraph/api/graphql";
+import { cn } from "@/lib/utils";
+import { smartRegistry } from "@/providers/smart/registry";
+import { ContextualContainer } from "@/reaktion/edit/components/ContextualContainer";
+import { useForm } from "react-hook-form";
+import { ConnectContextualParams, StagingEdgeParams } from "../types";
+import { labelToEdgeAgeName } from "../utils";
 
 const search = async ({ search, values }: SearchOptions) => {
   const models = smartRegistry
@@ -170,7 +158,7 @@ export const ConnectContextual = (props: {
   ) => {
     await props.addStagingEdge({
       data: data,
-      id: data.label,
+      ageName: labelToEdgeAgeName(data.label),
       type: "stagingmeasurement",
       source: props.params.leftNode.id,
       target: props.params.rightNode.id,
@@ -182,7 +170,7 @@ export const ConnectContextual = (props: {
   ) => {
     await props.addStagingEdge({
       data: data,
-      id: data.label,
+      ageName: labelToEdgeAgeName(data.label),
       type: "stagingrelation",
       source: props.params.leftNode.id,
       target: props.params.rightNode.id,
@@ -200,7 +188,7 @@ export const ConnectContextual = (props: {
       <div className="flex flex-col space-y-1.5 text-center sm:text-left">
         <FormDialog
           trigger={
-            <Button className={cn("flex flex-row items-center justify-center")}>
+            <Button className={cn("flex flex-row items-center justify-center")}  variant={"outline"} size="sm">
               Add Relation
             </Button>
           }
@@ -215,7 +203,7 @@ export const ConnectContextual = (props: {
         </FormDialog>
         <FormDialog
           trigger={
-            <Button className={cn("flex flex-row items-center justify-center")}>
+            <Button className={cn("flex flex-row items-center justify-center")}  variant={"outline"} size="sm">
               Add Measurement
             </Button>
           }

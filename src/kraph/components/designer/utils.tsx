@@ -69,3 +69,17 @@ export function getEdgeParams(source, target) {
     targetPos,
   };
 }
+
+
+export const identifierToNodeAgeName = (identifier: string) => {
+  return identifier.replace("@", "").replace("/", "_").toUpperCase();
+}
+
+export const labelToNodeAgeName = (label: string) => {
+  return label.replace(" ", "_").toUpperCase();
+}
+
+
+export const labelToEdgeAgeName = (label: string) => {
+  return label.replace(" ", "_").toLowerCase();
+}

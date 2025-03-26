@@ -37,6 +37,7 @@ import { ROIPolygon } from "./final/ROIPolygon";
 import { WireframeMaterial } from "@react-three/drei/materials/WireframeMaterial";
 import { AutoZoomCamera } from "./final/AutoZoomCamera";
 import { ChunkBitmapTexture } from "./final/ChunkMesh";
+import { ShortcutToolbar } from "@/rekuest/components/toolbars/ShortcutToolbar";
 
 export interface RGBDProps {
   context: ListRgbContextFragment;
@@ -362,6 +363,7 @@ export const FinalRender = (props: RGBDProps) => {
             }}
             value={panel.object}
           />
+          <ShortcutToolbar identifier={panel.identifier} object={panel.object} />
         </Card>
       ))}
     </div>

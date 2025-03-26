@@ -10,6 +10,18 @@ mutation CreateStructureCategory($input: StructureCategoryInput!) {
   }
 }
 
+mutation UpdateStructureCategory($input: UpdateStructureCategoryInput!) {
+  updateStructureCategory(input: $input) {
+    ...StructureCategory
+  }
+}
+
+mutation UpdateGenericCategory($input: UpdateGenericCategoryInput!) {
+  updateGenericCategory(input: $input) {
+    ...GenericCategory
+  }
+}
+
 mutation CreateGenericCategory($input: GenericCategoryInput!) {
   createGenericCategory(input: $input) {
     ...GenericCategory

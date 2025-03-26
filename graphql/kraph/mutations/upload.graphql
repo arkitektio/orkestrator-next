@@ -1,0 +1,5 @@
+mutation RequestMediaUpload($key: String!, $datalayer: String!) {
+  requestUpload(input: { key: $key, datalayer: $datalayer }) {
+    ...PresignedPostCredentials
+  }
+}

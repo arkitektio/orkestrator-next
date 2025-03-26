@@ -17,6 +17,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { ClickContextualParams, StagingNodeParams } from "../types";
 import { se } from "date-fns/locale";
+import { identifierToAgeName, identifierToNodeAgeName, labelToAgeName, labelToNodeAgeName } from "../utils";
 
 const search = async ({ search, values }: SearchOptions) => {
   const models = smartRegistry
@@ -131,23 +132,23 @@ export const ClickContextual = (props: {
 }) => {
   const [search, setSearch] = useState(undefined);
 
-  const onSubmit = async (
+  const onSubmit =  (
     data: CreateStructureCategoryMutationVariables["input"],
   ) => {
-    await props.addStagingNode({
+    props.addStagingNode({
       data: data,
-      id: data.identifier,
+      ageName: identifierToNodeAgeName(data.identifier),
       type: "stagingstructure",
       event: props.params.event,
     });
   };
 
-  const onSubmitGeneric = async (
+  const onSubmitGeneric =  (
     data: CreateGenericCategoryMutationVariables["input"],
   ) => {
-    await props.addStagingNode({
+    props.addStagingNode({
       data: data,
-      id: data.label,
+      ageName: labelToNodeAgeName(data.label),
       type: "staginggeneric",
       event: props.params.event,
     });
@@ -164,8 +165,8 @@ export const ClickContextual = (props: {
       <div className="flex flex-col space-y-1.5 text-center sm:text-left">
         <FormDialog
           trigger={
-            <Button className={cn("flex flex-row items-center justify-center")}>
-              Add Structure
+            <Button className={cn("flex flex-row items-center justify-center")}  variant={"outline"} size="sm">
+              Structure
             </Button>
           }
           onSubmit={onSubmit}
@@ -179,8 +180,8 @@ export const ClickContextual = (props: {
         </FormDialog>
         <FormDialog
           trigger={
-            <Button className={cn("flex flex-row items-center justify-center")}>
-              Add Generic
+            <Button className={cn("flex flex-row items-center justify-center")} variant={"outline"} size="sm">
+              Entitiy
             </Button>
           }
           onSubmit={onSubmitGeneric}

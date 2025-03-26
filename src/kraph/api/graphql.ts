@@ -93,7 +93,9 @@ export type ComputedMeasurement = Edge & {
   id: Scalars['NodeID']['output'];
   inferedBy: Edge;
   label: Scalars['String']['output'];
+  left: Node;
   leftId: Scalars['String']['output'];
+  right: Node;
   rightId: Scalars['String']['output'];
   /** Timestamp from when this entity is valid */
   validFrom: Scalars['DateTime']['output'];
@@ -174,7 +176,9 @@ export type Edge = {
   id: Scalars['NodeID']['output'];
   inferedBy: Edge;
   label: Scalars['String']['output'];
+  left: Node;
   leftId: Scalars['String']['output'];
+  right: Node;
   rightId: Scalars['String']['output'];
 };
 
@@ -584,7 +588,9 @@ export type Measurement = Edge & {
   id: Scalars['NodeID']['output'];
   inferedBy: Edge;
   label: Scalars['String']['output'];
+  left: Node;
   leftId: Scalars['String']['output'];
+  right: Node;
   rightId: Scalars['String']['output'];
   /** Timestamp from when this entity is valid */
   validFrom: Scalars['DateTime']['output'];
@@ -1969,7 +1975,9 @@ export type Relation = Edge & {
   id: Scalars['NodeID']['output'];
   inferedBy: Edge;
   label: Scalars['String']['output'];
+  left: Node;
   leftId: Scalars['String']['output'];
+  right: Node;
   rightId: Scalars['String']['output'];
   /** Timestamp from when this entity is valid */
   validFrom: Scalars['DateTime']['output'];
@@ -3019,6 +3027,15 @@ export type GetStructureQueryVariables = Exact<{
 
 
 export type GetStructureQuery = { __typename?: 'Query', structure: { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string }, pinnedViews: Array<{ __typename?: 'NodeView', id: string, label: string, node: { __typename?: 'Entity', id: any, graphId: string } | { __typename?: 'Structure', id: any, graphId: string }, query: { __typename?: 'NodeQuery', id: string, name: string, query: string }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, category: { __typename?: 'GenericCategory', id: string, label: string }, subjectedTo: Array<{ __typename?: 'ProtocolStep', id: string, performedAt?: any | null, name: string }> } | { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string } }>, edges: Array<{ __typename?: 'ComputedMeasurement', id: any, label: string, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, label: string, leftId: string, rightId: string, value: any } | { __typename?: 'Relation', id: any, label: string, leftId: string, rightId: string }> } | { __typename?: 'Table', rows: Array<any>, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MeasurementKind | null, description?: string | null, label?: string | null }>, graph: { __typename?: 'Graph', id: string, ageName: string } } }> } };
+
+export type GetStructreInfoQueryVariables = Exact<{
+  identifier: Scalars['StructureIdentifier']['input'];
+  object: Scalars['ID']['input'];
+  graph?: InputMaybe<Scalars['ID']['input']>;
+}>;
+
+
+export type GetStructreInfoQuery = { __typename?: 'Query', structure: { __typename?: 'Structure', id: any, label: string, identifier: string, object: string, category: { __typename?: 'StructureCategory', identifier: string }, leftEdges: Array<{ __typename?: 'ComputedMeasurement' } | { __typename?: 'Measurement' } | { __typename?: 'Relation', id: any, label: string, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, identifier: string }, left: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, identifier: string } }>, rightEdges: Array<{ __typename?: 'ComputedMeasurement' } | { __typename?: 'Measurement' } | { __typename?: 'Relation', id: any, label: string, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, identifier: string }, left: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Structure', id: any, identifier: string } }> } };
 
 export type GetStructureCategoryQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -6037,6 +6054,101 @@ export function useGetStructureLazyQuery(baseOptions?: ApolloReactHooks.LazyQuer
 export type GetStructureQueryHookResult = ReturnType<typeof useGetStructureQuery>;
 export type GetStructureLazyQueryHookResult = ReturnType<typeof useGetStructureLazyQuery>;
 export type GetStructureQueryResult = Apollo.QueryResult<GetStructureQuery, GetStructureQueryVariables>;
+export const GetStructreInfoDocument = gql`
+    query GetStructreInfo($identifier: StructureIdentifier!, $object: ID!, $graph: ID) {
+  structure(graph: $graph, identifier: $identifier, object: $object) {
+    id
+    label
+    identifier
+    object
+    category {
+      identifier
+    }
+    leftEdges {
+      ... on Relation {
+        id
+        label
+        right {
+          ... on Entity {
+            id
+            label
+          }
+          ... on Structure {
+            id
+            identifier
+          }
+        }
+        left {
+          ... on Entity {
+            id
+            label
+          }
+          ... on Structure {
+            id
+            identifier
+          }
+        }
+      }
+    }
+    rightEdges {
+      ... on Relation {
+        id
+        label
+        right {
+          ... on Entity {
+            id
+            label
+          }
+          ... on Structure {
+            id
+            identifier
+          }
+        }
+        left {
+          ... on Entity {
+            id
+            label
+          }
+          ... on Structure {
+            id
+            identifier
+          }
+        }
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetStructreInfoQuery__
+ *
+ * To run a query within a React component, call `useGetStructreInfoQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetStructreInfoQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetStructreInfoQuery({
+ *   variables: {
+ *      identifier: // value for 'identifier'
+ *      object: // value for 'object'
+ *      graph: // value for 'graph'
+ *   },
+ * });
+ */
+export function useGetStructreInfoQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetStructreInfoQuery, GetStructreInfoQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetStructreInfoQuery, GetStructreInfoQueryVariables>(GetStructreInfoDocument, options);
+      }
+export function useGetStructreInfoLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStructreInfoQuery, GetStructreInfoQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetStructreInfoQuery, GetStructreInfoQueryVariables>(GetStructreInfoDocument, options);
+        }
+export type GetStructreInfoQueryHookResult = ReturnType<typeof useGetStructreInfoQuery>;
+export type GetStructreInfoLazyQueryHookResult = ReturnType<typeof useGetStructreInfoLazyQuery>;
+export type GetStructreInfoQueryResult = Apollo.QueryResult<GetStructreInfoQuery, GetStructreInfoQueryVariables>;
 export const GetStructureCategoryDocument = gql`
     query GetStructureCategory($id: ID!) {
   structureCategory(id: $id) {

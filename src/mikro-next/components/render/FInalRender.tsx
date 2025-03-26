@@ -38,6 +38,7 @@ import { WireframeMaterial } from "@react-three/drei/materials/WireframeMaterial
 import { AutoZoomCamera } from "./final/AutoZoomCamera";
 import { ChunkBitmapTexture } from "./final/ChunkMesh";
 import { ShortcutToolbar } from "@/rekuest/components/toolbars/ShortcutToolbar";
+import { StructureInfo } from "@/kraph/components/mini/StructureInfo";
 
 export interface RGBDProps {
   context: ListRgbContextFragment;
@@ -352,18 +353,8 @@ export const FinalRender = (props: RGBDProps) => {
           >
             ×
           </button>
-          <DelegatingStructureWidget
-            port={{
-              key: "x",
-              nullable: false,
-              kind: PortKind.Structure,
-              identifier: panel.identifier,
-              __typename: "Port",
-              scope: PortScope.Global,
-            }}
-            value={panel.object}
-          />
-          <ShortcutToolbar identifier={panel.identifier} object={panel.object} />
+          <div className="text-xs text-gray-500"> Knowledge </div>
+          <StructureInfo identifier={panel.identifier} object={panel.object} />
         </Card>
       ))}
     </div>

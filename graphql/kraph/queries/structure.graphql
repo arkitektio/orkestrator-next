@@ -7,3 +7,71 @@ query GetStructure(
     ...KnowledgeStructure
   }
 }
+
+query GetStructreInfo(
+  $identifier: StructureIdentifier!
+  $object: ID!
+  $graph: ID
+) {
+  structure(graph: $graph, identifier: $identifier, object: $object) {
+    id
+    label
+    identifier
+    object
+    category {
+      identifier
+    }
+    leftEdges {
+      ... on Relation {
+        id
+        label
+        right {
+          ... on Entity {
+            id
+            label
+          }
+          ... on Structure {
+            id
+            identifier
+          }
+        }
+        left {
+          ... on Entity {
+            id
+            label
+          }
+          ... on Structure {
+            id
+            identifier
+          }
+        }
+      }
+    }
+    rightEdges {
+      ... on Relation {
+        id
+        label
+        right {
+          ... on Entity {
+            id
+            label
+          }
+          ... on Structure {
+            id
+            identifier
+          }
+        }
+        left {
+          ... on Entity {
+            id
+            label
+          }
+          ... on Structure {
+            id
+            identifier
+          }
+        }
+      }
+    }
+  }
+}

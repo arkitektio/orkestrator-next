@@ -14,8 +14,11 @@ import { Form } from "@/components/ui/form";
 import {
   CreateMeasurementCategoryMutationVariables,
   CreateRelationCategoryMutationVariables,
+  CreateStepCategoryMutationVariables,
   MeasurementKind,
-  OntologyFragment
+  OntologyFragment,
+  useSearchProtocolStepTemplatesLazyQuery,
+  useSearchProtocolStepTemplatesQuery
 } from "@/kraph/api/graphql";
 import { cn } from "@/lib/utils";
 import { smartRegistry } from "@/providers/smart/registry";
@@ -23,6 +26,7 @@ import { ContextualContainer } from "@/reaktion/edit/components/ContextualContai
 import { useForm } from "react-hook-form";
 import { ConnectContextualParams, StagingEdgeParams } from "../types";
 import { labelToEdgeAgeName } from "../utils";
+import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 
 const search = async ({ search, values }: SearchOptions) => {
   const models = smartRegistry
@@ -68,6 +72,50 @@ export const RelationForm = (props: {
                 label="Label"
                 name="label"
                 description="Add a label"
+              />
+
+              <DialogFooter>
+                <Button type="submit">Add</Button>
+              </DialogFooter>
+            </div>
+          </div>
+        </form>
+      </Form>
+    </>
+  );
+};
+
+export const StepForm = (props: {
+  params: ConnectContextualParams;
+  ontology: OntologyFragment;
+  addStagingEdge: (params: StagingEdgeParams) => void;
+}) => {
+  const run = useFormDialog();
+
+  const form = useForm<CreateRelationCategoryMutationVariables["input"]>({
+    defaultValues: {
+      label: "",
+      ontology: props.ontology.id,
+    },
+  });
+
+  const [ search] = useSearchProtocolStepTemplatesLazyQuery()
+
+  return (
+    <>
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(async (data) => {
+            run.onSubmit(data);
+          })}
+        >
+          <div className="grid grid-cols-2 gap-2">
+            <div className="col-span-2 flex-col gap-1 flex">
+              <GraphQLSearchField
+                label="The Template"
+                name="template"
+                searchQuery={search}
+                description="Which template to choose"
               />
 
               <DialogFooter>
@@ -177,6 +225,18 @@ export const ConnectContextual = (props: {
     });
   };
 
+  const onSubmitStep = async (
+    data: CreateStepCategoryMutationVariables["input"],
+  ) => {
+    await props.addStagingEdge({
+      data: data,
+      ageName: labelToEdgeAgeName(data.template),
+      type: "stagingstep",
+      source: props.params.leftNode.id,
+      target: props.params.rightNode.id,
+    });
+  };
+
   return (
     <ContextualContainer
       style={{
@@ -211,6 +271,21 @@ export const ConnectContextual = (props: {
           onError={props.onCancel}
         >
           <MeasurmentForm
+            ontology={props.ontology}
+            addStagingEdge={props.addStagingEdge}
+            params={props.params}
+          />
+        </FormDialog>
+        <FormDialog
+          trigger={
+            <Button className={cn("flex flex-row items-center justify-center")}  variant={"outline"} size="sm">
+              Add Alteration Step
+            </Button>
+          }
+          onSubmit={onSubmitStep}
+          onError={props.onCancel}
+        >
+          <StepForm
             ontology={props.ontology}
             addStagingEdge={props.addStagingEdge}
             params={props.params}

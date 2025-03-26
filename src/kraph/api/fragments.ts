@@ -10,6 +10,7 @@
       "GenericCategory",
       "MeasurementCategory",
       "RelationCategory",
+      "StepCategory",
       "StructureCategory"
     ],
     "Edge": [
@@ -19,7 +20,8 @@
     ],
     "EdgeCategory": [
       "MeasurementCategory",
-      "RelationCategory"
+      "RelationCategory",
+      "StepCategory"
     ],
     "Node": [
       "Entity",

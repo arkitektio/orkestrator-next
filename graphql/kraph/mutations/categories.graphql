@@ -33,3 +33,10 @@ mutation CreateRelationCategory($input: RelationCategoryInput!) {
     ...RelationCategory
   }
 }
+
+
+mutation CreateStepCategory($input: StepCategoryInput!) {
+  createStepCategory(input: $input) {
+    ...StepCategory
+  }
+}

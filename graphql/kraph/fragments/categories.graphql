@@ -32,6 +32,14 @@ fragment MeasurementCategory on MeasurementCategory {
   metricKind
 }
 
+fragment StepCategory on StepCategory {
+  ...BaseCategory
+  ...BaseEdgeCategory
+  template {
+    id
+  }
+}
+
 fragment RelationCategory on RelationCategory {
   ...BaseCategory
   ...BaseEdgeCategory

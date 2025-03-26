@@ -6,9 +6,11 @@ import {
   ListGenericCategoryFragment,
   ListMeasurementCategoryFragment,
   ListRelationCategoryFragment,
+  ListStepCategoryFragment,
   ListStructureCategoryFragment,
   MeasurementCategoryInput,
   RelationCategoryInput,
+  StepCategoryInput,
   StructureCategoryInput,
 } from "@/kraph/api/graphql";
 
@@ -27,22 +29,32 @@ export type MeasurementEdge = Edge<
   ListMeasurementCategoryFragment,
   "measurement"
 >;
+export type StagingMeasurementEdge = Edge<
+  MeasurementCategoryInput,
+  "stagingmeasurement"
+>;
 export type RelationEdge = Edge<ListRelationCategoryFragment, "relation">;
 
 export type StagingRelationEdge = Edge<
   RelationCategoryInput,
   "stagingrelation"
 >;
-export type StagingMeasurementEdge = Edge<
-  MeasurementCategoryInput,
-  "stagingmeasurement"
+export type StepEdge = Edge<
+  ListStepCategoryFragment,
+  "step"
+>;
+export type StagingStepEdge = Edge<
+  StepCategoryInput,
+  "stagingstep"
 >;
 
 export type MyEdge =
   | MeasurementEdge
   | RelationEdge
   | StagingRelationEdge
-  | StagingMeasurementEdge;
+  | StagingMeasurementEdge
+  | StepEdge
+  | StagingStepEdge;
 
 export type EdgeData = MyEdge["data"];
 
@@ -51,6 +63,7 @@ export type MyNode =
   | StructureNode
   | StagingStructureNode
   | StagingGenericNode;
+
 
 export type NodeData = MyNode["data"];
 

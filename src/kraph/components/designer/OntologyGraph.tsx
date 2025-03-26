@@ -15,6 +15,7 @@ import MeasurementEdge from "./edges/MeasurementEdge";
 import RelationEdge from "./edges/RelationEdge";
 import StagingMeasurementEdge from "./edges/StagingMeasurementEdge";
 import StagingRelationEdge from "./edges/StagingRelationEdge";
+import StepEdge from "./edges/StepEdge";
 import "./index.css";
 import GenericCategoryNode from "./nodes/GenericCategoryNode";
 import StagingGenericNode from "./nodes/StagingGenericNode";
@@ -29,6 +30,7 @@ import {
   StagingEdgeParams,
   StagingNodeParams,
 } from "./types";
+import StagingStepEdge from "./edges/StagingStepEdge";
 
 const ontologyToNodes = (ontology: OntologyFragment): MyNode[] => {
   const structureNodes = ontology.structureCategories.map((cat, index) => ({
@@ -84,7 +86,15 @@ const ontologyToEdges = (ontology: OntologyFragment) => {
     type: "relation" as const,
   }));
 
-  return [...edges, ...relationEdges];
+  const stepEdges = ontology.stepCategories.map((cat) => ({
+    id: cat.ageName,
+    source: cat.left.ageName || "start",
+    target: cat.right.ageName || "end",
+    data: cat,
+    type: "step" as const,
+  }));
+
+  return [...edges, ...relationEdges,...stepEdges];
 };
 
 const nodeTypes = {
@@ -99,6 +109,8 @@ const edgeTypes = {
   stagingrelation: StagingRelationEdge,
   stagingmeasurement: StagingMeasurementEdge,
   relation: RelationEdge,
+  stagingstep: StagingStepEdge,
+  step: StepEdge,
 };
 
 function calculateMidpoint(
@@ -224,6 +236,28 @@ export const edgeToEdgeInput = (edge: MyEdge): OntologyEdgeInput => {
       kind: OntologyEdgeKind.Relation,
       ageName: edge.id,
       description: edge.data?.description,
+      source: edge.source,
+      target: edge.target,
+      name: edge.id,
+    }
+  }
+
+  if (edge.type == "stagingstep") {
+    return {
+      kind: OntologyEdgeKind.Step,
+      ageName: edge.id,
+      template: edge.data?.template,
+      source: edge.source,
+      target: edge.target,
+      name: edge.id,
+    }
+  }
+
+  if (edge.type == "step") {
+    return {
+      kind: OntologyEdgeKind.Step,
+      ageName: edge.id,
+      template: edge.data?.template.id,
       source: edge.source,
       target: edge.target,
       name: edge.id,

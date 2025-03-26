@@ -93,7 +93,9 @@ export type ComputedMeasurement = Edge & {
   id: Scalars['NodeID']['output'];
   inferedBy: Edge;
   label: Scalars['String']['output'];
+  left: Node;
   leftId: Scalars['String']['output'];
+  right: Node;
   rightId: Scalars['String']['output'];
   /** Timestamp from when this entity is valid */
   validFrom: Scalars['DateTime']['output'];
@@ -164,6 +166,12 @@ export type DeleteScatterPlotInput = {
 };
 
 /** Input for deleting an expression */
+export type DeleteStepCategoryInput = {
+  /** The ID of the expression to delete */
+  id: Scalars['ID']['input'];
+};
+
+/** Input for deleting an expression */
 export type DeleteStructureCategoryInput = {
   /** The ID of the expression to delete */
   id: Scalars['ID']['input'];
@@ -174,7 +182,9 @@ export type Edge = {
   id: Scalars['NodeID']['output'];
   inferedBy: Edge;
   label: Scalars['String']['output'];
+  left: Node;
   leftId: Scalars['String']['output'];
+  right: Node;
   rightId: Scalars['String']['output'];
 };
 
@@ -584,7 +594,9 @@ export type Measurement = Edge & {
   id: Scalars['NodeID']['output'];
   inferedBy: Edge;
   label: Scalars['String']['output'];
+  left: Node;
   leftId: Scalars['String']['output'];
+  right: Node;
   rightId: Scalars['String']['output'];
   /** Timestamp from when this entity is valid */
   validFrom: Scalars['DateTime']['output'];
@@ -750,6 +762,8 @@ export type Mutation = {
   createRelationCategory: RelationCategory;
   /** Create a new scatter plot */
   createScatterPlot: ScatterPlot;
+  /** Create a new expression */
+  createStepCategory: StepCategory;
   /** Create a new structure */
   createStructure: Structure;
   /** Create a new expression */
@@ -775,6 +789,8 @@ export type Mutation = {
   /** Delete an existing scatter plot */
   deleteScatterPlot: Scalars['ID']['output'];
   /** Delete an existing expression */
+  deleteStepCategory: Scalars['ID']['output'];
+  /** Delete an existing expression */
   deleteStructureCategory: Scalars['ID']['output'];
   /** Pin or unpin a graph */
   pinGraph: Graph;
@@ -798,6 +814,8 @@ export type Mutation = {
   updateProtocolStepTemplate: ProtocolStepTemplate;
   /** Update an existing expression */
   updateRelationCategory: RelationCategory;
+  /** Update an existing expression */
+  updateStepCategory: StepCategory;
   /** Update an existing expression */
   updateStructureCategory: StructureCategory;
 };
@@ -898,6 +916,11 @@ export type MutationCreateScatterPlotArgs = {
 };
 
 
+export type MutationCreateStepCategoryArgs = {
+  input: StepCategoryInput;
+};
+
+
 export type MutationCreateStructureArgs = {
   input: StructureInput;
 };
@@ -958,6 +981,11 @@ export type MutationDeleteScatterPlotArgs = {
 };
 
 
+export type MutationDeleteStepCategoryArgs = {
+  input: DeleteStepCategoryInput;
+};
+
+
 export type MutationDeleteStructureCategoryArgs = {
   input: DeleteStructureCategoryInput;
 };
@@ -1015,6 +1043,11 @@ export type MutationUpdateProtocolStepTemplateArgs = {
 
 export type MutationUpdateRelationCategoryArgs = {
   input: UpdateRelationCategoryInput;
+};
+
+
+export type MutationUpdateStepCategoryArgs = {
+  input: UpdateStepCategoryInput;
 };
 
 
@@ -1169,6 +1202,8 @@ export type Ontology = {
   purl?: Maybe<Scalars['String']['output']>;
   /** The list of relation expressions defined in this ontology */
   relationCategories: Array<RelationCategory>;
+  /** The list of step expressions defined in this ontology */
+  stepCategories: Array<StepCategory>;
   /** Optional associated media files like documentation or diagrams */
   store?: Maybe<MediaStore>;
   /** The list of structure expressions defined in this ontology */
@@ -1280,6 +1315,17 @@ export type OntologyRelationCategoriesArgs = {
  *     interrelationships between entities in a specific domain. In kraph, ontologies provide the vocabulary
  *     and semantic structure for organizing data across graphs.
  */
+export type OntologyStepCategoriesArgs = {
+  filters?: InputMaybe<StepCategoryFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/**
+ * An ontology represents a formal naming and definition of types, properties, and
+ *     interrelationships between entities in a specific domain. In kraph, ontologies provide the vocabulary
+ *     and semantic structure for organizing data across graphs.
+ */
 export type OntologyStructureCategoriesArgs = {
   filters?: InputMaybe<StructureCategoryFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -1307,11 +1353,14 @@ export type OntologyEdgeInput = {
   source: Scalars['ID']['input'];
   /** The ID of the target ontology node */
   target: Scalars['ID']['input'];
+  /** The ID of the protocol template if its a step edge */
+  template?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export enum OntologyEdgeKind {
   Measurement = 'MEASUREMENT',
-  Relation = 'RELATION'
+  Relation = 'RELATION',
+  Step = 'STEP'
 }
 
 /** Filter for ontologies */
@@ -1640,6 +1689,9 @@ export type Query = {
   scatterPlot: ScatterPlot;
   /** List of all scatter plots */
   scatterPlots: Array<ScatterPlot>;
+  /** List of all step categories */
+  stepCategories: Array<StepCategory>;
+  stepCategory: StepCategory;
   /** Gets a specific structure e.g an image, video, or 3D model */
   structure: Structure;
   /** List of all structure categories */
@@ -1882,6 +1934,17 @@ export type QueryScatterPlotsArgs = {
 };
 
 
+export type QueryStepCategoriesArgs = {
+  filters?: InputMaybe<StepCategoryFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryStepCategoryArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type QueryStructureArgs = {
   graph?: InputMaybe<Scalars['ID']['input']>;
   identifier: Scalars['StructureIdentifier']['input'];
@@ -1969,7 +2032,9 @@ export type Relation = Edge & {
   id: Scalars['NodeID']['output'];
   inferedBy: Edge;
   label: Scalars['String']['output'];
+  left: Node;
   leftId: Scalars['String']['output'];
+  right: Node;
   rightId: Scalars['String']['output'];
   /** Timestamp from when this entity is valid */
   validFrom: Scalars['DateTime']['output'];
@@ -2092,6 +2157,50 @@ export type ScatterPlotInput = {
   yColumn: Scalars['String']['input'];
   /** The column to use for the y-axis ID (node, or edge) */
   yIdColumn?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type StepCategory = Category & EdgeCategory & {
+  __typename?: 'StepCategory';
+  /** The unique identifier of the expression within its graph */
+  ageName: Scalars['String']['output'];
+  color?: Maybe<Array<Scalars['Float']['output']>>;
+  /** A description of the expression. */
+  description?: Maybe<Scalars['String']['output']>;
+  /** The unique identifier of the expression within its graph */
+  id: Scalars['ID']['output'];
+  /** The kind of expression */
+  kind: ExpressionKind;
+  /** The unique identifier of the expression within its graph */
+  label: Scalars['String']['output'];
+  left: NodeCategory;
+  /** The ontology the expression belongs to. */
+  ontology: Ontology;
+  right: NodeCategory;
+  /** An image or other media file that can be used to represent the expression. */
+  store?: Maybe<MediaStore>;
+  /** The kind of metric this expression represents */
+  template: ProtocolStepTemplate;
+};
+
+export type StepCategoryFilter = {
+  AND?: InputMaybe<StepCategoryFilter>;
+  OR?: InputMaybe<StepCategoryFilter>;
+  graph?: InputMaybe<Scalars['ID']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  ontology?: InputMaybe<Scalars['ID']['input']>;
+  pinned?: InputMaybe<Scalars['Boolean']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Input for creating a new expression */
+export type StepCategoryInput = {
+  /** RGBA color values as list of 3 or 4 integers */
+  color?: InputMaybe<Array<Scalars['Int']['input']>>;
+  /** The ID of the ontology this expression belongs to. If not provided, uses default ontology */
+  ontology?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the protocol template this expression belongs to */
+  template: Scalars['ID']['input'];
 };
 
 /** A Structure is a recorded data point in a graph. It can measure a property of an entity through a direct measurement edge, that connects the entity to the structure. It of course can relate to other structures through relation edges. */
@@ -2313,6 +2422,22 @@ export type UpdateRelationCategoryInput = {
 };
 
 /** Input for updating an existing expression */
+export type UpdateStepCategoryInput = {
+  /** New RGBA color values as list of 3 or 4 integers */
+  color?: InputMaybe<Array<Scalars['Int']['input']>>;
+  /** New description for the expression */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** The ID of the expression to update */
+  id: Scalars['ID']['input'];
+  /** New image ID for the expression */
+  image?: InputMaybe<Scalars['ID']['input']>;
+  /** New permanent URL for the expression */
+  purl?: InputMaybe<Scalars['String']['input']>;
+  /** New step for the expression */
+  template?: InputMaybe<Scalars['ID']['input']>;
+};
+
+/** Input for updating an existing expression */
 export type UpdateStructureCategoryInput = {
   /** New RGBA color values as list of 3 or 4 integers */
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
@@ -2362,9 +2487,11 @@ type BaseCategory_MeasurementCategory_Fragment = { __typename?: 'MeasurementCate
 
 type BaseCategory_RelationCategory_Fragment = { __typename?: 'RelationCategory', id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
+type BaseCategory_StepCategory_Fragment = { __typename?: 'StepCategory', id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+
 type BaseCategory_StructureCategory_Fragment = { __typename?: 'StructureCategory', id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
-export type BaseCategoryFragment = BaseCategory_GenericCategory_Fragment | BaseCategory_MeasurementCategory_Fragment | BaseCategory_RelationCategory_Fragment | BaseCategory_StructureCategory_Fragment;
+export type BaseCategoryFragment = BaseCategory_GenericCategory_Fragment | BaseCategory_MeasurementCategory_Fragment | BaseCategory_RelationCategory_Fragment | BaseCategory_StepCategory_Fragment | BaseCategory_StructureCategory_Fragment;
 
 type BaseNodeCategory_GenericCategory_Fragment = { __typename?: 'GenericCategory', id: string };
 
@@ -2376,9 +2503,13 @@ type BaseEdgeCategory_MeasurementCategory_Fragment = { __typename?: 'Measurement
 
 type BaseEdgeCategory_RelationCategory_Fragment = { __typename?: 'RelationCategory', left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } };
 
-export type BaseEdgeCategoryFragment = BaseEdgeCategory_MeasurementCategory_Fragment | BaseEdgeCategory_RelationCategory_Fragment;
+type BaseEdgeCategory_StepCategory_Fragment = { __typename?: 'StepCategory', left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } };
+
+export type BaseEdgeCategoryFragment = BaseEdgeCategory_MeasurementCategory_Fragment | BaseEdgeCategory_RelationCategory_Fragment | BaseEdgeCategory_StepCategory_Fragment;
 
 export type MeasurementCategoryFragment = { __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } };
+
+export type StepCategoryFragment = { __typename?: 'StepCategory', id: string, label: string, ageName: string, template: { __typename?: 'ProtocolStepTemplate', id: string }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } };
 
 export type RelationCategoryFragment = { __typename?: 'RelationCategory', id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } };
 
@@ -2396,7 +2527,9 @@ type EdgeCategory_MeasurementCategory_Fragment = { __typename?: 'MeasurementCate
 
 type EdgeCategory_RelationCategory_Fragment = { __typename?: 'RelationCategory', id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } };
 
-export type EdgeCategoryFragment = EdgeCategory_MeasurementCategory_Fragment | EdgeCategory_RelationCategory_Fragment;
+type EdgeCategory_StepCategory_Fragment = { __typename?: 'StepCategory' };
+
+export type EdgeCategoryFragment = EdgeCategory_MeasurementCategory_Fragment | EdgeCategory_RelationCategory_Fragment | EdgeCategory_StepCategory_Fragment;
 
 export type PresignedPostCredentialsFragment = { __typename?: 'PresignedPostCredentials', xAmzAlgorithm: string, xAmzCredential: string, xAmzDate: string, xAmzSignature: string, key: string, bucket: string, datalayer: string, policy: string, store: string };
 
@@ -2432,9 +2565,11 @@ type BaseListCategory_MeasurementCategory_Fragment = { __typename?: 'Measurement
 
 type BaseListCategory_RelationCategory_Fragment = { __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
+type BaseListCategory_StepCategory_Fragment = { __typename?: 'StepCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null };
+
 type BaseListCategory_StructureCategory_Fragment = { __typename?: 'StructureCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
-export type BaseListCategoryFragment = BaseListCategory_GenericCategory_Fragment | BaseListCategory_MeasurementCategory_Fragment | BaseListCategory_RelationCategory_Fragment | BaseListCategory_StructureCategory_Fragment;
+export type BaseListCategoryFragment = BaseListCategory_GenericCategory_Fragment | BaseListCategory_MeasurementCategory_Fragment | BaseListCategory_RelationCategory_Fragment | BaseListCategory_StepCategory_Fragment | BaseListCategory_StructureCategory_Fragment;
 
 type BaseListNodeCategory_GenericCategory_Fragment = { __typename?: 'GenericCategory', id: string, positionX?: number | null, positionY?: number | null, height?: number | null, width?: number | null, color?: Array<number> | null };
 
@@ -2446,9 +2581,13 @@ type BaseListEdgeCategory_MeasurementCategory_Fragment = { __typename?: 'Measure
 
 type BaseListEdgeCategory_RelationCategory_Fragment = { __typename?: 'RelationCategory', left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } };
 
-export type BaseListEdgeCategoryFragment = BaseListEdgeCategory_MeasurementCategory_Fragment | BaseListEdgeCategory_RelationCategory_Fragment;
+type BaseListEdgeCategory_StepCategory_Fragment = { __typename?: 'StepCategory', left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } };
+
+export type BaseListEdgeCategoryFragment = BaseListEdgeCategory_MeasurementCategory_Fragment | BaseListEdgeCategory_RelationCategory_Fragment | BaseListEdgeCategory_StepCategory_Fragment;
 
 export type ListMeasurementCategoryFragment = { __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } };
+
+export type ListStepCategoryFragment = { __typename?: 'StepCategory', id: string, label: string, description?: string | null, ageName: string, template: { __typename?: 'ProtocolStepTemplate', id: string, name: string }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } };
 
 export type ListRelationCategoryFragment = { __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } };
 
@@ -2466,7 +2605,9 @@ type ListEdgeCategory_MeasurementCategory_Fragment = { __typename?: 'Measurement
 
 type ListEdgeCategory_RelationCategory_Fragment = { __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } };
 
-export type ListEdgeCategoryFragment = ListEdgeCategory_MeasurementCategory_Fragment | ListEdgeCategory_RelationCategory_Fragment;
+type ListEdgeCategory_StepCategory_Fragment = { __typename?: 'StepCategory' };
+
+export type ListEdgeCategoryFragment = ListEdgeCategory_MeasurementCategory_Fragment | ListEdgeCategory_RelationCategory_Fragment | ListEdgeCategory_StepCategory_Fragment;
 
 export type MeasurementFragment = { __typename?: 'Measurement', id: any, value: any };
 
@@ -2496,7 +2637,7 @@ export type NodeViewFragment = { __typename?: 'NodeView', id: string, label: str
 
 export type ListNodeViewFragment = { __typename?: 'NodeView', id: string, label: string };
 
-export type OntologyFragment = { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, structureCategories: Array<{ __typename?: 'StructureCategory', identifier: string, id: string, label: string, description?: string | null, ageName: string, positionX?: number | null, positionY?: number | null, height?: number | null, width?: number | null, color?: Array<number> | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, genericCategories: Array<{ __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, description?: string | null, ageName: string, positionX?: number | null, positionY?: number | null, height?: number | null, width?: number | null, color?: Array<number> | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, relationCategories: Array<{ __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string, pinned: boolean }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, description?: string | null, pinned: boolean }>, nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> };
+export type OntologyFragment = { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, structureCategories: Array<{ __typename?: 'StructureCategory', identifier: string, id: string, label: string, description?: string | null, ageName: string, positionX?: number | null, positionY?: number | null, height?: number | null, width?: number | null, color?: Array<number> | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, genericCategories: Array<{ __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, description?: string | null, ageName: string, positionX?: number | null, positionY?: number | null, height?: number | null, width?: number | null, color?: Array<number> | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, relationCategories: Array<{ __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } }>, stepCategories: Array<{ __typename?: 'StepCategory', id: string, label: string, description?: string | null, ageName: string, template: { __typename?: 'ProtocolStepTemplate', id: string, name: string }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string, pinned: boolean }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, description?: string | null, pinned: boolean }>, nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> };
 
 export type ListOntologyFragment = { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null };
 
@@ -2586,6 +2727,13 @@ export type CreateRelationCategoryMutationVariables = Exact<{
 
 export type CreateRelationCategoryMutation = { __typename?: 'Mutation', createRelationCategory: { __typename?: 'RelationCategory', id: string, label: string, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } } };
 
+export type CreateStepCategoryMutationVariables = Exact<{
+  input: StepCategoryInput;
+}>;
+
+
+export type CreateStepCategoryMutation = { __typename?: 'Mutation', createStepCategory: { __typename?: 'StepCategory', id: string, label: string, ageName: string, template: { __typename?: 'ProtocolStepTemplate', id: string }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } } };
+
 export type CreateEntityMutationVariables = Exact<{
   input: EntityInput;
 }>;
@@ -2661,14 +2809,14 @@ export type CreateOntologyMutationVariables = Exact<{
 }>;
 
 
-export type CreateOntologyMutation = { __typename?: 'Mutation', createOntology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, structureCategories: Array<{ __typename?: 'StructureCategory', identifier: string, id: string, label: string, description?: string | null, ageName: string, positionX?: number | null, positionY?: number | null, height?: number | null, width?: number | null, color?: Array<number> | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, genericCategories: Array<{ __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, description?: string | null, ageName: string, positionX?: number | null, positionY?: number | null, height?: number | null, width?: number | null, color?: Array<number> | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, relationCategories: Array<{ __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string, pinned: boolean }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, description?: string | null, pinned: boolean }>, nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> } };
+export type CreateOntologyMutation = { __typename?: 'Mutation', createOntology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, structureCategories: Array<{ __typename?: 'StructureCategory', identifier: string, id: string, label: string, description?: string | null, ageName: string, positionX?: number | null, positionY?: number | null, height?: number | null, width?: number | null, color?: Array<number> | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, genericCategories: Array<{ __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, description?: string | null, ageName: string, positionX?: number | null, positionY?: number | null, height?: number | null, width?: number | null, color?: Array<number> | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, relationCategories: Array<{ __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } }>, stepCategories: Array<{ __typename?: 'StepCategory', id: string, label: string, description?: string | null, ageName: string, template: { __typename?: 'ProtocolStepTemplate', id: string, name: string }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string, pinned: boolean }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, description?: string | null, pinned: boolean }>, nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> } };
 
 export type UpdateOntologyMutationVariables = Exact<{
   input: UpdateOntologyInput;
 }>;
 
 
-export type UpdateOntologyMutation = { __typename?: 'Mutation', updateOntology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, structureCategories: Array<{ __typename?: 'StructureCategory', identifier: string, id: string, label: string, description?: string | null, ageName: string, positionX?: number | null, positionY?: number | null, height?: number | null, width?: number | null, color?: Array<number> | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, genericCategories: Array<{ __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, description?: string | null, ageName: string, positionX?: number | null, positionY?: number | null, height?: number | null, width?: number | null, color?: Array<number> | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, relationCategories: Array<{ __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string, pinned: boolean }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, description?: string | null, pinned: boolean }>, nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> } };
+export type UpdateOntologyMutation = { __typename?: 'Mutation', updateOntology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, structureCategories: Array<{ __typename?: 'StructureCategory', identifier: string, id: string, label: string, description?: string | null, ageName: string, positionX?: number | null, positionY?: number | null, height?: number | null, width?: number | null, color?: Array<number> | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, genericCategories: Array<{ __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, description?: string | null, ageName: string, positionX?: number | null, positionY?: number | null, height?: number | null, width?: number | null, color?: Array<number> | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, relationCategories: Array<{ __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } }>, stepCategories: Array<{ __typename?: 'StepCategory', id: string, label: string, description?: string | null, ageName: string, template: { __typename?: 'ProtocolStepTemplate', id: string, name: string }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string, pinned: boolean }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, description?: string | null, pinned: boolean }>, nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> } };
 
 export type DeleteOntologyMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2864,7 +3012,7 @@ export type GetOntologyQueryVariables = Exact<{
 }>;
 
 
-export type GetOntologyQuery = { __typename?: 'Query', ontology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, structureCategories: Array<{ __typename?: 'StructureCategory', identifier: string, id: string, label: string, description?: string | null, ageName: string, positionX?: number | null, positionY?: number | null, height?: number | null, width?: number | null, color?: Array<number> | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, genericCategories: Array<{ __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, description?: string | null, ageName: string, positionX?: number | null, positionY?: number | null, height?: number | null, width?: number | null, color?: Array<number> | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, relationCategories: Array<{ __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string, pinned: boolean }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, description?: string | null, pinned: boolean }>, nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> } };
+export type GetOntologyQuery = { __typename?: 'Query', ontology: { __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null, structureCategories: Array<{ __typename?: 'StructureCategory', identifier: string, id: string, label: string, description?: string | null, ageName: string, positionX?: number | null, positionY?: number | null, height?: number | null, width?: number | null, color?: Array<number> | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, genericCategories: Array<{ __typename?: 'GenericCategory', instanceKind: InstanceKind, id: string, label: string, description?: string | null, ageName: string, positionX?: number | null, positionY?: number | null, height?: number | null, width?: number | null, color?: Array<number> | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }>, relationCategories: Array<{ __typename?: 'RelationCategory', id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } }>, measurementCategories: Array<{ __typename?: 'MeasurementCategory', metricKind: MeasurementKind, id: string, label: string, description?: string | null, ageName: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } }>, stepCategories: Array<{ __typename?: 'StepCategory', id: string, label: string, description?: string | null, ageName: string, template: { __typename?: 'ProtocolStepTemplate', id: string, name: string }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } }>, store?: { __typename?: 'MediaStore', id: string, key: string, presignedUrl: string } | null, graphs: Array<{ __typename?: 'Graph', id: string, name: string, pinned: boolean }>, graphQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, description?: string | null, pinned: boolean }>, nodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, description?: string | null, pinned: boolean }> } };
 
 export type ListOntologiesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -3011,6 +3159,21 @@ export type GlobalSearchQueryVariables = Exact<{
 
 export type GlobalSearchQuery = { __typename?: 'Query', graphs: Array<{ __typename?: 'Graph', id: string, name: string, pinned: boolean }>, ontologies: Array<{ __typename?: 'Ontology', id: string, name: string, description?: string | null, purl?: string | null }> };
 
+export type GetStepCategoryQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetStepCategoryQuery = { __typename?: 'Query', stepCategory: { __typename?: 'StepCategory', id: string, label: string, ageName: string, template: { __typename?: 'ProtocolStepTemplate', id: string }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, left: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string }, right: { __typename?: 'GenericCategory', ageName: string, id: string } | { __typename?: 'StructureCategory', ageName: string, id: string } } };
+
+export type SearchStepCategoryQueryVariables = Exact<{
+  search?: InputMaybe<Scalars['String']['input']>;
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+}>;
+
+
+export type SearchStepCategoryQuery = { __typename?: 'Query', options: Array<{ __typename?: 'StepCategory', value: string, label: string }> };
+
 export type GetStructureQueryVariables = Exact<{
   identifier: Scalars['StructureIdentifier']['input'];
   object: Scalars['ID']['input'];
@@ -3045,6 +3208,32 @@ export const BaseCategoryFragmentDoc = gql`
   }
 }
     `;
+export const BaseEdgeCategoryFragmentDoc = gql`
+    fragment BaseEdgeCategory on EdgeCategory {
+  left {
+    id
+    ... on Category {
+      ageName
+    }
+  }
+  right {
+    id
+    ... on Category {
+      ageName
+    }
+  }
+}
+    `;
+export const StepCategoryFragmentDoc = gql`
+    fragment StepCategory on StepCategory {
+  ...BaseCategory
+  ...BaseEdgeCategory
+  template {
+    id
+  }
+}
+    ${BaseCategoryFragmentDoc}
+${BaseEdgeCategoryFragmentDoc}`;
 export const BaseNodeCategoryFragmentDoc = gql`
     fragment BaseNodeCategory on NodeCategory {
   id
@@ -3073,22 +3262,6 @@ export const NodeCategoryFragmentDoc = gql`
 }
     ${StructureCategoryFragmentDoc}
 ${GenericCategoryFragmentDoc}`;
-export const BaseEdgeCategoryFragmentDoc = gql`
-    fragment BaseEdgeCategory on EdgeCategory {
-  left {
-    id
-    ... on Category {
-      ageName
-    }
-  }
-  right {
-    id
-    ... on Category {
-      ageName
-    }
-  }
-}
-    `;
 export const RelationCategoryFragmentDoc = gql`
     fragment RelationCategory on RelationCategory {
   ...BaseCategory
@@ -3499,6 +3672,17 @@ export const DetailNodeQueryFragmentDoc = gql`
   query
 }
     `;
+export const ListStepCategoryFragmentDoc = gql`
+    fragment ListStepCategory on StepCategory {
+  ...BaseListCategory
+  ...BaseListEdgeCategory
+  template {
+    id
+    name
+  }
+}
+    ${BaseListCategoryFragmentDoc}
+${BaseListEdgeCategoryFragmentDoc}`;
 export const MediaStoreFragmentDoc = gql`
     fragment MediaStore on MediaStore {
   id
@@ -3539,6 +3723,9 @@ export const OntologyFragmentDoc = gql`
   measurementCategories {
     ...ListMeasurementCategory
   }
+  stepCategories {
+    ...ListStepCategory
+  }
   store {
     ...MediaStore
   }
@@ -3556,6 +3743,7 @@ export const OntologyFragmentDoc = gql`
 ${ListGenericCategoryFragmentDoc}
 ${ListRelationCategoryFragmentDoc}
 ${ListMeasurementCategoryFragmentDoc}
+${ListStepCategoryFragmentDoc}
 ${MediaStoreFragmentDoc}
 ${ListGraphFragmentDoc}
 ${ListGraphQueryFragmentDoc}
@@ -3917,6 +4105,39 @@ export function useCreateRelationCategoryMutation(baseOptions?: ApolloReactHooks
 export type CreateRelationCategoryMutationHookResult = ReturnType<typeof useCreateRelationCategoryMutation>;
 export type CreateRelationCategoryMutationResult = Apollo.MutationResult<CreateRelationCategoryMutation>;
 export type CreateRelationCategoryMutationOptions = Apollo.BaseMutationOptions<CreateRelationCategoryMutation, CreateRelationCategoryMutationVariables>;
+export const CreateStepCategoryDocument = gql`
+    mutation CreateStepCategory($input: StepCategoryInput!) {
+  createStepCategory(input: $input) {
+    ...StepCategory
+  }
+}
+    ${StepCategoryFragmentDoc}`;
+export type CreateStepCategoryMutationFn = Apollo.MutationFunction<CreateStepCategoryMutation, CreateStepCategoryMutationVariables>;
+
+/**
+ * __useCreateStepCategoryMutation__
+ *
+ * To run a mutation, you first call `useCreateStepCategoryMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateStepCategoryMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createStepCategoryMutation, { data, loading, error }] = useCreateStepCategoryMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateStepCategoryMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateStepCategoryMutation, CreateStepCategoryMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateStepCategoryMutation, CreateStepCategoryMutationVariables>(CreateStepCategoryDocument, options);
+      }
+export type CreateStepCategoryMutationHookResult = ReturnType<typeof useCreateStepCategoryMutation>;
+export type CreateStepCategoryMutationResult = Apollo.MutationResult<CreateStepCategoryMutation>;
+export type CreateStepCategoryMutationOptions = Apollo.BaseMutationOptions<CreateStepCategoryMutation, CreateStepCategoryMutationVariables>;
 export const CreateEntityDocument = gql`
     mutation CreateEntity($input: EntityInput!) {
   createEntity(input: $input) {
@@ -6000,6 +6221,81 @@ export function useGlobalSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQuer
 export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>;
 export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>;
 export type GlobalSearchQueryResult = Apollo.QueryResult<GlobalSearchQuery, GlobalSearchQueryVariables>;
+export const GetStepCategoryDocument = gql`
+    query GetStepCategory($id: ID!) {
+  stepCategory(id: $id) {
+    ...StepCategory
+  }
+}
+    ${StepCategoryFragmentDoc}`;
+
+/**
+ * __useGetStepCategoryQuery__
+ *
+ * To run a query within a React component, call `useGetStepCategoryQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetStepCategoryQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetStepCategoryQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetStepCategoryQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetStepCategoryQuery, GetStepCategoryQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetStepCategoryQuery, GetStepCategoryQueryVariables>(GetStepCategoryDocument, options);
+      }
+export function useGetStepCategoryLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStepCategoryQuery, GetStepCategoryQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetStepCategoryQuery, GetStepCategoryQueryVariables>(GetStepCategoryDocument, options);
+        }
+export type GetStepCategoryQueryHookResult = ReturnType<typeof useGetStepCategoryQuery>;
+export type GetStepCategoryLazyQueryHookResult = ReturnType<typeof useGetStepCategoryLazyQuery>;
+export type GetStepCategoryQueryResult = Apollo.QueryResult<GetStepCategoryQuery, GetStepCategoryQueryVariables>;
+export const SearchStepCategoryDocument = gql`
+    query SearchStepCategory($search: String, $values: [ID!]) {
+  options: stepCategories(
+    filters: {search: $search, ids: $values}
+    pagination: {limit: 10}
+  ) {
+    value: id
+    label: label
+  }
+}
+    `;
+
+/**
+ * __useSearchStepCategoryQuery__
+ *
+ * To run a query within a React component, call `useSearchStepCategoryQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchStepCategoryQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchStepCategoryQuery({
+ *   variables: {
+ *      search: // value for 'search'
+ *      values: // value for 'values'
+ *   },
+ * });
+ */
+export function useSearchStepCategoryQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchStepCategoryQuery, SearchStepCategoryQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<SearchStepCategoryQuery, SearchStepCategoryQueryVariables>(SearchStepCategoryDocument, options);
+      }
+export function useSearchStepCategoryLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchStepCategoryQuery, SearchStepCategoryQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<SearchStepCategoryQuery, SearchStepCategoryQueryVariables>(SearchStepCategoryDocument, options);
+        }
+export type SearchStepCategoryQueryHookResult = ReturnType<typeof useSearchStepCategoryQuery>;
+export type SearchStepCategoryLazyQueryHookResult = ReturnType<typeof useSearchStepCategoryLazyQuery>;
+export type SearchStepCategoryQueryResult = Apollo.QueryResult<SearchStepCategoryQuery, SearchStepCategoryQueryVariables>;
 export const GetStructureDocument = gql`
     query GetStructure($identifier: StructureIdentifier!, $object: ID!, $graph: ID) {
   structure(graph: $graph, identifier: $identifier, object: $object) {

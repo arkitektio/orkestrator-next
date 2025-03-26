@@ -15,6 +15,9 @@ fragment Ontology on Ontology {
   measurementCategories {
     ...ListMeasurementCategory
   }
+  stepCategories {
+    ...ListStepCategory
+  }
   store {
     ...MediaStore
   }

@@ -16,8 +16,7 @@ import { ContextualContainer } from "@/reaktion/edit/components/ContextualContai
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { ClickContextualParams, StagingNodeParams } from "../types";
-import { se } from "date-fns/locale";
-import { identifierToAgeName, identifierToNodeAgeName, labelToAgeName, labelToNodeAgeName } from "../utils";
+import { identifierToNodeAgeName, labelToNodeAgeName } from "../utils";
 
 const search = async ({ search, values }: SearchOptions) => {
   const models = smartRegistry

@@ -3,3 +3,7 @@ mutation CreateShortcut($input: CreateShortcutInput!) {
     ...Shortcut
   }
 }
+
+mutation DeleteShortcut($id: ID!) {
+  deleteShortcut(input: { id: $id })
+}

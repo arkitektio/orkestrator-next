@@ -1,7 +1,11 @@
-import { FormDialog, useFormDialog } from "@/components/dialog/FormDialog"
-import { Button } from "@/components/ui/button"
-import { CreateMeasurementCategoryMutationVariables, MeasurementKind, OntologyFragment } from "@/kraph/api/graphql";
-import { cn } from "@/lib/utils"
+import { FormDialog, useFormDialog } from "@/components/dialog/FormDialog";
+import { Button } from "@/components/ui/button";
+import {
+  CreateMeasurementCategoryMutationVariables,
+  MeasurementKind,
+  OntologyFragment,
+} from "@/kraph/api/graphql";
+import { cn } from "@/lib/utils";
 import { StagingEdgeParams } from "../types";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
@@ -14,9 +18,7 @@ import { labelToEdgeAgeName, labelToNodeAgeName } from "../utils";
 import { add } from "date-fns";
 import { useOntologyGraph } from "../OntologyGraphProvider";
 
- 
-export const SelfMeasurementForm = (props: {
-}) => {
+export const SelfMeasurementForm = (props: {}) => {
   const run = useFormDialog();
 
   const form = useForm<CreateMeasurementCategoryMutationVariables["input"]>({
@@ -68,41 +70,38 @@ export const SelfMeasurementForm = (props: {
       </Form>
     </>
   );
-};  
+};
 
+export const SelfMeasurementButton = (props: { self: string }) => {
+  const { addStagingEdge } = useOntologyGraph();
 
+  const onSubmitGeneric = (
+    data: CreateMeasurementCategoryMutationVariables["input"],
+  ) => {
+    addStagingEdge({
+      data: data,
+      ageName: labelToEdgeAgeName(data.label),
+      type: "measurement",
+      source: props.self,
+      target: props.self,
+    });
+  };
 
-
-
-export const SelfMeasurementButton = (props: {
-  self: string;
-}) => {
-
-  const {addStagingEdge} = useOntologyGraph();
- 
-  const onSubmitGeneric =  (
-      data: CreateMeasurementCategoryMutationVariables["input"],
-    ) => {
-      addStagingEdge({
-        data: data,
-        ageName: labelToEdgeAgeName(data.label),
-        type: "measurement",
-        source: props.self,
-        target: props.self
-      });
-    };
- 
- return <FormDialog
-          trigger={
-            <Button className={cn("w-full px-4")} variant={"outline"} size="sm">
-              Add
-            </Button>
-          }
-          onSubmit={onSubmitGeneric}
-          onError={props.onCancel}
+  return (
+    <FormDialog
+      trigger={
+        <Button
+          className={cn("w-full px-4 hidden")}
+          variant={"outline"}
+          size="sm"
         >
-          <SelfMeasurementForm
-          />
-        </FormDialog>
-
-}
+          Add
+        </Button>
+      }
+      onSubmit={onSubmitGeneric}
+      onError={props.onCancel}
+    >
+      <SelfMeasurementForm />
+    </FormDialog>
+  );
+};

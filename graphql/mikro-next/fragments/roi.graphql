@@ -4,6 +4,7 @@ fragment ListROI on ROI {
     id
     name
   }
+  kind
   vectors
 }
 
@@ -21,5 +22,6 @@ fragment ROI on ROI {
   history {
     ...History
   }
+  kind
   vectors
 }

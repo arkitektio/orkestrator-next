@@ -85,7 +85,7 @@ export const PageLayout = ({
               <span className="sr-only">Toggle Sidebar</span>
             </Button>
             <Separator dir="vertical" className="w-2" />
-            <div className="flex-grow flex flex-col">
+            <div className="flex-grow flex flex-col truncate">
               <h1 className="scroll-m-20 text-2xl font-extrabold tracking-tight lg:text-2xl truncate">
                 {title}
               </h1>
@@ -93,7 +93,7 @@ export const PageLayout = ({
                 <BreadCrumbs />
               </div>
             </div>
-            <div className="flex-shrink text-foreground flex flex-row items-center">
+            <div className="flex-initial text-foreground flex flex-row items-center">
               {pageActions}
 
               <DropdownMenu>

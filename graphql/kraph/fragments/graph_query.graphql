@@ -1,21 +1,26 @@
-fragment DetailGraphQuery on GraphQuery {
+fragment GraphQuery on GraphQuery {
   id
-  name
   query
-  description
-  ontology {
+  name
+  graph {
     id
     name
   }
-  scatterPlots {
-    id
-    name
+  scatterPlots(pagination: { limit: 1 }) {
+    ...ListScatterPlot
   }
+  render {
+    ...Path
+    ...Pairs
+    ...Table
+  }
+  pinned
 }
 
 fragment ListGraphQuery on GraphQuery {
   id
   name
+  query
   description
   pinned
 }

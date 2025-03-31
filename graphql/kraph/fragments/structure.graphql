@@ -1,37 +1,30 @@
-fragment KnowledgeStructure on Structure {
-  id
-  label
-  identifier
-  object
-  category {
-    identifier
-  }
-  pinnedViews {
-    ...NodeView
-  }
-}
-
 fragment Structure on Structure {
   id
-  label
-  identifier
   object
-  category {
-    identifier
-  }
+  identifier
 }
 
 fragment ListStructure on Structure {
-  identifier
-  object
   id
   category {
     identifier
+    id
   }
 }
 
-fragment StructureGraphNode on Structure {
-  identifier
-  object
+fragment InformedStructure on Structure {
   id
+  category {
+    id
+    identifier
+  }
+  graph {
+    id
+    name
+  }
+  bestView {
+    ...Table
+    ...Pairs
+    ...Path
+  }
 }

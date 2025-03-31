@@ -1,0 +1,30 @@
+fragment EntityCategoryDefinition on EntityCategoryDefinition {
+  tagFilters
+  categoryFilters
+}
+
+fragment EntityRoleDefinition on EntityRoleDefinition {
+  role
+  categoryDefinition {
+    ...EntityCategoryDefinition
+  }
+}
+
+fragment ReagentCategoryDefinition on ReagentCategoryDefinition {
+  tagFilters
+  categoryFilters
+}
+
+fragment ReagentRoleDefinition on ReagentRoleDefinition {
+  role
+  categoryDefinition {
+    ...ReagentCategoryDefinition
+  }
+}
+
+fragment VariableDefinition on VariableDefinition {
+  param
+  valueKind
+  default
+  optional
+}

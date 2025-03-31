@@ -1,9 +1,9 @@
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { KraphExpression, KraphMeasurementCategory } from "@/linkers";
-import { MateFinder } from "@/mates/types";
 import { ListMeasurementCategoryFragment } from "@/kraph/api/graphql";
+import { KraphMeasurementCategory } from "@/linkers";
+import { MateFinder } from "@/mates/types";
 
 interface Props {
   item: ListMeasurementCategoryFragment;

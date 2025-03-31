@@ -1,13 +1,8 @@
-import { Card } from "@/components/ui/card";
-import { KraphGraph, KraphOntology } from "@/linkers";
-import { MateFinder } from "@/mates/types";
-import {
-  ListGraphFragment,
-  ListOntologyFragment,
-  usePinGraphMutation,
-} from "../../api/graphql";
-import { Badge } from "@/components/ui/badge";
 import { PinButton } from "@/components/pin/PinButton";
+import { Card } from "@/components/ui/card";
+import { KraphGraph } from "@/linkers";
+import { MateFinder } from "@/mates/types";
+import { ListGraphFragment, usePinGraphMutation } from "../../api/graphql";
 
 interface Props {
   item: ListGraphFragment;

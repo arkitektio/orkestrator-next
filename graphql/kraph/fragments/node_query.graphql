@@ -1,11 +1,13 @@
-fragment DetailNodeQuery on NodeQuery {
+fragment NodeQuery on NodeQuery {
+  id
   name
-  query
+  pinned
 }
 
 fragment ListNodeQuery on NodeQuery {
   id
   name
+  query
   description
   pinned
 }

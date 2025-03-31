@@ -1,15 +1,6 @@
 "use client";
 
-import * as React from "react";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  Scatter,
-  ScatterChart,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -20,10 +11,7 @@ import {
 import {
   ChartConfig,
   ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
   ChartTooltip,
-  ChartTooltipContent,
 } from "@/components/ui/chart";
 import {
   Select,
@@ -37,8 +25,9 @@ import {
   TableFragment,
   useDeleteScatterPlotMutation,
 } from "@/kraph/api/graphql";
+import * as React from "react";
+import { CartesianGrid, Scatter, ScatterChart, XAxis, YAxis } from "recharts";
 import { calculateColumns, calculateRows } from "../../renderers/utils";
-import { Button } from "@/components/ui/button";
 
 const chartConfig = {
   visitors: {
@@ -74,7 +63,9 @@ export default (props: {
         </div>
         <Button
           variant="destructive"
-          onClick={() => del({ variables: { id: props.scatterPlot.id } })}
+          onClick={() =>
+            del({ variables: { input: { id: props.scatterPlot.id } } })
+          }
         >
           Delete
         </Button>

@@ -1,0 +1,11 @@
+mutation CreateStructureCategory($input: StructureCategoryInput!) {
+  createStructureCategory(input: $input) {
+    ...StructureCategory
+  }
+}
+
+mutation UpdateStructureCategory($input: UpdateStructureCategoryInput!) {
+  updateStructureCategory(input: $input) {
+    ...StructureCategory
+  }
+}

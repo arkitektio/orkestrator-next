@@ -1,9 +1,9 @@
 import { Arkitekt, useKraph } from "@/arkitekt/Arkitekt";
 import {
   PresignedPostCredentialsFragment,
-  RequestMediaUploadDocument,
-  RequestMediaUploadMutation,
-  RequestMediaUploadMutationVariables,
+  RequestUploadDocument,
+  RequestUploadMutation,
+  RequestUploadMutationVariables,
 } from "@/kraph/api/graphql";
 import { useCallback } from "react";
 
@@ -123,13 +123,12 @@ export const useKraphUpload = () => {
       }
 
       let data = await client.mutate<
-        RequestMediaUploadMutation,
-        RequestMediaUploadMutationVariables
+        RequestUploadMutation,
+        RequestUploadMutationVariables
       >({
-        mutation: RequestMediaUploadDocument,
+        mutation: RequestUploadDocument,
         variables: {
-          key: file.name,
-          datalayer: "default",
+          input: { key: file.name, datalayer: "default" },
         },
       });
 
@@ -146,5 +145,3 @@ export const useKraphUpload = () => {
 
   return upload;
 };
-
-

@@ -5,6 +5,7 @@ import {
   KnowledgeStructureFragment,
   ListGraphFragment,
   useCreateStructureMutation,
+  useGetInformedStructureQuery,
   useGetStructreInfoQuery,
   useGetStructureQuery,
   useListGraphsQuery,
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/accordion";
 import { KraphNode } from "@/linkers";
 import { Badge } from "@/components/ui/badge";
+import { SelectiveRenderer } from "../renderers/NodeQueryRenderer";
 
 export type KnowledgeSidebarProps = {
   identifier: Identifier;
@@ -31,7 +33,7 @@ export type StructureViewWidgetProps = {
 } & KnowledgeSidebarProps;
 
 export const StructureViewWidget = (props: StructureViewWidgetProps) => {
-  const { data, loading, error } = useGetStructreInfoQuery({
+  const { data, loading, error } = useGetInformedStructureQuery({
     variables: {
       identifier: props.identifier,
       object: props.object,
@@ -55,52 +57,16 @@ export const StructureViewWidget = (props: StructureViewWidgetProps) => {
 
   return (
     <>
-      {data?.structure != undefined ? (
+      {data?.structureByIdentifier != undefined ? (
         <div className="w-full h-full">
           <div className="text-xs font-bold">{props.graph.name}</div>
 
-          {data.structure.leftEdges.map((edge) => (
-            <div className="flex flex-row">
-              {edge.__typename == "Relation" ? (
-                <div className="flex flex-row">
-                  {edge.left.__typename == "Structure"
-                    ? edge.left.identifier
-                    : ""}
-                  {edge.left.__typename == "Entity" ? edge.left.label : ""}
-                  {"-> "}
-                </div>
-              ) : null}
-            </div>
-          ))}
-
-          {data.structure.rightEdges.length == 0 && (
-            <div className="flex flex-row">
-              {data.structure.identifier} has no measurments
-            </div>
+          {data.structureByIdentifier.bestView && (
+            <SelectiveRenderer
+              render={data.structureByIdentifier.bestView}
+              nodeId={props.identifier}
+            />
           )}
-
-          {data.structure.rightEdges.map((edge) => (
-            <ul className="flex flex-row gap-2">
-              {edge.__typename == "Relation" ? (
-                <li className="flex flex-row" key={edge.id}>
-                  <KraphNode.DetailLink object={edge.right.id}>
-                    <Badge className="bg-red-200">
-                      {edge.label.replaceAll('"', "")}
-                    </Badge>
-                    {" - "}
-                    <Badge color="blue">
-                      {edge.right.__typename == "Entity"
-                        ? edge.right.label
-                        : ""}
-                      {edge.right.__typename == "Structure"
-                        ? edge.right.identifier
-                        : ""}
-                    </Badge>
-                  </KraphNode.DetailLink>
-                </li>
-              ) : null}
-            </ul>
-          ))}
         </div>
       ) : (
         <div className="">

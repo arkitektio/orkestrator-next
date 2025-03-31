@@ -27,7 +27,7 @@ export default asDetailQueryRoute(
         pageActions={
           <div className="flex flex-row gap-2">
             <KraphGraph.DetailLink
-              object={data.graphQuery.ontology.id}
+              object={data.graphQuery.graph.id}
               subroute="entities"
             >
               <Button variant="outline" size="sm">
@@ -56,9 +56,9 @@ export default asDetailQueryRoute(
               {data.graphQuery.name}
             </h1>
             <p className="mt-3 text-xl text-muted-foreground">
-              <KraphOntology.DetailLink object={data.graphQuery.ontology.id}>
-                {data.graphQuery.ontology.name}
-              </KraphOntology.DetailLink>
+              <KraphGraph.DetailLink object={data.graphQuery.graph.id}>
+                {data.graphQuery.graph.name}
+              </KraphGraph.DetailLink>
             </p>
           </div>
         </div>

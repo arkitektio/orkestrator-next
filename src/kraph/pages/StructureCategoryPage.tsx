@@ -6,7 +6,10 @@ import { useResolve } from "@/datalayer/hooks/useResolve";
 import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import { KraphStructureCategory } from "@/linkers";
 import { useNavigate } from "react-router-dom";
-import { useGetStructureCategoryQuery, useUpdateStructureCategoryMutation } from "../api/graphql";
+import {
+  useGetStructureCategoryQuery,
+  useUpdateStructureCategoryMutation,
+} from "../api/graphql";
 import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 
 export default asDetailQueryRoute(
@@ -37,7 +40,7 @@ export default asDetailQueryRoute(
     return (
       <KraphStructureCategory.ModelPage
         object={data.structureCategory.id}
-        title={data?.structureCategory.label}
+        title={data?.structureCategory.identifier}
         sidebars={
           <MultiSidebar
             map={{
@@ -58,10 +61,10 @@ export default asDetailQueryRoute(
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
           <div>
             <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-              {data.structureCategory.label}
+              {data.structureCategory.identifier}
             </h1>
             <p className="mt-3 text-xl text-muted-foreground">
-              {data.structureCategory.ageName}
+              {data.structureCategory.graph.name}
             </p>
           </div>
           <div className="w-full h-full flex-row relative">

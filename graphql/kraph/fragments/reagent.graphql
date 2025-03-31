@@ -1,17 +1,11 @@
 fragment Reagent on Reagent {
   id
+  category {
+    id
+    label
+  }
+  externalId
   label
-  creationSteps {
-    id
-    name
-  }
-  usedIn {
-    id
-    protocolStep {
-      performedAt
-      name
-    }
-  }
 }
 
 fragment ListReagent on Reagent {

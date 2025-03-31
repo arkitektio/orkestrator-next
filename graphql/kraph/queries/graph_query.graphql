@@ -1,6 +1,6 @@
 query GetGraphQuery($id: ID!) {
   graphQuery(id: $id) {
-    ...DetailGraphQuery
+    ...GraphQuery
   }
 }
 
@@ -11,5 +11,23 @@ query SearchGraphQueries($search: String, $values: [ID!]) {
   ) {
     value: id
     label: name
+  }
+}
+
+query ListGraphQueries(
+  $filters: GraphQueryFilter
+  $pagination: OffsetPaginationInput
+) {
+  graphQueries(filters: $filters, pagination: $pagination) {
+    ...ListGraphQuery
+  }
+}
+
+query ListPrerenderedGraphQueries(
+  $filters: GraphQueryFilter
+  $pagination: OffsetPaginationInput
+) {
+  graphQueries(filters: $filters, pagination: $pagination) {
+    ...GraphQuery
   }
 }

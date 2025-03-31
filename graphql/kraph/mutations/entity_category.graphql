@@ -1,0 +1,11 @@
+mutation CreateEntityCategory($input: EntityCategoryInput!) {
+  createEntityCategory(input: $input) {
+    ...EntityCategory
+  }
+}
+
+mutation UpdateEntityCategory($input: UpdateEntityCategoryInput!) {
+  updateEntityCategory(input: $input) {
+    ...EntityCategory
+  }
+}

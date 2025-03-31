@@ -1,5 +1,0 @@
-mutation CreateNodeView($input: NodeViewInput!) {
-  createNodeView(input: $input) {
-    ...NodeView
-  }
-}

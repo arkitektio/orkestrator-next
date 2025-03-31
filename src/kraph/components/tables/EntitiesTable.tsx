@@ -38,14 +38,13 @@ import {
 import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
 import { Form } from "@/components/ui/form";
 import { KraphNode } from "@/linkers";
+import { useForm } from "react-hook-form";
 import {
-  EntityFragment,
   ListEntitiesQueryVariables,
   ListEntityFragment,
   useListEntitiesQuery,
-  useSearchLinkedExpressionLazyQuery,
+  useSearchEntityCategoryLazyQuery,
 } from "@/kraph/api/graphql";
-import { useForm } from "react-hook-form";
 
 export const columns: ColumnDef<ListEntityFragment>[] = [
   {
@@ -115,7 +114,7 @@ export const columns: ColumnDef<ListEntityFragment>[] = [
     accessorKey: "linkedExpression.label",
     header: () => <div className="text-center">Type</div>,
     cell: ({ row, getValue }) => {
-      const label = row.getValue("Label");
+      const label = row.getValue("Label") as string;
 
       return <div className="text-center font-medium">{label}</div>;
     },
@@ -161,13 +160,6 @@ export const columns: ColumnDef<ListEntityFragment>[] = [
   },
 ];
 
-const initialVariables: ListEntitiesQueryVariables = {
-  pagination: {
-    limit: 20, // Default page size
-    offset: 0, // Start from the first item
-  },
-};
-
 const calculateColumns = () => {
   let calculated_columns = columns;
   return calculated_columns;
@@ -188,7 +180,7 @@ export const EntitiesTable = (props: {
     pageSize: 20,
   });
 
-  const [searchM] = useSearchLinkedExpressionLazyQuery({});
+  const [searchM] = useSearchEntityCategoryLazyQuery({});
 
   const form = useForm<FormValues>({
     defaultValues: {},

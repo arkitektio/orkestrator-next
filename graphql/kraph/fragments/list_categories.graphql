@@ -1,10 +1,12 @@
-fragment BaseListCategory on Category {
+fragment BaseListCategory on BaseCategory {
   id
-  label
   description
-  ageName
   store {
     presignedUrl
+  }
+  tags {
+    id
+    value
   }
 }
 
@@ -12,65 +14,52 @@ fragment BaseListNodeCategory on NodeCategory {
   id
   positionX
   positionY
-  height
   width
-  color
+  height
 }
 
 fragment BaseListEdgeCategory on EdgeCategory {
-  left {
-    id
-    ... on Category {
-    ageName
-    }
-  }
-  right {
-    id
-    ... on Category {
-    ageName
-    }
-  }
+  id
 }
 
 fragment ListMeasurementCategory on MeasurementCategory {
   ...BaseListCategory
   ...BaseListEdgeCategory
-  metricKind
-}
-
-fragment ListStepCategory on StepCategory {
-  ...BaseListCategory
-  ...BaseListEdgeCategory
-  template {
-    id
-    name
+  sourceDefinition {
+    tagFilters
+    categoryFilters
   }
+  targetDefinition {
+    tagFilters
+    categoryFilters
+  }
+  label
 }
-
 
 fragment ListRelationCategory on RelationCategory {
   ...BaseListCategory
   ...BaseListEdgeCategory
+  sourceDefinition {
+    tagFilters
+    categoryFilters
+  }
+  targetDefinition {
+    tagFilters
+    categoryFilters
+  }
+  label
 }
 
-fragment ListStructureCategory on StructureCategory {
+fragment ListReagentCategory on ReagentCategory {
   ...BaseListCategory
-  ...BaseListNodeCategory
-  identifier
-}
-
-fragment ListGenericCategory on GenericCategory {
-  ...BaseListCategory
-  ...BaseListNodeCategory
+  ...BaseNodeCategory
   instanceKind
+  label
 }
 
-fragment ListNodeCategory on NodeCategory {
-  ...ListStructureCategory
-  ...ListGenericCategory
-}
-
-fragment ListEdgeCategory on EdgeCategory {
-  ...ListRelationCategory
-  ...ListMeasurementCategory
+fragment ListMetricCategory on MetricCategory {
+  ...BaseListCategory
+  ...BaseNodeCategory
+  label
+  metricKind
 }

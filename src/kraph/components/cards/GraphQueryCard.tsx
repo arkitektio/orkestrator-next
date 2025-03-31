@@ -3,7 +3,6 @@ import { KraphGraphQuery } from "@/linkers";
 import { MateFinder } from "@/mates/types";
 import {
   ListGraphQueryFragment,
-  usePinGraphMutation,
   usePinGraphQueryMutation,
 } from "../../api/graphql";
 import { PinButton } from "@/components/pin/PinButton";

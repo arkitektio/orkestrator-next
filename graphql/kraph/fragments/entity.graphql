@@ -1,14 +1,13 @@
 fragment Entity on Entity {
   id
-  label
   category {
     id
     label
   }
-  subjectedTo {
+  label
+  subjectableTo {
     id
-    performedAt
-    name
+    label
   }
 }
 
@@ -18,13 +17,5 @@ fragment ListEntity on Entity {
   category {
     id
     label
-  }
-}
-
-fragment EntityGraphNode on Entity {
-  id
-  label
-  category {
-    color
   }
 }

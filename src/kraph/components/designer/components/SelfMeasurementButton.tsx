@@ -1,30 +1,28 @@
 import { FormDialog, useFormDialog } from "@/components/dialog/FormDialog";
+import { ChoicesField } from "@/components/fields/ChoicesField";
+import { ParagraphField } from "@/components/fields/ParagraphField";
+import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
+import { DialogFooter } from "@/components/ui/dialog";
+import { Form } from "@/components/ui/form";
 import {
   CreateMeasurementCategoryMutationVariables,
-  MeasurementKind,
-  OntologyFragment,
+  CreateMetricCategoryMutationVariables,
+  MetricKind,
 } from "@/kraph/api/graphql";
 import { cn } from "@/lib/utils";
-import { StagingEdgeParams } from "../types";
 import { useForm } from "react-hook-form";
-import { Form } from "@/components/ui/form";
-import { StringField } from "@/components/fields/StringField";
-import { ParagraphField } from "@/components/fields/ParagraphField";
-import { ChoicesField } from "@/components/fields/ChoicesField";
-import { ListSearchField } from "@/components/fields/ListSearchField";
-import { DialogFooter } from "@/components/ui/dialog";
-import { labelToEdgeAgeName, labelToNodeAgeName } from "../utils";
-import { add } from "date-fns";
 import { useOntologyGraph } from "../OntologyGraphProvider";
+import { labelToEdgeAgeName } from "../utils";
 
 export const SelfMeasurementForm = (props: {}) => {
   const run = useFormDialog();
 
-  const form = useForm<CreateMeasurementCategoryMutationVariables["input"]>({
+  const form = useForm<CreateMetricCategoryMutationVariables["input"]>({
     defaultValues: {
       label: "",
-      kind: MeasurementKind.Float,
+      description: "",
+      kind: MetricKind.Float,
     },
   });
 
@@ -55,9 +53,9 @@ export const SelfMeasurementForm = (props: {}) => {
                 name="kind"
                 description="Select a data kind"
                 options={[
-                  { label: "Float", value: MeasurementKind.Float },
-                  { label: "Integer", value: MeasurementKind.Int },
-                  { label: "String", value: MeasurementKind.String },
+                  { label: "Float", value: MetricKind.Float },
+                  { label: "Integer", value: MetricKind.Int },
+                  { label: "String", value: MetricKind.String },
                 ]}
               />
 

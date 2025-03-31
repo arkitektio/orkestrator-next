@@ -1,12 +1,9 @@
 import { useGetPodQuery } from "@/kabinet/api/graphql";
-import GraphViewWidget from "@/kraph/widgets/GraphViewWidget";
-import OntologyWidget from "@/kraph/widgets/OntologyWidget";
+import GraphWidget from "@/kraph/widgets/GraphWidget";
 import { KabinetPod, MikroImage, MikroROI, RekuestNode } from "@/linkers";
 import { UserAvatar } from "@/lok-next/components/UserAvatar";
 import { useGetImageQuery, useGetRoiQuery } from "@/mikro-next/api/graphql";
 import { DelegatingImageRender } from "@/mikro-next/components/render/DelegatingImageRender";
-import { FinalRender } from "@/mikro-next/components/render/FInalRender";
-import { RGBD } from "@/mikro-next/components/render/TwoDThree";
 import { useDetailNodeQuery } from "@/rekuest/api/graphql";
 import { ReturnWidgetProps } from "@/rekuest/widgets/types";
 import { MeshWidget } from "@/widgets/MeshWidget";
@@ -26,7 +23,9 @@ export const ImageWidget = (props: ReturnWidgetProps) => {
   return (
     <MikroImage.DetailLink object={props.value}>
       <div className="w-[200px] h-[200px]">
-        {defaultContext && <DelegatingImageRender context={defaultContext} rois={[]} />}
+        {defaultContext && (
+          <DelegatingImageRender context={defaultContext} rois={[]} />
+        )}
       </div>
     </MikroImage.DetailLink>
   );
@@ -44,8 +43,12 @@ export const RoiWidget = (props: ReturnWidgetProps) => {
 
   return (
     <MikroROI.DetailLink object={props.value}>
-       {roi?.creator && <UserAvatar sub={roi.creator.sub} />}
-       {roi?.createdAt && <p>Marked <Timestamp date={roi.createdAt} relative/></p>}
+      {roi?.creator && <UserAvatar sub={roi.creator.sub} />}
+      {roi?.createdAt && (
+        <p>
+          Marked <Timestamp date={roi.createdAt} relative />
+        </p>
+      )}
     </MikroROI.DetailLink>
   );
 };
@@ -105,11 +108,8 @@ export const DelegatingStructureWidget = (props: ReturnWidgetProps) => {
       return <div>Snapshssot</div>;
     case "@mikro/mesh":
       return <MeshWidget {...props} />;
-    case "@kraph/ontology":
-      return <OntologyWidget {...props} />;
-    case "@kraph/graphview":
-      return <GraphViewWidget {...props} />;
-
+    case "@kraph/graph":
+      return <GraphWidget {...props} />;
     default:
       return (
         <>

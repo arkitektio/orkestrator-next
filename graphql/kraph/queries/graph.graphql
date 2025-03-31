@@ -4,18 +4,6 @@ query GetGraph($id: ID!) {
   }
 }
 
-query MyActiveGraph {
-  myActiveGraph {
-    ...ListGraph
-  }
-}
-
-query ListGraphs($filters: GraphFilter, $pagination: OffsetPaginationInput) {
-  graphs(filters: $filters, pagination: $pagination) {
-    ...ListGraph
-  }
-}
-
 query SearchGraphs($search: String, $values: [ID!]) {
   options: graphs(
     filters: { search: $search, ids: $values }
@@ -23,5 +11,11 @@ query SearchGraphs($search: String, $values: [ID!]) {
   ) {
     value: id
     label: name
+  }
+}
+
+query ListGraphs($filters: GraphFilter, $pagination: OffsetPaginationInput) {
+  graphs(filters: $filters, pagination: $pagination) {
+    ...ListGraph
   }
 }

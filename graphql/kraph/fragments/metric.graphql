@@ -1,0 +1,14 @@
+fragment Metric on Metric {
+  id
+  category {
+    id
+    label
+  }
+  value
+}
+
+fragment ListMetric on Metric {
+  id
+  value
+  label
+}

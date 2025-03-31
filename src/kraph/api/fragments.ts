@@ -6,32 +6,52 @@
       }
       const result: PossibleTypesResultData = {
   "possibleTypes": {
-    "Category": [
-      "GenericCategory",
+    "BaseCategory": [
+      "EntityCategory",
       "MeasurementCategory",
+      "MetricCategory",
+      "NaturalEventCategory",
+      "ProtocolEventCategory",
+      "ReagentCategory",
       "RelationCategory",
-      "StepCategory",
       "StructureCategory"
     ],
+    "CategoryDefintion": [
+      "EntityCategoryDefinition",
+      "ReagentCategoryDefinition",
+      "StructureCategoryDefinition"
+    ],
     "Edge": [
-      "ComputedMeasurement",
       "Measurement",
+      "Participant",
       "Relation"
     ],
     "EdgeCategory": [
       "MeasurementCategory",
-      "RelationCategory",
-      "StepCategory"
+      "RelationCategory"
     ],
     "Node": [
       "Entity",
+      "Metric",
+      "NaturalEvent",
+      "ProtocolEvent",
+      "Reagent",
       "Structure"
     ],
     "NodeCategory": [
-      "GenericCategory",
+      "EntityCategory",
+      "MetricCategory",
+      "NaturalEventCategory",
+      "ProtocolEventCategory",
+      "ReagentCategory",
       "StructureCategory"
     ],
     "PairsPathTable": [
+      "Pairs",
+      "Path",
+      "Table"
+    ],
+    "PathPairsTable": [
       "Pairs",
       "Path",
       "Table"

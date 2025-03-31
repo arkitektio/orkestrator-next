@@ -1,0 +1,45 @@
+fragment BaseNode on Node {
+  id
+  label
+}
+
+fragment NaturalEvent on NaturalEvent {
+  id
+  validFrom
+  validTo
+  category {
+    id
+    label
+  }
+}
+
+fragment ProtocolEvent on ProtocolEvent {
+  id
+  validFrom
+  validTo
+  category {
+    id
+    label
+  }
+}
+
+fragment Node on Node {
+  ...BaseNode
+  ...Entity
+  ...Structure
+  ...Metric
+  ...Reagent
+}
+
+fragment DetailNode on Node {
+  ...Node
+  graph {
+    id
+    name
+  }
+  renders {
+    ...Path
+    ...Pairs
+    ...Table
+  }
+}

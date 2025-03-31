@@ -4,21 +4,18 @@ query GetReagent($id: ID!) {
   }
 }
 
-query ListReagents(
-  $filters: ReagentFilter
-  $pagination: OffsetPaginationInput
-) {
-  reagents(filters: $filters, pagination: $pagination) {
-    ...ListReagent
-  }
-}
-
 query SearchReagents($search: String, $values: [ID!]) {
-  options: reagents(
+  options: nodes(
     filters: { search: $search, ids: $values }
     pagination: { limit: 10 }
   ) {
     value: id
     label: label
+  }
+}
+
+query ListReagents($filters: ReagentFilter, $pagination: GraphPaginationInput) {
+  reagents(filters: $filters, pagination: $pagination) {
+    ...ListReagent
   }
 }

@@ -1,9 +1,6 @@
 import { Action } from "@/actions/action-registry";
 import { buildDeleteAction } from "@/actions/builders/deleteAction";
-import {
-  DeleteGraphDocument,
-  DeleteOntologyDocument,
-} from "@/kraph/api/graphql";
+import { DeleteGraphDocument } from "@/kraph/api/graphql";
 import { ApolloClient, NormalizedCache } from "@apollo/client";
 
 export const KRAPH_ACTIONS: Action[] = [
@@ -14,14 +11,6 @@ export const KRAPH_ACTIONS: Action[] = [
     service: "kraph",
     typename: "Graph",
     mutation: DeleteGraphDocument,
-  }),
-  buildDeleteAction({
-    title: "Delete Ontology",
-    identifier: "@kraph/ontology",
-    description: "Delete the Ontology",
-    service: "kraph",
-    typename: "Ontology",
-    mutation: DeleteOntologyDocument,
   }),
   {
     name: "Relate",

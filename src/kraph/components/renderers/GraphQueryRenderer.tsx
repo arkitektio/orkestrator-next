@@ -1,9 +1,29 @@
-import { useGetGraphViewQuery } from "@/kraph/api/graphql";
+import {
+  GraphQueryFragment,
+  useGetGraphQuery,
+  useGetGraphQueryQuery,
+} from "@/kraph/api/graphql";
 import { PathGraph } from "./graph/KnowledgeGraph";
 import { GraphTable } from "./table/GraphTable";
 
-export const GraphViewRenderer = (props: { id: string }) => {
-  const { data, error } = useGetGraphViewQuery({
+export const SelectiveGraphQueryRenderer = (props: {
+  graphQuery: GraphQueryFragment;
+}) => {
+  if (props.graphQuery.render.__typename === "Pairs") {
+    return <div>Pair Rendering</div>;
+  }
+
+  if (props.graphQuery.render.__typename === "Path") {
+    return <PathGraph path={props.graphQuery.render} />;
+  }
+
+  if (props.graphQuery.render.__typename === "Table") {
+    return <GraphTable table={props.graphQuery.render} />;
+  }
+};
+
+export const GraphQueryRenderer = (props: { id: string }) => {
+  const { data, error } = useGetGraphQueryQuery({
     variables: {
       id: props.id,
     },
@@ -17,15 +37,5 @@ export const GraphViewRenderer = (props: { id: string }) => {
     return <div>Loading...</div>;
   }
 
-  if (data.graphView.render.__typename === "Pairs") {
-    return <div>Pair Rendering</div>;
-  }
-
-  if (data.graphView.render.__typename === "Path") {
-    return <PathGraph path={data.graphView.render} />;
-  }
-
-  if (data.graphView.render.__typename === "Table") {
-    return <GraphTable table={data.graphView.render} />;
-  }
+  return <SelectiveGraphQueryRenderer graphQuery={data.graphQuery} />;
 };

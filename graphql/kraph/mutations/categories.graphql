@@ -4,39 +4,20 @@ mutation CreateMeasurementCategory($input: MeasurementCategoryInput!) {
   }
 }
 
-mutation CreateStructureCategory($input: StructureCategoryInput!) {
-  createStructureCategory(input: $input) {
-    ...StructureCategory
+mutation CreateMetricCategory($input: MetricCategoryInput!) {
+  createMetricCategory(input: $input) {
+    ...MetricCategory
   }
 }
 
-mutation UpdateStructureCategory($input: UpdateStructureCategoryInput!) {
-  updateStructureCategory(input: $input) {
-    ...StructureCategory
-  }
-}
-
-mutation UpdateGenericCategory($input: UpdateGenericCategoryInput!) {
-  updateGenericCategory(input: $input) {
-    ...GenericCategory
-  }
-}
-
-mutation CreateGenericCategory($input: GenericCategoryInput!) {
-  createGenericCategory(input: $input) {
-    ...GenericCategory
+mutation CreateReagentCategory($input: ReagentCategoryInput!) {
+  createReagentCategory(input: $input) {
+    ...ReagentCategory
   }
 }
 
 mutation CreateRelationCategory($input: RelationCategoryInput!) {
   createRelationCategory(input: $input) {
     ...RelationCategory
-  }
-}
-
-
-mutation CreateStepCategory($input: StepCategoryInput!) {
-  createStepCategory(input: $input) {
-    ...StepCategory
   }
 }

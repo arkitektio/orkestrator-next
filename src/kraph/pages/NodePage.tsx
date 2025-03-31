@@ -1,43 +1,13 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { useCreateNodeViewMutation, useGetNodeQuery } from "../api/graphql";
+import { useGetNodeQuery } from "../api/graphql";
 
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
-import {
-  KraphLinkedExpression,
-  KraphNode,
-  KraphNodeQuery,
-  KraphNodeView,
-} from "@/linkers";
-import {
-  NodeQueryRenderer,
-  NodeViewRenderer,
-} from "../components/renderers/NodeQueryRenderer";
-import { useState } from "react";
+import { KraphEntity, KraphNode } from "@/linkers";
 import { useNavigate } from "react-router";
-import { Card } from "@/components/ui/card";
-import NodeViewCard from "../components/cards/NodeViewCard";
 
 export default asDetailQueryRoute(useGetNodeQuery, ({ data, refetch }) => {
-  const [view, setView] = useState<string | undefined>(
-    data.node.nodeViews[0]?.id,
-  );
-
-  const [createNodeView] = useCreateNodeViewMutation();
   const nagivate = useNavigate();
-
-  const createView = async (queryId: string) => {
-    createNodeView({
-      variables: {
-        input: {
-          node: data.node.id,
-          query: queryId,
-        },
-      },
-    }).then((x) => {
-      nagivate(KraphNodeView.linkBuilder(x.data?.createNodeView.id));
-    });
-  };
 
   return (
     <KraphNode.ModelPage
@@ -68,23 +38,12 @@ export default asDetailQueryRoute(useGetNodeQuery, ({ data, refetch }) => {
           <p className="mt-3 text-xl text-muted-foreground">
             {data.node.graph.name}
           </p>
+          {data.node.__typename === "Entity" && (
+            <KraphEntity.DetailLink object={data.node.id}>
+              Open as Entity
+            </KraphEntity.DetailLink>
+          )}
         </div>
-        <Card className="p-6 h-96 col-span-8 overflow-y-hidden">
-          {view && <NodeViewRenderer id={view} />}
-        </Card>
-      </div>
-
-      <div className="p-6">
-        <div className="grid grid-cols-6 gap-2">
-          {data?.node.nodeViews?.map((item, i) => <NodeViewCard item={item} />)}
-        </div>
-        <>
-          {data.node?.graph.ontology.nodeQueries.map((item) => (
-            <>
-              <div onClick={() => createView(item.id)}>{item.name}</div>
-            </>
-          ))}
-        </>
       </div>
     </KraphNode.ModelPage>
   );

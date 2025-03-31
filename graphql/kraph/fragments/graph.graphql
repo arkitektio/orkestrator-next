@@ -1,32 +1,42 @@
 fragment Graph on Graph {
   id
   name
-  pinned
   description
-  latestNodes(pagination: { limit: 10 }) {
-    ...ListNode
+  structureCategories {
+    ...ListStructureCategory
   }
-  ontology {
-    id
-    graphQueries {
-      id
-      name
-      query
-    }
+  entityCategories {
+    ...ListEntityCategory
   }
-  graphViews {
-    ...ListGraphView
+  metricCategories {
+    ...ListMetricCategory
   }
-  nodeViews {
-    ...ListNodeView
+  protocolEventCategories {
+    ...ListProtocolEventCategory
   }
-  plotViews(pagination: { limit: 2 }) {
-    ...CarouselPlotView
+  naturalEventCategories {
+    ...ListNaturalEventCategory
+  }
+  reagentCategories {
+    ...ListReagentCategory
+  }
+  relationCategories {
+    ...ListRelationCategory
+  }
+  measurementCategories {
+    ...ListMeasurementCategory
+  }
+  graphQueries(pagination: { limit: 0 }) {
+    ...GraphQuery
+  }
+  latestNodes(pagination: { limit: 2 }) {
+    ...Node
   }
 }
 
 fragment ListGraph on Graph {
   id
   name
+  description
   pinned
 }

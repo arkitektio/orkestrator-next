@@ -4,18 +4,18 @@ mutation CreateGraph($input: GraphInput!) {
   }
 }
 
-mutation DeleteGraph($id: ID!) {
-  deleteGraph(input: { id: $id })
-}
-
-mutation UpdateGraph($input: UpdateGraphInput!) {
-  updateGraph(input: $input) {
+mutation PinGraph($input: PinGraphInput!) {
+  pinGraph(input: $input) {
     ...Graph
   }
 }
 
-mutation PinGraph($input: PinGraphInput!) {
-  pinGraph(input: $input) {
+mutation DeleteGraph($input: DeleteGraphInput!) {
+  deleteGraph(input: $input)
+}
+
+mutation UpdateGraph($input: UpdateGraphInput!) {
+  updateGraph(input: $input) {
     ...Graph
   }
 }

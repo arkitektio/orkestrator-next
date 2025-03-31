@@ -36,53 +36,11 @@ export const NavigationPane = (props: {}) => {
 
         <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
           <DroppableNavLink
-            to="/kraph/ontologies"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <GitBranchPlusIcon className="h-4 w-4" />
-            Ontologies
-          </DroppableNavLink>
-          <DroppableNavLink
             to="/kraph/graphs"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <SparkleIcon className="h-4 w-4" />
             Graphs
-          </DroppableNavLink>
-          <DroppableNavLink
-            to="/kraph/plotviews"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <FaChartArea className="h-4 w-4" />
-            Plots
-          </DroppableNavLink>
-        </div>
-
-        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4 mt-4">
-          Protocols
-        </div>
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
-          <DroppableNavLink
-            to="/kraph/protocolsteptemplates"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <Folder className="h-4 w-4" />
-            Templates
-          </DroppableNavLink>
-
-          <DroppableNavLink
-            to="/kraph/protocolsteps"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <GitBranchPlusIcon className="h-4 w-4" />
-            Steps
-          </DroppableNavLink>
-          <DroppableNavLink
-            to="/kraph/reagents"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <File className="h-4 w-4" />
-            Reagents
           </DroppableNavLink>
         </div>
       </nav>
@@ -92,9 +50,6 @@ export const NavigationPane = (props: {}) => {
 
 const variables: GlobalSearchQueryVariables = {
   search: "",
-  pagination: {
-    limit: 10,
-  },
 };
 
 const Pane: React.FunctionComponent<IDataSidebarProps> = (props) => {

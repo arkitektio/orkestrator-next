@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ColumnDef,
   ColumnFiltersState,
   SortingState,
   VisibilityState,
@@ -31,14 +30,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import {
-  ColumnFragment,
-  ColumnKind,
-  GraphViewFragment,
-  TableFragment,
-} from "@/kraph/api/graphql";
-import { useForm } from "react-hook-form";
-import { KraphNode } from "@/linkers";
+import { TableFragment } from "@/kraph/api/graphql";
 import { calculateColumns, calculateRows } from "../utils";
 
 export type FormValues = {
@@ -124,7 +116,7 @@ export const GraphTable = (props: { table?: TableFragment }) => {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="w-full h-full">
+      <div className="flex-grow flex flex-justify-between">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

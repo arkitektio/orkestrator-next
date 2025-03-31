@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import {
-  CreateGenericCategoryMutationVariables,
+  CreateEntityCategoryMutation,
+  CreateEntityCategoryMutationVariables,
   CreateStructureCategoryMutationVariables,
-  OntologyFragment,
+  GraphFragment,
 } from "@/kraph/api/graphql";
 import { cn } from "@/lib/utils";
 import { smartRegistry } from "@/providers/smart/registry";
@@ -36,7 +37,7 @@ const search = async ({ search, values }: SearchOptions) => {
 
 export const StructureForm = (props: {
   params: ClickContextualParams;
-  ontology: OntologyFragment;
+  graph: GraphFragment;
   addStagingNode: (params: StagingNodeParams) => void;
 }) => {
   const run = useFormDialog();
@@ -44,7 +45,7 @@ export const StructureForm = (props: {
   const form = useForm<CreateStructureCategoryMutationVariables["input"]>({
     defaultValues: {
       identifier: "",
-      ontology: props.ontology.id,
+      graph: props.graph.id,
     },
   });
 
@@ -78,15 +79,15 @@ export const StructureForm = (props: {
 
 export const GenericForm = (props: {
   params: ClickContextualParams;
-  ontology: OntologyFragment;
+  graph: GraphFragment;
   addStagingNode: (params: StagingNodeParams) => void;
 }) => {
   const run = useFormDialog();
 
-  const form = useForm<CreateGenericCategoryMutationVariables["input"]>({
+  const form = useForm<CreateEntityCategoryMutationVariables["input"]>({
     defaultValues: {
       label: "",
-      ontology: props.ontology.id,
+      graph: props.graph.id,
     },
   });
 
@@ -125,13 +126,13 @@ export const GenericForm = (props: {
 
 export const ClickContextual = (props: {
   params: ClickContextualParams;
-  ontology: OntologyFragment;
+  graph: GraphFragment;
   addStagingNode: (params: StagingNodeParams) => void;
   onCancel: () => void;
 }) => {
   const [search, setSearch] = useState(undefined);
 
-  const onSubmit =  (
+  const onSubmit = (
     data: CreateStructureCategoryMutationVariables["input"],
   ) => {
     props.addStagingNode({
@@ -142,8 +143,8 @@ export const ClickContextual = (props: {
     });
   };
 
-  const onSubmitGeneric =  (
-    data: CreateGenericCategoryMutationVariables["input"],
+  const onSubmitGeneric = (
+    data: CreateEntityCategoryMutationVariables["input"],
   ) => {
     props.addStagingNode({
       data: data,
@@ -164,7 +165,11 @@ export const ClickContextual = (props: {
       <div className="flex flex-col space-y-1.5 text-center sm:text-left">
         <FormDialog
           trigger={
-            <Button className={cn("flex flex-row items-center justify-center")}  variant={"outline"} size="sm">
+            <Button
+              className={cn("flex flex-row items-center justify-center")}
+              variant={"outline"}
+              size="sm"
+            >
               Structure
             </Button>
           }
@@ -172,14 +177,18 @@ export const ClickContextual = (props: {
           onError={props.onCancel}
         >
           <StructureForm
-            ontology={props.ontology}
+            graph={props.graph}
             addStagingNode={props.addStagingNode}
             params={props.params}
           />
         </FormDialog>
         <FormDialog
           trigger={
-            <Button className={cn("flex flex-row items-center justify-center")} variant={"outline"} size="sm">
+            <Button
+              className={cn("flex flex-row items-center justify-center")}
+              variant={"outline"}
+              size="sm"
+            >
               Entitiy
             </Button>
           }
@@ -187,7 +196,7 @@ export const ClickContextual = (props: {
           onError={props.onCancel}
         >
           <GenericForm
-            ontology={props.ontology}
+            graph={props.graph}
             addStagingNode={props.addStagingNode}
             params={props.params}
           />

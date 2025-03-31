@@ -4,6 +4,11 @@ fragment ScatterPlot on ScatterPlot {
   description
   xColumn
   yColumn
-  colorColumn
-  sizeColumn
+}
+
+fragment ListScatterPlot on ScatterPlot {
+  id
+  name
+  xColumn
+  yColumn
 }

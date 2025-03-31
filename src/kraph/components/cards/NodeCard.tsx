@@ -26,6 +26,7 @@ const TheCard = ({ item, mates }: Props) => {
               {item.object}
             </>
           )}
+          {item.label}
           {item.__typename == "Entity" && <>{item.category.label}</>}
           {item.__typename == "Structure" && (
             <Button variant="outline" size="sm">

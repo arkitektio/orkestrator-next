@@ -1,9 +1,9 @@
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { KraphExpression, KraphStructureCategory } from "@/linkers";
-import { MateFinder } from "@/mates/types";
 import { ListStructureCategoryFragment } from "@/kraph/api/graphql";
+import { KraphStructureCategory } from "@/linkers";
+import { MateFinder } from "@/mates/types";
 
 interface Props {
   item: ListStructureCategoryFragment;
@@ -31,7 +31,7 @@ const TheCard = ({ item, mates }: Props) => {
             }
             object={item.id}
           >
-            {item?.label}
+            {item?.identifier}
           </KraphStructureCategory.DetailLink>
           <p className="text-sm text-muted-foreground">{item?.description}</p>
         </div>

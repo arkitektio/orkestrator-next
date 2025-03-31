@@ -13,3 +13,12 @@ query SearchMeasurmentCategory($search: String, $values: [ID!]) {
     label: label
   }
 }
+
+query ListMeasurmentCategory(
+  $filters: MeasurementCategoryFilter
+  $pagination: OffsetPaginationInput
+) {
+  measurementCategories(filters: $filters, pagination: $pagination) {
+    ...ListMeasurementCategory
+  }
+}

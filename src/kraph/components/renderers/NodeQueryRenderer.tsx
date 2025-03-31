@@ -1,8 +1,8 @@
 import {
+  NodeQueryFragment,
   PathFragment,
-  useGetNodeViewQuery,
-  useRenderGraphQuery,
-  useRenderNodeQuery,
+  RenderNodeQueryQuery,
+  useRenderNodeQueryQuery,
 } from "@/kraph/api/graphql";
 import { PathGraph } from "./graph/KnowledgeGraph";
 
@@ -16,10 +16,29 @@ export const PathRenderer = (props: { path: PathFragment }) => {
   );
 };
 
-export const NodeViewRenderer = (props: { id: string }) => {
-  const { data, error } = useGetNodeViewQuery({
+export const SelectiveRenderer = (props: {
+  render: RenderNodeQueryQuery["renderNodeQuery"];
+  nodeId: string;
+}) => {
+  if (props.render.__typename === "Pairs") {
+    return <div>Pair Rendering</div>;
+  }
+
+  if (props.render.__typename === "Path") {
+    return <PathGraph path={props.render} root={props.nodeId} />;
+  }
+
+  return <div>Unknown Type</div>;
+};
+
+export const NodeViewRenderer = (props: {
+  query: NodeQueryFragment;
+  nodeId: string;
+}) => {
+  const { data, error } = useRenderNodeQueryQuery({
     variables: {
-      id: props.id,
+      id: props.query.id,
+      nodeId: props.nodeId,
     },
   });
 
@@ -31,16 +50,11 @@ export const NodeViewRenderer = (props: { id: string }) => {
     return <div>Loading...</div>;
   }
 
-  if (data.nodeView.render.__typename === "Pairs") {
+  if (data.renderNodeQuery.__typename === "Pairs") {
     return <div>Pair Rendering</div>;
   }
 
-  if (data.nodeView.render.__typename === "Path") {
-    return (
-      <PathGraph
-        path={data.nodeView.render}
-        root={data.nodeView.node.graphId}
-      />
-    );
+  if (data.renderNodeQuery.__typename === "Path") {
+    return <PathGraph path={data.renderNodeQuery} root={props.nodeId} />;
   }
 };

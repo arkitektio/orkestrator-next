@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { DragZone } from "@/components/upload/drag";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { useMediaUpload } from "@/datalayer/hooks/useUpload";
-import { KraphExpression } from "@/linkers";
+import { KraphReagent } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { useNavigate } from "react-router-dom";
 import { useGetReagentQuery } from "../api/graphql";
@@ -12,17 +12,11 @@ import { useGetReagentQuery } from "../api/graphql";
 export default asDetailQueryRoute(useGetReagentQuery, ({ data, refetch }) => {
   const uploadFile = useMediaUpload();
 
-  const resolve = useResolve();
-
-  const createFile = async (file: File, key: string) => {};
-
-  const navigate = useNavigate();
-
   return (
-    <KraphExpression.ModelPage
+    <KraphReagent.ModelPage
       object={data.reagent.id}
       title={data?.reagent.label}
-      sidebars={<KraphExpression.Komments object={data.reagent.id} />}
+      sidebars={<KraphReagent.Komments object={data.reagent.id} />}
       pageActions={
         <div className="flex flex-row gap-2">
           <>
@@ -42,11 +36,10 @@ export default asDetailQueryRoute(useGetReagentQuery, ({ data, refetch }) => {
           </p>
         </div>
       </div>
-      <DragZone uploadFile={uploadFile} createFile={createFile} />
 
       <div className="flex flex-col p-6">
         <p className="text-sm font-light">Appears in </p>
       </div>
-    </KraphExpression.ModelPage>
+    </KraphReagent.ModelPage>
   );
 });

@@ -1,45 +1,15 @@
 "use client";
 
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import { ChevronDown } from "lucide-react";
-import * as React from "react";
-
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { ColumnDef } from "@tanstack/react-table";
 
 import {
   ColumnFragment,
   ColumnKind,
-  GraphViewFragment,
-  MeasurementKind,
+  MetricKind,
   TableFragment,
 } from "@/kraph/api/graphql";
-import { useForm } from "react-hook-form";
 import { KraphNode } from "@/linkers";
+import Timestamp from "react-timestamp";
 
 const columnToDef = (
   column: ColumnFragment,
@@ -86,6 +56,27 @@ const columnToDef = (
   }
 
   if (column.kind == ColumnKind.Value) {
+    if (column.valueKind == MetricKind.Datetime) {
+      return {
+        id: column.name,
+        accessorKey: column.name,
+        header: () => (
+          <div className="text-center">{column.label || column.name}</div>
+        ),
+        cell: ({ row, getValue }) => {
+          const label = row.getValue(column.name) as string;
+
+          return (
+            <div className="text-center font-medium">
+              <Timestamp date={label.replaceAll('"', "")} relative />
+            </div>
+          );
+        },
+        enableSorting: true,
+        enableGlobalFilter: true,
+      };
+    }
+
     return {
       id: column.name,
       accessorKey: column.name,
@@ -107,13 +98,13 @@ const columnToDef = (
 
 export const parseValue = (
   value: string,
-  valueKind: MeasurementKind | null | undefined,
+  valueKind: MetricKind | null | undefined,
 ) => {
-  if (valueKind == MeasurementKind.Int) {
+  if (valueKind == MetricKind.Int) {
     return parseInt(value);
   }
 
-  if (valueKind == MeasurementKind.Float) {
+  if (valueKind == MetricKind.Float) {
     return parseFloat(value);
   }
 

@@ -2,17 +2,20 @@ fragment Column on Column {
   name
   kind
   valueKind
-  description
   label
+  description
+  category
+  searchable
+  idfor
+  preferhidden
 }
 
 fragment Table on Table {
+  graph {
+    ageName
+  }
   rows
   columns {
     ...Column
-  }
-  graph {
-    id
-    ageName
   }
 }

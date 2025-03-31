@@ -1,4 +1,0 @@
-fragment Measurement on Measurement {
-  id
-  value
-}

@@ -13,3 +13,12 @@ query SearchRelationCategory($search: String, $values: [ID!]) {
     label: label
   }
 }
+
+query ListRelationCategory(
+  $filters: RelationCategoryFilter
+  $pagination: OffsetPaginationInput
+) {
+  relationCategories(filters: $filters, pagination: $pagination) {
+    ...RelationCategory
+  }
+}

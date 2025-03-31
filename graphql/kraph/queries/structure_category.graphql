@@ -10,6 +10,15 @@ query SearchStructureCategory($search: String, $values: [ID!]) {
     pagination: { limit: 10 }
   ) {
     value: id
-    label: label
+    label: identifier
+  }
+}
+
+query ListStructureCategory(
+  $filters: StructureCategoryFilter
+  $pagination: OffsetPaginationInput
+) {
+  structureCategories(filters: $filters, pagination: $pagination) {
+    ...StructureCategory
   }
 }

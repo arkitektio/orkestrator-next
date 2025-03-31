@@ -1,5 +1,14 @@
 import { Button } from "@/components/ui/button";
-import { OntologyEdgeInput, OntologyEdgeKind, OntologyFragment, OntologyNodeInput, OntologyNodeKind, useUpdateOntologyMutation } from "@/kraph/api/graphql";
+
+import {
+  BaseListCategoryFragment,
+  CategoryDefintion,
+  GraphEdgeInput,
+  GraphFragment,
+  GraphNodeInput,
+  useUpdateGraphMutation,
+} from "@/kraph/api/graphql";
+import { notEmpty } from "@/lib/utils";
 import {
   Connection,
   ReactFlow,
@@ -11,13 +20,19 @@ import "@xyflow/react/dist/style.css";
 import React, { useState } from "react";
 import { ClickContextual } from "./contextuals/ClickContextuals";
 import { ConnectContextual } from "./contextuals/ConnectContextual";
+import EntityRoleEdge from "./edges/EntityRoleEdge";
 import MeasurementEdge from "./edges/MeasurementEdge";
+import ReagentRoleEdge from "./edges/ReagentRoleEdge";
 import RelationEdge from "./edges/RelationEdge";
 import StagingMeasurementEdge from "./edges/StagingMeasurementEdge";
 import StagingRelationEdge from "./edges/StagingRelationEdge";
+import StagingStepEdge from "./edges/StagingStepEdge";
 import StepEdge from "./edges/StepEdge";
 import "./index.css";
 import GenericCategoryNode from "./nodes/GenericCategoryNode";
+import NaturalEventNode from "./nodes/NaturalEventNode";
+import ProtocolEventNode from "./nodes/ProtocolEventNode";
+import ReagentCategoryNode from "./nodes/ReagentCategoryNode";
 import StagingGenericNode from "./nodes/StagingGenericNode";
 import StagingStructureNode from "./nodes/StagingStructureNode";
 import StructureCategoryNode from "./nodes/StructureCategoryNode";
@@ -30,18 +45,13 @@ import {
   StagingEdgeParams,
   StagingNodeParams,
 } from "./types";
-import StagingStepEdge from "./edges/StagingStepEdge";
 
-const ontologyToNodes = (ontology: OntologyFragment): MyNode[] => {
-  const structureNodes = ontology.structureCategories.map((cat, index) => ({
-    id: cat.ageName,
+const ontologyToNodes = (graph: GraphFragment): MyNode[] => {
+  const structureNodes = graph.structureCategories.map((cat, index) => ({
+    id: cat.id,
     position: {
-      x:
-        cat.positionX ||
-        300 ,
-      y:
-        cat.positionY ||
-        300,
+      x: cat.positionX || 300,
+      y: cat.positionY || 300,
     },
     height: cat.height || 100,
     width: cat.width || 100,
@@ -49,15 +59,11 @@ const ontologyToNodes = (ontology: OntologyFragment): MyNode[] => {
     type: "structurecategory" as const,
   }));
 
-  const genericNodes = ontology.genericCategories.map((entity, index) => ({
-    id: entity.ageName,
+  const genericNodes = graph.entityCategories.map((entity, index) => ({
+    id: entity.id,
     position: {
-      x:
-        entity.positionX ||
-        300 ,
-      y:
-      entity.positionY ||
-        300,
+      x: entity.positionX || 300,
+      y: entity.positionY || 300,
     },
     height: entity.height || 100,
     width: entity.width || 100,
@@ -65,36 +71,221 @@ const ontologyToNodes = (ontology: OntologyFragment): MyNode[] => {
     type: "genericcategory" as const,
   }));
 
-  return [...structureNodes, ...genericNodes];
+  const reagentNodes = graph.reagentCategories.map((entity, index) => ({
+    id: entity.id,
+    position: {
+      x: entity.positionX || 300,
+      y: entity.positionY || 300,
+    },
+    height: entity.height || 100,
+    width: entity.width || 100,
+    data: entity,
+    type: "reagentcategory" as const,
+  }));
+
+  const protocolEventCategory = graph.protocolEventCategories.map(
+    (entity, index) => ({
+      id: entity.id,
+      position: {
+        x: entity.positionX || 300,
+        y: entity.positionY || 300,
+      },
+      height: entity.height || 100,
+      width: entity.width || 100,
+      data: entity,
+      type: "protocoleventcategory" as const,
+    }),
+  );
+
+  const naturalEventCategory = graph.naturalEventCategories.map(
+    (entity, index) => ({
+      id: entity.id,
+      position: {
+        x: entity.positionX || 300,
+        y: entity.positionY || 300,
+      },
+      height: entity.height || 100,
+      width: entity.width || 100,
+      data: entity,
+      type: "naturaleventcategory" as const,
+    }),
+  );
+
+  return [
+    ...structureNodes,
+    ...genericNodes,
+    ...protocolEventCategory,
+    ...naturalEventCategory,
+    ...reagentNodes,
+  ];
 };
 
-const ontologyToEdges = (ontology: OntologyFragment) => {
-  const edges = ontology.measurementCategories.map((cat) => ({
-    id: cat.ageName,
-    source: cat.left.ageName || "start",
-    target: cat.right.ageName || "end",
-    data: cat,
-    type: "measurement" as const,
-    
-  }));
+const withCategoryFilter = (category: CategoryDefintion) => {
+  return (cat: BaseListCategoryFragment) => {
+    if (category.tagFilters && category.tagFilters.length > 0) {
+      return category.tagFilters.some((tag) =>
+        cat.tags.find((t) => t.value == tag),
+      );
+    }
+    if (category.categoryFilters && category.categoryFilters.length > 0) {
+      return category.categoryFilters.some((id) => id == cat.id);
+    }
+    return true;
+  };
+};
 
-  const relationEdges = ontology.relationCategories.map((cat) => ({
-    id: cat.ageName,
-    source: cat.left.ageName || "start",
-    target: cat.right.ageName || "end",
-    data: cat,
-    type: "relation" as const,
-  }));
+const ontologyToEdges = (graph: GraphFragment) => {
+  let edges: MyEdge[] = [];
 
-  const stepEdges = ontology.stepCategories.map((cat) => ({
-    id: cat.ageName,
-    source: cat.left.ageName || "start",
-    target: cat.right.ageName || "end",
-    data: cat,
-    type: "step" as const,
-  }));
+  console.log("Relations", graph.relationCategories);
 
-  return [...edges, ...relationEdges,...stepEdges];
+  graph.relationCategories.forEach((cat) => {
+    let source_nodes = graph.entityCategories.filter(
+      withCategoryFilter(cat.sourceDefinition),
+    );
+    let target_nodes = graph.entityCategories.filter(
+      withCategoryFilter(cat.targetDefinition),
+    );
+
+    for (let i = 0; i < source_nodes.length; i++) {
+      for (let j = 0; j < target_nodes.length; j++) {
+        edges.push({
+          id: `${cat.id}-${i}-${j}`,
+          source: source_nodes[i].id,
+          target: target_nodes[j].id,
+          data: cat,
+          type: "relation" as const,
+        });
+      }
+    }
+  });
+
+  console.log("Measurements", graph.measurementCategories);
+
+  graph.measurementCategories.forEach((cat) => {
+    let source_nodes = graph.structureCategories.filter(
+      withCategoryFilter(cat.sourceDefinition),
+    );
+    let target_nodes = graph.entityCategories.filter(
+      withCategoryFilter(cat.targetDefinition),
+    );
+
+    for (let i = 0; i < source_nodes.length; i++) {
+      for (let j = 0; j < target_nodes.length; j++) {
+        edges.push({
+          id: `${cat.id}-${i}-${j}`,
+          source: source_nodes[i].id,
+          target: target_nodes[j].id,
+          data: cat,
+          type: "measurement" as const,
+        });
+      }
+    }
+  });
+
+  graph.protocolEventCategories.forEach((cat) => {
+    cat.sourceEntityRoles.filter(notEmpty).forEach((role) => {
+      let source_nodes = graph.entityCategories.filter(
+        withCategoryFilter(role.categoryDefinition),
+      );
+
+      for (let i = 0; i < source_nodes.length; i++) {
+        edges.push({
+          id: `${cat.id}-${i}-${role.role}`,
+          source: source_nodes[i].id,
+          target: cat.id,
+          data: role,
+          type: "entityrole" as const,
+        });
+      }
+    });
+
+    cat.targetEntityRoles.forEach((role) => {
+      let targetNodes = graph.entityCategories.filter(
+        withCategoryFilter(role.categoryDefinition),
+      );
+
+      for (let i = 0; i < targetNodes.length; i++) {
+        edges.push({
+          id: `${cat.id}-${i}-${role.role}`,
+          source: cat.id,
+          target: targetNodes[i].id,
+          data: role,
+          type: "entityrole" as const,
+        });
+      }
+    });
+
+    cat.sourceReagentRoles.filter(notEmpty).forEach((role) => {
+      let source_nodes = graph.reagentCategories.filter(
+        withCategoryFilter(role.categoryDefinition),
+      );
+
+      for (let i = 0; i < source_nodes.length; i++) {
+        edges.push({
+          id: `${cat.id}-${i}-${role.role}`,
+          source: source_nodes[i].id,
+          target: cat.id,
+          data: role,
+          type: "reagentrole" as const,
+        });
+      }
+    });
+
+    cat.targetReagentRoles.forEach((role) => {
+      let targetNodes = graph.reagentCategories.filter(
+        withCategoryFilter(role.categoryDefinition),
+      );
+
+      for (let i = 0; i < targetNodes.length; i++) {
+        edges.push({
+          id: `${cat.id}-${i}-${role.role}`,
+          source: cat.id,
+          target: targetNodes[i].id,
+          data: role,
+          type: "reagentrole" as const,
+        });
+      }
+    });
+  });
+
+  graph.naturalEventCategories.forEach((cat) => {
+    cat.sourceEntityRoles.filter(notEmpty).forEach((role) => {
+      let source_nodes = graph.entityCategories.filter(
+        withCategoryFilter(role.categoryDefinition),
+      );
+
+      for (let i = 0; i < source_nodes.length; i++) {
+        edges.push({
+          id: `${cat.id}-${i}-${role.role}`,
+          source: source_nodes[i].id,
+          target: cat.id,
+          data: role,
+          type: "entityrole" as const,
+        });
+      }
+    });
+
+    cat.targetEntityRoles.forEach((role) => {
+      let targetNodes = graph.entityCategories.filter(
+        withCategoryFilter(role.categoryDefinition),
+      );
+
+      for (let i = 0; i < targetNodes.length; i++) {
+        edges.push({
+          id: `${cat.id}-${i}-${role.role}`,
+          source: cat.id,
+          target: targetNodes[i].id,
+          data: role,
+          type: "entityrole" as const,
+        });
+      }
+    });
+  });
+
+  console.log("edges", edges);
+
+  return [...edges];
 };
 
 const nodeTypes = {
@@ -102,6 +293,9 @@ const nodeTypes = {
   genericcategory: GenericCategoryNode,
   stagingstructure: StagingStructureNode,
   staginggeneric: StagingGenericNode,
+  naturaleventcategory: NaturalEventNode,
+  protocoleventcategory: ProtocolEventNode,
+  reagentcategory: ReagentCategoryNode,
 };
 
 const edgeTypes = {
@@ -111,6 +305,8 @@ const edgeTypes = {
   relation: RelationEdge,
   stagingstep: StagingStepEdge,
   step: StepEdge,
+  entityrole: EntityRoleEdge,
+  reagentrole: ReagentRoleEdge,
 };
 
 function calculateMidpoint(
@@ -123,168 +319,33 @@ function calculateMidpoint(
   };
 }
 
+const nodeToNodeInput = (node: MyNode): GraphNodeInput | null => {
+  // We only update the positions of the node the rest is not needed
+  return {
+    id: node.id,
+    positionX: node.position.x,
+    positionY: node.position.y,
+    height: node.height,
+    width: node.width,
+  };
+};
 
-const nodeToNodeInput = (node: MyNode): OntologyNodeInput => {
-  if (node.type == "structurecategory") {
-    if (!node.data.identifier) {
-      throw new Error("Identifier is required");
-    }
-    return {
-      kind: OntologyNodeKind.Structure,
-      ageName: node.id,
-      description: node.data.description,
-      identifier: node.data.identifier,
-      label: node.data.label,
-      name: node.data.label,
-      positionX: node.position.x,
-      positionY: node.position.y,
-      height: node.height,
-      width: node.width,
-    }
-  }
+export const edgeToEdgeInput = (edge: MyEdge): GraphEdgeInput | null => {
+  return null;
+};
 
-  if (node.type == "genericcategory") {
-    return {
-      kind: OntologyNodeKind.Entity,
-      ageName: node.id,
-      description: node.data.description,
-      label: node.data.label,
-      name: node.data.label,
-      positionX: node.position.x,
-      positionY: node.position.y,
-      height: node.height,
-      width: node.width,
-    }
-  }
-
-  if (node.type == "stagingstructure") {
-    if (!node.data.identifier) {
-      throw new Error("Identifier is required");
-    }
-    return {
-      kind: OntologyNodeKind.Structure,
-      ageName: node.id,
-      description: node.data.description,
-      identifier: node.data.identifier,
-      label: node.data.identifier,
-      name: node.data.identifier,
-      positionX: node.position.x,
-      positionY: node.position.y,
-      height: node.height,
-      width: node.width,
-    }
-  }
-
-  if (node.type == "staginggeneric") {
-    return {
-      kind: OntologyNodeKind.Entity,
-      ageName: node.id,
-      description: node.data.description,
-      label: node.data.label,
-      name: node.data.label,
-      positionX: node.position.x,
-      positionY: node.position.y,
-      height: node.height,
-      width: node.width,
-    }
-  }
-
-  else {
-    throw new Error("Unknown Node Type");
-  }
-}
-
-export const edgeToEdgeInput = (edge: MyEdge): OntologyEdgeInput => {
-
-  if (edge.type == "measurement") {
-    return {
-      kind: OntologyEdgeKind.Measurement,
-      ageName: edge.id,
-      description: edge.data?.description,
-      measurementKind: edge.data?.metricKind,
-      source: edge.source,
-      target: edge.target,
-      name: edge.id,
-    }
-  }
-
-  if (edge.type == "relation") {
-    return {
-      kind: OntologyEdgeKind.Relation,
-      ageName: edge.id,
-      description: edge.data?.description,
-      source: edge.source,
-      target: edge.target,
-      name: edge.id,
-    }
-  }
-
-  if (edge.type == "stagingmeasurement") {
-    return {
-      kind: OntologyEdgeKind.Measurement,
-      ageName: edge.id,
-      description: edge.data?.description,
-      measurementKind: edge.data?.kind,
-      source: edge.source,
-      target: edge.target,
-      name: edge.id,
-    }
-  }
-
-  if (edge.type == "stagingrelation") {
-    return {
-      kind: OntologyEdgeKind.Relation,
-      ageName: edge.id,
-      description: edge.data?.description,
-      source: edge.source,
-      target: edge.target,
-      name: edge.id,
-    }
-  }
-
-  if (edge.type == "stagingstep") {
-    return {
-      kind: OntologyEdgeKind.Step,
-      ageName: edge.id,
-      template: edge.data?.template,
-      source: edge.source,
-      target: edge.target,
-      name: edge.id,
-    }
-  }
-
-  if (edge.type == "step") {
-    return {
-      kind: OntologyEdgeKind.Step,
-      ageName: edge.id,
-      template: edge.data?.template.id,
-      source: edge.source,
-      target: edge.target,
-      name: edge.id,
-    }
-  }
-
-  else {
-    throw new Error("Unknown Edge Type");
-  }
-}
-
-
-export default ({ ontology }: { ontology: OntologyFragment }) => {
-
-  const [update] = useUpdateOntologyMutation();
-
-
+export default ({ graph }: { graph: GraphFragment }) => {
+  const [update] = useUpdateGraphMutation();
 
   const reactFlowWrapper = React.useRef<HTMLDivElement | null>(null);
   const [reactFlowInstance, setReactFlowInstance] =
     React.useState<ReactFlowInstance<MyNode, MyEdge> | null>(null);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<MyNode>(
-    ontologyToNodes(ontology),
+    ontologyToNodes(graph),
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState<MyEdge>(
-    ontologyToEdges(ontology),
+    ontologyToEdges(graph),
   );
 
   const [showClickContextual, setShowClickContextual] = useState<
@@ -298,26 +359,24 @@ export default ({ ontology }: { ontology: OntologyFragment }) => {
   }, [reactFlowInstance]);
 
   const save = () => {
-
     const nodes = reactFlowInstance?.getNodes() as MyNode[];
     const edges = reactFlowInstance?.getEdges() as MyEdge[];
 
-
-    const nodeInputs = nodes.map(nodeToNodeInput)
-    const edgeInputs = edges.map(edgeToEdgeInput)
+    const nodeInputs = nodes
+      .map(nodeToNodeInput)
+      .filter((n) => n != null) as GraphNodeInput[];
+    const edgeInputs = edges
+      .map(edgeToEdgeInput)
+      .filter((n) => n != null) as GraphEdgeInput[];
 
     update({
       variables: {
         input: {
-          id: ontology.id,
+          id: graph.id,
           nodes: nodeInputs,
-          edges: edgeInputs,
-        }
-      }
-    })
-
-
-
+        },
+      },
+    });
   };
 
   const onPaneClick = (event: React.MouseEvent) => {
@@ -406,7 +465,7 @@ export default ({ ontology }: { ontology: OntologyFragment }) => {
     });
 
     setNodes((prevNodes) => [
-      ...prevNodes.filter(id => id.id !== params.ageName),
+      ...prevNodes.filter((id) => id.id !== params.ageName),
       {
         data: params.data,
         position,
@@ -425,7 +484,7 @@ export default ({ ontology }: { ontology: OntologyFragment }) => {
     }
 
     setEdges((prevEdges) => [
-      ...prevEdges.filter(id => id.id !== params.ageName),
+      ...prevEdges.filter((id) => id.id !== params.ageName),
       {
         data: params.data,
         source: params.source,
@@ -438,44 +497,48 @@ export default ({ ontology }: { ontology: OntologyFragment }) => {
   };
 
   return (
-    <OntologyGraphProvider ontology={ontology} addStagingEdge={addStagingEdge} addStagingNode={addStagingNode}>
-    <div
-      ref={reactFlowWrapper}
-      style={{ width: "100%", height: "100%" }}
-      className="relative"
+    <OntologyGraphProvider
+      graph={graph}
+      addStagingEdge={addStagingEdge}
+      addStagingNode={addStagingNode}
     >
-      <ReactFlow<MyNode, MyEdge>
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onPaneClick={onPaneClick}
-        onConnect={onConnect}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        onInit={(r) => setReactFlowInstance(r)}
-        fitView
-      />
-      {showClickContextual && showClickContextual.type == "click" && (
-        <ClickContextual
-          params={showClickContextual}
-          ontology={ontology}
-          addStagingNode={addStagingNode}
-          onCancel={() => setShowClickContextual(undefined)}
+      <div
+        ref={reactFlowWrapper}
+        style={{ width: "100%", height: "100%" }}
+        className="relative"
+      >
+        <ReactFlow<MyNode, MyEdge>
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onPaneClick={onPaneClick}
+          onConnect={onConnect}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          onInit={(r) => setReactFlowInstance(r)}
+          fitView
         />
-      )}
-      {showClickContextual && showClickContextual.type == "connect" && (
-        <ConnectContextual
-          params={showClickContextual}
-          ontology={ontology}
-          addStagingEdge={addStagingEdge}
-          onCancel={() => setShowClickContextual(undefined)}
-        />
-      )}
-      <div className="absolute top-0 right-0 p-2">
-        <Button onClick={save}>Save</Button>
+        {showClickContextual && showClickContextual.type == "click" && (
+          <ClickContextual
+            params={showClickContextual}
+            graph={graph}
+            addStagingNode={addStagingNode}
+            onCancel={() => setShowClickContextual(undefined)}
+          />
+        )}
+        {showClickContextual && showClickContextual.type == "connect" && (
+          <ConnectContextual
+            params={showClickContextual}
+            graph={graph}
+            addStagingEdge={addStagingEdge}
+            onCancel={() => setShowClickContextual(undefined)}
+          />
+        )}
+        <div className="absolute top-0 right-0 p-2">
+          <Button onClick={save}>Save</Button>
+        </div>
       </div>
-    </div>
     </OntologyGraphProvider>
   );
 };

@@ -2,19 +2,34 @@ import React from "react";
 import { Node, Edge, Connection } from "@xyflow/react";
 
 import {
-  GenericCategoryInput,
-  ListGenericCategoryFragment,
+  EntityCategoryInput,
+  EntityRoleDefinition,
+  EntityRoleDefinitionFragment,
+  ListEntityCategoryFragment,
   ListMeasurementCategoryFragment,
+  ListNaturalEventCategoryFragment,
+  ListProtocolEventCategoryFragment,
+  ListReagentCategoryFragment,
   ListRelationCategoryFragment,
-  ListStepCategoryFragment,
   ListStructureCategoryFragment,
   MeasurementCategoryInput,
+  ReagentRoleDefinition,
+  ReagentRoleDefinitionFragment,
   RelationCategoryInput,
-  StepCategoryInput,
   StructureCategoryInput,
 } from "@/kraph/api/graphql";
 
-export type GenericNode = Node<ListGenericCategoryFragment, "genericcategory">;
+export type GenericNode = Node<ListEntityCategoryFragment, "genericcategory">;
+export type ReagentNode = Node<ListReagentCategoryFragment, "reagentcategory">;
+export type ProtocolEventNode = Node<
+  ListProtocolEventCategoryFragment,
+  "protocoleventcategory"
+>;
+export type NaturalEventNode = Node<
+  ListNaturalEventCategoryFragment,
+  "naturaleventcategory"
+>;
+
 export type StructureNode = Node<
   ListStructureCategoryFragment,
   "structurecategory"
@@ -23,7 +38,7 @@ export type StagingStructureNode = Node<
   StructureCategoryInput,
   "stagingstructure"
 >;
-export type StagingGenericNode = Node<GenericCategoryInput, "staginggeneric">;
+export type StagingGenericNode = Node<EntityCategoryInput, "staginggeneric">;
 
 export type MeasurementEdge = Edge<
   ListMeasurementCategoryFragment,
@@ -34,27 +49,21 @@ export type StagingMeasurementEdge = Edge<
   "stagingmeasurement"
 >;
 export type RelationEdge = Edge<ListRelationCategoryFragment, "relation">;
+export type EntityRoleEdge = Edge<ReagentRoleDefinitionFragment, "reagentrole">;
+export type ReagentRoleEdge = Edge<EntityRoleDefinitionFragment, "entityrole">;
 
 export type StagingRelationEdge = Edge<
   RelationCategoryInput,
   "stagingrelation"
->;
-export type StepEdge = Edge<
-  ListStepCategoryFragment,
-  "step"
->;
-export type StagingStepEdge = Edge<
-  StepCategoryInput,
-  "stagingstep"
 >;
 
 export type MyEdge =
   | MeasurementEdge
   | RelationEdge
   | StagingRelationEdge
-  | StagingMeasurementEdge
-  | StepEdge
-  | StagingStepEdge;
+  | EntityRoleEdge
+  | ReagentRoleEdge
+  | StagingMeasurementEdge;
 
 export type EdgeData = MyEdge["data"];
 
@@ -62,8 +71,9 @@ export type MyNode =
   | GenericNode
   | StructureNode
   | StagingStructureNode
-  | StagingGenericNode;
-
+  | StagingGenericNode
+  | ProtocolEventNode
+  | NaturalEventNode;
 
 export type NodeData = MyNode["data"];
 

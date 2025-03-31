@@ -1,5 +1,5 @@
 fragment MediaStore on MediaStore {
   id
-  key
   presignedUrl
+  key
 }

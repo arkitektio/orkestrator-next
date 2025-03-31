@@ -3,9 +3,3 @@ mutation CreateEntity($input: EntityInput!) {
     ...Entity
   }
 }
-
-mutation CreateRelation($input: RelationInput!) {
-  createRelation(input: $input) {
-    ...Relation
-  }
-}

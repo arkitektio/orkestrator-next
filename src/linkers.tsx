@@ -91,8 +91,6 @@ export const MikroDataset = buildSmart("@mikro/dataset", "mikro/datasets");
 
 export const ElektroTrace = buildSmart("@elekto/trace", "elektro/traces");
 
-export const KraphMetric = buildSmart("@kraph/metric", "kraph/metrics");
-
 export const KraphNode = buildSmart("@kraph/node", "kraph/nodes");
 
 export const KraphExpression = buildSmart(
@@ -103,6 +101,16 @@ export const KraphExpression = buildSmart(
 export const KraphStructureCategory = buildSmart(
   "@kraph/structurecategory",
   "kraph/structurecategories",
+);
+
+export const KraphNaturalEventCategory = buildSmart(
+  "@kraph/naturaleventcategory",
+  "kraph/naturaleventcategories",
+);
+
+export const KraphProtocolEventCategory = buildSmart(
+  "@kraph/protocoleventcategory",
+  "kraph/protocoleventcategories",
 );
 
 export const KraphMeasurementCategory = buildSmart(
@@ -120,12 +128,24 @@ export const KraphGenericCategory = buildSmart(
   "kraph/genericcategories",
 );
 
+export const KraphEntityCategory = buildSmart(
+  "@kraph/entitycategory",
+  "kraph/entitycategories",
+);
+
+export const KraphReagentCategory = buildSmart(
+  "@kraph/reagentcategory",
+  "kraph/reagentcategories",
+);
+
 export const KraphLinkedExpression = buildSmart(
   "@kraph/linkedexpression",
   "kraph/linkedexpressions",
 );
 export const KraphOntology = buildSmart("@kraph/ontology", "kraph/ontologies");
 export const KraphReagent = buildSmart("@kraph/reagent", "kraph/reagents");
+export const KraphEntity = buildSmart("@kraph/entity", "kraph/entities");
+export const KraphMetric = buildSmart("@kraph/metric", "kraph/metrics");
 export const KraphGraph = buildSmart("@kraph/graph", "kraph/graphs");
 export const KraphGraphView = buildSmart(
   "@kraph/graphview",
@@ -136,6 +156,11 @@ export const KraphNodeView = buildSmart("@kraph/nodeview", "kraph/nodeviews");
 export const KraphGraphQuery = buildSmart(
   "@kraph/graphquery",
   "kraph/graphqueries",
+);
+
+export const KraphScatterPlot = buildSmart(
+  "@kraph/scatterplot",
+  "kraph/scatterplots",
 );
 export const KraphNodeQuery = buildSmart(
   "@kraph/nodequery",

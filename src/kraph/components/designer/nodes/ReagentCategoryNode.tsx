@@ -1,7 +1,11 @@
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { KraphEntityCategory, KraphGenericCategory } from "@/linkers";
+import {
+  KraphEntityCategory,
+  KraphGenericCategory,
+  KraphReagentCategory,
+} from "@/linkers";
 import { NodeProps, NodeResizer, useConnection } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
@@ -40,9 +44,9 @@ export default memo(({ data, id, selected }: NodeProps<ReagentNode>) => {
               className="object-cover h-20 w-full rounded rounded-lg"
             />
           )}
-          <KraphEntityCategory.DetailLink object={data.id}>
+          <KraphReagentCategory.DetailLink object={data.id}>
             {data.label}
-          </KraphEntityCategory.DetailLink>
+          </KraphReagentCategory.DetailLink>
           {data.tags.map((tag) => (
             <Badge key={tag.id}>{tag.value}</Badge>
           ))}

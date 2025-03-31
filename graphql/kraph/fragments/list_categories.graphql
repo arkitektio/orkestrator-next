@@ -50,13 +50,6 @@ fragment ListRelationCategory on RelationCategory {
   label
 }
 
-fragment ListReagentCategory on ReagentCategory {
-  ...BaseListCategory
-  ...BaseNodeCategory
-  instanceKind
-  label
-}
-
 fragment ListMetricCategory on MetricCategory {
   ...BaseListCategory
   ...BaseNodeCategory

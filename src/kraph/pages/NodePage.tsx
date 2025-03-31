@@ -3,7 +3,7 @@ import { useGetNodeQuery } from "../api/graphql";
 
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
-import { KraphEntity, KraphNode } from "@/linkers";
+import { KraphEntity, KraphNode, KraphReagent } from "@/linkers";
 import { useNavigate } from "react-router";
 
 export default asDetailQueryRoute(useGetNodeQuery, ({ data, refetch }) => {
@@ -42,6 +42,11 @@ export default asDetailQueryRoute(useGetNodeQuery, ({ data, refetch }) => {
             <KraphEntity.DetailLink object={data.node.id}>
               Open as Entity
             </KraphEntity.DetailLink>
+          )}
+          {data.node.__typename === "Reagent" && (
+            <KraphReagent.DetailLink object={data.node.id}>
+              Open as Entity
+            </KraphReagent.DetailLink>
           )}
         </div>
       </div>

@@ -45,11 +45,6 @@ fragment MetricCategory on MetricCategory {
   metricKind
 }
 
-fragment ReagentCategory on ReagentCategory {
-  ...BaseCategory
-  ...BaseNodeCategory
-}
-
 fragment NodeCategory on NodeCategory {
   ...StructureCategory
   ...EntityCategory

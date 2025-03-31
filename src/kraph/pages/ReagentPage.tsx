@@ -40,6 +40,25 @@ export default asDetailQueryRoute(useGetReagentQuery, ({ data, refetch }) => {
       <div className="flex flex-col p-6">
         <p className="text-sm font-light">Appears in </p>
       </div>
+
+      <div className="flex flex-col p-6">
+        {data.reagent.usableIn.map((cat) => (
+          <>
+            {cat.label}
+            OHJAES
+            <br />
+          </>
+        ))}
+      </div>
+      <div className="flex flex-col p-6">
+        {data.reagent.createableFrom.map((cat) => (
+          <>
+            {cat.label}
+            OHJAES
+            <br />
+          </>
+        ))}
+      </div>
     </KraphReagent.ModelPage>
   );
 });

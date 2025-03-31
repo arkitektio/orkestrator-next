@@ -19,6 +19,7 @@ import {
 } from "./pages/StructureCategoryPage";
 import StandardPane from "./panes/StandardPane";
 import EntityPage from "./pages/EntityPage";
+import ReagentCategoryPage from "./pages/ReagentCategoryPage";
 interface Props {}
 
 export const KraphModule: React.FC<Props> = (props) => {
@@ -47,6 +48,10 @@ export const KraphModule: React.FC<Props> = (props) => {
           <Route
             path="naturaleventcategories/:id"
             element={<NaturalEventCategoryPage />}
+          />
+          <Route
+            path="reagentcategories/:id"
+            element={<ReagentCategoryPage />}
           />
           <Route path="graphs/:id/view/:viewid" element={<GraphPage />} />
           <Route path="reagents" element={<ReagentsPage />} />

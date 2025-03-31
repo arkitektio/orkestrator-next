@@ -1,11 +1,19 @@
 fragment Reagent on Reagent {
   id
+  label
   category {
     id
     label
   }
   externalId
-  label
+  usableIn {
+    id
+    label
+  }
+  createableFrom {
+    id
+    label
+  }
 }
 
 fragment ListReagent on Reagent {

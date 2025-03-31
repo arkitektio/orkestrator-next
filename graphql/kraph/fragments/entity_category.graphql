@@ -11,6 +11,7 @@ fragment EntityCategory on EntityCategory {
   bestQuery {
     ...GraphQuery
   }
+  pinned
 }
 
 fragment ListEntityCategory on EntityCategory {

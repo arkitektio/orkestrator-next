@@ -47,6 +47,19 @@ export default asDetailQueryRoute(
       }
     };
 
+    const pin = async () => {
+     
+      await update({
+        variables: {
+          input: {
+            id: data.entityCategory.id,
+            pin: !data.entityCategory.pinned,
+          },
+        },
+      });
+      await refetch();
+    };
+
     const navigate = useNavigate();
 
     return (
@@ -72,6 +85,17 @@ export default asDetailQueryRoute(
               variant="outline"
             >
               Quick+
+            </Button>
+            <Button
+              onClick={() => {
+               pin().then(refetch);
+              }}
+              className="w-full"
+              variant="outline"
+            >
+              {data.entityCategory.pinned
+                ? "Unpin"
+                : "Pin"}
             </Button>
             <FormDialog
               trigger={<Button variant="outline">Create</Button>}

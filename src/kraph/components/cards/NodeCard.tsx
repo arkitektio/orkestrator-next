@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ListNodeFragment } from "@/kraph/api/graphql";
-import { KraphGraph, KraphNode, KraphOntology } from "@/linkers";
+import { NodeFragment } from "@/kraph/api/graphql";
+import { KraphNode } from "@/linkers";
 import { MateFinder } from "@/mates/types";
 
 interface Props {
-  item: ListNodeFragment;
+  item: NodeFragment;
   mates?: MateFinder[];
 }
 

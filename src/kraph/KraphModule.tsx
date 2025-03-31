@@ -20,6 +20,10 @@ import {
 import StandardPane from "./panes/StandardPane";
 import EntityPage from "./pages/EntityPage";
 import ReagentCategoryPage from "./pages/ReagentCategoryPage";
+import ReagentCategoriesPage from "./pages/ReagentCategoriesPage";
+import EntityCategoriesPage from "./pages/EntityCategoriesPage";
+import StructureCategoriesPage from "./pages/StructureCategoriesPage";
+import ProtocolEventCategoriesPage from "./pages/ProtocolEventCategoriesPage";
 interface Props {}
 
 export const KraphModule: React.FC<Props> = (props) => {
@@ -34,6 +38,10 @@ export const KraphModule: React.FC<Props> = (props) => {
           <Route path="graphs" element={<GraphsPage />} />
           <Route path="graphs/:id" element={<GraphPage />} />
           <Route path="graphqueries/:id" element={<GraphQueryPage />} />
+          <Route path="reagentcategories" element={<ReagentCategoriesPage />} />
+          <Route path="entitycategories" element={<EntityCategoriesPage />} />
+          <Route path="structurecategories" element={<StructureCategoriesPage />} />
+          <Route path="protocoleventcategories" element={<ProtocolEventCategoriesPage />} />
 
           <Route
             path="structurecategories/:id"

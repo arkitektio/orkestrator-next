@@ -7,6 +7,7 @@ import {
   EntityRoleDefinitionFragment,
   ListEntityCategoryFragment,
   ListMeasurementCategoryFragment,
+  ListMetricCategoryFragment,
   ListNaturalEventCategoryFragment,
   ListProtocolEventCategoryFragment,
   ListReagentCategoryFragment,
@@ -21,6 +22,7 @@ import {
 
 export type GenericNode = Node<ListEntityCategoryFragment, "genericcategory">;
 export type ReagentNode = Node<ListReagentCategoryFragment, "reagentcategory">;
+export type MetricNode = Node<ListMetricCategoryFragment, "metriccategory">;
 export type ProtocolEventNode = Node<
   ListProtocolEventCategoryFragment,
   "protocoleventcategory"
@@ -44,6 +46,9 @@ export type MeasurementEdge = Edge<
   ListMeasurementCategoryFragment,
   "measurement"
 >;
+
+export type DescribeEdge = Edge<ListMetricCategoryFragment, "describe">;
+
 export type StagingMeasurementEdge = Edge<
   MeasurementCategoryInput,
   "stagingmeasurement"
@@ -62,6 +67,7 @@ export type MyEdge =
   | RelationEdge
   | StagingRelationEdge
   | EntityRoleEdge
+  | DescribeEdge
   | ReagentRoleEdge
   | StagingMeasurementEdge;
 
@@ -72,6 +78,7 @@ export type MyNode =
   | StructureNode
   | StagingStructureNode
   | StagingGenericNode
+  | MetricNode
   | ProtocolEventNode
   | NaturalEventNode;
 

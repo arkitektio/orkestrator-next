@@ -49,10 +49,3 @@ fragment ListRelationCategory on RelationCategory {
   }
   label
 }
-
-fragment ListMetricCategory on MetricCategory {
-  ...BaseListCategory
-  ...BaseNodeCategory
-  label
-  metricKind
-}

@@ -113,6 +113,11 @@ export const KraphProtocolEventCategory = buildSmart(
   "kraph/protocoleventcategories",
 );
 
+export const KraphMetricCategory = buildSmart(
+  "@kraph/metriccategory",
+  "kraph/metriccategories",
+);
+
 export const KraphMeasurementCategory = buildSmart(
   "@kraph/measurementcategory",
   "kraph/measurementcategories",

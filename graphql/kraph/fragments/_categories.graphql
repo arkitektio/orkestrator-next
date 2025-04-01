@@ -44,12 +44,6 @@ fragment RelationCategory on RelationCategory {
   }
 }
 
-fragment MetricCategory on MetricCategory {
-  ...BaseCategory
-  ...BaseNodeCategory
-  metricKind
-}
-
 fragment NodeCategory on NodeCategory {
   ...StructureCategory
   ...EntityCategory

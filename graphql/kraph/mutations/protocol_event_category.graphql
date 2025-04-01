@@ -11,3 +11,7 @@ mutation UpdateProtocolEventCategory(
     ...ProtocolEventCategory
   }
 }
+
+mutation DeleteProtocolEventCategory($id: ID!) {
+  deleteProtocolEventCategory(input: { id: $id })
+}

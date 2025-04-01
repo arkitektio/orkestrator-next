@@ -11,6 +11,7 @@ import {
 import { notEmpty } from "@/lib/utils";
 import {
   Connection,
+  MarkerType,
   ReactFlow,
   ReactFlowInstance,
   useEdgesState,
@@ -45,6 +46,8 @@ import {
   StagingEdgeParams,
   StagingNodeParams,
 } from "./types";
+import MetricCategoryNode from "./nodes/MetricCategoryNode";
+import DescribeEdge from "./edges/DescribeEdge";
 
 const ontologyToNodes = (graph: GraphFragment): MyNode[] => {
   const structureNodes = graph.structureCategories.map((cat, index) => ({
@@ -111,12 +114,25 @@ const ontologyToNodes = (graph: GraphFragment): MyNode[] => {
     }),
   );
 
+  const metricNode = graph.metricCategories.map((entity, index) => ({
+    id: entity.id,
+    position: {
+      x: entity.positionX || 300,
+      y: entity.positionY || 300,
+    },
+    height: entity.height || 100,
+    width: entity.width || 100,
+    data: entity,
+    type: "metriccategory" as const,
+  }));
+
   return [
     ...structureNodes,
     ...genericNodes,
     ...protocolEventCategory,
     ...naturalEventCategory,
     ...reagentNodes,
+    ...metricNode,
   ];
 };
 
@@ -155,6 +171,9 @@ const ontologyToEdges = (graph: GraphFragment) => {
           target: target_nodes[j].id,
           data: cat,
           type: "relation" as const,
+          markerEnd: {
+            type: MarkerType.Arrow,
+          },
         });
       }
     }
@@ -178,6 +197,30 @@ const ontologyToEdges = (graph: GraphFragment) => {
           target: target_nodes[j].id,
           data: cat,
           type: "measurement" as const,
+          markerEnd: {
+            type: MarkerType.Arrow,
+          },
+        });
+      }
+    }
+  });
+
+  graph.metricCategories.forEach((cat) => {
+    let source_nodes = graph.structureCategories.filter(
+      withCategoryFilter(cat.structureDefinition),
+    );
+
+    for (let i = 0; i < source_nodes.length; i++) {
+      for (let j = 0; j < source_nodes.length; j++) {
+        edges.push({
+          id: `${cat.id}-${i}-${j}`,
+          target: source_nodes[i].id,
+          source: cat.id,
+          data: cat,
+          type: "describe" as const,
+          markerEnd: {
+            type: MarkerType.Arrow,
+          },
         });
       }
     }
@@ -196,6 +239,10 @@ const ontologyToEdges = (graph: GraphFragment) => {
           target: cat.id,
           data: role,
           type: "entityrole" as const,
+
+          markerEnd: {
+            type: MarkerType.Arrow,
+          },
         });
       }
     });
@@ -212,6 +259,9 @@ const ontologyToEdges = (graph: GraphFragment) => {
           target: targetNodes[i].id,
           data: role,
           type: "entityrole" as const,
+          markerEnd: {
+            type: MarkerType.Arrow,
+          },
         });
       }
     });
@@ -228,6 +278,9 @@ const ontologyToEdges = (graph: GraphFragment) => {
           target: cat.id,
           data: role,
           type: "reagentrole" as const,
+          markerEnd: {
+            type: MarkerType.Arrow,
+          },
         });
       }
     });
@@ -296,6 +349,7 @@ const nodeTypes = {
   naturaleventcategory: NaturalEventNode,
   protocoleventcategory: ProtocolEventNode,
   reagentcategory: ReagentCategoryNode,
+  metriccategory: MetricCategoryNode,
 };
 
 const edgeTypes = {
@@ -306,6 +360,8 @@ const edgeTypes = {
   stagingstep: StagingStepEdge,
   step: StepEdge,
   entityrole: EntityRoleEdge,
+  describe: DescribeEdge,
+
   reagentrole: ReagentRoleEdge,
 };
 

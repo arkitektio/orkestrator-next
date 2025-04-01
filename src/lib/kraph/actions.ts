@@ -1,6 +1,11 @@
 import { Action } from "@/actions/action-registry";
 import { buildDeleteAction } from "@/actions/builders/deleteAction";
-import { DeleteGraphDocument } from "@/kraph/api/graphql";
+import {
+  DeleteEntityCategoryDocument,
+  DeleteGraphDocument,
+  DeleteNaturalEventCategoryDocument,
+  DeleteProtocolEventCategoryDocument,
+} from "@/kraph/api/graphql";
 import { ApolloClient, NormalizedCache } from "@apollo/client";
 
 export const KRAPH_ACTIONS: Action[] = [
@@ -11,6 +16,30 @@ export const KRAPH_ACTIONS: Action[] = [
     service: "kraph",
     typename: "Graph",
     mutation: DeleteGraphDocument,
+  }),
+  buildDeleteAction({
+    title: "Delete Protocol Event Category",
+    identifier: "@kraph/protocoleventcategory",
+    description: "Delete the Protocol Event Category",
+    service: "kraph",
+    typename: "ProtocolEventCategory",
+    mutation: DeleteProtocolEventCategoryDocument,
+  }),
+  buildDeleteAction({
+    title: "Delete Naturl Event Category",
+    identifier: "@kraph/naturaleventcategory",
+    description: "Delete the Protocol Event",
+    service: "kraph",
+    typename: "NaturalEventCategory",
+    mutation: DeleteNaturalEventCategoryDocument,
+  }),
+  buildDeleteAction({
+    title: "Delete Entity Category",
+    identifier: "@kraph/entitycategory",
+    description: "Delete the Entity Category",
+    service: "kraph",
+    typename: "EntityCategory",
+    mutation: DeleteEntityCategoryDocument,
   }),
   {
     name: "Relate",

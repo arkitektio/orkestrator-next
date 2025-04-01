@@ -6,7 +6,11 @@ import {
   type EdgeProps,
   type ReactFlowState,
 } from "@xyflow/react";
-import { MeasurementEdge, StagingMeasurementEdge, StagingRelationEdge } from "../types";
+import {
+  MeasurementEdge,
+  StagingMeasurementEdge,
+  StagingRelationEdge,
+} from "../types";
 import { getEdgeParams } from "../utils";
 import { Card } from "@/components/ui/card";
 
@@ -81,7 +85,12 @@ export default ({
 
   return (
     <>
-      <BaseEdge path={path} markerEnd={markerEnd} label={data?.label} />
+      <BaseEdge
+        path={path}
+        markerEnd={markerEnd}
+        label={data?.label}
+        color="#ff00ff"
+      />
       <EdgeLabelRenderer>
         <Card
           style={{
@@ -91,7 +100,6 @@ export default ({
           className="p-3 text-xs group"
         >
           {data?.label}
-          {data?.metricKind}
         </Card>
       </EdgeLabelRenderer>
     </>

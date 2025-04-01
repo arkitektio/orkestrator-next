@@ -9,3 +9,7 @@ mutation UpdateNaturalEventCategory($input: UpdateNaturalEventCategoryInput!) {
     ...NaturalEventCategory
   }
 }
+
+mutation DeleteNaturalEventCategory($input: DeleteNaturalEventCategoryInput!) {
+  deleteNaturalEventCategory(input: $input)
+}

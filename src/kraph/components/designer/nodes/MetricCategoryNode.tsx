@@ -2,13 +2,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { KraphProtocolEventCategory, KraphStructureCategory } from "@/linkers";
+import { KraphMetricCategory, KraphProtocolEventCategory } from "@/linkers";
 import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
-import { StructureNode } from "../types";
+import { MetricNode, StructureNode } from "../types";
 
-export default memo(({ data, id, selected }: NodeProps<StructureNode>) => {
+export default memo(({ data, id, selected }: NodeProps<MetricNode>) => {
   const resolve = useResolve();
 
   return (
@@ -36,12 +36,12 @@ export default memo(({ data, id, selected }: NodeProps<StructureNode>) => {
             />
           )}
           <div className="absolute top-0 left-0 right-0 bottom-0 z-10 flex items-center justify-center flex-col bg-black/50  ">
-            <KraphStructureCategory.DetailLink
+            <KraphMetricCategory.DetailLink
               object={data.id}
               className={"font-bold"}
             >
-              {data.identifier}
-            </KraphStructureCategory.DetailLink>
+              {data.label}
+            </KraphMetricCategory.DetailLink>
 
             <div className="flex flex-row gap-2">
               {data.tags.map((tag) => (
@@ -50,6 +50,7 @@ export default memo(({ data, id, selected }: NodeProps<StructureNode>) => {
                 </Badge>
               ))}
             </div>
+            <div className="flex flex-row gap-2">{data.metricKind}</div>
           </div>
         </Card>
       </div>

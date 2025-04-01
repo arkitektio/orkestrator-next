@@ -1,5 +1,4 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { ChoicesField } from "@/components/fields/ChoicesField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
@@ -7,9 +6,11 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
-  CreateEntityCategoryMutationVariables,
-  useCreateEntityCategoryMutation,
+  CreateProtocolEventCategoryMutationVariables,
+  useCreateProtocolEventCategoryMutation,
+  useSearchGraphsLazyQuery,
 } from "../api/graphql";
+import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 
 const enumToOptions = (e: any) => {
   return Object.keys(e).map((key) => ({
@@ -19,17 +20,19 @@ const enumToOptions = (e: any) => {
 };
 
 export default (props: { graph?: string }) => {
-  const [add] = useCreateEntityCategoryMutation({
+  const [add] = useCreateProtocolEventCategoryMutation({
     refetchQueries: ["GetGraph"],
   });
 
   const dialog = useGraphQlFormDialog(add);
 
-  const form = useForm<CreateEntityCategoryMutationVariables["input"]>({
+  const form = useForm<CreateProtocolEventCategoryMutationVariables["input"]>({
     defaultValues: {
       graph: props.graph,
     },
   });
+
+  const [search] = useSearchGraphsLazyQuery();
 
   return (
     <>
@@ -47,6 +50,16 @@ export default (props: { graph?: string }) => {
         >
           <div className="grid grid-cols-2 gap-2">
             <div className="col-span-2 flex-col gap-1 flex">
+              {!props.graph && (
+                <>
+                  <GraphQLSearchField
+                    label="Graph"
+                    name="graph"
+                    description="What graph do you want to add this expression to?"
+                    searchQuery={search}
+                  />
+                </>
+              )}
               <StringField
                 label="Label"
                 name="label"

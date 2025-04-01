@@ -19,3 +19,23 @@ query ListReagents($filters: ReagentFilter, $pagination: GraphPaginationInput) {
     ...ListReagent
   }
 }
+
+query SearchReagentsForRole(
+  $search: String
+  $values: [ID!]
+  $tags: [String!]
+  $categories: [ID!]
+) {
+  options: reagents(
+    filters: {
+      search: $search
+      ids: $values
+      tags: $tags
+      categories: $categories
+    }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: id
+  }
+}

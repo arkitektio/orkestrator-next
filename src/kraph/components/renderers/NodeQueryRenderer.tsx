@@ -5,6 +5,7 @@ import {
   useRenderNodeQueryQuery,
 } from "@/kraph/api/graphql";
 import { PathGraph } from "./graph/KnowledgeGraph";
+import { GraphTable } from "./table/GraphTable";
 
 export const PathRenderer = (props: { path: PathFragment }) => {
   return (
@@ -16,7 +17,7 @@ export const PathRenderer = (props: { path: PathFragment }) => {
   );
 };
 
-export const SelectiveRenderer = (props: {
+export const SelectiveNodeViewRenderer = (props: {
   render: RenderNodeQueryQuery["renderNodeQuery"];
   nodeId: string;
 }) => {
@@ -26,6 +27,10 @@ export const SelectiveRenderer = (props: {
 
   if (props.render.__typename === "Path") {
     return <PathGraph path={props.render} root={props.nodeId} />;
+  }
+
+  if (props.render.__typename === "Table") {
+    return <GraphTable table={props.render} />;
   }
 
   return <div>Unknown Type</div>;

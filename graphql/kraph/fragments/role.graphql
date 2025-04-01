@@ -8,6 +8,12 @@ fragment EntityRoleDefinition on EntityRoleDefinition {
   categoryDefinition {
     ...EntityCategoryDefinition
   }
+  allowMultiple
+  description
+  currentDefault {
+    id
+  }
+  label
 }
 
 fragment ReagentCategoryDefinition on ReagentCategoryDefinition {
@@ -20,6 +26,12 @@ fragment ReagentRoleDefinition on ReagentRoleDefinition {
   categoryDefinition {
     ...ReagentCategoryDefinition
   }
+  allowMultiple
+  description
+  currentDefault {
+    id
+  }
+  label
 }
 
 fragment VariableDefinition on VariableDefinition {
@@ -27,4 +39,6 @@ fragment VariableDefinition on VariableDefinition {
   valueKind
   default
   optional
+  description
+  label
 }

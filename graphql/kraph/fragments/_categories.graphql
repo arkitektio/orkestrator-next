@@ -3,6 +3,11 @@ fragment BaseCategory on BaseCategory {
   graph {
     id
   }
+  tags {
+    id
+    value
+  }
+  purl
 }
 
 fragment BaseNodeCategory on NodeCategory {

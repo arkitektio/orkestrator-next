@@ -1,5 +1,5 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { FormDialog } from "@/components/dialog/FormDialog";
+import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
@@ -15,6 +15,7 @@ import {
 } from "../api/graphql";
 import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
 import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
+import UpdateReagentCategoryForm from "../forms/UpdateReagentCategoryForm";
 
 export default asDetailQueryRoute(
   useGetReagentCategoryQuery,
@@ -81,6 +82,14 @@ export default asDetailQueryRoute(
             >
               <CreateGraphQueryForm category={data.reagentCategory} />
             </FormDialog>
+            <FormSheet
+              trigger={<Button variant="outline">Edit</Button>}
+              onSubmit={() => refetch()}
+            >
+              <UpdateReagentCategoryForm
+                entityCategory={data.reagentCategory}
+              />
+            </FormSheet>
           </div>
         }
       >

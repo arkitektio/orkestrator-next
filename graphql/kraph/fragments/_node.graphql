@@ -37,9 +37,8 @@ fragment DetailNode on Node {
     id
     name
   }
-  renders {
-    ...Path
-    ...Pairs
-    ...Table
+  queries {
+    id
+    name
   }
 }

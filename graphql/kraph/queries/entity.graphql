@@ -5,7 +5,7 @@ query GetEntity($id: ID!) {
 }
 
 query SearchEntities($search: String, $values: [ID!]) {
-  options: nodes(
+  options: entities(
     filters: { search: $search, ids: $values }
     pagination: { limit: 10 }
   ) {
@@ -17,5 +17,25 @@ query SearchEntities($search: String, $values: [ID!]) {
 query ListEntities($filters: EntityFilter, $pagination: GraphPaginationInput) {
   entities(filters: $filters, pagination: $pagination) {
     ...ListEntity
+  }
+}
+
+query SearchEntitiesForRole(
+  $search: String
+  $values: [ID!]
+  $tags: [String!]
+  $categories: [ID!]
+) {
+  options: entities(
+    filters: {
+      search: $search
+      ids: $values
+      tags: $tags
+      categories: $categories
+    }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: id
   }
 }

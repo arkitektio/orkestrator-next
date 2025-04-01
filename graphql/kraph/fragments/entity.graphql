@@ -1,13 +1,29 @@
 fragment Entity on Entity {
   id
+  graph {
+    id
+  }
   category {
     id
     label
   }
   label
   subjectableTo {
-    id
-    label
+    role
+    category {
+      id
+      label
+    }
+  }
+  targetableBy {
+    role
+    category {
+      id
+      label
+    }
+  }
+  bestView {
+    ...Table
   }
 }
 

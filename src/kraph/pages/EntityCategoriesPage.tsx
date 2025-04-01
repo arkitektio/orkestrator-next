@@ -52,12 +52,12 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
             </h1>
             <p className="mt-3 text-xl text-muted-foreground">
               Entities represent the objects of your experiments. They are
-              measured in the graph and are the main focus of your analysis. They can be
-              anything from genes, proteins, cells, or any other biological
-              entity. What ever you can measure, you can represent as an entity.
+              measured in the graph and are the main focus of your analysis.
+              They can be anything from genes, proteins, cells, or any other
+              biological entity. What ever you can measure, you can represent as
+              an entity.
               <br />
-              </p>
-
+            </p>
           </div>
           <Card className="w-full h-full flex-row relative"></Card>
         </div>

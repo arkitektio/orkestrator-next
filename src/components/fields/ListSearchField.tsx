@@ -92,9 +92,10 @@ export type ListSearchFieldProps = {
   label?: string;
   description?: string;
   placeholder?: string;
+  search: SearchFunction;
   commandPlaceholder?: string;
   noOptionFoundPlaceholder?: string;
-  search: SearchFunction;
+  createComponent?: React.ReactNode;
   className?: string;
 } & FieldProps;
 
@@ -103,6 +104,7 @@ export const ListSearchField = ({
   label,
   validate,
   search,
+  createComponent,
   className,
   placeholder = "Please Select",
   commandPlaceholder = "Search...",
@@ -198,7 +200,9 @@ export const ListSearchField = ({
                     }}
                     value={inputValue}
                     onBlur={() => setOpen(false)}
-                    onFocus={() => setOpen(true)}
+                    onFocus={() => {
+                      setOpen(true);
+                    }}
                     className="flex-grow"
                   />
                 </div>
@@ -211,6 +215,13 @@ export const ListSearchField = ({
                       {error && (
                         <CommandGroup heading="Error">
                           {error && <CommandItem>{error}</CommandItem>}
+                        </CommandGroup>
+                      )}
+                      {createComponent && (
+                        <CommandGroup heading="Created">
+                          {createComponent && (
+                            <CommandItem>{createComponent}</CommandItem>
+                          )}
                         </CommandGroup>
                       )}
                       {options.length > 0 && (

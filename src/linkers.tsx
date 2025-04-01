@@ -144,6 +144,14 @@ export const KraphLinkedExpression = buildSmart(
 );
 export const KraphOntology = buildSmart("@kraph/ontology", "kraph/ontologies");
 export const KraphReagent = buildSmart("@kraph/reagent", "kraph/reagents");
+export const KraphProtocolEvent = buildSmart(
+  "@kraph/protocolevent",
+  "kraph/protocolevents",
+);
+export const KraphNaturalEvent = buildSmart(
+  "@kraph/naturalevent",
+  "kraph/naturalevents",
+);
 export const KraphEntity = buildSmart("@kraph/entity", "kraph/entities");
 export const KraphMetric = buildSmart("@kraph/metric", "kraph/metrics");
 export const KraphGraph = buildSmart("@kraph/graph", "kraph/graphs");

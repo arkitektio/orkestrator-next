@@ -26,6 +26,7 @@ import {
 import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import {
+  MetricKind,
   NaturalEventCategoryFragment,
   ProtocolEventCategoryFragment,
   UpdateNaturalEventCategoryMutationVariables,
@@ -41,6 +42,7 @@ import { Card } from "@/components/ui/card";
 import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { DragZone } from "@/components/upload/drag";
+import { ChoicesField } from "@/components/fields/ChoicesField";
 
 export type IRepresentationScreenProps = {};
 
@@ -169,9 +171,11 @@ export const RoleDefinitionCreator = ({
             ...role,
             categoryDefinition: {
               ...role.categoryDefinition,
+
               __typename: undefined,
             },
             __typename: undefined,
+            currentDefault: undefined,
           }),
         ),
         targetEntityRoles: protocolEventCategory.targetEntityRoles.map(
@@ -182,6 +186,7 @@ export const RoleDefinitionCreator = ({
               __typename: undefined,
             },
             __typename: undefined,
+            currentDefault: undefined,
           }),
         ),
         sourceReagentRoles: protocolEventCategory.sourceReagentRoles.map(
@@ -189,9 +194,11 @@ export const RoleDefinitionCreator = ({
             ...role,
             categoryDefinition: {
               ...role.categoryDefinition,
+              currentDefault: undefined,
               __typename: undefined,
             },
             __typename: undefined,
+            currentDefault: undefined,
           }),
         ),
         targetReagentRoles: protocolEventCategory.targetReagentRoles.map(
@@ -199,8 +206,16 @@ export const RoleDefinitionCreator = ({
             ...role,
             categoryDefinition: {
               ...role.categoryDefinition,
+              currentDefault: undefined,
               __typename: undefined,
             },
+            __typename: undefined,
+            currentDefault: undefined,
+          }),
+        ),
+        variableDefinitions: protocolEventCategory.variableDefinitions.map(
+          (v) => ({
+            ...v,
             __typename: undefined,
           }),
         ),
@@ -229,6 +244,11 @@ export const RoleDefinitionCreator = ({
   const sourceReagentArray = useFieldArray({
     control: myform.control, // control props comes from useForm (optional: if you are using FormProvider)
     name: "sourceReagentRoles", // unique name for your Field Array
+  });
+
+  const variableDefinitionsArray = useFieldArray({
+    control: myform.control, // control props comes from useForm (optional: if you are using FormProvider)
+    name: "variableDefinitions", // unique name for your Field Array
   });
 
   return (
@@ -280,6 +300,16 @@ export const RoleDefinitionCreator = ({
                                 label="Category Filters"
                                 searchQuery={searchEntityCategory}
                                 description="Filters for the entity's categories."
+                              />
+                              <StringField
+                                name={`sourceEntityRoles.${index}.label`}
+                                label="Label"
+                                description="Which role does the entity play?"
+                              />
+                              <StringField
+                                name={`sourceEntityRoles.${index}.description`}
+                                label="Description"
+                                description="What describes this role the best"
                               />
 
                               <Button
@@ -339,6 +369,16 @@ export const RoleDefinitionCreator = ({
                                 searchQuery={searchEntityCategory}
                                 description="Filters for the entity's categories."
                               />
+                              <StringField
+                                name={`targetEntityRoles.${index}.label`}
+                                label="Label"
+                                description="Which role does the entity play?"
+                              />
+                              <StringField
+                                name={`targetEntityRoles.${index}.description`}
+                                label="Description"
+                                description="What describes this role the best"
+                              />
 
                               <Button
                                 type="button"
@@ -395,6 +435,16 @@ export const RoleDefinitionCreator = ({
                                 label="Category Filters"
                                 searchQuery={searchEntityCategory}
                                 description="Filters for the entity's categories."
+                              />
+                              <StringField
+                                name={`targetReagentRoles.${index}.label`}
+                                label="Label"
+                                description="Which role does the entity play?"
+                              />
+                              <StringField
+                                name={`targetReagentRoles.${index}.description`}
+                                label="Description"
+                                description="What describes this role the best"
                               />
 
                               <Button
@@ -453,6 +503,16 @@ export const RoleDefinitionCreator = ({
                                 searchQuery={searchEntityCategory}
                                 description="Filters for the entity's categories."
                               />
+                              <StringField
+                                name={`sourceReagentRoles.${index}.label`}
+                                label="Label"
+                                description="Which role does the entity play?"
+                              />
+                              <StringField
+                                name={`sourceReagentRoles.${index}.description`}
+                                label="Description"
+                                description="What describes this role the best"
+                              />
 
                               <Button
                                 type="button"
@@ -474,6 +534,81 @@ export const RoleDefinitionCreator = ({
                                 tagFilters: [],
                                 categoryFilters: [],
                               },
+                            })
+                          }
+                          variant={"ghost"}
+                        >
+                          +
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex flex-col">
+                      <div className="text-xs mb-2 items-center w-full flex justify-center">
+                        Variable Definitions
+                      </div>
+                      <div className="flex flex-col gap-4">
+                        {variableDefinitionsArray.fields.map((item, index) => (
+                          <Card
+                            key={item.id}
+                            className="p-3 max-w-lg gap-2 flex-col flex group"
+                          >
+                            <StringField
+                              name={`variableDefinitions.${index}.param`}
+                              label="Role"
+                              description="Which role does the entity play?"
+                            />
+                            <div className="group-hover:block group-hover:opacity-100 opacity-0 transition-opacity hidden">
+                              <ChoicesField
+                                name={`variableDefinitions.${index}.valueKind`}
+                                label="Tag Filters"
+                                options={[
+                                  {
+                                    label: "String",
+                                    value: MetricKind.String,
+                                  },
+                                  {
+                                    label: "Int",
+                                    value: MetricKind.Int,
+                                  },
+                                  {
+                                    label: "Float",
+                                    value: MetricKind.Float,
+                                  },
+                                ]}
+                                description="Filters for the entity's tags."
+                              />
+                              <StringField
+                                name={`variableDefinitions.${index}.description`}
+                                label="Description"
+                                description="Which role does the entity play?"
+                              />
+                              <StringField
+                                name={`variableDefinitions.${index}.label`}
+                                label="Label"
+                                description="Which role does the entity play?"
+                              />
+
+                              <Button
+                                type="button"
+                                onClick={() =>
+                                  variableDefinitionsArray.remove(index)
+                                }
+                                variant={"destructive"}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          </Card>
+                        ))}
+                        <Button
+                          className="h-full max-w-xs"
+                          type="button"
+                          onClick={() =>
+                            variableDefinitionsArray.append({
+                              param: "new",
+                              valueKind: MetricKind.String,
+                              label: "",
+                              description: "",
                             })
                           }
                           variant={"ghost"}

@@ -36,6 +36,10 @@ export const ButtonLabel = (props: {
     props
       .search({ values: [props.value] })
       .then((res) => {
+        if (res.length === 0) {
+          setOption(null);
+          setError("No option found for value");
+        }
         setOption(res[0] || null);
       })
       .catch((err) => {
@@ -46,6 +50,7 @@ export const ButtonLabel = (props: {
   return (
     <>
       {option?.label}
+
       {error}
     </>
   );
@@ -63,6 +68,7 @@ export type SearchFieldProps = {
   description?: string;
   placeholder?: string;
   commandPlaceholder?: string;
+  createComponent?: React.ReactNode;
   noOptionFoundPlaceholder?: string;
   search: SearchFunction;
 } & FieldProps;
@@ -72,6 +78,7 @@ export const SearchField = ({
   label,
   validate,
   search,
+  createComponent,
   placeholder = "Please Select",
   commandPlaceholder = "Search...",
   noOptionFoundPlaceholder = "No options found",
@@ -181,6 +188,13 @@ export const SearchField = ({
                       {error && (
                         <CommandGroup heading="Error">
                           {error && <CommandItem>{error}</CommandItem>}
+                        </CommandGroup>
+                      )}
+                      {createComponent && (
+                        <CommandGroup heading="Created">
+                          {createComponent && (
+                            <CommandItem>{createComponent}</CommandItem>
+                          )}
                         </CommandGroup>
                       )}
                       {options.length > 0 && (

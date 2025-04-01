@@ -3,8 +3,16 @@ import { useGetNodeQuery } from "../api/graphql";
 
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
-import { KraphEntity, KraphNode, KraphReagent } from "@/linkers";
+import {
+  KraphEntity,
+  KraphNaturalEvent,
+  KraphNode,
+  KraphProtocol,
+  KraphProtocolEvent,
+  KraphReagent,
+} from "@/linkers";
 import { useNavigate } from "react-router";
+import { useEffect } from "react";
 
 export default asDetailQueryRoute(useGetNodeQuery, ({ data, refetch }) => {
   const nagivate = useNavigate();
@@ -35,9 +43,16 @@ export default asDetailQueryRoute(useGetNodeQuery, ({ data, refetch }) => {
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl ">
             {data.node.label}
           </h1>
-          <p className="mt-3 text-xl text-muted-foreground">
-            {data.node.graph.name}
-          </p>
+          {data.node.__typename === "ProtocolEvent" && (
+            <KraphProtocolEvent.DetailLink object={data.node.id}>
+              Open as Protocol
+            </KraphProtocolEvent.DetailLink>
+          )}
+          {data.node.__typename === "ProtocolEvent" && (
+            <KraphNaturalEvent.DetailLink object={data.node.id}>
+              Open as Natural
+            </KraphNaturalEvent.DetailLink>
+          )}
           {data.node.__typename === "Entity" && (
             <KraphEntity.DetailLink object={data.node.id}>
               Open as Entity

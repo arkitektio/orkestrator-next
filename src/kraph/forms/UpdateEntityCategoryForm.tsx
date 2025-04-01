@@ -1,5 +1,5 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { ChoicesField } from "@/components/fields/ChoicesField";
+import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
@@ -7,8 +7,10 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
-  CreateEntityCategoryMutationVariables,
-  useCreateEntityCategoryMutation,
+  EntityCategoryFragment,
+  UpdateEntityCategoryMutationVariables,
+  useSearchTagsLazyQuery,
+  useUpdateEntityCategoryMutation,
 } from "../api/graphql";
 
 const enumToOptions = (e: any) => {
@@ -18,18 +20,24 @@ const enumToOptions = (e: any) => {
   }));
 };
 
-export default (props: { graph?: string }) => {
-  const [add] = useCreateEntityCategoryMutation({
+export default (props: { entityCategory: EntityCategoryFragment }) => {
+  const [update] = useUpdateEntityCategoryMutation({
     refetchQueries: ["GetGraph"],
   });
 
-  const dialog = useGraphQlFormDialog(add);
+  const dialog = useGraphQlFormDialog(update);
 
-  const form = useForm<CreateEntityCategoryMutationVariables["input"]>({
+  const form = useForm<UpdateEntityCategoryMutationVariables["input"]>({
     defaultValues: {
-      graph: props.graph,
+      id: props.entityCategory.id,
+      label: props.entityCategory.label,
+      description: props.entityCategory.description,
+      purl: props.entityCategory.purl || "",
+      tags: props.entityCategory.tags.map((tag) => tag.value),
     },
   });
+
+  const [searchTags] = useSearchTagsLazyQuery();
 
   return (
     <>
@@ -62,11 +70,17 @@ export default (props: { graph?: string }) => {
                 name="purl"
                 description="What is the PURL of this expression?"
               />
+              <GraphQLSearchField
+                searchQuery={searchTags}
+                label="Tags"
+                name="tags"
+                description="Search for related entities"
+              />
             </div>
           </div>
 
           <DialogFooter className="mt-2">
-            <Button type="submit">Create</Button>
+            <Button type="submit">Save</Button>
           </DialogFooter>
         </form>
       </Form>

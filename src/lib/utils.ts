@@ -11,3 +11,10 @@ export function notEmpty<TValue>(
   if (value === null || value === undefined) return false;
   return true;
 }
+
+export const enumToOptions = (e: any) => {
+  return Object.keys(e).map((key) => ({
+    label: key,
+    value: e[key],
+  }));
+};

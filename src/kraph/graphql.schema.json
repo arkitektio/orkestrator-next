@@ -152,6 +152,18 @@
             "deprecationReason": null
           },
           {
+            "name": "purl",
+            "description": "The unique identifier of the expression within its graph",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "store",
             "description": "An image or other media file that can be used to represent the expression.",
             "args": [],
@@ -1684,7 +1696,7 @@
             "deprecationReason": null
           },
           {
-            "name": "renders",
+            "name": "queries",
             "description": null,
             "args": [],
             "type": {
@@ -1697,8 +1709,8 @@
                   "kind": "NON_NULL",
                   "name": null,
                   "ofType": {
-                    "kind": "UNION",
-                    "name": "PathPairsTable",
+                    "kind": "OBJECT",
+                    "name": "NodeQuery",
                     "ofType": null
                   }
                 }
@@ -1746,7 +1758,31 @@
                   "name": null,
                   "ofType": {
                     "kind": "OBJECT",
-                    "name": "ProtocolEventCategory",
+                    "name": "PlayableEntityRoleInProtocolEvent",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "targetableBy",
+            "description": "Subjectable to",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "PlayableEntityRoleInProtocolEvent",
                     "ofType": null
                   }
                 }
@@ -1960,6 +1996,18 @@
             "type": {
               "kind": "SCALAR",
               "name": "Float",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "purl",
+            "description": "The unique identifier of the expression within its graph",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
               "ofType": null
             },
             "isDeprecated": false,
@@ -2287,6 +2335,26 @@
             "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
+          },
+          {
+            "name": "tags",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
           }
         ],
         "interfaces": null,
@@ -2428,16 +2496,16 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "EntityFilter",
-        "description": "Filter for entity relations in the graph",
+        "description": "Filter for entities in the graph",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
-            "name": "graph",
-            "description": "Filter by graph ID",
+            "name": "active",
+            "description": "Filter by active status",
             "type": {
               "kind": "SCALAR",
-              "name": "ID",
+              "name": "Boolean",
               "ofType": null
             },
             "defaultValue": "null",
@@ -2445,8 +2513,8 @@
             "deprecationReason": null
           },
           {
-            "name": "ids",
-            "description": "Filter by list of relation IDs",
+            "name": "categories",
+            "description": "Filter by list of entity categories",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -2465,8 +2533,52 @@
             "deprecationReason": null
           },
           {
-            "name": "kind",
-            "description": "Filter by relation kind",
+            "name": "createdAfter",
+            "description": "Filter by creation date after this date",
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "createdBefore",
+            "description": "Filter by creation date before this date",
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "externalIds",
+            "description": "Filter by list of entity IDs",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "ID",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "graph",
+            "description": "Filter by graph ID",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -2477,12 +2589,20 @@
             "deprecationReason": null
           },
           {
-            "name": "linkedExpression",
-            "description": "Filter by linked expression ID",
+            "name": "ids",
+            "description": "Filter by list of entity IDs",
             "type": {
-              "kind": "SCALAR",
-              "name": "ID",
-              "ofType": null
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "ID",
+                  "ofType": null
+                }
+              }
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -2490,11 +2610,31 @@
           },
           {
             "name": "search",
-            "description": "Search relations by text",
+            "description": "Search entities by text",
             "type": {
               "kind": "SCALAR",
               "name": "String",
               "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "tags",
+            "description": "Filter by list of categorie tags",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String",
+                  "ofType": null
+                }
+              }
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -2680,6 +2820,22 @@
         "isOneOf": null,
         "fields": [
           {
+            "name": "allowMultiple",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "categoryDefinition",
             "description": null,
             "args": [],
@@ -2691,6 +2847,42 @@
                 "name": "EntityCategoryDefinition",
                 "ofType": null
               }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "currentDefault",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Entity",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "description",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "label",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -2741,6 +2933,18 @@
         "fields": null,
         "inputFields": [
           {
+            "name": "allowMultiple",
+            "description": "Whether this port allows multiple entities or not",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "false",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "categoryDefinition",
             "description": "The category definition for this expression",
             "type": {
@@ -2753,6 +2957,30 @@
               }
             },
             "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "description",
+            "description": "A detailed description of the role",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "label",
+            "description": "The label/name of the role",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -4643,6 +4871,18 @@
             "deprecationReason": null
           },
           {
+            "name": "purl",
+            "description": "The unique identifier of the expression within its graph",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "sourceDefinition",
             "description": "The unique identifier of the expression within its graph",
             "args": [],
@@ -5497,7 +5737,7 @@
             "deprecationReason": null
           },
           {
-            "name": "renders",
+            "name": "queries",
             "description": null,
             "args": [],
             "type": {
@@ -5510,8 +5750,8 @@
                   "kind": "NON_NULL",
                   "name": null,
                   "ofType": {
-                    "kind": "UNION",
-                    "name": "PathPairsTable",
+                    "kind": "OBJECT",
+                    "name": "NodeQuery",
                     "ofType": null
                   }
                 }
@@ -5765,6 +6005,18 @@
             "type": {
               "kind": "SCALAR",
               "name": "Float",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "purl",
+            "description": "The unique identifier of the expression within its graph",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
               "ofType": null
             },
             "isDeprecated": false,
@@ -8290,7 +8542,7 @@
             "deprecationReason": null
           },
           {
-            "name": "renders",
+            "name": "queries",
             "description": null,
             "args": [],
             "type": {
@@ -8303,8 +8555,8 @@
                   "kind": "NON_NULL",
                   "name": null,
                   "ofType": {
-                    "kind": "UNION",
-                    "name": "PathPairsTable",
+                    "kind": "OBJECT",
+                    "name": "NodeQuery",
                     "ofType": null
                   }
                 }
@@ -8570,6 +8822,18 @@
             "type": {
               "kind": "SCALAR",
               "name": "Float",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "purl",
+            "description": "The unique identifier of the expression within its graph",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
               "ofType": null
             },
             "isDeprecated": false,
@@ -9281,7 +9545,7 @@
             "deprecationReason": null
           },
           {
-            "name": "renders",
+            "name": "queries",
             "description": null,
             "args": [],
             "type": {
@@ -9294,8 +9558,8 @@
                   "kind": "NON_NULL",
                   "name": null,
                   "ofType": {
-                    "kind": "UNION",
-                    "name": "PathPairsTable",
+                    "kind": "OBJECT",
+                    "name": "NodeQuery",
                     "ofType": null
                   }
                 }
@@ -9972,26 +10236,6 @@
         "fields": null,
         "inputFields": [
           {
-            "name": "allowedEntities",
-            "description": "The allowed entitie classes for this query",
-            "type": {
-              "kind": "LIST",
-              "name": null,
-              "ofType": {
-                "kind": "NON_NULL",
-                "name": null,
-                "ofType": {
-                  "kind": "SCALAR",
-                  "name": "ID",
-                  "ofType": null
-                }
-              }
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "columns",
             "description": "The columns (if ViewKind is Table)",
             "type": {
@@ -10084,6 +10328,26 @@
               }
             },
             "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "relevantFor",
+            "description": "The list of categories this expression is relevant for",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "ID",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -10910,6 +11174,50 @@
       },
       {
         "kind": "OBJECT",
+        "name": "PlayableEntityRoleInProtocolEvent",
+        "description": "Playable Role in Protocol Event",
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "category",
+            "description": "The unique identifier of the entity within its graph",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "ProtocolEventCategory",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "role",
+            "description": "The unique identifier of the entity within its graph",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
         "name": "PresignedPostCredentials",
         "description": "Temporary Credentials for a file upload that can be used by a Client (e.g. in a python datalayer)",
         "isOneOf": null,
@@ -11248,7 +11556,7 @@
             "deprecationReason": null
           },
           {
-            "name": "renders",
+            "name": "queries",
             "description": null,
             "args": [],
             "type": {
@@ -11261,8 +11569,8 @@
                   "kind": "NON_NULL",
                   "name": null,
                   "ofType": {
-                    "kind": "UNION",
-                    "name": "PathPairsTable",
+                    "kind": "OBJECT",
+                    "name": "NodeQuery",
                     "ofType": null
                   }
                 }
@@ -11544,6 +11852,18 @@
             "type": {
               "kind": "SCALAR",
               "name": "Float",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "purl",
+            "description": "The unique identifier of the expression within its graph",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
               "ofType": null
             },
             "isDeprecated": false,
@@ -14660,7 +14980,7 @@
             "deprecationReason": null
           },
           {
-            "name": "renders",
+            "name": "queries",
             "description": null,
             "args": [],
             "type": {
@@ -14673,8 +14993,8 @@
                   "kind": "NON_NULL",
                   "name": null,
                   "ofType": {
-                    "kind": "UNION",
-                    "name": "PathPairsTable",
+                    "kind": "OBJECT",
+                    "name": "NodeQuery",
                     "ofType": null
                   }
                 }
@@ -14936,6 +15256,18 @@
             "type": {
               "kind": "SCALAR",
               "name": "Float",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "purl",
+            "description": "The unique identifier of the expression within its graph",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
               "ofType": null
             },
             "isDeprecated": false,
@@ -15404,16 +15736,16 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "ReagentFilter",
-        "description": "Filter for entity relations in the graph",
+        "description": "Filter for entities in the graph",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
-            "name": "graph",
-            "description": "Filter by graph ID",
+            "name": "active",
+            "description": "Filter by active status",
             "type": {
               "kind": "SCALAR",
-              "name": "ID",
+              "name": "Boolean",
               "ofType": null
             },
             "defaultValue": "null",
@@ -15421,8 +15753,8 @@
             "deprecationReason": null
           },
           {
-            "name": "ids",
-            "description": "Filter by list of relation IDs",
+            "name": "categories",
+            "description": "Filter by list of entity categories",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -15441,8 +15773,52 @@
             "deprecationReason": null
           },
           {
-            "name": "kind",
-            "description": "Filter by relation kind",
+            "name": "createdAfter",
+            "description": "Filter by creation date after this date",
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "createdBefore",
+            "description": "Filter by creation date before this date",
+            "type": {
+              "kind": "SCALAR",
+              "name": "DateTime",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "externalIds",
+            "description": "Filter by list of entity IDs",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "ID",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "graph",
+            "description": "Filter by graph ID",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -15453,12 +15829,20 @@
             "deprecationReason": null
           },
           {
-            "name": "linkedExpression",
-            "description": "Filter by linked expression ID",
+            "name": "ids",
+            "description": "Filter by list of entity IDs",
             "type": {
-              "kind": "SCALAR",
-              "name": "ID",
-              "ofType": null
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "ID",
+                  "ofType": null
+                }
+              }
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -15466,11 +15850,31 @@
           },
           {
             "name": "search",
-            "description": "Search relations by text",
+            "description": "Search entities by text",
             "type": {
               "kind": "SCALAR",
               "name": "String",
               "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "tags",
+            "description": "Filter by list of categorie tags",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String",
+                  "ofType": null
+                }
+              }
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -15552,6 +15956,22 @@
         "isOneOf": null,
         "fields": [
           {
+            "name": "allowMultiple",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "categoryDefinition",
             "description": null,
             "args": [],
@@ -15568,17 +15988,37 @@
             "deprecationReason": null
           },
           {
-            "name": "needsQuantity",
+            "name": "currentDefault",
             "description": null,
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Boolean",
-                "ofType": null
-              }
+              "kind": "OBJECT",
+              "name": "Reagent",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "description",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "label",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -15613,6 +16053,18 @@
         "fields": null,
         "inputFields": [
           {
+            "name": "allowMultiple",
+            "description": "Whether this port allows multiple entities or not",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "false",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "categoryDefinition",
             "description": "The category definition for this expression",
             "type": {
@@ -15625,6 +16077,30 @@
               }
             },
             "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "description",
+            "description": "A detailed description of the role",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "label",
+            "description": "The label/name of the role",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -16285,6 +16761,18 @@
                 "name": "Boolean",
                 "ofType": null
               }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "purl",
+            "description": "The unique identifier of the expression within its graph",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -17545,7 +18033,7 @@
             "deprecationReason": null
           },
           {
-            "name": "renders",
+            "name": "queries",
             "description": null,
             "args": [],
             "type": {
@@ -17558,8 +18046,8 @@
                   "kind": "NON_NULL",
                   "name": null,
                   "ofType": {
-                    "kind": "UNION",
-                    "name": "PathPairsTable",
+                    "kind": "OBJECT",
+                    "name": "NodeQuery",
                     "ofType": null
                   }
                 }
@@ -17781,6 +18269,18 @@
             "type": {
               "kind": "SCALAR",
               "name": "Float",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "purl",
+            "description": "The unique identifier of the expression within its graph",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
               "ofType": null
             },
             "isDeprecated": false,
@@ -19668,12 +20168,44 @@
             "deprecationReason": null
           },
           {
+            "name": "pin",
+            "description": "Whether this expression should be pinned or not",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "purl",
             "description": "New permanent URL for the expression",
             "type": {
               "kind": "SCALAR",
               "name": "String",
               "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "tags",
+            "description": "A list of tags associated with this expression",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String",
+                  "ofType": null
+                }
+              }
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -19899,13 +20431,33 @@
             "description": null,
             "args": [],
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Any",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Any",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "description",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "label",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -19993,6 +20545,30 @@
             "type": {
               "kind": "SCALAR",
               "name": "Any",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "description",
+            "description": "A detailed description of the role",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "label",
+            "description": "The label/name of the role",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
               "ofType": null
             },
             "defaultValue": "null",

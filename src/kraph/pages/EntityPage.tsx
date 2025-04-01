@@ -1,13 +1,16 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { FormSheet } from "@/components/dialog/FormDialog";
+import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
+import { ListRender } from "@/components/layout/ListRender";
 import { Badge } from "@/components/ui/badge";
-import { DragZone } from "@/components/upload/drag";
-import { useResolve } from "@/datalayer/hooks/useResolve";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { useMediaUpload } from "@/datalayer/hooks/useUpload";
-import { KraphReagent } from "@/linkers";
+import { KraphProtocolEventCategory, KraphReagent } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
-import { useNavigate } from "react-router-dom";
-import { useGetEntityQuery, useGetReagentQuery } from "../api/graphql";
+import { useGetEntityQuery } from "../api/graphql";
+import { SelectiveNodeViewRenderer } from "../components/renderers/NodeQueryRenderer";
+import CreateNodeQueryForm from "../forms/CreateNodeQueryForm";
+import LoadingCreateProtocolEventForm from "../forms/LoadingCreateProtocolEventForm";
 
 export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
   const uploadFile = useMediaUpload();
@@ -38,17 +41,76 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
       </div>
 
       <div className="flex flex-col p-6">
-        <p className="text-sm font-light">Appears in </p>
-      </div>
+        <ListRender array={data.entity.subjectableTo}>
+          {(playable) => (
+            <Card
+              key={`${playable.role}-${playable.category.id}`}
+              className="p-2 m-2 flex-row gap-2 flex"
+            >
+              <KraphProtocolEventCategory.DetailLink
+                object={playable.category.id}
+              >
+                Subject as {playable.role} in {playable.category.label}
+              </KraphProtocolEventCategory.DetailLink>
 
+              <FormSheet
+                trigger={<Button variant="outline"> {">>"}</Button>}
+                onSubmit={() => refetch()}
+              >
+                <LoadingCreateProtocolEventForm
+                  id={playable.category.id}
+                  rolemap={{ [playable.role]: data.entity.id }}
+                />
+              </FormSheet>
+            </Card>
+          )}
+        </ListRender>
+      </div>
       <div className="flex flex-col p-6">
-        {data.entity.subjectableTo.map((cat) => (
-          <>
-            {cat.label}
-            OHJAES
-            <br />
-          </>
-        ))}
+        <ListRender array={data.entity.targetableBy}>
+          {(playable) => (
+            <Card
+              key={`${playable.role}-${playable.category.id}`}
+              className="p-2 m-2 flex-row gap-2 flex"
+            >
+              <KraphProtocolEventCategory.DetailLink
+                object={playable.category.id}
+              >
+                Target as {playable.role} in {playable.category.label}
+              </KraphProtocolEventCategory.DetailLink>
+
+              <FormSheet
+                trigger={<Button variant="outline"> {"<<"} </Button>}
+                onSubmit={() => refetch()}
+              >
+                <LoadingCreateProtocolEventForm
+                  id={playable.category.id}
+                  rolemap={{ [playable.role]: data.entity.id }}
+                />
+              </FormSheet>
+            </Card>
+          )}
+        </ListRender>
+      </div>
+      <div className="flex flex-col p-6 h-full">
+        {data.entity.bestView ? (
+          <SelectiveNodeViewRenderer
+            render={data.entity.bestView}
+            nodeId={data.entity.id}
+          />
+        ) : (
+          <div className="h-ful w-ull flex flex-col items-center justify-center">
+            <p className="text-sm font-light mb-3">
+              No Graph Query yet for this category
+            </p>
+            <FormDialog
+              trigger={<Button variant="outline">Create Query</Button>}
+              onSubmit={() => refetch()}
+            >
+              <CreateNodeQueryForm entity={data.entity} />
+            </FormDialog>
+          </div>
+        )}
       </div>
     </KraphReagent.ModelPage>
   );

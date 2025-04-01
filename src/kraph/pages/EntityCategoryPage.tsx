@@ -13,8 +13,9 @@ import {
 } from "../api/graphql";
 import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
 import { Button } from "@/components/ui/button";
-import { FormDialog } from "@/components/dialog/FormDialog";
+import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
 import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
+import UpdateEntityCategoryForm from "../forms/UpdateEntityCategoryForm";
 
 export default asDetailQueryRoute(
   useGetEntityCategoryQuery,
@@ -48,7 +49,6 @@ export default asDetailQueryRoute(
     };
 
     const pin = async () => {
-     
       await update({
         variables: {
           input: {
@@ -59,8 +59,6 @@ export default asDetailQueryRoute(
       });
       await refetch();
     };
-
-    const navigate = useNavigate();
 
     return (
       <KraphEntityCategory.ModelPage
@@ -88,14 +86,12 @@ export default asDetailQueryRoute(
             </Button>
             <Button
               onClick={() => {
-               pin().then(refetch);
+                pin().then(refetch);
               }}
               className="w-full"
               variant="outline"
             >
-              {data.entityCategory.pinned
-                ? "Unpin"
-                : "Pin"}
+              {data.entityCategory.pinned ? "Unpin" : "Pin"}
             </Button>
             <FormDialog
               trigger={<Button variant="outline">Create</Button>}
@@ -103,6 +99,12 @@ export default asDetailQueryRoute(
             >
               <CreateGraphQueryForm category={data.entityCategory} />
             </FormDialog>
+            <FormSheet
+              trigger={<Button variant="outline">Edit</Button>}
+              onSubmit={() => refetch()}
+            >
+              <UpdateEntityCategoryForm entityCategory={data.entityCategory} />
+            </FormSheet>
           </div>
         }
       >
@@ -112,7 +114,7 @@ export default asDetailQueryRoute(
               {data.entityCategory.label}
             </h1>
             <p className="mt-3 text-xl text-muted-foreground">
-              {data.entityCategory.ageName}
+              {data.entityCategory.description}
             </p>
           </div>
           <div className="w-full h-full flex-row relative">

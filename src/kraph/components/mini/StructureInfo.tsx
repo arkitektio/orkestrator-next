@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/accordion";
 import { KraphNode } from "@/linkers";
 import { Badge } from "@/components/ui/badge";
-import { SelectiveRenderer } from "../renderers/NodeQueryRenderer";
+import { SelectiveNodeViewRenderer } from "../renderers/NodeQueryRenderer";
 
 export type KnowledgeSidebarProps = {
   identifier: Identifier;
@@ -62,7 +62,7 @@ export const StructureViewWidget = (props: StructureViewWidgetProps) => {
           <div className="text-xs font-bold">{props.graph.name}</div>
 
           {data.structureByIdentifier.bestView && (
-            <SelectiveRenderer
+            <SelectiveNodeViewRenderer
               render={data.structureByIdentifier.bestView}
               nodeId={props.identifier}
             />

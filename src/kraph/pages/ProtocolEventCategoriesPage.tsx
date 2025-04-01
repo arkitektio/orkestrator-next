@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import StructureCategoryList from "../components/lists/StructureCategoryList";
 import CreateEntityCategoryForm from "../forms/CreateEntityCategoryForm";
 import ProtocolEventCategoryList from "../components/lists/ProtocolEventCategoryList";
+import CreateProtocolEventCategoryForm from "../forms/CreateProtocolEventCategoryForm";
 
 export type IRepresentationScreenProps = {};
 
@@ -33,10 +34,14 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
               }
               onSubmit={(item) => {
                 console.log(item);
-                navigate(KraphProtocolEventCategory.linkBuilder(item.createGraph.id));
+                navigate(
+                  KraphProtocolEventCategory.linkBuilder(
+                    item.createProtocolEventCategory.id,
+                  ),
+                );
               }}
             >
-              <CreateEntityCategoryForm />
+              <CreateProtocolEventCategoryForm />
             </FormDialogAction>
           </>
         </div>
@@ -49,13 +54,12 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
               Your Protocol categories
             </h1>
             <p className="mt-3 text-xl text-muted-foreground">
-              Protocl events represent the events that happen during your experiments. They are
-              the best metadata to filter the data. They can be anything from
-              experimental conditions, treatments, or any other event that happens
-              during your experiment. Whatever you do to your samples, you should represent
-              it as a protocol event.
-              </p>
-
+              Protocl events represent the events that happen during your
+              experiments. They are the best metadata to filter the data. They
+              can be anything from experimental conditions, treatments, or any
+              other event that happens during your experiment. Whatever you do
+              to your samples, you should represent it as a protocol event.
+            </p>
           </div>
           <Card className="w-full h-full flex-row relative"></Card>
         </div>

@@ -25,6 +25,12 @@ import EntityCategoriesPage from "./pages/EntityCategoriesPage";
 import StructureCategoriesPage from "./pages/StructureCategoriesPage";
 import ProtocolEventCategoriesPage from "./pages/ProtocolEventCategoriesPage";
 import MetricCategoryPage from "./pages/MetricCategoryPage";
+import MetricCategoriesPage from "./pages/MetricCategoriesPage";
+import RelationCategoriesPage from "./pages/RelationCategoriesPage";
+import { RelationCategoryFragmentDoc } from "./api/graphql";
+import RelationCategoryPage from "./pages/RelationCategoryPage";
+import MeasurementCategoriesPage from "./pages/MeasurementCategoriesPage";
+import MeasurementCategoryPage from "./pages/MeasurementCategoryPage";
 interface Props {}
 
 export const KraphModule: React.FC<Props> = (props) => {
@@ -46,15 +52,28 @@ export const KraphModule: React.FC<Props> = (props) => {
             element={<StructureCategoriesPage />}
           />
           <Route
+            path="measurementcategories"
+            element={<MeasurementCategoriesPage />}
+          />
+          <Route
+            path="relationcategories"
+            element={<RelationCategoriesPage />}
+          />
+          <Route
             path="protocoleventcategories"
             element={<ProtocolEventCategoriesPage />}
           />
+          <Route path="metriccategories" element={<MetricCategoriesPage />} />
 
           <Route
             path="structurecategories/:id"
             element={<StructureCategoryPage />}
           />
           <Route path="metriccategories/:id" element={<MetricCategoryPage />} />
+          <Route
+            path="relationcategories/:id"
+            element={<RelationCategoryPage />}
+          />
 
           <Route path="entitycategories/:id" element={<EntityCategoryPage />} />
           <Route
@@ -68,6 +87,10 @@ export const KraphModule: React.FC<Props> = (props) => {
           <Route
             path="reagentcategories/:id"
             element={<ReagentCategoryPage />}
+          />
+          <Route
+            path="measurementcategories/:id"
+            element={<MeasurementCategoryPage />}
           />
           <Route path="graphs/:id/view/:viewid" element={<GraphPage />} />
           <Route path="reagents" element={<ReagentsPage />} />

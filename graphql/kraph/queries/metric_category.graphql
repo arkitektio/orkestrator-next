@@ -4,6 +4,15 @@ query GetMetricCategory($id: ID!) {
   }
 }
 
+query ListMetricCategory(
+  $filters: MetricCategoryFilter
+  $pagination: OffsetPaginationInput
+) {
+  metricCategories(filters: $filters, pagination: $pagination) {
+    ...ListMetricCategory
+  }
+}
+
 query SearchMetricCategory($search: String, $values: [ID!]) {
   options: metricCategories(
     filters: { search: $search, ids: $values }

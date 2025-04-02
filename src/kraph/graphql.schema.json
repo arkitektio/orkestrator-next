@@ -164,6 +164,18 @@
             "deprecationReason": null
           },
           {
+            "name": "sequence",
+            "description": "The sequence of the expression within its graph",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "GraphSequence",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "store",
             "description": "An image or other media file that can be used to represent the expression.",
             "args": [],
@@ -2014,6 +2026,18 @@
             "deprecationReason": null
           },
           {
+            "name": "sequence",
+            "description": "The sequence of the expression within its graph",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "GraphSequence",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "store",
             "description": "An image or other media file that can be used to represent the expression.",
             "args": [],
@@ -2369,6 +2393,18 @@
         "fields": null,
         "inputFields": [
           {
+            "name": "autoCreateSequence",
+            "description": "Whether to create a sequence if it does not exist",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "false",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "color",
             "description": "RGBA color values as list of 3 or 4 integers",
             "type": {
@@ -2462,6 +2498,18 @@
             "type": {
               "kind": "SCALAR",
               "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "sequence",
+            "description": "The ID of the sequence this category will get internal_ids from",
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
               "ofType": null
             },
             "defaultValue": "null",
@@ -4489,6 +4537,154 @@
         "possibleTypes": null
       },
       {
+        "kind": "OBJECT",
+        "name": "GraphSequence",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "categories",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "INTERFACE",
+                    "name": "BaseCategory",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "graph",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "Graph",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "id",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "ID",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "GraphSequenceFilter",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "AND",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "GraphSequenceFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "OR",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "GraphSequenceFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "id",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ids",
+            "description": "Filter by list of IDs",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "ID",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "search",
+            "description": "Search by text",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "SCALAR",
         "name": "ID",
         "description": "The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `\"4\"`) or integer (such as `4`) input value will be accepted as an ID.",
@@ -4883,6 +5079,18 @@
             "deprecationReason": null
           },
           {
+            "name": "sequence",
+            "description": "The sequence of the expression within its graph",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "GraphSequence",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "sourceDefinition",
             "description": "The unique identifier of the expression within its graph",
             "args": [],
@@ -5092,6 +5300,18 @@
         "fields": null,
         "inputFields": [
           {
+            "name": "autoCreateSequence",
+            "description": "Whether to create a sequence if it does not exist",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "false",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "color",
             "description": "RGBA color values as list of 3 or 4 integers",
             "type": {
@@ -5201,6 +5421,18 @@
             "type": {
               "kind": "SCALAR",
               "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "sequence",
+            "description": "The ID of the sequence this category will get internal_ids from",
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
               "ofType": null
             },
             "defaultValue": "null",
@@ -6023,6 +6255,18 @@
             "deprecationReason": null
           },
           {
+            "name": "sequence",
+            "description": "The sequence of the expression within its graph",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "GraphSequence",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "store",
             "description": "An image or other media file that can be used to represent the expression.",
             "args": [],
@@ -6240,6 +6484,18 @@
         "fields": null,
         "inputFields": [
           {
+            "name": "autoCreateSequence",
+            "description": "Whether to create a sequence if it does not exist",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "false",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "color",
             "description": "RGBA color values as list of 3 or 4 integers",
             "type": {
@@ -6349,6 +6605,18 @@
             "type": {
               "kind": "SCALAR",
               "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "sequence",
+            "description": "The ID of the sequence this category will get internal_ids from",
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
               "ofType": null
             },
             "defaultValue": "null",
@@ -8840,6 +9108,18 @@
             "deprecationReason": null
           },
           {
+            "name": "sequence",
+            "description": "The sequence of the expression within its graph",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "GraphSequence",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "sourceEntityRoles",
             "description": "The unique identifier of the expression within its graph",
             "args": [],
@@ -9089,6 +9369,18 @@
         "fields": null,
         "inputFields": [
           {
+            "name": "autoCreateSequence",
+            "description": "Whether to create a sequence if it does not exist",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "false",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "color",
             "description": "RGBA color values as list of 3 or 4 integers",
             "type": {
@@ -9202,6 +9494,18 @@
             "type": {
               "kind": "SCALAR",
               "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "sequence",
+            "description": "The ID of the sequence this category will get internal_ids from",
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
               "ofType": null
             },
             "defaultValue": "null",
@@ -11870,6 +12174,18 @@
             "deprecationReason": null
           },
           {
+            "name": "sequence",
+            "description": "The sequence of the expression within its graph",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "GraphSequence",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "sourceEntityRoles",
             "description": "The unique identifier of the expression within its graph",
             "args": [],
@@ -12191,6 +12507,18 @@
         "fields": null,
         "inputFields": [
           {
+            "name": "autoCreateSequence",
+            "description": "Whether to create a sequence if it does not exist",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "false",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "color",
             "description": "RGBA color values as list of 3 or 4 integers",
             "type": {
@@ -12304,6 +12632,18 @@
             "type": {
               "kind": "SCALAR",
               "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "sequence",
+            "description": "The ID of the sequence this category will get internal_ids from",
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
               "ofType": null
             },
             "defaultValue": "null",
@@ -12926,6 +13266,88 @@
                 "kind": "OBJECT",
                 "name": "GraphQuery",
                 "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "graphSequence",
+            "description": null,
+            "args": [
+              {
+                "name": "id",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "ID",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "GraphSequence",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "graphSequences",
+            "description": "List of all graph sequences",
+            "args": [
+              {
+                "name": "filters",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "GraphSequenceFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "pagination",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OffsetPaginationInput",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "GraphSequence",
+                    "ofType": null
+                  }
+                }
               }
             },
             "isDeprecated": false,
@@ -15274,6 +15696,18 @@
             "deprecationReason": null
           },
           {
+            "name": "sequence",
+            "description": "The sequence of the expression within its graph",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "GraphSequence",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "store",
             "description": "An image or other media file that can be used to represent the expression.",
             "args": [],
@@ -15609,6 +16043,18 @@
         "fields": null,
         "inputFields": [
           {
+            "name": "autoCreateSequence",
+            "description": "Whether to create a sequence if it does not exist",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "false",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "color",
             "description": "RGBA color values as list of 3 or 4 integers",
             "type": {
@@ -15702,6 +16148,18 @@
             "type": {
               "kind": "SCALAR",
               "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "sequence",
+            "description": "The ID of the sequence this category will get internal_ids from",
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
               "ofType": null
             },
             "defaultValue": "null",
@@ -16778,6 +17236,18 @@
             "deprecationReason": null
           },
           {
+            "name": "sequence",
+            "description": "The sequence of the expression within its graph",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "GraphSequence",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "sourceDefinition",
             "description": "The unique identifier of the expression within its graph",
             "args": [],
@@ -17011,6 +17481,18 @@
         "fields": null,
         "inputFields": [
           {
+            "name": "autoCreateSequence",
+            "description": "Whether to create a sequence if it does not exist",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "false",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "color",
             "description": "RGBA color values as list of 3 or 4 integers",
             "type": {
@@ -17043,11 +17525,27 @@
             "deprecationReason": null
           },
           {
+            "name": "graph",
+            "description": "The ID of the graph this expression belongs to. If not provided, uses default ontology",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "ID",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "image",
             "description": "An optional image associated with this expression",
             "type": {
               "kind": "SCALAR",
-              "name": "RemoteUpload",
+              "name": "ID",
               "ofType": null
             },
             "defaultValue": "null",
@@ -17071,11 +17569,11 @@
             "deprecationReason": null
           },
           {
-            "name": "ontology",
-            "description": "The ID of the ontology this expression belongs to. If not provided, uses default ontology",
+            "name": "pin",
+            "description": "Whether this expression should be pinned or not",
             "type": {
               "kind": "SCALAR",
-              "name": "ID",
+              "name": "Boolean",
               "ofType": null
             },
             "defaultValue": "null",
@@ -17091,6 +17589,70 @@
               "ofType": null
             },
             "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "sequence",
+            "description": "The ID of the sequence this category will get internal_ids from",
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "sourceDefinition",
+            "description": "The source definition for this expression",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "CategoryDefinitionInput",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "tags",
+            "description": "A list of tags associated with this expression",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "targetDefinition",
+            "description": "The target definition for this expression",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "CategoryDefinitionInput",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -18287,6 +18849,18 @@
             "deprecationReason": null
           },
           {
+            "name": "sequence",
+            "description": "The sequence of the expression within its graph",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "GraphSequence",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "store",
             "description": "An image or other media file that can be used to represent the expression.",
             "args": [],
@@ -18622,6 +19196,18 @@
         "fields": null,
         "inputFields": [
           {
+            "name": "autoCreateSequence",
+            "description": "Whether to create a sequence if it does not exist",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "false",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "color",
             "description": "RGBA color values as list of 3 or 4 integers",
             "type": {
@@ -18715,6 +19301,18 @@
             "type": {
               "kind": "SCALAR",
               "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "sequence",
+            "description": "The ID of the sequence this category will get internal_ids from",
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
               "ofType": null
             },
             "defaultValue": "null",
@@ -20293,7 +20891,7 @@
         "inputFields": [
           {
             "name": "color",
-            "description": "New RGBA color values as list of 3 or 4 integers",
+            "description": "RGBA color values as list of 3 or 4 integers",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -20313,7 +20911,7 @@
           },
           {
             "name": "description",
-            "description": "New description for the expression",
+            "description": "A detailed description of the expression",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -20324,24 +20922,8 @@
             "deprecationReason": null
           },
           {
-            "name": "id",
-            "description": "The ID of the expression to update",
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "ID",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "image",
-            "description": "New image ID for the expression",
+            "description": "An optional image associated with this expression",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -20364,12 +20946,44 @@
             "deprecationReason": null
           },
           {
+            "name": "pin",
+            "description": "Whether this expression should be pinned or not",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "purl",
-            "description": "New permanent URL for the expression",
+            "description": "Permanent URL identifier for the expression",
             "type": {
               "kind": "SCALAR",
               "name": "String",
               "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "tags",
+            "description": "A list of tags associated with this expression",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String",
+                  "ofType": null
+                }
+              }
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -20389,7 +21003,7 @@
         "inputFields": [
           {
             "name": "color",
-            "description": "New RGBA color values as list of 3 or 4 integers",
+            "description": "RGBA color values as list of 3 or 4 integers",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -20409,7 +21023,7 @@
           },
           {
             "name": "description",
-            "description": "New description for the expression",
+            "description": "A detailed description of the expression",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -20449,7 +21063,7 @@
           },
           {
             "name": "image",
-            "description": "New image ID for the expression",
+            "description": "An optional image associated with this expression",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
@@ -20460,8 +21074,20 @@
             "deprecationReason": null
           },
           {
-            "name": "label",
-            "description": "New label for the expression",
+            "name": "pin",
+            "description": "Whether this expression should be pinned or not",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "purl",
+            "description": "Permanent URL identifier for the expression",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -20472,12 +21098,20 @@
             "deprecationReason": null
           },
           {
-            "name": "purl",
-            "description": "New permanent URL for the expression",
+            "name": "tags",
+            "description": "A list of tags associated with this expression",
             "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String",
+                  "ofType": null
+                }
+              }
             },
             "defaultValue": "null",
             "isDeprecated": false,

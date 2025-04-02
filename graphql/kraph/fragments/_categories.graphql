@@ -22,28 +22,6 @@ fragment BaseEdgeCategory on EdgeCategory {
   id
 }
 
-fragment MeasurementCategory on MeasurementCategory {
-  ...BaseCategory
-  ...BaseEdgeCategory
-  sourceDefinition {
-    tagFilters
-  }
-  targetDefinition {
-    tagFilters
-  }
-}
-
-fragment RelationCategory on RelationCategory {
-  ...BaseCategory
-  ...BaseEdgeCategory
-  sourceDefinition {
-    tagFilters
-  }
-  targetDefinition {
-    tagFilters
-  }
-}
-
 fragment NodeCategory on NodeCategory {
   ...StructureCategory
   ...EntityCategory

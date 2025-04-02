@@ -3,7 +3,7 @@
   "include": [
     "src",
     "electron/preload/*.d.ts"
-, "src/mikro-next/forms/.tsx", "src/modules/.tsx"  ],
+, "src/mikro-next/forms/.tsx", "src/modules/.tsx", "src/kraph/components/cards/.tsx"  ],
   "compilerOptions": {
     "module": "ESNext",
     "moduleResolution": "bundler",

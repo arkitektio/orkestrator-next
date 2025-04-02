@@ -1,5 +1,4 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { ChoicesField } from "@/components/fields/ChoicesField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
@@ -7,9 +6,13 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
-  CreateEntityCategoryMutationVariables,
-  useCreateEntityCategoryMutation,
+  CreateProtocolEventCategoryMutationVariables,
+  CreateRelationCategoryMutationVariables,
+  useCreateProtocolEventCategoryMutation,
+  useCreateRelationCategoryMutation,
+  useSearchEntityCategoryLazyQuery,
   useSearchGraphsLazyQuery,
+  useSearchTagsLazyQuery,
 } from "../api/graphql";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 
@@ -21,17 +24,20 @@ const enumToOptions = (e: any) => {
 };
 
 export default (props: { graph?: string }) => {
-  const [add] = useCreateEntityCategoryMutation({
-    refetchQueries: ["ListEntityCategories", "GetGraph"],
+  const [add] = useCreateRelationCategoryMutation({
+    refetchQueries: ["GetGraph"],
   });
 
   const dialog = useGraphQlFormDialog(add);
 
-  const form = useForm<CreateEntityCategoryMutationVariables["input"]>({
+  const form = useForm<CreateRelationCategoryMutationVariables["input"]>({
     defaultValues: {
       graph: props.graph,
     },
   });
+
+  const [searchTags] = useSearchTagsLazyQuery();
+  const [searchEntityCategory] = useSearchEntityCategoryLazyQuery();
 
   const [search] = useSearchGraphsLazyQuery();
 
@@ -76,6 +82,34 @@ export default (props: { graph?: string }) => {
                 name="purl"
                 description="What is the PURL of this expression?"
               />
+              <div className="col-span-2 flex-col gap-1 flex">
+                <GraphQLSearchField
+                  name={`sourceDefinition.tagFilters`}
+                  label="Tag Filters"
+                  searchQuery={searchTags}
+                  description="Filters for the entity's tags."
+                />
+                <GraphQLSearchField
+                  name={`sourceDefinition.categoryFilters`}
+                  label="Category Filters"
+                  searchQuery={searchEntityCategory}
+                  description="Filters for the entity's categories."
+                />
+              </div>
+              <div className="col-span-2 flex-col gap-1 flex">
+                <GraphQLSearchField
+                  name={`targetDefinition.tagFilters`}
+                  label="Tag Filters"
+                  searchQuery={searchTags}
+                  description="Filters for the entity's tags."
+                />
+                <GraphQLSearchField
+                  name={`targetDefinition.categoryFilters`}
+                  label="Category Filters"
+                  searchQuery={searchEntityCategory}
+                  description="Filters for the entity's categories."
+                />
+              </div>
             </div>
           </div>
 

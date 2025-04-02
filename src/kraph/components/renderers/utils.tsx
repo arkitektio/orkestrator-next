@@ -28,9 +28,11 @@ const columnToDef = (
         const concat_id = table.graph.ageName + ":" + label;
 
         return (
-          <KraphNode.DetailLink object={concat_id}>
-            {label || ""}
-          </KraphNode.DetailLink>
+          <KraphNode.Smart object={concat_id}>
+            <KraphNode.DetailLink object={concat_id}>
+              {label || ""}
+            </KraphNode.DetailLink>
+          </KraphNode.Smart>
         );
       },
       enableSorting: true,

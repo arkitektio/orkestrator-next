@@ -22,6 +22,7 @@ import {
 } from "./types";
 import { SearchFunction, smartRegistry } from "./registry";
 import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
+import { SmartDropZone } from "./Drop";
 
 const buildBaseLink = (to: string) => {
   return ({ children, ...props }: BaseLinkProps) => {
@@ -64,6 +65,18 @@ export const buildSmartModel = (
       <SmartModel identifier={identifier} {...props}>
         {children}
       </SmartModel>
+    );
+  };
+};
+
+export const buildDropModel = (
+  identifier: Identifier,
+): React.FC<CreatedSmartSmartProps> => {
+  return ({ children, ...props }) => {
+    return (
+      <SmartDropZone identifier={identifier} {...props}>
+        {children}
+      </SmartDropZone>
     );
   };
 };
@@ -156,6 +169,7 @@ export const buildSmart = (
     ListLink: buildBaseLink(to),
     linkBuilder: linkBuilder(to),
     Smart: buildSmartModel(model),
+    Drop: buildDropModel(model),
     Actions: buildSelfActions(model),
     Komments: buildKomments(model),
     Knowledge: buildKnowledge(model),

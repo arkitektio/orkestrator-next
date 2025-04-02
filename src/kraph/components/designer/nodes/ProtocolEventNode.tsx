@@ -40,13 +40,15 @@ export default memo(({ data, id, selected }: NodeProps<ProtocolEventNode>) => {
               className="object-cover h-full w-full rounded rounded-lg"
             />
           )}
-          <div className="absolute top-0 left-0 right-0 bottom-0 z-10 flex items-center justify-center flex-col bg-black/50  ">
-            <KraphProtocolEventCategory.DetailLink
-              object={data.id}
-              className={"font-bold"}
-            >
-              {data.label}
-            </KraphProtocolEventCategory.DetailLink>
+          <div className="absolute top-0 left-0 right-0 bottom-0 z-10 flex items-center justify-center flex-col bg-black/50 p-3 flex-row">
+            <div className="w-full overflow-hidden">
+              <KraphProtocolEventCategory.DetailLink
+                object={data.id}
+                className="font-bold align-middle text-center block text-1 transition-[font-size]"
+              >
+                {data.label}
+              </KraphProtocolEventCategory.DetailLink>
+            </div>
 
             <div className="flex flex-row gap-2">
               {data.tags.map((tag) => (

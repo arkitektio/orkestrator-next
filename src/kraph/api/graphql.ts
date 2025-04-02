@@ -42,6 +42,8 @@ export type BaseCategory = {
   pinned: Scalars['Boolean']['output'];
   /** The unique identifier of the expression within its graph */
   purl?: Maybe<Scalars['String']['output']>;
+  /** The sequence of the expression within its graph */
+  sequence?: Maybe<GraphSequence>;
   /** An image or other media file that can be used to represent the expression. */
   store?: Maybe<MediaStore>;
   /** The tags that are associated with the expression */
@@ -277,6 +279,8 @@ export type EntityCategory = BaseCategory & NodeCategory & {
   positionY?: Maybe<Scalars['Float']['output']>;
   /** The unique identifier of the expression within its graph */
   purl?: Maybe<Scalars['String']['output']>;
+  /** The sequence of the expression within its graph */
+  sequence?: Maybe<GraphSequence>;
   /** An image or other media file that can be used to represent the expression. */
   store?: Maybe<MediaStore>;
   /** The tags that are associated with the expression */
@@ -314,6 +318,8 @@ export type EntityCategoryFilter = {
 
 /** Input for creating a new expression */
 export type EntityCategoryInput = {
+  /** Whether to create a sequence if it does not exist */
+  autoCreateSequence?: InputMaybe<Scalars['Boolean']['input']>;
   /** RGBA color values as list of 3 or 4 integers */
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
   /** A detailed description of the expression */
@@ -328,6 +334,8 @@ export type EntityCategoryInput = {
   pin?: InputMaybe<Scalars['Boolean']['input']>;
   /** Permanent URL identifier for the expression */
   purl?: InputMaybe<Scalars['String']['input']>;
+  /** The ID of the sequence this category will get internal_ids from */
+  sequence?: InputMaybe<Scalars['ID']['input']>;
   /** A list of tags associated with this expression */
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
 };
@@ -639,6 +647,23 @@ export type GraphQueryInput = {
   relevantFor?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
+export type GraphSequence = {
+  __typename?: 'GraphSequence';
+  categories: Array<BaseCategory>;
+  graph: Graph;
+  id: Scalars['ID']['output'];
+};
+
+export type GraphSequenceFilter = {
+  AND?: InputMaybe<GraphSequenceFilter>;
+  OR?: InputMaybe<GraphSequenceFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Search by text */
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
 export enum InstanceKind {
   Entity = 'ENTITY',
   Lot = 'LOT',
@@ -684,6 +709,8 @@ export type MeasurementCategory = BaseCategory & EdgeCategory & {
   pinned: Scalars['Boolean']['output'];
   /** The unique identifier of the expression within its graph */
   purl?: Maybe<Scalars['String']['output']>;
+  /** The sequence of the expression within its graph */
+  sequence?: Maybe<GraphSequence>;
   /** The unique identifier of the expression within its graph */
   sourceDefinition: StructureCategoryDefinition;
   /** An image or other media file that can be used to represent the expression. */
@@ -710,6 +737,8 @@ export type MeasurementCategoryFilter = {
 
 /** Input for creating a new expression */
 export type MeasurementCategoryInput = {
+  /** Whether to create a sequence if it does not exist */
+  autoCreateSequence?: InputMaybe<Scalars['Boolean']['input']>;
   /** RGBA color values as list of 3 or 4 integers */
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
   /** A detailed description of the expression */
@@ -726,6 +755,8 @@ export type MeasurementCategoryInput = {
   pin?: InputMaybe<Scalars['Boolean']['input']>;
   /** Permanent URL identifier for the expression */
   purl?: InputMaybe<Scalars['String']['input']>;
+  /** The ID of the sequence this category will get internal_ids from */
+  sequence?: InputMaybe<Scalars['ID']['input']>;
   /** The source definition for this expression */
   structureDefinition: CategoryDefinitionInput;
   /** A list of tags associated with this expression */
@@ -836,6 +867,8 @@ export type MetricCategory = BaseCategory & NodeCategory & {
   positionY?: Maybe<Scalars['Float']['output']>;
   /** The unique identifier of the expression within its graph */
   purl?: Maybe<Scalars['String']['output']>;
+  /** The sequence of the expression within its graph */
+  sequence?: Maybe<GraphSequence>;
   /** An image or other media file that can be used to represent the expression. */
   store?: Maybe<MediaStore>;
   /** The unique identifier of the expression within its graph */
@@ -864,6 +897,8 @@ export type MetricCategoryFilter = {
 
 /** Input for creating a new expression */
 export type MetricCategoryInput = {
+  /** Whether to create a sequence if it does not exist */
+  autoCreateSequence?: InputMaybe<Scalars['Boolean']['input']>;
   /** RGBA color values as list of 3 or 4 integers */
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
   /** A detailed description of the expression */
@@ -880,6 +915,8 @@ export type MetricCategoryInput = {
   pin?: InputMaybe<Scalars['Boolean']['input']>;
   /** Permanent URL identifier for the expression */
   purl?: InputMaybe<Scalars['String']['input']>;
+  /** The ID of the sequence this category will get internal_ids from */
+  sequence?: InputMaybe<Scalars['ID']['input']>;
   /** The structure category for this expression */
   structureDefinition: CategoryDefinitionInput;
   /** A list of tags associated with this expression */
@@ -1347,6 +1384,8 @@ export type NaturalEventCategory = BaseCategory & NodeCategory & {
   positionY?: Maybe<Scalars['Float']['output']>;
   /** The unique identifier of the expression within its graph */
   purl?: Maybe<Scalars['String']['output']>;
+  /** The sequence of the expression within its graph */
+  sequence?: Maybe<GraphSequence>;
   /** The unique identifier of the expression within its graph */
   sourceEntityRoles: Array<EntityRoleDefinition>;
   /** An image or other media file that can be used to represent the expression. */
@@ -1377,6 +1416,8 @@ export type NaturalEventCategoryFilter = {
 
 /** Input for creating a new expression */
 export type NaturalEventCategoryInput = {
+  /** Whether to create a sequence if it does not exist */
+  autoCreateSequence?: InputMaybe<Scalars['Boolean']['input']>;
   /** RGBA color values as list of 3 or 4 integers */
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
   /** A detailed description of the expression */
@@ -1393,6 +1434,8 @@ export type NaturalEventCategoryInput = {
   plateChildren?: InputMaybe<Array<PlateChildInput>>;
   /** Permanent URL identifier for the expression */
   purl?: InputMaybe<Scalars['String']['input']>;
+  /** The ID of the sequence this category will get internal_ids from */
+  sequence?: InputMaybe<Scalars['ID']['input']>;
   /** The source definitions for this expression */
   sourceEntityRoles: Array<EntityRoleDefinitionInput>;
   /** The support definition for this expression */
@@ -1730,6 +1773,8 @@ export type ProtocolEventCategory = BaseCategory & NodeCategory & {
   positionY?: Maybe<Scalars['Float']['output']>;
   /** The unique identifier of the expression within its graph */
   purl?: Maybe<Scalars['String']['output']>;
+  /** The sequence of the expression within its graph */
+  sequence?: Maybe<GraphSequence>;
   /** The unique identifier of the expression within its graph */
   sourceEntityRoles: Array<EntityRoleDefinition>;
   /** The unique identifier of the expression within its graph */
@@ -1765,6 +1810,8 @@ export type ProtocolEventCategoryFilter = {
 
 /** Input for creating a new expression */
 export type ProtocolEventCategoryInput = {
+  /** Whether to create a sequence if it does not exist */
+  autoCreateSequence?: InputMaybe<Scalars['Boolean']['input']>;
   /** RGBA color values as list of 3 or 4 integers */
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
   /** A detailed description of the expression */
@@ -1781,6 +1828,8 @@ export type ProtocolEventCategoryInput = {
   plateChildren?: InputMaybe<Array<PlateChildInput>>;
   /** Permanent URL identifier for the expression */
   purl?: InputMaybe<Scalars['String']['input']>;
+  /** The ID of the sequence this category will get internal_ids from */
+  sequence?: InputMaybe<Scalars['ID']['input']>;
   /** The source definitions for this expression */
   sourceEntityRoles?: InputMaybe<Array<EntityRoleDefinitionInput>>;
   /** The target definitions for this expression */
@@ -1824,6 +1873,9 @@ export type Query = {
   /** List of all graph queries */
   graphQueries: Array<GraphQuery>;
   graphQuery: GraphQuery;
+  graphSequence: GraphSequence;
+  /** List of all graph sequences */
+  graphSequences: Array<GraphSequence>;
   /** List of all knowledge graphs */
   graphs: Array<Graph>;
   measurement: Measurement;
@@ -1937,6 +1989,17 @@ export type QueryGraphQueriesArgs = {
 
 export type QueryGraphQueryArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryGraphSequenceArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryGraphSequencesArgs = {
+  filters?: InputMaybe<GraphSequenceFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -2243,6 +2306,8 @@ export type ReagentCategory = BaseCategory & NodeCategory & {
   positionY?: Maybe<Scalars['Float']['output']>;
   /** The unique identifier of the expression within its graph */
   purl?: Maybe<Scalars['String']['output']>;
+  /** The sequence of the expression within its graph */
+  sequence?: Maybe<GraphSequence>;
   /** An image or other media file that can be used to represent the expression. */
   store?: Maybe<MediaStore>;
   /** The tags that are associated with the expression */
@@ -2279,6 +2344,8 @@ export type ReagentCategoryFilter = {
 
 /** Input for creating a new expression */
 export type ReagentCategoryInput = {
+  /** Whether to create a sequence if it does not exist */
+  autoCreateSequence?: InputMaybe<Scalars['Boolean']['input']>;
   /** RGBA color values as list of 3 or 4 integers */
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
   /** A detailed description of the expression */
@@ -2293,6 +2360,8 @@ export type ReagentCategoryInput = {
   pin?: InputMaybe<Scalars['Boolean']['input']>;
   /** Permanent URL identifier for the expression */
   purl?: InputMaybe<Scalars['String']['input']>;
+  /** The ID of the sequence this category will get internal_ids from */
+  sequence?: InputMaybe<Scalars['ID']['input']>;
   /** A list of tags associated with this expression */
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
 };
@@ -2428,6 +2497,8 @@ export type RelationCategory = BaseCategory & EdgeCategory & {
   pinned: Scalars['Boolean']['output'];
   /** The unique identifier of the expression within its graph */
   purl?: Maybe<Scalars['String']['output']>;
+  /** The sequence of the expression within its graph */
+  sequence?: Maybe<GraphSequence>;
   /** The unique identifier of the expression within its graph */
   sourceDefinition: EntityCategoryDefinition;
   /** An image or other media file that can be used to represent the expression. */
@@ -2456,18 +2527,30 @@ export type RelationCategoryFilter = {
 
 /** Input for creating a new expression */
 export type RelationCategoryInput = {
+  /** Whether to create a sequence if it does not exist */
+  autoCreateSequence?: InputMaybe<Scalars['Boolean']['input']>;
   /** RGBA color values as list of 3 or 4 integers */
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
   /** A detailed description of the expression */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** The ID of the graph this expression belongs to. If not provided, uses default ontology */
+  graph: Scalars['ID']['input'];
   /** An optional image associated with this expression */
-  image?: InputMaybe<Scalars['RemoteUpload']['input']>;
+  image?: InputMaybe<Scalars['ID']['input']>;
   /** The label/name of the expression */
   label: Scalars['String']['input'];
-  /** The ID of the ontology this expression belongs to. If not provided, uses default ontology */
-  ontology?: InputMaybe<Scalars['ID']['input']>;
+  /** Whether this expression should be pinned or not */
+  pin?: InputMaybe<Scalars['Boolean']['input']>;
   /** Permanent URL identifier for the expression */
   purl?: InputMaybe<Scalars['String']['input']>;
+  /** The ID of the sequence this category will get internal_ids from */
+  sequence?: InputMaybe<Scalars['ID']['input']>;
+  /** The source definition for this expression */
+  sourceDefinition: CategoryDefinitionInput;
+  /** A list of tags associated with this expression */
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** The target definition for this expression */
+  targetDefinition: CategoryDefinitionInput;
 };
 
 /** Filter for entity relations in the graph */
@@ -2625,6 +2708,8 @@ export type StructureCategory = BaseCategory & NodeCategory & {
   positionY?: Maybe<Scalars['Float']['output']>;
   /** The unique identifier of the expression within its graph */
   purl?: Maybe<Scalars['String']['output']>;
+  /** The sequence of the expression within its graph */
+  sequence?: Maybe<GraphSequence>;
   /** An image or other media file that can be used to represent the expression. */
   store?: Maybe<MediaStore>;
   /** The tags that are associated with the expression */
@@ -2661,6 +2746,8 @@ export type StructureCategoryFilter = {
 
 /** Input for creating a new expression */
 export type StructureCategoryInput = {
+  /** Whether to create a sequence if it does not exist */
+  autoCreateSequence?: InputMaybe<Scalars['Boolean']['input']>;
   /** RGBA color values as list of 3 or 4 integers */
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
   /** A detailed description of the expression */
@@ -2675,6 +2762,8 @@ export type StructureCategoryInput = {
   pin?: InputMaybe<Scalars['Boolean']['input']>;
   /** Permanent URL identifier for the expression */
   purl?: InputMaybe<Scalars['String']['input']>;
+  /** The ID of the sequence this category will get internal_ids from */
+  sequence?: InputMaybe<Scalars['ID']['input']>;
   /** A list of tags associated with this expression */
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
 };
@@ -2908,36 +2997,40 @@ export type UpdateReagentCategoryInput = {
 
 /** Input for updating an existing expression */
 export type UpdateRelationCategoryInput = {
-  /** New RGBA color values as list of 3 or 4 integers */
+  /** RGBA color values as list of 3 or 4 integers */
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
-  /** New description for the expression */
+  /** A detailed description of the expression */
   description?: InputMaybe<Scalars['String']['input']>;
-  /** The ID of the expression to update */
-  id: Scalars['ID']['input'];
-  /** New image ID for the expression */
+  /** An optional image associated with this expression */
   image?: InputMaybe<Scalars['ID']['input']>;
   /** New label for the expression */
   label?: InputMaybe<Scalars['String']['input']>;
-  /** New permanent URL for the expression */
+  /** Whether this expression should be pinned or not */
+  pin?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Permanent URL identifier for the expression */
   purl?: InputMaybe<Scalars['String']['input']>;
+  /** A list of tags associated with this expression */
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 /** Input for updating an existing expression */
 export type UpdateStructureCategoryInput = {
-  /** New RGBA color values as list of 3 or 4 integers */
+  /** RGBA color values as list of 3 or 4 integers */
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
-  /** New description for the expression */
+  /** A detailed description of the expression */
   description?: InputMaybe<Scalars['String']['input']>;
   /** The ID of the expression to update */
   id: Scalars['ID']['input'];
   /** The label/name of the expression */
   identifier?: InputMaybe<Scalars['String']['input']>;
-  /** New image ID for the expression */
+  /** An optional image associated with this expression */
   image?: InputMaybe<Scalars['ID']['input']>;
-  /** New label for the expression */
-  label?: InputMaybe<Scalars['String']['input']>;
-  /** New permanent URL for the expression */
+  /** Whether this expression should be pinned or not */
+  pin?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Permanent URL identifier for the expression */
   purl?: InputMaybe<Scalars['String']['input']>;
+  /** A list of tags associated with this expression */
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type VariableDefinition = {
@@ -3019,10 +3112,6 @@ type BaseEdgeCategory_MeasurementCategory_Fragment = { __typename?: 'Measurement
 type BaseEdgeCategory_RelationCategory_Fragment = { __typename?: 'RelationCategory', id: string };
 
 export type BaseEdgeCategoryFragment = BaseEdgeCategory_MeasurementCategory_Fragment | BaseEdgeCategory_RelationCategory_Fragment;
-
-export type MeasurementCategoryFragment = { __typename?: 'MeasurementCategory', id: string, purl?: string | null, sourceDefinition: { __typename?: 'StructureCategoryDefinition', tagFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null }, graph: { __typename?: 'Graph', id: string }, tags: Array<{ __typename?: 'Tag', id: string, value: string }> };
-
-export type RelationCategoryFragment = { __typename?: 'RelationCategory', id: string, purl?: string | null, sourceDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null }, graph: { __typename?: 'Graph', id: string }, tags: Array<{ __typename?: 'Tag', id: string, value: string }> };
 
 type NodeCategory_EntityCategory_Fragment = { __typename?: 'EntityCategory', instanceKind: InstanceKind, ageName: string, label: string, description?: string | null, pinned: boolean, id: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, bestQuery?: { __typename?: 'GraphQuery', id: string, query: string, name: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string, xColumn: string, yColumn: string }>, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, graph: { __typename?: 'Graph', id: string }, category: { __typename?: 'EntityCategory', id: string, label: string }, subjectableTo: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, targetableBy: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, bestView?: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } | null } | { __typename?: 'Metric', id: any, label: string, value: number, category: { __typename?: 'MetricCategory', id: string, label: string } } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string, externalId?: string | null, category: { __typename?: 'ReagentCategory', id: string, label: string }, usableIn: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }>, createableFrom: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }> } | { __typename?: 'Structure', id: any, label: string, object: string, identifier: string }>, edges: Array<{ __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom: any, validTo: any, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity: number } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, graph: { __typename?: 'Graph', id: string }, tags: Array<{ __typename?: 'Tag', id: string, value: string }> };
 
@@ -3162,9 +3251,9 @@ type BaseListEdgeCategory_RelationCategory_Fragment = { __typename?: 'RelationCa
 
 export type BaseListEdgeCategoryFragment = BaseListEdgeCategory_MeasurementCategory_Fragment | BaseListEdgeCategory_RelationCategory_Fragment;
 
-export type ListMeasurementCategoryFragment = { __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, sourceDefinition: { __typename?: 'StructureCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'Tag', id: string, value: string }> };
+export type MeasurementCategoryFragment = { __typename?: 'MeasurementCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, purl?: string | null, sourceDefinition: { __typename?: 'StructureCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, bestQuery?: { __typename?: 'GraphQuery', id: string, query: string, name: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string, xColumn: string, yColumn: string }>, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, graph: { __typename?: 'Graph', id: string }, category: { __typename?: 'EntityCategory', id: string, label: string }, subjectableTo: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, targetableBy: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, bestView?: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } | null } | { __typename?: 'Metric', id: any, label: string, value: number, category: { __typename?: 'MetricCategory', id: string, label: string } } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string, externalId?: string | null, category: { __typename?: 'ReagentCategory', id: string, label: string }, usableIn: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }>, createableFrom: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }> } | { __typename?: 'Structure', id: any, label: string, object: string, identifier: string }>, edges: Array<{ __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom: any, validTo: any, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity: number } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, graph: { __typename?: 'Graph', id: string }, tags: Array<{ __typename?: 'Tag', id: string, value: string }> };
 
-export type ListRelationCategoryFragment = { __typename?: 'RelationCategory', label: string, id: string, description?: string | null, sourceDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'Tag', id: string, value: string }> };
+export type ListMeasurementCategoryFragment = { __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, sourceDefinition: { __typename?: 'StructureCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'Tag', id: string, value: string }> };
 
 export type MetricFragment = { __typename?: 'Metric', id: any, value: number, category: { __typename?: 'MetricCategory', id: string, label: string } };
 
@@ -3200,6 +3289,10 @@ export type ReagentCategoryFragment = { __typename?: 'ReagentCategory', instance
 
 export type ListReagentCategoryFragment = { __typename?: 'ReagentCategory', instanceKind: InstanceKind, label: string, id: string, description?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'Tag', id: string, value: string }> };
 
+export type RelationCategoryFragment = { __typename?: 'RelationCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, purl?: string | null, sourceDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, bestQuery?: { __typename?: 'GraphQuery', id: string, query: string, name: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string, xColumn: string, yColumn: string }>, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, graph: { __typename?: 'Graph', id: string }, category: { __typename?: 'EntityCategory', id: string, label: string }, subjectableTo: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, targetableBy: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, bestView?: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } | null } | { __typename?: 'Metric', id: any, label: string, value: number, category: { __typename?: 'MetricCategory', id: string, label: string } } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string, externalId?: string | null, category: { __typename?: 'ReagentCategory', id: string, label: string }, usableIn: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }>, createableFrom: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }> } | { __typename?: 'Structure', id: any, label: string, object: string, identifier: string }>, edges: Array<{ __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom: any, validTo: any, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity: number } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, graph: { __typename?: 'Graph', id: string }, tags: Array<{ __typename?: 'Tag', id: string, value: string }> };
+
+export type ListRelationCategoryFragment = { __typename?: 'RelationCategory', label: string, id: string, description?: string | null, sourceDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'Tag', id: string, value: string }> };
+
 export type EntityCategoryDefinitionFragment = { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null };
 
 export type EntityRoleDefinitionFragment = { __typename?: 'EntityRoleDefinition', role: string, allowMultiple: boolean, description?: string | null, label?: string | null, categoryDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, currentDefault?: { __typename?: 'Entity', id: any } | null };
@@ -3230,13 +3323,6 @@ export type ColumnFragment = { __typename?: 'Column', name: string, kind: Column
 
 export type TableFragment = { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> };
 
-export type CreateMeasurementCategoryMutationVariables = Exact<{
-  input: MeasurementCategoryInput;
-}>;
-
-
-export type CreateMeasurementCategoryMutation = { __typename?: 'Mutation', createMeasurementCategory: { __typename?: 'MeasurementCategory', id: string, purl?: string | null, sourceDefinition: { __typename?: 'StructureCategoryDefinition', tagFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null }, graph: { __typename?: 'Graph', id: string }, tags: Array<{ __typename?: 'Tag', id: string, value: string }> } };
-
 export type CreateMetricCategoryMutationVariables = Exact<{
   input: MetricCategoryInput;
 }>;
@@ -3250,13 +3336,6 @@ export type CreateReagentCategoryMutationVariables = Exact<{
 
 
 export type CreateReagentCategoryMutation = { __typename?: 'Mutation', createReagentCategory: { __typename?: 'ReagentCategory', instanceKind: InstanceKind, ageName: string, label: string, description?: string | null, id: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, bestQuery?: { __typename?: 'GraphQuery', id: string, query: string, name: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string, xColumn: string, yColumn: string }>, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, graph: { __typename?: 'Graph', id: string }, category: { __typename?: 'EntityCategory', id: string, label: string }, subjectableTo: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, targetableBy: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, bestView?: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } | null } | { __typename?: 'Metric', id: any, label: string, value: number, category: { __typename?: 'MetricCategory', id: string, label: string } } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string, externalId?: string | null, category: { __typename?: 'ReagentCategory', id: string, label: string }, usableIn: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }>, createableFrom: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }> } | { __typename?: 'Structure', id: any, label: string, object: string, identifier: string }>, edges: Array<{ __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom: any, validTo: any, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity: number } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, graph: { __typename?: 'Graph', id: string }, tags: Array<{ __typename?: 'Tag', id: string, value: string }> } };
-
-export type CreateRelationCategoryMutationVariables = Exact<{
-  input: RelationCategoryInput;
-}>;
-
-
-export type CreateRelationCategoryMutation = { __typename?: 'Mutation', createRelationCategory: { __typename?: 'RelationCategory', id: string, purl?: string | null, sourceDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null }, graph: { __typename?: 'Graph', id: string }, tags: Array<{ __typename?: 'Tag', id: string, value: string }> } };
 
 export type CreateEntityMutationVariables = Exact<{
   input: EntityInput;
@@ -3334,6 +3413,27 @@ export type CreateMeasurementMutationVariables = Exact<{
 
 
 export type CreateMeasurementMutation = { __typename?: 'Mutation', createMeasurement: { __typename?: 'Measurement', validFrom: any, validTo: any, category: { __typename?: 'MeasurementCategory', id: string, label: string } } };
+
+export type CreateMeasurementCategoryMutationVariables = Exact<{
+  input: MeasurementCategoryInput;
+}>;
+
+
+export type CreateMeasurementCategoryMutation = { __typename?: 'Mutation', createMeasurementCategory: { __typename?: 'MeasurementCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, purl?: string | null, sourceDefinition: { __typename?: 'StructureCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, bestQuery?: { __typename?: 'GraphQuery', id: string, query: string, name: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string, xColumn: string, yColumn: string }>, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, graph: { __typename?: 'Graph', id: string }, category: { __typename?: 'EntityCategory', id: string, label: string }, subjectableTo: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, targetableBy: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, bestView?: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } | null } | { __typename?: 'Metric', id: any, label: string, value: number, category: { __typename?: 'MetricCategory', id: string, label: string } } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string, externalId?: string | null, category: { __typename?: 'ReagentCategory', id: string, label: string }, usableIn: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }>, createableFrom: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }> } | { __typename?: 'Structure', id: any, label: string, object: string, identifier: string }>, edges: Array<{ __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom: any, validTo: any, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity: number } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, graph: { __typename?: 'Graph', id: string }, tags: Array<{ __typename?: 'Tag', id: string, value: string }> } };
+
+export type UpdateMeasurementCategoryMutationVariables = Exact<{
+  input: UpdateMeasurementCategoryInput;
+}>;
+
+
+export type UpdateMeasurementCategoryMutation = { __typename?: 'Mutation', updateMeasurementCategory: { __typename?: 'MeasurementCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, purl?: string | null, sourceDefinition: { __typename?: 'StructureCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, bestQuery?: { __typename?: 'GraphQuery', id: string, query: string, name: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string, xColumn: string, yColumn: string }>, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, graph: { __typename?: 'Graph', id: string }, category: { __typename?: 'EntityCategory', id: string, label: string }, subjectableTo: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, targetableBy: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, bestView?: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } | null } | { __typename?: 'Metric', id: any, label: string, value: number, category: { __typename?: 'MetricCategory', id: string, label: string } } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string, externalId?: string | null, category: { __typename?: 'ReagentCategory', id: string, label: string }, usableIn: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }>, createableFrom: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }> } | { __typename?: 'Structure', id: any, label: string, object: string, identifier: string }>, edges: Array<{ __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom: any, validTo: any, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity: number } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, graph: { __typename?: 'Graph', id: string }, tags: Array<{ __typename?: 'Tag', id: string, value: string }> } };
+
+export type DeleteMeasurementCategoryMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteMeasurementCategoryMutation = { __typename?: 'Mutation', deleteMeasurementCategory: string };
 
 export type CreateMetricMutationVariables = Exact<{
   input: MetricInput;
@@ -3453,6 +3553,27 @@ export type CreateRelationMutationVariables = Exact<{
 
 
 export type CreateRelationMutation = { __typename?: 'Mutation', createRelation: { __typename?: 'Relation', category: { __typename?: 'RelationCategory', id: string, label: string } } };
+
+export type CreateRelationCategoryMutationVariables = Exact<{
+  input: RelationCategoryInput;
+}>;
+
+
+export type CreateRelationCategoryMutation = { __typename?: 'Mutation', createRelationCategory: { __typename?: 'RelationCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, purl?: string | null, sourceDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, bestQuery?: { __typename?: 'GraphQuery', id: string, query: string, name: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string, xColumn: string, yColumn: string }>, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, graph: { __typename?: 'Graph', id: string }, category: { __typename?: 'EntityCategory', id: string, label: string }, subjectableTo: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, targetableBy: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, bestView?: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } | null } | { __typename?: 'Metric', id: any, label: string, value: number, category: { __typename?: 'MetricCategory', id: string, label: string } } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string, externalId?: string | null, category: { __typename?: 'ReagentCategory', id: string, label: string }, usableIn: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }>, createableFrom: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }> } | { __typename?: 'Structure', id: any, label: string, object: string, identifier: string }>, edges: Array<{ __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom: any, validTo: any, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity: number } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, graph: { __typename?: 'Graph', id: string }, tags: Array<{ __typename?: 'Tag', id: string, value: string }> } };
+
+export type UpdateRelationCategoryMutationVariables = Exact<{
+  input: UpdateRelationCategoryInput;
+}>;
+
+
+export type UpdateRelationCategoryMutation = { __typename?: 'Mutation', updateRelationCategory: { __typename?: 'RelationCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, purl?: string | null, sourceDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, bestQuery?: { __typename?: 'GraphQuery', id: string, query: string, name: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string, xColumn: string, yColumn: string }>, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, graph: { __typename?: 'Graph', id: string }, category: { __typename?: 'EntityCategory', id: string, label: string }, subjectableTo: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, targetableBy: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, bestView?: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } | null } | { __typename?: 'Metric', id: any, label: string, value: number, category: { __typename?: 'MetricCategory', id: string, label: string } } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string, externalId?: string | null, category: { __typename?: 'ReagentCategory', id: string, label: string }, usableIn: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }>, createableFrom: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }> } | { __typename?: 'Structure', id: any, label: string, object: string, identifier: string }>, edges: Array<{ __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom: any, validTo: any, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity: number } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, graph: { __typename?: 'Graph', id: string }, tags: Array<{ __typename?: 'Tag', id: string, value: string }> } };
+
+export type DeleteRelationCategoryMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteRelationCategoryMutation = { __typename?: 'Mutation', deleteRelationCategory: string };
 
 export type CreateScatterPlotMutationVariables = Exact<{
   input: ScatterPlotInput;
@@ -3640,7 +3761,7 @@ export type GetMeasurmentCategoryQueryVariables = Exact<{
 }>;
 
 
-export type GetMeasurmentCategoryQuery = { __typename?: 'Query', measurementCategory: { __typename?: 'MeasurementCategory', id: string, purl?: string | null, sourceDefinition: { __typename?: 'StructureCategoryDefinition', tagFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null }, graph: { __typename?: 'Graph', id: string }, tags: Array<{ __typename?: 'Tag', id: string, value: string }> } };
+export type GetMeasurmentCategoryQuery = { __typename?: 'Query', measurementCategory: { __typename?: 'MeasurementCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, purl?: string | null, sourceDefinition: { __typename?: 'StructureCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, bestQuery?: { __typename?: 'GraphQuery', id: string, query: string, name: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string, xColumn: string, yColumn: string }>, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, graph: { __typename?: 'Graph', id: string }, category: { __typename?: 'EntityCategory', id: string, label: string }, subjectableTo: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, targetableBy: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, bestView?: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } | null } | { __typename?: 'Metric', id: any, label: string, value: number, category: { __typename?: 'MetricCategory', id: string, label: string } } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string, externalId?: string | null, category: { __typename?: 'ReagentCategory', id: string, label: string }, usableIn: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }>, createableFrom: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }> } | { __typename?: 'Structure', id: any, label: string, object: string, identifier: string }>, edges: Array<{ __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom: any, validTo: any, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity: number } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, graph: { __typename?: 'Graph', id: string }, tags: Array<{ __typename?: 'Tag', id: string, value: string }> } };
 
 export type SearchMeasurmentCategoryQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -3687,6 +3808,14 @@ export type GetMetricCategoryQueryVariables = Exact<{
 
 
 export type GetMetricCategoryQuery = { __typename?: 'Query', metricCategory: { __typename?: 'MetricCategory', ageName: string, label: string, metricKind: MetricKind, description?: string | null, pinned: boolean, id: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, bestQuery?: { __typename?: 'GraphQuery', id: string, query: string, name: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string, xColumn: string, yColumn: string }>, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, graph: { __typename?: 'Graph', id: string }, category: { __typename?: 'EntityCategory', id: string, label: string }, subjectableTo: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, targetableBy: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, bestView?: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } | null } | { __typename?: 'Metric', id: any, label: string, value: number, category: { __typename?: 'MetricCategory', id: string, label: string } } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string, externalId?: string | null, category: { __typename?: 'ReagentCategory', id: string, label: string }, usableIn: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }>, createableFrom: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }> } | { __typename?: 'Structure', id: any, label: string, object: string, identifier: string }>, edges: Array<{ __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom: any, validTo: any, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity: number } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, tags: Array<{ __typename?: 'Tag', id: string, value: string }>, graph: { __typename?: 'Graph', id: string } } };
+
+export type ListMetricCategoryQueryVariables = Exact<{
+  filters?: InputMaybe<MetricCategoryFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+}>;
+
+
+export type ListMetricCategoryQuery = { __typename?: 'Query', metricCategories: Array<{ __typename?: 'MetricCategory', label: string, metricKind: MetricKind, id: string, description?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, structureDefinition: { __typename?: 'StructureCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'Tag', id: string, value: string }> }> };
 
 export type SearchMetricCategoryQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -3937,7 +4066,7 @@ export type GetRelationCategoryQueryVariables = Exact<{
 }>;
 
 
-export type GetRelationCategoryQuery = { __typename?: 'Query', relationCategory: { __typename?: 'RelationCategory', id: string, purl?: string | null, sourceDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null }, graph: { __typename?: 'Graph', id: string }, tags: Array<{ __typename?: 'Tag', id: string, value: string }> } };
+export type GetRelationCategoryQuery = { __typename?: 'Query', relationCategory: { __typename?: 'RelationCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, purl?: string | null, sourceDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, bestQuery?: { __typename?: 'GraphQuery', id: string, query: string, name: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string, xColumn: string, yColumn: string }>, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, graph: { __typename?: 'Graph', id: string }, category: { __typename?: 'EntityCategory', id: string, label: string }, subjectableTo: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, targetableBy: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, bestView?: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } | null } | { __typename?: 'Metric', id: any, label: string, value: number, category: { __typename?: 'MetricCategory', id: string, label: string } } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string, externalId?: string | null, category: { __typename?: 'ReagentCategory', id: string, label: string }, usableIn: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }>, createableFrom: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }> } | { __typename?: 'Structure', id: any, label: string, object: string, identifier: string }>, edges: Array<{ __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom: any, validTo: any, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity: number } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, graph: { __typename?: 'Graph', id: string }, tags: Array<{ __typename?: 'Tag', id: string, value: string }> } };
 
 export type SearchRelationCategoryQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -3953,7 +4082,7 @@ export type ListRelationCategoryQueryVariables = Exact<{
 }>;
 
 
-export type ListRelationCategoryQuery = { __typename?: 'Query', relationCategories: Array<{ __typename?: 'RelationCategory', id: string, purl?: string | null, sourceDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null }, graph: { __typename?: 'Graph', id: string }, tags: Array<{ __typename?: 'Tag', id: string, value: string }> }> };
+export type ListRelationCategoryQuery = { __typename?: 'Query', relationCategories: Array<{ __typename?: 'RelationCategory', label: string, id: string, description?: string | null, sourceDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'Tag', id: string, value: string }> }> };
 
 export type StartPaneQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -4036,37 +4165,6 @@ export const BaseCategoryFragmentDoc = gql`
   purl
 }
     `;
-export const BaseEdgeCategoryFragmentDoc = gql`
-    fragment BaseEdgeCategory on EdgeCategory {
-  id
-}
-    `;
-export const MeasurementCategoryFragmentDoc = gql`
-    fragment MeasurementCategory on MeasurementCategory {
-  ...BaseCategory
-  ...BaseEdgeCategory
-  sourceDefinition {
-    tagFilters
-  }
-  targetDefinition {
-    tagFilters
-  }
-}
-    ${BaseCategoryFragmentDoc}
-${BaseEdgeCategoryFragmentDoc}`;
-export const RelationCategoryFragmentDoc = gql`
-    fragment RelationCategory on RelationCategory {
-  ...BaseCategory
-  ...BaseEdgeCategory
-  sourceDefinition {
-    tagFilters
-  }
-  targetDefinition {
-    tagFilters
-  }
-}
-    ${BaseCategoryFragmentDoc}
-${BaseEdgeCategoryFragmentDoc}`;
 export const BaseNodeCategoryFragmentDoc = gql`
     fragment BaseNodeCategory on NodeCategory {
   id
@@ -4741,6 +4839,37 @@ export const BaseListNodeCategoryFragmentDoc = gql`
   height
 }
     `;
+export const BaseEdgeCategoryFragmentDoc = gql`
+    fragment BaseEdgeCategory on EdgeCategory {
+  id
+}
+    `;
+export const MeasurementCategoryFragmentDoc = gql`
+    fragment MeasurementCategory on MeasurementCategory {
+  ...BaseEdgeCategory
+  ...BaseCategory
+  sourceDefinition {
+    tagFilters
+    categoryFilters
+  }
+  targetDefinition {
+    tagFilters
+    categoryFilters
+  }
+  ageName
+  label
+  description
+  store {
+    presignedUrl
+  }
+  bestQuery {
+    ...GraphQuery
+  }
+  pinned
+}
+    ${BaseEdgeCategoryFragmentDoc}
+${BaseCategoryFragmentDoc}
+${GraphQueryFragmentDoc}`;
 export const ListMetricFragmentDoc = gql`
     fragment ListMetric on Metric {
   id
@@ -4786,6 +4915,32 @@ export const ListReagentFragmentDoc = gql`
   label
 }
     `;
+export const RelationCategoryFragmentDoc = gql`
+    fragment RelationCategory on RelationCategory {
+  ...BaseEdgeCategory
+  ...BaseCategory
+  sourceDefinition {
+    tagFilters
+    categoryFilters
+  }
+  targetDefinition {
+    tagFilters
+    categoryFilters
+  }
+  ageName
+  label
+  description
+  store {
+    presignedUrl
+  }
+  bestQuery {
+    ...GraphQuery
+  }
+  pinned
+}
+    ${BaseEdgeCategoryFragmentDoc}
+${BaseCategoryFragmentDoc}
+${GraphQueryFragmentDoc}`;
 export const ScatterPlotFragmentDoc = gql`
     fragment ScatterPlot on ScatterPlot {
   id
@@ -4824,39 +4979,6 @@ export const InformedStructureFragmentDoc = gql`
     ${TableFragmentDoc}
 ${PairsFragmentDoc}
 ${PathFragmentDoc}`;
-export const CreateMeasurementCategoryDocument = gql`
-    mutation CreateMeasurementCategory($input: MeasurementCategoryInput!) {
-  createMeasurementCategory(input: $input) {
-    ...MeasurementCategory
-  }
-}
-    ${MeasurementCategoryFragmentDoc}`;
-export type CreateMeasurementCategoryMutationFn = Apollo.MutationFunction<CreateMeasurementCategoryMutation, CreateMeasurementCategoryMutationVariables>;
-
-/**
- * __useCreateMeasurementCategoryMutation__
- *
- * To run a mutation, you first call `useCreateMeasurementCategoryMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateMeasurementCategoryMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createMeasurementCategoryMutation, { data, loading, error }] = useCreateMeasurementCategoryMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useCreateMeasurementCategoryMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateMeasurementCategoryMutation, CreateMeasurementCategoryMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateMeasurementCategoryMutation, CreateMeasurementCategoryMutationVariables>(CreateMeasurementCategoryDocument, options);
-      }
-export type CreateMeasurementCategoryMutationHookResult = ReturnType<typeof useCreateMeasurementCategoryMutation>;
-export type CreateMeasurementCategoryMutationResult = Apollo.MutationResult<CreateMeasurementCategoryMutation>;
-export type CreateMeasurementCategoryMutationOptions = Apollo.BaseMutationOptions<CreateMeasurementCategoryMutation, CreateMeasurementCategoryMutationVariables>;
 export const CreateMetricCategoryDocument = gql`
     mutation CreateMetricCategory($input: MetricCategoryInput!) {
   createMetricCategory(input: $input) {
@@ -4923,39 +5045,6 @@ export function useCreateReagentCategoryMutation(baseOptions?: ApolloReactHooks.
 export type CreateReagentCategoryMutationHookResult = ReturnType<typeof useCreateReagentCategoryMutation>;
 export type CreateReagentCategoryMutationResult = Apollo.MutationResult<CreateReagentCategoryMutation>;
 export type CreateReagentCategoryMutationOptions = Apollo.BaseMutationOptions<CreateReagentCategoryMutation, CreateReagentCategoryMutationVariables>;
-export const CreateRelationCategoryDocument = gql`
-    mutation CreateRelationCategory($input: RelationCategoryInput!) {
-  createRelationCategory(input: $input) {
-    ...RelationCategory
-  }
-}
-    ${RelationCategoryFragmentDoc}`;
-export type CreateRelationCategoryMutationFn = Apollo.MutationFunction<CreateRelationCategoryMutation, CreateRelationCategoryMutationVariables>;
-
-/**
- * __useCreateRelationCategoryMutation__
- *
- * To run a mutation, you first call `useCreateRelationCategoryMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateRelationCategoryMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createRelationCategoryMutation, { data, loading, error }] = useCreateRelationCategoryMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useCreateRelationCategoryMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateRelationCategoryMutation, CreateRelationCategoryMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateRelationCategoryMutation, CreateRelationCategoryMutationVariables>(CreateRelationCategoryDocument, options);
-      }
-export type CreateRelationCategoryMutationHookResult = ReturnType<typeof useCreateRelationCategoryMutation>;
-export type CreateRelationCategoryMutationResult = Apollo.MutationResult<CreateRelationCategoryMutation>;
-export type CreateRelationCategoryMutationOptions = Apollo.BaseMutationOptions<CreateRelationCategoryMutation, CreateRelationCategoryMutationVariables>;
 export const CreateEntityDocument = gql`
     mutation CreateEntity($input: EntityInput!) {
   createEntity(input: $input) {
@@ -5315,6 +5404,103 @@ export function useCreateMeasurementMutation(baseOptions?: ApolloReactHooks.Muta
 export type CreateMeasurementMutationHookResult = ReturnType<typeof useCreateMeasurementMutation>;
 export type CreateMeasurementMutationResult = Apollo.MutationResult<CreateMeasurementMutation>;
 export type CreateMeasurementMutationOptions = Apollo.BaseMutationOptions<CreateMeasurementMutation, CreateMeasurementMutationVariables>;
+export const CreateMeasurementCategoryDocument = gql`
+    mutation CreateMeasurementCategory($input: MeasurementCategoryInput!) {
+  createMeasurementCategory(input: $input) {
+    ...MeasurementCategory
+  }
+}
+    ${MeasurementCategoryFragmentDoc}`;
+export type CreateMeasurementCategoryMutationFn = Apollo.MutationFunction<CreateMeasurementCategoryMutation, CreateMeasurementCategoryMutationVariables>;
+
+/**
+ * __useCreateMeasurementCategoryMutation__
+ *
+ * To run a mutation, you first call `useCreateMeasurementCategoryMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateMeasurementCategoryMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createMeasurementCategoryMutation, { data, loading, error }] = useCreateMeasurementCategoryMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateMeasurementCategoryMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateMeasurementCategoryMutation, CreateMeasurementCategoryMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateMeasurementCategoryMutation, CreateMeasurementCategoryMutationVariables>(CreateMeasurementCategoryDocument, options);
+      }
+export type CreateMeasurementCategoryMutationHookResult = ReturnType<typeof useCreateMeasurementCategoryMutation>;
+export type CreateMeasurementCategoryMutationResult = Apollo.MutationResult<CreateMeasurementCategoryMutation>;
+export type CreateMeasurementCategoryMutationOptions = Apollo.BaseMutationOptions<CreateMeasurementCategoryMutation, CreateMeasurementCategoryMutationVariables>;
+export const UpdateMeasurementCategoryDocument = gql`
+    mutation UpdateMeasurementCategory($input: UpdateMeasurementCategoryInput!) {
+  updateMeasurementCategory(input: $input) {
+    ...MeasurementCategory
+  }
+}
+    ${MeasurementCategoryFragmentDoc}`;
+export type UpdateMeasurementCategoryMutationFn = Apollo.MutationFunction<UpdateMeasurementCategoryMutation, UpdateMeasurementCategoryMutationVariables>;
+
+/**
+ * __useUpdateMeasurementCategoryMutation__
+ *
+ * To run a mutation, you first call `useUpdateMeasurementCategoryMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateMeasurementCategoryMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateMeasurementCategoryMutation, { data, loading, error }] = useUpdateMeasurementCategoryMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateMeasurementCategoryMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateMeasurementCategoryMutation, UpdateMeasurementCategoryMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<UpdateMeasurementCategoryMutation, UpdateMeasurementCategoryMutationVariables>(UpdateMeasurementCategoryDocument, options);
+      }
+export type UpdateMeasurementCategoryMutationHookResult = ReturnType<typeof useUpdateMeasurementCategoryMutation>;
+export type UpdateMeasurementCategoryMutationResult = Apollo.MutationResult<UpdateMeasurementCategoryMutation>;
+export type UpdateMeasurementCategoryMutationOptions = Apollo.BaseMutationOptions<UpdateMeasurementCategoryMutation, UpdateMeasurementCategoryMutationVariables>;
+export const DeleteMeasurementCategoryDocument = gql`
+    mutation DeleteMeasurementCategory($id: ID!) {
+  deleteMeasurementCategory(input: {id: $id})
+}
+    `;
+export type DeleteMeasurementCategoryMutationFn = Apollo.MutationFunction<DeleteMeasurementCategoryMutation, DeleteMeasurementCategoryMutationVariables>;
+
+/**
+ * __useDeleteMeasurementCategoryMutation__
+ *
+ * To run a mutation, you first call `useDeleteMeasurementCategoryMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteMeasurementCategoryMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteMeasurementCategoryMutation, { data, loading, error }] = useDeleteMeasurementCategoryMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteMeasurementCategoryMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteMeasurementCategoryMutation, DeleteMeasurementCategoryMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<DeleteMeasurementCategoryMutation, DeleteMeasurementCategoryMutationVariables>(DeleteMeasurementCategoryDocument, options);
+      }
+export type DeleteMeasurementCategoryMutationHookResult = ReturnType<typeof useDeleteMeasurementCategoryMutation>;
+export type DeleteMeasurementCategoryMutationResult = Apollo.MutationResult<DeleteMeasurementCategoryMutation>;
+export type DeleteMeasurementCategoryMutationOptions = Apollo.BaseMutationOptions<DeleteMeasurementCategoryMutation, DeleteMeasurementCategoryMutationVariables>;
 export const CreateMetricDocument = gql`
     mutation CreateMetric($input: MetricInput!) {
   createMetric(input: $input) {
@@ -5870,6 +6056,103 @@ export function useCreateRelationMutation(baseOptions?: ApolloReactHooks.Mutatio
 export type CreateRelationMutationHookResult = ReturnType<typeof useCreateRelationMutation>;
 export type CreateRelationMutationResult = Apollo.MutationResult<CreateRelationMutation>;
 export type CreateRelationMutationOptions = Apollo.BaseMutationOptions<CreateRelationMutation, CreateRelationMutationVariables>;
+export const CreateRelationCategoryDocument = gql`
+    mutation CreateRelationCategory($input: RelationCategoryInput!) {
+  createRelationCategory(input: $input) {
+    ...RelationCategory
+  }
+}
+    ${RelationCategoryFragmentDoc}`;
+export type CreateRelationCategoryMutationFn = Apollo.MutationFunction<CreateRelationCategoryMutation, CreateRelationCategoryMutationVariables>;
+
+/**
+ * __useCreateRelationCategoryMutation__
+ *
+ * To run a mutation, you first call `useCreateRelationCategoryMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateRelationCategoryMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createRelationCategoryMutation, { data, loading, error }] = useCreateRelationCategoryMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateRelationCategoryMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateRelationCategoryMutation, CreateRelationCategoryMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateRelationCategoryMutation, CreateRelationCategoryMutationVariables>(CreateRelationCategoryDocument, options);
+      }
+export type CreateRelationCategoryMutationHookResult = ReturnType<typeof useCreateRelationCategoryMutation>;
+export type CreateRelationCategoryMutationResult = Apollo.MutationResult<CreateRelationCategoryMutation>;
+export type CreateRelationCategoryMutationOptions = Apollo.BaseMutationOptions<CreateRelationCategoryMutation, CreateRelationCategoryMutationVariables>;
+export const UpdateRelationCategoryDocument = gql`
+    mutation UpdateRelationCategory($input: UpdateRelationCategoryInput!) {
+  updateRelationCategory(input: $input) {
+    ...RelationCategory
+  }
+}
+    ${RelationCategoryFragmentDoc}`;
+export type UpdateRelationCategoryMutationFn = Apollo.MutationFunction<UpdateRelationCategoryMutation, UpdateRelationCategoryMutationVariables>;
+
+/**
+ * __useUpdateRelationCategoryMutation__
+ *
+ * To run a mutation, you first call `useUpdateRelationCategoryMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateRelationCategoryMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateRelationCategoryMutation, { data, loading, error }] = useUpdateRelationCategoryMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateRelationCategoryMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateRelationCategoryMutation, UpdateRelationCategoryMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<UpdateRelationCategoryMutation, UpdateRelationCategoryMutationVariables>(UpdateRelationCategoryDocument, options);
+      }
+export type UpdateRelationCategoryMutationHookResult = ReturnType<typeof useUpdateRelationCategoryMutation>;
+export type UpdateRelationCategoryMutationResult = Apollo.MutationResult<UpdateRelationCategoryMutation>;
+export type UpdateRelationCategoryMutationOptions = Apollo.BaseMutationOptions<UpdateRelationCategoryMutation, UpdateRelationCategoryMutationVariables>;
+export const DeleteRelationCategoryDocument = gql`
+    mutation DeleteRelationCategory($id: ID!) {
+  deleteRelationCategory(input: {id: $id})
+}
+    `;
+export type DeleteRelationCategoryMutationFn = Apollo.MutationFunction<DeleteRelationCategoryMutation, DeleteRelationCategoryMutationVariables>;
+
+/**
+ * __useDeleteRelationCategoryMutation__
+ *
+ * To run a mutation, you first call `useDeleteRelationCategoryMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteRelationCategoryMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteRelationCategoryMutation, { data, loading, error }] = useDeleteRelationCategoryMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteRelationCategoryMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteRelationCategoryMutation, DeleteRelationCategoryMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<DeleteRelationCategoryMutation, DeleteRelationCategoryMutationVariables>(DeleteRelationCategoryDocument, options);
+      }
+export type DeleteRelationCategoryMutationHookResult = ReturnType<typeof useDeleteRelationCategoryMutation>;
+export type DeleteRelationCategoryMutationResult = Apollo.MutationResult<DeleteRelationCategoryMutation>;
+export type DeleteRelationCategoryMutationOptions = Apollo.BaseMutationOptions<DeleteRelationCategoryMutation, DeleteRelationCategoryMutationVariables>;
 export const CreateScatterPlotDocument = gql`
     mutation CreateScatterPlot($input: ScatterPlotInput!) {
   createScatterPlot(input: $input) {
@@ -7000,6 +7283,42 @@ export function useGetMetricCategoryLazyQuery(baseOptions?: ApolloReactHooks.Laz
 export type GetMetricCategoryQueryHookResult = ReturnType<typeof useGetMetricCategoryQuery>;
 export type GetMetricCategoryLazyQueryHookResult = ReturnType<typeof useGetMetricCategoryLazyQuery>;
 export type GetMetricCategoryQueryResult = Apollo.QueryResult<GetMetricCategoryQuery, GetMetricCategoryQueryVariables>;
+export const ListMetricCategoryDocument = gql`
+    query ListMetricCategory($filters: MetricCategoryFilter, $pagination: OffsetPaginationInput) {
+  metricCategories(filters: $filters, pagination: $pagination) {
+    ...ListMetricCategory
+  }
+}
+    ${ListMetricCategoryFragmentDoc}`;
+
+/**
+ * __useListMetricCategoryQuery__
+ *
+ * To run a query within a React component, call `useListMetricCategoryQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListMetricCategoryQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListMetricCategoryQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *      pagination: // value for 'pagination'
+ *   },
+ * });
+ */
+export function useListMetricCategoryQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListMetricCategoryQuery, ListMetricCategoryQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListMetricCategoryQuery, ListMetricCategoryQueryVariables>(ListMetricCategoryDocument, options);
+      }
+export function useListMetricCategoryLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListMetricCategoryQuery, ListMetricCategoryQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListMetricCategoryQuery, ListMetricCategoryQueryVariables>(ListMetricCategoryDocument, options);
+        }
+export type ListMetricCategoryQueryHookResult = ReturnType<typeof useListMetricCategoryQuery>;
+export type ListMetricCategoryLazyQueryHookResult = ReturnType<typeof useListMetricCategoryLazyQuery>;
+export type ListMetricCategoryQueryResult = Apollo.QueryResult<ListMetricCategoryQuery, ListMetricCategoryQueryVariables>;
 export const SearchMetricCategoryDocument = gql`
     query SearchMetricCategory($search: String, $values: [ID!]) {
   options: metricCategories(
@@ -8275,10 +8594,10 @@ export type SearchRelationCategoryQueryResult = Apollo.QueryResult<SearchRelatio
 export const ListRelationCategoryDocument = gql`
     query ListRelationCategory($filters: RelationCategoryFilter, $pagination: OffsetPaginationInput) {
   relationCategories(filters: $filters, pagination: $pagination) {
-    ...RelationCategory
+    ...ListRelationCategory
   }
 }
-    ${RelationCategoryFragmentDoc}`;
+    ${ListRelationCategoryFragmentDoc}`;
 
 /**
  * __useListRelationCategoryQuery__

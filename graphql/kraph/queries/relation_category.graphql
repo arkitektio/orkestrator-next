@@ -19,6 +19,6 @@ query ListRelationCategory(
   $pagination: OffsetPaginationInput
 ) {
   relationCategories(filters: $filters, pagination: $pagination) {
-    ...RelationCategory
+    ...ListRelationCategory
   }
 }

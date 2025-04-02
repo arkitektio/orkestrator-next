@@ -1,5 +1,5 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { ChoicesField } from "@/components/fields/ChoicesField";
+import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
@@ -7,11 +7,19 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
-  CreateEntityCategoryMutationVariables,
-  useCreateEntityCategoryMutation,
-  useSearchGraphsLazyQuery,
+  MeasurementCategoryFragment,
+  MetricCategoryFragment,
+  ReagentCategoryFragment,
+  UpdateEntityCategoryMutationVariables,
+  UpdateMeasurementCategoryMutationVariables,
+  UpdateMetricCategoryMutationVariables,
+  UpdateReagentCategoryMutationVariables,
+  useSearchTagsLazyQuery,
+  useUpdateEntityCategoryMutation,
+  useUpdateMeasurementCategoryMutation,
+  useUpdateMetricCategoryMutation,
+  useUpdateReagentCategoryMutation,
 } from "../api/graphql";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 
 const enumToOptions = (e: any) => {
   return Object.keys(e).map((key) => ({
@@ -20,20 +28,26 @@ const enumToOptions = (e: any) => {
   }));
 };
 
-export default (props: { graph?: string }) => {
-  const [add] = useCreateEntityCategoryMutation({
-    refetchQueries: ["ListEntityCategories", "GetGraph"],
+export default (props: {
+  measurementCategory: MeasurementCategoryFragment;
+}) => {
+  const [update] = useUpdateMeasurementCategoryMutation({
+    refetchQueries: ["GetGraph"],
   });
 
-  const dialog = useGraphQlFormDialog(add);
+  const dialog = useGraphQlFormDialog(update);
 
-  const form = useForm<CreateEntityCategoryMutationVariables["input"]>({
+  const form = useForm<UpdateMeasurementCategoryMutationVariables["input"]>({
     defaultValues: {
-      graph: props.graph,
+      id: props.measurementCategory.id,
+      label: props.measurementCategory.label,
+      description: props.measurementCategory.description,
+      purl: props.measurementCategory.purl || "",
+      tags: props.measurementCategory.tags.map((tag) => tag.value),
     },
   });
 
-  const [search] = useSearchGraphsLazyQuery();
+  const [searchTags] = useSearchTagsLazyQuery();
 
   return (
     <>
@@ -51,16 +65,6 @@ export default (props: { graph?: string }) => {
         >
           <div className="grid grid-cols-2 gap-2">
             <div className="col-span-2 flex-col gap-1 flex">
-              {!props.graph && (
-                <>
-                  <GraphQLSearchField
-                    label="Graph"
-                    name="graph"
-                    description="What graph do you want to add this expression to?"
-                    searchQuery={search}
-                  />
-                </>
-              )}
               <StringField
                 label="Label"
                 name="label"
@@ -76,11 +80,17 @@ export default (props: { graph?: string }) => {
                 name="purl"
                 description="What is the PURL of this expression?"
               />
+              <GraphQLSearchField
+                searchQuery={searchTags}
+                label="Tags"
+                name="tags"
+                description="Search for related entities"
+              />
             </div>
           </div>
 
           <DialogFooter className="mt-2">
-            <Button type="submit">Create</Button>
+            <Button type="submit">Save</Button>
           </DialogFooter>
         </form>
       </Form>

@@ -21,31 +21,3 @@ fragment BaseListNodeCategory on NodeCategory {
 fragment BaseListEdgeCategory on EdgeCategory {
   id
 }
-
-fragment ListMeasurementCategory on MeasurementCategory {
-  ...BaseListCategory
-  ...BaseListEdgeCategory
-  sourceDefinition {
-    tagFilters
-    categoryFilters
-  }
-  targetDefinition {
-    tagFilters
-    categoryFilters
-  }
-  label
-}
-
-fragment ListRelationCategory on RelationCategory {
-  ...BaseListCategory
-  ...BaseListEdgeCategory
-  sourceDefinition {
-    tagFilters
-    categoryFilters
-  }
-  targetDefinition {
-    tagFilters
-    categoryFilters
-  }
-  label
-}

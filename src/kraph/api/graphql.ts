@@ -326,18 +326,26 @@ export type EntityCategoryInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   /** The ID of the graph this expression belongs to. If not provided, uses default ontology */
   graph: Scalars['ID']['input'];
+  /** An optional height for the ontology node */
+  height?: InputMaybe<Scalars['Float']['input']>;
   /** An optional image associated with this expression */
   image?: InputMaybe<Scalars['ID']['input']>;
   /** The label/name of the expression */
   label: Scalars['String']['input'];
   /** Whether this expression should be pinned or not */
   pin?: InputMaybe<Scalars['Boolean']['input']>;
+  /** An optional x position for the ontology node */
+  positionX?: InputMaybe<Scalars['Float']['input']>;
+  /** An optional y position for the ontology node */
+  positionY?: InputMaybe<Scalars['Float']['input']>;
   /** Permanent URL identifier for the expression */
   purl?: InputMaybe<Scalars['String']['input']>;
   /** The ID of the sequence this category will get internal_ids from */
   sequence?: InputMaybe<Scalars['ID']['input']>;
   /** A list of tags associated with this expression */
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** An optional width for the ontology node */
+  width?: InputMaybe<Scalars['Float']['input']>;
 };
 
 /** Filter for entities in the graph */
@@ -905,6 +913,8 @@ export type MetricCategoryInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   /** The ID of the graph this expression belongs to. If not provided, uses default ontology */
   graph: Scalars['ID']['input'];
+  /** An optional height for the ontology node */
+  height?: InputMaybe<Scalars['Float']['input']>;
   /** An optional image associated with this expression */
   image?: InputMaybe<Scalars['ID']['input']>;
   /** The type of metric data this expression represents */
@@ -913,6 +923,10 @@ export type MetricCategoryInput = {
   label: Scalars['String']['input'];
   /** Whether this expression should be pinned or not */
   pin?: InputMaybe<Scalars['Boolean']['input']>;
+  /** An optional x position for the ontology node */
+  positionX?: InputMaybe<Scalars['Float']['input']>;
+  /** An optional y position for the ontology node */
+  positionY?: InputMaybe<Scalars['Float']['input']>;
   /** Permanent URL identifier for the expression */
   purl?: InputMaybe<Scalars['String']['input']>;
   /** The ID of the sequence this category will get internal_ids from */
@@ -921,6 +935,8 @@ export type MetricCategoryInput = {
   structureDefinition: CategoryDefinitionInput;
   /** A list of tags associated with this expression */
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** An optional width for the ontology node */
+  width?: InputMaybe<Scalars['Float']['input']>;
 };
 
 /** Filter for entity relations in the graph */
@@ -1424,6 +1440,8 @@ export type NaturalEventCategoryInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   /** The ID of the graph this expression belongs to. If not provided, uses default ontology */
   graph: Scalars['ID']['input'];
+  /** An optional height for the ontology node */
+  height?: InputMaybe<Scalars['Float']['input']>;
   /** An optional image associated with this expression */
   image?: InputMaybe<Scalars['ID']['input']>;
   /** The label/name of the expression */
@@ -1432,6 +1450,10 @@ export type NaturalEventCategoryInput = {
   pin?: InputMaybe<Scalars['Boolean']['input']>;
   /** A list of children for the plate */
   plateChildren?: InputMaybe<Array<PlateChildInput>>;
+  /** An optional x position for the ontology node */
+  positionX?: InputMaybe<Scalars['Float']['input']>;
+  /** An optional y position for the ontology node */
+  positionY?: InputMaybe<Scalars['Float']['input']>;
   /** Permanent URL identifier for the expression */
   purl?: InputMaybe<Scalars['String']['input']>;
   /** The ID of the sequence this category will get internal_ids from */
@@ -1444,6 +1466,8 @@ export type NaturalEventCategoryInput = {
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   /** The target definitions for this expression */
   targetEntityRoles: Array<EntityRoleDefinitionInput>;
+  /** An optional width for the ontology node */
+  width?: InputMaybe<Scalars['Float']['input']>;
 };
 
 /** Filter for entity relations in the graph */
@@ -1818,6 +1842,8 @@ export type ProtocolEventCategoryInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   /** The ID of the graph this expression belongs to. If not provided, uses default ontology */
   graph: Scalars['ID']['input'];
+  /** An optional height for the ontology node */
+  height?: InputMaybe<Scalars['Float']['input']>;
   /** An optional image associated with this expression */
   image?: InputMaybe<Scalars['ID']['input']>;
   /** The label/name of the expression */
@@ -1826,6 +1852,10 @@ export type ProtocolEventCategoryInput = {
   pin?: InputMaybe<Scalars['Boolean']['input']>;
   /** A list of children for the plate */
   plateChildren?: InputMaybe<Array<PlateChildInput>>;
+  /** An optional x position for the ontology node */
+  positionX?: InputMaybe<Scalars['Float']['input']>;
+  /** An optional y position for the ontology node */
+  positionY?: InputMaybe<Scalars['Float']['input']>;
   /** Permanent URL identifier for the expression */
   purl?: InputMaybe<Scalars['String']['input']>;
   /** The ID of the sequence this category will get internal_ids from */
@@ -1842,6 +1872,8 @@ export type ProtocolEventCategoryInput = {
   targetReagentRoles?: InputMaybe<Array<ReagentRoleDefinitionInput>>;
   /** The variable definitions for this expression */
   variableDefinitions?: InputMaybe<Array<VariableDefinitionInput>>;
+  /** An optional width for the ontology node */
+  width?: InputMaybe<Scalars['Float']['input']>;
 };
 
 /** Filter for entity relations in the graph */
@@ -2352,18 +2384,26 @@ export type ReagentCategoryInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   /** The ID of the graph this expression belongs to. If not provided, uses default ontology */
   graph: Scalars['ID']['input'];
+  /** An optional height for the ontology node */
+  height?: InputMaybe<Scalars['Float']['input']>;
   /** An optional image associated with this expression */
   image?: InputMaybe<Scalars['ID']['input']>;
   /** The label/name of the expression */
   label: Scalars['String']['input'];
   /** Whether this expression should be pinned or not */
   pin?: InputMaybe<Scalars['Boolean']['input']>;
+  /** An optional x position for the ontology node */
+  positionX?: InputMaybe<Scalars['Float']['input']>;
+  /** An optional y position for the ontology node */
+  positionY?: InputMaybe<Scalars['Float']['input']>;
   /** Permanent URL identifier for the expression */
   purl?: InputMaybe<Scalars['String']['input']>;
   /** The ID of the sequence this category will get internal_ids from */
   sequence?: InputMaybe<Scalars['ID']['input']>;
   /** A list of tags associated with this expression */
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** An optional width for the ontology node */
+  width?: InputMaybe<Scalars['Float']['input']>;
 };
 
 /** Filter for entities in the graph */
@@ -2851,6 +2891,8 @@ export type UpdateEntityCategoryInput = {
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
   /** New description for the expression */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** An optional height for the ontology node */
+  height?: InputMaybe<Scalars['Float']['input']>;
   /** The ID of the expression to update */
   id: Scalars['ID']['input'];
   /** New image ID for the expression */
@@ -2859,10 +2901,16 @@ export type UpdateEntityCategoryInput = {
   label?: InputMaybe<Scalars['String']['input']>;
   /** Whether this expression should be pinned or not */
   pin?: InputMaybe<Scalars['Boolean']['input']>;
+  /** An optional x position for the ontology node */
+  positionX?: InputMaybe<Scalars['Float']['input']>;
+  /** An optional y position for the ontology node */
+  positionY?: InputMaybe<Scalars['Float']['input']>;
   /** New permanent URL for the expression */
   purl?: InputMaybe<Scalars['String']['input']>;
   /** A list of tags associated with this expression */
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** An optional width for the ontology node */
+  width?: InputMaybe<Scalars['Float']['input']>;
 };
 
 /** Input type for updating an existing ontology */
@@ -2903,16 +2951,24 @@ export type UpdateMetricCategoryInput = {
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
   /** A detailed description of the expression */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** An optional height for the ontology node */
+  height?: InputMaybe<Scalars['Float']['input']>;
   /** An optional image associated with this expression */
   image?: InputMaybe<Scalars['ID']['input']>;
   /** The type of metric data this expression represents */
   kind?: InputMaybe<MetricKind>;
   /** Whether this expression should be pinned or not */
   pin?: InputMaybe<Scalars['Boolean']['input']>;
+  /** An optional x position for the ontology node */
+  positionX?: InputMaybe<Scalars['Float']['input']>;
+  /** An optional y position for the ontology node */
+  positionY?: InputMaybe<Scalars['Float']['input']>;
   /** Permanent URL identifier for the expression */
   purl?: InputMaybe<Scalars['String']['input']>;
   /** A list of tags associated with this expression */
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** An optional width for the ontology node */
+  width?: InputMaybe<Scalars['Float']['input']>;
 };
 
 /** Input for updating an existing expression */
@@ -2921,6 +2977,8 @@ export type UpdateNaturalEventCategoryInput = {
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
   /** A detailed description of the expression */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** An optional height for the ontology node */
+  height?: InputMaybe<Scalars['Float']['input']>;
   /** The ID of the expression to update */
   id: Scalars['ID']['input'];
   /** An optional ID reference to an associated image */
@@ -2931,6 +2989,10 @@ export type UpdateNaturalEventCategoryInput = {
   pin?: InputMaybe<Scalars['Boolean']['input']>;
   /** A list of children for the plate */
   plateChildren?: InputMaybe<Array<PlateChildInput>>;
+  /** An optional x position for the ontology node */
+  positionX?: InputMaybe<Scalars['Float']['input']>;
+  /** An optional y position for the ontology node */
+  positionY?: InputMaybe<Scalars['Float']['input']>;
   /** Permanent URL identifier for the expression */
   purl?: InputMaybe<Scalars['String']['input']>;
   /** The source definitions for this expression */
@@ -2941,6 +3003,8 @@ export type UpdateNaturalEventCategoryInput = {
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   /** The target definitions for this expression */
   targetEntityRoles?: InputMaybe<Array<EntityRoleDefinitionInput>>;
+  /** An optional width for the ontology node */
+  width?: InputMaybe<Scalars['Float']['input']>;
 };
 
 /** Input for updating an existing expression */
@@ -2949,6 +3013,8 @@ export type UpdateProtocolEventCategoryInput = {
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
   /** A detailed description of the expression */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** An optional height for the ontology node */
+  height?: InputMaybe<Scalars['Float']['input']>;
   /** The ID of the expression to update */
   id: Scalars['ID']['input'];
   /** An optional ID reference to an associated image */
@@ -2959,6 +3025,10 @@ export type UpdateProtocolEventCategoryInput = {
   pin?: InputMaybe<Scalars['Boolean']['input']>;
   /** A list of children for the plate */
   plateChildren?: InputMaybe<Array<PlateChildInput>>;
+  /** An optional x position for the ontology node */
+  positionX?: InputMaybe<Scalars['Float']['input']>;
+  /** An optional y position for the ontology node */
+  positionY?: InputMaybe<Scalars['Float']['input']>;
   /** Permanent URL identifier for the expression */
   purl?: InputMaybe<Scalars['String']['input']>;
   /** The source definitions for this expression */
@@ -2973,26 +3043,34 @@ export type UpdateProtocolEventCategoryInput = {
   targetReagentRoles?: InputMaybe<Array<ReagentRoleDefinitionInput>>;
   /** The variable definitions for this expression */
   variableDefinitions?: InputMaybe<Array<VariableDefinitionInput>>;
+  /** An optional width for the ontology node */
+  width?: InputMaybe<Scalars['Float']['input']>;
 };
 
 /** Input for updating an existing generic category */
 export type UpdateReagentCategoryInput = {
-  /** New RGBA color values as list of 3 or 4 integers */
+  /** RGBA color values as list of 3 or 4 integers */
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
-  /** New description for the expression */
+  /** A detailed description of the expression */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** An optional height for the ontology node */
+  height?: InputMaybe<Scalars['Float']['input']>;
   /** The ID of the expression to update */
   id: Scalars['ID']['input'];
-  /** New image ID for the expression */
+  /** An optional image associated with this expression */
   image?: InputMaybe<Scalars['ID']['input']>;
-  /** New label for the generic category */
-  label?: InputMaybe<Scalars['String']['input']>;
   /** Whether this expression should be pinned or not */
   pin?: InputMaybe<Scalars['Boolean']['input']>;
-  /** New permanent URL for the expression */
+  /** An optional x position for the ontology node */
+  positionX?: InputMaybe<Scalars['Float']['input']>;
+  /** An optional y position for the ontology node */
+  positionY?: InputMaybe<Scalars['Float']['input']>;
+  /** Permanent URL identifier for the expression */
   purl?: InputMaybe<Scalars['String']['input']>;
   /** A list of tags associated with this expression */
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** An optional width for the ontology node */
+  width?: InputMaybe<Scalars['Float']['input']>;
 };
 
 /** Input for updating an existing expression */
@@ -3359,7 +3437,7 @@ export type UpdateEntityCategoryMutationVariables = Exact<{
 export type UpdateEntityCategoryMutation = { __typename?: 'Mutation', updateEntityCategory: { __typename?: 'EntityCategory', instanceKind: InstanceKind, ageName: string, label: string, description?: string | null, pinned: boolean, id: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, bestQuery?: { __typename?: 'GraphQuery', id: string, query: string, name: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string, xColumn: string, yColumn: string }>, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, label: string, graph: { __typename?: 'Graph', id: string }, category: { __typename?: 'EntityCategory', id: string, label: string }, subjectableTo: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, targetableBy: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, bestView?: { __typename?: 'Pairs' } | { __typename?: 'Path' } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } | null } | { __typename?: 'Metric', id: any, label: string, value: number, category: { __typename?: 'MetricCategory', id: string, label: string } } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string, externalId?: string | null, category: { __typename?: 'ReagentCategory', id: string, label: string }, usableIn: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }>, createableFrom: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }> } | { __typename?: 'Structure', id: any, label: string, object: string, identifier: string }>, edges: Array<{ __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom: any, validTo: any, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity: number } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, graph: { __typename?: 'Graph', id: string }, tags: Array<{ __typename?: 'Tag', id: string, value: string }> } };
 
 export type DeleteEntityCategoryMutationVariables = Exact<{
-  input: DeleteEntityCategoryInput;
+  id: Scalars['ID']['input'];
 }>;
 
 
@@ -3485,7 +3563,7 @@ export type UpdateNaturalEventCategoryMutationVariables = Exact<{
 export type UpdateNaturalEventCategoryMutation = { __typename?: 'Mutation', updateNaturalEventCategory: { __typename?: 'NaturalEventCategory', plateChildren?: Array<any> | null, label: string, ageName: string, description?: string | null, id: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, sourceEntityRoles: Array<{ __typename?: 'EntityRoleDefinition', role: string, allowMultiple: boolean, description?: string | null, label?: string | null, categoryDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, currentDefault?: { __typename?: 'Entity', id: any } | null }>, targetEntityRoles: Array<{ __typename?: 'EntityRoleDefinition', role: string, allowMultiple: boolean, description?: string | null, label?: string | null, categoryDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, currentDefault?: { __typename?: 'Entity', id: any } | null }>, graph: { __typename?: 'Graph', id: string }, tags: Array<{ __typename?: 'Tag', id: string, value: string }> } };
 
 export type DeleteNaturalEventCategoryMutationVariables = Exact<{
-  input: DeleteNaturalEventCategoryInput;
+  id: Scalars['ID']['input'];
 }>;
 
 
@@ -3541,7 +3619,7 @@ export type CreateReagentMutationVariables = Exact<{
 export type CreateReagentMutation = { __typename?: 'Mutation', createReagent: { __typename?: 'Reagent', id: any, label: string, externalId?: string | null, category: { __typename?: 'ReagentCategory', id: string, label: string }, usableIn: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }>, createableFrom: Array<{ __typename?: 'ProtocolEventCategory', id: string, label: string }> } };
 
 export type UpdateReagentCategoryMutationVariables = Exact<{
-  input: UpdateReagentCategoryInput;
+  id: Scalars['ID']['input'];
 }>;
 
 
@@ -3609,6 +3687,13 @@ export type UpdateStructureCategoryMutationVariables = Exact<{
 
 
 export type UpdateStructureCategoryMutation = { __typename?: 'Mutation', updateStructureCategory: { __typename?: 'StructureCategory', identifier: string, ageName: string, description?: string | null, id: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, graph: { __typename?: 'Graph', id: string, name: string }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'Tag', id: string, value: string }> } };
+
+export type DeleteStructureCategoryMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteStructureCategoryMutation = { __typename?: 'Mutation', deleteStructureCategory: string };
 
 export type CreateToldyousoMutationVariables = Exact<{
   input: ToldYouSoInput;
@@ -5145,8 +5230,8 @@ export type UpdateEntityCategoryMutationHookResult = ReturnType<typeof useUpdate
 export type UpdateEntityCategoryMutationResult = Apollo.MutationResult<UpdateEntityCategoryMutation>;
 export type UpdateEntityCategoryMutationOptions = Apollo.BaseMutationOptions<UpdateEntityCategoryMutation, UpdateEntityCategoryMutationVariables>;
 export const DeleteEntityCategoryDocument = gql`
-    mutation DeleteEntityCategory($input: DeleteEntityCategoryInput!) {
-  deleteEntityCategory(input: $input)
+    mutation DeleteEntityCategory($id: ID!) {
+  deleteEntityCategory(input: {id: $id})
 }
     `;
 export type DeleteEntityCategoryMutationFn = Apollo.MutationFunction<DeleteEntityCategoryMutation, DeleteEntityCategoryMutationVariables>;
@@ -5164,7 +5249,7 @@ export type DeleteEntityCategoryMutationFn = Apollo.MutationFunction<DeleteEntit
  * @example
  * const [deleteEntityCategoryMutation, { data, loading, error }] = useDeleteEntityCategoryMutation({
  *   variables: {
- *      input: // value for 'input'
+ *      id: // value for 'id'
  *   },
  * });
  */
@@ -5731,8 +5816,8 @@ export type UpdateNaturalEventCategoryMutationHookResult = ReturnType<typeof use
 export type UpdateNaturalEventCategoryMutationResult = Apollo.MutationResult<UpdateNaturalEventCategoryMutation>;
 export type UpdateNaturalEventCategoryMutationOptions = Apollo.BaseMutationOptions<UpdateNaturalEventCategoryMutation, UpdateNaturalEventCategoryMutationVariables>;
 export const DeleteNaturalEventCategoryDocument = gql`
-    mutation DeleteNaturalEventCategory($input: DeleteNaturalEventCategoryInput!) {
-  deleteNaturalEventCategory(input: $input)
+    mutation DeleteNaturalEventCategory($id: ID!) {
+  deleteNaturalEventCategory(input: {id: $id})
 }
     `;
 export type DeleteNaturalEventCategoryMutationFn = Apollo.MutationFunction<DeleteNaturalEventCategoryMutation, DeleteNaturalEventCategoryMutationVariables>;
@@ -5750,7 +5835,7 @@ export type DeleteNaturalEventCategoryMutationFn = Apollo.MutationFunction<Delet
  * @example
  * const [deleteNaturalEventCategoryMutation, { data, loading, error }] = useDeleteNaturalEventCategoryMutation({
  *   variables: {
- *      input: // value for 'input'
+ *      id: // value for 'id'
  *   },
  * });
  */
@@ -5991,8 +6076,8 @@ export type CreateReagentMutationHookResult = ReturnType<typeof useCreateReagent
 export type CreateReagentMutationResult = Apollo.MutationResult<CreateReagentMutation>;
 export type CreateReagentMutationOptions = Apollo.BaseMutationOptions<CreateReagentMutation, CreateReagentMutationVariables>;
 export const UpdateReagentCategoryDocument = gql`
-    mutation UpdateReagentCategory($input: UpdateReagentCategoryInput!) {
-  updateReagentCategory(input: $input) {
+    mutation UpdateReagentCategory($id: ID!) {
+  updateReagentCategory(input: {id: $id}) {
     ...ReagentCategory
   }
 }
@@ -6012,7 +6097,7 @@ export type UpdateReagentCategoryMutationFn = Apollo.MutationFunction<UpdateReag
  * @example
  * const [updateReagentCategoryMutation, { data, loading, error }] = useUpdateReagentCategoryMutation({
  *   variables: {
- *      input: // value for 'input'
+ *      id: // value for 'id'
  *   },
  * });
  */
@@ -6316,6 +6401,37 @@ export function useUpdateStructureCategoryMutation(baseOptions?: ApolloReactHook
 export type UpdateStructureCategoryMutationHookResult = ReturnType<typeof useUpdateStructureCategoryMutation>;
 export type UpdateStructureCategoryMutationResult = Apollo.MutationResult<UpdateStructureCategoryMutation>;
 export type UpdateStructureCategoryMutationOptions = Apollo.BaseMutationOptions<UpdateStructureCategoryMutation, UpdateStructureCategoryMutationVariables>;
+export const DeleteStructureCategoryDocument = gql`
+    mutation DeleteStructureCategory($id: ID!) {
+  deleteStructureCategory(input: {id: $id})
+}
+    `;
+export type DeleteStructureCategoryMutationFn = Apollo.MutationFunction<DeleteStructureCategoryMutation, DeleteStructureCategoryMutationVariables>;
+
+/**
+ * __useDeleteStructureCategoryMutation__
+ *
+ * To run a mutation, you first call `useDeleteStructureCategoryMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteStructureCategoryMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteStructureCategoryMutation, { data, loading, error }] = useDeleteStructureCategoryMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteStructureCategoryMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteStructureCategoryMutation, DeleteStructureCategoryMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<DeleteStructureCategoryMutation, DeleteStructureCategoryMutationVariables>(DeleteStructureCategoryDocument, options);
+      }
+export type DeleteStructureCategoryMutationHookResult = ReturnType<typeof useDeleteStructureCategoryMutation>;
+export type DeleteStructureCategoryMutationResult = Apollo.MutationResult<DeleteStructureCategoryMutation>;
+export type DeleteStructureCategoryMutationOptions = Apollo.BaseMutationOptions<DeleteStructureCategoryMutation, DeleteStructureCategoryMutationVariables>;
 export const CreateToldyousoDocument = gql`
     mutation CreateToldyouso($input: ToldYouSoInput!) {
   createToldyouso(input: $input) {

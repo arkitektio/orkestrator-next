@@ -31,6 +31,7 @@ import { RelationCategoryFragmentDoc } from "./api/graphql";
 import RelationCategoryPage from "./pages/RelationCategoryPage";
 import MeasurementCategoriesPage from "./pages/MeasurementCategoriesPage";
 import MeasurementCategoryPage from "./pages/MeasurementCategoryPage";
+import NaturalEventCategoriesPage from "./pages/NaturalEventCategoriesPage";
 interface Props {}
 
 export const KraphModule: React.FC<Props> = (props) => {
@@ -54,6 +55,10 @@ export const KraphModule: React.FC<Props> = (props) => {
           <Route
             path="measurementcategories"
             element={<MeasurementCategoriesPage />}
+          />
+          <Route
+            path="naturaleventcategories"
+            element={<NaturalEventCategoriesPage />}
           />
           <Route
             path="relationcategories"

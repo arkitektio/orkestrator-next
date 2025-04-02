@@ -12,10 +12,13 @@ import { FloatingToolbar } from "@/components/plate-ui/floating-toolbar";
 import { FloatingToolbarButtons } from "@/components/plate-ui/floating-toolbar-buttons";
 import { TooltipProvider } from "@/components/plate-ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
+import { DragZone } from "@/components/upload/drag";
+import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
+import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
-  KraphNaturalEventCategory,
-  KraphProtocolStepTemplate,
+  KraphNaturalEventCategory
 } from "@/linkers";
 import { editor } from "@/plate/plugins";
 import {
@@ -32,12 +35,8 @@ import {
   useSearchEntityCategoryLazyQuery,
   useSearchTagsLazyQuery,
   useUpdateNaturalEventCategoryMutation,
-  useUpdateProtocolEventCategoryMutation,
+  useUpdateProtocolEventCategoryMutation
 } from "../api/graphql";
-import { Card } from "@/components/ui/card";
-import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
-import { useResolve } from "@/datalayer/hooks/useResolve";
-import { DragZone } from "@/components/upload/drag";
 
 export type IRepresentationScreenProps = {};
 
@@ -49,72 +48,6 @@ const initialValue = [
   },
 ];
 
-export const SafeButton = ({
-  naturalEventCategory,
-}: {
-  naturalEventCategory: NaturalEventCategoryFragment;
-}) => {
-  const ref = useEditorRef();
-  const [update] = useUpdateProtocolEventCategoryMutation();
-  const readOnly = useEditorReadOnly();
-  const [saving, setSaving] = useState(false);
-
-  const onClick = () => {
-    console.log("serialized");
-    console.log(ref);
-    setSaving(true);
-
-    update({
-      variables: {
-        input: { plateChildren: ref?.children, ...naturalEventCategory },
-      },
-    }).then(() => {
-      setSaving(false);
-    });
-  };
-
-  return (
-    <>
-      {!readOnly && (
-        <Button
-          onClick={onClick}
-          disabled={saving}
-          variant={"outline"}
-          className="mr-2"
-        >
-          {saving ? "Saving..." : "Save"}
-        </Button>
-      )}
-    </>
-  );
-};
-
-export function PlateEditor({
-  naturalEventCategory,
-}: {
-  naturalEventCategory: NaturalEventCategoryFragment;
-}) {
-  const plateEditor = usePlateEditor({
-    ...editor,
-    value: naturalEventCategory.plateChildren || initialValue,
-  });
-
-  return (
-    <Plate editor={plateEditor}>
-      <FixedToolbar>
-        <FixedToolbarButtons />
-        <SafeButton naturalEventCategory={naturalEventCategory} />
-      </FixedToolbar>
-
-      <Editor />
-
-      <FloatingToolbar>
-        <FloatingToolbarButtons />
-      </FloatingToolbar>
-      <CommentsPopover />
-    </Plate>
-  );
-}
 
 export function PlateDisplay({ plates }: { plates: any[] }) {
   const plateEditor = usePlateEditor({
@@ -155,29 +88,38 @@ export const RoleDefinitionCreator = ({
     });
   };
 
-  const myform = useForm<UpdateNaturalEventCategoryMutationVariables["input"]>({
-    defaultValues: {
-      id: naturalEventCategory.id,
-      label: naturalEventCategory.label,
-      description: naturalEventCategory.description,
-      sourceEntityRoles: naturalEventCategory.sourceEntityRoles.map((role) => ({
-        ...role,
-        categoryDefinition: {
-          ...role.categoryDefinition,
-          __typename: undefined,
-        },
-        __typename: undefined,
-      })),
-      targetEntityRoles: naturalEventCategory.targetEntityRoles.map((role) => ({
-        ...role,
-        categoryDefinition: {
-          ...role.categoryDefinition,
-          __typename: undefined,
-        },
-        __typename: undefined,
-      })),
+  const myform = useForm<UpdateNaturalEventCategoryMutationVariables["input"]>(
+    {
+      defaultValues: {
+        id: naturalEventCategory.id,
+        label: naturalEventCategory.label,
+        description: naturalEventCategory.description,
+        sourceEntityRoles: naturalEventCategory.sourceEntityRoles.map(
+          (role) => ({
+            ...role,
+            categoryDefinition: {
+              ...role.categoryDefinition,
+
+              __typename: undefined,
+            },
+            __typename: undefined,
+            currentDefault: undefined,
+          }),
+        ),
+        targetEntityRoles: naturalEventCategory.targetEntityRoles.map(
+          (role) => ({
+            ...role,
+            categoryDefinition: {
+              ...role.categoryDefinition,
+              __typename: undefined,
+            },
+            __typename: undefined,
+            currentDefault: undefined,
+          }),
+        ),
+      },
     },
-  });
+  );
 
   const [searchTags] = useSearchTagsLazyQuery();
   const [searchEntityCategory] = useSearchEntityCategoryLazyQuery();
@@ -191,6 +133,8 @@ export const RoleDefinitionCreator = ({
     control: myform.control, // control props comes from useForm (optional: if you are using FormProvider)
     name: "targetEntityRoles", // unique name for your Field Array
   });
+
+  
 
   return (
     <>
@@ -242,6 +186,16 @@ export const RoleDefinitionCreator = ({
                                 searchQuery={searchEntityCategory}
                                 description="Filters for the entity's categories."
                               />
+                              <StringField
+                                name={`sourceEntityRoles.${index}.label`}
+                                label="Label"
+                                description="Which role does the entity play?"
+                              />
+                              <StringField
+                                name={`sourceEntityRoles.${index}.description`}
+                                label="Description"
+                                description="What describes this role the best"
+                              />
 
                               <Button
                                 type="button"
@@ -265,9 +219,9 @@ export const RoleDefinitionCreator = ({
                               },
                             })
                           }
-                          variant={"ghost"}
+                          variant={"outline"}
                         >
-                          +
+                          Add Source Entity
                         </Button>
                       </div>
                     </div>
@@ -300,6 +254,16 @@ export const RoleDefinitionCreator = ({
                                 searchQuery={searchEntityCategory}
                                 description="Filters for the entity's categories."
                               />
+                              <StringField
+                                name={`targetEntityRoles.${index}.label`}
+                                label="Label"
+                                description="Which role does the entity play?"
+                              />
+                              <StringField
+                                name={`targetEntityRoles.${index}.description`}
+                                label="Description"
+                                description="What describes this role the best"
+                              />
 
                               <Button
                                 type="button"
@@ -331,7 +295,6 @@ export const RoleDefinitionCreator = ({
                     </div>
                   </div>
                 </div>
-
                 <FloatingToolbar>
                   <FloatingToolbarButtons />
                 </FloatingToolbar>
@@ -373,7 +336,7 @@ export default asDetailQueryRoute(
         title={data?.naturalEventCategory?.label}
         object={data.naturalEventCategory.id}
         actions={
-          <KraphProtocolStepTemplate.Actions
+          <KraphNaturalEventCategory.Actions
             object={data.naturalEventCategory.id}
           />
         }
@@ -381,7 +344,7 @@ export default asDetailQueryRoute(
           <MultiSidebar
             map={{
               Comments: (
-                <KraphProtocolStepTemplate.Komments
+                <KraphNaturalEventCategory.Komments
                   object={data.naturalEventCategory.id}
                 />
               ),
@@ -408,6 +371,7 @@ export default asDetailQueryRoute(
             )}
           </div>
         </div>
+
         <DragZone uploadFile={uploadFile} createFile={createFile} />
 
         <RoleDefinitionCreator

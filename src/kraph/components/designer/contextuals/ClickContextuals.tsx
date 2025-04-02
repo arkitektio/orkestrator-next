@@ -18,6 +18,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { ClickContextualParams, StagingNodeParams } from "../types";
 import { identifierToNodeAgeName, labelToNodeAgeName } from "../utils";
+import CreateEntityCategoryForm from "@/kraph/forms/CreateEntityCategoryForm";
 
 const search = async ({ search, values }: SearchOptions) => {
   const models = smartRegistry
@@ -132,27 +133,8 @@ export const ClickContextual = (props: {
 }) => {
   const [search, setSearch] = useState(undefined);
 
-  const onSubmit = (
-    data: CreateStructureCategoryMutationVariables["input"],
-  ) => {
-    props.addStagingNode({
-      data: data,
-      ageName: identifierToNodeAgeName(data.identifier),
-      type: "stagingstructure",
-      event: props.params.event,
-    });
-  };
+  
 
-  const onSubmitGeneric = (
-    data: CreateEntityCategoryMutationVariables["input"],
-  ) => {
-    props.addStagingNode({
-      data: data,
-      ageName: labelToNodeAgeName(data.label),
-      type: "staginggeneric",
-      event: props.params.event,
-    });
-  };
 
   return (
     <ContextualContainer
@@ -173,7 +155,7 @@ export const ClickContextual = (props: {
               Structure
             </Button>
           }
-          onSubmit={onSubmit}
+          onSubmit={props.onCancel}
           onError={props.onCancel}
         >
           <StructureForm
@@ -192,13 +174,15 @@ export const ClickContextual = (props: {
               Entitiy
             </Button>
           }
-          onSubmit={onSubmitGeneric}
+          onSubmit={props.onCancel}
           onError={props.onCancel}
         >
-          <GenericForm
-            graph={props.graph}
-            addStagingNode={props.addStagingNode}
-            params={props.params}
+          <CreateEntityCategoryForm
+            graph={props.graph.id}
+            positionX={props.params.position.x}
+            positionY={props.params.position.y}
+            width={200}
+            height={100}
           />
         </FormDialog>
       </div>

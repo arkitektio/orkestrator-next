@@ -2,14 +2,13 @@ import { ListRender } from "@/components/layout/ListRender";
 import { KraphReagentCategory } from "@/linkers";
 import {
   OffsetPaginationInput,
-  OntologyFilter,
+  ProtocolEventCategoryFilter,
   useListProtocolEventCategoriesQuery
 } from "../../api/graphql";
-import ReagentCategoryCard from "../cards/ReagentCategoryCard";
 import ProtocolEventCategoryCard from "../cards/ProtocolEventCategoryCard";
 
 export type Props = {
-  filters?: OntologyFilter;
+  filters?: ProtocolEventCategoryFilter;
   pagination?: OffsetPaginationInput;
 };
 

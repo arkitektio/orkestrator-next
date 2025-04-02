@@ -9,3 +9,8 @@ mutation UpdateStructureCategory($input: UpdateStructureCategoryInput!) {
     ...StructureCategory
   }
 }
+
+
+mutation DeleteStructureCategory($id: ID!) {
+  deleteStructureCategory(input: { id: $id })
+}

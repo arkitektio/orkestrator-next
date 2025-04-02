@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import {
   KraphNaturalEventCategory,
+  KraphProtocolEventCategory,
   KraphProtocolStepTemplate,
 } from "@/linkers";
 import { editor } from "@/plate/plugins";
@@ -656,11 +657,11 @@ export default asDetailQueryRoute(
     };
 
     return (
-      <KraphNaturalEventCategory.ModelPage
+      <KraphProtocolEventCategory.ModelPage
         title={data?.protocolEventCategory?.label}
         object={data.protocolEventCategory.id}
         actions={
-          <KraphProtocolStepTemplate.Actions
+          <KraphProtocolEventCategory.Actions
             object={data.protocolEventCategory.id}
           />
         }
@@ -701,7 +702,7 @@ export default asDetailQueryRoute(
         <RoleDefinitionCreator
           protocolEventCategory={data.protocolEventCategory}
         />
-      </KraphNaturalEventCategory.ModelPage>
+      </KraphProtocolEventCategory.ModelPage>
     );
   },
 );

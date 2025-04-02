@@ -2453,6 +2453,18 @@
             "deprecationReason": null
           },
           {
+            "name": "height",
+            "description": "An optional height for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "image",
             "description": "An optional image associated with this expression",
             "type": {
@@ -2486,6 +2498,30 @@
             "type": {
               "kind": "SCALAR",
               "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "positionX",
+            "description": "An optional x position for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "positionY",
+            "description": "An optional y position for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
               "ofType": null
             },
             "defaultValue": "null",
@@ -2531,6 +2567,18 @@
                   "ofType": null
                 }
               }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "width",
+            "description": "An optional width for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -6544,6 +6592,18 @@
             "deprecationReason": null
           },
           {
+            "name": "height",
+            "description": "An optional height for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "image",
             "description": "An optional image associated with this expression",
             "type": {
@@ -6593,6 +6653,30 @@
             "type": {
               "kind": "SCALAR",
               "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "positionX",
+            "description": "An optional x position for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "positionY",
+            "description": "An optional y position for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
               "ofType": null
             },
             "defaultValue": "null",
@@ -6654,6 +6738,18 @@
                   "ofType": null
                 }
               }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "width",
+            "description": "An optional width for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -9429,6 +9525,18 @@
             "deprecationReason": null
           },
           {
+            "name": "height",
+            "description": "An optional height for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "image",
             "description": "An optional image associated with this expression",
             "type": {
@@ -9483,6 +9591,30 @@
                   "ofType": null
                 }
               }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "positionX",
+            "description": "An optional x position for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "positionY",
+            "description": "An optional y position for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -9593,6 +9725,18 @@
               }
             },
             "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "width",
+            "description": "An optional width for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -12567,6 +12711,18 @@
             "deprecationReason": null
           },
           {
+            "name": "height",
+            "description": "An optional height for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "image",
             "description": "An optional image associated with this expression",
             "type": {
@@ -12621,6 +12777,30 @@
                   "ofType": null
                 }
               }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "positionX",
+            "description": "An optional x position for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "positionY",
+            "description": "An optional y position for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -12765,6 +12945,18 @@
                   "ofType": null
                 }
               }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "width",
+            "description": "An optional width for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -16103,6 +16295,18 @@
             "deprecationReason": null
           },
           {
+            "name": "height",
+            "description": "An optional height for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "image",
             "description": "An optional image associated with this expression",
             "type": {
@@ -16136,6 +16340,30 @@
             "type": {
               "kind": "SCALAR",
               "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "positionX",
+            "description": "An optional x position for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "positionY",
+            "description": "An optional y position for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
               "ofType": null
             },
             "defaultValue": "null",
@@ -16181,6 +16409,18 @@
                   "ofType": null
                 }
               }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "width",
+            "description": "An optional width for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -19914,6 +20154,18 @@
             "deprecationReason": null
           },
           {
+            "name": "height",
+            "description": "An optional height for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "id",
             "description": "The ID of the expression to update",
             "type": {
@@ -19966,6 +20218,30 @@
             "deprecationReason": null
           },
           {
+            "name": "positionX",
+            "description": "An optional x position for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "positionY",
+            "description": "An optional y position for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "purl",
             "description": "New permanent URL for the expression",
             "type": {
@@ -19992,6 +20268,18 @@
                   "ofType": null
                 }
               }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "width",
+            "description": "An optional width for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -20234,6 +20522,18 @@
             "deprecationReason": null
           },
           {
+            "name": "height",
+            "description": "An optional height for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "image",
             "description": "An optional image associated with this expression",
             "type": {
@@ -20270,6 +20570,30 @@
             "deprecationReason": null
           },
           {
+            "name": "positionX",
+            "description": "An optional x position for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "positionY",
+            "description": "An optional y position for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "purl",
             "description": "Permanent URL identifier for the expression",
             "type": {
@@ -20296,6 +20620,18 @@
                   "ofType": null
                 }
               }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "width",
+            "description": "An optional width for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -20339,6 +20675,18 @@
             "type": {
               "kind": "SCALAR",
               "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "height",
+            "description": "An optional height for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
               "ofType": null
             },
             "defaultValue": "null",
@@ -20412,6 +20760,30 @@
                   "ofType": null
                 }
               }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "positionX",
+            "description": "An optional x position for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "positionY",
+            "description": "An optional y position for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -20500,6 +20872,18 @@
             "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
+          },
+          {
+            "name": "width",
+            "description": "An optional width for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
           }
         ],
         "interfaces": null,
@@ -20539,6 +20923,18 @@
             "type": {
               "kind": "SCALAR",
               "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "height",
+            "description": "An optional height for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
               "ofType": null
             },
             "defaultValue": "null",
@@ -20612,6 +21008,30 @@
                   "ofType": null
                 }
               }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "positionX",
+            "description": "An optional x position for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "positionY",
+            "description": "An optional y position for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -20748,6 +21168,18 @@
             "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
+          },
+          {
+            "name": "width",
+            "description": "An optional width for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
           }
         ],
         "interfaces": null,
@@ -20763,7 +21195,7 @@
         "inputFields": [
           {
             "name": "color",
-            "description": "New RGBA color values as list of 3 or 4 integers",
+            "description": "RGBA color values as list of 3 or 4 integers",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -20783,10 +21215,22 @@
           },
           {
             "name": "description",
-            "description": "New description for the expression",
+            "description": "A detailed description of the expression",
             "type": {
               "kind": "SCALAR",
               "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "height",
+            "description": "An optional height for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
               "ofType": null
             },
             "defaultValue": "null",
@@ -20811,22 +21255,10 @@
           },
           {
             "name": "image",
-            "description": "New image ID for the expression",
+            "description": "An optional image associated with this expression",
             "type": {
               "kind": "SCALAR",
               "name": "ID",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "label",
-            "description": "New label for the generic category",
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
               "ofType": null
             },
             "defaultValue": "null",
@@ -20846,8 +21278,32 @@
             "deprecationReason": null
           },
           {
+            "name": "positionX",
+            "description": "An optional x position for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "positionY",
+            "description": "An optional y position for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "purl",
-            "description": "New permanent URL for the expression",
+            "description": "Permanent URL identifier for the expression",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -20872,6 +21328,18 @@
                   "ofType": null
                 }
               }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "width",
+            "description": "An optional width for the ontology node",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Float",
+              "ofType": null
             },
             "defaultValue": "null",
             "isDeprecated": false,

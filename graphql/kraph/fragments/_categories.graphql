@@ -8,6 +8,9 @@ fragment BaseCategory on BaseCategory {
     value
   }
   purl
+  relevantQueries {
+    ...ListGraphQuery
+  }
 }
 
 fragment BaseNodeCategory on NodeCategory {

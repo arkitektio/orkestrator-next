@@ -4,7 +4,7 @@ import { Image } from "@/components/ui/image";
 import { DragZone } from "@/components/upload/drag";
 import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { KraphEntityCategory } from "@/linkers";
+import { KraphEntityCategory, KraphGraphQuery } from "@/linkers";
 import { useNavigate } from "react-router-dom";
 import {
   useCreateEntityMutation,
@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
 import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import UpdateEntityCategoryForm from "../forms/UpdateEntityCategoryForm";
+import { Card } from "@/components/ui/card";
 
 export default asDetailQueryRoute(
   useGetEntityCategoryQuery,
@@ -128,6 +129,16 @@ export default asDetailQueryRoute(
           </div>
         </div>
         <DragZone uploadFile={uploadFile} createFile={createFile} />
+
+        <div className="flex flex-row p-6">
+          {data.entityCategory.relevantQueries.map((query) => (
+            <Card key={query.id} className="p-2 m-2 flex-row gap-2 flex">
+              <KraphGraphQuery.DetailLink object={query.id} className="w-full">
+                {query.name}
+              </KraphGraphQuery.DetailLink>
+            </Card>
+          ))}
+        </div>
 
         <div className="flex flex-col p-6 h-full">
           {data.entityCategory.bestQuery ? (

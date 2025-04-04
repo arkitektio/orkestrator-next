@@ -11,6 +11,9 @@ fragment BaseCategory on BaseCategory {
   relevantQueries {
     ...ListGraphQuery
   }
+  relevantNodeQueries {
+    ...ListNodeQuery
+  }
 }
 
 fragment BaseNodeCategory on NodeCategory {

@@ -30,3 +30,9 @@ query ListNodeQueries(
     ...ListNodeQuery
   }
 }
+
+query GetNodeView($query: ID!, $nodeId: ID!) {
+  nodeView(query: $query, nodeId: $nodeId) {
+    ...NodeQueryView
+  }
+}

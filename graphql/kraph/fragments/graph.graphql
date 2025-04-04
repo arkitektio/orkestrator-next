@@ -32,6 +32,7 @@ fragment Graph on Graph {
   latestNodes(pagination: { limit: 2 }) {
     ...Node
   }
+  pinned
 }
 
 fragment ListGraph on Graph {

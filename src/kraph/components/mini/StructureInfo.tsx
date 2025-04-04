@@ -63,8 +63,7 @@ export const StructureViewWidget = (props: StructureViewWidgetProps) => {
 
           {data.structureByIdentifier.bestView && (
             <SelectiveNodeViewRenderer
-              render={data.structureByIdentifier.bestView}
-              nodeId={props.identifier}
+              view={data.structureByIdentifier.bestView}
             />
           )}
         </div>

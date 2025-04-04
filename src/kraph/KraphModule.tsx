@@ -32,6 +32,10 @@ import RelationCategoryPage from "./pages/RelationCategoryPage";
 import MeasurementCategoriesPage from "./pages/MeasurementCategoriesPage";
 import MeasurementCategoryPage from "./pages/MeasurementCategoryPage";
 import NaturalEventCategoriesPage from "./pages/NaturalEventCategoriesPage";
+import NodeQueryPage from "./pages/NodeQueryPage";
+import NodeViewPage from "./pages/NodeViewPage";
+import StructurePage from "./pages/StructurePage";
+import ProtocolEventPage from "./pages/ProtocolEventPage";
 interface Props {}
 
 export const KraphModule: React.FC<Props> = (props) => {
@@ -43,9 +47,17 @@ export const KraphModule: React.FC<Props> = (props) => {
           <Route path="expressions/:id" element={<ExpressionPage />} />
           <Route path="nodes/:id" element={<NodePage />} />
           <Route path="entities/:id" element={<EntityPage />} />
+          <Route path="structures/:id" element={<StructurePage />} />
+          <Route path="protocolevents/:id" element={<ProtocolEventPage />} />
           <Route path="graphs" element={<GraphsPage />} />
           <Route path="graphs/:id" element={<GraphPage />} />
           <Route path="graphqueries/:id" element={<GraphQueryPage />} />
+          <Route path="nodequeries/:id" element={<NodeQueryPage />} />
+          <Route
+            path="nodequeries/:id/view/:nodeid"
+            element={<NodeViewPage />}
+          />
+
           <Route path="reagentcategories" element={<ReagentCategoriesPage />} />
           <Route path="entitycategories" element={<EntityCategoriesPage />} />
           <Route

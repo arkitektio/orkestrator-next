@@ -3,7 +3,7 @@ import {
   useGetGraphQuery,
   useGetGraphQueryQuery,
 } from "@/kraph/api/graphql";
-import { PathGraph } from "./graph/KnowledgeGraph";
+import { PathGraph } from "./graph/PathGraph";
 import { GraphTable } from "./table/GraphTable";
 
 export const SelectiveGraphQueryRenderer = (props: {

@@ -22,6 +22,7 @@
       "StructureCategoryDefinition"
     ],
     "Edge": [
+      "Description",
       "Measurement",
       "Participant",
       "Relation"

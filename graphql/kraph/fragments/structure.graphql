@@ -1,7 +1,13 @@
 fragment Structure on Structure {
+  ...BaseNode
   id
   object
   identifier
+  category {
+    id
+    identifier
+    description
+  }
 }
 
 fragment ListStructure on Structure {
@@ -12,7 +18,18 @@ fragment ListStructure on Structure {
   }
 }
 
+fragment PathStructure on Structure {
+  ...ListStructure
+  category {
+    identifier
+    store {
+      presignedUrl
+    }
+  }
+}
+
 fragment InformedStructure on Structure {
+  ...BaseNode
   id
   category {
     id
@@ -21,10 +38,5 @@ fragment InformedStructure on Structure {
   graph {
     id
     name
-  }
-  bestView {
-    ...Table
-    ...Pairs
-    ...Path
   }
 }

@@ -1,6 +1,6 @@
 fragment Path on Path {
   nodes {
-    ...Node
+    ...PathNode
   }
   edges {
     ...Edge

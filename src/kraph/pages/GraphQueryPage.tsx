@@ -9,7 +9,7 @@ import {
 } from "@/linkers";
 import { useGetGraphQueryQuery } from "../api/graphql";
 
-import { PathGraph } from "../components/renderers/graph/KnowledgeGraph";
+import { PathGraph } from "../components/renderers/graph/PathGraph";
 import { GraphTable } from "../components/renderers/table/GraphTable";
 
 import ScatterPlot from "../components/charts/scatterplot/ScatterPlot";

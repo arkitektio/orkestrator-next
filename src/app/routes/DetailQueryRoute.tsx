@@ -74,10 +74,10 @@ export const asDetailQueryRoute = <T extends any>(
     queryOptions?: QueryHookOptions<T, DetailVariables>;
   } = { fallback: <></> },
 ) => {
-  return () => {
+  return ({ direct }: { direct?: any | undefined }) => {
     const { debug } = useDebug();
     const { id } = useParams<{ id: string }>();
-    if (!id) {
+    if (!id && direct == undefined) {
       if (options.fallback) {
         return options.fallback;
       } else {
@@ -85,29 +85,25 @@ export const asDetailQueryRoute = <T extends any>(
       }
     }
 
-    const { data, error, refetch, loading, subscribeToMore } = hook({
-      variables: { id: id },
-      ...options.queryOptions,
-    });
+    const passyProps =
+      direct ||
+      hook({
+        variables: { id: id },
+        ...options.queryOptions,
+      });
 
-    if (error) {
-      return <ErrorPage error={error} />;
+    if (passyProps.error) {
+      return <ErrorPage error={passyProps.error} />;
     }
 
-    if (loading) return <LoadingPage />;
+    if (passyProps.loading) return <LoadingPage />;
 
-    if (data) {
+    if (passyProps) {
       if (debug) {
-        return <DebugPage data={data} />;
+        return <DebugPage data={passyProps.data} />;
       }
 
-      return (
-        <Component
-          data={data}
-          refetch={refetch}
-          subscribeToMore={subscribeToMore}
-        />
-      );
+      return <Component {...passyProps} />;
     }
   };
 };

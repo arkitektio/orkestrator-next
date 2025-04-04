@@ -10,7 +10,8 @@ mutation UpdateStructureCategory($input: UpdateStructureCategoryInput!) {
   }
 }
 
-
 mutation DeleteStructureCategory($id: ID!) {
   deleteStructureCategory(input: { id: $id })
 }
+
+# Compare this snippet from graphql/kraph/mutations/structure_category.graphql:

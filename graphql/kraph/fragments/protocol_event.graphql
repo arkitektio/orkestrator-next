@@ -1,0 +1,30 @@
+fragment ProtocolEvent on ProtocolEvent {
+  ...BaseNode
+  id
+  validFrom
+  validTo
+  category {
+    id
+    label
+  }
+}
+
+fragment ListProtocolEvent on ProtocolEvent {
+  id
+  validFrom
+  validTo
+  category {
+    label
+    id
+  }
+}
+
+fragment PathProtocolEvent on ProtocolEvent {
+  ...ListProtocolEvent
+  category {
+    label
+    store {
+      presignedUrl
+    }
+  }
+}

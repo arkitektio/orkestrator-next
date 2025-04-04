@@ -28,6 +28,15 @@ query GetInformedStructure(
   }
 }
 
+query GetActiveGraphStructures(
+  $identifier: StructureIdentifier!
+  $object: ID!
+) {
+  activeGraphStructuresForIdentifier(identifier: $identifier, object: $object) {
+    ...InformedStructure
+  }
+}
+
 query ListStructures(
   $filters: StructureFilter
   $pagination: GraphPaginationInput

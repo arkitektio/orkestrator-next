@@ -12,3 +12,15 @@ fragment ListMetric on Metric {
   value
   label
 }
+
+fragment PathMetric on Metric {
+  ...ListMetric
+  category {
+    id
+    label
+    store {
+      presignedUrl
+    }
+  }
+  value
+}

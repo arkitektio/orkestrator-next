@@ -72,6 +72,13 @@ export const NavigationPane = (props: {}) => {
             Meshes
           </DroppableNavLink>
           <DroppableNavLink
+            to="/mikro/rois"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <CubeIcon className="h-4 w-4" />
+            Rois
+          </DroppableNavLink>
+          <DroppableNavLink
             to="/mikro/datasets"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >

@@ -10,6 +10,9 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Guard } from "@/arkitekt/Arkitekt";
+import { FormDialog } from "@/components/dialog/FormDialog";
+import { Button } from "@/components/ui/button";
+import AddMeasurementForm from "../forms/AddMeasurementForm";
 
 export const ProtectedTinyStructureBox = (props: {
   identifier: string;
@@ -22,16 +25,12 @@ export const ProtectedTinyStructureBox = (props: {
     },
   });
 
-  if (error) {
-    return <div>{JSON.stringify(error)}</div>;
-  }
-  if (!data) return <div>Loading...</div>;
 
   return (
     <Carousel className="w-full dark:text-white">
       <CarouselPrevious />
       <CarouselContent>
-        {data.activeGraphStructuresForIdentifier.map((structure) => (
+        {data?.activeGraphStructuresForIdentifier.map((structure) => (
           <CarouselItem key={structure.id}>
             <Card className="p-3 h-64">
               <h3 className="text-scroll font-semibold text-xs">
@@ -45,10 +44,23 @@ export const ProtectedTinyStructureBox = (props: {
             </Card>
           </CarouselItem>
         ))}
-        {data.activeGraphStructuresForIdentifier.length == 0 && (
+        {data?.activeGraphStructuresForIdentifier.length == 0 && (
           <CarouselItem>
-            <Card className="p-3">
-              This identifier has no active graph structures. Create one now
+            <Card className="p-3 flex flex-col gap-2">
+              <h3 className="text-scroll font-semibold text-xs">
+              This identifier has no active graph structures. 
+              </h3>
+              <FormDialog trigger={
+                <Button onClick={() => {}} variant="outline" className="w-full">
+                  Add Measurement
+                  </Button>
+              }>
+              <AddMeasurementForm
+                identifier={props.identifier}
+                object={props.object}
+                />
+              </FormDialog>
+              
             </Card>
           </CarouselItem>
         )}

@@ -7,6 +7,7 @@ import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { MikroFile, MikroImage } from "@/linkers";
 import { useGetFileQuery, usePinStageMutation } from "../api/graphql";
+import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 
 export default asDetailQueryRoute(useGetFileQuery, ({ data, refetch }) => {
   const [pinStage] = usePinStageMutation();
@@ -31,7 +32,7 @@ export default asDetailQueryRoute(useGetFileQuery, ({ data, refetch }) => {
       title={data.file.name}
       sidebars={
         <MultiSidebar
-          map={{ Comments: <MikroFile.Komments object={data.file.id} /> }}
+          map={{ Comments: <MikroFile.Komments object={data.file.id} />, Provenance: <ProvenanceSidebar items={data?.file.history} />, }}
         />
       }
       pageActions={

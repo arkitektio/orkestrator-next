@@ -1,19 +1,11 @@
-import { Badge } from "@/components/ui/badge";
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  KraphNode,
   MikroFile,
-  MikroFileView,
-  KraphProtocolStep,
-  MikroROI,
-  MikroROIView,
-  MikroSpecimenView,
+  MikroFileView
 } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
 import {
-  FileViewFragment,
-  RoiViewFragment,
-  SpecimenViewFragment,
+  FileViewFragment
 } from "../../api/graphql";
 import { ViewCard } from "./meta/ViewCard";
 
@@ -29,7 +21,7 @@ const TheCard = ({ view, mates }: Props) => {
         <CardHeader>
           <CardTitle className="flex flex-col">
             <p className="font-bold text-md font-light mb-1">Created from</p>
-            <p className="font-bold text-xs">
+            <p className="font-bold text-xs truncate">
               {view.file && (
                 <MikroFile.DetailLink object={view.file?.id}>
                   {view.file?.name}

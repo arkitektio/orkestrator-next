@@ -14,6 +14,9 @@ fragment File on File {
       ...ListImage
     }
   }
+  history(pagination: { limit: 3 }) {
+    ...History
+  }
 }
 
 fragment ListFile on File {

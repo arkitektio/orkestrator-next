@@ -4,8 +4,8 @@ query GetROI($id: ID!) {
   }
 }
 
-query GetROIs($filters: ROIFilter, $pagination: OffsetPaginationInput) {
-  rois(filters: $filters, pagination: $pagination) {
+query GetROIs($filters: ROIFilter, $pagination: OffsetPaginationInput, $order: ROIOrder) {
+  rois(filters: $filters, pagination: $pagination, order: $order) {
     ...ListROI
   }
 }

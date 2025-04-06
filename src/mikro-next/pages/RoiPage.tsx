@@ -66,6 +66,10 @@ export default asDetailQueryRoute(useGetRoiQuery, ({ data, refetch }) => {
               <div className="text-md mt-2 ">
                 <Timestamp date={data?.roi?.createdAt} />
               </div>
+              <div className="font-light my-2 ">
+                    Knowledge{" "}
+                  </div>
+                  <MikroROI.TinyKnowledge object={data?.roi?.id} />
               <div className="font-light mt-2 ">Created by</div>
               <div className="text-md mt-2 ">
                 {data?.roi?.creator?.sub && (

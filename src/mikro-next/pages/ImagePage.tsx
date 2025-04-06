@@ -163,11 +163,6 @@ export default asDetailQueryRoute(
                   ))}
                 </div>
               ),
-              Knowledge: (
-                <>
-                  <MikroImage.Knowledge object={data?.image?.id} />
-                </>
-              ),
             }}
           />
         }
@@ -256,7 +251,7 @@ export default asDetailQueryRoute(
                       <UserInfo sub={data?.image?.creator?.sub} />
                     )}
                   </div>
-                  <div className="font-light mt-2 font-semibold ">
+                  <div className="font-light my-2 ">
                     Knowledge{" "}
                   </div>
                   <MikroImage.TinyKnowledge object={data?.image?.id} />

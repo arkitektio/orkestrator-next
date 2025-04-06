@@ -709,11 +709,18 @@ export type ExperimentFilter = {
 
 export type File = {
   __typename?: 'File';
+  /** History of changes to this image */
+  history: Array<History>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   origins: Array<Image>;
   store: BigFileStore;
   views: Array<FileView>;
+};
+
+
+export type FileHistoryArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -2924,6 +2931,7 @@ export type QueryRoiArgs = {
 
 export type QueryRoisArgs = {
   filters?: InputMaybe<RoiFilter>;
+  order?: InputMaybe<RoiOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -3150,6 +3158,10 @@ export type RoiFilter = {
   image?: InputMaybe<Scalars['ID']['input']>;
   kind?: InputMaybe<RoiKindChoices>;
   search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type RoiOrder = {
+  createdAt?: InputMaybe<Ordering>;
 };
 
 export type RoiView = View & {
@@ -4039,7 +4051,7 @@ export type ListDatasetFragment = { __typename?: 'Dataset', id: string, name: st
 
 export type EraFragment = { __typename?: 'Era', id: string, begin?: any | null, name: string };
 
-export type FileFragment = { __typename?: 'File', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null } }> };
+export type FileFragment = { __typename?: 'File', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null } }>, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> };
 
 export type ListFileFragment = { __typename?: 'File', id: string, name: string };
 
@@ -4334,7 +4346,7 @@ export type From_File_LikeMutationVariables = Exact<{
 }>;
 
 
-export type From_File_LikeMutation = { __typename?: 'Mutation', fromFileLike: { __typename?: 'File', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null } }> } };
+export type From_File_LikeMutation = { __typename?: 'Mutation', fromFileLike: { __typename?: 'File', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null } }>, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
 
 export type RequestFileUploadMutationVariables = Exact<{
   key: Scalars['String']['input'];
@@ -4650,7 +4662,7 @@ export type GetFileQueryVariables = Exact<{
 }>;
 
 
-export type GetFileQuery = { __typename?: 'Query', file: { __typename?: 'File', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null } }> } };
+export type GetFileQuery = { __typename?: 'Query', file: { __typename?: 'File', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null } }>, history: Array<{ __typename?: 'History', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, app?: { __typename?: 'App', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
 
 export type GetFilesQueryVariables = Exact<{
   filters?: InputMaybe<FileFilter>;
@@ -4810,6 +4822,7 @@ export type GetRoiQuery = { __typename?: 'Query', roi: { __typename?: 'ROI', id:
 export type GetRoIsQueryVariables = Exact<{
   filters?: InputMaybe<RoiFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+  order?: InputMaybe<RoiOrder>;
 }>;
 
 
@@ -5021,9 +5034,13 @@ export const FileFragmentDoc = gql`
       ...ListImage
     }
   }
+  history(pagination: {limit: 3}) {
+    ...History
+  }
 }
     ${BigFileStoreFragmentDoc}
-${ListImageFragmentDoc}`;
+${ListImageFragmentDoc}
+${HistoryFragmentDoc}`;
 export const InstrumentFragmentDoc = gql`
     fragment Instrument on Instrument {
   model
@@ -8430,8 +8447,8 @@ export type GetRoiQueryHookResult = ReturnType<typeof useGetRoiQuery>;
 export type GetRoiLazyQueryHookResult = ReturnType<typeof useGetRoiLazyQuery>;
 export type GetRoiQueryResult = Apollo.QueryResult<GetRoiQuery, GetRoiQueryVariables>;
 export const GetRoIsDocument = gql`
-    query GetROIs($filters: ROIFilter, $pagination: OffsetPaginationInput) {
-  rois(filters: $filters, pagination: $pagination) {
+    query GetROIs($filters: ROIFilter, $pagination: OffsetPaginationInput, $order: ROIOrder) {
+  rois(filters: $filters, pagination: $pagination, order: $order) {
     ...ListROI
   }
 }
@@ -8451,6 +8468,7 @@ export const GetRoIsDocument = gql`
  *   variables: {
  *      filters: // value for 'filters'
  *      pagination: // value for 'pagination'
+ *      order: // value for 'order'
  *   },
  * });
  */

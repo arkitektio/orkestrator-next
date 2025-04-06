@@ -158,6 +158,10 @@ export const KraphNaturalEvent = buildSmart(
   "kraph/naturalevents",
 );
 export const KraphEntity = buildSmart("@kraph/entity", "kraph/entities");
+export const KraphStructure = buildSmart(
+  "@kraph/structure",
+  "kraph/structures",
+);
 export const KraphMetric = buildSmart("@kraph/metric", "kraph/metrics");
 export const KraphGraph = buildSmart("@kraph/graph", "kraph/graphs");
 export const KraphGraphView = buildSmart(
@@ -177,7 +181,7 @@ export const KraphScatterPlot = buildSmart(
 );
 export const KraphNodeQuery = buildSmart(
   "@kraph/nodequery",
-  "kraph/ndoequeries",
+  "kraph/nodequeries",
 );
 
 export const MikroExperiment = buildSmart(

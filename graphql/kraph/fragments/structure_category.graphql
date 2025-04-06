@@ -11,6 +11,10 @@ fragment StructureCategory on StructureCategory {
   store {
     presignedUrl
   }
+  bestQuery {
+    ...GraphQuery
+  }
+  pinned
 }
 
 fragment ListStructureCategory on StructureCategory {

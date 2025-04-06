@@ -23,6 +23,7 @@ import {
 import { SearchFunction, smartRegistry } from "./registry";
 import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
 import { SmartDropZone } from "./Drop";
+import { TinyStructureBox } from "@/kraph/boxes/TinyStructureBox";
 
 const buildBaseLink = (to: string) => {
   return ({ children, ...props }: BaseLinkProps) => {
@@ -35,11 +36,11 @@ const buildBaseLink = (to: string) => {
 };
 
 const buildModelLink = (to: string) => {
-  return ({ children, subroute, ...props }: ModelLinkProps) => {
+  return ({ children, subroute, subobject, ...props }: ModelLinkProps) => {
     return (
       <NavLink
         {...props}
-        to={`/${to}/${props.object}/${subroute || ""}`}
+        to={`/${to}/${props.object}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}`}
         title="Open"
         className={props.className}
       >
@@ -100,6 +101,12 @@ const buildKomments = (model: Identifier) => {
 const buildKnowledge = (model: Identifier) => {
   return ({ ...props }: ObjectProps) => {
     return <KnowledgeSidebar identifier={model} object={props.object} />;
+  };
+};
+
+const buildTinyKnowledge = (model: Identifier) => {
+  return ({ ...props }: ObjectProps) => {
+    return <TinyStructureBox identifier={model} object={props.object} />;
   };
 };
 
@@ -173,6 +180,7 @@ export const buildSmart = (
     Actions: buildSelfActions(model),
     Komments: buildKomments(model),
     Knowledge: buildKnowledge(model),
+    TinyKnowledge: buildTinyKnowledge(model),
     identifier: model,
     ModelPage: buildModelPage(model),
     useNodes: () => buildUseNodesQuery(model),

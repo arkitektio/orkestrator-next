@@ -1,12 +1,10 @@
-import { ListRoiFragment, RoiKind } from "@/mikro-next/api/graphql";
-import { PassThroughProps } from "../TwoDThree";
-import { useRef, useState } from "react";
-import { useThree } from "@react-three/fiber";
-import * as THREE from "three";
-import { useCallback } from "react";
 import { MikroROI } from "@/linkers";
+import { ListRoiFragment, RoiKind } from "@/mikro-next/api/graphql";
 import { useCursor } from "@react-three/drei";
-import { Rectangle } from "recharts";
+import { useThree } from "@react-three/fiber";
+import { useCallback, useRef, useState } from "react";
+import * as THREE from "three";
+import { PassThroughProps } from "../TwoDThree";
 
 const convertToThreeJSCoords = (
   vertices: [number, number, number, number, number][],
@@ -41,6 +39,8 @@ export const ROIPolygon = (
     props.imageWidth,
     props.imageHeight,
   );
+
+  if (!vertices.at(0)) return null;
 
   // Create shape from vertices
   const shape = new THREE.Shape();

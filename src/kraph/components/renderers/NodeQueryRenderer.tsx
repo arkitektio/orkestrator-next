@@ -1,10 +1,11 @@
 import {
   NodeQueryFragment,
+  NodeQueryViewFragment,
   PathFragment,
   RenderNodeQueryQuery,
   useRenderNodeQueryQuery,
 } from "@/kraph/api/graphql";
-import { PathGraph } from "./graph/KnowledgeGraph";
+import { PathGraph } from "./graph/PathGraph";
 import { GraphTable } from "./table/GraphTable";
 
 export const PathRenderer = (props: { path: PathFragment }) => {
@@ -18,48 +19,19 @@ export const PathRenderer = (props: { path: PathFragment }) => {
 };
 
 export const SelectiveNodeViewRenderer = (props: {
-  render: RenderNodeQueryQuery["renderNodeQuery"];
-  nodeId: string;
+  view: NodeQueryViewFragment;
 }) => {
-  if (props.render.__typename === "Pairs") {
+  if (props.view.render.__typename === "Pairs") {
     return <div>Pair Rendering</div>;
   }
 
-  if (props.render.__typename === "Path") {
-    return <PathGraph path={props.render} root={props.nodeId} />;
+  if (props.view.render.__typename === "Path") {
+    return <PathGraph path={props.view.render} />;
   }
 
-  if (props.render.__typename === "Table") {
-    return <GraphTable table={props.render} />;
+  if (props.view.render.__typename === "Table") {
+    return <GraphTable table={props.view.render} />;
   }
 
   return <div>Unknown Type</div>;
-};
-
-export const NodeViewRenderer = (props: {
-  query: NodeQueryFragment;
-  nodeId: string;
-}) => {
-  const { data, error } = useRenderNodeQueryQuery({
-    variables: {
-      id: props.query.id,
-      nodeId: props.nodeId,
-    },
-  });
-
-  if (error) {
-    return <div>{JSON.stringify(error)}</div>;
-  }
-
-  if (!data) {
-    return <div>Loading...</div>;
-  }
-
-  if (data.renderNodeQuery.__typename === "Pairs") {
-    return <div>Pair Rendering</div>;
-  }
-
-  if (data.renderNodeQuery.__typename === "Path") {
-    return <PathGraph path={data.renderNodeQuery} root={props.nodeId} />;
-  }
 };

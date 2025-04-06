@@ -45,6 +45,7 @@ import { AddImageViewForm } from "../forms/AddImageViewForm";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
 import HistogramViewCard from "../components/cards/HistogramViewCard";
 import { create } from "handlebars";
+import { TinyStructureBox } from "@/kraph/boxes/TinyStructureBox";
 
 export type IRepresentationScreenProps = {};
 
@@ -249,11 +250,18 @@ export default asDetailQueryRoute(
                     <Timestamp
                       date={data?.image?.createdAt}
                       className="my-auto"
-                    />
+                    />{" "}
+                    <div className="my-auto">by</div>
                     {data?.image?.creator?.sub && (
                       <UserInfo sub={data?.image?.creator?.sub} />
                     )}
                   </div>
+                  <div className="font-light mt-2 font-semibold ">
+                    Knowledge{" "}
+                  </div>
+                  <MikroImage.TinyKnowledge object={data?.image?.id} />
+
+                  <div className="flex-row flex gap-2 mt-2"></div>
 
                   <div className="font-light mb-2">Views</div>
 

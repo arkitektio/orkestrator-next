@@ -4,7 +4,11 @@ import { Image } from "@/components/ui/image";
 import { DragZone } from "@/components/upload/drag";
 import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { KraphEntityCategory } from "@/linkers";
+import {
+  KraphEntityCategory,
+  KraphGraphQuery,
+  KraphNodeQuery,
+} from "@/linkers";
 import { useNavigate } from "react-router-dom";
 import {
   useCreateEntityMutation,
@@ -16,6 +20,8 @@ import { Button } from "@/components/ui/button";
 import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
 import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import UpdateEntityCategoryForm from "../forms/UpdateEntityCategoryForm";
+import { Card } from "@/components/ui/card";
+import { StructureQueriesPlanner } from "../components/StructureQueriesPlanner";
 
 export default asDetailQueryRoute(
   useGetEntityCategoryQuery,
@@ -128,6 +134,8 @@ export default asDetailQueryRoute(
           </div>
         </div>
         <DragZone uploadFile={uploadFile} createFile={createFile} />
+
+        <StructureQueriesPlanner category={data.entityCategory} />
 
         <div className="flex flex-col p-6 h-full">
           {data.entityCategory.bestQuery ? (

@@ -26,6 +26,7 @@ import {
   KraphProtocolEventCategory,
   KraphReagentCategory,
   KraphRelationCategory,
+  KraphStructureCategory,
 } from "@/linkers";
 import { PiGif, PiNumberCircleEight } from "react-icons/pi";
 import { BsRecord } from "react-icons/bs";
@@ -147,13 +148,13 @@ export const NavigationPane = (props: {}) => {
             </div>
             {data.structureCategories.map((i) => (
               <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
-                <KraphEntityCategory.DetailLink
+                <KraphStructureCategory.DetailLink
                   object={i.id}
                   className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
                 >
                   <SparkleIcon className="h-4 w-4" />
                   {i.identifier}
-                </KraphEntityCategory.DetailLink>
+                </KraphStructureCategory.DetailLink>
               </div>
             ))}
           </>

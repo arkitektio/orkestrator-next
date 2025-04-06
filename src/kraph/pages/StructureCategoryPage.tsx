@@ -4,13 +4,25 @@ import { Image } from "@/components/ui/image";
 import { DragZone } from "@/components/upload/drag";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { useMediaUpload } from "@/datalayer/hooks/useUpload";
-import { KraphStructureCategory } from "@/linkers";
+import {
+  KraphGraphQuery,
+  KraphNodeQuery,
+  KraphStructureCategory,
+} from "@/linkers";
 import { useNavigate } from "react-router-dom";
 import {
   useGetStructureCategoryQuery,
   useUpdateStructureCategoryMutation,
 } from "../api/graphql";
 import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
+import { Button } from "@/components/ui/button";
+import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
+import UpdateStructureCategoryForm from "../forms/UpdateStructureCategoryForm";
+import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
+import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { StructureQueriesPlanner } from "../components/StructureQueriesPlanner";
 
 export default asDetailQueryRoute(
   useGetStructureCategoryQuery,
@@ -35,6 +47,18 @@ export default asDetailQueryRoute(
       }
     };
 
+    const pin = async () => {
+      await update({
+        variables: {
+          input: {
+            id: data.structureCategory.id,
+            pin: !data.structureCategory.pinned,
+          },
+        },
+      });
+      await refetch();
+    };
+
     const navigate = useNavigate();
 
     return (
@@ -54,7 +78,29 @@ export default asDetailQueryRoute(
         }
         pageActions={
           <div className="flex flex-row gap-2">
-            <></>
+            <Button
+              onClick={() => {
+                pin();
+              }}
+              className="w-full"
+              variant="outline"
+            >
+              {data.structureCategory.pinned ? "Unpin" : "Pin"}
+            </Button>
+            <FormDialog
+              trigger={<Button variant="outline">Create</Button>}
+              onSubmit={() => refetch()}
+            >
+              <CreateGraphQueryForm category={data.structureCategory} />
+            </FormDialog>
+            <FormSheet
+              trigger={<Button variant="outline">Edit</Button>}
+              onSubmit={() => refetch()}
+            >
+              <UpdateStructureCategoryForm
+                structureCategory={data.structureCategory}
+              />
+            </FormSheet>
           </div>
         }
       >
@@ -78,6 +124,28 @@ export default asDetailQueryRoute(
           </div>
         </div>
         <DragZone uploadFile={uploadFile} createFile={createFile} />
+
+        <StructureQueriesPlanner category={data.structureCategory} />
+
+        <div className="flex flex-col p-6 h-full">
+          {data.structureCategory.bestQuery ? (
+            <SelectiveGraphQueryRenderer
+              graphQuery={data.structureCategory.bestQuery}
+            />
+          ) : (
+            <div className="h-ful w-ull flex flex-col items-center justify-center">
+              <p className="text-sm font-light mb-3">
+                No Graph Query yet for this category
+              </p>
+              <FormDialog
+                trigger={<Button variant="outline">Create Query</Button>}
+                onSubmit={() => refetch()}
+              >
+                <CreateGraphQueryForm category={data.structureCategory} />
+              </FormDialog>
+            </div>
+          )}
+        </div>
       </KraphStructureCategory.ModelPage>
     );
   },

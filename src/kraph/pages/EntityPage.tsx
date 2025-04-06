@@ -106,14 +106,11 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
       </div>
       <div className="flex flex-col p-6 h-full">
         {data.entity.bestView ? (
-          <SelectiveNodeViewRenderer
-            render={data.entity.bestView}
-            nodeId={data.entity.id}
-          />
+          <SelectiveNodeViewRenderer view={data.entity.bestView} />
         ) : (
           <div className="h-ful w-ull flex flex-col items-center justify-center">
             <p className="text-sm font-light mb-3">
-              No Graph Query yet for this category
+              No Node Query yet for this category
             </p>
             <FormDialog
               trigger={<Button variant="outline">Create Query</Button>}

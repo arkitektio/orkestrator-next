@@ -16,6 +16,16 @@ fragment Reagent on Reagent {
   }
 }
 
+fragment PathReagent on Reagent {
+  ...ListReagent
+  category {
+    label
+    store {
+      presignedUrl
+    }
+  }
+}
+
 fragment ListReagent on Reagent {
   id
   label

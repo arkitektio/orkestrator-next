@@ -21,7 +21,7 @@ fragment Relation on Relation {
 }
 
 fragment Participant on Participant {
-  role 
+  role
   quantity
 }
 
@@ -30,4 +30,11 @@ fragment Edge on Edge {
   ...Measurement
   ...Relation
   ...Participant
+}
+
+fragment PathEdge on Edge {
+  ...PathMeasurement
+  ...PathRelation
+  ...PathParticipant
+  ...PathDescription
 }

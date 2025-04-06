@@ -1,4 +1,5 @@
 fragment Entity on Entity {
+  ...BaseNode
   id
   graph {
     id
@@ -22,9 +23,17 @@ fragment Entity on Entity {
       label
     }
   }
-  bestView {
-    ...Table
+}
+
+fragment PathEntity on Entity {
+  ...ListEntity
+  category {
+    label
+    store {
+      presignedUrl
+    }
   }
+  externalId
 }
 
 fragment ListEntity on Entity {

@@ -1,25 +1,15 @@
 fragment BaseNode on Node {
   id
   label
-}
-
-fragment NaturalEvent on NaturalEvent {
-  id
-  validFrom
-  validTo
-  category {
+  graph {
     id
-    label
   }
-}
-
-fragment ProtocolEvent on ProtocolEvent {
-  id
-  validFrom
-  validTo
-  category {
-    id
-    label
+  label
+  bestView {
+    ...NodeQueryView
+  }
+  relevantQueries {
+    ...ListNodeQuery
   }
 }
 
@@ -37,8 +27,14 @@ fragment DetailNode on Node {
     id
     name
   }
-  queries {
-    id
-    name
-  }
+}
+
+fragment PathNode on Node {
+  id
+  ...PathStructure
+  ...PathEntity
+  ...PathReagent
+  ...PathNaturalEvent
+  ...PathProtocolEvent
+  ...PathMetric
 }

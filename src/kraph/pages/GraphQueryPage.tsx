@@ -9,13 +9,14 @@ import {
 } from "@/linkers";
 import { useGetGraphQueryQuery } from "../api/graphql";
 
-import { PathGraph } from "../components/renderers/graph/KnowledgeGraph";
+import { PathGraph } from "../components/renderers/graph/PathGraph";
 import { GraphTable } from "../components/renderers/table/GraphTable";
 
 import ScatterPlot from "../components/charts/scatterplot/ScatterPlot";
 import { CypherSidebar } from "../components/sidebars/CypherSidebar";
 import { CypherEditor } from "../components/cypher/CypherEditor";
 import { Card } from "@/components/ui/card";
+import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
 
 export default asDetailQueryRoute(
   useGetGraphQueryQuery,
@@ -61,10 +62,12 @@ export default asDetailQueryRoute(
               </KraphGraph.DetailLink>
             </p>
           </div>
+          <Card className="p-6 h-96 col-span-7">
+            <CypherEditor cypher={data.graphQuery.query} />
+          </Card>
         </div>
-        <Card className="p-6 h-96">
-          <CypherEditor cypher={data.graphQuery.query} />
-        </Card>
+
+        <SelectiveGraphQueryRenderer graphQuery={data.graphQuery} />
       </KraphGraphQuery.ModelPage>
     );
   },

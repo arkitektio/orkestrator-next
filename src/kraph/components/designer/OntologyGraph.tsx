@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import {
   BaseListCategoryFragment,
   CategoryDefintion,
-  GraphEdgeInput,
   GraphFragment,
   GraphNodeInput,
   useUpdateGraphMutation,

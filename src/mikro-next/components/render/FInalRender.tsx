@@ -39,6 +39,8 @@ import { AutoZoomCamera } from "./final/AutoZoomCamera";
 import { ChunkBitmapTexture } from "./final/ChunkMesh";
 import { ShortcutToolbar } from "@/rekuest/components/toolbars/ShortcutToolbar";
 import { StructureInfo } from "@/kraph/components/mini/StructureInfo";
+import { Slider } from "@/components/ui/slider";
+import { SliderTooltip } from "@/components/ui/slider-tooltip";
 
 export interface RGBDProps {
   context: ListRgbContextFragment;
@@ -221,44 +223,32 @@ export const FinalRender = (props: RGBDProps) => {
 
   return (
     <div style={{ width: "100%", height: "100%" }} className="relative">
-      <div className="absolute top-0 right-0 z-10">
+      <div className="absolute bottom-0 z-10 w-full mb-4 px-6 bg-gradient-to-t from-black to-transparent py-3">
         <div className="flex flex-col">
-          <div className="flex flex-row">
-            {z > 0 && (
-              <button
-                onClick={() => setZ((z) => Math.max(z - 1, 0))}
-                className="bg-blue-500 text-white"
-              >
-                - z
-              </button>
-            )}
-            {z < zSize - 1 && (
-              <button
-                onClick={() => setZ((z) => z + 1)}
-                className="bg-blue-500 text-white"
-              >
-                + z
-              </button>
-            )}
-          </div>
-          <div className="flex flex-row">
-            {t > 0 && (
-              <button
-                onClick={() => setT((t) => Math.max(t - 1, 0))}
-                className="bg-blue-500 text-white"
-              >
-                - z
-              </button>
-            )}
-            {t < tSize - 1 && (
-              <button
-                onClick={() => setT((t) => t + 1)}
-                className="bg-blue-500 text-white"
-              >
-                + T
-              </button>
-            )}
-          </div>
+          {zSize > 1 && <div className="flex flex-row">
+            <div className="my-auto mr-2 w-12">z: {z}</div>
+            <SliderTooltip
+              value={[z]}
+              onValueChange={(value) => setZ(value[0])}
+              min={0}
+              max={zSize - 1}
+              step={1}
+              className="w-full"
+              defaultValue={[0]}
+            />
+          </div>}
+          {tSize > 1 && <div className="flex flex-row">
+            <div className="my-auto mr-2 w-12">t: {t}</div>
+            <SliderTooltip
+              value={[t]}
+              onValueChange={(value) => setT(value[0])}
+              min={0}
+              max={tSize - 1}
+              step={1}
+              className="w-full"
+              defaultValue={[0]}
+            />
+          </div>}
           <div className="flex flex-col">
             {layers.length > 1 && (
               <>

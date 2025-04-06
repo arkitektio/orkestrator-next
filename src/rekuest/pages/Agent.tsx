@@ -204,8 +204,7 @@ export default asDetailQueryRoute(
         <div className="p-6 mt-2">
           {data.agent.states.map((state) => (
             <>
-              {state.stateSchema.hash}
-              <StateDisplay state={state} label={true} />
+              <StateDisplay stateId={state.id} label={true} />
             </>
           ))}
 

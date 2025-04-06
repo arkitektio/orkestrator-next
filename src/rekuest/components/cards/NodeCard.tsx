@@ -52,15 +52,15 @@ const TheCard = ({ node, mates }: Props) => {
               )}
             </CardDescription>
           </div>
-          <CardFooter className="flex justify-between gap-2">
+          <CardFooter className="flex justify-between gap-2 truncate">
             <NodeActionButton id={node.id}>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="flex-1 truncate">
                 Assign
               </Button>
             </NodeActionButton>
             <ReserveActionButton id={node.id}>
-              <Button variant="outline" size="sm">
-                Reserve
+              <Button variant="outline" size="sm"  className="flex-1 truncate">
+                Short
               </Button>
             </ReserveActionButton>
           </CardFooter>

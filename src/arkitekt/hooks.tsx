@@ -78,7 +78,13 @@ export const useArkitektLogin = () => {
 
 export const buildArkitektConnect =
   (manifest: Manifest, serviceBuilderMap) => () => {
-    const { load, ...x } = useLoadFakts();
+    const { logout } = useLogin();
+    const { load, remove, ...x } = useLoadFakts();
+
+    const adaptive_remove = useCallback(() => {
+      logout();
+      remove();
+    }, [logout, remove]);
 
     const adaptive_load = useCallback(
       (request: Partial<FaktsRequest> = {}) => {
@@ -113,5 +119,6 @@ export const buildArkitektConnect =
     return {
       ...x,
       load: adaptive_load,
+      remove: adaptive_remove,
     };
   };

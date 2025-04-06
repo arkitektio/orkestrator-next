@@ -1,5 +1,5 @@
 import { error } from "console";
-import { useGetActiveGraphStructuresQuery } from "../api/graphql";
+import { useCreateStructureMutation, useGetActiveGraphStructuresQuery, useGetKnowledgeViewsQuery } from "../api/graphql";
 import { SelectiveNodeViewRenderer } from "../components/renderers/NodeQueryRenderer";
 import { Card } from "@/components/ui/card";
 import {
@@ -13,16 +13,22 @@ import { Guard } from "@/arkitekt/Arkitekt";
 import { FormDialog } from "@/components/dialog/FormDialog";
 import { Button } from "@/components/ui/button";
 import AddMeasurementForm from "../forms/AddMeasurementForm";
+import { ref } from "yup";
 
 export const ProtectedTinyStructureBox = (props: {
   identifier: string;
   object: string;
 }) => {
-  const { data, loading, error } = useGetActiveGraphStructuresQuery({
+  const { data, loading, error , refetch} = useGetKnowledgeViewsQuery({
     variables: {
       identifier: props.identifier,
       object: props.object,
     },
+    
+  });
+
+  const [addStructure] = useCreateStructureMutation({
+    
   });
 
 
@@ -30,37 +36,49 @@ export const ProtectedTinyStructureBox = (props: {
     <Carousel className="w-full dark:text-white">
       <CarouselPrevious />
       <CarouselContent>
-        {data?.activeGraphStructuresForIdentifier.map((structure) => (
-          <CarouselItem key={structure.id}>
-            <Card className="p-3 h-64">
+        {data?.knowledgeViews.map((view) => (
+          <CarouselItem key={view.structureCategory.id}>
+            <Card className="p-3 ">
               <h3 className="text-scroll font-semibold text-xs">
-                {structure.graph.name}
+                {view.structureCategory.graph.name}
               </h3>
-              {structure.bestView ? (
-                <SelectiveNodeViewRenderer view={structure.bestView} />
+              {view.structure ? (
+                <div className="h-64">
+              {view.structure?.bestView ? (
+                <SelectiveNodeViewRenderer view={view.structure.bestView} />
               ) : (
                 "No view available"
               )}
+                </div>
+              ) : (
+                <div className="flex flex-col w-full gap-2">
+                  <p className="text-sm text-scroll font-light">
+                    Not connected yet to Graph
+                  </p>
+                  <Button onClick={() => {
+                addStructure({
+                  variables: {
+                    input: {
+                      structure: `${props.identifier}:${props.object}`,
+                      graph: view.structureCategory.graph.id,
+                    }
+                }}).then(() => refetch())
+
+              }} variant={"outline"} size="default" className="w-full">
+             Connect
+              </Button>
+                </div>
+              )}
+              
             </Card>
           </CarouselItem>
         ))}
-        {data?.activeGraphStructuresForIdentifier.length == 0 && (
+        {data?.knowledgeViews.length == 0 && (
           <CarouselItem>
             <Card className="p-3 flex flex-col gap-2">
               <h3 className="text-scroll font-semibold text-xs">
-              This identifier has no active graph structures. 
+              No pinned Graphs. Pin some graphs to see them here.
               </h3>
-              <FormDialog trigger={
-                <Button onClick={() => {}} variant="outline" className="w-full">
-                  Add Measurement
-                  </Button>
-              }>
-              <AddMeasurementForm
-                identifier={props.identifier}
-                object={props.object}
-                />
-              </FormDialog>
-              
             </Card>
           </CarouselItem>
         )}

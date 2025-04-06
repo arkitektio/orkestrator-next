@@ -28,12 +28,21 @@ query GetInformedStructure(
   }
 }
 
-query GetActiveGraphStructures(
+query GetKnowledgeViews(
   $identifier: StructureIdentifier!
   $object: ID!
 ) {
-  activeGraphStructuresForIdentifier(identifier: $identifier, object: $object) {
-    ...InformedStructure
+  knowledgeViews(identifier: $identifier, object: $object) {
+    structureCategory {
+      id
+      graph {
+        id
+        name
+      }
+    }
+    structure {
+      ...InformedStructure
+    }
   }
 }
 

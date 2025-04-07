@@ -15,13 +15,20 @@ import { useNavigate } from "react-router";
 import { useEffect } from "react";
 import EntityPage from "./EntityPage";
 import StructurePage from "./StructurePage";
+import ReagentPage from "./ReagentPage";
+import ProtocolEventPage from "./ProtocolEventPage";
+
 
 export default asDetailQueryRoute(useGetNodeQuery, (props) => {
   if (props.data.node.__typename == "Entity") {
-    return <EntityPage {...props} />;
+    return <EntityPage />;
   }
   if (props.data.node.__typename == "Structure") {
-    return <StructurePage {...props} />;
+    return <StructurePage />;
+  }
+
+  if (props.data.node.__typename == "Reagent") {
+    return <ReagentPage  />;
   }
 
   return <> Unknown Type yet </>;

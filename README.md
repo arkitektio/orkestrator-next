@@ -56,7 +56,7 @@ Before the new version of Orkestrator can be merged into the main repository, th
 - [ ] User Stories (e.g. documentation for specific user stories)
 - [ ] Documentation, Documentation, Documentation
 - [x] Lazy Load Modules (only if corresponding service in Deployment)
-- [ ] Hosted Deployment (e.g. on Goethe Cluster)
+- [x] Hosted Deployment (Discarded for electron app)
 - [x] CI/CD Pipeline
 
 ## Service Specific Next Features
@@ -64,13 +64,14 @@ Before the new version of Orkestrator can be merged into the main repository, th
 ### Lok
 
 - [x] User Management
-- [ ] Advanced App and Config Management (around Fakts)
+- [x] Advanced App and Config Management (around Fakts)
 
 ### Mikro
 
 - [x] Move to Mikro Next
 - [x] Establish "Views" as central concept
 - [x] Deprecated OMERO metadata support
+- [X] Lazy Renderer (similar to Vizarr)
 
 ### Fluss
 
@@ -91,6 +92,14 @@ Before the new version of Orkestrator can be merged into the main repository, th
 - [x] Create App Store like Feature
 - [x] Create App Store UI
 
+### Kraph
+
+- [x] Establish Kraph as the defactor "Knowledge Graph" for Arkitekt Serivces
+- [x] Create Knowledge Widgets
+- [ ] Allow simple creation of new Graphs
+- [ ] 
+
+
 ### Omero-Ark
 
 - [ ] Improve Omero UI
@@ -98,7 +107,7 @@ Before the new version of Orkestrator can be merged into the main repository, th
 
 ### Port
 
-- [x] Build deprecated Port UI (Port will be replaced by Kabinet)
+- [x] Port is now deprecated for Kabinet
 
 ### Kluster
 
@@ -108,4 +117,4 @@ Before the new version of Orkestrator can be merged into the main repository, th
 
 ### Elektro
 
-- [ ] Implement basic trace visualization
+- [x] Implement basic trace visualization

@@ -9,9 +9,34 @@ import { useFocused, useSelected } from "slate-react";
 
 import { useMounted } from "@/hooks/use-mounted";
 import { useRoles } from "@/kraph/providers/RoleProvider";
+import { useGetNodeQuery } from "@/kraph/api/graphql";
+import { useRoleValue } from "./ValueProvider";
 
 
-export const ReagentElement = withRef<
+export const ValueDisplay = (props: {
+  role: string,
+  value: string
+}) => {
+
+  const { data, error, loading } = useGetNodeQuery({
+    variables: {
+      id: props.value,
+    },
+  });
+
+  if (error) {
+    return <span>{error.message}</span>;
+  }
+
+  if (!data) {
+    return <span>{props.value}</span>;
+  }
+
+
+  return <span>{data.node.label}</span>;
+}
+
+export const RoleValueElement = withRef<
   typeof PlateElement,
   {
     prefix?: string;
@@ -23,6 +48,9 @@ export const ReagentElement = withRef<
   const selected = useSelected();
   const focused = useFocused();
   const mounted = useMounted();
+
+
+  const option = useRoleValue(element.value);
 
 
 
@@ -46,15 +74,15 @@ export const ReagentElement = withRef<
         // Mac OS IME https://github.com/ianstormtaylor/slate/issues/3490
         <React.Fragment>
           {children}
+          {option ? <ValueDisplay role={option.role} value={option.value} /> : <span className="text-muted-foreground">{element.value}</span>}
           {prefix}
-          {renderLabel ? renderLabel(element) : element.value}
         </React.Fragment>
       ) : (
         // Others like Android https://github.com/ianstormtaylor/slate/pull/5360
         <React.Fragment>
-          {prefix}
-          {renderLabel ? renderLabel(element) : element.value}
           {children}
+          {option ? <ValueDisplay role={option.role} value={option.value} /> : <span className="text-muted-foreground">{element.value}</span>}
+          {prefix}
         </React.Fragment>
       )}
     </PlateElement>

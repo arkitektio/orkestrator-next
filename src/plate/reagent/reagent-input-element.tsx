@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { cn, withRef } from '@udecode/cn';
 import { getMentionOnSelectItem } from '@udecode/plate-mention';
@@ -12,19 +12,19 @@ import {
   InlineComboboxItem,
 } from '@/components/plate-ui/inline-combobox';
 import { PlateElement } from '@/components/plate-ui/plate-element';
-import { useSearchReagentsLazyQuery } from '@/mikro-next/api/graphql';
+import { useRoles } from '@/kraph/providers/RoleProvider';
 
 const onSelectItem = getMentionOnSelectItem();
 
 
-export type Option {
+export type Option ={
   label: string;
   value: string;
 }
 
 
 
-export const MentionInputElement = withRef<typeof PlateElement>(
+export const ReagentInputElement = withRef<typeof PlateElement>(
   ({ className, ...props }, ref) => {
     const { children, editor, element } = props;
 
@@ -32,12 +32,17 @@ export const MentionInputElement = withRef<typeof PlateElement>(
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState("");
 
-    const [searchF] = useSearchReagentsLazyQuery();
+    const { roles} = useRoles();
+
+    const searchF = async (search: string) => {
+      const troles = roles.filter(role => role.label.toLowerCase().includes(search.toLowerCase()));
+      return troles 
+    }
 
     const query = (string: string) => {
-      searchF({ variables: { search: string } })
+      searchF(search)
         .then((res) => {
-          setOptions(res.data?.options || ([] as Option[]));
+          setOptions(res);
           setError(null);
         })
         .catch((err) => {
@@ -84,7 +89,7 @@ export const MentionInputElement = withRef<typeof PlateElement>(
                   onSelectItem(editor, { text: item?.value || "karl" }, search)
                 }
                 value={item?.label || ""}
-                className="hover:bg-primary bg-slate-200"
+                className="hover:bg-slate-800"
               >
                 {item?.label}
               </InlineComboboxItem>

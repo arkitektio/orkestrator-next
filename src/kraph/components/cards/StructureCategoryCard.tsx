@@ -23,10 +23,10 @@ const TheCard = ({ item, mates }: Props) => {
             className="z-3 object-cover h-full w-full absolute top-0 left-0 rounded rounded-lg"
           />
         )}
-        <div className="p-3 h-full w-full absolute top-0 left-0 bg-opacity-20  hover:bg-opacity-10 transition-all ease-in-out duration-200 flex flex-col break-all overflow-y-hidden">
+        <div className="p-3 h-full w-full absolute top-0 left-0 bg-opacity-20  hover:bg-opacity-10 transition-all ease-in-out duration-200 flex flex-col break-all flex-wrapp overflow-y-hidden">
           <KraphStructureCategory.DetailLink
             className={({ isActive } /*  */) =>
-              "z-10 font-bold text-md mb-2 cursor-pointer " +
+              "z-10 font-bold text-md mb-2 cursor-pointer flex-wrap flex truncate" +
               (isActive ? "text-primary-300" : "")
             }
             object={item.id}

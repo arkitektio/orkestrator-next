@@ -68,7 +68,7 @@ export type CategoryDefintion = {
   categoryExcludeFilters?: Maybe<Array<Scalars['ID']['output']>>;
   categoryFilters?: Maybe<Array<Scalars['ID']['output']>>;
   tagExcludeFilters?: Maybe<Array<Scalars['ID']['output']>>;
-  tagFilters?: Maybe<Array<Scalars['ID']['output']>>;
+  tagFilters?: Maybe<Array<Scalars['String']['output']>>;
 };
 
 /** A column definition for a table view. */
@@ -252,6 +252,8 @@ export type Entity = Node & {
   label: Scalars['String']['output'];
   /** The unique identifier of the entity within its graph */
   leftEdges: Array<Edge>;
+  /** The unique identifier of the entity within its graph */
+  localId?: Maybe<Scalars['String']['output']>;
   relevantQueries: Array<NodeQuery>;
   /** The unique identifier of the entity within its graph */
   rightEdges: Array<Edge>;
@@ -267,6 +269,12 @@ export type Entity = Node & {
 export type EntityEdgesArgs = {
   filter?: InputMaybe<EntityRelationFilter>;
   pagination?: InputMaybe<GraphPaginationInput>;
+};
+
+
+/** A Entity is a recorded data point in a graph. It can measure a property of an entity through a direct measurement edge, that connects the entity to the structure. It of course can relate to other structures through relation edges. */
+export type EntityLabelArgs = {
+  full?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type EntityCategory = BaseCategory & NodeCategory & {
@@ -321,7 +329,7 @@ export type EntityCategoryDefinition = CategoryDefintion & {
   categoryFilters?: Maybe<Array<Scalars['ID']['output']>>;
   matches: Array<EntityCategory>;
   tagExcludeFilters?: Maybe<Array<Scalars['ID']['output']>>;
-  tagFilters?: Maybe<Array<Scalars['ID']['output']>>;
+  tagFilters?: Maybe<Array<Scalars['String']['output']>>;
 };
 
 export type EntityCategoryFilter = {
@@ -865,6 +873,8 @@ export type Metric = Node & {
   label: Scalars['String']['output'];
   /** The unique identifier of the entity within its graph */
   leftEdges: Array<Edge>;
+  /** The unique identifier of the entity within its graph */
+  localId?: Maybe<Scalars['String']['output']>;
   relevantQueries: Array<NodeQuery>;
   /** The unique identifier of the entity within its graph */
   rightEdges: Array<Edge>;
@@ -878,6 +888,12 @@ export type Metric = Node & {
 export type MetricEdgesArgs = {
   filter?: InputMaybe<EntityRelationFilter>;
   pagination?: InputMaybe<GraphPaginationInput>;
+};
+
+
+/** A Metric is a recorded data point in a graph. It always describes a structure and through the structure it can bring meaning to the measured entity. It can measure a property of an entity through a direct measurement edge, that connects the entity to the structure. It of course can relate to other structures through relation edges. */
+export type MetricLabelArgs = {
+  full?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type MetricCategory = BaseCategory & NodeCategory & {
@@ -1391,6 +1407,8 @@ export type NaturalEvent = Node & {
   label: Scalars['String']['output'];
   /** The unique identifier of the entity within its graph */
   leftEdges: Array<Edge>;
+  /** The unique identifier of the entity within its graph */
+  localId?: Maybe<Scalars['String']['output']>;
   relevantQueries: Array<NodeQuery>;
   /** The unique identifier of the entity within its graph */
   rightEdges: Array<Edge>;
@@ -1406,6 +1424,12 @@ export type NaturalEvent = Node & {
 export type NaturalEventEdgesArgs = {
   filter?: InputMaybe<EntityRelationFilter>;
   pagination?: InputMaybe<GraphPaginationInput>;
+};
+
+
+/** A Metric is a recorded data point in a graph. It always describes a structure and through the structure it can bring meaning to the measured entity. It can measure a property of an entity through a direct measurement edge, that connects the entity to the structure. It of course can relate to other structures through relation edges. */
+export type NaturalEventLabelArgs = {
+  full?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type NaturalEventCategory = BaseCategory & NodeCategory & {
@@ -1538,6 +1562,8 @@ export type Node = {
   label: Scalars['String']['output'];
   /** The unique identifier of the entity within its graph */
   leftEdges: Array<Edge>;
+  /** The unique identifier of the entity within its graph */
+  localId?: Maybe<Scalars['String']['output']>;
   relevantQueries: Array<NodeQuery>;
   /** The unique identifier of the entity within its graph */
   rightEdges: Array<Edge>;
@@ -1548,6 +1574,11 @@ export type Node = {
 export type NodeEdgesArgs = {
   filter?: InputMaybe<EntityRelationFilter>;
   pagination?: InputMaybe<GraphPaginationInput>;
+};
+
+
+export type NodeLabelArgs = {
+  full?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type NodeCategory = {
@@ -1655,6 +1686,15 @@ export type NodeQueryView = {
 export type OffsetPaginationInput = {
   limit?: Scalars['Int']['input'];
   offset?: Scalars['Int']['input'];
+};
+
+export type OptionInput = {
+  /** A detailed description of the option */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** The label of the option */
+  label: Scalars['String']['input'];
+  /** The value of the option. This can be a string, number, or boolean */
+  value: Scalars['Any']['input'];
 };
 
 /** A paired structure two entities and the relation between them. */
@@ -1799,6 +1839,8 @@ export type ProtocolEvent = Node & {
   label: Scalars['String']['output'];
   /** The unique identifier of the entity within its graph */
   leftEdges: Array<Edge>;
+  /** The unique identifier of the entity within its graph */
+  localId?: Maybe<Scalars['String']['output']>;
   relevantQueries: Array<NodeQuery>;
   /** The unique identifier of the entity within its graph */
   rightEdges: Array<Edge>;
@@ -1807,7 +1849,7 @@ export type ProtocolEvent = Node & {
   /** Protocol steps where this entity was the target */
   validTo?: Maybe<Scalars['DateTime']['output']>;
   /** Protocol steps where this entity was the target */
-  variables: Scalars['Any']['output'];
+  variables: Array<VariableMapping>;
   views: Array<NodeQueryView>;
 };
 
@@ -1816,6 +1858,12 @@ export type ProtocolEvent = Node & {
 export type ProtocolEventEdgesArgs = {
   filter?: InputMaybe<EntityRelationFilter>;
   pagination?: InputMaybe<GraphPaginationInput>;
+};
+
+
+/** A Metric is a recorded data point in a graph. It always describes a structure and through the structure it can bring meaning to the measured entity. It can measure a property of an entity through a direct measurement edge, that connects the entity to the structure. It of course can relate to other structures through relation edges. */
+export type ProtocolEventLabelArgs = {
+  full?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type ProtocolEventCategory = BaseCategory & NodeCategory & {
@@ -2362,6 +2410,8 @@ export type Reagent = Node & {
   label: Scalars['String']['output'];
   /** The unique identifier of the entity within its graph */
   leftEdges: Array<Edge>;
+  /** The unique identifier of the entity within its graph */
+  localId?: Maybe<Scalars['String']['output']>;
   relevantQueries: Array<NodeQuery>;
   /** The unique identifier of the entity within its graph */
   rightEdges: Array<Edge>;
@@ -2375,6 +2425,12 @@ export type Reagent = Node & {
 export type ReagentEdgesArgs = {
   filter?: InputMaybe<EntityRelationFilter>;
   pagination?: InputMaybe<GraphPaginationInput>;
+};
+
+
+/** A Entity is a recorded data point in a graph. It can measure a property of an entity through a direct measurement edge, that connects the entity to the structure. It of course can relate to other structures through relation edges. */
+export type ReagentLabelArgs = {
+  full?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type ReagentCategory = BaseCategory & NodeCategory & {
@@ -2429,7 +2485,7 @@ export type ReagentCategoryDefinition = CategoryDefintion & {
   categoryFilters?: Maybe<Array<Scalars['ID']['output']>>;
   matches: Array<ReagentCategory>;
   tagExcludeFilters?: Maybe<Array<Scalars['ID']['output']>>;
-  tagFilters?: Maybe<Array<Scalars['ID']['output']>>;
+  tagFilters?: Maybe<Array<Scalars['String']['output']>>;
 };
 
 export type ReagentCategoryFilter = {
@@ -2560,7 +2616,7 @@ export type RecordProtocolEventInput = {
   reagentTargets?: InputMaybe<Array<NodeMapping>>;
   validFrom?: InputMaybe<Scalars['DateTime']['input']>;
   validTo?: InputMaybe<Scalars['DateTime']['input']>;
-  variables?: InputMaybe<Array<VariableMapping>>;
+  variables?: InputMaybe<Array<VariableMappingInput>>;
 };
 
 /**
@@ -2780,6 +2836,8 @@ export type Structure = Node & {
   /** The unique identifier of the entity within its graph */
   leftEdges: Array<Edge>;
   /** The unique identifier of the entity within its graph */
+  localId?: Maybe<Scalars['String']['output']>;
+  /** The unique identifier of the entity within its graph */
   measures: Array<Entity>;
   /** The expression that defines this entity's type */
   metrics: Array<Metric>;
@@ -2796,6 +2854,12 @@ export type Structure = Node & {
 export type StructureEdgesArgs = {
   filter?: InputMaybe<EntityRelationFilter>;
   pagination?: InputMaybe<GraphPaginationInput>;
+};
+
+
+/** A Structure is a recorded data point in a graph. It can measure a property of an entity through a direct measurement edge, that connects the entity to the structure. It of course can relate to other structures through relation edges. */
+export type StructureLabelArgs = {
+  full?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type StructureCategory = BaseCategory & NodeCategory & {
@@ -2848,7 +2912,7 @@ export type StructureCategoryDefinition = CategoryDefintion & {
   categoryFilters?: Maybe<Array<Scalars['ID']['output']>>;
   matches: Array<StructureCategory>;
   tagExcludeFilters?: Maybe<Array<Scalars['ID']['output']>>;
-  tagFilters?: Maybe<Array<Scalars['ID']['output']>>;
+  tagFilters?: Maybe<Array<Scalars['String']['output']>>;
 };
 
 export type StructureCategoryFilter = {
@@ -3200,6 +3264,7 @@ export type VariableDefinition = {
   label?: Maybe<Scalars['String']['output']>;
   needsQuantity: Scalars['Boolean']['output'];
   optional: Scalars['Boolean']['output'];
+  options?: Maybe<Array<VariableOption>>;
   param: Scalars['String']['output'];
   valueKind: MetricKind;
 };
@@ -3214,6 +3279,8 @@ export type VariableDefinitionInput = {
   label?: InputMaybe<Scalars['String']['input']>;
   /** Whether this port is optional or not */
   optional?: InputMaybe<Scalars['Boolean']['input']>;
+  /** A list of options for this port (if only a few values are allowed) */
+  options?: InputMaybe<Array<OptionInput>>;
   /** The parameter name */
   param: Scalars['String']['input'];
   /** The type of metric data this expression represents */
@@ -3221,8 +3288,21 @@ export type VariableDefinitionInput = {
 };
 
 export type VariableMapping = {
+  __typename?: 'VariableMapping';
+  role: Scalars['String']['output'];
+  value: Scalars['String']['output'];
+};
+
+export type VariableMappingInput = {
   key: Scalars['String']['input'];
   value: Scalars['Any']['input'];
+};
+
+export type VariableOption = {
+  __typename?: 'VariableOption';
+  description?: Maybe<Scalars['String']['output']>;
+  label: Scalars['String']['output'];
+  value: Scalars['String']['output'];
 };
 
 export enum ViewKind {
@@ -3479,7 +3559,7 @@ export type PathParticipantFragment = { __typename?: 'Participant', role: string
 
 export type PathFragment = { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: number, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, edges: Array<{ __typename?: 'Description', id: any, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom: any, validTo: any, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity?: number | null } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }> };
 
-export type ProtocolEventFragment = { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, label: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string }, graph: { __typename?: 'Graph', id: string }, bestView?: { __typename?: 'NodeQueryView', nodeId: string, query: { __typename?: 'NodeQuery', id: string, name: string, pinned: boolean, query: string, graph: { __typename?: 'Graph', id: string, name: string } }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: number, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, edges: Array<{ __typename?: 'Description', id: any, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom: any, validTo: any, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity?: number | null } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, relevantQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean }> };
+export type ProtocolEventFragment = { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, label: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string, plateChildren?: Array<any> | null }, leftEdges: Array<{ __typename?: 'Description', leftId: string, rightId: string } | { __typename?: 'Measurement', validFrom: any, validTo: any, leftId: string, rightId: string, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', role: string, leftId: string, rightId: string } | { __typename?: 'Relation', validFrom: any, validTo: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }>, rightEdges: Array<{ __typename?: 'Description', leftId: string, rightId: string } | { __typename?: 'Measurement', validFrom: any, validTo: any, leftId: string, rightId: string, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', role: string, leftId: string, rightId: string } | { __typename?: 'Relation', validFrom: any, validTo: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }>, variables: Array<{ __typename?: 'VariableMapping', role: string, value: string }>, graph: { __typename?: 'Graph', id: string }, bestView?: { __typename?: 'NodeQueryView', nodeId: string, query: { __typename?: 'NodeQuery', id: string, name: string, pinned: boolean, query: string, graph: { __typename?: 'Graph', id: string, name: string } }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: number, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, edges: Array<{ __typename?: 'Description', id: any, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom: any, validTo: any, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity?: number | null } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, relevantQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean }> };
 
 export type ListProtocolEventFragment = { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string } };
 
@@ -3724,7 +3804,7 @@ export type RecordProtocolEventMutationVariables = Exact<{
 }>;
 
 
-export type RecordProtocolEventMutation = { __typename?: 'Mutation', recordProtocolEvent: { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, label: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string }, graph: { __typename?: 'Graph', id: string }, bestView?: { __typename?: 'NodeQueryView', nodeId: string, query: { __typename?: 'NodeQuery', id: string, name: string, pinned: boolean, query: string, graph: { __typename?: 'Graph', id: string, name: string } }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: number, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, edges: Array<{ __typename?: 'Description', id: any, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom: any, validTo: any, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity?: number | null } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, relevantQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean }> } };
+export type RecordProtocolEventMutation = { __typename?: 'Mutation', recordProtocolEvent: { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, label: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string, plateChildren?: Array<any> | null }, leftEdges: Array<{ __typename?: 'Description', leftId: string, rightId: string } | { __typename?: 'Measurement', validFrom: any, validTo: any, leftId: string, rightId: string, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', role: string, leftId: string, rightId: string } | { __typename?: 'Relation', validFrom: any, validTo: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }>, rightEdges: Array<{ __typename?: 'Description', leftId: string, rightId: string } | { __typename?: 'Measurement', validFrom: any, validTo: any, leftId: string, rightId: string, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', role: string, leftId: string, rightId: string } | { __typename?: 'Relation', validFrom: any, validTo: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }>, variables: Array<{ __typename?: 'VariableMapping', role: string, value: string }>, graph: { __typename?: 'Graph', id: string }, bestView?: { __typename?: 'NodeQueryView', nodeId: string, query: { __typename?: 'NodeQuery', id: string, name: string, pinned: boolean, query: string, graph: { __typename?: 'Graph', id: string, name: string } }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: number, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, edges: Array<{ __typename?: 'Description', id: any, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom: any, validTo: any, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity?: number | null } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, relevantQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean }> } };
 
 export type CreateProtocolEventCategoryMutationVariables = Exact<{
   input: ProtocolEventCategoryInput;
@@ -3876,7 +3956,7 @@ export type SearchEntitiesForRoleQueryVariables = Exact<{
 }>;
 
 
-export type SearchEntitiesForRoleQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Entity', value: any, label: any }> };
+export type SearchEntitiesForRoleQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Entity', value: any, label: string }> };
 
 export type GetEntityCategoryQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4186,7 +4266,7 @@ export type GetProtocolEventQueryVariables = Exact<{
 }>;
 
 
-export type GetProtocolEventQuery = { __typename?: 'Query', protocolEvent: { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, label: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string }, graph: { __typename?: 'Graph', id: string }, bestView?: { __typename?: 'NodeQueryView', nodeId: string, query: { __typename?: 'NodeQuery', id: string, name: string, pinned: boolean, query: string, graph: { __typename?: 'Graph', id: string, name: string } }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: number, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, edges: Array<{ __typename?: 'Description', id: any, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom: any, validTo: any, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity?: number | null } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, relevantQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean }> } };
+export type GetProtocolEventQuery = { __typename?: 'Query', protocolEvent: { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, label: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string, plateChildren?: Array<any> | null }, leftEdges: Array<{ __typename?: 'Description', leftId: string, rightId: string } | { __typename?: 'Measurement', validFrom: any, validTo: any, leftId: string, rightId: string, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', role: string, leftId: string, rightId: string } | { __typename?: 'Relation', validFrom: any, validTo: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }>, rightEdges: Array<{ __typename?: 'Description', leftId: string, rightId: string } | { __typename?: 'Measurement', validFrom: any, validTo: any, leftId: string, rightId: string, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', role: string, leftId: string, rightId: string } | { __typename?: 'Relation', validFrom: any, validTo: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }>, variables: Array<{ __typename?: 'VariableMapping', role: string, value: string }>, graph: { __typename?: 'Graph', id: string }, bestView?: { __typename?: 'NodeQueryView', nodeId: string, query: { __typename?: 'NodeQuery', id: string, name: string, pinned: boolean, query: string, graph: { __typename?: 'Graph', id: string, name: string } }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', left: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any }, right: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: number, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, edges: Array<{ __typename?: 'Description', id: any, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom: any, validTo: any, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity?: number | null } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, relevantQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean }> } };
 
 export type SearchProtocolEventsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -4250,7 +4330,7 @@ export type SearchReagentsForRoleQueryVariables = Exact<{
 }>;
 
 
-export type SearchReagentsForRoleQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Reagent', value: any, label: any }> };
+export type SearchReagentsForRoleQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Reagent', value: any, label: string }> };
 
 export type GetReagentCategoryQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -5046,54 +5126,6 @@ export const PresignedPostCredentialsFragmentDoc = gql`
   store
 }
     `;
-export const PathMeasurementFragmentDoc = gql`
-    fragment PathMeasurement on Measurement {
-  validFrom
-  validTo
-  category {
-    id
-    label
-  }
-  leftId
-  rightId
-}
-    `;
-export const PathRelationFragmentDoc = gql`
-    fragment PathRelation on Relation {
-  validFrom
-  validTo
-  category {
-    id
-    label
-  }
-  leftId
-  rightId
-}
-    `;
-export const PathParticipantFragmentDoc = gql`
-    fragment PathParticipant on Participant {
-  role
-  leftId
-  rightId
-}
-    `;
-export const PathDescriptionFragmentDoc = gql`
-    fragment PathDescription on Description {
-  leftId
-  rightId
-}
-    `;
-export const PathEdgeFragmentDoc = gql`
-    fragment PathEdge on Edge {
-  ...PathMeasurement
-  ...PathRelation
-  ...PathParticipant
-  ...PathDescription
-}
-    ${PathMeasurementFragmentDoc}
-${PathRelationFragmentDoc}
-${PathParticipantFragmentDoc}
-${PathDescriptionFragmentDoc}`;
 export const ListStructureCategoryFragmentDoc = gql`
     fragment ListStructureCategory on StructureCategory {
   ...BaseCategory
@@ -5348,6 +5380,54 @@ export const NaturalEventFragmentDoc = gql`
   validTo
 }
     ${BaseNodeFragmentDoc}`;
+export const PathMeasurementFragmentDoc = gql`
+    fragment PathMeasurement on Measurement {
+  validFrom
+  validTo
+  category {
+    id
+    label
+  }
+  leftId
+  rightId
+}
+    `;
+export const PathRelationFragmentDoc = gql`
+    fragment PathRelation on Relation {
+  validFrom
+  validTo
+  category {
+    id
+    label
+  }
+  leftId
+  rightId
+}
+    `;
+export const PathParticipantFragmentDoc = gql`
+    fragment PathParticipant on Participant {
+  role
+  leftId
+  rightId
+}
+    `;
+export const PathDescriptionFragmentDoc = gql`
+    fragment PathDescription on Description {
+  leftId
+  rightId
+}
+    `;
+export const PathEdgeFragmentDoc = gql`
+    fragment PathEdge on Edge {
+  ...PathMeasurement
+  ...PathRelation
+  ...PathParticipant
+  ...PathDescription
+}
+    ${PathMeasurementFragmentDoc}
+${PathRelationFragmentDoc}
+${PathParticipantFragmentDoc}
+${PathDescriptionFragmentDoc}`;
 export const ProtocolEventFragmentDoc = gql`
     fragment ProtocolEvent on ProtocolEvent {
   ...BaseNode
@@ -5357,9 +5437,21 @@ export const ProtocolEventFragmentDoc = gql`
   category {
     id
     label
+    plateChildren
+  }
+  leftEdges {
+    ...PathEdge
+  }
+  rightEdges {
+    ...PathEdge
+  }
+  variables {
+    role
+    value
   }
 }
-    ${BaseNodeFragmentDoc}`;
+    ${BaseNodeFragmentDoc}
+${PathEdgeFragmentDoc}`;
 export const RelationCategoryFragmentDoc = gql`
     fragment RelationCategory on RelationCategory {
   ...BaseEdgeCategory
@@ -6961,7 +7053,7 @@ export const SearchEntitiesForRoleDocument = gql`
     pagination: {limit: 10}
   ) {
     value: id
-    label: id
+    label: label
   }
 }
     `;
@@ -8792,7 +8884,7 @@ export const SearchReagentsForRoleDocument = gql`
     pagination: {limit: 10}
   ) {
     value: id
-    label: id
+    label: label
   }
 }
     `;

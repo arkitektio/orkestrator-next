@@ -62,18 +62,6 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
       <PopularePlotViewsCarousel queries={data.graph.graphQueries} />
       <OntologyGraph graph={data.graph} />
 
-      <div className="p-6">
-        <KraphGraph.DetailLink
-          object={data.graph.id}
-          subroute="entities"
-          className="mb-5"
-        >
-          Latest Nodes{" "}
-        </KraphGraph.DetailLink>
-        <div className="grid grid-cols-6 gap-2">
-          {data?.graph?.latestNodes?.map((item, i) => <NodeCard item={item} />)}
-        </div>
-      </div>
     </KraphGraph.ModelPage>
   );
 });

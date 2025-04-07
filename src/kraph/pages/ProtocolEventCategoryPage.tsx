@@ -24,7 +24,7 @@ import {
   useEditorRef,
   usePlateEditor,
 } from "@udecode/plate-common/react";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import {
   MetricKind,
@@ -44,6 +44,7 @@ import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { DragZone } from "@/components/upload/drag";
 import { ChoicesField } from "@/components/fields/ChoicesField";
+import { RoleProvider } from "../providers/RoleProvider";
 
 export type IRepresentationScreenProps = {};
 
@@ -141,6 +142,13 @@ export function PlateDisplay({ plates }: { plates: any[] }) {
   );
 }
 
+
+
+
+
+
+
+
 export const RoleDefinitionCreator = ({
   protocolEventCategory,
 }: {
@@ -224,6 +232,40 @@ export const RoleDefinitionCreator = ({
     },
   );
 
+  const sourceEntityRoles = myform.watch("sourceEntityRoles");
+  const targetEntityRoles = myform.watch("targetEntityRoles");
+  const sourceReagentRoles = myform.watch("sourceReagentRoles");
+  const targetReagentRoles = myform.watch("targetReagentRoles");
+  const variableDefinitions = myform.watch("variableDefinitions");
+
+
+  const roles = useMemo(
+    () => {
+      return [
+        ...sourceEntityRoles?.map((role) => ({
+          label: role.role,
+          value: role.role,
+        })) || [],
+        ...targetEntityRoles?.map((role) => ({
+          label: role.role,
+          value: role.role,
+        })) || [],
+        ...sourceReagentRoles?.map((role) => ({
+          label: role.role,
+          value: role.role,
+        })) || [],
+        ...targetReagentRoles?.map((role) => ({
+          label: role.role,
+          value: role.role,
+        })) || [],
+        ...variableDefinitions?.map((role) => ({
+          label: role.param,
+          value: role.param,
+        })) || [],
+      ]
+    }, [sourceEntityRoles, targetEntityRoles, sourceReagentRoles, targetReagentRoles, variableDefinitions]
+  )
+
   const [searchTags] = useSearchTagsLazyQuery();
   const [searchEntityCategory] = useSearchEntityCategoryLazyQuery();
 
@@ -260,7 +302,9 @@ export const RoleDefinitionCreator = ({
           className="flex flex-row gap-4 p-6 h-full"
         >
           <div className="flex grow flex-col ">
+            <RoleProvider roles={roles}>
             <TooltipProvider>
+
               <Plate editor={plateEditor}>
                 <FixedToolbar>
                   <FixedToolbarButtons />
@@ -626,6 +670,7 @@ export const RoleDefinitionCreator = ({
                 <CommentsPopover />
               </Plate>
             </TooltipProvider>
+            </RoleProvider>
           </div>
         </form>
       </Form>

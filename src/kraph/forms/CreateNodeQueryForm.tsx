@@ -21,6 +21,7 @@ import {
 import { CypherEditor } from "../components/cypher/CypherEditor";
 import { CypherField } from "../components/cypher/CypherField";
 import { Card } from "@/components/ui/card";
+import { ChoicesField } from "@/components/fields/ChoicesField";
 
 export default (props: { entity: EntityFragment }) => {
   const [add] = useCreateNodeQueryMutation();
@@ -62,6 +63,8 @@ RETURN id(n), n.__created_at`,
     name: "columns",
   });
 
+  const kind = form.watch("kind");
+
   return (
     <>
       <Form {...form}>
@@ -82,12 +85,22 @@ RETURN id(n), n.__created_at`,
               name="name"
               description="How do you can to call this Query?"
             />
+            <ChoicesField
+              label="Kind"
+              name="kind"
+              options={[
+                { label: "Table", value: ViewKind.Table },
+                { label: "Path", value: ViewKind.Path },
+                { label: "Pairs", value: ViewKind.Pairs },
+              ]}
+              description="What kind of the query is it??"
+            />
             <CypherField
               label="Query"
               name="query"
               description="The Cypher query to execute"
             />
-            <div className="flex flex-row gap-4 w-full">
+            {kind == ViewKind.Table && <div className="flex flex-row gap-4 w-full">
               {columnFieldArray.fields.map((item, index) => (
                 <Card
                   key={item.id}
@@ -124,7 +137,7 @@ RETURN id(n), n.__created_at`,
               >
                 +
               </Button>
-            </div>
+            </div>}
           </div>
 
           <DialogFooter className="mt-2">

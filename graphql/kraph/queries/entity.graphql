@@ -36,6 +36,6 @@ query SearchEntitiesForRole(
     pagination: { limit: 10 }
   ) {
     value: id
-    label: id
+    label: label
   }
 }

@@ -66,12 +66,25 @@ export type Contextual = ClickContextual | DropContextual;
 
 const elk = new ELK();
 
+const stressLayout = {
+  "elk.algorithm": "stress",
+  "org.eclipse.elk.stress.desiredEdgeLength": "200",
+  "org.eclipse.elk.stress.dimension" : "XY",
+  "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+  "elk.layered.crossingMinimization.minimize": "LAYER_SWEEP",
+  "elk.layered.spacing.nodeNode": "200",
+  "elk.spacing.nodeNode": "200",
+  "elk.layered.spacing.nodeNodeBetweenLayrs": "200",
+  "elk.direction": "RIGHT",
+  "elk.layered.nodePlacement.bk.fixedAlignment": "LEFT",
+}
+
 export const PathGraph: React.FC<Props> = ({ path, root }) => {
   const reactFlowWrapper = React.useRef<HTMLDivElement | null>(null);
   const [reactFlowInstance, setReactFlowInstance] =
     React.useState<ReactFlowInstance<PathNode, PathEdge> | null>(null);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState<PathNode | null>(null);
+  const [nodes, setNodes, onNodesChange] = useNodesState<PathNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<PathEdge>(
     entityRelationToEdges(path.edges),
   );
@@ -81,12 +94,7 @@ export const PathGraph: React.FC<Props> = ({ path, root }) => {
 
     const graph = {
       id: "root",
-      layoutOptions: {
-        "elk.algorithm": "mrtree",
-        "elk.spacing.nodeNode": "100",
-        "elk.layered.spacing.nodeNodeBetweenLayers": "100",
-        "elk.direction": "RIGHT",
-      },
+      layoutOptions: stressLayout,
       children: the_nodes.map((node) => ({
         id: node.id,
         x: node.position.x,

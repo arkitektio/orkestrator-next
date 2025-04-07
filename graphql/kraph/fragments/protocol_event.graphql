@@ -6,7 +6,19 @@ fragment ProtocolEvent on ProtocolEvent {
   category {
     id
     label
+    plateChildren
   }
+  leftEdges {
+    ...PathEdge
+  }
+  rightEdges {
+    ...PathEdge
+  }
+  variables {
+    role
+    value
+  }
+
 }
 
 fragment ListProtocolEvent on ProtocolEvent {

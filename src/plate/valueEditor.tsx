@@ -100,12 +100,13 @@ import { ToggleElement } from "@/components/plate-ui/toggle-element";
 import { withDraggables } from "@/components/plate-ui/with-draggables";
 import { ReagentElement } from "./reagent/reagent-element";
 import { ReagentInputElement } from "./reagent/reagent-input-element";
+import { RoleValueElement } from "./value/role-value-element";
 
 export const aiPlugins = [AIPlugin, CopilotPlugin];
 
 
 
-export const editor = {
+export const valueEditor = {
   plugins: [
     BlockquotePlugin,
     CodeBlockPlugin,
@@ -249,7 +250,7 @@ export const editor = {
         [HEADING_KEYS.h5]: withProps(HeadingElement, { variant: "h5" }),
         [HEADING_KEYS.h6]: withProps(HeadingElement, { variant: "h6" }),
         [MediaEmbedPlugin.key]: MediaEmbedElement,
-        [MentionPlugin.key]: ReagentElement,
+        [MentionPlugin.key]: RoleValueElement,
         [MentionInputPlugin.key]: ReagentInputElement,
         [ParagraphPlugin.key]: ParagraphElement,
         [TablePlugin.key]: TableElement,

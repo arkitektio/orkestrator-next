@@ -68,8 +68,7 @@ export default ({
   };
 
   let path = "";
-  const offset =
-    myIndex % 2 === 0 ? (myIndex / 2) * 50 : (myIndex / 2) * 50 * -1;
+  const offset = 0;
 
   path = getSpecialPath(
     { sourceX: sx, sourceY: sy, targetX: tx, targetY: ty },

@@ -3,7 +3,7 @@ name: Build/release Electron Dev app
 on:
   push:
     branches:
-      - dev
+      - main
 
 permissions: write-all
 
@@ -112,8 +112,7 @@ jobs:
           files: |
             all-artifacts/**/*
           tag_name: "v${{ github.run_number }}"
-          name: "Nightly ${{ env.RELEASE_NAME }}"
-          prerelease: true
-          body: The latest nightly release of orkestrator-next to install, but be aware it might be highly experimental.
+          name: "Stabe ${{ env.RELEASE_NAME }}"
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,9 +1,9 @@
-name: Build/release Electron app
+name: Build/release Electron Dev app
 
 on:
   push:
     branches:
-      - main
+      - dev
 
 permissions: write-all
 
@@ -87,7 +87,7 @@ jobs:
       # Step 2: Set the release name with timestamp
       - name: Set Release Name
         id: release_name
-        run: echo "RELEASE_NAME=Orkestrator $(date +"%Y-%m-%d %H:%M")" >> $GITHUB_ENV
+        run: echo "RELEASE_NAME=Orkestrator Stable $(date +"%Y-%m-%d %H:%M")" >> $GITHUB_ENV
 
       # Step 3: Rename artifacts with release name
       - name: Rename artifacts
@@ -112,8 +112,8 @@ jobs:
           files: |
             all-artifacts/**/*
           tag_name: "v${{ github.run_number }}"
-          name: "${{ env.RELEASE_NAME }}"
-          prerelease: false
-          body: The latest release of orkestrator-next to install, but be aware it might be highly experimental.
+          name: "Nightly ${{ env.RELEASE_NAME }}"
+          prerelease: true
+          body: The latest nightly release of orkestrator-next to install, but be aware it might be highly experimental.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

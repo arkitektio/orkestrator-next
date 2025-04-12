@@ -80,6 +80,6 @@ export const StreamWidget = (props: { value: string }) => {
   const room = data?.stream?.agent?.room.id;
 
   return (
-    <div className="w-full h-full bg-green-200">{room && <StreamJoiner room={room} />}</div>
+    <div className="w-full h-full bg-green-200 mr-2">{room && <StreamJoiner room={room} />}</div>
   );
 };

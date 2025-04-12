@@ -86,7 +86,7 @@ export const StateDisplay = ({
         const Widget = registry.getReturnWidgetForPort(port);
 
         return (
-          <div className="flex-1">
+          <div className="flex-1 h-96 w-96 flex flex-col gap-2" key={index}>
             {label && <label>{port.key}</label>}
             <Widget
               key={index}

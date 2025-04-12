@@ -76,9 +76,9 @@ export const useAsyncChunk = (props: {
       format = THREE.RedFormat;
       type = THREE.FloatType;
     } else if (array.data instanceof Int32Array) {
-      textureData = new Int32Array(array.data);
+      textureData = new Float32Array(array.data);
       format = THREE.RedFormat;
-      type = THREE.IntType;
+      type = THREE.FloatType;
     } else if (array.data instanceof Uint16Array) {
       textureData = new Float32Array(array.data);
       format = THREE.RedFormat;
@@ -88,6 +88,8 @@ export const useAsyncChunk = (props: {
       format = THREE.RedFormat;
       type = THREE.FloatType;
     }
+
+    console.log("Texture data", textureData);
 
     const texture = new THREE.DataTexture(
       textureData,

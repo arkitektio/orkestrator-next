@@ -112,7 +112,7 @@ jobs:
           files: |
             all-artifacts/**/*
           tag_name: "v${{ github.run_number }}"
-          name: "Stabe ${{ env.RELEASE_NAME }}"
+          name: "Stable ${{ env.RELEASE_NAME }}"
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

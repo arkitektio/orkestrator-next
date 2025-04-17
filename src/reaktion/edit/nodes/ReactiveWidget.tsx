@@ -196,6 +196,42 @@ export const Reorder = ({ data }: ShapeProps) => {
   );
 };
 
+export const BufferCount = ({ data, id }: ShapeProps) => {
+
+
+  const { updateData } = useEditRiver();
+  const updateNodeInternal = useUpdateNodeInternals();
+
+
+  const updateCount = (count: number) => {
+    updateData(
+      { constantsMap: { ...data.constantsMap, count: count } },
+      id,
+    );
+    updateNodeInternal(id);
+  };
+
+  return (
+    <>
+      <Card className="rounded-md border-blue-400/40 shadow-blue-400/20 dark:border-blue-300 dark:shadow-blue/20 shadow-xl">
+        <CardHeader className="p-1">
+            <CardTitle className="text-sm font-light">Buffer</CardTitle>
+            <CardDescription>
+              
+              <Button onClick={() => updateCount(data.constantsMap.count + 1)} variant={"ghost"} size={"icon"}>
+                + 
+              </Button>
+              {data.constantsMap.count}
+              <Button onClick={() => updateCount(data.constantsMap.count - 1)} variant={"ghost"} size={"icon"}>
+                -
+              </Button>
+            </CardDescription>
+        </CardHeader>
+      </Card>
+    </>
+  );
+};
+
 export const ToList = ({ data }: ShapeProps) => {
   let firstItem = data?.ins?.at(0)?.at(0);
   let outItem = data?.outs?.at(0)?.at(0);
@@ -286,12 +322,13 @@ const contextMenuMap: {
   [ReactiveImplementation.Split]: DefaultContext,
   [ReactiveImplementation.ToList]: DefaultContext,
   [ReactiveImplementation.BufferComplete]: DefaultContext,
+  [ReactiveImplementation.BufferUntil]: DefaultContext,
+  [ReactiveImplementation.BufferCount]: DefaultContext,
   [ReactiveImplementation.Chunk]: DefaultContext,
   [ReactiveImplementation.Omit]: DefaultContext,
   [ReactiveImplementation.Add]: DefaultContext,
   [ReactiveImplementation.All]: DefaultContext,
   [ReactiveImplementation.And]: DefaultContext,
-  [ReactiveImplementation.BufferUntil]: DefaultContext,
   [ReactiveImplementation.Delay]: DefaultContext,
   [ReactiveImplementation.DelayUntil]: DefaultContext,
   [ReactiveImplementation.Divide]: DefaultContext,
@@ -318,12 +355,13 @@ const shapeMap: { [key in ReactiveImplementation]: React.FC<ShapeProps> } = {
   [ReactiveImplementation.Split]: Default,
   [ReactiveImplementation.ToList]: ToList,
   [ReactiveImplementation.BufferComplete]: Default,
+  [ReactiveImplementation.BufferUntil]: Default,
+  [ReactiveImplementation.BufferCount]: BufferCount,
   [ReactiveImplementation.Chunk]: Default,
   [ReactiveImplementation.Omit]: Default,
   [ReactiveImplementation.Add]: Add,
   [ReactiveImplementation.All]: Default,
   [ReactiveImplementation.And]: Default,
-  [ReactiveImplementation.BufferUntil]: Default,
   [ReactiveImplementation.Delay]: Default,
   [ReactiveImplementation.DelayUntil]: Default,
   [ReactiveImplementation.Divide]: Default,

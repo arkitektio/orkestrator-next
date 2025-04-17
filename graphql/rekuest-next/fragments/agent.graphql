@@ -1,10 +1,6 @@
 fragment Agent on Agent {
   id
   instanceId
-  status
-  provisions {
-    ...ListProvision
-  }
   templates {
     ...ListTemplate
   }
@@ -31,7 +27,6 @@ fragment Agent on Agent {
 fragment ListAgent on Agent {
   id
   instanceId
-  status
   active
   connected
   name
@@ -55,4 +50,15 @@ query AgentOptions($search: String, $values: [ID!]) {
     value: id
     label: name
   }
+}
+
+
+fragment AgentChangeEvent on AgentChangeEvent {
+  create {
+    ...ListAgent
+  }
+  update {
+    ...ListAgent
+  }
+  delete
 }

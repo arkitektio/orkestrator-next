@@ -6,7 +6,6 @@ import { CardStackIcon, CubeIcon } from "@radix-ui/react-icons";
 import { Box, FunctionSquare, Home, ShoppingCart } from "lucide-react";
 import * as React from "react";
 import {
-  AgentStatus,
   GlobalSearchQueryVariables,
   Ordering,
   useAgentsQuery,
@@ -119,7 +118,7 @@ export const NavigationPane = (props: {}) => {
                       className="w-3 h-3 rounded rounded-full my-auto animate-pulse"
                       style={{
                         backgroundColor:
-                          agent.status == AgentStatus.Active
+                          agent.connected 
                             ? "#00FF00"
                             : "#FF0000",
                       }}
@@ -146,7 +145,7 @@ export const NavigationPane = (props: {}) => {
                     className="h-4 w-4"
                     style={{
                       color:
-                        agent.status == AgentStatus.Active
+                        agent.connected
                           ? "#00FF00"
                           : "#A9A9A9",
                     }}

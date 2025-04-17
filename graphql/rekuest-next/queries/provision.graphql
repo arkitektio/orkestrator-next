@@ -1,5 +1,0 @@
-query DetailProvision($id: ID!) {
-  provision(id: $id) {
-    ...DetailProvision
-  }
-}

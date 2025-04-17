@@ -4,7 +4,6 @@ import {
   useCreateStreamMutation,
   useGetStreamQuery,
 } from "@/lok-next/api/graphql";
-import { ReturnWidgetProps } from "@/rekuest/widgets/types";
 import {
   GridLayout,
   LiveKitRoom,

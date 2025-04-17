@@ -24,8 +24,8 @@ import { SmartProvider } from "@/providers/smart/provider";
 import { FlussWard } from "@/reaktion/FlussWard";
 import { RekuestNextWard } from "@/rekuest/RekuestNextWard";
 import NodeDisplay from "@/rekuest/components/displays/NodeDisplay";
+import { AgentUpdater } from "@/rekuest/components/functional/AgentUpdater";
 import { AssignationUpdater } from "@/rekuest/components/functional/AssignationUpdater";
-import { ReservationUpdater } from "@/rekuest/components/functional/ReservationUpdater";
 import { WidgetRegistryProvider } from "@/rekuest/widgets/WidgetsProvider";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import { useNavigate } from "react-router-dom";
@@ -110,7 +110,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                         <Guard.Rekuest fallback={<></>}>
                           {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
                           <AssignationUpdater />
-                          <ReservationUpdater />
+                          <AgentUpdater/>
                           {/* We register the Shadn powered widgets to the widget registry. */}
                           <RekuestNextWard />
                           <ShadnWigets />

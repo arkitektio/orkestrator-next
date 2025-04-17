@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/tooltip";
 import { NodeDescription } from "@/lib/rekuest/NodeDescription";
 import {
+  FlussChildPortFragment,
   FlussPortFragment,
   GraphNodeKind,
   ReactiveImplementation,
@@ -192,10 +193,36 @@ const combineOptions = [
   },
 ];
 
+const bufferOptions = [
+  {
+    title: "Buffer Count",
+    description: "Buffer the count stream",
+    implementation: ReactiveImplementation.BufferCount,
+    constantsMap: {
+      count: 1,
+    }
+  },
+  {
+    title: "BufferComplete",
+    description: "Buffer the stream until complete",
+    implementation: ReactiveImplementation.BufferComplete,
+    constantsMap: {}
+  },
+  {
+    title: "BufferUntil",
+    description: "Buffer the stream until a condition is met",
+    implementation: ReactiveImplementation.BufferUntil,
+    constantsMap: {}
+  },
+];
+
+
+
+
 // Checks if two items are structurally equal, that means they have the same kind and identifier. (If the kind is a structure)
 const isStructuralMatch = (
-  item1: FlussPortFragment | undefined,
-  item2: FlussPortFragment | undefined,
+  item1: FlussPortFragment | FlussChildPortFragment | undefined,
+  item2: FlussPortFragment  | FlussChildPortFragment |  undefined,
 ) => {
   if (!item1 || !item2) {
     return false;
@@ -305,6 +332,37 @@ const connectReactiveNodes = (
       },
       title: "Chunk",
       description: "Chunk the stream",
+    });
+  }
+
+  if (
+    rightPorts.length == 1 &&
+    rightPorts.at(0)?.kind == PortKind.List &&
+    isStructuralMatch(rightPorts.at(0)?.children?.at(0), leftPorts.at(0))
+  ) {
+    // Is chunk transferable
+    bufferOptions.map((option) => {
+      nodes.push({
+        node: {
+          id: nodeIdBuilder(),
+          type: "ReactiveNode",
+          position: { x: 0, y: 0 },
+          data: {
+            globalsMap: {},
+            title: option.title,
+            description: option.description,
+            kind: GraphNodeKind.Reactive,
+            ins: [leftPorts],
+            constantsMap: option.constantsMap,
+            outs: [rightPorts],
+            voids: [],
+            constants: [],
+            implementation: option.implementation,
+          },
+        },
+        title: option.title,
+        description: option.description,
+      });
     });
   }
 

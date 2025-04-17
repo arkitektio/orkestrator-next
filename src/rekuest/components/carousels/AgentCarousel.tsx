@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/carousel";
 import { NodeDescription } from "@/lib/rekuest/NodeDescription";
 import { RekuestAgent, RekuestTemplate } from "@/linkers";
-import { AgentFragment, AgentStatus } from "@/rekuest/api/graphql";
+import { AgentFragment } from "@/rekuest/api/graphql";
 import Timestamp from "react-timestamp";
 
 export default (props: { agent: AgentFragment }) => {
@@ -28,12 +28,12 @@ export default (props: { agent: AgentFragment }) => {
                     {props.agent.name}
                   </h1>
                   <p className="mt-3 text-xl text-muted-foreground flex flex-row gap-2">
-                    {props.agent.status}{" "}
+                    {props.agent.connected && "Connected"}{" "}
                     <div
                       className="w-3 h-3 rounded rounded-full my-auto animate-pulse"
                       style={{
                         backgroundColor:
-                          props.agent.status == AgentStatus.Active
+                          props.agent.connected
                             ? "#00FF00"
                             : "#FF0000",
                       }}

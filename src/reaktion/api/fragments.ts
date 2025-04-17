@@ -1,31 +1,51 @@
-export interface PossibleTypesResultData {
-  possibleTypes: {
-    [key: string]: string[];
-  };
-}
-const result: PossibleTypesResultData = {
-  possibleTypes: {
-    AssignWidget: [
+
+      export interface PossibleTypesResultData {
+        possibleTypes: {
+          [key: string]: string[]
+        }
+      }
+      const result: PossibleTypesResultData = {
+  "possibleTypes": {
+    "AssignWidget": [
       "ChoiceAssignWidget",
       "CustomAssignWidget",
       "SearchAssignWidget",
       "SliderAssignWidget",
       "StateChoiceAssignWidget",
-      "StringAssignWidget",
+      "StringAssignWidget"
     ],
-    AssignableNode: ["RekuestFilterNode", "RekuestMapNode"],
-    Effect: ["CustomEffect", "MessageEffect"],
-    GraphEdge: ["LoggingEdge", "VanillaEdge"],
-    GraphNode: [
+    "AssignableNode": [
+      "RekuestFilterNode",
+      "RekuestMapNode"
+    ],
+    "Effect": [
+      "CustomEffect",
+      "MessageEffect"
+    ],
+    "GraphEdge": [
+      "LoggingEdge",
+      "VanillaEdge"
+    ],
+    "GraphNode": [
       "ArgNode",
       "ReactiveNode",
       "RekuestFilterNode",
       "RekuestMapNode",
-      "ReturnNode",
+      "ReturnNode"
     ],
-    RekuestNode: ["RekuestFilterNode", "RekuestMapNode"],
-    RetriableNode: ["RekuestFilterNode", "RekuestMapNode"],
-    ReturnWidget: ["ChoiceReturnWidget", "CustomReturnWidget"],
-  },
+    "RekuestNode": [
+      "RekuestFilterNode",
+      "RekuestMapNode"
+    ],
+    "RetriableNode": [
+      "RekuestFilterNode",
+      "RekuestMapNode"
+    ],
+    "ReturnWidget": [
+      "ChoiceReturnWidget",
+      "CustomReturnWidget"
+    ]
+  }
 };
-export default result;
+      export default result;
+    

@@ -52,7 +52,7 @@ fragment DetailNode on Node {
     description
     runs {
       template_id: arg(key: "template")
-      status
+      latestEventKind
     }
   }
 }

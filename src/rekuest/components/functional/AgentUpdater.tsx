@@ -1,22 +1,21 @@
 import { useRekuest } from "@/arkitekt/Arkitekt";
-import { Alert } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { useSettings } from "@/providers/settings/SettingsContext";
-import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 import { ReturnsContainer } from "@/rekuest/widgets/tailwind";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import {
-  AssignationEventKind,
+  AgentsDocument,
+  AgentsQuery,
   AssignationsDocument,
   AssignationsQuery,
-  useCancelMutation,
   useDetailNodeQuery,
+  WatchAgentsDocument,
+  WatchAgentsSubscription,
+  WatchAgentsSubscriptionVariables,
   WatchAssignationEventsSubscriptionVariables,
   WatchAssignationsDocument,
-  WatchAssignationsSubscription,
+  WatchAssignationsSubscription
 } from "../../api/graphql";
 
 export const DynamicYieldDisplay = (props: {
@@ -64,45 +63,29 @@ export const AgentUpdater = (props: {}) => {
       console.log("Subscribing to Postman Agents");
       const subscription = client
         ?.subscribe<
-          WatchAssignationsSubscription,
-          WatchAssignationEventsSubscriptionVariables
+          WatchAgentsSubscription,
+          WatchAgentsSubscriptionVariables
         >({
-          query: WatchAssignationsDocument,
-          variables: {
-            instanceId: settings.instanceId,
-          },
+          query: WatchAgentsDocument,
+          variables: {},
         })
         .subscribe((res) => {
-          console.log("Received assignation update", res);
+          console.error("Received agent update", res);
 
-          let event = res.data?.assignations.event;
-          let create = res?.data?.assignations.create;
+          let update = res.data?.agents.update;
+          let create = res?.data?.agents.create;
 
-          if (event) {
-            client.cache.updateQuery<AssignationsQuery>(
+          if (update) {
+            client.cache.updateQuery<AgentsQuery>(
               {
-                query: AssignationsDocument,
-                variables: {
-                  instanceId: settings.instanceId,
-                },
+                query: AgentsDocument,
               },
               (data) => {
-                let assignation = data?.assignations.find(
-                  (a) => a.id === event.assignation.id,
-                );
-
-                if (!assignation) {
-                  console.error(
-                    "Assignation not found",
-                    event.assignation.id,
-                    data?.assignations,
-                  );
-                }
 
                 return {
-                  assignations: (data?.assignations || []).map((ass) =>
-                    ass.id == event.assignation.id
-                      ? { ...ass, events: [event, ...ass.events] }
+                  agents: (data?.agents || []).map((ass) =>
+                    ass.id == update.id
+                      ? { ...ass, update}
                       : ass,
                   ),
                 };
@@ -111,26 +94,17 @@ export const AgentUpdater = (props: {}) => {
           }
 
           if (create) {
-            client.cache.updateQuery<AssignationsQuery>(
+            client.cache.updateQuery<AgentsQuery>(
               {
-                query: AssignationsDocument,
-                variables: {
-                  instanceId: settings.instanceId,
-                },
+                query: AgentsDocument,
               },
               (data) => {
                 return {
-                  assignations: data?.assignations.concat([create]) || [create],
+                  agents: data?.agents.concat([create]) || [create],
                 };
               },
             );
 
-            if (create.ephemeral) {
-              // Ephemeral Assignations do not get a notification
-              return;
-            }
-
-            console.error("Added assignation", create.reference);
             const toastId = create.id; // Use the assignation id as the toastId
             toast(<AgentToatser id={toastId} />, {
               id: toastId,

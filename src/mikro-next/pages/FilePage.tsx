@@ -8,6 +8,8 @@ import { useResolve } from "@/datalayer/hooks/useResolve";
 import { MikroFile, MikroImage } from "@/linkers";
 import { useGetFileQuery, usePinStageMutation } from "../api/graphql";
 import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
+import { Download } from "lucide-react";
+import { DownloadButton } from "@/components/ui/download-button";
 
 export default asDetailQueryRoute(useGetFileQuery, ({ data, refetch }) => {
   const [pinStage] = usePinStageMutation();
@@ -37,9 +39,9 @@ export default asDetailQueryRoute(useGetFileQuery, ({ data, refetch }) => {
       }
       pageActions={
         <>
-          <Button onClick={downloadFile} variant="outline">
+          <DownloadButton url={resolve(data.file.store.presignedUrl)} variant="outline">
             Download
-          </Button>
+          </DownloadButton>
         </>
       }
     >

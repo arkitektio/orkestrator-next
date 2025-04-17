@@ -8,6 +8,7 @@ declare global {
       authenticate: (url: string) => Promise<string>;
       openJitsiWindow: () => Promise<void>;
       openSecondWindow: (path: string) => void;
+      downloadFromUrl: (url: string) =>  Promise<{ success: boolean; path?: string; error?: string }>;
     };
   }
 }

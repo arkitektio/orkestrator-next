@@ -4,7 +4,6 @@ fragment Binds on Binds {
 
 fragment PostmanReservation on Reservation {
   title
-  status
   id
   reference
   node {
@@ -16,27 +15,14 @@ fragment PostmanReservation on Reservation {
   binds {
     ...Binds
   }
-  events {
-    ...ReservationEvent
-  }
   viable
   happy
 }
 
-fragment ReservationEvent on ReservationEvent {
-  id
-  kind
-  level
-  reservation {
-    id
-  }
-  createdAt
-}
 
 fragment ListReservation on Reservation {
   id
   title
-  status
   reference
   node {
     name
@@ -47,9 +33,6 @@ fragment ListReservation on Reservation {
 
 fragment DetailReservation on Reservation {
   ...PostmanReservation
-  provisions {
-    ...ListProvision
-  }
   node {
     name
     description

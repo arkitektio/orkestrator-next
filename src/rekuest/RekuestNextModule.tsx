@@ -12,7 +12,6 @@ import Node from "./pages/Node";
 import Nodes from "./pages/Nodes";
 import Panel from "./pages/Panel";
 import Panels from "./pages/Panels";
-import Provision from "./pages/Provision";
 import Reservation from "./pages/Reservation";
 import Reservations from "./pages/Reservations";
 import Template from "./pages/Template";
@@ -51,7 +50,6 @@ const Module: React.FC<Props> = () => {
           <Route path="interfaces" element={<Interfaces />} />
           <Route path="dependencies/:id" element={<Dependency />} />
           <Route path="templates/:id" element={<Template />} />
-          <Route path="provisions/:id" element={<Provision />} />
           <Route path="agents/:id" element={<Agent />} />
           <Route path="assignations/:id" element={<Assignation />} />
           <Route path="interfaces/:kind/:id" element={<Interface />} />

@@ -28,6 +28,7 @@ import { useNavigate } from "react-router-dom";
 import Timestamp from "react-timestamp";
 import { useNodeAction } from "../hooks/useNodeAction";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const AssignationFlow = (props: {
   id: string;
@@ -136,18 +137,7 @@ export const AssignationTimeLine = (props: {
   );
 };
 
-export const WorkflowRender = (props: {
-  assignation: DetailAssignationFragment;
-}) => {
-  return (
-    <div className="w-full h-[500px] overflow-y-scroll">
-      <AssignationFlow
-        id={props?.assignation?.provision?.template?.params["flow"]}
-        assignation={props.assignation}
-      />
-    </div>
-  );
-};
+
 
 export const useReassign = ({
   assignation,
@@ -155,14 +145,14 @@ export const useReassign = ({
   assignation: DetailAssignationFragment;
 }) => {
   const { assign } = useNodeAction({
-    id: assignation.provision?.template.id || "",
+    id: assignation?.template.id || "",
   });
   const navigate = useNavigate();
 
   const reassign = async () => {
     let x = await assign({
       args: assignation.args,
-      template: assignation.provision?.template.id || "",
+      template: assignation?.template.id || "",
       hooks: [],
     });
 
@@ -173,10 +163,10 @@ export const useReassign = ({
 };
 
 export const isCancalable = (assignation: DetailAssignationFragment) => {
-  return assignation.status != AssignationEventKind.Done;
+  return assignation.isDone
 };
 export const isInterruptable = (assignation: DetailAssignationFragment) => {
-  return assignation.status != AssignationEventKind.Done;
+  return assignation.isDone
 };
 
 export default asDetailQueryRoute(
@@ -250,11 +240,27 @@ export default asDetailQueryRoute(
         }
       >
         <div className="flex h-full w-full relative">
-          {data?.assignation?.provision?.template?.extension === "reaktion" ? (
-            <AssignationFlow
-              id={data?.assignation?.provision.template?.params["flow"]}
+          {data?.assignation?.template?.extension === "reaktion" ? (
+            <>
+            <Tabs className="w-full h-full" defaultValue="flow">
+              <TabsList className="w-full h-8">
+                <TabsTrigger value="flow">Flow</TabsTrigger>
+                <TabsTrigger value="logs">Logs</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="flow" className="h-full w-full">
+              <AssignationFlow
+              id={data?.assignation?.template?.interface}
               assignation={data.assignation}
             />
+              </TabsContent>
+              <TabsContent value="logs" className="h-full w-full">
+                <AssignationTimeLine assignation={data.assignation} />
+              </TabsContent>
+
+            </Tabs>
+            </>
+           
           ) : (
             <DefaultRenderer assignation={data.assignation} />
           )}

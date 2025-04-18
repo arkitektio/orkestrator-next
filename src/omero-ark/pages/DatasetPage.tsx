@@ -23,7 +23,8 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   });
 
   return (
-    <PageLayout
+    <OmeroArkDataset.ModelPage
+      object={id}
       actions={<OmeroArkDataset.Actions id={id} />}
       sidebars={<Komments identifier="@omero-ark/dataset" object={id} />}
     >
@@ -50,7 +51,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
           {(item, index) => <ImageCard image={item} key={index} />}
         </ListRender>
       </DetailPane>
-    </PageLayout>
+    </OmeroArkDataset.ModelPage>
   );
 };
 

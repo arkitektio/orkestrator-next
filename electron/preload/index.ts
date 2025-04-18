@@ -7,7 +7,8 @@ const api = {
     // @ts-ignore (define in dts)
     return ipcRenderer.send("fakts-start", url);
   },
-
+  downloadFromUrl: (url: string) =>
+    ipcRenderer.invoke('download-from-url', { url }),
   authenticate: async (url: string) => {
     // @ts-ignore (define in dts)
     console.log("Running oauth?", url);

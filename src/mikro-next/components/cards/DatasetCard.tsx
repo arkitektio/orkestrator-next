@@ -18,7 +18,7 @@ const TheCard = ({ dataset, mates, className }: Props) => {
     <MikroDataset.Smart object={dataset?.id} mates={mates}>
       <Card
         className={cn(
-          "px-2 py-2 h-20 transition-all ease-in-out duration-200 truncate",
+          "px-2 py-2 h-20 flex transition-all ease-in-out duration-200 truncate items-center justify-center group hover:bg-back-800 hover:shadow-xl",
           className,
         )}
       >

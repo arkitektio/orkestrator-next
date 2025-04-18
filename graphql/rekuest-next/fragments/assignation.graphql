@@ -1,8 +1,9 @@
 fragment PostmanAssignation on Assignation {
   id
-  status
+  latestEventKind
   args
   reference
+  isDone
   events {
     ...AssignationEvent
   }
@@ -20,29 +21,16 @@ fragment PostmanAssignation on Assignation {
       name
     }
   }
-  provision {
-    id
-    template {
-      id
-    }
-  }
   template {
     id
     interface
+    extension
   }
   createdAt
 }
 
 fragment DetailAssignation on Assignation {
   ...PostmanAssignation
-  provision {
-    template {
-      id
-      interface
-      params
-      extension
-    }
-  }
 }
 
 fragment AssignationEvent on AssignationEvent {

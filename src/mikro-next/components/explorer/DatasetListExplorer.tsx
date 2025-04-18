@@ -18,7 +18,7 @@ import ImageCard from "../cards/ImageCard";
 import { ProvenanceSidebar } from "../sidebars/ProvenanceSidebar";
 import { offset } from "@udecode/plate-floating";
 import { useState } from "react";
-
+import { TreeView, TreeDataItem } from '@/components/tree-view';
 export type IRepresentationScreenProps = {};
 
 export const DatasetListExplorer = (props: {
@@ -87,6 +87,7 @@ export const DatasetListExplorer = (props: {
             <LayoutList />
           </Button>
 
+
           <Button
             variant="outline"
             onClick={() => {
@@ -116,22 +117,29 @@ export const DatasetListExplorer = (props: {
         </div>
       }
     >
-      <div className="flex-grow">
-        <div className="grid grid-cols-6 rounded-md gap-4 mt-2">
+      <div className="h-full w-full flex flex-col rounded-md">
+        <div className="grid grid-cols-6 rounded-md gap-4 mt-2 flex-initial ">
           {data?.children.map((child) => {
             if (child.__typename === "Dataset") {
-              return <DatasetCard dataset={child} className="h-10" />;
+              return <DatasetCard dataset={child} className="h-20 w-full" />;
             } else if (child.__typename === "Image") {
               return (
                 <ImageCard image={child} className="h-20 w-full  ellipsis" />
               );
             } else if (child.__typename === "File") {
-              return <FileCard file={child} className="h-10" />;
+              return <FileCard file={child} className="h-20 w-full" />;
             } else {
               return <div>Unknown type</div>;
             }
           })}
+          {error && (
+            <div className="col-span-6 text-red-500">
+              {error.message}
+              </div>
+          )}
+          
         </div>
+
         <DropZone
           accepts={["item:@mikro/image", "list:@mikro/image"]}
           className="border border-gray-800 cursor-pointer rounded p-5 text-white bg-gray-900 hover:shadow-lg truncate"

@@ -264,6 +264,7 @@ const contextMenuMap: {
   [ReactiveImplementation.BufferComplete]: DefaultContext,
   [ReactiveImplementation.Chunk]: DefaultContext,
   [ReactiveImplementation.Omit]: DefaultContext,
+  [ReactiveImplementation.BufferCount]: DefaultContext,
   [ReactiveImplementation.Add]: DefaultContext,
   [ReactiveImplementation.All]: DefaultContext,
   [ReactiveImplementation.And]: DefaultContext,
@@ -299,6 +300,8 @@ const shapeMap: { [key in ReactiveImplementation]: React.FC<ShapeProps> } = {
   [ReactiveImplementation.All]: Default,
   [ReactiveImplementation.And]: Default,
   [ReactiveImplementation.BufferUntil]: Default,
+  [ReactiveImplementation.Reorder]: Reorder,
+  [ReactiveImplementation.BufferCount]: Default,
   [ReactiveImplementation.Delay]: Default,
   [ReactiveImplementation.DelayUntil]: Default,
   [ReactiveImplementation.Divide]: Default,
@@ -318,13 +321,13 @@ const shapeMap: { [key in ReactiveImplementation]: React.FC<ShapeProps> } = {
 const shapeForImplementation = (
   implementation: ReactiveImplementation,
 ): React.FC<ShapeProps> => {
-  return shapeMap[implementation];
+  return shapeMap[implementation] || Default;
 };
 
 const contextMenuForImplementation = (
   implementation: ReactiveImplementation,
 ): React.FC<ContextMenuProps> => {
-  return contextMenuMap[implementation];
+  return contextMenuMap[implementation] || DefaultContext;
 };
 
 export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({

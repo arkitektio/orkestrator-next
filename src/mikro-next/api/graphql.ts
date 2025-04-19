@@ -180,6 +180,7 @@ export type AssociateInput = {
 export type BigFileStore = {
   __typename?: 'BigFileStore';
   bucket: Scalars['String']['output'];
+  filename: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   key: Scalars['String']['output'];
   path: Scalars['String']['output'];
@@ -241,6 +242,7 @@ export type CameraInput = {
 export type ChangeDatasetInput = {
   id: Scalars['ID']['input'];
   name: Scalars['String']['input'];
+  parent?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type Channel = {
@@ -429,6 +431,7 @@ export type ContinousScanViewInput = {
 
 export type CreateDatasetInput = {
   name: Scalars['String']['input'];
+  parent?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type CreateRgbContextInput = {
@@ -466,6 +469,7 @@ export type Dataset = {
   images: Array<Image>;
   isDefault: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
+  parent?: Maybe<Dataset>;
   pinned: Scalars['Boolean']['output'];
   tags: Array<Scalars['String']['output']>;
 };
@@ -887,7 +891,7 @@ export type FromArrayLikeInput = {
 export type FromFileLike = {
   dataset?: InputMaybe<Scalars['ID']['input']>;
   file: Scalars['FileLike']['input'];
-  name: Scalars['String']['input'];
+  fileName: Scalars['String']['input'];
   origins?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
@@ -1484,6 +1488,8 @@ export type Mutation = {
   ensureCamera: Camera;
   /** Ensure a channel exists, creating if needed */
   ensureChannel: Channel;
+  /** Create a new dataset to organize data */
+  ensureDataset: Dataset;
   /** Ensure an instrument exists, creating if needed */
   ensureInstrument: Instrument;
   /** Ensure a multi-well plate exists, creating if needed */
@@ -1821,6 +1827,11 @@ export type MutationEnsureCameraArgs = {
 
 export type MutationEnsureChannelArgs = {
   input: ChannelInput;
+};
+
+
+export type MutationEnsureDatasetArgs = {
+  input: CreateDatasetInput;
 };
 
 
@@ -3318,7 +3329,7 @@ export type RequestFileAccessInput = {
 
 export type RequestFileUploadInput = {
   datalayer: Scalars['String']['input'];
-  key: Scalars['String']['input'];
+  fileName: Scalars['String']['input'];
 };
 
 export type RequestMediaUploadInput = {
@@ -6275,7 +6286,7 @@ export type CreateEraMutationOptions = Apollo.BaseMutationOptions<CreateEraMutat
 export const From_File_LikeDocument = gql`
     mutation from_file_like($file: FileLike!, $name: String!, $origins: [ID!], $dataset: ID) {
   fromFileLike(
-    input: {file: $file, name: $name, origins: $origins, dataset: $dataset}
+    input: {file: $file, fileName: $name, origins: $origins, dataset: $dataset}
   ) {
     ...File
   }
@@ -6312,7 +6323,7 @@ export type From_File_LikeMutationResult = Apollo.MutationResult<From_File_LikeM
 export type From_File_LikeMutationOptions = Apollo.BaseMutationOptions<From_File_LikeMutation, From_File_LikeMutationVariables>;
 export const RequestFileUploadDocument = gql`
     mutation RequestFileUpload($key: String!, $datalayer: String!) {
-  requestFileUpload(input: {key: $key, datalayer: $datalayer}) {
+  requestFileUpload(input: {fileName: $key, datalayer: $datalayer}) {
     ...Credentials
   }
 }
@@ -6346,7 +6357,7 @@ export type RequestFileUploadMutationResult = Apollo.MutationResult<RequestFileU
 export type RequestFileUploadMutationOptions = Apollo.BaseMutationOptions<RequestFileUploadMutation, RequestFileUploadMutationVariables>;
 export const RequestFileUploadPresignedDocument = gql`
     mutation RequestFileUploadPresigned($key: String!, $datalayer: String!) {
-  requestFileUploadPresigned(input: {key: $key, datalayer: $datalayer}) {
+  requestFileUploadPresigned(input: {fileName: $key, datalayer: $datalayer}) {
     ...PresignedPostCredentials
   }
 }

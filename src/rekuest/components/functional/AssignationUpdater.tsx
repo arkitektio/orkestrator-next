@@ -71,7 +71,7 @@ export const AssignationToaster = (props: { id: string }) => {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {ass.error && <Alert>{ass.error}</Alert>}
+      {ass.error && <Alert className="bg-red-800">{ass.error}</Alert>}
       {ass.yield && ass.nodeId && (
         <DynamicYieldDisplay values={ass.yield} nodeId={ass.nodeId} />
       )}

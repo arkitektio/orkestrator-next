@@ -41,6 +41,7 @@ import { ShortcutToolbar } from "@/rekuest/components/toolbars/ShortcutToolbar";
 import { StructureInfo } from "@/kraph/components/mini/StructureInfo";
 import { Slider } from "@/components/ui/slider";
 import { SliderTooltip } from "@/components/ui/slider-tooltip";
+import { Button } from "@/components/ui/button";
 
 export interface RGBDProps {
   context: ListRgbContextFragment;
@@ -212,7 +213,7 @@ export const FinalRender = (props: RGBDProps) => {
     id: "extra",
   });
 
-  const selectedLayers = layers;
+  const selectedLayers = [layers.at(selectedScale)];
   // Calculate which chunks are needed for the view
 
   const chunk_shape = props.context.image.store.chunks;
@@ -224,9 +225,9 @@ export const FinalRender = (props: RGBDProps) => {
   return (
     <div style={{ width: "100%", height: "100%" }} className="relative">
       <div className="absolute bottom-0 z-10 w-full mb-4 px-6 bg-gradient-to-t from-black to-transparent py-3">
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-2">
           {zSize > 1 && <div className="flex flex-row">
-            <div className="my-auto mr-2 w-12">z: {z}</div>
+            <div className="my-auto mx-2 w-12">z: {z}</div>
             <SliderTooltip
               value={[z]}
               onValueChange={(value) => setZ(value[0])}
@@ -236,6 +237,29 @@ export const FinalRender = (props: RGBDProps) => {
               className="w-full"
               defaultValue={[0]}
             />
+            <div className="flex flex-col ml-2">
+            {layers.length > 1 && (
+              <>
+                <div className="flex flex-row gap-2">
+                  {layers.map((layer, index) => {
+                    return (
+                      <Button
+                        key={index}
+                        onClick={() => {
+                          setSelectedScale(index);
+                        }}
+                        size={"sm"}
+                        variant="ghost"
+                        className={selectedScale === index ? "bg-gray-800" : "bg-gray-900"}
+                      >
+                        {layer.scaleX} x
+                      </Button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
           </div>}
           {tSize > 1 && <div className="flex flex-row">
             <div className="my-auto mr-2 w-12">t: {t}</div>
@@ -249,27 +273,7 @@ export const FinalRender = (props: RGBDProps) => {
               defaultValue={[0]}
             />
           </div>}
-          <div className="flex flex-col">
-            {layers.length > 1 && (
-              <>
-                <div className="flex flex-col">
-                  {layers.map((layer, index) => {
-                    return (
-                      <button
-                        key={index}
-                        onClick={() => {
-                          setSelectedScale(index);
-                        }}
-                        className="bg-blue-500 text-white"
-                      >
-                        {layer.scaleX}xl
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </div>
+          
         </div>
       </div>
 

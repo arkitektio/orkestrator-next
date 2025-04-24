@@ -1,0 +1,24 @@
+fragment DetailSimulation on Simulation {
+  id
+  name
+  model {
+    ...DetailNeuronModel
+  }
+  timeTrace {
+    id
+    name
+    store {
+      ...ZarrStore
+    }
+  }
+  duration
+  recordings {
+    ...Recording
+  }
+}
+
+fragment ListSimulation on Simulation {
+  id
+  name
+  duration
+}

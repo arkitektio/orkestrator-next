@@ -39,6 +39,27 @@ export const NavigationPane = (props: {}) => {
           <CubeIcon className="h-4 w-4" />
           Traces
         </DroppableNavLink>
+        <DroppableNavLink
+          to="/elektro/simulations"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <CubeIcon className="h-4 w-4" />
+          Simulations
+        </DroppableNavLink>
+        <DroppableNavLink
+          to="/elektro/experiments"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <CubeIcon className="h-4 w-4" />
+          Experiments
+        </DroppableNavLink>
+        <DroppableNavLink
+          to="/elektro/neuronmodels"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <CubeIcon className="h-4 w-4" />
+          Neuron models
+        </DroppableNavLink>
       </SubTree>
     </Tree>
   );

@@ -71,12 +71,6 @@ export const viewToSlices = (t: number, z: number): Slice[] => {
       start: null,
       stop: null,
     },
-    {
-      _slice: true,
-      step: 1,
-      start: null,
-      stop: null,
-    },
   ];
 
   return selection;
@@ -94,7 +88,7 @@ export const renderArray = async (
   store: ZarrStoreFragment,
   t: number,
   abortSignal?: AbortSignal,
-): Promise<Plot> => {
+): Promise<number[]> => {
   let slices = viewToSlices(t, t);
   console.log("Slices", slices);
 
@@ -108,12 +102,12 @@ export const renderArray = async (
 
   console.log("Array is", selection.out.data);
   const reduced = Array.from(selection.out.data).map((x, i) => {
-    return { t: i, c: x };
+    return x
   });
 
   console.log("Reduced array", reduced);
 
-  return reduced as Plot;
+  return reduced as number[];
 };
 
 const downloadArray = async (

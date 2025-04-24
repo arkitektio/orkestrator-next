@@ -1,36 +1,37 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { ElektroTrace } from "@/linkers";
-import { useDetailTraceQuery } from "../api/graphql";
+import { ElektroNeuronModel, ElektroTrace } from "@/linkers";
+import { useDetailNeuronModelQuery, useDetailTraceQuery } from "../api/graphql";
 import { useTraceArray } from "../lib/useTraceArray";
 import { Button } from "@/components/ui/button";
 import { TraceRender } from "../components/TraceRender";
+import { NeuronVisualizer } from "../components/NeuronRenderer";
 
 export type IRepresentationScreenProps = {};
 
 export default asDetailQueryRoute(
-  useDetailTraceQuery,
+  useDetailNeuronModelQuery,
   ({ data, subscribeToMore }) => {
-    
+
     return (
-      <ElektroTrace.ModelPage
-        title={data?.trace?.name}
-        object={data.trace.id}
+      <ElektroNeuronModel.ModelPage
+        title={data?.neuronModel?.name}
+        object={data.neuronModel.id}
         pageActions={
           <div className="flex flex-row gap-2">
-            <ElektroTrace.ObjectButton object={data.trace.id} />
+            <ElektroNeuronModel.ObjectButton object={data.neuronModel.id} />
           </div>
         }
         sidebars={
           <MultiSidebar
             map={{
-              Comments: <ElektroTrace.Komments object={data.trace.id} />,
+              Comments: <ElektroNeuronModel.Komments object={data.neuronModel.id} />,
             }}
           />
         }
       >
-        <TraceRender trace={data.trace} />
-      </ElektroTrace.ModelPage>
+        <NeuronVisualizer model={data.neuronModel} />
+      </ElektroNeuronModel.ModelPage>
     );
   },
 );

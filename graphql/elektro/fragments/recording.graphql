@@ -1,0 +1,12 @@
+fragment Recording on Recording {
+    id
+    label
+    cell
+    trace {
+        id
+        name
+        store {
+            ...ZarrStore
+        }
+    }
+}

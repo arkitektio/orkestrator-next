@@ -90,6 +90,11 @@ export const MikroRenderTree = buildSmart(
 export const MikroDataset = buildSmart("@mikro/dataset", "mikro/datasets");
 
 export const ElektroTrace = buildSmart("@elekto/trace", "elektro/traces");
+export const ElektroSimulation = buildSmart("@elekto/simulation", "elektro/simulations");
+export const ElektroRecording = buildSmart("@elekto/recording", "elektro/recordings");
+export const ElektroStimulus = buildSmart("@elekto/stimulus", "elektro/stimuli");
+export const ElektroExperiment = buildSmart("@elekto/experiment", "elektro/experiments");
+export const ElektroNeuronModel = buildSmart("@elekto/neuronmodel", "elektro/neuronmodels");
 
 export const KraphNode = buildSmart("@kraph/node", "kraph/nodes");
 

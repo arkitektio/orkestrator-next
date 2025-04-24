@@ -1,0 +1,19 @@
+fragment Experiment on Experiment {
+    id
+   name 
+   views {
+        id
+        label 
+        stimulus {
+            ...Stimulus
+        }
+        recording {
+            ...Recording
+        }
+   }
+}
+
+fragment ListExperiment on Experiment {
+    id
+    name
+}

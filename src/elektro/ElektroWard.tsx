@@ -25,7 +25,7 @@ export const ElektroWard: React.FC<{
           });
       };
 
-      registry?.registerWard(key, {
+      registry?.registerWard("elektro", {
         search: runFunc,
       });
     }

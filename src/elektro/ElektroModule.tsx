@@ -12,6 +12,8 @@ import SimulationsPage from "./pages/SimulationsPage";
 import ExperimentsPage from "./pages/ExperimentsPage";
 import NeuronModelsPage from "./pages/NeuronModelsPage";
 import TracesPage from "./pages/TracesPage";
+import ModelCollectionPage from "./pages/ModelCollectionPage";
+import ModelCollectionsPage from "./pages/ModelCollectionsPage";
 interface Props {}
 
 export const ElektroModule: React.FC<Props> = (props) => {
@@ -23,10 +25,12 @@ export const ElektroModule: React.FC<Props> = (props) => {
           <Route path="simulations/:id" element={<SimulationPage/>} />
           <Route path="experiments/:id" element={<ExperimentPage/>} />
           <Route path="neuronmodels/:id" element={<NeuronModelPage/>} />
+          <Route path="modelcollections/:id" element={<ModelCollectionPage/>} />
           <Route path="traces" element={<TracesPage />} />
           <Route path="simulations" element={<SimulationsPage />} />
           <Route path="experiments" element={<ExperimentsPage />} />
           <Route path="neuronmodels" element={<NeuronModelsPage />} />
+          <Route path="modelcollections" element={<ModelCollectionsPage />} />
           <Route path="*" element={<HomePage />} />
         </Routes>
       </ModuleLayout>

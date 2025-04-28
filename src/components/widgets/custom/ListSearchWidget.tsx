@@ -15,8 +15,12 @@ export const ListSearchWidget = (
   let wardKey = props.widget?.ward;
   let query = props?.widget?.query || "";
 
+  if (!wardKey) {
+    return <>No ward set</>;
+  }
+
   const theward = useMemo(
-    () => registry.getWard(wardKey || "default"),
+    () => registry.getWard(wardKey),
     [registry, wardKey],
   );
 

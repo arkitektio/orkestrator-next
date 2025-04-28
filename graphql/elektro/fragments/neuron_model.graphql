@@ -54,6 +54,21 @@ fragment DetailNeuronModel on NeuronModel {
     }
   }
   }
+  comparisons {
+    collection {
+        id
+        name
+    }
+    changes {
+        type 
+        path
+        valueA
+        valueB
+    }
+  }
+  simulations {
+    ...ListSimulation
+  }
 
 }
 

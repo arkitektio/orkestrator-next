@@ -11,7 +11,7 @@ export interface InputWidgetProps<
   W extends AssignWidgetFragment = AssignWidgetFragment,
 > {
   port: PortFragment;
-  widget?: W | null;
+  widget: W;
   options?: PortOptions;
   parentKind?: PortKind;
   path: string[];

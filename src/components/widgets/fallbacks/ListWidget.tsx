@@ -64,7 +64,7 @@ export const SideBySideWidget = ({
                 variant="outline"
                 size={"icon"}
                 className="absolute top-0 right-0 mr-2 mt-2"
-                onClick={() => remove(index)}
+                onClick={(e) => {remove(index); e.preventDefault()}}
               >
                 <X />
               </Button>
@@ -73,7 +73,7 @@ export const SideBySideWidget = ({
           <TooltipButton
             variant="outline"
             size="icon"
-            onClick={() => append({ __value: undefined })}
+            onClick={(e) => {append({ __value: undefined }); e.preventDefault()}}
             tooltip="Add new item"
           >
             <Plus />

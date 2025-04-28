@@ -7,6 +7,7 @@ import TraceCard from "../cards/TraceCard";
 import SimulationCard from "../cards/SimulationCard";
 import ExperimentCard from "../cards/ExperimentCard";
 import { ExperimentFilter } from "@/mikro-next/api/graphql";
+import { Button } from "@/components/ui/button";
 
 export type Props = {
   filters?: ExperimentFilter;
@@ -29,6 +30,11 @@ const List = ({ filters, pagination }: Props) => {
         <ElektroExperiment.ListLink className="flex-0">Experiments</ElektroExperiment.ListLink>
       }
       refetch={refetch}
+      actions={
+        <ElektroExperiment.NewButton
+          className="flex-1"
+        ><Button>x</Button></ElektroExperiment.NewButton>
+      }
     >
       {(ex, index) => <ExperimentCard key={index} item={ex} />}
     </ListRender>

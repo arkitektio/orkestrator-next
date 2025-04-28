@@ -793,6 +793,8 @@ export type ProvenanceFilter = {
 
 export type Query = {
   __typename?: 'Query';
+  /** Returns a list of cells in a model */
+  cells: Array<Cell>;
   dataset: Dataset;
   datasets: Array<Dataset>;
   experiment: Experiment;
@@ -812,6 +814,8 @@ export type Query = {
   recordings: Array<Recording>;
   roi: Roi;
   rois: Array<Roi>;
+  /** Returns a list of images */
+  sections: Array<Section>;
   simulation: Simulation;
   simulations: Array<Simulation>;
   stimuli: Array<Stimulus>;
@@ -820,6 +824,11 @@ export type Query = {
   /** Returns a single image by ID */
   trace: Trace;
   traces: Array<Trace>;
+};
+
+
+export type QueryCellsArgs = {
+  modelId: Scalars['ID']['input'];
 };
 
 
@@ -909,6 +918,12 @@ export type QueryRoiArgs = {
 export type QueryRoisArgs = {
   filters?: InputMaybe<RoiFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QuerySectionsArgs = {
+  cellID: Scalars['ID']['input'];
+  modelId: Scalars['ID']['input'];
 };
 
 

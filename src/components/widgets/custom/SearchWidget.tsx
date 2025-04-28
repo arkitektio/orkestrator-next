@@ -1,7 +1,9 @@
 import { FilterSearchField } from "@/components/fields/FilterSearchField";
 import { SearchField, SearchOptions } from "@/components/fields/SearchField";
+import { Badge } from "@/components/ui/badge";
 import { FilterSearch } from "@/kabinet/forms/filter/GlobalSearchFilter";
 import { SearchAssignWidgetFragment } from "@/rekuest/api/graphql";
+import useWidgetDependencies from "@/rekuest/hooks/useWidgetDependencies";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { InputWidgetProps } from "@/rekuest/widgets/types";
 import { pathToName } from "@/rekuest/widgets/utils";
@@ -9,11 +11,14 @@ import { pathToName } from "@/rekuest/widgets/utils";
 import { useCallback, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 
+
+
+
+
 export const SearchWidget = (
   props: InputWidgetProps<SearchAssignWidgetFragment>,
 ) => {
   console.log("SearchWidget", props);
-  const form = useFormContext();
   const { registry } = useWidgetRegistry();
 
   let query = props?.widget?.query || "";
@@ -28,22 +33,16 @@ export const SearchWidget = (
     [registry, wardKey],
   );
 
-  const values = useMemo(() => form.getValues(), [form.formState]);
-
-  const foundValues = useMemo(() => {
-    return (
-      props.widget?.dependencies
-        ?.map((dep) => {
-          return values[dep];
-        })
-        .filter((predicate) => predicate !== undefined) || []
-    );
-  }, [values, props.widget?.dependencies]);
+  const { values, met} = useWidgetDependencies({
+    widget: props.widget,
+    path: props.path,
+  });
 
   const search = useCallback(
     async (searching: SearchOptions) => {
       console.log("searching", searching, theward, wardKey, query);
       if (!theward.search) throw new Error("Ward does not support search");
+      if (!met) throw new Error("Dependencies not met");
 
       let options = await theward.search({
         query: query,
@@ -56,8 +55,8 @@ export const SearchWidget = (
     [theward, query, values],
   );
 
-  if (foundValues?.length < (props.widget?.dependencies?.length || 0)) {
-    return <>Waiting for {props.widget?.dependencies?.join(",")}</>;
+  if (!met) {
+    return <div className="w-full my-2">Waiting for {props.widget?.dependencies?.map(d => <Badge>{d}</Badge>)}</div>;
   }
 
   if (props.widget?.filters && props.widget.filters.length > 0) {
@@ -75,6 +74,7 @@ export const SearchWidget = (
   }
 
   return (
+    <>
     <SearchField
       name={pathToName(props.path)}
       label={props.port.label || props.port.key}
@@ -83,5 +83,6 @@ export const SearchWidget = (
       noOptionFoundPlaceholder="No options found"
       commandPlaceholder="Search..."
     />
+    </>
   );
 };

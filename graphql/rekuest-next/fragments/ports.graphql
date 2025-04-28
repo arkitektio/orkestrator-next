@@ -20,7 +20,7 @@ fragment StateChoiceAssignWidget on StateChoiceAssignWidget {
   stateChoices
 }
 
-fragment FilterPort on ChildPort {
+fragment FilterPort on Port {
   __typename
   kind
   key
@@ -65,7 +65,7 @@ fragment ChoiceAssignWidget on ChoiceAssignWidget {
   }
 }
 
-fragment ChildPortNested on ChildPort {
+fragment ChildPortNested on Port {
   __typename
   kind
   key
@@ -92,7 +92,7 @@ fragment ChildPortNested on ChildPort {
   nullable
 }
 
-fragment ChildPort on ChildPort {
+fragment ChildPort on Port {
   __typename
   kind
   key

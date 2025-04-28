@@ -511,7 +511,7 @@
                 "ofType": null
               }
             },
-            "defaultValue": "\"713a206f-194f-4d84-b562-eabf77f099ce\"",
+            "defaultValue": "\"86bc5d4d-0cc4-468f-bd3f-7763abc0ab2a\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -877,7 +877,7 @@
                 "ofType": null
               }
             },
-            "defaultValue": "\"a7e399a3-2d48-4b33-adfe-b47df235441b\"",
+            "defaultValue": "\"3ff18d01-8d83-4054-9058-548d07b45db5\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -5097,7 +5097,7 @@
                 "ofType": null
               }
             },
-            "defaultValue": "\"e2015a51-735a-4165-9b52-867572fab425\"",
+            "defaultValue": "\"72d76f93-8feb-4566-83b7-f209f9c685b9\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -5257,7 +5257,7 @@
                 "ofType": null
               }
             },
-            "defaultValue": "\"3d5397c8-0053-46bf-a4b6-986f5f0002d6\"",
+            "defaultValue": "\"cd5256d4-281c-4925-a1c9-611781286369\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -6234,6 +6234,47 @@
         "isOneOf": null,
         "fields": [
           {
+            "name": "cells",
+            "description": "Returns a list of cells in a model",
+            "args": [
+              {
+                "name": "modelId",
+                "description": "The unique identifier of an object",
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "ID",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "Cell",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "dataset",
             "description": null,
             "args": [
@@ -6913,6 +6954,63 @@
                   "ofType": {
                     "kind": "OBJECT",
                     "name": "ROI",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "sections",
+            "description": "Returns a list of images",
+            "args": [
+              {
+                "name": "cellID",
+                "description": "The unique identifier of an object",
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "ID",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "modelId",
+                "description": "The unique identifier of an object",
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "ID",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "Section",
                     "ofType": null
                   }
                 }

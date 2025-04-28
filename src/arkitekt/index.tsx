@@ -42,7 +42,7 @@ export const buildGuard =
     const { clients } = useArkitekt();
 
     if (!clients[key]) {
-      return <div>{props.fallback || "Loading"} FUCK</div>;
+      return <div>{props.fallback || "Loading"}</div>;
     }
 
     return props.children;

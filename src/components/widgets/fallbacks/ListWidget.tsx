@@ -55,7 +55,7 @@ export const SideBySideWidget = ({
       <FormControl>
         <ContainerGrid fitLength={fields.length}>
           {fields.map((item, index) => (
-            <Card key={item.id} className="p-3">
+            <Card key={item.id} className="p-3 relative">
               <RenderDownWidget
                 port={valuetype}
                 path={path.concat(index.toString(), "__value")}

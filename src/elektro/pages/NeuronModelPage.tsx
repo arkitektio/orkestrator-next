@@ -8,6 +8,7 @@ import { TraceRender } from "../components/TraceRender";
 import { NeuronVisualizer } from "../components/NeuronRenderer";
 import { Card } from "@/components/ui/card";
 import SimulationCard from "../components/cards/SimulationCard";
+import { valueFromAST } from "graphql";
 
 export type IRepresentationScreenProps = {};
 
@@ -60,10 +61,10 @@ export default asDetailQueryRoute(
                     {change.path.join(".")}
                   </div>
                   <div className="flex-1">
-                    Self: {change.valueA}
+                    Self: {JSON.stringify(change.valueA)}
                     </div>
                     <div className="flex-1">
-                    Other: {change.valueB}
+                    Other:  {JSON.stringify(change.valueA)}
                     </div>
                   <div className="flex-1">
                     {change.type}

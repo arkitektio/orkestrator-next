@@ -59,8 +59,8 @@ export const usePortForm = (props: {
             ...additionalData,
           });
         },
-        (e) => {
-          toast.error(JSON.stringify(e));
+        (e, event) => {
+          toast.error(JSON.stringify(e,null, 2));
         },
       );
     },

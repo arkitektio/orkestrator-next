@@ -33,7 +33,7 @@ export const IntField = (props: FieldProps & { placeholder?: string }) => {
                 console.log("Changing", props.name, "XX", e);
                 field.onChange(e);
               }}
-              type="number"
+              type="string"
               className="w-full dark:text-white"
             />
           </FormControl>

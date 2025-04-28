@@ -225,20 +225,32 @@ export const portToValidation = (port: LabellablePort): Yup.AnySchema => {
       baseType = Yup.string().typeError("Please enter a string");
       break;
     case PortKind.Int:
-      baseType = Yup.number()
-        .integer("Please enter a valid integer")
-        .typeError(`Please enter a valid integer`)
-        .transform((v) => (v === "" || Number.isNaN(v) ? null : v))
-        .typeError("Please enter a valid integer");
+      baseType = Yup.mixed()
+      .transform((value) => {
+        if (typeof value === 'string') {
+        const parsed = parseFloat(value);
+        return isNaN(parsed) ? null : parsed;
+        }
+        return value === "" || Number.isNaN(value) ? null : value;
+      })
+      .typeError(`Please enter a valid number`);
       break;
     case PortKind.Float:
-      baseType = Yup.number()
-        .transform((v) => (v === "" || Number.isNaN(v) ? null : v))
-        .typeError(`Please enter a valid number`);
+      baseType = Yup.mixed()
+      .transform((value) => {
+        if (typeof value === 'string') {
+        const parsed = parseFloat(value);
+        return isNaN(parsed) ? null : parsed;
+        }
+        return value === "" || Number.isNaN(value) ? null : value;
+      })
+      .typeError(`Please enter a valid number`);
       break;
     case PortKind.Structure:
       baseType = Yup.string().typeError(`Please select a ${port.identifier}`);
       break;
+
+
     case PortKind.Union:
       baseType = Yup.object({
         use: Yup.number().typeError(`Please select a valid choice`),

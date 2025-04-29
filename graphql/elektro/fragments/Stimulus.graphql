@@ -10,3 +10,21 @@ fragment Stimulus on Stimulus {
         }
     }
 }
+
+fragment DetailStimulus on Stimulus {
+    id
+    label
+    simulation {
+        ...DetailSimulation
+    }
+}
+
+
+fragment ListStimulus on Stimulus {
+    id
+    label
+    cell
+    simulation {
+        id
+    }
+}

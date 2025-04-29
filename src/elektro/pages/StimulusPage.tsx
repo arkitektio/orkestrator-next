@@ -1,48 +1,44 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { ElektroSimulation, ElektroTrace } from "@/linkers";
-import { useDetailSimulationQuery, useDetailTraceQuery } from "../api/graphql";
+import { ElektroRecording, ElektroSimulation, ElektroStimulus, ElektroTrace } from "@/linkers";
+import { useDetailRecordingQuery, useDetailSimulationQuery, useDetailStimulusQuery, useDetailTraceQuery } from "../api/graphql";
 import { useTraceArray } from "../lib/useTraceArray";
 import { Button } from "@/components/ui/button";
 import { TraceRender } from "../components/TraceRender";
 import { SimulationRender } from "../components/SImulationRender";
 import { NeuronVisualizer } from "../components/NeuronRenderer";
-import { Card } from "@/components/ui/card";
 
 export type IRepresentationScreenProps = {};
 
 export default asDetailQueryRoute(
-  useDetailSimulationQuery,
+  useDetailStimulusQuery,
   ({ data, subscribeToMore }) => {
     const { renderView } = useTraceArray();
 
 
     return (
-      <ElektroSimulation.ModelPage
-        title={data?.simulation?.name}
-        object={data.simulation.id}
+      <ElektroStimulus.ModelPage
+        title={data?.stimulus?.label}
+        object={data.stimulus.id}
         pageActions={
           <div className="flex flex-row gap-2">
-            <ElektroSimulation.ObjectButton object={data.simulation.id} />
+            <ElektroStimulus.ObjectButton object={data.stimulus.id} />
           </div>
         }
         sidebars={
           <MultiSidebar
             map={{
-              Comments: <ElektroSimulation.Komments object={data.simulation.id} />,
+              Comments: <ElektroStimulus.Komments object={data.stimulus.id} />,
             }}
           />
         }
       >
         <div className="flex flex-row gap-2">
-          <div className="flex-grow">
-        <SimulationRender simulation={data.simulation} />
+          <div className="flex-1">
+        <SimulationRender simulation={data.stimulus.simulation} highlight={[data.stimulus.id]} />
         </div>
-          <Card className="flex-initial w-[vw20%]" >
-        <NeuronVisualizer model={data.simulation.model} />
-        </Card>
         </div>
-      </ElektroSimulation.ModelPage>
+      </ElektroStimulus.ModelPage>
     );
   },
 );

@@ -511,7 +511,7 @@
                 "ofType": null
               }
             },
-            "defaultValue": "\"86bc5d4d-0cc4-468f-bd3f-7763abc0ab2a\"",
+            "defaultValue": "\"a111d182-9ea6-4c5b-a913-b4c518f2b466\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -877,7 +877,7 @@
                 "ofType": null
               }
             },
-            "defaultValue": "\"3ff18d01-8d83-4054-9058-548d07b45db5\"",
+            "defaultValue": "\"0a196186-5474-412c-98a8-e4ede1ab4012\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -5097,7 +5097,7 @@
                 "ofType": null
               }
             },
-            "defaultValue": "\"72d76f93-8feb-4566-83b7-f209f9c685b9\"",
+            "defaultValue": "\"cf2c593d-9b5b-4cf1-a2dd-36478d434b77\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -5257,7 +5257,7 @@
                 "ofType": null
               }
             },
-            "defaultValue": "\"cd5256d4-281c-4925-a1c9-611781286369\"",
+            "defaultValue": "\"b46be3d9-84e8-4ede-8e00-cad55b3273db\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -6238,6 +6238,26 @@
             "description": "Returns a list of cells in a model",
             "args": [
               {
+                "name": "ids",
+                "description": null,
+                "type": {
+                  "kind": "LIST",
+                  "name": null,
+                  "ofType": {
+                    "kind": "NON_NULL",
+                    "name": null,
+                    "ofType": {
+                      "kind": "SCALAR",
+                      "name": "ID",
+                      "ofType": null
+                    }
+                  }
+                },
+                "defaultValue": "null",
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
                 "name": "modelId",
                 "description": "The unique identifier of an object",
                 "type": {
@@ -6250,6 +6270,18 @@
                   }
                 },
                 "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "search",
+                "description": null,
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "String",
+                  "ofType": null
+                },
+                "defaultValue": "null",
                 "isDeprecated": false,
                 "deprecationReason": null
               }
@@ -6967,7 +6999,7 @@
             "description": "Returns a list of images",
             "args": [
               {
-                "name": "cellID",
+                "name": "cellId",
                 "description": "The unique identifier of an object",
                 "type": {
                   "kind": "NON_NULL",
@@ -6979,6 +7011,26 @@
                   }
                 },
                 "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "ids",
+                "description": null,
+                "type": {
+                  "kind": "LIST",
+                  "name": null,
+                  "ofType": {
+                    "kind": "NON_NULL",
+                    "name": null,
+                    "ofType": {
+                      "kind": "SCALAR",
+                      "name": "ID",
+                      "ofType": null
+                    }
+                  }
+                },
+                "defaultValue": "null",
                 "isDeprecated": false,
                 "deprecationReason": null
               },
@@ -6995,6 +7047,18 @@
                   }
                 },
                 "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "search",
+                "description": null,
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "String",
+                  "ofType": null
+                },
+                "defaultValue": "null",
                 "isDeprecated": false,
                 "deprecationReason": null
               }
@@ -7382,6 +7446,18 @@
                 "name": "RoiKind",
                 "ofType": null
               }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "label",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -8246,22 +8322,6 @@
         "fields": null,
         "inputFields": [
           {
-            "name": "image",
-            "description": "The image this ROI belongs to",
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "ID",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "kind",
             "description": "The type/kind of ROI",
             "type": {
@@ -8278,8 +8338,36 @@
             "deprecationReason": null
           },
           {
+            "name": "label",
+            "description": "The label of the ROI",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "trace",
+            "description": "The image this ROI belongs to",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "ID",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "vectors",
-            "description": "The vector coordinates defining the ROI",
+            "description": "The vector coordinates defining the as XY",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -8291,7 +8379,7 @@
                   "name": null,
                   "ofType": {
                     "kind": "SCALAR",
-                    "name": "FiveDVector",
+                    "name": "TwoDVector",
                     "ofType": null
                   }
                 }
@@ -8316,37 +8404,7 @@
         "interfaces": null,
         "enumValues": [
           {
-            "name": "CUBE",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "ELLIPSIS",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "FRAME",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "HYPERCUBE",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "LINE",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "PATH",
             "description": null,
             "isDeprecated": false,
             "deprecationReason": null
@@ -8358,49 +8416,13 @@
             "deprecationReason": null
           },
           {
-            "name": "POLYGON",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "RECTANGLE",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "SLICE",
             "description": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
-            "name": "SPECTRAL_CUBE",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "SPECTRAL_HYPERCUBE",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "SPECTRAL_RECTANGLE",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "TEMPORAL_CUBE",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "TEMPORAL_RECTANGLE",
+            "name": "SPIKE",
             "description": null,
             "isDeprecated": false,
             "deprecationReason": null
@@ -8418,37 +8440,7 @@
         "interfaces": null,
         "enumValues": [
           {
-            "name": "CUBE",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "ELLIPSIS",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "FRAME",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "HYPERCUBE",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "LINE",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "PATH",
             "description": null,
             "isDeprecated": false,
             "deprecationReason": null
@@ -8460,55 +8452,13 @@
             "deprecationReason": null
           },
           {
-            "name": "POLYGON",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "RECTANGLE",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "SLICE",
             "description": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
-            "name": "SPECTRAL_CUBE",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "SPECTRAL_HYPERCUBE",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "SPECTRAL_RECTANGLE",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "TEMPORAL_CUBE",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "TEMPORAL_RECTANGLE",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "UNKNOWN",
+            "name": "SPIKE",
             "description": null,
             "isDeprecated": false,
             "deprecationReason": null
@@ -10537,6 +10487,55 @@
             "deprecationReason": null
           },
           {
+            "name": "rois",
+            "description": "The rois of this image",
+            "args": [
+              {
+                "name": "filters",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "ROIFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "pagination",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OffsetPaginationInput",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "ROI",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "store",
             "description": "The store where the image data is stored.",
             "args": [],
@@ -10782,6 +10781,17 @@
         "possibleTypes": null
       },
       {
+        "kind": "SCALAR",
+        "name": "TwoDVector",
+        "description": "The `Vector` scalar type represents a matrix values as specified by",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "INPUT_OBJECT",
         "name": "UpdateRoiInput",
         "description": null,
@@ -10789,59 +10799,23 @@
         "fields": null,
         "inputFields": [
           {
-            "name": "entity",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "ID",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "entityGroup",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "ID",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "entityKind",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "ID",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "entityParent",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "ID",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "kind",
             "description": null,
             "type": {
               "kind": "ENUM",
               "name": "RoiKind",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "label",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
               "ofType": null
             },
             "defaultValue": "null",
@@ -10875,7 +10849,7 @@
                 "name": null,
                 "ofType": {
                   "kind": "SCALAR",
-                  "name": "FiveDVector",
+                  "name": "TwoDVector",
                   "ofType": null
                 }
               }

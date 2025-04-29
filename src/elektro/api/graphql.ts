@@ -21,6 +21,7 @@ export type Scalars = {
   FileLike: { input: any; output: any; }
   FiveDVector: { input: any; output: any; }
   TraceLike: { input: any; output: any; }
+  TwoDVector: { input: any; output: any; }
 };
 
 /** Temporary Credentials for a file download that can be used by a Client (e.g. in a python datalayer) */
@@ -828,7 +829,9 @@ export type Query = {
 
 
 export type QueryCellsArgs = {
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   modelId: Scalars['ID']['input'];
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -922,8 +925,10 @@ export type QueryRoisArgs = {
 
 
 export type QuerySectionsArgs = {
-  cellID: Scalars['ID']['input'];
+  cellId: Scalars['ID']['input'];
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   modelId: Scalars['ID']['input'];
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -967,6 +972,7 @@ export type Roi = {
   history: Array<History>;
   id: Scalars['ID']['output'];
   kind: RoiKind;
+  label?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   pinned: Scalars['Boolean']['output'];
   trace: Trace;
@@ -1064,49 +1070,28 @@ export type RoiEvent = {
 };
 
 export type RoiInput = {
-  /** The image this ROI belongs to */
-  image: Scalars['ID']['input'];
   /** The type/kind of ROI */
   kind: RoiKind;
-  /** The vector coordinates defining the ROI */
-  vectors: Array<Scalars['FiveDVector']['input']>;
+  /** The label of the ROI */
+  label?: InputMaybe<Scalars['String']['input']>;
+  /** The image this ROI belongs to */
+  trace: Scalars['ID']['input'];
+  /** The vector coordinates defining the as XY */
+  vectors: Array<Scalars['TwoDVector']['input']>;
 };
 
 export enum RoiKind {
-  Cube = 'CUBE',
-  Ellipsis = 'ELLIPSIS',
-  Frame = 'FRAME',
-  Hypercube = 'HYPERCUBE',
   Line = 'LINE',
-  Path = 'PATH',
   Point = 'POINT',
-  Polygon = 'POLYGON',
-  Rectangle = 'RECTANGLE',
   Slice = 'SLICE',
-  SpectralCube = 'SPECTRAL_CUBE',
-  SpectralHypercube = 'SPECTRAL_HYPERCUBE',
-  SpectralRectangle = 'SPECTRAL_RECTANGLE',
-  TemporalCube = 'TEMPORAL_CUBE',
-  TemporalRectangle = 'TEMPORAL_RECTANGLE'
+  Spike = 'SPIKE'
 }
 
 export enum RoiKindChoices {
-  Cube = 'CUBE',
-  Ellipsis = 'ELLIPSIS',
-  Frame = 'FRAME',
-  Hypercube = 'HYPERCUBE',
   Line = 'LINE',
-  Path = 'PATH',
   Point = 'POINT',
-  Polygon = 'POLYGON',
-  Rectangle = 'RECTANGLE',
   Slice = 'SLICE',
-  SpectralCube = 'SPECTRAL_CUBE',
-  SpectralHypercube = 'SPECTRAL_HYPERCUBE',
-  SpectralRectangle = 'SPECTRAL_RECTANGLE',
-  TemporalCube = 'TEMPORAL_CUBE',
-  TemporalRectangle = 'TEMPORAL_RECTANGLE',
-  Unknown = 'UNKNOWN'
+  Spike = 'SPIKE'
 }
 
 export type Section = {
@@ -1327,6 +1312,8 @@ export type Trace = {
   name: Scalars['String']['output'];
   /** Is this image pinned by the current user */
   pinned: Scalars['Boolean']['output'];
+  /** The rois of this image */
+  rois: Array<Roi>;
   /** The store where the image data is stored. */
   store: ZarrStore;
   /** The tags of this image */
@@ -1340,6 +1327,12 @@ export type TraceEventsArgs = {
 
 
 export type TraceHistoryArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type TraceRoisArgs = {
+  filters?: InputMaybe<RoiFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1366,13 +1359,10 @@ export type TraceOrder = {
 };
 
 export type UpdateRoiInput = {
-  entity?: InputMaybe<Scalars['ID']['input']>;
-  entityGroup?: InputMaybe<Scalars['ID']['input']>;
-  entityKind?: InputMaybe<Scalars['ID']['input']>;
-  entityParent?: InputMaybe<Scalars['ID']['input']>;
   kind?: InputMaybe<RoiKind>;
+  label?: InputMaybe<Scalars['String']['input']>;
   roi: Scalars['ID']['input'];
-  vectors?: InputMaybe<Array<Scalars['FiveDVector']['input']>>;
+  vectors?: InputMaybe<Array<Scalars['TwoDVector']['input']>>;
 };
 
 export type UpdateTraceInput = {
@@ -1420,13 +1410,17 @@ export type ZarrStore = {
 
 export type StimulusFragment = { __typename?: 'Stimulus', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } };
 
+export type DetailStimulusFragment = { __typename?: 'Stimulus', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: number, model: { __typename?: 'NeuronModel', id: string, name: string, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number }> }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> } };
+
+export type ListStimulusFragment = { __typename?: 'Stimulus', id: string, label: string, cell: string, simulation: { __typename?: 'Simulation', id: string } };
+
 export type CredentialsFragment = { __typename?: 'Credentials', accessKey: string, status: string, secretKey: string, bucket: string, key: string, sessionToken: string, store: string };
 
 export type AccessCredentialsFragment = { __typename?: 'AccessCredentials', accessKey: string, secretKey: string, bucket: string, key: string, sessionToken: string, path: string };
 
 export type PresignedPostCredentialsFragment = { __typename?: 'PresignedPostCredentials', xAmzAlgorithm: string, xAmzCredential: string, xAmzDate: string, xAmzSignature: string, key: string, bucket: string, datalayer: string, policy: string, store: string };
 
-export type ExperimentFragment = { __typename?: 'Experiment', id: string, name: string, views: Array<{ __typename?: 'ExperimentView', id: string, label?: string | null, stimulus?: { __typename?: 'Stimulus', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } } | null, recording?: { __typename?: 'Recording', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } } | null }> };
+export type ExperimentFragment = { __typename?: 'Experiment', id: string, name: string, views: Array<{ __typename?: 'ExperimentView', id: string, label?: string | null, stimulus?: { __typename?: 'Stimulus', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } } | null, recording?: { __typename?: 'Recording', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } } | null }> };
 
 export type ListExperimentFragment = { __typename?: 'Experiment', id: string, name: string };
 
@@ -1446,9 +1440,13 @@ export type DetailNeuronModelFragment = { __typename?: 'NeuronModel', id: string
 
 export type ListNeuronModelFragment = { __typename?: 'NeuronModel', id: string, name: string };
 
-export type RecordingFragment = { __typename?: 'Recording', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } };
+export type RecordingFragment = { __typename?: 'Recording', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } };
 
-export type DetailSimulationFragment = { __typename?: 'Simulation', id: string, name: string, duration: number, model: { __typename?: 'NeuronModel', id: string, name: string, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number }> }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> };
+export type DetailRecordingFragment = { __typename?: 'Recording', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: number, model: { __typename?: 'NeuronModel', id: string, name: string, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number }> }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> } };
+
+export type ListRecordingFragment = { __typename?: 'Recording', id: string, label: string, cell: string, simulation: { __typename?: 'Simulation', id: string } };
+
+export type DetailSimulationFragment = { __typename?: 'Simulation', id: string, name: string, duration: number, model: { __typename?: 'NeuronModel', id: string, name: string, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number }> }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> };
 
 export type ListSimulationFragment = { __typename?: 'Simulation', id: string, name: string, duration: number };
 
@@ -1479,7 +1477,7 @@ export type DetailExperimentQueryVariables = Exact<{
 }>;
 
 
-export type DetailExperimentQuery = { __typename?: 'Query', experiment: { __typename?: 'Experiment', id: string, name: string, views: Array<{ __typename?: 'ExperimentView', id: string, label?: string | null, stimulus?: { __typename?: 'Stimulus', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } } | null, recording?: { __typename?: 'Recording', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } } | null }> } };
+export type DetailExperimentQuery = { __typename?: 'Query', experiment: { __typename?: 'Experiment', id: string, name: string, views: Array<{ __typename?: 'ExperimentView', id: string, label?: string | null, stimulus?: { __typename?: 'Stimulus', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } } | null, recording?: { __typename?: 'Recording', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } } | null }> } };
 
 export type ListExperimentsQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -1516,6 +1514,21 @@ export type ListNeuronModelsQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type ListNeuronModelsQuery = { __typename?: 'Query', neuronModels: Array<{ __typename?: 'NeuronModel', id: string, name: string }> };
 
+export type DetailRecordingQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DetailRecordingQuery = { __typename?: 'Query', recording: { __typename?: 'Recording', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: number, model: { __typename?: 'NeuronModel', id: string, name: string, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number }> }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> } } };
+
+export type ListRecordingsQueryVariables = Exact<{
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<RecordingFilter>;
+}>;
+
+
+export type ListRecordingsQuery = { __typename?: 'Query', recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, simulation: { __typename?: 'Simulation', id: string } }> };
+
 export type GlobalSearchQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -1529,12 +1542,27 @@ export type DetailSimulationQueryVariables = Exact<{
 }>;
 
 
-export type DetailSimulationQuery = { __typename?: 'Query', simulation: { __typename?: 'Simulation', id: string, name: string, duration: number, model: { __typename?: 'NeuronModel', id: string, name: string, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number }> }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> } };
+export type DetailSimulationQuery = { __typename?: 'Query', simulation: { __typename?: 'Simulation', id: string, name: string, duration: number, model: { __typename?: 'NeuronModel', id: string, name: string, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number }> }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> } };
 
 export type ListSimulationsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type ListSimulationsQuery = { __typename?: 'Query', simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number }> };
+
+export type DetailStimulusQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DetailStimulusQuery = { __typename?: 'Query', stimulus: { __typename?: 'Stimulus', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: number, model: { __typename?: 'NeuronModel', id: string, name: string, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number }> }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> } } };
+
+export type ListStimuliQueryVariables = Exact<{
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<StimulusFilter>;
+}>;
+
+
+export type ListStimuliQuery = { __typename?: 'Query', stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, simulation: { __typename?: 'Simulation', id: string } }> };
 
 export type DetailTraceQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1548,122 +1576,6 @@ export type TracesQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type TracesQuery = { __typename?: 'Query', traces: Array<{ __typename?: 'Trace', id: string, name: string }> };
 
-export const CredentialsFragmentDoc = gql`
-    fragment Credentials on Credentials {
-  accessKey
-  status
-  secretKey
-  bucket
-  key
-  sessionToken
-  store
-}
-    `;
-export const AccessCredentialsFragmentDoc = gql`
-    fragment AccessCredentials on AccessCredentials {
-  accessKey
-  secretKey
-  bucket
-  key
-  sessionToken
-  path
-}
-    `;
-export const PresignedPostCredentialsFragmentDoc = gql`
-    fragment PresignedPostCredentials on PresignedPostCredentials {
-  xAmzAlgorithm
-  xAmzCredential
-  xAmzDate
-  xAmzSignature
-  key
-  bucket
-  datalayer
-  policy
-  store
-}
-    `;
-export const ZarrStoreFragmentDoc = gql`
-    fragment ZarrStore on ZarrStore {
-  id
-  key
-  bucket
-  path
-  shape
-  dtype
-}
-    `;
-export const StimulusFragmentDoc = gql`
-    fragment Stimulus on Stimulus {
-  id
-  label
-  cell
-  trace {
-    id
-    name
-    store {
-      ...ZarrStore
-    }
-  }
-}
-    ${ZarrStoreFragmentDoc}`;
-export const RecordingFragmentDoc = gql`
-    fragment Recording on Recording {
-  id
-  label
-  cell
-  trace {
-    id
-    name
-    store {
-      ...ZarrStore
-    }
-  }
-}
-    ${ZarrStoreFragmentDoc}`;
-export const ExperimentFragmentDoc = gql`
-    fragment Experiment on Experiment {
-  id
-  name
-  views {
-    id
-    label
-    stimulus {
-      ...Stimulus
-    }
-    recording {
-      ...Recording
-    }
-  }
-}
-    ${StimulusFragmentDoc}
-${RecordingFragmentDoc}`;
-export const ListExperimentFragmentDoc = gql`
-    fragment ListExperiment on Experiment {
-  id
-  name
-}
-    `;
-export const ListNeuronModelFragmentDoc = gql`
-    fragment ListNeuronModel on NeuronModel {
-  id
-  name
-}
-    `;
-export const ModelCollectionFragmentDoc = gql`
-    fragment ModelCollection on ModelCollection {
-  id
-  name
-  models {
-    ...ListNeuronModel
-  }
-}
-    ${ListNeuronModelFragmentDoc}`;
-export const ListModelCollectionFragmentDoc = gql`
-    fragment ListModelCollection on ModelCollection {
-  id
-  name
-}
-    `;
 export const CompartmentFragmentDoc = gql`
     fragment Compartment on Compartment {
   id
@@ -1751,6 +1663,50 @@ export const DetailNeuronModelFragmentDoc = gql`
     ${CompartmentFragmentDoc}
 ${SectionFragmentDoc}
 ${ListSimulationFragmentDoc}`;
+export const ZarrStoreFragmentDoc = gql`
+    fragment ZarrStore on ZarrStore {
+  id
+  key
+  bucket
+  path
+  shape
+  dtype
+}
+    `;
+export const RecordingFragmentDoc = gql`
+    fragment Recording on Recording {
+  id
+  label
+  cell
+  trace {
+    id
+    name
+    store {
+      ...ZarrStore
+    }
+    rois {
+      id
+      vectors
+      label
+      kind
+    }
+  }
+}
+    ${ZarrStoreFragmentDoc}`;
+export const StimulusFragmentDoc = gql`
+    fragment Stimulus on Stimulus {
+  id
+  label
+  cell
+  trace {
+    id
+    name
+    store {
+      ...ZarrStore
+    }
+  }
+}
+    ${ZarrStoreFragmentDoc}`;
 export const DetailSimulationFragmentDoc = gql`
     fragment DetailSimulation on Simulation {
   id
@@ -1769,10 +1725,130 @@ export const DetailSimulationFragmentDoc = gql`
   recordings {
     ...Recording
   }
+  stimuli {
+    ...Stimulus
+  }
 }
     ${DetailNeuronModelFragmentDoc}
 ${ZarrStoreFragmentDoc}
+${RecordingFragmentDoc}
+${StimulusFragmentDoc}`;
+export const DetailStimulusFragmentDoc = gql`
+    fragment DetailStimulus on Stimulus {
+  id
+  label
+  simulation {
+    ...DetailSimulation
+  }
+}
+    ${DetailSimulationFragmentDoc}`;
+export const ListStimulusFragmentDoc = gql`
+    fragment ListStimulus on Stimulus {
+  id
+  label
+  cell
+  simulation {
+    id
+  }
+}
+    `;
+export const CredentialsFragmentDoc = gql`
+    fragment Credentials on Credentials {
+  accessKey
+  status
+  secretKey
+  bucket
+  key
+  sessionToken
+  store
+}
+    `;
+export const AccessCredentialsFragmentDoc = gql`
+    fragment AccessCredentials on AccessCredentials {
+  accessKey
+  secretKey
+  bucket
+  key
+  sessionToken
+  path
+}
+    `;
+export const PresignedPostCredentialsFragmentDoc = gql`
+    fragment PresignedPostCredentials on PresignedPostCredentials {
+  xAmzAlgorithm
+  xAmzCredential
+  xAmzDate
+  xAmzSignature
+  key
+  bucket
+  datalayer
+  policy
+  store
+}
+    `;
+export const ExperimentFragmentDoc = gql`
+    fragment Experiment on Experiment {
+  id
+  name
+  views {
+    id
+    label
+    stimulus {
+      ...Stimulus
+    }
+    recording {
+      ...Recording
+    }
+  }
+}
+    ${StimulusFragmentDoc}
 ${RecordingFragmentDoc}`;
+export const ListExperimentFragmentDoc = gql`
+    fragment ListExperiment on Experiment {
+  id
+  name
+}
+    `;
+export const ListNeuronModelFragmentDoc = gql`
+    fragment ListNeuronModel on NeuronModel {
+  id
+  name
+}
+    `;
+export const ModelCollectionFragmentDoc = gql`
+    fragment ModelCollection on ModelCollection {
+  id
+  name
+  models {
+    ...ListNeuronModel
+  }
+}
+    ${ListNeuronModelFragmentDoc}`;
+export const ListModelCollectionFragmentDoc = gql`
+    fragment ListModelCollection on ModelCollection {
+  id
+  name
+}
+    `;
+export const DetailRecordingFragmentDoc = gql`
+    fragment DetailRecording on Recording {
+  id
+  label
+  simulation {
+    ...DetailSimulation
+  }
+}
+    ${DetailSimulationFragmentDoc}`;
+export const ListRecordingFragmentDoc = gql`
+    fragment ListRecording on Recording {
+  id
+  label
+  cell
+  simulation {
+    id
+  }
+}
+    `;
 export const DetailTraceFragmentDoc = gql`
     fragment DetailTrace on Trace {
   id
@@ -2067,6 +2143,77 @@ export function useListNeuronModelsLazyQuery(baseOptions?: ApolloReactHooks.Lazy
 export type ListNeuronModelsQueryHookResult = ReturnType<typeof useListNeuronModelsQuery>;
 export type ListNeuronModelsLazyQueryHookResult = ReturnType<typeof useListNeuronModelsLazyQuery>;
 export type ListNeuronModelsQueryResult = Apollo.QueryResult<ListNeuronModelsQuery, ListNeuronModelsQueryVariables>;
+export const DetailRecordingDocument = gql`
+    query DetailRecording($id: ID!) {
+  recording(id: $id) {
+    ...DetailRecording
+  }
+}
+    ${DetailRecordingFragmentDoc}`;
+
+/**
+ * __useDetailRecordingQuery__
+ *
+ * To run a query within a React component, call `useDetailRecordingQuery` and pass it any options that fit your needs.
+ * When your component renders, `useDetailRecordingQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useDetailRecordingQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDetailRecordingQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailRecordingQuery, DetailRecordingQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailRecordingQuery, DetailRecordingQueryVariables>(DetailRecordingDocument, options);
+      }
+export function useDetailRecordingLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailRecordingQuery, DetailRecordingQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailRecordingQuery, DetailRecordingQueryVariables>(DetailRecordingDocument, options);
+        }
+export type DetailRecordingQueryHookResult = ReturnType<typeof useDetailRecordingQuery>;
+export type DetailRecordingLazyQueryHookResult = ReturnType<typeof useDetailRecordingLazyQuery>;
+export type DetailRecordingQueryResult = Apollo.QueryResult<DetailRecordingQuery, DetailRecordingQueryVariables>;
+export const ListRecordingsDocument = gql`
+    query ListRecordings($pagination: OffsetPaginationInput, $filters: RecordingFilter) {
+  recordings(pagination: $pagination, filters: $filters) {
+    ...ListRecording
+  }
+}
+    ${ListRecordingFragmentDoc}`;
+
+/**
+ * __useListRecordingsQuery__
+ *
+ * To run a query within a React component, call `useListRecordingsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListRecordingsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListRecordingsQuery({
+ *   variables: {
+ *      pagination: // value for 'pagination'
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useListRecordingsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListRecordingsQuery, ListRecordingsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListRecordingsQuery, ListRecordingsQueryVariables>(ListRecordingsDocument, options);
+      }
+export function useListRecordingsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListRecordingsQuery, ListRecordingsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListRecordingsQuery, ListRecordingsQueryVariables>(ListRecordingsDocument, options);
+        }
+export type ListRecordingsQueryHookResult = ReturnType<typeof useListRecordingsQuery>;
+export type ListRecordingsLazyQueryHookResult = ReturnType<typeof useListRecordingsLazyQuery>;
+export type ListRecordingsQueryResult = Apollo.QueryResult<ListRecordingsQuery, ListRecordingsQueryVariables>;
 export const GlobalSearchDocument = gql`
     query GlobalSearch($search: String, $pagination: OffsetPaginationInput) {
   traces: traces(filters: {search: $search}, pagination: $pagination) {
@@ -2172,6 +2319,77 @@ export function useListSimulationsLazyQuery(baseOptions?: ApolloReactHooks.LazyQ
 export type ListSimulationsQueryHookResult = ReturnType<typeof useListSimulationsQuery>;
 export type ListSimulationsLazyQueryHookResult = ReturnType<typeof useListSimulationsLazyQuery>;
 export type ListSimulationsQueryResult = Apollo.QueryResult<ListSimulationsQuery, ListSimulationsQueryVariables>;
+export const DetailStimulusDocument = gql`
+    query DetailStimulus($id: ID!) {
+  stimulus(id: $id) {
+    ...DetailStimulus
+  }
+}
+    ${DetailStimulusFragmentDoc}`;
+
+/**
+ * __useDetailStimulusQuery__
+ *
+ * To run a query within a React component, call `useDetailStimulusQuery` and pass it any options that fit your needs.
+ * When your component renders, `useDetailStimulusQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useDetailStimulusQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDetailStimulusQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailStimulusQuery, DetailStimulusQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailStimulusQuery, DetailStimulusQueryVariables>(DetailStimulusDocument, options);
+      }
+export function useDetailStimulusLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailStimulusQuery, DetailStimulusQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailStimulusQuery, DetailStimulusQueryVariables>(DetailStimulusDocument, options);
+        }
+export type DetailStimulusQueryHookResult = ReturnType<typeof useDetailStimulusQuery>;
+export type DetailStimulusLazyQueryHookResult = ReturnType<typeof useDetailStimulusLazyQuery>;
+export type DetailStimulusQueryResult = Apollo.QueryResult<DetailStimulusQuery, DetailStimulusQueryVariables>;
+export const ListStimuliDocument = gql`
+    query ListStimuli($pagination: OffsetPaginationInput, $filters: StimulusFilter) {
+  stimuli(pagination: $pagination, filters: $filters) {
+    ...ListStimulus
+  }
+}
+    ${ListStimulusFragmentDoc}`;
+
+/**
+ * __useListStimuliQuery__
+ *
+ * To run a query within a React component, call `useListStimuliQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListStimuliQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListStimuliQuery({
+ *   variables: {
+ *      pagination: // value for 'pagination'
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useListStimuliQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListStimuliQuery, ListStimuliQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListStimuliQuery, ListStimuliQueryVariables>(ListStimuliDocument, options);
+      }
+export function useListStimuliLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListStimuliQuery, ListStimuliQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListStimuliQuery, ListStimuliQueryVariables>(ListStimuliDocument, options);
+        }
+export type ListStimuliQueryHookResult = ReturnType<typeof useListStimuliQuery>;
+export type ListStimuliLazyQueryHookResult = ReturnType<typeof useListStimuliLazyQuery>;
+export type ListStimuliQueryResult = Apollo.QueryResult<ListStimuliQuery, ListStimuliQueryVariables>;
 export const DetailTraceDocument = gql`
     query DetailTrace($id: ID!) {
   trace(id: $id) {

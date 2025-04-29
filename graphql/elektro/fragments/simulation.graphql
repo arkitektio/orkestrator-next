@@ -15,6 +15,9 @@ fragment DetailSimulation on Simulation {
   recordings {
     ...Recording
   }
+  stimuli {
+    ...Stimulus
+  }
 }
 
 fragment ListSimulation on Simulation {

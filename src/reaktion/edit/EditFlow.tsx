@@ -1351,7 +1351,6 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                 {flow.id && isEqual && <RunButton flow={flow} />}
               </div>
             )}
-
             {globals.length > 0 && (
               <div className="absolute  top-0 left-0  ml-3 mt-5 z-50">
                 <Card className="max-w-md">

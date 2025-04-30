@@ -12,6 +12,10 @@ fragment DetailTemplate on Template {
   agent {
     name
   }
+  myLatestAssignation {
+    id
+    args
+  }
 }
 
 fragment ListTemplate on Template {

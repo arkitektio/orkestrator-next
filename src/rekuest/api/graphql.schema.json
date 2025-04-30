@@ -1094,7 +1094,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"f2e3cf27-6071-4220-afcf-39d0bfa61171\"",
+            "defaultValue": "\"4d2739af-8393-4828-8802-614cd9d0ff63\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -11251,7 +11251,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"60fba8c3-7ebf-4a41-8b4d-431eab022398\"",
+            "defaultValue": "\"0b150e8d-d06c-49c8-8c96-6bec8743d1ae\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -13516,6 +13516,18 @@
                 "name": "String",
                 "ofType": null
               }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "myLatestAssignation",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Assignation",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null

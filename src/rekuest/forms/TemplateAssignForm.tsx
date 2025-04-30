@@ -33,7 +33,6 @@ export const TemplateAssignForm = (props: TemplateAssignFormProps) => {
     reValidateMode: "onChange",
   });
 
-  const data = form.watch();
 
   const onSubmit = async (data: any) => {
     console.log("Submitting");
@@ -65,7 +64,7 @@ export const TemplateAssignForm = (props: TemplateAssignFormProps) => {
   return (
     <>
       <h1 className="text-lg font-semibold mb-1">
-        {template?.node.name}{" "}
+        {template?.node.name}
         <p className="text-muted-foreground text-xs">@ {template?.interface}</p>
       </h1>
 

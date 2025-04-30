@@ -36,6 +36,7 @@ export const DoFormBackup = (props: { id: string }) => {
 
   const form = usePortForm({
     ports: template?.node.args || [],
+    defaults: latestAssignation?.args,
   });
 
   const navigate = useNavigate();

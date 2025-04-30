@@ -58,7 +58,7 @@ export const useTemplateAction = <T extends any>(
     (x) => x.template?.id == data?.template.id,
   );
 
-  const latestAssignation = assignations?.at(0);
+  const latestAssignation = data?.template.myLatestAssignation || assignations?.at(0);
 
   const assign = useCallback(
     async (vars: ActionAssignVariables) => {

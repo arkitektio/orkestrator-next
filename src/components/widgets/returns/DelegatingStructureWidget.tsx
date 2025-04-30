@@ -1,3 +1,5 @@
+import ExperimentWidget from "@/elektro/widgets/ExperimentWidget";
+import SimulationWidget from "@/elektro/widgets/SimulationWidget";
 import { useGetPodQuery } from "@/kabinet/api/graphql";
 import GraphWidget from "@/kraph/widgets/GraphWidget";
 import { KabinetPod, MikroImage, MikroROI, RekuestNode } from "@/linkers";
@@ -110,6 +112,10 @@ export const DelegatingStructureWidget = (props: ReturnWidgetProps) => {
       return <MeshWidget {...props} />;
     case "@kraph/graph":
       return <GraphWidget {...props} />;
+    case "@elektro/experiment":
+      return <ExperimentWidget {...props} />;
+    case "@elektro/simulation":
+      return <SimulationWidget {...props} />;
     default:
       return (
         <>

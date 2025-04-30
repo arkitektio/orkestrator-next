@@ -33,6 +33,8 @@ export const TemplateAssignForm = (props: TemplateAssignFormProps) => {
     reValidateMode: "onChange",
   });
 
+  const data = form.watch();
+
   const onSubmit = async (data: any) => {
     console.log("Submitting");
     console.log(data);
@@ -80,7 +82,7 @@ export const TemplateAssignForm = (props: TemplateAssignFormProps) => {
           />
 
           <DialogFooter>
-            <Button type="submit" className="btn">
+            <Button type="submit" className="btn" disabled={!form.formState.isValid}>
               {" "}
               Submit{" "}
             </Button>

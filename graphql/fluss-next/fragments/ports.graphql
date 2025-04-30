@@ -45,7 +45,7 @@ fragment FlussAssignWidget on AssignWidget {
   ...FlussCustomAssignWidget
 }
 
-fragment FlussChildPortNested on ChildPort {
+fragment FlussChildPortNested on Port {
   __typename
   key
   kind
@@ -72,7 +72,7 @@ fragment FlussChildPortNested on ChildPort {
   nullable
 }
 
-fragment FlussChildPort on ChildPort {
+fragment FlussChildPort on Port {
   __typename
   kind
   identifier

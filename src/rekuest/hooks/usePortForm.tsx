@@ -37,7 +37,7 @@ export const usePortForm = (props: {
     return zodResolver(zodSchema);
   }, [hash, props.additionalSchema]);
 
-  const { handleSubmit, ...form } = useForm({
+  const { handleSubmit,...form } = useForm({
     defaultValues: defaultValues,
     reValidateMode: props.reValidateMode || "onChange",
     resolver: myResolver(),
@@ -59,8 +59,8 @@ export const usePortForm = (props: {
             ...additionalData,
           });
         },
-        (e, event) => {
-          toast.error(JSON.stringify(e,null, 2));
+        (errors) => {
+          toast.error(JSON.stringify(errors));
         },
       );
     },
@@ -72,5 +72,5 @@ export const usePortForm = (props: {
     form.reset(portToDefaults(props.ports, props.overwrites || {}));
   }, [hash]);
 
-  return { ...form, handleSubmit: overWrittenHandleSubmit };
+  return { ...form, handleSubmit: overWrittenHandleSubmit,  };
 };

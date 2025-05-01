@@ -2,6 +2,8 @@ fragment Stimulus on Stimulus {
     id
     label
     cell
+    location
+    position
     trace {
         id
         name

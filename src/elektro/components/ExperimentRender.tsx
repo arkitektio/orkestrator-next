@@ -1,24 +1,24 @@
-import { useEffect, useState } from "react";
-import { DetailSimulationFragment, DetailTraceFragment, ExperimentFragment, RecordingFragment, RecordingKind } from "../api/graphql";
-import { Plot, useTraceArray } from "../lib/useTraceArray";
+import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
-import { Car, TrendingUp } from "lucide-react";
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Area, CartesianGrid, XAxis, AreaChart, LineChart, Line } from "recharts";
-import { ElektroRecording, ElektroSimulation } from "@/linkers";
-import { cn } from "@/lib/utils";
+import { ReloadIcon } from "@radix-ui/react-icons";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Brush, CartesianGrid, Line, LineChart, ReferenceArea, XAxis, YAxis } from "recharts";
+import { CategoricalChartState } from "recharts/types/chart/types";
+import useUndoable from "use-undoable";
+import { ExperimentFragment, ExperimentRecordingView, ExperimentStimulusView } from "../api/graphql";
+import { useTraceArray } from "../lib/useTraceArray";
 
 const chartConfig = {
   desktop: {
@@ -27,12 +27,26 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-const viewToLabel = (view: any) => view.label || view.recording?.label || view.stimulus?.label || view.id;
+export const recordingViewToLabel = (view: any) =>  `r:${view.recording.label}${view.id}`
+export const stimulusViewToLabel = (view: any) =>  `s:${view.stimulus.label}${view.id}`
 
-const getColorFromView = (view: {id: string}) => {
+
+export const getColorForRecordingView = (view: ExperimentRecordingView, highlight?: string) => {
+  if (highlight && highlight === view.id) {
+    return "hsl(45, 70%, 60%)";
+  }
   const hue = (parseInt(view.id) * 137.508) % 360;
   return `hsl(${hue}, 70%, 60%)`;
 };
+
+export const getColorForStimulusView = (view: ExperimentStimulusView, highlight?: string) => {
+  if (highlight && highlight === view.id) {
+    return "hsl(45, 70%, 60%)";
+  }
+  const hue = (parseInt(view.id) * 137.508) % 360;
+  return `hsl(${hue}, 70%, 60%)`;
+};
+
 
 
 
@@ -48,33 +62,53 @@ const useValuesForExperiment = (
 
   const render = async () => {
     if (experiment) {
+
+      let size = experiment.timeTrace.store?.shape?.at(0)
+
+      let stepSize = Math.max(1, Math.round((size || 2000) / 2000));
+  
+      console.log("Step size", stepSize, size);
       Promise.all(
-        [...experiment.views.map((view) => {
-          if (view.stimulus) {
-            return renderView(view.stimulus.trace, 0);
-          }
-          if (view.recording) {
-            return renderView(view.recording.trace, 0);
-          }
-          return Promise.resolve([]);
-        })]
+        [...experiment.recordingViews.map((view) => {
+          return renderView(view.recording.trace, stepSize);
+        }),
+        ...experiment.stimulusViews.map((view) => {
+            return renderView(view.stimulus.trace, stepSize);
+        }),
+        renderView(experiment.timeTrace, stepSize),
+      ]
       ).then((data) => {
 
         const values = data.map((x) => ({})) ;
 
-        experiment.views.forEach((view, recordIndex: number) => {
+        experiment.recordingViews.forEach((view, recordIndex: number) => {
           const array = data[recordIndex];
 
           array.forEach((value, index) => {
             values[index] = {
               ...values[index],
-              [viewToLabel(view)]: value,
+              [recordingViewToLabel(view)]: value,
             };
           }
           );
         });
 
+        experiment.stimulusViews.forEach((s, sIndex: number) => {
+          const array = data[sIndex + experiment.recordingViews.length];
 
+          array.forEach((value, index) => {
+            values[index] = {
+              ...values[index],
+              [stimulusViewToLabel(s)]: value,
+            };
+          }
+          );
+        });
+
+       
+
+
+        
         const timeTrace = data[data.length - 1];
         timeTrace.forEach((value, index) => {
           values[index] = {
@@ -98,11 +132,85 @@ const useValuesForExperiment = (
 }
 
 
-export const ExperimentRender = (props: { experiment: ExperimentFragment }) => {
+export const ExperimentRender = (props: { experiment: ExperimentFragment, hidden?: string[], hiddenStimuli?: string[], highlight?: string }) => {
   
   const {loading, values} = useValuesForExperiment(props.experiment);
-  const [hidden, setHidden ] = useState<string[]>([]);
+  const [range, setRange, { redo, undo, canRedo, canUndo }] =
+    useUndoable<{ left: number; right: number }>({
+      left: 0,
+      right: values.length - 1,
+    });
+
+  const [selection, setSelection] = useState<{ left: number | null; right: number | null }>({ left: null, right: null });
+  const [selecting, setSelecting] = useState(false);
+
+  const reset = useCallback(() => {
+    setRange({ left: 0, right: values.length - 1 });
+  }, [values]);
+
+  useEffect(() => {
+    if (values.length > 0) {
+      setRange({ left: 0, right: values.length - 1 }, undefined, true);
+    }
+  }, [values]);
+
+  const handleMouseDown = useCallback(
+    (e: CategoricalChartState, event) => {
+      if (e.activeLabel) {
+        setSelection({
+          left: values.findIndex((d) => d.t === (e.activeLabel as unknown as number)),
+          right: null,
+        });
+        setSelecting(true);
+      }
+      event.preventDefault();
+      event.stopPropagation();
+    },
+    [values]
+  );
+
+  const handleMouseMove = useCallback(
+    (e: CategoricalChartState, event) => {
+      if (selecting && e.activeLabel) {
+        setSelection((prev) => ({
+          ...prev,
+          right: values.findIndex((d) => d.t === (e.activeLabel as unknown as number)),
+        }));
+      }
+      event.preventDefault();
+      event.stopPropagation();
+    },
+    [selecting, values]
+  );
+
+  const handleMouseUp = useCallback(
+    (e: CategoricalChartState, event) => {
+      if (selection.left !== null && selection.right !== null) {
+        const [tempLeft, tempRight] = [selection.left, selection.right].sort((a, b) => a - b);
+        setRange({ left: tempLeft, right: tempRight });
+      }
+      setSelection({ left: null, right: null });
+      setSelecting(false);
+      event.preventDefault();
+      event.stopPropagation();
+    },
+    [selection]
+  );
+
+  const filteredValues = useMemo(() => {
+      return values
+    }, [values]);
   
+  const visibleRecordingViews = useMemo(() => {
+    return props.experiment.recordingViews.filter((view) => !props.hidden || !props.hidden.includes(view.id));
+  }, [props.experiment.recordingViews, props.hidden]);
+
+
+  const visibleStimulusViews = useMemo(() => {
+    return props.experiment.stimulusViews.filter((view) => !props.hiddenStimuli || !props.hiddenStimuli.includes(view.id));
+  }, [props.experiment.stimulusViews, props.hiddenStimuli]);
+
+
   if (loading) {
     return (
       <Card className="p-3">
@@ -117,60 +225,155 @@ export const ExperimentRender = (props: { experiment: ExperimentFragment }) => {
   
 
   return (
-    <Card className="p-3">
-      <ChartContainer config={chartConfig}>
-        <LineChart
-          data={values}
-          margin={{
-            left: 12,
-            right: 12,
-          }}
-        >
-          <CartesianGrid vertical={false} />
-          <XAxis dataKey={"t"} tickLine={false} axisLine={false} tickMargin={8} />
-          <ChartTooltip
-            cursor={false}
-            content={<ChartTooltipContent indicator="line" />}
-          />
-          {props.experiment.views.filter((view) => !hidden.includes(view.id)).map( (view, index) =>  <Line
-            dataKey={viewToLabel(view)}
-            type="natural"
-            stroke={getColorFromView(view)}
-            fillOpacity={0.4}
-            strokeWidth={2}
-            dot={false}
-          />)})
-        </LineChart>
-      </ChartContainer>
-      <CardFooter>
-        <div className="flex flex-row gap-2  mt-2">
-        {props.experiment.views.map((view, index) => (
-          <div className={cn("px-2 flex-1 cursor-pointer", hidden.includes(view.id) && "opacity-20")} key={index} onClick={() => {
-            setHidden(prev => {
-              return prev.find((x) => x === view.id) ? prev.filter((x) => x !== view.id) : [...prev, view.id]
-            })
-          }}>
-            <div className="flex flex-row gap-2 my-auto">
-              <div
+      <div className="flex flex-col w-full max-h-[70vh] my-auto relative">
+        <ChartContainer config={chartConfig} className="flex-grow">
+        
+    {/* Chart 1: Recordings */}
+    <LineChart
+      data={filteredValues}
+      height={300}
+      margin={{ left: 10, right: 10 }}
+      className="relative"
+      syncId="simulation-chart"
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+    >
+      <CartesianGrid vertical={false} />
+      <XAxis
+        dataKey="t"
+        tickLine={false}
+        axisLine={false}
+        tickMargin={8}
+        tickFormatter={(v) => `${v.toFixed(1)}`}
+      />
+      <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+      <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
+  
+      {/* Recording traces */}
+      {visibleRecordingViews.map((view) => (
+        <Line
+          key={recordingViewToLabel(view)}
+          dataKey={recordingViewToLabel(view)}
+          type="natural"
+          stroke={getColorForRecordingView(view, props.highlight)}
+          fillOpacity={0.4}
+          strokeWidth={2}
+          dot={false}
+          isAnimationActive={false}
+        />
+      ))}
+  
+      {/* Selection highlight */}
+      {selection.left !== null && selection.right !== null && (
+        <ReferenceArea
+          x1={values[selection.left].t}
+          x2={values[selection.right].t}
+          strokeOpacity={0.3}
+          fill="hsl(45, 70%, 60%)"
+          fillOpacity={0.2}
+        />
+      )}
+       <Brush
+        dataKey="t"
+        height={0}
+        stroke="#1b1b25"
+        fill="transparent"
+        travellerWidth={5}
+        travellerStroke="#181212"
+        travellerFill="#181212"
+        startIndex={range.left}
+        endIndex={range.right}
+        onChange={(e) =>
+          setRange({
+            left: e?.startIndex ?? 0,
+            right: e?.endIndex ?? values.length - 1,
+          })
+        }
+      />
+    </LineChart>
+    </ChartContainer>
+    <ChartContainer config={chartConfig} className="flex-initial h-48">
+  
+    {/* Chart 2: Stimuli (e.g. current injections) */}
+    <LineChart
+      data={filteredValues}
+      height={100}
+      margin={{ left: 12, right: 12 }}
+      syncId="simulation-chart"
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
       
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: getColorFromView(view) }}
-              />
-              <div className="text-sm text-muted-foreground my-auto">
-                {viewToLabel(view)}
-              </div>
-              <div className="text-sm text-muted-foreground my-auto">
-              <ElektroRecording.DetailLink object={view.recording?.id || view.stimulus?.id || "null"} key={index} style={{ color: getColorFromView(index) }}>
-
-Open
-</ElektroRecording.DetailLink>
-</div>
-            </div>
-            </div>
-          
-        ))}
+    >
+      <CartesianGrid vertical={false} />
+      <XAxis
+        dataKey="t"
+        tickLine={false}
+        axisLine={false}
+        tickMargin={8}
+        tickFormatter={(v) => `${v.toFixed(1)}`}
+      />
+      <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+      <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
+  
+      {/* Stimuli traces */}
+      {visibleStimulusViews.map((s) => (
+        <Line
+          key={stimulusViewToLabel(s)}
+          dataKey={stimulusViewToLabel(s)}
+          type="natural"
+          stroke={getColorForStimulusView(s, props.highlight)}
+          strokeWidth={2}
+          dot={false}
+          isAnimationActive={false}
+        />
+      ))}
+  
+      {/* Brush for zooming */}
+      <Brush
+        dataKey="t"
+        height={30}
+        stroke="#1b1b25"
+        fill="transparent"
+        travellerWidth={5}
+        travellerStroke="#181212"
+        travellerFill="#181212"
+        startIndex={range.left}
+        endIndex={range.right}
+        onChange={(e) =>
+          setRange({
+            left: e?.startIndex ?? 0,
+            right: e?.endIndex ?? values.length - 1,
+          })
+        }
+      />
+       {/* Selection highlight */}
+       {selection.left !== null && selection.right !== null && (
+        <ReferenceArea
+          x1={values[selection.left].t}
+          x2={values[selection.right].t}
+          strokeOpacity={0.3}
+          fill="hsl(45, 70%, 60%)"
+          fillOpacity={0.2}
+        />
+      )}
+      </LineChart>
+    </ChartContainer>
+  
+        <div className="absolute top-0 right-0 mr-2 mt-2 flex gap-1">
+          <Button variant="outline" size="icon" onClick={(e) => { e.preventDefault(); undo(); }} disabled={!canUndo}>
+            <ArrowLeft />
+          </Button>
+          <Button variant="outline" size="icon" onClick={(e) => { e.preventDefault(); redo(); }} disabled={!canRedo}>
+            <ArrowRight />
+          </Button>
+          <Button onClick={() => reset()} variant="outline">
+            <ReloadIcon />
+          </Button>
         </div>
-      </CardFooter>
-    </Card>
+      </div>
   );
 };

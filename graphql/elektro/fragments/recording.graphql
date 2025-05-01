@@ -2,6 +2,8 @@ fragment Recording on Recording {
     id
     label
     cell
+    location
+    position
     trace {
         id
         name

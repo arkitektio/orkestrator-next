@@ -76,7 +76,7 @@ export const portToZod = (port: LabellablePort): any => {
         { message: "Please enter a valid float" },
       ).refine((val) => !isNaN(val), {
         message: "Please enter a valid float",
-      });
+      })
       break;
     case PortKind.Structure:
       baseType = z.string();
@@ -188,7 +188,7 @@ export const buildZodSchema = (ports: PortablePort[], path: string[] = []) => {
           }
         };
 
-        schema = schema.refine(
+        schema.refine(
           (data) => {
             return wrappedValidator(data[port.key], data);
           },

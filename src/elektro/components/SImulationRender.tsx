@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DetailSimulationFragment, DetailTraceFragment, RecordingFragment, RecordingKind, StimulusFragment } from "../api/graphql";
+import { DetailSimulationFragment, DetailTraceFragment, ListRecordingFragment, ListStimulusFragment, RecordingFragment, RecordingKind, StimulusFragment } from "../api/graphql";
 import { Plot, useTraceArray } from "../lib/useTraceArray";
 import {
   Card,
@@ -18,7 +18,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Area, CartesianGrid, XAxis, AreaChart, LineChart, Line, ReferenceLine, Brush, ReferenceArea } from "recharts";
+import { Area, CartesianGrid, XAxis, AreaChart, LineChart, Line, ReferenceLine, Brush, ReferenceArea, YAxis } from "recharts";
 import { cn } from "@/lib/utils";
 import { ElektroRecording } from "@/linkers";
 import { CategoricalChartState } from "recharts/types/chart/types";
@@ -33,19 +33,21 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export const getColorForRecording = (recording: RecordingFragment, highlight?: string[]) => {
+export const getColorForRecording = (recording: ListRecordingFragment, highlight?: string[]) => {
   const hue = highlight == undefined ? (parseInt(recording.id) * 137.508) % 360 : (highlight.includes(recording.id) ? 0 : (parseInt(recording.id) * 137.508) % 360);
   return `hsl(${hue}, 70%, 60%)`;
 }
 
-export const getColorForStimulus= (stimulus: StimulusFragment, highlight?: string[]) => {
-  const hue = highlight == undefined ? (parseInt(stimulus.id) * 137.508) % 360 : (highlight.includes(stimulus.id) ? 0 : (parseInt(stimulus.id) * 137.508) % 360);
+export const getColorForStimulus= (stimulus: ListStimulusFragment, highlight?: string[]) => {
+  const hue = highlight == undefined ? (parseInt(stimulus.id) * 37.508) % 360 : (highlight.includes(stimulus.id) ? 0 : (parseInt(stimulus.id) * 137.508) % 360);
   return `hsl(${hue}, 70%, 60%)`;
 }
 
+export const recordingToID = (rec: RecordingFragment) => `r:${rec.label}`;
+export const stimulusToID = (s: StimulusFragment) => `s:${s.label}`;
 
-const recordingToLabel = (rec: RecordingFragment) => rec.label 
-const stimulusToLabel = (rec: StimulusFragment) => rec.label 
+export const recordingToLabel = (rec: RecordingFragment) => rec.label 
+export const stimulusToLabel = (rec: StimulusFragment) => rec.label 
 
 const useValuesForSimulation = (
   simulation: DetailSimulationFragment
@@ -62,12 +64,17 @@ const useValuesForSimulation = (
 
   const render = async () => {
     if (simulation) {
+      
+
+      let stepSize = Math.max(1, Math.round((simulation.timeTrace.store?.shape?.at(0) || 2000) / 2000));
+      console.log("Step size", stepSize, simulation.timeTrace.store?.shape?.at(0));
+
       Promise.all(
         [...simulation.recordings.map((recording: RecordingFragment) => {
-          return renderView(recording.trace, 0);
-        }),...simulation.stimuli.map((stimulus: RecordingFragment) => {
-          return renderView(stimulus.trace, 0);
-        }), renderView(simulation.timeTrace, 0)]
+          return renderView(recording.trace, stepSize);
+        }),...simulation.stimuli.map((stimulus: StimulusFragment) => {
+          return renderView(stimulus.trace, stepSize);
+        }), renderView(simulation.timeTrace, stepSize)]
       ).then((data) => {
 
         
@@ -77,34 +84,27 @@ const useValuesForSimulation = (
         simulation.recordings.forEach((recording: RecordingFragment, recordIndex: number) => {
           const array = data[recordIndex];
 
+          const recId = recordingToID(recording)
+
           array.forEach((value, index) => {
             values[index] = {
               ...values[index],
-              [recording.label]: value,
+              [recId]: value,
             };
           }
           );
         });
 
-        simulation.recordings.forEach((recording: RecordingFragment, recordIndex: number) => {
-          const array = data[recordIndex];
-
-          array.forEach((value, index) => {
-            values[index] = {
-              ...values[index],
-              [recording.label]: value,
-            };
-          }
-          );
-        });
 
         simulation.stimuli.forEach((stimulus: StimulusFragment, stimIndex: number) => {
           const array = data[stimIndex + simulation.recordings.length];
 
+          const recId = stimulusToID(stimulus)
+
           array.forEach((value, index) => {
             values[index] = {
               ...values[index],
-              [stimulus.label]: value,
+              [recId]: value,
             };
           }
           );
@@ -153,9 +153,8 @@ const useValuesForSimulation = (
 }
 
 
-export const SimulationRender = (props: { simulation: DetailSimulationFragment, highlight?: string[] }) => {
+export const SimulationRender = (props: { simulation: DetailSimulationFragment, highlight?: string[], hidden?: string[], hiddenStimuli?: string[]}) => {
   const { loading, values, spikeTimes } = useValuesForSimulation(props.simulation);
-  const [hidden, setHidden] = useState<string[]>([]);
   const [range, setRange, { redo, undo, canRedo, canUndo }] =
     useUndoable<{ left: number; right: number }>({
       left: 0,
@@ -223,12 +222,12 @@ export const SimulationRender = (props: { simulation: DetailSimulationFragment, 
   }, [values]);
 
   const visibleRecordings = useMemo(() => {
-    return props.simulation.recordings.filter((view) => !hidden.includes(view.id));
-  }, [props.simulation.recordings, hidden]);
+    return props.simulation.recordings.filter((view) => !props.hidden || !props.hidden.includes(view.id));
+  }, [props.simulation.recordings, props.hidden]);
 
   const visibleStimuli = useMemo(() => {
-    return props.simulation.stimuli.filter((view) => !hidden.includes(view.id));
-  }, [props.simulation.stimuli, hidden]);
+    return props.simulation.stimuli.filter((view) => !props.hiddenStimuli || !props.hiddenStimuli?.includes(view.id));
+  }, [props.simulation.stimuli, props.hiddenStimuli]);
 
   const spikeLines = useMemo(() => {
     return spikeTimes.map((spikeTime, index) => (
@@ -244,158 +243,156 @@ export const SimulationRender = (props: { simulation: DetailSimulationFragment, 
 
   if (loading) {
     return (
-      <Card className="p-3">
+      <div className="flex flex-col w-full">
         <CardHeader>
           <CardTitle>Loading...</CardTitle>
           <CardDescription>Loading simulation data</CardDescription>
         </CardHeader>
-      </Card>
+      </div>
     );
   }
 
   return (
-    <Card className="p-3 relative pointer-events-auto">
-      <ChartContainer config={chartConfig}>
-        <LineChart
-          data={filteredValues}
-          margin={{ left: 12, right: 12 }}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-        >
-          <CartesianGrid vertical={false} />
-          <XAxis dataKey={"t"} tickLine={false} axisLine={false} tickMargin={8} />
-          <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
+    <div className="flex flex-col w-full max-h-[70vh] my-auto relative">
+      <ChartContainer config={chartConfig} className="flex-grow">
+      
+  {/* Chart 1: Recordings */}
+  <LineChart
+    data={filteredValues}
+    height={300}
+    margin={{ left: 10, right: 10 }}
+    className="relative"
+    syncId="simulation-chart"
+    onMouseDown={handleMouseDown}
+    onMouseMove={handleMouseMove}
+    onMouseUp={handleMouseUp}
+    onMouseLeave={handleMouseUp}
+  >
+    <CartesianGrid vertical={false} />
+    <XAxis
+      dataKey="t"
+      tickLine={false}
+      axisLine={false}
+      tickMargin={8}
+      tickFormatter={(v) => `${v.toFixed(1)}`}
+    />
+    <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+    <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
 
-          {visibleRecordings.map((view) => (
-            <Line
-              key={view.id}
-              dataKey={recordingToLabel(view)}
-              type="natural"
-              stroke={getColorForRecording(view, props.highlight)}
-              fillOpacity={0.4}
-              strokeWidth={2}
-              dot={false}
-              isAnimationActive={false}
-            />
-          ))}
+    {/* Recording traces */}
+    {visibleRecordings.map((rec) => (
+      <Line
+        key={recordingToID(rec)}
+        dataKey={recordingToID(rec)}
+        type="natural"
+        stroke={getColorForRecording(rec, props.highlight)}
+        fillOpacity={0.4}
+        strokeWidth={2}
+        dot={false}
+        isAnimationActive={false}
+      />
+    ))}
 
-          {visibleStimuli.map((s) => (
-            <Line
-              key={s.id}
-              dataKey={stimulusToLabel(s)}
-              type="natural"
-              stroke={getColorForStimulus(s, props.highlight)}
-              fillOpacity={0.4}
-              strokeWidth={2}
-              dot={false}
-              isAnimationActive={false}
-            />
-          ))}
+    {/* Spike times */}
+    {spikeLines}
 
-          {spikeLines}
+    {/* Selection highlight */}
+    {selection.left !== null && selection.right !== null && (
+      <ReferenceArea
+        x1={values[selection.left].t}
+        x2={values[selection.right].t}
+        strokeOpacity={0.3}
+        fill="hsl(45, 70%, 60%)"
+        fillOpacity={0.2}
+      />
+    )}
+     <Brush
+      dataKey="t"
+      height={0}
+      stroke="#1b1b25"
+      fill="transparent"
+      travellerWidth={5}
+      travellerStroke="#181212"
+      travellerFill="#181212"
+      startIndex={range.left}
+      endIndex={range.right}
+      onChange={(e) =>
+        setRange({
+          left: e?.startIndex ?? 0,
+          right: e?.endIndex ?? values.length - 1,
+        })
+      }
+    />
+  </LineChart>
+  </ChartContainer>
+  <ChartContainer config={chartConfig} className="flex-initial h-48">
 
-          {selection.left !== null && selection.right !== null && (
-            <ReferenceArea
-              x1={values[selection.left].t}
-              x2={values[selection.right].t}
-              strokeOpacity={0.3}
-              fill="hsl(45, 70%, 60%)"
-              fillOpacity={0.2}
-            />
-          )}
+  {/* Chart 2: Stimuli (e.g. current injections) */}
+  <LineChart
+    data={filteredValues}
+    height={100}
+    margin={{ left: 12, right: 12 }}
+    syncId="simulation-chart"
+    onMouseDown={handleMouseDown}
+    onMouseMove={handleMouseMove}
+    onMouseUp={handleMouseUp}
+    onMouseLeave={handleMouseUp}
+    
+  >
+    <CartesianGrid vertical={false} />
+    <XAxis
+      dataKey="t"
+      tickLine={false}
+      axisLine={false}
+      tickMargin={8}
+      tickFormatter={(v) => `${v.toFixed(1)}`}
+    />
+    <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+    <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
 
-          <Brush
-            dataKey="t"
-            height={30}
-            stroke="hsl(var(--foreground))"
-            fill="transparent"
-            travellerWidth={5}
-            travellerStroke="hsl(var(--foreground))"
-            travellerFill="hsl(var(--card))"
-            startIndex={range.left}
-            endIndex={range.right}
-            onChange={(e) =>
-              setRange({
-                left: e?.startIndex ?? 0,
-                right: e?.endIndex ?? values.length - 1,
-              })
-            }
-          />
-        </LineChart>
-      </ChartContainer>
+    {/* Stimuli traces */}
+    {visibleStimuli.map((s) => (
+      <Line
+        key={stimulusToID(s)}
+        dataKey={stimulusToID(s)}
+        type="stepAfter"
+        stroke={getColorForStimulus(s, props.highlight)}
+        strokeWidth={2}
+        dot={false}
+        isAnimationActive={false}
+      />
+    ))}
 
-      <CardFooter>
-        <div className="flex flex-row gap-2 mt-2">
-          {props.simulation.recordings.map((view, index) => (
-            <div
-              className={cn("px-2 flex-1 cursor-pointer", hidden.includes(view.id) && "opacity-20")}
-              key={index}
-              onClick={() => {
-                setHidden((prev) =>
-                  prev.find((x) => x === view.id)
-                    ? prev.filter((x) => x !== view.id)
-                    : [...prev, view.id]
-                );
-              }}
-            >
-              <div className="flex flex-row gap-2 my-auto">
-                <div
-                  className="w-4 h-4 rounded-full"
-                  style={{ backgroundColor: getColorForRecording(view, props.highlight) }}
-                />
-                <div className="text-sm text-muted-foreground my-auto">
-                  {recordingToLabel(view)}
-                </div>
-                <div className="text-sm text-muted-foreground my-auto">
-                  <ElektroRecording.DetailLink
-                    object={view?.id}
-                    key={index}
-                    style={{ color: getColorForRecording(view, props.highlight) }}
-                  >
-                    Open
-                  </ElektroRecording.DetailLink>
-                </div>
-                </div>
-            </div>
-          ))}
-        </div>
-        <div className="flex flex-row gap-2 mt-2">
-          {props.simulation.stimuli.map((view, index) => (
-            <div
-              className={cn("px-2 flex-1 cursor-pointer", hidden.includes(view.id) && "opacity-20")}
-              key={index}
-              onClick={() => {
-                setHidden((prev) =>
-                  prev.find((x) => x === view.id)
-                    ? prev.filter((x) => x !== view.id)
-                    : [...prev, view.id]
-                );
-              }}
-            >
-              <div className="flex flex-row gap-2 my-auto">
-                <div
-                  className="w-4 h-4 rounded-full"
-                  style={{ backgroundColor: getColorForStimulus(view, props.highlight) }}
-                />
-                <div className="text-sm text-muted-foreground my-auto">
-                  {stimulusToLabel(view)}
-                </div>
-                <div className="text-sm text-muted-foreground my-auto">
-                  <ElektroRecording.DetailLink
-                    object={view?.id}
-                    key={index}
-                    style={{ color: getColorForStimulus(view, props.highlight) }}
-                  >
-                    Open
-                  </ElektroRecording.DetailLink>
-                </div>
-                </div>
-            </div>
-          ))}
-        </div>
-      </CardFooter>
+    {/* Brush for zooming */}
+    <Brush
+      dataKey="t"
+      height={30}
+      stroke="#1b1b25"
+      fill="transparent"
+      travellerWidth={5}
+      travellerStroke="#181212"
+      travellerFill="#181212"
+      startIndex={range.left}
+      endIndex={range.right}
+      onChange={(e) =>
+        setRange({
+          left: e?.startIndex ?? 0,
+          right: e?.endIndex ?? values.length - 1,
+        })
+      }
+    />
+     {/* Selection highlight */}
+     {selection.left !== null && selection.right !== null && (
+      <ReferenceArea
+        x1={values[selection.left].t}
+        x2={values[selection.right].t}
+        strokeOpacity={0.3}
+        fill="hsl(45, 70%, 60%)"
+        fillOpacity={0.2}
+      />
+    )}
+    </LineChart>
+  </ChartContainer>
 
       <div className="absolute top-0 right-0 mr-2 mt-2 flex gap-1">
         <Button variant="outline" size="icon" onClick={(e) => { e.preventDefault(); undo(); }} disabled={!canUndo}>
@@ -408,6 +405,6 @@ export const SimulationRender = (props: { simulation: DetailSimulationFragment, 
           <ReloadIcon />
         </Button>
       </div>
-    </Card>
+    </div>
   );
 };

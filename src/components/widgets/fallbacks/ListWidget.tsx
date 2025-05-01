@@ -6,7 +6,7 @@ import { TooltipButton } from "@/components/ui/tooltip-button";
 import { ChildPortFragment, PortKind } from "@/rekuest/api/graphql";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { InputWidgetProps, Port } from "@/rekuest/widgets/types";
-import { pathToName } from "@/rekuest/widgets/utils";
+import { pathToName, portToDefaults } from "@/rekuest/widgets/utils";
 import { Plus, X } from "lucide-react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { ListChoicesWidget } from "../custom/ListChoicesWidget";
@@ -51,7 +51,7 @@ export const SideBySideWidget = ({
 
   return (
     <FormItem>
-      <FormLabel>{port.label || port.key}</FormLabel>
+      <FormLabel>{port.label || port.key} {JSON.stringify(portToDefaults([valuetype], {}))}</FormLabel>
       <FormControl>
         <ContainerGrid fitLength={fields.length}>
           {fields.map((item, index) => (
@@ -73,7 +73,7 @@ export const SideBySideWidget = ({
           <TooltipButton
             variant="outline"
             size="icon"
-            onClick={(e) => {append({ __value: undefined }); e.preventDefault()}}
+            onClick={(e) => {append({ __value: portToDefaults([valuetype], {})[valuetype.key] }); e.preventDefault()}}
             tooltip="Add new item"
           >
             <Plus />

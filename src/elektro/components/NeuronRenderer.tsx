@@ -3,6 +3,8 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Html, Bounds, useCursor } from "@react-three/drei";
 import * as THREE from "three";
 import { CompartmentFragment, CoordFragment, DetailNeuronModelFragment, SectionFragment } from "../api/graphql";
+import { Bloom, DepthOfField, EffectComposer, Noise, Vignette } from '@react-three/postprocessing'
+
 
 const getColorFromIndex = (index: number) => {
   const hue = (index * 137.508) % 360;
@@ -170,6 +172,11 @@ export const NeuronVisualizer = ({ model }: { model: DetailNeuronModelFragment }
           }
         })}
       </Bounds>
+      <EffectComposer>
+
+    
+        <Vignette eskil={false} offset={0.1} darkness={1.1} />
+      </EffectComposer>
     </Canvas>
   );
 };

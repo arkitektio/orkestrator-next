@@ -63,11 +63,11 @@ export const downloadSelectionFromStore = async (
   };
 };
 
-export const viewToSlices = (t: number, z: number): Slice[] => {
+export const viewToSlices = (t: number): Slice[] => {
   let selection: Slice[] = [
     {
       _slice: true,
-      step: 1,
+      step: t,
       start: null,
       stop: null,
     },
@@ -89,7 +89,10 @@ export const renderArray = async (
   t: number,
   abortSignal?: AbortSignal,
 ): Promise<number[]> => {
-  let slices = viewToSlices(t, t);
+
+
+  
+  let slices = viewToSlices(t);
   console.log("Slices", slices);
 
   let selection = await downloadSelectionFromStore(
@@ -101,13 +104,11 @@ export const renderArray = async (
   );
 
   console.log("Array is", selection.out.data);
-  const reduced = Array.from(selection.out.data).map((x, i) => {
-    return x
-  });
+  
 
-  console.log("Reduced array", reduced);
+  console.log("Reduced array",  selection.out.data);
 
-  return reduced as number[];
+  return  selection.out.data as number[];
 };
 
 const downloadArray = async (

@@ -13,8 +13,7 @@ fragment DetailTemplate on Template {
     name
   }
   myLatestAssignation {
-    id
-    args
+    ...PostmanAssignation
   }
 }
 

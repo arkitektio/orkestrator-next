@@ -1,4 +1,5 @@
 import ExperimentWidget from "@/elektro/widgets/ExperimentWidget";
+import NeuronModelWidget from "@/elektro/widgets/NeuronModelWidget";
 import SimulationWidget from "@/elektro/widgets/SimulationWidget";
 import { useGetPodQuery } from "@/kabinet/api/graphql";
 import GraphWidget from "@/kraph/widgets/GraphWidget";
@@ -114,6 +115,8 @@ export const DelegatingStructureWidget = (props: ReturnWidgetProps) => {
       return <GraphWidget {...props} />;
     case "@elektro/experiment":
       return <ExperimentWidget {...props} />;
+    case "@elektro/neuronmodel":
+      return <NeuronModelWidget {...props} />;
     case "@elektro/simulation":
       return <SimulationWidget {...props} />;
     default:

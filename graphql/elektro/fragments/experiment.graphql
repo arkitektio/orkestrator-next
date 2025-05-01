@@ -1,12 +1,24 @@
 fragment Experiment on Experiment {
     id
    name 
-   views {
+   description
+   timeTrace {
+        id
+        name
+        store {
+            ...ZarrStore
+        }
+   }
+   stimulusViews {
         id
         label 
         stimulus {
             ...Stimulus
         }
+   }
+   recordingViews {
+        id
+        label 
         recording {
             ...Recording
         }

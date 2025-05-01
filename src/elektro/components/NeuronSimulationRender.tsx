@@ -3,6 +3,9 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Html, Bounds, useCursor } from "@react-three/drei";
 import * as THREE from "three";
 import { CompartmentFragment, CoordFragment, DetailNeuronModelFragment, DetailSimulationFragment, SectionFragment } from "../api/graphql";
+import { interpolateCoords } from "../model_render/utils";
+import { RecordingMarker } from "../model_render/RecordingMarker";
+import { StimulusMarker } from "../model_render/StimulusMarker";
 
 const getColorFromIndex = (index: number) => {
   const hue = (index * 137.508) % 360;
@@ -114,8 +117,10 @@ const CylinderWithTooltip = ({
   );
 };
 
-export const NeuronVisualizer = ({ simulation }: { simulation: DetailSimulationFragment }) => {
-  const sections = simulation.model.config.cells.flatMap((cell) => cell.topology.sections);
+
+
+export const NeuronSimulationVisualizer = ({ simulation }: { simulation: DetailSimulationFragment }) => {
+  const cells = simulation.model.config.cells
   const compartmentMap = Object.fromEntries(
     simulation.model.config.cells.flatMap((cell) =>
       cell.biophysics.compartments.map((c) => [c.id, c])
@@ -133,7 +138,9 @@ export const NeuronVisualizer = ({ simulation }: { simulation: DetailSimulationF
       <OrbitControls makeDefault />
 
       <Bounds fit clip observe margin={1.2}>
-        {sections.flatMap((section, secIndex) => {
+        {cells.map( cell => 
+        <>
+        {cell.topology.sections.flatMap((section, secIndex) => {
           const color = getColorFromIndex(secIndex);
 
           if (section.coords && section.coords.length > 1) {
@@ -168,7 +175,34 @@ export const NeuronVisualizer = ({ simulation }: { simulation: DetailSimulationF
               />
             );
           }
+        }
+        )}
+        </>)}
+        {simulation.recordings.map((rec, i) => {
+            const cell = simulation.model.config.cells.find(c => c.id === rec.cell);
+            const section = cell?.topology.sections.find(s => s.id === rec.location);
+
+            if (!section || !section.coords || typeof rec.position !== "number") throw new Error(`Invalid recording data ${JSON.stringify(rec)}`);
+
+            const point = interpolateCoords(section.coords, rec.position);
+
+            return (
+              <RecordingMarker key={`rec-marker-${i}`} recording={rec} position={point} />
+            );
         })}
+        {simulation.stimuli.map((stim, i) => {
+            const cell = simulation.model.config.cells.find(c => c.id === stim.cell);
+            const section = cell?.topology.sections.find(s => s.id === stim.location);
+
+            if (!section || !section.coords || typeof stim.position !== "number") throw new Error(`Invalid stimulus data ${JSON.stringify(stim)}`);
+
+            const point = interpolateCoords(section.coords, stim.position);
+
+            return (
+              <StimulusMarker key={`rec-marker-${i}`} stimulus={stim} position={point} />
+            );
+        })}
+
       </Bounds>
     </Canvas>
   );

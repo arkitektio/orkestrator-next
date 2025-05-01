@@ -9,6 +9,9 @@ import { PostmanAssignationFragment } from "../api/graphql";
 import { usePortForm } from "../hooks/usePortForm";
 import { useTemplateAction } from "../hooks/useTemplateAction";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
+import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
+import { TooltipTrigger } from "@radix-ui/react-tooltip";
+import { cn } from "@/lib/utils";
 
 export type TemplateAssignFormProps = {
   id: string;
@@ -81,10 +84,11 @@ export const TemplateAssignForm = (props: TemplateAssignFormProps) => {
           />
 
           <DialogFooter>
-            <Button type="submit" className="btn" disabled={!form.formState.isValid}>
+            <Button type="submit" className={cn(form.formState.isSubmitting && "bg-red-200")}>
               {" "}
               Submit{" "}
             </Button>
+        
           </DialogFooter>
         </form>
       </Form>

@@ -18,6 +18,11 @@ fragment DetailSimulation on Simulation {
   stimuli {
     ...Stimulus
   }
+  dt
+  createdAt
+  creator {
+    id
+  }
 }
 
 fragment ListSimulation on Simulation {

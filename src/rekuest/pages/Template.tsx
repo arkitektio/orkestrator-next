@@ -36,7 +36,7 @@ export const DoFormBackup = (props: { id: string }) => {
 
   const form = usePortForm({
     ports: template?.node.args || [],
-    defaults: latestAssignation?.args,
+    overwrites: latestAssignation?.args,
   });
 
   const navigate = useNavigate();
@@ -120,11 +120,11 @@ export const DoForm = ({ id }: { id: string }) => {
 
   const { registry } = useWidgetRegistry();
 
-  const yieldEvent = latestAssignation?.events.find(
+  const yieldEvent = latestAssignation?.events?.find(
     (x) => x.kind == AssignationEventKind.Yield,
   );
 
-  const errorEvent = latestAssignation?.events.find(
+  const errorEvent = latestAssignation?.events?.find(
     (x) => x.kind == AssignationEventKind.Critical,
   );
 

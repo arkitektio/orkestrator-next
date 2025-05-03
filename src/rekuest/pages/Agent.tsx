@@ -4,7 +4,7 @@ import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import { useGetPodForAgentQuery } from "@/kabinet/api/graphql";
 import { cn } from "@/lib/utils";
-import { KabinetPod, RekuestAgent } from "@/linkers";
+import { KabinetPod, RekuestAgent, RekuestMemoryShelve } from "@/linkers";
 import {
   AgentFragment,
   ListImplementationFragment,
@@ -188,6 +188,11 @@ export default asDetailQueryRoute(
           <div className="flex flex-row gap-2">
             <PinAgent agent={data.agent} />
             <ManagedByCard agent={data.agent} />
+            {data.agent.memoryShelve && <RekuestMemoryShelve.DetailLink object={data.agent.memoryShelve.id}>
+              <Button variant="outline" size="sm">
+                Memory Shelve
+              </Button>
+            </RekuestMemoryShelve.DetailLink>}
           </div>
         }
       >

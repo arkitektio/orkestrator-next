@@ -4,7 +4,9 @@ fragment Agent on Agent {
   implementations {
     ...ListImplementation
   }
-
+  memoryShelve {
+    id
+  }
   states {
     ...State
   }

@@ -140,6 +140,7 @@ export type Agent = {
   active: Scalars['Boolean']['output'];
   connected: Scalars['Boolean']['output'];
   extensions: Array<Scalars['String']['output']>;
+  fileSystemShelves: Array<FilesystemShelve>;
   hardwareRecords: Array<HardwareRecord>;
   id: Scalars['ID']['output'];
   implementation?: Maybe<Implementation>;
@@ -147,10 +148,17 @@ export type Agent = {
   instanceId: Scalars['InstanceId']['output'];
   lastSeen?: Maybe<Scalars['DateTime']['output']>;
   latestHardwareRecord?: Maybe<HardwareRecord>;
+  memoryShelve?: Maybe<MemoryShelve>;
   name: Scalars['String']['output'];
   pinned: Scalars['Boolean']['output'];
   registry: Registry;
   states: Array<State>;
+};
+
+
+export type AgentFileSystemShelvesArgs = {
+  filters?: InputMaybe<FilesystemShelveFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -477,13 +485,6 @@ export type CreateForeignImplementationInput = {
   implementation: ImplementationInput;
 };
 
-export type CreateHardwareRecordInput = {
-  cpuCount?: InputMaybe<Scalars['Int']['input']>;
-  cpuFrequency?: InputMaybe<Scalars['Float']['input']>;
-  cpuVendorName?: InputMaybe<Scalars['String']['input']>;
-  instanceId?: InputMaybe<Scalars['InstanceId']['input']>;
-};
-
 /** The input for creating a implementation. */
 export type CreateImplementationInput = {
   extension: Scalars['String']['input'];
@@ -721,6 +722,44 @@ export enum EffectKind {
   Message = 'MESSAGE'
 }
 
+export type FileDrawer = {
+  __typename?: 'FileDrawer';
+  agent: Agent;
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  identifier: Scalars['String']['output'];
+  resourceId: Scalars['String']['output'];
+};
+
+/** A way to filter shelved items */
+export type FileDrawerFilter = {
+  AND?: InputMaybe<FileDrawerFilter>;
+  OR?: InputMaybe<FileDrawerFilter>;
+  agent?: InputMaybe<Scalars['ID']['input']>;
+  identifier?: InputMaybe<Scalars['String']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  shelve?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type FilesystemShelve = {
+  __typename?: 'FilesystemShelve';
+  drawers: Array<FileDrawer>;
+  id: Scalars['ID']['output'];
+};
+
+
+export type FilesystemShelveDrawersArgs = {
+  filters?: InputMaybe<FileDrawerFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+/** A way to filter shelved items */
+export type FilesystemShelveFilter = {
+  AND?: InputMaybe<FilesystemShelveFilter>;
+  OR?: InputMaybe<FilesystemShelveFilter>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
 export type HardwareRecord = {
   __typename?: 'HardwareRecord';
   agent: Agent;
@@ -870,6 +909,54 @@ export enum LogLevel {
   Warn = 'WARN'
 }
 
+export type MemoryDrawer = {
+  __typename?: 'MemoryDrawer';
+  createdAt: Scalars['DateTime']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  identifier: Scalars['String']['output'];
+  label?: Maybe<Scalars['String']['output']>;
+  resourceId: Scalars['String']['output'];
+  shelve: MemoryShelve;
+};
+
+/** A way to filter shelved items */
+export type MemoryDrawerFilter = {
+  AND?: InputMaybe<MemoryDrawerFilter>;
+  OR?: InputMaybe<MemoryDrawerFilter>;
+  agent?: InputMaybe<Scalars['ID']['input']>;
+  identifier?: InputMaybe<Scalars['String']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  shelve?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type MemoryShelve = {
+  __typename?: 'MemoryShelve';
+  agent: Agent;
+  description?: Maybe<Scalars['String']['output']>;
+  drawers: Array<MemoryDrawer>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+};
+
+
+export type MemoryShelveDrawersArgs = {
+  filters?: InputMaybe<MemoryDrawerFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+/** A way to filter shelved items */
+export type MemoryShelveFilter = {
+  AND?: InputMaybe<MemoryShelveFilter>;
+  OR?: InputMaybe<MemoryShelveFilter>;
+  agent?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type MemoryShelveOrder = {
+  name?: InputMaybe<Ordering>;
+};
+
 export type MessageEffect = Effect & {
   __typename?: 'MessageEffect';
   dependencies: Array<Scalars['String']['output']>;
@@ -888,7 +975,6 @@ export type Mutation = {
   collect: Array<Scalars['String']['output']>;
   createDashboard: Dashboard;
   createForeignImplementation: Implementation;
-  createHardwareRecord: HardwareRecord;
   createImplementation: Implementation;
   createPanel: Panel;
   createShortcut: Shortcut;
@@ -912,9 +998,11 @@ export type Mutation = {
   resume: Assignation;
   setExtensionImplementations: Array<Implementation>;
   setState: State;
+  shelveInMemoryDrawer: MemoryDrawer;
   /** Step a assignation */
   step: Assignation;
   unreserve: Scalars['String']['output'];
+  unshelveMemoryDrawer: Scalars['String']['output'];
   updateState: State;
 };
 
@@ -951,11 +1039,6 @@ export type MutationCreateDashboardArgs = {
 
 export type MutationCreateForeignImplementationArgs = {
   input: CreateForeignImplementationInput;
-};
-
-
-export type MutationCreateHardwareRecordArgs = {
-  input: CreateHardwareRecordInput;
 };
 
 
@@ -1059,6 +1142,11 @@ export type MutationSetStateArgs = {
 };
 
 
+export type MutationShelveInMemoryDrawerArgs = {
+  input: ShelveInMemoryDrawerInput;
+};
+
+
 export type MutationStepArgs = {
   input: StepInput;
 };
@@ -1066,6 +1154,11 @@ export type MutationStepArgs = {
 
 export type MutationUnreserveArgs = {
   input: UnreserveInput;
+};
+
+
+export type MutationUnshelveMemoryDrawerArgs = {
+  input: UnshelveMemoryDrawerInput;
 };
 
 
@@ -1282,6 +1375,8 @@ export type Query = {
   implementation: Implementation;
   implementationAt: Implementation;
   implementations: Array<Implementation>;
+  memoryShelve: MemoryShelve;
+  memoryShelves: Array<MemoryShelve>;
   myImplementationAt: Implementation;
   myreservations: Array<Reservation>;
   panel: Panel;
@@ -1393,6 +1488,18 @@ export type QueryImplementationAtArgs = {
 
 export type QueryImplementationsArgs = {
   filters?: InputMaybe<ImplementationFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryMemoryShelveArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryMemoryShelvesArgs = {
+  filters?: InputMaybe<MemoryShelveFilter>;
+  order?: InputMaybe<MemoryShelveOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1643,6 +1750,19 @@ export type SetStateInput = {
   instanceId: Scalars['InstanceId']['input'];
   stateSchema: Scalars['ID']['input'];
   value: Scalars['Args']['input'];
+};
+
+export type ShelveInMemoryDrawerInput = {
+  /** The description of the drawer. This is used to identify the drawer in the system. */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** The identifier of the drawer. This is used to identify the drawer in the system. */
+  identifier: Scalars['Identifier']['input'];
+  /** The instance ID of the agent. This is used to identify the agent in the system. */
+  instanceId: Scalars['InstanceId']['input'];
+  /** The label of the drawer. This is used to identify the drawer in the system. */
+  label?: InputMaybe<Scalars['String']['input']>;
+  /** The resource ID of the drawer. */
+  resourceId: Scalars['String']['input'];
 };
 
 export type Shortcut = {
@@ -1954,6 +2074,13 @@ export type UnreserveInput = {
   reservation: Scalars['ID']['input'];
 };
 
+export type UnshelveMemoryDrawerInput = {
+  /** The instance ID of the agent. This is used to identify the agent in the system. */
+  instanceId: Scalars['InstanceId']['input'];
+  /** The resource ID of the drawer. */
+  resourceId: Scalars['String']['input'];
+};
+
 /** The input for updating a state schema. */
 export type UpdateStateInput = {
   instanceId: Scalars['InstanceId']['input'];
@@ -2004,7 +2131,7 @@ export type WaiterFilter = {
   instanceId: Scalars['InstanceId']['input'];
 };
 
-export type AgentFragment = { __typename?: 'Agent', id: string, instanceId: any, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, states: Array<{ __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'Port', key: string, label?: string | null, nullable: boolean, description?: string | null, scope: PortScope, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, dependencies: Array<string>, function: any, hook: string, ward: string } | { __typename: 'MessageEffect', kind: EffectKind, dependencies: Array<string>, function: any, message: string }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'Port', kind: PortKind, identifier?: any | null, scope: PortScope, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null, label?: string | null, errorMessage?: string | null }> | null }> } }>, registry: { __typename?: 'Registry', app: { __typename?: 'App', clientId: string }, user: { __typename?: 'User', id: string } } };
+export type AgentFragment = { __typename?: 'Agent', id: string, instanceId: any, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'Port', key: string, label?: string | null, nullable: boolean, description?: string | null, scope: PortScope, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, dependencies: Array<string>, function: any, hook: string, ward: string } | { __typename: 'MessageEffect', kind: EffectKind, dependencies: Array<string>, function: any, message: string }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'Port', kind: PortKind, identifier?: any | null, scope: PortScope, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null, label?: string | null, errorMessage?: string | null }> | null }> } }>, registry: { __typename?: 'Registry', app: { __typename?: 'App', clientId: string }, user: { __typename?: 'User', id: string } } };
 
 export type ListAgentFragment = { __typename?: 'Agent', id: string, instanceId: any, active: boolean, connected: boolean, name: string, lastSeen?: any | null, pinned: boolean, registry: { __typename?: 'Registry', app: { __typename?: 'App', clientId: string }, user: { __typename?: 'User', id: string } } };
 
@@ -2049,6 +2176,10 @@ export type DependencyGraphFragment = { __typename?: 'DependencyGraph', actions:
 export type DetailDependencyFragment = { __typename?: 'Dependency', id: string, reference?: string | null, initialHash: any, resolvable: boolean, action?: { __typename?: 'Action', id: string, name: string, hash: any } | null };
 
 export type ListDependencyFragment = { __typename?: 'Dependency', id: string, initialHash: any, reference?: string | null, resolvable: boolean, action?: { __typename?: 'Action', id: string, name: string, hash: any } | null };
+
+export type MemoryShelveFragment = { __typename?: 'MemoryShelve', id: string, name: string, agent: { __typename?: 'Agent', name: string }, drawers: Array<{ __typename?: 'MemoryDrawer', id: string, label?: string | null, description?: string | null, resourceId: string }> };
+
+export type ListMemoryShelveFragment = { __typename?: 'MemoryShelve', id: string, name: string, agent: { __typename?: 'Agent', name: string } };
 
 export type ListActionFragment = { __typename?: 'Action', id: string, name: string, description?: string | null, hash: any, kind: ActionKind, scope: ActionScope, stateful: boolean, implementations: Array<{ __typename?: 'Implementation', id: string, agent: { __typename?: 'Agent', id: string } }> };
 
@@ -2166,7 +2297,7 @@ export type PinAgentMutationVariables = Exact<{
 }>;
 
 
-export type PinAgentMutation = { __typename?: 'Mutation', pinAgent: { __typename?: 'Agent', id: string, instanceId: any, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, states: Array<{ __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'Port', key: string, label?: string | null, nullable: boolean, description?: string | null, scope: PortScope, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, dependencies: Array<string>, function: any, hook: string, ward: string } | { __typename: 'MessageEffect', kind: EffectKind, dependencies: Array<string>, function: any, message: string }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'Port', kind: PortKind, identifier?: any | null, scope: PortScope, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null, label?: string | null, errorMessage?: string | null }> | null }> } }>, registry: { __typename?: 'Registry', app: { __typename?: 'App', clientId: string }, user: { __typename?: 'User', id: string } } } };
+export type PinAgentMutation = { __typename?: 'Mutation', pinAgent: { __typename?: 'Agent', id: string, instanceId: any, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'Port', key: string, label?: string | null, nullable: boolean, description?: string | null, scope: PortScope, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, dependencies: Array<string>, function: any, hook: string, ward: string } | { __typename: 'MessageEffect', kind: EffectKind, dependencies: Array<string>, function: any, message: string }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'Port', kind: PortKind, identifier?: any | null, scope: PortScope, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null, label?: string | null, errorMessage?: string | null }> | null }> } }>, registry: { __typename?: 'Registry', app: { __typename?: 'App', clientId: string }, user: { __typename?: 'User', id: string } } } };
 
 export type DeleteAgentMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2346,7 +2477,7 @@ export type AgentQueryVariables = Exact<{
 }>;
 
 
-export type AgentQuery = { __typename?: 'Query', agent: { __typename?: 'Agent', id: string, instanceId: any, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, states: Array<{ __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'Port', key: string, label?: string | null, nullable: boolean, description?: string | null, scope: PortScope, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, dependencies: Array<string>, function: any, hook: string, ward: string } | { __typename: 'MessageEffect', kind: EffectKind, dependencies: Array<string>, function: any, message: string }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'Port', kind: PortKind, identifier?: any | null, scope: PortScope, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null, label?: string | null, errorMessage?: string | null }> | null }> } }>, registry: { __typename?: 'Registry', app: { __typename?: 'App', clientId: string }, user: { __typename?: 'User', id: string } } } };
+export type AgentQuery = { __typename?: 'Query', agent: { __typename?: 'Agent', id: string, instanceId: any, pinned: boolean, extensions: Array<string>, name: string, active: boolean, connected: boolean, lastSeen?: any | null, implementations: Array<{ __typename?: 'Implementation', id: string, interface: string, action: { __typename?: 'Action', description?: string | null, name: string, stateful: boolean }, agent: { __typename?: 'Agent', name: string } }>, memoryShelve?: { __typename?: 'MemoryShelve', id: string } | null, states: Array<{ __typename?: 'State', id: string, value: any, updatedAt: any, stateSchema: { __typename?: 'StateSchema', hash: string, name: string, ports: Array<{ __typename: 'Port', key: string, label?: string | null, nullable: boolean, description?: string | null, scope: PortScope, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, dependencies: Array<string>, function: any, hook: string, ward: string } | { __typename: 'MessageEffect', kind: EffectKind, dependencies: Array<string>, function: any, message: string }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'Port', kind: PortKind, identifier?: any | null, scope: PortScope, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, dependencies?: Array<string> | null, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, scope: PortScope, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null, step?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null, label?: string | null, errorMessage?: string | null }> | null }> } }>, registry: { __typename?: 'Registry', app: { __typename?: 'App', clientId: string }, user: { __typename?: 'User', id: string } } } };
 
 export type AssignationsQueryVariables = Exact<{
   instanceId: Scalars['InstanceId']['input'];
@@ -2406,6 +2537,22 @@ export type HooksSearchQueryVariables = Exact<{
 
 
 export type HooksSearchQuery = { __typename?: 'Query', options: Array<{ __typename?: 'Action', value: string, label: string, description?: string | null }> };
+
+export type MemoryShelvesQueryVariables = Exact<{
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<MemoryShelveFilter>;
+  order?: InputMaybe<MemoryShelveOrder>;
+}>;
+
+
+export type MemoryShelvesQuery = { __typename?: 'Query', memoryShelves: Array<{ __typename?: 'MemoryShelve', id: string, name: string, agent: { __typename?: 'Agent', name: string } }> };
+
+export type MemoryShelveQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type MemoryShelveQuery = { __typename?: 'Query', memoryShelve: { __typename?: 'MemoryShelve', id: string, name: string, agent: { __typename?: 'Agent', name: string }, drawers: Array<{ __typename?: 'MemoryDrawer', id: string, label?: string | null, description?: string | null, resourceId: string }> } };
 
 export type GetPanelQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2848,6 +2995,9 @@ export const AgentFragmentDoc = gql`
   implementations {
     ...ListImplementation
   }
+  memoryShelve {
+    id
+  }
   states {
     ...State
   }
@@ -3063,6 +3213,30 @@ export const DetailDependencyFragmentDoc = gql`
   }
   reference
   resolvable
+}
+    `;
+export const MemoryShelveFragmentDoc = gql`
+    fragment MemoryShelve on MemoryShelve {
+  agent {
+    name
+  }
+  id
+  name
+  drawers {
+    id
+    label
+    description
+    resourceId
+  }
+}
+    `;
+export const ListMemoryShelveFragmentDoc = gql`
+    fragment ListMemoryShelve on MemoryShelve {
+  agent {
+    name
+  }
+  id
+  name
 }
     `;
 export const ListActionFragmentDoc = gql`
@@ -4620,6 +4794,78 @@ export function useHooksSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQuery
 export type HooksSearchQueryHookResult = ReturnType<typeof useHooksSearchQuery>;
 export type HooksSearchLazyQueryHookResult = ReturnType<typeof useHooksSearchLazyQuery>;
 export type HooksSearchQueryResult = Apollo.QueryResult<HooksSearchQuery, HooksSearchQueryVariables>;
+export const MemoryShelvesDocument = gql`
+    query MemoryShelves($pagination: OffsetPaginationInput, $filters: MemoryShelveFilter, $order: MemoryShelveOrder) {
+  memoryShelves(order: $order, pagination: $pagination, filters: $filters) {
+    ...ListMemoryShelve
+  }
+}
+    ${ListMemoryShelveFragmentDoc}`;
+
+/**
+ * __useMemoryShelvesQuery__
+ *
+ * To run a query within a React component, call `useMemoryShelvesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMemoryShelvesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMemoryShelvesQuery({
+ *   variables: {
+ *      pagination: // value for 'pagination'
+ *      filters: // value for 'filters'
+ *      order: // value for 'order'
+ *   },
+ * });
+ */
+export function useMemoryShelvesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<MemoryShelvesQuery, MemoryShelvesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<MemoryShelvesQuery, MemoryShelvesQueryVariables>(MemoryShelvesDocument, options);
+      }
+export function useMemoryShelvesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<MemoryShelvesQuery, MemoryShelvesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<MemoryShelvesQuery, MemoryShelvesQueryVariables>(MemoryShelvesDocument, options);
+        }
+export type MemoryShelvesQueryHookResult = ReturnType<typeof useMemoryShelvesQuery>;
+export type MemoryShelvesLazyQueryHookResult = ReturnType<typeof useMemoryShelvesLazyQuery>;
+export type MemoryShelvesQueryResult = Apollo.QueryResult<MemoryShelvesQuery, MemoryShelvesQueryVariables>;
+export const MemoryShelveDocument = gql`
+    query MemoryShelve($id: ID!) {
+  memoryShelve(id: $id) {
+    ...MemoryShelve
+  }
+}
+    ${MemoryShelveFragmentDoc}`;
+
+/**
+ * __useMemoryShelveQuery__
+ *
+ * To run a query within a React component, call `useMemoryShelveQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMemoryShelveQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMemoryShelveQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useMemoryShelveQuery(baseOptions: ApolloReactHooks.QueryHookOptions<MemoryShelveQuery, MemoryShelveQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<MemoryShelveQuery, MemoryShelveQueryVariables>(MemoryShelveDocument, options);
+      }
+export function useMemoryShelveLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<MemoryShelveQuery, MemoryShelveQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<MemoryShelveQuery, MemoryShelveQueryVariables>(MemoryShelveDocument, options);
+        }
+export type MemoryShelveQueryHookResult = ReturnType<typeof useMemoryShelveQuery>;
+export type MemoryShelveLazyQueryHookResult = ReturnType<typeof useMemoryShelveLazyQuery>;
+export type MemoryShelveQueryResult = Apollo.QueryResult<MemoryShelveQuery, MemoryShelveQueryVariables>;
 export const GetPanelDocument = gql`
     query GetPanel($id: ID!) {
   panel(id: $id) {

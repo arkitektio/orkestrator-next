@@ -22,6 +22,7 @@ import Shortcut from "./pages/Shortcut";
 import Shortcuts from "./pages/Shortcuts";
 import Toolboxes from "./pages/Toolboxes";
 import Toolbox from "./pages/Toolbox";
+import MemoryShelve from "./pages/MemoryShelve";
 
 interface Props {}
 /**
@@ -45,6 +46,7 @@ const Module: React.FC<Props> = () => {
           <Route path="actions" element={<Actions />} />
           <Route path="dashboards" element={<Dashboards />} />
           <Route path="dashboards/:id" element={<Dashboard />} />
+          <Route path="memoryshelves/:id" element={<MemoryShelve />} />
           <Route path="panels/:id" element={<Panel />} />
           <Route path="panels" element={<Panels />} />
           <Route path="interfaces" element={<Interfaces />} />

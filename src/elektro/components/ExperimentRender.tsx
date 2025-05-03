@@ -213,12 +213,13 @@ export const ExperimentRender = (props: { experiment: ExperimentFragment, hidden
 
   if (loading) {
     return (
-      <Card className="p-3">
-        <CardHeader>
-          <CardTitle>Loading...</CardTitle>
-          <CardDescription>Loading simulation data</CardDescription>
-        </CardHeader>
-      </Card>
+      <div className="flex flex-col w-full max-h-[70vh] my-auto relative items-center justify-center">
+        <div className="">
+          
+          Loading...
+          </div>
+        
+      </div>
     );
   }
 

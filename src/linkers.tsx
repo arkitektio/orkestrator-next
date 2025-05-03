@@ -49,6 +49,7 @@ export const RekuestProvision = buildSmart(
   "rekuest/provisions",
 );
 export const RekuestAgent = buildSmart("@rekuest/agent", "rekuest/agents");
+export const RekuestMemoryShelve = buildSmart("@rekuest/memoryshelve", "rekuest/memoryshelves");
 
 export const RekuestShortcut = buildSmart(
   "@rekuest/shortcut",

@@ -4,12 +4,12 @@ import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import { KABINET_REFRESH_POD_HASH } from "@/constants";
 import {
-  NodeDescription,
-  useNodeDescription,
-} from "@/lib/rekuest/NodeDescription";
+  ActionDescription,
+  useActionDescription,
+} from "@/lib/rekuest/ActionDescription";
 import { KabinetDefinition } from "@/linkers";
-import { useTemplatesQuery } from "@/rekuest/api/graphql";
-import { useTemplateAction } from "@/rekuest/hooks/useTemplateAction";
+import { useImplementationsQuery } from "@/rekuest/api/graphql";
+import { useImplementationAction } from "@/rekuest/hooks/useImplementationAction";
 import { useGetDefinitionQuery } from "../api/graphql";
 import { useCallback } from "react";
 import ReleaseCard from "../components/cards/ReleaseCard";
@@ -21,7 +21,7 @@ export const AssignButton = (props: {
   pod: string;
   refetch: () => void;
 }) => {
-  const { assign } = useTemplateAction({
+  const { assign } = useImplementationAction({
     id: props.id,
   });
 
@@ -44,7 +44,7 @@ export const AssignButton = (props: {
 };
 
 const RefreshLogsButton = (props: { item: string; refetch: () => void }) => {
-  const { data } = useTemplatesQuery({
+  const { data } = useImplementationsQuery({
     variables: {
       filters: {
         nodeHash: KABINET_REFRESH_POD_HASH,
@@ -64,7 +64,7 @@ const RefreshLogsButton = (props: { item: string; refetch: () => void }) => {
 export default asDetailQueryRoute(
   withKabinet(useGetDefinitionQuery),
   ({ data, refetch }) => {
-    const description = useNodeDescription({
+    const description = useActionDescription({
       description: data.definition.description || "",
     });
 

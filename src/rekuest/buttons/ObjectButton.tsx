@@ -42,27 +42,27 @@ import { toast } from "sonner";
 import {
   DemandKind,
   ListShortcutFragment,
-  ListTemplateFragment,
+  ListImplementationFragment,
   PortKind,
-  PrimaryNodeFragment,
+  PrimaryActionFragment,
   ShortcutFragment,
-  useAllPrimaryNodesQuery,
+  useAllPrimaryActionsQuery,
   useShortcutsQuery,
-  useTemplatesQuery,
+  useImplementationsQuery,
 } from "../api/graphql";
-import { NodeAssignForm } from "../forms/NodeAssignForm";
+import { ActionAssignForm } from "../forms/ActionAssignForm";
 import { useAssign } from "../hooks/useAssign";
 import { useLiveAssignation } from "../hooks/useAssignations";
 import { useHashAction } from "../hooks/useHashActions";
 import { LightningBoltIcon } from "@radix-ui/react-icons";
 
-export const DirectTemplateAssignment = (
-  props: SmartContextProps & { node: PrimaryNodeFragment },
+export const DirectImplementationAssignment = (
+  props: SmartContextProps & { action: PrimaryActionFragment },
 ) => {
-  const templates = useTemplatesQuery({
+  const implementations = useImplementationsQuery({
     variables: {
       filters: {
-        nodeHash: props.node.hash,
+        actionHash: props.action.hash,
       },
     },
   });
@@ -71,13 +71,13 @@ export const DirectTemplateAssignment = (
     <>
       <div className="flex flex-row text-xs">Run on</div>
       <div className="flex flex-col gap-2">
-        {templates.data?.templates.map((x) => (
+        {implementations.data?.implementations.map((x) => (
           <>
             <Button
               variant={"outline"}
               size={"lg"}
               className="flex flex-col gap-1"
-              onClick={() => props.onSelectTemplate(props.node, x)}
+              onClick={() => props.onSelectImplementation(props.action, x)}
             >
               <div className="text-md text-gray-100">{x.agent.name}</div>
               <div className="text-xs text-gray-400">{x.interface}</div>
@@ -90,21 +90,21 @@ export const DirectTemplateAssignment = (
 };
 
 export const AssignButton = (
-  props: SmartContextProps & { node: PrimaryNodeFragment },
+  props: SmartContextProps & { action: PrimaryActionFragment },
 ) => {
   const status = useLiveAssignation({
     identifier: props.identifier,
     object: props.object,
-    node: props.node.id,
+    action: props.action.id,
   });
 
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
         <CommandItem
-          onSelect={() => props.onSelectNode(props.node)}
-          value={props.node.id}
-          key={props.node.id}
+          onSelect={() => props.onSelectAction(props.action)}
+          value={props.action.id}
+          key={props.action.id}
           className="flex-grow  flex flex-col group cursor-pointer"
           style={{
             backgroundSize: `${status?.progress || 0}% 100%`,
@@ -114,18 +114,18 @@ export const AssignButton = (
           }}
         >
           <span className="mr-auto text-md text-gray-100">
-            {props.node.name}
+            {props.action.name}
           </span>
           <span className="mr-auto text-xs text-gray-400">
-            {props.node.description}
+            {props.action.description}
           </span>
         </CommandItem>
       </ContextMenuTrigger>
       <ContextMenuContent className="text-white border-gray-800 px-2 py-2 items-center">
-        <DirectTemplateAssignment
+        <DirectImplementationAssignment
           {...props}
-          node={props.node}
-          onSelectTemplate={props.onSelectTemplate}
+          action={props.action}
+          onSelectImplementation={props.onSelectImplementation}
         />
       </ContextMenuContent>
     </ContextMenu>
@@ -138,12 +138,12 @@ export const ShortcutButton = (
   const status = useLiveAssignation({
     identifier: props.identifier,
     object: props.object,
-    node: props.shortcut.node.id,
+    action: props.shortcut.action.id,
   });
 
   return (
     <CommandItem
-      onSelect={() => props.onSelectNode(props.shortcut.node)}
+      onSelect={() => props.onSelectAction(props.shortcut.action)}
       value={props.shortcut.id}
       key={props.shortcut.id}
       className="flex-initial flex flex-row group cursor-pointer border border-1 rounded rounded-full bg-slate-800 shadow-xl  h-8 overflow-hidden truncate max-w-[100px] ellipsis px-2"
@@ -164,7 +164,7 @@ export const ShortcutButton = (
 };
 
 export const AutoInstallButton = (props: { definition: string }) => {
-  const { assign, node } = useHashAction({
+  const { assign, action } = useHashAction({
     hash: KABINET_INSTALL_DEFINITION_HASH,
   });
 
@@ -174,9 +174,9 @@ export const AutoInstallButton = (props: { definition: string }) => {
       variant={"outline"}
       onClick={(e) => {
         e.preventDefault();
-        assign({ node: node?.id, args: { definition: props.definition } });
+        assign({ action: action?.id, args: { definition: props.definition } });
       }}
-      disabled={!node}
+      disabled={!action}
     >
       Auto Install
     </Button>
@@ -223,7 +223,7 @@ export const InstallButton = (props: {
   );
 };
 
-export const ApplicableNodes = (props: PassDownProps) => {
+export const ApplicableActions = (props: PassDownProps) => {
   const demands = [
     {
       kind: DemandKind.Args,
@@ -248,7 +248,7 @@ export const ApplicableNodes = (props: PassDownProps) => {
     });
   }
 
-  const { data, error } = useAllPrimaryNodesQuery({
+  const { data, error } = useAllPrimaryActionsQuery({
     variables: {
       filters: {
         demands: demands,
@@ -269,10 +269,10 @@ export const ApplicableNodes = (props: PassDownProps) => {
     return null;
   }
 
-  if (data.nodes.length === 0) {
+  if (data.actions.length === 0) {
     return (
       <span className="font-light text-xs w-full items-center ml-2 w-full">
-        No nodes...
+        No actions...
       </span>
     );
   }
@@ -285,7 +285,7 @@ export const ApplicableNodes = (props: PassDownProps) => {
         </span>
       }
     >
-      {data?.nodes.map((x) => <AssignButton node={x} {...props} />)}
+      {data?.actions.map((x) => <AssignButton action={x} {...props} />)}
     </CommandGroup>
   );
 };
@@ -339,7 +339,7 @@ export const AppicableShortcuts = (props: PassDownProps) => {
   if (data.shortcuts.length === 0) {
     return (
       <span className="font-light text-xs w-full items-center ml-2 w-full">
-        No nodes...
+        No actions...
       </span>
     );
   }
@@ -509,7 +509,7 @@ export const Actions = (props: { state: ActionState; filter?: string }) => {
   );
 };
 
-export const ApplicableActions = (props: PassDownProps) => {
+export const ApplicableLocalActions = (props: PassDownProps) => {
   return (
     <Actions
       state={{
@@ -539,17 +539,17 @@ export const ObjectButton = (props: ObjectButtonProps) => {
     undefined,
   );
 
-  const [dialogNode, setDialogNode] = React.useState<{
-    node: PrimaryNodeFragment;
+  const [dialogAction, setDialogAction] = React.useState<{
+    action: PrimaryActionFragment;
     args: { [key: string]: any };
   } | null>(null);
 
   const { assign } = useAssign();
 
-  const conditionalAssign = async (node: PrimaryNodeFragment) => {
-    let the_key = node.args?.at(0)?.key;
+  const conditionalAssign = async (action: PrimaryActionFragment) => {
+    let the_key = action.args?.at(0)?.key;
 
-    let neededAdditionalPorts = node.args.filter(
+    let neededAdditionalPorts = action.args.filter(
       (x) => !x.nullable && x.key != the_key,
     );
     if (!the_key) {
@@ -557,13 +557,13 @@ export const ObjectButton = (props: ObjectButtonProps) => {
       return;
     }
     if (neededAdditionalPorts.length > 0) {
-      setDialogNode({ node: node, args: { [the_key]: props.object } });
+      setDialogAction({ action: action, args: { [the_key]: props.object } });
       return;
     }
 
     try {
       await assign({
-        node: node.id,
+        action: action.id,
         args: {
           [the_key]: props.object,
         },
@@ -573,13 +573,13 @@ export const ObjectButton = (props: ObjectButtonProps) => {
     }
   };
 
-  const onTemplateSelect = async (
-    node: PrimaryNodeFragment,
-    template: ListTemplateFragment,
+  const onImplementationSelect = async (
+    action: PrimaryActionFragment,
+    implementation: ListImplementationFragment,
   ) => {
-    let the_key = node.args?.at(0)?.key;
+    let the_key = action.args?.at(0)?.key;
 
-    let neededAdditionalPorts = node.args.filter(
+    let neededAdditionalPorts = action.args.filter(
       (x) => !x.nullable && x.key != the_key,
     );
     if (!the_key) {
@@ -587,13 +587,13 @@ export const ObjectButton = (props: ObjectButtonProps) => {
       return;
     }
     if (neededAdditionalPorts.length > 0) {
-      setDialogNode(node);
+      setDialogAction(action);
       return;
     }
 
     try {
       await assign({
-        node: node.id,
+        action: action.id,
         args: {
           [the_key]: props.object,
         },
@@ -610,8 +610,8 @@ export const ObjectButton = (props: ObjectButtonProps) => {
   return (
     <>
       <Dialog
-        open={dialogNode != null}
-        onOpenChange={() => setDialogNode(null)}
+        open={dialogAction != null}
+        onOpenChange={() => setDialogAction(null)}
       >
         <DialogTrigger asChild>
           <Popover>
@@ -625,17 +625,17 @@ export const ObjectButton = (props: ObjectButtonProps) => {
             <PopoverContent className="text-white border-gray-800 px-2 py-2 items-left">
               <SmartContext
                 {...props}
-                onSelectNode={conditionalAssign}
-                onSelectTemplate={onTemplateSelect}
+                onSelectAction={conditionalAssign}
+                onSelectImplementation={onImplementationSelect}
               />
             </PopoverContent>
           </Popover>
         </DialogTrigger>
         <DialogContent>
-          <NodeAssignForm
-            id={dialogNode?.node.id || ""}
-            args={dialogNode?.args}
-            hidden={dialogNode?.args}
+          <ActionAssignForm
+            id={dialogAction?.action.id || ""}
+            args={dialogAction?.args}
+            hidden={dialogAction?.args}
           />
         </DialogContent>
       </Dialog>
@@ -644,10 +644,10 @@ export const ObjectButton = (props: ObjectButtonProps) => {
 };
 
 export type SmartContextProps = ObjectButtonProps & {
-  onSelectNode: (node: PrimaryNodeFragment) => Promise<void>;
-  onSelectTemplate: (
-    node: PrimaryNodeFragment,
-    template: ListTemplateFragment,
+  onSelectAction: (action: PrimaryActionFragment) => Promise<void>;
+  onSelectImplementation: (
+    action: PrimaryActionFragment,
+    implementation: ListImplementationFragment,
   ) => Promise<void>;
 };
 
@@ -672,17 +672,17 @@ export const SmartContext = (props: SmartContextProps) => {
           <AppicableShortcuts
             {...props}
             filter={filter}
-            onSelectNode={props.onSelectNode}
-            onSelectTemplate={props.onSelectTemplate}
+            onSelectAction={props.onSelectAction}
+            onSelectImplementation={props.onSelectImplementation}
           />
           <CommandEmpty>{"No Action available"}</CommandEmpty>
 
-          <ApplicableActions {...props} filter={filter} />
-          <ApplicableNodes
+          <ApplicableLocalActions {...props} filter={filter} />
+          <ApplicableActions
             {...props}
             filter={filter}
-            onSelectNode={props.onSelectNode}
-            onSelectTemplate={props.onSelectTemplate}
+            onSelectAction={props.onSelectAction}
+            onSelectImplementation={props.onSelectImplementation}
           />
 
           <ApplicableDefinitions

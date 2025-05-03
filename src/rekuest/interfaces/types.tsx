@@ -4,29 +4,29 @@ export type StateRequirements = {
   [key: string]: string;
 };
 
-export type NodeRequirements = {
+export type ActionRequirements = {
   [key: string]: string;
 };
 
 export type InterfaceProps<
-  T extends NodeRequirements,
+  T extends ActionRequirements,
   S extends StateRequirements,
 > = {
   states: S;
-  nodes: T;
+  actions: T;
   agent: AgentFragment;
 };
 
 export type InterfaceDefinition<
-  T extends NodeRequirements,
+  T extends ActionRequirements,
   S extends StateRequirements,
 > = {
-  nodeRequirements: T;
+  actionRequirements: T;
   stateRequirements: S;
 };
 
 export type Descriptor<
-  T extends NodeRequirements,
+  T extends ActionRequirements,
   S extends StateRequirements,
 > = {
   name: string;

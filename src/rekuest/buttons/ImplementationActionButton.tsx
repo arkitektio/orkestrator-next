@@ -1,23 +1,23 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import {
-  TemplateAssignForm,
-  TemplateAssignFormProps,
-} from "../forms/TemplateAssignForm";
+  ImplementationAssignForm,
+  ImplementationAssignFormProps,
+} from "../forms/ImplementationAssignForm";
 
-export const TemplateActionButton = ({
+export const ImplementationActionButton = ({
   children,
   ...props
 }: {
   children: React.ReactNode;
-} & TemplateAssignFormProps) => {
+} & ImplementationAssignFormProps) => {
   return (
     <>
       <>
         <Dialog>
           <DialogTrigger asChild>{children}</DialogTrigger>
           <DialogContent className="text-white">
-            <TemplateAssignForm {...props} />
+            <ImplementationAssignForm {...props} />
           </DialogContent>
         </Dialog>
       </>

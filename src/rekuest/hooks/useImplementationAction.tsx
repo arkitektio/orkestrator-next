@@ -1,17 +1,17 @@
 import { useSettings } from "@/providers/settings/SettingsContext";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
+import { toast } from "sonner";
 import {
   AssignInput,
   AssignationEventKind,
-  DetailTemplateFragment,
+  DetailImplementationFragment,
   PostmanAssignationFragment,
   ReserveMutationVariables,
   useAssignMutation,
   useAssignationsQuery,
   useCancelMutation,
-  useTemplateQuery,
+  useImplementationQuery,
 } from "../api/graphql";
-import { v4 } from "uuid";
 
 export type ActionReserveVariables = Omit<
   ReserveMutationVariables,
@@ -19,31 +19,29 @@ export type ActionReserveVariables = Omit<
 >;
 export type ActionAssignVariables = Omit<AssignInput, "instanceId">;
 
-export type UseTemplateActionReturn<T> = {
-  template?: DetailTemplateFragment;
+export type UseImplementationActionReturn<T> = {
+  implementation?: DetailImplementationFragment;
   assign: (
     variables: ActionAssignVariables,
   ) => Promise<PostmanAssignationFragment>;
   reassign: () => Promise<PostmanAssignationFragment>;
   cancel: () => void;
   assignations?: PostmanAssignationFragment[];
-  causedAssignation?: PostmanAssignationFragment;
+  latestAssignation?: PostmanAssignationFragment;
 };
 
-export type UseTemplateAction<T> = {
+export type UseImplementationAction<T> = {
   id: string;
 };
 
-export const useTemplateSubscribeAction = <T extends any>(
-  options: UseTemplateAction<T>,
-): UseTemplateActionReturn<T> => {
+export const useImplementationAction = <T extends any>(
+  options: UseImplementationAction<T>,
+): UseImplementationActionReturn<T> => {
   const { settings } = useSettings();
-  const [causedAssignation, setCausedAssignation] =
-    useState<PostmanAssignationFragment | null>(null);
 
-  const { data } = useTemplateQuery({
+  const { data, variables, refetch } = useImplementationQuery({
     variables: {
-      ...options,
+      id: options.id,
     },
   });
 
@@ -57,69 +55,68 @@ export const useTemplateSubscribeAction = <T extends any>(
   const [cancelAssign] = useCancelMutation({});
 
   let assignations = assignations_data?.assignations.filter(
-    (x) => x.reference == causedAssignation?.reference,
+    (x) => x.implementation?.id == data?.implementation.id,
   );
 
-  const latestAssignation = assignations?.at(0);
+  const latestAssignation = data?.implementation.myLatestAssignation || assignations?.at(0);
 
   const assign = useCallback(
     async (vars: ActionAssignVariables) => {
-      let mutation = await postAssign({
-        variables: {
-          input: {
-            ...vars,
-            args: vars.args,
-            instanceId: settings.instanceId,
-            hooks: [],
+      console.log("Assigning", vars);
+
+      try {
+        let mutation = await postAssign({
+          variables: {
+            input: {
+              ...vars,
+              implementation: options.id,
+              args: vars.args,
+              instanceId: settings.instanceId,
+              hooks: [],
+            },
           },
-        },
-      });
+        });
 
-      console.log(mutation);
+        console.log(mutation);
 
-      let assignation = mutation.data?.assign;
+        let assignation = mutation.data?.assign;
 
-      if (!assignation) {
-        console.error(mutation);
-        const errorMessages =
-          mutation.errors?.map((error) => error.message).join(", ") ||
-          "Unknown error";
-        throw Error(`Couldn't assign: ${errorMessages}`);
+        if (!assignation) {
+          throw Error(`Couldn't assign`);
+        }
+
+        return assignation;
+      } catch (error: any) {
+        throw Error(`Couldn't assign: ${error.message}`);
       }
-
-      setCausedAssignation(assignation);
-      return assignation;
     },
-    [postAssign, settings],
+    [postAssign, settings.instanceId, options.id],
   );
 
   const reassign = useCallback(() => {
     console.log("Not");
-    if (!causedAssignation) {
+    if (!latestAssignation) {
       throw Error("No latest assignation");
     }
     return assign({
-      args: causedAssignation.args,
-      node: latestAssignation?.node.id,
+      args: latestAssignation.args,
+      implementation: latestAssignation?.implementation?.id,
       hooks: [],
     });
   }, [assign]);
 
   const cancel = useCallback(async () => {
-    console.log("Cancelling", causedAssignation);
-    if (!causedAssignation) {
+    if (!latestAssignation) {
       throw Error("Cannot Reassign");
     }
 
-    if (causedAssignation.status == AssignationEventKind.Done) {
+    if (latestAssignation.status == AssignationEventKind.Done) {
       throw Error("Cannot Cancel as it is done");
     }
 
-    console.log("Cancelling", causedAssignation);
-
     let mutation = await cancelAssign({
       variables: {
-        input: { assignation: causedAssignation.id },
+        input: { assignation: latestAssignation.id },
       },
     });
 
@@ -133,17 +130,15 @@ export const useTemplateSubscribeAction = <T extends any>(
       throw Error(`Couldn't assign: ${errorMessages}`);
     }
 
-    setCausedAssignation(null);
-
     return assignation;
-  }, [cancelAssign, causedAssignation]);
+  }, [cancelAssign, latestAssignation]);
 
   return {
     assign,
     reassign,
-    causedAssignation: latestAssignation,
+    latestAssignation,
     cancel,
     assignations,
-    template: data?.template,
+    implementation: data?.implementation,
   };
 };

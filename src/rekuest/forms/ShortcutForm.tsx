@@ -6,8 +6,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { NodeDescription } from "@/lib/rekuest/NodeDescription";
-import { useNodeAction } from "../hooks/useNodeAction";
+import { ActionDescription } from "@/lib/rekuest/ActionDescription";
+import { useAction } from "../hooks/useAction";
 import { usePortForm } from "../hooks/usePortForm";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 import * as z from "zod";
@@ -21,12 +21,12 @@ import { EffectWrapper } from "@/rekuest/widgets/EffectWrapper";
 import { ArgsContainerProps } from "@/rekuest/widgets/tailwind";
 import { Port, PortGroup } from "@/rekuest/widgets/types";
 import { useMemo } from "react";
-import { useGetNodeQuery } from "@/kraph/api/graphql";
+import { useGetActionQuery } from "@/kraph/api/graphql";
 import {
   useAgentOptionsLazyQuery,
   useAgentsLazyQuery,
   useCreateShortcutMutation,
-  useDetailNodeQuery,
+  useDetailActionQuery,
   useReserveMutation,
 } from "../api/graphql";
 import { Badge } from "@/components/ui/badge";
@@ -151,7 +151,7 @@ export const ReserveForm = (props: {
   args?: { [key: string]: any };
   hidden?: { [key: string]: any };
 }) => {
-  const { data: nodedata } = useDetailNodeQuery({
+  const { data: actiondata } = useDetailActionQuery({
     variables: {
       id: props.id,
     },
@@ -159,15 +159,15 @@ export const ReserveForm = (props: {
 
   const [create] = useCreateShortcutMutation();
 
-  const node = nodedata?.node;
+  const action = actiondata?.action;
 
   const [search] = useAgentOptionsLazyQuery();
 
   let [chosenArgs, setChosenArgs] = React.useState<string[]>([]);
 
   const form = usePortForm({
-    ports: node?.args.filter((arg) => chosenArgs.includes(arg.key)) || [],
-    overwrites: { ...props.args, name: node?.name },
+    ports: action?.args.filter((arg) => chosenArgs.includes(arg.key)) || [],
+    overwrites: { ...props.args, name: action?.name },
     additionalSchema: z.object({
       name: z.string().nonempty(),
       allowQuick: z.boolean().default(false),
@@ -186,7 +186,7 @@ export const ReserveForm = (props: {
       variables: {
         input: {
           name: name,
-          node: props.id,
+          action: props.id,
           args: rest,
           allowQuick: allowQuick,
         },
@@ -212,12 +212,12 @@ export const ReserveForm = (props: {
   return (
     <div>
       <DialogHeader>
-        <DialogTitle>{node?.name}</DialogTitle>
+        <DialogTitle>{action?.name}</DialogTitle>
       </DialogHeader>
 
       <DialogDescription className="mt2">
-        {node?.description && (
-          <NodeDescription description={node?.description} variables={data} />
+        {action?.description && (
+          <ActionDescription description={action?.description} variables={data} />
         )}
 
         <Form {...form}>
@@ -226,8 +226,8 @@ export const ReserveForm = (props: {
             className="space-y-6 mt-4"
           >
             <div className="w-full flex flex-row items-center space-x-2 mt-2">
-              {node?.args.length > 0 &&
-                node?.args.map((arg) => {
+              {action?.args.length > 0 &&
+                action?.args.map((arg) => {
                   return (
                     <Badge
                       key={arg.key}
@@ -245,14 +245,14 @@ export const ReserveForm = (props: {
                   );
                 })}
             </div>
-            {node?.args.length == 0 && (
+            {action?.args.length == 0 && (
               <div className="text-muted"> No Arguments needed</div>
             )}
             <ArgsContainer
               registry={registry}
-              groups={node?.portGroups || []}
+              groups={action?.portGroups || []}
               ports={
-                node?.args.filter((arg) => chosenArgs.includes(arg.key)) || []
+                action?.args.filter((arg) => chosenArgs.includes(arg.key)) || []
               }
               hidden={props.args}
               path={[]}
@@ -287,7 +287,7 @@ export const ReserveFormDialog = (props: {
   id: string;
   args?: { [key: string]: any };
 }) => {
-  const { data } = useDetailNodeQuery({
+  const { data } = useDetailActionQuery({
     variables: {
       id: props.id,
     },
@@ -302,17 +302,17 @@ export const ReserveFormDialog = (props: {
   return (
     <div>
       <DialogHeader>
-        <DialogTitle>{data?.node?.name}</DialogTitle>
+        <DialogTitle>{data?.action?.name}</DialogTitle>
       </DialogHeader>
 
       <DialogDescription className="mt2">
-        {data?.node?.description && (
-          <NodeDescription
-            description={data.node?.description}
+        {data?.action?.description && (
+          <ActionDescription
+            description={data.action?.description}
             variables={data}
           />
         )}
-        {data?.node?.args.length == 0 && (
+        {data?.action?.args.length == 0 && (
           <div className="text-muted"> No Arguments needed</div>
         )}
 
@@ -320,8 +320,8 @@ export const ReserveFormDialog = (props: {
           Choose your arguments that you want to preset
         </div>
         <div className="w-full flex flex-row items-center space-x-2 mt-2">
-          {data?.node.args.length > 0 &&
-            data?.node.args.map((arg) => {
+          {data?.action.args.length > 0 &&
+            data?.action.args.map((arg) => {
               return (
                 <Badge
                   key={arg.key}

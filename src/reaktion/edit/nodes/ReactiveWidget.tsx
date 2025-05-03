@@ -20,7 +20,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { NodeDescription } from "@/lib/rekuest/NodeDescription";
+import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import { ReactiveImplementation } from "@/reaktion/api/graphql";
 import { Constants } from "@/reaktion/base/Constants";
 import { InStream } from "@/reaktion/base/Instream";
@@ -69,7 +69,7 @@ export const Default = ({ data }: ShapeProps) => {
           <Tooltip>
             <TooltipTrigger>
               <CardTitle className="text-sm font-light">
-                <NodeDescription
+                <ActionDescription
                   description={data.title}
                   variables={{ ...data.constantsMap, __ports: data.ins }}
                 />
@@ -77,7 +77,7 @@ export const Default = ({ data }: ShapeProps) => {
             </TooltipTrigger>
             <TooltipContent>
               <CardDescription className="text-xs">
-                <NodeDescription
+                <ActionDescription
                   description={data.description}
                   variables={data.constantsMap}
                 />
@@ -103,7 +103,7 @@ export const Select = ({ data }: ShapeProps) => {
             </TooltipTrigger>
             <TooltipContent>
               <CardDescription className="text-xs">
-                <NodeDescription
+                <ActionDescription
                   description={data.description}
                   variables={data.constantsMap}
                 />

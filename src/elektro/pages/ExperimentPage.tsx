@@ -1,14 +1,10 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ElektroExperiment, ElektroRecording, ElektroSimulation } from "@/linkers";
+import { ElektroExperiment } from "@/linkers";
 import { cn } from "@udecode/cn";
 import React from "react";
-import { useDetailExperimentQuery, useDetailRecordingQuery, useDetailSimulationQuery } from "../api/graphql";
-import { NeuronSimulationVisualizer } from "../components/NeuronSimulationRender";
-import { getColorForRecording, getColorForStimulus, recordingToLabel, SimulationRender, stimulusToLabel } from "../components/SImulationRender";
+import { useDetailExperimentQuery } from "../api/graphql";
 import { ExperimentRender, getColorForRecordingView, getColorForStimulusView, recordingViewToLabel, stimulusViewToLabel } from "../components/ExperimentRender";
 
 export type IRepresentationScreenProps = {};

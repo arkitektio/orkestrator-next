@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
-import { useNodeDescription } from "@/lib/rekuest/NodeDescription";
-import { RekuestNode, RekuestShortcut, RekuestTemplate } from "@/linkers";
+import { useActionDescription } from "@/lib/rekuest/ActionDescription";
+import { RekuestAction, RekuestShortcut, RekuestImplementation } from "@/linkers";
 import {
   AssignationEventKind,
-  DetailNodeFragment,
+  DetailActionFragment,
   ShortcutFragment,
-  useDetailNodeQuery,
+  useDetailActionQuery,
   useShortcutQuery,
 } from "@/rekuest/api/graphql";
 import { ArrowRight } from "lucide-react";
@@ -20,15 +20,15 @@ import { useCallback, useState } from "react";
 import { TbMedicalCross } from "react-icons/tb";
 import { TiTick } from "react-icons/ti";
 import ReservationCard from "../components/cards/ReservationCard";
-import { useNodeAction } from "../hooks/useNodeAction";
+import { useAction } from "../hooks/useAction";
 import { usePortForm } from "../hooks/usePortForm";
 import { ReturnsContainer } from "../widgets/tailwind";
 import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
 export const ShortcutForm= ({ shortcut }: { shortcut: ShortcutFragment }) => {
-  const { assign, latestAssignation, cancel } = useNodeAction({
-    id: shortcut.node.id,
+  const { assign, latestAssignation, cancel } = useAction({
+    id: shortcut.action.id,
   });
 
   const form = usePortForm({
@@ -39,7 +39,7 @@ export const ShortcutForm= ({ shortcut }: { shortcut: ShortcutFragment }) => {
     console.log("Submiftting");
     console.log(data);
     assign({
-      node: shortcut.node.id,
+      action: shortcut.action.id,
       args: {...data, ...shortcut.savedArgs},
       hooks: [],
     }).then(
@@ -76,7 +76,7 @@ export const ShortcutForm= ({ shortcut }: { shortcut: ShortcutFragment }) => {
                 <div className="w-full">
                   <ArgsContainer
                     registry={registry}
-                    groups={shortcut?.node.portGroups || []}
+                    groups={shortcut?.action.portGroups || []}
                     ports={shortcut?.args || []}
                     path={[]}
                   />
@@ -158,13 +158,13 @@ export const ShortcutForm= ({ shortcut }: { shortcut: ShortcutFragment }) => {
 
 export default asDetailQueryRoute(useShortcutQuery, ({ data, refetch }) => {
   const copyHashToClipboard = useCallback(() => {
-    navigator.clipboard.writeText(data?.shortcut.node?.hash || "");
-  }, [data?.shortcut.node?.hash]);
+    navigator.clipboard.writeText(data?.shortcut.action?.hash || "");
+  }, [data?.shortcut.action?.hash]);
 
   const [formData, setFormData] = useState({});
 
-  const description = useNodeDescription({
-    description: data.shortcut.node.description || "",
+  const description = useActionDescription({
+    description: data.shortcut.action.description || "",
   });
 
   return (

@@ -17,10 +17,10 @@ export const RekuestAssignation = buildSmart(
 
 export const BlokBlok = buildSmart("@blok/blok", "blok/bloks");
 
-export const RekuestNode = buildSmart("@rekuest/node", "rekuest/nodes");
-export const RekuestTemplate = buildSmart(
-  "@rekuest/template",
-  "rekuest/templates",
+export const RekuestAction = buildSmart("@rekuest/action", "rekuest/actions");
+export const RekuestImplementation = buildSmart(
+  "@rekuest/implementation",
+  "rekuest/implementations",
 );
 export const RekuestPanel = buildSmart("@rekuest/panel", "rekuest/panels");
 export const RekuestDependency = buildSmart(
@@ -30,7 +30,11 @@ export const RekuestDependency = buildSmart(
 export const FlussFlow = buildSmart("@fluss/flow", "fluss/flows");
 export const FlussWorkspace = buildSmart(
   "@fluss/workspace",
-  "fluss/workspaces",
+  "fluss/workspaces"
+);
+export const FlussReactiveTemplate = buildSmart(
+  "@fluss/reactive_template",
+  "fluss/reactive_templates",
 );
 
 export const FlussRun = buildSmart("@fluss/run", "fluss/runs");

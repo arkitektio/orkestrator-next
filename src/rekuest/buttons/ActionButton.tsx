@@ -1,8 +1,8 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DialogTrigger } from "@radix-ui/react-dialog";
-import { NodeAssignForm } from "../forms/NodeAssignForm";
+import { ActionAssignForm } from "../forms/ActionAssignForm";
 
-export const NodeActionButton = (props: {
+export const ActionButton = (props: {
   id: string;
   children: React.ReactNode;
 }) => {
@@ -12,7 +12,7 @@ export const NodeActionButton = (props: {
         <Dialog>
           <DialogTrigger asChild>{props.children}</DialogTrigger>
           <DialogContent className="text-white">
-            <NodeAssignForm id={props.id} />
+            <ActionAssignForm id={props.id} />
           </DialogContent>
         </Dialog>
       </>

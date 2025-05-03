@@ -22,7 +22,7 @@ import {
 } from "../api/graphql";
 import { StateDisplay } from "../components/State";
 import { usePortForm } from "../hooks/usePortForm";
-import { useTemplateAction } from "../hooks/useTemplateAction";
+import { useImplementationAction } from "../hooks/useImplementationAction";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
 const StateWidget = (props: {
@@ -69,20 +69,20 @@ const StateWidget = (props: {
   );
 };
 
-const Fake = (props: { template: string; panel: PanelFragment }) => {
-  const { assign, latestAssignation, cancel, template } = useTemplateAction({
-    id: props.template,
+const Fake = (props: { implementation: string; panel: PanelFragment }) => {
+  const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
+    id: props.implementation,
   });
 
   const form = usePortForm({
-    ports: template?.node.args || [],
+    ports: implementation?.action.args || [],
   });
 
   const onSubmit = (data: any) => {
     console.log("Submitting");
     console.log(data);
     assign({
-      template: props.template,
+      implementation: props.implementation,
       args: data,
       hooks: [],
     }).then(
@@ -118,9 +118,9 @@ const Fake = (props: { template: string; panel: PanelFragment }) => {
           </p>
           <ArgsContainer
             registry={registry}
-            ports={template?.node.args || []}
+            ports={implementation?.action.args || []}
             path={[]}
-            bound={props.template}
+            bound={props.implementation}
           />
           {!props.panel.submitOnChange && (
             <Button type="submit" className="btn">
@@ -156,9 +156,9 @@ const components: { [key in PanelKind]: any } = {
   ) => {
     return (
       <div style={{ padding: "20px", color: "white" }}>
-        {props.params.panel.reservation?.template ? (
+        {props.params.panel.reservation?.implementation ? (
           <Fake
-            template={props.params.panel.reservation?.template.id}
+            implementation={props.params.panel.reservation?.implementation.id}
             panel={props.params.panel}
           />
         ) : (

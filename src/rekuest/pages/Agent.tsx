@@ -7,18 +7,18 @@ import { cn } from "@/lib/utils";
 import { KabinetPod, RekuestAgent } from "@/linkers";
 import {
   AgentFragment,
-  ListTemplateFragment,
+  ListImplementationFragment,
   useAgentQuery,
   usePinAgentMutation,
-  WatchTemplatesDocument,
-  WatchTemplatesSubscription,
-  WatchTemplatesSubscriptionVariables,
+  WatchImplementationsDocument,
+  WatchImplementationsSubscription,
+  WatchImplementationsSubscriptionVariables,
 } from "@/rekuest/api/graphql";
 import { ArrowRightIcon } from "@radix-ui/react-icons";
 import { BellIcon } from "lucide-react";
 import { useEffect } from "react";
-import { TemplateActionButton } from "../buttons/TemplateActionButton";
-import TemplateCard from "../components/cards/TemplateCard";
+import { ImplementationActionButton } from "../buttons/ImplementationActionButton";
+import ImplementationCard from "../components/cards/ImplementationCard";
 import AgentCarousel from "../components/carousels/AgentCarousel";
 import { StateDisplay } from "../components/State";
 import { Badge } from "@/components/ui/badge";
@@ -31,15 +31,15 @@ export const sizer = (length: number, index: number): string => {
     : "col-span-1 row-span-1";
 };
 
-const TemplateBentoCard = ({
-  template,
+const ImplementationBentoCard = ({
+  implementation,
   className,
 }: {
-  template: ListTemplateFragment;
+  implementation: ListImplementationFragment;
   className: string;
 }) => (
   <div
-    key={template.id}
+    key={implementation.id}
     className={cn(
       "group relative  flex flex-col justify-between overflow-hidden rounded-xl",
       // light styles
@@ -55,9 +55,9 @@ const TemplateBentoCard = ({
     <div className="pointer-events-none z-10 flex transform-gpu flex-col gap-1 p-6 transition-all duration-300 group-hover:-translate-y-40 cursor-pointer">
       <BellIcon className="h-12 w-12 origin-left transform-gpu text-neutral-700 transition-all duration-300 ease-in-out group-hover:scale-75" />
       <h3 className="text-xl font-semibold text-neutral-700 dark:text-neutral-300">
-        {template.node.name}
+        {implementation.action.name}
       </h3>
-      <p className="max-w-lg text-neutral-400"> @{template.interface}</p>
+      <p className="max-w-lg text-neutral-400"> @{implementation.interface}</p>
     </div>
 
     <div
@@ -65,8 +65,8 @@ const TemplateBentoCard = ({
         "absolute bottom-0 flex w-full translate-y-[100%] flex-col items-start p-6 opacity-100 transition-all duration-300 group-hover:translate-y-0 ",
       )}
     >
-      <p className="max-w-lg text-neutral-400"> {template.node.description}</p>
-      <TemplateActionButton id={template.id}>
+      <p className="max-w-lg text-neutral-400"> {implementation.action.description}</p>
+      <ImplementationActionButton id={implementation.id}>
         <Button
           variant="ghost"
           asChild
@@ -78,7 +78,7 @@ const TemplateBentoCard = ({
             <ArrowRightIcon className="ml-2 h-4 w-4" />
           </a>
         </Button>
-      </TemplateActionButton>
+      </ImplementationActionButton>
     </div>
   </div>
 );
@@ -132,21 +132,21 @@ export default asDetailQueryRoute(
   ({ data, refetch, subscribeToMore }) => {
     useEffect(() => {
       return subscribeToMore<
-        WatchTemplatesSubscription,
-        WatchTemplatesSubscriptionVariables
+        WatchImplementationsSubscription,
+        WatchImplementationsSubscriptionVariables
       >({
-        document: WatchTemplatesDocument,
+        document: WatchImplementationsDocument,
         variables: { agent: data.agent.id },
         updateQuery: (prev, { subscriptionData }) => {
           if (!subscriptionData.data) return prev;
-          const create = subscriptionData.data.templates.create;
-          const update = subscriptionData.data.templates.update;
-          const remove = subscriptionData.data.templates.delete;
+          const create = subscriptionData.data.implementations.create;
+          const update = subscriptionData.data.implementations.update;
+          const remove = subscriptionData.data.implementations.delete;
           if (create) {
             return {
               agent: {
                 ...prev.agent,
-                templates: [...prev.agent.templates, create],
+                implementations: [...prev.agent.implementations, create],
               },
             };
           }
@@ -154,7 +154,7 @@ export default asDetailQueryRoute(
             return {
               agent: {
                 ...prev.agent,
-                templates: prev.agent.templates.map((x) =>
+                implementations: prev.agent.implementations.map((x) =>
                   x.id == update.id ? update : x,
                 ),
               },
@@ -164,7 +164,7 @@ export default asDetailQueryRoute(
             return {
               agent: {
                 ...prev.agent,
-                templates: prev.agent.templates.filter((x) => x.id != remove),
+                implementations: prev.agent.implementations.filter((x) => x.id != remove),
               },
             };
           }
@@ -209,10 +209,10 @@ export default asDetailQueryRoute(
           ))}
 
           <ListRender
-            array={data.agent.templates}
+            array={data.agent.implementations}
             title={<p className="text-xs ml-2 mb-2">Registered Actions</p>}
           >
-            {(item) => <TemplateCard item={item} />}
+            {(item) => <ImplementationCard item={item} />}
           </ListRender>
         </div>
       </RekuestAgent.ModelPage>

@@ -1,11 +1,11 @@
-fragment DetailTemplate on Template {
+fragment DetailImplementation on Implementation {
   id
   interface
   dependencies {
     ...ListDependency
   }
-  node {
-    ...DetailNode
+  action {
+    ...DetailAction
   }
   extension
   params
@@ -17,10 +17,10 @@ fragment DetailTemplate on Template {
   }
 }
 
-fragment ListTemplate on Template {
+fragment ListImplementation on Implementation {
   id
   interface
-  node {
+  action {
     description
     name
     stateful

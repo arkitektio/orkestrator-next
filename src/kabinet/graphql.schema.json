@@ -12,6 +12,77 @@
     "types": [
       {
         "kind": "SCALAR",
+        "name": "ActionHash",
+        "description": "The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "ENUM",
+        "name": "ActionKind",
+        "description": "The kind of action.",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": [
+          {
+            "name": "FUNCTION",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "GENERATOR",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "possibleTypes": null
+      },
+      {
+        "kind": "ENUM",
+        "name": "ActionScope",
+        "description": "The kind of action scope.",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": [
+          {
+            "name": "BRIDGE_GLOBAL_TO_LOCAL",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "BRIDGE_LOCAL_TO_GLOBAL",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "GLOBAL",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "LOCAL",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "possibleTypes": null
+      },
+      {
+        "kind": "SCALAR",
         "name": "AnyDefault",
         "description": "The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer",
         "isOneOf": null,
@@ -257,7 +328,7 @@
         "inputFields": [
           {
             "name": "asParagraph",
-            "description": null,
+            "description": "Whether to display the input as a paragraph or not. This is used for text inputs and dropdowns",
             "type": {
               "kind": "SCALAR",
               "name": "Boolean",
@@ -330,22 +401,10 @@
                 "name": null,
                 "ofType": {
                   "kind": "INPUT_OBJECT",
-                  "name": "ChildPortInput",
+                  "name": "PortInput",
                   "ofType": null
                 }
               }
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "followValue",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -428,18 +487,6 @@
             "deprecationReason": null
           },
           {
-            "name": "stateChoices",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "step",
             "description": null,
             "type": {
@@ -471,7 +518,7 @@
       {
         "kind": "ENUM",
         "name": "AssignWidgetKind",
-        "description": null,
+        "description": "The kind of assign widget.",
         "isOneOf": null,
         "fields": null,
         "inputFields": null,
@@ -862,7 +909,7 @@
             "deprecationReason": null
           },
           {
-            "name": "templates",
+            "name": "implementations",
             "description": null,
             "type": {
               "kind": "LIST",
@@ -968,362 +1015,6 @@
             "ofType": null
           }
         ],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "OBJECT",
-        "name": "ChildPort",
-        "description": null,
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "assignWidget",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "INTERFACE",
-              "name": "AssignWidget",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "children",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "LIST",
-              "name": null,
-              "ofType": {
-                "kind": "NON_NULL",
-                "name": null,
-                "ofType": {
-                  "kind": "OBJECT",
-                  "name": "ChildPort",
-                  "ofType": null
-                }
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "default",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "SCALAR",
-              "name": "AnyDefault",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "description",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "identifier",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "SCALAR",
-              "name": "Identifier",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "key",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "kind",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "ENUM",
-                "name": "PortKind",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "label",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "nullable",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Boolean",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "returnWidget",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "INTERFACE",
-              "name": "ReturnWidget",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "scope",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "ENUM",
-                "name": "PortScope",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "INPUT_OBJECT",
-        "name": "ChildPortInput",
-        "description": null,
-        "isOneOf": false,
-        "fields": null,
-        "inputFields": [
-          {
-            "name": "assignWidget",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "AssignWidgetInput",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "children",
-            "description": null,
-            "type": {
-              "kind": "LIST",
-              "name": null,
-              "ofType": {
-                "kind": "NON_NULL",
-                "name": null,
-                "ofType": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "ChildPortInput",
-                  "ofType": null
-                }
-              }
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "default",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "AnyDefault",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "description",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "effects",
-            "description": null,
-            "type": {
-              "kind": "LIST",
-              "name": null,
-              "ofType": {
-                "kind": "NON_NULL",
-                "name": null,
-                "ofType": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "EffectInput",
-                  "ofType": null
-                }
-              }
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "identifier",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Identifier",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "key",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "kind",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "ENUM",
-                "name": "PortKind",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "label",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "nullable",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Boolean",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "returnWidget",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "ReturnWidgetInput",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "scope",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "ENUM",
-                "name": "PortScope",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "interfaces": null,
         "enumValues": null,
         "possibleTypes": null
       },
@@ -1464,7 +1155,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "ChoiceInput",
-        "description": null,
+        "description": "\nA choice is a value that can be selected in a dropdown.\n\nIt is composed of a value, a label, and a description. The value is the\nvalue that is returned when the choice is selected. The label is the\ntext that is displayed in the dropdown. The description is the text\nthat is displayed when the user hovers over the choice.\n\n    ",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -2525,12 +2216,12 @@
       {
         "kind": "OBJECT",
         "name": "Definition",
-        "description": "Nodes are abstraction of RPC Tasks. They provide a common API to deal with creating tasks.\n\nSee online Documentation",
+        "description": "Actions are abstraction of RPC Tasks. They provide a common API to deal with creating tasks.\n\nSee online Documentation",
         "isOneOf": null,
         "fields": [
           {
             "name": "args",
-            "description": "Inputs for this Node",
+            "description": "Inputs for this Action",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2554,7 +2245,7 @@
           },
           {
             "name": "collections",
-            "description": "The collections this Node belongs to",
+            "description": "The collections this Action belongs to",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2594,7 +2285,7 @@
           },
           {
             "name": "description",
-            "description": "A description for the Node",
+            "description": "A description for the Action",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -2655,14 +2346,14 @@
           },
           {
             "name": "hash",
-            "description": "The hash of the Node (completely unique)",
+            "description": "The hash of the Action (completely unique)",
             "args": [],
             "type": {
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
                 "kind": "SCALAR",
-                "name": "NodeHash",
+                "name": "ActionHash",
                 "ofType": null
               }
             },
@@ -2748,14 +2439,14 @@
           },
           {
             "name": "kind",
-            "description": "The kind of this Node. e.g. is it a function or a generator?",
+            "description": "The kind of this Action. e.g. is it a function or a generator?",
             "args": [],
             "type": {
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
                 "kind": "ENUM",
-                "name": "NodeKind",
+                "name": "ActionKind",
                 "ofType": null
               }
             },
@@ -2764,7 +2455,7 @@
           },
           {
             "name": "name",
-            "description": "The cleartext name of this Node",
+            "description": "The cleartext name of this Action",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2780,7 +2471,7 @@
           },
           {
             "name": "protocols",
-            "description": "The protocols this Node implements (e.g. Predicate)",
+            "description": "The protocols this Action implements (e.g. Predicate)",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2804,7 +2495,7 @@
           },
           {
             "name": "returns",
-            "description": "Outputs for this Node",
+            "description": "Outputs for this Action",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2828,14 +2519,14 @@
           },
           {
             "name": "scope",
-            "description": "The scope of this Node. e.g. does the data it needs or produce live only in the scope of this Node or is it global or does it bridge data?",
+            "description": "The scope of this Action. e.g. does the data it needs or produce live only in the scope of this Action or is it global or does it bridge data?",
             "args": [],
             "type": {
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
                 "kind": "ENUM",
-                "name": "NodeScope",
+                "name": "ActionScope",
                 "ofType": null
               }
             },
@@ -3012,13 +2703,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "DefinitionInput",
-        "description": null,
+        "description": "A definition\n\n    Definitions are the building implementation for Actions and provide the\n    information needed to create a action. They are primarly composed of a name,\n    a description, and a list of ports.\n\n    Definitions provide a protocol of input and output, and do not contain\n    any information about the actual implementation of the action ( this is handled\n    by a implementation that implements a action).\n\n\n\n\n    ",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "args",
-            "description": null,
+            "description": "The args of the definition. This is the input ports of the definition",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -3042,7 +2733,7 @@
           },
           {
             "name": "collections",
-            "description": null,
+            "description": "The collections of the definition. This is used to group definitions together in the UI",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -3066,7 +2757,7 @@
           },
           {
             "name": "description",
-            "description": null,
+            "description": "The description of the definition. This is the text that is displayed in the UI",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -3078,7 +2769,7 @@
           },
           {
             "name": "interfaces",
-            "description": null,
+            "description": "The interfaces of the definition. This is used to group definitions together in the UI",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -3102,7 +2793,7 @@
           },
           {
             "name": "isDev",
-            "description": null,
+            "description": "Whether the definition is a dev definition or not. If the definition is a dev definition, it can be used to create a dev action. If the definition is not a dev definition, it cannot be used to create a dev action",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -3118,7 +2809,7 @@
           },
           {
             "name": "isTestFor",
-            "description": null,
+            "description": "The tests for the definition. This is used to group definitions together in the UI",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -3142,13 +2833,13 @@
           },
           {
             "name": "kind",
-            "description": null,
+            "description": "The kind of the definition. This is the type of the definition. Can be either a function or a generator",
             "type": {
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
                 "kind": "ENUM",
-                "name": "NodeKind",
+                "name": "ActionKind",
                 "ofType": null
               }
             },
@@ -3157,8 +2848,20 @@
             "deprecationReason": null
           },
           {
+            "name": "logo",
+            "description": "The logo of the definition. This is used to display the logo in the UI",
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "name",
-            "description": null,
+            "description": "The name of the actions. This is used to uniquely identify the definition",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -3174,7 +2877,7 @@
           },
           {
             "name": "portGroups",
-            "description": null,
+            "description": "The port groups of the definition. This is used to group ports together in the UI",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -3198,7 +2901,7 @@
           },
           {
             "name": "returns",
-            "description": null,
+            "description": "The returns of the definition. This is the output ports of the definition",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -3222,7 +2925,7 @@
           },
           {
             "name": "stateful",
-            "description": null,
+            "description": "Whether the definition is stateful or not. If the definition is stateful, it can be used to create a stateful action. If the definition is not stateful, it cannot be used to create a stateful action",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -3320,7 +3023,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "DependencyInput",
-        "description": null,
+        "description": "A dependency for a implementation. By defining dependencies, you can\n    create a dependency graph for your implementations and actions",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -3341,7 +3044,7 @@
             "description": null,
             "type": {
               "kind": "SCALAR",
-              "name": "NodeHash",
+              "name": "ActionHash",
               "ofType": null
             },
             "defaultValue": null,
@@ -3839,7 +3542,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "EffectInput",
-        "description": null,
+        "description": "\n                 An effect is a way to modify a port based on a condition. For example,\n    you could have an effect that sets a port to null if another port is null.\n\n    Or, you could have an effect that hides the port if another port meets a condition.\n    E.g when the user selects a certain option in a dropdown, another port is hidden.\n\n\n    ",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -3847,19 +3550,15 @@
             "name": "dependencies",
             "description": null,
             "type": {
-              "kind": "NON_NULL",
+              "kind": "LIST",
               "name": null,
               "ofType": {
-                "kind": "LIST",
+                "kind": "NON_NULL",
                 "name": null,
                 "ofType": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "kind": "SCALAR",
-                    "name": "String",
-                    "ofType": null
-                  }
+                  "kind": "SCALAR",
+                  "name": "String",
+                  "ofType": null
                 }
               }
             },
@@ -3943,7 +3642,7 @@
       {
         "kind": "ENUM",
         "name": "EffectKind",
-        "description": null,
+        "description": "The kind of effect.",
         "isOneOf": null,
         "fields": null,
         "inputFields": null,
@@ -4660,6 +4359,110 @@
       },
       {
         "kind": "INPUT_OBJECT",
+        "name": "ImplementationInput",
+        "description": "A implementation is a blueprint for a action. It is composed of a definition, a list of dependencies, and a list of params.",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "definition",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "INPUT_OBJECT",
+                "name": "DefinitionInput",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "dependencies",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "DependencyInput",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "dynamic",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "defaultValue": "false",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "interface",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "logo",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "params",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "AnyDefault",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
         "name": "InspectionInput",
         "description": null,
         "isOneOf": false,
@@ -4715,7 +4518,7 @@
                   "name": null,
                   "ofType": {
                     "kind": "INPUT_OBJECT",
-                    "name": "TemplateInput",
+                    "name": "ImplementationInput",
                     "ofType": null
                   }
                 }
@@ -4933,19 +4736,7 @@
         "fields": null,
         "inputFields": [
           {
-            "name": "environment",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "EnvironmentInput",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "nodes",
+            "name": "actions",
             "description": null,
             "type": {
               "kind": "LIST",
@@ -4955,10 +4746,22 @@
                 "name": null,
                 "ofType": {
                   "kind": "SCALAR",
-                  "name": "NodeHash",
+                  "name": "ActionHash",
                   "ofType": null
                 }
               }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "environment",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "EnvironmentInput",
+              "ofType": null
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -5471,77 +5274,6 @@
         "possibleTypes": null
       },
       {
-        "kind": "SCALAR",
-        "name": "NodeHash",
-        "description": "The `ArrayLike` scalar type represents a reference to a store previously created by the user n a datalayer",
-        "isOneOf": null,
-        "fields": null,
-        "inputFields": null,
-        "interfaces": null,
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "ENUM",
-        "name": "NodeKind",
-        "description": null,
-        "isOneOf": null,
-        "fields": null,
-        "inputFields": null,
-        "interfaces": null,
-        "enumValues": [
-          {
-            "name": "FUNCTION",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "GENERATOR",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "possibleTypes": null
-      },
-      {
-        "kind": "ENUM",
-        "name": "NodeScope",
-        "description": null,
-        "isOneOf": null,
-        "fields": null,
-        "inputFields": null,
-        "interfaces": null,
-        "enumValues": [
-          {
-            "name": "BRIDGE_GLOBAL_TO_LOCAL",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "BRIDGE_LOCAL_TO_GLOBAL",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "GLOBAL",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "LOCAL",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "possibleTypes": null
-      },
-      {
         "kind": "INPUT_OBJECT",
         "name": "OffsetPaginationInput",
         "description": null,
@@ -6019,7 +5751,7 @@
                 "name": null,
                 "ofType": {
                   "kind": "OBJECT",
-                  "name": "ChildPort",
+                  "name": "Port",
                   "ofType": null
                 }
               }
@@ -6272,7 +6004,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "PortGroupInput",
-        "description": null,
+        "description": "A Port Group is a group of ports that are related to each other. It is used to group ports together in the UI and provide a better user experience.",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -6310,7 +6042,7 @@
           },
           {
             "name": "key",
-            "description": null,
+            "description": "The key of the port group. This is used to uniquely identify the port group",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -6364,7 +6096,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "PortInput",
-        "description": null,
+        "description": "Port\n\n    A Port is a single input or output of a action. It is composed of a key and a kind\n    which are used to uniquely identify the port.\n\n    If the Port is a structure, we need to define a identifier and scope,\n    Identifiers uniquely identify a specific type of model for the scopes (e.g\n    all the ports that have the identifier \"@mikro/image\" are of the same type, and\n    are hence compatible with each other). Scopes are used to define in which context\n    the identifier is valid (e.g. a port with the identifier \"@mikro/image\" and the\n    scope \"local\", can only be wired to other ports that have the same identifier and\n    are running in the same app). Global ports are ports that have the scope \"global\",\n    and can be wired to any other port that has the same identifier, as there exists a\n    mechanism to resolve and retrieve the object for each app. Please check the rekuest\n    documentation for more information on how this works.\n\n\n    ",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -6391,7 +6123,7 @@
                 "name": null,
                 "ofType": {
                   "kind": "INPUT_OBJECT",
-                  "name": "ChildPortInput",
+                  "name": "PortInput",
                   "ofType": null
                 }
               }
@@ -6572,7 +6304,7 @@
       {
         "kind": "ENUM",
         "name": "PortKind",
-        "description": null,
+        "description": "The kind of port.",
         "isOneOf": null,
         "fields": null,
         "inputFields": null,
@@ -6736,7 +6468,7 @@
       {
         "kind": "ENUM",
         "name": "PortScope",
-        "description": null,
+        "description": "The kind of port",
         "isOneOf": null,
         "fields": null,
         "inputFields": null,
@@ -6820,7 +6552,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "QualifierInput",
-        "description": "A qualifier that describes some property of the node",
+        "description": "A qualifier that describes some property of the action",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -6958,7 +6690,7 @@
                 "description": null,
                 "type": {
                   "kind": "SCALAR",
-                  "name": "NodeHash",
+                  "name": "ActionHash",
                   "ofType": null
                 },
                 "defaultValue": "null",
@@ -8131,7 +7863,7 @@
       {
         "kind": "OBJECT",
         "name": "Resource",
-        "description": "A resource on a backend. Resource define allocated resources on a backend. E.g a computational node",
+        "description": "A resource on a backend. Resource define allocated resources on a backend. E.g a computational action",
         "isOneOf": null,
         "fields": [
           {
@@ -8387,7 +8119,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "ReturnWidgetInput",
-        "description": null,
+        "description": "A Return Widget is a UI element that is used to display the value of a port.\n\n    Return Widgets get displayed both if we show the return values of an assignment,\n    but also when we inspect the given arguments of a previous run task. Their primary\n    usecase is to adequately display the value of a port, in a user readable way.\n\n    Return Widgets are often overwriten by the underlying UI framework (e.g. Orkestrator)\n    to provide a better user experience. For example, a return widget that displays a\n    date could be overwriten to display a calendar widget.\n\n    Return Widgets provide more a way to customize this overwriten behavior.\n\n    ",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -8519,7 +8251,7 @@
       {
         "kind": "ENUM",
         "name": "ReturnWidgetKind",
-        "description": null,
+        "description": "The kind of return widget.",
         "isOneOf": null,
         "fields": null,
         "inputFields": null,
@@ -8716,7 +8448,7 @@
                 "name": null,
                 "ofType": {
                   "kind": "OBJECT",
-                  "name": "ChildPort",
+                  "name": "Port",
                   "ofType": null
                 }
               }
@@ -9262,114 +8994,6 @@
         "possibleTypes": null
       },
       {
-        "kind": "INPUT_OBJECT",
-        "name": "TemplateInput",
-        "description": null,
-        "isOneOf": false,
-        "fields": null,
-        "inputFields": [
-          {
-            "name": "definition",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "INPUT_OBJECT",
-                "name": "DefinitionInput",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "dependencies",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "LIST",
-                "name": null,
-                "ofType": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "kind": "INPUT_OBJECT",
-                    "name": "DependencyInput",
-                    "ofType": null
-                  }
-                }
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "dynamic",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Boolean",
-                "ofType": null
-              }
-            },
-            "defaultValue": "false",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "interface",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "logo",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "params",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "AnyDefault",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "interfaces": null,
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
         "kind": "SCALAR",
         "name": "UntypedParams",
         "description": "UntypedParams represents an untyped options object returned by the Dask Gateway API.",
@@ -9670,7 +9294,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "ValidatorInput",
-        "description": null,
+        "description": " \nA validating function for a port. Can specify a function that will run when validating values of the port.\nIf outside dependencies are needed they need to be specified in the dependencies field. With the .. syntax\nwhen transversing the tree of ports. \n\n",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -10697,7 +10321,11 @@
         "name": "include",
         "description": "Directs the executor to include this field or fragment only when the `if` argument is true.",
         "isRepeatable": false,
-        "locations": ["FIELD", "FRAGMENT_SPREAD", "INLINE_FRAGMENT"],
+        "locations": [
+          "FIELD",
+          "FRAGMENT_SPREAD",
+          "INLINE_FRAGMENT"
+        ],
         "args": [
           {
             "name": "if",
@@ -10721,7 +10349,9 @@
         "name": "relation",
         "description": "Make get stuff uppercase",
         "isRepeatable": false,
-        "locations": ["FIELD"],
+        "locations": [
+          "FIELD"
+        ],
         "args": [
           {
             "name": "on",
@@ -10745,7 +10375,9 @@
         "name": "replace",
         "description": null,
         "isRepeatable": false,
-        "locations": ["FIELD"],
+        "locations": [
+          "FIELD"
+        ],
         "args": [
           {
             "name": "new",
@@ -10785,7 +10417,11 @@
         "name": "skip",
         "description": "Directs the executor to skip this field or fragment when the `if` argument is true.",
         "isRepeatable": false,
-        "locations": ["FIELD", "FRAGMENT_SPREAD", "INLINE_FRAGMENT"],
+        "locations": [
+          "FIELD",
+          "FRAGMENT_SPREAD",
+          "INLINE_FRAGMENT"
+        ],
         "args": [
           {
             "name": "if",
@@ -10809,7 +10445,9 @@
         "name": "specifiedBy",
         "description": "Exposes a URL that specifies the behaviour of this scalar.",
         "isRepeatable": false,
-        "locations": ["SCALAR"],
+        "locations": [
+          "SCALAR"
+        ],
         "args": [
           {
             "name": "url",
@@ -10833,7 +10471,9 @@
         "name": "upper",
         "description": "Make string uppercase",
         "isRepeatable": false,
-        "locations": ["FIELD"],
+        "locations": [
+          "FIELD"
+        ],
         "args": []
       }
     ]

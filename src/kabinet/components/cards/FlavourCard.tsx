@@ -10,12 +10,12 @@ import {
 import { KabinetFlavour } from "@/linkers";
 import {
   DemandKind,
-  ListTemplateFragment,
+  ListImplementationFragment,
   PortKind,
-  useTemplatesQuery,
+  useImplementationsQuery,
 } from "@/rekuest/api/graphql";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
-import { useTemplateAction } from "@/rekuest/hooks/useTemplateAction";
+import { useImplementationAction } from "@/rekuest/hooks/useImplementationAction";
 import { MateFinder } from "../../../mates/types";
 import { ListFlavourFragment } from "../../api/graphql";
 
@@ -25,10 +25,10 @@ interface Props {
 }
 
 export const AssignButton = (props: {
-  template: ListTemplateFragment;
+  template: ListImplementationFragment;
   release: string;
 }) => {
-  const { assign, latestAssignation, template } = useTemplateAction({
+  const { assign, latestAssignation, template } = useImplementationAction({
     id: props.template.id,
   });
 
@@ -55,7 +55,7 @@ export const AssignButton = (props: {
 };
 
 const InstallDialog = (props: { item: { id: string } }) => {
-  const { data } = useTemplatesQuery({
+  const { data } = useImplementationsQuery({
     variables: {
       filters: {
         node: {

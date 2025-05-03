@@ -12,14 +12,14 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { GraphNodeKind, ReactiveImplementation } from "@/reaktion/api/graphql";
-import { rekuestNodeToMatchingNode } from "@/reaktion/plugins/rekuest";
+import { rekuestActionToMatchingNode } from "@/reaktion/plugins/rekuest";
 import { nodeIdBuilder } from "@/reaktion/utils";
 import {
-  ConstantNodeDocument,
+  ConstantActionDocument,
   ConstantNodeQuery,
   PortKind,
   PortScope,
-  useAllNodesQuery,
+  useAllActionsQuery,
   useProtocolOptionsLazyQuery,
 } from "@/rekuest/api/graphql";
 import { Tooltip } from "@radix-ui/react-tooltip";
@@ -227,7 +227,7 @@ const ClickArkitektNodes = (props: {
   search: string | undefined;
   params: ClickContextualParams;
 }) => {
-  const { data, refetch } = useAllNodesQuery({
+  const { data, refetch } = useAllActionsQuery({
     variables: {
       filters: {
         search: props.search,
@@ -257,13 +257,13 @@ const ClickArkitektNodes = (props: {
     client &&
       client
         .query<ConstantNodeQuery>({
-          query: ConstantNodeDocument,
+          query: ConstantActionDocument,
           variables: { id: id },
         })
         .then(async (event) => {
           console.log(event);
           if (event.data?.node) {
-            let flownode = rekuestNodeToMatchingNode(event.data?.node, {
+            let flownode = rekuestActionToMatchingNode(event.data?.node, {
               x: 0,
               y: 0,
             });
@@ -277,13 +277,13 @@ const ClickArkitektNodes = (props: {
     client &&
       client
         .query<ConstantNodeQuery>({
-          query: ConstantNodeDocument,
+          query: ConstantActionDocument,
           variables: { id: nodeid },
         })
         .then(async (event) => {
           console.log(event);
           if (event.data?.node) {
-            let flownode = rekuestNodeToMatchingNode(event.data?.node, {
+            let flownode = rekuestActionToMatchingNode(event.data?.node, {
               x: 0,
               y: 0,
             });

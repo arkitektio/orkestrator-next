@@ -34,10 +34,10 @@ import { DropContextual } from "@/reaktion/edit/components/DropContextual";
 import { BoundNodesBox } from "@/reaktion/edit/components/boxes/BoundNodesBox";
 import { ErrorBox } from "@/reaktion/edit/components/boxes/ErrorBox";
 import {
-  ConstantNodeDocument,
-  ConstantNodeQuery,
+  ConstantActionDocument,
+  ConstantActionQuery,
   PortScope,
-  useTemplatesQuery,
+  useImplementationsQuery,
 } from "@/rekuest/api/graphql";
 import {
   DoubleArrowLeftIcon,
@@ -68,7 +68,7 @@ import {
 import useUndoable, { MutationBehavior } from "use-undoable";
 import { Constants } from "../base/Constants";
 import { Graph } from "../base/Graph";
-import { rekuestNodeToMatchingNode } from "../plugins/rekuest";
+import { rekuestActionToMatchingNode } from "../plugins/rekuest";
 import {
   ClickContextualParams,
   ConnectContextualParams,
@@ -103,16 +103,17 @@ import { DeployInterfaceButton } from "./components/buttons/DeployButton";
 import { EditRiverContext } from "./context";
 import { LabeledShowEdge } from "./edges/LabeledShowEdge";
 import { ReactiveTrackNodeWidget } from "./nodes/ReactiveWidget";
-import { RekuestFilterWidget } from "./nodes/RekuestFilterWidget";
-import { RekuestMapWidget } from "./nodes/RekuestMapWidget";
+import { RekuestFilterActionWidget } from "./nodes/RekuestFilterActionWidget";
+import { RekuestMapActionWidget } from "./nodes/RekuestMapActionWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
 import { useRekuest } from "@/arkitekt/Arkitekt";
 import { RunButton } from "./components/buttons/RunButton";
+import { FlussReactiveTemplate, RekuestAction, RekuestImplementation } from "@/linkers";
 
 const nodeTypes: NodeTypes = {
-  RekuestFilterNode: RekuestFilterWidget,
-  RekuestMapNode: RekuestMapWidget,
+  RekuestFilterActionNode: RekuestFilterActionWidget,
+  RekuestMapActionNode: RekuestMapActionWidget,
   ReactiveNode: ReactiveTrackNodeWidget,
   ArgNode: ArgTrackNodeWidget,
   ReturnNode: ReturnTrackNodeWidget,
@@ -1270,18 +1271,18 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
             y: y - reactFlowBounds.top + index * 100,
           });
 
-          if (type == "@rekuest-next/node") {
+          if (type == RekuestAction.identifier) {
             arkitektapi &&
               arkitektapi
-                .query<ConstantNodeQuery>({
-                  query: ConstantNodeDocument,
+                .query<ConstantActionQuery>({
+                  query: ConstantActionDocument,
                   variables: { id: id },
                 })
                 .then(async (event) => {
                   console.log(event);
-                  if (event.data?.node) {
-                    let flownode = rekuestNodeToMatchingNode(
-                      event.data?.node,
+                  if (event.data?.action) {
+                    let flownode = rekuestActionToMatchingNode(
+                      event.data?.action,
                       position,
                     );
                     addNode(flownode);
@@ -1289,7 +1290,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                 });
           }
 
-          if (type == "@rekuest-next/reactive-template") {
+          if (type == FlussReactiveTemplate.identifier) {
             arkitektapi &&
               arkitektapi
                 .query<ReactiveTemplateQuery>({
@@ -1363,15 +1364,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                       These are global variables that will be constants to the
                       whole workflow and are mapping to the following ports:{" "}
                     </CardDescription>
-                    <Constants
-                      ports={globals.map((x) => ({ ...x.port, key: x.key }))}
-                      overwrites={{}}
-                      onToArg={(e) => removeGlobal(e.key)}
-                      onSubmit={() =>
-                        console.log("setting values here has no impact")
-                      }
-                      path={["globals"]}
-                    />
+                    {globals.map(g => <>{g.key}</>)}
                   </CardContent>
                 </Card>
               </div>

@@ -15,11 +15,11 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import {
-  NodeDescription,
-  useNodeDescription,
-} from "@/lib/rekuest/NodeDescription";
+  ActionDescription,
+  useActionDescription,
+} from "@/lib/rekuest/ActionDescription";
 import { cn } from "@/lib/utils";
-import { RekuestMapNodeFragment } from "@/reaktion/api/graphql";
+import { RekuestMapActionNodeFragment } from "@/reaktion/api/graphql";
 import { Args } from "@/reaktion/base/Args";
 import { Constants } from "@/reaktion/base/Constants";
 import { InStream } from "@/reaktion/base/Instream";
@@ -28,8 +28,8 @@ import { OutStream } from "@/reaktion/base/Outstream";
 import { RekuestMapNodeProps } from "@/reaktion/types";
 import {
   PortFragment,
-  useTemplateQuery,
-  useTemplatesQuery,
+  useImplementationQuery,
+  useImplementationsQuery,
 } from "@/rekuest/api/graphql";
 import { GearIcon } from "@radix-ui/react-icons";
 import React, { useCallback } from "react";
@@ -39,25 +39,25 @@ import { useEditNodeErrors, useEditRiver } from "../context";
 export const DeviceSelector = (props) => {};
 
 const TemplateSelector = (props: {
-  data: RekuestMapNodeFragment;
+  data: RekuestMapActionNodeFragment;
   bind: (x: string) => void;
 }) => {
-  const { data } = useTemplatesQuery({
+  const { data } = useImplementationsQuery({
     variables: {
       filters: {
-        nodeHash: props.data.hash,
+        actionHash: props.data.hash,
       },
     },
   });
 
-  const templates = data?.templates || [];
+  const templates = data?.implementations || [];
 
   return (
     <div>
       {templates.map((template) => (
         <Button
           onClick={() => props.bind(template.id)}
-          data-active={props.data.binds.templates.includes(template.id) && true}
+          data-active={props.data.binds.implementations.includes(template.id) && true}
           className=" hover:bg-green-300 data-[active=true]:bg-green-300"
         >
           {template.interface}
@@ -68,7 +68,7 @@ const TemplateSelector = (props: {
 };
 
 export const TemplateTag = (props: { template: string }) => {
-  const { data } = useTemplateQuery({
+  const { data } = useImplementationQuery({
     variables: {
       id: props.template,
     },
@@ -76,12 +76,12 @@ export const TemplateTag = (props: { template: string }) => {
 
   return (
     <div className="px-1 m-2 rounded rounded-md border-gray-200 bg-sidepane border">
-      {data?.template?.interface}
+      {data?.implementation?.interface}
     </div>
   );
 };
 
-export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
+export const RekuestMapActionWidget: React.FC<RekuestMapNodeProps> = ({
   data: { ins, outs, constants, ...data },
   id,
   selected,
@@ -117,11 +117,11 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
 
   const bind = useCallback(
     (template: string) => {
-      if (data.binds?.templates.includes(template)) {
+      if (data.binds?.implementations.includes(template)) {
         updateData(
           {
             binds: {
-              templates: data.binds.templates.filter((x) => x !== template),
+              templates: data.binds.implementations.filter((x) => x !== template),
             },
           },
           id,
@@ -129,7 +129,7 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
         return;
       } else {
         updateData(
-          { binds: { templates: [...data.binds.templates, template] } },
+          { binds: { templates: [...data.binds.implementations, template] } },
           id,
         );
       }
@@ -139,13 +139,13 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
 
   const errors = useEditNodeErrors(id);
 
-  const description = useNodeDescription({
+  const description = useActionDescription({
     description: data.description,
     variables: data.constantsMap,
   });
 
   const bound =
-    data.binds?.templates.length == 1 ? data.binds.templates[0] : undefined;
+    data.binds?.implementations.length == 1 ? data.binds.implementations[0] : undefined;
 
   return (
     <NodeShowLayout
@@ -167,7 +167,7 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
       ))}
 
       <div className="absolute top-0 left-[50%] translate-y-[-100%] translate-x-[-50%] opacity-0 group-hover:opacity-100">
-        {data.binds?.templates.map((template) => (
+        {data.binds?.implementations.map((template) => (
           <TemplateTag template={template} />
         ))}
       </div>
@@ -203,7 +203,7 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
           </div>
         </CardTitle>
         <CardDescription>
-          <NodeDescription description={description} />
+          <ActionDescription description={description} />
         </CardDescription>
         {expanded && (
           <div className="w-full @container">

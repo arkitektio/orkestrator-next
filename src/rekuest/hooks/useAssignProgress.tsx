@@ -4,9 +4,9 @@ import { useAssignations } from "./useAssignations";
 export const useAssignProgress = (options: {
   identifier?: string;
   object?: string;
-  node?: string;
-  template?: string;
-  assignedTemplate?: string;
+  action?: string;
+  implementation?: string;
+  assignedImplementation?: string;
 }) => {
   const { data } = useAssignations();
 
@@ -15,28 +15,28 @@ export const useAssignProgress = (options: {
       return false;
     }
 
-    if (options.node) {
-      if (a.node?.id != options.node) {
+    if (options.action) {
+      if (a.action?.id != options.action) {
         return false;
       }
     }
 
-    if (options.template) {
-      if (a.template?.id != options.template) {
+    if (options.implementation) {
+      if (a.implementation?.id != options.implementation) {
         return false;
       }
     }
 
-    if (options.assignedTemplate) {
-      console.log(a.provision?.template.id, options.assignedTemplate);
-      if (a.provision?.template.id != options.assignedTemplate) {
+    if (options.assignedImplementation) {
+      console.log(a.provision?.implementation.id, options.assignedImplementation);
+      if (a.provision?.implementation.id != options.assignedImplementation) {
         return false;
       }
     }
 
     if (options.identifier && options.object) {
       let matches = false;
-      for (const port of a.node.args) {
+      for (const port of a.action.args) {
         if (
           port.kind == PortKind.Structure &&
           port.identifier == options.identifier

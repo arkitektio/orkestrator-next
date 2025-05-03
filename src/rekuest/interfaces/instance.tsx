@@ -6,7 +6,7 @@ registry.registerPackage({
   name: "Microscope",
   loader: () => import("@/rekuest/interfaces/components/Microscope"),
   componentname: "my-microscope",
-  nodeRequirements: {
+  actionRequirements: {
     movex: "48ba103c0a0f303f27491f398063485fefcc55f076c158b6a45a653211809bfa",
   },
   stateRequirements: {

@@ -4,14 +4,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { RekuestTemplate } from "@/linkers";
+import { RekuestImplementation } from "@/linkers";
 import { FlowFragment } from "@/reaktion/api/graphql";
 import { flowToDefinition, flowToDependencies } from "@/reaktion/utils";
 import {
   ListAgentFragment,
   useAgentsQuery,
-  useCreateForeignTemplateMutation,
-  useTemplateAtQuery,
+  useCreateForeignImplementationMutation,
+  useImplementationAtQuery,
 } from "@/rekuest/api/graphql";
 import { useNavigate } from "react-router-dom";
 
@@ -19,7 +19,7 @@ export const DeployButton = (props: {
   flow: FlowFragment;
   agent: ListAgentFragment;
 }) => {
-  const { data } = useTemplateAtQuery({
+  const { data } = useImplementationAtQuery({
     variables: {
       agent: props.agent.id,
       extension: "reaktion",
@@ -27,7 +27,7 @@ export const DeployButton = (props: {
     },
   });
 
-  const [deploy] = useCreateForeignTemplateMutation({
+  const [deploy] = useCreateForeignImplementationMutation({
     variables: {
       input: {
         agent: props.agent.id,
@@ -53,7 +53,7 @@ export const DeployButton = (props: {
           deploy().then((result) => {
             result?.data &&
               navigate(
-                RekuestTemplate.linkBuilder(
+                RekuestImplementation.linkBuilder(
                   result?.data?.createForeignTemplate.id,
                 ),
               );

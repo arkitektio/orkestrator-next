@@ -6,40 +6,40 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useNodeDescription } from "@/lib/rekuest/NodeDescription";
-import { RekuestTemplate } from "@/linkers";
+import { useActionDescription } from "@/lib/rekuest/ActionDescription";
+import { RekuestImplementation } from "@/linkers";
 import { useReserveMate } from "@/mates/reserve/useReserveMate";
 import { MateFinder } from "@/mates/types";
 import {
-  ListTemplateFragment,
-  useDeleteTemplateMutation,
+  ListImplementationFragment,
+  useDeleteImplementationMutation,
 } from "@/rekuest/api/graphql";
-import { TemplateActionButton } from "@/rekuest/buttons/TemplateActionButton";
+import { ImplementationActionButton } from "@/rekuest/buttons/ImplementationActionButton";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 
 interface Props {
-  item: ListTemplateFragment;
+  item: ListImplementationFragment;
   mates?: MateFinder[];
 }
 
 const TheCard = ({ item, mates }: Props) => {
   const reserveMate = useReserveMate();
-  const [deleteTemplate, _] = useDeleteTemplateMutation({
+  const [deleteImplementation, _] = useDeleteImplementationMutation({
     variables: {
       id: item.id,
     },
   });
 
   const progress = useLiveAssignation({
-    assignedTemplate: item.id,
+    assignedImplementation: item.id,
   });
 
-  const description = useNodeDescription({
-    description: item.node.description || "",
+  const description = useActionDescription({
+    description: item.action.description || "",
   });
 
   return (
-    <RekuestTemplate.Smart object={item?.id} mates={[reserveMate]}>
+    <RekuestImplementation.Smart object={item?.id} mates={[reserveMate]}>
       <Card
         className="group border border-gray-200 dark:border-gray-800 aspect-square"
         style={{
@@ -52,26 +52,26 @@ const TheCard = ({ item, mates }: Props) => {
         <CardHeader className="flex flex-row p-3">
           <div>
             <CardTitle className="mb-2">
-              <RekuestTemplate.DetailLink object={item?.id}>
+              <RekuestImplementation.DetailLink object={item?.id}>
                 {" "}
-                {item.node.name}
-              </RekuestTemplate.DetailLink>
+                {item.action.name}
+              </RekuestImplementation.DetailLink>
             </CardTitle>
-            <CardDescription>{item.node.description}</CardDescription>
+            <CardDescription>{item.action.description}</CardDescription>
             <p className="text-xs text-gray-500">{item.interface}</p>
           </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-row gap-2">
-            <TemplateActionButton id={item.id}>
+            <ImplementationActionButton id={item.id}>
               <Button variant="outline" size="sm">
                 Assign
               </Button>
-            </TemplateActionButton>
+            </ImplementationActionButton>
           </div>
         </CardContent>
       </Card>
-    </RekuestTemplate.Smart>
+    </RekuestImplementation.Smart>
   );
 };
 

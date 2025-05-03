@@ -10,13 +10,13 @@ import {
   PortKind,
   PortScope,
   ReactiveNodeFragment,
-  ReactiveTemplateFragment,
+  ReactiveImplementationFragment,
   StreamItemInput,
 } from "@/reaktion/api/graphql";
 import {
   DefinitionInput,
   DependencyInput,
-  NodeKind,
+  ActionKind,
 } from "@/rekuest/api/graphql";
 import { convertPortToInput } from "@/rekuest/utils";
 import { portToDefaults } from "@/rekuest/widgets/utils";
@@ -28,7 +28,7 @@ import {
   FlowNode,
   GlobalFragment,
   GlobalInput,
-  NodeFragment,
+  ActionFragment,
   NodeInput,
   StreamItemFragment,
 } from "./types";
@@ -53,7 +53,7 @@ export function keyInObject(
   return obj && key in obj;
 }
 
-export const nodes_to_flownodes = (nodes: NodeFragment[]): FlowNode[] => {
+export const nodes_to_flownodes = (nodes: ActionFragment[]): FlowNode[] => {
   console.log("nodes_to_flownodes", nodes);
 
   const nodes_ =
@@ -191,7 +191,7 @@ export const globals_to_inputglobals = (
 };
 
 export const reactiveTemplateToFlowNode = (
-  node: ReactiveTemplateFragment,
+  node: ReactiveImplementationFragment,
   position: { x: number; y: number },
 ): FlowNode<ReactiveNodeFragment> => {
   let nodeId = "reactive-" + uuidv4();
@@ -367,7 +367,7 @@ export const flowToDefinition = (flow: FlowFragment): DefinitionInput => {
       ?.map((p) => convertPortToInput(p)) || [];
 
   return {
-    kind: NodeKind.Function,
+    kind: ActionKind.Function,
     args: [...args, ...kwargs],
     returns: returns,
     name: flow.title,

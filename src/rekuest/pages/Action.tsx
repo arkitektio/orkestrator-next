@@ -6,38 +6,38 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
-import { useNodeDescription } from "@/lib/rekuest/NodeDescription";
-import { RekuestNode, RekuestTemplate } from "@/linkers";
+import { useActionDescription } from "@/lib/rekuest/ActionDescription";
+import { RekuestAction, RekuestImplementation } from "@/linkers";
 import {
   AssignationEventKind,
-  DetailNodeFragment,
-  useDetailNodeQuery,
+  DetailActionFragment,
+  useDetailActionQuery,
 } from "@/rekuest/api/graphql";
 import { ArrowRight } from "lucide-react";
 import { useCallback, useState } from "react";
 import { TbMedicalCross } from "react-icons/tb";
 import { TiTick } from "react-icons/ti";
 import ReservationCard from "../components/cards/ReservationCard";
-import { useNodeAction } from "../hooks/useNodeAction";
+import { useAction } from "../hooks/useAction";
 import { usePortForm } from "../hooks/usePortForm";
 import { ReturnsContainer } from "../widgets/tailwind";
 import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
-export const DoNodeForm = ({ node }: { node: DetailNodeFragment }) => {
-  const { assign, latestAssignation, cancel } = useNodeAction({
-    id: node.id,
+export const DoActionForm = ({ action }: { action: DetailActionFragment }) => {
+  const { assign, latestAssignation, cancel } = useAction({
+    id: action.id,
   });
 
   const form = usePortForm({
-    ports: node?.args || [],
+    ports: action?.args || [],
   });
 
   const onSubmit = (data: any) => {
     console.log("Submiftting");
     console.log(data);
     assign({
-      node: node.id,
+      action: action.id,
       args: data,
       hooks: [],
     }).then(
@@ -74,8 +74,8 @@ export const DoNodeForm = ({ node }: { node: DetailNodeFragment }) => {
                 <div className="w-full">
                   <ArgsContainer
                     registry={registry}
-                    groups={node?.portGroups || []}
-                    ports={node?.args || []}
+                    groups={action?.portGroups || []}
+                    ports={action?.args || []}
                     path={[]}
                   />
                 </div>
@@ -101,7 +101,7 @@ export const DoNodeForm = ({ node }: { node: DetailNodeFragment }) => {
                   <div className="flex flex-col gap-2">
                     <ReturnsContainer
                       registry={registry}
-                      ports={node.returns}
+                      ports={action.returns}
                       values={yieldEvent?.returns}
                     ></ReturnsContainer>
                   </div>
@@ -115,7 +115,7 @@ export const DoNodeForm = ({ node }: { node: DetailNodeFragment }) => {
 
                 <CardContent>
                   <div className="flex flex-col gap-2">
-                    {node?.returns?.map((p) => (
+                    {action?.returns?.map((p) => (
                       <div>
                         <div className=" font-bold">{p.label || p.key}</div>
                         <div className="text-xs text-muted-foreground">
@@ -154,26 +154,26 @@ export const DoNodeForm = ({ node }: { node: DetailNodeFragment }) => {
   );
 };
 
-export default asDetailQueryRoute(useDetailNodeQuery, ({ data, refetch }) => {
+export default asDetailQueryRoute(useDetailActionQuery, ({ data, refetch }) => {
   const copyHashToClipboard = useCallback(() => {
-    navigator.clipboard.writeText(data?.node?.hash || "");
-  }, [data?.node?.hash]);
+    navigator.clipboard.writeText(data?.action?.hash || "");
+  }, [data?.action?.hash]);
 
   const [formData, setFormData] = useState({});
 
-  const description = useNodeDescription({
-    description: data.node.description || "",
+  const description = useActionDescription({
+    description: data.action.description || "",
   });
 
   return (
     <ModelPageLayout
-      identifier="@rekuest/node"
-      title={data.node.name}
-      object={data.node.id}
+      identifier="@rekuest/action"
+      title={data.action.name}
+      object={data.action.id}
       sidebars={
         <MultiSidebar
           map={{
-            Comments: <RekuestNode.Komments object={data?.node?.id} />,
+            Comments: <RekuestAction.Komments object={data?.action?.id} />,
           }}
         />
       }
@@ -184,19 +184,19 @@ export default asDetailQueryRoute(useDetailNodeQuery, ({ data, refetch }) => {
             className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl cursor-pointer"
             onClick={copyHashToClipboard}
           >
-            {data?.node?.name}
+            {data?.action?.name}
           </h1>
           <p className="mt-3 text-xl text-muted-foreground max-w-[80%]">
             {description}
           </p>
         </div>
-        <DoNodeForm node={data.node} />
+        <DoActionForm action={data.action} />
 
-        {(data.node.tests?.length || 0) > 0 && (
+        {(data.action.tests?.length || 0) > 0 && (
           <>
-            <h5 className="font-light text-xl mt-2"> Tests for this Node </h5>
+            <h5 className="font-light text-xl mt-2"> Tests for this Action </h5>
             <div className="grid grid-cols-2 gap-4 mt-3">
-              {data.node.tests?.map((testCase, key) => (
+              {data.action.tests?.map((testCase, key) => (
                 <Card key={key}>
                   <CardHeader>
                     <CardTitle>
@@ -206,18 +206,18 @@ export default asDetailQueryRoute(useDetailNodeQuery, ({ data, refetch }) => {
                   </CardHeader>
                   <CardContent>
                     {testCase.runs?.map((result, key) => {
-                      if (result?.template_id == null) {
+                      if (result?.implementation_id == null) {
                         return null;
                       }
 
                       return (
                         <div key={key}>
-                          <RekuestTemplate.DetailLink
-                            object={result?.template_id}
+                          <RekuestImplementation.DetailLink
+                            object={result?.implementation_id}
                             className="font-bold"
                           >
-                            {result?.template_id}
-                          </RekuestTemplate.DetailLink>
+                            {result?.implementation_id}
+                          </RekuestImplementation.DetailLink>
                           <div>
                             {result.status == AssignationEventKind.Done ? (
                               <TiTick />
@@ -235,7 +235,7 @@ export default asDetailQueryRoute(useDetailNodeQuery, ({ data, refetch }) => {
           </>
         )}
 
-        <ListRender array={data?.node?.reservations} title="Reservations">
+        <ListRender array={data?.action?.reservations} title="Reservations">
           {(item, key) => <ReservationCard item={item} key={key} />}
         </ListRender>
       </div>

@@ -13,7 +13,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { useNodeDescription } from "@/lib/rekuest/NodeDescription";
+import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { cn } from "@/lib/utils";
 import { Args } from "@/reaktion/base/Args";
 import { Constants } from "@/reaktion/base/Constants";
@@ -26,7 +26,7 @@ import React from "react";
 import { RekuestFilterNodeProps } from "../../types";
 import { useEditNodeErrors, useEditRiver } from "../context";
 
-export const RekuestFilterWidget: React.FC<RekuestFilterNodeProps> = ({
+export const RekuestFilterActionWidget: React.FC<RekuestFilterNodeProps> = ({
   data: { ins, outs, constants, ...data },
   id,
   selected,
@@ -66,7 +66,7 @@ export const RekuestFilterWidget: React.FC<RekuestFilterNodeProps> = ({
 
   const errors = useEditNodeErrors(id);
 
-  const description = useNodeDescription({
+  const description = useActionDescription({
     description: data.description,
     variables: data.constantsMap,
   });

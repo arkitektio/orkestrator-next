@@ -6,29 +6,29 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { NodeDescription } from "@/lib/rekuest/NodeDescription";
-import { RekuestNode } from "@/linkers";
+import { ActionDescription } from "@/lib/rekuest/ActionDescription";
+import { RekuestAction } from "@/linkers";
 import { useReserveMate } from "@/mates/reserve/useReserveMate";
 import { MateFinder } from "@/mates/types";
-import { ListNodeFragment } from "@/rekuest/api/graphql";
-import { NodeActionButton } from "@/rekuest/buttons/NodeActionButton";
+import { ListActionFragment } from "@/rekuest/api/graphql";
+import { ActionButton } from "@/rekuest/buttons/ActionButton";
 import { ReserveActionButton } from "@/rekuest/buttons/ReserveActionButton";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 
 interface Props {
-  node: ListNodeFragment;
+  action: ListActionFragment;
   mates?: MateFinder[];
 }
 
-const TheCard = ({ node, mates }: Props) => {
+const TheCard = ({ action, mates }: Props) => {
   const reserveMate = useReserveMate();
 
   const progress = useLiveAssignation({
-    assignedNode: node.id,
+    assignedAction: action.id,
   });
 
   return (
-    <RekuestNode.Smart object={node?.id} mates={[reserveMate]}>
+    <RekuestAction.Smart object={action?.id} mates={[reserveMate]}>
       <Card
         className="group border border-gray-200 dark:border-gray-800 aspect-square ring ring-0 group-data-[selected=true]:ring-1  "
         style={{
@@ -41,24 +41,24 @@ const TheCard = ({ node, mates }: Props) => {
         <CardHeader className="flex flex-col justify-between p-3 h-full">
           <div className="flex-grow overflow-hidden">
             <CardTitle>
-              <RekuestNode.DetailLink object={node?.id}>
+              <RekuestAction.DetailLink object={action?.id}>
                 {" "}
-                {node.name}
-              </RekuestNode.DetailLink>
+                {action.name}
+              </RekuestAction.DetailLink>
             </CardTitle>
             <CardDescription>
-              {node?.description && (
-                <NodeDescription description={node?.description} />
+              {action?.description && (
+                <ActionDescription description={action?.description} />
               )}
             </CardDescription>
           </div>
           <CardFooter className="flex justify-between gap-2 truncate">
-            <NodeActionButton id={node.id}>
+            <ActionButton id={action.id}>
               <Button variant="outline" size="sm" className="flex-1 truncate">
                 Assign
               </Button>
-            </NodeActionButton>
-            <ReserveActionButton id={node.id}>
+            </ActionButton>
+            <ReserveActionButton id={action.id}>
               <Button variant="outline" size="sm"  className="flex-1 truncate">
                 Short
               </Button>
@@ -66,7 +66,7 @@ const TheCard = ({ node, mates }: Props) => {
           </CardFooter>
         </CardHeader>
       </Card>
-    </RekuestNode.Smart>
+    </RekuestAction.Smart>
   );
 };
 

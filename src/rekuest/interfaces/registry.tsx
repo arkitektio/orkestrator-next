@@ -1,7 +1,7 @@
 import {
   Descriptor,
   InterfaceProps,
-  NodeRequirements,
+  ActionRequirements,
   StateRequirements,
 } from "./types";
 

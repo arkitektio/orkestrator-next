@@ -1,4 +1,4 @@
-fragment ListNode on Node {
+fragment ListAction on Action {
   id
   name
   description
@@ -6,7 +6,7 @@ fragment ListNode on Node {
   kind
   scope
   stateful
-  templates {
+  implementations {
     id
     agent {
       id
@@ -14,7 +14,7 @@ fragment ListNode on Node {
   }
 }
 
-fragment GraphNodeNode on Node {
+fragment GraphNodeAction on Action {
   name
   description
   kind
@@ -31,9 +31,9 @@ fragment GraphNodeNode on Node {
   }
 }
 
-fragment DetailNode on Node {
-  ...GraphNodeNode
-  templates {
+fragment DetailAction on Action {
+  ...GraphNodeAction
+  implementations {
     id
     interface
   }
@@ -51,18 +51,18 @@ fragment DetailNode on Node {
     name
     description
     runs {
-      template_id: arg(key: "template")
+      implementation_id: arg(key: "implementation")
       latestEventKind
     }
   }
 }
 
-fragment PrimaryNode on Node {
+fragment PrimaryAction on Action {
   id
   stateful
   name
   hash
-  templates {
+  implementations {
     id
     interface
   }

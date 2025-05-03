@@ -8,7 +8,7 @@ export const useAgentsForDescriptor = (name: string) => {
     variables: {
       filters: {
         hasStates: Object.values(value.stateRequirements),
-        hasTemplates: Object.values(value.nodeRequirements),
+        hasImplementations: Object.values(value.actionRequirements),
       },
     },
   });

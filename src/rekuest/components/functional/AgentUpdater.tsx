@@ -10,7 +10,7 @@ import {
   AssignationsDocument,
   AssignationsQuery,
   useAgentQuery,
-  useDetailNodeQuery,
+  useDetailActionQuery,
   WatchAgentsDocument,
   WatchAgentsSubscription,
   WatchAgentsSubscriptionVariables,

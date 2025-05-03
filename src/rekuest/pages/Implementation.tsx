@@ -6,17 +6,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
-import { NodeDescription } from "@/lib/rekuest/NodeDescription";
-import { RekuestAssignation, RekuestNode, RekuestTemplate } from "@/linkers";
+import { ActionDescription } from "@/lib/rekuest/ActionDescription";
+import { RekuestAssignation, RekuestAction, RekuestImplementation } from "@/linkers";
 import { useFlowQuery } from "@/reaktion/api/graphql";
 import { ShowFlow } from "@/reaktion/show/ShowFlow";
 import {
   AssignationEventKind,
-  DetailTemplateFragment,
-  WatchTemplateDocument,
-  WatchTemplateSubscription,
-  WatchTemplateSubscriptionVariables,
-  useTemplateQuery,
+  DetailImplementationFragment,
+  WatchImplementationDocument,
+  WatchImplementationSubscription,
+  WatchImplementationSubscriptionVariables,
+  useImplementationQuery,
 } from "@/rekuest/api/graphql";
 import { ArrowRight } from "lucide-react";
 import { useEffect } from "react";
@@ -24,18 +24,18 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import DependencyCard from "../components/cards/DependencyCard";
 import { usePortForm } from "../hooks/usePortForm";
-import { useTemplateAction } from "../hooks/useTemplateAction";
+import { useImplementationAction } from "../hooks/useImplementationAction";
 import { ReturnsContainer } from "../widgets/tailwind";
 import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
 export const DoFormBackup = (props: { id: string }) => {
-  const { assign, latestAssignation, cancel, template } = useTemplateAction({
+  const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
     id: props.id,
   });
 
   const form = usePortForm({
-    ports: template?.node.args || [],
+    ports: implementation?.action.args || [],
     overwrites: latestAssignation?.args,
   });
 
@@ -45,7 +45,7 @@ export const DoFormBackup = (props: { id: string }) => {
     console.log("Submitting");
     console.log(data);
     assign({
-      template: props.id,
+      implementation: props.id,
       args: data,
       hooks: [],
     }).then(
@@ -65,16 +65,16 @@ export const DoFormBackup = (props: { id: string }) => {
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
-          {template?.node?.description && (
-            <NodeDescription
-              description={template.node.description}
+          {implementation?.action?.description && (
+            <ActionDescription
+              description={implementation.action.description}
               variables={form.watch()}
             />
           )}
           <ArgsContainer
             registry={registry}
-            groups={template?.node.portGroups}
-            ports={template?.node.args || []}
+            groups={implementation?.action.portGroups}
+            ports={implementation?.action.args || []}
             path={[]}
           />
           <DialogFooter>
@@ -90,12 +90,12 @@ export const DoFormBackup = (props: { id: string }) => {
 };
 
 export const DoForm = ({ id }: { id: string }) => {
-  const { assign, latestAssignation, cancel, template } = useTemplateAction({
+  const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
     id: id,
   });
 
   const form = usePortForm({
-    ports: template?.node.args || [],
+    ports: implementation?.action.args || [],
   });
 
   const navigate = useNavigate();
@@ -104,7 +104,7 @@ export const DoForm = ({ id }: { id: string }) => {
     console.log("Submitting");
     console.log(data);
     assign({
-      template: id,
+      implementation: id,
       args: data,
       hooks: [],
     }).then(
@@ -142,7 +142,7 @@ export const DoForm = ({ id }: { id: string }) => {
                 <div className="w-full">
                   <ArgsContainer
                     registry={registry}
-                    ports={template?.node?.args || []}
+                    ports={implementation?.action?.args || []}
                     path={[]}
                   />
                 </div>
@@ -168,7 +168,7 @@ export const DoForm = ({ id }: { id: string }) => {
                   <div className="flex flex-col gap-2">
                     <ReturnsContainer
                       registry={registry}
-                      ports={template?.node.returns || []}
+                      ports={implementation?.action.returns || []}
                       values={yieldEvent?.returns}
                     ></ReturnsContainer>
                   </div>
@@ -182,7 +182,7 @@ export const DoForm = ({ id }: { id: string }) => {
 
                 <CardContent>
                   <div className="flex flex-col gap-2">
-                    {template?.node?.returns?.map((p) => (
+                    {implementation?.action?.returns?.map((p) => (
                       <div>
                         <div className=" font-bold">{p.label || p.key}</div>
                         <div className="text-xs text-muted-foreground">
@@ -221,99 +221,99 @@ export const DoForm = ({ id }: { id: string }) => {
   );
 };
 
-export const TemplateFlow = (props: { template: DetailTemplateFragment }) => {
+export const ImplementationFlow = (props: { implementation: DetailImplementationFragment }) => {
   const { data } = useFlowQuery({
     variables: {
-      id: props.template.params.flow,
+      id: props.implementation.params.flow,
     },
   });
 
   return (
     <>
-      {data?.flow && <ShowFlow flow={data?.flow} template={props.template} />}
+      {data?.flow && <ShowFlow flow={data?.flow} implementation={props.implementation} />}
     </>
   );
 };
 
 export const DefaultRenderer = (props: {
-  template: DetailTemplateFragment;
+  implementation: DetailImplementationFragment;
 }) => {
   return (
     <div className=" p-6">
       <div className="mb-3">
         <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl cursor-pointer">
-          {props?.template?.node.name}
+          {props?.implementation?.action.name}
         </h1>
         <p className="mt-3 text-xl text-muted-foreground max-w-[80%]">
-          {props?.template?.node.description}
+          {props?.implementation?.action.description}
         </p>
       </div>
-      <DoForm id={props.template.id} />
+      <DoForm id={props.implementation.id} />
 
-      <ListRender array={props?.template?.dependencies}>
-        {(template, key) => <DependencyCard item={template} key={key} />}
+      <ListRender array={props?.implementation?.dependencies}>
+        {(implementation, key) => <DependencyCard item={implementation} key={key} />}
       </ListRender>
     </div>
   );
 };
 
-export const FlowRender = (props: { template: DetailTemplateFragment }) => {
+export const FlowRender = (props: { implementation: DetailImplementationFragment }) => {
   return (
     <div className="w-full h-full">
-      <TemplateFlow template={props.template} />
+      <ImplementationFlow implementation={props.implementation} />
     </div>
   );
 };
 
 export default asDetailQueryRoute(
-  useTemplateQuery,
+  useImplementationQuery,
   ({ data, refetch, subscribeToMore }) => {
     useEffect(() => {
       return subscribeToMore<
-        WatchTemplateSubscription,
-        WatchTemplateSubscriptionVariables
+        WatchImplementationSubscription,
+        WatchImplementationSubscriptionVariables
       >({
-        document: WatchTemplateDocument,
+        document: WatchImplementationDocument,
         variables: {
-          template: data.template.id,
+          implementation: data.implementation.id,
         },
         updateQuery: (prev, { subscriptionData }) => {
-          return { template: subscriptionData.data.templateChange };
+          return { implementation: subscriptionData.data.implementationChange };
         },
       });
     }, [subscribeToMore]);
 
     return (
-      <RekuestTemplate.ModelPage
+      <RekuestImplementation.ModelPage
         title={
           <>
-            {data.template.node.name} @ {data.template.interface}
+            {data.implementation.action.name} @ {data.implementation.interface}
           </>
         }
-        object={data.template.id}
+        object={data.implementation.id}
         sidebars={
           <MultiSidebar
             map={{
               Comments: (
-                <RekuestTemplate.Komments object={data?.template?.id} />
+                <RekuestImplementation.Komments object={data?.implementation?.id} />
               ),
             }}
           />
         }
         pageActions={
           <>
-            <RekuestNode.DetailLink object={data.template.node.id}>
-              <Button variant="outline">Go to Node</Button>
-            </RekuestNode.DetailLink>
+            <RekuestAction.DetailLink object={data.implementation.action.id}>
+              <Button variant="outline">Go to Action</Button>
+            </RekuestAction.DetailLink>
           </>
         }
       >
-        {data.template?.params?.flow ? (
-          <FlowRender template={data.template} />
+        {data.implementation?.params?.flow ? (
+          <FlowRender implementation={data.implementation} />
         ) : (
-          <DefaultRenderer template={data.template} />
+          <DefaultRenderer implementation={data.implementation} />
         )}
-      </RekuestTemplate.ModelPage>
+      </RekuestImplementation.ModelPage>
     );
   },
 );

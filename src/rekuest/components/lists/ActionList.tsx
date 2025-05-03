@@ -1,31 +1,31 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { RekuestNode } from "@/linkers";
+import { RekuestAction } from "@/linkers";
 import {
-  NodeFilter,
+  ActionFilter,
   OffsetPaginationInput,
-  useAllNodesQuery,
+  useAllActionsQuery,
 } from "@/rekuest/api/graphql";
-import NodeCard from "../cards/NodeCard";
+import ActionCard from "../cards/ActionCard";
 
 export type Props = {
-  filters?: NodeFilter;
+  filters?: ActionFilter;
   pagination?: OffsetPaginationInput;
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useAllNodesQuery({
+  const { data, error, subscribeToMore, refetch } = useAllActionsQuery({
     variables: { filters, pagination },
   });
 
   return (
     <ListRender
-      array={data?.nodes}
+      array={data?.actions}
       title={
-        <RekuestNode.ListLink className="flex-0">Nodes</RekuestNode.ListLink>
+        <RekuestAction.ListLink className="flex-0">Actions</RekuestAction.ListLink>
       }
       refetch={refetch}
     >
-      {(ex, index) => <NodeCard key={index} node={ex} mates={[]} />}
+      {(ex, index) => <ActionCard key={index} action={ex} mates={[]} />}
     </ListRender>
   );
 };

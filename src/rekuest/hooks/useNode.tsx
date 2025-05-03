@@ -9,7 +9,7 @@ import {
 
 export const useUsage = (options: {
   hash?: string;
-  template?: string;
+  implementation?: string;
 }): [PostmanReservationFragment | undefined, () => void] => {
   const { settings } = useSettings();
   const { data } = useReservationsQuery({
@@ -21,7 +21,7 @@ export const useUsage = (options: {
   const [reserve, _] = useReserveMutation();
   const [unreserve, __] = useUnreserveMutation();
 
-  const isUsed = data?.reservations.find((r) => r.node.hash == options.hash);
+  const isUsed = data?.reservations.find((r) => r.action.hash == options.hash);
 
   const toggle = useCallback(() => {
     console.log(isUsed ? "Unreserving" : "Reserving");
@@ -29,8 +29,8 @@ export const useUsage = (options: {
       reserve({
         variables: {
           instanceId: settings.instanceId,
-          node: options.hash,
-          template: options.template,
+          action: options.hash,
+          implementation: options.implementation,
         },
       });
     } else {

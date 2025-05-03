@@ -1,16 +1,17 @@
 import { useSettings } from "@/providers/settings/SettingsContext";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import {
   AssignInput,
   AssignationEventKind,
-  DetailNodeFragment,
+  DetailImplementationFragment,
   PostmanAssignationFragment,
   ReserveMutationVariables,
   useAssignMutation,
   useAssignationsQuery,
   useCancelMutation,
-  useDetailNodeQuery,
+  useImplementationQuery,
 } from "../api/graphql";
+import { v4 } from "uuid";
 
 export type ActionReserveVariables = Omit<
   ReserveMutationVariables,
@@ -18,29 +19,31 @@ export type ActionReserveVariables = Omit<
 >;
 export type ActionAssignVariables = Omit<AssignInput, "instanceId">;
 
-export type useActionReturn<T> = {
+export type UseImplementationActionReturn<T> = {
+  implementation?: DetailImplementationFragment;
   assign: (
     variables: ActionAssignVariables,
   ) => Promise<PostmanAssignationFragment>;
   reassign: () => Promise<PostmanAssignationFragment>;
   cancel: () => void;
   assignations?: PostmanAssignationFragment[];
-  latestAssignation?: PostmanAssignationFragment;
-  node: DetailNodeFragment | undefined;
+  causedAssignation?: PostmanAssignationFragment;
 };
 
-export type useActionOptions<T> = {
+export type UseImplementationAction<T> = {
   id: string;
 };
 
-export const useNodeAction = <T extends any>(
-  options: useActionOptions<T>,
-): useActionReturn<T> => {
+export const useImplementationSubscribeAction = <T extends any>(
+  options: UseImplementationAction<T>,
+): UseImplementationActionReturn<T> => {
   const { settings } = useSettings();
+  const [causedAssignation, setCausedAssignation] =
+    useState<PostmanAssignationFragment | null>(null);
 
-  const { data, variables, refetch } = useDetailNodeQuery({
+  const { data } = useImplementationQuery({
     variables: {
-      id: options.id,
+      ...options,
     },
   });
 
@@ -54,15 +57,13 @@ export const useNodeAction = <T extends any>(
   const [cancelAssign] = useCancelMutation({});
 
   let assignations = assignations_data?.assignations.filter(
-    (x) => x.node.id == options.id,
+    (x) => x.reference == causedAssignation?.reference,
   );
 
-  const latestAssignation = assignations?.at(-1);
+  const latestAssignation = assignations?.at(0);
 
   const assign = useCallback(
     async (vars: ActionAssignVariables) => {
-      console.log("Assigning", vars);
-
       let mutation = await postAssign({
         variables: {
           input: {
@@ -80,10 +81,13 @@ export const useNodeAction = <T extends any>(
 
       if (!assignation) {
         console.error(mutation);
-        const errorMessages = mutation.errors || "Unknown error";
+        const errorMessages =
+          mutation.errors?.map((error) => error.message).join(", ") ||
+          "Unknown error";
         throw Error(`Couldn't assign: ${errorMessages}`);
       }
 
+      setCausedAssignation(assignation);
       return assignation;
     },
     [postAssign, settings],
@@ -91,28 +95,31 @@ export const useNodeAction = <T extends any>(
 
   const reassign = useCallback(() => {
     console.log("Not");
-    if (!latestAssignation) {
+    if (!causedAssignation) {
       throw Error("No latest assignation");
     }
     return assign({
-      args: latestAssignation.args,
-      node: latestAssignation?.node.id,
+      args: causedAssignation.args,
+      action: latestAssignation?.action.id,
       hooks: [],
     });
   }, [assign]);
 
   const cancel = useCallback(async () => {
-    if (!latestAssignation) {
+    console.log("Cancelling", causedAssignation);
+    if (!causedAssignation) {
       throw Error("Cannot Reassign");
     }
 
-    if (latestAssignation.status == AssignationEventKind.Done) {
+    if (causedAssignation.status == AssignationEventKind.Done) {
       throw Error("Cannot Cancel as it is done");
     }
 
+    console.log("Cancelling", causedAssignation);
+
     let mutation = await cancelAssign({
       variables: {
-        input: { assignation: latestAssignation.id },
+        input: { assignation: causedAssignation.id },
       },
     });
 
@@ -126,15 +133,17 @@ export const useNodeAction = <T extends any>(
       throw Error(`Couldn't assign: ${errorMessages}`);
     }
 
+    setCausedAssignation(null);
+
     return assignation;
-  }, [cancelAssign, latestAssignation]);
+  }, [cancelAssign, causedAssignation]);
 
   return {
     assign,
     reassign,
-    latestAssignation,
+    causedAssignation: latestAssignation,
     cancel,
     assignations,
-    node: data?.node,
+    implementation: data?.implementation,
   };
 };

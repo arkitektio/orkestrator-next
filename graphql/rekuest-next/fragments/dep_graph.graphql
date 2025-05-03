@@ -1,14 +1,14 @@
-fragment NodeNode on NodeNode {
+fragment ActionAction on ActionAction {
   id
-  nodeId
+  actionId
   name
   reservationId
   status
 }
 
-fragment TemplateNode on TemplateNode {
+fragment ImplementationAction on ImplementationAction {
   id
-  templateId
+  implementationId
   interface
   clientId
   provisionId
@@ -18,7 +18,7 @@ fragment TemplateNode on TemplateNode {
   active
 }
 
-fragment InvalidNode on InvalidNode {
+fragment InvalidAction on InvalidAction {
   id
   initialHash
 }
@@ -37,10 +37,10 @@ fragment ImplementationEdge on ImplementationEdge {
 }
 
 fragment DependencyGraph on DependencyGraph {
-  nodes {
-    ...NodeNode
-    ...TemplateNode
-    ...InvalidNode
+  actions {
+    ...ActionAction
+    ...ImplementationAction
+    ...InvalidAction
   }
   edges {
     ...DependencyEdge

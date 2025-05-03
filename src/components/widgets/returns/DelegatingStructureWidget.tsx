@@ -3,11 +3,11 @@ import NeuronModelWidget from "@/elektro/widgets/NeuronModelWidget";
 import SimulationWidget from "@/elektro/widgets/SimulationWidget";
 import { useGetPodQuery } from "@/kabinet/api/graphql";
 import GraphWidget from "@/kraph/widgets/GraphWidget";
-import { KabinetPod, MikroImage, MikroROI, RekuestNode } from "@/linkers";
+import { KabinetPod, MikroImage, MikroROI, RekuestAction } from "@/linkers";
 import { UserAvatar } from "@/lok-next/components/UserAvatar";
 import { useGetImageQuery, useGetRoiQuery } from "@/mikro-next/api/graphql";
 import { DelegatingImageRender } from "@/mikro-next/components/render/DelegatingImageRender";
-import { useDetailNodeQuery } from "@/rekuest/api/graphql";
+import { useDetailActionQuery } from "@/rekuest/api/graphql";
 import { ReturnWidgetProps } from "@/rekuest/widgets/types";
 import { MeshWidget } from "@/widgets/MeshWidget";
 import { RenderedPlotWidget } from "@/widgets/RenderedPlotWidget";
@@ -57,17 +57,17 @@ export const RoiWidget = (props: ReturnWidgetProps) => {
 };
 
 export const NodeWidget = (props: ReturnWidgetProps) => {
-  const { data } = useDetailNodeQuery({
+  const { data } = useDetailActionQuery({
     variables: {
       id: props.value,
     },
   });
 
   return (
-    <RekuestNode.DetailLink object={props.value}>
+    <RekuestAction.DetailLink object={props.value}>
       <p className="text-xl">{data?.node?.name}</p>
       <p className="text-sm">{data?.node?.description}</p>
-    </RekuestNode.DetailLink>
+    </RekuestAction.DetailLink>
   );
 };
 

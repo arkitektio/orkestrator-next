@@ -20,14 +20,14 @@ import {
   GraphNodeKind,
   ReactiveImplementation,
 } from "@/reaktion/api/graphql";
-import { rekuestNodeToMatchingNode } from "@/reaktion/plugins/rekuest";
+import { rekuestActionToMatchingNode } from "@/reaktion/plugins/rekuest";
 import { nodeIdBuilder } from "@/reaktion/utils";
 import {
-  ConstantNodeDocument,
+  ConstantActionDocument,
   ConstantNodeQuery,
   DemandKind,
   PortKind,
-  useAllNodesQuery,
+  useAllActionsQuery,
   useProtocolOptionsLazyQuery,
 } from "@/rekuest/api/graphql";
 import { ArrowDown, X } from "lucide-react";
@@ -328,7 +328,7 @@ export const EdgeContextualRekuestNode = (props: {
   const leftPorts = props.params.leftNode.data.outs[props.params.leftStream];
   const rightPorts = props.params.rightNode.data.ins[props.params.rightStream];
 
-  const { data, refetch, variables } = useAllNodesQuery({
+  const { data, refetch, variables } = useAllActionsQuery({
     variables: {
       filters: {
         demands: [
@@ -380,13 +380,13 @@ export const EdgeContextualRekuestNode = (props: {
     client &&
       client
         .query<ConstantNodeQuery>({
-          query: ConstantNodeDocument,
+          query: ConstantActionDocument,
           variables: { id: id },
         })
         .then(async (event) => {
           console.log(event);
           if (event.data?.node) {
-            let flownode = rekuestNodeToMatchingNode(event.data?.node, {
+            let flownode = rekuestActionToMatchingNode(event.data?.node, {
               x: 0,
               y: 0,
             });

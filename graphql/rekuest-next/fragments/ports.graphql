@@ -212,7 +212,7 @@ fragment PortGroup on PortGroup {
   ports
 }
 
-fragment Ports on Node {
+fragment Ports on Action {
   args {
     ...Port
   }

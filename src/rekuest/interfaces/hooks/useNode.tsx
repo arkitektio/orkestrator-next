@@ -1,24 +1,24 @@
 import {
   useGetStateForQuery,
-  useNodeTemplateAtQuery,
-  useTemplateQuery,
+  useActionImplementationAtQuery,
+  useImplementationQuery,
 } from "@/rekuest/api/graphql";
 import { InterfaceDefinition } from "../types";
-import { useTemplateAction } from "@/rekuest/hooks/useTemplateAction";
+import { useImplementationAction } from "@/rekuest/hooks/useImplementationAction";
 
-export const useInterfaceTemplate = (
+export const useInterfaceImplementation = (
   descriptor: InterfaceDefinition<any, any>,
   key: string,
   agent: string,
 ) => {
-  const template = useNodeTemplateAtQuery({
+  const implementation = useActionImplementationAtQuery({
     variables: {
-      nodeHash: descriptor.nodeRequirements[key],
+      actionHash: descriptor.actionRequirements[key],
       agent,
     },
   });
 
-  return template;
+  return implementation;
 };
 
 export const useInterfaceState = (

@@ -1,11 +1,11 @@
 import Handlebars from "handlebars";
 import { useEffect, useState } from "react";
 
-function replaceVariablesWithNames(template: string) {
+function replaceVariablesWithNames(implementation: string) {
   // This regular expression captures Handlebars expressions {{ variable }}
   let regex = /\{\{([^\{\}]+)\}\}/g;
 
-  return template.replace(regex, function (match, variableName) {
+  return implementation.replace(regex, function (match, variableName) {
     // Remove any whitespace and return the variable name
     return variableName.trim();
   });
@@ -20,7 +20,7 @@ function replaceUndefinedValuesWithKeyName(obj: any) {
   return obj;
 }
 
-export const NodeDescription = (props: {
+export const ActionDescription = (props: {
   description: string;
   variables?: { [key: string]: any };
 }) => {
@@ -30,8 +30,8 @@ export const NodeDescription = (props: {
 
   useEffect(() => {
     if (props.variables) {
-      const template = Handlebars.compile(props.description);
-      const newText = template(
+      const implementation = Handlebars.compile(props.description);
+      const newText = implementation(
         replaceUndefinedValuesWithKeyName({ ...props.variables }),
       );
       setText(newText);
@@ -43,7 +43,7 @@ export const NodeDescription = (props: {
   return <>{text}</>;
 };
 
-export const useNodeDescription = (props: {
+export const useActionDescription = (props: {
   description: string;
   variables?: { [key: string]: any };
 }) => {
@@ -53,8 +53,8 @@ export const useNodeDescription = (props: {
 
   useEffect(() => {
     if (props.variables) {
-      const template = Handlebars.compile(props.description);
-      const newText = template(
+      const implementation = Handlebars.compile(props.description);
+      const newText = implementation(
         replaceUndefinedValuesWithKeyName({ ...props.variables }),
       );
       setText(newText);

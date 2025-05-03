@@ -13,7 +13,7 @@ import {
   AssignationsDocument,
   AssignationsQuery,
   useCancelMutation,
-  useDetailNodeQuery,
+  useDetailActionQuery,
   WatchAssignationEventsSubscriptionVariables,
   WatchAssignationsDocument,
   WatchAssignationsSubscription,
@@ -21,11 +21,11 @@ import {
 
 export const DynamicYieldDisplay = (props: {
   values: any[];
-  nodeId: string;
+  actionId: string;
 }) => {
-  const { data } = useDetailNodeQuery({
+  const { data } = useDetailActionQuery({
     variables: {
-      id: props.nodeId,
+      id: props.actionId,
     },
   });
 
@@ -38,7 +38,7 @@ export const DynamicYieldDisplay = (props: {
   return (
     <div>
       <ReturnsContainer
-        ports={data.node.returns}
+        ports={data.action.returns}
         values={props.values}
         registry={registry}
         className="p-2"
@@ -72,8 +72,8 @@ export const AssignationToaster = (props: { id: string }) => {
       onMouseLeave={() => setHovered(false)}
     >
       {ass.error && <Alert className="bg-red-800">{ass.error}</Alert>}
-      {ass.yield && ass.nodeId && (
-        <DynamicYieldDisplay values={ass.yield} nodeId={ass.nodeId} />
+      {ass.yield && ass.actionId && (
+        <DynamicYieldDisplay values={ass.yield} actionId={ass.actionId} />
       )}
       {ass.cancelled && <Alert>{ass.message}</Alert>}
       {ass.progress != undefined && <Progress value={ass.progress} />}

@@ -1,8 +1,8 @@
 fragment Agent on Agent {
   id
   instanceId
-  templates {
-    ...ListTemplate
+  implementations {
+    ...ListImplementation
   }
 
   states {

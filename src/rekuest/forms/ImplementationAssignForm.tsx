@@ -2,18 +2,16 @@ import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
-import { useNodeDescription } from "@/lib/rekuest/NodeDescription";
+import { useActionDescription } from "@/lib/rekuest/ActionDescription";
+import { cn } from "@/lib/utils";
 import { ApolloError } from "@apollo/client";
 import { toast } from "sonner";
 import { PostmanAssignationFragment } from "../api/graphql";
+import { useImplementationAction } from "../hooks/useImplementationAction";
 import { usePortForm } from "../hooks/usePortForm";
-import { useTemplateAction } from "../hooks/useTemplateAction";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
-import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
-import { TooltipTrigger } from "@radix-ui/react-tooltip";
-import { cn } from "@/lib/utils";
 
-export type TemplateAssignFormProps = {
+export type ImplementationAssignFormProps = {
   id: string;
   onAssign?: (assignation: PostmanAssignationFragment) => void;
   onError?: (error: any) => void;
@@ -21,17 +19,17 @@ export type TemplateAssignFormProps = {
   hidden?: { [key: string]: any };
 };
 
-export const TemplateAssignForm = (props: TemplateAssignFormProps) => {
-  const { assign, latestAssignation, cancel, template } = useTemplateAction({
+export const ImplementationAssignForm = (props: ImplementationAssignFormProps) => {
+  const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
     id: props.id,
   });
 
-  const description = useNodeDescription({
-    description: template?.node.description || "",
+  const description = useActionDescription({
+    description: implementation?.action.description || "",
   });
 
   const form = usePortForm({
-    ports: template?.node.args || [],
+    ports: implementation?.action.args || [],
     overwrites: { ...latestAssignation?.args, ...props.args },
     reValidateMode: "onChange",
   });
@@ -42,7 +40,7 @@ export const TemplateAssignForm = (props: TemplateAssignFormProps) => {
     console.log(data);
     try {
       let assignation = await assign({
-        template: props.id,
+        implementation: props.id,
         args: data,
         hooks: [],
       });
@@ -67,8 +65,8 @@ export const TemplateAssignForm = (props: TemplateAssignFormProps) => {
   return (
     <>
       <h1 className="text-lg font-semibold mb-1">
-        {template?.node.name}
-        <p className="text-muted-foreground text-xs">@ {template?.interface}</p>
+        {implementation?.action.name}
+        <p className="text-muted-foreground text-xs">@ {implementation?.interface}</p>
       </h1>
 
       <p className="text-mutated">{description}</p>
@@ -76,10 +74,10 @@ export const TemplateAssignForm = (props: TemplateAssignFormProps) => {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
           <ArgsContainer
             registry={registry}
-            ports={template?.node.args || []}
+            ports={implementation?.action.args || []}
             path={[]}
-            bound={template?.id}
-            groups={template?.node.portGroups}
+            bound={implementation?.id}
+            groups={implementation?.action.portGroups}
             hidden={props.hidden}
           />
 

@@ -3,7 +3,7 @@ import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { DroppableNavLink } from "@/components/ui/link";
-import { usePrimaryReturnNodesQuery } from "@/rekuest/api/graphql";
+import { usePrimaryReturnActionsQuery } from "@/rekuest/api/graphql";
 import { SparkleIcon, UploadIcon } from "lucide-react";
 import React from "react";
 import RenderedPlotList from "../components/lists/RenderedPlotList";
@@ -11,7 +11,7 @@ import RenderedPlotList from "../components/lists/RenderedPlotList";
 export type IRepresentationScreenProps = {};
 
 export const PlotterSidebar = (props: {}) => {
-  const { data } = usePrimaryReturnNodesQuery({
+  const { data } = usePrimaryReturnActionsQuery({
     variables: {
       pagination: {
         limit: 5,

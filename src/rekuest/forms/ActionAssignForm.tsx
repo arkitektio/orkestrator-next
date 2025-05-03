@@ -8,9 +8,9 @@ import {
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
-import { NodeDescription } from "@/lib/rekuest/NodeDescription";
+import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import { useHooksSearchLazyQuery } from "../api/graphql";
-import { useNodeAction } from "../hooks/useNodeAction";
+import { useAction } from "../hooks/useAction";
 import { usePortForm } from "../hooks/usePortForm";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
@@ -20,17 +20,17 @@ export const SelectHooks = (props: {}) => {
   return <GraphQLSearchField name="hooks" searchQuery={search} />;
 };
 
-export const NodeAssignForm = (props: {
+export const ActionAssignForm = (props: {
   id: string;
   args?: { [key: string]: any };
   hidden?: { [key: string]: any };
 }) => {
-  const { assign, latestAssignation, cancel, node } = useNodeAction({
+  const { assign, latestAssignation, cancel, action } = useAction({
     id: props.id,
   });
 
   const form = usePortForm({
-    ports: node?.args || [],
+    ports: action?.args || [],
     overwrites: props.args,
   });
 
@@ -38,7 +38,7 @@ export const NodeAssignForm = (props: {
     console.log("Submitting");
     console.log(data);
     await assign({
-      node: props.id,
+      action: props.id,
       args: data,
       hooks: [],
     });
@@ -53,24 +53,24 @@ export const NodeAssignForm = (props: {
   return (
     <div>
       <DialogHeader>
-        <DialogTitle>{node?.name}</DialogTitle>
+        <DialogTitle>{action?.name}</DialogTitle>
       </DialogHeader>
       <DialogDescription className="mt2">
-        {node?.description && (
-          <NodeDescription description={node?.description} variables={data} />
+        {action?.description && (
+          <ActionDescription description={action?.description} variables={data} />
         )}
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-6 mt-4"
           >
-            {node?.args.length == 0 && (
+            {action?.args.length == 0 && (
               <div className="text-muted"> No Arguments needed</div>
             )}
             <ArgsContainer
               registry={registry}
-              groups={node?.portGroups || []}
-              ports={node?.args || []}
+              groups={action?.portGroups || []}
+              ports={action?.args || []}
               hidden={props.args}
               path={[]}
             />

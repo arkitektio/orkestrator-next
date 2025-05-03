@@ -1,16 +1,14 @@
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { useCallback } from "react";
-import { toast } from "sonner";
 import {
   AssignInput,
-  AssignationEventKind,
-  DetailTemplateFragment,
+  DetailActionFragment,
   PostmanAssignationFragment,
   ReserveMutationVariables,
   useAssignMutation,
   useAssignationsQuery,
   useCancelMutation,
-  useTemplateQuery,
+  useDetailActionQuery
 } from "../api/graphql";
 
 export type ActionReserveVariables = Omit<
@@ -19,8 +17,7 @@ export type ActionReserveVariables = Omit<
 >;
 export type ActionAssignVariables = Omit<AssignInput, "instanceId">;
 
-export type UseTemplateActionReturn<T> = {
-  template?: DetailTemplateFragment;
+export type useActionReturn<T> = {
   assign: (
     variables: ActionAssignVariables,
   ) => Promise<PostmanAssignationFragment>;
@@ -28,18 +25,19 @@ export type UseTemplateActionReturn<T> = {
   cancel: () => void;
   assignations?: PostmanAssignationFragment[];
   latestAssignation?: PostmanAssignationFragment;
+  action: DetailActionFragment | undefined;
 };
 
-export type UseTemplateAction<T> = {
+export type useActionOptions<T> = {
   id: string;
 };
 
-export const useTemplateAction = <T extends any>(
-  options: UseTemplateAction<T>,
-): UseTemplateActionReturn<T> => {
+export const useAction = <T extends any>(
+  options: useActionOptions<T>,
+): useActionReturn<T> => {
   const { settings } = useSettings();
 
-  const { data, variables, refetch } = useTemplateQuery({
+  const { data, variables, refetch } = useDetailActionQuery({
     variables: {
       id: options.id,
     },
@@ -55,42 +53,39 @@ export const useTemplateAction = <T extends any>(
   const [cancelAssign] = useCancelMutation({});
 
   let assignations = assignations_data?.assignations.filter(
-    (x) => x.template?.id == data?.template.id,
+    (x) => x.action.id == options.id,
   );
 
-  const latestAssignation = data?.template.myLatestAssignation || assignations?.at(0);
+  const latestAssignation = assignations?.at(-1);
 
   const assign = useCallback(
     async (vars: ActionAssignVariables) => {
       console.log("Assigning", vars);
 
-      try {
-        let mutation = await postAssign({
-          variables: {
-            input: {
-              ...vars,
-              template: options.id,
-              args: vars.args,
-              instanceId: settings.instanceId,
-              hooks: [],
-            },
+      let mutation = await postAssign({
+        variables: {
+          input: {
+            ...vars,
+            args: vars.args,
+            instanceId: settings.instanceId,
+            hooks: [],
           },
-        });
+        },
+      });
 
-        console.log(mutation);
+      console.log(mutation);
 
-        let assignation = mutation.data?.assign;
+      let assignation = mutation.data?.assign;
 
-        if (!assignation) {
-          throw Error(`Couldn't assign`);
-        }
-
-        return assignation;
-      } catch (error: any) {
-        throw Error(`Couldn't assign: ${error.message}`);
+      if (!assignation) {
+        console.error(mutation);
+        const errorMessages = mutation.errors || "Unknown error";
+        throw Error(`Couldn't assign: ${errorMessages}`);
       }
+
+      return assignation;
     },
-    [postAssign, settings.instanceId, options.id],
+    [postAssign, settings],
   );
 
   const reassign = useCallback(() => {
@@ -100,7 +95,7 @@ export const useTemplateAction = <T extends any>(
     }
     return assign({
       args: latestAssignation.args,
-      template: latestAssignation?.template?.id,
+      action: latestAssignation?.action.id,
       hooks: [],
     });
   }, [assign]);
@@ -110,9 +105,6 @@ export const useTemplateAction = <T extends any>(
       throw Error("Cannot Reassign");
     }
 
-    if (latestAssignation.status == AssignationEventKind.Done) {
-      throw Error("Cannot Cancel as it is done");
-    }
 
     let mutation = await cancelAssign({
       variables: {
@@ -139,6 +131,6 @@ export const useTemplateAction = <T extends any>(
     latestAssignation,
     cancel,
     assignations,
-    template: data?.template,
+    action: data?.action,
   };
 };

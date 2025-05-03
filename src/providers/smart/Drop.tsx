@@ -2,12 +2,12 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { SMART_MODEL_DROP_TYPE } from "@/constants";
 import { cn } from "@/lib/utils";
 import {
-  ListTemplateFragment,
-  PrimaryNodeFragment,
+  ListImplementationFragment,
+  PrimaryActionFragment,
 } from "@/rekuest/api/graphql";
 import { SmartContext } from "@/rekuest/buttons/ObjectButton";
-import { NodeAssignForm } from "@/rekuest/forms/NodeAssignForm";
-import { TemplateAssignForm } from "@/rekuest/forms/TemplateAssignForm";
+import { ActionAssignForm } from "@/rekuest/forms/ActionAssignForm";
+import { ImplementationAssignForm } from "@/rekuest/forms/ImplementationAssignForm";
 import { useAssign } from "@/rekuest/hooks/useAssign";
 import { Structure } from "@/types";
 import { useFloating } from "@floating-ui/react";
@@ -121,14 +121,14 @@ export const SmartDropZone = ({
   });
 
   const [dialogNode, setDialogNode] = React.useState<{
-    node: PrimaryNodeFragment;
+    node: PrimaryActionFragment;
     args: { [key: string]: any };
-    template?: ListTemplateFragment;
+    template?: ListImplementationFragment;
   } | null>(null);
 
   const { assign } = useAssign();
 
-  const conditionalAssign = async (node: PrimaryNodeFragment) => {
+  const conditionalAssign = async (node: PrimaryActionFragment) => {
     let the_key = node.args?.at(0)?.key;
 
     let neededAdditionalPorts = node.args.filter(
@@ -156,8 +156,8 @@ export const SmartDropZone = ({
   };
 
   const onTemplateSelect = async (
-    node: PrimaryNodeFragment,
-    template: ListTemplateFragment,
+    node: PrimaryActionFragment,
+    template: ListImplementationFragment,
   ) => {
     let the_key = node.args?.at(0)?.key;
 
@@ -229,13 +229,13 @@ export const SmartDropZone = ({
         </div>
         <DialogContent>
           {dialogNode?.template ? (
-            <TemplateAssignForm
+            <ImplementationAssignForm
               id={dialogNode.template.id}
               args={dialogNode.args}
               hidden={dialogNode.args}
             />
           ) : (
-            <NodeAssignForm
+            <ActionAssignForm
               id={dialogNode?.node.id || ""}
               args={dialogNode?.args}
               hidden={dialogNode?.args}

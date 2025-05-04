@@ -16,9 +16,8 @@ import { rekuestActionToMatchingNode } from "@/reaktion/plugins/rekuest";
 import { nodeIdBuilder } from "@/reaktion/utils";
 import {
   ConstantActionDocument,
-  ConstantNodeQuery,
+  ConstantActionQuery,
   PortKind,
-  PortScope,
   useAllActionsQuery,
   useProtocolOptionsLazyQuery,
 } from "@/rekuest/api/graphql";
@@ -141,10 +140,11 @@ const clickReactiveNodes = (search: string): ReactiveNodeSuggestions[] => {
           outs: [
             [
               {
-                scope: PortScope.Global,
                 description: "Just an Int",
                 key: "the_int",
                 kind: PortKind.Int,
+                nullable: false,
+                __typename: "Port",
               },
             ],
           ],
@@ -174,7 +174,8 @@ const clickReactiveNodes = (search: string): ReactiveNodeSuggestions[] => {
         outs: [
           [
             {
-              scope: PortScope.Global,
+              __typename: "Port",
+              nullable: false,
               description: "Just a String",
               key: "string",
               kind: PortKind.String,
@@ -256,14 +257,14 @@ const ClickArkitektNodes = (props: {
   const onNodeClick = (id: string) => {
     client &&
       client
-        .query<ConstantNodeQuery>({
+        .query<ConstantActionQuery>({
           query: ConstantActionDocument,
           variables: { id: id },
         })
         .then(async (event) => {
           console.log(event);
-          if (event.data?.node) {
-            let flownode = rekuestActionToMatchingNode(event.data?.node, {
+          if (event.data?.action) {
+            let flownode = rekuestActionToMatchingNode(event.data?.action, {
               x: 0,
               y: 0,
             });
@@ -276,14 +277,14 @@ const ClickArkitektNodes = (props: {
   const onTemplateClick = (nodeid: string, template: string) => {
     client &&
       client
-        .query<ConstantNodeQuery>({
+        .query<ConstantActionQuery>({
           query: ConstantActionDocument,
           variables: { id: nodeid },
         })
         .then(async (event) => {
           console.log(event);
-          if (event.data?.node) {
-            let flownode = rekuestActionToMatchingNode(event.data?.node, {
+          if (event.data?.action) {
+            let flownode = rekuestActionToMatchingNode(event.data?.action, {
               x: 0,
               y: 0,
             });
@@ -297,7 +298,7 @@ const ClickArkitektNodes = (props: {
 
   return (
     <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
-      {data?.nodes.map((node) => (
+      {data?.actions.map((node) => (
         <Tooltip>
           <TooltipTrigger>
             <>

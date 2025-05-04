@@ -36,7 +36,7 @@ import { ErrorBox } from "@/reaktion/edit/components/boxes/ErrorBox";
 import {
   ConstantActionDocument,
   ConstantActionQuery,
-  PortScope,
+  PortKind,
   useImplementationsQuery,
 } from "@/rekuest/api/graphql";
 import {
@@ -142,13 +142,13 @@ function calculateMidpoint(
 const hasBoundPort = (node: FlowNode<BaseGraphNodeFragment>): boolean => {
   return (
     node.data.ins?.find(
-      (s) => s && s.length && s.find((i) => i.scope == PortScope.Local),
+      (s) => s && s.length && s.find((i) => i.kind == PortKind.MemoryStructure),
     ) ||
     node.data.outs?.find(
-      (s) => s && s.length && s.find((i) => i.scope == PortScope.Local),
+      (s) => s && s.length && s.find((i) => i.kind == PortKind.MemoryStructure),
     ) ||
-    node.data.voids?.find((i) => i.scope == PortScope.Local) ||
-    node.data.constants?.find((i) => i.scope == PortScope.Local)
+    node.data.voids?.find((i) => i.kind == PortKind.MemoryStructure) ||
+    node.data.constants?.find((i) => i.kind == PortKind.MemoryStructure)
   );
 };
 

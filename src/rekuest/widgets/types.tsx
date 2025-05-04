@@ -89,6 +89,7 @@ export type LabellablePort = {
   identifier?: string;
   nullable?: boolean;
   children?: (LabellablePort | null)[] | null;
+  choices?: Port["choices"];
 };
 
 export type PortablePort = LabellablePort & {

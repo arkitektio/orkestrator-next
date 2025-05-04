@@ -1,47 +1,27 @@
-import { useCursor, Wireframe } from "@react-three/drei";
 
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { DelegatingStructureWidget } from "@/components/widgets/returns/DelegatingStructureWidget";
-import { MikroROI } from "@/linkers";
+import { SliderTooltip } from "@/components/ui/slider-tooltip";
+import { StructureInfo } from "@/kraph/components/mini/StructureInfo";
 import {
-  ColorMap,
   ListRgbContextFragment,
   ListRoiFragment,
   RgbImageFragment,
-  RgbViewFragment,
+  RgbViewFragment
 } from "@/mikro-next/api/graphql";
-import { PortKind, PortScope } from "@/rekuest/api/graphql";
-import { OrbitControls, OrthographicCamera } from "@react-three/drei";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
 import {
   Dispatch,
   SetStateAction,
   Suspense,
-  useCallback,
-  useRef,
-  useState,
+  useState
 } from "react";
-import { useNavigate } from "react-router-dom";
-import * as THREE from "three";
-import {
-  blueColormap,
-  createColormapTexture,
-  greenColormap,
-  redColormap,
-  viridisColormap,
-} from "./final/colormaps";
-import { useArray } from "./final/useArray";
-import { useAsyncChunk } from "./final/useChunkTexture";
-import { BasicIndexer, IndexerProjection, Slice } from "./indexer";
-import { ROIPolygon } from "./final/ROIPolygon";
-import { WireframeMaterial } from "@react-three/drei/materials/WireframeMaterial";
 import { AutoZoomCamera } from "./final/AutoZoomCamera";
 import { ChunkBitmapTexture } from "./final/ChunkMesh";
-import { ShortcutToolbar } from "@/rekuest/components/toolbars/ShortcutToolbar";
-import { StructureInfo } from "@/kraph/components/mini/StructureInfo";
-import { Slider } from "@/components/ui/slider";
-import { SliderTooltip } from "@/components/ui/slider-tooltip";
-import { Button } from "@/components/ui/button";
+import { ROIPolygon } from "./final/ROIPolygon";
+import { useArray } from "./final/useArray";
+import { BasicIndexer, IndexerProjection, Slice } from "./indexer";
 
 export interface RGBDProps {
   context: ListRgbContextFragment;

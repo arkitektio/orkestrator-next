@@ -8,7 +8,6 @@ import {
   GraphNodeKind,
   FlussPortFragment as PortFragment,
   PortKind,
-  PortScope,
   ReactiveNodeFragment,
   ReactiveImplementationFragment,
   StreamItemInput,
@@ -236,14 +235,13 @@ export const listPortToSingle = (
 };
 
 export const singleToList = (port: PortFragment): PortFragment => {
-  const { __typename, key, ...rest } = port;
+
   return {
     nullable: false,
     kind: PortKind.List,
-    scope: PortScope.Global,
-    key: key,
+    key: port.key,
     __typename: "Port",
-    children: [rest],
+    children: [{...port, key: "0"}],
   };
 };
 
@@ -264,8 +262,8 @@ export const portToReadble = (
   if (!port) return "undefined";
 
   let answer = withLocalDisclaimer
-    ? port.scope == PortScope.Local
-      ? "local "
+    ? port.kind == PortKind.MemoryStructure
+      ? "memory"
       : ""
     : "";
   if (port.nullable) answer += "?";

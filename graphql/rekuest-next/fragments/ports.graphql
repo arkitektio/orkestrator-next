@@ -25,7 +25,6 @@ fragment FilterPort on Port {
   kind
   key
   identifier
-  scope
   assignWidget {
     ... on SearchAssignWidget {
       query
@@ -73,7 +72,6 @@ fragment ChildPortNested on Port {
   children {
     kind
     identifier
-    scope
     assignWidget {
       ...AssignWidget
     }
@@ -81,7 +79,11 @@ fragment ChildPortNested on Port {
       ...ReturnWidget
     }
   }
-  scope
+  choices {
+    value
+    label
+    description
+  }
   assignWidget {
     ...AssignWidget
   }
@@ -97,7 +99,6 @@ fragment ChildPort on Port {
   kind
   key
   identifier
-  scope
   children {
     ...ChildPortNested
   }
@@ -106,6 +107,11 @@ fragment ChildPort on Port {
   }
   returnWidget {
     ...ReturnWidget
+  }
+  choices {
+    value
+    label
+    description
   }
   nullable
   description
@@ -157,7 +163,6 @@ fragment Port on Port {
   label
   nullable
   description
-  scope
   effects {
     ...PortEffect
   }
@@ -171,6 +176,11 @@ fragment Port on Port {
   identifier
   children {
     ...ChildPort
+  }
+  choices {
+    value
+    label
+    description
   }
   default
   nullable

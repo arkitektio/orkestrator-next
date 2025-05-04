@@ -68,8 +68,14 @@ export const portToZod = (port: LabellablePort): any => {
     case PortKind.String:
       baseType = z.string({ message: "Please enter a string" });
       break;
+    case PortKind.Enum:
+      baseType = z.enum( (port.choices?.map(c => c.value) || ["fake"]) as [string], { message: "Please enter a kind" });
+      break;
     case PortKind.Int:
       baseType = z.coerce.number({ message: "Please enter a valid integer" });
+      break;
+    case PortKind.MemoryStructure:
+      baseType = z.string({ message: "Please enter a valid memory structure" });
       break;
     case PortKind.Float:
       baseType = z.coerce.number(
@@ -79,7 +85,7 @@ export const portToZod = (port: LabellablePort): any => {
       })
       break;
     case PortKind.Structure:
-      baseType = z.string();
+      baseType = z.string({ message: "Please enter a valid structure" });
       break;
     case PortKind.Union:
       let variants = port.children?.filter(notEmpty);

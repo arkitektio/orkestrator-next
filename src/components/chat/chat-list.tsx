@@ -3,7 +3,7 @@ import {
   DetailRoomFragment,
   ListMessageFragment,
 } from "@/lok-next/api/graphql";
-import { PortKind, PortScope } from "@/rekuest/api/graphql";
+import { PortKind } from "@/rekuest/api/graphql";
 import { AnimatePresence, motion } from "framer-motion";
 import React, { useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -90,7 +90,6 @@ export function ChatList({
                             __typename: "Port",
                             key: index.toString(),
                             nullable: false,
-                            scope: PortScope.Global,
                           }}
                           value={s.object}
                         />

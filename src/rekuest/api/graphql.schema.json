@@ -2147,7 +2147,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"27070a06-23c9-4fc4-be53-42de03d869e1\"",
+            "defaultValue": "\"08467f5d-8809-44d6-ab6a-f8ef4a5de6e4\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -9667,6 +9667,26 @@
             "deprecationReason": null
           },
           {
+            "name": "choices",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "Choice",
+                  "ofType": null
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "default",
             "description": null,
             "args": [],
@@ -9790,22 +9810,6 @@
               "kind": "INTERFACE",
               "name": "ReturnWidget",
               "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "scope",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "ENUM",
-                "name": "PortScope",
-                "ofType": null
-              }
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -10148,6 +10152,26 @@
             "deprecationReason": null
           },
           {
+            "name": "choices",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "ChoiceInput",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "default",
             "description": null,
             "type": {
@@ -10276,22 +10300,6 @@
             "deprecationReason": null
           },
           {
-            "name": "scope",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "ENUM",
-                "name": "PortScope",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "validators",
             "description": null,
             "type": {
@@ -10344,6 +10352,12 @@
             "deprecationReason": null
           },
           {
+            "name": "ENUM",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "FLOAT",
             "description": null,
             "isDeprecated": false,
@@ -10357,6 +10371,12 @@
           },
           {
             "name": "LIST",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "MEMORY_STRUCTURE",
             "description": null,
             "isDeprecated": false,
             "deprecationReason": null
@@ -10478,30 +10498,6 @@
         ],
         "interfaces": null,
         "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "ENUM",
-        "name": "PortScope",
-        "description": "The kind of port",
-        "isOneOf": null,
-        "fields": null,
-        "inputFields": null,
-        "interfaces": null,
-        "enumValues": [
-          {
-            "name": "GLOBAL",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "LOCAL",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
         "possibleTypes": null
       },
       {
@@ -13056,7 +13052,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"376e351f-e567-4651-813e-bdbe0f05f829\"",
+            "defaultValue": "\"d0981f47-9ec7-480f-9c40-c320e77992aa\"",
             "isDeprecated": false,
             "deprecationReason": null
           },

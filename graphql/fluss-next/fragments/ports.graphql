@@ -54,7 +54,6 @@ fragment FlussChildPortNested on Port {
     key
     kind
     identifier
-    scope
     assignWidget {
       ...FlussAssignWidget
     }
@@ -62,7 +61,6 @@ fragment FlussChildPortNested on Port {
       ...FlussReturnWidget
     }
   }
-  scope
   assignWidget {
     ...FlussAssignWidget
   }
@@ -76,7 +74,6 @@ fragment FlussChildPort on Port {
   __typename
   kind
   identifier
-  scope
   key
   children {
     ...FlussChildPortNested
@@ -133,7 +130,6 @@ fragment FlussPort on Port {
   label
   nullable
   description
-  scope
   effects {
     ...FlussPortEffect
   }

@@ -1302,6 +1302,8 @@ export type ListDefinitionFragment = { __typename?: 'Definition', id: string, na
 
 export type ListFlavourFragment = { __typename?: 'Flavour', id: string, name: string, release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } }, selectors: Array<{ __typename?: 'CPUSelector' } | { __typename?: 'CudaSelector', cudaVersion?: string | null, cudaCores?: number | null } | { __typename?: 'RocmSelector', apiVersion?: string | null, apiThing?: string | null }> };
 
+export type FlavourFragment = { __typename?: 'Flavour', description: string, id: string, name: string, release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } }, selectors: Array<{ __typename?: 'CPUSelector' } | { __typename?: 'CudaSelector', cudaVersion?: string | null, cudaCores?: number | null } | { __typename?: 'RocmSelector', apiVersion?: string | null, apiThing?: string | null }> };
+
 export type ListPodFragment = { __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null };
 
 export type PodFragment = { __typename?: 'Pod', id: string, podId: string, status: PodStatus, clientId?: string | null, backend: { __typename?: 'Backend', id: string, clientId: string, instanceId: string, name: string, kind: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> }, latestLogDump?: { __typename?: 'LogDump', logs: string, createdAt: any } | null, resource?: { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } } | null, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } } };
@@ -1428,6 +1430,18 @@ export type AllPrimaryDefinitionsQueryVariables = Exact<{
 
 
 export type AllPrimaryDefinitionsQuery = { __typename?: 'Query', definitions: Array<{ __typename?: 'Definition', id: string, name: string, hash: any, description?: string | null, flavours: Array<{ __typename?: 'Flavour', id: string, name: string, release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } }> }> };
+
+export type ListFlavoursQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ListFlavoursQuery = { __typename?: 'Query', flavours: Array<{ __typename?: 'Flavour', id: string, name: string, release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } }, selectors: Array<{ __typename?: 'CPUSelector' } | { __typename?: 'CudaSelector', cudaVersion?: string | null, cudaCores?: number | null } | { __typename?: 'RocmSelector', apiVersion?: string | null, apiThing?: string | null }> }> };
+
+export type GetFlavourQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetFlavourQuery = { __typename?: 'Query', flavour: { __typename?: 'Flavour', description: string, id: string, name: string, release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } }, selectors: Array<{ __typename?: 'CPUSelector' } | { __typename?: 'CudaSelector', cudaVersion?: string | null, cudaCores?: number | null } | { __typename?: 'RocmSelector', apiVersion?: string | null, apiThing?: string | null }> } };
 
 export type ListPodQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1789,6 +1803,12 @@ export const ListDefinitionFragmentDoc = gql`
   }
 }
     `;
+export const FlavourFragmentDoc = gql`
+    fragment Flavour on Flavour {
+  ...ListFlavour
+  description
+}
+    ${ListFlavourFragmentDoc}`;
 export const ListPodFragmentDoc = gql`
     fragment ListPod on Pod {
   id
@@ -2213,6 +2233,75 @@ export function useAllPrimaryDefinitionsLazyQuery(baseOptions?: ApolloReactHooks
 export type AllPrimaryDefinitionsQueryHookResult = ReturnType<typeof useAllPrimaryDefinitionsQuery>;
 export type AllPrimaryDefinitionsLazyQueryHookResult = ReturnType<typeof useAllPrimaryDefinitionsLazyQuery>;
 export type AllPrimaryDefinitionsQueryResult = Apollo.QueryResult<AllPrimaryDefinitionsQuery, AllPrimaryDefinitionsQueryVariables>;
+export const ListFlavoursDocument = gql`
+    query ListFlavours {
+  flavours {
+    ...ListFlavour
+  }
+}
+    ${ListFlavourFragmentDoc}`;
+
+/**
+ * __useListFlavoursQuery__
+ *
+ * To run a query within a React component, call `useListFlavoursQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListFlavoursQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListFlavoursQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useListFlavoursQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListFlavoursQuery, ListFlavoursQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListFlavoursQuery, ListFlavoursQueryVariables>(ListFlavoursDocument, options);
+      }
+export function useListFlavoursLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListFlavoursQuery, ListFlavoursQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListFlavoursQuery, ListFlavoursQueryVariables>(ListFlavoursDocument, options);
+        }
+export type ListFlavoursQueryHookResult = ReturnType<typeof useListFlavoursQuery>;
+export type ListFlavoursLazyQueryHookResult = ReturnType<typeof useListFlavoursLazyQuery>;
+export type ListFlavoursQueryResult = Apollo.QueryResult<ListFlavoursQuery, ListFlavoursQueryVariables>;
+export const GetFlavourDocument = gql`
+    query GetFlavour($id: ID!) {
+  flavour(id: $id) {
+    ...Flavour
+  }
+}
+    ${FlavourFragmentDoc}`;
+
+/**
+ * __useGetFlavourQuery__
+ *
+ * To run a query within a React component, call `useGetFlavourQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetFlavourQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetFlavourQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetFlavourQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetFlavourQuery, GetFlavourQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetFlavourQuery, GetFlavourQueryVariables>(GetFlavourDocument, options);
+      }
+export function useGetFlavourLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetFlavourQuery, GetFlavourQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetFlavourQuery, GetFlavourQueryVariables>(GetFlavourDocument, options);
+        }
+export type GetFlavourQueryHookResult = ReturnType<typeof useGetFlavourQuery>;
+export type GetFlavourLazyQueryHookResult = ReturnType<typeof useGetFlavourLazyQuery>;
+export type GetFlavourQueryResult = Apollo.QueryResult<GetFlavourQuery, GetFlavourQueryVariables>;
 export const ListPodDocument = gql`
     query ListPod {
   pods {

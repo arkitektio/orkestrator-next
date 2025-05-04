@@ -261,11 +261,7 @@ export const portToReadble = (
 ): string => {
   if (!port) return "undefined";
 
-  let answer = withLocalDisclaimer
-    ? port.kind == PortKind.MemoryStructure
-      ? "memory"
-      : ""
-    : "";
+  let answer = "";
   if (port.nullable) answer += "?";
   if (port.kind == PortKind.List) {
     answer +=
@@ -311,6 +307,14 @@ export const portToReadble = (
   }
 
   if (port.kind == PortKind.Structure) {
+    answer += port.identifier;
+  }
+
+  if (port.kind == PortKind.Enum) {
+    answer += port.identifier;
+  }
+
+  if (port.kind == PortKind.MemoryStructure) {
     answer += port.identifier;
   }
 

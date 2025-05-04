@@ -10,6 +10,7 @@ import PodsPage from "./pages/PodsPage";
 import ReleasePage from "./pages/ReleasePage";
 import StandardPane from "./panes/StandardPane";
 import ResourcePage from "./pages/ResourcePage";
+import FlavourPage from "./pages/FlavourPage";
 interface Props {}
 
 export const KabinetModule: React.FC<Props> = (props) => {
@@ -23,6 +24,7 @@ export const KabinetModule: React.FC<Props> = (props) => {
           <Route path="resources/:id" element={<ResourcePage />} />
           <Route path="backends/:id" element={<BackendPage />} />
           <Route path="releases/:id" element={<ReleasePage />} />
+          <Route path="flavours/:id" element={<FlavourPage />} />
           <Route path="*" element={<HomePage />} />
         </Routes>
       </ModuleLayout>

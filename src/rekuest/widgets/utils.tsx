@@ -51,6 +51,12 @@ export const portToLabel = (port: LabellablePort): string => {
   if (port.kind == PortKind.Model) {
     return port.identifier || "Unknown Model";
   }
+  if (port.kind == PortKind.Enum) {
+    return port.identifier || "Unknown Enum";
+  }
+  if (port.kind == PortKind.MemoryStructure) {
+    return port.identifier || "Unknown Memory Structure";
+  }
   if (port.kind == PortKind.Dict) {
     const firstChild = port.children?.at(0);
     return firstChild

@@ -40,9 +40,6 @@ fragment DetailAction on Action {
   reservations {
     ...ListReservation
   }
-  dependencyGraph {
-    ...DependencyGraph
-  }
   testCases {
     ...ListTestCase
   }

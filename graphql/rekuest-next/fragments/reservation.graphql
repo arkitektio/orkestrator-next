@@ -19,7 +19,6 @@ fragment PostmanReservation on Reservation {
   happy
 }
 
-
 fragment ListReservation on Reservation {
   id
   title
@@ -37,8 +36,5 @@ fragment DetailReservation on Reservation {
     name
     description
     ...Ports
-  }
-  dependencyGraph {
-    ...DependencyGraph
   }
 }

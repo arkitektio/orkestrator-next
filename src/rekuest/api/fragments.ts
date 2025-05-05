@@ -6,11 +6,6 @@
       }
       const result: PossibleTypesResultData = {
   "possibleTypes": {
-    "ActionActionInvalidActionImplementationAction": [
-      "ActionAction",
-      "ImplementationAction",
-      "InvalidAction"
-    ],
     "AssignWidget": [
       "ChoiceAssignWidget",
       "CustomAssignWidget",
@@ -18,10 +13,6 @@
       "SliderAssignWidget",
       "StateChoiceAssignWidget",
       "StringAssignWidget"
-    ],
-    "DependencyEdgeImplementationEdge": [
-      "DependencyEdge",
-      "ImplementationEdge"
     ],
     "Effect": [
       "CustomEffect",

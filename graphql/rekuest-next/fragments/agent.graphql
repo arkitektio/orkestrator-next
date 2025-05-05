@@ -11,11 +11,11 @@ fragment Agent on Agent {
     ...State
   }
   registry {
-    app {
+    client {
       clientId
     }
     user {
-      id
+      sub
     }
   }
   pinned
@@ -35,11 +35,11 @@ fragment ListAgent on Agent {
   lastSeen
   pinned
   registry {
-    app {
+    client {
       clientId
     }
     user {
-      id
+      sub
     }
   }
 }
@@ -53,7 +53,6 @@ query AgentOptions($search: String, $values: [ID!]) {
     label: name
   }
 }
-
 
 fragment AgentChangeEvent on AgentChangeEvent {
   create {

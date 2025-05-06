@@ -108,7 +108,7 @@ export const PinAgent = (props: { agent: AgentFragment }) => {
 export const ManagedByCard = (props: { agent: AgentFragment }) => {
   const { data } = useGetPodForAgentQuery({
     variables: {
-      clientId: props.agent.registry.app.clientId,
+      clientId: props.agent.registry.client.clientId,
       instanceId: props.agent.instanceId,
     },
   });

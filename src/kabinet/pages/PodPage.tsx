@@ -77,7 +77,7 @@ const RefreshLogsButton = (props: {
 
   return (
     <div className="flex flex-row gap-2">
-      {data?.templates.map((t) => (
+      {data?.implementations.map((t) => (
         <Tooltip>
           <TooltipTrigger>
             <AssignButton

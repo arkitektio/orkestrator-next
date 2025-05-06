@@ -144,7 +144,9 @@ export default asDetailQueryRoute(
           <MultiSidebar
             map={{
               Comments: <MikroImage.Komments object={data?.image?.id} />,
-              Provenance: <ProvenanceSidebar items={data?.image.history} />,
+              Provenance: (
+                <ProvenanceSidebar items={data?.image.provenanceEntries} />
+              ),
               Renders: (
                 <div className="p-3 flex flex-col gap-2">
                   {data.image.renders.map((render, index) => (
@@ -251,9 +253,7 @@ export default asDetailQueryRoute(
                       <UserInfo sub={data?.image?.creator?.sub} />
                     )}
                   </div>
-                  <div className="font-light my-2 ">
-                    Knowledge{" "}
-                  </div>
+                  <div className="font-light my-2 ">Knowledge </div>
                   <MikroImage.TinyKnowledge object={data?.image?.id} />
 
                   <div className="flex-row flex gap-2 mt-2"></div>

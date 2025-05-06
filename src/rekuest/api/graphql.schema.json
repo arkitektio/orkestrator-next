@@ -41,12 +41,12 @@
       {
         "kind": "OBJECT",
         "name": "Action",
-        "description": null,
+        "description": "Represents an executable action in the system.",
         "isOneOf": null,
         "fields": [
           {
             "name": "args",
-            "description": null,
+            "description": "Input arguments (ports) for the action.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -70,7 +70,7 @@
           },
           {
             "name": "collections",
-            "description": null,
+            "description": "Collections to which this action belongs.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -94,7 +94,7 @@
           },
           {
             "name": "definedAt",
-            "description": null,
+            "description": "Timestamp when the action was defined.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -110,7 +110,7 @@
           },
           {
             "name": "description",
-            "description": null,
+            "description": "Optional description of the action.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -122,7 +122,7 @@
           },
           {
             "name": "hash",
-            "description": null,
+            "description": "Unique hash identifying the action definition.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -138,7 +138,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "Unique ID of the action.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -154,7 +154,7 @@
           },
           {
             "name": "implementations",
-            "description": null,
+            "description": "List of implementations for this action.",
             "args": [
               {
                 "name": "filters",
@@ -203,7 +203,7 @@
           },
           {
             "name": "interfaces",
-            "description": null,
+            "description": "Interfaces implemented by the action.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -227,7 +227,7 @@
           },
           {
             "name": "isDev",
-            "description": null,
+            "description": "Marks whether the action is in development.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -243,7 +243,7 @@
           },
           {
             "name": "isTestFor",
-            "description": null,
+            "description": "Actions for which this is a test.",
             "args": [
               {
                 "name": "filters",
@@ -304,7 +304,7 @@
           },
           {
             "name": "kind",
-            "description": null,
+            "description": "The kind or category of the action.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -320,7 +320,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "Name of the action.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -336,7 +336,7 @@
           },
           {
             "name": "pinned",
-            "description": null,
+            "description": "Check if the current user has pinned this action.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -352,7 +352,7 @@
           },
           {
             "name": "portGroups",
-            "description": null,
+            "description": "Port groups used in the action for organizing ports.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -376,7 +376,7 @@
           },
           {
             "name": "protocols",
-            "description": null,
+            "description": "Protocols associated with the action.",
             "args": [
               {
                 "name": "filters",
@@ -437,7 +437,7 @@
           },
           {
             "name": "reservations",
-            "description": null,
+            "description": "Reservations related to this action.",
             "args": [
               {
                 "name": "filters",
@@ -482,7 +482,7 @@
           },
           {
             "name": "returns",
-            "description": null,
+            "description": "Output values (ports) returned by the action.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -506,7 +506,7 @@
           },
           {
             "name": "runs",
-            "description": null,
+            "description": "Retrieve assignations where this action has run.",
             "args": [],
             "type": {
               "kind": "LIST",
@@ -526,7 +526,7 @@
           },
           {
             "name": "scope",
-            "description": null,
+            "description": "Scope of the action, e.g., user or system.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -542,7 +542,7 @@
           },
           {
             "name": "stateful",
-            "description": null,
+            "description": "Indicates whether the action maintains state.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -558,7 +558,7 @@
           },
           {
             "name": "testCases",
-            "description": null,
+            "description": "Test cases for this action.",
             "args": [
               {
                 "name": "filters",
@@ -603,7 +603,7 @@
           },
           {
             "name": "tests",
-            "description": null,
+            "description": "List of tests associated with the action.",
             "args": [
               {
                 "name": "filters",
@@ -922,12 +922,12 @@
       {
         "kind": "OBJECT",
         "name": "Agent",
-        "description": null,
+        "description": "Represents a compute agent that can execute implementations.",
         "isOneOf": null,
         "fields": [
           {
             "name": "active",
-            "description": null,
+            "description": "Determine if the agent is currently active based on last seen timestamp.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -943,7 +943,7 @@
           },
           {
             "name": "connected",
-            "description": null,
+            "description": "Is the agent currently connected.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -959,7 +959,7 @@
           },
           {
             "name": "extensions",
-            "description": null,
+            "description": "List of installed agent extensions.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -983,7 +983,7 @@
           },
           {
             "name": "fileSystemShelves",
-            "description": null,
+            "description": "Filesystem shelves available on the agent.",
             "args": [
               {
                 "name": "filters",
@@ -1032,7 +1032,7 @@
           },
           {
             "name": "hardwareRecords",
-            "description": null,
+            "description": "Historical records of agent's hardware.",
             "args": [
               {
                 "name": "filters",
@@ -1081,7 +1081,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "Unique ID of the agent.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -1097,7 +1097,7 @@
           },
           {
             "name": "implementation",
-            "description": null,
+            "description": "Fetch a specific implementation by interface.",
             "args": [
               {
                 "name": "interface",
@@ -1126,7 +1126,7 @@
           },
           {
             "name": "implementations",
-            "description": null,
+            "description": "Implementations the agent can run.",
             "args": [
               {
                 "name": "filters",
@@ -1175,7 +1175,7 @@
           },
           {
             "name": "instanceId",
-            "description": null,
+            "description": "Unique instance identifier on the agent.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -1191,7 +1191,7 @@
           },
           {
             "name": "lastSeen",
-            "description": null,
+            "description": "Last timestamp this agent was seen.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -1203,7 +1203,7 @@
           },
           {
             "name": "latestHardwareRecord",
-            "description": null,
+            "description": "Retrieve the latest hardware record for this agent.",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -1215,7 +1215,7 @@
           },
           {
             "name": "memoryShelve",
-            "description": null,
+            "description": "Agent's associated memory shelve.",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -1227,7 +1227,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "Agent name.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -1243,7 +1243,7 @@
           },
           {
             "name": "pinned",
-            "description": null,
+            "description": "Check if this agent is pinned by the current user.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -1259,7 +1259,7 @@
           },
           {
             "name": "registry",
-            "description": null,
+            "description": "Registry entry this agent belongs to.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -1275,7 +1275,7 @@
           },
           {
             "name": "states",
-            "description": null,
+            "description": "Current and historical states associated with the agent.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -1884,7 +1884,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"9cda3841-7c8d-4aba-a7fc-67223084df22\"",
+            "defaultValue": "\"143649c0-d41f-4462-ad1d-4d45ddf9d872\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -2235,12 +2235,12 @@
       {
         "kind": "OBJECT",
         "name": "Assignation",
-        "description": null,
+        "description": "Tracks the assignment of an implementation to a specific task.",
         "isOneOf": null,
         "fields": [
           {
             "name": "action",
-            "description": "The action that this assignation is assigned to",
+            "description": "Action assigned.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2256,7 +2256,7 @@
           },
           {
             "name": "arg",
-            "description": null,
+            "description": "Get a specific argument by key.",
             "args": [
               {
                 "name": "key",
@@ -2285,7 +2285,7 @@
           },
           {
             "name": "args",
-            "description": null,
+            "description": "Arguments used in the assignation.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2301,7 +2301,7 @@
           },
           {
             "name": "createdAt",
-            "description": null,
+            "description": "Creation timestamp.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2317,7 +2317,7 @@
           },
           {
             "name": "ephemeral",
-            "description": "If true, this assignation will be deleted after the assignation is completed",
+            "description": "Indicates if the assignation should be deleted after completion.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2333,7 +2333,7 @@
           },
           {
             "name": "events",
-            "description": null,
+            "description": "List of recent events for this assignation.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2357,7 +2357,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "Unique ID of the assignation.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2373,7 +2373,7 @@
           },
           {
             "name": "implementation",
-            "description": "The implementation that this assignation is assigned to",
+            "description": "Implementation assigned to execute.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2389,7 +2389,7 @@
           },
           {
             "name": "instructs",
-            "description": null,
+            "description": "List of recent instructions for this assignation.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2413,7 +2413,7 @@
           },
           {
             "name": "isDone",
-            "description": null,
+            "description": "Indicates if the assignation is completed.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2429,7 +2429,7 @@
           },
           {
             "name": "latestEventKind",
-            "description": "The status of this assignation",
+            "description": "Type of the latest event.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2445,7 +2445,7 @@
           },
           {
             "name": "latestInstructKind",
-            "description": "The latest instruct that was sent to this assignation",
+            "description": "Last instruction type.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2461,7 +2461,7 @@
           },
           {
             "name": "parent",
-            "description": "A parent assignation is the next assignation in the chain of assignations that caused this assignation to be created. Parents can be created by intent or by the system. If null, this assignation is the parent",
+            "description": "Parent assignation that triggered this one.",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -2473,7 +2473,7 @@
           },
           {
             "name": "reference",
-            "description": null,
+            "description": "Optional external reference for tracking.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -2485,7 +2485,7 @@
           },
           {
             "name": "reservation",
-            "description": "If this assignation is the result of a reservation, this field will contain the reservation that caused this assignation to be created",
+            "description": "Reservation that caused this assignation.",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -2497,7 +2497,7 @@
           },
           {
             "name": "root",
-            "description": "A root assignation is the root assignation that caused this assignation to be created. This mother is always created by intent (e.g a user action). If null, this assignation is the mother",
+            "description": "Root assignation in the creation chain.",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -2509,7 +2509,7 @@
           },
           {
             "name": "statusMessage",
-            "description": null,
+            "description": "Current status message.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -2521,7 +2521,7 @@
           },
           {
             "name": "updatedAt",
-            "description": null,
+            "description": "Last update timestamp.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2537,7 +2537,7 @@
           },
           {
             "name": "waiter",
-            "description": "The Waiter that this assignation was created by",
+            "description": "Waiter responsible for this assignation.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2596,12 +2596,12 @@
       {
         "kind": "OBJECT",
         "name": "AssignationEvent",
-        "description": null,
+        "description": "An event that occurred during an assignation.",
         "isOneOf": null,
         "fields": [
           {
             "name": "assignation",
-            "description": null,
+            "description": "Associated assignation.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2617,7 +2617,7 @@
           },
           {
             "name": "createdAt",
-            "description": null,
+            "description": "Time when event was created.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2633,7 +2633,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "Unique ID of the event.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2649,7 +2649,7 @@
           },
           {
             "name": "kind",
-            "description": null,
+            "description": "Kind of assignation event.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2665,19 +2665,23 @@
           },
           {
             "name": "level",
-            "description": null,
+            "description": "Default log level.",
             "args": [],
             "type": {
-              "kind": "ENUM",
-              "name": "LogLevel",
-              "ofType": null
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "ENUM",
+                "name": "LogLevel",
+                "ofType": null
+              }
             },
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
             "name": "message",
-            "description": null,
+            "description": "Optional message associated with the event.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -2689,7 +2693,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "Name of the event.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2705,7 +2709,7 @@
           },
           {
             "name": "progress",
-            "description": null,
+            "description": "Progress percentage.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -2717,7 +2721,7 @@
           },
           {
             "name": "reference",
-            "description": null,
+            "description": "Reference string for the event.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2733,7 +2737,7 @@
           },
           {
             "name": "returns",
-            "description": null,
+            "description": "Optional return values.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -2848,12 +2852,12 @@
       {
         "kind": "OBJECT",
         "name": "AssignationInstruct",
-        "description": null,
+        "description": "An instruct event for a specific assignation.",
         "isOneOf": null,
         "fields": [
           {
             "name": "assignation",
-            "description": null,
+            "description": "Assignation the instruction relates to.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2869,7 +2873,7 @@
           },
           {
             "name": "createdAt",
-            "description": null,
+            "description": "Time when instruction was issued.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2885,7 +2889,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "Unique ID of the instruct event.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2901,7 +2905,7 @@
           },
           {
             "name": "kind",
-            "description": null,
+            "description": "Type of instruction.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -3417,12 +3421,12 @@
       {
         "kind": "OBJECT",
         "name": "Client",
-        "description": null,
+        "description": "Represents a registered OAuth2 client.",
         "isOneOf": null,
         "fields": [
           {
             "name": "clientId",
-            "description": null,
+            "description": "OAuth2 client ID.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -3438,7 +3442,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "Unique ID of the client.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -3454,7 +3458,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "Name of the client.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -3661,12 +3665,12 @@
       {
         "kind": "OBJECT",
         "name": "Collection",
-        "description": null,
+        "description": "A grouping of actions.",
         "isOneOf": null,
         "fields": [
           {
             "name": "actions",
-            "description": null,
+            "description": "Actions included in this collection.",
             "args": [
               {
                 "name": "filters",
@@ -3727,7 +3731,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "Collection ID.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -3743,7 +3747,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "Name of the collection.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5139,12 +5143,12 @@
       {
         "kind": "OBJECT",
         "name": "Dependency",
-        "description": null,
+        "description": "Represents a dependency between implementations and actions.",
         "isOneOf": null,
         "fields": [
           {
             "name": "action",
-            "description": null,
+            "description": "Optional action this dependency refers to.",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -5156,7 +5160,7 @@
           },
           {
             "name": "binds",
-            "description": null,
+            "description": "Binds information attached to the dependency.",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -5168,7 +5172,7 @@
           },
           {
             "name": "hash",
-            "description": null,
+            "description": "Current hash of the dependency.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5184,7 +5188,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "Unique ID of the dependency.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5200,7 +5204,7 @@
           },
           {
             "name": "implementation",
-            "description": null,
+            "description": "Implementation this dependency belongs to.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5216,7 +5220,7 @@
           },
           {
             "name": "initialHash",
-            "description": null,
+            "description": "Original hash when the dependency was created.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5232,7 +5236,7 @@
           },
           {
             "name": "optional",
-            "description": null,
+            "description": "Indicates if the dependency is optional.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5248,7 +5252,7 @@
           },
           {
             "name": "reference",
-            "description": null,
+            "description": "Optional string identifier or tag for reference.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -5260,7 +5264,7 @@
           },
           {
             "name": "resolvable",
-            "description": null,
+            "description": "Check if this dependency can be resolved by a connected agent.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5648,12 +5652,12 @@
       {
         "kind": "OBJECT",
         "name": "FileDrawer",
-        "description": null,
+        "description": "Represents a file-based drawer within a filesystem shelve.",
         "isOneOf": null,
         "fields": [
           {
             "name": "agent",
-            "description": null,
+            "description": "Agent owning the drawer.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5669,7 +5673,7 @@
           },
           {
             "name": "createdAt",
-            "description": null,
+            "description": "Creation timestamp of the drawer.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5685,7 +5689,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "ID of the file drawer.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5701,7 +5705,7 @@
           },
           {
             "name": "identifier",
-            "description": null,
+            "description": "Unique string identifying the drawer.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5717,7 +5721,7 @@
           },
           {
             "name": "resourceId",
-            "description": null,
+            "description": "External resource identifier.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5856,12 +5860,12 @@
       {
         "kind": "OBJECT",
         "name": "FilesystemShelve",
-        "description": null,
+        "description": "Shelve on an agent for filesystem-based resources.",
         "isOneOf": null,
         "fields": [
           {
             "name": "drawers",
-            "description": null,
+            "description": "List of file drawers in the shelve.",
             "args": [
               {
                 "name": "filters",
@@ -5910,7 +5914,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "ID of the filesystem shelve.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -6024,12 +6028,12 @@
       {
         "kind": "OBJECT",
         "name": "HardwareRecord",
-        "description": null,
+        "description": "Represents a record of an agent's hardware configuration.",
         "isOneOf": null,
         "fields": [
           {
             "name": "agent",
-            "description": null,
+            "description": "The agent to which this hardware belongs.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -6045,7 +6049,7 @@
           },
           {
             "name": "cpuCount",
-            "description": null,
+            "description": "Number of CPU cores available.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -6061,7 +6065,7 @@
           },
           {
             "name": "cpuFrequency",
-            "description": null,
+            "description": "Clock speed of the CPU in GHz.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -6077,7 +6081,7 @@
           },
           {
             "name": "cpuVendorName",
-            "description": null,
+            "description": "Vendor of the CPU.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -6093,7 +6097,7 @@
           },
           {
             "name": "createdAt",
-            "description": null,
+            "description": "Timestamp when this record was created.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -6109,7 +6113,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "Unique ID of the hardware record.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -6390,12 +6394,12 @@
       {
         "kind": "OBJECT",
         "name": "Implementation",
-        "description": null,
+        "description": "Represents a concrete implementation of an action.",
         "isOneOf": null,
         "fields": [
           {
             "name": "action",
-            "description": null,
+            "description": "The action this implements.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -6411,7 +6415,7 @@
           },
           {
             "name": "agent",
-            "description": null,
+            "description": "Agent running this implementation.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -6427,7 +6431,7 @@
           },
           {
             "name": "dependencies",
-            "description": null,
+            "description": "Dependencies required by this implementation.",
             "args": [
               {
                 "name": "filters",
@@ -6476,7 +6480,7 @@
           },
           {
             "name": "extension",
-            "description": null,
+            "description": "Extension or module name.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -6492,7 +6496,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "Unique ID of the implementation.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -6508,7 +6512,7 @@
           },
           {
             "name": "interface",
-            "description": null,
+            "description": "Interface string representing the implementation entrypoint.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -6524,7 +6528,7 @@
           },
           {
             "name": "myLatestAssignation",
-            "description": null,
+            "description": "Get the latest completed assignation created by the current user.",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -6536,7 +6540,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "Constructed name for display, combining interface and agent name.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -6552,7 +6556,7 @@
           },
           {
             "name": "params",
-            "description": null,
+            "description": "Arbitrary parameters for the implementation.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -6568,7 +6572,7 @@
           },
           {
             "name": "pinned",
-            "description": null,
+            "description": "Check if this implementation is pinned by the current user.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7559,12 +7563,12 @@
       {
         "kind": "OBJECT",
         "name": "MemoryShelve",
-        "description": null,
+        "description": "A shelve for storing memory-based resources on an agent.",
         "isOneOf": null,
         "fields": [
           {
             "name": "agent",
-            "description": null,
+            "description": "Agent that owns this memory shelve.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7580,7 +7584,7 @@
           },
           {
             "name": "description",
-            "description": null,
+            "description": "Optional description of the shelve.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -7592,7 +7596,7 @@
           },
           {
             "name": "drawers",
-            "description": null,
+            "description": "List of memory drawers within the shelve.",
             "args": [
               {
                 "name": "filters",
@@ -7641,7 +7645,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "ID of the memory shelve.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7657,7 +7661,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "Name of the shelve.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7886,12 +7890,12 @@
       {
         "kind": "OBJECT",
         "name": "Mutation",
-        "description": null,
+        "description": "Root mutation type for executing write operations on the API.",
         "isOneOf": null,
         "fields": [
           {
             "name": "ack",
-            "description": null,
+            "description": "Acknowledge an assignation.",
             "args": [
               {
                 "name": "input",
@@ -7924,7 +7928,7 @@
           },
           {
             "name": "archiveState",
-            "description": null,
+            "description": "Archive a state schema.",
             "args": [
               {
                 "name": "input",
@@ -7948,7 +7952,7 @@
               "name": null,
               "ofType": {
                 "kind": "OBJECT",
-                "name": "StateSchema",
+                "name": "State",
                 "ofType": null
               }
             },
@@ -7957,7 +7961,7 @@
           },
           {
             "name": "assign",
-            "description": null,
+            "description": "Assign a task to an agent.",
             "args": [
               {
                 "name": "input",
@@ -7990,7 +7994,7 @@
           },
           {
             "name": "cancel",
-            "description": null,
+            "description": "Cancel an active assignation.",
             "args": [
               {
                 "name": "input",
@@ -8023,7 +8027,7 @@
           },
           {
             "name": "collect",
-            "description": "Collect data from a assignation",
+            "description": "Collect results from an assignation.",
             "args": [
               {
                 "name": "input",
@@ -8064,7 +8068,7 @@
           },
           {
             "name": "createDashboard",
-            "description": null,
+            "description": "Create a dashboard layout.",
             "args": [
               {
                 "name": "input",
@@ -8097,7 +8101,7 @@
           },
           {
             "name": "createForeignImplementation",
-            "description": null,
+            "description": "Register an external implementation.",
             "args": [
               {
                 "name": "input",
@@ -8130,7 +8134,7 @@
           },
           {
             "name": "createImplementation",
-            "description": null,
+            "description": "Create a new implementation entry.",
             "args": [
               {
                 "name": "input",
@@ -8163,7 +8167,7 @@
           },
           {
             "name": "createPanel",
-            "description": null,
+            "description": "Create a user interface panel.",
             "args": [
               {
                 "name": "input",
@@ -8196,7 +8200,7 @@
           },
           {
             "name": "createShortcut",
-            "description": null,
+            "description": "Create a shortcut to an action.",
             "args": [
               {
                 "name": "input",
@@ -8229,7 +8233,7 @@
           },
           {
             "name": "createStateSchema",
-            "description": null,
+            "description": "Define a new state schema.",
             "args": [
               {
                 "name": "input",
@@ -8262,7 +8266,7 @@
           },
           {
             "name": "createTestCase",
-            "description": null,
+            "description": "Create a new test case.",
             "args": [
               {
                 "name": "input",
@@ -8295,7 +8299,7 @@
           },
           {
             "name": "createTestResult",
-            "description": null,
+            "description": "Create a test result record.",
             "args": [
               {
                 "name": "input",
@@ -8328,7 +8332,7 @@
           },
           {
             "name": "createToolbox",
-            "description": null,
+            "description": "Create a new toolbox with shortcuts.",
             "args": [
               {
                 "name": "input",
@@ -8361,7 +8365,7 @@
           },
           {
             "name": "deleteAgent",
-            "description": null,
+            "description": "Delete an agent record.",
             "args": [
               {
                 "name": "input",
@@ -8394,7 +8398,7 @@
           },
           {
             "name": "deleteImplementation",
-            "description": "Delete a implementation",
+            "description": "Delete a registered implementation.",
             "args": [
               {
                 "name": "input",
@@ -8427,7 +8431,7 @@
           },
           {
             "name": "deleteShortcut",
-            "description": null,
+            "description": "Delete a shortcut.",
             "args": [
               {
                 "name": "input",
@@ -8451,7 +8455,7 @@
               "name": null,
               "ofType": {
                 "kind": "SCALAR",
-                "name": "String",
+                "name": "ID",
                 "ofType": null
               }
             },
@@ -8460,7 +8464,7 @@
           },
           {
             "name": "ensureAgent",
-            "description": null,
+            "description": "Ensure agent record exists or is up to date.",
             "args": [
               {
                 "name": "input",
@@ -8493,7 +8497,7 @@
           },
           {
             "name": "interrupt",
-            "description": null,
+            "description": "Interrupt the execution of an assignation.",
             "args": [
               {
                 "name": "input",
@@ -8526,7 +8530,7 @@
           },
           {
             "name": "pause",
-            "description": "Pause a assignation",
+            "description": "Pause an ongoing assignation.",
             "args": [
               {
                 "name": "input",
@@ -8559,7 +8563,7 @@
           },
           {
             "name": "pinAgent",
-            "description": null,
+            "description": "Pin an agent to the user.",
             "args": [
               {
                 "name": "input",
@@ -8592,7 +8596,7 @@
           },
           {
             "name": "pinImplementation",
-            "description": null,
+            "description": "Pin an implementation to the user.",
             "args": [
               {
                 "name": "input",
@@ -8625,7 +8629,7 @@
           },
           {
             "name": "reinit",
-            "description": null,
+            "description": "Reinitialize the assignation or agent.",
             "args": [
               {
                 "name": "input",
@@ -8658,7 +8662,7 @@
           },
           {
             "name": "reserve",
-            "description": null,
+            "description": "Reserve an implementation for future use.",
             "args": [
               {
                 "name": "input",
@@ -8691,7 +8695,7 @@
           },
           {
             "name": "resume",
-            "description": "Resume a assignation",
+            "description": "Resume a paused assignation.",
             "args": [
               {
                 "name": "input",
@@ -8724,7 +8728,7 @@
           },
           {
             "name": "setExtensionImplementations",
-            "description": null,
+            "description": "Set implementations provided by an extension.",
             "args": [
               {
                 "name": "input",
@@ -8765,7 +8769,7 @@
           },
           {
             "name": "setState",
-            "description": null,
+            "description": "Set the value of a state object.",
             "args": [
               {
                 "name": "input",
@@ -8798,7 +8802,7 @@
           },
           {
             "name": "shelveInMemoryDrawer",
-            "description": null,
+            "description": "Shelve data into a memory drawer.",
             "args": [
               {
                 "name": "input",
@@ -8831,7 +8835,7 @@
           },
           {
             "name": "step",
-            "description": "Step a assignation",
+            "description": "Advance an assignation one step.",
             "args": [
               {
                 "name": "input",
@@ -8864,7 +8868,7 @@
           },
           {
             "name": "unreserve",
-            "description": null,
+            "description": "Release a reserved implementation.",
             "args": [
               {
                 "name": "input",
@@ -8897,7 +8901,7 @@
           },
           {
             "name": "unshelveMemoryDrawer",
-            "description": null,
+            "description": "Unshelve data from a memory drawer.",
             "args": [
               {
                 "name": "input",
@@ -8921,7 +8925,7 @@
               "name": null,
               "ofType": {
                 "kind": "SCALAR",
-                "name": "String",
+                "name": "ID",
                 "ofType": null
               }
             },
@@ -8930,7 +8934,7 @@
           },
           {
             "name": "updateState",
-            "description": null,
+            "description": "Update fields in a state object.",
             "args": [
               {
                 "name": "input",
@@ -10206,12 +10210,12 @@
       {
         "kind": "OBJECT",
         "name": "Protocol",
-        "description": null,
+        "description": "A set of related actions forming a protocol.",
         "isOneOf": null,
         "fields": [
           {
             "name": "actions",
-            "description": null,
+            "description": "Associated actions.",
             "args": [
               {
                 "name": "filters",
@@ -10272,7 +10276,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "Protocol ID.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10288,7 +10292,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "Name of the protocol.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10439,12 +10443,12 @@
       {
         "kind": "OBJECT",
         "name": "Query",
-        "description": null,
+        "description": "Root query type for fetching entities in the system.",
         "isOneOf": null,
         "fields": [
           {
             "name": "action",
-            "description": null,
+            "description": "Fetch a specific action.",
             "args": [
               {
                 "name": "agent",
@@ -10545,7 +10549,7 @@
           },
           {
             "name": "actions",
-            "description": null,
+            "description": "List of all available actions.",
             "args": [
               {
                 "name": "filters",
@@ -10606,7 +10610,7 @@
           },
           {
             "name": "agent",
-            "description": null,
+            "description": "Retrieve an agent by ID.",
             "args": [
               {
                 "name": "id",
@@ -10639,7 +10643,7 @@
           },
           {
             "name": "agents",
-            "description": null,
+            "description": "Retrieve all compute agents.",
             "args": [
               {
                 "name": "filters",
@@ -10700,7 +10704,7 @@
           },
           {
             "name": "assignation",
-            "description": null,
+            "description": "Fetch assignation by ID.",
             "args": [
               {
                 "name": "id",
@@ -10733,7 +10737,7 @@
           },
           {
             "name": "assignations",
-            "description": null,
+            "description": "Fetch assignations.",
             "args": [
               {
                 "name": "instanceId",
@@ -10770,7 +10774,7 @@
           },
           {
             "name": "clients",
-            "description": null,
+            "description": "List all registered clients.",
             "args": [
               {
                 "name": "filters",
@@ -10831,7 +10835,7 @@
           },
           {
             "name": "dashboard",
-            "description": null,
+            "description": "Get dashboard by ID.",
             "args": [
               {
                 "name": "id",
@@ -10864,7 +10868,7 @@
           },
           {
             "name": "dashboards",
-            "description": null,
+            "description": "All dashboards.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10888,7 +10892,7 @@
           },
           {
             "name": "dependency",
-            "description": null,
+            "description": "Fetch a dependency by ID.",
             "args": [
               {
                 "name": "id",
@@ -10921,7 +10925,7 @@
           },
           {
             "name": "event",
-            "description": null,
+            "description": "Fetch a specific event.",
             "args": [
               {
                 "name": "id",
@@ -10958,7 +10962,7 @@
           },
           {
             "name": "hardwareRecord",
-            "description": null,
+            "description": "Get hardware record by ID.",
             "args": [
               {
                 "name": "id",
@@ -10991,7 +10995,7 @@
           },
           {
             "name": "hardwareRecords",
-            "description": null,
+            "description": "List of all hardware records.",
             "args": [
               {
                 "name": "filters",
@@ -11040,7 +11044,7 @@
           },
           {
             "name": "implementation",
-            "description": null,
+            "description": "Get implementation by ID.",
             "args": [
               {
                 "name": "id",
@@ -11073,7 +11077,7 @@
           },
           {
             "name": "implementationAt",
-            "description": null,
+            "description": "Find implementation at given interface.",
             "args": [
               {
                 "name": "actionHash",
@@ -11142,7 +11146,7 @@
           },
           {
             "name": "implementations",
-            "description": null,
+            "description": "All registered implementations.",
             "args": [
               {
                 "name": "filters",
@@ -11191,7 +11195,7 @@
           },
           {
             "name": "memoryShelve",
-            "description": null,
+            "description": "Fetch a memory shelve by ID.",
             "args": [
               {
                 "name": "id",
@@ -11224,7 +11228,7 @@
           },
           {
             "name": "memoryShelves",
-            "description": null,
+            "description": "All memory shelves.",
             "args": [
               {
                 "name": "filters",
@@ -11285,7 +11289,7 @@
           },
           {
             "name": "myImplementationAt",
-            "description": null,
+            "description": "Find your implementation at a specific interface.",
             "args": [
               {
                 "name": "actionId",
@@ -11342,7 +11346,7 @@
           },
           {
             "name": "myreservations",
-            "description": null,
+            "description": "Reservations made by the current user.",
             "args": [
               {
                 "name": "instanceId",
@@ -11379,7 +11383,7 @@
           },
           {
             "name": "panel",
-            "description": null,
+            "description": "Get a panel by ID.",
             "args": [
               {
                 "name": "id",
@@ -11412,7 +11416,7 @@
           },
           {
             "name": "panels",
-            "description": null,
+            "description": "List of UI panels.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -11436,7 +11440,7 @@
           },
           {
             "name": "protocols",
-            "description": null,
+            "description": "Retrieve protocols grouping actions.",
             "args": [
               {
                 "name": "filters",
@@ -11497,7 +11501,7 @@
           },
           {
             "name": "reservation",
-            "description": null,
+            "description": "Retrieve reservation by ID.",
             "args": [
               {
                 "name": "id",
@@ -11530,7 +11534,7 @@
           },
           {
             "name": "reservations",
-            "description": null,
+            "description": "List of all reservations.",
             "args": [
               {
                 "name": "instanceId",
@@ -11567,7 +11571,7 @@
           },
           {
             "name": "shortcut",
-            "description": null,
+            "description": "Retrieve shortcut by ID.",
             "args": [
               {
                 "name": "id",
@@ -11600,7 +11604,7 @@
           },
           {
             "name": "shortcuts",
-            "description": null,
+            "description": "List of shortcuts.",
             "args": [
               {
                 "name": "filters",
@@ -11661,7 +11665,7 @@
           },
           {
             "name": "state",
-            "description": null,
+            "description": "Get a specific state by ID.",
             "args": [
               {
                 "name": "id",
@@ -11694,7 +11698,7 @@
           },
           {
             "name": "stateFor",
-            "description": null,
+            "description": "Retrieve state for a specific context.",
             "args": [
               {
                 "name": "agent",
@@ -11747,7 +11751,7 @@
           },
           {
             "name": "stateSchema",
-            "description": null,
+            "description": "Retrieve a state schema by ID.",
             "args": [
               {
                 "name": "id",
@@ -11780,7 +11784,7 @@
           },
           {
             "name": "stateSchemas",
-            "description": null,
+            "description": "Available state schemas.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -11804,7 +11808,7 @@
           },
           {
             "name": "states",
-            "description": null,
+            "description": "All states from agents.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -11828,7 +11832,7 @@
           },
           {
             "name": "testCase",
-            "description": null,
+            "description": "Retrieve test case by ID.",
             "args": [
               {
                 "name": "id",
@@ -11861,7 +11865,7 @@
           },
           {
             "name": "testCases",
-            "description": null,
+            "description": "All test cases.",
             "args": [
               {
                 "name": "filters",
@@ -11910,7 +11914,7 @@
           },
           {
             "name": "testResult",
-            "description": null,
+            "description": "Get test result by ID.",
             "args": [
               {
                 "name": "id",
@@ -11943,7 +11947,7 @@
           },
           {
             "name": "testResults",
-            "description": null,
+            "description": "Test results associated with test cases.",
             "args": [
               {
                 "name": "filters",
@@ -11992,7 +11996,7 @@
           },
           {
             "name": "toolbox",
-            "description": null,
+            "description": "Get toolbox by ID.",
             "args": [
               {
                 "name": "id",
@@ -12025,7 +12029,7 @@
           },
           {
             "name": "toolboxes",
-            "description": null,
+            "description": "List of toolboxes containing shortcuts.",
             "args": [
               {
                 "name": "filters",
@@ -12117,12 +12121,12 @@
       {
         "kind": "OBJECT",
         "name": "Registry",
-        "description": null,
+        "description": "Links a user and a client for registry tracking.",
         "isOneOf": null,
         "fields": [
           {
             "name": "agents",
-            "description": null,
+            "description": "Agents registered under this registry.",
             "args": [
               {
                 "name": "filters",
@@ -12183,7 +12187,7 @@
           },
           {
             "name": "client",
-            "description": null,
+            "description": "The associated client.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -12199,7 +12203,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "Unique identifier for the registry.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -12215,7 +12219,7 @@
           },
           {
             "name": "user",
-            "description": null,
+            "description": "The associated user.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -12238,12 +12242,12 @@
       {
         "kind": "OBJECT",
         "name": "Reservation",
-        "description": null,
+        "description": "Reservation for planned assignment of implementations.",
         "isOneOf": null,
         "fields": [
           {
             "name": "action",
-            "description": null,
+            "description": "Action this reservation is for.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -12259,7 +12263,7 @@
           },
           {
             "name": "binds",
-            "description": null,
+            "description": "Bind configuration for the reservation.",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -12271,7 +12275,7 @@
           },
           {
             "name": "causingDependency",
-            "description": null,
+            "description": "Dependency that triggered the reservation.",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -12283,7 +12287,7 @@
           },
           {
             "name": "happy",
-            "description": null,
+            "description": "Did the reservation succeed.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -12299,7 +12303,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "ID of the reservation.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -12315,7 +12319,7 @@
           },
           {
             "name": "implementation",
-            "description": null,
+            "description": "Chosen implementation.",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -12327,7 +12331,7 @@
           },
           {
             "name": "implementations",
-            "description": null,
+            "description": "Available implementations for the reservation.",
             "args": [
               {
                 "name": "filters",
@@ -12376,7 +12380,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "Name of the reservation.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -12392,7 +12396,7 @@
           },
           {
             "name": "reference",
-            "description": null,
+            "description": "Reference string for identification.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -12408,7 +12412,7 @@
           },
           {
             "name": "strategy",
-            "description": null,
+            "description": "Reservation strategy applied.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -12424,7 +12428,7 @@
           },
           {
             "name": "title",
-            "description": null,
+            "description": "Optional title.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -12436,7 +12440,7 @@
           },
           {
             "name": "updatedAt",
-            "description": null,
+            "description": "Last update timestamp.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -12452,7 +12456,7 @@
           },
           {
             "name": "viable",
-            "description": null,
+            "description": "Is the reservation currently viable.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -12468,7 +12472,7 @@
           },
           {
             "name": "waiter",
-            "description": null,
+            "description": "Waiter associated with the reservation.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -12787,7 +12791,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"f38045ce-b45d-4777-bda9-86b7c0fb1e65\"",
+            "defaultValue": "\"754e51ac-d062-4d83-95f2-fc8f3d26d257\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -13391,12 +13395,12 @@
       {
         "kind": "OBJECT",
         "name": "Shortcut",
-        "description": null,
+        "description": "Shortcut to an action with preset arguments.",
         "isOneOf": null,
         "fields": [
           {
             "name": "action",
-            "description": null,
+            "description": "The associated action.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -13412,7 +13416,7 @@
           },
           {
             "name": "allowQuick",
-            "description": null,
+            "description": "Allow quick execution without modification.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -13428,7 +13432,7 @@
           },
           {
             "name": "args",
-            "description": null,
+            "description": "Input ports for the shortcut's action.dd",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -13452,7 +13456,7 @@
           },
           {
             "name": "description",
-            "description": null,
+            "description": "Optional description.",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -13464,7 +13468,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "Shortcut ID.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -13480,7 +13484,7 @@
           },
           {
             "name": "implementation",
-            "description": null,
+            "description": "Implementation of the action.",
             "args": [],
             "type": {
               "kind": "OBJECT",
@@ -13492,7 +13496,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "Name of the shortcut.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -13508,7 +13512,7 @@
           },
           {
             "name": "returns",
-            "description": null,
+            "description": "Return ports from the shortcut's action.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -13532,7 +13536,7 @@
           },
           {
             "name": "savedArgs",
-            "description": null,
+            "description": "Saved arguments for the shortcut.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -13548,7 +13552,7 @@
           },
           {
             "name": "toolboxes",
-            "description": null,
+            "description": "Toolboxes that contain this shortcut.",
             "args": [
               {
                 "name": "filters",
@@ -13609,7 +13613,7 @@
           },
           {
             "name": "useReturns",
-            "description": null,
+            "description": "If true, shortcut uses return values.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -14541,12 +14545,12 @@
       {
         "kind": "OBJECT",
         "name": "Subscription",
-        "description": null,
+        "description": "Root subscription type for real-time event streams from the system.",
         "isOneOf": null,
         "fields": [
           {
             "name": "agents",
-            "description": null,
+            "description": "Subscribe to updates on agent connections and statuses.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -14562,7 +14566,7 @@
           },
           {
             "name": "assignationEvents",
-            "description": null,
+            "description": "Subscribe to events related to assignations.",
             "args": [
               {
                 "name": "instanceId",
@@ -14595,7 +14599,7 @@
           },
           {
             "name": "assignations",
-            "description": null,
+            "description": "Subscribe to updates on assignations.",
             "args": [
               {
                 "name": "instanceId",
@@ -14628,7 +14632,7 @@
           },
           {
             "name": "implementationChange",
-            "description": null,
+            "description": "Subscribe to changes in implementations.",
             "args": [
               {
                 "name": "implementation",
@@ -14661,7 +14665,7 @@
           },
           {
             "name": "implementations",
-            "description": null,
+            "description": "Subscribe to creation or updates of implementations.",
             "args": [
               {
                 "name": "agent",
@@ -14694,7 +14698,7 @@
           },
           {
             "name": "newActions",
-            "description": null,
+            "description": "Subscribe to notifications when new actions are created.",
             "args": [
               {
                 "name": "cage",
@@ -14727,7 +14731,7 @@
           },
           {
             "name": "reservations",
-            "description": null,
+            "description": "Subscribe to updates on reservations.",
             "args": [
               {
                 "name": "instanceId",
@@ -14760,7 +14764,7 @@
           },
           {
             "name": "stateUpdateEvents",
-            "description": null,
+            "description": "Subscribe to updates of state values and patches.",
             "args": [
               {
                 "name": "stateId",
@@ -14800,12 +14804,12 @@
       {
         "kind": "OBJECT",
         "name": "TestCase",
-        "description": null,
+        "description": "Defines a test case comparing expected behavior for actions.",
         "isOneOf": null,
         "fields": [
           {
             "name": "action",
-            "description": null,
+            "description": "Target action under test.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -14821,7 +14825,7 @@
           },
           {
             "name": "description",
-            "description": null,
+            "description": "Details of what this test case covers.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -14837,7 +14841,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "Unique ID of the test case.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -14853,7 +14857,7 @@
           },
           {
             "name": "isBenchmark",
-            "description": null,
+            "description": "If true, measures performance rather than correctness.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -14869,7 +14873,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "Short name for the test case.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -14885,7 +14889,7 @@
           },
           {
             "name": "results",
-            "description": null,
+            "description": "Results from running this test case.",
             "args": [
               {
                 "name": "filters",
@@ -14934,7 +14938,7 @@
           },
           {
             "name": "tester",
-            "description": null,
+            "description": "Action used to perform the test.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -15049,12 +15053,12 @@
       {
         "kind": "OBJECT",
         "name": "TestResult",
-        "description": null,
+        "description": "Result from executing a test case with specific implementations.",
         "isOneOf": null,
         "fields": [
           {
             "name": "case",
-            "description": null,
+            "description": "Associated test case.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -15070,7 +15074,7 @@
           },
           {
             "name": "createdAt",
-            "description": null,
+            "description": "When the test was executed.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -15086,7 +15090,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "ID of the test result.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -15102,7 +15106,7 @@
           },
           {
             "name": "implementation",
-            "description": null,
+            "description": "Implementation under test.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -15118,7 +15122,7 @@
           },
           {
             "name": "passed",
-            "description": null,
+            "description": "True if test passed.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -15134,7 +15138,7 @@
           },
           {
             "name": "tester",
-            "description": null,
+            "description": "Implementation running the test.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -15150,7 +15154,7 @@
           },
           {
             "name": "updatedAt",
-            "description": null,
+            "description": "When the test result was last updated.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -15265,12 +15269,12 @@
       {
         "kind": "OBJECT",
         "name": "Toolbox",
-        "description": null,
+        "description": "A collection of shortcuts grouped as a toolbox.",
         "isOneOf": null,
         "fields": [
           {
             "name": "description",
-            "description": null,
+            "description": "Description of the toolbox.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -15286,7 +15290,7 @@
           },
           {
             "name": "id",
-            "description": null,
+            "description": "Toolbox ID.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -15302,7 +15306,7 @@
           },
           {
             "name": "name",
-            "description": null,
+            "description": "Name of the toolbox.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -15318,7 +15322,7 @@
           },
           {
             "name": "shortcuts",
-            "description": null,
+            "description": "List of shortcuts in this toolbox.",
             "args": [
               {
                 "name": "filters",
@@ -16216,12 +16220,12 @@
       {
         "kind": "OBJECT",
         "name": "User",
-        "description": null,
+        "description": "Represents an authenticated user.",
         "isOneOf": null,
         "fields": [
           {
             "name": "sub",
-            "description": null,
+            "description": "The subject identifier of the user.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -16399,12 +16403,12 @@
       {
         "kind": "OBJECT",
         "name": "Waiter",
-        "description": null,
+        "description": "Entity that waits for the completion of assignations.",
         "isOneOf": null,
         "fields": [
           {
             "name": "id",
-            "description": null,
+            "description": "Unique ID of the waiter.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -16420,7 +16424,7 @@
           },
           {
             "name": "instanceId",
-            "description": null,
+            "description": "Instance ID associated with the waiter.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -16436,7 +16440,7 @@
           },
           {
             "name": "registry",
-            "description": null,
+            "description": "Registry the waiter belongs to.",
             "args": [],
             "type": {
               "kind": "NON_NULL",

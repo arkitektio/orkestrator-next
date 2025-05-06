@@ -1,11 +1,11 @@
-fragment History on History {
+fragment ProvenanceEntry on ProvenanceEntry {
   id
   during
   kind
   user {
     sub
   }
-  app {
+  client {
     clientId
   }
   date

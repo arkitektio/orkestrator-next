@@ -21,7 +21,7 @@ fragment DetailSimulation on Simulation {
   dt
   createdAt
   creator {
-    id
+    sub
   }
 }
 

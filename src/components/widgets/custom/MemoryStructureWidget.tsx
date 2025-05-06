@@ -4,6 +4,7 @@ import {
   StateChoiceAssignWidgetFragment,
   useGetStateForQuery,
   useMemoryShelveQuery,
+  useSearchMemoryDrawerLazyQuery,
 } from "@/rekuest/api/graphql";
 import { InputWidgetProps } from "@/rekuest/widgets/types";
 import { pathToName } from "@/rekuest/widgets/utils";
@@ -21,29 +22,21 @@ export const MemoryStructureWidget = (
     );
   }
 
-  const { data, error } = useMemoryShelveQuery({
-    variables: {
-      template: props.bound,
-    },
-  });
+  const [searchD] = useSearchMemoryDrawerLazyQuery()
 
   const search = useCallback(
     async (searching: SearchOptions) => {
-      console.log("Searching", searching);
-      if (searching.search) {
-        return data?.memoryShelve.drawers
-          .filter(notEmpty)
-          .filter((c) => c.label?.startsWith(searching.search || ""));
-      }
-      if (searching.values) {
-        console.log("Searching", searching.values);
-        return data?.memoryShelve.drawers
-          .filter(notEmpty)
-          .filter((c) => searching.values?.includes(c.resourceId));
-      }
-      return data?.memoryShelve.drawers
+      console.log("Searching", searching)
+      let w = await searchD({
+        variables: {
+          ...searching,
+          template: props.bound,
+
+        }
+      })
+      return w.data?.options
     },
-    [data],
+    [searchD, props.bound],
   );
 
   return (
@@ -56,7 +49,6 @@ export const MemoryStructureWidget = (
         noOptionFoundPlaceholder="No options found"
         commandPlaceholder="Search..."
       />
-      {error && <div>Error: {error.message}</div>}
     </>
   );
 };

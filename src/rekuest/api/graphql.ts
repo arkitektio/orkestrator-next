@@ -1016,6 +1016,8 @@ export type MemoryDrawerFilter = {
   agent?: InputMaybe<Scalars['ID']['input']>;
   identifier?: InputMaybe<Scalars['String']['input']>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  implementation?: InputMaybe<Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
   shelve?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -1557,6 +1559,8 @@ export type Query = {
   implementationAt: Implementation;
   /** All registered implementations. */
   implementations: Array<Implementation>;
+  /** All memory drawers. */
+  memoryDrawers: Array<MemoryDrawer>;
   /** Fetch a memory shelve by ID. */
   memoryShelve: MemoryShelve;
   /** All memory shelves. */
@@ -1707,6 +1711,13 @@ export type QueryImplementationAtArgs = {
 /** Root query type for fetching entities in the system. */
 export type QueryImplementationsArgs = {
   filters?: InputMaybe<ImplementationFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+/** Root query type for fetching entities in the system. */
+export type QueryMemoryDrawersArgs = {
+  filters?: InputMaybe<MemoryDrawerFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2820,6 +2831,17 @@ export type DependencyQueryVariables = Exact<{
 
 
 export type DependencyQuery = { __typename?: 'Query', dependency: { __typename?: 'Dependency', id: string, reference?: string | null, initialHash: any, resolvable: boolean, action?: { __typename?: 'Action', id: string, name: string, hash: any } | null } };
+
+export type SearchMemoryDrawerQueryVariables = Exact<{
+  search?: InputMaybe<Scalars['String']['input']>;
+  implementation?: InputMaybe<Scalars['ID']['input']>;
+  values?: InputMaybe<Array<Scalars['ID']['input']>>;
+  identifier?: InputMaybe<Scalars['String']['input']>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+}>;
+
+
+export type SearchMemoryDrawerQuery = { __typename?: 'Query', options: Array<{ __typename?: 'MemoryDrawer', label?: string | null, value: string }> };
 
 export type GlobalSearchQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -4961,6 +4983,49 @@ export function useDependencyLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryH
 export type DependencyQueryHookResult = ReturnType<typeof useDependencyQuery>;
 export type DependencyLazyQueryHookResult = ReturnType<typeof useDependencyLazyQuery>;
 export type DependencyQueryResult = Apollo.QueryResult<DependencyQuery, DependencyQueryVariables>;
+export const SearchMemoryDrawerDocument = gql`
+    query SearchMemoryDrawer($search: String, $implementation: ID, $values: [ID!], $identifier: String, $pagination: OffsetPaginationInput) {
+  options: memoryDrawers(
+    filters: {search: $search, implementation: $implementation, ids: $values, identifier: $identifier}
+    pagination: $pagination
+  ) {
+    label: label
+    value: id
+  }
+}
+    `;
+
+/**
+ * __useSearchMemoryDrawerQuery__
+ *
+ * To run a query within a React component, call `useSearchMemoryDrawerQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchMemoryDrawerQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchMemoryDrawerQuery({
+ *   variables: {
+ *      search: // value for 'search'
+ *      implementation: // value for 'implementation'
+ *      values: // value for 'values'
+ *      identifier: // value for 'identifier'
+ *      pagination: // value for 'pagination'
+ *   },
+ * });
+ */
+export function useSearchMemoryDrawerQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchMemoryDrawerQuery, SearchMemoryDrawerQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<SearchMemoryDrawerQuery, SearchMemoryDrawerQueryVariables>(SearchMemoryDrawerDocument, options);
+      }
+export function useSearchMemoryDrawerLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchMemoryDrawerQuery, SearchMemoryDrawerQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<SearchMemoryDrawerQuery, SearchMemoryDrawerQueryVariables>(SearchMemoryDrawerDocument, options);
+        }
+export type SearchMemoryDrawerQueryHookResult = ReturnType<typeof useSearchMemoryDrawerQuery>;
+export type SearchMemoryDrawerLazyQueryHookResult = ReturnType<typeof useSearchMemoryDrawerLazyQuery>;
+export type SearchMemoryDrawerQueryResult = Apollo.QueryResult<SearchMemoryDrawerQuery, SearchMemoryDrawerQueryVariables>;
 export const GlobalSearchDocument = gql`
     query GlobalSearch($search: String, $noActions: Boolean!, $pagination: OffsetPaginationInput) {
   actions: actions(filters: {search: $search}, pagination: $pagination) @skip(if: $noActions) {

@@ -1884,7 +1884,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"143649c0-d41f-4462-ad1d-4d45ddf9d872\"",
+            "defaultValue": "\"fb2b276b-4bc7-413c-95c3-84aad18cec8f\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -7544,6 +7544,30 @@
             "deprecationReason": null
           },
           {
+            "name": "implementation",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "search",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "shelve",
             "description": null,
             "type": {
@@ -11194,6 +11218,55 @@
             "deprecationReason": null
           },
           {
+            "name": "memoryDrawers",
+            "description": "All memory drawers.",
+            "args": [
+              {
+                "name": "filters",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "MemoryDrawerFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "pagination",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OffsetPaginationInput",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "MemoryDrawer",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "memoryShelve",
             "description": "Fetch a memory shelve by ID.",
             "args": [
@@ -12791,7 +12864,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"754e51ac-d062-4d83-95f2-fc8f3d26d257\"",
+            "defaultValue": "\"223f3572-57d4-4dfc-8f4a-8014b9f9297d\"",
             "isDeprecated": false,
             "deprecationReason": null
           },

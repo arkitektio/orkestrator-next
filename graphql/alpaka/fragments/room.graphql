@@ -1,4 +1,4 @@
-fragment DetailRoom on Room {
+fragment Room on Room {
   id
   title
   description

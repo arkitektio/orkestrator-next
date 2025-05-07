@@ -1,11 +1,5 @@
-import { Card } from "@/components/ui/card";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { MetaApplication, UsedAgentContext } from "@/hooks/use-metaapp";
-import { useAgentQuery, useAgentsQuery } from "@/rekuest/api/graphql";
+import { useAgentQuery } from "@/rekuest/api/graphql";
 import React from "react";
 
 export const ModuleWrapper = (props: {

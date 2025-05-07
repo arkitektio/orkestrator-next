@@ -65,8 +65,8 @@ export const NodeWidget = (props: ReturnWidgetProps) => {
 
   return (
     <RekuestAction.DetailLink object={props.value}>
-      <p className="text-xl">{data?.node?.name}</p>
-      <p className="text-sm">{data?.node?.description}</p>
+      <p className="text-xl">{data?.action?.name}</p>
+      <p className="text-sm">{data?.action?.description}</p>
     </RekuestAction.DetailLink>
   );
 };
@@ -103,7 +103,7 @@ export const DelegatingStructureWidget = (props: ReturnWidgetProps) => {
       return <StreamWidget {...props} />;
     case "@mikro/renderedplot":
       return <RenderedPlotWidget {...props} />;
-    case "@rekuest-next/node":
+    case "@rekuest/action":
       return <NodeWidget {...props} />;
     case "@kabinet/pod":
       return <PodWidget {...props} />;

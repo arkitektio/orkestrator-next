@@ -355,7 +355,7 @@ const buildUseRekuestActions = <T extends MetaApplication<any, any>>(
     const { agent } = useAgentContext();
 
     const { assign, reassign, cancel, latestAssignation } = useAction({
-      nodeHash: app.actions[action].manifest?.hash,
+      actionHash: app.actions[action].manifest?.hash,
       agent: agent,
     });
 

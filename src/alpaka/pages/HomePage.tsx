@@ -6,6 +6,11 @@ import { useCreateRoomMutation } from "../api/graphql";
 import RoomsCarousel from "../components/carousels/RoomsCarousel";
 import { useNavigate } from "react-router-dom";
 import { AlpakaRoom } from "@/linkers";
+import RoomList from "../components/lists/RoomList";
+import ProviderList from "../components/lists/ProviderList";
+import LLMModelList from "../components/lists/LLMModelList";
+import CollectionList from "../components/lists/CollectionList";
+
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
@@ -39,6 +44,11 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       }
     >
       <RoomsCarousel />
+
+      <RoomList />
+      <ProviderList />
+      <LLMModelList />
+      <CollectionList />
 
       <Separator />
     </PageLayout>

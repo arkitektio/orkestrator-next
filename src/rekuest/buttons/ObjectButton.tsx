@@ -549,28 +549,13 @@ export const ObjectButton = (props: ObjectButtonProps) => {
   const conditionalAssign = async (action: PrimaryActionFragment) => {
     let the_key = action.args?.at(0)?.key;
 
-    let neededAdditionalPorts = action.args.filter(
-      (x) => !x.nullable && x.key != the_key,
-    );
+    
     if (!the_key) {
       toast.error("No key found");
       return;
     }
-    if (neededAdditionalPorts.length > 0) {
-      setDialogAction({ action: action, args: { [the_key]: props.object } });
-      return;
-    }
-
-    try {
-      await assign({
-        action: action.id,
-        args: {
-          [the_key]: props.object,
-        },
-      });
-    } catch (e) {
-      toast.error(e.message);
-    }
+    setDialogAction({ action: action, args: { [the_key]: props.object } });
+    
   };
 
   const onImplementationSelect = async (

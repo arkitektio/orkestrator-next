@@ -1,6 +1,6 @@
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReturnsContainer } from "@/components/widgets/returns/ReturnsContainer";
-import { useNodeDescription } from "@/lib/rekuest/NodeDescription";
+import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { cn } from "@/lib/utils";
 import { RunEventKind } from "@/reaktion/api/graphql";
 import { InStream } from "@/reaktion/base/Instream";
@@ -19,7 +19,7 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
   const latestEvent = useLatestNodeEvent(id);
   const [expanded, setExpanded] = React.useState(false);
 
-  const description = useNodeDescription({
+  const description = useActionDescription({
     description: data.description,
     variables: data.constantsMap,
   });

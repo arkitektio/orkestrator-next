@@ -7,13 +7,13 @@ import {
   WatchMessagesDocument,
   WatchMessagesSubscription,
   WatchMessagesSubscriptionVariables,
-  useDetailRoomQuery,
+  useGetRoomQuery,
 } from "../api/graphql";
 
 export type IRepresentationScreenProps = {};
 
 export default asDetailQueryRoute(
-  useDetailRoomQuery,
+  useGetRoomQuery,
   ({ data, subscribeToMore }) => {
     useEffect(() => {
       console.log("RUning subscription");

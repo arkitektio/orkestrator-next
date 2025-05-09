@@ -1,0 +1,5 @@
+mutation CreateVideoStream($input: CreateStreamInput!) {
+  createVideoStream(input: $input) {
+    ...EnsuredStream
+  }
+}

@@ -14,18 +14,9 @@
       "StateChoiceAssignWidget",
       "StringAssignWidget"
     ],
-    "DependencyEdgeImplementationEdge": [
-      "DependencyEdge",
-      "ImplementationEdge"
-    ],
     "Effect": [
       "CustomEffect",
       "MessageEffect"
-    ],
-    "NodeNodeInvalidNodeTemplateNode": [
-      "InvalidNode",
-      "NodeNode",
-      "TemplateNode"
     ],
     "ReturnWidget": [
       "ChoiceReturnWidget",

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { FlowFragment, GraphInput } from "@/reaktion/api/graphql";
-import { DetailTemplateFragment } from "@/rekuest/api/graphql";
+import { DetailImplementationFragment } from "@/rekuest/api/graphql";
 import {
   EyeOpenIcon,
   LetterCaseToggleIcon,
@@ -34,14 +34,14 @@ import { RekuestFilterWidget } from "./nodes/RekuestFilterWidget";
 import { RekuestMapWidget } from "./nodes/RekuestMapWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
-import { TemplateActionButton } from "@/rekuest/buttons/TemplateActionButton";
+import { ImplementationActionButton } from "@/rekuest/buttons/ImplementationActionButton";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { RekuestAssignation } from "@/linkers";
 
 const nodeTypes: NodeTypes = {
-  RekuestFilterNode: RekuestFilterWidget,
-  RekuestMapNode: RekuestMapWidget,
+  RekuestFilterActionNode: RekuestFilterWidget,
+  RekuestMapActionNode: RekuestMapWidget,
   ReactiveNode: ReactiveTrackNodeWidget,
   ArgNode: ArgTrackNodeWidget,
   ReturnNode: ReturnTrackNodeWidget,
@@ -54,7 +54,7 @@ const edgeTypes: EdgeTypes = {
 
 export type Props = {
   flow: FlowFragment;
-  template?: DetailTemplateFragment;
+  template?: DetailImplementationFragment;
   onSave?: (graph: GraphInput) => void;
 };
 
@@ -105,14 +105,14 @@ export const ShowFlow: React.FC<Props> = ({ flow, template }) => {
           <AnimatePresence>
             {template && (
               <div className="absolute  bottom-0 right-0  ml-3 mt-5 z-50">
-                <TemplateActionButton
+                <ImplementationActionButton
                   id={template.id}
                   onAssign={(e) =>
                     navigate(RekuestAssignation.linkBuilder(e.id))
                   }
                 >
                   <Button> Run </Button>
-                </TemplateActionButton>
+                </ImplementationActionButton>
               </div>
             )}
           </AnimatePresence>

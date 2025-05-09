@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { wrap } from "../wrap";
-import { useInterfaceState, useInterfaceTemplate } from "../hooks/useNode";
+import { useInterfaceState, useInterfaceImplementation } from "../hooks/useAction";
 import { Button } from "@/components/ui/button";
-import { DetailTemplateFragment } from "@/rekuest/api/graphql";
-import { useTemplateAction } from "@/rekuest/hooks/useTemplateAction";
+import { DetailImplementationFragment } from "@/rekuest/api/graphql";
+import { useImplementationAction } from "@/rekuest/hooks/useImplementationAction";
 
-const MoveButton = (props: { template: DetailTemplateFragment }) => {
-  const { assign } = useTemplateAction({
-    id: props.template.id,
+const MoveButton = (props: { implementation: DetailImplementationFragment }) => {
+  const { assign } = useImplementationAction({
+    id: props.implementation.id,
   });
 
   const move = () => {
@@ -18,20 +18,20 @@ const MoveButton = (props: { template: DetailTemplateFragment }) => {
     });
   };
 
-  return <Button onClick={move}>{props.template.interface}</Button>;
+  return <Button onClick={move}>{props.implementation.interface}</Button>;
 };
 
 const Microscope = wrap(({ descriptor, agent }) => {
   const [count, setCount] = useState(0);
 
-  const { data } = useInterfaceTemplate(descriptor, "movex", agent);
+  const { data } = useInterfaceImplementation(descriptor, "movex", agent);
 
   const { data: state } = useInterfaceState(descriptor, "positioner", agent);
 
   return (
     <h1>
-      dd{JSON.stringify(descriptor.nodeRequirements)}
-      {data?.templateAt && <MoveButton template={data.templateAt} />}
+      dd{JSON.stringify(descriptor.actionRequirements)}
+      {data?.implementationAt && <MoveButton implementation={data.implementationAt} />}
       {state?.stateFor && <div>{JSON.stringify(state.stateFor.value)}</div>}
     </h1>
   );

@@ -29,11 +29,11 @@ export const useAssignation = (options: { assignation?: string }) => {
 export type FilterOptions = {
   identifier?: string;
   object?: string;
-  node?: string;
-  template?: string;
+  action?: string;
+  implementation?: string;
   assignation?: string;
-  assignedTemplate?: string;
-  assignedNode?: string;
+  assignedImplementation?: string;
+  assignedAction?: string;
   allowDone?: boolean;
 };
 
@@ -57,34 +57,34 @@ export const useFilteredAssignations = (options?: FilterOptions) => {
           return false;
         }
 
-        if (options.node) {
-          if (a.node?.id != options.node) {
+        if (options.action) {
+          if (a.action?.id != options.action) {
             return false;
           }
         }
 
-        if (options.template) {
-          if (a.template?.id != options.template) {
+        if (options.implementation) {
+          if (a.implementation?.id != options.implementation) {
             return false;
           }
         }
 
-        if (options.assignedNode) {
-          if (a?.node.id != options.assignedNode) {
+        if (options.assignedAction) {
+          if (a?.action.id != options.assignedAction) {
             return false;
           }
         }
 
-        if (options.assignedTemplate) {
-          console.log(a.provision?.template.id, options.assignedTemplate);
-          if (a.provision?.template.id != options.assignedTemplate) {
+        if (options.assignedImplementation) {
+          console.log(a.provision?.implementation.id, options.assignedImplementation);
+          if (a.provision?.implementation.id != options.assignedImplementation) {
             return false;
           }
         }
 
         if (options.identifier && options.object) {
           let matches = false;
-          for (const port of a.node.args) {
+          for (const port of a.action.args) {
             if (
               port.kind == PortKind.Structure &&
               port.identifier == options.identifier
@@ -105,9 +105,9 @@ export const useFilteredAssignations = (options?: FilterOptions) => {
       }) || [],
     [
       data?.assignations,
-      options?.node,
-      options?.template,
-      options?.assignedTemplate,
+      options?.action,
+      options?.implementation,
+      options?.assignedImplementation,
       options?.identifier,
       options?.object,
       options?.assignation,
@@ -158,7 +158,7 @@ export const useLiveAssignation = (options: FilterOptions) => {
     cancelled: cancelled,
     done,
     error,
-    nodeId: assignation?.node.id,
+    actionId: assignation?.action.id,
     message: latestMessage,
     event: assignation?.events.at(0),
   };

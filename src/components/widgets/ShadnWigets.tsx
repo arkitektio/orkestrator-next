@@ -21,6 +21,8 @@ import { ModelReturnWidget } from "./returns/fallbacks/ModelReturnWidget";
 import { StringReturnWidget } from "./returns/fallbacks/StringReturnWidget";
 import { FloatReturnWidget } from "./returns/fallbacks/FloatReturnWidget";
 import { SliderWidget } from "./custom/SliderWidget";
+import { MemoryStructureWidget } from "./fallbacks/MemoryStructureWidget";
+import { EnumWidget } from "./fallbacks/EnumWidget";
 
 export const ShadnWigets = () => {
   const { registry } = useWidgetRegistry();
@@ -30,6 +32,7 @@ export const ShadnWigets = () => {
     let list = registry.registerInputWidgetFallback(PortKind.List, ListWidget);
     let bool = registry.registerInputWidgetFallback(PortKind.Bool, BoolWidget);
     let date = registry.registerInputWidgetFallback(PortKind.Date, DateWidget);
+    let enumwi = registry.registerInputWidgetFallback(PortKind.Enum, EnumWidget);
     let union = registry.registerInputWidgetFallback(
       PortKind.Union,
       UnionWidget,
@@ -46,6 +49,10 @@ export const ShadnWigets = () => {
     let string = registry.registerInputWidgetFallback(
       PortKind.String,
       StringWidget,
+    );
+    let mstructure = registry.registerInputWidgetFallback(
+      PortKind.MemoryStructure,
+      MemoryStructureWidget,
     );
     let structure = registry.registerInputWidgetFallback(
       PortKind.Structure,
@@ -80,7 +87,9 @@ export const ShadnWigets = () => {
       date();
       bool();
       float();
+      enumwi();
       union();
+      mstructure();
       stateChoise();
       choices();
       structure();

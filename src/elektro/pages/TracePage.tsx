@@ -11,12 +11,7 @@ export type IRepresentationScreenProps = {};
 export default asDetailQueryRoute(
   useDetailTraceQuery,
   ({ data, subscribeToMore }) => {
-    const { renderView } = useTraceArray();
-
-    const click = () => {
-      console.log(renderView(data?.trace, 0));
-    };
-
+    
     return (
       <ElektroTrace.ModelPage
         title={data?.trace?.name}

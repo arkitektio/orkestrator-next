@@ -4,8 +4,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { PortFragment, PortScope } from "@/rekuest/api/graphql";
+import { PortFragment } from "@/rekuest/api/graphql";
 import { portToLabel } from "@/rekuest/widgets/utils";
+import { PortKind } from "../api/graphql";
 
 export const Args = ({
   instream,
@@ -28,7 +29,7 @@ export const Args = ({
                   variant="outline"
                   className="inline my-auto px-2 h-full flex flex-row py-1 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => onClick && onClick(id, index)}
-                  disabled={s.scope == PortScope.Local && s.nullable == false}
+                  disabled={s.kind == PortKind.MemoryStructure && s.nullable == false}
                 >
                   <svg
                     width="15"
@@ -50,10 +51,10 @@ export const Args = ({
               <TooltipContent className="bg-background text-foreground border border-1 border-foreground">
                 <p className="text-sm inline">{portToLabel(s)}</p>
                 <div className="text-xs mt-0"> {s?.description}</div>
-                {s.scope == PortScope.Local && s.nullable == false && (
+                {s.kind == PortKind.MemoryStructure && s.nullable == false && (
                   <div className="text-xs mt-0 text-muted-foreground ">
                     {" "}
-                    Local non-nullable Ports cannot be constants
+                    Memory Structure cannot be constants
                   </div>
                 )}
               </TooltipContent>

@@ -23,6 +23,7 @@ import KraphModule from "@/kraph/KraphModule";
 import BlokModule from "@/blok/BlokModule";
 import AlpakaModule from "@/alpaka/AlpakaModule";
 import ElektroModule from "@/elektro/ElektroModule";
+import LovekitModule from "@/lovekit/LovekitModule";
 // Entrypoint of the application.
 // We provide two main routers, one for the public routes, and one for the private routes.
 export const protect = (component: React.ReactNode) => {
@@ -65,6 +66,7 @@ function App() {
               <Route path="settings/*" element={protect(<SettingsModule />)} />
               <Route path="blok/*" element={protect(<BlokModule />)} />
               <Route path="alpaka/*" element={protect(<AlpakaModule />)} />
+              <Route path="lovekit/*" element={protect(<LovekitModule />)} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Stash />

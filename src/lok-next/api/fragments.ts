@@ -10,10 +10,6 @@
       "LeafDescendant",
       "MentionDescendant",
       "ParagraphDescendant"
-    ],
-    "SocialAccount": [
-      "GenericAccount",
-      "OrcidAccount"
     ]
   }
 };

@@ -16,7 +16,7 @@ fragment ListTestCase on TestCase {
 
 fragment TestResult on TestResult {
   id
-  template {
+  implementation {
     id
     interface
     agent {

@@ -19,8 +19,8 @@ fragment ROI on ROI {
   creator {
     sub
   }
-  history {
-    ...History
+  provenanceEntries {
+    ...ProvenanceEntry
   }
   kind
   vectors

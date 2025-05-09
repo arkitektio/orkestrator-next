@@ -8,7 +8,7 @@ fragment PostmanAssignation on Assignation {
     ...AssignationEvent
   }
   ephemeral
-  node {
+  action {
     hash
     id
     name
@@ -17,11 +17,11 @@ fragment PostmanAssignation on Assignation {
   reservation {
     id
     title
-    node {
+    action {
       name
     }
   }
-  template {
+  implementation {
     id
     interface
     extension

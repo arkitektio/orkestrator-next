@@ -9,6 +9,7 @@ import {
 import { useFormContext } from "react-hook-form";
 import { Slider } from "../ui/slider";
 import { FieldProps } from "./types";
+import { Button } from "../ui/button";
 
 function throttle<T extends (...args: any[]) => void>(
   fn: T,
@@ -47,7 +48,7 @@ export const SliderField = (
       rules={{ validate: props.validate }}
       render={({ field }) => (
         <FormItem>
-          <div className="flex flex-row items-center justify-between w-full gap-2">
+          <div className="flex flex-row items-center justify-between w-full gap-2 relative">
             <FormLabel>
               {props.label != undefined ? props.label : props.name}
             </FormLabel>
@@ -65,8 +66,17 @@ export const SliderField = (
                 step={props.step}
               />
             </FormControl>
-
-            {JSON.stringify(field.value)}
+            <Button 
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                field.onChange(null);
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+            >
+              Clear
+            </Button>
           </div>
           <FormDescription>{props.description}</FormDescription>
           <FormMessage />

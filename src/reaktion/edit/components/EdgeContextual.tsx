@@ -20,14 +20,15 @@ import {
   GraphNodeKind,
   ReactiveImplementation,
 } from "@/reaktion/api/graphql";
-import { rekuestNodeToMatchingNode } from "@/reaktion/plugins/rekuest";
+import { rekuestActionToMatchingNode } from "@/reaktion/plugins/rekuest";
 import { nodeIdBuilder } from "@/reaktion/utils";
 import {
-  ConstantNodeDocument,
+  ConstantActionDocument,
+  ConstantActionQuery,
   ConstantNodeQuery,
   DemandKind,
   PortKind,
-  useAllNodesQuery,
+  useAllActionsQuery,
   useProtocolOptionsLazyQuery,
 } from "@/rekuest/api/graphql";
 import { ArrowDown, X } from "lucide-react";
@@ -328,7 +329,7 @@ export const EdgeContextualRekuestNode = (props: {
   const leftPorts = props.params.leftNode.data.outs[props.params.leftStream];
   const rightPorts = props.params.rightNode.data.ins[props.params.rightStream];
 
-  const { data, refetch, variables } = useAllNodesQuery({
+  const { data, refetch, variables } = useAllActionsQuery({
     variables: {
       filters: {
         demands: [
@@ -374,19 +375,19 @@ export const EdgeContextualRekuestNode = (props: {
   }, [props.search]);
 
   const { addEdgeContextualNode } = useEditRiver();
-  const { client } = useRekuest();
+  const client = useRekuest();
 
   const onNodeClick = (id: string) => {
     client &&
       client
-        .query<ConstantNodeQuery>({
-          query: ConstantNodeDocument,
+        .query<ConstantActionQuery>({
+          query: ConstantActionDocument,
           variables: { id: id },
         })
         .then(async (event) => {
           console.log(event);
-          if (event.data?.node) {
-            let flownode = rekuestNodeToMatchingNode(event.data?.node, {
+          if (event.data?.action) {
+            let flownode = rekuestActionToMatchingNode(event.data?.action, {
               x: 0,
               y: 0,
             });
@@ -398,7 +399,7 @@ export const EdgeContextualRekuestNode = (props: {
 
   return (
     <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
-      {data?.nodes.map((node) => (
+      {data?.actions.map((node) => (
         <Tooltip>
           <TooltipTrigger>
             <Card

@@ -22,12 +22,6 @@
       "Snapshot",
       "Video"
     ],
-    "RenderNode": [
-      "ContextNode",
-      "GridNode",
-      "OverlayNode",
-      "SplitNode"
-    ],
     "View": [
       "AcquisitionView",
       "AffineTransformationView",

@@ -1,12 +1,12 @@
 fragment Binds on Binds {
-  templates
+  implementations
 }
 
 fragment PostmanReservation on Reservation {
   title
   id
   reference
-  node {
+  action {
     ...Ports
     name
     description
@@ -19,12 +19,11 @@ fragment PostmanReservation on Reservation {
   happy
 }
 
-
 fragment ListReservation on Reservation {
   id
   title
   reference
-  node {
+  action {
     name
     description
     hash
@@ -33,12 +32,9 @@ fragment ListReservation on Reservation {
 
 fragment DetailReservation on Reservation {
   ...PostmanReservation
-  node {
+  action {
     name
     description
     ...Ports
-  }
-  dependencyGraph {
-    ...DependencyGraph
   }
 }

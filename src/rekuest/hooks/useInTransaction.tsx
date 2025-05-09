@@ -27,7 +27,7 @@ export const useInTransaction = (
   const asArgs = assignations_data?.assignations.filter(
     (x) =>
       x.args[
-        x.node.args.find((x) => x.identifier == options.identifier)?.key ||
+        x.action.args.find((x) => x.identifier == options.identifier)?.key ||
           "_unset"
       ] == options.object,
   );

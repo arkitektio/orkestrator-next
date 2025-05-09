@@ -1,9 +1,9 @@
 import { useLivekit } from "@/arkitekt/Arkitekt";
 import {
   EnsuredStreamFragment,
-  useCreateStreamMutation,
+  useCreateVideoStreamMutation,
   useGetStreamQuery,
-} from "@/lok-next/api/graphql";
+} from "@/lovekit/api/graphql";
 import {
   GridLayout,
   LiveKitRoom,
@@ -11,7 +11,6 @@ import {
   VideoTrack,
 } from "@livekit/components-react";
 import { Track } from "livekit-client";
-import { useEffect } from "react";
 
 function VideoRenderer() {
   const trackRefs = useTracks([Track.Source.Camera]);
@@ -42,31 +41,9 @@ export const VideoStream = ({ stream }: { stream: EnsuredStreamFragment }) => {
 };
 
 export const StreamJoiner = (props: { room: string }) => {
-  const [createStream, stream] = useCreateStreamMutation();
+  const [createStream, stream] = useCreateVideoStreamMutation();
 
-  useEffect(() => {
-    console.log("Creating stream");
-    if (!stream || !stream.data?.createStream.agent.room != props.room) {
-      createStream({
-        variables: {
-          input: {
-            title: "My Stream",
-            room: props.room,
-            agentId: "default",
-          },
-        },
-      });
-    }
-  }, [props.room]);
-
-  return (
-    <>
-      {stream.loading && <div>Loading</div>}
-      {stream.data?.createStream && (
-        <VideoStream stream={stream.data.createStream} />
-      )}
-    </>
-  );
+  return <>Not implemented Right now</>;
 };
 
 export const StreamWidget = (props: { value: string }) => {
@@ -76,9 +53,11 @@ export const StreamWidget = (props: { value: string }) => {
     },
   });
 
-  const room = data?.stream?.agent?.room.id;
+  const room = data?.stream?.id;
 
   return (
-    <div className="w-full h-full m-2">{room && <StreamJoiner room={room} />}</div>
+    <div className="w-full h-full m-2">
+      {room && <StreamJoiner room={room} />}
+    </div>
   );
 };

@@ -15,7 +15,7 @@ const TheCard = ({ assignation, mates }: Props) => {
         <CardHeader>
           <CardTitle>
             <RekuestAssignation.DetailLink object={assignation.id}>
-              {assignation.node.name}
+              {assignation.action.name}
             </RekuestAssignation.DetailLink>
             <div className="text-muted-foreground font-light mt-2">
               <Timestamp date={assignation.createdAt} relative />

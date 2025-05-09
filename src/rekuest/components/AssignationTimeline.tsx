@@ -35,7 +35,7 @@ export const AssignationTimeline = ({ assignation }: TimelineLayoutProps) => {
               <br />
               {e.returns && (
                 <ReturnsContainer
-                  ports={assignation.node.returns}
+                  ports={assignation.action.returns}
                   values={e.returns}
                   registry={registry}
                 />

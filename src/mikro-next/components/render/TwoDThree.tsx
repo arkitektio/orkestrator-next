@@ -34,7 +34,7 @@ import * as THREE from "three";
 import { additiveBlending, bitmapToBlob, viewHasher } from "./TwoDRGBRender";
 import { useViewRenderFunction } from "./hooks/useViewRender";
 import { DelegatingStructureWidget } from "@/components/widgets/returns/DelegatingStructureWidget";
-import { PortKind, PortScope } from "@/rekuest/api/graphql";
+import { PortKind } from "@/rekuest/api/graphql";
 
 export interface RGBDProps {
   context: ListRgbContextFragment;
@@ -378,7 +378,6 @@ export const RGBD = (props: RGBDProps) => {
               kind: PortKind.Structure,
               identifier: panel.identifier,
               __typename: "Port",
-              scope: PortScope.Global,
             }}
             value={panel.object}
           />

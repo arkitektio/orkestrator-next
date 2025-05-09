@@ -32,8 +32,8 @@ const TheCard = ({ item, mates }: Props) => {
           </CardTitle>
         </CardHeader>
         <CardFooter>
-          <UserAvatarUsername sub={item.registry.user.id} />
-          <ClientAvatar clientId={item.registry.app.clientId} />
+          <UserAvatarUsername sub={item.registry.user.sub} />
+          <ClientAvatar clientId={item.registry.client.clientId} />
         </CardFooter>
       </Card>
     </RekuestAgent.Smart>

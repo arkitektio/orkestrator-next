@@ -6,7 +6,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { NodeDescription } from "@/lib/rekuest/NodeDescription";
+import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import { useListDefinitionsQuery } from "../api/graphql";
 
 export const Test = () => {
@@ -32,7 +32,7 @@ export const PopularCarousel = ({}) => {
                   </h1>
                   <p className="mt-3 text-xl text-muted-foreground">
                     {item.description && (
-                      <NodeDescription description={item.description} />
+                      <ActionDescription description={item.description} />
                     )}
                   </p>
                   {item.flavours.map((flavour) => (

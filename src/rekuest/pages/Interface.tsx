@@ -1,5 +1,5 @@
 import { PageLayout } from "@/components/layout/PageLayout";
-import NodeList from "@/rekuest/components/lists/NodeList";
+import ActionList from "@/rekuest/components/lists/ActionList";
 import {
   useDescriptor,
   useDescriptors,
@@ -49,7 +49,7 @@ export function WebComponentLoader({
       webComponent.setAttribute(
         "descriptor",
         JSON.stringify({
-          nodeRequirements: descriptor.nodeRequirements,
+          actionRequirements: descriptor.actionRequirements,
           stateRequirements: descriptor.stateRequirements,
         }),
       );

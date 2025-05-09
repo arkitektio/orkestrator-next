@@ -8,7 +8,7 @@ fragment Panel on Panel {
   accessors
   reservation {
     id
-    template {
+    implementation {
       id
     }
   }

@@ -11,20 +11,20 @@ import {
 } from "@/components/ui/resizable";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 import { ReturnsContainer } from "@/components/widgets/returns/ReturnsContainer";
-import { useNodeDescription } from "@/lib/rekuest/NodeDescription";
-import { RekuestNode } from "@/linkers";
+import { useActionDescription } from "@/lib/rekuest/ActionDescription";
+import { RekuestAction } from "@/linkers";
 import {
   AssignationEventKind,
   DetailNodeFragment,
-  useDetailNodeQuery,
+  useDetailActionQuery,
 } from "@/rekuest/api/graphql";
-import { useNodeAction } from "@/rekuest/hooks/useNodeAction";
+import { useAction } from "@/rekuest/hooks/useAction";
 import { usePortForm } from "@/rekuest/hooks/usePortForm";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { toast } from "sonner";
 
 export const DoNodeForm = ({ node }: { node: DetailNodeFragment }) => {
-  const { assign, latestAssignation, cancel } = useNodeAction({
+  const { assign, latestAssignation, cancel } = useAction({
     id: node.id,
   });
 
@@ -33,7 +33,7 @@ export const DoNodeForm = ({ node }: { node: DetailNodeFragment }) => {
     overwrites: latestAssignation?.args,
   });
 
-  const description = useNodeDescription({
+  const description = useActionDescription({
     description: node.description || "",
   });
 
@@ -139,7 +139,7 @@ export const DoNodeForm = ({ node }: { node: DetailNodeFragment }) => {
   );
 };
 
-export default asDetailQueryRoute(useDetailNodeQuery, ({ data, refetch }) => {
+export default asDetailQueryRoute(useDetailActionQuery, ({ data, refetch }) => {
   return (
     <ModelPageLayout
       identifier="@rekuest/node"
@@ -148,7 +148,7 @@ export default asDetailQueryRoute(useDetailNodeQuery, ({ data, refetch }) => {
       sidebars={
         <MultiSidebar
           map={{
-            Comments: <RekuestNode.Komments object={data?.node?.id} />,
+            Comments: <RekuestAction.Komments object={data?.node?.id} />,
           }}
         />
       }

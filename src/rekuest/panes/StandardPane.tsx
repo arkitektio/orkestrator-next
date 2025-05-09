@@ -11,7 +11,7 @@ import {
   useAgentsQuery,
   useGlobalSearchQuery,
 } from "../api/graphql";
-import NodeCard from "../components/cards/NodeCard";
+import ActionCard from "../components/cards/ActionCard";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
 import { useDescriptors } from "../interfaces/hooks/useDescriptors";
 
@@ -70,11 +70,11 @@ export const NavigationPane = (props: {}) => {
             Reservations
           </DroppableNavLink>
           <DroppableNavLink
-            to="/rekuest/nodes"
+            to="/rekuest/actions"
             className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
           >
             <FunctionSquare className="h-4 w-4" />
-            Nodes
+            Actions
           </DroppableNavLink>
           <DroppableNavLink
             to="/rekuest/toolboxes"
@@ -164,7 +164,7 @@ export const NavigationPane = (props: {}) => {
 
 const variables = {
   search: "",
-  noNodes: false,
+  noActions: false,
   pagination: {
     limit: 10,
   },
@@ -189,7 +189,7 @@ const Pane: React.FunctionComponent<IDataSidebarProps> = (props) => {
         searchBar={
           <GlobalSearchFilter
             onFilterChanged={onFilterChanged}
-            defaultValue={{ search: "", noNodes: false }}
+            defaultValue={{ search: "", noActions: false }}
           />
         }
       >
@@ -199,8 +199,8 @@ const Pane: React.FunctionComponent<IDataSidebarProps> = (props) => {
           </>
         ) : (
           <>
-            <ListRender array={data?.nodes}>
-              {(item, i) => <NodeCard node={item} key={i} />}
+            <ListRender array={data?.actions}>
+              {(item, i) => <ActionCard action={item} key={i} />}
             </ListRender>
           </>
         )}

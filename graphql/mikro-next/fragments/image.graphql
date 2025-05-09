@@ -37,8 +37,8 @@ fragment Image on Image {
     id
   }
   createdAt
-  history(pagination: { limit: 3 }) {
-    ...History
+  provenanceEntries {
+    ...ProvenanceEntry
   }
   creator {
     sub

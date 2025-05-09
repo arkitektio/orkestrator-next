@@ -1,6 +1,22 @@
-query DetailRoom($id: ID!) {
+query GetRoom($id: ID!) {
   room(id: $id) {
-    ...DetailRoom
+    ...Room
+  }
+}
+query SearchRooms($search: String, $values: [ID!]) {
+  options: rooms(
+    filters: { search: $search, ids: $values }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: title
+    description: description
+  }
+}
+
+query ListRooms($filter: RoomFilter, $pagination: OffsetPaginationInput) {
+  rooms(filters: $filter, pagination: $pagination) {
+    ...Room
   }
 }
 

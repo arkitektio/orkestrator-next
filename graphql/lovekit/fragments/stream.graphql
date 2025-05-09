@@ -1,0 +1,22 @@
+fragment Stream on Stream {
+  id
+  title
+}
+
+fragment EnsuredStream on Stream {
+  id
+  title
+  token
+  agent {
+    id
+  }
+}
+
+fragment DetailStream on Stream {
+  id
+  title
+  token
+  agent {
+    id
+  }
+}

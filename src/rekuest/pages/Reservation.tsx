@@ -28,7 +28,7 @@ export default asDetailQueryRoute(
     return (
       <ModelPageLayout
         identifier="@rekuest/reservation"
-        title={data?.reservation?.title || data?.reservation.node?.name}
+        title={data?.reservation?.title || data?.reservation.action?.name}
         object={data.reservation.id}
       >
         <DetailPane>
@@ -40,10 +40,10 @@ export default asDetailQueryRoute(
                 </Button>
               }
             >
-              {data?.reservation?.title || data?.reservation.node?.name}
+              {data?.reservation?.title || data?.reservation.action?.name}
             </DetailPaneTitle>
             <DetailPaneDescription>
-              {data?.reservation?.node?.description}
+              {data?.reservation?.action?.description}
 
               {JSON.stringify(data?.reservation?.binds)}
             </DetailPaneDescription>
@@ -53,7 +53,7 @@ export default asDetailQueryRoute(
         <DetailPane className="mt-2">
           <DetailPaneHeader>Assign</DetailPaneHeader>
           <TestConstants
-            ports={data?.reservation.node?.args || []}
+            ports={data?.reservation.action?.args || []}
             overwrites={{}}
             onSubmit={(e) => {
               console.log("submit", e);
@@ -61,7 +61,7 @@ export default asDetailQueryRoute(
                 variables: {
                   reservation: data.reservation.id,
                   args:
-                    data?.reservation?.node?.args.map(
+                    data?.reservation?.action?.args.map(
                       (arg) => e[arg.key] || null,
                     ) || [],
                 },

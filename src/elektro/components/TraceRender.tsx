@@ -31,7 +31,8 @@ export const TraceRender = (props: { trace: DetailTraceFragment }) => {
 
   useEffect(() => {
     renderView(props.trace, 0).then((data) => {
-      setValues(data);
+      const values = data.map((x, index) => ({index: index, c: x}));
+      setValues(values);
     });
   }, [props.trace]);
 
@@ -50,7 +51,7 @@ export const TraceRender = (props: { trace: DetailTraceFragment }) => {
           }}
         >
           <CartesianGrid vertical={false} />
-          <XAxis dataKey="t" tickLine={false} axisLine={false} tickMargin={8} />
+          <XAxis dataKey="index" tickLine={false} axisLine={false} tickMargin={8} />
           <ChartTooltip
             cursor={false}
             content={<ChartTooltipContent indicator="line" />}

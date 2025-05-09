@@ -15,8 +15,8 @@
       "StringAssignWidget"
     ],
     "AssignableNode": [
-      "RekuestFilterNode",
-      "RekuestMapNode"
+      "RekuestFilterActionNode",
+      "RekuestMapActionNode"
     ],
     "Effect": [
       "CustomEffect",
@@ -29,17 +29,17 @@
     "GraphNode": [
       "ArgNode",
       "ReactiveNode",
-      "RekuestFilterNode",
-      "RekuestMapNode",
+      "RekuestFilterActionNode",
+      "RekuestMapActionNode",
       "ReturnNode"
     ],
-    "RekuestNode": [
-      "RekuestFilterNode",
-      "RekuestMapNode"
+    "RekuestActionNode": [
+      "RekuestFilterActionNode",
+      "RekuestMapActionNode"
     ],
     "RetriableNode": [
-      "RekuestFilterNode",
-      "RekuestMapNode"
+      "RekuestFilterActionNode",
+      "RekuestMapActionNode"
     ],
     "ReturnWidget": [
       "ChoiceReturnWidget",

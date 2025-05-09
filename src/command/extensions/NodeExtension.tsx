@@ -1,7 +1,7 @@
 import { CommandGroup, CommandItem } from "@/components/ui/command";
 import {
   ListNodeFragment,
-  useNodeSearchLazyQuery,
+  useActionSearchLazyQuery,
 } from "@/rekuest/api/graphql";
 import { useEffect, useState } from "react";
 import { useExtension } from "../ExtensionContext";
@@ -11,7 +11,7 @@ export const NodeExtensions = () => {
 
   const [nodes, setNodes] = useState<ListNodeFragment[]>([]);
 
-  const [searchNodes] = useNodeSearchLazyQuery();
+  const [searchNodes] = useActionSearchLazyQuery();
 
   useEffect(() => {
     if (

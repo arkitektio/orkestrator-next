@@ -2,12 +2,12 @@ import { useSettings } from "@/providers/settings/SettingsContext";
 import { useCallback } from "react";
 import {
   AssignInput,
-  AssignNodeQuery,
+  AssignActionQuery,
   AssignationEventKind,
   PostmanAssignationFragment,
   ReserveMutationVariables,
   useAssignMutation,
-  useAssignNodeQuery,
+  useAssignActionQuery,
   useAssignationsQuery,
   useCancelMutation,
 } from "../api/graphql";
@@ -19,7 +19,7 @@ export type ActionReserveVariables = Omit<
 export type ActionAssignVariables = Omit<AssignInput, "instanceId">;
 
 export type useActionReturn<T> = {
-  node?: AssignNodeQuery["node"];
+  action?: AssignActionQuery["action"];
   assign: (
     variables: ActionAssignVariables,
   ) => Promise<PostmanAssignationFragment>;
@@ -38,7 +38,7 @@ export const useHashAction = <T extends any>(
 ): useActionReturn<T> => {
   const { settings } = useSettings();
 
-  const { data } = useAssignNodeQuery({
+  const { data } = useAssignActionQuery({
     variables: {
       ...options,
     },
@@ -54,7 +54,7 @@ export const useHashAction = <T extends any>(
   const [cancelAssign] = useCancelMutation({});
 
   let assignations = assignations_data?.assignations.filter(
-    (x) => x.node.hash == data?.node.hash,
+    (x) => x.action.hash == data?.action.hash,
   );
 
   const latestAssignation = assignations?.at(0);
@@ -98,7 +98,7 @@ export const useHashAction = <T extends any>(
     }
     return assign({
       args: latestAssignation.args,
-      node: latestAssignation?.node.id,
+      action: latestAssignation?.action.id,
       hooks: [],
     });
   }, [assign]);
@@ -137,6 +137,6 @@ export const useHashAction = <T extends any>(
     latestAssignation,
     cancel,
     assignations,
-    node: data?.node,
+    action: data?.action,
   };
 };

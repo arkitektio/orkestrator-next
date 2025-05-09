@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { useTemplatesQuery } from "@/rekuest/api/graphql";
+import { useImplementationsQuery } from "@/rekuest/api/graphql";
 
 export const TemplateSelector = (props: {
   node: string;
   hash: string;
   onClick: (node: string, template: string) => void;
 }) => {
-  const { data } = useTemplatesQuery({
+  const { data } = useImplementationsQuery({
     variables: {
       filters: {
         nodeHash: props.hash,

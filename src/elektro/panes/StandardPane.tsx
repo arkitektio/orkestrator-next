@@ -5,7 +5,7 @@ import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { DroppableNavLink } from "@/components/ui/link";
 import { CubeIcon } from "@radix-ui/react-icons";
-import { Home } from "lucide-react";
+import { Home, LineChartIcon, Network } from "lucide-react";
 import * as React from "react";
 import {
   GlobalSearchQueryVariables,
@@ -13,6 +13,7 @@ import {
 } from "../api/graphql";
 import TraceCard from "../components/cards/TraceCard";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
+import { RiCheckboxMultipleLine } from "react-icons/ri";
 
 interface IDataSidebarProps {}
 
@@ -30,14 +31,35 @@ export const NavigationPane = (props: {}) => {
         </DroppableNavLink>
       </SubTree>
 
-      <SubTreeTitle>Data</SubTreeTitle>
+      <SubTreeTitle>NEURON</SubTreeTitle>
       <SubTree>
         <DroppableNavLink
-          to="/elektro/traces"
+          to="/elektro/simulations"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <LineChartIcon className="h-4 w-4" />
+          Simulations
+        </DroppableNavLink>
+        <DroppableNavLink
+          to="/elektro/experiments"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <RiCheckboxMultipleLine className="h-4 w-4" />
+          Experiments
+        </DroppableNavLink>
+        <DroppableNavLink
+          to="/elektro/neuronmodels"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <Network className="h-4 w-4" />
+          Neuron models
+        </DroppableNavLink>
+        <DroppableNavLink
+          to="/elektro/modelcollections"
           className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
         >
           <CubeIcon className="h-4 w-4" />
-          Traces
+          Model Collections
         </DroppableNavLink>
       </SubTree>
     </Tree>

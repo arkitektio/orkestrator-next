@@ -1,5 +1,5 @@
 import { PageLayout } from "@/components/layout/PageLayout";
-import NodeList from "@/rekuest/components/lists/NodeList";
+import ActionList from "@/rekuest/components/lists/ActionList";
 import { useDescriptors } from "../interfaces/hooks/useDescriptors";
 import { Descriptor } from "../interfaces/types";
 import { useAgentsForDescriptor } from "../interfaces/hooks/useAgentsForInterface";
@@ -48,7 +48,7 @@ const Page = () => {
   const descriptors = useDescriptors();
 
   return (
-    <PageLayout title={"Nodes"}>
+    <PageLayout title={"Actions"}>
       <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
         <div>
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">

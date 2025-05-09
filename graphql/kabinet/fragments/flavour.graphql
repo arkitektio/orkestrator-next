@@ -13,3 +13,9 @@ fragment ListFlavour on Flavour {
     ...RocmSelector
   }
 }
+
+
+fragment Flavour on Flavour {
+  ...ListFlavour
+  description
+}

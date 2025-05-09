@@ -19,12 +19,11 @@ fragment StateChoiceAssignWidget on StateChoiceAssignWidget {
   stateChoices
 }
 
-fragment FilterPort on ChildPort {
+fragment FilterPort on Port {
   __typename
   kind
   key
   identifier
-  scope
   assignWidget {
     ... on SearchAssignWidget {
       query
@@ -63,7 +62,7 @@ fragment ChoiceAssignWidget on ChoiceAssignWidget {
   }
 }
 
-fragment ChildPortNested on ChildPort {
+fragment ChildPortNested on Port {
   __typename
   kind
   key
@@ -71,7 +70,6 @@ fragment ChildPortNested on ChildPort {
   children {
     kind
     identifier
-    scope
     assignWidget {
       ...AssignWidget
     }
@@ -79,7 +77,6 @@ fragment ChildPortNested on ChildPort {
       ...ReturnWidget
     }
   }
-  scope
   assignWidget {
     ...AssignWidget
   }
@@ -90,12 +87,11 @@ fragment ChildPortNested on ChildPort {
   nullable
 }
 
-fragment ChildPort on ChildPort {
+fragment ChildPort on Port {
   __typename
   kind
   key
   identifier
-  scope
   children {
     ...ChildPortNested
   }
@@ -154,7 +150,6 @@ fragment Port on Port {
   label
   nullable
   description
-  scope
   effects {
     ...PortEffect
   }

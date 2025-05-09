@@ -31,7 +31,7 @@ export const FloatField = (props: FieldProps & { placeholder?: string }) => {
               onChange={(e) => {
                 field.onChange(e);
               }}
-              type="number"
+              type="string"
               className="w-full dark:text-white"
             />
           </FormControl>

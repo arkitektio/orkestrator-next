@@ -2,13 +2,13 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
-import { NodeDescription } from "@/lib/rekuest/NodeDescription";
+import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import { RekuestPanel } from "@/linkers";
 import { toast } from "sonner";
 import { useGetPanelQuery, useGetStateQuery } from "../api/graphql";
 import { StateDisplay } from "../components/State";
 import { usePortForm } from "../hooks/usePortForm";
-import { useTemplateAction } from "../hooks/useTemplateAction";
+import { useImplementationAction } from "../hooks/useImplementationAction";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
 const StateWidget = (props: {
@@ -30,20 +30,20 @@ const StateWidget = (props: {
   );
 };
 
-const Fake = (props: { template: string }) => {
-  const { assign, latestAssignation, cancel, template } = useTemplateAction({
-    id: props.template,
+const Fake = (props: { implementation: string }) => {
+  const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
+    id: props.implementation,
   });
 
   const form = usePortForm({
-    ports: template?.node.args || [],
+    ports: implementation?.action.args || [],
   });
 
   const onSubmit = (data: any) => {
     console.log("Submitting");
     console.log(data);
     assign({
-      template: props.template,
+      implementation: props.implementation,
       args: data,
       hooks: [],
     }).then(
@@ -62,18 +62,18 @@ const Fake = (props: { template: string }) => {
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
-          {template?.node?.description && (
-            <NodeDescription
-              description={template.node.description}
+          {implementation?.action?.description && (
+            <ActionDescription
+              description={implementation.action.description}
               variables={form.watch()}
             />
           )}
           <ArgsContainer
             registry={registry}
-            groups={template?.node?.portGroups || []}
-            ports={template?.node.args || []}
+            groups={implementation?.action?.portGroups || []}
+            ports={implementation?.action.args || []}
             path={[]}
-            bound={props.template}
+            bound={props.implementation}
           />
           <Button type="submit" className="btn">
             {" "}
@@ -100,8 +100,8 @@ export default asDetailQueryRoute(useGetPanelQuery, ({ data, refetch }) => {
         ) : (
           <> State kind but now state? </>
         )}
-        {data.panel.reservation?.template ? (
-          <Fake template={data.panel.reservation?.template.id} />
+        {data.panel.reservation?.implementation ? (
+          <Fake implementation={data.panel.reservation?.implementation.id} />
         ) : (
           <> State kind but now state? </>
         )}

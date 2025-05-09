@@ -22,8 +22,8 @@ import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
 import { RunState } from "./types";
 
 const nodeTypes: NodeTypes = {
-  RekuestFilterNode: RekuestFilterWidget,
-  RekuestMapNode: RekuestMapWidget,
+  RekuestFilterActionNode: RekuestFilterWidget,
+  RekuestMapActionNode: RekuestMapWidget,
   ReactiveNode: ReactiveTrackNodeWidget,
   ArgNode: ArgTrackNodeWidget,
   ReturnNode: ReturnTrackNodeWidget,

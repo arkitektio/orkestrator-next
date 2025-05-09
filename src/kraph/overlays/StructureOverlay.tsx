@@ -1,10 +1,10 @@
 import { DelegatingStructureWidget } from "@/components/widgets/returns/DelegatingStructureWidget";
 import { KraphNode } from "@/linkers";
-import { PortKind, PortScope } from "@/rekuest/api/graphql";
+import { PortKind } from "@/rekuest/api/graphql";
 import { useGetNodeQuery } from "../api/graphql";
 
 export const EntityOverlay = (props: { entity: string }) => {
-  const { data } = us({
+  const { data } = useGetNodeQuery({
     variables: {
       id: props.entity,
     },
@@ -27,7 +27,6 @@ export const EntityOverlay = (props: { entity: string }) => {
                   key: data.node.object,
                   __typename: "Port",
                   nullable: false,
-                  scope: PortScope.Global,
                 }}
                 value={data.node.object}
               />

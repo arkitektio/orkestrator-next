@@ -9,7 +9,8 @@ import {
   AgentsQuery,
   AssignationsDocument,
   AssignationsQuery,
-  useDetailNodeQuery,
+  useAgentQuery,
+  useDetailActionQuery,
   WatchAgentsDocument,
   WatchAgentsSubscription,
   WatchAgentsSubscriptionVariables,
@@ -18,38 +19,14 @@ import {
   WatchAssignationsSubscription
 } from "../../api/graphql";
 
-export const DynamicYieldDisplay = (props: {
-  values: any[];
-  nodeId: string;
-}) => {
-  const { data } = useDetailNodeQuery({
-    variables: {
-      id: props.nodeId,
-    },
-  });
-
-  const { registry } = useWidgetRegistry();
-
-  if (!data) {
-    return <> Loaaading </>;
-  }
-
-  return (
-    <div>
-      <ReturnsContainer
-        ports={data.node.returns}
-        values={props.values}
-        registry={registry}
-        className="p-2"
-      />
-    </div>
-  );
-};
 
 export const AgentToatser = (props: { id: string }) => {
+  const {data} = useAgentQuery({})
+
+
   return (
     <div className="h-full relative w-full overflow-hidden group p-2">
-      I bims 1 Agent
+      {data?.agent?.name} is now {data?.agent.connected ? "connected" : "disconnected"}
     </div>
   );
 };
@@ -108,7 +85,7 @@ export const AgentUpdater = (props: {}) => {
             const toastId = create.id; // Use the assignation id as the toastId
             toast(<AgentToatser id={toastId} />, {
               id: toastId,
-              duration: Infinity, // Keep toast open until manually closed or task completes
+              duration: 300, // Keep toast open until manually closed or task completes
               dismissible: true,
             });
           }

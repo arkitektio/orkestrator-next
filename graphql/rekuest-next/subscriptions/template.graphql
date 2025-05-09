@@ -1,16 +1,16 @@
-subscription WatchTemplate($template: ID!) {
-  templateChange(template: $template) {
-    ...DetailTemplate
+subscription WatchImplementation($implementation: ID!) {
+  implementationChange(implementation: $implementation) {
+    ...DetailImplementation
   }
 }
 
-subscription WatchTemplates($agent: ID!) {
-  templates(agent: $agent) {
+subscription WatchImplementations($agent: ID!) {
+  implementations(agent: $agent) {
     create {
-      ...ListTemplate
+      ...ListImplementation
     }
     update {
-      ...ListTemplate
+      ...ListImplementation
     }
     delete
   }

@@ -61,7 +61,7 @@ export const ShortcutToolbar = (props: {identifier: string, object: string}) => 
   if (data.shortcuts.length === 0) {
     return (
       <span className="font-light text-xs w-full items-center ml-2 w-full">
-        No nodes...
+        No actions...
       </span>
     );
   }

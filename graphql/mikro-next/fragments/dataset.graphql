@@ -2,8 +2,8 @@ fragment Dataset on Dataset {
   id
   name
   description
-  history {
-    ...History
+  provenanceEntries {
+    ...ProvenanceEntry
   }
   images {
     ...ListImage

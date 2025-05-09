@@ -30,6 +30,7 @@
     "fluss": "graphql-codegen --config fluss.yml",
     "kabinet": "graphql-codegen --config kabinet.yml",
     "port": "graphql-codegen --config port-next.yml",
+    "lovekit": "graphql-codegen --config lovekit.yml",
     "lok": "graphql-codegen --config lok.yml",
     "elektro": "graphql-codegen --config elektro.yml"
   },

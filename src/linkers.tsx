@@ -357,6 +357,8 @@ export const LokServiceInstance = buildSmart(
 );
 export const LokLayer = buildSmart("@lok/layer", "lok/layers");
 
+export const LovekitStream = buildSmart("@lovekit/stream", "lovekit/streams");
+
 export const AlpakaRoom = buildSmart("@alpaka/room", "alpaka/rooms");
 export const AlpakaProvider = buildSmart(
   "@alpaka/provider",

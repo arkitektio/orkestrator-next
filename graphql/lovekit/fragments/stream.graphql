@@ -8,9 +8,7 @@ fragment EnsuredStream on Stream {
   title
   token
   agent {
-    room {
-      id
-    }
+    id
   }
 }
 
@@ -19,8 +17,6 @@ fragment DetailStream on Stream {
   title
   token
   agent {
-    room {
-      id
-    }
+    id
   }
 }

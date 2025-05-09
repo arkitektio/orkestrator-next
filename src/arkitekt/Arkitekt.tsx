@@ -21,6 +21,7 @@ import rekuestResult from "@/rekuest/api/fragments";
 import { ApolloClient, NormalizedCache } from "@apollo/client";
 import { buildArkitekt, buildGuard } from ".";
 import { ServiceBuilderMap, useArkitekt } from "./provider";
+import { createLovekitClient } from "@/lib/lovekit/client";
 
 export const electronRedirect = async (
   url: string,
@@ -52,6 +53,21 @@ export const serviceMap: ServiceBuilderMap = {
     builder: (manifest, fakts: any, token) => {
       return {
         client: createRekuestClient({
+          wsEndpointUrl: fakts.rekuest.ws_endpoint_url,
+          endpointUrl: fakts.rekuest.endpoint_url,
+          possibleTypes: rekuestResult.possibleTypes,
+          retrieveToken: () => token,
+        }),
+      };
+    },
+  },
+  lovekit: {
+    key: "lovekit",
+    service: "live.arkitekt.lovekit",
+    optional: false,
+    builder: (manifest, fakts: any, token) => {
+      return {
+        client: createLovekitClient({
           wsEndpointUrl: fakts.rekuest.ws_endpoint_url,
           endpointUrl: fakts.rekuest.endpoint_url,
           possibleTypes: rekuestResult.possibleTypes,
@@ -210,6 +226,7 @@ export const Guard = {
   Kraph: buildGuard("kraph"),
   Alpaka: buildGuard("alpaka"),
   Elektro: buildGuard("elektro"),
+  Lovekit: buildGuard("lovekit"),
 };
 
 export const useMikro = (): ApolloClient<NormalizedCache> => {
@@ -290,6 +307,16 @@ export const useAlpaka = (): ApolloClient<NormalizedCache> => {
   }
 
   return clients.alpaka?.client;
+};
+
+export const useLovekit = (): ApolloClient<NormalizedCache> => {
+  const { clients } = useArkitekt();
+
+  if (!clients.lovekit?.client) {
+    throw new Error("Lovekit client not available");
+  }
+
+  return clients.lovekit?.client;
 };
 
 export const useElektro = (): ApolloClient<NormalizedCache> => {

@@ -11,7 +11,6 @@ import { ElektroWard } from "@/elektro/ElektroWard";
 import { KabinetWard } from "@/kabinet/KabinetWard";
 import { KraphWard } from "@/kraph/KraphWard";
 import { WellKnownDiscovery } from "@/lib/fakts";
-import { SystemMessageDisplay } from "@/lok-next/SystemMessage";
 import { MikroNextWard } from "@/mikro-next/MikroNextWard";
 import ImageDisplay from "@/mikro-next/displays/ImageDisplay";
 import { ThemeProvider } from "@/providers/ThemeProvider";
@@ -110,7 +109,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                         <Guard.Rekuest fallback={<></>}>
                           {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
                           <AssignationUpdater />
-                          <AgentUpdater/>
+                          <AgentUpdater />
                           {/* We register the Shadn powered widgets to the widget registry. */}
                           <RekuestNextWard />
                           <ShadnWigets />
@@ -134,9 +133,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                         <Guard.Fluss fallback={<></>}>
                           <FlussWard key="fluss" />
                         </Guard.Fluss>
-                        <Guard.Lok fallback={<></>}>
-                          <SystemMessageDisplay />
-                        </Guard.Lok>
                         <BackNavigationErrorCatcher>
                           {children}
                         </BackNavigationErrorCatcher>

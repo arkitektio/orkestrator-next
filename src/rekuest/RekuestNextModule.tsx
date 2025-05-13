@@ -16,8 +16,6 @@ import Reservation from "./pages/Reservation";
 import Reservations from "./pages/Reservations";
 import Implementation from "./pages/Implementation";
 import Standardpane from "./panes/StandardPane";
-import Interfaces from "./pages/Interfaces";
-import Interface from "./pages/Interface";
 import Shortcut from "./pages/Shortcut";
 import Shortcuts from "./pages/Shortcuts";
 import Toolboxes from "./pages/Toolboxes";
@@ -49,12 +47,10 @@ const Module: React.FC<Props> = () => {
           <Route path="memoryshelves/:id" element={<MemoryShelve />} />
           <Route path="panels/:id" element={<Panel />} />
           <Route path="panels" element={<Panels />} />
-          <Route path="interfaces" element={<Interfaces />} />
           <Route path="dependencies/:id" element={<Dependency />} />
           <Route path="implementations/:id" element={<Implementation />} />
           <Route path="agents/:id" element={<Agent />} />
           <Route path="assignations/:id" element={<Assignation />} />
-          <Route path="interfaces/:kind/:id" element={<Interface />} />
         </Routes>
       </ModuleLayout>
     </Guard.Rekuest>

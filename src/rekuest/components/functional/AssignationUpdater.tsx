@@ -81,6 +81,9 @@ export const AssignationToaster = (props: { id: string }) => {
       {ass.done && "Done :)"}
       {ass.event?.kind == AssignationEventKind.Queued && <>Enqueued...</>}
       {ass.event?.kind == AssignationEventKind.Bound && <>Bound...</>}
+      {ass.event?.kind == AssignationEventKind.Cancelled && (
+        <>Successfully cancelled :)</>
+      )}
 
       <div className="group-hover:opacity-100 opacity-0 bg-black p-1 rounded-full absolute bottom-0 right-0">
         {!ass.done && !ass.error ? (

@@ -87,6 +87,7 @@ export const DirectImplementationAssignment = (
       openDialog("implementationassign", {
         id: implementation.id,
         args: { [the_key]: props.object },
+        hidden: { [the_key]: props.object },
       });
       return;
     }
@@ -147,6 +148,7 @@ export const AssignButton = (
       openDialog("actionassign", {
         id: action.id,
         args: { [the_key]: props.object },
+        hidden: { [the_key]: props.object },
       });
       event.stopPropagation();
       return;
@@ -217,6 +219,7 @@ export const ShortcutButton = (
       openDialog("actionassign", {
         id: shortcut.action.id,
         args: { [the_key]: props.object, ...shortcut.savedArgs },
+        hidden: { [the_key]: props.object, ...shortcut.savedArgs },
       });
       return;
     }

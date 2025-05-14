@@ -3,7 +3,7 @@ import {
   ContextMenuContent,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { SMART_MODEL_DROP_TYPE } from "@/constants";
 import { cn } from "@/lib/utils";
 import {
@@ -23,6 +23,7 @@ import { useMySelection } from "../selection/SelectionContext";
 import { SmartModelProps } from "./types";
 import { ImplementationAssignForm } from "@/rekuest/forms/ImplementationAssignForm";
 import { ActionAssignForm } from "@/rekuest/forms/ActionAssignForm";
+import { useDialog } from "@/app/dialog";
 
 export const SmartModel = ({
   showSelfMates = true,
@@ -37,6 +38,7 @@ export const SmartModel = ({
   };
 
   const [partners, setPartners] = useState<Structure[]>([]);
+
   const { refs, floatingStyles } = useFloating({
     strategy: "fixed",
     transform: true,
@@ -47,25 +49,6 @@ export const SmartModel = ({
       }
     },
   });
-
-  useEffect(() => {
-    if (partners.length > 0) {
-      const listener = {
-        handleEvent: (e: Event) => {
-          const target = e.target as HTMLElement;
-          const partnerCard = target.closest(".partnercard");
-          if (!partnerCard) {
-            setPartners([]);
-          }
-        },
-      };
-      document.addEventListener("mousedown", listener);
-
-      return () => {
-        document.removeEventListener("mousedown", listener);
-      };
-    }
-  }, [partners]);
 
   const [{ isOver, canDrop }, drop] = useDrop(() => {
     return {
@@ -144,76 +127,6 @@ export const SmartModel = ({
     object: props.object,
   });
 
-  const [dialogNode, setDialogNode] = React.useState<{
-    node: PrimaryActionFragment;
-    args: { [key: string]: any };
-    template?: ListImplementationFragment;
-  } | null>(null);
-
-  const { assign } = useAssign();
-
-  const conditionalAssign = async (node: PrimaryActionFragment) => {
-    let the_key = node.args?.at(0)?.key;
-
-    let neededAdditionalPorts = node.args.filter(
-      (x) => !x.nullable && x.key != the_key,
-    );
-    if (!the_key) {
-      toast.error("No key found");
-      return;
-    }
-    if (neededAdditionalPorts.length > 0) {
-      setDialogNode({ node: node, args: { [the_key]: props.object } });
-      return;
-    }
-
-    try {
-      await assign({
-        node: node.id,
-        args: {
-          [the_key]: props.object,
-        },
-      });
-    } catch (e) {
-      toast.error(e.message);
-    }
-  };
-
-  const onTemplateSelect = async (
-    node: PrimaryActionFragment,
-    template: ListImplementationFragment,
-  ) => {
-    let the_key = node.args?.at(0)?.key;
-
-    let neededAdditionalPorts = node.args.filter(
-      (x) => !x.nullable && x.key != the_key,
-    );
-    if (!the_key) {
-      toast.error("No key found");
-      return;
-    }
-
-    if (neededAdditionalPorts.length > 0) {
-      setDialogNode({
-        node: node,
-        args: { [the_key]: props.object },
-        template: template,
-      });
-      return;
-    }
-
-    try {
-      await assign({
-        template: template.id,
-        args: {
-          [the_key]: props.object,
-        },
-      });
-    } catch (e) {
-      toast.error(e.message);
-    }
-  };
-
   return (
     <div
       key={props.object}
@@ -230,86 +143,62 @@ export const SmartModel = ({
       data-identifier={props.identifier}
       data-object={props.object}
     >
-      <Dialog>
-        <ContextMenu>
-          <ContextMenuContent className="dark:border-gray-700 max-w-md">
-            {isSelected ? (
-              <>Multiselect is not implemented yet</>
-            ) : (
-              <SmartContext
-                identifier={props.identifier}
-                object={props.object}
-                partners={[]}
-                onSelectNode={conditionalAssign}
-                onSelectTemplate={onTemplateSelect}
-              />
-            )}
-          </ContextMenuContent>
-          <ContextMenuTrigger asChild>
-            <div
-              ref={drag}
-              className={cn(
-                "@container relative z-10 cursor-pointer",
-                isSelected && "group ring ring-1 ",
-                isDragging &&
-                  "opacity-50 ring-2 ring-gray-600 ring rounded rounded-md",
-                isOver &&
-                  "shadow-xl ring-2 border-gray-200 ring rounded rounded-md",
-              )}
-              draggable={true}
-              onDragStart={(e) => {
-                // Package the data as text/uri-list
-                const data = JSON.stringify(self);
-                e.dataTransfer.setData("text/plain", data);
-              }}
-              data-identifier={props.identifier}
-              data-object={props.object}
-            >
-              {props.children}
-              {isOver && <CombineButton />}
-              <div
-                className="absolute top-0 right-0 "
-                ref={refs.setReference}
-              />
-
-              {partners.length > 0 && (
-                <Portal>
-                  <div
-                    ref={refs.setFloating}
-                    className={cn(
-                      " bg-background border border-gray-500 rounded-lg shadow-lg p-2 z-[9999] w-[300px] aspect-square",
-                    )}
-                    style={floatingStyles}
-                  >
-                    <SmartContext
-                      identifier={props.identifier}
-                      object={props.object}
-                      partners={partners}
-                      onSelectNode={conditionalAssign}
-                      onSelectTemplate={onTemplateSelect}
-                    />
-                  </div>
-                </Portal>
-              )}
-            </div>
-          </ContextMenuTrigger>
-        </ContextMenu>
-        <DialogContent>
-          {dialogNode?.template ? (
-            <ImplementationAssignForm
-              id={dialogNode.template.id}
-              args={dialogNode.args}
-              hidden={dialogNode.args}
-            />
+      <ContextMenu modal={false}>
+        <ContextMenuContent className="dark:border-gray-700 max-w-md">
+          {isSelected ? (
+            <>Multiselect is not implemented yet</>
           ) : (
-            <ActionAssignForm
-              id={dialogNode?.node.id || ""}
-              args={dialogNode?.args}
-              hidden={dialogNode?.args}
+            <SmartContext
+              identifier={props.identifier}
+              object={props.object}
+              partners={[]}
             />
           )}
-        </DialogContent>
-      </Dialog>
+        </ContextMenuContent>
+        <ContextMenuTrigger>
+          <div
+            ref={drag}
+            className={cn(
+              "@container relative z-10 cursor-pointer",
+              isSelected && "group ring ring-1 ",
+              isDragging &&
+                "opacity-50 ring-2 ring-gray-600 ring rounded rounded-md",
+              isOver &&
+                "shadow-xl ring-2 border-gray-200 ring rounded rounded-md",
+            )}
+            draggable={true}
+            onDragStart={(e) => {
+              // Package the data as text/uri-list
+              const data = JSON.stringify(self);
+              e.dataTransfer.setData("text/plain", data);
+            }}
+            data-identifier={props.identifier}
+            data-object={props.object}
+          >
+            {props.children}
+            {isOver && <CombineButton />}
+            <div className="absolute top-0 right-0 " ref={refs.setReference} />
+
+            {partners.length > 0 && (
+              <Portal>
+                <div
+                  ref={refs.setFloating}
+                  className={cn(
+                    " bg-background border border-gray-500 rounded-lg shadow-lg p-2 z-[9999] w-[300px] aspect-square",
+                  )}
+                  style={floatingStyles}
+                >
+                  <SmartContext
+                    identifier={props.identifier}
+                    object={props.object}
+                    partners={partners}
+                  />
+                </div>
+              </Portal>
+            )}
+          </div>
+        </ContextMenuTrigger>
+      </ContextMenu>
     </div>
   );
 };

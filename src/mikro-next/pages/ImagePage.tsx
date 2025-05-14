@@ -239,7 +239,8 @@ export default asDetailQueryRoute(
                     ))}
                   </div>
                   <div className="font-light text-xs mb-2">
-                    ZarrV {data?.image?.store?.version}
+                    ZarrV {data?.image?.store?.version} [
+                    {data.image.store.dtype}]
                   </div>
 
                   <div className="font-light mt-2 font-semibold ">Creation</div>

@@ -1,10 +1,10 @@
 fragment ListBackend on Backend {
   id
   user {
-    id
+    sub
   }
   client {
-    id
+    clientId
   }
 
   name
@@ -14,10 +14,10 @@ fragment ListBackend on Backend {
 fragment Backend on Backend {
   id
   user {
-    id
+    sub
   }
   client {
-    id
+    clientId
   }
   clientId
   instanceId

@@ -28,12 +28,14 @@ export const AssignButton = (props: {
   template: ListImplementationFragment;
   release: string;
 }) => {
-  const { assign, latestAssignation, template } = useImplementationAction({
-    id: props.template.id,
-  });
+  const { assign, latestAssignation, implementation } = useImplementationAction(
+    {
+      id: props.template.id,
+    },
+  );
 
   const doassign = async () => {
-    let argKey = template?.node.args.at(0)?.key;
+    let argKey = implementation?.action.args.at(0)?.key;
     if (!argKey) {
       return;
     }
@@ -58,7 +60,7 @@ const InstallDialog = (props: { item: { id: string } }) => {
   const { data } = useImplementationsQuery({
     variables: {
       filters: {
-        node: {
+        action: {
           demands: [
             {
               kind: DemandKind.Args,
@@ -95,7 +97,7 @@ const InstallDialog = (props: { item: { id: string } }) => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right">
-          {data?.templates.map((t) => (
+          {data?.implementations.map((t) => (
             <AssignButton template={t} release={props.item.id} />
           ))}
         </DropdownMenuContent>

@@ -119,6 +119,7 @@ export type BackendResourcesArgs = {
 /** Filter for Resources */
 export type BackendFilter = {
   AND?: InputMaybe<BackendFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<BackendFilter>;
   OR?: InputMaybe<BackendFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -179,21 +180,18 @@ export type ChoiceReturnWidget = ReturnWidget & {
   kind: ReturnWidgetKind;
 };
 
-/** A user of the bridge server. Maps to an authentikate user */
 export type Client = {
   __typename?: 'Client';
-  id: Scalars['ID']['output'];
-  identifier: Scalars['String']['output'];
+  clientId: Scalars['String']['output'];
+  name: Scalars['String']['output'];
 };
 
 /** A user of the bridge server. Maps to an authentikate user */
 export type Collection = {
   __typename?: 'Collection';
   definedAt: Scalars['DateTime']['output'];
-  /** A description for the Collection */
   description: Scalars['String']['output'];
   id: Scalars['ID']['output'];
-  /** The name of this Collection */
   name: Scalars['String']['output'];
 };
 
@@ -295,58 +293,31 @@ export type DeclareResourceInput = {
   qualifiers?: InputMaybe<Array<QualifierInput>>;
 };
 
-/**
- * Actions are abstraction of RPC Tasks. They provide a common API to deal with creating tasks.
- *
- * See online Documentation
- */
 export type Definition = {
   __typename?: 'Definition';
-  /** Inputs for this Action */
   args: Array<Port>;
-  /** The collections this Action belongs to */
   collections: Array<Collection>;
   definedAt: Scalars['DateTime']['output'];
-  /** A description for the Action */
   description?: Maybe<Scalars['String']['output']>;
-  /** The flavours this Definition belongs to */
   flavours: Array<Flavour>;
-  /** The hash of the Action (completely unique) */
   hash: Scalars['ActionHash']['output'];
   id: Scalars['ID']['output'];
-  /** The users that have pinned the position */
   isTestFor: Array<Definition>;
-  /** The kind of this Action. e.g. is it a function or a generator? */
   kind: ActionKind;
-  /** The cleartext name of this Action */
   name: Scalars['String']['output'];
-  /** The protocols this Action implements (e.g. Predicate) */
   protocols: Array<Protocol>;
-  /** Outputs for this Action */
   returns: Array<Port>;
-  /** The scope of this Action. e.g. does the data it needs or produce live only in the scope of this Action or is it global or does it bridge data? */
   scope: ActionScope;
-  /** The users that have pinned the position */
   tests: Array<Definition>;
 };
 
 
-/**
- * Actions are abstraction of RPC Tasks. They provide a common API to deal with creating tasks.
- *
- * See online Documentation
- */
 export type DefinitionFlavoursArgs = {
   filters?: InputMaybe<FlavourFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
-/**
- * Actions are abstraction of RPC Tasks. They provide a common API to deal with creating tasks.
- *
- * See online Documentation
- */
 export type DefinitionIsTestForArgs = {
   filters?: InputMaybe<DefinitionFilter>;
   order?: InputMaybe<DefinitionOrder>;
@@ -354,11 +325,6 @@ export type DefinitionIsTestForArgs = {
 };
 
 
-/**
- * Actions are abstraction of RPC Tasks. They provide a common API to deal with creating tasks.
- *
- * See online Documentation
- */
 export type DefinitionTestsArgs = {
   filters?: InputMaybe<DefinitionFilter>;
   order?: InputMaybe<DefinitionOrder>;
@@ -368,6 +334,7 @@ export type DefinitionTestsArgs = {
 /** Filter for Dask Clusters */
 export type DefinitionFilter = {
   AND?: InputMaybe<DefinitionFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<DefinitionFilter>;
   OR?: InputMaybe<DefinitionFilter>;
   demands?: InputMaybe<Array<PortDemandInput>>;
@@ -457,6 +424,7 @@ export type Deployment = {
 /** Filter for Dask Clusters */
 export type DeploymentFilter = {
   AND?: InputMaybe<DeploymentFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<DeploymentFilter>;
   OR?: InputMaybe<DeploymentFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -529,7 +497,6 @@ export type EnvironmentInput = {
 /** A user of the bridge server. Maps to an authentikate user */
 export type Flavour = {
   __typename?: 'Flavour';
-  /** The flavours this Definition belongs to */
   definitions: Array<Definition>;
   deployments: Array<Deployment>;
   description: Scalars['String']['output'];
@@ -563,6 +530,7 @@ export type FlavourDeploymentsArgs = {
 /** Filter for Dask Clusters */
 export type FlavourFilter = {
   AND?: InputMaybe<FlavourFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<FlavourFilter>;
   OR?: InputMaybe<FlavourFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -590,6 +558,7 @@ export type GithubRepoFlavoursArgs = {
 /** Filter for Dask Clusters */
 export type GithubRepoFilter = {
   AND?: InputMaybe<GithubRepoFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<GithubRepoFilter>;
   OR?: InputMaybe<GithubRepoFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -607,9 +576,9 @@ export type ImplementationInput = {
 };
 
 export type InspectionInput = {
+  implementations: Array<ImplementationInput>;
   requirements: Array<RequirementInput>;
   size?: InputMaybe<Scalars['Int']['input']>;
-  templates: Array<ImplementationInput>;
 };
 
 /** The logs of a pod */
@@ -627,7 +596,7 @@ export type ManifestInput = {
   entrypoint?: InputMaybe<Scalars['String']['input']>;
   identifier: Scalars['String']['input'];
   logo?: InputMaybe<Scalars['String']['input']>;
-  scopes: Array<Scalars['String']['input']>;
+  scopes?: Array<Scalars['String']['input']>;
   version: Scalars['String']['input'];
 };
 
@@ -730,7 +699,7 @@ export type MutationUpdatePodArgs = {
 };
 
 export type OffsetPaginationInput = {
-  limit?: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: Scalars['Int']['input'];
 };
 
@@ -741,7 +710,11 @@ export type OneApiSelectorInput = {
 
 export enum Ordering {
   Asc = 'ASC',
-  Desc = 'DESC'
+  AscNullsFirst = 'ASC_NULLS_FIRST',
+  AscNullsLast = 'ASC_NULLS_LAST',
+  Desc = 'DESC',
+  DescNullsFirst = 'DESC_NULLS_FIRST',
+  DescNullsLast = 'DESC_NULLS_LAST'
 }
 
 /** A user of the bridge server. Maps to an authentikate user */
@@ -761,6 +734,7 @@ export type Pod = {
 /** Filter for Dask Clusters */
 export type PodFilter = {
   AND?: InputMaybe<PodFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<PodFilter>;
   OR?: InputMaybe<PodFilter>;
   backend?: InputMaybe<Scalars['ID']['input']>;
@@ -885,10 +859,8 @@ export type PortMatchInput = {
 /** A user of the bridge server. Maps to an authentikate user */
 export type Protocol = {
   __typename?: 'Protocol';
-  /** A description for the Protocol */
   description: Scalars['String']['output'];
   id: Scalars['ID']['output'];
-  /** The name of this Protocol */
   name: Scalars['String']['output'];
 };
 
@@ -1051,7 +1023,6 @@ export type Release = {
   logo?: Maybe<Scalars['String']['output']>;
   /** Is this release deployed */
   name: Scalars['String']['output'];
-  /** The original logo url */
   originalLogo?: Maybe<Scalars['String']['output']>;
   scopes: Array<Scalars['String']['output']>;
   version: Scalars['String']['output'];
@@ -1067,6 +1038,7 @@ export type ReleaseFlavoursArgs = {
 /** Filter for Dask Clusters */
 export type ReleaseFilter = {
   AND?: InputMaybe<ReleaseFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<ReleaseFilter>;
   OR?: InputMaybe<ReleaseFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -1110,6 +1082,7 @@ export type ResourcePodsArgs = {
 /** Filter for Resources */
 export type ResourceFilter = {
   AND?: InputMaybe<ResourceFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<ResourceFilter>;
   OR?: InputMaybe<ResourceFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -1258,15 +1231,11 @@ export type UpdatePodInput = {
   status: PodStatus;
 };
 
-/** A user of the bridge server. Maps to an authentikate user */
 export type User = {
   __typename?: 'User';
-  email: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  password: Scalars['String']['output'];
+  preferredUsername: Scalars['String']['output'];
+  roles: Array<Scalars['String']['output']>;
   sub: Scalars['String']['output'];
-  /** Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only. */
-  username: Scalars['String']['output'];
 };
 
 export type Validator = {
@@ -1292,9 +1261,9 @@ export type ValidatorInput = {
   label?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type ListBackendFragment = { __typename?: 'Backend', id: string, name: string, kind: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } };
+export type ListBackendFragment = { __typename?: 'Backend', id: string, name: string, kind: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } };
 
-export type BackendFragment = { __typename?: 'Backend', id: string, clientId: string, instanceId: string, name: string, kind: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> };
+export type BackendFragment = { __typename?: 'Backend', id: string, clientId: string, instanceId: string, name: string, kind: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> };
 
 export type DefinitionFragment = { __typename?: 'Definition', id: string, name: string, hash: any, description?: string | null, args: Array<{ __typename: 'Port', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, dependencies: Array<string>, hook: string, ward: string } | { __typename: 'MessageEffect', kind: EffectKind, dependencies: Array<string>, message: string }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'Port', kind: PortKind, identifier?: any | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null, label?: string | null, errorMessage?: string | null }> | null }>, returns: Array<{ __typename: 'Port', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, dependencies: Array<string>, hook: string, ward: string } | { __typename: 'MessageEffect', kind: EffectKind, dependencies: Array<string>, message: string }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, children?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, nullable: boolean, description?: string | null, children?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, children?: Array<{ __typename?: 'Port', kind: PortKind, identifier?: any | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string, filters?: Array<{ __typename: 'Port', kind: PortKind, key: string, identifier?: any | null, description?: string | null, nullable: boolean, assignWidget?: { __typename?: 'ChoiceAssignWidget' } | { __typename?: 'CustomAssignWidget' } | { __typename?: 'SearchAssignWidget', query: string } | { __typename?: 'SliderAssignWidget' } | { __typename?: 'StateChoiceAssignWidget' } | { __typename?: 'StringAssignWidget' } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind, followValue?: string | null, stateChoices: string } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null, label?: string | null, errorMessage?: string | null }> | null }>, flavours: Array<{ __typename?: 'Flavour', id: string, name: string, release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } }, selectors: Array<{ __typename?: 'CPUSelector' } | { __typename?: 'CudaSelector', cudaVersion?: string | null, cudaCores?: number | null } | { __typename?: 'RocmSelector', apiVersion?: string | null, apiThing?: string | null }> }> };
 
@@ -1304,9 +1273,9 @@ export type ListFlavourFragment = { __typename?: 'Flavour', id: string, name: st
 
 export type FlavourFragment = { __typename?: 'Flavour', description: string, id: string, name: string, release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } }, selectors: Array<{ __typename?: 'CPUSelector' } | { __typename?: 'CudaSelector', cudaVersion?: string | null, cudaCores?: number | null } | { __typename?: 'RocmSelector', apiVersion?: string | null, apiThing?: string | null }> };
 
-export type ListPodFragment = { __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null };
+export type ListPodFragment = { __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null };
 
-export type PodFragment = { __typename?: 'Pod', id: string, podId: string, status: PodStatus, clientId?: string | null, backend: { __typename?: 'Backend', id: string, clientId: string, instanceId: string, name: string, kind: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> }, latestLogDump?: { __typename?: 'LogDump', logs: string, createdAt: any } | null, resource?: { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } } | null, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } } };
+export type PodFragment = { __typename?: 'Pod', id: string, podId: string, status: PodStatus, clientId?: string | null, backend: { __typename?: 'Backend', id: string, clientId: string, instanceId: string, name: string, kind: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> }, latestLogDump?: { __typename?: 'LogDump', logs: string, createdAt: any } | null, resource?: { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } } | null, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } } };
 
 export type StringAssignWidgetFragment = { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean };
 
@@ -1368,7 +1337,7 @@ export type ReleaseFragment = { __typename?: 'Release', id: string, version: str
 
 export type ListReleaseFragment = { __typename?: 'Release', id: string, version: string, installed: boolean, scopes: Array<string>, colour: string, description: string, app: { __typename?: 'App', identifier: string }, flavours: Array<{ __typename?: 'Flavour', id: string, name: string, release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } }, selectors: Array<{ __typename?: 'CPUSelector' } | { __typename?: 'CudaSelector', cudaVersion?: string | null, cudaCores?: number | null } | { __typename?: 'RocmSelector', apiVersion?: string | null, apiThing?: string | null }> }> };
 
-export type ResourceFragment = { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }> };
+export type ResourceFragment = { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }> };
 
 export type ListResourceFragment = { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } };
 
@@ -1391,14 +1360,14 @@ export type RescanReposMutation = { __typename?: 'Mutation', rescanRepos: Array<
 export type ListBackendsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ListBackendsQuery = { __typename?: 'Query', backends: Array<{ __typename?: 'Backend', id: string, name: string, kind: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }> };
+export type ListBackendsQuery = { __typename?: 'Query', backends: Array<{ __typename?: 'Backend', id: string, name: string, kind: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }> };
 
 export type GetBackendQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetBackendQuery = { __typename?: 'Query', backend: { __typename?: 'Backend', id: string, clientId: string, instanceId: string, name: string, kind: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> } };
+export type GetBackendQuery = { __typename?: 'Query', backend: { __typename?: 'Backend', id: string, clientId: string, instanceId: string, name: string, kind: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> } };
 
 export type GetDefinitionQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1446,14 +1415,14 @@ export type GetFlavourQuery = { __typename?: 'Query', flavour: { __typename?: 'F
 export type ListPodQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ListPodQuery = { __typename?: 'Query', pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }> };
+export type ListPodQuery = { __typename?: 'Query', pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }> };
 
 export type GetPodQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetPodQuery = { __typename?: 'Query', pod: { __typename?: 'Pod', id: string, podId: string, status: PodStatus, clientId?: string | null, backend: { __typename?: 'Backend', id: string, clientId: string, instanceId: string, name: string, kind: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> }, latestLogDump?: { __typename?: 'LogDump', logs: string, createdAt: any } | null, resource?: { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } } | null, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } } } };
+export type GetPodQuery = { __typename?: 'Query', pod: { __typename?: 'Pod', id: string, podId: string, status: PodStatus, clientId?: string | null, backend: { __typename?: 'Backend', id: string, clientId: string, instanceId: string, name: string, kind: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> }, latestLogDump?: { __typename?: 'LogDump', logs: string, createdAt: any } | null, resource?: { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } } | null, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } } } };
 
 export type GetPodForAgentQueryVariables = Exact<{
   clientId: Scalars['ID']['input'];
@@ -1461,7 +1430,7 @@ export type GetPodForAgentQueryVariables = Exact<{
 }>;
 
 
-export type GetPodForAgentQuery = { __typename?: 'Query', podForAgent?: { __typename?: 'Pod', id: string, podId: string, status: PodStatus, clientId?: string | null, backend: { __typename?: 'Backend', id: string, clientId: string, instanceId: string, name: string, kind: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> }, latestLogDump?: { __typename?: 'LogDump', logs: string, createdAt: any } | null, resource?: { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } } | null, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } } } | null };
+export type GetPodForAgentQuery = { __typename?: 'Query', podForAgent?: { __typename?: 'Pod', id: string, podId: string, status: PodStatus, clientId?: string | null, backend: { __typename?: 'Backend', id: string, clientId: string, instanceId: string, name: string, kind: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }>, resources: Array<{ __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } }> }, latestLogDump?: { __typename?: 'LogDump', logs: string, createdAt: any } | null, resource?: { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } } | null, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } } } | null };
 
 export type ListReleasesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1485,7 +1454,7 @@ export type GetResourceQueryVariables = Exact<{
 }>;
 
 
-export type GetResourceQuery = { __typename?: 'Query', resource: { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', id: string }, client: { __typename?: 'Client', id: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }> } };
+export type GetResourceQuery = { __typename?: 'Query', resource: { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }> } };
 
 export type GlobalSearchQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -1499,10 +1468,10 @@ export const ListBackendFragmentDoc = gql`
     fragment ListBackend on Backend {
   id
   user {
-    id
+    sub
   }
   client {
-    id
+    clientId
   }
   name
   kind
@@ -1815,10 +1784,10 @@ export const ListPodFragmentDoc = gql`
   podId
   backend {
     user {
-      id
+      sub
     }
     client {
-      id
+      clientId
     }
     name
   }
@@ -1857,10 +1826,10 @@ export const BackendFragmentDoc = gql`
     fragment Backend on Backend {
   id
   user {
-    id
+    sub
   }
   client {
-    id
+    clientId
   }
   clientId
   instanceId

@@ -2,6 +2,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import CancelablePromise from "cancelable-promise";
 import React, { ComponentType, useRef } from "react";
 import { DialogContext } from "./DialogContext";
+import { Guard } from "@/arkitekt/Arkitekt";
 
 export type Submit<T extends {} | undefined = undefined> = {
   submit: (endState: T) => void;
@@ -43,12 +44,14 @@ export const DialogProvider = ({ children }: { children: React.ReactNode }) => {
           }}
         >
           <DialogContent>
-            <Component
-              {...props}
-              submit={submit}
-              reject={reject}
-              buttonref={focusRef}
-            />
+            <Guard.Rekuest>
+              <Component
+                {...props}
+                submit={submit}
+                reject={reject}
+                buttonref={focusRef}
+              />
+            </Guard.Rekuest>
           </DialogContent>
         </Dialog>,
       );

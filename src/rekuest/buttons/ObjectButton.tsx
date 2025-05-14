@@ -55,6 +55,8 @@ import { useAssign } from "../hooks/useAssign";
 import { useLiveAssignation } from "../hooks/useAssignations";
 import { useHashAction } from "../hooks/useHashActions";
 import { LightningBoltIcon } from "@radix-ui/react-icons";
+import { useDialog } from "@/app/dialog";
+import { e } from "node_modules/@udecode/plate-emoji/dist/IndexSearch-Dvqq913n";
 
 export const DirectImplementationAssignment = (
   props: SmartContextProps & { action: PrimaryActionFragment },
@@ -67,6 +69,39 @@ export const DirectImplementationAssignment = (
     },
   });
 
+  const { assign } = useAssign();
+  const { openDialog } = useDialog();
+
+  const onTemplateSelect = async (
+    action: PrimaryActionFragment,
+    implementation: ListImplementationFragment,
+  ) => {
+    let the_key = action.args?.at(0)?.key;
+
+    if (!the_key) {
+      toast.error("No key found");
+      return;
+    }
+
+    if (action.args.length > 1) {
+      openDialog("implementationassign", {
+        id: implementation.id,
+        args: { [the_key]: props.object },
+      });
+      return;
+    }
+
+    try {
+      await assign({
+        implementation: implementation.id,
+        args: {
+          [the_key]: props.object,
+        },
+      });
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
   return (
     <>
       <div className="flex flex-row text-xs">Run on</div>
@@ -77,7 +112,7 @@ export const DirectImplementationAssignment = (
               variant={"outline"}
               size={"lg"}
               className="flex flex-col gap-1"
-              onClick={() => props.onSelectImplementation(props.action, x)}
+              onClick={() => onTemplateSelect(props.action, x)}
             >
               <div className="text-md text-gray-100">{x.agent.name}</div>
               <div className="text-xs text-gray-400">{x.interface}</div>
@@ -98,11 +133,42 @@ export const AssignButton = (
     action: props.action.id,
   });
 
+  const { assign } = useAssign();
+  const { openDialog } = useDialog();
+
+  const conditionalAssign = async (action: PrimaryActionFragment) => {
+    let the_key = action.args?.at(0)?.key;
+
+    if (!the_key) {
+      toast.error("No key found");
+      return;
+    }
+    if (action.args.length > 1) {
+      openDialog("actionassign", {
+        id: action.id,
+        args: { [the_key]: props.object },
+      });
+      event.stopPropagation();
+      return;
+    }
+
+    try {
+      await assign({
+        action: action.id,
+        args: {
+          [the_key]: props.object,
+        },
+      });
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
+
   return (
-    <ContextMenu>
+    <ContextMenu modal={false}>
       <ContextMenuTrigger asChild>
         <CommandItem
-          onSelect={() => props.onSelectAction(props.action)}
+          onSelect={() => conditionalAssign(props.action)}
           value={props.action.id}
           key={props.action.id}
           className="flex-grow  flex flex-col group cursor-pointer"
@@ -122,11 +188,7 @@ export const AssignButton = (
         </CommandItem>
       </ContextMenuTrigger>
       <ContextMenuContent className="text-white border-gray-800 px-2 py-2 items-center">
-        <DirectImplementationAssignment
-          {...props}
-          action={props.action}
-          onSelectImplementation={props.onSelectImplementation}
-        />
+        <DirectImplementationAssignment {...props} action={props.action} />
       </ContextMenuContent>
     </ContextMenu>
   );
@@ -141,9 +203,40 @@ export const ShortcutButton = (
     action: props.shortcut.action.id,
   });
 
+  const { assign } = useAssign();
+  const { openDialog } = useDialog();
+
+  const conditionalAssign = async (shortcut: ListShortcutFragment) => {
+    let the_key = shortcut.args?.at(0)?.key;
+
+    if (!the_key) {
+      toast.error("No key found");
+      return;
+    }
+    if (shortcut.args.length > 1) {
+      openDialog("actionassign", {
+        id: shortcut.action.id,
+        args: { [the_key]: props.object, ...shortcut.savedArgs },
+      });
+      return;
+    }
+
+    try {
+      await assign({
+        action: shortcut.action.id,
+        args: {
+          [the_key]: props.object,
+          ...shortcut.savedArgs,
+        },
+      });
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
+
   return (
     <CommandItem
-      onSelect={() => props.onSelectAction(props.shortcut.action)}
+      onSelect={() => conditionalAssign(props.shortcut)}
       value={props.shortcut.id}
       key={props.shortcut.id}
       className="flex-initial flex flex-row group cursor-pointer border border-1 rounded rounded-full bg-slate-800 shadow-xl  h-8 overflow-hidden truncate max-w-[100px] ellipsis px-2"
@@ -535,106 +628,25 @@ export type PassDownProps = SmartContextProps & {
 };
 
 export const ObjectButton = (props: ObjectButtonProps) => {
-  const [filter, setFilterValue] = React.useState<string | undefined>(
-    undefined,
-  );
-
-  const [dialogAction, setDialogAction] = React.useState<{
-    action: PrimaryActionFragment;
-    args: { [key: string]: any };
-  } | null>(null);
-
-  const { assign } = useAssign();
-
-  const conditionalAssign = async (action: PrimaryActionFragment) => {
-    let the_key = action.args?.at(0)?.key;
-
-    
-    if (!the_key) {
-      toast.error("No key found");
-      return;
-    }
-    setDialogAction({ action: action, args: { [the_key]: props.object } });
-    
-  };
-
-  const onImplementationSelect = async (
-    action: PrimaryActionFragment,
-    implementation: ListImplementationFragment,
-  ) => {
-    let the_key = action.args?.at(0)?.key;
-
-    let neededAdditionalPorts = action.args.filter(
-      (x) => !x.nullable && x.key != the_key,
-    );
-    if (!the_key) {
-      toast.error("No key found");
-      return;
-    }
-    if (neededAdditionalPorts.length > 0) {
-      setDialogAction(action);
-      return;
-    }
-
-    try {
-      await assign({
-        action: action.id,
-        args: {
-          [the_key]: props.object,
-        },
-      });
-    } catch (e) {
-      toast.error(e.message);
-    }
-  };
-
-  if (props.object === "") {
-    return <> Error</>;
-  }
-
   return (
     <>
-      <Dialog
-        open={dialogAction != null}
-        onOpenChange={() => setDialogAction(null)}
-      >
-        <DialogTrigger asChild>
-          <Popover>
-            <PopoverTrigger asChild>
-              {props.children || (
-                <Button variant={"outline"} className="w-6 h-9 text-white">
-                  Do
-                </Button>
-              )}
-            </PopoverTrigger>
-            <PopoverContent className="text-white border-gray-800 px-2 py-2 items-left">
-              <SmartContext
-                {...props}
-                onSelectAction={conditionalAssign}
-                onSelectImplementation={onImplementationSelect}
-              />
-            </PopoverContent>
-          </Popover>
-        </DialogTrigger>
-        <DialogContent>
-          <ActionAssignForm
-            id={dialogAction?.action.id || ""}
-            args={dialogAction?.args}
-            hidden={dialogAction?.args}
-          />
-        </DialogContent>
-      </Dialog>
+      <Popover>
+        <PopoverTrigger asChild>
+          {props.children || (
+            <Button variant={"outline"} className="w-6 h-9 text-white">
+              Do
+            </Button>
+          )}
+        </PopoverTrigger>
+        <PopoverContent className="text-white border-gray-800 px-2 py-2 items-left">
+          <SmartContext {...props} />
+        </PopoverContent>
+      </Popover>
     </>
   );
 };
 
-export type SmartContextProps = ObjectButtonProps & {
-  onSelectAction: (action: PrimaryActionFragment) => Promise<void>;
-  onSelectImplementation: (
-    action: PrimaryActionFragment,
-    implementation: ListImplementationFragment,
-  ) => Promise<void>;
-};
+export type SmartContextProps = ObjectButtonProps & {};
 
 export const SmartContext = (props: SmartContextProps) => {
   const [filter, setFilterValue] = React.useState<string | undefined>(
@@ -654,21 +666,11 @@ export const SmartContext = (props: SmartContextProps) => {
         />
 
         <CommandList>
-          <AppicableShortcuts
-            {...props}
-            filter={filter}
-            onSelectAction={props.onSelectAction}
-            onSelectImplementation={props.onSelectImplementation}
-          />
+          <AppicableShortcuts {...props} filter={filter} />
           <CommandEmpty>{"No Action available"}</CommandEmpty>
 
           <ApplicableLocalActions {...props} filter={filter} />
-          <ApplicableActions
-            {...props}
-            filter={filter}
-            onSelectAction={props.onSelectAction}
-            onSelectImplementation={props.onSelectImplementation}
-          />
+          <ApplicableActions {...props} filter={filter} />
 
           <ApplicableDefinitions
             {...props}
@@ -680,3 +682,9 @@ export const SmartContext = (props: SmartContextProps) => {
     </>
   );
 };
+function openDialog(
+  arg0: string,
+  arg1: { id: string; args: { [x: string]: string } },
+) {
+  throw new Error("Function not implemented.");
+}

@@ -167,7 +167,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -374,7 +374,7 @@
                 }
               }
             },
-            "defaultValue": "null",
+            "defaultValue": "[]",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -805,6 +805,18 @@
             "deprecationReason": null
           },
           {
+            "name": "DISTINCT",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "NOT",
             "description": null,
             "type": {
@@ -888,7 +900,7 @@
                 }
               }
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -924,7 +936,7 @@
                 }
               }
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -1277,11 +1289,11 @@
       {
         "kind": "OBJECT",
         "name": "Client",
-        "description": "A user of the bridge server. Maps to an authentikate user",
+        "description": null,
         "isOneOf": null,
         "fields": [
           {
-            "name": "id",
+            "name": "clientId",
             "description": null,
             "args": [],
             "type": {
@@ -1289,7 +1301,7 @@
               "name": null,
               "ofType": {
                 "kind": "SCALAR",
-                "name": "ID",
+                "name": "String",
                 "ofType": null
               }
             },
@@ -1297,7 +1309,7 @@
             "deprecationReason": null
           },
           {
-            "name": "identifier",
+            "name": "name",
             "description": null,
             "args": [],
             "type": {
@@ -1342,7 +1354,7 @@
           },
           {
             "name": "description",
-            "description": "A description for the Collection",
+            "description": null,
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -1374,7 +1386,7 @@
           },
           {
             "name": "name",
-            "description": "The name of this Collection",
+            "description": null,
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -1529,7 +1541,7 @@
               "name": "UntypedParams",
               "ofType": null
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -2216,12 +2228,12 @@
       {
         "kind": "OBJECT",
         "name": "Definition",
-        "description": "Actions are abstraction of RPC Tasks. They provide a common API to deal with creating tasks.\n\nSee online Documentation",
+        "description": null,
         "isOneOf": null,
         "fields": [
           {
             "name": "args",
-            "description": "Inputs for this Action",
+            "description": null,
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2245,7 +2257,7 @@
           },
           {
             "name": "collections",
-            "description": "The collections this Action belongs to",
+            "description": null,
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2285,7 +2297,7 @@
           },
           {
             "name": "description",
-            "description": "A description for the Action",
+            "description": null,
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -2297,7 +2309,7 @@
           },
           {
             "name": "flavours",
-            "description": "The flavours this Definition belongs to",
+            "description": null,
             "args": [
               {
                 "name": "filters",
@@ -2346,7 +2358,7 @@
           },
           {
             "name": "hash",
-            "description": "The hash of the Action (completely unique)",
+            "description": null,
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2378,7 +2390,7 @@
           },
           {
             "name": "isTestFor",
-            "description": "The users that have pinned the position",
+            "description": null,
             "args": [
               {
                 "name": "filters",
@@ -2439,7 +2451,7 @@
           },
           {
             "name": "kind",
-            "description": "The kind of this Action. e.g. is it a function or a generator?",
+            "description": null,
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2455,7 +2467,7 @@
           },
           {
             "name": "name",
-            "description": "The cleartext name of this Action",
+            "description": null,
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2471,7 +2483,7 @@
           },
           {
             "name": "protocols",
-            "description": "The protocols this Action implements (e.g. Predicate)",
+            "description": null,
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2495,7 +2507,7 @@
           },
           {
             "name": "returns",
-            "description": "Outputs for this Action",
+            "description": null,
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2519,7 +2531,7 @@
           },
           {
             "name": "scope",
-            "description": "The scope of this Action. e.g. does the data it needs or produce live only in the scope of this Action or is it global or does it bridge data?",
+            "description": null,
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -2535,7 +2547,7 @@
           },
           {
             "name": "tests",
-            "description": "The users that have pinned the position",
+            "description": null,
             "args": [
               {
                 "name": "filters",
@@ -2613,6 +2625,18 @@
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "DefinitionFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DISTINCT",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
               "ofType": null
             },
             "defaultValue": null,
@@ -3035,7 +3059,7 @@
               "name": "BindsInput",
               "ofType": null
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -3075,7 +3099,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -3087,7 +3111,7 @@
               "name": "Int",
               "ofType": null
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -3217,6 +3241,18 @@
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "DeploymentFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DISTINCT",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
               "ofType": null
             },
             "defaultValue": null,
@@ -3590,7 +3626,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -3630,7 +3666,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -3725,7 +3761,7 @@
         "fields": [
           {
             "name": "definitions",
-            "description": "The flavours this Definition belongs to",
+            "description": null,
             "args": [
               {
                 "name": "filters",
@@ -4043,6 +4079,18 @@
             "deprecationReason": null
           },
           {
+            "name": "DISTINCT",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "NOT",
             "description": null,
             "type": {
@@ -4275,6 +4323,18 @@
             "deprecationReason": null
           },
           {
+            "name": "DISTINCT",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "NOT",
             "description": null,
             "type": {
@@ -4469,6 +4529,30 @@
         "fields": null,
         "inputFields": [
           {
+            "name": "implementations",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "ImplementationInput",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "requirements",
             "description": null,
             "type": {
@@ -4499,30 +4583,6 @@
               "kind": "SCALAR",
               "name": "Int",
               "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "templates",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "LIST",
-                "name": null,
-                "ofType": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "kind": "INPUT_OBJECT",
-                    "name": "ImplementationInput",
-                    "ofType": null
-                  }
-                }
-              }
             },
             "defaultValue": null,
             "isDeprecated": false,
@@ -4703,7 +4763,7 @@
                 }
               }
             },
-            "defaultValue": null,
+            "defaultValue": "[]",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -4751,7 +4811,7 @@
                 }
               }
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -5284,15 +5344,11 @@
             "name": "limit",
             "description": null,
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Int",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
             },
-            "defaultValue": "-1",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -5357,7 +5413,31 @@
             "deprecationReason": null
           },
           {
+            "name": "ASC_NULLS_FIRST",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ASC_NULLS_LAST",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "DESC",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DESC_NULLS_FIRST",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DESC_NULLS_LAST",
             "description": null,
             "isDeprecated": false,
             "deprecationReason": null
@@ -5522,6 +5602,18 @@
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "PodFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DISTINCT",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
               "ofType": null
             },
             "defaultValue": null,
@@ -6493,7 +6585,7 @@
         "fields": [
           {
             "name": "description",
-            "description": "A description for the Protocol",
+            "description": null,
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -6525,7 +6617,7 @@
           },
           {
             "name": "name",
-            "description": "The name of this Protocol",
+            "description": null,
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7576,7 +7668,7 @@
           },
           {
             "name": "originalLogo",
-            "description": "The original logo url",
+            "description": null,
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -7645,6 +7737,18 @@
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "ReleaseFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DISTINCT",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
               "ofType": null
             },
             "defaultValue": null,
@@ -8006,6 +8110,18 @@
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "ResourceFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DISTINCT",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
               "ofType": null
             },
             "defaultValue": null,
@@ -9075,7 +9191,7 @@
               "name": "ID",
               "ofType": null
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -9087,7 +9203,7 @@
               "name": "ID",
               "ofType": null
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -9115,11 +9231,11 @@
       {
         "kind": "OBJECT",
         "name": "User",
-        "description": "A user of the bridge server. Maps to an authentikate user",
+        "description": null,
         "isOneOf": null,
         "fields": [
           {
-            "name": "email",
+            "name": "preferredUsername",
             "description": null,
             "args": [],
             "type": {
@@ -9135,32 +9251,24 @@
             "deprecationReason": null
           },
           {
-            "name": "id",
+            "name": "roles",
             "description": null,
             "args": [],
             "type": {
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "kind": "SCALAR",
-                "name": "ID",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "password",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String",
+                    "ofType": null
+                  }
+                }
               }
             },
             "isDeprecated": false,
@@ -9169,22 +9277,6 @@
           {
             "name": "sub",
             "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "username",
-            "description": "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -10342,74 +10434,6 @@
         ]
       },
       {
-        "name": "relation",
-        "description": "Make get stuff uppercase",
-        "isRepeatable": false,
-        "locations": [
-          "FIELD"
-        ],
-        "args": [
-          {
-            "name": "on",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ]
-      },
-      {
-        "name": "replace",
-        "description": null,
-        "isRepeatable": false,
-        "locations": [
-          "FIELD"
-        ],
-        "args": [
-          {
-            "name": "new",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "old",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ]
-      },
-      {
         "name": "skip",
         "description": "Directs the executor to skip this field or fragment when the `if` argument is true.",
         "isRepeatable": false,
@@ -10439,7 +10463,7 @@
       },
       {
         "name": "specifiedBy",
-        "description": "Exposes a URL that specifies the behaviour of this scalar.",
+        "description": "Exposes a URL that specifies the behavior of this scalar.",
         "isRepeatable": false,
         "locations": [
           "SCALAR"
@@ -10447,7 +10471,7 @@
         "args": [
           {
             "name": "url",
-            "description": "The URL that specifies the behaviour of this scalar.",
+            "description": "The URL that specifies the behavior of this scalar.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -10462,15 +10486,6 @@
             "deprecationReason": null
           }
         ]
-      },
-      {
-        "name": "upper",
-        "description": "Make string uppercase",
-        "isRepeatable": false,
-        "locations": [
-          "FIELD"
-        ],
-        "args": []
       }
     ]
   }

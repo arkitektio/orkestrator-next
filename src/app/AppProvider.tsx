@@ -16,6 +16,7 @@ import ImageDisplay from "@/mikro-next/displays/ImageDisplay";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { CommandProvider } from "@/providers/command/CommandProvider";
 import { DebugProvider } from "@/providers/debug/DebugProvider";
+import { DialogProvider } from "@/app/dialog";
 import { DisplayProvider } from "@/providers/display/DisplayProvider";
 import { SelectionProvider } from "@/providers/selection/SelectionProvider";
 import { SettingsProvider } from "@/providers/settings/SettingsProvider";
@@ -105,37 +106,39 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                   <CommandProvider>
                     <SmartProvider>
                       <WidgetRegistryProvider>
-                        <CommandMenu />
-                        <Guard.Rekuest fallback={<></>}>
-                          {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
-                          <AssignationUpdater />
-                          <AgentUpdater />
-                          {/* We register the Shadn powered widgets to the widget registry. */}
-                          <RekuestNextWard />
-                          <ShadnWigets />
-                          <Toaster />
-                        </Guard.Rekuest>
-                        <Guard.Kabinet fallback={<></>}>
-                          <KabinetWard key="kabinet" />
-                        </Guard.Kabinet>
-                        <Guard.Kraph fallback={<></>}>
-                          <KraphWard key="kraph" />
-                        </Guard.Kraph>
-                        <Guard.Alpaka fallback={<></>}>
-                          <AlpakaWard key="alpaka" />
-                        </Guard.Alpaka>
-                        <Guard.Elektro fallback={<></>}>
-                          <ElektroWard key="elektro" />
-                        </Guard.Elektro>
-                        <Guard.Mikro fallback={<></>}>
-                          <MikroNextWard key="mikro" />
-                        </Guard.Mikro>
-                        <Guard.Fluss fallback={<></>}>
-                          <FlussWard key="fluss" />
-                        </Guard.Fluss>
-                        <BackNavigationErrorCatcher>
-                          {children}
-                        </BackNavigationErrorCatcher>
+                        <DialogProvider>
+                          <CommandMenu />
+                          <Guard.Rekuest fallback={<></>}>
+                            {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
+                            <AssignationUpdater />
+                            <AgentUpdater />
+                            {/* We register the Shadn powered widgets to the widget registry. */}
+                            <RekuestNextWard />
+                            <ShadnWigets />
+                            <Toaster />
+                          </Guard.Rekuest>
+                          <Guard.Kabinet fallback={<></>}>
+                            <KabinetWard key="kabinet" />
+                          </Guard.Kabinet>
+                          <Guard.Kraph fallback={<></>}>
+                            <KraphWard key="kraph" />
+                          </Guard.Kraph>
+                          <Guard.Alpaka fallback={<></>}>
+                            <AlpakaWard key="alpaka" />
+                          </Guard.Alpaka>
+                          <Guard.Elektro fallback={<></>}>
+                            <ElektroWard key="elektro" />
+                          </Guard.Elektro>
+                          <Guard.Mikro fallback={<></>}>
+                            <MikroNextWard key="mikro" />
+                          </Guard.Mikro>
+                          <Guard.Fluss fallback={<></>}>
+                            <FlussWard key="fluss" />
+                          </Guard.Fluss>
+                          <BackNavigationErrorCatcher>
+                            {children}
+                          </BackNavigationErrorCatcher>
+                        </DialogProvider>
                       </WidgetRegistryProvider>
                     </SmartProvider>
                   </CommandProvider>

@@ -1,40 +1,95 @@
 import { Button } from "@/components/ui/button";
 import {
-  build,
-  buildAction,
-  buildModule,
-  buildState,
-  useAgentContext,
+  action,
+  integer,
+  module,
+  state,
+  structure,
 } from "@/hooks/use-metaapp";
-import { StreamWidget } from "@/widgets/StreamWidget";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpIcon } from "lucide-react";
+import { MikroImage } from "@/linkers";
+import { useGetImageQuery } from "@/mikro-next/api/graphql";
+import { DelegatingImageRender } from "@/mikro-next/components/render/DelegatingImageRender";
+import { ImageWidget } from "@/widgets/ImageWidget";
 
-export const CameraModule = buildModule({
+export const CameraModule = module({
   states: {
-    camera: buildState(
+    camera: state(
       {
-        latest_image: build.structure("@mikro/image"),
-        stream: build.structure("@lok/stream"),
-      },
-      {
-        forceHash:
-          "98827913a754105345839da69433409c43b1000251387ff2a37e174e46f1f7e4",
-      },
+        latest_image: structure("@mikro/image"),
+      }
     ),
   },
-  actions: {},
+  actions: {
+    acquire: action(
+      {
+        x: integer("The x position of the stage"),
+        y: integer("The y position of the stage"),
+        z: integer("The z position of the stage"),
+      },
+      {
+        return0: structure("@mikro/image"),
+      }
+    )
+  },
 });
 
-export const CentralCamera = () => {
-  const { value: camera } = CameraModule.useState("camera");
+export const ImageRender = ({id}: {
+  id: string,
+}) => {
 
-  if (!camera) {
-    return <div>Loading</div>;
+  const { data } = useGetImageQuery({
+    variables: {
+      id,
+    },
+  });
+
+  const defaultContext = data?.image?.rgbContexts.at(0);
+
+  return (
+    <MikroImage.DetailLink object={id}>
+      <div className="w-[700px] h-[700px]">
+        {defaultContext && (
+          <DelegatingImageRender context={defaultContext} rois={[]} />
+        )}
+      </div>
+    </MikroImage.DetailLink>
+  );
+}
+
+export const CentralCamera = () => {
+  const { value: camera, errors} = CameraModule.useState("camera");
+
+  
+
+  const { assign } = CameraModule.useAction("acquire", {
+    ephemeral: true,
+  });
+  if (errors) {
+    return <div>{JSON.stringify(errors)}</div>;
   }
+  
+
+
+
 
   return (
     <div className="mx-auto max-h-[700px] max-w-[700px] my-auto bg-black">
-      <StreamWidget value={camera.stream} />
+      { camera?.latest_image && (
+        <ImageRender id={camera.latest_image} />
+      )}
+
+      <Button 
+        onClick={() => {
+          assign({
+            x: 0,
+            y: 0,
+            z: 0,
+          });
+        }}
+        className="absolute bottom-0 left-0 m-4"
+      >
+        Acquire
+      </Button>
     </div>
   );
 };

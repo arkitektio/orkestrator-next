@@ -670,6 +670,114 @@
       },
       {
         "kind": "INPUT_OBJECT",
+        "name": "ActionDemandInput",
+        "description": "The input for creating a action demand.",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "argMatches",
+            "description": "The demands for the action args and returns. This is used to identify the demand in the system.",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "PortMatchInput",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "forceArgLength",
+            "description": "Require that the action has a specific number of args. This is used to identify the demand in the system.",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "forceReturnLength",
+            "description": "Require that the action has a specific number of returns. This is used to identify the demand in the system.",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "hash",
+            "description": "The hash of the action. This is used to identify the action in the system.",
+            "type": {
+              "kind": "SCALAR",
+              "name": "ActionHash",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "protocols",
+            "description": "The protocols that the action has to implement. This is used to identify the demand in the system.",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "ID",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "returnMatches",
+            "description": "The demands for the action args and returns. This is used to identify the demand in the system.",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "PortMatchInput",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
         "name": "ActionFilter",
         "description": null,
         "isOneOf": false,
@@ -1407,6 +1515,26 @@
             "deprecationReason": null
           },
           {
+            "name": "actionDemands",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "ActionDemandInput",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "clientId",
             "description": "Filter by client ID of the app the agent is registered to",
             "type": {
@@ -1543,6 +1671,26 @@
               "ofType": null
             },
             "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "stateDemands",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "SchemaDemandInput",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -1884,7 +2032,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"83341a1a-ccf8-4b2a-9613-54e9f16be10e\"",
+            "defaultValue": "\"47b45044-a130-4582-9a13-9f647352615b\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -11177,6 +11325,18 @@
                 "deprecationReason": null
               },
               {
+                "name": "demand",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "ActionDemandInput",
+                  "ofType": null
+                },
+                "defaultValue": "null",
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
                 "name": "extension",
                 "description": null,
                 "type": {
@@ -11822,20 +11982,24 @@
                 "name": "agent",
                 "description": null,
                 "type": {
-                  "kind": "SCALAR",
-                  "name": "ID",
-                  "ofType": null
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "ID",
+                    "ofType": null
+                  }
                 },
-                "defaultValue": "null",
+                "defaultValue": null,
                 "isDeprecated": false,
                 "deprecationReason": null
               },
               {
-                "name": "implementation",
+                "name": "demand",
                 "description": null,
                 "type": {
-                  "kind": "SCALAR",
-                  "name": "ID",
+                  "kind": "INPUT_OBJECT",
+                  "name": "SchemaDemandInput",
                   "ofType": null
                 },
                 "defaultValue": "null",
@@ -12909,7 +13073,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"bc0cdbe5-3914-4d63-a765-b7fed2bdb583\"",
+            "defaultValue": "\"fdd2686c-4f6c-4390-8470-d70615e0b5e6\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -13151,6 +13315,70 @@
             "deprecationReason": null
           }
         ],
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "SchemaDemandInput",
+        "description": "The input for creating a action demand.",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "hash",
+            "description": "The hash of the state.",
+            "type": {
+              "kind": "SCALAR",
+              "name": "ActionHash",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "matches",
+            "description": "The demands for the action args and returns. This is used to identify the demand in the system.",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "PortMatchInput",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "protocols",
+            "description": "The protocols that the action has to implement. This is used to identify the demand in the system.",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "ID",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
         "possibleTypes": null
       },
       {

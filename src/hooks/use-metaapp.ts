@@ -4,13 +4,18 @@ import {
   PortKind,
   PostmanAssignationFragment,
   useGetStateForQuery,
+  SchemaDemandInput,
   WatchStateEventsDocument,
   WatchStateEventsSubscription,
   WatchStateEventsSubscriptionVariables,
+  ActionDemandInput,
+  useImplementationAtQuery,
 } from "@/rekuest/api/graphql";
 import React, { useEffect } from "react";
 import zod from "zod";
 import { useAction } from "./use-action";
+import { useAssign } from "@/rekuest/hooks/useAssign";
+import { toast } from "sonner";
 
 export const ports = zod.object;
 
@@ -23,13 +28,10 @@ export const port = {
   any: zod.any(),
 };
 
-type ManifestedState = {
-  hash: string;
-};
 
 export type StateDefinition<T extends { [key: string]: any }> = {
   ports: T;
-  manifest?: ManifestedState;
+  demand: SchemaDemandInput
 };
 
 // Function to extract schema definition as JSON
@@ -119,40 +121,59 @@ export const build = {
 
 export type StatePort = { zodType: zod.ZodTypeAny } & Omit<PortInput, "key">;
 
-export const hashifyState = <T extends Record<string, StatePort>>(
+export const statePortsToDemand = <T extends Record<string, StatePort>>(
   ports: T,
   options?: StateOptions,
-): string => {
-  if (options?.forceHash) {
-    return options.forceHash;
-  }
-  const shape = Object.entries(ports).reduce(
-    (acc, [key, value]) => {
-      acc[key] = schemaToJson(value.zodType);
-      return acc;
-    },
-    {} as { [key: string]: any },
-  );
+): SchemaDemandInput => {
 
-  return JSON.stringify(shape);
+
+  const matches = Object.entries(ports).map(
+    ([key, value]) => {
+      return {
+        key: key,
+        kind: value.kind,
+      };
+    },
+  )
+
+  return {
+    hash: options?.forceHash,
+    matches: matches,
+  };
 };
 
-export const hashifyAction = <T extends Record<string, StatePort>>(
-  ports: T,
+export const buildActionManifest = <
+  T extends Record<string, StatePort>,
+  R extends Record<string, StatePort>,
+>(
+  args: T,
+  returns: R,
   options?: ActionOptions,
-): string => {
-  if (options?.forceHash) {
-    return options.forceHash;
-  }
-  const shape = Object.entries(ports).reduce(
-    (acc, [key, value]) => {
-      acc[key] = schemaToJson(value.zodType);
-      return acc;
+): ActionDemandInput => {
+  
+  const argMatches = Object.entries(args).map(
+    ([key, value]) => {
+      return {
+        key: key,
+        kind: value.kind,
+      };
     },
-    {} as { [key: string]: any },
-  );
+  )
 
-  return JSON.stringify(shape);
+  const returnMatches = Object.entries(returns).map(
+    ([key, value]) => {
+      return {
+        key: key,
+        kind: value.kind,
+      };
+    },
+  )
+
+  return {
+    hash: options?.forceHash,
+    argMatches: argMatches,
+    returnMatches: returnMatches,
+  };
 };
 
 export const buildState = <T extends Record<string, StatePort>>(
@@ -169,7 +190,7 @@ export const buildState = <T extends Record<string, StatePort>>(
 
   return {
     ports: zod.object(shape) as any,
-    manifest: { hash: hashifyState(ports, options) },
+    demand: statePortsToDemand(ports, options),
   };
 };
 
@@ -194,7 +215,7 @@ export const buildAction = <
 
   const returnsShape = Object.entries(returns).reduce(
     (acc, [key, value]) => {
-      acc[key] = value;
+      acc[key] = value.zodType;
       return acc;
     },
     {} as { [key: string]: zod.ZodTypeAny },
@@ -203,12 +224,12 @@ export const buildAction = <
   return {
     args: zod.object(argsShape) as any,
     returns: zod.object(returnsShape) as any,
-    manifest: { hash: hashifyAction(args, options) },
+    demand: buildActionManifest(args, returns, options),
   };
 };
 
 export type ActionManifest = {
-  hash: string;
+  demand: ActionDemandInput
 };
 
 export type ActionOptions = {
@@ -225,7 +246,7 @@ export type ActionDefinition<
 > = {
   args: T;
   returns: R;
-  manifest?: ActionManifest;
+  demand: ActionDemandInput
 };
 
 export type MetaApplication<
@@ -241,10 +262,11 @@ export type UseActionOptions = {
   debounce?: number;
 };
 
-export type MetaApplicationAdds<T extends MetaApplication<any, any>> = T & {
+export type MetaApplicationAdds<T extends MetaApplication<any, any>> = {
+  app: T;
   useState: <K extends keyof T["states"]>(
     state: K,
-  ) => { value?: zod.infer<T["states"][K]["ports"]>; updatedAt?: string };
+  ) => { value?: zod.infer<T["states"][K]["ports"]>; updatedAt?: string, errors: any };
   useAction: <K extends keyof T["actions"]>(
     action: K,
     options?: UseActionOptions,
@@ -287,10 +309,10 @@ const buildUseRekuestState = <T extends MetaApplication<any, any>>(
   const hook = (state: keyof T["states"]) => {
     const { agent } = useAgentContext();
 
-    const { data, subscribeToMore, refetch } = useGetStateForQuery({
+    const { data, subscribeToMore, refetch, error } = useGetStateForQuery({
       variables: {
         agent,
-        stateHash: app.states[state].manifest.hash,
+        demand: app.states[state].demand,
       },
     });
 
@@ -298,9 +320,9 @@ const buildUseRekuestState = <T extends MetaApplication<any, any>>(
       console.log("Refetching");
       refetch({
         agent,
-        stateHash: app.states[state].manifest.hash,
+        demand: app.states[state].demand,
       });
-    }, [agent, app.states[state].manifest.hash]);
+    }, [agent]);
 
     useEffect(() => {
       if (data?.stateFor) {
@@ -335,6 +357,15 @@ const buildUseRekuestState = <T extends MetaApplication<any, any>>(
       return () => {};
     }, [subscribeToMore, data?.stateFor?.id]);
 
+    if (error) {
+      console.error("Error", error);
+      return {
+        value: undefined,
+        updatedAt: undefined,
+        errors: error,
+      };
+    }
+
     if (!data) {
       return {
         value: undefined,
@@ -342,7 +373,11 @@ const buildUseRekuestState = <T extends MetaApplication<any, any>>(
       };
     }
 
-    return data?.stateFor;
+    
+
+
+
+    return data?.stateFor
   };
 
   return hook as any;
@@ -354,35 +389,33 @@ const buildUseRekuestActions = <T extends MetaApplication<any, any>>(
   const hook = (action: keyof T["actions"], options?: UseActionOptions) => {
     const { agent } = useAgentContext();
 
-    const { assign, reassign, cancel, latestAssignation } = useAction({
-      actionHash: app.actions[action].manifest?.hash,
-      agent: agent,
+    const { data} = useImplementationAtQuery({
+      variables: {
+        agent,
+        demand: app.actions[action].demand,
+      },
     });
 
+    const { assign} = useAssign()
+
+
     const nodeAssign = async (args: any) => {
+      if (!data?.implementationAt) {
+        toast.error(`No implementation found for ${String(action)} on ${agent}`);
+        return;
+      }
       if (options?.debounce) {
-        debounce(
-          () => assign({ args: args, ephemeral: options?.ephemeral }),
+        return debounce(
+          () => assign({ implementation: data?.implementationAt.id, args: args, ephemeral: options?.ephemeral }),
           options.debounce,
         );
       } else {
-        return assign({ args: args, ephemeral: options?.ephemeral });
+        return assign({implementation: data?.implementationAt.id, args: args, ephemeral: options?.ephemeral });
       }
     };
 
     return {
       assign: nodeAssign,
-      reassign,
-      cancel,
-      returns: latestAssignation?.events
-        .filter((a) => a.kind == AssignationEventKind.Yield)
-        .at(0)?.returns,
-      events: latestAssignation?.events,
-      latestEvent: latestAssignation?.events.at(0),
-      done:
-        latestAssignation?.events.some(
-          (a) => a.kind == AssignationEventKind.Done,
-        ) || false,
     };
   };
 
@@ -393,8 +426,19 @@ export const buildModule = <T extends MetaApplication<any, any>>(
   app: T,
 ): MetaApplicationAdds<T> => {
   return {
-    ...app,
+    app: app,
     useState: buildUseRekuestState(app),
     useAction: buildUseRekuestActions(app),
-  } as unknown as MetaApplicationAdds<T>;
+  } 
 };
+
+
+export const module = buildModule 
+export const action = buildAction
+export const state = buildState
+export const integer = build.integer
+export const string = build.string
+export const structure = build.structure
+export const model = build.model
+export const list = build.array
+export const float = build.float

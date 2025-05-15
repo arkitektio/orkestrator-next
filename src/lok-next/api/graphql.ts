@@ -18,7 +18,6 @@ export type Scalars = {
   Float: { input: number; output: number; }
   AppIdentifier: { input: any; output: any; }
   DateTime: { input: any; output: any; }
-  ExtraData: { input: any; output: any; }
   Fakt: { input: any; output: any; }
   Identifier: { input: any; output: any; }
   ServiceIdentifier: { input: any; output: any; }
@@ -34,13 +33,6 @@ export type AcknowledgeMessageInput = {
 export type AddItemToStashInput = {
   items: Array<StashItemInput>;
   stash: Scalars['ID']['input'];
-};
-
-/** Agent(id, room, name, app, user) */
-export type Agent = {
-  __typename?: 'Agent';
-  id: Scalars['ID']['output'];
-  room: Room;
 };
 
 /** An App is the Arkitekt equivalent of a Software Application. It is a collection of `Releases` that can be all part of the same application. E.g the App `Napari` could have the releases `0.1.0` and `0.2.0`. */
@@ -60,13 +52,14 @@ export type App = {
 /** App(id, name, identifier, logo) */
 export type AppFilter = {
   AND?: InputMaybe<AppFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<AppFilter>;
   OR?: InputMaybe<AppFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export enum BackendType {
-  ConfigBackend = 'ConfigBackend',
   DockerBackend = 'DockerBackend',
   UserDefined = 'user_defined'
 }
@@ -102,9 +95,11 @@ export type Client = {
   user?: Maybe<User>;
 };
 
-/** Client(id, name, release, oauth2_client, kind, user, redirect_uris, public, token, client_id, client_secret, tenant, created_at, requirements_hash, logo) */
+/** Client(id, name, release, oauth2_client, kind, user, redirect_uris, public, token, tenant, created_at, requirements_hash, logo) */
 export type ClientFilter = {
   AND?: InputMaybe<ClientFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<ClientFilter>;
   OR?: InputMaybe<ClientFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
@@ -197,20 +192,9 @@ export type CreateProfileInput = {
   user: Scalars['ID']['input'];
 };
 
-export type CreateRoomInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  title?: InputMaybe<Scalars['String']['input']>;
-};
-
 export type CreateStashInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type CreateStreamInput = {
-  agentId?: InputMaybe<Scalars['String']['input']>;
-  room: Scalars['ID']['input'];
-  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CreateUserInput = {
@@ -277,22 +261,6 @@ export enum FaktValueType {
 
 /**
  *
- * The Generic Account is a Social Account that maps to a generic account. It provides information about the
- * user that is specific to the provider. This includes untyped extra data.
- *
- *
- */
-export type GenericAccount = SocialAccount & {
-  __typename?: 'GenericAccount';
-  extraData: Scalars['ExtraData']['output'];
-  /** The provider of the account. This can be used to determine the type of the account. */
-  provider: ProviderType;
-  /** The unique identifier of the account. This is unique for the provider. */
-  uid: Scalars['String']['output'];
-};
-
-/**
- *
  * A Group is the base unit of Role Based Access Control. A Group can have many users and many permissions. A user can have many groups. A user with a group that has a permission can perform the action that the permission allows.
  * Groups are propagated to the respecting subservices. Permissions are not. Each subservice has to define its own permissions and mappings to groups.
  *
@@ -309,6 +277,8 @@ export type Group = {
 /** __doc__ */
 export type GroupFilter = {
   AND?: InputMaybe<GroupFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<GroupFilter>;
   OR?: InputMaybe<GroupFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   name?: InputMaybe<StrFilterLookup>;
@@ -333,10 +303,6 @@ export type GroupProfile = {
   id: Scalars['ID']['output'];
   /** The name of the group */
   name?: Maybe<Scalars['String']['output']>;
-};
-
-export type JoinStreamInput = {
-  id: Scalars['ID']['input'];
 };
 
 export type KeyValueInput = {
@@ -371,6 +337,8 @@ export type LayerInstancesArgs = {
 /** Layer(id, name, identifier, logo, description, dns_probe, get_probe, kind) */
 export type LayerFilter = {
   AND?: InputMaybe<LayerFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<LayerFilter>;
   OR?: InputMaybe<LayerFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
@@ -388,10 +356,6 @@ export type LeafDescendant = Descendant & {
   underline?: Maybe<Scalars['Boolean']['output']>;
   /** Unsafe children are not typed and fall back to json. This is a workaround if queries get too complex. */
   unsafeChildren?: Maybe<Array<Scalars['UnsafeChild']['output']>>;
-};
-
-export type LeaveStreamInput = {
-  id: Scalars['ID']['input'];
 };
 
 export type LinkingRequestInput = {
@@ -434,32 +398,6 @@ export type MentionDescendant = Descendant & {
   user?: Maybe<User>;
 };
 
-/** Message represent the message of an agent on a room */
-export type Message = {
-  __typename?: 'Message';
-  /** The user that created this comment */
-  agent: Agent;
-  attachedStructures: Array<Structure>;
-  id: Scalars['ID']['output'];
-  /** A clear text representation of the rich comment */
-  text: Scalars['String']['output'];
-  title: Scalars['String']['output'];
-};
-
-
-/** Message represent the message of an agent on a room */
-export type MessageAttachedStructuresArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-/** Message represent the message of an agent on a room */
-export type MessageFilter = {
-  AND?: InputMaybe<MessageFilter>;
-  OR?: InputMaybe<MessageFilter>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
-
 export type Mutation = {
   __typename?: 'Mutation';
   acknowledgeMessage: SystemMessage;
@@ -469,23 +407,18 @@ export type Mutation = {
   createDevelopmentalClient: Client;
   createGroupProfile: GroupProfile;
   createProfile: Profile;
-  createRoom: Room;
   /** Create a new stash */
   createStash: Stash;
-  createStream: Stream;
   createUser: User;
   createUserDefinedServiceInstance: UserDefinedServiceInstance;
   deleteStash: Scalars['ID']['output'];
   /** Delete items from a stash */
   deleteStashItems: Array<Scalars['ID']['output']>;
-  joinStream: Stream;
-  leaveStream: Stream;
   render: Scalars['Fakt']['output'];
   replyTo: Comment;
   requestMediaUpload: PresignedPostCredentials;
   resolveComment: Comment;
   scan: Scalars['String']['output'];
-  send: Message;
   updateGroupProfile: GroupProfile;
   updateProfile: Profile;
   updateServiceInstance: ServiceInstance;
@@ -524,18 +457,8 @@ export type MutationCreateProfileArgs = {
 };
 
 
-export type MutationCreateRoomArgs = {
-  input: CreateRoomInput;
-};
-
-
 export type MutationCreateStashArgs = {
   input: CreateStashInput;
-};
-
-
-export type MutationCreateStreamArgs = {
-  input: CreateStreamInput;
 };
 
 
@@ -556,16 +479,6 @@ export type MutationDeleteStashArgs = {
 
 export type MutationDeleteStashItemsArgs = {
   input: DeleteStashItems;
-};
-
-
-export type MutationJoinStreamArgs = {
-  input: JoinStreamInput;
-};
-
-
-export type MutationLeaveStreamArgs = {
-  input: LeaveStreamInput;
 };
 
 
@@ -594,11 +507,6 @@ export type MutationScanArgs = {
 };
 
 
-export type MutationSendArgs = {
-  input: SendMessageInput;
-};
-
-
 export type MutationUpdateGroupProfileArgs = {
   input: UpdateGroupProfileInput;
 };
@@ -618,63 +526,16 @@ export type MutationUpdateStashArgs = {
   input: UpdateStashInput;
 };
 
-/** Application(id, client_id, user, redirect_uris, post_logout_redirect_uris, client_type, authorization_grant_type, client_secret, name, skip_authorization, created, updated, algorithm) */
+/** OAuth2Client(id, user, client_id, client_secret, redirect_uris, scope, token_endpoint_auth_method, grant_types, response_types) */
 export type Oauth2Client = {
   __typename?: 'Oauth2Client';
-  algorithm: Scalars['String']['output'];
-  authorizationGrantType: Scalars['String']['output'];
   clientId: Scalars['String']['output'];
-  clientType: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
-  /** Allowed URIs list, space separated */
-  redirectUris: Scalars['String']['output'];
-  user: User;
+  id: Scalars['String']['output'];
 };
 
 export type OffsetPaginationInput = {
-  limit?: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: Scalars['Int']['input'];
-};
-
-/**
- *
- * An ORCID Account is a Social Account that maps to an ORCID Account. It provides information about the
- * user that is specific to the ORCID service. This includes the ORCID Identifier, the ORCID Preferences and
- * the ORCID Person. The ORCID Person contains information about the user that is specific to the ORCID service.
- * This includes the ORCID Activities, the ORCID Researcher URLs and the ORCID Addresses.
- *
- *
- */
-export type OrcidAccount = SocialAccount & {
-  __typename?: 'OrcidAccount';
-  /** Extra data that is specific to the provider. This is a json field and can be used to store arbitrary data. */
-  extraData: Scalars['ExtraData']['output'];
-  /** The ORCID Identifier of the user. The UID of the account is the same as the path of the identifier. */
-  identifier: OrcidIdentifier;
-  /** Information about the person that is specific to the ORCID service. */
-  person?: Maybe<OrcidPerson>;
-  /** The provider of the account. This can be used to determine the type of the account. */
-  provider: ProviderType;
-  /** The unique identifier of the account. This is unique for the provider. */
-  uid: Scalars['String']['output'];
-};
-
-/** The ORCID Identifier of a user. This is a unique identifier that is used to identify a user on the ORCID service. It is composed of a uri, a path and a host. */
-export type OrcidIdentifier = {
-  __typename?: 'OrcidIdentifier';
-  /** The host of the identifier */
-  host: Scalars['String']['output'];
-  /** The path of the identifier */
-  path: Scalars['String']['output'];
-  /** The uri of the identifier */
-  uri: Scalars['String']['output'];
-};
-
-export type OrcidPerson = {
-  __typename?: 'OrcidPerson';
-  addresses: Array<Scalars['String']['output']>;
-  researcherUrls: Array<Scalars['String']['output']>;
 };
 
 /** A Paragraph of text */
@@ -718,10 +579,6 @@ export type Profile = {
   name?: Maybe<Scalars['String']['output']>;
 };
 
-export enum ProviderType {
-  Orcid = 'ORCID'
-}
-
 export type Query = {
   __typename?: 'Query';
   app: App;
@@ -746,8 +603,6 @@ export type Query = {
   redeemTokens: Array<RedeemToken>;
   release: Release;
   releases: Array<Release>;
-  room: Room;
-  rooms: Array<Room>;
   scopes: Array<Scope>;
   service: Service;
   serviceInstance: ServiceInstance;
@@ -757,7 +612,6 @@ export type Query = {
   stashItem: StashItem;
   stashItems: Array<StashItem>;
   stashes: Array<Stash>;
-  stream: Stream;
   user: User;
   users: Array<User>;
 };
@@ -845,17 +699,6 @@ export type QueryReleaseArgs = {
 };
 
 
-export type QueryRoomArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type QueryRoomsArgs = {
-  filters?: InputMaybe<RoomFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
 export type QueryServiceArgs = {
   id: Scalars['ID']['input'];
 };
@@ -900,11 +743,6 @@ export type QueryStashesArgs = {
 };
 
 
-export type QueryStreamArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
 export type QueryUserArgs = {
   id: Scalars['ID']['input'];
 };
@@ -942,6 +780,8 @@ export type RedeemToken = {
  */
 export type RedeemTokenFilter = {
   AND?: InputMaybe<RedeemTokenFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<RedeemTokenFilter>;
   OR?: InputMaybe<RedeemTokenFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
@@ -1004,46 +844,6 @@ export type ResolveCommentInput = {
   notify?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
-/** Room(id, title, description, creator) */
-export type Room = {
-  __typename?: 'Room';
-  agents: Array<Agent>;
-  description: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  messages: Array<Message>;
-  streams: Array<Stream>;
-  /** The Title of the Room */
-  title: Scalars['String']['output'];
-};
-
-
-/** Room(id, title, description, creator) */
-export type RoomAgentsArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-/** Room(id, title, description, creator) */
-export type RoomMessagesArgs = {
-  filters?: InputMaybe<MessageFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-export type RoomEvent = {
-  __typename?: 'RoomEvent';
-  join?: Maybe<Agent>;
-  leave?: Maybe<Agent>;
-  message?: Maybe<Message>;
-};
-
-/** Room(id, title, description, creator) */
-export type RoomFilter = {
-  AND?: InputMaybe<RoomFilter>;
-  OR?: InputMaybe<RoomFilter>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  search?: InputMaybe<Scalars['String']['input']>;
-};
-
 export type ScanBackendInput = {
   backend?: InputMaybe<Scalars['String']['input']>;
 };
@@ -1057,15 +857,6 @@ export type Scope = {
   label: Scalars['String']['output'];
   /** The value of the scope. This is the value that is used in the OAuth2 flow. */
   value: Scalars['String']['output'];
-};
-
-export type SendMessageInput = {
-  agentId: Scalars['String']['input'];
-  attachStructures?: InputMaybe<Array<StructureInput>>;
-  notify?: InputMaybe<Scalars['Boolean']['input']>;
-  parent?: InputMaybe<Scalars['ID']['input']>;
-  room: Scalars['ID']['input'];
-  text: Scalars['String']['input'];
 };
 
 /** A Service is a Webservice that a Client might want to access. It is not the configured instance of the service, but the service itself. */
@@ -1094,6 +885,8 @@ export type ServiceInstancesArgs = {
 /** Service(id, name, identifier, logo, description) */
 export type ServiceFilter = {
   AND?: InputMaybe<ServiceFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<ServiceFilter>;
   OR?: InputMaybe<ServiceFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
@@ -1160,6 +953,8 @@ export type ServiceInstanceDeniedUsersArgs = {
 /** ServiceInstance(id, backend, layer, service, logo, identifier, template) */
 export type ServiceInstanceFilter = {
   AND?: InputMaybe<ServiceInstanceFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<ServiceInstanceFilter>;
   OR?: InputMaybe<ServiceInstanceFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
@@ -1177,32 +972,6 @@ export type ServiceInstanceMapping = {
   key: Scalars['String']['output'];
   /** Is this mapping optional? If a mapping is optional, you can configure the client without this mapping. */
   optional: Scalars['Boolean']['output'];
-};
-
-/**
- *
- * A Social Account is an account that is associated with a user. It can be used to authenticate the user with external services. It
- * can be used to store extra data about the user that is specific to the provider. We provide typed access to the extra data for
- * some providers. For others we provide a generic json field that can be used to store arbitrary data. Generic accounts are
- * always available, but typed accounts are only available for some providers.
- *
- */
-export type SocialAccount = {
-  /** Extra data that is specific to the provider. This is a json field and can be used to store arbitrary data. */
-  extraData: Scalars['ExtraData']['output'];
-  /** The provider of the account. This can be used to determine the type of the account. */
-  provider: ProviderType;
-  /** The unique identifier of the account. This is unique for the provider. */
-  uid: Scalars['String']['output'];
-};
-
-/** SocialAccount(id, user, provider, uid, last_login, date_joined, extra_data) */
-export type SocialAccountFilter = {
-  AND?: InputMaybe<SocialAccountFilter>;
-  OR?: InputMaybe<SocialAccountFilter>;
-  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  provider?: InputMaybe<ProviderType>;
-  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 /**
@@ -1237,6 +1006,8 @@ export type StashItemsArgs = {
 /** __doc__ */
 export type StashFilter = {
   AND?: InputMaybe<StashFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<StashFilter>;
   OR?: InputMaybe<StashFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
@@ -1260,6 +1031,8 @@ export type StashItem = {
 /** StashItem(id, stash, identifier, object, added_by, added_at, updated_at) */
 export type StashItemFilter = {
   AND?: InputMaybe<StashItemFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<StashItemFilter>;
   OR?: InputMaybe<StashItemFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
@@ -1288,71 +1061,20 @@ export type StrFilterLookup = {
   isNull?: InputMaybe<Scalars['Boolean']['input']>;
   lt?: InputMaybe<Scalars['String']['input']>;
   lte?: InputMaybe<Scalars['String']['input']>;
-  nContains?: InputMaybe<Scalars['String']['input']>;
-  nEndsWith?: InputMaybe<Scalars['String']['input']>;
-  nExact?: InputMaybe<Scalars['String']['input']>;
-  nGt?: InputMaybe<Scalars['String']['input']>;
-  nGte?: InputMaybe<Scalars['String']['input']>;
-  nIContains?: InputMaybe<Scalars['String']['input']>;
-  nIEndsWith?: InputMaybe<Scalars['String']['input']>;
-  nIExact?: InputMaybe<Scalars['String']['input']>;
-  nIRegex?: InputMaybe<Scalars['String']['input']>;
-  nIStartsWith?: InputMaybe<Scalars['String']['input']>;
-  nInList?: InputMaybe<Array<Scalars['String']['input']>>;
-  nIsNull?: InputMaybe<Scalars['Boolean']['input']>;
-  nLt?: InputMaybe<Scalars['String']['input']>;
-  nLte?: InputMaybe<Scalars['String']['input']>;
-  nRange?: InputMaybe<Array<Scalars['String']['input']>>;
-  nRegex?: InputMaybe<Scalars['String']['input']>;
-  nStartsWith?: InputMaybe<Scalars['String']['input']>;
   range?: InputMaybe<Array<Scalars['String']['input']>>;
   regex?: InputMaybe<Scalars['String']['input']>;
   startsWith?: InputMaybe<Scalars['String']['input']>;
-};
-
-/** Stream(id, agent, title, token) */
-export type Stream = {
-  __typename?: 'Stream';
-  /** The agent that created this stream */
-  agent: Agent;
-  id: Scalars['ID']['output'];
-  /** The Title of the Stream */
-  title: Scalars['String']['output'];
-  token: Scalars['String']['output'];
-};
-
-/** Structure(id, identifier, object) */
-export type Structure = {
-  __typename?: 'Structure';
-  id: Scalars['ID']['output'];
-  /** The identifier of the object. Consult the documentation for the format */
-  identifier: Scalars['String']['output'];
-  /** The object id of the object, on its associated service */
-  object: Scalars['ID']['output'];
-};
-
-export type StructureInput = {
-  identifier: Scalars['String']['input'];
-  object: Scalars['ID']['input'];
 };
 
 export type Subscription = {
   __typename?: 'Subscription';
   communications: Communication;
   mentions: Comment;
-  room: RoomEvent;
 };
 
 
 export type SubscriptionCommunicationsArgs = {
   channels: Array<Scalars['ID']['input']>;
-};
-
-
-export type SubscriptionRoomArgs = {
-  agentId: Scalars['ID']['input'];
-  filterOwn?: Scalars['Boolean']['input'];
-  room: Scalars['ID']['input'];
 };
 
 /**
@@ -1424,7 +1146,6 @@ export type User = {
   lastName?: Maybe<Scalars['String']['output']>;
   managedClients: Array<DjangoModelType>;
   profile: Profile;
-  socialAccounts: Array<SocialAccount>;
   /** Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only. */
   username: Scalars['String']['output'];
 };
@@ -1475,10 +1196,11 @@ export type UserDefinedServiceInstanceInput = {
  */
 export type UserFilter = {
   AND?: InputMaybe<UserFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<UserFilter>;
   OR?: InputMaybe<UserFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
-  socialAccounts?: InputMaybe<SocialAccountFilter>;
   /** Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only. */
   username?: InputMaybe<StrFilterLookup>;
 };
@@ -1487,7 +1209,7 @@ export type DetailAppFragment = { __typename?: 'App', id: string, identifier: an
 
 export type ListAppFragment = { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
-export type DetailClientFragment = { __typename?: 'Client', id: string, token: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', id: string, version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, oauth2Client: { __typename?: 'Oauth2Client', authorizationGrantType: string, redirectUris: string }, mappings: Array<{ __typename?: 'ServiceInstanceMapping', id: string, key: string, optional: boolean, instance: { __typename?: 'ServiceInstance', id: string, backend: BackendType, identifier: string, allowedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, deniedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, layer: { __typename?: 'Layer', id: string, name: string } }, client: { __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } } }> };
+export type DetailClientFragment = { __typename?: 'Client', id: string, token: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', id: string, version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, oauth2Client: { __typename?: 'Oauth2Client', clientId: string }, mappings: Array<{ __typename?: 'ServiceInstanceMapping', id: string, key: string, optional: boolean, instance: { __typename?: 'ServiceInstance', id: string, backend: BackendType, identifier: string, allowedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, deniedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, layer: { __typename?: 'Layer', id: string, name: string } }, client: { __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } } }> };
 
 export type ListClientFragment = { __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } };
 
@@ -1527,10 +1249,6 @@ export type LayerFragment = { __typename?: 'Layer', id: string, name: string, de
 
 export type ListLayerFragment = { __typename?: 'Layer', id: string, name: string, description?: string | null, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
-export type MessageFragment = { __typename?: 'Message', id: string, text: string, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> };
-
-export type ListMessageFragment = { __typename?: 'Message', id: string, text: string, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> };
-
 export type ProfileFragment = { __typename?: 'Profile', id: string, name?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null };
 
 export type ListRedeemTokenFragment = { __typename?: 'RedeemToken', id: string, token: string, user: { __typename?: 'User', id: string, email?: string | null }, client?: { __typename?: 'Client', id: string, release: { __typename?: 'Release', version: any, app: { __typename?: 'App', identifier: any } } } | null };
@@ -1538,8 +1256,6 @@ export type ListRedeemTokenFragment = { __typename?: 'RedeemToken', id: string, 
 export type DetailReleaseFragment = { __typename?: 'Release', id: string, version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null }, clients: Array<{ __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }> };
 
 export type ListReleaseFragment = { __typename?: 'Release', id: string, version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } };
-
-export type DetailRoomFragment = { __typename?: 'Room', id: string, title: string, description: string, messages: Array<{ __typename?: 'Message', id: string, text: string, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> }>, streams: Array<{ __typename?: 'Stream', id: string, title: string }> };
 
 export type ListServiceFragment = { __typename?: 'Service', identifier: any, id: string, name: string, description?: string | null, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, instances: Array<{ __typename?: 'ServiceInstance', id: string, backend: BackendType, identifier: string, allowedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, deniedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, layer: { __typename?: 'Layer', id: string, name: string } }> };
 
@@ -1556,12 +1272,6 @@ export type StashFragment = { __typename?: 'Stash', id: string, name: string, de
 export type ListStashFragment = { __typename?: 'Stash', id: string, name: string, description?: string | null, createdAt: any, updatedAt: any, items: Array<{ __typename?: 'StashItem', id: string, identifier: string, object: string }>, owner: { __typename?: 'User', id: string, username: string } };
 
 export type StashItemFragment = { __typename?: 'StashItem', id: string, identifier: string, object: string };
-
-export type StreamFragment = { __typename?: 'Stream', id: string, title: string };
-
-export type EnsuredStreamFragment = { __typename?: 'Stream', id: string, title: string, token: string, agent: { __typename?: 'Agent', room: { __typename?: 'Room', id: string } } };
-
-export type DetailStreamFragment = { __typename?: 'Stream', id: string, title: string, token: string, agent: { __typename?: 'Agent', room: { __typename?: 'Room', id: string } } };
 
 export type ListUserFragment = { __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string };
 
@@ -1629,23 +1339,6 @@ export type UpdateServiceInstanceMutationVariables = Exact<{
 
 export type UpdateServiceInstanceMutation = { __typename?: 'Mutation', updateServiceInstance: { __typename?: 'ServiceInstance', id: string, backend: BackendType, identifier: string, service: { __typename?: 'Service', identifier: any, id: string, description?: string | null, name: string }, allowedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, deniedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, allowedGroups: Array<{ __typename?: 'Group', id: string, name: string, profile?: { __typename?: 'GroupProfile', id: string, bio?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null }>, deniedGroups: Array<{ __typename?: 'Group', id: string, name: string, profile?: { __typename?: 'GroupProfile', id: string, bio?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null }>, userDefinitions: Array<{ __typename?: 'UserDefinedServiceInstance', id: string, values: Array<{ __typename?: 'DefinedValue', key: string, value: string }> }>, mappings: Array<{ __typename?: 'ServiceInstanceMapping', id: string, key: string, optional: boolean, instance: { __typename?: 'ServiceInstance', id: string, backend: BackendType, identifier: string, allowedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, deniedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, layer: { __typename?: 'Layer', id: string, name: string } }, client: { __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } } }>, layer: { __typename?: 'Layer', id: string, name: string }, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } };
 
-export type AcknowledgeMessageMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  ack: Scalars['Boolean']['input'];
-}>;
-
-
-export type AcknowledgeMessageMutation = { __typename?: 'Mutation', acknowledgeMessage: { __typename?: 'SystemMessage', id: string } };
-
-export type SendMessageMutationVariables = Exact<{
-  text: Scalars['String']['input'];
-  room: Scalars['ID']['input'];
-  agentId: Scalars['String']['input'];
-}>;
-
-
-export type SendMessageMutation = { __typename?: 'Mutation', send: { __typename?: 'Message', id: string, text: string, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> } };
-
 export type CreateUserProfileMutationVariables = Exact<{
   input: CreateProfileInput;
 }>;
@@ -1659,11 +1352,6 @@ export type UpdateUserProfileMutationVariables = Exact<{
 
 
 export type UpdateUserProfileMutation = { __typename?: 'Mutation', updateProfile: { __typename?: 'Profile', id: string, name?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } };
-
-export type CreateRoomMutationVariables = Exact<{ [key: string]: never; }>;
-
-
-export type CreateRoomMutation = { __typename?: 'Mutation', createRoom: { __typename?: 'Room', id: string, title: string } };
 
 export type CreateStashMutationVariables = Exact<{
   name?: InputMaybe<Scalars['String']['input']>;
@@ -1694,13 +1382,6 @@ export type DeleteStashMutationVariables = Exact<{
 
 
 export type DeleteStashMutation = { __typename?: 'Mutation', deleteStash: string };
-
-export type CreateStreamMutationVariables = Exact<{
-  input: CreateStreamInput;
-}>;
-
-
-export type CreateStreamMutation = { __typename?: 'Mutation', createStream: { __typename?: 'Stream', id: string, title: string, token: string, agent: { __typename?: 'Agent', room: { __typename?: 'Room', id: string } } } };
 
 export type RequestMediaUploadMutationVariables = Exact<{
   key: Scalars['String']['input'];
@@ -1754,7 +1435,7 @@ export type DetailClientQueryVariables = Exact<{
 }>;
 
 
-export type DetailClientQuery = { __typename?: 'Query', client: { __typename?: 'Client', id: string, token: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', id: string, version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, oauth2Client: { __typename?: 'Oauth2Client', authorizationGrantType: string, redirectUris: string }, mappings: Array<{ __typename?: 'ServiceInstanceMapping', id: string, key: string, optional: boolean, instance: { __typename?: 'ServiceInstance', id: string, backend: BackendType, identifier: string, allowedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, deniedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, layer: { __typename?: 'Layer', id: string, name: string } }, client: { __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } } }> } };
+export type DetailClientQuery = { __typename?: 'Query', client: { __typename?: 'Client', id: string, token: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', id: string, version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, oauth2Client: { __typename?: 'Oauth2Client', clientId: string }, mappings: Array<{ __typename?: 'ServiceInstanceMapping', id: string, key: string, optional: boolean, instance: { __typename?: 'ServiceInstance', id: string, backend: BackendType, identifier: string, allowedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, deniedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, layer: { __typename?: 'Layer', id: string, name: string } }, client: { __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } } }> } };
 
 export type MyManagedClientsQueryVariables = Exact<{
   kind: ClientKind;
@@ -1768,7 +1449,7 @@ export type ClientQueryVariables = Exact<{
 }>;
 
 
-export type ClientQuery = { __typename?: 'Query', client: { __typename?: 'Client', id: string, token: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', id: string, version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, oauth2Client: { __typename?: 'Oauth2Client', authorizationGrantType: string, redirectUris: string }, mappings: Array<{ __typename?: 'ServiceInstanceMapping', id: string, key: string, optional: boolean, instance: { __typename?: 'ServiceInstance', id: string, backend: BackendType, identifier: string, allowedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, deniedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, layer: { __typename?: 'Layer', id: string, name: string } }, client: { __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } } }> } };
+export type ClientQuery = { __typename?: 'Query', client: { __typename?: 'Client', id: string, token: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', id: string, version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, oauth2Client: { __typename?: 'Oauth2Client', clientId: string }, mappings: Array<{ __typename?: 'ServiceInstanceMapping', id: string, key: string, optional: boolean, instance: { __typename?: 'ServiceInstance', id: string, backend: BackendType, identifier: string, allowedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, deniedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, layer: { __typename?: 'Layer', id: string, name: string } }, client: { __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } } }> } };
 
 export type CommentsForQueryVariables = Exact<{
   object: Scalars['ID']['input'];
@@ -1863,18 +1544,6 @@ export type DetailReleaseQueryVariables = Exact<{
 
 export type DetailReleaseQuery = { __typename?: 'Query', release: { __typename?: 'Release', id: string, version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null }, clients: Array<{ __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }> } };
 
-export type DetailRoomQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type DetailRoomQuery = { __typename?: 'Query', room: { __typename?: 'Room', id: string, title: string, description: string, messages: Array<{ __typename?: 'Message', id: string, text: string, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> }>, streams: Array<{ __typename?: 'Stream', id: string, title: string }> } };
-
-export type RoomsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type RoomsQuery = { __typename?: 'Query', rooms: Array<{ __typename?: 'Room', id: string, title: string, description: string, messages: Array<{ __typename?: 'Message', id: string, text: string, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> }> }> };
-
 export type ScopesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -1932,13 +1601,6 @@ export type MyStashesQueryVariables = Exact<{
 
 export type MyStashesQuery = { __typename?: 'Query', stashes: Array<{ __typename?: 'Stash', id: string, name: string, description?: string | null, createdAt: any, updatedAt: any, items: Array<{ __typename?: 'StashItem', id: string, identifier: string, object: string }>, owner: { __typename?: 'User', id: string, username: string } }> };
 
-export type GetStreamQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type GetStreamQuery = { __typename?: 'Query', stream: { __typename?: 'Stream', id: string, title: string, token: string, agent: { __typename?: 'Agent', room: { __typename?: 'Room', id: string } } } };
-
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -1983,14 +1645,6 @@ export type WatchMentionsSubscriptionVariables = Exact<{ [key: string]: never; }
 
 
 export type WatchMentionsSubscription = { __typename?: 'Subscription', mentions: { __typename?: 'Comment', id: string, createdAt: any, resolved: boolean, object: string, identifier: any, user: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null }>, children: Array<{ __typename?: 'Comment', createdAt: any, user: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, parent?: { __typename?: 'Comment', id: string } | null, descendants: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, size?: string | null, children?: Array<{ __typename?: 'LeafDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, bold?: boolean | null, italic?: boolean | null, code?: string | null, text?: string | null } | { __typename?: 'MentionDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, user?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } | { __typename?: 'ParagraphDescendant', kind: DescendantKind, unsafeChildren?: Array<any> | null, size?: string | null }> | null }> | null }> }>, mentions: Array<{ __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, resolvedBy?: { __typename?: 'User', id: string, username: string, avatar?: string | null, profile: { __typename?: 'Profile', avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | null } };
-
-export type WatchMessagesSubscriptionVariables = Exact<{
-  room: Scalars['ID']['input'];
-  agentId: Scalars['ID']['input'];
-}>;
-
-
-export type WatchMessagesSubscription = { __typename?: 'Subscription', room: { __typename?: 'RoomEvent', message?: { __typename?: 'Message', id: string, text: string, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> } | null } };
 
 export const ListAppFragmentDoc = gql`
     fragment ListApp on App {
@@ -2107,8 +1761,7 @@ export const DetailClientFragmentDoc = gql`
     presignedUrl
   }
   oauth2Client {
-    authorizationGrantType
-    redirectUris
+    clientId
   }
   mappings {
     ...ListServiceInstanceMapping
@@ -2326,19 +1979,6 @@ export const ListLayerFragmentDoc = gql`
   }
 }
     `;
-export const MessageFragmentDoc = gql`
-    fragment Message on Message {
-  id
-  text
-  agent {
-    id
-  }
-  attachedStructures {
-    identifier
-    object
-  }
-}
-    `;
 export const ListRedeemTokenFragmentDoc = gql`
     fragment ListRedeemToken on RedeemToken {
   id
@@ -2374,39 +2014,6 @@ export const DetailReleaseFragmentDoc = gql`
 }
     ${ListAppFragmentDoc}
 ${ListClientFragmentDoc}`;
-export const ListMessageFragmentDoc = gql`
-    fragment ListMessage on Message {
-  id
-  text
-  agent {
-    id
-  }
-  attachedStructures {
-    identifier
-    object
-  }
-}
-    `;
-export const StreamFragmentDoc = gql`
-    fragment Stream on Stream {
-  id
-  title
-}
-    `;
-export const DetailRoomFragmentDoc = gql`
-    fragment DetailRoom on Room {
-  id
-  title
-  description
-  messages {
-    ...ListMessage
-  }
-  streams {
-    ...Stream
-  }
-}
-    ${ListMessageFragmentDoc}
-${StreamFragmentDoc}`;
 export const ListServiceFragmentDoc = gql`
     fragment ListService on Service {
   identifier
@@ -2464,30 +2071,6 @@ export const ListStashFragmentDoc = gql`
 }
     ${StashFragmentDoc}
 ${StashItemFragmentDoc}`;
-export const EnsuredStreamFragmentDoc = gql`
-    fragment EnsuredStream on Stream {
-  id
-  title
-  token
-  agent {
-    room {
-      id
-    }
-  }
-}
-    `;
-export const DetailStreamFragmentDoc = gql`
-    fragment DetailStream on Stream {
-  id
-  title
-  token
-  agent {
-    room {
-      id
-    }
-  }
-}
-    `;
 export const ProfileFragmentDoc = gql`
     fragment Profile on Profile {
   id
@@ -2837,76 +2420,6 @@ export function useUpdateServiceInstanceMutation(baseOptions?: ApolloReactHooks.
 export type UpdateServiceInstanceMutationHookResult = ReturnType<typeof useUpdateServiceInstanceMutation>;
 export type UpdateServiceInstanceMutationResult = Apollo.MutationResult<UpdateServiceInstanceMutation>;
 export type UpdateServiceInstanceMutationOptions = Apollo.BaseMutationOptions<UpdateServiceInstanceMutation, UpdateServiceInstanceMutationVariables>;
-export const AcknowledgeMessageDocument = gql`
-    mutation AcknowledgeMessage($id: ID!, $ack: Boolean!) {
-  acknowledgeMessage(input: {id: $id, acknowledged: $ack}) {
-    id
-    id
-  }
-}
-    `;
-export type AcknowledgeMessageMutationFn = Apollo.MutationFunction<AcknowledgeMessageMutation, AcknowledgeMessageMutationVariables>;
-
-/**
- * __useAcknowledgeMessageMutation__
- *
- * To run a mutation, you first call `useAcknowledgeMessageMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useAcknowledgeMessageMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [acknowledgeMessageMutation, { data, loading, error }] = useAcknowledgeMessageMutation({
- *   variables: {
- *      id: // value for 'id'
- *      ack: // value for 'ack'
- *   },
- * });
- */
-export function useAcknowledgeMessageMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AcknowledgeMessageMutation, AcknowledgeMessageMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<AcknowledgeMessageMutation, AcknowledgeMessageMutationVariables>(AcknowledgeMessageDocument, options);
-      }
-export type AcknowledgeMessageMutationHookResult = ReturnType<typeof useAcknowledgeMessageMutation>;
-export type AcknowledgeMessageMutationResult = Apollo.MutationResult<AcknowledgeMessageMutation>;
-export type AcknowledgeMessageMutationOptions = Apollo.BaseMutationOptions<AcknowledgeMessageMutation, AcknowledgeMessageMutationVariables>;
-export const SendMessageDocument = gql`
-    mutation SendMessage($text: String!, $room: ID!, $agentId: String!) {
-  send(input: {text: $text, room: $room, agentId: $agentId}) {
-    ...Message
-  }
-}
-    ${MessageFragmentDoc}`;
-export type SendMessageMutationFn = Apollo.MutationFunction<SendMessageMutation, SendMessageMutationVariables>;
-
-/**
- * __useSendMessageMutation__
- *
- * To run a mutation, you first call `useSendMessageMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useSendMessageMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [sendMessageMutation, { data, loading, error }] = useSendMessageMutation({
- *   variables: {
- *      text: // value for 'text'
- *      room: // value for 'room'
- *      agentId: // value for 'agentId'
- *   },
- * });
- */
-export function useSendMessageMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<SendMessageMutation, SendMessageMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<SendMessageMutation, SendMessageMutationVariables>(SendMessageDocument, options);
-      }
-export type SendMessageMutationHookResult = ReturnType<typeof useSendMessageMutation>;
-export type SendMessageMutationResult = Apollo.MutationResult<SendMessageMutation>;
-export type SendMessageMutationOptions = Apollo.BaseMutationOptions<SendMessageMutation, SendMessageMutationVariables>;
 export const CreateUserProfileDocument = gql`
     mutation CreateUserProfile($input: CreateProfileInput!) {
   createProfile(input: $input) {
@@ -2973,39 +2486,6 @@ export function useUpdateUserProfileMutation(baseOptions?: ApolloReactHooks.Muta
 export type UpdateUserProfileMutationHookResult = ReturnType<typeof useUpdateUserProfileMutation>;
 export type UpdateUserProfileMutationResult = Apollo.MutationResult<UpdateUserProfileMutation>;
 export type UpdateUserProfileMutationOptions = Apollo.BaseMutationOptions<UpdateUserProfileMutation, UpdateUserProfileMutationVariables>;
-export const CreateRoomDocument = gql`
-    mutation CreateRoom {
-  createRoom(input: {title: "Room 1"}) {
-    id
-    title
-  }
-}
-    `;
-export type CreateRoomMutationFn = Apollo.MutationFunction<CreateRoomMutation, CreateRoomMutationVariables>;
-
-/**
- * __useCreateRoomMutation__
- *
- * To run a mutation, you first call `useCreateRoomMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateRoomMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createRoomMutation, { data, loading, error }] = useCreateRoomMutation({
- *   variables: {
- *   },
- * });
- */
-export function useCreateRoomMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateRoomMutation, CreateRoomMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateRoomMutation, CreateRoomMutationVariables>(CreateRoomDocument, options);
-      }
-export type CreateRoomMutationHookResult = ReturnType<typeof useCreateRoomMutation>;
-export type CreateRoomMutationResult = Apollo.MutationResult<CreateRoomMutation>;
-export type CreateRoomMutationOptions = Apollo.BaseMutationOptions<CreateRoomMutation, CreateRoomMutationVariables>;
 export const CreateStashDocument = gql`
     mutation CreateStash($name: String, $description: String = "") {
   createStash(input: {name: $name, description: $description}) {
@@ -3136,39 +2616,6 @@ export function useDeleteStashMutation(baseOptions?: ApolloReactHooks.MutationHo
 export type DeleteStashMutationHookResult = ReturnType<typeof useDeleteStashMutation>;
 export type DeleteStashMutationResult = Apollo.MutationResult<DeleteStashMutation>;
 export type DeleteStashMutationOptions = Apollo.BaseMutationOptions<DeleteStashMutation, DeleteStashMutationVariables>;
-export const CreateStreamDocument = gql`
-    mutation CreateStream($input: CreateStreamInput!) {
-  createStream(input: $input) {
-    ...EnsuredStream
-  }
-}
-    ${EnsuredStreamFragmentDoc}`;
-export type CreateStreamMutationFn = Apollo.MutationFunction<CreateStreamMutation, CreateStreamMutationVariables>;
-
-/**
- * __useCreateStreamMutation__
- *
- * To run a mutation, you first call `useCreateStreamMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateStreamMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createStreamMutation, { data, loading, error }] = useCreateStreamMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useCreateStreamMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateStreamMutation, CreateStreamMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateStreamMutation, CreateStreamMutationVariables>(CreateStreamDocument, options);
-      }
-export type CreateStreamMutationHookResult = ReturnType<typeof useCreateStreamMutation>;
-export type CreateStreamMutationResult = Apollo.MutationResult<CreateStreamMutation>;
-export type CreateStreamMutationOptions = Apollo.BaseMutationOptions<CreateStreamMutation, CreateStreamMutationVariables>;
 export const RequestMediaUploadDocument = gql`
     mutation RequestMediaUpload($key: String!, $datalayer: String!) {
   requestMediaUpload(input: {key: $key, datalayer: $datalayer}) {
@@ -3954,80 +3401,6 @@ export function useDetailReleaseLazyQuery(baseOptions?: ApolloReactHooks.LazyQue
 export type DetailReleaseQueryHookResult = ReturnType<typeof useDetailReleaseQuery>;
 export type DetailReleaseLazyQueryHookResult = ReturnType<typeof useDetailReleaseLazyQuery>;
 export type DetailReleaseQueryResult = Apollo.QueryResult<DetailReleaseQuery, DetailReleaseQueryVariables>;
-export const DetailRoomDocument = gql`
-    query DetailRoom($id: ID!) {
-  room(id: $id) {
-    ...DetailRoom
-  }
-}
-    ${DetailRoomFragmentDoc}`;
-
-/**
- * __useDetailRoomQuery__
- *
- * To run a query within a React component, call `useDetailRoomQuery` and pass it any options that fit your needs.
- * When your component renders, `useDetailRoomQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useDetailRoomQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useDetailRoomQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailRoomQuery, DetailRoomQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<DetailRoomQuery, DetailRoomQueryVariables>(DetailRoomDocument, options);
-      }
-export function useDetailRoomLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailRoomQuery, DetailRoomQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<DetailRoomQuery, DetailRoomQueryVariables>(DetailRoomDocument, options);
-        }
-export type DetailRoomQueryHookResult = ReturnType<typeof useDetailRoomQuery>;
-export type DetailRoomLazyQueryHookResult = ReturnType<typeof useDetailRoomLazyQuery>;
-export type DetailRoomQueryResult = Apollo.QueryResult<DetailRoomQuery, DetailRoomQueryVariables>;
-export const RoomsDocument = gql`
-    query Rooms {
-  rooms(pagination: {limit: 10}) {
-    id
-    title
-    description
-    messages(pagination: {limit: 4}) {
-      ...ListMessage
-    }
-  }
-}
-    ${ListMessageFragmentDoc}`;
-
-/**
- * __useRoomsQuery__
- *
- * To run a query within a React component, call `useRoomsQuery` and pass it any options that fit your needs.
- * When your component renders, `useRoomsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useRoomsQuery({
- *   variables: {
- *   },
- * });
- */
-export function useRoomsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<RoomsQuery, RoomsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<RoomsQuery, RoomsQueryVariables>(RoomsDocument, options);
-      }
-export function useRoomsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<RoomsQuery, RoomsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<RoomsQuery, RoomsQueryVariables>(RoomsDocument, options);
-        }
-export type RoomsQueryHookResult = ReturnType<typeof useRoomsQuery>;
-export type RoomsLazyQueryHookResult = ReturnType<typeof useRoomsLazyQuery>;
-export type RoomsQueryResult = Apollo.QueryResult<RoomsQuery, RoomsQueryVariables>;
 export const ScopesDocument = gql`
     query Scopes {
   scopes {
@@ -4318,41 +3691,6 @@ export function useMyStashesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHo
 export type MyStashesQueryHookResult = ReturnType<typeof useMyStashesQuery>;
 export type MyStashesLazyQueryHookResult = ReturnType<typeof useMyStashesLazyQuery>;
 export type MyStashesQueryResult = Apollo.QueryResult<MyStashesQuery, MyStashesQueryVariables>;
-export const GetStreamDocument = gql`
-    query GetStream($id: ID!) {
-  stream(id: $id) {
-    ...DetailStream
-  }
-}
-    ${DetailStreamFragmentDoc}`;
-
-/**
- * __useGetStreamQuery__
- *
- * To run a query within a React component, call `useGetStreamQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetStreamQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetStreamQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useGetStreamQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetStreamQuery, GetStreamQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetStreamQuery, GetStreamQueryVariables>(GetStreamDocument, options);
-      }
-export function useGetStreamLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStreamQuery, GetStreamQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetStreamQuery, GetStreamQueryVariables>(GetStreamDocument, options);
-        }
-export type GetStreamQueryHookResult = ReturnType<typeof useGetStreamQuery>;
-export type GetStreamLazyQueryHookResult = ReturnType<typeof useGetStreamLazyQuery>;
-export type GetStreamQueryResult = Apollo.QueryResult<GetStreamQuery, GetStreamQueryVariables>;
 export const MeDocument = gql`
     query Me {
   me {
@@ -4593,36 +3931,3 @@ export function useWatchMentionsSubscription(baseOptions?: ApolloReactHooks.Subs
       }
 export type WatchMentionsSubscriptionHookResult = ReturnType<typeof useWatchMentionsSubscription>;
 export type WatchMentionsSubscriptionResult = Apollo.SubscriptionResult<WatchMentionsSubscription>;
-export const WatchMessagesDocument = gql`
-    subscription WatchMessages($room: ID!, $agentId: ID!) {
-  room(room: $room, agentId: $agentId, filterOwn: false) {
-    message {
-      ...ListMessage
-    }
-  }
-}
-    ${ListMessageFragmentDoc}`;
-
-/**
- * __useWatchMessagesSubscription__
- *
- * To run a query within a React component, call `useWatchMessagesSubscription` and pass it any options that fit your needs.
- * When your component renders, `useWatchMessagesSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useWatchMessagesSubscription({
- *   variables: {
- *      room: // value for 'room'
- *      agentId: // value for 'agentId'
- *   },
- * });
- */
-export function useWatchMessagesSubscription(baseOptions: ApolloReactHooks.SubscriptionHookOptions<WatchMessagesSubscription, WatchMessagesSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<WatchMessagesSubscription, WatchMessagesSubscriptionVariables>(WatchMessagesDocument, options);
-      }
-export type WatchMessagesSubscriptionHookResult = ReturnType<typeof useWatchMessagesSubscription>;
-export type WatchMessagesSubscriptionResult = Apollo.SubscriptionResult<WatchMessagesSubscription>;

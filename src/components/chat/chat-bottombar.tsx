@@ -1,3 +1,4 @@
+import { RoomFragment } from "@/alpaka/api/graphql";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -14,14 +15,11 @@ import { EmojiPicker } from "../emoji-picker";
 import { Button, buttonVariants } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Textarea } from "../ui/textarea";
-import { Arkitekt, Guard } from "@/arkitekt/Arkitekt";
-import { StreamButton } from "./stream_button";
-import { DetailRoomFragment } from "@/lok-next/api/graphql";
 
 interface ChatBottombarProps {
   sendMessage: (text: string) => void;
   isMobile: boolean;
-  room: DetailRoomFragment;
+  room: RoomFragment;
 }
 
 export const BottombarIcons = [{ icon: FileImage }, { icon: Paperclip }];

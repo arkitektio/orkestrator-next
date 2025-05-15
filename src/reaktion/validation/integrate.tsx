@@ -6,7 +6,6 @@ import {
   PortKind,
   ReactiveImplementation,
 } from "@/reaktion/api/graphql";
-import { PortScope } from "@/rekuest/api/graphql";
 import { Connection, XYPosition } from "reactflow";
 import { FlowEdge, FlowNode, FlowNodeData } from "../types";
 import {
@@ -117,7 +116,7 @@ export const onlyValid = (
 
 export const streamContainsNonLocal = (stream: PortFragment[]): boolean => {
   for (let port of stream) {
-    if (port.scope == PortScope.Local) return true;
+    if (port.kind == PortKind.MemoryStructure) return true;
   }
   return false;
 };

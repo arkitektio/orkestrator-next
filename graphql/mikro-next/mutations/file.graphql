@@ -5,20 +5,20 @@ mutation from_file_like(
   $dataset: ID
 ) {
   fromFileLike(
-    input: { file: $file, name: $name, origins: $origins, dataset: $dataset }
+    input: { file: $file, fileName: $name, origins: $origins, dataset: $dataset }
   ) {
     ...File
   }
 }
 
 mutation RequestFileUpload($key: String!, $datalayer: String!) {
-  requestFileUpload(input: { key: $key, datalayer: $datalayer }) {
+  requestFileUpload(input: { fileName: $key, datalayer: $datalayer }) {
     ...Credentials
   }
 }
 
 mutation RequestFileUploadPresigned($key: String!, $datalayer: String!) {
-  requestFileUploadPresigned(input: { key: $key, datalayer: $datalayer }) {
+  requestFileUploadPresigned(input: { fileName: $key, datalayer: $datalayer }) {
     ...PresignedPostCredentials
   }
 }

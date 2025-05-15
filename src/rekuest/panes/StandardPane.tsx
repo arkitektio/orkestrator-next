@@ -11,9 +11,8 @@ import {
   useAgentsQuery,
   useGlobalSearchQuery,
 } from "../api/graphql";
-import NodeCard from "../components/cards/NodeCard";
+import ActionCard from "../components/cards/ActionCard";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
-import { useDescriptors } from "../interfaces/hooks/useDescriptors";
 
 interface IDataSidebarProps {}
 
@@ -40,7 +39,6 @@ export const NavigationPane = (props: {}) => {
     },
   });
 
-  const descriptors = useDescriptors();
 
   return (
     <div className="flex-1 flex-col">
@@ -70,11 +68,11 @@ export const NavigationPane = (props: {}) => {
             Reservations
           </DroppableNavLink>
           <DroppableNavLink
-            to="/rekuest/nodes"
+            to="/rekuest/actions"
             className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
           >
             <FunctionSquare className="h-4 w-4" />
-            Nodes
+            Actions
           </DroppableNavLink>
           <DroppableNavLink
             to="/rekuest/toolboxes"
@@ -89,13 +87,6 @@ export const NavigationPane = (props: {}) => {
           >
             <ShoppingCart className="h-4 w-4" />
             Shortcuts
-          </DroppableNavLink>
-          <DroppableNavLink
-            to="/rekuest/panels"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <Home className="h-4 w-4" />
-            Panels
           </DroppableNavLink>
         </div>
         {JSON.stringify(error)}
@@ -164,7 +155,7 @@ export const NavigationPane = (props: {}) => {
 
 const variables = {
   search: "",
-  noNodes: false,
+  noActions: false,
   pagination: {
     limit: 10,
   },
@@ -189,7 +180,7 @@ const Pane: React.FunctionComponent<IDataSidebarProps> = (props) => {
         searchBar={
           <GlobalSearchFilter
             onFilterChanged={onFilterChanged}
-            defaultValue={{ search: "", noNodes: false }}
+            defaultValue={{ search: "", noActions: false }}
           />
         }
       >
@@ -199,8 +190,8 @@ const Pane: React.FunctionComponent<IDataSidebarProps> = (props) => {
           </>
         ) : (
           <>
-            <ListRender array={data?.nodes}>
-              {(item, i) => <NodeCard node={item} key={i} />}
+            <ListRender array={data?.actions}>
+              {(item, i) => <ActionCard action={item} key={i} />}
             </ListRender>
           </>
         )}

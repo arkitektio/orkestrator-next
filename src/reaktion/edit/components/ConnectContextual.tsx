@@ -15,22 +15,22 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { NodeDescription } from "@/lib/rekuest/NodeDescription";
+import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import {
   FlussChildPortFragment,
   FlussPortFragment,
   GraphNodeKind,
   ReactiveImplementation,
 } from "@/reaktion/api/graphql";
-import { rekuestNodeToMatchingNode } from "@/reaktion/plugins/rekuest";
+import { rekuestActionToMatchingNode } from "@/reaktion/plugins/rekuest";
 import { nodeIdBuilder, streamToReadable } from "@/reaktion/utils";
 import {
-  ConstantNodeDocument,
+  ConstantActionDocument,
   ConstantNodeQuery,
   DemandKind,
-  NodeScope,
+  ActionScope,
   PortKind,
-  useAllNodesQuery,
+  useAllActionsQuery,
   useProtocolOptionsLazyQuery,
 } from "@/rekuest/api/graphql";
 import clsx from "clsx";
@@ -564,7 +564,7 @@ const ConnectArkitektNodes = (props: {
   leftPorts: FlussPortFragment[];
   rightPorts: FlussPortFragment[];
 }) => {
-  const { data, refetch, variables } = useAllNodesQuery({
+  const { data, refetch, variables } = useAllActionsQuery({
     variables: buildVariabels(props.leftPorts, props.rightPorts, props.search),
     fetchPolicy: "network-only",
   });
@@ -581,13 +581,13 @@ const ConnectArkitektNodes = (props: {
     client &&
       client
         .query<ConstantNodeQuery>({
-          query: ConstantNodeDocument,
+          query: ConstantActionDocument,
           variables: { id: id },
         })
         .then(async (event) => {
           console.log(event);
           if (event.data?.node) {
-            let flownode = rekuestNodeToMatchingNode(event.data?.node, {
+            let flownode = rekuestActionToMatchingNode(event.data?.node, {
               x: 0,
               y: 0,
             });
@@ -601,13 +601,13 @@ const ConnectArkitektNodes = (props: {
     client &&
       client
         .query<ConstantNodeQuery>({
-          query: ConstantNodeDocument,
+          query: ConstantActionDocument,
           variables: { id: node },
         })
         .then(async (event) => {
           console.log(event);
           if (event.data?.node) {
-            let flownode = rekuestNodeToMatchingNode(event.data?.node, {
+            let flownode = rekuestActionToMatchingNode(event.data?.node, {
               x: 0,
               y: 0,
             });
@@ -620,14 +620,14 @@ const ConnectArkitektNodes = (props: {
 
   return (
     <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
-      {data?.nodes.map((node) => (
+      {data?.actions.map((action) => (
         <Tooltip>
           <TooltipTrigger>
-            {node.stateful ? (
+            {action.stateful ? (
               <Popover>
                 <PopoverTrigger>
                   <Card className="px-2 py-1 border-solid border-2 border-green-300 border ">
-                    {node.name}
+                    {action.name}
                   </Card>
                 </PopoverTrigger>
                 <PopoverContent className="rounded rounded-lg">
@@ -636,29 +636,29 @@ const ConnectArkitektNodes = (props: {
                     instance
                   </div>
                   <TemplateSelector
-                    hash={node.hash}
-                    node={node.id}
+                    hash={action.hash}
+                    node={action.id}
                     onClick={onTemplateClick}
                   />
                 </PopoverContent>
               </Popover>
             ) : (
               <Card
-                onClick={() => onNodeClick(node.id)}
+                onClick={() => onNodeClick(action.id)}
                 className={clsx(
                   "px-2 py-1 border",
-                  node.scope == NodeScope.Global ? "" : "dark:border-blue-200",
+                  action.scope == ActionScope.Global ? "" : "dark:border-blue-200",
                 )}
               >
-                {node.name}
+                {action.name}
               </Card>
             )}
           </TooltipTrigger>
           <TooltipContent align="center">
-            {node.description && (
-              <NodeDescription description={node.description} />
+            {action.description && (
+              <ActionDescription description={action.description} />
             )}
-            {node.scope == NodeScope.Global ? (
+            {action.scope == ActionScope.Global ? (
               " "
             ) : (
               <div className="text-blue-200 mt-2">

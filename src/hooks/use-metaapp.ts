@@ -2,7 +2,6 @@ import {
   AssignationEventKind,
   PortInput,
   PortKind,
-  PortScope,
   PostmanAssignationFragment,
   useGetStateForQuery,
   WatchStateEventsDocument,
@@ -12,7 +11,6 @@ import {
 import React, { useEffect } from "react";
 import zod from "zod";
 import { useAction } from "./use-action";
-import { T } from "node_modules/@udecode/plate-emoji/dist/IndexSearch-Dvqq913n";
 
 export const ports = zod.object;
 
@@ -71,25 +69,21 @@ export const build = {
     kind: PortKind.Int,
     description: description,
     zodType: zod.number(),
-    scope: PortScope.Global,
   }),
   int: (description?: string): StatePort => ({
     kind: PortKind.Int,
     description: description,
     zodType: zod.number(),
-    scope: PortScope.Global,
   }),
   float: (description?: string): StatePort => ({
     kind: PortKind.Float,
     description: description,
     zodType: zod.number(),
-    scope: PortScope.Global,
   }),
   string: (description?: string): StatePort => ({
     kind: PortKind.String,
     description: description,
     zodType: zod.string(),
-    scope: PortScope.Global,
   }),
   structure(identifier: string, description?: string): StatePort {
     return {
@@ -97,7 +91,6 @@ export const build = {
       identifier: identifier,
       description: description,
       zodType: zod.string(),
-      scope: PortScope.Global,
     };
   },
   model: <T extends Record<string, StatePort>>(ports: T) => {
@@ -114,14 +107,12 @@ export const build = {
       zodType: zod.object(shape) as zod.ZodObject<{
         [K in keyof T]: T[K]["zodType"];
       }>,
-      scope: PortScope.Global,
     };
   },
   array: <T extends StatePort>(port: T): StatePort => {
     return {
       kind: PortKind.List,
       zodType: zod.array(port.zodType) as zod.ZodArray<T["zodType"]>,
-      scope: PortScope.Global,
     };
   },
 };
@@ -364,7 +355,7 @@ const buildUseRekuestActions = <T extends MetaApplication<any, any>>(
     const { agent } = useAgentContext();
 
     const { assign, reassign, cancel, latestAssignation } = useAction({
-      nodeHash: app.actions[action].manifest?.hash,
+      actionHash: app.actions[action].manifest?.hash,
       agent: agent,
     });
 

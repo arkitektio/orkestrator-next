@@ -11,10 +11,10 @@ import { AppInfo } from "@/lok-next/components/protected/AppInfo";
 import { UserInfo } from "@/lok-next/components/protected/UserInfo";
 import Timestamp from "react-timestamp";
 import { MateFinder } from "../../../mates/types";
-import { HistoryFragment, HistoryKind } from "../../api/graphql";
+import { ProvenanceEntry, HistoryKind } from "../../api/graphql";
 
 interface HistoryCardProps {
-  history: HistoryFragment;
+  history: ProvenanceEntry;
   mates?: MateFinder[];
 }
 
@@ -35,10 +35,10 @@ const TheCard = ({ history, mates }: HistoryCardProps) => {
             <CardDescription>
               <Timestamp date={history.date} relative className="text-xs" />
               <div className="text-muted-xs w-auto text-sm">
-                {history.app && (
+                {history.client && (
                   <>
                     utilizing{" "}
-                    <AppInfo clientId={history.app?.clientId}></AppInfo>
+                    <AppInfo clientId={history.client?.clientId}></AppInfo>
                   </>
                 )}
               </div>

@@ -3,15 +3,15 @@ import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { DelegatingStructureWidget } from "@/components/widgets/returns/DelegatingStructureWidget";
 import { useMediaUpload } from "@/datalayer/hooks/useUpload";
-import { KraphEntity, KraphNodeQuery, KraphStructure } from "@/linkers";
+import { KraphNodeQuery, KraphStructure } from "@/linkers";
+import { PortKind } from "@/rekuest/api/graphql";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { useGetStructureQuery } from "../api/graphql";
 import { SelectiveNodeViewRenderer } from "../components/renderers/NodeQueryRenderer";
 import CreateStructureNodeQueryForm from "../forms/CreateStructureNodeQueryForm";
-import { DelegatingStructureWidget } from "@/components/widgets/returns/DelegatingStructureWidget";
-import { PortKind, PortScope } from "@/rekuest/api/graphql";
-import { Card } from "@/components/ui/card";
 
 export default asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
   const uploadFile = useMediaUpload();
@@ -55,7 +55,6 @@ export default asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
             port={{
               key: "structure",
               nullable: true,
-              scope: PortScope.Global,
               kind: PortKind.Structure,
               __typename: "Port",
               identifier: data.structure.identifier,

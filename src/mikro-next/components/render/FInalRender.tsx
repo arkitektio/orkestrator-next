@@ -1,46 +1,27 @@
-import { useCursor, Wireframe } from "@react-three/drei";
 
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { DelegatingStructureWidget } from "@/components/widgets/returns/DelegatingStructureWidget";
-import { MikroROI } from "@/linkers";
+import { SliderTooltip } from "@/components/ui/slider-tooltip";
+import { StructureInfo } from "@/kraph/components/mini/StructureInfo";
 import {
-  ColorMap,
   ListRgbContextFragment,
   ListRoiFragment,
   RgbImageFragment,
-  RgbViewFragment,
+  RgbViewFragment
 } from "@/mikro-next/api/graphql";
-import { PortKind, PortScope } from "@/rekuest/api/graphql";
-import { OrbitControls, OrthographicCamera } from "@react-three/drei";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
 import {
   Dispatch,
   SetStateAction,
   Suspense,
-  useCallback,
-  useRef,
-  useState,
+  useState
 } from "react";
-import { useNavigate } from "react-router-dom";
-import * as THREE from "three";
-import {
-  blueColormap,
-  createColormapTexture,
-  greenColormap,
-  redColormap,
-  viridisColormap,
-} from "./final/colormaps";
-import { useArray } from "./final/useArray";
-import { useAsyncChunk } from "./final/useChunkTexture";
-import { BasicIndexer, IndexerProjection, Slice } from "./indexer";
-import { ROIPolygon } from "./final/ROIPolygon";
-import { WireframeMaterial } from "@react-three/drei/materials/WireframeMaterial";
 import { AutoZoomCamera } from "./final/AutoZoomCamera";
 import { ChunkBitmapTexture } from "./final/ChunkMesh";
-import { ShortcutToolbar } from "@/rekuest/components/toolbars/ShortcutToolbar";
-import { StructureInfo } from "@/kraph/components/mini/StructureInfo";
-import { Slider } from "@/components/ui/slider";
-import { SliderTooltip } from "@/components/ui/slider-tooltip";
+import { ROIPolygon } from "./final/ROIPolygon";
+import { useArray } from "./final/useArray";
+import { BasicIndexer, IndexerProjection, Slice } from "./indexer";
 
 export interface RGBDProps {
   context: ListRgbContextFragment;
@@ -212,7 +193,7 @@ export const FinalRender = (props: RGBDProps) => {
     id: "extra",
   });
 
-  const selectedLayers = layers;
+  const selectedLayers = [layers.at(selectedScale)];
   // Calculate which chunks are needed for the view
 
   const chunk_shape = props.context.image.store.chunks;
@@ -224,9 +205,9 @@ export const FinalRender = (props: RGBDProps) => {
   return (
     <div style={{ width: "100%", height: "100%" }} className="relative">
       <div className="absolute bottom-0 z-10 w-full mb-4 px-6 bg-gradient-to-t from-black to-transparent py-3">
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-2">
           {zSize > 1 && <div className="flex flex-row">
-            <div className="my-auto mr-2 w-12">z: {z}</div>
+            <div className="my-auto mx-2 w-12">z: {z}</div>
             <SliderTooltip
               value={[z]}
               onValueChange={(value) => setZ(value[0])}
@@ -236,6 +217,29 @@ export const FinalRender = (props: RGBDProps) => {
               className="w-full"
               defaultValue={[0]}
             />
+            <div className="flex flex-col ml-2">
+            {layers.length > 1 && (
+              <>
+                <div className="flex flex-row gap-2">
+                  {layers.map((layer, index) => {
+                    return (
+                      <Button
+                        key={index}
+                        onClick={() => {
+                          setSelectedScale(index);
+                        }}
+                        size={"sm"}
+                        variant="ghost"
+                        className={selectedScale === index ? "bg-gray-800" : "bg-gray-900"}
+                      >
+                        {layer.scaleX} x
+                      </Button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
           </div>}
           {tSize > 1 && <div className="flex flex-row">
             <div className="my-auto mr-2 w-12">t: {t}</div>
@@ -249,27 +253,7 @@ export const FinalRender = (props: RGBDProps) => {
               defaultValue={[0]}
             />
           </div>}
-          <div className="flex flex-col">
-            {layers.length > 1 && (
-              <>
-                <div className="flex flex-col">
-                  {layers.map((layer, index) => {
-                    return (
-                      <button
-                        key={index}
-                        onClick={() => {
-                          setSelectedScale(index);
-                        }}
-                        className="bg-blue-500 text-white"
-                      >
-                        {layer.scaleX}xl
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </div>
+          
         </div>
       </div>
 

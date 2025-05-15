@@ -9,8 +9,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { KabinetPod } from "@/linkers";
-import { ListTemplateFragment, useTemplatesQuery } from "@/rekuest/api/graphql";
-import { useTemplateAction } from "@/rekuest/hooks/useTemplateAction";
+import { ListImplementationFragment, useImplementationsQuery } from "@/rekuest/api/graphql";
+import { useImplementationAction } from "@/rekuest/hooks/useImplementationAction";
 import {
   DemandKind,
   PodFragment,
@@ -20,11 +20,11 @@ import {
 import ResourceCard from "../components/cards/ResourceCard";
 
 export const AssignButton = (props: {
-  template: ListTemplateFragment;
+  template: ListImplementationFragment;
   pod: string;
   refetch: () => void;
 }) => {
-  const { assign } = useTemplateAction({
+  const { assign } = useImplementationAction({
     id: props.template.id,
   });
 
@@ -50,7 +50,7 @@ const RefreshLogsButton = (props: {
   pod: PodFragment;
   refetch: () => void;
 }) => {
-  const { data } = useTemplatesQuery({
+  const { data } = useImplementationsQuery({
     variables: {
       filters: {
         node: {
@@ -77,7 +77,7 @@ const RefreshLogsButton = (props: {
 
   return (
     <div className="flex flex-row gap-2">
-      {data?.templates.map((t) => (
+      {data?.implementations.map((t) => (
         <Tooltip>
           <TooltipTrigger>
             <AssignButton

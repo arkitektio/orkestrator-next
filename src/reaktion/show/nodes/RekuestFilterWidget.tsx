@@ -13,7 +13,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { useNodeDescription } from "@/lib/rekuest/NodeDescription";
+import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { cn } from "@/lib/utils";
 import { InStream } from "@/reaktion/base/Instream";
 import { NodeShowLayout } from "@/reaktion/base/NodeShow";
@@ -29,7 +29,7 @@ export const RekuestFilterWidget: React.FC<RekuestFilterNodeProps> = ({
 }) => {
   const [expanded, setExpanded] = React.useState(false);
 
-  const description = useNodeDescription({
+  const description = useActionDescription({
     description: data.description,
     variables: data.constantsMap,
   });

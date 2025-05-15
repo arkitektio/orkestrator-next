@@ -6,8 +6,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { NodeDescription } from "@/lib/rekuest/NodeDescription";
-import { RekuestAgent, RekuestTemplate } from "@/linkers";
+import { ActionDescription } from "@/lib/rekuest/ActionDescription";
+import { RekuestAgent, RekuestImplementation } from "@/linkers";
 import { AgentFragment } from "@/rekuest/api/graphql";
 import Timestamp from "react-timestamp";
 
@@ -50,30 +50,30 @@ export default (props: { agent: AgentFragment }) => {
               </Card>
             </div>
           </CarouselItem>
-          {props.agent?.templates.map((item, index) => (
+          {props.agent?.implementations.map((item, index) => (
             <CarouselItem key={index} className="grid grid-cols-8">
               <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6">
                 <div>
                   <p className="mt-3 text-xl text-muted-foreground">
-                    {item.node.name}
+                    {item.action.name}
                   </p>
-                  <RekuestTemplate.DetailLink object={item.id}>
+                  <RekuestImplementation.DetailLink object={item.id}>
                     <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
                       {item.agent.name}
                     </h1>
                     <p className="mt-3 text-xl text-muted-foreground">
-                      {item.node.description && (
-                        <NodeDescription description={item.node.description} />
+                      {item.action.description && (
+                        <ActionDescription description={item.action.description} />
                       )}
                     </p>
-                  </RekuestTemplate.DetailLink>
+                  </RekuestImplementation.DetailLink>
                 </div>
               </div>
               <div className="col-span-4">
                 <div className="p-1">
                   <Card>
                     <CardContent className="flex aspect-square max-h-[200px] p-6 ">
-                      <div className="w-full h-full">{item.node.name}</div>
+                      <div className="w-full h-full">{item.action.name}</div>
                     </CardContent>
                   </Card>
                 </div>

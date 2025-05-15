@@ -1,9 +1,9 @@
-mutation CreateForeignTemplate($input: CreateForeignTemplateInput!) {
-  createForeignTemplate(input: $input) {
+mutation CreateForeignImplementation($input: CreateForeignImplementationInput!) {
+  createForeignImplementation(input: $input) {
     id
   }
 }
 
-mutation DeleteTemplate($id: ID!) {
-  deleteTemplate(input: { template: $id })
+mutation DeleteImplementation($id: ID!) {
+  deleteImplementation(input: { implementation: $id })
 }

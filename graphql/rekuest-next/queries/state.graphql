@@ -4,8 +4,8 @@ query GetState($id: ID!) {
   }
 }
 
-query GetStateFor($template: ID, $agent: ID, $stateHash: String!) {
-  stateFor(template: $template, agent: $agent, stateHash: $stateHash) {
+query GetStateFor($implementation: ID, $agent: ID, $stateHash: String!) {
+  stateFor(implementation: $implementation, agent: $agent, stateHash: $stateHash) {
     ...State
   }
 }

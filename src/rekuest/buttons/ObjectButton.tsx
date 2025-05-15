@@ -42,42 +42,78 @@ import { toast } from "sonner";
 import {
   DemandKind,
   ListShortcutFragment,
-  ListTemplateFragment,
+  ListImplementationFragment,
   PortKind,
-  PrimaryNodeFragment,
+  PrimaryActionFragment,
   ShortcutFragment,
-  useAllPrimaryNodesQuery,
+  useAllPrimaryActionsQuery,
   useShortcutsQuery,
-  useTemplatesQuery,
+  useImplementationsQuery,
 } from "../api/graphql";
-import { NodeAssignForm } from "../forms/NodeAssignForm";
+import { ActionAssignForm } from "../forms/ActionAssignForm";
 import { useAssign } from "../hooks/useAssign";
 import { useLiveAssignation } from "../hooks/useAssignations";
 import { useHashAction } from "../hooks/useHashActions";
 import { LightningBoltIcon } from "@radix-ui/react-icons";
+import { useDialog } from "@/app/dialog";
+import { e } from "node_modules/@udecode/plate-emoji/dist/IndexSearch-Dvqq913n";
 
-export const DirectTemplateAssignment = (
-  props: SmartContextProps & { node: PrimaryNodeFragment },
+export const DirectImplementationAssignment = (
+  props: SmartContextProps & { action: PrimaryActionFragment },
 ) => {
-  const templates = useTemplatesQuery({
+  const implementations = useImplementationsQuery({
     variables: {
       filters: {
-        nodeHash: props.node.hash,
+        actionHash: props.action.hash,
       },
     },
   });
 
+  const { assign } = useAssign();
+  const { openDialog } = useDialog();
+
+  const onTemplateSelect = async (
+    action: PrimaryActionFragment,
+    implementation: ListImplementationFragment,
+  ) => {
+    let the_key = action.args?.at(0)?.key;
+
+    if (!the_key) {
+      toast.error("No key found");
+      return;
+    }
+
+    if (action.args.length > 1) {
+      openDialog("implementationassign", {
+        id: implementation.id,
+        args: { [the_key]: props.object },
+        hidden: { [the_key]: props.object },
+      });
+      return;
+    }
+
+    try {
+      await assign({
+        implementation: implementation.id,
+        args: {
+          [the_key]: props.object,
+        },
+      });
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
   return (
     <>
       <div className="flex flex-row text-xs">Run on</div>
       <div className="flex flex-col gap-2">
-        {templates.data?.templates.map((x) => (
+        {implementations.data?.implementations.map((x) => (
           <>
             <Button
               variant={"outline"}
               size={"lg"}
               className="flex flex-col gap-1"
-              onClick={() => props.onSelectTemplate(props.node, x)}
+              onClick={() => onTemplateSelect(props.action, x)}
             >
               <div className="text-md text-gray-100">{x.agent.name}</div>
               <div className="text-xs text-gray-400">{x.interface}</div>
@@ -90,21 +126,53 @@ export const DirectTemplateAssignment = (
 };
 
 export const AssignButton = (
-  props: SmartContextProps & { node: PrimaryNodeFragment },
+  props: SmartContextProps & { action: PrimaryActionFragment },
 ) => {
   const status = useLiveAssignation({
     identifier: props.identifier,
     object: props.object,
-    node: props.node.id,
+    action: props.action.id,
   });
 
+  const { assign } = useAssign();
+  const { openDialog } = useDialog();
+
+  const conditionalAssign = async (action: PrimaryActionFragment) => {
+    let the_key = action.args?.at(0)?.key;
+
+    if (!the_key) {
+      toast.error("No key found");
+      return;
+    }
+    if (action.args.length > 1) {
+      openDialog("actionassign", {
+        id: action.id,
+        args: { [the_key]: props.object },
+        hidden: { [the_key]: props.object },
+      });
+      event.stopPropagation();
+      return;
+    }
+
+    try {
+      await assign({
+        action: action.id,
+        args: {
+          [the_key]: props.object,
+        },
+      });
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
+
   return (
-    <ContextMenu>
+    <ContextMenu modal={false}>
       <ContextMenuTrigger asChild>
         <CommandItem
-          onSelect={() => props.onSelectNode(props.node)}
-          value={props.node.id}
-          key={props.node.id}
+          onSelect={() => conditionalAssign(props.action)}
+          value={props.action.id}
+          key={props.action.id}
           className="flex-grow  flex flex-col group cursor-pointer"
           style={{
             backgroundSize: `${status?.progress || 0}% 100%`,
@@ -114,19 +182,15 @@ export const AssignButton = (
           }}
         >
           <span className="mr-auto text-md text-gray-100">
-            {props.node.name}
+            {props.action.name}
           </span>
           <span className="mr-auto text-xs text-gray-400">
-            {props.node.description}
+            {props.action.description}
           </span>
         </CommandItem>
       </ContextMenuTrigger>
       <ContextMenuContent className="text-white border-gray-800 px-2 py-2 items-center">
-        <DirectTemplateAssignment
-          {...props}
-          node={props.node}
-          onSelectTemplate={props.onSelectTemplate}
-        />
+        <DirectImplementationAssignment {...props} action={props.action} />
       </ContextMenuContent>
     </ContextMenu>
   );
@@ -138,12 +202,44 @@ export const ShortcutButton = (
   const status = useLiveAssignation({
     identifier: props.identifier,
     object: props.object,
-    node: props.shortcut.node.id,
+    action: props.shortcut.action.id,
   });
+
+  const { assign } = useAssign();
+  const { openDialog } = useDialog();
+
+  const conditionalAssign = async (shortcut: ListShortcutFragment) => {
+    let the_key = shortcut.args?.at(0)?.key;
+
+    if (!the_key) {
+      toast.error("No key found");
+      return;
+    }
+    if (shortcut.args.length > 1) {
+      openDialog("actionassign", {
+        id: shortcut.action.id,
+        args: { [the_key]: props.object, ...shortcut.savedArgs },
+        hidden: { [the_key]: props.object, ...shortcut.savedArgs },
+      });
+      return;
+    }
+
+    try {
+      await assign({
+        action: shortcut.action.id,
+        args: {
+          [the_key]: props.object,
+          ...shortcut.savedArgs,
+        },
+      });
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
 
   return (
     <CommandItem
-      onSelect={() => props.onSelectNode(props.shortcut.node)}
+      onSelect={() => conditionalAssign(props.shortcut)}
       value={props.shortcut.id}
       key={props.shortcut.id}
       className="flex-initial flex flex-row group cursor-pointer border border-1 rounded rounded-full bg-slate-800 shadow-xl  h-8 overflow-hidden truncate max-w-[100px] ellipsis px-2"
@@ -164,7 +260,7 @@ export const ShortcutButton = (
 };
 
 export const AutoInstallButton = (props: { definition: string }) => {
-  const { assign, node } = useHashAction({
+  const { assign, action } = useHashAction({
     hash: KABINET_INSTALL_DEFINITION_HASH,
   });
 
@@ -174,9 +270,9 @@ export const AutoInstallButton = (props: { definition: string }) => {
       variant={"outline"}
       onClick={(e) => {
         e.preventDefault();
-        assign({ node: node?.id, args: { definition: props.definition } });
+        assign({ action: action?.id, args: { definition: props.definition } });
       }}
-      disabled={!node}
+      disabled={!action}
     >
       Auto Install
     </Button>
@@ -223,7 +319,7 @@ export const InstallButton = (props: {
   );
 };
 
-export const ApplicableNodes = (props: PassDownProps) => {
+export const ApplicableActions = (props: PassDownProps) => {
   const demands = [
     {
       kind: DemandKind.Args,
@@ -248,7 +344,7 @@ export const ApplicableNodes = (props: PassDownProps) => {
     });
   }
 
-  const { data, error } = useAllPrimaryNodesQuery({
+  const { data, error } = useAllPrimaryActionsQuery({
     variables: {
       filters: {
         demands: demands,
@@ -269,10 +365,10 @@ export const ApplicableNodes = (props: PassDownProps) => {
     return null;
   }
 
-  if (data.nodes.length === 0) {
+  if (data.actions.length === 0) {
     return (
       <span className="font-light text-xs w-full items-center ml-2 w-full">
-        No nodes...
+        No actions...
       </span>
     );
   }
@@ -285,7 +381,7 @@ export const ApplicableNodes = (props: PassDownProps) => {
         </span>
       }
     >
-      {data?.nodes.map((x) => <AssignButton node={x} {...props} />)}
+      {data?.actions.map((x) => <AssignButton action={x} {...props} />)}
     </CommandGroup>
   );
 };
@@ -339,7 +435,7 @@ export const AppicableShortcuts = (props: PassDownProps) => {
   if (data.shortcuts.length === 0) {
     return (
       <span className="font-light text-xs w-full items-center ml-2 w-full">
-        No nodes...
+        No actions...
       </span>
     );
   }
@@ -509,7 +605,7 @@ export const Actions = (props: { state: ActionState; filter?: string }) => {
   );
 };
 
-export const ApplicableActions = (props: PassDownProps) => {
+export const ApplicableLocalActions = (props: PassDownProps) => {
   return (
     <Actions
       state={{
@@ -535,121 +631,25 @@ export type PassDownProps = SmartContextProps & {
 };
 
 export const ObjectButton = (props: ObjectButtonProps) => {
-  const [filter, setFilterValue] = React.useState<string | undefined>(
-    undefined,
-  );
-
-  const [dialogNode, setDialogNode] = React.useState<{
-    node: PrimaryNodeFragment;
-    args: { [key: string]: any };
-  } | null>(null);
-
-  const { assign } = useAssign();
-
-  const conditionalAssign = async (node: PrimaryNodeFragment) => {
-    let the_key = node.args?.at(0)?.key;
-
-    let neededAdditionalPorts = node.args.filter(
-      (x) => !x.nullable && x.key != the_key,
-    );
-    if (!the_key) {
-      toast.error("No key found");
-      return;
-    }
-    if (neededAdditionalPorts.length > 0) {
-      setDialogNode({ node: node, args: { [the_key]: props.object } });
-      return;
-    }
-
-    try {
-      await assign({
-        node: node.id,
-        args: {
-          [the_key]: props.object,
-        },
-      });
-    } catch (e) {
-      toast.error(e.message);
-    }
-  };
-
-  const onTemplateSelect = async (
-    node: PrimaryNodeFragment,
-    template: ListTemplateFragment,
-  ) => {
-    let the_key = node.args?.at(0)?.key;
-
-    let neededAdditionalPorts = node.args.filter(
-      (x) => !x.nullable && x.key != the_key,
-    );
-    if (!the_key) {
-      toast.error("No key found");
-      return;
-    }
-    if (neededAdditionalPorts.length > 0) {
-      setDialogNode(node);
-      return;
-    }
-
-    try {
-      await assign({
-        node: node.id,
-        args: {
-          [the_key]: props.object,
-        },
-      });
-    } catch (e) {
-      toast.error(e.message);
-    }
-  };
-
-  if (props.object === "") {
-    return <> Error</>;
-  }
-
   return (
     <>
-      <Dialog
-        open={dialogNode != null}
-        onOpenChange={() => setDialogNode(null)}
-      >
-        <DialogTrigger asChild>
-          <Popover>
-            <PopoverTrigger asChild>
-              {props.children || (
-                <Button variant={"outline"} className="w-6 h-9 text-white">
-                  Do
-                </Button>
-              )}
-            </PopoverTrigger>
-            <PopoverContent className="text-white border-gray-800 px-2 py-2 items-left">
-              <SmartContext
-                {...props}
-                onSelectNode={conditionalAssign}
-                onSelectTemplate={onTemplateSelect}
-              />
-            </PopoverContent>
-          </Popover>
-        </DialogTrigger>
-        <DialogContent>
-          <NodeAssignForm
-            id={dialogNode?.node.id || ""}
-            args={dialogNode?.args}
-            hidden={dialogNode?.args}
-          />
-        </DialogContent>
-      </Dialog>
+      <Popover>
+        <PopoverTrigger asChild>
+          {props.children || (
+            <Button variant={"outline"} className="w-6 h-9 text-white">
+              Do
+            </Button>
+          )}
+        </PopoverTrigger>
+        <PopoverContent className="text-white border-gray-800 px-2 py-2 items-left">
+          <SmartContext {...props} />
+        </PopoverContent>
+      </Popover>
     </>
   );
 };
 
-export type SmartContextProps = ObjectButtonProps & {
-  onSelectNode: (node: PrimaryNodeFragment) => Promise<void>;
-  onSelectTemplate: (
-    node: PrimaryNodeFragment,
-    template: ListTemplateFragment,
-  ) => Promise<void>;
-};
+export type SmartContextProps = ObjectButtonProps & {};
 
 export const SmartContext = (props: SmartContextProps) => {
   const [filter, setFilterValue] = React.useState<string | undefined>(
@@ -669,21 +669,11 @@ export const SmartContext = (props: SmartContextProps) => {
         />
 
         <CommandList>
-          <AppicableShortcuts
-            {...props}
-            filter={filter}
-            onSelectNode={props.onSelectNode}
-            onSelectTemplate={props.onSelectTemplate}
-          />
+          <AppicableShortcuts {...props} filter={filter} />
           <CommandEmpty>{"No Action available"}</CommandEmpty>
 
+          <ApplicableLocalActions {...props} filter={filter} />
           <ApplicableActions {...props} filter={filter} />
-          <ApplicableNodes
-            {...props}
-            filter={filter}
-            onSelectNode={props.onSelectNode}
-            onSelectTemplate={props.onSelectTemplate}
-          />
 
           <ApplicableDefinitions
             {...props}
@@ -695,3 +685,9 @@ export const SmartContext = (props: SmartContextProps) => {
     </>
   );
 };
+function openDialog(
+  arg0: string,
+  arg1: { id: string; args: { [x: string]: string } },
+) {
+  throw new Error("Function not implemented.");
+}

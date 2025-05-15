@@ -1,33 +1,33 @@
-query Template($id: ID!) {
-  template(id: $id) {
-    ...DetailTemplate
+query Implementation($id: ID!) {
+  implementation(id: $id) {
+    ...DetailImplementation
   }
 }
 
-query Templates($filters: TemplateFilter, $pagination: OffsetPaginationInput) {
-  templates(filters: $filters, pagination: $pagination) {
-    ...DetailTemplate
+query Implementations($filters: ImplementationFilter, $pagination: OffsetPaginationInput) {
+  implementations(filters: $filters, pagination: $pagination) {
+    ...DetailImplementation
   }
 }
 
-query TemplateAt($agent: ID!, $extension: String!, $interface: String!) {
-  templateAt(agent: $agent, extension: $extension, interface: $interface) {
-    ...DetailTemplate
+query ImplementationAt($agent: ID!, $extension: String!, $interface: String!) {
+  implementationAt(agent: $agent, extension: $extension, interface: $interface) {
+    ...DetailImplementation
   }
 }
 
-query MyTemplateAt($instanceId: String!, $interface: String, $nodeId: ID) {
-  myTemplateAt(
+query MyImplementationAt($instanceId: String!, $interface: String, $actionId: ID) {
+  myImplementationAt(
     instanceId: $instanceId
     interface: $interface
-    nodeId: $nodeId
+    actionId: $actionId
   ) {
-    ...DetailTemplate
+    ...DetailImplementation
   }
 }
 
-query NodeTemplateAt($agent: ID!, $nodeHash: String!) {
-  templateAt(agent: $agent, nodeHash: $nodeHash) {
-    ...DetailTemplate
+query ActionImplementationAt($agent: ID!, $actionHash: String!) {
+  implementationAt(agent: $agent, actionHash: $actionHash) {
+    ...DetailImplementation
   }
 }

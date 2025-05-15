@@ -26,7 +26,7 @@ import {
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Timestamp from "react-timestamp";
-import { useNodeAction } from "../hooks/useNodeAction";
+import { useAction } from "../hooks/useAction";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -100,7 +100,7 @@ export const YieldItem = (props: {
           </p>
           <ReturnsContainer
             registry={registry}
-            ports={props.assignation.node.returns}
+            ports={props.assignation.action.returns}
             values={props.event.returns}
             options={{ labels: false }}
           />
@@ -144,15 +144,15 @@ export const useReassign = ({
 }: {
   assignation: DetailAssignationFragment;
 }) => {
-  const { assign } = useNodeAction({
-    id: assignation?.template.id || "",
+  const { assign } = useAction({
+    id: assignation?.implementation.id || "",
   });
   const navigate = useNavigate();
 
   const reassign = async () => {
     let x = await assign({
       args: assignation.args,
-      template: assignation?.template.id || "",
+      implementation: assignation?.implementation.id || "",
       hooks: [],
     });
 
@@ -183,7 +183,7 @@ export default asDetailQueryRoute(
       <RekuestAssignation.ModelPage
         title={
           <div className="flex flex-row gap-2">
-            {data?.assignation?.node.name}
+            {data?.assignation?.action.name}
             <p className="text-md font-light text-muted-foreground">
               <Timestamp date={data.assignation.createdAt} relative />
             </p>
@@ -240,7 +240,7 @@ export default asDetailQueryRoute(
         }
       >
         <div className="flex h-full w-full relative">
-          {data?.assignation?.template?.extension === "reaktion" ? (
+          {data?.assignation?.implementation?.extension === "reaktion" ? (
             <>
             <Tabs className="w-full h-full" defaultValue="flow">
               <TabsList className="w-full h-8">
@@ -250,7 +250,7 @@ export default asDetailQueryRoute(
               
               <TabsContent value="flow" className="h-full w-full">
               <AssignationFlow
-              id={data?.assignation?.template?.interface}
+              id={data?.assignation?.implementation?.interface}
               assignation={data.assignation}
             />
               </TabsContent>

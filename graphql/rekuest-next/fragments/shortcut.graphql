@@ -2,8 +2,8 @@ fragment Shortcut on Shortcut {
   id
   name
   description
-  node {
-    ...DetailNode
+  action {
+    ...DetailAction
   }
   savedArgs
   args {
@@ -19,9 +19,10 @@ fragment ListShortcut on Shortcut {
   id
   name
   description
-  node {
+  action {
     id
   }
+  savedArgs
   args {
     ...Port
   }

@@ -36,6 +36,7 @@ import { ModeToggle } from "../ModeToggle";
 import { Icons } from "@/components/icons";
 import { BiSolidWidget } from "react-icons/bi";
 import { BsLightning } from "react-icons/bs";
+import { MdStream } from "react-icons/md";
 
 export type INavigationBarProps = {
   children?: React.ReactNode;
@@ -65,6 +66,8 @@ export const matchIcon = (key: string) => {
       return (
         <ChatBubbleIcon className="w-8 h-8 mx-auto  text-foreground p-[0.5]" />
       );
+    case "lovekit":
+      return <MdStream className="w-8 h-8 mx-auto  text-foreground p-[0.5]" />;
     case "elektro":
       return <BsLightning className="w-8 h-8 mx-auto  text-foreground" />;
     default:

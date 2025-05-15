@@ -15,27 +15,27 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { NodeDescription } from "@/lib/rekuest/NodeDescription";
+import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import {
   FlussPortFragment,
   GraphNodeKind,
   PortKind,
   ReactiveImplementation,
 } from "@/reaktion/api/graphql";
-import { rekuestNodeToMatchingNode } from "@/reaktion/plugins/rekuest";
+import { rekuestActionToMatchingNode as rekuestActionToMatchingNode } from "@/reaktion/plugins/rekuest";
 import {
   listPortToSingle,
   nodeIdBuilder,
   streamToReadable,
 } from "@/reaktion/utils";
 import {
-  AllNodesQueryVariables,
-  ConstantNodeDocument,
-  ConstantNodeQuery,
+  AllActionsQueryVariables,
+  ConstantActionDocument,
   DemandKind,
-  NodeScope,
-  useAllNodesQuery,
+  ActionScope,
+  useAllActionsQuery,
   useProtocolOptionsLazyQuery,
+  ConstantActionQuery,
 } from "@/rekuest/api/graphql";
 import clsx from "clsx";
 import { ArrowDown } from "lucide-react";
@@ -230,7 +230,7 @@ export const TargetDropContextual = (props: {
   const { addContextualNode } = useEditRiver();
 
   const client = useRekuest();
-  const [variables, setVariables] = useState<AllNodesQueryVariables>({
+  const [variables, setVariables] = useState<AllActionsQueryVariables>({
     filters: {
       demands: [
         {
@@ -269,7 +269,7 @@ export const TargetDropContextual = (props: {
     }));
   };
 
-  const { data, refetch } = useAllNodesQuery({
+  const { data, refetch } = useAllActionsQuery({
     variables: variables,
     fetchPolicy: "network-only",
   });
@@ -277,14 +277,14 @@ export const TargetDropContextual = (props: {
   const onNodeClick = (id: string) => {
     client &&
       client
-        .query<ConstantNodeQuery>({
-          query: ConstantNodeDocument,
+        .query<ConstantActionQuery>({
+          query: ConstantActionDocument,
           variables: { id: id },
         })
         .then(async (event) => {
           console.log(event);
-          if (event.data?.node) {
-            let flownode = rekuestNodeToMatchingNode(event.data?.node, {
+          if (event.data?.action) {
+            let flownode = rekuestActionToMatchingNode(event.data?.action, {
               x: 0,
               y: 0,
             });
@@ -295,8 +295,8 @@ export const TargetDropContextual = (props: {
   };
 
   const notWorthSearch =
-    data?.nodes &&
-    data.nodes.length < displayLimit &&
+    data?.actions &&
+    data.actions.length < displayLimit &&
     variables.filters?.search == undefined;
 
   const calculatedNodes = props.ports
@@ -305,7 +305,7 @@ export const TargetDropContextual = (props: {
 
   return (
     <ContextualContainer
-      active={data?.nodes?.length != 0}
+      active={data?.actions?.length != 0}
       style={{
         left: props.params.position.x,
         top: props.params.position.y,
@@ -326,18 +326,18 @@ export const TargetDropContextual = (props: {
       {notWorthSearch ? <></> : <SearchForm onSubmit={onSubmit} />}
 
       <Separator />
-      {data?.nodes?.length == 0 && calculatedNodes.length == 0 && (
+      {data?.actions?.length == 0 && calculatedNodes.length == 0 && (
         <div className="my-auto mx-auto mt-2">No matching nodes found</div>
       )}
       <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
-        {data?.nodes.map((node) => (
+        {data?.actions.map((node) => (
           <Tooltip>
             <TooltipTrigger>
               <Card
                 onClick={() => onNodeClick(node.id)}
                 className={clsx(
                   "px-2 py-1 border",
-                  node.scope == NodeScope.Global ? "" : "dark:border-blue-200",
+                  node.scope == ActionScope.Global ? "" : "dark:border-blue-200",
                 )}
               >
                 {node.name}
@@ -345,10 +345,10 @@ export const TargetDropContextual = (props: {
             </TooltipTrigger>
             <TooltipContent align="center">
               {node.description && (
-                <NodeDescription description={node.description} />
+                <ActionDescription description={node.description} />
               )}
 
-              {node.scope == NodeScope.Global ? (
+              {node.scope == ActionScope.Global ? (
                 " "
               ) : (
                 <div className="text-blue-200 mt-2">
@@ -385,7 +385,7 @@ export const SourceDropContextual = (props: {
   const { addContextualNode } = useEditRiver();
 
   const client = useRekuest();
-  const [variables, setVariables] = useState<AllNodesQueryVariables>({
+  const [variables, setVariables] = useState<AllActionsQueryVariables>({
     filters: {
       demands: [
         {
@@ -425,7 +425,7 @@ export const SourceDropContextual = (props: {
     }));
   };
 
-  const { data, refetch } = useAllNodesQuery({
+  const { data, refetch } = useAllActionsQuery({
     variables: variables,
     fetchPolicy: "network-only",
   });
@@ -433,14 +433,14 @@ export const SourceDropContextual = (props: {
   const onNodeClick = (id: string) => {
     client &&
       client
-        .query<ConstantNodeQuery>({
-          query: ConstantNodeDocument,
+        .query<ConstantActionQuery>({
+          query: ConstantActionDocument,
           variables: { id: id },
         })
         .then(async (event) => {
           console.log(event);
-          if (event.data?.node) {
-            let flownode = rekuestNodeToMatchingNode(event.data?.node, {
+          if (event.data?.action) {
+            let flownode = rekuestActionToMatchingNode(event.data?.action, {
               x: 0,
               y: 0,
             });
@@ -451,8 +451,8 @@ export const SourceDropContextual = (props: {
   };
 
   const notWorthSearch =
-    data?.nodes &&
-    data.nodes.length < displayLimit &&
+    data?.actions &&
+    data.actions.length < displayLimit &&
     variables.filters?.search == undefined;
 
   const calculatedNodes = props.ports
@@ -461,7 +461,7 @@ export const SourceDropContextual = (props: {
 
   return (
     <ContextualContainer
-      active={data?.nodes?.length != 0}
+      active={data?.actions?.length != 0}
       style={{
         left: props.params.position.x,
         top: props.params.position.y,
@@ -473,29 +473,29 @@ export const SourceDropContextual = (props: {
       {notWorthSearch ? <></> : <SearchForm onSubmit={onSubmit} />}
 
       <Separator />
-      {data?.nodes?.length == 0 && calculatedNodes.length == 0 && (
+      {data?.actions?.length == 0 && calculatedNodes.length == 0 && (
         <div className="my-auto mx-auto mt-2">No matching nodes found</div>
       )}
       <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
-        {data?.nodes.map((node) => (
+        {data?.actions.map((action) => (
           <Tooltip>
             <TooltipTrigger>
               <Card
-                onClick={() => onNodeClick(node.id)}
+                onClick={() => onNodeClick(action.id)}
                 className={clsx(
                   "px-2 py-1 border",
-                  node.scope == NodeScope.Global ? "" : "dark:border-blue-200",
+                  action.scope == ActionScope.Global ? "" : "dark:border-blue-200",
                 )}
               >
-                {node.name}
+                {action.name}
               </Card>
             </TooltipTrigger>
             <TooltipContent align="center">
-              {node.description && (
-                <NodeDescription description={node.description} />
+              {action.description && (
+                <ActionDescription description={action.description} />
               )}
 
-              {node.scope == NodeScope.Global ? (
+              {action.scope == ActionScope.Global ? (
                 " "
               ) : (
                 <div className="text-blue-200 mt-2">
@@ -534,7 +534,7 @@ export const DropContextual = (props: { params: DropContextualParams }) => {
     return (
       <SourceDropContextual
         params={props.params}
-        ports={props.params.causingNode.data.int[props.params.causingStream]}
+        ports={props.params.causingNode.data.ins[props.params.causingStream]}
       />
     );
   } else {

@@ -1,9 +1,9 @@
 import { cn } from "@/lib/utils";
 import {
-  DetailRoomFragment,
+  RoomFragment,
   ListMessageFragment,
-} from "@/lok-next/api/graphql";
-import { PortKind, PortScope } from "@/rekuest/api/graphql";
+} from "@/alpaka/api/graphql";
+import { PortKind } from "@/rekuest/api/graphql";
 import { AnimatePresence, motion } from "framer-motion";
 import React, { useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -15,7 +15,7 @@ interface ChatListProps {
   agent: { id: string };
   sendMessage: (message: string) => void;
   isMobile: boolean;
-  room: DetailRoomFragment;
+  room: RoomFragment;
 }
 
 export function ChatList({
@@ -90,7 +90,6 @@ export function ChatList({
                             __typename: "Port",
                             key: index.toString(),
                             nullable: false,
-                            scope: PortScope.Global,
                           }}
                           value={s.object}
                         />

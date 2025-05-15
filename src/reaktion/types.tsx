@@ -14,8 +14,8 @@ import {
   GraphNodeInput,
   LoggingEdgeFragment,
   ReactiveNodeFragment,
-  RekuestFilterNodeFragment,
-  RekuestMapNodeFragment,
+  RekuesFilterActionNodeFragment,
+  RekuestMapActionNodeFragment,
   ReturnNodeFragment,
   VanillaEdgeFragment,
 } from "@/reaktion/api/graphql";
@@ -32,8 +32,8 @@ export type DataEnhancer<T, L = {}> = T & { extras?: L };
 
 export type ArgNodeData = DataEnhancer<ArgNodeFragment>;
 export type ReturnNodeData = DataEnhancer<ReturnNodeFragment>;
-export type RekuestMapNodeData = DataEnhancer<RekuestMapNodeFragment>;
-export type RekuestFilterNodeData = DataEnhancer<RekuestFilterNodeFragment>;
+export type RekuestMapNodeData = DataEnhancer<RekuestMapActionNodeFragment>;
+export type RekuestFilterNodeData = DataEnhancer<RekuesFilterActionNodeFragment>;
 export type ReactiveNodeData = DataEnhancer<ReactiveNodeFragment>;
 
 export type NodeData =
@@ -149,7 +149,7 @@ export type NodeInput = GraphNodeInput;
 export type EdgeInput = GraphEdgeInput;
 export type GlobalInput = GlobalArgInput;
 
-export type NodeFragment = GraphNodeFragment;
+export type ActionFragment = GraphNodeFragment;
 export type EdgeFragement = GraphEdgeFragment;
 export type GlobalFragment = GlobalArgFragment;
 export type StreamItemFragment = FlussStreamItemFragment;

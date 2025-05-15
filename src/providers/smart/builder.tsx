@@ -3,7 +3,7 @@ import {
   ModelPageLayoutProps,
 } from "@/components/layout/ModelPageLayout";
 import { Komments } from "@/lok-next/components/komments/Komments";
-import { usePrimaryNodesQuery } from "@/rekuest/api/graphql";
+import { usePrimaryActionsQuery } from "@/rekuest/api/graphql";
 import { NewButton, NewButtonProps } from "@/rekuest/buttons/NewButton";
 import {
   ObjectButton,
@@ -123,7 +123,7 @@ const buildModelPage = (model: Identifier) => {
 };
 
 const buildUseNodesQuery = (model: Identifier) => {
-  return usePrimaryNodesQuery({
+  return usePrimaryActionsQuery({
     variables: {
       identifier: model,
     },

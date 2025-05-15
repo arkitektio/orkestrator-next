@@ -4,7 +4,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { NodeDescription } from "@/lib/rekuest/NodeDescription";
+import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import { KabinetDefinition } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
 import { ListDefinitionFragment } from "../../api/graphql";
@@ -28,7 +28,7 @@ const TheCard = ({ item, mates }: Props) => {
             </CardTitle>
             <CardDescription>
               {item?.description && (
-                <NodeDescription description={item?.description} />
+                <ActionDescription description={item?.description} />
               )}
             </CardDescription>
           </div>

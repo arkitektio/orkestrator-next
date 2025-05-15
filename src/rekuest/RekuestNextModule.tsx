@@ -8,20 +8,19 @@ import Dashboard from "./pages/Dashboard";
 import Dashboards from "./pages/Dashboards";
 import Dependency from "./pages/Dependency";
 import Home from "./pages/Home";
-import Node from "./pages/Node";
-import Nodes from "./pages/Nodes";
+import Action from "./pages/Action";
+import Actions from "./pages/Actions";
 import Panel from "./pages/Panel";
 import Panels from "./pages/Panels";
 import Reservation from "./pages/Reservation";
 import Reservations from "./pages/Reservations";
-import Template from "./pages/Template";
+import Implementation from "./pages/Implementation";
 import Standardpane from "./panes/StandardPane";
-import Interfaces from "./pages/Interfaces";
-import Interface from "./pages/Interface";
 import Shortcut from "./pages/Shortcut";
 import Shortcuts from "./pages/Shortcuts";
 import Toolboxes from "./pages/Toolboxes";
 import Toolbox from "./pages/Toolbox";
+import MemoryShelve from "./pages/MemoryShelve";
 
 interface Props {}
 /**
@@ -35,24 +34,23 @@ const Module: React.FC<Props> = () => {
       <ModuleLayout pane={<Standardpane />}>
         <Routes>
           <Route index element={<Home />} />
-          <Route path="nodes/:id" element={<Node />} />
+          <Route path="actions/:id" element={<Action />} />
           <Route path="reservations/:id" element={<Reservation />} />
           <Route path="shortcuts/:id" element={<Shortcut />} />
           <Route path="shortcuts" element={<Shortcuts />} />
           <Route path="toolboxes" element={<Toolboxes />} />
           <Route path="toolboxes/:id" element={<Toolbox />} />
           <Route path="reservations" element={<Reservations />} />
-          <Route path="nodes" element={<Nodes />} />
+          <Route path="actions" element={<Actions />} />
           <Route path="dashboards" element={<Dashboards />} />
           <Route path="dashboards/:id" element={<Dashboard />} />
+          <Route path="memoryshelves/:id" element={<MemoryShelve />} />
           <Route path="panels/:id" element={<Panel />} />
           <Route path="panels" element={<Panels />} />
-          <Route path="interfaces" element={<Interfaces />} />
           <Route path="dependencies/:id" element={<Dependency />} />
-          <Route path="templates/:id" element={<Template />} />
+          <Route path="implementations/:id" element={<Implementation />} />
           <Route path="agents/:id" element={<Agent />} />
           <Route path="assignations/:id" element={<Assignation />} />
-          <Route path="interfaces/:kind/:id" element={<Interface />} />
         </Routes>
       </ModuleLayout>
     </Guard.Rekuest>

@@ -2,7 +2,7 @@ fragment DetailDependency on Dependency {
   id
   reference
   initialHash
-  node {
+  action {
     id
     name
     hash
@@ -14,7 +14,7 @@ fragment DetailDependency on Dependency {
 fragment ListDependency on Dependency {
   id
   initialHash
-  node {
+  action {
     id
     name
     hash

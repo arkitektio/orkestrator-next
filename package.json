@@ -30,6 +30,7 @@
     "fluss": "graphql-codegen --config fluss.yml",
     "kabinet": "graphql-codegen --config kabinet.yml",
     "port": "graphql-codegen --config port-next.yml",
+    "lovekit": "graphql-codegen --config lovekit.yml",
     "lok": "graphql-codegen --config lok.yml",
     "elektro": "graphql-codegen --config elektro.yml"
   },
@@ -83,6 +84,7 @@
     "@radix-ui/react-visually-hidden": "^1.1.0",
     "@react-three/drei": "^9.108.3",
     "@react-three/fiber": "^8.16.8",
+    "@react-three/postprocessing": "^2.19.1",
     "@tailwindcss/container-queries": "^0.1.1",
     "@tanstack/react-table": "^8.20.1",
     "@udecode/cn": "^39.0.0",

@@ -1,23 +1,6 @@
-import { Guard } from "@/arkitekt/Arkitekt";
-import registry, { Registry } from "../registry";
-import { ModuleWrapper } from "../Wrapper";
-import { useRef, useState } from "react";
-import {
-  DockviewApi,
-  DockviewReact,
-  DockviewReadyEvent,
-  IDockviewPanelProps,
-} from "dockview";
-import { PanelKind, useAgentsQuery } from "@/rekuest/api/graphql";
-import { Button } from "@/components/ui/button";
-import { MetaApplication } from "@/hooks/use-metaapp";
-import React from "react";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 export const Dashboards = () => {
   const [selectedDashboard, setSelectedDashboard] = useState<string>("default");

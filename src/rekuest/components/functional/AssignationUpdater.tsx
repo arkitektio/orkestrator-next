@@ -13,7 +13,7 @@ import {
   AssignationsDocument,
   AssignationsQuery,
   useCancelMutation,
-  useDetailNodeQuery,
+  useDetailActionQuery,
   WatchAssignationEventsSubscriptionVariables,
   WatchAssignationsDocument,
   WatchAssignationsSubscription,
@@ -21,11 +21,11 @@ import {
 
 export const DynamicYieldDisplay = (props: {
   values: any[];
-  nodeId: string;
+  actionId: string;
 }) => {
-  const { data } = useDetailNodeQuery({
+  const { data } = useDetailActionQuery({
     variables: {
-      id: props.nodeId,
+      id: props.actionId,
     },
   });
 
@@ -38,7 +38,7 @@ export const DynamicYieldDisplay = (props: {
   return (
     <div>
       <ReturnsContainer
-        ports={data.node.returns}
+        ports={data.action.returns}
         values={props.values}
         registry={registry}
         className="p-2"
@@ -71,9 +71,9 @@ export const AssignationToaster = (props: { id: string }) => {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {ass.error && <Alert>{ass.error}</Alert>}
-      {ass.yield && ass.nodeId && (
-        <DynamicYieldDisplay values={ass.yield} nodeId={ass.nodeId} />
+      {ass.error && <Alert className="bg-red-800">{ass.error}</Alert>}
+      {ass.yield && ass.actionId && (
+        <DynamicYieldDisplay values={ass.yield} actionId={ass.actionId} />
       )}
       {ass.cancelled && <Alert>{ass.message}</Alert>}
       {ass.progress != undefined && <Progress value={ass.progress} />}
@@ -81,6 +81,9 @@ export const AssignationToaster = (props: { id: string }) => {
       {ass.done && "Done :)"}
       {ass.event?.kind == AssignationEventKind.Queued && <>Enqueued...</>}
       {ass.event?.kind == AssignationEventKind.Bound && <>Bound...</>}
+      {ass.event?.kind == AssignationEventKind.Cancelled && (
+        <>Successfully cancelled :)</>
+      )}
 
       <div className="group-hover:opacity-100 opacity-0 bg-black p-1 rounded-full absolute bottom-0 right-0">
         {!ass.done && !ass.error ? (

@@ -19,7 +19,7 @@ const TheCard = ({ item, mates }: Props) => {
           <CardTitle>
             <RekuestReservation.DetailLink object={item?.id}>
               {" "}
-              {item.node.name}
+              {item.action.name}
               {item.status}
             </RekuestReservation.DetailLink>
           </CardTitle>

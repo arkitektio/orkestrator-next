@@ -14,8 +14,7 @@ fragment DetailClient on Client {
     presignedUrl
   }
   oauth2Client {
-    authorizationGrantType
-    redirectUris
+    clientId
   }
   mappings {
     ...ListServiceInstanceMapping

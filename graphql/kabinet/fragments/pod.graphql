@@ -3,10 +3,10 @@ fragment ListPod on Pod {
   podId
   backend {
     user {
-      id
+      sub
     }
     client {
-      id
+      clientId
     }
     name
   }

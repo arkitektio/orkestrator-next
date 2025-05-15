@@ -38,22 +38,22 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
-  PrimaryNodeFragment,
-  usePrimaryReturnNodesQuery,
-  useTemplatesQuery,
+  PrimaryActionFragment,
+  usePrimaryReturnActionsQuery,
+  useImplementationsQuery,
 } from "../api/graphql";
 import { useLiveAssignation } from "../hooks/useAssignations";
-import { useNodeAction } from "../hooks/useNodeAction";
-import { TemplateActionButton } from "./TemplateActionButton";
+import { useAction } from "../hooks/useAction";
+import { ImplementationActionButton } from "./ImplementationActionButton";
 
-export const DirectTemplateAssignment = (props: {
-  node: PrimaryNodeFragment;
+export const DirectImplementationAssignment = (props: {
+  action: PrimaryActionFragment;
   identifier: string;
 }) => {
-  const templates = useTemplatesQuery({
+  const implementations = useImplementationsQuery({
     variables: {
       filters: {
-        nodeHash: props.node.hash,
+        actionHash: props.action.hash,
       },
     },
   });
@@ -62,9 +62,9 @@ export const DirectTemplateAssignment = (props: {
     <>
       <div className="flex flex-row text-xs">Run on</div>
       <div className="flex flex-col gap-2">
-        {templates.data?.templates.map((x) => (
+        {implementations.data?.implementations.map((x) => (
           <>
-            <TemplateActionButton id={x.id} args={{}}>
+            <ImplementationActionButton id={x.id} args={{}}>
               <Button variant={"outline"} size={"sm"} className="flex flex-col">
                 <span className="mr-auto text-md text-gray-100">
                   {x.agent.name}
@@ -73,7 +73,7 @@ export const DirectTemplateAssignment = (props: {
                   {x.interface}
                 </span>
               </Button>
-            </TemplateActionButton>
+            </ImplementationActionButton>
           </>
         ))}
       </div>
@@ -82,15 +82,15 @@ export const DirectTemplateAssignment = (props: {
 };
 
 export const AssignButton = (props: {
-  node: PrimaryNodeFragment;
+  action: PrimaryActionFragment;
   identifier: string;
 }) => {
-  const { assign, latestAssignation } = useNodeAction({ id: props.node.id });
+  const { assign, latestAssignation } = useAction({ id: props.action.id });
 
   const objectAssign = async () => {
     try {
       await assign({
-        node: props.node.id,
+        action: props.action.id,
         args: {},
       });
     } catch (e) {
@@ -99,7 +99,7 @@ export const AssignButton = (props: {
   };
 
   const status = useLiveAssignation({
-    assignedNode: props.node.id,
+    assignedAction: props.action.id,
   });
 
   return (
@@ -107,8 +107,8 @@ export const AssignButton = (props: {
       <ContextMenuTrigger asChild>
         <CommandItem
           onSelect={objectAssign}
-          value={props.node.id}
-          key={props.node.id}
+          value={props.action.id}
+          key={props.action.id}
           className="flex-grow  flex flex-col group cursor-pointer"
           style={{
             backgroundSize: `${status?.progress || 0}% 100%`,
@@ -118,16 +118,16 @@ export const AssignButton = (props: {
           }}
         >
           <span className="mr-auto text-md text-gray-100">
-            {props.node.name}
+            {props.action.name}
           </span>
           <span className="mr-auto text-xs text-gray-400">
-            {props.node.description}
+            {props.action.description}
           </span>
         </CommandItem>
       </ContextMenuTrigger>
       <ContextMenuContent className="text-white border-gray-800 px-2 py-2 items-center">
-        <DirectTemplateAssignment
-          node={props.node}
+        <DirectImplementationAssignment
+          action={props.action}
           identifier={props.identifier}
         />
       </ContextMenuContent>
@@ -171,11 +171,11 @@ export const InstallButton = (props: {
   );
 };
 
-export const ApplicableNewNodes = (props: {
+export const ApplicableNewActions = (props: {
   identifier: string;
   filter?: string;
 }) => {
-  const { data } = usePrimaryReturnNodesQuery({
+  const { data } = usePrimaryReturnActionsQuery({
     variables: {
       identifier: props.identifier,
       search: props.filter,
@@ -186,7 +186,7 @@ export const ApplicableNewNodes = (props: {
     return null;
   }
 
-  if (data.nodes.length === 0) {
+  if (data.actions.length === 0) {
     return null;
   }
 
@@ -198,8 +198,8 @@ export const ApplicableNewNodes = (props: {
         </span>
       }
     >
-      {data?.nodes.map((x) => (
-        <AssignButton node={x} identifier={props.identifier} />
+      {data?.actions.map((x) => (
+        <AssignButton action={x} identifier={props.identifier} />
       ))}
     </CommandGroup>
   );
@@ -239,7 +239,7 @@ export const ApplicableNewDefinitions = (props: {
   );
 };
 
-export const useAction = (props: { action: Action; state: ActionState }) => {
+export const useLocalAction = (props: { action: Action; state: ActionState }) => {
   const [progress, setProgress] = React.useState<number | undefined>(0);
   const [controller, setController] = React.useState<AbortController | null>(
     null,
@@ -287,7 +287,7 @@ export const LocalActionButton = (props: {
   action: Action;
   state: ActionState;
 }) => {
-  const { assign, progress } = useAction(props);
+  const { assign, progress } = useLocalAction(props);
 
   return (
     <CommandItem
@@ -397,7 +397,7 @@ export const NewContext = (props: NewButtonProps) => {
         />
         <CommandList>
           <CommandEmpty>{"No Action available"}</CommandEmpty>
-          <ApplicableNewNodes identifier={props.identifier} filter={filter} />
+          <ApplicableNewActions identifier={props.identifier} filter={filter} />
 
           <ApplicableNewDefinitions
             identifier={props.identifier}

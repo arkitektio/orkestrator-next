@@ -3,8 +3,7 @@ import {
   build,
   buildAction,
   buildModule,
-  buildState,
-  useAgentContext,
+  buildState
 } from "@/hooks/use-metaapp";
 import { StreamWidget } from "@/widgets/StreamWidget";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpIcon } from "lucide-react";

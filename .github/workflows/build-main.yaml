@@ -105,14 +105,16 @@ jobs:
             cd ..
           done
 
+      
       # Step 4: Create GitHub Release and upload all artifacts
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
             all-artifacts/**/*
-          tag_name: "v${{ github.run_number }}"
-          name: "Stable ${{ env.RELEASE_NAME }}"
+          tag_name: "stable-v${{ github.run_number }}"
+          name: "Stable V${{ github.run_number }}"
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

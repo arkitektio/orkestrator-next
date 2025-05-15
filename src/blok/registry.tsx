@@ -1,4 +1,4 @@
-import { MetaApplication } from "@/hooks/use-metaapp";
+import { MetaApplication, MetaApplicationAdds } from "@/hooks/use-metaapp";
 import {
   Positioner,
   PositionerModule,
@@ -14,13 +14,13 @@ import { Camera, CameraModule } from "./modules/Camera";
 
 export type Registration = {
   name: string;
-  module: MetaApplication<any, any>;
+  module: MetaApplicationAdds<any>;
   component: React.ComponentType;
   placeholder: React.ComponentType;
 };
 
 export class Registry {
-  modules: Map<string, MetaApplication<any, any>>;
+  modules: Map<string,  MetaApplicationAdds<any>>;
   components: Map<string, Registration>;
 
   constructor() {

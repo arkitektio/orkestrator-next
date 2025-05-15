@@ -10,8 +10,8 @@ query Implementations($filters: ImplementationFilter, $pagination: OffsetPaginat
   }
 }
 
-query ImplementationAt($agent: ID!, $extension: String!, $interface: String!) {
-  implementationAt(agent: $agent, extension: $extension, interface: $interface) {
+query ImplementationAt($agent: ID!, $extension: String, $interface: String, $demand: ActionDemandInput) {
+  implementationAt(agent: $agent, extension: $extension, interface: $interface, demand: $demand) {
     ...DetailImplementation
   }
 }

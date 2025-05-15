@@ -10,7 +10,7 @@ import {
 } from "dockview";
 import { PanelKind, useAgentsQuery } from "@/rekuest/api/graphql";
 import { Button } from "@/components/ui/button";
-import { MetaApplication } from "@/hooks/use-metaapp";
+import { MetaApplication, MetaApplicationAdds } from "@/hooks/use-metaapp";
 import React from "react";
 import {
   Popover,
@@ -54,25 +54,32 @@ const components = registry.components
 
 export const Selector = (props: {
   module: string;
-  app: MetaApplication<any, any>;
+  app: MetaApplicationAdds<any>,
   addPanel: (key: string, agent: string) => void;
 }) => {
-  const stateHashes = Object.keys(props.app.states).map((key) => {
-    return props.app.states[key].manifest?.hash || "";
+
+  if (!props.app.app) {
+    return <>No app defined</>;
+  }
+
+
+
+  const stateDemands = Object.keys(props.app.app.states).map((key) => {
+    return props.app.app.states[key].demand
   });
 
-  const templateHashes = Object.keys(props.app.actions).map((key) => {
-    return props.app.actions[key].manifest?.hash || "";
+  const actionDemands = Object.keys(props.app.app.actions).map((key) => {
+    return props.app.app.actions[key].demand
   });
 
-  console.log("STATE_HASHES", stateHashes);
-  console.log("TEMPLATE_HASHES", templateHashes);
+  console.log("STATE_HASHES", stateDemands);
+  console.log("TEMPLATE_HASHES", actionDemands);
 
-  const { data } = useAgentsQuery({
+  const { data, variables } = useAgentsQuery({
     variables: {
       filters: {
-        hasStates: stateHashes.length > 0 ? stateHashes : undefined,
-        hasTemplates: templateHashes.length > 0 ? templateHashes : undefined,
+        stateDemands: stateDemands.length > 0 ? stateDemands : undefined,
+        actionDemands: actionDemands.length > 0 ? actionDemands : undefined,
         distinct: true,
       },
     },
@@ -83,7 +90,7 @@ export const Selector = (props: {
   }
 
   if (data.agents.length === 0) {
-    return <div>No agents Implementing this</div>;
+    return <div>No agents Implementing this. {JSON.stringify(variables, null, 3)}</div>;
   }
 
   return (

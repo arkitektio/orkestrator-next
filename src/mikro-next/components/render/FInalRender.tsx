@@ -263,6 +263,7 @@ export const FinalRender = (props: RGBDProps) => {
         <Canvas style={{ width: "100%", height: "100%" }}>
           <AutoZoomCamera imageHeight={ySize} imageWidth={xSize} />
           <OrbitControls
+          
             enableRotate={false}
             enablePan={true}
             regress={false}

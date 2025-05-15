@@ -64,7 +64,7 @@ export const serviceMap: ServiceBuilderMap = {
   lovekit: {
     key: "lovekit",
     service: "live.arkitekt.lovekit",
-    optional: false,
+    optional: true,
     builder: (manifest, fakts: any, token) => {
       return {
         client: createLovekitClient({

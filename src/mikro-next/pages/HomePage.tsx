@@ -7,7 +7,6 @@ import React from "react";
 import DatasetList from "../components/lists/DatasetList";
 import FileList from "../components/lists/FileList";
 import ImageList from "../components/lists/ImageList";
-import RenderedPlotList from "../components/lists/RenderedPlotList";
 
 export type IRepresentationScreenProps = {};
 
@@ -30,7 +29,6 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
           <DatasetList pagination={{ limit: 30 }} />
           <Separator className="my-4" />
           <FileList pagination={{ limit: 30 }} />
-          <RenderedPlotList pagination={{ limit: 30 }} />
         </div>
       </UploadWrapper>
     </PageLayout>

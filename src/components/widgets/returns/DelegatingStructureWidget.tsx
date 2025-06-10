@@ -10,7 +10,6 @@ import { DelegatingImageRender } from "@/mikro-next/components/render/Delegating
 import { useDetailActionQuery } from "@/rekuest/api/graphql";
 import { ReturnWidgetProps } from "@/rekuest/widgets/types";
 import { MeshWidget } from "@/widgets/MeshWidget";
-import { RenderedPlotWidget } from "@/widgets/RenderedPlotWidget";
 import { StreamWidget } from "@/widgets/StreamWidget";
 import Timestamp from "react-timestamp";
 
@@ -101,8 +100,6 @@ export const DelegatingStructureWidget = (props: ReturnWidgetProps) => {
       return <RoiWidget {...props} />;
     case "@lok/stream":
       return <StreamWidget {...props} />;
-    case "@mikro/renderedplot":
-      return <RenderedPlotWidget {...props} />;
     case "@rekuest/action":
       return <NodeWidget {...props} />;
     case "@kabinet/pod":

@@ -27,7 +27,12 @@ export const TurretModule = buildModule({
       {
         objective: build.string(),
       },
-      {},
+      {
+        
+      },
+      { 
+        name: "Change Objective"
+      }
     ),
   },
 });

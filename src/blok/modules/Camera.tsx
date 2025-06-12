@@ -12,6 +12,8 @@ import { DelegatingImageRender } from "@/mikro-next/components/render/Delegating
 import { ImageWidget } from "@/widgets/ImageWidget";
 
 export const CameraModule = module({
+  name: "Camera",
+  description: "Controls the camera and image acquisition.",
   states: {
     camera: state(
       {
@@ -61,9 +63,7 @@ export const CentralCamera = () => {
 
   
 
-  const { assign } = CameraModule.useAction("acquire", {
-    ephemeral: true,
-  });
+  const { assign } = CameraModule.useAction("acquire");
   if (errors) {
     return <div>{JSON.stringify(errors)}</div>;
   }

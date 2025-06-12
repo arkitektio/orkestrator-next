@@ -6,8 +6,7 @@ import {
   buildState,
 } from "@/hooks/use-metaapp";
 import {
-  AsyncStageRender,
-  StageRender,
+  AsyncStageRender
 } from "@/mikro-next/components/render/StageRender";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpIcon } from "lucide-react";
 

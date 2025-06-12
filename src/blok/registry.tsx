@@ -58,4 +58,25 @@ registry.register({
   placeholder: PositionerPlaceholder,
 });
 
+registry.register({
+  name: "Camera",
+  module: CameraModule,
+  component: Camera,
+  placeholder: PositionerPlaceholder,
+});
+
+registry.register({
+  name: "Positioner",
+  module: PositionerModule,
+  component: Positioner,
+  placeholder: PositionerPlaceholder,
+});
+
+registry.register({
+  name: "Illuminator",
+  module: IlluminationModule,
+  component: Illuminator,
+  placeholder: PositionerPlaceholder,
+});
+
 export default registry;

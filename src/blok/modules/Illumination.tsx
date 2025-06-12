@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -11,6 +10,8 @@ import { useDebounce } from "@uidotdev/usehooks";
 import { useEffect, useState } from "react";
 
 export const IlluminationModule = buildModule({
+  name: "Illumination",
+  description: "Controls the microscope illumination and light intensity.",
   states: {
     illumination: buildState(
       {
@@ -25,22 +26,11 @@ export const IlluminationModule = buildModule({
   actions: {
     set: buildAction(
       {
-        x: build.float(),
+        x: build.int(),
       },
       {},
       {
-        forceHash:
-          "126c98222e77315f81463da83f754ab071dcf45778f85877c794ad658118eec1",
-      },
-    ),
-    toggle: buildAction(
-      {
-        x: build.float(),
-      },
-      {},
-      {
-        forceHash:
-          "dd9c77ec90383a335d034d160e92509daf536b8efe4a97e0b86b40ef5c036d5a",
+        name: "Set Light Intensity"
       },
     ),
   },
@@ -53,9 +43,7 @@ export function Illuminator() {
 
   const debounce = useDebounce(state, 300);
 
-  const { assign } = IlluminationModule.useAction("set", {
-    ephemeral: true,
-  });
+  const { assign } = IlluminationModule.useAction("set");
 
   useEffect(() => {
     assign({ x: debounce });
@@ -140,31 +128,6 @@ export function Illuminator() {
   );
 }
 
-export const IlluminatorBackup = () => {
-  const { value } = IlluminationModule.useState("illumination");
-
-  const { assign } = IlluminationModule.useAction("set", {
-    ephemeral: true,
-  });
-
-  if (!value) {
-    return <div>Loading</div>;
-  }
-
-  return (
-    <div className="relative flex h-full flex-col">
-      {value?.current_light_intensity}
-      <Button onClick={() => assign({ x: value.current_light_intensity + 10 })}>
-        Increase
-      </Button>
-      <Button onClick={() => assign({ x: value.current_light_intensity - 10 })}>
-        Decrease
-      </Button>
-      <Button onClick={() => assign({ x: 0 })}>Off</Button>
-      <Button onClick={() => assign({ x: 1000 })}>Max</Button>
-    </div>
-  );
-};
 
 export const PositionerPlaceholder = () => {
   return <div className="positioner">Placeholder</div>;

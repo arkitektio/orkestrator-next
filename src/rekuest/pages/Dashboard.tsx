@@ -6,12 +6,16 @@ import { RekuestDashboard } from "@/linkers";
 import { useSmartDrop } from "@/providers/smart/hooks";
 import { Structure } from "@/types";
 import {
+  Direction,
   DockviewApi,
+  DockviewDidDropEvent,
   DockviewReact,
   DockviewReadyEvent,
   IDockviewPanelProps,
+  positionToDirection,
+  SerializedDockview,
 } from "dockview";
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   MaterializedBlokFragment,
@@ -22,6 +26,8 @@ import {
 } from "../api/graphql";
 import BlokCard from "../components/cards/BlokCard";
 import { ModuleWrapper } from "@/blok/Wrapper";
+import { m } from "framer-motion";
+import { Card } from "@/components/ui/card";
 
 const components: {} = {
   MBLOK: (
@@ -38,13 +44,25 @@ export const BlokSidebar = (props: {}) => {
   const { data, subscribeToMore } = useListBloksQuery();
 
   return (
-    <div className="flex flex-col gap-2">
-      {data?.bloks.map((blok) => <BlokCard item={blok} key={blok.id} />)}
+    <div className="flex flex-col gap-2 p-3">
+      {data?.bloks.map((blok) => <Card key={blok.id} onDragStart={(event) => {
+            if (event.dataTransfer) {
+                event.dataTransfer.effectAllowed = 'move';
+
+                event.dataTransfer.setData('text/plain', "blok-" + blok.id);
+            }
+        }}
+        className="p-3 cursor-move"
+        draggable={true}>{blok.name}</Card>)}
     </div>
   );
 };
 
 export const DynamicLoader = (props: { blok: MaterializedBlokFragment }) => {
+
+
+
+
   return <ModuleWrapper mblok={props.blok} />;
 };
 
@@ -86,21 +104,82 @@ export const Selector = (props: {
 };
 
 export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
-  const apiRef = useRef<DockviewApi>();
+  const [api, setApi] = useState<DockviewApi | null>(null);
 
   const [materialize] = useMaterializeBlokMutation();
 
   const onReady = (event: DockviewReadyEvent) => {
-    data.dashboard.materializedBloks?.forEach((b) =>
-      addMaterializedBlok(b, event.api),
-    );
+
+    const mySerializedLayout = localStorage.getItem(`layout_${data.dashboard.id}`);
+
+    if (mySerializedLayout) {
+        try {
+            const layout = JSON.parse(mySerializedLayout);
+
+            console.log("Restoring layout", layout.panels);
+
+            layout.panels = data.dashboard.materializedBloks?.map((b) => ({
+                id: b.id,
+                contentComponent: "MBLOK",
+                params: {
+                    title: b.blok.name,
+                    mblok: b
+                },
+                title: b.blok.name,
+            })).reduce((acc, cur) => {
+                acc[cur.id] = cur;
+                return acc;
+            }, {});
+
+            event.api.fromJSON(layout);
+        } catch (err) {
+          alert("Failed to parse layout: " + err);
+          data.dashboard.materializedBloks?.forEach((b) =>
+            addMaterializedBlok(b, event.api),
+          );
+        }
+    }
+    else {
+      data.dashboard.materializedBloks?.forEach((b) =>
+        addMaterializedBlok(b, event.api),
+      );
+    }
+
+
+
+    setApi(event.api);
   };
+
+  const [dropContext, setDropContext] = useState<{
+    blok: string
+    group: string | undefined;
+    direction: Direction
+  } | undefined>(undefined);
+
+  useEffect(() => {
+    if (!api) {
+      return;
+    }
+    const disposable = api.onUnhandledDragOverEvent((event) => {
+            event.accept();
+        });
+
+    const disposableL = api.onDidLayoutChange(() => {
+      const layout: SerializedDockview = api.toJSON();
+      localStorage.setItem(`layout_${data.dashboard.id}`, JSON.stringify(layout));
+    });
+
+    return () => {
+      disposable.dispose();
+      disposableL.dispose();
+    };
+  }, [api]);
+  
 
   const addMaterializedBlok = (
     mblok: MaterializedBlokFragment,
     api: DockviewApi,
   ) => {
-    let one_before: string | undefined = undefined;
 
     api.addPanel({
       id: mblok.id,
@@ -110,26 +189,39 @@ export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
         mblok: mblok,
       },
       title: mblok.blok.name,
-      position: one_before
-        ? { referencePanel: one_before, direction: "right" }
-        : undefined,
     });
   };
 
-  const addPanel = (blok: string, agent: string) => {
+  const addPanel = useCallback((blok: string, agent: string) => {
     materialize({
       variables: {
         input: { blok: blok, agent: agent, dashboard: data.dashboard.id },
       },
     }).then(
       (result) => {
-        if (result.data?.materializeBlok) {
-          console.log("Materialized Blok", result.data.materializeBlok);
-          if (!apiRef.current) {
-            console.error("API reference is not set");
+        let mblok = result.data?.materializeBlok;
+        if (mblok) {
+          console.log("Materialized Blok", mblok);
+          if (!api || dropContext == undefined) {
+            toast.error("API reference is not set");
             return;
           }
-          addMaterializedBlok(result.data.materializeBlok, apiRef.current);
+
+
+          api.addPanel({
+            id: mblok.id,
+            component: "MBLOK",
+            params: {
+              title: mblok.blok.name,
+              mblok: mblok,
+            },
+            title: mblok.blok.name,
+            position: {
+                direction: dropContext?.direction,
+                referenceGroup: dropContext?.group,
+            },
+          });
+          setDropContext(undefined);
         } else {
           toast.error("Failed to materialize blok");
         }
@@ -138,20 +230,32 @@ export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
         toast.error(error.message);
       },
     );
-    setDroppedItems(undefined);
-  };
+    
+  }, [data.dashboard.id, materialize, api, dropContext]);
 
-  const [droppedItems, setDroppedItems] = useState<Structure[] | undefined>();
 
-  const [{ isOver, canDrop }, drop] = useSmartDrop((items) => {
-    setDroppedItems(items);
-  }, []);
+ 
 
   const onSave = () => {
-    let api = apiRef.current;
     if (api) {
-      console.log(api.toJSON());
+      alert(JSON.stringify(api.toJSON()));
     }
+  };
+
+  const onDidDrop = (event: DockviewDidDropEvent) => {
+
+    let blok = event.nativeEvent?.dataTransfer?.getData("text/plain");
+    if (!blok || !blok.startsWith("blok-")) {
+      alert("Dropped item is not a blok");
+      return;
+    }
+    blok = blok.replace("blok-", "");
+
+    setDropContext({
+      blok: blok,
+      group: event.group?.id,
+      direction: positionToDirection(event.position),
+    });
   };
 
   return (
@@ -166,37 +270,26 @@ export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
         />
       }
     >
-      <div className="relative w-full h-[800px] flex">
+      <div className="relative w-full h-full flex">
         <Dialog
-          open={droppedItems != undefined}
+          open={dropContext != undefined}
           onOpenChange={() => {
-            setDroppedItems(undefined);
+            setDropContext(undefined);
           }}
+          
         >
           <DialogContent>
-            {droppedItems &&
-              droppedItems.map((item) => (
-                <Selector module={item.object} addPanel={addPanel} />
-              ))}
+            {dropContext &&
+              <Selector module={dropContext.blok} addPanel={addPanel} />
+            }
           </DialogContent>
         </Dialog>
-        <div
-          ref={drop}
-          className={`relative w-full h-full ${
-            isOver && canDrop ? "bg-green-500/20" : ""
-          }`}
-        >
-          {isOver && canDrop && (
-            <div className="absolute top-0 left-0 w-full h-full bg-green-500/20 flex items-center justify-center">
-              <p className="text-white">Drop to add a new panel</p>
-            </div>
-          )}
           <DockviewReact
             components={components}
             onReady={onReady}
             className={"dockview-theme-abyss h-[800px] w-full"}
+            onDidDrop={onDidDrop}
           />
-        </div>
 
         <Button
           variant="outline"
@@ -205,7 +298,8 @@ export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
         >
           Save
         </Button>
-      </div>
+
+        </div>
     </RekuestDashboard.ModelPage>
   );
 });

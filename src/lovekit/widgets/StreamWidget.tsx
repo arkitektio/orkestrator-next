@@ -4,6 +4,7 @@ import {
   useCreateVideoStreamMutation,
   useGetStreamQuery,
 } from "@/lovekit/api/graphql";
+import { ReturnWidgetProps } from "@/rekuest/widgets/types";
 import {
   GridLayout,
   LiveKitRoom,
@@ -46,7 +47,7 @@ export const StreamJoiner = (props: { room: string }) => {
   return <>Not implemented Right now</>;
 };
 
-export const StreamWidget = (props: { value: string }) => {
+export const StreamWidget = (props: ReturnWidgetProps) => {
   const { data } = useGetStreamQuery({
     variables: {
       id: props.value,

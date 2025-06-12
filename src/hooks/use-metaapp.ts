@@ -10,12 +10,17 @@ import {
   WatchStateEventsSubscriptionVariables,
   ActionDemandInput,
   useImplementationAtQuery,
+  MaterializedBlokFragment,
+  useGetStateQuery,
+  useImplementationQuery,
 } from "@/rekuest/api/graphql";
 import React, { useEffect } from "react";
 import zod from "zod";
 import { useAction } from "./use-action";
 import { useAssign } from "@/rekuest/hooks/useAssign";
 import { toast } from "sonner";
+import { t } from "node_modules/@udecode/plate-list/dist/BaseListPlugin-B0eGlA5x";
+import Implementation from "@/rekuest/pages/Implementation";
 
 export const ports = zod.object;
 
@@ -28,10 +33,9 @@ export const port = {
   any: zod.any(),
 };
 
-
 export type StateDefinition<T extends { [key: string]: any }> = {
   ports: T;
-  demand: SchemaDemandInput
+  demand: SchemaDemandInput;
 };
 
 // Function to extract schema definition as JSON
@@ -125,16 +129,13 @@ export const statePortsToDemand = <T extends Record<string, StatePort>>(
   ports: T,
   options?: StateOptions,
 ): SchemaDemandInput => {
-
-
-  const matches = Object.entries(ports).map(
-    ([key, value]) => {
-      return {
-        key: key,
-        kind: value.kind,
-      };
-    },
-  )
+  const matches = Object.entries(ports).map(([key, value]) => {
+    return {
+      key: key,
+      kind: value.kind,
+      identifier: value.identifier,
+    };
+  });
 
   return {
     hash: options?.forceHash,
@@ -150,27 +151,24 @@ export const buildActionManifest = <
   returns: R,
   options?: ActionOptions,
 ): ActionDemandInput => {
-  
-  const argMatches = Object.entries(args).map(
-    ([key, value]) => {
-      return {
-        key: key,
-        kind: value.kind,
-      };
-    },
-  )
+  const argMatches = Object.entries(args).map(([key, value]) => {
+    return {
+      key: key,
+      kind: value.kind,
+    };
+  });
 
-  const returnMatches = Object.entries(returns).map(
-    ([key, value]) => {
-      return {
-        key: key,
-        kind: value.kind,
-      };
-    },
-  )
+  const returnMatches = Object.entries(returns).map(([key, value]) => {
+    return {
+      key: key,
+      kind: value.kind,
+    };
+  });
 
   return {
     hash: options?.forceHash,
+    name: options?.name,
+    interface: options?.interface,
     argMatches: argMatches,
     returnMatches: returnMatches,
   };
@@ -229,11 +227,13 @@ export const buildAction = <
 };
 
 export type ActionManifest = {
-  demand: ActionDemandInput
+  demand: ActionDemandInput;
 };
 
 export type ActionOptions = {
-  forceHash: string;
+  forceHash?: string;
+  name?: string;
+  interface?: string;
 };
 
 export type StateOptions = {
@@ -246,19 +246,21 @@ export type ActionDefinition<
 > = {
   args: T;
   returns: R;
-  demand: ActionDemandInput
+  demand: ActionDemandInput;
 };
 
 export type MetaApplication<
   States extends { [key: string]: StateDefinition<any> },
   Actions extends { [key: string]: ActionDefinition<any, any> },
 > = {
+  name: string;
+  description?: string;
   states: States;
   actions: Actions;
 };
 
 export type UseActionOptions = {
-  ephemeral: boolean;
+  track: boolean;
   debounce?: number;
 };
 
@@ -266,7 +268,11 @@ export type MetaApplicationAdds<T extends MetaApplication<any, any>> = {
   app: T;
   useState: <K extends keyof T["states"]>(
     state: K,
-  ) => { value?: zod.infer<T["states"][K]["ports"]>; updatedAt?: string, errors: any };
+  ) => {
+    value?: zod.infer<T["states"][K]["ports"]>;
+    updatedAt?: string;
+    errors: any;
+  };
   useAction: <K extends keyof T["actions"]>(
     action: K,
     options?: UseActionOptions,
@@ -283,13 +289,14 @@ export type MetaApplicationAdds<T extends MetaApplication<any, any>> = {
   };
 };
 
-export type AgentContext = {
-  agent: string;
+export type MaterializedBlokContext = {
+  mblok: MaterializedBlokFragment;
 };
 
-export const UsedAgentContext = React.createContext<AgentContext>({
-  agent: "",
-});
+export const MaterializedBlokContext =
+  React.createContext<MaterializedBlokContext>({
+    mblok: null as any,
+  });
 
 const debounce = (callback: Function, delay: number) => {
   let timeout: NodeJS.Timeout | undefined;
@@ -301,52 +308,60 @@ const debounce = (callback: Function, delay: number) => {
   };
 };
 
-export const useAgentContext = () => React.useContext(UsedAgentContext);
+export const useMaterializedBlokContext = () =>
+  React.useContext(MaterializedBlokContext);
 
 const buildUseRekuestState = <T extends MetaApplication<any, any>>(
   app: T,
 ): MetaApplicationAdds<T>["useState"] => {
   const hook = (state: keyof T["states"]) => {
-    const { agent } = useAgentContext();
+    const { mblok } = useMaterializedBlokContext();
 
-    const { data, subscribeToMore, refetch, error } = useGetStateForQuery({
+    let stateID = mblok.stateMappings.find((s) => s.key === state)?.state.id;
+
+    if (!stateID) {
+      console.error(
+        `State ${String(state)} not found in materialized blok ${mblok.id}`,
+      );
+      return {
+        value: undefined,
+        updatedAt: undefined,
+        errors: new Error(`State ${String(state)} not found`),
+      };
+    }
+
+    const { data, subscribeToMore, refetch, error } = useGetStateQuery({
       variables: {
-        agent,
-        demand: app.states[state].demand,
+        id: stateID,
       },
     });
 
     useEffect(() => {
       console.log("Refetching");
-      refetch({
-        agent,
-        demand: app.states[state].demand,
-      });
-    }, [agent]);
+      refetch({ id: stateID });
+    }, [stateID]);
 
     useEffect(() => {
-      if (data?.stateFor) {
-        console.log("State", state, "subscribing to", data.stateFor.id);
+      if (data?.state) {
+        console.log("State", state, "subscribing to", data.state.id);
         return subscribeToMore<
           WatchStateEventsSubscription,
           WatchStateEventsSubscriptionVariables
         >({
           document: WatchStateEventsDocument,
           variables: {
-            stateID: data.stateFor.id,
+            stateID: data.state.id,
           },
           updateQuery: (prev, { subscriptionData }) => {
             if (!subscriptionData.data) return prev;
             console.log("State update for", state, subscriptionData.data);
             // TODO: This is so weird and hacky because why is it subscribing to the other state as well?
-            if (
-              subscriptionData.data.stateUpdateEvents.id !== data.stateFor.id
-            ) {
+            if (subscriptionData.data.stateUpdateEvents.id !== data.state.id) {
               return prev;
             }
             return {
               stateFor: {
-                ...prev.stateFor,
+                ...prev.state,
                 ...subscriptionData.data.stateUpdateEvents,
               },
             };
@@ -355,7 +370,7 @@ const buildUseRekuestState = <T extends MetaApplication<any, any>>(
       }
 
       return () => {};
-    }, [subscribeToMore, data?.stateFor?.id]);
+    }, [subscribeToMore, data?.state?.id]);
 
     if (error) {
       console.error("Error", error);
@@ -373,11 +388,7 @@ const buildUseRekuestState = <T extends MetaApplication<any, any>>(
       };
     }
 
-    
-
-
-
-    return data?.stateFor
+    return data?.state;
   };
 
   return hook as any;
@@ -387,30 +398,36 @@ const buildUseRekuestActions = <T extends MetaApplication<any, any>>(
   app: T,
 ): MetaApplicationAdds<T>["useAction"] => {
   const hook = (action: keyof T["actions"], options?: UseActionOptions) => {
-    const { agent } = useAgentContext();
+    const { mblok } = useMaterializedBlokContext();
 
-    const { data} = useImplementationAtQuery({
+    let actionId = mblok.actionMappings.find((s) => s.key === action)
+      ?.implementation.id;
+
+    const { data } = useImplementationQuery({
       variables: {
-        agent,
-        demand: app.actions[action].demand,
+        id: actionId,
       },
     });
 
-    const { assign} = useAssign()
-
+    const { assign } = useAssign();
 
     const nodeAssign = async (args: any) => {
-      if (!data?.implementationAt) {
-        toast.error(`No implementation found for ${String(action)} on ${agent}`);
-        return;
-      }
       if (options?.debounce) {
         return debounce(
-          () => assign({ implementation: data?.implementationAt.id, args: args, ephemeral: options?.ephemeral }),
+          () =>
+            assign({
+              implementation: data?.implementation.id,
+              args: args,
+              ephemeral: options?.track ? false : true,
+            }),
           options.debounce,
         );
       } else {
-        return assign({implementation: data?.implementationAt.id, args: args, ephemeral: options?.ephemeral });
+        return assign({
+          implementation: data?.implementation.id,
+          args: args,
+          ephemeral: options?.track ? false : true,
+        });
       }
     };
 
@@ -429,16 +446,15 @@ export const buildModule = <T extends MetaApplication<any, any>>(
     app: app,
     useState: buildUseRekuestState(app),
     useAction: buildUseRekuestActions(app),
-  } 
+  };
 };
 
-
-export const module = buildModule 
-export const action = buildAction
-export const state = buildState
-export const integer = build.integer
-export const string = build.string
-export const structure = build.structure
-export const model = build.model
-export const list = build.array
-export const float = build.float
+export const module = buildModule;
+export const action = buildAction;
+export const state = buildState;
+export const integer = build.integer;
+export const string = build.string;
+export const structure = build.structure;
+export const model = build.model;
+export const list = build.array;
+export const float = build.float;

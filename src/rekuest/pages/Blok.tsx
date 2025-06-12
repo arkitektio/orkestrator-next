@@ -3,9 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 import { ActionDescription } from "@/lib/rekuest/ActionDescription";
-import { RekuestPanel } from "@/linkers";
+import { RekuestBlok, RekuestPanel } from "@/linkers";
 import { toast } from "sonner";
-import { useGetPanelQuery, useGetStateQuery } from "../api/graphql";
+import {
+  useGetBlokQuery,
+  useGetPanelQuery,
+  useGetStateQuery,
+} from "../api/graphql";
 import { StateDisplay } from "../components/State";
 import { usePortForm } from "../hooks/usePortForm";
 import { useImplementationAction } from "../hooks/useImplementationAction";
@@ -31,9 +35,10 @@ const StateWidget = (props: {
 };
 
 const Fake = (props: { implementation: string }) => {
-  const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
-    id: props.implementation,
-  });
+  const { assign, latestAssignation, cancel, implementation } =
+    useImplementationAction({
+      id: props.implementation,
+    });
 
   const form = usePortForm({
     ports: implementation?.action.args || [],
@@ -85,27 +90,13 @@ const Fake = (props: { implementation: string }) => {
   );
 };
 
-export default asDetailQueryRoute(useGetPanelQuery, ({ data, refetch }) => {
+export default asDetailQueryRoute(useGetBlokQuery, ({ data, refetch }) => {
   return (
-    <RekuestPanel.ModelPage
-      title={data.panel.name || "New Dasboard"}
-      object={data.panel.id}
+    <RekuestBlok.ModelPage
+      title={data.blok.name || "New Dasboard"}
+      object={data.blok.id}
     >
-      <div className="relative w-full h-full">
-        {data.panel.state ? (
-          <StateWidget
-            state={data.panel.state.id}
-            accessors={data.panel.accessors}
-          />
-        ) : (
-          <> State kind but now state? </>
-        )}
-        {data.panel.reservation?.implementation ? (
-          <Fake implementation={data.panel.reservation?.implementation.id} />
-        ) : (
-          <> State kind but now state? </>
-        )}
-      </div>
-    </RekuestPanel.ModelPage>
+      <div className="relative w-full h-full">Not implemented</div>
+    </RekuestBlok.ModelPage>
   );
 });

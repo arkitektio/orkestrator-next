@@ -1,11 +1,11 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { RekuestDashboard } from "@/linkers";
+import { RekuestBlok } from "@/linkers";
 import {
   AgentFilter,
   OffsetPaginationInput,
-  useListPanelsQuery,
+  useListBloksQuery,
 } from "@/rekuest/api/graphql";
-import PanelCard from "../cards/PanelCard";
+import BlokCard from "../cards/BlokCard";
 
 export type Props = {
   filters?: AgentFilter;
@@ -13,19 +13,17 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useListPanelsQuery({});
+  const { data, error, subscribeToMore, refetch } = useListBloksQuery({});
 
   return (
     <ListRender
-      array={data?.panels}
+      array={data?.bloks}
       title={
-        <RekuestDashboard.ListLink className="flex-0">
-          Panels
-        </RekuestDashboard.ListLink>
+        <RekuestBlok.ListLink className="flex-0">Bloks</RekuestBlok.ListLink>
       }
       refetch={refetch}
     >
-      {(ex, index) => <PanelCard key={index} item={ex} mates={[]} />}
+      {(ex, index) => <BlokCard key={index} item={ex} mates={[]} />}
     </ListRender>
   );
 };

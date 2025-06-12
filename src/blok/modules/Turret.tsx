@@ -8,23 +8,19 @@ import {
 } from "@/hooks/use-metaapp";
 
 export const TurretModule = buildModule({
+  name: "Turret",
+  description: "Controls the turret objectives and their selection.",
   states: {
-    objective: buildState(
-      {
-        current_objective: build.string(),
-        objective_options: build.array(
-          build.model({
-            label: build.string(),
-            value: build.string(),
-            description: build.string(),
-          }),
-        ),
-      },
-      {
-        forceHash:
-          "aa7337c56b43bb8e7c8cb8d44f9bd40920ad25bf94fa8925fd05e89f623fa11f",
-      },
-    ),
+    objective: buildState({
+      current_objective: build.string(),
+      objective_options: build.array(
+        build.model({
+          label: build.string(),
+          value: build.string(),
+          description: build.string(),
+        }),
+      ),
+    }),
   },
   actions: {
     set: buildAction(
@@ -32,10 +28,6 @@ export const TurretModule = buildModule({
         objective: build.string(),
       },
       {},
-      {
-        forceHash:
-          "1764173e85803aa16125810be183b68fec63cbc937bd9b3632ac433b80f5793d",
-      },
     ),
   },
 });
@@ -43,9 +35,7 @@ export const TurretModule = buildModule({
 export default function TurretWidget() {
   const { value } = TurretModule.useState("objective");
 
-  const { assign, done } = TurretModule.useAction("set", {
-    ephemeral: true,
-  });
+  const { assign, done } = TurretModule.useAction("set");
 
   return (
     <div className="w-full h-full">

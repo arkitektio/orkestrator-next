@@ -3,12 +3,14 @@ import {
   build,
   buildAction,
   buildModule,
-  buildState
+  buildState,
 } from "@/hooks/use-metaapp";
-import { StreamWidget } from "@/widgets/StreamWidget";
+import { StreamWidget } from "@/lovekit/widgets/StreamWidget";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpIcon } from "lucide-react";
 
 export const PositionerModule = buildModule({
+  name: "Positioner",
+  description: "Controls the positioner and camera stream.",
   states: {
     camera: buildState(
       {

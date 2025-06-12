@@ -20,7 +20,7 @@ export type Registration = {
 };
 
 export class Registry {
-  modules: Map<string,  MetaApplicationAdds<any>>;
+  modules: Map<string, MetaApplicationAdds<any>>;
   components: Map<string, Registration>;
 
   constructor() {
@@ -29,8 +29,8 @@ export class Registry {
   }
 
   register(register: Registration) {
-    this.modules.set(register.name, register.module);
-    this.components.set(register.name, register);
+    this.modules.set(register.module.app.name, register.module);
+    this.components.set(register.module.app.name, register);
   }
 
   getModule(name: string) {
@@ -45,33 +45,16 @@ export class Registry {
 const registry = new Registry();
 
 registry.register({
-  name: "Positioner",
-  module: PositionerModule,
-  component: Positioner,
-  placeholder: PositionerPlaceholder,
-});
-registry.register({
-  name: "Illuminator",
-  module: IlluminationModule,
-  component: Illuminator,
-  placeholder: PositionerPlaceholder,
-});
-registry.register({
-  name: "Turret",
-  module: TurretModule,
-  component: TurretWidget,
-  placeholder: PositionerPlaceholder,
-});
-registry.register({
   name: "StageControl",
   module: StageControllerModule,
   component: StageController,
   placeholder: PositionerPlaceholder,
 });
+
 registry.register({
-  name: "Camera",
-  module: CameraModule,
-  component: Camera,
+  name: "Turret",
+  module: TurretModule,
+  component: TurretWidget,
   placeholder: PositionerPlaceholder,
 });
 

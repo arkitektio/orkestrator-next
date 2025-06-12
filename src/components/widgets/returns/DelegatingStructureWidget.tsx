@@ -10,7 +10,7 @@ import { DelegatingImageRender } from "@/mikro-next/components/render/Delegating
 import { useDetailActionQuery } from "@/rekuest/api/graphql";
 import { ReturnWidgetProps } from "@/rekuest/widgets/types";
 import { MeshWidget } from "@/widgets/MeshWidget";
-import { StreamWidget } from "@/widgets/StreamWidget";
+import { StreamWidget } from "@/lovekit/widgets/StreamWidget";
 import Timestamp from "react-timestamp";
 
 export const ImageWidget = (props: ReturnWidgetProps) => {
@@ -98,7 +98,7 @@ export const DelegatingStructureWidget = (props: ReturnWidgetProps) => {
       return <ImageWidget {...props} />;
     case "@mikro/roi":
       return <RoiWidget {...props} />;
-    case "@lok/stream":
+    case "@lovekit/stream":
       return <StreamWidget {...props} />;
     case "@rekuest/action":
       return <NodeWidget {...props} />;

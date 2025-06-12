@@ -1,18 +1,17 @@
-
 import {
   ImageFragment,
   ListRgbContextFragment,
   RgbViewFragment,
   StageFragment,
-  useGetImageQuery
+  useGetImageQuery,
+  useGetStageQuery,
+  WatchTransformationViewsDocument,
+  WatchTransformationViewsSubscription,
+  WatchTransformationViewsSubscriptionVariables,
 } from "@/mikro-next/api/graphql";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import {
-  Dispatch,
-  SetStateAction,
-  Suspense
-} from "react";
+import { Dispatch, SetStateAction, Suspense, useEffect } from "react";
 import * as THREE from "three";
 import { StageCamera } from "./cameras/StageCamera";
 import { ChunkBitmapTexture } from "./final/ChunkMesh";
@@ -144,15 +143,11 @@ export const ScaleViewRender = (props: {
   );
 };
 
+export const useScale = () => 0;
+export const useZ = () => 0;
+export const useT = () => 0;
 
-export const useScale = () => 0
-export const useZ = () => 0
-export const useT = () => 0
-
-
-const ImageRender = (props: {
-  image: ImageFragment;
-}) => {
+const ImageRender = (props: { image: ImageFragment }) => {
   const selectedScale = useScale();
   const z = useZ();
   const t = useT();
@@ -160,9 +155,7 @@ const ImageRender = (props: {
   const rgbContext = props.image.rgbContexts.at(0);
   if (!rgbContext) {
     return <div>No RGB context found for the image</div>;
-
   }
-
 
   const version = props.image.store.version;
   const cSize = props.image?.store.shape?.at(0) || 1;
@@ -170,7 +163,6 @@ const ImageRender = (props: {
   const tSize = props.image?.store.shape?.at(1) || 1;
   const xSize = props.image?.store.shape?.at(3) || 1;
   const ySize = props.image?.store.shape?.at(4) || 1;
-
 
   const layers = rgbContext.image.derivedScaleViews.concat({
     image: props.image,
@@ -185,109 +177,136 @@ const ImageRender = (props: {
 
   const selectedScales = [layers.at(selectedScale)];
 
-  
-
-
-
   return (
     <>
       {rgbContext.views.map((view, viewIndex) => {
-          return (
-            <group key={view.id}>
-              {selectedScales.map((layer) => {
-                return (
-                  <ScaleViewRender
-                    key={`${z}-${t}-${viewIndex}-${layer.id}`}
-                    derivedScaleView={layer}
-                    view={view}
-                    z={z}
-                    t={t}
-                    xSize={xSize}
-                    ySize={ySize}
-                  />
-                );
-              })}
-            </group>
-          );
-        })}
+        return (
+          <group key={view.id}>
+            {selectedScales.map((layer) => {
+              return (
+                <ScaleViewRender
+                  key={`${z}-${t}-${viewIndex}-${layer.id}`}
+                  derivedScaleView={layer}
+                  view={view}
+                  z={z}
+                  t={t}
+                  xSize={xSize}
+                  ySize={ySize}
+                />
+              );
+            })}
+          </group>
+        );
+      })}
     </>
   );
-}
+};
 
-export const StageToolbar = (props: {
-  stage: StageFragment;
-}
-)=> {
+export const StageToolbar = (props: { stage: StageFragment }) => {
+  return <div className="flex flex-col gap-2">Not implemented yet</div>;
+};
 
-        return <div className="flex flex-col gap-2">
-          Not implemented yet
-        </div>
-    }; 
+export const useZSize = () => 1;
+export const useTSize = () => 1;
 
-
-
-
-export const useZSize = () => 1
-export const useTSize = () => 1
-
-
-
-const AsyncImageRender = (props: {
-  imageId: string;
-}) => {
+const AsyncImageRender = (props: { imageId: string }) => {
   const { data, loading, error } = useGetImageQuery({
     variables: {
       id: props.imageId,
     },
   });
 
-  if (loading) return  null
+  if (loading) return null;
   if (!data) return <div>Error loading image: {error?.message}</div>;
 
-
   return <ImageRender image={data.image} />;
-}
-
-
+};
 
 export const StageRender = ({ stage }: StageRenderProps) => {
-
-
   return (
     <div style={{ width: "100%", height: "100%" }} className="relative">
       <div className="absolute bottom-0 z-10 w-full mb-4 px-6 bg-gradient-to-t from-black to-transparent py-3">
-        xxx 
-        </div>
+        xxx
+      </div>
 
       <Suspense
         fallback={<div className="w-full h-full bg-gray-100"> Loading</div>}
       >
         <Canvas style={{ width: "100%", height: "100%" }}>
-          <StageCamera  />
+          <StageCamera />
           <OrbitControls
             enableRotate={false}
             enablePan={true}
             regress={false}
           />
           {stage.affineViews.map((view) => {
-
-            const flattenMatrix = view.affineMatrix.reduce( (acc, row) => acc.concat(row), []);
+            const flattenMatrix = view.affineMatrix.reduce(
+              (acc, row) => acc.concat(row),
+              [],
+            );
             console.log("Flattened Matrix", flattenMatrix);
 
-
             const matrix = new THREE.Matrix4();
-            matrix.set(
-              ...flattenMatrix
-            );
+            matrix.set(...flattenMatrix);
             return (
               <group key={view.id} matrixAutoUpdate={false} matrix={matrix}>
                 <AsyncImageRender imageId={view.image.id} />
               </group>
             );
           })}
-          </Canvas>
-          </Suspense>
+        </Canvas>
+      </Suspense>
     </div>
   );
 };
 
+export const AsyncStageRender = (props: { stageId: string }) => {
+  const { data, loading, error, subscribeToMore } = useGetStageQuery({
+    variables: {
+      id: props.stageId,
+    },
+  });
+
+  useEffect(() => {
+    const unsubscribe = subscribeToMore<
+      WatchTransformationViewsSubscription,
+      WatchTransformationViewsSubscriptionVariables
+    >({
+      document: WatchTransformationViewsDocument,
+      variables: { stage: props.stageId },
+      updateQuery: (prev, { subscriptionData }) => {
+        if (!subscriptionData.data) return prev;
+
+        const stage = prev.stage;
+        if (!stage) return prev;
+        if (!stage.affineViews) {
+          stage.affineViews = [];
+        }
+
+        let newView = subscriptionData.data.affineTransformationViews.create;
+
+        if (!subscriptionData.data.affineTransformationViews.create)
+          return prev;
+
+        const affineViews = [...(stage.affineViews || []), newView];
+
+        return {
+          ...prev,
+          stage: {
+            ...stage,
+            affineViews: affineViews,
+          },
+        };
+      },
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [props.stageId, subscribeToMore]);
+
+  if (loading) return <div>Loading Stage...</div>;
+  if (!data) return <div>Error loading stage: {error?.message}</div>;
+
+  return <StageRender stage={data.stage} />;
+};

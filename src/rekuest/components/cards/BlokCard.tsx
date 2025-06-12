@@ -1,27 +1,27 @@
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { RekuestPanel } from "@/linkers";
+import { RekuestBlok } from "@/linkers";
 import { MateFinder } from "@/mates/types";
-import { ListPanelFragment } from "@/rekuest/api/graphql";
+import { ListBlokFragment } from "@/rekuest/api/graphql";
 
 interface Props {
-  item: ListPanelFragment;
+  item: ListBlokFragment;
   mates?: MateFinder[];
 }
 
 const TheCard = ({ item, mates }: Props) => {
   return (
-    <RekuestPanel.Smart object={item?.id}>
+    <RekuestBlok.Smart object={item?.id}>
       <Card>
         <CardHeader>
           <CardTitle>
-            <RekuestPanel.DetailLink object={item?.id}>
+            <RekuestBlok.DetailLink object={item?.id}>
               {" "}
               <h1>{item.name}</h1>
-            </RekuestPanel.DetailLink>
+            </RekuestBlok.DetailLink>
           </CardTitle>
         </CardHeader>
       </Card>
-    </RekuestPanel.Smart>
+    </RekuestBlok.Smart>
   );
 };
 

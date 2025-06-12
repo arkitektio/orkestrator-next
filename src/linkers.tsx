@@ -22,7 +22,11 @@ export const RekuestImplementation = buildSmart(
   "@rekuest/implementation",
   "rekuest/implementations",
 );
-export const RekuestPanel = buildSmart("@rekuest/panel", "rekuest/panels");
+export const RekuestBlok = buildSmart("@rekuest/blok", "rekuest/bloks");
+export const RekuestMaterializedBlok = buildSmart(
+  "@rekuest/materialized_blok",
+  "rekuest/materialized_bloks",
+);
 export const RekuestDependency = buildSmart(
   "@rekuest/dependency",
   "rekuest/dependencies",

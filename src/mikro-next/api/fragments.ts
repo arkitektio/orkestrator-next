@@ -15,9 +15,6 @@
       "File",
       "Image"
     ],
-    "Plot": [
-      "RenderedPlot"
-    ],
     "Render": [
       "Snapshot",
       "Video"

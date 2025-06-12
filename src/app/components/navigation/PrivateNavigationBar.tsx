@@ -113,7 +113,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
 
   return (
     <NavigationMenu
-      className="mx-auto px-1 max-w-[40px] flex flex-grow sm:flex-col flex-row gap-8  items-center justify-start h-auto py-3"
+      className="mx-auto px-1 max-w-[40px] flex flex-grow sm:flex-col flex-row gap-8  h-full py-3"
       orientation="horizontal"
     >
       <IconContext.Provider
@@ -122,22 +122,11 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
           style: { stroke: "0.3px" },
         }}
       >
-        <div className="flex-grow  flex-row md:flex-col  flex gap-8 ">
+        <div className="flex-grow flex-row md:flex-col  flex gap-8 ">
           <div className="flex-grow"></div>
           {linkChildren}
-          <DroppableNavLink
-            key={"Bloks"}
-            to={"blok"}
-            className={"text-foreground mx-auto"}
-          >
-            {({ isActive }) => (
-              <NavigationMenuLink active={isActive}>
-                <BiSolidWidget />
-              </NavigationMenuLink>
-            )}
-          </DroppableNavLink>
-          <div className="flex-grow"></div>
         </div>
+        <div className="flex-grow"></div>
 
         <Button
           variant="ghost"
@@ -146,6 +135,8 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
         >
           {debug ? <Bug /> : <TbBugOff />}
         </Button>
+
+
 
         <DroppableNavLink
           key={"Settings"}

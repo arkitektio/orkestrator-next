@@ -63,7 +63,7 @@ export const downloadSelectionFromStore = async (
   };
 };
 
-export const viewToSlices = (t: number): Slice[] => {
+export const viewToSlices = (t: number | null): Slice[] => {
   let selection: Slice[] = [
     {
       _slice: true,
@@ -86,12 +86,9 @@ export const renderArray = async (
   credentials: AccessCredentialsFragment,
   datalayerUrl: string,
   store: ZarrStoreFragment,
-  t: number,
+  t: number | null,
   abortSignal?: AbortSignal,
 ): Promise<number[]> => {
-
-
-  
   let slices = viewToSlices(t);
   console.log("Slices", slices);
 
@@ -104,17 +101,16 @@ export const renderArray = async (
   );
 
   console.log("Array is", selection.out.data);
-  
 
-  console.log("Reduced array",  selection.out.data);
+  console.log("Reduced array", selection.out.data);
 
-  return  selection.out.data as number[];
+  return selection.out.data as number[];
 };
 
 const downloadArray = async (
   client: ApolloClient<any> | undefined,
   fakts: any,
-  t: number,
+  t: number | null,
   store: ZarrStoreFragment,
   signal?: AbortSignal,
 ) => {
@@ -148,7 +144,11 @@ export const useTraceArray = () => {
   const fakts = Arkitekt.useFakts();
 
   const renderView = useCallback(
-    async (trace: DetailTraceFragment, t: number, signal?: AbortSignal) => {
+    async (
+      trace: DetailTraceFragment,
+      t: number | null,
+      signal?: AbortSignal,
+    ) => {
       if (!client) {
         throw Error("No client found");
       }

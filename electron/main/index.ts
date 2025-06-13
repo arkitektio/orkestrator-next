@@ -31,6 +31,25 @@ ipcMain.handle('download-from-url', async (event, { url }: { url: string }) => {
   }
 });
 
+function handleOrkestratorUrl(url: string) {
+  try {
+    const { host: modelIdentifier, pathname } = new URL(url);
+    const id = pathname.replace(/^\/+/, ""); // strip leading slashes
+    const fullPath = `${modelIdentifier}/${id}`;
+    console.log("Handling orkestrator URL:", fullPath);
+
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+
+    openSecondaryWindow(fullPath);
+  } catch (err) {
+    console.error("Invalid orkestrator URL", url);
+    dialog.showErrorBox("Invalid Link", `The URL '${url}' could not be processed.`);
+  }
+}
+
 function createWindow(): BrowserWindow {
   // Create the browser window.
   mainWindow = new BrowserWindow({

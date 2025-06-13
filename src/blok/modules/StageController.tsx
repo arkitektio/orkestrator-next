@@ -3,57 +3,63 @@ import {
   build,
   buildAction,
   buildModule,
-  buildState
+  buildState,
 } from "@/hooks/use-metaapp";
+import { AsyncStageRender } from "@/mikro-next/components/render/StageRender";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpIcon } from "lucide-react";
 
 export const StageControllerModule = buildModule({
+  name: "StageController",
+  description: "Controls the stage positioner and grid acquisition.",
   states: {
-    positioner: buildState(
-      {
+    positioner: buildState({
+      keys: {
+        stage: build.structure("@mikro/stage"),
         position_x: build.float(),
         position_y: build.float(),
         position_z: build.float(),
       },
-      {
-        forceHash:
-          "3e1ba8b3140b4a2dba7c0e4bfafa8ff9a9731a3e2b0b51a97d1f52c81ade623d",
-      },
-    ),
+    }),
   },
   actions: {
-    moveY: buildAction(
-      {
-        y: build.float(),
+    moveY: buildAction({
+      args: {
+        y: build.int(),
       },
-      {},
-      {
-        forceHash:
-          "221142ddcfd6d5d32516a0f2cd62b8b423ac97dac11b61642ab98ac2646222ba",
+      name: "Move Y",
+    }),
+    moveX: buildAction({
+      args: {
+        x: build.int(),
       },
-    ),
-    moveX: buildAction(
-      {
-        x: build.float(),
+      name: "Move X",
+    }),
+    acquire_grid: buildAction({
+      args: {
+        minPosX: build.int(),
+        maxPosX: build.int(),
+        minPosY: build.int(),
+        maxPosY: build.int(),
       },
-      {},
-      {
-        forceHash:
-          "ae097dc60aaed3382ddfd8ed170d624bf5d7a319a0e32ae5650de454f660a452",
-      },
-    ),
+      name: "Tile Scan",
+    }),
   },
 });
 
 export const StageController = () => {
   const { value: position } = StageControllerModule.useState("positioner");
 
-  const { assign } = StageControllerModule.useAction("moveY", {
-    ephemeral: true,
-  });
-  const { assign: assignX } = StageControllerModule.useAction("moveX", {
-    ephemeral: true,
-  });
+  const { assign } = StageControllerModule.useAction("moveY");
+
+  const {
+    assign: acquireGrid,
+    latestEvent,
+    cancel,
+  } = StageControllerModule.useAction("acquire_grid");
+
+  const { assign: resetStage } = StageControllerModule.useAction("reset_stage");
+
+  const { assign: assignX } = StageControllerModule.useAction("moveX");
 
   if (!position) {
     return <div>Loading</div>;
@@ -61,8 +67,22 @@ export const StageController = () => {
 
   return (
     <div className="relative w-full h-full">
+      <AsyncStageRender stageId={position.stage} />
+
       <div className="absolute top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%] bg-gray-900 p-2 rounded-full px-3">
-        {position.position_y}y {position.position_x}x {position.position_z}z
+        {position.position_y}y {position.position_x}x {position.position_z}z{" "}
+        {latestEvent?.message}
+      </div>
+      <div className="absolute top-4 right-3 bg-gray-900 p-2 rounded-md px-3 flex flex-row gap-2">
+        <Button
+          onClick={() => acquireGrid({ minPosX: 1, maxPosX: 1000, minPosY: 1, maxPosY: 1000 })}
+          variant={"outline"}
+        >
+          Acquire Grid
+        </Button>
+        <Button onClick={() => resetStage({})} variant={"outline"}>
+          Reset
+        </Button>
       </div>
       <Button
         className="absolute top-2 left-1/2 transform -translate-x-1/2"

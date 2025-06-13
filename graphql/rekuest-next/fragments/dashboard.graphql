@@ -17,8 +17,8 @@ fragment Dashboard on Dashboard {
       }
     }
   }
-  panels {
-    ...Panel
+  materializedBloks {
+    ...MaterializedBlok
   }
 }
 

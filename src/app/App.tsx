@@ -44,35 +44,30 @@ export const Fallback = () => {
 function App() {
   return (
     <AppProvider>
-      <TooltipProvider>
-        <AppLayout navigationBar={<PrivateNavigationBar />}>
-          <BackNavigationErrorCatcher>
-            <Toaster />
-            <Routes>
-              <Route path="callback" element={<Callback />} />{" "}
-              {/* This is the callback route for the herre provider, and needs to be publicalyl available. (Represents Oauth2 Callback)*/}
-              <Route index element={<Hero />} />
-              <Route path="mikro/*" element={protect(<MikroNextModule />)} />
-              <Route path="elektro/*" element={protect(<ElektroModule />)} />
-              <Route
-                path="rekuest/*"
-                element={protect(<RekuestNextModule />)}
-              />
-              <Route path="fluss/*" element={protect(<ReaktionModule />)} />
-              <Route path="kabinet/*" element={protect(<KabinetModule />)} />
-              <Route path="omero-ark/*" element={protect(<OmeroArkModule />)} />
-              <Route path="kraph/*" element={protect(<KraphModule />)} />
-              <Route path="lok/*" element={protect(<LokNextModule />)} />
-              <Route path="settings/*" element={protect(<SettingsModule />)} />
-              <Route path="blok/*" element={protect(<BlokModule />)} />
-              <Route path="alpaka/*" element={protect(<AlpakaModule />)} />
-              <Route path="lovekit/*" element={protect(<LovekitModule />)} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Stash />
-          </BackNavigationErrorCatcher>
-        </AppLayout>
-      </TooltipProvider>
+      <AppLayout navigationBar={<PrivateNavigationBar />}>
+        <BackNavigationErrorCatcher>
+          <Toaster />
+          <Routes>
+            <Route path="callback" element={<Callback />} />{" "}
+            {/* This is the callback route for the herre provider, and needs to be publicalyl available. (Represents Oauth2 Callback)*/}
+            <Route index element={<Hero />} />
+            <Route path="mikro/*" element={protect(<MikroNextModule />)} />
+            <Route path="elektro/*" element={protect(<ElektroModule />)} />
+            <Route path="rekuest/*" element={protect(<RekuestNextModule />)} />
+            <Route path="fluss/*" element={protect(<ReaktionModule />)} />
+            <Route path="kabinet/*" element={protect(<KabinetModule />)} />
+            <Route path="omero-ark/*" element={protect(<OmeroArkModule />)} />
+            <Route path="kraph/*" element={protect(<KraphModule />)} />
+            <Route path="lok/*" element={protect(<LokNextModule />)} />
+            <Route path="settings/*" element={protect(<SettingsModule />)} />
+            <Route path="blok/*" element={protect(<BlokModule />)} />
+            <Route path="alpaka/*" element={protect(<AlpakaModule />)} />
+            <Route path="lovekit/*" element={protect(<LovekitModule />)} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Stash />
+        </BackNavigationErrorCatcher>
+      </AppLayout>
     </AppProvider>
   );
 }

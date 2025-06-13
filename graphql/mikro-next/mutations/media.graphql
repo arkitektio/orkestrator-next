@@ -1,5 +1,5 @@
 mutation RequestMediaUpload($key: String!, $datalayer: String!) {
-  requestMediaUpload(input: { key: $key, datalayer: $datalayer }) {
+  requestMediaUpload(input: { fileName: $key, datalayer: $datalayer }) {
     ...PresignedPostCredentials
   }
 }

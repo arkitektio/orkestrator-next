@@ -3,56 +3,42 @@ import {
   build,
   buildAction,
   buildModule,
-  buildState
+  buildState,
 } from "@/hooks/use-metaapp";
-import { StreamWidget } from "@/widgets/StreamWidget";
+import { AsyncSoloBroadcastWidget } from "@/lovekit/widgets/SoloBroadcastWidget";
+import { StreamWidget } from "@/lovekit/widgets/StreamWidget";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpIcon } from "lucide-react";
 
 export const PositionerModule = buildModule({
+  name: "Positioner",
+  description: "Controls the positioner and camera stream.",
   states: {
-    camera: buildState(
-      {
-        latest_image: build.structure("@mikro/image"),
-        stream: build.structure("@lok/stream"),
+    camera: buildState({
+      keys: {
+        broadcast: build.structure("@lovekit/solo_broadcast"),
       },
-      {
-        forceHash:
-          "98827913a754105345839da69433409c43b1000251387ff2a37e174e46f1f7e4",
-      },
-    ),
-    positioner: buildState(
-      {
+    }),
+    positioner: buildState({
+      keys: {
         position_x: build.float(),
         position_y: build.float(),
         position_z: build.float(),
       },
-      {
-        forceHash:
-          "3e1ba8b3140b4a2dba7c0e4bfafa8ff9a9731a3e2b0b51a97d1f52c81ade623d",
-      },
-    ),
+    }),
   },
   actions: {
-    moveY: buildAction(
-      {
-        y: build.float(),
+    moveY: buildAction({
+      args: {
+        y: build.int(),
       },
-      {},
-      {
-        forceHash:
-          "221142ddcfd6d5d32516a0f2cd62b8b423ac97dac11b61642ab98ac2646222ba",
+      name: "Move Y",
+    }),
+    moveX: buildAction({
+      args: {
+        x: build.int(),
       },
-    ),
-    moveX: buildAction(
-      {
-        x: build.float(),
-      },
-      {},
-      {
-        forceHash:
-          "ae097dc60aaed3382ddfd8ed170d624bf5d7a319a0e32ae5650de454f660a452",
-      },
-    ),
+      name: "Move X",
+    }),
   },
 });
 
@@ -64,8 +50,8 @@ export const CentralCamera = () => {
   }
 
   return (
-    <div className="mx-auto max-h-[700px] max-w-[700px]">
-      <StreamWidget value={camera.stream} />
+    <div className="mx-auto  w-full h-full bg-black relative">
+      <AsyncSoloBroadcastWidget id={camera.broadcast} />
     </div>
   );
 };
@@ -73,12 +59,8 @@ export const CentralCamera = () => {
 export const PositionOverlay = () => {
   const { value: position } = PositionerModule.useState("positioner");
 
-  const { assign } = PositionerModule.useAction("moveY", {
-    ephemeral: true,
-  });
-  const { assign: assignX } = PositionerModule.useAction("moveX", {
-    ephemeral: true,
-  });
+  const { assign } = PositionerModule.useAction("moveY");
+  const { assign: assignX } = PositionerModule.useAction("moveX");
 
   if (!position) {
     return <div>Loading</div>;

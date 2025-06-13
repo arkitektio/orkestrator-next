@@ -1,5 +1,7 @@
-mutation CreateVideoStream($input: CreateStreamInput!) {
-  createVideoStream(input: $input) {
-    ...EnsuredStream
-  }
+mutation JoinBroadcast($input: JoinBroadcastInput!) {
+  joinBroadcast(input: $input)
+}
+
+mutation EnsureStream($input: EnsureStreamInput!) {
+  ensureStream(input: $input)
 }

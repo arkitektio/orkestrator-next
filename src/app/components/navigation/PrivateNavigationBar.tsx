@@ -113,7 +113,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
 
   return (
     <NavigationMenu
-      className="mx-auto px-1 max-w-[40px] flex flex-grow sm:flex-col flex-row gap-8  items-center justify-start h-auto py-3"
+      className="mx-auto px-1 max-w-[40px] flex flex-grow sm:flex-col flex-row gap-8  h-full py-3"
       orientation="horizontal"
     >
       <IconContext.Provider
@@ -122,54 +122,42 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
           style: { stroke: "0.3px" },
         }}
       >
-        <div className="flex-grow  flex-row md:flex-col  flex gap-8 ">
-          <div className="flex-grow"></div>
+        <div className="flex-grow flex-row md:flex-col justify-center flex gap-8 ">
           {linkChildren}
+        </div>
+        <div className="flex-initial flex-row md:flex-col justify-center flex gap-8">
+          <Button
+            variant="ghost"
+            className="md:block text-foreground hidden"
+            onClick={() => setDebug(!debug)}
+          >
+            {debug ? <Bug /> : <TbBugOff />}
+          </Button>
           <DroppableNavLink
-            key={"Bloks"}
-            to={"blok"}
-            className={"text-foreground mx-auto"}
+            key={"Settings"}
+            to={"settings"}
+            className={"text-foreground"}
           >
             {({ isActive }) => (
               <NavigationMenuLink active={isActive}>
-                <BiSolidWidget />
+                <Settings />
               </NavigationMenuLink>
             )}
           </DroppableNavLink>
-          <div className="flex-grow"></div>
-        </div>
-
-        <Button
-          variant="ghost"
-          className="md:block text-foreground hidden"
-          onClick={() => setDebug(!debug)}
-        >
-          {debug ? <Bug /> : <TbBugOff />}
-        </Button>
-
-        <DroppableNavLink
-          key={"Settings"}
-          to={"settings"}
-          className={"text-foreground"}
-        >
-          {({ isActive }) => (
-            <NavigationMenuLink active={isActive}>
-              <Settings />
-            </NavigationMenuLink>
-          )}
-        </DroppableNavLink>
-
-        <Guard.Lok fallback={<>No lok?</>}>
           <DropdownMenu>
-            <DropdownMenuTrigger className="md:block text-foreground hidden">
-              <Me />
+            <DropdownMenuTrigger className="text-foreground h-12">
+              <Guard.Lok fallback={<div className="h-8">No lok?</div>}>
+                <Me />
+              </Guard.Lok>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               side="right"
               className="p-2 mb-2 border-seperator"
             >
               <DropdownMenuLabel>
-                <Username />
+                <Guard.Lok fallback={<div>No lok?</div>}>
+                  <Username />
+                </Guard.Lok>
               </DropdownMenuLabel>
 
               <div className="flex flex-row gap-2 w-full">
@@ -184,7 +172,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
-        </Guard.Lok>
+        </div>
       </IconContext.Provider>
     </NavigationMenu>
   );

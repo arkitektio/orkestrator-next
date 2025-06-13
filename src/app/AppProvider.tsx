@@ -29,6 +29,7 @@ import { AssignationUpdater } from "@/rekuest/components/functional/AssignationU
 import { WidgetRegistryProvider } from "@/rekuest/widgets/WidgetsProvider";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import { useNavigate } from "react-router-dom";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const displayRegistry = {
   "@mikro-next/image": ImageDisplay,
@@ -98,52 +99,54 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
             {/* This is where we configure the application automatically based on facts */}
 
             <Arkitekt.Provider>
-              <DisplayProvider registry={displayRegistry}>
-                <WellKnownDiscovery
-                  endpoints={WELL_KNOWN_ENDPOINTS} // this configures fakts to use the well known endpoints in order to discover the other services
-                />
-                <SelectionProvider>
-                  <CommandProvider>
-                    <SmartProvider>
-                      <WidgetRegistryProvider>
-                        <DialogProvider>
-                          <CommandMenu />
-                          <Guard.Rekuest fallback={<></>}>
-                            {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
-                            <AssignationUpdater />
-                            <AgentUpdater />
-                            {/* We register the Shadn powered widgets to the widget registry. */}
-                            <RekuestNextWard />
-                            <ShadnWigets />
-                            <Toaster />
-                          </Guard.Rekuest>
-                          <Guard.Kabinet fallback={<></>}>
-                            <KabinetWard key="kabinet" />
-                          </Guard.Kabinet>
-                          <Guard.Kraph fallback={<></>}>
-                            <KraphWard key="kraph" />
-                          </Guard.Kraph>
-                          <Guard.Alpaka fallback={<></>}>
-                            <AlpakaWard key="alpaka" />
-                          </Guard.Alpaka>
-                          <Guard.Elektro fallback={<></>}>
-                            <ElektroWard key="elektro" />
-                          </Guard.Elektro>
-                          <Guard.Mikro fallback={<></>}>
-                            <MikroNextWard key="mikro" />
-                          </Guard.Mikro>
-                          <Guard.Fluss fallback={<></>}>
-                            <FlussWard key="fluss" />
-                          </Guard.Fluss>
-                          <BackNavigationErrorCatcher>
-                            {children}
-                          </BackNavigationErrorCatcher>
-                        </DialogProvider>
-                      </WidgetRegistryProvider>
-                    </SmartProvider>
-                  </CommandProvider>
-                </SelectionProvider>
-              </DisplayProvider>
+              <TooltipProvider>
+                <DisplayProvider registry={displayRegistry}>
+                  <WellKnownDiscovery
+                    endpoints={WELL_KNOWN_ENDPOINTS} // this configures fakts to use the well known endpoints in order to discover the other services
+                  />
+                  <SelectionProvider>
+                    <CommandProvider>
+                      <SmartProvider>
+                        <WidgetRegistryProvider>
+                          <DialogProvider>
+                            <CommandMenu />
+                            <Guard.Rekuest fallback={<></>}>
+                              {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
+                              <AssignationUpdater />
+                              <AgentUpdater />
+                              {/* We register the Shadn powered widgets to the widget registry. */}
+                              <RekuestNextWard />
+                              <ShadnWigets />
+                              <Toaster />
+                            </Guard.Rekuest>
+                            <Guard.Kabinet fallback={<></>}>
+                              <KabinetWard key="kabinet" />
+                            </Guard.Kabinet>
+                            <Guard.Kraph fallback={<></>}>
+                              <KraphWard key="kraph" />
+                            </Guard.Kraph>
+                            <Guard.Alpaka fallback={<></>}>
+                              <AlpakaWard key="alpaka" />
+                            </Guard.Alpaka>
+                            <Guard.Elektro fallback={<></>}>
+                              <ElektroWard key="elektro" />
+                            </Guard.Elektro>
+                            <Guard.Mikro fallback={<></>}>
+                              <MikroNextWard key="mikro" />
+                            </Guard.Mikro>
+                            <Guard.Fluss fallback={<></>}>
+                              <FlussWard key="fluss" />
+                            </Guard.Fluss>
+                            <BackNavigationErrorCatcher>
+                              {children}
+                            </BackNavigationErrorCatcher>
+                          </DialogProvider>
+                        </WidgetRegistryProvider>
+                      </SmartProvider>
+                    </CommandProvider>
+                  </SelectionProvider>
+                </DisplayProvider>
+              </TooltipProvider>
             </Arkitekt.Provider>
           </ThemeProvider>
         </Router>

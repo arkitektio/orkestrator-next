@@ -18,6 +18,7 @@ import mikroResult from "@/mikro-next/api/fragments";
 import omeroArkResult from "@/omero-ark/api/fragments";
 import flussResult from "@/reaktion/api/fragments";
 import rekuestResult from "@/rekuest/api/fragments";
+import lovekitResult from "@/lovekit/api/fragments";
 import { ApolloClient, NormalizedCache } from "@apollo/client";
 import { buildArkitekt, buildGuard } from ".";
 import { ServiceBuilderMap, useArkitekt } from "./provider";
@@ -68,9 +69,9 @@ export const serviceMap: ServiceBuilderMap = {
     builder: (manifest, fakts: any, token) => {
       return {
         client: createLovekitClient({
-          wsEndpointUrl: fakts.rekuest.ws_endpoint_url,
-          endpointUrl: fakts.rekuest.endpoint_url,
-          possibleTypes: rekuestResult.possibleTypes,
+          wsEndpointUrl: fakts.lovekit.ws_endpoint_url,
+          endpointUrl: fakts.lovekit.endpoint_url,
+          possibleTypes: lovekitResult.possibleTypes,
           retrieveToken: () => token,
         }),
       };

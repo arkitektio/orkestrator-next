@@ -39,7 +39,6 @@ export const NavigationPane = (props: {}) => {
     },
   });
 
-
   return (
     <div className="flex-1 flex-col">
       <nav className="grid items-start px-1 text-sm font-medium lg:px-2">
@@ -82,6 +81,20 @@ export const NavigationPane = (props: {}) => {
             Toolboxes
           </DroppableNavLink>
           <DroppableNavLink
+            to="/rekuest/dashboards"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <Box className="h-4 w-4" />
+            Dashboards
+          </DroppableNavLink>
+          <DroppableNavLink
+            to="/rekuest/bloks"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <Box className="h-4 w-4" />
+            Bloks
+          </DroppableNavLink>
+          <DroppableNavLink
             to="/rekuest/shortcuts"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
@@ -108,10 +121,9 @@ export const NavigationPane = (props: {}) => {
                     <div
                       className="w-3 h-3 rounded rounded-full my-auto animate-pulse"
                       style={{
-                        backgroundColor:
-                          agent.connected 
-                            ? "#00FF00"
-                            : "#FF0000",
+                        backgroundColor: agent.connected
+                          ? "#00FF00"
+                          : "#FF0000",
                       }}
                     />
                   </RekuestAgent.DetailLink>
@@ -135,10 +147,7 @@ export const NavigationPane = (props: {}) => {
                   <CardStackIcon
                     className="h-4 w-4"
                     style={{
-                      color:
-                        agent.connected
-                          ? "#00FF00"
-                          : "#A9A9A9",
+                      color: agent.connected ? "#00FF00" : "#A9A9A9",
                     }}
                   />
                   {agent.name}

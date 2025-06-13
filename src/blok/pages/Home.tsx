@@ -8,7 +8,11 @@ import {
   DockviewReadyEvent,
   IDockviewPanelProps,
 } from "dockview";
-import { PanelKind, useAgentsQuery } from "@/rekuest/api/graphql";
+import {
+  PanelKind,
+  useAgentsQuery,
+  useCreateBlokMutation,
+} from "@/rekuest/api/graphql";
 import { Button } from "@/components/ui/button";
 import { MetaApplication, MetaApplicationAdds } from "@/hooks/use-metaapp";
 import React from "react";
@@ -54,22 +58,19 @@ const components = registry.components
 
 export const Selector = (props: {
   module: string;
-  app: MetaApplicationAdds<any>,
+  app: MetaApplicationAdds<any>;
   addPanel: (key: string, agent: string) => void;
 }) => {
-
   if (!props.app.app) {
     return <>No app defined</>;
   }
 
-
-
   const stateDemands = Object.keys(props.app.app.states).map((key) => {
-    return props.app.app.states[key].demand
+    return props.app.app.states[key].demand;
   });
 
   const actionDemands = Object.keys(props.app.app.actions).map((key) => {
-    return props.app.app.actions[key].demand
+    return props.app.app.actions[key].demand;
   });
 
   console.log("STATE_HASHES", stateDemands);
@@ -90,7 +91,11 @@ export const Selector = (props: {
   }
 
   if (data.agents.length === 0) {
-    return <div>No agents Implementing this. {JSON.stringify(variables, null, 3)}</div>;
+    return (
+      <div>
+        No agents Implementing this. {JSON.stringify(variables, null, 3)}
+      </div>
+    );
   }
 
   return (
@@ -154,8 +159,41 @@ export const Home = (props) => {
     setDroppedItems(items);
   }, []);
 
+  const [createBlok] = useCreateBlokMutation();
+
+  const createBloks = async () => {
+    for (const [key, mod] of registry.modules.entries()) {
+      console.log("Creating blok for", key, mod);
+      if (mod.app) {
+        const stateDemands = Object.keys(mod.app.states).map((key) => {
+          return { key: key, ...mod.app.states[key].demand };
+        });
+
+        const actionDemands = Object.keys(mod.app.actions).map((key) => {
+          return { key: key, ...mod.app.actions[key].demand };
+        });
+
+        let x = await createBlok({
+          variables: {
+            input: {
+              name: mod.app.name,
+              stateDemands: stateDemands,
+              actionDemands: actionDemands,
+              url: `orkestrator:///${key}`,
+            },
+          },
+        });
+
+        console.log("Created blok", x.data?.createBlok);
+      }
+    }
+  };
+
   return (
-    <PageLayout title="Bloks">
+    <PageLayout
+      title="Bloks"
+      pageActions={<Button onClick={() => createBloks()}>Materialize</Button>}
+    >
       <div className="h-full w-full flex flex-col">
         <Guard.Rekuest>
           <Dialog

@@ -1,42 +1,29 @@
 import { Button } from "@/components/ui/button";
-import {
-  action,
-  integer,
-  module,
-  state,
-  structure,
-} from "@/hooks/use-metaapp";
+import { action, integer, module, state, structure } from "@/hooks/use-metaapp";
 import { MikroImage } from "@/linkers";
+import { AsyncSoloBroadcastWidget } from "@/lovekit/widgets/SoloBroadcastWidget";
+import {
+  AsyncStreamWidget,
+  StreamWidget,
+} from "@/lovekit/widgets/StreamWidget";
 import { useGetImageQuery } from "@/mikro-next/api/graphql";
 import { DelegatingImageRender } from "@/mikro-next/components/render/DelegatingImageRender";
 import { ImageWidget } from "@/widgets/ImageWidget";
 
 export const CameraModule = module({
+  name: "Camera",
+  description: "Shows a stream from the central camera",
   states: {
-    camera: state(
-      {
-        latest_image: structure("@mikro/image"),
-      }
-    ),
-  },
-  actions: {
-    acquire: action(
-      {
-        x: integer("The x position of the stage"),
-        y: integer("The y position of the stage"),
-        z: integer("The z position of the stage"),
+    camera: state({
+      keys: {
+        broadcast: structure("@lovekit/solo_broadcast"),
       },
-      {
-        return0: structure("@mikro/image"),
-      }
-    )
+    }),
   },
+  actions: {},
 });
 
-export const ImageRender = ({id}: {
-  id: string,
-}) => {
-
+export const ImageRender = ({ id }: { id: string }) => {
   const { data } = useGetImageQuery({
     variables: {
       id,
@@ -54,42 +41,23 @@ export const ImageRender = ({id}: {
       </div>
     </MikroImage.DetailLink>
   );
-}
+};
 
 export const CentralCamera = () => {
-  const { value: camera, errors} = CameraModule.useState("camera");
+  const { value: camera, errors } = CameraModule.useState("camera");
 
-  
-
-  const { assign } = CameraModule.useAction("acquire", {
-    ephemeral: true,
-  });
   if (errors) {
     return <div>{JSON.stringify(errors)}</div>;
   }
-  
-
-
-
 
   return (
-    <div className="mx-auto max-h-[700px] max-w-[700px] my-auto bg-black">
-      { camera?.latest_image && (
-        <ImageRender id={camera.latest_image} />
+    <div className="bg-black h-full w-full">
+      {camera?.broadcast && <AsyncSoloBroadcastWidget id={camera.broadcast} />}
+      {!camera?.broadcast && (
+        <div className="flex items-center justify-center h-full">
+          <span className="text-white">Loading camera stream...</span>
+        </div>
       )}
-
-      <Button 
-        onClick={() => {
-          assign({
-            x: 0,
-            y: 0,
-            z: 0,
-          });
-        }}
-        className="absolute bottom-0 left-0 m-4"
-      >
-        Acquire
-      </Button>
     </div>
   );
 };

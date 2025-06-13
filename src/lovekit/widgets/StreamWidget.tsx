@@ -4,12 +4,14 @@ import {
   useCreateVideoStreamMutation,
   useGetStreamQuery,
 } from "@/lovekit/api/graphql";
+import { ReturnWidgetProps } from "@/rekuest/widgets/types";
 import {
   GridLayout,
   LiveKitRoom,
   useTracks,
   VideoTrack,
 } from "@livekit/components-react";
+import { Value } from "@udecode/plate-common";
 import { Track } from "livekit-client";
 
 function VideoRenderer() {
@@ -41,12 +43,12 @@ export const VideoStream = ({ stream }: { stream: EnsuredStreamFragment }) => {
 };
 
 export const StreamJoiner = (props: { room: string }) => {
-  const [createStream, stream] = useCreateVideoStreamMutation();
+  const [createStream, stream] = useJoin();
 
   return <>Not implemented Right now</>;
 };
 
-export const StreamWidget = (props: { value: string }) => {
+export const StreamWidget = (props: ReturnWidgetProps) => {
   const { data } = useGetStreamQuery({
     variables: {
       id: props.value,
@@ -58,6 +60,32 @@ export const StreamWidget = (props: { value: string }) => {
   return (
     <div className="w-full h-full m-2">
       {room && <StreamJoiner room={room} />}
+    </div>
+  );
+};
+
+export const AsyncStreamWidget = (props: { id: string }) => {
+  const { data, error } = useGetStreamQuery({
+    variables: {
+      id: props.id,
+    },
+  });
+
+  const room = data?.stream?.id;
+
+  return (
+    <div className="w-full h-full m-2">
+      {room && <StreamJoiner room={room} />}
+      {!room && (
+        <div className="flex items-center justify-center h-full">
+          <span className="text-white">Loading stream...</span>
+        </div>
+      )}
+      {error && (
+        <div className="text-red-500">
+          Error loading stream: {error.message}
+        </div>
+      )}
     </div>
   );
 };

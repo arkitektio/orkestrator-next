@@ -10,8 +10,8 @@ import Dependency from "./pages/Dependency";
 import Home from "./pages/Home";
 import Action from "./pages/Action";
 import Actions from "./pages/Actions";
-import Panel from "./pages/Panel";
-import Panels from "./pages/Panels";
+import Blok from "./pages/Blok";
+import Bloks from "./pages/Bloks";
 import Reservation from "./pages/Reservation";
 import Reservations from "./pages/Reservations";
 import Implementation from "./pages/Implementation";
@@ -45,8 +45,8 @@ const Module: React.FC<Props> = () => {
           <Route path="dashboards" element={<Dashboards />} />
           <Route path="dashboards/:id" element={<Dashboard />} />
           <Route path="memoryshelves/:id" element={<MemoryShelve />} />
-          <Route path="panels/:id" element={<Panel />} />
-          <Route path="panels" element={<Panels />} />
+          <Route path="bloks/:id" element={<Blok />} />
+          <Route path="bloks" element={<Bloks />} />
           <Route path="dependencies/:id" element={<Dependency />} />
           <Route path="implementations/:id" element={<Implementation />} />
           <Route path="agents/:id" element={<Agent />} />

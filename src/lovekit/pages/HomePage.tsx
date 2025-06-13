@@ -2,19 +2,12 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { ActionButton } from "@/components/ui/action";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import React from "react";
-import { useCreateVideoStreamMutation } from "../api/graphql";
 import { useNavigate } from "react-router-dom";
 import { AlpakaRoom } from "@/linkers";
 
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
-  const [createRoom] = useCreateVideoStreamMutation({
-    refetchQueries: ["Rooms"],
-  });
-
-  const navigate = useNavigate();
-
   const handleCreateRoom = async () => {
     alert("Creating room");
   };

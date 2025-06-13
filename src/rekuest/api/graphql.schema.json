@@ -671,12 +671,12 @@
       {
         "kind": "OBJECT",
         "name": "ActionDemand",
-        "description": null,
+        "description": "Input model for action demand.",
         "isOneOf": null,
         "fields": [
           {
             "name": "argMatches",
-            "description": "The demands for the action args and returns. This is used to identify the demand in the system.",
+            "description": null,
             "args": [],
             "type": {
               "kind": "LIST",
@@ -696,7 +696,7 @@
           },
           {
             "name": "description",
-            "description": "The description of the action. This can described the action and its purpose.",
+            "description": null,
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -708,7 +708,7 @@
           },
           {
             "name": "forceArgLength",
-            "description": "Require that the action has a specific number of args. This is used to identify the demand in the system.",
+            "description": null,
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -720,7 +720,7 @@
           },
           {
             "name": "forceReturnLength",
-            "description": "Require that the action has a specific number of returns. This is used to identify the demand in the system.",
+            "description": null,
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -732,7 +732,7 @@
           },
           {
             "name": "hash",
-            "description": "The hash of the action. This is used to identify the action in the system.",
+            "description": null,
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -744,7 +744,7 @@
           },
           {
             "name": "key",
-            "description": "The key of the action demand. This is used to identify the action in the system.",
+            "description": null,
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -760,7 +760,7 @@
           },
           {
             "name": "name",
-            "description": "The name of the action. This is used to identify the action in the system.",
+            "description": null,
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -772,7 +772,7 @@
           },
           {
             "name": "protocols",
-            "description": "The protocols that the action has to implement. This is used to identify the demand in the system.",
+            "description": null,
             "args": [],
             "type": {
               "kind": "LIST",
@@ -792,7 +792,7 @@
           },
           {
             "name": "returnMatches",
-            "description": "The demands for the action args and returns. This is used to identify the demand in the system.",
+            "description": null,
             "args": [],
             "type": {
               "kind": "LIST",
@@ -2328,7 +2328,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"c358d575-5a88-45a4-ba59-948172f4c742\"",
+            "defaultValue": "\"83839703-4516-4ac6-b6d2-447cd564e131\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -10848,12 +10848,12 @@
       {
         "kind": "OBJECT",
         "name": "PortMatch",
-        "description": null,
+        "description": "Port matching in action demands.",
         "isOneOf": null,
         "fields": [
           {
             "name": "at",
-            "description": "The index of the port to match. ",
+            "description": null,
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -10865,7 +10865,7 @@
           },
           {
             "name": "children",
-            "description": "List of child ports to match. ",
+            "description": null,
             "args": [],
             "type": {
               "kind": "LIST",
@@ -10885,7 +10885,7 @@
           },
           {
             "name": "identifier",
-            "description": "The identifier of the port to match. ",
+            "description": null,
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -10897,7 +10897,7 @@
           },
           {
             "name": "key",
-            "description": "The key of the port to match.",
+            "description": null,
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -10909,7 +10909,7 @@
           },
           {
             "name": "kind",
-            "description": "The kind of the port to match. ",
+            "description": null,
             "args": [],
             "type": {
               "kind": "ENUM",
@@ -10921,7 +10921,7 @@
           },
           {
             "name": "nullable",
-            "description": "Whether the port is nullable. ",
+            "description": null,
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -13735,7 +13735,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"eccaddbb-d354-4ef3-af58-bc4f687a540a\"",
+            "defaultValue": "\"5a8fcd3a-2b81-483a-a88e-dc559a3a4024\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -15157,7 +15157,7 @@
         "fields": [
           {
             "name": "hash",
-            "description": "The hash of the state.",
+            "description": null,
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -15169,7 +15169,7 @@
           },
           {
             "name": "key",
-            "description": "The key of the action demand. This is used to identify the action in the system.",
+            "description": null,
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -15185,7 +15185,7 @@
           },
           {
             "name": "matches",
-            "description": "The demands for the action args and returns. This is used to identify the demand in the system.",
+            "description": null,
             "args": [],
             "type": {
               "kind": "LIST",
@@ -15205,7 +15205,7 @@
           },
           {
             "name": "protocols",
-            "description": "The protocols that the action has to implement. This is used to identify the demand in the system.",
+            "description": null,
             "args": [],
             "type": {
               "kind": "LIST",

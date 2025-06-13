@@ -13,7 +13,7 @@ generates:
     config:
       withHooks: true
       reactApolloVersion: 3
-      apolloReactHooksImportFrom: "@/lib/lok/hooks"
+      apolloReactHooksImportFrom: "@/lib/lovekit/funcs"
   src/lovekit/graphql.schema.json:
     plugins:
       - "introspection"

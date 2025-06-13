@@ -12,28 +12,25 @@ export const TurretModule = buildModule({
   description: "Controls the turret objectives and their selection.",
   states: {
     objective: buildState({
-      current_objective: build.string(),
-      objective_options: build.array(
-        build.model({
-          label: build.string(),
-          value: build.string(),
-          description: build.string(),
-        }),
-      ),
+      keys: {
+        current_objective: build.string(),
+        objective_options: build.array(
+          build.model({
+            label: build.string(),
+            value: build.string(),
+            description: build.string(),
+          }),
+        ),
+      },
     }),
   },
   actions: {
-    set: buildAction(
-      {
+    set: buildAction({
+      args: {
         objective: build.string(),
       },
-      {
-        
-      },
-      { 
-        name: "Change Objective"
-      }
-    ),
+      name: "Change Objective",
+    }),
   },
 });
 

@@ -147,18 +147,18 @@ export const buildActionManifest = <
   T extends Record<string, StatePort>,
   R extends Record<string, StatePort>,
 >(
-  args: T,
-  returns: R,
+  args?: T,
+  returns?: R,
   options?: ActionOptions,
-): ActionDemandInput => {
-  const argMatches = Object.entries(args).map(([key, value]) => {
+): Omit<ActionDemandInput, "key"> => {
+  const argMatches = Object.entries(args || {}).map(([key, value]) => {
     return {
       key: key,
       kind: value.kind,
     };
   });
 
-  const returnMatches = Object.entries(returns).map(([key, value]) => {
+  const returnMatches = Object.entries(returns || {}).map(([key, value]) => {
     return {
       key: key,
       kind: value.kind,
@@ -168,17 +168,19 @@ export const buildActionManifest = <
   return {
     hash: options?.forceHash,
     name: options?.name,
-    interface: options?.interface,
     argMatches: argMatches,
     returnMatches: returnMatches,
   };
 };
 
+export type BuildStateOptions<T extends Record<string, StatePort>> = {
+  keys: T;
+} & StateOptions;
+
 export const buildState = <T extends Record<string, StatePort>>(
-  ports: T,
-  options?: StateOptions,
+  options: BuildStateOptions<T>,
 ): StateDefinition<zod.ZodObject<{ [K in keyof T]: T[K]["zodType"] }>> => {
-  const shape = Object.entries(ports).reduce(
+  const shape = Object.entries(options.keys).reduce(
     (acc, [key, value]) => {
       acc[key] = value.zodType;
       return acc;
@@ -188,22 +190,28 @@ export const buildState = <T extends Record<string, StatePort>>(
 
   return {
     ports: zod.object(shape) as any,
-    demand: statePortsToDemand(ports, options),
+    demand: statePortsToDemand(options.keys, options),
   };
 };
+
+export type BuildActionOptions<
+  T extends Record<string, StatePort>,
+  R extends Record<string, StatePort>,
+> = {
+  args?: T;
+  returns?: R;
+} & ActionOptions;
 
 export const buildAction = <
   T extends Record<string, StatePort>,
   R extends Record<string, StatePort>,
 >(
-  args: T = {} as T,
-  returns: R = {} as R,
-  options?: ActionOptions,
+  options: BuildActionOptions<T, R>,
 ): ActionDefinition<
   zod.ZodObject<{ [K in keyof T]: T[K]["zodType"] }>,
   zod.ZodObject<{ [K in keyof R]: R[K]["zodType"] }>
 > => {
-  const argsShape = Object.entries(args).reduce(
+  const argsShape = Object.entries(options.args || {}).reduce(
     (acc, [key, value]) => {
       acc[key] = value.zodType;
       return acc;
@@ -211,7 +219,7 @@ export const buildAction = <
     {} as { [key: string]: zod.ZodTypeAny },
   );
 
-  const returnsShape = Object.entries(returns).reduce(
+  const returnsShape = Object.entries(options.returns || {}).reduce(
     (acc, [key, value]) => {
       acc[key] = value.zodType;
       return acc;
@@ -222,7 +230,7 @@ export const buildAction = <
   return {
     args: zod.object(argsShape) as any,
     returns: zod.object(returnsShape) as any,
-    demand: buildActionManifest(args, returns, options),
+    demand: buildActionManifest(options.args, options.returns, options),
   };
 };
 
@@ -237,7 +245,7 @@ export type ActionOptions = {
 };
 
 export type StateOptions = {
-  forceHash: string;
+  forceHash?: string;
 };
 
 export type ActionDefinition<
@@ -246,7 +254,7 @@ export type ActionDefinition<
 > = {
   args: T;
   returns: R;
-  demand: ActionDemandInput;
+  demand: Omit<ActionDemandInput, "key">;
 };
 
 export type MetaApplication<

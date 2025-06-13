@@ -5,9 +5,7 @@ import {
   buildModule,
   buildState,
 } from "@/hooks/use-metaapp";
-import {
-  AsyncStageRender
-} from "@/mikro-next/components/render/StageRender";
+import { AsyncStageRender } from "@/mikro-next/components/render/StageRender";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpIcon } from "lucide-react";
 
 export const StageControllerModule = buildModule({
@@ -15,29 +13,36 @@ export const StageControllerModule = buildModule({
   description: "Controls the stage positioner and grid acquisition.",
   states: {
     positioner: buildState({
-      stage: build.structure("@mikro/stage"),
-      position_x: build.float(),
-      position_y: build.float(),
-      position_z: build.float(),
+      keys: {
+        stage: build.structure("@mikro/stage"),
+        position_x: build.float(),
+        position_y: build.float(),
+        position_z: build.float(),
+      },
     }),
   },
   actions: {
     moveY: buildAction({
-      y: build.int(),
+      args: {
+        y: build.int(),
+      },
+      name: "Move Y",
     }),
     moveX: buildAction({
-      x: build.int(),
-    }),
-    reset_stage: buildAction(
-      {},
-      {},
-      {
-        name: "Reset Stage",
+      args: {
+        x: build.int(),
       },
-    ),
+      name: "Move X",
+    }),
+    reset_stage: buildAction({
+      name: "Reset Stage",
+    }),
     acquire_grid: buildAction({
-      grid_cols: build.integer("Number of columns in the grid"),
-      grid_rows: build.integer("Number of rows in the grid"),
+      args: {
+        grid_cols: build.integer("Number of columns in the grid"),
+        grid_rows: build.integer("Number of rows in the grid"),
+      },
+      name: "Acquire Grid",
     }),
   },
 });

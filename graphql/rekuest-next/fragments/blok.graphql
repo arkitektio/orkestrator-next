@@ -1,11 +1,35 @@
+fragment PortMatch on PortMatch {
+  at
+  key
+  kind
+  identifier
+  nullable
+  children {
+    at
+    key
+    kind
+    identifier
+    nullable
+  }
+}
+
 fragment Blok on Blok {
   id
   name
   actionDemands {
     key
+    argMatches {
+      ...PortMatch
+    }
+    returnMatches {
+      ...PortMatch
+    }
   }
   stateDemands {
     key
+    matches {
+      ...PortMatch
+    }
   }
   materializedBloks {
     ...MaterializedBlok

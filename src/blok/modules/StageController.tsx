@@ -34,15 +34,14 @@ export const StageControllerModule = buildModule({
       },
       name: "Move X",
     }),
-    reset_stage: buildAction({
-      name: "Reset Stage",
-    }),
     acquire_grid: buildAction({
       args: {
-        grid_cols: build.integer("Number of columns in the grid"),
-        grid_rows: build.integer("Number of rows in the grid"),
+        minPosX: build.int(),
+        maxPosX: build.int(),
+        minPosY: build.int(),
+        maxPosY: build.int(),
       },
-      name: "Acquire Grid",
+      name: "Tile Scan",
     }),
   },
 });
@@ -76,7 +75,7 @@ export const StageController = () => {
       </div>
       <div className="absolute top-4 right-3 bg-gray-900 p-2 rounded-md px-3 flex flex-row gap-2">
         <Button
-          onClick={() => acquireGrid({ grid_cols: 3, grid_rows: 3 })}
+          onClick={() => acquireGrid({ minPosX: 1, maxPosX: 1000, minPosY: 1, maxPosY: 1000 })}
           variant={"outline"}
         >
           Acquire Grid

@@ -51,7 +51,6 @@ export const useAsyncChunk = (props: {
 
     let [min, max] = mapDTypeToMinMax(dtype);
 
-    console.log(chunk.data);
 
     if (chunk.data instanceof Uint8Array) {
       textureData = array.data;
@@ -89,7 +88,6 @@ export const useAsyncChunk = (props: {
       type = THREE.FloatType;
     }
 
-    console.log("Texture data", textureData);
 
     const texture = new THREE.DataTexture(
       textureData,
@@ -100,7 +98,6 @@ export const useAsyncChunk = (props: {
     );
 
     texture.needsUpdate = true;
-    console.log("RESEEÉ");
     setTexture({ texture, min: min, max: max });
   };
 
@@ -148,14 +145,7 @@ export const useAsyncChunk = (props: {
   useEffect(() => {
     if (shouldRender) {
       let abortController = new AbortController();
-      console.log(
-        "Rendering chunk",
-        props.chunk_coords,
-        props.chunk_shape,
-        props.c,
-        props.t,
-        props.z,
-      );
+      
       calculateImageData(abortController.signal);
 
       return () => {

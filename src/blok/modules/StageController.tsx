@@ -7,6 +7,8 @@ import {
 } from "@/hooks/use-metaapp";
 import { AsyncStageRender } from "@/mikro-next/components/render/StageRender";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpIcon } from "lucide-react";
+import * as THREE from "three";
+
 
 export const StageControllerModule = buildModule({
   name: "StageController",
@@ -65,14 +67,26 @@ export const StageController = () => {
     return <div>Loading</div>;
   }
 
+  const onRectangleDrawn = (start: THREE.Vector3, end: THREE.Vector3) => {
+    // Handle rectangle drawn event
+    acquireGrid({
+      minPosX: start.x,
+      maxPosX: end.x,
+      minPosY: start.y,
+      maxPosY: end.y,
+    });
+  };
+
+
+
   return (
     <div className="relative w-full h-full">
-      <AsyncStageRender stageId={position.stage} />
+      <AsyncStageRender stageId={position.stage} onRectangleDrawn={onRectangleDrawn}/>
 
-      <div className="absolute top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%] bg-gray-900 p-2 rounded-full px-3">
-        {position.position_y}y {position.position_x}x {position.position_z}z{" "}
+      {latestEvent?.message && <div className="absolute top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%] bg-gray-900 p-2 rounded-full px-3">
+        
         {latestEvent?.message}
-      </div>
+      </div>}
       <div className="absolute top-4 right-3 bg-gray-900 p-2 rounded-md px-3 flex flex-row gap-2">
         <Button
           onClick={() => acquireGrid({ minPosX: 1, maxPosX: 1000, minPosY: 1, maxPosY: 1000 })}

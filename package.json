@@ -167,6 +167,7 @@
     "hls.js": "^1.5.12",
     "idb": "^8.0.2",
     "input-otp": "^1.2.4",
+    "leva": "^0.10.0",
     "livekit-client": "^2.3.2",
     "localforage": "^1.10.0",
     "lucide-react": "^0.488.0",

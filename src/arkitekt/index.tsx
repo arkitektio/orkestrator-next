@@ -100,7 +100,7 @@ export const useArkitektFakts = (key?: undefined | string) => {
       return result;
     }
 
-    if ((fakts as any)[key]) {
+    if (!(key in (fakts as any))) {
       throw new Error(`Missing fakts.${key}`);
     }
     return (fakts as any)[key];

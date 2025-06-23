@@ -29,14 +29,14 @@ before you will be able to open it. After installation you can do this by runnin
 xattr -c /Applications/orkestrator-next.app # or wherever you installed it
 ```
 
-This willl remove the quarantine attribute from the application and you should be able to open it.
+This will remove the quarantine attribute from the application and you should be able to open it.
 We are sorry for the inconvenience.
 
 ### Windows
 
 Just download the installer and run it. It should install the application and create a desktop shortcut for you.
-Windows might ask you if you really want to install the application, because it is not signed. YOu can safely
-ignore this warnign and proceed with the installation. Follow the instructions [here](https://www.minitool.com/backup-tips/windows-protected-your-pc.html)
+Windows might ask you if you really want to install the application, because it is not signed. You can safely
+ignore this warning and proceed with the installation. Follow the instructions [here](https://www.minitool.com/backup-tips/windows-protected-your-pc.html)
 
 # Roadmap
 
@@ -77,7 +77,7 @@ Before the new version of Orkestrator can be merged into the main repository, th
 
 - [x] Establish new Workflow UI + Engine (typesafe, wizard, ...) (looks nice)
 - [x] Move to Fluss Next
-- [x] More tighlty integrate Schedulers in UI
+- [x] More tightly integrate Schedulers in UI
 - [ ] Allow Resource Management in UI ( provisional UI for resource management)
 
 ### Rekuest
@@ -94,7 +94,7 @@ Before the new version of Orkestrator can be merged into the main repository, th
 
 ### Kraph
 
-- [x] Establish Kraph as the defactor "Knowledge Graph" for Arkitekt Serivces
+- [x] Establish Kraph as the de facto "Knowledge Graph" for Arkitekt Services
 - [x] Create Knowledge Widgets
 - [ ] Allow simple creation of new Graphs
 - [ ] 

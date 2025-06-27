@@ -1,4 +1,4 @@
-import { Arkitekt, useMikro } from "@/arkitekt/Arkitekt";
+import { Arkitekt, useMikro } from "@/lib/arkitekt/Arkitekt";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Fakts } from "@/lib/fakts";

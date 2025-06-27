@@ -1,4 +1,4 @@
-import { useFluss } from "@/arkitekt/Arkitekt";
+import { useFluss } from "@/lib/arkitekt/Arkitekt";
 import { useService } from "@/arkitekt/hooks";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { gql } from "@apollo/client";

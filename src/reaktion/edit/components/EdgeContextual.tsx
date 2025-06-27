@@ -41,7 +41,7 @@ import {
 } from "../../types";
 import { useEditRiver } from "../context";
 import { ContextualContainer } from "./ContextualContainer";
-import { useRekuest } from "@/arkitekt/Arkitekt";
+import { useRekuest } from "@/lib/arkitekt/Arkitekt";
 
 export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   const form = useForm({

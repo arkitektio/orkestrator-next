@@ -1,4 +1,4 @@
-import { Arkitekt } from "@/arkitekt/Arkitekt";
+import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,14 +18,18 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { manifest } from "@/constants";
-import { introspectUrl } from "@/lib/fakts";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { NotLoggedIn } from "../components/fallbacks/NotLoggedIn";
 import { NotConnected } from "../components/fallbacks/NotConnected";
+import { discover } from "@/lib/arkitekt/fakts/discover";
+import { FaktsEndpoint } from "@/lib/arkitekt/fakts/endpointSchema";
+import { useMeQuery } from "@/lok-next/api/graphql";
 
 export const ConnectButton = () => {
-  const { registeredEndpoints, load, remove } = Arkitekt.useConnect();
+  const connect = Arkitekt.useConnect();
+
+  const [endpoints, setEndpoints] = React.useState<FaktsEndpoint[]>([]);
 
   const form = useForm({
     defaultValues: {
@@ -36,12 +40,16 @@ export const ConnectButton = () => {
   const onSubmit = (data: any) => {
     console.log(data);
 
-    introspectUrl(data.url, 2000, new AbortController()).then((endpoint) => {
-      load({
+    const controller = new AbortController();
+
+    discover({
+      url: data.url,
+      timeout: 2000,
+      controller: controller,
+    }).then((endpoint) => {
+      connect({
         endpoint,
-        manifest: manifest,
-        requestedClientType: "desktop",
-        requestPublic: true,
+        controller,
       });
     });
   };
@@ -67,15 +75,13 @@ export const ConnectButton = () => {
           </div>
 
           <div className="flex flex-col gap-2 min-[400px]:flex-row">
-            {registeredEndpoints.map((endpoint) => (
+            {endpoints.map((endpoint) => (
               <Card
                 key={endpoint.base_url}
                 onClick={() =>
-                  load({
+                  connect({
                     endpoint,
-                    manifest: manifest,
-                    requestedClientType: "desktop",
-                    requestPublic: true,
+                    controller: new AbortController(),
                   })
                 }
                 className="cursor-pointer hover:bg-accent-300"
@@ -135,84 +141,6 @@ export const ConnectButton = () => {
         </div>
       </div>
     </div>
-  );
-};
-
-export const LoginButton = () => {
-  const { login } = Arkitekt.useLogin();
-  const { remove, fakts } = Arkitekt.useConnect();
-
-  return (
-    <>
-      <div className="flex flex-col w-full h-full flex items-center justify-center">
-        <div className="flex flex-col">
-          <div className="space-y-4">
-            <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl  text-foreground">
-              {" "}
-              Welcome to{" "}
-              <Sheet>
-                <SheetTrigger asChild>
-                  <div className="text-4xl sm:text-5xl md:text-6xl text-primary cursor-pointer inline">
-                    {" "}
-                    {fakts?.self?.deployment_name}
-                  </div>
-                </SheetTrigger>
-                <SheetContent>
-                  <SheetHeader>
-                    <SheetTitle>Debug Info</SheetTitle>
-
-                    <SheetDescription className="space-y-4">
-                      <div className="space-y-4">
-                        <p className=" dark:text-gray-400">
-                          {" "}
-                          These are the registered services on your server.
-                        </p>
-
-                        <ServicesInfo />
-                      </div>
-                      <div className="space-y-4">
-                        <p className=" dark:text-gray-400">
-                          {" "}
-                          Look at the fakts configured for this service
-                        </p>
-                        <pre className="space-y-4">
-                          {JSON.stringify(fakts, null, 2)}
-                        </pre>
-                      </div>
-                    </SheetDescription>
-                  </SheetHeader>
-                </SheetContent>
-              </Sheet>{" "}
-            </h1>
-            {fakts?.self?.welcome_message && (
-              <p className="max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-                {fakts?.self?.welcome_message}
-              </p>
-            )}
-
-            <p className="max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-              You need to login to access the features of this server.
-            </p>
-
-            <div className="flex items-center space-x-2">
-              <Button onClick={() => login()} className="w-60">
-                Login
-              </Button>
-
-              <Button
-                onClick={() => {
-                  remove();
-                }}
-                variant={"ghost"}
-                className="text-foreground"
-              >
-                Disconnect form server
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
   );
 };
 
@@ -319,8 +247,12 @@ export const ServicesInfo = () => {
 };
 
 export const Home = () => {
-  const { login, user, logout } = Arkitekt.useLogin();
-  const { remove, fakts } = Arkitekt.useConnect();
+  const fakts = Arkitekt.useFakts();
+  const disconnect = Arkitekt.useDisconnect();
+
+  const { data, error } = useMeQuery({
+    fetchPolicy: "cache-and-network",
+  });
 
   return (
     <>
@@ -329,7 +261,7 @@ export const Home = () => {
           <div className="space-y-4">
             <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl text-foreground">
               {" "}
-              Hi {user?.preferred_username} :)
+              Hi {data?.me?.username} :)
             </h1>
             <p className="max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
               You are currently logged in to {fakts?.self?.deployment_name}. You
@@ -337,20 +269,9 @@ export const Home = () => {
             </p>
 
             <div className="flex items-center space-x-2">
-              {!user ? (
-                <Button onClick={() => login()} className="w-60">
-                  Login
-                </Button>
-              ) : (
-                <Button onClick={() => logout()} className="w-60">
-                  Logout
-                </Button>
-              )}
-
               <Button
                 onClick={() => {
-                  logout();
-                  remove();
+                  disconnect();
                 }}
                 variant={"ghost"}
                 className="text-foreground"
@@ -374,10 +295,7 @@ export const Home = () => {
 function Page() {
   return (
     <>
-      <Arkitekt.Guard
-        notConnectedFallback={<NotConnected />}
-        notLoggedInFallback={<NotLoggedIn />}
-      >
+      <Arkitekt.Guard notConnectedFallback={<NotConnected />}>
         <Home />
       </Arkitekt.Guard>
     </>

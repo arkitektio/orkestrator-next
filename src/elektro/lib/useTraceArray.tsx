@@ -1,4 +1,4 @@
-import { Arkitekt, useElektro } from "@/arkitekt/Arkitekt";
+import { Arkitekt, useElektro } from "@/lib/arkitekt/Arkitekt";
 import {
   AccessCredentialsFragment,
   RequestAccessDocument,

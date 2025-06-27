@@ -1,4 +1,4 @@
-import { useRekuest } from "@/arkitekt/Arkitekt";
+import { useRekuest } from "@/lib/arkitekt/Arkitekt";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";

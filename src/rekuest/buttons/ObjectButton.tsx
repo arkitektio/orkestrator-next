@@ -4,7 +4,7 @@ import {
   defaultRegistry,
   Structure,
 } from "@/actions/action-registry";
-import { useArkitekt } from "@/arkitekt/provider";
+import { useArkitekt } from "@/lib/arkitekt/provider";
 import { Button } from "@/components/ui/button";
 import {
   Command,

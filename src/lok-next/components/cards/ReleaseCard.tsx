@@ -1,19 +1,7 @@
-import {
-  LokApp,
-  LokClient,
-  LokRelease,
-  LokService,
-  LokServiceInstance,
-} from "@/linkers";
-import { MateFinder } from "../../../mates/types";
-import {
-  BackendType,
-  ListClientFragment,
-  ListReleaseFragment,
-  ListServiceFragment,
-  ListServiceInstanceFragment,
-} from "../../api/graphql";
 import { Card } from "@/components/ui/card";
+import { LokRelease } from "@/linkers";
+import { MateFinder } from "../../../mates/types";
+import { ListReleaseFragment } from "../../api/graphql";
 
 interface Props {
   item: ListReleaseFragment;

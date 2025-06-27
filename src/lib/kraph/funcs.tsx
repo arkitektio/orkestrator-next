@@ -1,4 +1,4 @@
-import { useKraph } from "@/arkitekt/Arkitekt";
+import { useKraph } from "@/lib/arkitekt/Arkitekt";
 import {
   LazyQueryHookOptions,
   MutationHookOptions,

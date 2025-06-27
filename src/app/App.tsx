@@ -1,10 +1,9 @@
 import Hero from "@/app/pages/Hero";
-import { Arkitekt } from "@/arkitekt/Arkitekt";
+import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import KabinetModule from "@/kabinet/KabinetModule";
-import { Callback } from "@/lib/herre";
 import LokNextModule from "@/lok-next/LokNextModule";
 import { Stash } from "@/lok-next/components/stash/Stash";
 import MikroNextModule from "@/mikro-next/MikroNextModule";
@@ -28,10 +27,7 @@ import LovekitModule from "@/lovekit/LovekitModule";
 // We provide two main routers, one for the public routes, and one for the private routes.
 export const protect = (component: React.ReactNode) => {
   return (
-    <Arkitekt.Guard
-      notLoggedInFallback={<NotLoggedIn />}
-      notConnectedFallback={<NotConnected />}
-    >
+    <Arkitekt.Guard notConnectedFallback={<NotConnected />}>
       {component}
     </Arkitekt.Guard>
   );
@@ -48,7 +44,6 @@ function App() {
         <BackNavigationErrorCatcher>
           <Toaster />
           <Routes>
-            <Route path="callback" element={<Callback />} />{" "}
             {/* This is the callback route for the herre provider, and needs to be publicalyl available. (Represents Oauth2 Callback)*/}
             <Route index element={<Hero />} />
             <Route path="mikro/*" element={protect(<MikroNextModule />)} />

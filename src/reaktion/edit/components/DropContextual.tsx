@@ -1,4 +1,4 @@
-import { useRekuest } from "@/arkitekt/Arkitekt";
+import { useRekuest } from "@/lib/arkitekt/Arkitekt";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Card } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
@@ -337,7 +337,9 @@ export const TargetDropContextual = (props: {
                 onClick={() => onNodeClick(node.id)}
                 className={clsx(
                   "px-2 py-1 border",
-                  node.scope == ActionScope.Global ? "" : "dark:border-blue-200",
+                  node.scope == ActionScope.Global
+                    ? ""
+                    : "dark:border-blue-200",
                 )}
               >
                 {node.name}
@@ -484,7 +486,9 @@ export const SourceDropContextual = (props: {
                 onClick={() => onNodeClick(action.id)}
                 className={clsx(
                   "px-2 py-1 border",
-                  action.scope == ActionScope.Global ? "" : "dark:border-blue-200",
+                  action.scope == ActionScope.Global
+                    ? ""
+                    : "dark:border-blue-200",
                 )}
               >
                 {action.name}

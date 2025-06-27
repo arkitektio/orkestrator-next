@@ -1,4 +1,4 @@
-import { Arkitekt, useMikro } from "@/arkitekt/Arkitekt";
+import { Arkitekt, useMikro } from "@/lib/arkitekt/Arkitekt";
 import { useService } from "@/arkitekt/hooks";
 import {
   AccessCredentialsFragment,

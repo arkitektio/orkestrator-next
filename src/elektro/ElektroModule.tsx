@@ -1,4 +1,4 @@
-import { Guard } from "@/arkitekt/Arkitekt";
+import { Guard } from "@/lib/arkitekt/Arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import React from "react";
 import { Route, Routes } from "react-router";
@@ -24,12 +24,15 @@ export const ElektroModule: React.FC<Props> = (props) => {
       <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route path="traces/:id" element={<TracePage />} />
-          <Route path="simulations/:id" element={<SimulationPage/>} />
-          <Route path="experiments/:id" element={<ExperimentPage/>} />
+          <Route path="simulations/:id" element={<SimulationPage />} />
+          <Route path="experiments/:id" element={<ExperimentPage />} />
           <Route path="recordings/:id" element={<RecordingPage />} />
-          <Route path="stimulus/:id" element={<StimulusPage/>} />
-          <Route path="neuronmodels/:id" element={<NeuronModelPage/>} />
-          <Route path="modelcollections/:id" element={<ModelCollectionPage/>} />
+          <Route path="stimulus/:id" element={<StimulusPage />} />
+          <Route path="neuronmodels/:id" element={<NeuronModelPage />} />
+          <Route
+            path="modelcollections/:id"
+            element={<ModelCollectionPage />}
+          />
           <Route path="traces" element={<TracesPage />} />
           <Route path="simulations" element={<SimulationsPage />} />
           <Route path="experiments" element={<ExperimentsPage />} />

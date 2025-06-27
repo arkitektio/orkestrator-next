@@ -1,4 +1,4 @@
-import { useLivekit } from "@/arkitekt/Arkitekt";
+import { useLivekit } from "@/lib/arkitekt/Arkitekt";
 import {
   EnsuredStreamFragment,
   useCreateVideoStreamMutation,

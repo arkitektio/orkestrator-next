@@ -2,7 +2,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import CancelablePromise from "cancelable-promise";
 import React, { ComponentType, useRef } from "react";
 import { DialogContext } from "./DialogContext";
-import { Guard } from "@/arkitekt/Arkitekt";
+import { Guard } from "@/lib/arkitekt/Arkitekt";
 
 export type Submit<T extends {} | undefined = undefined> = {
   submit: (endState: T) => void;

@@ -1,4 +1,8 @@
-import { Arkitekt, useKraph } from "@/arkitekt/Arkitekt";
+import {
+  Arkitekt,
+  useDatalayerEndpoint,
+  useKraph,
+} from "@/lib/arkitekt/Arkitekt";
 import {
   PresignedPostCredentialsFragment,
   RequestUploadDocument,
@@ -110,15 +114,11 @@ const uploadToStore = async (
 
 export const useKraphUpload = () => {
   const client = useKraph();
-  const fakts = Arkitekt.useFakts();
+  const datalayerEndpoint = useDatalayerEndpoint();
 
   const upload = useCallback(
     async (file: File) => {
       if (!client) {
-        throw Error("No client configured");
-      }
-      const endPointUrl = fakts?.datalayer?.endpoint_url;
-      if (!endPointUrl) {
         throw Error("No client configured");
       }
 
@@ -138,9 +138,9 @@ export const useKraphUpload = () => {
 
       let z = data.data.requestUpload;
 
-      return await uploadToStore(file, endPointUrl, z, {});
+      return await uploadToStore(file, datalayerEndpoint, z, {});
     },
-    [client, fakts],
+    [client, datalayerEndpoint],
   );
 
   return upload;

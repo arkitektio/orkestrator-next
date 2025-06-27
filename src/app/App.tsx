@@ -44,7 +44,6 @@ function App() {
         <BackNavigationErrorCatcher>
           <Toaster />
           <Routes>
-            {/* This is the callback route for the herre provider, and needs to be publicalyl available. (Represents Oauth2 Callback)*/}
             <Route index element={<Hero />} />
             <Route path="mikro/*" element={protect(<MikroNextModule />)} />
             <Route path="elektro/*" element={protect(<ElektroModule />)} />

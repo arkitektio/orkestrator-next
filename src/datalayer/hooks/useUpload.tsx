@@ -153,7 +153,6 @@ export type FileUploadOptions = {
 
 export const useBigFileUpload = () => {
   const client = useMikro();
-  const fakts = Arkitekt.useFakts();
   const datalayerEndpoint = useDatalayerEndpoint();
 
   const upload = useCallback(
@@ -183,7 +182,7 @@ export const useBigFileUpload = () => {
 
       return await uploadToStore(file, datalayerEndpoint, z, options);
     },
-    [client, fakts],
+    [client, datalayerEndpoint],
   );
 
   return upload;

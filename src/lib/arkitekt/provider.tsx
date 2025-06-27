@@ -1,4 +1,3 @@
-import { HerreProps, HerreProvider, Token, useHerre } from "@/lib/herre";
 import { Ward } from "@/rekuest/widgets/WidgetsContext";
 import { ApolloClient } from "@apollo/client";
 import {
@@ -8,22 +7,18 @@ import {
   useEffect,
   useState,
 } from "react";
+import { resolveWorkingAlias } from "./alias/resolve";
+import { FaktsEndpoint } from "./fakts/endpointSchema";
 import {
   ActiveFakts,
   ActiveFaktsSchema,
   Alias,
-  AuthFakt,
   Instance,
 } from "./fakts/faktsSchema";
-import { start } from "./fakts/start";
-import { resolve } from "path";
-import { resolveWorkingAlias } from "./alias/resolve";
 import { flow } from "./fakts/flow";
 import { Manifest } from "./fakts/manifestSchema";
-import { FaktsEndpoint } from "./fakts/endpointSchema";
-import { login } from "./oauth/login";
-import { manifest } from "@/constants";
 import { TokenResponse, TokenResponseSchema } from "./fakts/tokenSchema";
+import { login } from "./oauth/login";
 
 export type AvailableService = {
   key: string;

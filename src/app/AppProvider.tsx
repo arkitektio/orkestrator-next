@@ -1,5 +1,5 @@
 import { AlpakaWard } from "@/alpaka/AlpakaWard";
-import { Arkitekt, Guard } from "@/arkitekt/Arkitekt";
+import { Arkitekt, Guard } from "@/lib/arkitekt/Arkitekt";
 import { CommandMenu } from "@/command/Menu";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -10,7 +10,6 @@ import { baseName, Router, WELL_KNOWN_ENDPOINTS } from "@/constants";
 import { ElektroWard } from "@/elektro/ElektroWard";
 import { KabinetWard } from "@/kabinet/KabinetWard";
 import { KraphWard } from "@/kraph/KraphWard";
-import { WellKnownDiscovery } from "@/lib/fakts";
 import { MikroNextWard } from "@/mikro-next/MikroNextWard";
 import ImageDisplay from "@/mikro-next/displays/ImageDisplay";
 import { ThemeProvider } from "@/providers/ThemeProvider";
@@ -101,9 +100,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
             <Arkitekt.Provider>
               <TooltipProvider>
                 <DisplayProvider registry={displayRegistry}>
-                  <WellKnownDiscovery
-                    endpoints={WELL_KNOWN_ENDPOINTS} // this configures fakts to use the well known endpoints in order to discover the other services
-                  />
                   <SelectionProvider>
                     <CommandProvider>
                       <SmartProvider>

@@ -1,4 +1,4 @@
-import { Arkitekt, Guard } from "@/arkitekt/Arkitekt";
+import { Arkitekt, Guard } from "@/lib/arkitekt/Arkitekt";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -83,33 +83,30 @@ export const matchIcon = (key: string) => {
  * only modules that are available to the user are shown. See the example below.
  */
 const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
-  const { logout } = Arkitekt.useLogin();
-  const { remove, fakts } = Arkitekt.useConnect();
+  const disconnect = Arkitekt.useDisconnect();
   const { debug, setDebug } = useDebug();
   const services = Arkitekt.useServices();
 
   const linkChildren =
-    (fakts &&
-      services.map((s) => {
-        if (s.key == "self") return null;
-        if (s.key == "datalayer") return null;
-        if (s.key == "livekit") return null;
-        return (
-          <DroppableNavLink key={s.key} to={`/${s.key}`}>
-            {({ isActive }) => (
-              <Tooltip>
-                <TooltipTrigger>
-                  <NavigationMenuLink active={isActive}>
-                    {matchIcon(s.key)}
-                  </NavigationMenuLink>
-                </TooltipTrigger>
-                <TooltipContent side="right">{s.key}</TooltipContent>
-              </Tooltip>
-            )}
-          </DroppableNavLink>
-        );
-      })) ||
-    [];
+    services.map((s) => {
+      if (s.key == "self") return null;
+      if (s.key == "datalayer") return null;
+      if (s.key == "livekit") return null;
+      return (
+        <DroppableNavLink key={s.key} to={`/${s.key}`}>
+          {({ isActive }) => (
+            <Tooltip>
+              <TooltipTrigger>
+                <NavigationMenuLink active={isActive}>
+                  {matchIcon(s.key)}
+                </NavigationMenuLink>
+              </TooltipTrigger>
+              <TooltipContent side="right">{s.key}</TooltipContent>
+            </Tooltip>
+          )}
+        </DroppableNavLink>
+      );
+    }) || [];
 
   return (
     <NavigationMenu
@@ -164,9 +161,9 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
                 <Button
                   variant="outline"
                   className="flex-1"
-                  onClick={() => remove()}
+                  onClick={() => disconnect()}
                 >
-                  Logout
+                  Disconnect
                 </Button>{" "}
                 <ModeToggle />
               </div>

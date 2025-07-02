@@ -1,5 +1,5 @@
-import { ArkitektGuard } from "@/arkitekt";
-import { Arkitekt, Guard } from "@/arkitekt/Arkitekt";
+import { ArkitektGuard } from "@/lib/arkitekt";
+import { Arkitekt, Guard } from "@/lib/arkitekt/Arkitekt";
 import { EntityOverlay } from "@/kraph/overlays/EntityOverlay";
 import { MeasurementOverlay } from "@/kraph/overlays/MeasurementOverlay";
 import { Structure } from "@/types";

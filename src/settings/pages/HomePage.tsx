@@ -1,4 +1,4 @@
-import { Arkitekt } from "@/arkitekt/Arkitekt";
+import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
 import { SwitchField } from "@/components/fields/SwitchField";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -13,6 +13,9 @@ export type IRepresentationScreenProps = {};
 const Page: React.FC<IRepresentationScreenProps> = () => {
   const { setSettings, settings } = useSettings();
   const fakts = Arkitekt.useFakts();
+
+  const services = Arkitekt.useServices();
+  const unresolvedServices = Arkitekt.useUnresolvedServices();
 
   const form = useForm({
     defaultValues: settings,
@@ -70,6 +73,27 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
           />
         </form>
       </Form>
+
+      {services.map((service) => {
+        return (
+          <div key={service.key} className="p-4">
+            <h2 className="text-2xl font-bold">{service.key}</h2>
+            <pre className="text-sm text-gray-300">
+              {JSON.stringify(service, null, 2)}
+            </pre>
+          </div>
+        );
+      })}
+      {unresolvedServices.map((service) => {
+        return (
+          <div key={service.key} className="p-4 bg-red-800">
+            <h2 className="text-2xl font-bold">{service.key}</h2>
+            <pre className="text-sm text-gray-300">
+              {JSON.stringify(service, null, 2)}
+            </pre>
+          </div>
+        );
+      })}
     </PageLayout>
   );
 };

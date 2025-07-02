@@ -1,7 +1,7 @@
+import { Card } from "@/components/ui/card";
 import { LokClient, LokUser } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
 import { ListClientFragment } from "../../api/graphql";
-import { Card } from "@/components/ui/card";
 
 interface Props {
   item: ListClientFragment;

@@ -4,7 +4,7 @@ import {
   defaultRegistry,
   Structure,
 } from "@/actions/action-registry";
-import { useArkitekt } from "@/arkitekt/provider";
+import { useArkitekt } from "@/lib/arkitekt/provider";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -527,7 +527,7 @@ export const useAction = (props: { action: Action; state: ActionState }) => {
           setProgress(p);
         },
         abortSignal: newController.signal,
-        services: app.clients,
+        services: app.connection?.clients || {},
         state: props.state,
       });
       setController(null);

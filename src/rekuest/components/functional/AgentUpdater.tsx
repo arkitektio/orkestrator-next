@@ -1,4 +1,4 @@
-import { useRekuest } from "@/arkitekt/Arkitekt";
+import { useRekuest } from "@/lib/arkitekt/Arkitekt";
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { ReturnsContainer } from "@/rekuest/widgets/tailwind";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
@@ -16,17 +16,16 @@ import {
   WatchAgentsSubscriptionVariables,
   WatchAssignationEventsSubscriptionVariables,
   WatchAssignationsDocument,
-  WatchAssignationsSubscription
+  WatchAssignationsSubscription,
 } from "../../api/graphql";
 
-
 export const AgentToatser = (props: { id: string }) => {
-  const {data} = useAgentQuery({})
-
+  const { data } = useAgentQuery({});
 
   return (
     <div className="h-full relative w-full overflow-hidden group p-2">
-      {data?.agent?.name} is now {data?.agent.connected ? "connected" : "disconnected"}
+      {data?.agent?.name} is now{" "}
+      {data?.agent.connected ? "connected" : "disconnected"}
     </div>
   );
 };
@@ -39,10 +38,7 @@ export const AgentUpdater = (props: {}) => {
     if (client) {
       console.log("Subscribing to Postman Agents");
       const subscription = client
-        ?.subscribe<
-          WatchAgentsSubscription,
-          WatchAgentsSubscriptionVariables
-        >({
+        ?.subscribe<WatchAgentsSubscription, WatchAgentsSubscriptionVariables>({
           query: WatchAgentsDocument,
           variables: {},
         })
@@ -58,12 +54,9 @@ export const AgentUpdater = (props: {}) => {
                 query: AgentsDocument,
               },
               (data) => {
-
                 return {
                   agents: (data?.agents || []).map((ass) =>
-                    ass.id == update.id
-                      ? { ...ass, update}
-                      : ass,
+                    ass.id == update.id ? { ...ass, update } : ass,
                   ),
                 };
               },

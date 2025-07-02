@@ -107,9 +107,13 @@ import { RekuestFilterActionWidget } from "./nodes/RekuestFilterActionWidget";
 import { RekuestMapActionWidget } from "./nodes/RekuestMapActionWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
-import { useRekuest } from "@/arkitekt/Arkitekt";
+import { useRekuest } from "@/lib/arkitekt/Arkitekt";
 import { RunButton } from "./components/buttons/RunButton";
-import { FlussReactiveTemplate, RekuestAction, RekuestImplementation } from "@/linkers";
+import {
+  FlussReactiveTemplate,
+  RekuestAction,
+  RekuestImplementation,
+} from "@/linkers";
 
 const nodeTypes: NodeTypes = {
   RekuestFilterActionNode: RekuestFilterActionWidget,
@@ -1364,7 +1368,9 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                       These are global variables that will be constants to the
                       whole workflow and are mapping to the following ports:{" "}
                     </CardDescription>
-                    {globals.map(g => <>{g.key}</>)}
+                    {globals.map((g) => (
+                      <>{g.key}</>
+                    ))}
                   </CardContent>
                 </Card>
               </div>

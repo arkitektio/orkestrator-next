@@ -1,4 +1,4 @@
-import { Arkitekt } from "@/arkitekt/Arkitekt";
+import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,14 +20,18 @@ import {
 import { manifest } from "@/constants";
 import { useForm } from "react-hook-form";
 import { useLocation } from "react-router-dom";
-import { introspectUrl } from "@/lib/fakts";
 import React from "react";
+import { FaktsEndpoint } from "@/lib/arkitekt/fakts/endpointSchema";
+import { discover } from "@/lib/arkitekt/fakts/discover";
 
 export const NotConnected = () => {
-  const { registeredEndpoints, load, error } = Arkitekt.useConnect();
+  const connect = Arkitekt.useConnect();
+
+  const [endpoints, setEndpoints] = React.useState<FaktsEndpoint[]>([]);
   const [introspectError, setIntrospectError] = React.useState<string | null>(
     null,
   );
+
   const location = useLocation();
 
   const form = useForm({
@@ -36,17 +40,18 @@ export const NotConnected = () => {
     },
   });
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: { url: string }) => {
     console.log(data);
     setIntrospectError(null);
+    const controller = new AbortController();
 
-    introspectUrl(data.url, 2000, new AbortController())
+    discover({ url: data.url, timeout: 2000, controller })
       .then((endpoint) => {
-        load({
+        connect({
           endpoint,
-          manifest: manifest,
-          requestedClientType: "desktop",
-          requestPublic: true,
+          controller,
+        }).catch((e) => {
+          setIntrospectError(e.message);
         });
       })
       .catch((e) => {
@@ -78,22 +83,14 @@ export const NotConnected = () => {
             Discovered Endpoints
           </div>
 
-          {error && (
-            <div className="bg-red-100 text-red-900 p-2 rounded-md">
-              {error}
-            </div>
-          )}
-
           <div className="flex flex-col gap-2 min-[400px]:flex-row">
-            {registeredEndpoints.map((endpoint) => (
+            {endpoints.map((endpoint) => (
               <Card
                 key={endpoint.base_url}
                 onClick={() =>
-                  load({
+                  connect({
                     endpoint,
-                    manifest: manifest,
-                    requestedClientType: "desktop",
-                    requestPublic: true,
+                    controller: new AbortController(),
                   })
                 }
                 className="cursor-pointer hover:bg-accent-300"
@@ -128,12 +125,6 @@ export const NotConnected = () => {
                       Enter your username and password to access your local
                       server.
                     </p>
-
-                    {error && (
-                      <div className="bg-red-100 text-red-900 p-2 rounded-md">
-                        {error}
-                      </div>
-                    )}
 
                     {introspectError && (
                       <div className="bg-red-100 text-red-900 p-2 rounded-md">

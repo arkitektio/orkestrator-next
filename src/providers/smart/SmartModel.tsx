@@ -3,27 +3,17 @@ import {
   ContextMenuContent,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { SMART_MODEL_DROP_TYPE } from "@/constants";
 import { cn } from "@/lib/utils";
-import {
-  ListImplementationFragment,
-  PrimaryActionFragment,
-} from "@/rekuest/api/graphql";
 import { SmartContext } from "@/rekuest/buttons/ObjectButton";
-import { useAssign } from "@/rekuest/hooks/useAssign";
 import { Structure } from "@/types";
 import { useFloating } from "@floating-ui/react";
 import { Portal } from "@radix-ui/react-portal";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { NativeTypes } from "react-dnd-html5-backend";
-import { toast } from "sonner";
 import { useMySelection } from "../selection/SelectionContext";
 import { SmartModelProps } from "./types";
-import { ImplementationAssignForm } from "@/rekuest/forms/ImplementationAssignForm";
-import { ActionAssignForm } from "@/rekuest/forms/ActionAssignForm";
-import { useDialog } from "@/app/dialog";
 
 export const SmartModel = ({
   showSelfMates = true,

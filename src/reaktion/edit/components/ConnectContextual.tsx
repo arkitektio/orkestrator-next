@@ -1,4 +1,4 @@
-import { useRekuest } from "@/arkitekt/Arkitekt";
+import { useRekuest } from "@/lib/arkitekt/Arkitekt";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Card } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
@@ -200,29 +200,26 @@ const bufferOptions = [
     implementation: ReactiveImplementation.BufferCount,
     constantsMap: {
       count: 1,
-    }
+    },
   },
   {
     title: "BufferComplete",
     description: "Buffer the stream until complete",
     implementation: ReactiveImplementation.BufferComplete,
-    constantsMap: {}
+    constantsMap: {},
   },
   {
     title: "BufferUntil",
     description: "Buffer the stream until a condition is met",
     implementation: ReactiveImplementation.BufferUntil,
-    constantsMap: {}
+    constantsMap: {},
   },
 ];
-
-
-
 
 // Checks if two items are structurally equal, that means they have the same kind and identifier. (If the kind is a structure)
 const isStructuralMatch = (
   item1: FlussPortFragment | FlussChildPortFragment | undefined,
-  item2: FlussPortFragment  | FlussChildPortFragment |  undefined,
+  item2: FlussPortFragment | FlussChildPortFragment | undefined,
 ) => {
   if (!item1 || !item2) {
     return false;
@@ -647,7 +644,9 @@ const ConnectArkitektNodes = (props: {
                 onClick={() => onNodeClick(action.id)}
                 className={clsx(
                   "px-2 py-1 border",
-                  action.scope == ActionScope.Global ? "" : "dark:border-blue-200",
+                  action.scope == ActionScope.Global
+                    ? ""
+                    : "dark:border-blue-200",
                 )}
               >
                 {action.name}

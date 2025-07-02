@@ -1,19 +1,14 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { withKabinet } from "@/arkitekt";
+import { ListRender } from "@/components/layout/ListRender";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import { KABINET_REFRESH_POD_HASH } from "@/constants";
-import {
-  ActionDescription,
-  useActionDescription,
-} from "@/lib/rekuest/ActionDescription";
+import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { KabinetDefinition } from "@/linkers";
 import { useImplementationsQuery } from "@/rekuest/api/graphql";
 import { useImplementationAction } from "@/rekuest/hooks/useImplementationAction";
-import { useGetDefinitionQuery } from "../api/graphql";
 import { useCallback } from "react";
-import ReleaseCard from "../components/cards/ReleaseCard";
-import { ListRender } from "@/components/layout/ListRender";
+import { useGetDefinitionQuery } from "../api/graphql";
 import FlavourCard from "../components/cards/FlavourCard";
 
 export const AssignButton = (props: {
@@ -54,7 +49,7 @@ const RefreshLogsButton = (props: { item: string; refetch: () => void }) => {
 
   return (
     <div className="flex flex-row gap-2">
-      {data?.templates.map((t) => (
+      {data?.implementations.map((t) => (
         <AssignButton id={t.id} pod={props.item} refetch={props.refetch} />
       ))}
     </div>
@@ -62,7 +57,7 @@ const RefreshLogsButton = (props: { item: string; refetch: () => void }) => {
 };
 
 export default asDetailQueryRoute(
-  withKabinet(useGetDefinitionQuery),
+  useGetDefinitionQuery,
   ({ data, refetch }) => {
     const description = useActionDescription({
       description: data.definition.description || "",

@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useCallback, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Guard } from "@/arkitekt/Arkitekt";
+import { Guard } from "@/lib/arkitekt/Arkitekt";
 
 // --- 1. Utility Type ---
 type ExtractProps<T> =

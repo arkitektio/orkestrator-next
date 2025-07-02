@@ -3,7 +3,7 @@ import {
   ActionState,
   defaultRegistry,
 } from "@/actions/action-registry";
-import { useArkitekt } from "@/arkitekt/provider";
+import { useArkitekt } from "@/lib/arkitekt/provider";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -239,7 +239,10 @@ export const ApplicableNewDefinitions = (props: {
   );
 };
 
-export const useLocalAction = (props: { action: Action; state: ActionState }) => {
+export const useLocalAction = (props: {
+  action: Action;
+  state: ActionState;
+}) => {
   const [progress, setProgress] = React.useState<number | undefined>(0);
   const [controller, setController] = React.useState<AbortController | null>(
     null,

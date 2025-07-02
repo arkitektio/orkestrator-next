@@ -1,4 +1,5 @@
-import { Arkitekt } from "@/arkitekt/Arkitekt";
+import { Arkitekt, useOmeroArk } from "@/lib/arkitekt/Arkitekt";
+import { useService } from "@/lib/arkitekt/provider";
 import { OmeroArkImage } from "@/linkers";
 import { MateFinder } from "@/mates/types";
 import { ListImageFragment } from "@/omero-ark/api/graphql";
@@ -10,6 +11,7 @@ interface Props {
 }
 
 const apiUrlFromImageID = (id: string, fakts: any) => {
+  //TODO: CURRENTLY NOT FUNCTIONAL
   return `${fakts.omero_ark.endpoint_url.replace(
     "/graphql",
     "",
@@ -17,8 +19,8 @@ const apiUrlFromImageID = (id: string, fakts: any) => {
 };
 
 const Card = ({ image, mates }: Props) => {
-  const fakts = Arkitekt.useFakts();
   const token = Arkitekt.useToken();
+  const omeroArk = Arkitekt.useService("omero_ark");
 
   // Components refs
   const ref: React.Ref<HTMLImageElement> = React.createRef();
@@ -27,7 +29,7 @@ const Card = ({ image, mates }: Props) => {
   React.useEffect(() => {
     if (!image.id) return;
     if (ref.current === null) return;
-    fetch(apiUrlFromImageID(image.id, fakts), {
+    fetch(apiUrlFromImageID(image.id, omeroArk.client.url), {
       headers: {
         Accept: "image/jpeg",
         Authorization: "Bearer " + token,

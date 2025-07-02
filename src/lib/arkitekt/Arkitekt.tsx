@@ -3,26 +3,28 @@ import { manifest } from "@/constants";
 import elektroResult from "@/elektro/api/fragments";
 import kabinetResult from "@/kabinet/api/fragments";
 import kraphResult from "@/kraph/api/fragments";
-import { createAlpakaClient } from "@/lib/alpaka/client";
-import { createElektroClient } from "@/lib/elektro/client";
-import { createFlussClient } from "@/lib/fluss/client";
-import { createKabinetClient } from "@/lib/kabinet/client";
-import { createKraphClient } from "@/lib/kraph/client";
 import { createLivekitClient, LivekitClient } from "@/lib/livekit/client";
 import { createMikroClient } from "@/lib/mikro/client";
-import { createOmeroArkClient } from "@/lib/omero-ark/client";
-import { createRekuestClient } from "@/lib/rekuest/client";
 import lokResult from "@/lok-next/api/fragments";
-import { createLokClient } from "@/lok-next/lib/LokClient";
+import lovekitResult from "@/lovekit/api/fragments";
 import mikroResult from "@/mikro-next/api/fragments";
 import omeroArkResult from "@/omero-ark/api/fragments";
 import flussResult from "@/reaktion/api/fragments";
 import rekuestResult from "@/rekuest/api/fragments";
-import lovekitResult from "@/lovekit/api/fragments";
 import { ApolloClient, NormalizedCache } from "@apollo/client";
 import { buildArkitekt, buildGuard } from ".";
-import { ServiceBuilderMap, useArkitekt } from "./provider";
+import { ServiceBuilderMap, useArkitekt, useService } from "./provider";
+import { createRekuestClient } from "@/lib/rekuest/client";
 import { createLovekitClient } from "@/lib/lovekit/client";
+import { createFlussClient } from "@/lib/fluss/client";
+import { createLokClient } from "@/lok-next/lib/LokClient";
+import { createKabinetClient } from "@/kabinet/lib/KabinetClient";
+import { createOmeroArkClient } from "@/lib/omero-ark/client";
+import { createKraphClient } from "@/lib/kraph/client";
+import { createAlpakaClient } from "@/lib/alpaka/client";
+import { createElektroClient } from "@/lib/elektro/client";
+import { aliasToHttpPath, aliasToWsPath } from "./alias/helpers";
+import { use } from "cytoscape";
 
 export const electronRedirect = async (
   url: string,
@@ -36,11 +38,11 @@ export const serviceMap: ServiceBuilderMap = {
     key: "mikro",
     service: "live.arkitekt.mikro",
     optional: false,
-    builder: (manifest, fakts: any, token) => {
+    builder: async ({ alias, token }) => {
       return {
         client: createMikroClient({
-          wsEndpointUrl: fakts.mikro.ws_endpoint_url,
-          endpointUrl: fakts.mikro.endpoint_url,
+          wsEndpointUrl: aliasToWsPath(alias, "graphql"),
+          endpointUrl: aliasToHttpPath(alias, "graphql"),
           possibleTypes: mikroResult.possibleTypes,
           retrieveToken: () => token,
         }),
@@ -51,11 +53,11 @@ export const serviceMap: ServiceBuilderMap = {
     key: "rekuest",
     service: "live.arkitekt.rekuest",
     optional: false,
-    builder: (manifest, fakts: any, token) => {
+    builder: async ({ alias, token }) => {
       return {
         client: createRekuestClient({
-          wsEndpointUrl: fakts.rekuest.ws_endpoint_url,
-          endpointUrl: fakts.rekuest.endpoint_url,
+          wsEndpointUrl: aliasToWsPath(alias, "graphql"),
+          endpointUrl: aliasToHttpPath(alias, "graphql"),
           possibleTypes: rekuestResult.possibleTypes,
           retrieveToken: () => token,
         }),
@@ -66,11 +68,11 @@ export const serviceMap: ServiceBuilderMap = {
     key: "lovekit",
     service: "live.arkitekt.lovekit",
     optional: true,
-    builder: (manifest, fakts: any, token) => {
+    builder: async ({ alias, token }) => {
       return {
         client: createLovekitClient({
-          wsEndpointUrl: fakts.lovekit.ws_endpoint_url,
-          endpointUrl: fakts.lovekit.endpoint_url,
+          wsEndpointUrl: aliasToWsPath(alias, "graphql"),
+          endpointUrl: aliasToHttpPath(alias, "graphql"),
           possibleTypes: lovekitResult.possibleTypes,
           retrieveToken: () => token,
         }),
@@ -81,11 +83,11 @@ export const serviceMap: ServiceBuilderMap = {
     key: "fluss",
     service: "live.arkitekt.fluss",
     optional: false,
-    builder: (manifest, fakts: any, token) => {
+    builder: async ({ alias, token }) => {
       return {
         client: createFlussClient({
-          wsEndpointUrl: fakts.fluss.ws_endpoint_url,
-          endpointUrl: fakts.fluss.endpoint_url,
+          wsEndpointUrl: aliasToWsPath(alias, "graphql"),
+          endpointUrl: aliasToHttpPath(alias, "graphql"),
           possibleTypes: flussResult.possibleTypes,
           retrieveToken: () => token,
         }),
@@ -96,11 +98,11 @@ export const serviceMap: ServiceBuilderMap = {
     key: "lok",
     service: "live.arkitekt.lok",
     optional: false,
-    builder: (manifest, fakts: any, token) => {
+    builder: async ({ alias, token }) => {
       return {
         client: createLokClient({
-          wsEndpointUrl: fakts.lok.ws_endpoint_url,
-          endpointUrl: fakts.lok.endpoint_url,
+          wsEndpointUrl: aliasToWsPath(alias, "graphql"),
+          endpointUrl: aliasToHttpPath(alias, "graphql"),
           possibleTypes: lokResult.possibleTypes,
           retrieveToken: () => token,
         }),
@@ -111,11 +113,11 @@ export const serviceMap: ServiceBuilderMap = {
     key: "kabinet",
     service: "live.arkitekt.kabinet",
     optional: false,
-    builder: (manifest, fakts: any, token) => {
+    builder: async ({ alias, token }) => {
       return {
         client: createKabinetClient({
-          wsEndpointUrl: fakts.kabinet.ws_endpoint_url,
-          endpointUrl: fakts.kabinet.endpoint_url,
+          wsEndpointUrl: aliasToWsPath(alias, "graphql"),
+          endpointUrl: aliasToHttpPath(alias, "graphql"),
           possibleTypes: kabinetResult.possibleTypes,
           retrieveToken: () => token,
         }),
@@ -126,11 +128,11 @@ export const serviceMap: ServiceBuilderMap = {
     key: "omero_ark",
     service: "live.arkitekt.omero_ark",
     optional: true,
-    builder: (manifest, fakts: any, token) => {
+    builder: async ({ alias, token }) => {
       return {
         client: createOmeroArkClient({
-          wsEndpointUrl: fakts.omero_ark.ws_endpoint_url,
-          endpointUrl: fakts.omero_ark.endpoint_url,
+          wsEndpointUrl: aliasToWsPath(alias, "graphql"),
+          endpointUrl: aliasToHttpPath(alias, "graphql"),
           possibleTypes: omeroArkResult.possibleTypes,
           retrieveToken: () => token,
         }),
@@ -141,11 +143,11 @@ export const serviceMap: ServiceBuilderMap = {
     key: "kraph",
     service: "live.arkitekt.kraph",
     optional: true,
-    builder: (manifest, fakts: any, token) => {
+    builder: async ({ alias, token }) => {
       return {
         client: createKraphClient({
-          wsEndpointUrl: fakts.kraph.ws_endpoint_url,
-          endpointUrl: fakts.kraph.endpoint_url,
+          wsEndpointUrl: aliasToWsPath(alias, "graphql"),
+          endpointUrl: aliasToHttpPath(alias, "graphql"),
           possibleTypes: kraphResult.possibleTypes,
           retrieveToken: () => token,
         }),
@@ -156,11 +158,11 @@ export const serviceMap: ServiceBuilderMap = {
     key: "alpaka",
     service: "live.arkitekt.alpaka",
     optional: true,
-    builder: (manifest, fakts: any, token) => {
+    builder: async ({ alias, token }) => {
       return {
         client: createAlpakaClient({
-          wsEndpointUrl: fakts.alpaka.ws_endpoint_url,
-          endpointUrl: fakts.alpaka.endpoint_url,
+          wsEndpointUrl: aliasToWsPath(alias, "graphql"),
+          endpointUrl: aliasToHttpPath(alias, "graphql"),
           possibleTypes: alpakaResult.possibleTypes,
           retrieveToken: () => token,
         }),
@@ -171,11 +173,11 @@ export const serviceMap: ServiceBuilderMap = {
     key: "elektro",
     service: "live.arkitekt.elektro",
     optional: true,
-    builder: (manifest, fakts: any, token) => {
+    builder: async ({ alias, token }) => {
       return {
         client: createElektroClient({
-          wsEndpointUrl: fakts.elektro.ws_endpoint_url,
-          endpointUrl: fakts.elektro.endpoint_url,
+          wsEndpointUrl: aliasToWsPath(alias, "graphql"),
+          endpointUrl: aliasToHttpPath(alias, "graphql"),
           possibleTypes: elektroResult.possibleTypes,
           retrieveToken: () => token,
         }),
@@ -186,11 +188,10 @@ export const serviceMap: ServiceBuilderMap = {
     key: "livekit",
     service: "io.livekit.livekit",
     optional: true,
-    builder: (manifest, fakts: any, token) => {
-      console.log("Creating livekit client", fakts);
+    builder: async ({ alias, token }) => {
       return {
         client: createLivekitClient({
-          url: fakts.livekit.https_endpoint,
+          url: aliasToHttpPath(alias, ""),
         }),
       };
     },
@@ -199,9 +200,9 @@ export const serviceMap: ServiceBuilderMap = {
     key: "datalayer",
     service: "live.arkitekt.s3",
     optional: false,
-    builder(manifest, fakts: any, token) {
+    builder: async ({ alias, token }) => {
       return {
-        client: { url: fakts.datalayer.endpoint_url },
+        client: { url: aliasToHttpPath(alias, "") },
       };
     },
   },
@@ -212,7 +213,6 @@ export const Arkitekt = window.electron
   ? buildArkitekt({
       manifest,
       serviceBuilderMap: serviceMap,
-      herreProps: { doRedirect: electronRedirect },
     })
   : buildArkitekt({ manifest, serviceBuilderMap: serviceMap });
 
@@ -231,111 +231,53 @@ export const Guard = {
 };
 
 export const useMikro = (): ApolloClient<NormalizedCache> => {
-  const { clients } = useArkitekt();
-
-  if (!clients.mikro.client) {
-    throw new Error("Mikro client not available");
-  }
-
-  return clients.mikro.client;
+  return useService("mikro").client as ApolloClient<NormalizedCache>;
 };
 
 export const useKabinet = (): ApolloClient<NormalizedCache> => {
-  const { clients } = useArkitekt();
-
-  if (!clients.kabinet?.client) {
-    throw new Error("Kabinet client not available");
-  }
-
-  return clients.kabinet.client;
+  return useService("kabinet").client as ApolloClient<NormalizedCache>;
 };
 
 export const useRekuest = (): ApolloClient<NormalizedCache> => {
-  const { clients } = useArkitekt();
-
-  if (!clients.rekuest?.client) {
-    throw new Error("Rekuest client not available");
-  }
-
-  return clients.rekuest?.client;
+  return useService("rekuest").client as ApolloClient<NormalizedCache>;
 };
 
 export const useLok = (): ApolloClient<NormalizedCache> => {
-  const { clients } = useArkitekt();
-
-  if (!clients.lok?.client) {
-    throw new Error("Lok client not available");
-  }
-
-  return clients.lok?.client;
+  return useService("lok").client as ApolloClient<NormalizedCache>;
 };
 
 export const useFluss = (): ApolloClient<NormalizedCache> => {
-  const { clients } = useArkitekt();
-
-  if (!clients.fluss.client) {
-    throw new Error("Fluss client not available");
-  }
-
-  return clients.fluss.client;
+  return useService("fluss").client as ApolloClient<NormalizedCache>;
 };
 
 export const useOmeroArk = (): ApolloClient<NormalizedCache> => {
-  const { clients } = useArkitekt();
-
-  if (!clients.omero_ark?.client) {
-    throw new Error("OmeroArk client not available");
-  }
-
-  return clients.omero_ark?.client;
+  return useService("omero_ark").client as ApolloClient<NormalizedCache>;
 };
 
 export const useKraph = (): ApolloClient<NormalizedCache> => {
-  const { clients } = useArkitekt();
-
-  if (!clients.kraph?.client) {
-    throw new Error("Kraph client not available");
-  }
-
-  return clients.kraph?.client;
+  return useService("kraph").client as ApolloClient<NormalizedCache>;
 };
 
 export const useAlpaka = (): ApolloClient<NormalizedCache> => {
-  const { clients } = useArkitekt();
-
-  if (!clients.alpaka?.client) {
-    throw new Error("Alpaka client not available");
-  }
-
-  return clients.alpaka?.client;
+  return useService("alpaka").client as ApolloClient<NormalizedCache>;
 };
 
 export const useLovekit = (): ApolloClient<NormalizedCache> => {
-  const { clients } = useArkitekt();
-
-  if (!clients.lovekit?.client) {
-    throw new Error("Lovekit client not available");
-  }
-
-  return clients.lovekit?.client;
+  return useService("lovekit").client as ApolloClient<NormalizedCache>;
 };
 
 export const useElektro = (): ApolloClient<NormalizedCache> => {
-  const { clients } = useArkitekt();
-
-  if (!clients.elektro?.client) {
-    throw new Error("Elektro client not available");
-  }
-
-  return clients.elektro?.client;
+  return useService("elektro").client as ApolloClient<NormalizedCache>;
 };
 
 export const useLivekit = (): LivekitClient => {
-  const { clients } = useArkitekt();
+  return useService("livekit").client as LivekitClient;
+};
 
-  if (!clients.livekit?.client) {
-    throw new Error("Livekit client not available");
+export const useDatalayerEndpoint = (): string => {
+  const url = useService("datalayer").client.url;
+  if (!url) {
+    throw Error("No Datalayer configured ");
   }
-
-  return clients.livekit.client;
+  return url;
 };

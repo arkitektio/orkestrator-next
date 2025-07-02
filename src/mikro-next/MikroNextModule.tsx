@@ -1,5 +1,5 @@
 import { NotFound } from "@/app/components/fallbacks/NotFound";
-import { Guard } from "@/arkitekt/Arkitekt";
+import { Guard } from "@/lib/arkitekt/Arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import React from "react";
 import { Route, Routes } from "react-router";

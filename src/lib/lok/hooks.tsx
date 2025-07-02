@@ -1,4 +1,4 @@
-import { useLok } from "@/arkitekt/Arkitekt";
+import { useLok } from "@/lib/arkitekt/Arkitekt";
 import {
   LazyQueryHookOptions,
   MutationHookOptions,

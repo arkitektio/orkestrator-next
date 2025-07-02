@@ -1,11 +1,10 @@
-import { Arkitekt, useMikro } from "@/arkitekt/Arkitekt";
+import { useDatalayerEndpoint, useMikro } from "@/lib/arkitekt/Arkitekt";
 import {
   useRequestAccessMutation,
   ZarrStoreFragment,
 } from "@/mikro-next/api/graphql";
 import { S3Store } from "@/mikro-next/providers/xarray/store";
 import { AwsClient } from "aws4fetch";
-import { IDBPDatabase, openDB } from "idb";
 import { useCallback, useEffect, useState } from "react";
 import { Array, Chunk, DataType, get, open } from "zarrita";
 
@@ -44,7 +43,7 @@ type TypedArray =
 
 export const useArray = (props: { store: ZarrStoreFragment }) => {
   const client = useMikro();
-  const fakts = Arkitekt.useFakts();
+  const datalayerEndpoint = useDatalayerEndpoint();
 
   const [array, setArray] = useState<Array<DataType, S3Store> | null>(null);
 
@@ -60,9 +59,8 @@ export const useArray = (props: { store: ZarrStoreFragment }) => {
         throw Error("No credentials loadable");
       }
 
-      let endpoint_url = (fakts?.datalayer as any)?.endpoint_url;
       let path =
-        endpoint_url + "/" + props.store.bucket + "/" + props.store.key;
+        datalayerEndpoint + "/" + props.store.bucket + "/" + props.store.key;
 
       let aws = new AwsClient({
         accessKeyId: x.data?.requestAccess.accessKey,
@@ -77,7 +75,7 @@ export const useArray = (props: { store: ZarrStoreFragment }) => {
       let array = await open.v3(store, { kind: "array" });
       setArray(array);
     });
-  }, [props.store, fakts.datalayer, request]);
+  }, [props.store, datalayerEndpoint, request]);
 
   const renderView = useCallback(
     async (

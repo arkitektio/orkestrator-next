@@ -21,6 +21,7 @@ import { useAssign } from "@/rekuest/hooks/useAssign";
 import { toast } from "sonner";
 import { t } from "node_modules/@udecode/plate-list/dist/BaseListPlugin-B0eGlA5x";
 import Implementation from "@/rekuest/pages/Implementation";
+import { useFilteredAssignations } from "@/rekuest/hooks/useAssignations";
 
 export const ports = zod.object;
 
@@ -377,7 +378,7 @@ const buildUseRekuestState = <T extends MetaApplication<any, any>>(
         });
       }
 
-      return () => {};
+      return () => { };
     }, [subscribeToMore, data?.state?.id]);
 
     if (error) {
@@ -411,20 +412,20 @@ const buildUseRekuestActions = <T extends MetaApplication<any, any>>(
     let actionId = mblok.actionMappings.find((s) => s.key === action)
       ?.implementation.id;
 
-    const { data } = useImplementationQuery({
-      variables: {
-        id: actionId,
-      },
-    });
 
     const { assign } = useAssign();
+
+    const assingation = useFilteredAssignations({
+      implementation: actionId,
+    })
+
 
     const nodeAssign = async (args: any) => {
       if (options?.debounce) {
         return debounce(
           () =>
             assign({
-              implementation: data?.implementation.id,
+              implementation: actionId,
               args: args,
               ephemeral: options?.track ? false : true,
             }),
@@ -432,7 +433,7 @@ const buildUseRekuestActions = <T extends MetaApplication<any, any>>(
         );
       } else {
         return assign({
-          implementation: data?.implementation.id,
+          implementation: actionId,
           args: args,
           ephemeral: options?.track ? false : true,
         });
@@ -441,6 +442,7 @@ const buildUseRekuestActions = <T extends MetaApplication<any, any>>(
 
     return {
       assign: nodeAssign,
+      latestEvent: assingation?.at(-1)?.events?.at(0),
     };
   };
 

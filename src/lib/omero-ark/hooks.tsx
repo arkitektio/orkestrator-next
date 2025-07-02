@@ -1,5 +1,5 @@
-import { useFluss, useOmeroArk } from "@/arkitekt/Arkitekt";
-import { useArkitekt } from "@/arkitekt/provider";
+import { useFluss, useOmeroArk } from "@/lib/arkitekt/Arkitekt";
+import { useArkitekt } from "@/lib/arkitekt/provider";
 import {
   LazyQueryHookOptions,
   MutationHookOptions,

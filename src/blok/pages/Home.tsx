@@ -1,4 +1,4 @@
-import { Guard } from "@/arkitekt/Arkitekt";
+import { Guard } from "@/lib/arkitekt/Arkitekt";
 import registry, { Registry } from "../registry";
 import { ModuleWrapper } from "../Wrapper";
 import { useRef, useState } from "react";

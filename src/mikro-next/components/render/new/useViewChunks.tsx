@@ -1,17 +1,13 @@
-import { Arkitekt, useMikro } from "@/arkitekt/Arkitekt";
-import { useService } from "@/arkitekt/hooks";
+import { Arkitekt, useMikro } from "@/lib/arkitekt/Arkitekt";
 import {
   AccessCredentialsFragment,
   RequestAccessDocument,
-  RequestAccessMutation,
-  RequestAccessMutationVariables,
   RgbViewFragment,
   ZarrStoreFragment,
 } from "@/mikro-next/api/graphql";
 import { BasicIndexer } from "@/mikro-next/providers/xarray/indexing";
 import { S3Store } from "@/mikro-next/providers/xarray/store";
 import { getChunkItem } from "@/mikro-next/providers/xarray/utils";
-import { ApolloClient } from "@apollo/client";
 import { AwsClient } from "aws4fetch";
 import { useCallback } from "react";
 import { NestedArray, TypedArray, ZarrArray, openGroup } from "zarr";

@@ -11,19 +11,33 @@ import {
 } from "@/mikro-next/api/graphql";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { Dispatch, SetStateAction, Suspense, useEffect } from "react";
+import { Dispatch, SetStateAction, Suspense, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { StageCamera } from "./cameras/StageCamera";
 import { ChunkBitmapTexture } from "./final/ChunkMesh";
 import { useArray } from "./final/useArray";
 import { BasicIndexer, IndexerProjection, Slice } from "./indexer";
+import { ComplexCameraControls } from "./controls/CameraControls";
+import { Leva } from 'leva'
+import {
+  Select,
+  useSelect,
+  Sky,
+  ContactShadows,
+  Edges,
+  Environment,
+  MeshTransmissionMaterial,
+  useCursor
+} from '@react-three/drei'
+import { Object3D, Object3DEventMap } from "three";
+import { RectangleDrawer, RectangleDrawerProps } from "./controls/RectangleDrawer";
 
-export interface StageRenderProps {
+export type StageRenderProps  = {
   stage: StageFragment;
   className?: string;
   follow?: "width" | "height";
   onValueClick?: (value: number) => void;
-}
+} & RectangleDrawerProps
 
 export type PassThroughProps = {
   setOpenPanels: Dispatch<SetStateAction<Panel[]>>;
@@ -147,7 +161,13 @@ export const useScale = () => 0;
 export const useZ = () => 0;
 export const useT = () => 0;
 
-const ImageRender = (props: { image: ImageFragment }) => {
+
+export type ImageRenderProps = {
+  image: ImageFragment;
+  onImageContextMenu?: (event: any, image: ImageFragment) => void;
+};
+
+const ImageRender = (props: { image: ImageFragment, onImageContextMenu?: (event: any, image: ImageFragment) => void }) => {
   const selectedScale = useScale();
   const z = useZ();
   const t = useT();
@@ -177,11 +197,16 @@ const ImageRender = (props: { image: ImageFragment }) => {
 
   const selectedScales = [layers.at(selectedScale)];
 
+
   return (
     <>
       {rgbContext.views.map((view, viewIndex) => {
         return (
-          <group key={view.id}>
+          <group key={view.id} onContextMenu={(event) => {
+            event.stopPropagation();
+            props.onImageContextMenu?.(event, props.image);
+          }}
+          >
             {selectedScales.map((layer) => {
               return (
                 <ScaleViewRender
@@ -209,61 +234,125 @@ export const StageToolbar = (props: { stage: StageFragment }) => {
 export const useZSize = () => 1;
 export const useTSize = () => 1;
 
-const AsyncImageRender = (props: { imageId: string }) => {
+const AsyncImageRender = ({ imageId, ...props}: { imageId: string } & Omit<ImageRenderProps, "image">) => {
   const { data, loading, error } = useGetImageQuery({
     variables: {
-      id: props.imageId,
+      id: imageId,
     },
   });
 
   if (loading) return null;
   if (!data) return <div>Error loading image: {error?.message}</div>;
 
-  return <ImageRender image={data.image} />;
+  return <ImageRender image={data.image} {...props}/>;
 };
 
-export const StageRender = ({ stage }: StageRenderProps) => {
+
+export const StageRender = ({ stage, onRectangleDrawn }: StageRenderProps ) => {
+
+    const [selected, setSelected] = useState<Object3D<Object3DEventMap>[]>([])
+
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    const [contextMenu, setContextMenu] = useState<{
+  x: number;
+  y: number;
+  image: ImageFragment;
+} | null>(null);
+
+
+
   return (
-    <div style={{ width: "100%", height: "100%" }} className="relative">
-      <div className="absolute bottom-0 z-10 w-full mb-4 px-6 bg-gradient-to-t from-black to-transparent py-3">
-        xxx
-      </div>
+    <div style={{ width: "100%", height: "100%" }} className="relative" ref={containerRef}>
+      
+      <Leva
+        isRoot
+        collapsed
+        
+      />
 
       <Suspense
         fallback={<div className="w-full h-full bg-gray-100"> Loading</div>}
       >
         <Canvas style={{ width: "100%", height: "100%" }}>
+          
           <StageCamera />
+          
           <OrbitControls
             enableRotate={false}
             enablePan={true}
             regress={false}
+            mouseButtons={{
+              LEFT: THREE.MOUSE.PAN,
+              MIDDLE: THREE.MOUSE.ROTATE,
+              RIGHT: THREE.MOUSE.DOLLY,
+            }}
           />
-          {stage.affineViews.map((view) => {
-            const flattenMatrix = view.affineMatrix.reduce(
-              (acc, row) => acc.concat(row),
-              [],
-            );
-            console.log("Flattened Matrix", flattenMatrix);
+          <Select multiple onChange={setSelected}>
+            {stage.affineViews.map((view) => {
+              const flattenMatrix: number[] = view.affineMatrix.reduce(
+                (acc, row) => acc.concat(row),
+                [],
+              );
+              console.log("Flattened Matrix", flattenMatrix);
 
-            const matrix = new THREE.Matrix4();
-            matrix.set(...flattenMatrix);
-            return (
-              <group key={view.id} matrixAutoUpdate={false} matrix={matrix}>
-                <AsyncImageRender imageId={view.image.id} />
-              </group>
-            );
-          })}
+              const matrix = new THREE.Matrix4();
+              matrix.set(...flattenMatrix);
+              return (
+                <group key={view.id} matrixAutoUpdate={false} matrix={matrix}>
+                  <AsyncImageRender imageId={view.image.id} onImageContextMenu={(event, image) => {
+   
+                      event.stopPropagation();
+
+                      const containerBounds = containerRef.current?.getBoundingClientRect();
+                      const x = event.clientX - (containerBounds?.left || 0);
+                      const y = event.clientY - (containerBounds?.top || 0);
+
+                      setContextMenu({
+                        x,
+                        y,
+                        image,
+                      });
+                    }}
+                   />
+                </group>
+              );
+            })}
+          </Select>
+          <RectangleDrawer onRectangleDrawn={onRectangleDrawn}/>
         </Canvas>
       </Suspense>
+      {contextMenu && (
+        <div
+          className="absolute bg-white border border-gray-300 rounded shadow-lg p-2"
+          style={{
+      top: contextMenu.y,
+      left: contextMenu.x,
+    }}
+          onContextMenu={(e) => e.preventDefault()}
+        >
+          <h3 className="font-bold mb-2">Image Context Menu</h3>
+          <p>{contextMenu.image.name}</p>
+          <button
+            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
+            onClick={() => {
+              setContextMenu(null);
+              // Handle any action here, like opening a modal or redirecting
+            }}
+          >
+            Close
+          </button>
+        </div>
+      )}
+
     </div>
   );
 };
 
-export const AsyncStageRender = (props: { stageId: string }) => {
+export const AsyncStageRender = ({stageId, ...props}: { stageId: string } & Omit<StageRenderProps, "stage">) => {
   const { data, loading, error, subscribeToMore } = useGetStageQuery({
     variables: {
-      id: props.stageId,
+      id: stageId,
     },
   });
 
@@ -273,7 +362,7 @@ export const AsyncStageRender = (props: { stageId: string }) => {
       WatchTransformationViewsSubscriptionVariables
     >({
       document: WatchTransformationViewsDocument,
-      variables: { stage: props.stageId },
+      variables: { stage: stageId },
       updateQuery: (prev, { subscriptionData }) => {
         if (!subscriptionData.data) return prev;
 
@@ -303,10 +392,10 @@ export const AsyncStageRender = (props: { stageId: string }) => {
     return () => {
       unsubscribe();
     };
-  }, [props.stageId, subscribeToMore]);
+  }, [stageId, subscribeToMore]);
 
   if (loading) return <div>Loading Stage...</div>;
   if (!data) return <div>Error loading stage: {error?.message}</div>;
 
-  return <StageRender stage={data.stage} />;
+  return <StageRender stage={data.stage} {...props} />;
 };

@@ -48,9 +48,6 @@ export default memo(
           <LokServiceInstance.DetailLink object={data.id} className={"text-xl"}>
             {data.identifier}
           </LokServiceInstance.DetailLink>
-          <LokLayer.DetailLink object={data.layer.id} className={"text-xs"}>
-            {data.layer.name}
-          </LokLayer.DetailLink>
         </Card>
       </>
     );

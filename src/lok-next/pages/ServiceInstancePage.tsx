@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FormSheetAction } from "@/components/ui/form-sheet-action";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { PlusIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { useGetServiceInstanceQuery } from "../api/graphql";
 import GroupCard from "../components/cards/GroupCard";
 import UserCard from "../components/cards/UserCard";
@@ -14,12 +13,10 @@ import { UpdateServiceInstanceForm } from "../forms/UpdateServiceInstanceForm";
 
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { LokLayer } from "@/linkers";
 
 export type IRepresentationScreenProps = {};
 
 const Page = asDetailQueryRoute(useGetServiceInstanceQuery, ({ data }) => {
-  const navigate = useNavigate();
   const resolve = useResolve();
   return (
     <PageLayout
@@ -49,7 +46,7 @@ const Page = asDetailQueryRoute(useGetServiceInstanceQuery, ({ data }) => {
             <div className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl flex flex-col">
               {data.serviceInstance.identifier}
               <div className="text-lg text-gray-500">
-                {data.serviceInstance.backend}
+                {data.serviceInstance.service.identifier}
               </div>
               <div className="text-lg text-gray-700 font-light">
                 Provides {data.serviceInstance.service.identifier}
@@ -57,12 +54,6 @@ const Page = asDetailQueryRoute(useGetServiceInstanceQuery, ({ data }) => {
               <div className="text-lg text-gray-700 font-light">
                 {data.serviceInstance.service.description}
               </div>
-              <LokLayer.DetailLink
-                object={data.serviceInstance.layer.id}
-                className="text-lg text-gray-700 font-light"
-              >
-                Reachable through {data.serviceInstance.layer.name}
-              </LokLayer.DetailLink>
             </div>
           </div>
         </div>

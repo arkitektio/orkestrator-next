@@ -1,8 +1,9 @@
-import { Wireframe } from "@react-three/drei";
+import { Edges, useSelect } from "@react-three/drei";
 
 import { ColorMap, RgbViewFragment } from "@/mikro-next/api/graphql";
+import { useThree } from "@react-three/fiber";
+import { useRef } from "react";
 import * as THREE from "three";
-import { useAsyncChunk } from "./useChunkTexture";
 import {
   blueColormap,
   createColormapTexture,
@@ -10,8 +11,8 @@ import {
   redColormap,
   viridisColormap,
 } from "./colormaps";
-import { useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useRef, useState } from "react";
+import { useAsyncChunk } from "./useChunkTexture";
+
 
 const getColormapForView = (view: RgbViewFragment) => {
   switch (view.colorMap) {
@@ -82,8 +83,10 @@ export const ChunkBitmapTexture = ({
 
   const colormapTexture = getColormapForView(view);
 
+  const selected = useSelect().map((sel) => sel.userData.viewId)
+
   // Get the dimensions from the shape
-  const meshRef = useRef();
+  const meshRef = useRef<THREE.Mesh>();
   const box_shape_3d = chunk_shape?.slice(3, 5);
   const box_shape = [box_shape_3d[0] * scaleX, box_shape_3d[1] * scaleY, 1];
 
@@ -98,7 +101,9 @@ export const ChunkBitmapTexture = ({
   const gl = useThree((state) => state.gl);
 
   const congruentView = view.congruentViews?.at(0);
-  console.log(congruentView);
+
+  const isSelected = selected.find((id: string) => id === view.id) !== undefined;
+  console.log("Is selected:", isSelected);
 
   cLimMax =
     cLimMax ||
@@ -112,7 +117,7 @@ export const ChunkBitmapTexture = ({
       : undefined);
 
   return (
-    <mesh ref={meshRef} position={[xPosition, yPosition, 0]} scale={[1, 1, 1]}>
+    <mesh ref={meshRef} position={[xPosition, yPosition, 0]} scale={[1, 1, 1]} userData={{ viewId: view.id}}>
       <planeGeometry args={[box_shape[1], box_shape[0]]} />
       {texture && colormapTexture ? (
         <shaderMaterial
@@ -162,6 +167,9 @@ export const ChunkBitmapTexture = ({
       ) : (
         <meshBasicMaterial color={"black"} />
       )}
+      <Edges visible={isSelected} scale={1} renderOrder={1000}>
+        <meshBasicMaterial transparent color="#333" depthTest={true} />
+      </Edges>
     </mesh>
   );
 };

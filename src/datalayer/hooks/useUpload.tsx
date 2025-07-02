@@ -1,5 +1,8 @@
-import { Arkitekt, useMikro } from "@/arkitekt/Arkitekt";
-import { useService } from "@/arkitekt/hooks";
+import {
+  Arkitekt,
+  useDatalayerEndpoint,
+  useMikro,
+} from "@/lib/arkitekt/Arkitekt";
 import {
   PresignedPostCredentialsFragment,
   RequestFileUploadPresignedDocument,
@@ -114,18 +117,10 @@ const uploadToStore = async (
 
 export const useMediaUpload = () => {
   const client = useMikro();
-  const fakts = Arkitekt.useFakts();
+  const datalayerEndpoint = useDatalayerEndpoint();
 
   const upload = useCallback(
     async (file: File) => {
-      if (!client) {
-        throw Error("No client configured");
-      }
-      const endPointUrl = fakts?.datalayer?.endpoint_url;
-      if (!endPointUrl) {
-        throw Error("No client configured");
-      }
-
       let data = await client.mutate<
         RequestMediaUploadMutation,
         RequestMediaUploadMutationVariables
@@ -143,9 +138,9 @@ export const useMediaUpload = () => {
 
       let z = data.data.requestMediaUpload;
 
-      return await uploadToStore(file, endPointUrl, z, {});
+      return await uploadToStore(file, datalayerEndpoint, z, {});
     },
-    [client, fakts],
+    [client, datalayerEndpoint],
   );
 
   return upload;
@@ -158,19 +153,15 @@ export type FileUploadOptions = {
 
 export const useBigFileUpload = () => {
   const client = useMikro();
-  const fakts = Arkitekt.useFakts();
+  const datalayerEndpoint = useDatalayerEndpoint();
 
   const upload = useCallback(
     async (file: File, options: FileUploadOptions) => {
       if (!client) {
         throw Error("No client configured");
       }
-      const endPointUrl = fakts?.datalayer?.endpoint_url;
-      if (!endPointUrl) {
-        throw Error("No client configured");
-      }
 
-      console.log("uploading", file, options);
+      console.log("uploading", file, options, datalayerEndpoint);
 
       let data = await client.mutate<
         RequestFileUploadPresignedMutation,
@@ -189,9 +180,9 @@ export const useBigFileUpload = () => {
 
       let z = data.data.requestFileUploadPresigned;
 
-      return await uploadToStore(file, endPointUrl, z, options);
+      return await uploadToStore(file, datalayerEndpoint, z, options);
     },
-    [client, fakts],
+    [client, datalayerEndpoint],
   );
 
   return upload;

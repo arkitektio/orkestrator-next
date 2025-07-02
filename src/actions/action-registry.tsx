@@ -1,4 +1,4 @@
-import { ServiceMap } from "@/arkitekt/provider";
+import { ServiceMap } from "@/lib/arkitekt/provider";
 import { KRAPH_ACTIONS } from "@/lib/kraph/actions";
 import { MIKRO_ACTIONS } from "@/lib/mikro/actions";
 import { REKUEST_ACTIONS } from "@/lib/rekuest/actions";

@@ -527,7 +527,7 @@ export const useAction = (props: { action: Action; state: ActionState }) => {
           setProgress(p);
         },
         abortSignal: newController.signal,
-        services: app.clients,
+        services: app.connection?.clients || {},
         state: props.state,
       });
       setController(null);

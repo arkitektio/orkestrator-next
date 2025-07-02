@@ -6,7 +6,7 @@ export const FaktsEndpointSchema = z.object({
   description: z.string(),
   claim: z.string().url(),
   base_url: z.string().url(),
-  ca_crt: z.string(), // PEM-encoded certificate as plain string
+  ca_crt: z.string().optional().nullable(), // PEM-encoded certificate as plain string
 });
 
 export type FaktsEndpoint = z.infer<typeof FaktsEndpointSchema>;

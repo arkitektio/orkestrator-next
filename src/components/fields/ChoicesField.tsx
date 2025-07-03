@@ -37,8 +37,6 @@ export type Option = {
 export const ChoicesField = (props: FieldProps & { options: Option[] }) => {
   const [open, setOpen] = React.useState(false);
 
-  console.log(props.options);
-
   const search = async ({
     search,
     values,

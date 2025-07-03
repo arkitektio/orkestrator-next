@@ -34,7 +34,6 @@ export const buildDeleteAction = (params: DeleteActionParams): Action => ({
   execute: async ({ services, onProgress, abortSignal, state }) => {
     let service = services[params.service]
       .client as ApolloClient<NormalizedCache>;
-    console.log("Deleting file");
     if (!service) {
       throw new Error("Service not found");
     }
@@ -52,7 +51,6 @@ export const buildDeleteAction = (params: DeleteActionParams): Action => ({
     }
 
     onProgress(100);
-    console.log("File deleted");
     return {
       left: [],
       isCommand: false,

@@ -62,7 +62,6 @@ export function Illuminator() {
           value={[state]}
           onValueChange={(e) => {
             setState(e[0]);
-            console.log(e);
           }}
           aria-label="Light intensity"
         />

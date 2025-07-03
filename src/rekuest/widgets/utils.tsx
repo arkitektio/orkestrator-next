@@ -5,7 +5,6 @@ import { PortKind } from "../api/graphql";
 import { LabellablePort, PortablePort } from "./types";
 
 export const pathToName = (path: string[]): string => {
-  console.log(path);
   return path.join(".");
 };
 
@@ -66,8 +65,6 @@ export const portToLabel = (port: LabellablePort): string => {
   return "Unknown";
 };
 
-
-
 export const portToZod = (port: LabellablePort): any => {
   let baseType;
   switch (port?.kind) {
@@ -75,7 +72,10 @@ export const portToZod = (port: LabellablePort): any => {
       baseType = z.string({ message: "Please enter a string" });
       break;
     case PortKind.Enum:
-      baseType = z.enum( (port.choices?.map(c => c.value) || ["fake"]) as [string], { message: "Please enter a kind" });
+      baseType = z.enum(
+        (port.choices?.map((c) => c.value) || ["fake"]) as [string],
+        { message: "Please enter a kind" },
+      );
       break;
     case PortKind.Int:
       baseType = z.coerce.number({ message: "Please enter a valid integer" });
@@ -84,11 +84,11 @@ export const portToZod = (port: LabellablePort): any => {
       baseType = z.string({ message: "Please enter a valid memory structure" });
       break;
     case PortKind.Float:
-      baseType = z.coerce.number(
-        { message: "Please enter a valid float" },
-      ).refine((val) => !isNaN(val), {
-        message: "Please enter a valid float",
-      })
+      baseType = z.coerce
+        .number({ message: "Please enter a valid float" })
+        .refine((val) => !isNaN(val), {
+          message: "Please enter a valid float",
+        });
       break;
     case PortKind.Structure:
       baseType = z.string({ message: "Please enter a valid structure" });
@@ -101,13 +101,12 @@ export const portToZod = (port: LabellablePort): any => {
       }
       baseType = z.discriminatedUnion(
         "__use",
-        variants
-          .map((v, index) =>
-            z.object({
-              __value: portToZod(v),
-              __use: z.literal(index.toString()),
-            }),
-          ) || [],
+        variants.map((v, index) =>
+          z.object({
+            __value: portToZod(v),
+            __use: z.literal(index.toString()),
+          }),
+        ) || [],
       );
       break;
     case PortKind.Bool:
@@ -188,9 +187,7 @@ export const buildZodSchema = (ports: PortablePort[], path: string[] = []) => {
           ) => boolean;
 
           let params = validator.dependencies?.map((dep) => values[dep]);
-          console.log("Params", params);
           if (params?.every((predicate) => predicate != undefined)) {
-            console.log("Calling validator with params", params);
             let serialized_values = JSON.stringify(params);
             let x = func(v, serialized_values);
             console.log(x);
@@ -209,15 +206,12 @@ export const buildZodSchema = (ports: PortablePort[], path: string[] = []) => {
             path: [pathToName([...path, port.key])],
           },
         );
-
-        console.log("Refined schema with", validator);
       }
     }
   });
 
   return schema;
 };
-
 
 export const portToDefaults = (
   ports: PortablePort[],
@@ -267,7 +261,6 @@ export const submittedDataToRekuestFormat = (
   data: any,
   ports: PortablePort[],
 ): any => {
-  console.log("Parsing", data);
   return ports.reduce(
     (prev, curr) => {
       prev[curr.key] = recursiveExtract(data[curr.key], curr);

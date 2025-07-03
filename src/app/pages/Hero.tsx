@@ -38,8 +38,6 @@ export const ConnectButton = () => {
   });
 
   const onSubmit = (data: any) => {
-    console.log(data);
-
     const controller = new AbortController();
 
     discover({
@@ -165,8 +163,6 @@ const LokServiceWidget = (props: ServiceCardProps) => {
         .then((res) => res.json())
         .then((data) => {
           setHealth(true);
-
-          console.log(data);
         })
         .catch((e) => {
           console.error(e, props.value.healthz);

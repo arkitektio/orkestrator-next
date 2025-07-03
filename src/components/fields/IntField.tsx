@@ -13,7 +13,6 @@ import { FieldProps } from "./types";
 export const IntField = (props: FieldProps & { placeholder?: string }) => {
   const form = useFormContext();
 
-  console.log("Reanderer");
   return (
     <FormField
       control={form.control}
@@ -30,7 +29,6 @@ export const IntField = (props: FieldProps & { placeholder?: string }) => {
               }
               {...field}
               onChange={(e) => {
-                console.log("Changing", props.name, "XX", e);
                 field.onChange(e);
               }}
               type="string"

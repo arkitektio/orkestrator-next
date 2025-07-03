@@ -117,7 +117,6 @@ export const CreateableSearchField = ({
   }, [debouncedQuery]);
 
   const createValue = (input: string) => {
-    console.log("creating", input);
     create(input).then((value) => {
       return form.setValue(name, value, {
         shouldValidate: false,
@@ -187,7 +186,6 @@ export const CreateableSearchField = ({
                           value={option.value}
                           key={option.value}
                           onSelect={() => {
-                            console.log(option.value);
                             form.setValue(name, option.value, {
                               shouldValidate: true,
                             });

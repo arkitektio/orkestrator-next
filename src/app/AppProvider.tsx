@@ -29,7 +29,7 @@ import { WidgetRegistryProvider } from "@/rekuest/widgets/WidgetsProvider";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import { useNavigate } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
-
+import React from "react";
 const displayRegistry = {
   "@mikro-next/image": ImageDisplay,
   "@rekuest/node": NodeDisplay,

@@ -170,7 +170,6 @@ export const FilterSearchField = ({
                           value={option.value}
                           key={option.value}
                           onSelect={() => {
-                            console.log(option.value);
                             form.setValue(name, option.value, {
                               shouldValidate: true,
                             });

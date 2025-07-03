@@ -41,7 +41,6 @@ export const NotConnected = () => {
   });
 
   const onSubmit = (data: { url: string }) => {
-    console.log(data);
     setIntrospectError(null);
     const controller = new AbortController();
 

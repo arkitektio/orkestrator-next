@@ -51,7 +51,7 @@ export const ListButtonLabel = (props: {
       return;
     }
     props
-      .search({ values: props.value})
+      .search({ values: props.value })
       .then((res) => {
         setOptions(res.filter(notEmpty));
       })
@@ -189,37 +189,27 @@ export const ListSearchField = ({
                           value={option.value}
                           key={option.value}
                           onSelect={() => {
-                            console.log(option.value);
                             if (field.value == undefined) {
                               field.onChange([option.value]);
                             } else {
-                              if (
-                                field.value.find(
-                                  (v) => v == option.value,
-                                )
-                              ) {
+                              if (field.value.find((v) => v == option.value)) {
                                 form.setValue(
                                   name,
-                                  field.value.filter(
-                                    (v) => v !== option.value,
-                                  ),
+                                  field.value.filter((v) => v !== option.value),
                                   { shouldValidate: true },
                                 );
                               } else {
                                 form.setValue(
                                   name,
-                                  [
-                                    ...field.value,
-                                    option.value,
-                                  ].filter(notEmpty),
+                                  [...field.value, option.value].filter(
+                                    notEmpty,
+                                  ),
                                   { shouldValidate: true },
                                 );
                               }
                             }
                           }}
-                          onClick={() => {
-                            console.log(option.value);
-                          }}
+                          onClick={() => {}}
                         >
                           {option.label}
                           <CheckIcon

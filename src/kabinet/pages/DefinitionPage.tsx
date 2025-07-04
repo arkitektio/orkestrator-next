@@ -42,7 +42,7 @@ const RefreshLogsButton = (props: { item: string; refetch: () => void }) => {
   const { data } = useImplementationsQuery({
     variables: {
       filters: {
-        nodeHash: KABINET_REFRESH_POD_HASH,
+        actionHash: KABINET_REFRESH_POD_HASH,
       },
     },
   });

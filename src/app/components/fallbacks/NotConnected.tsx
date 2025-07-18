@@ -1,4 +1,3 @@
-import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,12 +16,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { manifest } from "@/constants";
+import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
+import { discover } from "@/lib/arkitekt/fakts/discover";
+import { FaktsEndpoint } from "@/lib/arkitekt/fakts/endpointSchema";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { useLocation } from "react-router-dom";
-import React from "react";
-import { FaktsEndpoint } from "@/lib/arkitekt/fakts/endpointSchema";
-import { discover } from "@/lib/arkitekt/fakts/discover";
 
 export const NotConnected = () => {
   const connect = Arkitekt.useConnect();

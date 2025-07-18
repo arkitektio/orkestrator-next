@@ -117,7 +117,15 @@ fragment ChildPort on Port {
   description
 }
 
+fragment BaseEffect on Effect {
+  __typename
+  kind
+  dependencies
+  function
+}
+
 fragment CustomEffect on CustomEffect {
+  ...BaseEffect
   __typename
   kind
   hook
@@ -125,18 +133,22 @@ fragment CustomEffect on CustomEffect {
 }
 
 fragment MessageEffect on MessageEffect {
+  ...BaseEffect
   __typename
   kind
   message
 }
 
-fragment PortEffect on Effect {
+fragment HideEffect on HideEffect {
+  ...BaseEffect
   __typename
-  kind
-  dependencies
-  function
+  fade
+}
+
+fragment PortEffect on Effect {
   ...CustomEffect
   ...MessageEffect
+  ...HideEffect
 }
 
 fragment AssignWidget on AssignWidget {

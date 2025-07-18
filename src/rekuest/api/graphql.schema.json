@@ -1,13 +1,16 @@
 {
   "__schema": {
     "queryType": {
-      "name": "Query"
+      "name": "Query",
+      "kind": "OBJECT"
     },
     "mutationType": {
-      "name": "Mutation"
+      "name": "Mutation",
+      "kind": "OBJECT"
     },
     "subscriptionType": {
-      "name": "Subscription"
+      "name": "Subscription",
+      "kind": "OBJECT"
     },
     "types": [
       {
@@ -2328,7 +2331,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"83839703-4516-4ac6-b6d2-447cd564e131\"",
+            "defaultValue": "\"de4937b2-07e3-4b9b-9920-b4d1f0b1751e\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -6070,6 +6073,11 @@
           },
           {
             "kind": "OBJECT",
+            "name": "HideEffect",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
             "name": "MessageEffect",
             "ofType": null
           }
@@ -6103,6 +6111,18 @@
             "deprecationReason": null
           },
           {
+            "name": "fade",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "true",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "function",
             "description": null,
             "type": {
@@ -6126,7 +6146,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": null,
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -6166,7 +6186,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": null,
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -6778,6 +6798,96 @@
           }
         ],
         "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "HideEffect",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "dependencies",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "fade",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "function",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "ValidatorFunction",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "kind",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "ENUM",
+                "name": "EffectKind",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [
+          {
+            "kind": "INTERFACE",
+            "name": "Effect",
+            "ofType": null
+          }
+        ],
         "enumValues": null,
         "possibleTypes": null
       },
@@ -9947,6 +10057,34 @@
             "deprecationReason": null
           }
         ],
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "Organization",
+        "description": "Represents an organization in the system.",
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "slug",
+            "description": "Slug of the organization.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
         "possibleTypes": null
       },
       {
@@ -13162,6 +13300,22 @@
             "deprecationReason": null
           },
           {
+            "name": "organization",
+            "description": "The organization this registry belongs to.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "Organization",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "user",
             "description": "The associated user.",
             "args": [],
@@ -13735,7 +13889,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"5a8fcd3a-2b81-483a-a88e-dc559a3a4024\"",
+            "defaultValue": "\"5080e989-bd49-471b-8318-d266c91d678f\"",
             "isDeprecated": false,
             "deprecationReason": null
           },

@@ -1,4 +1,3 @@
-import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,14 +16,15 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { manifest } from "@/constants";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { NotLoggedIn } from "../components/fallbacks/NotLoggedIn";
-import { NotConnected } from "../components/fallbacks/NotConnected";
+import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
 import { discover } from "@/lib/arkitekt/fakts/discover";
 import { FaktsEndpoint } from "@/lib/arkitekt/fakts/endpointSchema";
-import { useMeQuery } from "@/lok-next/api/graphql";
+import { useMyContextQuery } from "@/lok-next/api/graphql";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { NotConnected } from "../components/fallbacks/NotConnected";
+import React from "react";
+import { ConnectingFallback } from "../components/fallbacks/Connecting";
 
 export const ConnectButton = () => {
   const connect = Arkitekt.useConnect();
@@ -245,8 +245,9 @@ export const ServicesInfo = () => {
 export const Home = () => {
   const fakts = Arkitekt.useFakts();
   const disconnect = Arkitekt.useDisconnect();
+  const reconnect = Arkitekt.useReconnect();
 
-  const { data, error } = useMeQuery({
+  const { data, error } = useMyContextQuery({
     fetchPolicy: "cache-and-network",
   });
 
@@ -257,11 +258,14 @@ export const Home = () => {
           <div className="space-y-4">
             <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl text-foreground">
               {" "}
-              Hi {data?.me?.username} :)
+              Hi {data?.mycontext?.user.username} :)
             </h1>
             <p className="max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-              You are currently logged in to {fakts?.self?.deployment_name}. You
-              can now access all the features of your server.
+              You are currently logged in to {fakts?.self?.deployment_name} and
+              are acting on behalf of {data?.mycontext.organization.name}.
+              <br />
+              You can now access all the features of your server for your
+              organization.
             </p>
 
             <div className="flex items-center space-x-2">
@@ -273,6 +277,15 @@ export const Home = () => {
                 className="text-foreground"
               >
                 Disconnect form server
+              </Button>
+              <Button
+                onClick={() => {
+                  reconnect({ controller: new AbortController() });
+                }}
+                variant={"ghost"}
+                className="text-foreground"
+              >
+                Change User / Organization
               </Button>
             </div>
 
@@ -291,9 +304,7 @@ export const Home = () => {
 function Page() {
   return (
     <>
-      <Arkitekt.Guard notConnectedFallback={<NotConnected />}>
-        <Home />
-      </Arkitekt.Guard>
+      <Home />
     </>
   );
 }

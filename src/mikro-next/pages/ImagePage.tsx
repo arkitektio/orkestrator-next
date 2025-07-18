@@ -31,6 +31,7 @@ import AcquisitionViewCard from "../components/cards/AcquisitionViewCard";
 import ChannelViewCard from "../components/cards/ChannelViewCard";
 import DerivedViewCard from "../components/cards/DerivedViewCard";
 import FileViewCard from "../components/cards/FileViewCard";
+import HistogramViewCard from "../components/cards/HistogramViewCard";
 import LabelViewCard from "../components/cards/LabelViewCard";
 import OpticsViewCard from "../components/cards/OpticsViewCard";
 import PixelViewCard from "../components/cards/PixelViewCard";
@@ -43,9 +44,6 @@ import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { PinToggle } from "../components/ui/PinToggle";
 import { AddImageViewForm } from "../forms/AddImageViewForm";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
-import HistogramViewCard from "../components/cards/HistogramViewCard";
-import { create } from "handlebars";
-import { TinyStructureBox } from "@/kraph/boxes/TinyStructureBox";
 
 export type IRepresentationScreenProps = {};
 
@@ -147,6 +145,7 @@ export default asDetailQueryRoute(
               Provenance: (
                 <ProvenanceSidebar items={data?.image.provenanceEntries} />
               ),
+              Share: <MikroImage.Share object={data?.image?.id} />,
               Renders: (
                 <div className="p-3 flex flex-col gap-2">
                   {data.image.renders.map((render, index) => (

@@ -37,6 +37,10 @@ import { Icons } from "@/components/icons";
 import { BiSolidWidget } from "react-icons/bi";
 import { BsLightning } from "react-icons/bs";
 import { MdStream } from "react-icons/md";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ArkitektLogo } from "../logos/ArkitektLogo";
+import { BackLogo } from "../logos/BackLogo";
+import { cn } from "@/lib/utils";
 
 export type INavigationBarProps = {
   children?: React.ReactNode;
@@ -84,8 +88,20 @@ export const matchIcon = (key: string) => {
  */
 const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
   const disconnect = Arkitekt.useDisconnect();
+  const reconnect = Arkitekt.useReconnect();
   const { debug, setDebug } = useDebug();
   const services = Arkitekt.useServices();
+
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const onClick = () => {
+    if (window.electron) {
+      navigate(-1);
+    } else {
+      navigate("/");
+    }
+  };
 
   const linkChildren =
     services.map((s) => {
@@ -110,8 +126,8 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
 
   return (
     <NavigationMenu
-      className="mx-auto px-1 max-w-[40px] flex flex-grow sm:flex-col flex-row gap-8  h-full py-3"
-      orientation="horizontal"
+      className=" px-1 w-full sm:flex-col flex-row gap-8 h-full overflow-hidden py-3"
+      orientation="vertical"
     >
       <IconContext.Provider
         value={{
@@ -119,22 +135,42 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
           style: { stroke: "0.3px" },
         }}
       >
+        <div className="flex-initial h-12 w-12 border-b-gray-600 mt-2 mx-auto my-auto md:block hidden">
+          <div onClick={onClick} className="cursor-pointer">
+            {location.pathname == "/" ? (
+              <ArkitektLogo
+                width={"100%"}
+                height={"100%"}
+                cubeColor={"hsl(var(--primary))"}
+                aColor={"hsl(var(--foreground))"}
+                strokeColor={"hsl(var(--foreground))"}
+              />
+            ) : (
+              <BackLogo
+                width={"100%"}
+                height={"100%"}
+                cubeColor={"hsl(var(--primary))"}
+                aColor={"hsl(var(--foreground))"}
+                strokeColor={"hsl(var(--foreground))"}
+              />
+            )}
+          </div>
+        </div>
         <div className="flex-grow flex-row md:flex-col justify-center flex gap-8 ">
           {linkChildren}
         </div>
-        <div className="flex-initial flex-row md:flex-col justify-center flex gap-8">
+        <div className="flex-initial flex-row md:flex-col justify-center items-center  gap-2 flex ">
           <Button
             variant="ghost"
-            className="md:block text-foreground hidden"
+            className={cn(
+              "md:block text-foreground hidden mx-auto h-12 w-12",
+              debug && "bg-red-500",
+            )}
             onClick={() => setDebug(!debug)}
           >
             {debug ? <Bug /> : <TbBugOff />}
           </Button>
-          <DroppableNavLink
-            key={"Settings"}
-            to={"settings"}
-            className={"text-foreground"}
-          >
+          <DroppableNavLink key={"Settings"} to={"settings"} className={""}>
             {({ isActive }) => (
               <NavigationMenuLink active={isActive}>
                 <Settings />
@@ -142,7 +178,7 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
             )}
           </DroppableNavLink>
           <DropdownMenu>
-            <DropdownMenuTrigger className="text-foreground h-12">
+            <DropdownMenuTrigger className="text-foreground  mx-auto h-12 w-12">
               <Guard.Lok fallback={<div className="h-8">No lok?</div>}>
                 <Me />
               </Guard.Lok>
@@ -165,7 +201,13 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
                 >
                   Disconnect
                 </Button>{" "}
-                <ModeToggle />
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => reconnect()}
+                >
+                  Reconnect
+                </Button>{" "}
               </div>
             </DropdownMenuContent>
           </DropdownMenu>

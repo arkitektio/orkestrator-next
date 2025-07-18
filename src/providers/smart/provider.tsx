@@ -10,7 +10,7 @@ export const HTML5toTouch = {
     {
       id: "html5",
       backend: HTML5Backend,
-      preview: true,
+      preview: false,
       transition: MouseTransition,
     },
   ],
@@ -34,10 +34,5 @@ export type SmartProviderProps = {
 };
 
 export const SmartProvider = (props: SmartProviderProps) => {
-  return (
-    <DndProvider options={HTML5toTouch}>
-      <MyPreview />
-      {props.children}
-    </DndProvider>
-  );
+  return <DndProvider options={HTML5toTouch}>{props.children}</DndProvider>;
 };

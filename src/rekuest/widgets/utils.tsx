@@ -221,7 +221,7 @@ export const portToDefaults = (
 };
 
 export const recursiveExtract = (data: any, port: PortablePort): any => {
-  if (!data) return null;
+  if (data == undefined || data == null) return null;
   if (!port) throw new Error("Port is not defined");
 
   if (port.kind == PortKind.List) {

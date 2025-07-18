@@ -1,3 +1,4 @@
+import React from "react";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { cn } from "@/lib/utils";

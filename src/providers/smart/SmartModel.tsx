@@ -22,114 +22,161 @@ export const SmartModel = ({
   mates,
   ...props
 }: SmartModelProps) => {
-  const self: Structure = {
-    identifier: props.identifier,
-    object: props.object,
-  };
+  const self: Structure = React.useMemo(
+    () => ({
+      identifier: props.identifier,
+      object: props.object,
+    }),
+    [props.identifier, props.object],
+  );
+
+  const portalRef = React.useRef<HTMLDivElement>(null);
 
   const [partners, setPartners] = useState<Structure[]>([]);
 
-  const { refs, floatingStyles } = useFloating({
-    strategy: "fixed",
-    transform: true,
-    open: partners.length > 0,
-    onOpenChange: (open) => {
-      if (!open) {
-        setPartners([]);
+  const dropHandler = React.useCallback((item: any, monitor: any) => {
+    console.log("drop", item);
+
+    if (monitor.getItemType() === SMART_MODEL_DROP_TYPE) {
+      console.log("SMART", item);
+      setPartners(item);
+      return {};
+    }
+
+    if (monitor.getItemType() === NativeTypes.URL) {
+      console.log("URL", item);
+      const url = item.urls;
+      const partners: Structure[] = [];
+      for (let i = 0; i < url.length; i++) {
+        const the_url = url[i];
+        console.log("URL", the_url);
+        const match = the_url.match(/arkitekt:\/\/([^:]+):([^\/]+)/);
+        if (match) {
+          console.log("MATCH", match);
+          const [_, identifier, object] = match;
+          const structure: Structure = { identifier, object };
+          partners.push(structure);
+        }
       }
-    },
-  });
-
-  const [{ isOver, canDrop }, drop] = useDrop(() => {
-    return {
-      accept: [SMART_MODEL_DROP_TYPE, NativeTypes.TEXT, NativeTypes.URL],
-      drop: (item, monitor) => {
-        console.log("drop", item);
-
-        if (monitor.getItemType() === SMART_MODEL_DROP_TYPE) {
-          console.log("SMART", item);
-          setPartners(item);
-          return {};
-        }
-
-        if (monitor.getItemType() === NativeTypes.URL) {
-          console.log("URL", item);
-          let url = item.urls;
-          let partners: Structure[] = [];
-          for (let i = 0; i < url.length; i++) {
-            let the_url = url[i];
-            console.log("URL", the_url);
-            let match = the_url.match(/arkitekt:\/\/([^:]+):([^\/]+)/);
-            if (match) {
-              console.log("MATCH", match);
-              let [_, identifier, object] = match;
-              let structure: Structure = { identifier, object };
-              partners.push(structure);
-            }
-          }
-          if (partners.length > 0) {
-            setPartners(partners);
-            return {};
-          }
-        }
-
-        let text = item.text;
-
-        if (item.text) {
-          try {
-            let structure: Structure = JSON.parse(text);
-            setPartners([structure]);
-            return {};
-          } catch (e) {
-            console.error(e);
-          }
-        }
-
-        alert(`Drop unkonwn ${item}`);
-
+      if (partners.length > 0) {
+        setPartners(partners);
         return {};
-      },
-      collect: (monitor) => {
-        return {
-          isOver: !!monitor.isOver(),
-          canDrop: !!monitor.canDrop(),
-        };
-      },
-    };
-  });
+      }
+    }
+
+    const text = item.text;
+
+    if (item.text) {
+      try {
+        const structure: Structure = JSON.parse(text);
+        setPartners([structure]);
+        return {};
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    alert(`Drop unknown ${item}`);
+    return {};
+  }, []);
+
+  const collectDrop = React.useCallback(
+    (monitor: any) => ({
+      isOver: !!monitor.isOver(),
+      canDrop: !!monitor.canDrop(),
+    }),
+    [],
+  );
+
+  const [{ isOver }, drop] = useDrop(
+    () => ({
+      accept: [SMART_MODEL_DROP_TYPE, NativeTypes.TEXT, NativeTypes.URL],
+      drop: dropHandler,
+      collect: collectDrop,
+    }),
+    [dropHandler, collectDrop],
+  );
+
+  const collectDrag = React.useCallback(
+    (monitor: any) => ({
+      isDragging: monitor.isDragging(),
+    }),
+    [],
+  );
 
   const [{ isDragging }, drag] = useDrag(
     () => ({
       type: SMART_MODEL_DROP_TYPE,
       item: [self],
-      collect: (monitor) => {
-        console.log("dragging", monitor.isDragging());
-        return {
-          isDragging: monitor.isDragging(),
-        };
-      },
+      collect: collectDrag,
     }),
-    [self],
+    [self, collectDrag],
   );
+
+  const clearPartners = React.useCallback(() => {
+    setPartners([]);
+  }, []);
+
+  const handleDragStart = React.useCallback(
+    (e: React.DragEvent) => {
+      const data = JSON.stringify(self);
+      e.dataTransfer.setData("text/plain", data);
+      e.dataTransfer.setData(
+        "text/uri-list",
+        `arkitekt://${props.identifier}:${props.object}`,
+      );
+    },
+    [self, props.identifier, props.object],
+  );
+
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        portalRef.current &&
+        !portalRef.current.contains(event.target as Node)
+      ) {
+        clearPartners();
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        clearPartners();
+      }
+    };
+
+    if (partners.length > 0) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [partners.length, clearPartners]);
 
   const { isSelected } = useMySelection({
     identifier: props.identifier,
     object: props.object,
   });
 
+  const className = React.useMemo(
+    () =>
+      cn(
+        "@container relative z-10 cursor-pointer",
+        isSelected && "group ring ring-1 ",
+        isDragging && "opacity-50 ring-2 ring-gray-600 ring rounded rounded-md",
+        isOver && "shadow-xl ring-2 border-gray-200 ring rounded rounded-md",
+      ),
+    [isSelected, isDragging, isOver],
+  );
+
   return (
     <div
       key={props.object}
       ref={drop}
-      onDragStart={(e) => {
-        // Package the data as text/uri-list
-        const data = JSON.stringify(self);
-        e.dataTransfer.setData("text/plain", data);
-        e.dataTransfer.setData(
-          "text/uri-list",
-          `arkitekt://${props.identifier}:${props.object}`,
-        );
-      }}
+      onDragStart={handleDragStart}
       data-identifier={props.identifier}
       data-object={props.object}
     >
@@ -148,35 +195,26 @@ export const SmartModel = ({
         <ContextMenuTrigger>
           <div
             ref={drag}
-            className={cn(
-              "@container relative z-10 cursor-pointer",
-              isSelected && "group ring ring-1 ",
-              isDragging &&
-                "opacity-50 ring-2 ring-gray-600 ring rounded rounded-md",
-              isOver &&
-                "shadow-xl ring-2 border-gray-200 ring rounded rounded-md",
-            )}
-            draggable={true}
-            onDragStart={(e) => {
-              // Package the data as text/uri-list
-              const data = JSON.stringify(self);
-              e.dataTransfer.setData("text/plain", data);
-            }}
+            className={className}
+            draggable={false}
             data-identifier={props.identifier}
             data-object={props.object}
           >
             {props.children}
             {isOver && <CombineButton />}
-            <div className="absolute top-0 right-0 " ref={refs.setReference} />
 
             {partners.length > 0 && (
-              <Portal>
+              <div
+                className="fixed inset-0 z-[9998] flex items-center justify-center"
+                ref={portalRef}
+              >
                 <div
-                  ref={refs.setFloating}
-                  className={cn(
-                    " bg-background border border-gray-500 rounded-lg shadow-lg p-2 z-[9999] w-[300px] aspect-square",
-                  )}
-                  style={floatingStyles}
+                  className="fixed inset-0 bg-black bg-opacity-50"
+                  onClick={clearPartners}
+                />
+                <div
+                  className="bg-background border border-gray-500 rounded-lg shadow-lg p-2 z-[9999] w-[300px] aspect-square relative"
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <SmartContext
                     identifier={props.identifier}
@@ -184,7 +222,7 @@ export const SmartModel = ({
                     partners={partners}
                   />
                 </div>
-              </Portal>
+              </div>
             )}
           </div>
         </ContextMenuTrigger>

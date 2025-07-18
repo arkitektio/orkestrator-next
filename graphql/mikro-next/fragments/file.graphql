@@ -17,6 +17,9 @@ fragment File on File {
   provenanceEntries {
     ...ProvenanceEntry
   }
+  organization {
+    slug
+  }
 }
 
 fragment ListFile on File {

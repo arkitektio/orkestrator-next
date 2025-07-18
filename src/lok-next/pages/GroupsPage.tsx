@@ -15,14 +15,14 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
 
   return (
     <PageLayout
-      title="Groups"
+      title="Roles"
       pageActions={
         <>
           <FormDialogAction
             variant={"outline"}
             size={"sm"}
             label="Create"
-            description="Create a new Group"
+            description="Create a new Role"
             buttonChildren={
               <>
                 <PlusIcon className="h-4 w-4 mr-2" />

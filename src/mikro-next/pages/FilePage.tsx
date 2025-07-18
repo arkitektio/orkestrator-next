@@ -34,12 +34,18 @@ export default asDetailQueryRoute(useGetFileQuery, ({ data, refetch }) => {
       title={data.file.name}
       sidebars={
         <MultiSidebar
-          map={{ Comments: <MikroFile.Komments object={data.file.id} />, Provenance: <ProvenanceSidebar items={data?.file.history} />, }}
+          map={{
+            Comments: <MikroFile.Komments object={data.file.id} />,
+            Provenance: <ProvenanceSidebar items={data?.file.history} />,
+          }}
         />
       }
       pageActions={
         <>
-          <DownloadButton url={resolve(data.file.store.presignedUrl)} variant="outline">
+          <DownloadButton
+            url={resolve(data.file.store.presignedUrl)}
+            variant="outline"
+          >
             Download
           </DownloadButton>
         </>
@@ -47,7 +53,7 @@ export default asDetailQueryRoute(useGetFileQuery, ({ data, refetch }) => {
     >
       <div className="flex flex-col gap-1 mb-3">
         <MikroFile.DetailLink object={data.file.id} className={"text-3xl"}>
-          {data?.file?.name}
+          {data?.file?.name} @ {data.file.organization.slug}
         </MikroFile.DetailLink>
         <p>
           {data?.file?.store.bucket}/{data?.file?.store.key}

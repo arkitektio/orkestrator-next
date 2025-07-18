@@ -173,6 +173,13 @@ export type AffineTransformationViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type AssignUserPermissionInput = {
+  identifier: Scalars['String']['input'];
+  object: Scalars['ID']['input'];
+  permissions: Array<Scalars['String']['input']>;
+  user: Scalars['ID']['input'];
+};
+
 export type AssociateInput = {
   other: Scalars['ID']['input'];
   selfs: Array<Scalars['ID']['input']>;
@@ -725,8 +732,12 @@ export type ExperimentFilter = {
 
 export type File = {
   __typename?: 'File';
+  /** The user who created this file */
+  creator: User;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
+  /** The organization this file belongs to */
+  organization: Organization;
   origins: Array<Image>;
   /** Provenance entries for this camera */
   provenanceEntries: Array<ProvenanceEntry>;
@@ -1135,6 +1146,7 @@ export type ImageFilter = {
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   name?: InputMaybe<StrFilterLookup>;
   notDerived?: InputMaybe<Scalars['Boolean']['input']>;
+  scope?: InputMaybe<ScopeFilter>;
   store?: InputMaybe<ZarrStoreFilter>;
   timepointViews?: InputMaybe<TimepointViewFilter>;
   transformationViews?: InputMaybe<AffineTransformationViewFilter>;
@@ -1357,6 +1369,8 @@ export type MultiWellPlateInput = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  /** Assign a user permission to an object */
+  assignUserPermission: Array<UserObjectPermission>;
   /** Create a new view for affine transformation data */
   createAffineTransformationView: AffineTransformationView;
   /** Create a new camera configuration */
@@ -1541,6 +1555,11 @@ export type Mutation = {
   updateRgbContext: RgbContext;
   /** Update an existing region of interest */
   updateRoi: Roi;
+};
+
+
+export type MutationAssignUserPermissionArgs = {
+  input: AssignUserPermissionInput;
 };
 
 
@@ -1915,7 +1934,8 @@ export type MutationPutImagesInDatasetArgs = {
 
 
 export type MutationRelateToDatasetArgs = {
-  input: RelateToDatasetInput;
+  id: Scalars['ID']['input'];
+  other: Scalars['ID']['input'];
 };
 
 
@@ -2120,6 +2140,12 @@ export enum Ordering {
   DescNullsFirst = 'DESC_NULLS_FIRST',
   DescNullsLast = 'DESC_NULLS_LAST'
 }
+
+export type Organization = {
+  __typename?: 'Organization';
+  id: Scalars['String']['output'];
+  slug: Scalars['String']['output'];
+};
 
 export type ParquetStore = {
   __typename?: 'ParquetStore';
@@ -2478,6 +2504,12 @@ export type PartialTimepointViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type PermissionOption = {
+  __typename?: 'PermissionOption';
+  label: Scalars['String']['output'];
+  value: Scalars['ID']['output'];
+};
+
 export type PinCameraInput = {
   id: Scalars['ID']['input'];
   pin: Scalars['Boolean']['input'];
@@ -2646,6 +2678,8 @@ export type Query = {
   __typename?: 'Query';
   acquisitionViews: Array<AcquisitionView>;
   affineTransformationViews: Array<AffineTransformationView>;
+  /** Get available permissions for a specific identifier */
+  availablePermissions: Array<PermissionOption>;
   camera: Camera;
   channelViews: Array<ChannelView>;
   channels: Array<Channel>;
@@ -2680,6 +2714,8 @@ export type Query = {
   mytables: Array<Table>;
   objective: Objective;
   objectives: Array<Objective>;
+  /** Get permissions for a specific object */
+  permissions: Array<UserObjectPermission>;
   pixelView: PixelView;
   randomImage: Image;
   renderTree: RenderTree;
@@ -2710,6 +2746,13 @@ export type Query = {
 export type QueryAffineTransformationViewsArgs = {
   filters?: InputMaybe<AffineTransformationViewFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryAvailablePermissionsArgs = {
+  identifier: Scalars['String']['input'];
+  search?: InputMaybe<Scalars['String']['input']>;
+  values?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
 
@@ -2848,6 +2891,12 @@ export type QueryMytablesArgs = {
 
 export type QueryObjectiveArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryPermissionsArgs = {
+  identifier: Scalars['String']['input'];
+  object: Scalars['ID']['input'];
 };
 
 
@@ -3185,11 +3234,6 @@ export type RangePixelLabel = {
   min: Scalars['Int']['input'];
 };
 
-export type RelateToDatasetInput = {
-  id: Scalars['ID']['input'];
-  other: Scalars['ID']['input'];
-};
-
 export type Render = {
   createdAt: Scalars['DateTime']['output'];
   creator?: Maybe<User>;
@@ -3380,6 +3424,13 @@ export enum ScanDirection {
   SliceRowColumn = 'SLICE_ROW_COLUMN',
   SliceRowColumnSnake = 'SLICE_ROW_COLUMN_SNAKE'
 }
+
+export type ScopeFilter = {
+  me?: InputMaybe<Scalars['Boolean']['input']>;
+  org?: InputMaybe<Scalars['Boolean']['input']>;
+  public?: InputMaybe<Scalars['Boolean']['input']>;
+  shared?: InputMaybe<Scalars['Boolean']['input']>;
+};
 
 export type Snapshot = Render & {
   __typename?: 'Snapshot';
@@ -3761,9 +3812,15 @@ export type UpdateRoiInput = {
 
 export type User = {
   __typename?: 'User';
+  activeOrganization?: Maybe<Organization>;
   preferredUsername: Scalars['String']['output'];
-  roles: Array<Scalars['String']['output']>;
   sub: Scalars['String']['output'];
+};
+
+export type UserObjectPermission = {
+  __typename?: 'UserObjectPermission';
+  permission: Scalars['String']['output'];
+  user: User;
 };
 
 export type Video = Render & {
@@ -3969,7 +4026,7 @@ export type ListDatasetFragment = { __typename?: 'Dataset', id: string, name: st
 
 export type EraFragment = { __typename?: 'Era', id: string, begin?: any | null, name: string };
 
-export type FileFragment = { __typename?: 'File', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> };
+export type FileFragment = { __typename?: 'File', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } };
 
 export type ListFileFragment = { __typename?: 'File', id: string, name: string };
 
@@ -4222,7 +4279,7 @@ export type From_File_LikeMutationVariables = Exact<{
 }>;
 
 
-export type From_File_LikeMutation = { __typename?: 'Mutation', fromFileLike: { __typename?: 'File', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
+export type From_File_LikeMutation = { __typename?: 'Mutation', fromFileLike: { __typename?: 'File', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } } };
 
 export type RequestFileUploadMutationVariables = Exact<{
   key: Scalars['String']['input'];
@@ -4352,6 +4409,13 @@ export type EnsureObjectiveMutationVariables = Exact<{
 
 
 export type EnsureObjectiveMutation = { __typename?: 'Mutation', ensureObjective: { __typename?: 'Objective', id: string, name: string } };
+
+export type AssignUserPermissionsMutationVariables = Exact<{
+  input: AssignUserPermissionInput;
+}>;
+
+
+export type AssignUserPermissionsMutation = { __typename?: 'Mutation', assignUserPermission: Array<{ __typename?: 'UserObjectPermission', permission: string, user: { __typename?: 'User', sub: string } }> };
 
 export type CreateRgbContextMutationVariables = Exact<{
   input: CreateRgbContextInput;
@@ -4538,7 +4602,7 @@ export type GetFileQueryVariables = Exact<{
 }>;
 
 
-export type GetFileQuery = { __typename?: 'Query', file: { __typename?: 'File', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
+export type GetFileQuery = { __typename?: 'Query', file: { __typename?: 'File', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, views: Array<{ __typename?: 'FileView', id: string, seriesIdentifier?: string | null, image: { __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null } }>, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, organization: { __typename?: 'Organization', slug: string } } };
 
 export type GetFilesQueryVariables = Exact<{
   filters?: InputMaybe<FileFilter>;
@@ -4630,6 +4694,23 @@ export type GetObjectiveQueryVariables = Exact<{
 
 
 export type GetObjectiveQuery = { __typename?: 'Query', objective: { __typename?: 'Objective', na?: number | null, name: string, serialNumber: string } };
+
+export type GetPermissionsQueryVariables = Exact<{
+  identifier: Scalars['String']['input'];
+  object: Scalars['ID']['input'];
+}>;
+
+
+export type GetPermissionsQuery = { __typename?: 'Query', permissions: Array<{ __typename?: 'UserObjectPermission', permission: string, user: { __typename?: 'User', sub: string } }> };
+
+export type PermissionOptionsQueryVariables = Exact<{
+  identifier: Scalars['String']['input'];
+  search?: InputMaybe<Scalars['String']['input']>;
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+}>;
+
+
+export type PermissionOptionsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'PermissionOption', value: string, label: string }> };
 
 export type GetPixelViewQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4892,6 +4973,9 @@ export const FileFragmentDoc = gql`
   }
   provenanceEntries {
     ...ProvenanceEntry
+  }
+  organization {
+    slug
   }
 }
     ${BigFileStoreFragmentDoc}
@@ -6616,6 +6700,42 @@ export function useEnsureObjectiveMutation(baseOptions?: ApolloReactHooks.Mutati
 export type EnsureObjectiveMutationHookResult = ReturnType<typeof useEnsureObjectiveMutation>;
 export type EnsureObjectiveMutationResult = Apollo.MutationResult<EnsureObjectiveMutation>;
 export type EnsureObjectiveMutationOptions = Apollo.BaseMutationOptions<EnsureObjectiveMutation, EnsureObjectiveMutationVariables>;
+export const AssignUserPermissionsDocument = gql`
+    mutation AssignUserPermissions($input: AssignUserPermissionInput!) {
+  assignUserPermission(input: $input) {
+    user {
+      sub
+    }
+    permission
+  }
+}
+    `;
+export type AssignUserPermissionsMutationFn = Apollo.MutationFunction<AssignUserPermissionsMutation, AssignUserPermissionsMutationVariables>;
+
+/**
+ * __useAssignUserPermissionsMutation__
+ *
+ * To run a mutation, you first call `useAssignUserPermissionsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAssignUserPermissionsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [assignUserPermissionsMutation, { data, loading, error }] = useAssignUserPermissionsMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useAssignUserPermissionsMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AssignUserPermissionsMutation, AssignUserPermissionsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<AssignUserPermissionsMutation, AssignUserPermissionsMutationVariables>(AssignUserPermissionsDocument, options);
+      }
+export type AssignUserPermissionsMutationHookResult = ReturnType<typeof useAssignUserPermissionsMutation>;
+export type AssignUserPermissionsMutationResult = Apollo.MutationResult<AssignUserPermissionsMutation>;
+export type AssignUserPermissionsMutationOptions = Apollo.BaseMutationOptions<AssignUserPermissionsMutation, AssignUserPermissionsMutationVariables>;
 export const CreateRgbContextDocument = gql`
     mutation CreateRGBContext($input: CreateRGBContextInput!) {
   createRgbContext(input: $input) {
@@ -7877,6 +7997,87 @@ export function useGetObjectiveLazyQuery(baseOptions?: ApolloReactHooks.LazyQuer
 export type GetObjectiveQueryHookResult = ReturnType<typeof useGetObjectiveQuery>;
 export type GetObjectiveLazyQueryHookResult = ReturnType<typeof useGetObjectiveLazyQuery>;
 export type GetObjectiveQueryResult = Apollo.QueryResult<GetObjectiveQuery, GetObjectiveQueryVariables>;
+export const GetPermissionsDocument = gql`
+    query GetPermissions($identifier: String!, $object: ID!) {
+  permissions(identifier: $identifier, object: $object) {
+    user {
+      sub
+    }
+    permission
+  }
+}
+    `;
+
+/**
+ * __useGetPermissionsQuery__
+ *
+ * To run a query within a React component, call `useGetPermissionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetPermissionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetPermissionsQuery({
+ *   variables: {
+ *      identifier: // value for 'identifier'
+ *      object: // value for 'object'
+ *   },
+ * });
+ */
+export function useGetPermissionsQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetPermissionsQuery, GetPermissionsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetPermissionsQuery, GetPermissionsQueryVariables>(GetPermissionsDocument, options);
+      }
+export function useGetPermissionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetPermissionsQuery, GetPermissionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetPermissionsQuery, GetPermissionsQueryVariables>(GetPermissionsDocument, options);
+        }
+export type GetPermissionsQueryHookResult = ReturnType<typeof useGetPermissionsQuery>;
+export type GetPermissionsLazyQueryHookResult = ReturnType<typeof useGetPermissionsLazyQuery>;
+export type GetPermissionsQueryResult = Apollo.QueryResult<GetPermissionsQuery, GetPermissionsQueryVariables>;
+export const PermissionOptionsDocument = gql`
+    query PermissionOptions($identifier: String!, $search: String, $values: [ID!]) {
+  options: availablePermissions(
+    identifier: $identifier
+    search: $search
+    values: $values
+  ) {
+    value
+    label
+  }
+}
+    `;
+
+/**
+ * __usePermissionOptionsQuery__
+ *
+ * To run a query within a React component, call `usePermissionOptionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `usePermissionOptionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = usePermissionOptionsQuery({
+ *   variables: {
+ *      identifier: // value for 'identifier'
+ *      search: // value for 'search'
+ *      values: // value for 'values'
+ *   },
+ * });
+ */
+export function usePermissionOptionsQuery(baseOptions: ApolloReactHooks.QueryHookOptions<PermissionOptionsQuery, PermissionOptionsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<PermissionOptionsQuery, PermissionOptionsQueryVariables>(PermissionOptionsDocument, options);
+      }
+export function usePermissionOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<PermissionOptionsQuery, PermissionOptionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<PermissionOptionsQuery, PermissionOptionsQueryVariables>(PermissionOptionsDocument, options);
+        }
+export type PermissionOptionsQueryHookResult = ReturnType<typeof usePermissionOptionsQuery>;
+export type PermissionOptionsLazyQueryHookResult = ReturnType<typeof usePermissionOptionsLazyQuery>;
+export type PermissionOptionsQueryResult = Apollo.QueryResult<PermissionOptionsQuery, PermissionOptionsQueryVariables>;
 export const GetPixelViewDocument = gql`
     query GetPixelView($id: ID!) {
   pixelView(id: $id) {

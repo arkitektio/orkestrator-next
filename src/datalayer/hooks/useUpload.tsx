@@ -13,6 +13,7 @@ import {
   RequestMediaUploadMutationVariables,
 } from "@/mikro-next/api/graphql";
 import { useCallback } from "react";
+import { toast } from "sonner";
 
 export const uploadFetch = (
   url: RequestInfo | URL,
@@ -163,24 +164,36 @@ export const useBigFileUpload = () => {
 
       console.log("uploading", file, options, datalayerEndpoint);
 
-      let data = await client.mutate<
-        RequestFileUploadPresignedMutation,
-        RequestFileUploadPresignedMutationVariables
-      >({
-        mutation: RequestFileUploadPresignedDocument,
-        variables: {
-          key: file.name,
-          datalayer: "default",
-        },
-      });
+      try {
+        const data = await client.mutate<
+          RequestFileUploadPresignedMutation,
+          RequestFileUploadPresignedMutationVariables
+        >({
+          mutation: RequestFileUploadPresignedDocument,
+          variables: {
+            key: file.name,
+            datalayer: "default",
+          },
+        });
 
-      if (!data.data?.requestFileUploadPresigned) {
-        throw Error("Failed to request upload");
+        if (data.errors) {
+          toast.error(
+            `Failed to request upload: ${data.errors.map((e) => e.message).join(", ")}`,
+          );
+        }
+
+        if (!data.data?.requestFileUploadPresigned) {
+          throw Error("Failed to request upload");
+        }
+
+        let z = data.data.requestFileUploadPresigned;
+
+        return await uploadToStore(file, datalayerEndpoint, z, options);
+      } catch (e) {
+        console.error("Failed to upload file", e);
+        toast.error(`Failed to upload file: ${(e as Error).message}`);
+        throw e;
       }
-
-      let z = data.data.requestFileUploadPresigned;
-
-      return await uploadToStore(file, datalayerEndpoint, z, options);
     },
     [client, datalayerEndpoint],
   );

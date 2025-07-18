@@ -21,17 +21,9 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       title="Datasets"
       pageActions={
         <>
-          <Button variant="outline" size="sm">
-            <UploadIcon className="h-4 w-4 mr-2" />
-            Upload
-          </Button>
           <Button variant="outline" size="sm" onClick={() => createDataset()}>
             <PlusIcon className="h-4 w-4 mr-2" />
-            Create
-          </Button>
-          <Button variant="outline" size="sm">
-            <DownloadIcon className="h-4 w-4 mr-2" />
-            Download
+            New
           </Button>
         </>
       }

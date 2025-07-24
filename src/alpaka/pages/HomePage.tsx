@@ -21,7 +21,14 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   const navigate = useNavigate();
 
   const handleCreateRoom = async () => {
-    const { data } = await createRoom();
+    const { data } = await createRoom({
+      variables: {
+        input: {
+          title: "New Room",
+          description: "A new room created from the home page",
+        },
+      },
+    });
     if (data?.createRoom) {
       navigate(AlpakaRoom.linkBuilder(data.createRoom.id));
     }

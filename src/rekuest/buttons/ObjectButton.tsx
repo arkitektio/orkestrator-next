@@ -63,6 +63,7 @@ import {
   useCreateStructureRelationMutation,
   useListStructureRelationCategoryQuery,
 } from "@/kraph/api/graphql";
+import { Guard } from "@/lib/arkitekt/Arkitekt";
 
 export const DirectImplementationAssignment = (
   props: SmartContextProps & { action: PrimaryActionFragment },
@@ -827,18 +828,25 @@ export const SmartContext = (props: SmartContextProps) => {
         />
 
         <CommandList>
-          <AppicableShortcuts {...props} filter={filter} />
+          
           <CommandEmpty>{"No Action available"}</CommandEmpty>
 
           <ApplicableLocalActions {...props} filter={filter} />
+          <Guard.Rekuest fallback={<></>}>
+          <AppicableShortcuts {...props} filter={filter} />
           <ApplicableActions {...props} filter={filter} />
-          <ApplicableRelations {...props} filter={filter} />
+          </Guard.Rekuest>
+          <Guard.Kraph fallback={<></>}>
+            <ApplicableRelations {...props} filter={filter} />
+          </Guard.Kraph>
 
+          <Guard.Kabinet fallback={<></>}>
           <ApplicableDefinitions
             {...props}
             partners={props.partners}
             filter={filter}
           />
+          </Guard.Kabinet>
         </CommandList>
       </Command>
     </>

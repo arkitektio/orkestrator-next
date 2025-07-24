@@ -164,6 +164,11 @@ export const KraphRelationCategory = buildSmart(
   "kraph/relationcategories",
 );
 
+export const KraphStructureRelationCategory = buildSmart(
+  "@kraph/structurerelationcategory",
+  "kraph/structurerelationcategories",
+);
+
 export const KraphGenericCategory = buildSmart(
   "@kraph/genericcategory",
   "kraph/genericcategories",

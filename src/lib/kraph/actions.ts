@@ -42,3 +42,21 @@ export const KRAPH_ACTIONS: Action[] = [
     mutation: DeleteEntityCategoryDocument,
   }),
 ];
+
+export const relateAction = {
+  name: "Relate",
+  title: "relate things",
+  description: "Delete the structure",
+  conditions: [
+    {
+      type: "haspartner",
+    },
+  ],
+  execute: async ({ services, onProgress, abortSignal, state, dialog }) => {
+    dialog.openDialog("relatestructure", {
+      left: state.left,
+      right: state.right,
+    });
+  },
+  collections: ["io"],
+};

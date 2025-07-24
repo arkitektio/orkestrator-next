@@ -1,4 +1,3 @@
-import { useService } from "@/arkitekt/hooks";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,7 +15,9 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/use-toast";
+import { useRekuest } from "@/lib/arkitekt/Arkitekt";
 import { cn } from "@/lib/utils";
+import { FlussReactiveTemplate, RekuestAction } from "@/linkers";
 import { useSmartDrop } from "@/providers/smart/hooks";
 import {
   BaseGraphNodeFragment,
@@ -37,7 +38,6 @@ import {
   ConstantActionDocument,
   ConstantActionQuery,
   PortKind,
-  useImplementationsQuery,
 } from "@/rekuest/api/graphql";
 import {
   DoubleArrowLeftIcon,
@@ -66,7 +66,6 @@ import {
   applyNodeChanges,
 } from "reactflow";
 import useUndoable, { MutationBehavior } from "use-undoable";
-import { Constants } from "../base/Constants";
 import { Graph } from "../base/Graph";
 import { rekuestActionToMatchingNode } from "../plugins/rekuest";
 import {
@@ -100,6 +99,7 @@ import { ValidationResult } from "../validation/types";
 import { validateState } from "../validation/validate";
 import { EdgeContextual } from "./components/EdgeContextual";
 import { DeployInterfaceButton } from "./components/buttons/DeployButton";
+import { RunButton } from "./components/buttons/RunButton";
 import { EditRiverContext } from "./context";
 import { LabeledShowEdge } from "./edges/LabeledShowEdge";
 import { ReactiveTrackNodeWidget } from "./nodes/ReactiveWidget";
@@ -107,13 +107,7 @@ import { RekuestFilterActionWidget } from "./nodes/RekuestFilterActionWidget";
 import { RekuestMapActionWidget } from "./nodes/RekuestMapActionWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
-import { useRekuest } from "@/lib/arkitekt/Arkitekt";
-import { RunButton } from "./components/buttons/RunButton";
-import {
-  FlussReactiveTemplate,
-  RekuestAction,
-  RekuestImplementation,
-} from "@/linkers";
+import { SolvedErrorBox } from "./components/boxes/SolvedErrorBox";
 
 const nodeTypes: NodeTypes = {
   RekuestFilterActionNode: RekuestFilterActionWidget,
@@ -1366,7 +1360,8 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                     <CardDescription className="text-xs text-muted-foreground ">
                       {" "}
                       These are global variables that will be constants to the
-                      whole workflow and are mapping to the following ports:{" "}
+                      whole workflow and are mapping to the following
+                      ports:{" "}
                     </CardDescription>
                     {globals.map((g) => (
                       <>{g.key}</>
@@ -1379,6 +1374,9 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
             <div className="absolute top-0 right-0  mr-3 mt-5 z-50 max-w-xs gap-1 flex flex-col ">
               {state.remainingErrors.length != 0 && (
                 <ErrorBox errors={state.remainingErrors} />
+              )}
+              {state.solvedErrors.length != 0 && (
+                <SolvedErrorBox errors={state.solvedErrors} />
               )}
               {boundNodes.length > 0 && <BoundNodesBox nodes={boundNodes} />}
             </div>

@@ -207,6 +207,7 @@ export type Camera = {
   manufacturer?: Maybe<Scalars['String']['output']>;
   model?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  organization: DjangoModelType;
   pixelSizeX?: Maybe<Scalars['Micrometers']['output']>;
   pixelSizeY?: Maybe<Scalars['Micrometers']['output']>;
   /** Provenance entries for this camera */
@@ -269,6 +270,7 @@ export type Channel = {
 /** A channel descriptor */
 export type ChannelInfo = {
   __typename?: 'ChannelInfo';
+  index: Scalars['Int']['output'];
   label: Scalars['String']['output'];
 };
 
@@ -276,6 +278,11 @@ export type ChannelInfo = {
 /** A channel descriptor */
 export type ChannelInfoLabelArgs = {
   withColorName?: Scalars['Boolean']['input'];
+};
+
+export type ChannelInfoFilter = {
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ChannelInput = {
@@ -624,6 +631,11 @@ export type DesociateInput = {
   selfs: Array<Scalars['ID']['input']>;
 };
 
+export type DjangoModelType = {
+  __typename?: 'DjangoModelType';
+  pk: Scalars['ID']['output'];
+};
+
 export enum DuckDbDataType {
   /** Large integer for large numeric values */
   Bigint = 'BIGINT',
@@ -773,6 +785,7 @@ export type FileFilter = {
   id?: InputMaybe<Scalars['ID']['input']>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   name?: InputMaybe<StrFilterLookup>;
+  scope?: InputMaybe<ScopeKind>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1162,6 +1175,7 @@ export type Instrument = {
   manufacturer?: Maybe<Scalars['String']['output']>;
   model?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  organization: DjangoModelType;
   serialNumber: Scalars['String']['output'];
   views: Array<OpticsView>;
 };
@@ -2030,6 +2044,7 @@ export type Objective = {
   magnification?: Maybe<Scalars['Float']['output']>;
   na?: Maybe<Scalars['Float']['output']>;
   name: Scalars['String']['output'];
+  organization: DjangoModelType;
   serialNumber: Scalars['String']['output'];
   views: Array<OpticsView>;
 };
@@ -2683,6 +2698,7 @@ export type Query = {
   camera: Camera;
   channelViews: Array<ChannelView>;
   channels: Array<Channel>;
+  channelsFor: Array<ChannelInfo>;
   children: Array<DatasetImageFile>;
   continousScanViews: Array<ContinousScanView>;
   dataset: Dataset;
@@ -2758,6 +2774,12 @@ export type QueryAvailablePermissionsArgs = {
 
 export type QueryCameraArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryChannelsForArgs = {
+  filters?: InputMaybe<ChannelInfoFilter>;
+  image: Scalars['ID']['input'];
 };
 
 
@@ -3431,6 +3453,13 @@ export type ScopeFilter = {
   public?: InputMaybe<Scalars['Boolean']['input']>;
   shared?: InputMaybe<Scalars['Boolean']['input']>;
 };
+
+export enum ScopeKind {
+  Me = 'ME',
+  Org = 'ORG',
+  Public = 'PUBLIC',
+  Shared = 'SHARED'
+}
 
 export type Snapshot = Render & {
   __typename?: 'Snapshot';
@@ -4438,6 +4467,13 @@ export type PinRoiMutationVariables = Exact<{
 
 
 export type PinRoiMutation = { __typename?: 'Mutation', pinRoi: { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'LabelView' } | { __typename?: 'OpticsView' } | { __typename?: 'PixelView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ScaleView' } | { __typename?: 'StructureView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> }, creator?: { __typename?: 'User', sub: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
+
+export type CreateRoiMutationVariables = Exact<{
+  input: RoiInput;
+}>;
+
+
+export type CreateRoiMutation = { __typename?: 'Mutation', createRoi: { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, rescale: boolean, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'LabelView' } | { __typename?: 'OpticsView' } | { __typename?: 'PixelView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ScaleView' } | { __typename?: 'StructureView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> }, creator?: { __typename?: 'User', sub: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
 
 export type CreateSnapshotMutationVariables = Exact<{
   image: Scalars['ID']['input'];
@@ -6836,6 +6872,39 @@ export function usePinRoiMutation(baseOptions?: ApolloReactHooks.MutationHookOpt
 export type PinRoiMutationHookResult = ReturnType<typeof usePinRoiMutation>;
 export type PinRoiMutationResult = Apollo.MutationResult<PinRoiMutation>;
 export type PinRoiMutationOptions = Apollo.BaseMutationOptions<PinRoiMutation, PinRoiMutationVariables>;
+export const CreateRoiDocument = gql`
+    mutation CreateROI($input: RoiInput!) {
+  createRoi(input: $input) {
+    ...ROI
+  }
+}
+    ${RoiFragmentDoc}`;
+export type CreateRoiMutationFn = Apollo.MutationFunction<CreateRoiMutation, CreateRoiMutationVariables>;
+
+/**
+ * __useCreateRoiMutation__
+ *
+ * To run a mutation, you first call `useCreateRoiMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateRoiMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createRoiMutation, { data, loading, error }] = useCreateRoiMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateRoiMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateRoiMutation, CreateRoiMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateRoiMutation, CreateRoiMutationVariables>(CreateRoiDocument, options);
+      }
+export type CreateRoiMutationHookResult = ReturnType<typeof useCreateRoiMutation>;
+export type CreateRoiMutationResult = Apollo.MutationResult<CreateRoiMutation>;
+export type CreateRoiMutationOptions = Apollo.BaseMutationOptions<CreateRoiMutation, CreateRoiMutationVariables>;
 export const CreateSnapshotDocument = gql`
     mutation CreateSnapshot($image: ID!, $file: ImageFileLike!) {
   createSnapshot(input: {file: $file, image: $image}) {

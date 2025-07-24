@@ -1,9 +1,9 @@
 fragment Pairs on Pairs {
   pairs {
-    left {
+    source {
       id
     }
-    right {
+    target {
       id
     }
   }

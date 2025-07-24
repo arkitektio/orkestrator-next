@@ -137,8 +137,6 @@ export const AssignationTimeLine = (props: {
   );
 };
 
-
-
 export const useReassign = ({
   assignation,
 }: {
@@ -163,10 +161,10 @@ export const useReassign = ({
 };
 
 export const isCancalable = (assignation: DetailAssignationFragment) => {
-  return assignation.isDone
+  return assignation.isDone;
 };
 export const isInterruptable = (assignation: DetailAssignationFragment) => {
-  return assignation.isDone
+  return assignation.isDone;
 };
 
 export default asDetailQueryRoute(
@@ -242,25 +240,23 @@ export default asDetailQueryRoute(
         <div className="flex h-full w-full relative">
           {data?.assignation?.implementation?.extension === "reaktion" ? (
             <>
-            <Tabs className="w-full h-full" defaultValue="flow">
-              <TabsList className="w-full h-8">
-                <TabsTrigger value="flow">Flow</TabsTrigger>
-                <TabsTrigger value="logs">Logs</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="flow" className="h-full w-full">
-              <AssignationFlow
-              id={data?.assignation?.implementation?.interface}
-              assignation={data.assignation}
-            />
-              </TabsContent>
-              <TabsContent value="logs" className="h-full w-full">
-                <AssignationTimeLine assignation={data.assignation} />
-              </TabsContent>
+              <Tabs className="flex-grow flex flex-col " defaultValue="flow">
+                <TabsList className="h-8 flex-initial">
+                  <TabsTrigger value="flow">Flow</TabsTrigger>
+                  <TabsTrigger value="logs">Logs</TabsTrigger>
+                </TabsList>
 
-            </Tabs>
+                <TabsContent value="flow" className="flex-grow">
+                  <AssignationFlow
+                    id={data?.assignation?.implementation?.interface}
+                    assignation={data.assignation}
+                  />
+                </TabsContent>
+                <TabsContent value="logs" className="h-full w-full">
+                  <AssignationTimeLine assignation={data.assignation} />
+                </TabsContent>
+              </Tabs>
             </>
-           
           ) : (
             <DefaultRenderer assignation={data.assignation} />
           )}

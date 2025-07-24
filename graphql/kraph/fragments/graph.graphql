@@ -26,6 +26,9 @@ fragment Graph on Graph {
   measurementCategories {
     ...ListMeasurementCategory
   }
+  structureRelationCategories {
+    ...ListStructureRelationCategory
+  }
   graphQueries(pagination: { limit: 0 }) {
     ...GraphQuery
   }

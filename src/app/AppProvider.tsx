@@ -6,7 +6,7 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { ShadnWigets } from "@/components/widgets/ShadnWigets";
-import { baseName, Router, WELL_KNOWN_ENDPOINTS } from "@/constants";
+import { baseName, Router } from "@/constants";
 import { ElektroWard } from "@/elektro/ElektroWard";
 import { KabinetWard } from "@/kabinet/KabinetWard";
 import { KraphWard } from "@/kraph/KraphWard";
@@ -100,11 +100,11 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
             <Arkitekt.Provider>
               <TooltipProvider>
                 <DisplayProvider registry={displayRegistry}>
-                  <SelectionProvider>
-                    <CommandProvider>
-                      <SmartProvider>
-                        <WidgetRegistryProvider>
-                          <DialogProvider>
+                  <DialogProvider>
+                    <SelectionProvider>
+                      <CommandProvider>
+                        <SmartProvider>
+                          <WidgetRegistryProvider>
                             <CommandMenu />
                             <Guard.Rekuest fallback={<></>}>
                               {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
@@ -136,11 +136,11 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                             <BackNavigationErrorCatcher>
                               {children}
                             </BackNavigationErrorCatcher>
-                          </DialogProvider>
-                        </WidgetRegistryProvider>
-                      </SmartProvider>
-                    </CommandProvider>
-                  </SelectionProvider>
+                          </WidgetRegistryProvider>
+                        </SmartProvider>
+                      </CommandProvider>
+                    </SelectionProvider>
+                  </DialogProvider>
                 </DisplayProvider>
               </TooltipProvider>
             </Arkitekt.Provider>

@@ -22,12 +22,13 @@ import EntityPage from "./pages/EntityPage";
 import ReagentCategoryPage from "./pages/ReagentCategoryPage";
 import ReagentCategoriesPage from "./pages/ReagentCategoriesPage";
 import EntityCategoriesPage from "./pages/EntityCategoriesPage";
+import StructureRelationCategoriesPage from "./pages/StructureRelationCategoriesPage";
+import StuctureRelationCategoryPage from "./pages/StructureRelationCategoryPage";
 import StructureCategoriesPage from "./pages/StructureCategoriesPage";
 import ProtocolEventCategoriesPage from "./pages/ProtocolEventCategoriesPage";
 import MetricCategoryPage from "./pages/MetricCategoryPage";
 import MetricCategoriesPage from "./pages/MetricCategoriesPage";
 import RelationCategoriesPage from "./pages/RelationCategoriesPage";
-import { RelationCategoryFragmentDoc } from "./api/graphql";
 import RelationCategoryPage from "./pages/RelationCategoryPage";
 import MeasurementCategoriesPage from "./pages/MeasurementCategoriesPage";
 import MeasurementCategoryPage from "./pages/MeasurementCategoryPage";
@@ -60,6 +61,14 @@ export const KraphModule: React.FC<Props> = (props) => {
 
           <Route path="reagentcategories" element={<ReagentCategoriesPage />} />
           <Route path="entitycategories" element={<EntityCategoriesPage />} />
+          <Route
+            path="structurerelationcategories"
+            element={<StructureRelationCategoriesPage />}
+          />
+          <Route
+            path="structurerelationcategories/:id"
+            element={<StuctureRelationCategoryPage />}
+          />
           <Route
             path="structurecategories"
             element={<StructureCategoriesPage />}

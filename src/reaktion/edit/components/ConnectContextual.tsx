@@ -26,12 +26,13 @@ import { rekuestActionToMatchingNode } from "@/reaktion/plugins/rekuest";
 import { nodeIdBuilder, streamToReadable } from "@/reaktion/utils";
 import {
   ConstantActionDocument,
-  ConstantNodeQuery,
+  ConstantActionQuery,
   DemandKind,
   ActionScope,
   PortKind,
   useAllActionsQuery,
   useProtocolOptionsLazyQuery,
+  AllActionsQueryVariables,
 } from "@/rekuest/api/graphql";
 import clsx from "clsx";
 import { ArrowDown } from "lucide-react";
@@ -498,7 +499,7 @@ const ConnectReactiveNodes = (props: {
   return (
     <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
       {nodes.map((sug) => (
-        <Tooltip>
+        <Tooltip key={sug.node.id}>
           <TooltipTrigger>
             <Card
               onClick={() => addConnectContextualNode(sug.node, props.params)}
@@ -514,7 +515,11 @@ const ConnectReactiveNodes = (props: {
   );
 };
 
-const buildVariabels = (leftPorts, rightPorts, search) => ({
+const buildVariabels = (
+  leftPorts: FlussPortFragment[],
+  rightPorts: FlussPortFragment[],
+  search: string | undefined,
+): AllActionsQueryVariables => ({
   filters: {
     search: search,
     demands: [
@@ -561,7 +566,7 @@ const ConnectArkitektNodes = (props: {
   leftPorts: FlussPortFragment[];
   rightPorts: FlussPortFragment[];
 }) => {
-  const { data, refetch, variables } = useAllActionsQuery({
+  const { data, refetch, variables, error } = useAllActionsQuery({
     variables: buildVariabels(props.leftPorts, props.rightPorts, props.search),
     fetchPolicy: "network-only",
   });
@@ -577,7 +582,7 @@ const ConnectArkitektNodes = (props: {
   const onNodeClick = (id: string) => {
     client &&
       client
-        .query<ConstantNodeQuery>({
+        .query<ConstantActionQuery>({
           query: ConstantActionDocument,
           variables: { id: id },
         })
@@ -597,7 +602,7 @@ const ConnectArkitektNodes = (props: {
   const onTemplateClick = (node: string, template: string) => {
     client &&
       client
-        .query<ConstantNodeQuery>({
+        .query<ConstantActionQuery>({
           query: ConstantActionDocument,
           variables: { id: node },
         })
@@ -617,8 +622,9 @@ const ConnectArkitektNodes = (props: {
 
   return (
     <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
+      {error && <div className="text-red-500">Error: {error.message}</div>}
       {data?.actions.map((action) => (
-        <Tooltip>
+        <Tooltip key={action.id}>
           <TooltipTrigger>
             {action.stateful ? (
               <Popover>

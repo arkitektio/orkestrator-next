@@ -1,5 +1,6 @@
 import {
   AssignWidgetFragment,
+  EffectKind,
   PortEffectFragment,
   PortFragment,
   PortGroupFragment,

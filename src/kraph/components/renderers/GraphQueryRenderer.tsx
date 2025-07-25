@@ -5,12 +5,13 @@ import {
 } from "@/kraph/api/graphql";
 import { PathGraph } from "./graph/PathGraph";
 import { GraphTable } from "./table/GraphTable";
+import { Pairs } from "./pairs/Pairs";
 
 export const SelectiveGraphQueryRenderer = (props: {
   graphQuery: GraphQueryFragment;
 }) => {
   if (props.graphQuery.render.__typename === "Pairs") {
-    return <div>Pair Rendering</div>;
+    return <Pairs pairs={props.graphQuery.render} />;
   }
 
   if (props.graphQuery.render.__typename === "Path") {

@@ -1,3 +1,4 @@
+import { useDialog } from "@/app/dialog";
 import { ServiceMap } from "@/lib/arkitekt/provider";
 import { KRAPH_ACTIONS } from "@/lib/kraph/actions";
 import { MIKRO_ACTIONS } from "@/lib/mikro/actions";
@@ -53,6 +54,7 @@ export type ActionParams = {
   services: ServiceMap;
   onProgress: (progress: number) => void;
   abortSignal: AbortSignal;
+  dialog: ReturnType<typeof useDialog>;
 };
 
 export type SetAction = ActionState;

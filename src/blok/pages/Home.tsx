@@ -73,9 +73,6 @@ export const Selector = (props: {
     return props.app.app.actions[key].demand;
   });
 
-  console.log("STATE_HASHES", stateDemands);
-  console.log("TEMPLATE_HASHES", actionDemands);
-
   const { data, variables } = useAgentsQuery({
     variables: {
       filters: {
@@ -149,7 +146,6 @@ export const Home = (props) => {
     if (api) {
       const layout = api.toJSON();
       localStorage.setItem("dockview-layout", JSON.stringify(layout));
-      console.log("Layout saved to localStorage");
     }
   };
 
@@ -163,7 +159,6 @@ export const Home = (props) => {
 
   const createBloks = async () => {
     for (const [key, mod] of registry.modules.entries()) {
-      console.log("Creating blok for", key, mod);
       if (mod.app) {
         const stateDemands = Object.keys(mod.app.states).map((key) => {
           return { key: key, ...mod.app.states[key].demand };

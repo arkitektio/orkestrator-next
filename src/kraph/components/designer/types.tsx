@@ -13,6 +13,7 @@ import {
   ListReagentCategoryFragment,
   ListRelationCategoryFragment,
   ListStructureCategoryFragment,
+  ListStructureRelationCategoryFragment,
   MeasurementCategoryInput,
   ReagentRoleDefinition,
   ReagentRoleDefinitionFragment,
@@ -54,6 +55,10 @@ export type StagingMeasurementEdge = Edge<
   "stagingmeasurement"
 >;
 export type RelationEdge = Edge<ListRelationCategoryFragment, "relation">;
+export type StructureRelationEdge = Edge<
+  ListStructureRelationCategoryFragment,
+  "structure_relation"
+>;
 export type EntityRoleEdge = Edge<ReagentRoleDefinitionFragment, "reagentrole">;
 export type ReagentRoleEdge = Edge<EntityRoleDefinitionFragment, "entityrole">;
 
@@ -65,6 +70,7 @@ export type StagingRelationEdge = Edge<
 export type MyEdge =
   | MeasurementEdge
   | RelationEdge
+  | StructureRelationEdge
   | StagingRelationEdge
   | EntityRoleEdge
   | DescribeEdge

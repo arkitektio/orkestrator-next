@@ -108,6 +108,13 @@ export const NavigationPane = (props: {}) => {
             Relations
           </DroppableNavLink>
           <DroppableNavLink
+            to="/kraph/structurerelationcategories"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <TbRelationOneToOne className="h-4 w-4" />
+            Structure Relations
+          </DroppableNavLink>
+          <DroppableNavLink
             to="/kraph/metriccategories"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >

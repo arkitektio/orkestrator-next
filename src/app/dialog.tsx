@@ -1,3 +1,4 @@
+import { RelateStructures } from "@/dialogs/RelateStructures";
 import { createDialogProvider } from "@/lib/generic/providers/DialogProvider";
 import { ActionAssignForm } from "@/rekuest/forms/ActionAssignForm";
 import { ImplementationAssignForm } from "@/rekuest/forms/ImplementationAssignForm";
@@ -5,4 +6,5 @@ import { ImplementationAssignForm } from "@/rekuest/forms/ImplementationAssignFo
 export const { DialogProvider, useDialog } = createDialogProvider({
   actionassign: ActionAssignForm,
   implementationassign: ImplementationAssignForm,
+  relatestructure: RelateStructures,
 });

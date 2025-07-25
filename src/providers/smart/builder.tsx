@@ -24,6 +24,7 @@ import { SearchFunction, smartRegistry } from "./registry";
 import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
 import { SmartDropZone } from "./Drop";
 import { TinyStructureBox } from "@/kraph/boxes/TinyStructureBox";
+import { ShareDialog } from "./ShareDialog";
 
 const buildBaseLink = (to: string) => {
   return ({ children, ...props }: BaseLinkProps) => {
@@ -67,6 +68,14 @@ export const buildSmartModel = (
         {children}
       </SmartModel>
     );
+  };
+};
+
+export const buildShareModel = (
+  identifier: Identifier,
+): React.FC<CreatedSmartSmartProps> => {
+  return ({ children, ...props }) => {
+    return <ShareDialog identifier={identifier} object={props.object} />;
   };
 };
 
@@ -176,6 +185,7 @@ export const buildSmart = (
     ListLink: buildBaseLink(to),
     linkBuilder: linkBuilder(to),
     Smart: buildSmartModel(model),
+    Share: buildShareModel(model),
     Drop: buildDropModel(model),
     Actions: buildSelfActions(model),
     Komments: buildKomments(model),

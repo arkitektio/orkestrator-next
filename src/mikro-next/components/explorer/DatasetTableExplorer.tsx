@@ -296,6 +296,7 @@ export const DatasetTableExplorer = (props: {
             Comments: (
               <Komments identifier="@mikro/dataset" object={props.dataset.id} />
             ),
+            Share: <MikroDataset.Share object={props.dataset.id} />,
             Provenance: <ProvenanceSidebar items={props?.dataset.history} />,
           }}
         />

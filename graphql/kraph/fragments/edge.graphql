@@ -20,6 +20,20 @@ fragment Relation on Relation {
   }
 }
 
+fragment StructureRelation on StructureRelation {
+  id
+  leftId
+  rightId
+  left {
+    id
+    label
+  }
+  right {
+    id
+    label
+  }
+}
+
 fragment Participant on Participant {
   role
   quantity

@@ -39,7 +39,6 @@ export const DocumentsExplorer = (props: {
         collection: props.collection.id,
       },
     });
-    console.log(data);
   };
 
   let debouncedQuery = useDebounce(query, 500);

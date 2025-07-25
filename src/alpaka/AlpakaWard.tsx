@@ -19,7 +19,6 @@ export const AlpakaWard: React.FC<{
             variables: options.variables,
           })
           .then((result: any) => {
-            console.log(result.data);
             return result.data.options;
           });
       };

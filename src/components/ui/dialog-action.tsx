@@ -19,7 +19,6 @@ export const DialogAction: React.FC<ActionButtonProps> = ({
 
   useAction({
     run: async (state) => {
-      console.log("run");
       setOpen(true);
     },
     ...props,

@@ -141,8 +141,6 @@
     "cmdk": "^1.0.0",
     "color-2-name": "^1.4.4",
     "colormap": "^2.3.2",
-    "crpyto-js": "^0.0.1-security",
-    "crypto-js": "^4.2.0",
     "cytoscape": "^3.30.2",
     "cytoscape-cise": "^2.0.0",
     "cytoscape-cola": "^2.5.1",

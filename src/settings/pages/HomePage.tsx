@@ -31,9 +31,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
 
   useEffect(() => {
     if (formState.isValid && !isValidating) {
-      console.log("formState", formState);
       if (!deepEqual(data, settings)) {
-        console.log("submitting", data);
         setSettings(data);
       }
     }
@@ -56,7 +54,6 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit((data) => {
-            console.log("setting", data);
             setSettings(data);
           })}
           className="space-y-4"

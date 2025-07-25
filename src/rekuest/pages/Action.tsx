@@ -34,19 +34,14 @@ export const DoActionForm = ({ action }: { action: DetailActionFragment }) => {
   });
 
   const onSubmit = (data: any) => {
-    console.log("Submiftting");
     console.log(data);
     assign({
       action: action.id,
       args: data,
       hooks: [],
     }).then(
-      (v) => {
-        console.log("Result", v);
-      },
-      (error) => {
-        console.log("Error", error);
-      },
+      (v) => {},
+      (error) => {},
     );
   };
 

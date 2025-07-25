@@ -52,8 +52,6 @@ export const FormDialogAction: React.FC<FormDialogActionProps> = ({
 
   useAction({
     run: async (state) => {
-      console.log("run");
-
       setOpen(true);
 
       const [promise, defered] = createDefered();
@@ -73,7 +71,6 @@ export const FormDialogAction: React.FC<FormDialogActionProps> = ({
 
   const bonSubmit = useCallback(
     (v: any) => {
-      console.log("submit");
       setOpen(false);
       if (defered) {
         defered.resolve(v);
@@ -85,7 +82,6 @@ export const FormDialogAction: React.FC<FormDialogActionProps> = ({
 
   const bonError = useCallback(
     (e: any) => {
-      console.log("error", e);
       setOpen(false);
       if (defered) {
         defered.reject(e);

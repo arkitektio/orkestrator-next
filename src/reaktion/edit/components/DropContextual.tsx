@@ -269,7 +269,7 @@ export const TargetDropContextual = (props: {
     }));
   };
 
-  const { data, refetch } = useAllActionsQuery({
+  const { data, refetch, error } = useAllActionsQuery({
     variables: variables,
     fetchPolicy: "network-only",
   });
@@ -328,6 +328,11 @@ export const TargetDropContextual = (props: {
       <Separator />
       {data?.actions?.length == 0 && calculatedNodes.length == 0 && (
         <div className="my-auto mx-auto mt-2">No matching nodes found</div>
+      )}
+      {error && (
+        <div className="text-red-500 my-auto mx-auto mt-2">
+          Error: {error.message}
+        </div>
       )}
       <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
         {data?.actions.map((node) => (
@@ -427,7 +432,7 @@ export const SourceDropContextual = (props: {
     }));
   };
 
-  const { data, refetch } = useAllActionsQuery({
+  const { data, refetch, error } = useAllActionsQuery({
     variables: variables,
     fetchPolicy: "network-only",
   });
@@ -480,7 +485,7 @@ export const SourceDropContextual = (props: {
       )}
       <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
         {data?.actions.map((action) => (
-          <Tooltip>
+          <Tooltip key={action.id}>
             <TooltipTrigger>
               <Card
                 onClick={() => onNodeClick(action.id)}
@@ -512,7 +517,7 @@ export const SourceDropContextual = (props: {
       </div>
       <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
         {calculatedNodes.map((sug) => (
-          <Tooltip>
+          <Tooltip key={sug.node.id}>
             <TooltipTrigger>
               <Card
                 onClick={() => addContextualNode(sug.node, props.params)}

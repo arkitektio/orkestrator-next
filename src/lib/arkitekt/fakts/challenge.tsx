@@ -6,7 +6,7 @@ export const challenge = async ({
   code,
   controller,
   challengeTimeout = 5000,
-  maxRetries = 5,
+  maxRetries = 20,
   retry = 0,
 }: {
   endpoint: FaktsEndpoint;

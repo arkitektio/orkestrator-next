@@ -6,7 +6,7 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { ShadnWigets } from "@/components/widgets/ShadnWigets";
-import { baseName, Router, WELL_KNOWN_ENDPOINTS } from "@/constants";
+import { baseName, Router } from "@/constants";
 import { ElektroWard } from "@/elektro/ElektroWard";
 import { KabinetWard } from "@/kabinet/KabinetWard";
 import { KraphWard } from "@/kraph/KraphWard";
@@ -29,7 +29,7 @@ import { WidgetRegistryProvider } from "@/rekuest/widgets/WidgetsProvider";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import { useNavigate } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
-
+import React from "react";
 const displayRegistry = {
   "@mikro-next/image": ImageDisplay,
   "@rekuest/node": NodeDisplay,
@@ -100,11 +100,12 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
             <Arkitekt.Provider>
               <TooltipProvider>
                 <DisplayProvider registry={displayRegistry}>
-                  <SelectionProvider>
-                    <CommandProvider>
-                      <SmartProvider>
-                        <WidgetRegistryProvider>
-                          <DialogProvider>
+
+                          <WidgetRegistryProvider>
+                  <DialogProvider>
+                    <SelectionProvider>
+                      <CommandProvider>
+                        <SmartProvider>
                             <CommandMenu />
                             <Guard.Rekuest fallback={<></>}>
                               {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
@@ -136,11 +137,12 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                             <BackNavigationErrorCatcher>
                               {children}
                             </BackNavigationErrorCatcher>
-                          </DialogProvider>
-                        </WidgetRegistryProvider>
-                      </SmartProvider>
-                    </CommandProvider>
-                  </SelectionProvider>
+                        </SmartProvider>
+                      </CommandProvider>
+                    </SelectionProvider>
+                  </DialogProvider>
+
+                          </WidgetRegistryProvider>
                 </DisplayProvider>
               </TooltipProvider>
             </Arkitekt.Provider>

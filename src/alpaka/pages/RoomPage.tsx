@@ -16,7 +16,6 @@ export default asDetailQueryRoute(
   useGetRoomQuery,
   ({ data, subscribeToMore }) => {
     useEffect(() => {
-      console.log("RUning subscription");
       return subscribeToMore<
         WatchMessagesSubscription,
         WatchMessagesSubscriptionVariables

@@ -63,6 +63,7 @@ export const buildArkitekt = ({
     Guard: ConnectedGuard,
     useConnect: () => useArkitekt().connect,
     useDisconnect: () => useArkitekt().disconnect,
+    useReconnect: () => useArkitekt().reconnect,
     useManifest: () => realManifest,
     useFakts: () => useArkitekt().connection?.fakts,
     useService: useService,

@@ -29,7 +29,7 @@ export const NodeExtensions = () => {
           setNodes(res.data?.nodes || []);
         })
         .catch((err) => {
-          console.log(err);
+          setNodes([]);
         });
     }
   }, [query, modifiers]);

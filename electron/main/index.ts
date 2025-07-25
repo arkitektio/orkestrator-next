@@ -11,17 +11,16 @@ import { writeFileSync } from "fs";
 import { join, resolve } from "path";
 import icon from "../../resources/icon.png?asset";
 import { fileURLToPath } from "url";
-import { download } from 'electron-dl';
+import { download } from "electron-dl";
 
-app.commandLine.appendSwitch('ignore-certificate-errors', 'true');
+app.commandLine.appendSwitch("ignore-certificate-errors", "true");
 
 let mainWindow: BrowserWindow | null = null;
 
-ipcMain.handle('download-from-url', async (event, { url }: { url: string }) => {
+ipcMain.handle("download-from-url", async (event, { url }: { url: string }) => {
   // Check if the URL is valid
-  console.log("Download URL", url);
   const win = BrowserWindow.getFocusedWindow();
-  if (!win) return { success: false, error: 'No active window' };
+  if (!win) return { success: false, error: "No active window" };
 
   try {
     const dl = await download(win, url);
@@ -46,7 +45,10 @@ function handleOrkestratorUrl(url: string) {
     openSecondaryWindow(fullPath);
   } catch (err) {
     console.error("Invalid orkestrator URL", url);
-    dialog.showErrorBox("Invalid Link", `The URL '${url}' could not be processed.`);
+    dialog.showErrorBox(
+      "Invalid Link",
+      `The URL '${url}' could not be processed.`,
+    );
   }
 }
 

@@ -58,7 +58,7 @@ export function createDialogProvider<
           {DialogComponent && (
             <DialogContent>
               <Guard.Rekuest>
-                <DialogComponent {...dialogState.props} onClose={closeDialog} />
+                <DialogComponent {...dialogState.props} />
               </Guard.Rekuest>
             </DialogContent>
           )}

@@ -13,10 +13,10 @@ export const EffectWrapper = ({
   children: ReactNode;
   port: PortFragment;
 }) => {
-  let [effect, ...resteffect] = effects;
+  const [effect, ...resteffect] = effects;
 
   if (effect) {
-    let Wrapper = registry.getEffectWidget(effect.__typename);
+    const Wrapper = registry.getEffectWidget(effect.__typename);
 
     return (
       <Wrapper effect={effect} port={port}>

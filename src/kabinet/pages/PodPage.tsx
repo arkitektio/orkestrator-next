@@ -20,7 +20,7 @@ import {
   useGetPodQuery,
 } from "../api/graphql";
 import ResourceCard from "../components/cards/ResourceCard";
-
+import React from "react";
 export const AssignButton = (props: {
   template: ListImplementationFragment;
   pod: string;
@@ -43,7 +43,7 @@ export const AssignButton = (props: {
 
   return (
     <Button onClick={doassign} variant={"outline"} size="sm">
-      {props.template.node.name}
+      {props.template.action.name}
     </Button>
   );
 };
@@ -55,7 +55,7 @@ const RefreshLogsButton = (props: {
   const { data } = useImplementationsQuery({
     variables: {
       filters: {
-        node: {
+        action: {
           demands: [
             {
               kind: DemandKind.Args,
@@ -69,10 +69,6 @@ const RefreshLogsButton = (props: {
             },
           ],
         },
-        agent: {
-          clientId: props.pod.backend.clientId,
-          instanceId: props.pod.backend.instanceId,
-        },
       },
     },
   });
@@ -80,7 +76,7 @@ const RefreshLogsButton = (props: {
   return (
     <div className="flex flex-row gap-2">
       {data?.implementations.map((t) => (
-        <Tooltip>
+        <Tooltip key={t.id}>
           <TooltipTrigger>
             <AssignButton
               template={t}

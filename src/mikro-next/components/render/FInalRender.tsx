@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SliderTooltip } from "@/components/ui/slider-tooltip";
@@ -7,21 +6,17 @@ import {
   ListRgbContextFragment,
   ListRoiFragment,
   RgbImageFragment,
-  RgbViewFragment
+  RgbViewFragment,
 } from "@/mikro-next/api/graphql";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import {
-  Dispatch,
-  SetStateAction,
-  Suspense,
-  useState
-} from "react";
+import { Dispatch, SetStateAction, Suspense, useState } from "react";
 import { AutoZoomCamera } from "./final/AutoZoomCamera";
 import { ChunkBitmapTexture } from "./final/ChunkMesh";
 import { ROIPolygon } from "./final/ROIPolygon";
 import { useArray } from "./final/useArray";
 import { BasicIndexer, IndexerProjection, Slice } from "./indexer";
+import { RectangleDrawer } from "./controls/RectangleDrawer";
 
 export interface RGBDProps {
   context: ListRgbContextFragment;
@@ -206,54 +201,61 @@ export const FinalRender = (props: RGBDProps) => {
     <div style={{ width: "100%", height: "100%" }} className="relative">
       <div className="absolute bottom-0 z-10 w-full mb-4 px-6 bg-gradient-to-t from-black to-transparent py-3">
         <div className="flex flex-col gap-2">
-          {zSize > 1 && <div className="flex flex-row">
-            <div className="my-auto mx-2 w-12">z: {z}</div>
-            <SliderTooltip
-              value={[z]}
-              onValueChange={(value) => setZ(value[0])}
-              min={0}
-              max={zSize - 1}
-              step={1}
-              className="w-full"
-              defaultValue={[0]}
-            />
-            <div className="flex flex-col ml-2">
-            {layers.length > 1 && (
-              <>
-                <div className="flex flex-row gap-2">
-                  {layers.map((layer, index) => {
-                    return (
-                      <Button
-                        key={index}
-                        onClick={() => {
-                          setSelectedScale(index);
-                        }}
-                        size={"sm"}
-                        variant="ghost"
-                        className={selectedScale === index ? "bg-gray-800" : "bg-gray-900"}
-                      >
-                        {layer.scaleX} x
-                      </Button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </div>
-          </div>}
-          {tSize > 1 && <div className="flex flex-row">
-            <div className="my-auto mr-2 w-12">t: {t}</div>
-            <SliderTooltip
-              value={[t]}
-              onValueChange={(value) => setT(value[0])}
-              min={0}
-              max={tSize - 1}
-              step={1}
-              className="w-full"
-              defaultValue={[0]}
-            />
-          </div>}
-          
+          {zSize > 1 && (
+            <div className="flex flex-row">
+              <div className="my-auto mx-2 w-12">z: {z}</div>
+              <SliderTooltip
+                value={[z]}
+                onValueChange={(value) => setZ(value[0])}
+                min={0}
+                max={zSize - 1}
+                step={1}
+                className="w-full"
+                defaultValue={[0]}
+              />
+              <div className="flex flex-col ml-2">
+                {layers.length > 1 && (
+                  <>
+                    <div className="flex flex-row gap-2">
+                      {layers.map((layer, index) => {
+                        return (
+                          <Button
+                            key={index}
+                            onClick={() => {
+                              setSelectedScale(index);
+                            }}
+                            size={"sm"}
+                            variant="ghost"
+                            className={
+                              selectedScale === index
+                                ? "bg-gray-800"
+                                : "bg-gray-900"
+                            }
+                          >
+                            {layer.scaleX} x
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+          {tSize > 1 && (
+            <div className="flex flex-row">
+              <div className="my-auto mr-2 w-12">t: {t}</div>
+              <SliderTooltip
+                value={[t]}
+                onValueChange={(value) => setT(value[0])}
+                min={0}
+                max={tSize - 1}
+                step={1}
+                className="w-full"
+                defaultValue={[0]}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -263,7 +265,6 @@ export const FinalRender = (props: RGBDProps) => {
         <Canvas style={{ width: "100%", height: "100%" }}>
           <AutoZoomCamera imageHeight={ySize} imageWidth={xSize} />
           <OrbitControls
-          
             enableRotate={false}
             enablePan={true}
             regress={false}

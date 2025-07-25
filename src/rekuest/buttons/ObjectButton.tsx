@@ -57,6 +57,13 @@ import { useHashAction } from "../hooks/useHashActions";
 import { LightningBoltIcon } from "@radix-ui/react-icons";
 import { useDialog } from "@/app/dialog";
 import { e } from "node_modules/@udecode/plate-emoji/dist/IndexSearch-Dvqq913n";
+import {
+  ListStructureRelationCategoryWithGraphFragment,
+  useCreateStructureMutation,
+  useCreateStructureRelationMutation,
+  useListStructureRelationCategoryQuery,
+} from "@/kraph/api/graphql";
+import { Guard } from "@/lib/arkitekt/Arkitekt";
 
 export const DirectImplementationAssignment = (
   props: SmartContextProps & { action: PrimaryActionFragment },
@@ -366,11 +373,7 @@ export const ApplicableActions = (props: PassDownProps) => {
   }
 
   if (data.actions.length === 0) {
-    return (
-      <span className="font-light text-xs w-full items-center ml-2 w-full">
-        No actions...
-      </span>
-    );
+    return null;
   }
 
   return (
@@ -381,7 +384,9 @@ export const ApplicableActions = (props: PassDownProps) => {
         </span>
       }
     >
-      {data?.actions.map((x) => <AssignButton action={x} {...props} />)}
+      {data?.actions.map((x) => (
+        <AssignButton action={x} {...props} />
+      ))}
     </CommandGroup>
   );
 };
@@ -433,16 +438,14 @@ export const AppicableShortcuts = (props: PassDownProps) => {
   }
 
   if (data.shortcuts.length === 0) {
-    return (
-      <span className="font-light text-xs w-full items-center ml-2 w-full">
-        No actions...
-      </span>
-    );
+    return null;
   }
 
   return (
     <div className="flex flex-row gap-2 p-2">
-      {data?.shortcuts.map((x) => <ShortcutButton shortcut={x} {...props} />)}
+      {data?.shortcuts.map((x) => (
+        <ShortcutButton shortcut={x} {...props} />
+      ))}
     </div>
   );
 };
@@ -505,12 +508,167 @@ export const ApplicableDefinitions = (props: PassDownProps) => {
   );
 };
 
+export const ApplicableRelations = (props: PassDownProps) => {
+  const firstPartner = props.partners?.at(0);
+
+  if (!firstPartner) {
+    return null;
+  }
+
+  const { data, error } = useListStructureRelationCategoryQuery({
+    variables: {
+      filters: {
+        sourceIdentifier: props.identifier,
+        targetIdentifier: firstPartner.identifier,
+        search: props.filter && props.filter != "" ? props.filter : undefined,
+      },
+    },
+    fetchPolicy: "network-only",
+  });
+
+  if (!data) {
+    return null;
+  }
+
+  return (
+    <CommandGroup
+      heading={
+        <span className="font-light text-xs w-full items-center ml-2 w-full">
+          Relate...
+        </span>
+      }
+    >
+      {data?.structureRelationCategories.map((x) => (
+        <RelateButton relation={x} right={firstPartner} left={props}>
+          {x.label}
+        </RelateButton>
+      ))}
+      {data.structureRelationCategories.length === 0 && (
+        <CommandItem
+          value={"no-relation"}
+          onSelect={() => alert("Will create this new relation now")}
+          className="flex-1 "
+        >
+          <Tooltip>
+            <TooltipTrigger className="flex flex-row group w-full">
+              <div className="flex-col">
+                <div className="text-md text-gray-100 text-left">
+                  Create... {props.filter || "No relation found"}
+                </div>
+                <div className="text-xs text-gray-400 text-left">
+                  Will create a new relation
+                </div>
+              </div>
+              <div className="flex-grow"></div>
+            </TooltipTrigger>
+            <TooltipContent>{props.filter}</TooltipContent>
+          </Tooltip>
+        </CommandItem>
+      )}
+    </CommandGroup>
+  );
+};
+
+export const RelateButton = (props: {
+  relation: ListStructureRelationCategoryWithGraphFragment;
+  left: PassDownProps;
+  right: Structure;
+  children: React.ReactNode;
+}) => {
+  const [createSRelation] = useCreateStructureRelationMutation({
+    onCompleted: (data) => {
+      console.log("Relation created:", data);
+    },
+    onError: (error) => {
+      console.error("Error creating relation:", error);
+    },
+  });
+
+  const [createStructure] = useCreateStructureMutation({
+    onCompleted: (data) => {
+      console.log("Structure created:", data);
+    },
+    onError: (error) => {
+      console.error("Error creating structure:", error);
+    },
+  });
+
+  const handleRelationCreation = async (
+    category: ListStructureRelationCategoryWithGraphFragment,
+  ) => {
+    try {
+      const leftStructureString = `${props.left.identifier}:${props.left.object}`;
+      const rightStructureString = `${props.right.identifier}:${props.right.object}`;
+
+      const left = await createStructure({
+        variables: {
+          input: {
+            structure: leftStructureString,
+            graph: category.graph.id,
+          },
+        },
+      });
+
+      const right = await createStructure({
+        variables: {
+          input: {
+            structure: rightStructureString,
+            graph: category.graph.id,
+          },
+        },
+      });
+
+      await createSRelation({
+        variables: {
+          input: {
+            source: left.data?.createStructure.id,
+            target: right.data?.createStructure.id,
+            category: category.id,
+          },
+        },
+      });
+
+      toast.success("Relation created successfully!");
+    } catch (error) {
+      toast.error(
+        `Failed to create relation: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+      console.error("Failed to create relation:", error);
+    }
+  };
+
+  return (
+    <CommandItem
+      value={props.relation.label}
+      key={props.relation.id}
+      onSelect={() => handleRelationCreation(props.relation)}
+      className="flex-1 "
+    >
+      <Tooltip>
+        <TooltipTrigger className="flex flex-row group w-full">
+          <div className="flex-col">
+            <div className="text-md text-gray-100 text-left">
+              {props.relation.label}
+            </div>
+            <div className="text-xs text-gray-400 text-left">
+              {props.relation.graph.name}
+            </div>
+          </div>
+          <div className="flex-grow"></div>
+        </TooltipTrigger>
+        <TooltipContent>{props.relation.description}</TooltipContent>
+      </Tooltip>
+    </CommandItem>
+  );
+};
+
 export const useAction = (props: { action: Action; state: ActionState }) => {
   const [progress, setProgress] = React.useState<number | undefined>(0);
   const [controller, setController] = React.useState<AbortController | null>(
     null,
   );
   const app = useArkitekt();
+  const dialog = useDialog();
 
   const assign = async () => {
     if (controller) {
@@ -528,6 +686,7 @@ export const useAction = (props: { action: Action; state: ActionState }) => {
         },
         abortSignal: newController.signal,
         services: app.connection?.clients || {},
+        dialog,
         state: props.state,
       });
       setController(null);
@@ -599,7 +758,7 @@ export const Actions = (props: { state: ActionState; filter?: string }) => {
       }
     >
       {actions.map((x) => (
-        <LocalActionButton action={x} state={props.state} />
+        <LocalActionButton key={x.name} action={x} state={props.state} />
       ))}
     </CommandGroup>
   );
@@ -669,17 +828,25 @@ export const SmartContext = (props: SmartContextProps) => {
         />
 
         <CommandList>
-          <AppicableShortcuts {...props} filter={filter} />
+          
           <CommandEmpty>{"No Action available"}</CommandEmpty>
 
           <ApplicableLocalActions {...props} filter={filter} />
+          <Guard.Rekuest fallback={<></>}>
+          <AppicableShortcuts {...props} filter={filter} />
           <ApplicableActions {...props} filter={filter} />
+          </Guard.Rekuest>
+          <Guard.Kraph fallback={<></>}>
+            <ApplicableRelations {...props} filter={filter} />
+          </Guard.Kraph>
 
+          <Guard.Kabinet fallback={<></>}>
           <ApplicableDefinitions
             {...props}
             partners={props.partners}
             filter={filter}
           />
+          </Guard.Kabinet>
         </CommandList>
       </Command>
     </>

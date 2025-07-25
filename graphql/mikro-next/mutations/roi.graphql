@@ -3,3 +3,9 @@ mutation PinROI($id: ID!, $pin: Boolean!) {
     ...ROI
   }
 }
+
+mutation CreateROI($input: RoiInput!) {
+  createRoi(input: $input) {
+    ...ROI
+  }
+}

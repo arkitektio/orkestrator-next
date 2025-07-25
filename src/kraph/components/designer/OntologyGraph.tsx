@@ -48,7 +48,8 @@ import {
 import MetricCategoryNode from "./nodes/MetricCategoryNode";
 import DescribeEdge from "./edges/DescribeEdge";
 import ELK from "elkjs/lib/elk.bundled.js";
-
+import { structure } from "@/hooks/use-metaapp";
+import StructureRelationEdge from "./edges/StructureRelationEdge";
 
 const ontologyToNodes = (graph: GraphFragment): MyNode[] => {
   const structureNodes = graph.structureCategories.map((cat, index) => ({
@@ -152,7 +153,7 @@ const withCategoryFilter = (category: CategoryDefintion) => {
 };
 
 const ontologyToEdges = (graph: GraphFragment) => {
-  let edges: MyEdge[] = [];
+  const edges: MyEdge[] = [];
 
   console.log("Relations", graph.relationCategories);
 
@@ -172,6 +173,30 @@ const ontologyToEdges = (graph: GraphFragment) => {
           target: target_nodes[j].id,
           data: cat,
           type: "relation" as const,
+          markerEnd: {
+            type: MarkerType.Arrow,
+          },
+        });
+      }
+    }
+  });
+
+  graph.structureRelationCategories.forEach((cat) => {
+    let source_nodes = graph.structureCategories.filter(
+      withCategoryFilter(cat.sourceDefinition),
+    );
+    let target_nodes = graph.structureCategories.filter(
+      withCategoryFilter(cat.targetDefinition),
+    );
+
+    for (let i = 0; i < source_nodes.length; i++) {
+      for (let j = 0; j < target_nodes.length; j++) {
+        edges.push({
+          id: `${cat.id}-${i}-${j}`,
+          source: source_nodes[i].id,
+          target: target_nodes[j].id,
+          data: cat,
+          type: "structure_relation" as const,
           markerEnd: {
             type: MarkerType.Arrow,
           },
@@ -356,6 +381,7 @@ const nodeTypes = {
 const edgeTypes = {
   measurement: MeasurementEdge,
   stagingrelation: StagingRelationEdge,
+  structure_relation: StructureRelationEdge,
   stagingmeasurement: StagingMeasurementEdge,
   relation: RelationEdge,
   stagingstep: StagingStepEdge,
@@ -387,7 +413,6 @@ const nodeToNodeInput = (node: MyNode): GraphNodeInput | null => {
   };
 };
 
-
 const layeredLayout = {
   "elk.algorithm": "layered",
   "elk.layered.nodePlacement.strategy": "SIMPLE",
@@ -397,7 +422,7 @@ const layeredLayout = {
   "elk.spacing.nodeNode": "100",
   "elk.layered.spacing.nodeNodeBetweenLayers": "100",
   "elk.direction": "RIGHT",
-}
+};
 
 const forceLayout = {
   "elk.algorithm": "force",
@@ -410,7 +435,6 @@ const forceLayout = {
   "elk.direction": "RIGHT",
 };
 
-
 const discoLayout = {
   "elk.algorithm": "disco",
   "elk.drawing.strategy": "POLYLINE",
@@ -420,7 +444,7 @@ const discoLayout = {
   "elk.direction": "RIGHT",
   "elk.layered.nodePlacement.strategy": "SIMPLE",
   "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
-}
+};
 
 const treeLayout = {
   "elk.algorithm": "mrtree",
@@ -432,12 +456,12 @@ const treeLayout = {
   "elk.layered.spacing.nodeNodeBetweenLayers": "100",
   "elk.direction": "RIGHT",
   "elk.layered.nodePlacement.bk.fixedAlignment": "LEFT",
-}
+};
 
 const stressLayout = {
   "elk.algorithm": "stress",
   "org.eclipse.elk.stress.desiredEdgeLength": "200",
-  "org.eclipse.elk.stress.dimension" : "XY",
+  "org.eclipse.elk.stress.dimension": "XY",
   "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
   "elk.layered.crossingMinimization.minimize": "LAYER_SWEEP",
   "elk.layered.spacing.nodeNode": "200",
@@ -445,9 +469,9 @@ const stressLayout = {
   "elk.layered.spacing.nodeNodeBetweenLayrs": "200",
   "elk.direction": "RIGHT",
   "elk.layered.nodePlacement.bk.fixedAlignment": "LEFT",
-}
+};
 
-export default ({ graph }: { graph: GraphFragment }) => {
+export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
   const [update] = useUpdateGraphMutation();
 
   const reactFlowWrapper = React.useRef<HTMLDivElement | null>(null);
@@ -522,42 +546,42 @@ export default ({ graph }: { graph: GraphFragment }) => {
     }
   };
 
-  const layout = (layout: {[key: string]: string}) => {
-      const elk = new ELK();
-      const the_nodes = nodes;
-  
-      const graph = {
-        id: "root",
-        layoutOptions: layout,
-        children: the_nodes.map((node) => ({
-          id: node.id,
-          x: node.position.x,
-          y: node.position.y,
-          width: node.width,
-          height: node.height,
-        })),
-        edges: edges.map((edge) => ({
-          id: edge.id,
-          sources: [edge.source],
-          targets: [edge.target],
-        })),
-      };
-  
-      elk.layout(graph).then(({ children }) => {
-        // By mutating the children in-place we saves ourselves from creating a
-        // needless copy of the nodes array.
-        if (!children) {
-          return;
-        }
-  
-        const newNodes = children.map((node) => {
-          const child = the_nodes.find((n) => n.id === node.id);
-          return { ...child, position: { x: node.x, y: node.y } };
-        });
-  
-        setNodes(newNodes);
+  const layout = (layout: { [key: string]: string }) => {
+    const elk = new ELK();
+    const the_nodes = nodes;
+
+    const graph = {
+      id: "root",
+      layoutOptions: layout,
+      children: the_nodes.map((node) => ({
+        id: node.id,
+        x: node.position.x,
+        y: node.position.y,
+        width: node.width,
+        height: node.height,
+      })),
+      edges: edges.map((edge) => ({
+        id: edge.id,
+        sources: [edge.source],
+        targets: [edge.target],
+      })),
+    };
+
+    elk.layout(graph).then(({ children }) => {
+      // By mutating the children in-place we saves ourselves from creating a
+      // needless copy of the nodes array.
+      if (!children) {
+        return;
+      }
+
+      const newNodes = children.map((node) => {
+        const child = the_nodes.find((n) => n.id === node.id);
+        return { ...child, position: { x: node.x, y: node.y } };
       });
-    }
+
+      setNodes(newNodes);
+    });
+  };
 
   const onConnect = (connection: Connection) => {
     console.log("onConnect", connection);
@@ -684,16 +708,30 @@ export default ({ graph }: { graph: GraphFragment }) => {
           />
         )}
         <div className="absolute top-0 right-0 p-2">
-          <Button onClick={save} variant={"outline"}>Save</Button>
+          <Button onClick={save} variant={"outline"}>
+            Save
+          </Button>
         </div>
         <div className="absolute top-0 left-0 p-3 gap-1">
-          <Button onClick={() => layout(stressLayout)} variant={"outline"}>Stress</Button>
-          <Button onClick={() => layout(forceLayout)} variant={"outline"}>Force</Button>
-          <Button onClick={() => layout(discoLayout)} variant={"outline"}>Disco</Button>
-          <Button onClick={() => layout(treeLayout)} variant={"outline"}>Tree</Button>
-          <Button onClick={() => layout(layeredLayout)} variant={"outline"}>Layered</Button>
-          </div>
+          <Button onClick={() => layout(stressLayout)} variant={"outline"}>
+            Stress
+          </Button>
+          <Button onClick={() => layout(forceLayout)} variant={"outline"}>
+            Force
+          </Button>
+          <Button onClick={() => layout(discoLayout)} variant={"outline"}>
+            Disco
+          </Button>
+          <Button onClick={() => layout(treeLayout)} variant={"outline"}>
+            Tree
+          </Button>
+          <Button onClick={() => layout(layeredLayout)} variant={"outline"}>
+            Layered
+          </Button>
+        </div>
       </div>
     </OntologyGraphProvider>
   );
 };
+
+export default OntologyGraph; // --- IGNORE ---

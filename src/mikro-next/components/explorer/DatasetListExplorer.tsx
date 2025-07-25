@@ -18,7 +18,7 @@ import ImageCard from "../cards/ImageCard";
 import { ProvenanceSidebar } from "../sidebars/ProvenanceSidebar";
 import { offset } from "@udecode/plate-floating";
 import { useState } from "react";
-import { TreeView, TreeDataItem } from '@/components/tree-view';
+import { TreeView, TreeDataItem } from "@/components/tree-view";
 export type IRepresentationScreenProps = {};
 
 export const DatasetListExplorer = (props: {
@@ -52,6 +52,7 @@ export const DatasetListExplorer = (props: {
             Comments: (
               <Komments identifier="@mikro/dataset" object={props.dataset.id} />
             ),
+            Share: <MikroDataset.Share object={props.dataset.id} />,
             Provenance: <ProvenanceSidebar items={props?.dataset.history} />,
           }}
         />
@@ -86,7 +87,6 @@ export const DatasetListExplorer = (props: {
           >
             <LayoutList />
           </Button>
-
 
           <Button
             variant="outline"
@@ -133,11 +133,8 @@ export const DatasetListExplorer = (props: {
             }
           })}
           {error && (
-            <div className="col-span-6 text-red-500">
-              {error.message}
-              </div>
+            <div className="col-span-6 text-red-500">{error.message}</div>
           )}
-          
         </div>
 
         <DropZone

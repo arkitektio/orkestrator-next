@@ -67,7 +67,7 @@ export const SMART_MODEL_DROP_TYPE = "smart";
 export const WELL_KNOWN_ENDPOINTS = ["https://localhost:443"];
 
 export const KABINET_REFRESH_POD_HASH =
-  "363c28aca6fad6032ca3d5ff8f2baa67f93abbd3cacb1f033f6f17fd302e91e1";
+  "3edf4d37e009b4273ffaf1fa1dc5316ded2363c6beb08e73a614055a22062b04";
 
 export const KABINET_INSTALL_POD_HASH =
   "fad7fa309e1409bf301467286dad304dd729801155dd4d38899a470257859dc8";

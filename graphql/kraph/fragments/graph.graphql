@@ -29,7 +29,7 @@ fragment Graph on Graph {
   structureRelationCategories {
     ...ListStructureRelationCategory
   }
-  graphQueries(pagination: { limit: 0 }) {
+  graphQueries(pagination: { limit: 5 }) {
     ...GraphQuery
   }
   latestNodes(pagination: { limit: 2 }) {

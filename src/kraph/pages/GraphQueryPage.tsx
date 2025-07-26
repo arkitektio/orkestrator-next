@@ -1,22 +1,13 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
-import {
-  KraphGraph,
-  KraphGraphQuery,
-  KraphGraphView,
-  KraphOntology,
-} from "@/linkers";
+import { KraphGraph, KraphGraphQuery, KraphGraphView } from "@/linkers";
 import { useGetGraphQueryQuery } from "../api/graphql";
 
-import { PathGraph } from "../components/renderers/graph/PathGraph";
-import { GraphTable } from "../components/renderers/table/GraphTable";
-
-import ScatterPlot from "../components/charts/scatterplot/ScatterPlot";
-import { CypherSidebar } from "../components/sidebars/CypherSidebar";
-import { CypherEditor } from "../components/cypher/CypherEditor";
 import { Card } from "@/components/ui/card";
+import { CypherEditor } from "../components/cypher/CypherEditor";
 import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
+import { CypherSidebar } from "../components/sidebars/CypherSidebar";
 
 export default asDetailQueryRoute(
   useGetGraphQueryQuery,
@@ -40,6 +31,7 @@ export default asDetailQueryRoute(
                 Edit Query
               </Button>
             </KraphGraphQuery.DetailLink>
+            <KraphGraphQuery.ObjectButton object={data.graphQuery.id} />
           </div>
         }
         sidebars={

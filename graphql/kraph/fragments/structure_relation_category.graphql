@@ -4,10 +4,12 @@ fragment StructureRelationCategory on StructureRelationCategory {
   sourceDefinition {
     tagFilters
     categoryFilters
+    identifierFilters
   }
   targetDefinition {
     tagFilters
     categoryFilters
+    identifierFilters
   }
   ageName
   label
@@ -27,10 +29,12 @@ fragment ListStructureRelationCategory on StructureRelationCategory {
   sourceDefinition {
     tagFilters
     categoryFilters
+    identifierFilters
   }
   targetDefinition {
     tagFilters
     categoryFilters
+    identifierFilters
   }
   label
 }

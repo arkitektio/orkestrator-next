@@ -5,6 +5,8 @@ import {
   CategoryDefintion,
   GraphFragment,
   GraphNodeInput,
+  ListStructureCategoryFragment,
+  StructureCategoryDefinition,
   useUpdateGraphMutation,
 } from "@/kraph/api/graphql";
 import { notEmpty } from "@/lib/utils";
@@ -152,6 +154,26 @@ const withCategoryFilter = (category: CategoryDefintion) => {
   };
 };
 
+const withStructureCategoryFilter = (category: StructureCategoryDefinition) => {
+  return (cat: ListStructureCategoryFragment) => {
+    if (category.tagFilters && category.tagFilters.length > 0) {
+      return category.tagFilters.some((tag) =>
+        cat.tags.find((t) => t.value == tag),
+      );
+    }
+    if (category.categoryFilters && category.categoryFilters.length > 0) {
+      return category.categoryFilters.some((id) => id == cat.id);
+    }
+    if (category.identifierFilters && category.identifierFilters.length > 0) {
+      return category.identifierFilters.some(
+        (identifier) => identifier == cat.identifier,
+      );
+    }
+
+    return true;
+  };
+};
+
 const ontologyToEdges = (graph: GraphFragment) => {
   const edges: MyEdge[] = [];
 
@@ -183,10 +205,11 @@ const ontologyToEdges = (graph: GraphFragment) => {
 
   graph.structureRelationCategories.forEach((cat) => {
     let source_nodes = graph.structureCategories.filter(
-      withCategoryFilter(cat.sourceDefinition),
+      withStructureCategoryFilter(cat.sourceDefinition),
     );
+
     let target_nodes = graph.structureCategories.filter(
-      withCategoryFilter(cat.targetDefinition),
+      withStructureCategoryFilter(cat.targetDefinition),
     );
 
     for (let i = 0; i < source_nodes.length; i++) {
@@ -204,8 +227,6 @@ const ontologyToEdges = (graph: GraphFragment) => {
       }
     }
   });
-
-  console.log("Measurements", graph.measurementCategories);
 
   graph.measurementCategories.forEach((cat) => {
     let source_nodes = graph.structureCategories.filter(
@@ -712,7 +733,7 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
             Save
           </Button>
         </div>
-        <div className="absolute top-0 left-0 p-3 gap-1">
+        <div className="absolute top-0 left-0 p-3 gap-2 flex flex-row">
           <Button onClick={() => layout(stressLayout)} variant={"outline"}>
             Stress
           </Button>

@@ -24,13 +24,9 @@ const TheCard = ({ item, mates }: Props) => {
         >
           {item?.name}
         </KraphGraph.DetailLink>
-        <PinButton
-          item={item}
-          func={pin}
-          className="ml-auto text-xs p-1 group-hover:block hidden"
-          variant={"outline"}
-          size={"icon"}
-        />
+        <div className="text-sm text-muted-foreground">
+          {item?.description || "No Description"}
+        </div>
       </Card>
     </KraphGraph.Smart>
   );

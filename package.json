@@ -26,6 +26,7 @@
     "mikro": "graphql-codegen --config mikro.yml",
     "kraph": "graphql-codegen --config kraph.yml",
     "alpaka": "graphql-codegen --config alpaka.yml",
+    "dokuments": "graphql-codegen --config dokuments.yml",
     "omero-ark": "graphql-codegen --config omero-ark.yml",
     "fluss": "graphql-codegen --config fluss.yml",
     "kabinet": "graphql-codegen --config kabinet.yml",

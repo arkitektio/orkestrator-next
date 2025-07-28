@@ -9,6 +9,7 @@ import lokResult from "@/lok-next/api/fragments";
 import lovekitResult from "@/lovekit/api/fragments";
 import mikroResult from "@/mikro-next/api/fragments";
 import omeroArkResult from "@/omero-ark/api/fragments";
+import dokumentsResult from "@/dokuments/api/fragments";
 import flussResult from "@/reaktion/api/fragments";
 import rekuestResult from "@/rekuest/api/fragments";
 import { ApolloClient, NormalizedCache } from "@apollo/client";
@@ -25,6 +26,7 @@ import { createAlpakaClient } from "@/lib/alpaka/client";
 import { createElektroClient } from "@/lib/elektro/client";
 import { aliasToHttpPath, aliasToWsPath } from "./alias/helpers";
 import { use } from "cytoscape";
+import { createDokumentsClient } from "../dokuments/client";
 
 export const electronRedirect = async (
   url: string,
@@ -169,6 +171,21 @@ export const serviceMap: ServiceBuilderMap = {
       };
     },
   },
+  dokuments: {
+    key: "dokuments",
+    service: "live.arkitekt.dokuments",
+    optional: true,
+    builder: async ({ alias, token }) => {
+      return {
+        client: createDokumentsClient({
+          wsEndpointUrl: aliasToWsPath(alias, "graphql"),
+          endpointUrl: aliasToHttpPath(alias, "graphql"),
+          possibleTypes: dokumentsResult.possibleTypes,
+          retrieveToken: () => token,
+        }),
+      };
+    },
+  },
   elektro: {
     key: "elektro",
     service: "live.arkitekt.elektro",
@@ -228,6 +245,7 @@ export const Guard = {
   Alpaka: buildGuard("alpaka"),
   Elektro: buildGuard("elektro"),
   Lovekit: buildGuard("lovekit"),
+  Dokuments: buildGuard("dokuments"),
 };
 
 export const useMikro = (): ApolloClient<NormalizedCache> => {
@@ -274,6 +292,10 @@ export const useLivekit = (): LivekitClient => {
   return useService("livekit").client as LivekitClient;
 };
 
+
+export const useDokuments = ():  ApolloClient<NormalizedCache>  => {
+  return useService("dokuments").client as ApolloClient<NormalizedCache>;
+};
 export const useDatalayerEndpoint = (): string => {
   const url = useService("datalayer").client.url;
   if (!url) {

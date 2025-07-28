@@ -49,7 +49,30 @@ export const useAsyncChunk = (props: {
     let format;
     let type;
 
-    let [min, max] = mapDTypeToMinMax(dtype);
+    let [dtypeMin, dtypeMax] = mapDTypeToMinMax(dtype);
+
+    // Calculate actual min/max from the data for better normalization
+    let min = dtypeMin;
+    let max = dtypeMax;
+    
+    // For non-float types, calculate actual data range
+    if (dtype !== "float32" && dtype !== "float64") {
+      const data = array.data;
+      let actualMin = Number.MAX_VALUE;
+      let actualMax = Number.MIN_VALUE;
+      
+      for (let i = 0; i < data.length; i++) {
+        const val = Number(data[i]);
+        if (val < actualMin) actualMin = val;
+        if (val > actualMax) actualMax = val;
+      }
+      
+      // Use actual range if it's more restrictive than dtype range
+      if (actualMin > dtypeMin || actualMax < dtypeMax) {
+        min = actualMin;
+        max = actualMax;
+      }
+    }
 
 
     if (chunk.data instanceof Uint8Array) {
@@ -78,12 +101,13 @@ export const useAsyncChunk = (props: {
       textureData = new Float32Array(array.data);
       format = THREE.RedFormat;
       type = THREE.FloatType;
-    } else if (array.data instanceof Uint16Array) {
-      textureData = new Float32Array(array.data);
-      format = THREE.RedFormat;
-      type = THREE.FloatType;
     } else {
-      textureData = new Float32Array(array.data);
+      // Handle other array types by iterating through them
+      const sourceData = array.data;
+      textureData = new Float32Array(sourceData.length);
+      for (let i = 0; i < sourceData.length; i++) {
+        textureData[i] = Number(sourceData[i]);
+      }
       format = THREE.RedFormat;
       type = THREE.FloatType;
     }
@@ -153,6 +177,7 @@ export const useAsyncChunk = (props: {
       };
     } else {
       setTexture(null);
+      return () => {}; // Return empty cleanup function
     }
   }, [
     props.chunk_coords,

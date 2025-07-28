@@ -290,6 +290,7 @@ export const DatasetTableExplorer = (props: {
     <MikroDataset.ModelPage
       object={props.dataset.id}
       title={props.dataset.name}
+      actions={<MikroDataset.Actions object={props.dataset.id} />}
       sidebars={
         <MultiSidebar
           map={{

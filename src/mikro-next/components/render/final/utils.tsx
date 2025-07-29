@@ -65,9 +65,9 @@ export const mapDTypeToMinMax = (dtype: DataType): [number, number] => {
     case "uint8":
       return [0, 255];
     case "uint16":
-      return [0, 255];
+      return [0, 65535];
     case "uint32":
-      return [0, 65563];
+      return [0, 4294967295];
     case "int8":
       return [-128, 127];
     case "int16":

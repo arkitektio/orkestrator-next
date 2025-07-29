@@ -48,11 +48,28 @@ export const useCalculateMinMaxFor = (
             throw new Error("Chunk not found");
         }
 
-        const data = chunk.chunk.data as Float32Array;
-        const min = Math.min(...data);
-        const max = Math.max(...data);
+        const data = chunk.chunk.data 
+        
+        if (!data || data.length === 0) {
+            throw new Error("No data available for min/max calculation");
+        }
+
+        let min = 0;
+        let max = 0;
+
+
+       for (let i = 0; i < data.length; i++) {
+            const value = data[i];
+            if (value < min) {
+                min = value;
+            }
+            if (value > max) {
+                max = value;
+            }
+        }
 
         return { min, max };
+
     }
 
 

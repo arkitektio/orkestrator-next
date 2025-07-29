@@ -3,7 +3,7 @@ import { AddContinousScanViewForm } from "./AddContinousScanViewForm";
 import { AddMultiPositionViewForm } from "./AddMultiPositionViewForm";
 import { AddRGBViewForm } from "./AddRGBViewForm";
 import { AddTransformationViewForm } from "./AddTransformationViewForm";
-import { AddStructureViewForm } from "./AddSpecimenViewForm";
+import { AddMaskViewForm } from "./AddMaskViewForm";
 
 export const AddImageViewForm = (props: { image: string }) => {
   return (
@@ -27,7 +27,7 @@ export const AddImageViewForm = (props: { image: string }) => {
           value="structure"
           className={"h-full w-full mt-0 rounded rounded-md "}
         >
-          <AddStructureViewForm {...props} />
+          <AddMaskViewForm {...props} />
         </TabsContent>
         <TabsContent
           value="rgb"

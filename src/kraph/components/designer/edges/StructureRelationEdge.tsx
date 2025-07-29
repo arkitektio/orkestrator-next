@@ -6,9 +6,14 @@ import {
   type EdgeProps,
   type ReactFlowState,
 } from "@xyflow/react";
-import { RelationEdge } from "../types";
+import {
+  MeasurementEdge,
+  StagingMeasurementEdge,
+  StagingRelationEdge,
+} from "../types";
 import { getEdgeParams } from "../utils";
 import { Card } from "@/components/ui/card";
+import { KraphStructureRelationCategory } from "@/linkers";
 
 export type GetSpecialPathParams = {
   sourceX: number;
@@ -24,12 +29,12 @@ export const getSpecialPath = (
   const centerX = (sourceX + targetX) / 2;
   const centerY = (sourceY + targetY) / 2;
 
-  return `M ${sourceX} ${sourceY} Q ${centerX} ${
+  return `M ${sourceX} ${sourceY} Q ${centerX + offset} ${
     centerY + offset
   } ${targetX} ${targetY}`;
 };
 
-export default ({
+export const TEdge = ({
   id,
   data,
   source,
@@ -41,7 +46,7 @@ export default ({
   sourcePosition,
   targetPosition,
   markerEnd,
-}: EdgeProps<RelationEdge>) => {
+}: EdgeProps<MeasurementEdge>) => {
   const sourceNode = useInternalNode(source);
   const targetNode = useInternalNode(target);
 
@@ -58,40 +63,53 @@ export default ({
 
   const { sx, sy, tx, ty } = getEdgeParams(sourceNode, targetNode);
 
-  const edgePathParams = {
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition,
-  };
-
   let path = "";
   const offset = 0;
+  let centerX = (sourceX + targetX) / 2;
+  let centerY = (sourceY + targetY) / 2;
 
-  path = getSpecialPath(
-    { sourceX: sx, sourceY: sy, targetX: tx, targetY: ty },
-    offset,
-  );
+  if (source == target) {
+    const radiusX = 100;
+    const radiusY = 100;
+    path = `M ${sourceX - 10} ${sourceY} A ${radiusX} ${radiusY} 0 1 0 ${
+      targetX + 5
+    } ${targetY}`;
 
-  const centerX = (sourceX + targetX) / 2;
-  const centerY = (sourceY + targetY) / 2;
+    centerX = sourceX - radiusX * 2;
+    centerY = (sourceY + targetY) / 2;
+  } else {
+    path = getSpecialPath(
+      { sourceX: sx, sourceY: sy, targetX: tx, targetY: ty },
+      offset,
+    );
+  }
 
   return (
     <>
-      <BaseEdge path={path} markerEnd={markerEnd} label={data?.label} />
+      <BaseEdge
+        path={path}
+        markerEnd={markerEnd}
+        label={data?.label}
+        color="#ff00ff"
+      />
       <EdgeLabelRenderer>
         <Card
           style={{
             position: "absolute",
-            transform: `translate(-50%, -50%) translate(${centerX}px,${centerY + offset}px)`,
+            transform: `translate(-50%, -50%) translate(${centerX}px,${centerY + offset}px) `,
           }}
-          className="p-1 text-xs group"
+          className="p-3 text-xs group z-10"
         >
-          {data?.label}
+          <KraphStructureRelationCategory.DetailLink
+            object={id}
+            className={"font-bold"}
+          >
+            {data?.label}
+          </KraphStructureRelationCategory.DetailLink>
         </Card>
       </EdgeLabelRenderer>
     </>
   );
 };
+
+export default TEdge;

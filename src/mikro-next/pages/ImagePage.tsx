@@ -263,40 +263,37 @@ export default asDetailQueryRoute(
                     {data?.image.views?.map((view, index) => (
                       <>
                         {view.__typename == "AffineTransformationView" && (
-                          <TransformationViewCard view={view} key={index} />
+                          <TransformationViewCard view={view} key={"affine-" + view.id} />
                         )}
                         {view.__typename == "LabelView" && (
-                          <LabelViewCard view={view} key={index} />
+                          <LabelViewCard view={view} key={"label-" + view.id} />
                         )}
                         {view.__typename == "OpticsView" && (
-                          <OpticsViewCard view={view} key={index} />
+                          <OpticsViewCard view={view} key={"optics-" + view.id} />
                         )}
                         {view.__typename == "ChannelView" && (
-                          <ChannelViewCard view={view} key={index} />
+                          <ChannelViewCard view={view} key={"channel-" + view.id} />
                         )}
                         {view.__typename == "RGBView" && (
-                          <RGBViewCard view={view} key={index} />
+                          <RGBViewCard view={view} key={"rgb-" + view.id} />
                         )}
                         {view.__typename == "AcquisitionView" && (
-                          <AcquisitionViewCard view={view} key={index} />
+                          <AcquisitionViewCard view={view} key={"acquisition-" + view.id} />
                         )}
                         {view.__typename == "WellPositionView" && (
-                          <WellPositionViewCard view={view} key={index} />
+                          <WellPositionViewCard view={view} key={"well-position-" + view.id} />
                         )}
                         {view.__typename == "ROIView" && (
-                          <ROIViewCard view={view} key={index} />
+                          <ROIViewCard view={view} key={"roi-" + view.id} />
                         )}
                         {view.__typename == "FileView" && (
-                          <FileViewCard view={view} key={index} />
+                          <FileViewCard view={view} key={"file-" + view.id} />
                         )}
                         {view.__typename == "DerivedView" && (
-                          <DerivedViewCard view={view} key={index} />
-                        )}
-                        {view.__typename == "PixelView" && (
-                          <PixelViewCard view={view} key={index} />
+                          <DerivedViewCard view={view} key={"derived-" + view.id} />
                         )}
                         {view.__typename == "HistogramView" && (
-                          <HistogramViewCard view={view} key={index} />
+                          <HistogramViewCard view={view} key={"histogram-" + view.id} />
                         )}
                       </>
                     ))}

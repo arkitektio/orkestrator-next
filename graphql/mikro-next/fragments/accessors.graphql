@@ -7,7 +7,7 @@ fragment Accessor on Accessor {
 
 fragment LabelAccessor on LabelAccessor {
   ...Accessor
-  pixelView {
+  maskView {
     id
   }
 }

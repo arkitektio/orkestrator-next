@@ -17,6 +17,7 @@ import { ROIPolygon } from "./final/ROIPolygon";
 import { useArray } from "./final/useArray";
 import { BasicIndexer, IndexerProjection, Slice } from "./indexer";
 import { RectangleDrawer } from "./controls/RectangleDrawer";
+import { notEmpty } from "@/lib/utils";
 
 export interface RGBDProps {
   context: ListRgbContextFragment;
@@ -127,7 +128,7 @@ export const LayerRender = (props: {
             renderFunc={renderView}
             chunk_coords={chunk_loader.chunk_coords}
             chunk_shape={derivedScaleView.image.store.chunks}
-            key={`${index}-${z}-${t}-${view.id}`}
+            key={`${index}-${z}-${t}-${view.id}-${view.contrastLimitMax}-${view.contrastLimitMin}-${view.colorMap}-${view.baseColor?.join("-")}`}
             view={view}
             t={t}
             z={z}
@@ -162,6 +163,11 @@ export const FinalRender = (props: RGBDProps) => {
   // Get image dimensions for the auto-zoom camera
   const imageDimensions = useImageDimensions(props.context);
 
+
+
+
+
+
   if (
     rbgContext.image.store.chunks?.length !=
     rbgContext.image.store.shape?.length
@@ -188,7 +194,7 @@ export const FinalRender = (props: RGBDProps) => {
     id: "extra",
   });
 
-  const selectedLayers = [layers.at(selectedScale)];
+  const selectedLayers = [layers.at(selectedScale)].filter(notEmpty);
   // Calculate which chunks are needed for the view
 
   const chunk_shape = props.context.image.store.chunks;

@@ -14,9 +14,8 @@ fragment View on View {
 fragment ChannelView on ChannelView {
   ...View
   id
-  channel {
-    ...Channel
-  }
+  excitationWavelength
+  emissionWavelength
 }
 
 fragment DerivedView on DerivedView {
@@ -94,7 +93,6 @@ fragment RGBView on RGBView {
   contrastLimitMin
   contrastLimitMax
   gamma
-  rescale
   active
   fullColour
   baseColor
@@ -130,17 +128,28 @@ fragment OpticsView on OpticsView {
   }
 }
 
-fragment LabelView on LabelView {
+fragment MaskView on MaskView {
   ...View
   id
-  label
+  referenceView {
+    id
+    
+  }
 }
 
-fragment StructureView on StructureView {
+fragment ReferenceView on ReferenceView {
   ...View
   id
-  structure
 }
+
+fragment InstanceMaskView on InstanceMaskView {
+  ...View
+  id
+  referenceView {
+    id
+  }
+}
+
 
 fragment AcquisitionView on AcquisitionView {
   ...View
@@ -171,11 +180,6 @@ fragment ContinousScanView on ContinousScanView {
   direction
 }
 
-fragment PixelView on PixelView {
-  ...View
-  id
-}
-
 fragment HistogramView on HistogramView {
   ...View
   id
@@ -185,17 +189,4 @@ fragment HistogramView on HistogramView {
   histogram
 }
 
-fragment DetailPixelView on PixelView {
-  ...View
-  id
-  image {
-    ...Image
-  }
-  labelAccessors {
-    keys
-    table {
-      id
-      name
-    }
-  }
-}
+

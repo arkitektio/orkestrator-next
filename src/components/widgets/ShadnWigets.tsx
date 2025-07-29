@@ -34,88 +34,104 @@ export const ShadnWigets = () => {
   const { registry } = useWidgetRegistry();
 
   useEffect(() => {
-    let int = registry.registerInputWidgetFallback(PortKind.Int, IntWidget);
-    let list = registry.registerInputWidgetFallback(PortKind.List, ListWidget);
-    let bool = registry.registerInputWidgetFallback(PortKind.Bool, BoolWidget);
-    let date = registry.registerInputWidgetFallback(PortKind.Date, DateWidget);
-    let enumwi = registry.registerInputWidgetFallback(
+    const int = registry.registerInputWidgetFallback(PortKind.Int, IntWidget);
+    const list = registry.registerInputWidgetFallback(
+      PortKind.List,
+      ListWidget,
+    );
+    const bool = registry.registerInputWidgetFallback(
+      PortKind.Bool,
+      BoolWidget,
+    );
+    const date = registry.registerInputWidgetFallback(
+      PortKind.Date,
+      DateWidget,
+    );
+    const enumwi = registry.registerInputWidgetFallback(
       PortKind.Enum,
       EnumWidget,
     );
-    let union = registry.registerInputWidgetFallback(
+    const union = registry.registerInputWidgetFallback(
       PortKind.Union,
       UnionWidget,
     );
-    let dict = registry.registerInputWidgetFallback(PortKind.Dict, DictWidget);
-    let model = registry.registerInputWidgetFallback(
+    const dict = registry.registerInputWidgetFallback(
+      PortKind.Dict,
+      DictWidget,
+    );
+    const model = registry.registerInputWidgetFallback(
       PortKind.Model,
       ModelWidget,
     );
-    let float = registry.registerInputWidgetFallback(
+    const float = registry.registerInputWidgetFallback(
       PortKind.Float,
       FloatWidget,
     );
-    let string = registry.registerInputWidgetFallback(
+    const string = registry.registerInputWidgetFallback(
       PortKind.String,
       StringWidget,
     );
-    let mstructure = registry.registerInputWidgetFallback(
+    const mstructure = registry.registerInputWidgetFallback(
       PortKind.MemoryStructure,
       MemoryStructureWidget,
     );
-    let structure = registry.registerInputWidgetFallback(
+    const structure = registry.registerInputWidgetFallback(
       PortKind.Structure,
       StructureWidget,
     );
 
-    let hideEffect = registry.registerEffectWidget("HideEffect", HideEffect);
+    const hideEffect = registry.registerEffectWidget("HideEffect", HideEffect);
 
-    let search = registry.registerInputWidget(
+    const search = registry.registerInputWidget(
       "SearchAssignWidget",
       SearchWidget,
     );
-    let slider = registry.registerInputWidget(
+    const slider = registry.registerInputWidget(
       "SliderAssignWidget",
       SliderWidget,
     );
 
-    let choices = registry.registerInputWidget(
+    const choices = registry.registerInputWidget(
       "ChoiceAssignWidget",
       ChoicesWidget,
     );
 
-    let stateChoise = registry.registerInputWidget(
+    const stateChoise = registry.registerInputWidget(
       "StateChoiceAssignWidget",
       StateChoiceWidget,
     );
 
-    let intReturn = registry.registerReturnWidgetFallback(
+    const intReturn = registry.registerReturnWidgetFallback(
       PortKind.Int,
       IntReturnWidget,
     );
-    let listReturn = registry.registerReturnWidgetFallback(
+    const floatReturn = registry.registerReturnWidgetFallback(
+      PortKind.Float,
+      FloatReturnWidget,
+    );
+    const listReturn = registry.registerReturnWidgetFallback(
       PortKind.List,
       ListReturnWidget,
     );
-    let boolReturn = registry.registerReturnWidgetFallback(
+    const boolReturn = registry.registerReturnWidgetFallback(
       PortKind.Bool,
       BoolReturnWidget,
     );
-    let dateReturn = registry.registerReturnWidgetFallback(
+    const dateReturn = registry.registerReturnWidgetFallback(
       PortKind.Date,
       DateReturnWidget,
     );
 
-    let enumReturn = registry.registerReturnWidgetFallback(
+    const enumReturn = registry.registerReturnWidgetFallback(
       PortKind.Enum,
       EnumReturnWidget,
     );
-    let unionReturn = registry.registerReturnWidgetFallback(
+    const unionReturn = registry.registerReturnWidgetFallback(
       PortKind.Union,
       UnionReturnWidget,
     );
 
-    let structureReturn = registry.registerReturnWidgetFallback(
+    const structureReturn = registry.registerReturnWidgetFallback(
       PortKind.Structure,
       DelegatingStructureWidget,
     );
@@ -142,6 +158,7 @@ export const ShadnWigets = () => {
       listReturn();
       boolReturn();
       dateReturn();
+      floatReturn();
       enumReturn();
       unionReturn();
       structureReturn();

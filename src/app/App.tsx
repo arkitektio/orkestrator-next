@@ -22,6 +22,7 @@ import { ConnectingFallback } from "./components/fallbacks/Connecting";
 import { NotConnected } from "./components/fallbacks/NotConnected";
 import { NotFound } from "./components/fallbacks/NotFound";
 import { PrivateNavigationBar } from "./components/navigation/PrivateNavigationBar";
+import DokumentsModule from "@/dokuments/DokumentsModule";
 // Entrypoint of the application.
 // We provide two main routers, one for the public routes, and one for the private routes.
 export const protect = (component: React.ReactNode) => {
@@ -59,6 +60,7 @@ function App() {
             <Route path="blok/*" element={protect(<BlokModule />)} />
             <Route path="alpaka/*" element={protect(<AlpakaModule />)} />
             <Route path="lovekit/*" element={protect(<LovekitModule />)} />
+            <Route path="dokuments/*" element={protect(<DokumentsModule />)} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Stash />

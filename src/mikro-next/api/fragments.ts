@@ -27,13 +27,14 @@
       "DerivedView",
       "FileView",
       "HistogramView",
+      "InstanceMaskView",
       "LabelView",
+      "MaskView",
       "OpticsView",
-      "PixelView",
       "RGBView",
       "ROIView",
+      "ReferenceView",
       "ScaleView",
-      "StructureView",
       "TimepointView",
       "WellPositionView"
     ]

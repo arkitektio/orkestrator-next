@@ -1,0 +1,13 @@
+fragment Page on Page {
+  id
+  index
+  content
+  image {
+    ...BigFileStore
+  }
+}
+
+fragment ListPage on Page {
+  id
+  index
+}

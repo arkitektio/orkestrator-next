@@ -11,7 +11,6 @@ import FilesPage from "./pages/FilesPage";
 import HomePage from "./pages/HomePage";
 import ImagePage from "./pages/ImagePage";
 import ImagesPage from "./pages/ImagesPage";
-import PixelViewPage from "./pages/PixelViewPage";
 import RoiPage from "./pages/RoiPage";
 import StagePage from "./pages/StagePage";
 import StagesPage from "./pages/StagesPage";
@@ -34,18 +33,12 @@ export const MikroNextModule: React.FC<Props> = (props) => {
           <Route path="datasets" element={<DatasetsPage />} />
           <Route path="files" element={<FilesPage />} />
           <Route path="rois" element={<RoisPage />} />
-
           <Route path="rois/:id" element={<RoiPage />} />
           <Route path="files/:id" element={<FilePage />} />
           <Route path="tables" element={<TablesPage />} />
           <Route path="tables/:id" element={<TablePage />} />
           <Route path="meshes/:id" element={<MeshPage />} />
           <Route path="meshes" element={<MeshesPage />} />
-          <Route path="pixelviews/:id" element={<PixelViewPage />} />
-          <Route
-            path="pixelviews/:id/value/:value"
-            element={<PixelViewPage />}
-          />
           <Route path="stages/:id" element={<StagePage />} />
           <Route path="stages" element={<StagesPage />} />
           <Route path="*" element={<NotFound />} />

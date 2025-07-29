@@ -7,6 +7,7 @@ import { DragZone } from "@/components/upload/drag";
 import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
+  KraphGraphQuery,
   KraphRelationCategory,
   KraphStructureRelationCategory,
 } from "@/linkers";
@@ -107,11 +108,16 @@ export default asDetailQueryRoute(
 
         <div className="flex flex-col p-6 h-full">
           {data.structureRelationCategory.bestQuery ? (
-            <SelectiveGraphQueryRenderer
-              graphQuery={data.structureRelationCategory.bestQuery}
-            />
+            <>
+              <KraphGraphQuery.ObjectButton
+                object={data.structureRelationCategory.bestQuery.id}
+              />
+              <SelectiveGraphQueryRenderer
+                graphQuery={data.structureRelationCategory.bestQuery}
+              />
+            </>
           ) : (
-            <div className="h-ful w-ull flex flex-col items-center justify-center">
+            <div className="h-full w-full flex flex-col items-center justify-center">
               <p className="text-sm font-light mb-3">
                 No Graph Query yet for this category
               </p>

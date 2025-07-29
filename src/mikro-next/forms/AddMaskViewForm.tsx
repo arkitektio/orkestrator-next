@@ -7,12 +7,13 @@ import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import {
   StructureViewInput,
+  useCreateMaskViewMutation,
   useCreateStructureViewMutation,
 } from "../api/graphql";
 import { NotImplementedYet } from "@/app/components/fallbacks/NotImplemted";
 
-export const AddStructureViewForm = (props: { image: string }) => {
-  const [add] = useCreateStructureViewMutation();
+export const AddMaskViewForm = (props: { image: string }) => {
+  const [add] = useCreateMaskViewMutation();
 
   const dialog = useGraphQlFormDialog(add);
 

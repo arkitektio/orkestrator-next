@@ -122,6 +122,23 @@ export const ElektroExperiment = buildSmart(
   "@elektro/experiment",
   "elektro/experiments",
 );
+
+export const DokumentsFile = buildSmart(
+  "@dokuments/file",
+  "dokuments/files",
+);
+
+export const DokumentsDocument = buildSmart(
+  "@dokuments/document",
+  "dokuments/documents",
+);
+
+export const DokumentsPage = buildSmart(
+  "@dokuments/page",
+  "dokuments/pages",
+);
+
+
 export const ElektroNeuronModel = buildSmart(
   "@elektro/neuronmodel",
   "elektro/neuronmodels",

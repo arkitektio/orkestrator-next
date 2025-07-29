@@ -14,7 +14,7 @@ import {
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { Me, Username } from "@/lok-next/components/Me";
 import { useDebug } from "@/providers/debug/DebugContext";
-import { ChatBubbleIcon, HomeIcon } from "@radix-ui/react-icons";
+import { ChatBubbleIcon, DashIcon, HomeIcon } from "@radix-ui/react-icons";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import {
   Bolt,
@@ -70,6 +70,8 @@ export const matchIcon = (key: string) => {
       return (
         <ChatBubbleIcon className="w-8 h-8 mx-auto  text-foreground p-[0.5]" />
       );
+    case "dokuments":
+      return <DashIcon className="w-8 h-8 mx-auto  text-foreground" />;
     case "lovekit":
       return <MdStream className="w-8 h-8 mx-auto  text-foreground p-[0.5]" />;
     case "elektro":

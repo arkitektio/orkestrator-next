@@ -3,6 +3,7 @@ import { buildDeleteAction } from "@/actions/builders/deleteAction";
 import {
   DeleteFileDocument,
   DeleteImageDocument,
+  DeleteDatasetDocument,
 } from "@/mikro-next/api/graphql";
 
 export const MIKRO_ACTIONS: Action[] = [
@@ -21,5 +22,13 @@ export const MIKRO_ACTIONS: Action[] = [
     service: "mikro",
     typename: "File",
     mutation: DeleteFileDocument,
+  }),
+  buildDeleteAction({
+    title: "Delete Dataset",
+    identifier: "@mikro/dataset",
+    description: "Delete the dataset",
+    service: "mikro",
+    typename: "Dataset",
+    mutation: DeleteDatasetDocument,
   }),
 ];

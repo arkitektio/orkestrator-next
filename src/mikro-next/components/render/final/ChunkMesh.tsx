@@ -26,12 +26,13 @@ const getColormapForView = (view: RgbViewFragment) => {
       return redColormap;
     }
     case ColorMap.Intensity: {
+      const base = view.baseColor ?? [1, 1, 1];
+
       return createColormapTexture(
-        Array.from({ length: 256 }, (_, i) => [
-          (view.baseColor?.at(0) || 0) * i,
-          (view.baseColor?.at(1) || 0) * i,
-          (view.baseColor?.at(2) || 0) * i,
-        ]),
+        Array.from({ length: 256 }, (_, i) => {
+          const v = i / 255; // intensity [0,1]
+          return [v * base[0] / 255, v * base[1] / 255, v * base[2] / 255];
+        })
       );
     }
 

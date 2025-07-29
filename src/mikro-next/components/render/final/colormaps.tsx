@@ -5,9 +5,9 @@ export const createColormapTexture = (colors: number[][]) => {
   const data = new Uint8Array(size * 4);
 
   for (let i = 0; i < size; i++) {
-    data[i * 4] = colors[i][0] * 255;
-    data[i * 4 + 1] = colors[i][1] * 255;
-    data[i * 4 + 2] = colors[i][2] * 255;
+    data[i * 4] = Math.round(colors[i][0] * 255);
+    data[i * 4 + 1] = Math.round(colors[i][1] * 255);
+    data[i * 4 + 2] = Math.round(colors[i][2] * 255);
     data[i * 4 + 3] = 255;
   }
 

@@ -6,8 +6,9 @@ import { ColorMap, GetImageDocument, RgbViewFragment, useUpdateRgbViewMutation }
 import { ViewCard } from "./meta/ViewCard";
 import { Button } from "@/components/ui/button";
 import { useCalculateMinMaxFor } from "../render/calculations/calculateMinMax";
-import { ReloadIcon } from "@radix-ui/react-icons";
-import { Scale3DIcon } from "lucide-react";
+import { Scale3DIcon, Edit2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { enumToOptions } from "@/lib/utils";
 
 interface Props {
   view: RgbViewFragment;
@@ -26,32 +27,72 @@ export const baseColorToName = (baseColor: number[] | undefined | null) => {
   return closest(rgb).name;
 };
 
-const TheCard = ({ view, mates }: Props) => {
+// Available colormap options
+const colorMapOptions = enumToOptions(ColorMap).map((option) => ({
+  value: option.value,
+  label: option.label,
+}));
+
+const TheCard = ({ view }: Props) => {
 
   const [updateRgbView]= useUpdateRgbViewMutation({ variables: { input: { id: view.id } }, refetchQueries: [GetImageDocument] });
 
   const calculate = useCalculateMinMaxFor(view);
 
+  const handleColorMapChange = (newColorMap: ColorMap) => {
+    updateRgbView({
+      variables: {
+        input: {
+          id: view.id,
+          colorMap: newColorMap,
+        },
+      },
+    }).catch((error) => {
+      console.error("Error updating colormap:", error);
+      alert("Failed to update colormap.");
+    });
+  };
+
   return (
     <MikroRGBView.Smart object={view?.id}>
       <ViewCard view={view} className="flex flex-row p-2 justify-between" >
         <CardHeader className="flex flex-col gap-1">
-          <CardTitle className="flex w-full">
+          <CardTitle className="flex w-full items-center gap-2">
             Channel {view.cMin}{" "}
             {view.colorMap == ColorMap.Intensity && (
               <div
-                className="w-2 h-2 rounded rounded-full ml-auto"
+                className="w-2 h-2 rounded rounded-full"
                 style={{ backgroundColor: baseColorToRGB(view.baseColor) }}
               ></div>
             )}
           </CardTitle>
-          {view.colorMap == ColorMap.Intensity ? (
-            <p className="text-xs text-foreground-muted">
-              {baseColorToName(view.baseColor)}
-            </p>
-          ) : (
-            <p className="text-xs text-foreground-muted">{view.colorMap}</p>
-          )}
+          <div className="flex items-center gap-2">
+            {view.colorMap == ColorMap.Intensity ? (
+              <p className="text-xs text-foreground-muted">
+                {baseColorToName(view.baseColor)}
+              </p>
+            ) : (
+              <p className="text-xs text-foreground-muted">{view.colorMap}</p>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-4 w-4 p-0">
+                  <Edit2 className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {colorMapOptions.map((option) => (
+                  <DropdownMenuItem
+                    key={option.value}
+                    onClick={() => handleColorMapChange(option.value)}
+                    className={view.colorMap === option.value ? "bg-accent" : ""}
+                  >
+                    {option.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
           {view.contrastLimitMin || view.contrastLimitMax ? (
             <p className="text-xs text-foreground-muted">

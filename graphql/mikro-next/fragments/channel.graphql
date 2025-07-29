@@ -1,5 +1,1 @@
-fragment Channel on Channel {
-  id
-  name
-  excitationWavelength
-}
+

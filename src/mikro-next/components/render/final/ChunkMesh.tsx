@@ -105,20 +105,15 @@ export const ChunkBitmapTexture = ({
   const isSelected = selected.find((id: string) => id === view.id) !== undefined;
   console.log("Is selected:", isSelected);
 
-  cLimMax =
-    cLimMax ||
-    (congruentView?.__typename == "HistogramView"
-      ? congruentView?.max
-      : undefined);
-  cLimMin =
-    cLimMin ||
-    (congruentView?.__typename == "HistogramView"
-      ? congruentView?.min
-      : undefined);
+  cLimMax = view.contrastLimitMax || texture?.max;
+  cLimMin = view.contrastLimitMin || texture?.min;
+
+  console.log("cLimMax", cLimMax, "cLimMin", cLimMin, "texture", texture);
 
   return (
     <mesh ref={meshRef} position={[xPosition, yPosition, 0]} scale={[1, 1, 1]} userData={{ viewId: view.id}}>
       <planeGeometry args={[box_shape[1], box_shape[0]]} />
+
       {texture && colormapTexture ? (
         <shaderMaterial
           transparent={true}
@@ -127,9 +122,9 @@ export const ChunkBitmapTexture = ({
           uniforms={{
             colorTexture: { value: texture.texture },
             colormapTexture: { value: colormapTexture },
-            minValue: { value: cLimMin ? cLimMin : texture.min },
-            maxValue: { value: cLimMax ? cLimMax : texture.max },
-            opacity: { value: 0 },
+            minValue: { value: cLimMin },
+            maxValue: { value: cLimMax },
+            opacity: { value: 1 },
           }}
           onBeforeCompile={(shader) => {
             // Animate opacity from 0 to 1
@@ -158,9 +153,9 @@ export const ChunkBitmapTexture = ({
 
         void main() {
           float value = texture2D(colorTexture, vUv).r;
-          float normalized = (value - minValue) / (maxValue - minValue);
-          vec4 color = texture2D(colormapTexture, vec2(clamp(normalized, 0.0, 1.0), 0.5)).rgba;
-          gl_FragColor = vec4(color.rgb, color.a * opacity);
+          float normalized = clamp((value - minValue) / (maxValue - minValue), 0.0, 0.999);
+          vec4 color = texture2D(colormapTexture, vec2(normalized, 0.5)).rgba;
+          gl_FragColor = vec4(color.rgb, color.a); // should render grayscale 0-1
         }
         `}
         />

@@ -2,8 +2,12 @@ import { CardHeader, CardTitle } from "@/components/ui/card";
 import { MikroRGBView } from "@/linkers";
 import { MateFinder } from "@/mates/types";
 import { closest } from "color-2-name";
-import { ColorMap, RgbViewFragment } from "../../api/graphql";
+import { ColorMap, GetImageDocument, RgbViewFragment, useUpdateRgbViewMutation } from "../../api/graphql";
 import { ViewCard } from "./meta/ViewCard";
+import { Button } from "@/components/ui/button";
+import { useCalculateMinMaxFor } from "../render/calculations/calculateMinMax";
+import { ReloadIcon } from "@radix-ui/react-icons";
+import { Scale3DIcon } from "lucide-react";
 
 interface Props {
   view: RgbViewFragment;
@@ -23,10 +27,15 @@ export const baseColorToName = (baseColor: number[] | undefined | null) => {
 };
 
 const TheCard = ({ view, mates }: Props) => {
+
+  const [updateRgbView]= useUpdateRgbViewMutation({ variables: { input: { id: view.id } }, refetchQueries: [GetImageDocument] });
+
+  const calculate = useCalculateMinMaxFor(view);
+
   return (
     <MikroRGBView.Smart object={view?.id}>
-      <ViewCard view={view}>
-        <CardHeader>
+      <ViewCard view={view} className="flex flex-row p-2 justify-between" >
+        <CardHeader className="flex flex-col gap-1">
           <CardTitle className="flex w-full">
             Channel {view.cMin}{" "}
             {view.colorMap == ColorMap.Intensity && (
@@ -43,7 +52,34 @@ const TheCard = ({ view, mates }: Props) => {
           ) : (
             <p className="text-xs text-foreground-muted">{view.colorMap}</p>
           )}
+
+          {view.contrastLimitMin || view.contrastLimitMax ? (
+            <p className="text-xs text-foreground-muted">
+              Contrast: {view.contrastLimitMin} - {view.contrastLimitMax}
+            </p>
+          ) : null}
+
+          
         </CardHeader>
+        <Button onClick={() => {
+            const abortSignal = new AbortController().signal;
+            calculate(abortSignal).then((result) => {;
+              updateRgbView({
+                variables: {
+                  input: {
+                    id: view.id,
+                    contrastLimitMin: result.min,
+                    contrastLimitMax: result.max,
+                  },
+                },
+              })
+            }).catch((error) => {
+              console.error("Error calculating min/max:", error);
+              alert("Failed to calculate min/max values.");
+            });
+          }} variant={"outline"} size="icon" className="ml-2 h-8 w-8">
+            <Scale3DIcon className="mr-2" />
+          </Button>
       </ViewCard>
     </MikroRGBView.Smart>
   );

@@ -7,6 +7,7 @@ import { S3Store } from "@/mikro-next/providers/xarray/store";
 import { AwsClient } from "aws4fetch";
 import { useCallback, useEffect, useState } from "react";
 import { Array, Chunk, DataType, get, open } from "zarrita";
+import { Slice } from "../indexer";
 
 // Define the database schema
 interface ChunkDB {
@@ -117,8 +118,31 @@ export const useArray = (props: { store: ZarrStoreFragment }) => {
     [array],
   );
 
+  const renderSelection = useCallback(
+    async (
+      signal: AbortSignal,
+      selection: (number | Slice | null)[],
+    ) => {
+      if (!array) {
+        throw Error("No credentials loaded");
+      }
+
+      
+
+      console.log("Selection", selection);
+
+      let chunk = (await get(array, selection, {
+        opts: { signal: signal },
+      })) as Chunk<DataType>;
+
+      return { chunk, dtype: array.dtype };
+    },
+    [array],
+  );
+
   return {
     renderView,
+    renderSelection,
     array,
   };
 };

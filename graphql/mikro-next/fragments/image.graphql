@@ -7,17 +7,16 @@ fragment Image on Image {
   views {
     ...ChannelView
     ...AffineTransformationView
-    ...LabelView
+    ...MaskView
+    ...InstanceMaskView
     ...TimepointView
     ...OpticsView
     ...AcquisitionView
     ...RGBView
     ...WellPositionView
-    ...StructureView
     ...DerivedView
     ...ROIView
     ...FileView
-    ...PixelView
     ...HistogramView
   }
   derivedFromViews {

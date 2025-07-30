@@ -32,6 +32,10 @@ fragment StructureRelation on StructureRelation {
     id
     label
   }
+  category {
+    id
+    label
+  }
 }
 
 fragment Participant on Participant {
@@ -44,11 +48,6 @@ fragment Edge on Edge {
   ...Measurement
   ...Relation
   ...Participant
+  ...StructureRelation
 }
 
-fragment PathEdge on Edge {
-  ...PathMeasurement
-  ...PathRelation
-  ...PathParticipant
-  ...PathDescription
-}

@@ -1,3 +1,4 @@
+import { CreateNewRelation } from "@/dialogs/CreateNewRelation";
 import { RelateStructures } from "@/dialogs/RelateStructures";
 import { createDialogProvider } from "@/lib/generic/providers/DialogProvider";
 import { ActionAssignForm } from "@/rekuest/forms/ActionAssignForm";
@@ -7,4 +8,5 @@ export const { DialogProvider, useDialog } = createDialogProvider({
   actionassign: ActionAssignForm,
   implementationassign: ImplementationAssignForm,
   relatestructure: RelateStructures,
+  createnewrelation: CreateNewRelation,
 });

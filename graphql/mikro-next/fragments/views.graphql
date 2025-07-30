@@ -14,8 +14,10 @@ fragment View on View {
 fragment ChannelView on ChannelView {
   ...View
   id
+  channelName: name
   excitationWavelength
   emissionWavelength
+  acquisitionMode
 }
 
 fragment DerivedView on DerivedView {

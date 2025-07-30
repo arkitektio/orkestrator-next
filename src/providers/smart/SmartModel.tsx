@@ -7,8 +7,6 @@ import { SMART_MODEL_DROP_TYPE } from "@/constants";
 import { cn } from "@/lib/utils";
 import { SmartContext } from "@/rekuest/buttons/ObjectButton";
 import { Structure } from "@/types";
-import { useFloating } from "@floating-ui/react";
-import { Portal } from "@radix-ui/react-portal";
 import React, { useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { NativeTypes } from "react-dnd-html5-backend";
@@ -220,6 +218,7 @@ export const SmartModel = ({
                     identifier={props.identifier}
                     object={props.object}
                     partners={partners}
+                    onDone={() => clearPartners()}
                   />
                 </div>
               </div>

@@ -19,6 +19,7 @@ export const useAsyncChunk = (props: {
   scaleY: number;
   imageHeight: number;
   imageWidth: number;
+  viewId: string;
   c: number;
   t: number;
   z: number;
@@ -30,72 +31,82 @@ export const useAsyncChunk = (props: {
   } | null>(null);
 
   useEffect(() => {
+    console.log("Rendering chunk with coords", props.chunk_coords);
     const abortController = new AbortController();
 
     const calculateImageData = async () => {
-      const { chunk, dtype } = (await props.renderFunc(
-        abortController.signal,
-        props.chunk_coords,
-        props.chunk_shape,
-        props.c,
-        props.t,
-        props.z,
-      )) as { chunk: Chunk<DataType>; dtype: DataType };
+      try {
+        const { chunk, dtype } = (await props.renderFunc(
+          abortController.signal,
+          props.chunk_coords,
+          props.chunk_shape,
+          props.c,
+          props.t,
+          props.z,
+        )) as { chunk: Chunk<DataType>; dtype: DataType };
 
-      let array = chunk as Chunk<DataType>;
-      let textureData: ArrayBufferView;
-      let format: THREE.PixelFormat;
-      let type: THREE.TextureDataType;
-      let [min, max] = mapDTypeToMinMax(dtype);
+        if (abortController.signal.aborted) return;
 
-      if (array.data instanceof Uint8Array) {
+        let array = chunk as Chunk<DataType>;
+        let textureData: ArrayBufferView;
+        let format: THREE.PixelFormat;
+        let type: THREE.TextureDataType;
+        let [min, max] = mapDTypeToMinMax(dtype);
 
-        textureData = new Float32Array(array.data);
-        format = THREE.RedFormat; // compatible single-channel format
-        type = THREE.FloatType;
-        min = 0;
-        max = 255;
-      } else if (array.data instanceof Float32Array) {
-        textureData = array.data;
-        format = THREE.RedFormat;
-        type = THREE.FloatType;
-      } else if (
-        array.data instanceof Int16Array ||
-        array.data instanceof Uint16Array ||
-        array.data instanceof Int32Array ||
-        array.data instanceof Uint32Array
-      ) {
-        textureData = new Float32Array(array.data);
-        format = THREE.RedFormat;
-        type = THREE.FloatType;
-      } else {
-        console.error("Unsupported data type for texture creation:", array.data);
-        return; // do not proceed with unsupported type
+        if (array.data instanceof Uint8Array) {
+          textureData = new Float32Array(array.data);
+          format = THREE.RedFormat;
+          type = THREE.FloatType;
+          min = 0;
+          max = 255;
+        } else if (array.data instanceof Float32Array) {
+          textureData = array.data;
+          format = THREE.RedFormat;
+          type = THREE.FloatType;
+        } else if (
+          array.data instanceof Int16Array ||
+          array.data instanceof Uint16Array ||
+          array.data instanceof Int32Array ||
+          array.data instanceof Uint32Array
+        ) {
+          textureData = new Float32Array(array.data);
+          format = THREE.RedFormat;
+          type = THREE.FloatType;
+        } else {
+          console.error("Unsupported data type for texture creation:", array.data);
+          return;
+        }
+
+        const tex = new THREE.DataTexture(
+          textureData,
+          array.shape[1],
+          array.shape[0],
+          format,
+          type,
+        );
+
+        tex.needsUpdate = true;
+
+        if (!abortController.signal.aborted) {
+          setTexture({ texture: tex, min, max });
+        }
+      } catch (error) {
+        if (!abortController.signal.aborted) {
+          console.error("Error loading texture:", error);
+        }
       }
-
-      const tex = new THREE.DataTexture(
-        textureData,
-        array.shape[1],
-        array.shape[0],
-        format,
-        type,
-      );
-
-      tex.needsUpdate = true;
-
-      setTexture({ texture: tex, min, max });
     };
 
     calculateImageData();
 
     return () => abortController.abort();
   }, [
-    props.chunk_coords,
-    props.chunk_shape,
+    props.viewId,
+    props.chunk_coords.join("-"),
+    props.chunk_shape.join("-"),
     props.c,
     props.t,
     props.z,
-    props.renderFunc,
   ]);
 
   return texture;

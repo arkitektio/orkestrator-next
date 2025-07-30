@@ -73,6 +73,7 @@ export const ChunkBitmapTexture = ({
     renderFunc,
     chunk_coords,
     chunk_shape,
+    viewId: view.id,
     c: view.cMin || 0,
     z: z,
     t: t,

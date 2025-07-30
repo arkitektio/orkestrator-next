@@ -14,7 +14,7 @@ const TheCard = ({ view, mates }: Props) => {
     <MikroChannelView.Smart object={view?.id}>
       <ViewCard view={view}>
         <CardHeader>
-          <CardTitle> {view.channel.name}</CardTitle>
+          <CardTitle> {view.channelName}</CardTitle>
         </CardHeader>
       </ViewCard>
     </MikroChannelView.Smart>

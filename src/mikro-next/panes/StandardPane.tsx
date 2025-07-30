@@ -1,151 +1,165 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { DroppableNavLink } from "@/components/ui/link";
-import { CubeIcon } from "@radix-ui/react-icons";
+import { Input } from "@/components/ui/input";
 import {
-  File,
-  Folder,
-  GitBranchPlusIcon,
-  Home,
-  Image,
-  SparkleIcon,
-} from "lucide-react";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  PopoverAnchor,
+} from "@/components/ui/popover";
+import { ToggleField } from "@/components/fields/ToggleField";
+import { CubeIcon } from "@radix-ui/react-icons";
+import { File, Folder, Home, Image } from "lucide-react";
 import * as React from "react";
-import { FaChartArea } from "react-icons/fa";
 import {
   GlobalSearchQueryVariables,
   useGlobalSearchQuery,
 } from "../api/graphql";
 import FileCard from "../components/cards/FileCard";
 import ImageCard from "../components/cards/ImageCard";
-import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
+import { useDebounce } from "@uidotdev/usehooks";
+import { ArrowDown } from "lucide-react";
+import { FancyInput } from "@/components/ui/fancy-input";
+import { Toggle } from "@/components/ui/toggle";
+import DatasetCard from "../components/cards/DatasetCard";
 
-interface IDataSidebarProps {}
+export const NavigationPane = () => (
+  <div className="flex-1 flex-col">
+    <nav className="grid items-start px-1 text-sm font-medium lg:px-2">
+      <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
+        Explore
+      </div>
+      <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-4">
+        <DroppableNavLink
+          to="/mikro"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <Home className="h-4 w-4" />
+          Dashboard
+        </DroppableNavLink>
+      </div>
 
-export const NavigationPane = (props: {}) => {
-  return (
-    <div className="flex-1 flex-col">
-      <nav className="grid items-start px-1 text-sm font-medium lg:px-2">
-        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
-          Explore
-        </div>
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-4">
-          <DroppableNavLink
-            to="/mikro"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <Home className="h-4 w-4" />
-            Dashboard
-          </DroppableNavLink>
-        </div>
+      <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
+        Data
+      </div>
+      <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-5">
+        <DroppableNavLink to="/mikro/images" className="flex gap-3 w-full hover:text-primary">
+          <Image className="h-4 w-4" />
+          Images
+        </DroppableNavLink>
+        <DroppableNavLink to="/mikro/tables" className="flex gap-3 w-full hover:text-primary">
+          <Home className="h-4 w-4" />
+          Tables
+        </DroppableNavLink>
+        <DroppableNavLink to="/mikro/stages" className="flex gap-3 w-full hover:text-primary">
+          <CubeIcon className="h-4 w-4" />
+          Stages
+        </DroppableNavLink>
+        <DroppableNavLink to="/mikro/meshes" className="flex gap-3 w-full hover:text-primary">
+          <CubeIcon className="h-4 w-4" />
+          Meshes
+        </DroppableNavLink>
+        <DroppableNavLink to="/mikro/rois" className="flex gap-3 w-full hover:text-primary">
+          <CubeIcon className="h-4 w-4" />
+          Rois
+        </DroppableNavLink>
+        <DroppableNavLink to="/mikro/datasets" className="flex gap-3 w-full hover:text-primary">
+          <Folder className="h-4 w-4" />
+          Datasets
+        </DroppableNavLink>
+        <DroppableNavLink to="/mikro/files" className="flex gap-3 w-full hover:text-primary">
+          <File className="h-4 w-4" />
+          Files
+        </DroppableNavLink>
+      </div>
+    </nav>
+  </div>
+);
 
-        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
-          Data
-        </div>
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-5">
-          <DroppableNavLink
-            to="/mikro/images"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <Image className="h-4 w-4" />
-            Images
-          </DroppableNavLink>
-          <DroppableNavLink
-            to="/mikro/tables"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <Home className="h-4 w-4" />
-            Tables
-          </DroppableNavLink>
-          <DroppableNavLink
-            to="/mikro/stages"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <CubeIcon className="h-4 w-4" />
-            Stages
-          </DroppableNavLink>
-          <DroppableNavLink
-            to="/mikro/meshes"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <CubeIcon className="h-4 w-4" />
-            Meshes
-          </DroppableNavLink>
-          <DroppableNavLink
-            to="/mikro/rois"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <CubeIcon className="h-4 w-4" />
-            Rois
-          </DroppableNavLink>
-          <DroppableNavLink
-            to="/mikro/datasets"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <Folder className="h-4 w-4" />
-            Datasets
-          </DroppableNavLink>
-          <DroppableNavLink
-            to="/mikro/files"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <File className="h-4 w-4" />
-            Files
-          </DroppableNavLink>
-        </div>
-      </nav>
-    </div>
-  );
-};
+const Pane: React.FunctionComponent = () => {
+  const [search, setSearch] = React.useState("");
+  const [noImages, setNoImages] = React.useState(false);
+  const [noFiles, setNoFiles] = React.useState(false);
+  const [noDatasets, setNoDatasets] = React.useState(false);
 
-const variables: GlobalSearchQueryVariables = {
-  search: "",
-  noImages: false,
-  noFiles: false,
-  pagination: {
-    limit: 10,
-  },
-};
+  const debouncedSearch = useDebounce(search, 300);
 
-const Pane: React.FunctionComponent<IDataSidebarProps> = (props) => {
-  const { data, refetch } = useGlobalSearchQuery({
-    variables: variables,
-  });
-
-  const [currentVariables, setCurrentVariables] =
-    React.useState<GlobalSearchQueryVariables>(variables);
-
-  const onFilterChanged = (e: GlobalSearchQueryVariables) => {
-    refetch(e);
-    setCurrentVariables(e);
+  const variables: GlobalSearchQueryVariables = {
+    search: debouncedSearch,
+    noImages,
+    noFiles,
+    noDatasets,
+    pagination: {
+      limit: 10,
+    },
   };
 
+  const { data, refetch } = useGlobalSearchQuery({ variables });
+
+  React.useEffect(() => {
+    refetch(variables);
+  }, [debouncedSearch, noImages, noFiles]);
+
+  const searchBar = (
+    <div className="w-full flex flex-row">
+      <Popover>
+        <PopoverAnchor asChild>
+          <div className="h-full w-full relative flex flex-row">
+            <FancyInput
+              placeholder="Search..."
+              type="string"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="flex-grow h-full bg-background text-foreground w-full"
+            />
+            <PopoverTrigger className="absolute right-1 top-1 text-foreground">
+              <ArrowDown />
+            </PopoverTrigger>
+          </div>
+        </PopoverAnchor>
+        <PopoverContent>
+          <div className="flex flex-col gap-2">
+            <Toggle
+              label="No Images"
+              name="noImages"
+              checked={noImages}
+              onCheckedChange={setNoImages}
+            >
+              Exclude Images
+            </Toggle>
+            <Toggle
+              label="No Files"
+              name="noFiles"
+              checked={noFiles}
+              onCheckedChange={setNoFiles}
+            >
+              Exclude Files
+            </Toggle>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+
   return (
-    <>
-      <SidebarLayout
-        searchBar={
-          <GlobalSearchFilter
-            onFilterChanged={onFilterChanged}
-            defaultValue={variables}
-          />
-        }
-      >
-        {currentVariables?.search == "" ? (
-          <>
-            <NavigationPane />
-          </>
-        ) : (
-          <>
-            <ListRender array={data?.images}>
-              {(item, i) => <ImageCard image={item} key={i} />}
-            </ListRender>
-            <ListRender array={data?.files}>
-              {(item, i) => <FileCard file={item} key={i} />}
-            </ListRender>
-          </>
-        )}
-      </SidebarLayout>
-    </>
+    <SidebarLayout searchBar={searchBar}>
+      {search.trim() === "" ? (
+        <NavigationPane />
+      ) : (
+        <div className="h-full">
+          <ListRender array={data?.images}>
+            {(item, i) => <ImageCard image={item} key={i} />}
+          </ListRender>
+          <ListRender array={data?.files}>
+            {(item, i) => <FileCard file={item} key={i} />}
+          </ListRender>
+          <ListRender array={data?.datasets}>
+            {(item, i) => <DatasetCard dataset={item} key={i} />}
+          </ListRender>
+        </div>
+      )}
+    </SidebarLayout>
   );
 };
 

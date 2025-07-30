@@ -9,10 +9,10 @@ fragment ProtocolEvent on ProtocolEvent {
     plateChildren
   }
   leftEdges {
-    ...PathEdge
+    ...Edge
   }
   rightEdges {
-    ...PathEdge
+    ...Edge
   }
   variables {
     role

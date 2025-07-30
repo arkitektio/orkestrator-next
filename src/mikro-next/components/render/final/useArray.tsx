@@ -1,82 +1,84 @@
-import { useDatalayerEndpoint, useMikro } from "@/lib/arkitekt/Arkitekt";
+import { useDatalayerEndpoint } from "@/lib/arkitekt/Arkitekt";
 import {
   useRequestAccessMutation,
   ZarrStoreFragment,
 } from "@/mikro-next/api/graphql";
 import { S3Store } from "@/mikro-next/providers/xarray/store";
 import { AwsClient } from "aws4fetch";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Array, Chunk, DataType, get, open } from "zarrita";
 import { Slice } from "../indexer";
 
-// Define the database schema
-interface ChunkDB {
-  chunks: {
-    key: string;
-    value: {
-      data: ArrayBuffer | TypedArray;
-      dtype: string;
-      min: number;
-      max: number;
-      timestamp: number;
-    };
-  };
-  metadata: {
-    key: string;
-    value: {
-      lastAccessed: number;
-      totalSize: number;
-    };
-  };
-}
-
-// TypedArray is a union of all typed array types
-type TypedArray =
-  | Int8Array
-  | Uint8Array
-  | Uint8ClampedArray
-  | Int16Array
-  | Uint16Array
-  | Int32Array
-  | Uint32Array
-  | Float32Array
-  | Float64Array;
-
 export const useArray = (props: { store: ZarrStoreFragment }) => {
-  const client = useMikro();
   const datalayerEndpoint = useDatalayerEndpoint();
 
   const [array, setArray] = useState<Array<DataType, S3Store> | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState<Error | null>(null);
 
-  const [request, result] = useRequestAccessMutation({
+  const [request] = useRequestAccessMutation({
     variables: { store: props.store.id },
   });
 
-  useEffect(() => {
-    request({
-      variables: { store: props.store.id },
-    }).then(async (x) => {
-      if (!x.data?.requestAccess) {
-        throw Error("No credentials loadable");
+  // Promise to track the loading process and prevent multiple simultaneous loads
+  const arrayLoadPromiseRef = useRef<Promise<Array<DataType, S3Store>> | null>(null);
+
+  const loadArray = useCallback(async (): Promise<Array<DataType, S3Store>> => {
+    // If already loading, return the existing promise
+    if (arrayLoadPromiseRef.current) {
+      return arrayLoadPromiseRef.current;
+    }
+
+    // If array is already loaded, return it
+    if (array) {
+      return array;
+    }
+
+    // Start loading
+    setIsLoading(true);
+    setLoadError(null);
+
+    const loadPromise = (async () => {
+      try {
+        const response = await request({
+          variables: { store: props.store.id },
+        });
+
+        if (!response.data?.requestAccess) {
+          throw new Error("No credentials loadable");
+        }
+
+        const path =
+          datalayerEndpoint + "/" + props.store.bucket + "/" + props.store.key;
+
+        const aws = new AwsClient({
+          accessKeyId: response.data.requestAccess.accessKey,
+          secretAccessKey: response.data.requestAccess.secretKey,
+          sessionToken: response.data.requestAccess.sessionToken,
+          service: "s3",
+        });
+
+        console.log("Path", path);
+        const store = new S3Store(path, aws);
+        const loadedArray = await open.v3(store, { kind: "array" });
+        
+        setArray(loadedArray);
+        setIsLoading(false);
+        return loadedArray;
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        setLoadError(err);
+        setIsLoading(false);
+        throw err;
+      } finally {
+        // Clear the promise reference when done
+        arrayLoadPromiseRef.current = null;
       }
+    })();
 
-      let path =
-        datalayerEndpoint + "/" + props.store.bucket + "/" + props.store.key;
-
-      let aws = new AwsClient({
-        accessKeyId: x.data?.requestAccess.accessKey,
-        secretAccessKey: x.data?.requestAccess.secretKey,
-        sessionToken: x.data?.requestAccess.sessionToken,
-        service: "s3",
-      });
-
-      console.log("Path", path);
-      let store = new S3Store(path, aws);
-
-      let array = await open.v3(store, { kind: "array" });
-      setArray(array);
-    });
-  }, [props.store, datalayerEndpoint, request]);
+    arrayLoadPromiseRef.current = loadPromise;
+    return loadPromise;
+  }, [array, request, props.store.id, datalayerEndpoint, props.store.bucket, props.store.key]);
 
   const renderView = useCallback(
     async (
@@ -87,11 +89,10 @@ export const useArray = (props: { store: ZarrStoreFragment }) => {
       t: number,
       z: number,
     ) => {
-      if (!array) {
-        throw Error("No credentials loaded");
-      }
+      // Load array if not already loaded
+      const loadedArray = await loadArray();
 
-      let selection = [
+      const selection = [
         c,
         t,
         z,
@@ -109,13 +110,13 @@ export const useArray = (props: { store: ZarrStoreFragment }) => {
 
       console.log("Selection", selection);
 
-      let chunk = (await get(array, selection, {
+      const chunk = (await get(loadedArray, selection, {
         opts: { signal: signal },
       })) as Chunk<DataType>;
 
-      return { chunk, dtype: array.dtype };
+      return { chunk, dtype: loadedArray.dtype };
     },
-    [array],
+    [loadArray],
   );
 
   const renderSelection = useCallback(
@@ -123,26 +124,23 @@ export const useArray = (props: { store: ZarrStoreFragment }) => {
       signal: AbortSignal,
       selection: (number | Slice | null)[],
     ) => {
-      if (!array) {
-        throw Error("No credentials loaded");
-      }
+      // Load array if not already loaded
+      const loadedArray = await loadArray();
 
-      
-
-      console.log("Selection", selection);
-
-      let chunk = (await get(array, selection, {
+      const chunk = (await get(loadedArray, selection, {
         opts: { signal: signal },
       })) as Chunk<DataType>;
 
-      return { chunk, dtype: array.dtype };
+      return { chunk, dtype: loadedArray.dtype };
     },
-    [array],
+    [loadArray],
   );
 
   return {
     renderView,
     renderSelection,
     array,
+    isLoading,
+    loadError,
   };
 };

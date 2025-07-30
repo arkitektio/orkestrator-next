@@ -65,6 +65,9 @@ import {
 } from "@/kraph/api/graphql";
 import { Guard } from "@/lib/arkitekt/Arkitekt";
 
+
+export type OnDone = () => void;
+
 export const DirectImplementationAssignment = (
   props: SmartContextProps & { action: PrimaryActionFragment },
 ) => {
@@ -106,6 +109,9 @@ export const DirectImplementationAssignment = (
           [the_key]: props.object,
         },
       });
+      if (props.onDone) {
+        props.onDone();
+      }
     } catch (e) {
       toast.error(e.message);
     }
@@ -168,6 +174,9 @@ export const AssignButton = (
           [the_key]: props.object,
         },
       });
+      if (props.onDone) {
+        props.onDone();
+      }
     } catch (e) {
       toast.error(e.message);
     }
@@ -239,6 +248,9 @@ export const ShortcutButton = (
           ...shortcut.savedArgs,
         },
       });
+      if (props.onDone) {
+        props.onDone();
+      }
     } catch (e) {
       toast.error(e.message);
     }
@@ -385,7 +397,7 @@ export const ApplicableActions = (props: PassDownProps) => {
       }
     >
       {data?.actions.map((x) => (
-        <AssignButton action={x} {...props} />
+        <AssignButton action={x} {...props} key={x.id}/>
       ))}
     </CommandGroup>
   );
@@ -444,7 +456,7 @@ export const AppicableShortcuts = (props: PassDownProps) => {
   return (
     <div className="flex flex-row gap-2 p-2">
       {data?.shortcuts.map((x) => (
-        <ShortcutButton shortcut={x} {...props} />
+        <ShortcutButton shortcut={x} {...props} key={x.id}/>
       ))}
     </div>
   );
@@ -502,7 +514,7 @@ export const ApplicableDefinitions = (props: PassDownProps) => {
       }
     >
       {data?.definitions.map((x) => (
-        <InstallButton definition={x}>{x.name}</InstallButton>
+        <InstallButton definition={x} key={x.id}>{x.name}</InstallButton>
       ))}
     </CommandGroup>
   );
@@ -515,6 +527,8 @@ export const ApplicableRelations = (props: PassDownProps) => {
     return null;
   }
 
+  const dialog = useDialog();
+
   const { data, error } = useListStructureRelationCategoryQuery({
     variables: {
       filters: {
@@ -526,9 +540,6 @@ export const ApplicableRelations = (props: PassDownProps) => {
     fetchPolicy: "network-only",
   });
 
-  if (!data) {
-    return null;
-  }
 
   return (
     <CommandGroup
@@ -539,21 +550,27 @@ export const ApplicableRelations = (props: PassDownProps) => {
       }
     >
       {data?.structureRelationCategories.map((x) => (
-        <RelateButton relation={x} right={firstPartner} left={props}>
+        <RelateButton relation={x} right={firstPartner} left={props} key={x.id}>
           {x.label}
         </RelateButton>
       ))}
-      {data.structureRelationCategories.length === 0 && (
+      {error && (
+        <CommandItem value={"error"} className="flex-1">
+          <span className="text-red-500">Error: {error.message}</span>
+        </CommandItem>
+      )}
         <CommandItem
           value={"no-relation"}
-          onSelect={() => alert("Will create this new relation now")}
+          onSelect={() => dialog.openDialog("createnewrelation", {left: [{
+identifier: props.identifier, object: props.object
+          }], right: props.partners || []})}
           className="flex-1 "
         >
           <Tooltip>
             <TooltipTrigger className="flex flex-row group w-full">
               <div className="flex-col">
                 <div className="text-md text-gray-100 text-left">
-                  Create... {props.filter || "No relation found"}
+                  Create.new Relation
                 </div>
                 <div className="text-xs text-gray-400 text-left">
                   Will create a new relation
@@ -564,7 +581,7 @@ export const ApplicableRelations = (props: PassDownProps) => {
             <TooltipContent>{props.filter}</TooltipContent>
           </Tooltip>
         </CommandItem>
-      )}
+      
     </CommandGroup>
   );
 };
@@ -662,7 +679,7 @@ export const RelateButton = (props: {
   );
 };
 
-export const useAction = (props: { action: Action; state: ActionState }) => {
+export const useAction = (props: { action: Action; state: ActionState, onDone?: OnDone }) => {
   const [progress, setProgress] = React.useState<number | undefined>(0);
   const [controller, setController] = React.useState<AbortController | null>(
     null,
@@ -691,9 +708,15 @@ export const useAction = (props: { action: Action; state: ActionState }) => {
       });
       setController(null);
       setProgress(undefined);
+      if (props.onDone) {
+        props.onDone();
+      }
     } catch (e) {
       setProgress(undefined);
       setController(null);
+      if (props.onDone) {
+        props.onDone();
+      }
       console.error(e);
     }
   };
@@ -711,6 +734,7 @@ export const useActions = (props: { state: ActionState; filter?: string }) => {
 export const LocalActionButton = (props: {
   action: Action;
   state: ActionState;
+  onDone?: OnDone;
 }) => {
   const { assign, progress } = useAction(props);
 
@@ -740,7 +764,7 @@ export const LocalActionButton = (props: {
   );
 };
 
-export const Actions = (props: { state: ActionState; filter?: string }) => {
+export const Actions = (props: { state: ActionState; filter?: string, onDone?: OnDone }) => {
   const actions = useActions(props).filter(
     (x) => !props.filter || x.title.includes(props.filter),
   );
@@ -758,7 +782,7 @@ export const Actions = (props: { state: ActionState; filter?: string }) => {
       }
     >
       {actions.map((x) => (
-        <LocalActionButton key={x.name} action={x} state={props.state} />
+        <LocalActionButton key={x.name} action={x} state={props.state} onDone={props.onDone} />
       ))}
     </CommandGroup>
   );
@@ -773,6 +797,7 @@ export const ApplicableLocalActions = (props: PassDownProps) => {
         isCommand: false,
       }}
       filter={props.filter}
+      onDone={props.onDone}
     />
   );
 };
@@ -783,6 +808,7 @@ export type ObjectButtonProps = {
   children?: React.ReactNode;
   className?: string;
   partners?: Structure[];
+  onDone?: () => void;
 };
 
 export type PassDownProps = SmartContextProps & {
@@ -852,9 +878,3 @@ export const SmartContext = (props: SmartContextProps) => {
     </>
   );
 };
-function openDialog(
-  arg0: string,
-  arg1: { id: string; args: { [x: string]: string } },
-) {
-  throw new Error("Function not implemented.");
-}

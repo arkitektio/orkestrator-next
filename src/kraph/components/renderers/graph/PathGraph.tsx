@@ -1,30 +1,26 @@
 import { PathFragment } from "@/kraph/api/graphql.js";
-import ELK from "elkjs/lib/elk.bundled.js";
-import { AnimatePresence } from "framer-motion";
-import React, { useEffect } from "react";
 import {
-  Background,
   ReactFlow,
   ReactFlowInstance,
   useEdgesState,
-  useNodesState,
+  useNodesState
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { ClickContextual } from "./components/ClickContextual";
-import { PathEdge, PathNode } from "./types";
-import { entityNodesToNodes, entityRelationToEdges } from "./utils";
+import ELK from "elkjs/lib/elk.bundled.js";
+import React, { useEffect } from "react";
+import DescribeEdge from "./edges/DescribeEdge";
+import EntityRoleEdge from "./edges/EntityRoleEdge";
+import MeasurementEdge from "./edges/MeasurementEdge";
+import RelationEdge from "./edges/RelationEdge";
 import EntityNode from "./nodes/EntityNode";
+import MetricNode from "./nodes/MetricNode";
 import NaturalEventNode from "./nodes/NaturalEventNode";
 import ProtocolEventNode from "./nodes/ProtocolEventNode";
-import StructureNode from "./nodes/StructureNode";
 import ReagentNode from "./nodes/ReagentNode";
-import MetricNode from "./nodes/MetricNode";
-import MeasurementEdge from "./edges/MeasurementEdge";
-import EntityRoleEdge from "./edges/EntityRoleEdge";
-import RelationEdge from "./edges/RelationEdge";
-import { Description } from "@radix-ui/react-dialog";
-import DescribeEdge from "./edges/DescribeEdge";
+import StructureNode from "./nodes/StructureNode";
 import ThisNode from "./nodes/ThisNode";
+import { PathEdge, PathNode } from "./types";
+import { entityNodesToNodes, entityRelationToEdges } from "./utils";
 
 export type Props = {
   path: PathFragment;
@@ -45,6 +41,7 @@ const pathEdgeTypes = {
   Measurement: MeasurementEdge,
   Participant: EntityRoleEdge,
   Relation: RelationEdge,
+  StructureRelation: RelationEdge,
   Description: DescribeEdge,
 };
 

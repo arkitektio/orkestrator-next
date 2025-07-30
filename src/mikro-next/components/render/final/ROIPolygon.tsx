@@ -21,6 +21,25 @@ const convertToThreeJSCoords = (
   return tr;
 };
 
+const convertFromThreeJSCoords = (
+  threeJSVertices: [number, number][],
+  imageWidth: number,
+  imageHeight: number,
+  c: number = 0,
+  t: number = 0,
+  z: number = 0,
+): [number, number, number, number, number][] => {
+  return threeJSVertices.map((vertex) => {
+    const [threeX, threeY] = vertex;
+    // Reverse the transformation: x = -(threeX + imageWidth / 2), y = threeY + imageHeight / 2
+    const x = -(threeX - imageWidth / 2);
+    const y = threeY + imageHeight / 2;
+    return [c, t, z, y, x] as [number, number, number, number, number];
+  });
+};
+
+
+
 export const ROIPolygon = (
   props: {
     roi: ListRoiFragment;

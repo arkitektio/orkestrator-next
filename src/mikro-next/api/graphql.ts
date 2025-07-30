@@ -4400,6 +4400,13 @@ export type RevertDatasetMutationVariables = Exact<{
 
 export type RevertDatasetMutation = { __typename?: 'Mutation', revertDataset: { __typename?: 'Dataset', id: string, name: string, description?: string | null } };
 
+export type DeleteDatasetMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteDatasetMutation = { __typename?: 'Mutation', deleteDataset: string };
+
 export type CreateEraMutationVariables = Exact<{
   name: Scalars['String']['input'];
   begin?: InputMaybe<Scalars['DateTime']['input']>;
@@ -6141,6 +6148,37 @@ export function useRevertDatasetMutation(baseOptions?: ApolloReactHooks.Mutation
 export type RevertDatasetMutationHookResult = ReturnType<typeof useRevertDatasetMutation>;
 export type RevertDatasetMutationResult = Apollo.MutationResult<RevertDatasetMutation>;
 export type RevertDatasetMutationOptions = Apollo.BaseMutationOptions<RevertDatasetMutation, RevertDatasetMutationVariables>;
+export const DeleteDatasetDocument = gql`
+    mutation DeleteDataset($id: ID!) {
+  deleteDataset(input: {id: $id})
+}
+    `;
+export type DeleteDatasetMutationFn = Apollo.MutationFunction<DeleteDatasetMutation, DeleteDatasetMutationVariables>;
+
+/**
+ * __useDeleteDatasetMutation__
+ *
+ * To run a mutation, you first call `useDeleteDatasetMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteDatasetMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteDatasetMutation, { data, loading, error }] = useDeleteDatasetMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteDatasetMutation, DeleteDatasetMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<DeleteDatasetMutation, DeleteDatasetMutationVariables>(DeleteDatasetDocument, options);
+      }
+export type DeleteDatasetMutationHookResult = ReturnType<typeof useDeleteDatasetMutation>;
+export type DeleteDatasetMutationResult = Apollo.MutationResult<DeleteDatasetMutation>;
+export type DeleteDatasetMutationOptions = Apollo.BaseMutationOptions<DeleteDatasetMutation, DeleteDatasetMutationVariables>;
 export const CreateEraDocument = gql`
     mutation CreateEra($name: String!, $begin: DateTime) {
   createEra(input: {name: $name, begin: $begin}) {

@@ -6,6 +6,7 @@ import {
   PutDatasetsInDatasetDocument,
   PutDatasetsInDatasetMutation,
   PutDatasetsInDatasetMutationVariables,
+  DeleteDatasetDocument,
 } from "@/mikro-next/api/graphql";
 
 export const MIKRO_ACTIONS: Action[] = [
@@ -63,11 +64,14 @@ export const MIKRO_ACTIONS: Action[] = [
           other: inside.object, // Assuming 'inside' is the dataset where images will be moved
         },
       });
-
-
-
-      // Implement the logic to move images to the dataset
-      // This is a placeholder for the actual implementation
     }
-  }
+  },
+  buildDeleteAction({
+    title: "Delete Dataset",
+    identifier: "@mikro/dataset",
+    description: "Delete the dataset",
+    service: "mikro",
+    typename: "Dataset",
+    mutation: DeleteDatasetDocument,
+  }),
 ];

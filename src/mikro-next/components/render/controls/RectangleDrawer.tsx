@@ -10,7 +10,6 @@ export type RectangleDrawerProps = {
 }
 
 export function RectangleDrawer(props: RectangleDrawerProps) {
-  const { camera, gl, raycaster } = useThree()
   const planeRef = useRef<THREE.Mesh>(null)
 
   const [start, setStart] = useState<THREE.Vector3 | null>(null)
@@ -18,16 +17,10 @@ export function RectangleDrawer(props: RectangleDrawerProps) {
   const [drawing, setDrawing] = useState(false)
 
   const handlePointerDown = (e) => {
-    if (start && end) {
-      // If already drawing, reset
-      setStart(null)
-      setEnd(null)
-      setDrawing(false)
-      return
-    }
     if (!e.shiftKey) return // 🟡 Require Shift to start
     
     e.stopPropagation()
+    // Always start fresh
     setStart(e.point.clone())
     setEnd(e.point.clone())
     setDrawing(true)
@@ -44,6 +37,9 @@ export function RectangleDrawer(props: RectangleDrawerProps) {
     if (start && end) {
       // Call the callback with the rectangle corners
       props.onRectangleDrawn?.(start.clone(), end.clone())
+      // Clear the states after drawing is complete
+      setStart(null)
+      setEnd(null)
     }
   }
 
@@ -69,7 +65,7 @@ export function RectangleDrawer(props: RectangleDrawerProps) {
         <planeGeometry args={[10000, 10000]} />
         <meshStandardMaterial
           color="lightgray"
-          opacity={0.01}
+          opacity={0.001}
           transparent
           depthWrite={false}
         />

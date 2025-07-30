@@ -2,6 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SliderTooltip } from "@/components/ui/slider-tooltip";
 import { StructureInfo } from "@/kraph/components/mini/StructureInfo";
+import * as THREE from "three";
+
+import { notEmpty } from "@/lib/utils";
 import {
   ListRgbContextFragment,
   ListRoiFragment,
@@ -9,15 +12,14 @@ import {
   RgbViewFragment,
 } from "@/mikro-next/api/graphql";
 import { OrbitControls } from "@react-three/drei";
-import { Canvas } from "@react-three/fiber";
+import { Canvas as ThreeCanvas } from "@react-three/fiber";
 import { Dispatch, SetStateAction, Suspense, useState } from "react";
 import { AutoZoomCamera } from "./final/AutoZoomCamera";
 import { ChunkBitmapTexture } from "./final/ChunkMesh";
 import { ROIPolygon } from "./final/ROIPolygon";
 import { useArray } from "./final/useArray";
 import { BasicIndexer, IndexerProjection, Slice } from "./indexer";
-import { RectangleDrawer } from "./controls/RectangleDrawer";
-import { notEmpty } from "@/lib/utils";
+import { RoiDrawerCanvas } from "./RoiDrawer";
 
 export interface RGBDProps {
   context: ListRgbContextFragment;
@@ -128,7 +130,7 @@ export const LayerRender = (props: {
             renderFunc={renderView}
             chunk_coords={chunk_loader.chunk_coords}
             chunk_shape={derivedScaleView.image.store.chunks}
-            key={`${index}-${z}-${t}-${view.id}-${view.contrastLimitMax}-${view.contrastLimitMin}-${view.colorMap}-${view.baseColor?.join("-")}`}
+            key={`${chunk_loader.chunk_coords.join("-")}-${z}-${t}-${view.id}-${view.contrastLimitMax}-${view.contrastLimitMin}-${view.colorMap}-${view.baseColor?.join("-")}`}
             view={view}
             t={t}
             z={z}
@@ -204,142 +206,151 @@ export const FinalRender = (props: RGBDProps) => {
   }
 
   return (
-    <div style={{ width: "100%", height: "100%" }} className="relative">
-      <div className="absolute bottom-0 z-10 w-full mb-4 px-6 bg-gradient-to-t from-black to-transparent py-3">
-        <div className="flex flex-col gap-2">
-          {zSize > 1 && (
-            <div className="flex flex-row">
-              <div className="my-auto mx-2 w-12">z: {z}</div>
-              <SliderTooltip
-                value={[z]}
-                onValueChange={(value) => setZ(value[0])}
-                min={0}
-                max={zSize - 1}
-                step={1}
-                className="w-full"
-                defaultValue={[0]}
-              />
-              <div className="flex flex-col ml-2">
-                {layers.length > 1 && (
-                  <>
-                    <div className="flex flex-row gap-2">
-                      {layers.map((layer, index) => {
-                        return (
-                          <Button
-                            key={index}
-                            onClick={() => {
-                              setSelectedScale(index);
-                            }}
-                            size={"sm"}
-                            variant="ghost"
-                            className={
-                              selectedScale === index
-                                ? "bg-gray-800"
-                                : "bg-gray-900"
-                            }
-                          >
-                            {layer.scaleX} x
-                          </Button>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
+      <div style={{ width: "100%", height: "100%" }} className="relative">
+        <div className="absolute bottom-0 z-10 w-full mb-4 px-6 bg-gradient-to-t from-black to-transparent py-3">
+          <div className="flex flex-col gap-2">
+            {zSize > 1 && (
+              <div className="flex flex-row">
+                <div className="my-auto mx-2 w-12">z: {z}</div>
+                <SliderTooltip
+                  value={[z]}
+                  onValueChange={(value) => setZ(value[0])}
+                  min={0}
+                  max={zSize - 1}
+                  step={1}
+                  className="w-full"
+                  defaultValue={[0]}
+                />
+                <div className="flex flex-col ml-2">
+                  {layers.length > 1 && (
+                    <>
+                      <div className="flex flex-row gap-2">
+                        {layers.map((layer, index) => {
+                          return (
+                            <Button
+                              key={index}
+                              onClick={() => {
+                                setSelectedScale(index);
+                              }}
+                              size={"sm"}
+                              variant="ghost"
+                              className={
+                                selectedScale === index
+                                  ? "bg-gray-800"
+                                  : "bg-gray-900"
+                              }
+                            >
+                              {layer.scaleX} x
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-          {tSize > 1 && (
-            <div className="flex flex-row">
-              <div className="my-auto mr-2 w-12">t: {t}</div>
-              <SliderTooltip
-                value={[t]}
-                onValueChange={(value) => setT(value[0])}
-                min={0}
-                max={tSize - 1}
-                step={1}
-                className="w-full"
-                defaultValue={[0]}
-              />
-            </div>
-          )}
+            )}
+            {tSize > 1 && (
+              <div className="flex flex-row">
+                <div className="my-auto mr-2 w-12">t: {t}</div>
+                <SliderTooltip
+                  value={[t]}
+                  onValueChange={(value) => setT(value[0])}
+                  min={0}
+                  max={tSize - 1}
+                  step={1}
+                  className="w-full"
+                  defaultValue={[0]}
+                />
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      <Suspense
-        fallback={<div className="w-full h-full bg-gray-100"> Loading</div>}
-      >
-        <Canvas style={{ width: "100%", height: "100%" }}>
-          <AutoZoomCamera imageHeight={ySize} imageWidth={xSize} />
-          <OrbitControls
-            enableRotate={false}
-            enablePan={true}
-            regress={false}
-          />
 
-          {props.context.views.map((view, viewIndex) => {
-            return (
-              <group key={view.id}>
-                {selectedLayers.map((layer) => {
-                  return (
-                    <LayerRender
-                      key={`${z}-${t}-${viewIndex}-${layer.id}`}
-                      derivedScaleView={layer}
-                      view={view}
-                      z={z}
-                      t={t}
-                      xSize={xSize}
-                      ySize={ySize}
-                    />
-                  );
-                })}
-              </group>
-            );
-          })}
-
-          {props.rois.map((roi) => (
-            <ROIPolygon
-              key={roi.id}
-              roi={roi}
-              setOpenPanels={setOpenPanels}
-              imageWidth={xSize}
-              imageHeight={ySize}
-            />
-          ))}
-        </Canvas>
-      </Suspense>
-      {openPanels.map((panel) => (
-        <Card
-          key={`panel-${panel.identifier}-${panel.object}`}
-          style={{
-            position: "fixed",
-            top: `${panel.positionY}px`,
-            left: `${panel.positionX}px`, // Removed the +20px offset
-            zIndex: 10,
-            transform: "translate(-50%, -50%)", // Center the card on the calculated position
-          }}
-          className="p-2 shadow-lg"
+        <Suspense
+          fallback={<div className="w-full h-full bg-gray-100"> Loading</div>}
         >
-          <button
-            className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
-            onClick={() =>
-              setOpenPanels((panels) =>
-                panels.filter(
-                  (p) =>
-                    !(
-                      p.identifier === panel.identifier &&
-                      p.object === panel.object
-                    ),
-                ),
-              )
-            }
+          <ThreeCanvas style={{ width: "100%", height: "100%" }}>
+            <AutoZoomCamera imageHeight={ySize} imageWidth={xSize} />
+            <OrbitControls
+              enableRotate={false}
+              enablePan={true}
+              regress={false}
+              mouseButtons={{
+                            LEFT: THREE.MOUSE.PAN,
+                            MIDDLE: THREE.MOUSE.ROTATE,
+                            RIGHT: THREE.MOUSE.DOLLY,
+                          }}
+            />
+
+            {props.context.views.map((view, viewIndex) => {
+              return (
+                <group key={view.id}>
+                  {selectedLayers.map((layer) => {
+                    return (
+                      <LayerRender
+                        key={`${z}-${t}-${viewIndex}-${layer.id}`}
+                        derivedScaleView={layer}
+                        view={view}
+                        z={z}
+                        t={t}
+                        xSize={xSize}
+                        ySize={ySize}
+                      />
+                    );
+                  })}
+                </group>
+              );
+            })}
+
+            {props.rois.map((roi) => (
+              <ROIPolygon
+                key={roi.id}
+                roi={roi}
+                setOpenPanels={setOpenPanels}
+                imageWidth={xSize}
+                imageHeight={ySize}
+              />
+            ))}
+
+            <RoiDrawerCanvas  imageHeight={ySize} imageWidth={xSize} image={props.context.image} />
+          </ThreeCanvas>
+        </Suspense>
+        
+        {openPanels.map((panel) => (
+          <Card
+            key={`panel-${panel.identifier}-${panel.object}`}
+            style={{
+              position: "fixed",
+              top: `${panel.positionY}px`,
+              left: `${panel.positionX}px`, // Removed the +20px offset
+              zIndex: 10,
+              transform: "translate(-50%, -50%)", // Center the card on the calculated position
+            }}
+            className="p-2 shadow-lg"
           >
-            ×
-          </button>
-          <div className="text-xs text-gray-500"> Knowledge </div>
-          <StructureInfo identifier={panel.identifier} object={panel.object} />
-        </Card>
-      ))}
-    </div>
+            <button
+              className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
+              onClick={() =>
+                setOpenPanels((panels) =>
+                  panels.filter(
+                    (p) =>
+                      !(
+                        p.identifier === panel.identifier &&
+                        p.object === panel.object
+                      ),
+                  ),
+                )
+              }
+            >
+              ×
+            </button>
+            <div className="text-xs text-gray-500"> Knowledge </div>
+            <StructureInfo identifier={panel.identifier} object={panel.object} />
+          </Card>
+        ))}
+      </div>
   );
 };
 

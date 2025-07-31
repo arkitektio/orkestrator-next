@@ -342,7 +342,7 @@ export type SubscriptionFilesArgs = {
   dataset?: InputMaybe<Scalars['ID']['input']>;
 };
 
-export type DocumentFragment = { __typename?: 'Document', id: string, title: string, pages: Array<{ __typename?: 'Page', id: string, index: number }> };
+export type DocumentFragment = { __typename?: 'Document', id: string, title: string, pages: Array<{ __typename?: 'Page', id: string, index: number, content: string, image: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, ocrResult: { __typename?: 'OCRPageResult', angle: number, lines: Array<{ __typename?: 'OCRTextLine', text: string, score: number, angle: number, bbox: Array<Array<number>> }> } }> };
 
 export type ListDocumentFragment = { __typename?: 'Document', id: string, title: string };
 
@@ -350,9 +350,11 @@ export type FileFragment = { __typename?: 'File', id: string, name: string, docu
 
 export type ListFileFragment = { __typename?: 'File', id: string, name: string };
 
-export type PageFragment = { __typename?: 'Page', id: string, index: number, content: string, image: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string } };
+export type OcrPageResultFragment = { __typename?: 'OCRPageResult', angle: number, lines: Array<{ __typename?: 'OCRTextLine', text: string, score: number, angle: number, bbox: Array<Array<number>> }> };
 
-export type ListPageFragment = { __typename?: 'Page', id: string, index: number };
+export type PageFragment = { __typename?: 'Page', id: string, index: number, content: string, image: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, ocrResult: { __typename?: 'OCRPageResult', angle: number, lines: Array<{ __typename?: 'OCRTextLine', text: string, score: number, angle: number, bbox: Array<Array<number>> }> } };
+
+export type ListPageFragment = { __typename?: 'Page', id: string, index: number, content: string, document: { __typename?: 'Document', id: string, title: string } };
 
 export type BigFileStoreFragment = { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string };
 
@@ -361,7 +363,7 @@ export type GetDocumentQueryVariables = Exact<{
 }>;
 
 
-export type GetDocumentQuery = { __typename?: 'Query', document: { __typename?: 'Document', id: string, title: string, pages: Array<{ __typename?: 'Page', id: string, index: number }> } };
+export type GetDocumentQuery = { __typename?: 'Query', document: { __typename?: 'Document', id: string, title: string, pages: Array<{ __typename?: 'Page', id: string, index: number, content: string, image: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, ocrResult: { __typename?: 'OCRPageResult', angle: number, lines: Array<{ __typename?: 'OCRTextLine', text: string, score: number, angle: number, bbox: Array<Array<number>> }> } }> } };
 
 export type SearchDocumentsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -407,7 +409,7 @@ export type GetPageQueryVariables = Exact<{
 }>;
 
 
-export type GetPageQuery = { __typename?: 'Query', page: { __typename?: 'Page', id: string, index: number, content: string, image: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string } } };
+export type GetPageQuery = { __typename?: 'Query', page: { __typename?: 'Page', id: string, index: number, content: string, image: { __typename?: 'BigFileStore', id: string, key: string, bucket: string, path: string, presignedUrl: string }, ocrResult: { __typename?: 'OCRPageResult', angle: number, lines: Array<{ __typename?: 'OCRTextLine', text: string, score: number, angle: number, bbox: Array<Array<number>> }> } } };
 
 export type SearchPagesQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -423,29 +425,15 @@ export type ListPagesQueryVariables = Exact<{
 }>;
 
 
-export type ListPagesQuery = { __typename?: 'Query', pages: Array<{ __typename?: 'Page', id: string, index: number }> };
+export type ListPagesQuery = { __typename?: 'Query', pages: Array<{ __typename?: 'Page', id: string, index: number, content: string, document: { __typename?: 'Document', id: string, title: string } }> };
 
-export const ListPageFragmentDoc = gql`
-    fragment ListPage on Page {
-  id
-  index
-}
-    `;
-export const DocumentFragmentDoc = gql`
-    fragment Document on Document {
-  id
-  title
-  pages {
-    ...ListPage
-  }
-}
-    ${ListPageFragmentDoc}`;
-export const ListDocumentFragmentDoc = gql`
-    fragment ListDocument on Document {
-  id
-  title
-}
-    `;
+export type GlobalSearchQueryVariables = Exact<{
+  search?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type GlobalSearchQuery = { __typename?: 'Query', pages: Array<{ __typename?: 'Page', id: string, index: number, content: string, document: { __typename?: 'Document', id: string, title: string } }> };
+
 export const BigFileStoreFragmentDoc = gql`
     fragment BigFileStore on BigFileStore {
   id
@@ -453,6 +441,46 @@ export const BigFileStoreFragmentDoc = gql`
   bucket
   path
   presignedUrl
+}
+    `;
+export const OcrPageResultFragmentDoc = gql`
+    fragment OCRPageResult on OCRPageResult {
+  lines {
+    text
+    score
+    angle
+    bbox
+  }
+  angle
+}
+    `;
+export const PageFragmentDoc = gql`
+    fragment Page on Page {
+  id
+  index
+  content
+  image {
+    ...BigFileStore
+  }
+  ocrResult {
+    ...OCRPageResult
+  }
+}
+    ${BigFileStoreFragmentDoc}
+${OcrPageResultFragmentDoc}`;
+export const DocumentFragmentDoc = gql`
+    fragment Document on Document {
+  id
+  title
+  pages {
+    ...Page
+  }
+}
+    ${PageFragmentDoc}`;
+export const ListDocumentFragmentDoc = gql`
+    fragment ListDocument on Document {
+  id
+  title
 }
     `;
 export const FileFragmentDoc = gql`
@@ -474,16 +502,17 @@ export const ListFileFragmentDoc = gql`
   name
 }
     `;
-export const PageFragmentDoc = gql`
-    fragment Page on Page {
+export const ListPageFragmentDoc = gql`
+    fragment ListPage on Page {
   id
   index
   content
-  image {
-    ...BigFileStore
+  document {
+    id
+    title
   }
 }
-    ${BigFileStoreFragmentDoc}`;
+    `;
 export const GetDocumentDocument = gql`
     query GetDocument($id: ID!) {
   document(id: $id) {
@@ -817,3 +846,38 @@ export function useListPagesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHo
 export type ListPagesQueryHookResult = ReturnType<typeof useListPagesQuery>;
 export type ListPagesLazyQueryHookResult = ReturnType<typeof useListPagesLazyQuery>;
 export type ListPagesQueryResult = Apollo.QueryResult<ListPagesQuery, ListPagesQueryVariables>;
+export const GlobalSearchDocument = gql`
+    query GlobalSearch($search: String) {
+  pages: pages(filters: {search: $search}) {
+    ...ListPage
+  }
+}
+    ${ListPageFragmentDoc}`;
+
+/**
+ * __useGlobalSearchQuery__
+ *
+ * To run a query within a React component, call `useGlobalSearchQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGlobalSearchQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGlobalSearchQuery({
+ *   variables: {
+ *      search: // value for 'search'
+ *   },
+ * });
+ */
+export function useGlobalSearchQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
+      }
+export function useGlobalSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
+        }
+export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>;
+export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>;
+export type GlobalSearchQueryResult = Apollo.QueryResult<GlobalSearchQuery, GlobalSearchQueryVariables>;

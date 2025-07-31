@@ -1,11 +1,10 @@
-import { Guard } from "@/lib/arkitekt/Arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import { Guard } from "@/lib/arkitekt/Arkitekt";
 import React from "react";
 import { Route, Routes } from "react-router";
-import ClientPage from "./pages/ClientPage";
 import HomePage from "./pages/HomePage";
-import StandardPane from "./panes/StandardPane";
 import StreamPage from "./pages/StreamPage";
+import StandardPane from "./panes/StandardPane";
 interface Props {}
 
 export const Module: React.FC<Props> = (props) => {

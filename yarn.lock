@@ -1942,6 +1942,11 @@
     "@loaders.gl/schema" "3.4.15"
     fast-xml-parser "^4.2.5"
 
+"@lobehub/icons-static-svg@^1.60.0":
+  version "1.60.0"
+  resolved "https://registry.yarnpkg.com/@lobehub/icons-static-svg/-/icons-static-svg-1.60.0.tgz#099b8a7592ccd12547c112a2e3e1694e754a5db5"
+  integrity sha512-XFz77zKdI+Er5KdGVh+k9OHzPprO0PN1QsFPBHomKILtKiaJaQTTO8DWEs+0ORosfZd/zAQC8CtCDNUS8h9ZCg==
+
 "@luma.gl/constants@8.5.21", "@luma.gl/constants@^8.5.21", "@luma.gl/constants@~8.5.21":
   version "8.5.21"
   resolved "https://registry.yarnpkg.com/@luma.gl/constants/-/constants-8.5.21.tgz#81825e9bd9bdf4a9449bcface8b504389f65f634"

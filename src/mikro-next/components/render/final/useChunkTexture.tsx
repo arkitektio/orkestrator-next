@@ -2,17 +2,17 @@ import { useEffect, useState } from "react";
 import * as THREE from "three";
 import { Chunk, DataType } from "zarrita";
 import { mapDTypeToMinMax } from "./utils";
-import { useFrame } from "@react-three/fiber";
-
-const f = 2;
-
-const isScaled = (zoom: number, xScale: number, yScale: number) => {
-  const window = (1 / zoom) * f;
-  return xScale == 1;
-};
+import { useChunkCulling, ChunkBounds } from "./useViewportCulling";
 
 export const useAsyncChunk = (props: {
-  renderFunc: any;
+  renderFunc: (
+    signal: AbortSignal,
+    chunk_coords: number[],
+    chunk_shape: number[],
+    c: number,
+    t: number,
+    z: number,
+  ) => Promise<{ chunk: Chunk<DataType>; dtype: DataType }>;
   chunk_coords: number[];
   chunk_shape: number[];
   scaleX: number;
@@ -23,6 +23,7 @@ export const useAsyncChunk = (props: {
   c: number;
   t: number;
   z: number;
+  enableCulling?: boolean;
 }) => {
   const [texture, setTexture] = useState<{
     texture: THREE.Texture | null;
@@ -30,8 +31,49 @@ export const useAsyncChunk = (props: {
     max: number;
   } | null>(null);
 
+  // Calculate chunk bounds for viewport culling - must match ChunkMesh positioning logic
+  const box_shape_3d = props.chunk_shape?.slice(3, 5) || [0, 0];
+  const baseChunkWidth = box_shape_3d[1];
+  const baseChunkHeight = box_shape_3d[0];
+  const scaledWidth = baseChunkWidth * props.scaleX;
+  const scaledHeight = baseChunkHeight * props.scaleY;
+
+  const box_position_3d = props.chunk_coords.slice(3, 5);
+
+  const chunkBounds: ChunkBounds = {
+    x:
+      box_position_3d[1] * scaledWidth + scaledWidth / 2 - props.imageWidth / 2,
+    y:
+      box_position_3d[0] * scaledHeight +
+      scaledHeight / 2 -
+      props.imageHeight / 2,
+    width: scaledWidth,
+    height: scaledHeight,
+  };
+
+  // Use viewport culling if enabled
+  const cullingResult = useChunkCulling(
+    chunkBounds,
+    props.scaleX,
+    props.imageWidth,
+    props.imageHeight,
+  );
+
+  const shouldRender = true;
+
   useEffect(() => {
-    console.log("Rendering chunk with coords", props.chunk_coords);
+    // Don't render if culling is enabled and chunk should not be rendered
+    if (!shouldRender) {
+      setTexture(null);
+      return;
+    }
+
+    console.log(
+      "Rendering chunk with coords",
+      props.chunk_coords,
+      "shouldRender:",
+      shouldRender,
+    );
     const abortController = new AbortController();
 
     const calculateImageData = async () => {
@@ -47,7 +89,7 @@ export const useAsyncChunk = (props: {
 
         if (abortController.signal.aborted) return;
 
-        let array = chunk as Chunk<DataType>;
+        const array = chunk as Chunk<DataType>;
         let textureData: ArrayBufferView;
         let format: THREE.PixelFormat;
         let type: THREE.TextureDataType;
@@ -73,7 +115,10 @@ export const useAsyncChunk = (props: {
           format = THREE.RedFormat;
           type = THREE.FloatType;
         } else {
-          console.error("Unsupported data type for texture creation:", array.data);
+          console.error(
+            "Unsupported data type for texture creation:",
+            array.data,
+          );
           return;
         }
 
@@ -107,6 +152,7 @@ export const useAsyncChunk = (props: {
     props.c,
     props.t,
     props.z,
+    shouldRender, // Include shouldRender in dependencies
   ]);
 
   return texture;

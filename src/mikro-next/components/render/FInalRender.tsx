@@ -1,8 +1,32 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SliderTooltip } from "@/components/ui/slider-tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { StructureInfo } from "@/kraph/components/mini/StructureInfo";
 import * as THREE from "three";
+import {
+  Eye,
+  EyeOff,
+  Layers,
+  Settings,
+  ChevronDown,
+  Check,
+  Grid3X3,
+  Type,
+  Edit3,
+  Square,
+  Circle,
+  Minus,
+  MoreHorizontal,
+  MapPin,
+} from "lucide-react";
 
 import { notEmpty } from "@/lib/utils";
 import {
@@ -10,6 +34,7 @@ import {
   ListRoiFragment,
   RgbImageFragment,
   RgbViewFragment,
+  RoiKind,
 } from "@/mikro-next/api/graphql";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas as ThreeCanvas } from "@react-three/fiber";
@@ -20,6 +45,28 @@ import { ROIPolygon } from "./final/ROIPolygon";
 import { useArray } from "./final/useArray";
 import { BasicIndexer, IndexerProjection, Slice } from "./indexer";
 import { RoiDrawerCanvas } from "./RoiDrawer";
+import { ObjectButton, SmartContext } from "@/rekuest/buttons/ObjectButton";
+import { ViewerStateProvider, useViewerState } from "./ViewerStateProvider";
+
+// Helper function to get icon for ROI type
+const getRoiIcon = (roiKind: RoiKind) => {
+  switch (roiKind) {
+    case RoiKind.Rectangle:
+      return Square;
+    case RoiKind.Ellipsis:
+      return Circle;
+    case RoiKind.Line:
+      return Minus;
+    case RoiKind.Point:
+      return MapPin;
+    case RoiKind.Polygon:
+      return MoreHorizontal;
+    case RoiKind.Path:
+      return Edit3;
+    default:
+      return Square;
+  }
+};
 
 export interface RGBDProps {
   context: ListRgbContextFragment;
@@ -38,6 +85,7 @@ export interface Panel {
   object: string;
   positionX: number;
   positionY: number;
+  isRightClick?: boolean; // Optional, used for right-click context menu
 }
 
 export const calculateChunkGrid = (
@@ -45,13 +93,13 @@ export const calculateChunkGrid = (
   shape,
   chunks,
 ) => {
-  let indexer = new BasicIndexer({
+  const indexer = new BasicIndexer({
     selection,
     shape: shape,
     chunk_shape: chunks,
   });
 
-  let chunk_loaders: {
+  const chunk_loaders: {
     chunk_coords: number[];
     mapping: IndexerProjection[];
   }[] = [];
@@ -93,8 +141,26 @@ export const LayerRender = (props: {
   t: number;
   xSize: number;
   ySize: number;
+  enabledScales: Set<number>;
+  showLayerEdges: boolean;
+  showDebugText: boolean;
 }) => {
-  const { derivedScaleView, view, z, t, xSize, ySize } = props;
+  const {
+    derivedScaleView,
+    view,
+    z,
+    t,
+    xSize,
+    ySize,
+    enabledScales,
+    showLayerEdges,
+    showDebugText,
+  } = props;
+
+  // Don't render if this scale is disabled
+  if (!enabledScales.has(derivedScaleView.scaleX)) {
+    return null;
+  }
 
   const selection = [
     {
@@ -123,13 +189,13 @@ export const LayerRender = (props: {
   }
 
   return (
-    <group key={`${z}-${t}-${view.id}`}>
-      {chunk_loaders.map((chunk_loader, index) => {
+    <group key={`${z}-${t}-${view.id}-${derivedScaleView.id}`}>
+      {chunk_loaders.map((chunk_loader) => {
         return (
           <ChunkBitmapTexture
             renderFunc={renderView}
             chunk_coords={chunk_loader.chunk_coords}
-            chunk_shape={derivedScaleView.image.store.chunks}
+            chunk_shape={derivedScaleView.image.store.chunks || []}
             key={`${chunk_loader.chunk_coords.join("-")}-${z}-${t}-${view.id}-${view.contrastLimitMax}-${view.contrastLimitMin}-${view.colorMap}-${view.baseColor?.join("-")}`}
             view={view}
             t={t}
@@ -140,35 +206,52 @@ export const LayerRender = (props: {
             imageHeight={ySize}
             scaleX={derivedScaleView.scaleX}
             scaleY={derivedScaleView.scaleY}
+            enableCulling={true}
+            showEdges={showLayerEdges}
+            showDebugText={showDebugText}
           />
         );
       })}
     </group>
   );
 };
-export const FinalRender = (props: RGBDProps) => {
+export const FinalRenderInner = (props: RGBDProps) => {
   const [openPanels, setOpenPanels] = useState<Panel[]>([]);
-
   const [rbgContext, setRgbContext] = useState(props.context);
 
-  const [z, setZ] = useState(0);
-  const [t, setT] = useState(0);
-  const [selectedScale, setSelectedScale] = useState(0);
+  // Use the viewer state from context
+  const {
+    z,
+    t,
+    showRois,
+    showLayerEdges,
+    showDebugText,
+    enabledScales,
+    allowRoiDrawing,
+    roiDrawMode,
+    setZ,
+    setT,
+    setShowRois,
+    setShowLayerEdges,
+    setShowDebugText,
+    setAllowRoiDrawing,
+    setRoiDrawMode,
+    toggleScale,
+  } = useViewerState();
 
   const version = rbgContext.image.store.version;
-  const cSize = rbgContext.image?.store.shape?.at(0) || 1;
   const zSize = rbgContext.image?.store.shape?.at(2) || 1;
   const tSize = rbgContext.image?.store.shape?.at(1) || 1;
   const xSize = rbgContext.image?.store.shape?.at(3) || 1;
   const ySize = rbgContext.image?.store.shape?.at(4) || 1;
 
+  // Get available scales from layers
+  const allLayers = rbgContext.image.derivedScaleViews;
+  const availableScales = Array.from(
+    new Set([1, ...allLayers.map((layer) => layer.scaleX)]),
+  ).sort((a, b) => a - b);
+
   // Get image dimensions for the auto-zoom camera
-  const imageDimensions = useImageDimensions(props.context);
-
-
-
-
-
 
   if (
     rbgContext.image.store.chunks?.length !=
@@ -196,7 +279,7 @@ export const FinalRender = (props: RGBDProps) => {
     id: "extra",
   });
 
-  const selectedLayers = [layers.at(selectedScale)].filter(notEmpty);
+  const selectedLayers = layers;
   // Calculate which chunks are needed for the view
 
   const chunk_shape = props.context.image.store.chunks;
@@ -206,151 +289,327 @@ export const FinalRender = (props: RGBDProps) => {
   }
 
   return (
-      <div style={{ width: "100%", height: "100%" }} className="relative">
-        <div className="absolute bottom-0 z-10 w-full mb-4 px-6 bg-gradient-to-t from-black to-transparent py-3">
-          <div className="flex flex-col gap-2">
-            {zSize > 1 && (
-              <div className="flex flex-row">
-                <div className="my-auto mx-2 w-12">z: {z}</div>
-                <SliderTooltip
-                  value={[z]}
-                  onValueChange={(value) => setZ(value[0])}
-                  min={0}
-                  max={zSize - 1}
-                  step={1}
-                  className="w-full"
-                  defaultValue={[0]}
-                />
-                <div className="flex flex-col ml-2">
-                  {layers.length > 1 && (
-                    <>
-                      <div className="flex flex-row gap-2">
-                        {layers.map((layer, index) => {
-                          return (
-                            <Button
-                              key={index}
-                              onClick={() => {
-                                setSelectedScale(index);
-                              }}
-                              size={"sm"}
-                              variant="ghost"
-                              className={
-                                selectedScale === index
-                                  ? "bg-gray-800"
-                                  : "bg-gray-900"
-                              }
-                            >
-                              {layer.scaleX} x
-                            </Button>
-                          );
-                        })}
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-            {tSize > 1 && (
-              <div className="flex flex-row">
-                <div className="my-auto mr-2 w-12">t: {t}</div>
-                <SliderTooltip
-                  value={[t]}
-                  onValueChange={(value) => setT(value[0])}
-                  min={0}
-                  max={tSize - 1}
-                  step={1}
-                  className="w-full"
-                  defaultValue={[0]}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-
-
-        <Suspense
-          fallback={<div className="w-full h-full bg-gray-100"> Loading</div>}
-        >
-          <ThreeCanvas style={{ width: "100%", height: "100%" }}>
-            <AutoZoomCamera imageHeight={ySize} imageWidth={xSize} />
-            <OrbitControls
-              enableRotate={false}
-              enablePan={true}
-              regress={false}
-              mouseButtons={{
-                            LEFT: THREE.MOUSE.PAN,
-                            MIDDLE: THREE.MOUSE.ROTATE,
-                            RIGHT: THREE.MOUSE.DOLLY,
-                          }}
+    <div style={{ width: "100%", height: "100%" }} className="relative">
+      <div className="absolute bottom-0 z-10 w-full mb-4 px-6 bg-gradient-to-t from-black to-transparent py-3">
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-row items-center">
+            <div className="my-auto mx-2 w-12">z: {z}</div>
+            <SliderTooltip
+              value={[z]}
+              onValueChange={(value) => setZ(value[0])}
+              min={0}
+              max={zSize - 1}
+              step={1}
+              className="w-full"
+              defaultValue={[0]}
             />
 
-            {props.context.views.map((view, viewIndex) => {
-              return (
-                <group key={view.id}>
-                  {selectedLayers.map((layer) => {
-                    return (
-                      <LayerRender
-                        key={`${z}-${t}-${viewIndex}-${layer.id}`}
-                        derivedScaleView={layer}
-                        view={view}
-                        z={z}
-                        t={t}
-                        xSize={xSize}
-                        ySize={ySize}
-                      />
-                    );
-                  })}
-                </group>
-              );
-            })}
+            {/* Controls Menu Button */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="bg-gray-800 text-gray-300 hover:bg-gray-700"
+                  title="Toggle controls menu"
+                >
+                  <Settings className="w-4 h-4" />
+                  <ChevronDown className="w-3 h-3 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-64 bg-gray-900 border-gray-700">
+                <>
+                  <DropdownMenuLabel className="text-gray-400">
+                    Enable Rois
+                  </DropdownMenuLabel>
+                  <DropdownMenuItem
+                    onClick={() => setShowRois(!showRois)}
+                    className={`cursor-pointer ${
+                      showRois
+                        ? "bg-blue-800 text-white"
+                        : "text-gray-300 hover:bg-gray-800"
+                    }`}
+                  >
+                    {showRois ? (
+                      <Eye className="w-4 h-4 mr-2" />
+                    ) : (
+                      <EyeOff className="w-4 h-4 mr-2" />
+                    )}
+                    {showRois ? "Hide ROIs" : "Show ROIs"}
+                  </DropdownMenuItem>
 
-            {props.rois.map((roi) => (
-              <ROIPolygon
-                key={roi.id}
-                roi={roi}
-                setOpenPanels={setOpenPanels}
-                imageWidth={xSize}
-                imageHeight={ySize}
+                  {/* ROI Drawing Controls */}
+                  <DropdownMenuItem
+                    onClick={() => setAllowRoiDrawing(!allowRoiDrawing)}
+                    className={`cursor-pointer ${
+                      allowRoiDrawing
+                        ? "bg-green-800 text-white"
+                        : "text-gray-300 hover:bg-gray-800"
+                    }`}
+                  >
+                    <Edit3 className="w-4 h-4 mr-2" />
+                    {allowRoiDrawing
+                      ? "Disable ROI Drawing"
+                      : "Enable ROI Drawing"}
+                  </DropdownMenuItem>
+
+                  {/* ROI Drawing Mode Selection */}
+                  {allowRoiDrawing && (
+                    <>
+                      <DropdownMenuSeparator className="bg-gray-700" />
+                      <DropdownMenuLabel className="text-gray-400">
+                        Drawing Mode
+                      </DropdownMenuLabel>
+                      {[
+                        RoiKind.Rectangle,
+                        RoiKind.Ellipsis,
+                        RoiKind.Polygon,
+                        RoiKind.Line,
+                        RoiKind.Point,
+                        RoiKind.Path,
+                      ].map((kind) => {
+                        const IconComponent = getRoiIcon(kind);
+                        return (
+                          <DropdownMenuItem
+                            key={kind}
+                            onClick={() => setRoiDrawMode(kind)}
+                            className={`cursor-pointer ${
+                              roiDrawMode === kind
+                                ? "bg-green-800 text-white"
+                                : "text-gray-300 hover:bg-gray-800"
+                            }`}
+                          >
+                            <IconComponent className="w-4 h-4 mr-2" />
+                            {kind.charAt(0) + kind.slice(1).toLowerCase()}
+                            {roiDrawMode === kind && (
+                              <Check className="w-3 h-3 ml-auto" />
+                            )}
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </>
+                  )}
+
+                  <DropdownMenuSeparator className="bg-gray-700" />
+                </>
+
+                {/* Layer Display Controls */}
+                <DropdownMenuLabel className="text-gray-400">
+                  Layer Display
+                </DropdownMenuLabel>
+                <DropdownMenuItem
+                  onClick={() => setShowLayerEdges(!showLayerEdges)}
+                  className={`cursor-pointer ${
+                    showLayerEdges
+                      ? "bg-blue-800 text-white"
+                      : "text-gray-300 hover:bg-gray-800"
+                  }`}
+                >
+                  <Grid3X3 className="w-4 h-4 mr-2" />
+                  {showLayerEdges ? "Hide Layer Edges" : "Show Layer Edges"}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setShowDebugText(!showDebugText)}
+                  className={`cursor-pointer ${
+                    showDebugText
+                      ? "bg-blue-800 text-white"
+                      : "text-gray-300 hover:bg-gray-800"
+                  }`}
+                >
+                  <Type className="w-4 h-4 mr-2" />
+                  {showDebugText ? "Hide Debug Text" : "Show Debug Text"}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-gray-700" />
+
+                {/* Scale Selection Controls */}
+                {availableScales.length > 1 && (
+                  <>
+                    <DropdownMenuLabel className="text-gray-400">
+                      Render Scales
+                    </DropdownMenuLabel>
+                    {availableScales.map((scale) => (
+                      <DropdownMenuItem
+                        key={scale}
+                        onClick={() => toggleScale(scale)}
+                        className={`cursor-pointer ${
+                          enabledScales.has(scale)
+                            ? "bg-green-800 text-white"
+                            : "text-gray-400 hover:bg-gray-800"
+                        }`}
+                      >
+                        <Layers className="w-3 h-3 mr-2" />
+                        {scale}x
+                        {enabledScales.has(scale) && (
+                          <Check className="w-3 h-3 ml-auto" />
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          {tSize > 1 && (
+            <div className="flex flex-row">
+              <div className="my-auto mr-2 w-12">t: {t}</div>
+              <SliderTooltip
+                value={[t]}
+                onValueChange={(value) => setT(value[0])}
+                min={0}
+                max={tSize - 1}
+                step={1}
+                className="w-full"
+                defaultValue={[0]}
               />
-            ))}
-
-            <RoiDrawerCanvas  imageHeight={ySize} imageWidth={xSize} image={props.context.image} />
-          </ThreeCanvas>
-        </Suspense>
-        
-        {openPanels.map((panel) => (
-          <Card
-            key={`panel-${panel.identifier}-${panel.object}`}
-            style={{
-              position: "fixed",
-              top: `${panel.positionY}px`,
-              left: `${panel.positionX}px`, // Removed the +20px offset
-              zIndex: 10,
-              transform: "translate(-50%, -50%)", // Center the card on the calculated position
-            }}
-            className="p-2 shadow-lg"
-          >
-            <button
-              className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
-              onClick={() =>
-                setOpenPanels((panels) =>
-                  panels.filter(
-                    (p) =>
-                      !(
-                        p.identifier === panel.identifier &&
-                        p.object === panel.object
-                      ),
-                  ),
-                )
-              }
-            >
-              ×
-            </button>
-            <div className="text-xs text-gray-500"> Knowledge </div>
-            <StructureInfo identifier={panel.identifier} object={panel.object} />
-          </Card>
-        ))}
+            </div>
+          )}
+        </div>
       </div>
+
+      <Suspense
+        fallback={<div className="w-full h-full bg-gray-100"> Loading</div>}
+      >
+        <ThreeCanvas style={{ width: "100%", height: "100%" }}>
+          <AutoZoomCamera
+            imageHeight={ySize}
+            imageWidth={xSize}
+            contextId={props.context.id}
+          />
+          <OrbitControls
+            enableRotate={false}
+            enablePan={true}
+            regress={false}
+            mouseButtons={{
+              LEFT: THREE.MOUSE.PAN,
+              MIDDLE: THREE.MOUSE.ROTATE,
+              RIGHT: THREE.MOUSE.DOLLY,
+            }}
+          />
+
+          {props.context.views.map((view, viewIndex) => {
+            // Calculate available scales from all layers
+
+            return (
+              <group key={view.id}>
+                {selectedLayers.map((layer) => {
+                  return (
+                    <LayerRender
+                      key={`${z}-${t}-${viewIndex}-${layer.id}`}
+                      derivedScaleView={layer}
+                      view={view}
+                      z={z}
+                      t={t}
+                      xSize={xSize}
+                      ySize={ySize}
+                      enabledScales={enabledScales}
+                      showLayerEdges={showLayerEdges}
+                      showDebugText={showDebugText}
+                    />
+                  );
+                })}
+              </group>
+            );
+          })}
+
+          {showRois && (
+            <>
+              {props.rois.map((roi) => (
+                <ROIPolygon
+                  key={roi.id}
+                  roi={roi}
+                  setOpenPanels={setOpenPanels}
+                  imageWidth={xSize}
+                  imageHeight={ySize}
+                />
+              ))}
+
+              {allowRoiDrawing && (
+                <RoiDrawerCanvas
+                  imageHeight={ySize}
+                  imageWidth={xSize}
+                  z={z}
+                  t={t}
+                  c={0}
+                  image={props.context.image}
+                />
+              )}
+            </>
+          )}
+        </ThreeCanvas>
+      </Suspense>
+
+      {openPanels.map((panel) => (
+        <Card
+          key={`panel-${panel.identifier}-${panel.object}`}
+          style={{
+            position: "fixed",
+            top: `${panel.positionY}px`,
+            left: `${panel.positionX + 200}px`, // Removed the +20px offset
+            maxWidth: "300px",
+            zIndex: 10,
+            transform: "translate(-50%, -50%)", // Center the card on the calculated position
+          }}
+          className="p-2 shadow-lg"
+        >
+          <button
+            className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
+            onClick={() =>
+              setOpenPanels((panels) =>
+                panels.filter(
+                  (p) =>
+                    !(
+                      p.identifier === panel.identifier &&
+                      p.object === panel.object
+                    ),
+                ),
+              )
+            }
+          >
+            ×
+          </button>
+
+          {panel.isRightClick ? (
+            <SmartContext identifier={panel.identifier} object={panel.object} />
+          ) : (
+            <>
+              <ObjectButton identifier={panel.identifier} object={panel.object}>
+                <Button variant={"outline"} className="w-6 h-9 text-white">
+                  Do
+                </Button>
+              </ObjectButton>
+
+              <div className="text-xs text-gray-500"> Knowledge </div>
+              <StructureInfo
+                identifier={panel.identifier}
+                object={panel.object}
+              />
+            </>
+          )}
+        </Card>
+      ))}
+    </div>
+  );
+};
+
+// Main component that provides the viewer state context
+export const FinalRender = (props: RGBDProps) => {
+  // Get available scales from layers for provider initialization
+  const allLayers = props.context.image.derivedScaleViews;
+  const availableScales = Array.from(
+    new Set([1, ...allLayers.map((layer) => layer.scaleX)]),
+  ).sort((a, b) => a - b);
+
+  return (
+    <ViewerStateProvider
+      availableScales={availableScales}
+      initialState={{
+        // Only most downscaled version enabled by default
+        enabledScales: new Set([Math.max(...availableScales)]),
+        showRois: true,
+      }}
+    >
+      <FinalRenderInner {...props} />
+    </ViewerStateProvider>
   );
 };
 

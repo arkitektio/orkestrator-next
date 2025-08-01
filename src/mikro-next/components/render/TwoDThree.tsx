@@ -53,6 +53,7 @@ export interface Panel {
   object: string;
   positionX: number;
   positionY: number;
+  isRightClick?: boolean;
 }
 
 function Box(props: ThreeElements["mesh"]) {

@@ -49,6 +49,7 @@
     "@hookform/resolvers": "^3.3.4",
     "@livekit/components-react": "^2.3.6",
     "@livekit/components-styles": "^1.0.12",
+    "@lobehub/icons-static-svg": "^1.60.0",
     "@luma.gl/core": "8",
     "@monaco-editor/react": "^4.7.0",
     "@paciolan/remote-component": "^2.13.0",

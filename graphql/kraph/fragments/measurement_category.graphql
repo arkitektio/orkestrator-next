@@ -34,3 +34,11 @@ fragment ListMeasurementCategory on MeasurementCategory {
   }
   label
 }
+
+fragment ListMeasurementCategoryWithGraph on MeasurementCategory {
+  ...ListMeasurementCategory
+  graph {
+    id
+    name
+  }
+}

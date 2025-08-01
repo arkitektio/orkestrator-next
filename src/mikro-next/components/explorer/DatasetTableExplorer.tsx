@@ -41,7 +41,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
+import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Form } from "@/components/ui/form";
 import { MikroDataset, MikroFile, MikroImage } from "@/linkers";

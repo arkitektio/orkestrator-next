@@ -40,6 +40,7 @@ fragment AssignationEvent on AssignationEvent {
   returns
   assignation {
     id
+    reference
   }
   progress
   reference

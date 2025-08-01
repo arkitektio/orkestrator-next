@@ -806,6 +806,7 @@ export type MeasurementCategoryFilter = {
   id?: InputMaybe<Scalars['ID']['input']>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
+  sourceIdentifier?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** Input for creating a new expression */
@@ -831,7 +832,7 @@ export type MeasurementCategoryInput = {
   /** The ID of the sequence this category will get internal_ids from */
   sequence?: InputMaybe<Scalars['ID']['input']>;
   /** The source definition for this expression */
-  structureDefinition: CategoryDefinitionInput;
+  structureDefinition: StructureCategoryDefinitionInput;
   /** A list of tags associated with this expression */
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
 };
@@ -3773,6 +3774,8 @@ export type MeasurementCategoryFragment = { __typename?: 'MeasurementCategory', 
 
 export type ListMeasurementCategoryFragment = { __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, sourceDefinition: { __typename?: 'StructureCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'Tag', id: string, value: string }> };
 
+export type ListMeasurementCategoryWithGraphFragment = { __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string }, sourceDefinition: { __typename?: 'StructureCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'Tag', id: string, value: string }> };
+
 export type PathMeasurementFragment = { __typename?: 'Measurement', validFrom: any, validTo: any, leftId: string, rightId: string, category: { __typename?: 'MeasurementCategory', id: string, label: string } };
 
 export type MetricFragment = { __typename?: 'Metric', id: any, value: number, category: { __typename?: 'MetricCategory', id: string, label: string } };
@@ -4362,7 +4365,7 @@ export type ListMeasurmentCategoryQueryVariables = Exact<{
 }>;
 
 
-export type ListMeasurmentCategoryQuery = { __typename?: 'Query', measurementCategories: Array<{ __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, sourceDefinition: { __typename?: 'StructureCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'Tag', id: string, value: string }> }> };
+export type ListMeasurmentCategoryQuery = { __typename?: 'Query', measurementCategories: Array<{ __typename?: 'MeasurementCategory', label: string, id: string, description?: string | null, graph: { __typename?: 'Graph', id: string, name: string }, sourceDefinition: { __typename?: 'StructureCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, targetDefinition: { __typename?: 'EntityCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'Tag', id: string, value: string }> }> };
 
 export type GetMetricQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -5711,6 +5714,15 @@ export const MeasurementCategoryFragmentDoc = gql`
     ${BaseEdgeCategoryFragmentDoc}
 ${BaseCategoryFragmentDoc}
 ${GraphQueryFragmentDoc}`;
+export const ListMeasurementCategoryWithGraphFragmentDoc = gql`
+    fragment ListMeasurementCategoryWithGraph on MeasurementCategory {
+  ...ListMeasurementCategory
+  graph {
+    id
+    name
+  }
+}
+    ${ListMeasurementCategoryFragmentDoc}`;
 export const PathMeasurementFragmentDoc = gql`
     fragment PathMeasurement on Measurement {
   validFrom
@@ -8164,10 +8176,10 @@ export type SearchMeasurmentCategoryQueryResult = Apollo.QueryResult<SearchMeasu
 export const ListMeasurmentCategoryDocument = gql`
     query ListMeasurmentCategory($filters: MeasurementCategoryFilter, $pagination: OffsetPaginationInput) {
   measurementCategories(filters: $filters, pagination: $pagination) {
-    ...ListMeasurementCategory
+    ...ListMeasurementCategoryWithGraph
   }
 }
-    ${ListMeasurementCategoryFragmentDoc}`;
+    ${ListMeasurementCategoryWithGraphFragmentDoc}`;
 
 /**
  * __useListMeasurmentCategoryQuery__

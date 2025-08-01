@@ -28,7 +28,6 @@ import {
   MapPin,
 } from "lucide-react";
 
-import { notEmpty } from "@/lib/utils";
 import {
   ListRgbContextFragment,
   ListRoiFragment,
@@ -68,6 +67,24 @@ const getRoiIcon = (roiKind: RoiKind) => {
   }
 };
 
+// Helper function to get icon for panel kind
+const getPanelKindIcon = (kind?: PanelKind) => {
+  switch (kind) {
+    case "roi_tools":
+      return Edit3;
+    case "layer_controls":
+      return Layers;
+    case "view_settings":
+      return Settings;
+    case "object_info":
+      return Eye;
+    case "context_menu":
+      return MoreHorizontal;
+    default:
+      return Settings;
+  }
+};
+
 export interface RGBDProps {
   context: ListRgbContextFragment;
   rois: ListRoiFragment[];
@@ -80,11 +97,19 @@ export type PassThroughProps = {
   setOpenPanels: Dispatch<SetStateAction<Panel[]>>;
 };
 
+export type PanelKind =
+  | "roi_tools"
+  | "layer_controls"
+  | "view_settings"
+  | "object_info"
+  | "context_menu";
+
 export interface Panel {
   identifier: string;
   object: string;
   positionX: number;
   positionY: number;
+  kind?: PanelKind; // Optional to maintain backward compatibility
   isRightClick?: boolean; // Optional, used for right-click context menu
 }
 
@@ -215,9 +240,226 @@ export const LayerRender = (props: {
     </group>
   );
 };
+
+// PanelContent component to render different panel types
+const PanelContent = ({
+  panel,
+  roiDrawMode,
+  setRoiDrawMode,
+  allowRoiDrawing,
+  setAllowRoiDrawing,
+  showRois,
+  setShowRois,
+  showLayerEdges,
+  setShowLayerEdges,
+  showDebugText,
+  setShowDebugText,
+}: {
+  panel: Panel;
+  roiDrawMode: RoiKind;
+  setRoiDrawMode: (mode: RoiKind) => void;
+  allowRoiDrawing: boolean;
+  setAllowRoiDrawing: (allow: boolean) => void;
+  showRois: boolean;
+  setShowRois: (show: boolean) => void;
+  showLayerEdges: boolean;
+  setShowLayerEdges: (show: boolean) => void;
+  showDebugText: boolean;
+  setShowDebugText: (show: boolean) => void;
+}) => {
+  const PanelIcon = getPanelKindIcon(panel.kind);
+
+  if (panel.isRightClick) {
+    return <SmartContext identifier={panel.identifier} object={panel.object} />;
+  }
+
+  switch (panel.kind) {
+    case "roi_tools":
+      return (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2 mb-2">
+            <PanelIcon className="w-4 h-4" />
+            <span className="text-sm font-medium">ROI Tools</span>
+          </div>
+          <div className="text-xs text-gray-400 mb-2">
+            Click to open ROI tools • Shift+Click for Layer Controls •
+            Ctrl+Click for View Settings
+          </div>
+
+          {/* ROI Drawing Toggle */}
+          <Button
+            size="sm"
+            variant={allowRoiDrawing ? "default" : "outline"}
+            onClick={() => setAllowRoiDrawing(!allowRoiDrawing)}
+            className="w-full justify-start"
+          >
+            <Edit3 className="w-4 h-4 mr-2" />
+            {allowRoiDrawing ? "Disable Drawing" : "Enable Drawing"}
+          </Button>
+
+          {/* ROI Drawing Mode Selection */}
+          {allowRoiDrawing && (
+            <div className="grid grid-cols-2 gap-1">
+              {[
+                RoiKind.Rectangle,
+                RoiKind.Ellipsis,
+                RoiKind.Polygon,
+                RoiKind.Line,
+                RoiKind.Point,
+                RoiKind.Path,
+              ].map((kind) => {
+                const IconComponent = getRoiIcon(kind);
+                return (
+                  <Button
+                    key={kind}
+                    size="sm"
+                    variant={roiDrawMode === kind ? "default" : "outline"}
+                    onClick={() => setRoiDrawMode(kind)}
+                    className="p-2"
+                    title={kind.charAt(0) + kind.slice(1).toLowerCase()}
+                  >
+                    <IconComponent className="w-3 h-3" />
+                  </Button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* ROI Visibility Toggle */}
+          <Button
+            size="sm"
+            variant={showRois ? "default" : "outline"}
+            onClick={() => setShowRois(!showRois)}
+            className="w-full justify-start"
+          >
+            {showRois ? (
+              <Eye className="w-4 h-4 mr-2" />
+            ) : (
+              <EyeOff className="w-4 h-4 mr-2" />
+            )}
+            {showRois ? "Hide ROIs" : "Show ROIs"}
+          </Button>
+        </div>
+      );
+
+    case "layer_controls":
+      return (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2 mb-2">
+            <PanelIcon className="w-4 h-4" />
+            <span className="text-sm font-medium">Layer Controls</span>
+          </div>
+          <div className="text-xs text-gray-400 mb-2">
+            Opened with Shift+Click on image
+          </div>
+
+          <Button
+            size="sm"
+            variant={showLayerEdges ? "default" : "outline"}
+            onClick={() => setShowLayerEdges(!showLayerEdges)}
+            className="w-full justify-start"
+          >
+            <Grid3X3 className="w-4 h-4 mr-2" />
+            {showLayerEdges ? "Hide Edges" : "Show Edges"}
+          </Button>
+
+          <Button
+            size="sm"
+            variant={showDebugText ? "default" : "outline"}
+            onClick={() => setShowDebugText(!showDebugText)}
+            className="w-full justify-start"
+          >
+            <Type className="w-4 h-4 mr-2" />
+            {showDebugText ? "Hide Debug" : "Show Debug"}
+          </Button>
+        </div>
+      );
+
+    case "view_settings":
+      return (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2 mb-2">
+            <PanelIcon className="w-4 h-4" />
+            <span className="text-sm font-medium">View Settings</span>
+          </div>
+          <div className="text-xs text-gray-400 mb-2">
+            Opened with Ctrl+Click on image
+          </div>
+          <div className="text-xs text-gray-500">
+            View configuration options would go here
+          </div>
+        </div>
+      );
+
+    case "object_info":
+    default:
+      return (
+        <>
+          <ObjectButton identifier={panel.identifier} object={panel.object}>
+            <Button variant={"outline"} className="w-6 h-9 text-white">
+              Do
+            </Button>
+          </ObjectButton>
+
+          <div className="text-xs text-gray-500"> Knowledge </div>
+          <StructureInfo identifier={panel.identifier} object={panel.object} />
+        </>
+      );
+  }
+};
+
+// Clickable plane component for handling background clicks
+const ClickablePlane = ({
+  xSize,
+  ySize,
+  setOpenPanels,
+}: {
+  xSize: number;
+  ySize: number;
+  setOpenPanels: Dispatch<SetStateAction<Panel[]>>;
+}) => {
+  const handleClick = (event: any) => {
+    // Determine panel type based on click modifier keys
+    let panelKind: PanelKind = "roi_tools"; // default
+
+    // Check for modifier keys to determine panel type
+    if (event.altKey) {
+      panelKind = "layer_controls";
+    } else if (event.ctrlKey || event.metaKey) {
+      panelKind = "view_settings";
+    } else {
+      return; // Do nothing if Alt is pressed
+    }
+
+    event.stopPropagation();
+
+    // Calculate position - use center of screen as fallback
+    const positionX = window.innerWidth / 2;
+    const positionY = window.innerHeight / 2;
+
+    // Close all existing panels and create a new one
+    setOpenPanels([
+      {
+        identifier: "image_click_panel",
+        object: `canvas_${Date.now()}`, // unique object id
+        positionX,
+        positionY,
+        kind: panelKind,
+      },
+    ]);
+  };
+
+  return (
+    <mesh position={[0, 0, -0.001]} onClick={handleClick}>
+      <planeGeometry args={[xSize, ySize]} />
+      <meshBasicMaterial transparent={true} opacity={0} depthWrite={false} />
+    </mesh>
+  );
+};
+
 export const FinalRenderInner = (props: RGBDProps) => {
   const [openPanels, setOpenPanels] = useState<Panel[]>([]);
-  const [rbgContext, setRgbContext] = useState(props.context);
+  const rbgContext = props.context;
 
   // Use the viewer state from context
   const {
@@ -469,6 +711,7 @@ export const FinalRenderInner = (props: RGBDProps) => {
       <Suspense
         fallback={<div className="w-full h-full bg-gray-100"> Loading</div>}
       >
+        {/* @ts-expect-error - ThreeCanvas type issue */}
         <ThreeCanvas style={{ width: "100%", height: "100%" }}>
           <AutoZoomCamera
             imageHeight={ySize}
@@ -510,6 +753,13 @@ export const FinalRenderInner = (props: RGBDProps) => {
               </group>
             );
           })}
+
+          {/* Clickable background plane for creating panels */}
+          <ClickablePlane
+            xSize={xSize}
+            ySize={ySize}
+            setOpenPanels={setOpenPanels}
+          />
 
           {showRois && (
             <>
@@ -553,38 +803,27 @@ export const FinalRenderInner = (props: RGBDProps) => {
         >
           <button
             className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
-            onClick={() =>
-              setOpenPanels((panels) =>
-                panels.filter(
-                  (p) =>
-                    !(
-                      p.identifier === panel.identifier &&
-                      p.object === panel.object
-                    ),
-                ),
-              )
-            }
+            onClick={() => {
+              setOpenPanels([]);
+            }}
+            title="Close Panel"
           >
             ×
           </button>
 
-          {panel.isRightClick ? (
-            <SmartContext identifier={panel.identifier} object={panel.object} />
-          ) : (
-            <>
-              <ObjectButton identifier={panel.identifier} object={panel.object}>
-                <Button variant={"outline"} className="w-6 h-9 text-white">
-                  Do
-                </Button>
-              </ObjectButton>
-
-              <div className="text-xs text-gray-500"> Knowledge </div>
-              <StructureInfo
-                identifier={panel.identifier}
-                object={panel.object}
-              />
-            </>
-          )}
+          <PanelContent
+            panel={panel}
+            roiDrawMode={roiDrawMode}
+            setRoiDrawMode={setRoiDrawMode}
+            allowRoiDrawing={allowRoiDrawing}
+            setAllowRoiDrawing={setAllowRoiDrawing}
+            showRois={showRois}
+            setShowRois={setShowRois}
+            showLayerEdges={showLayerEdges}
+            setShowLayerEdges={setShowLayerEdges}
+            showDebugText={showDebugText}
+            setShowDebugText={setShowDebugText}
+          />
         </Card>
       ))}
     </div>

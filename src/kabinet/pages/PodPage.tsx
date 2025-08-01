@@ -20,7 +20,6 @@ import {
   useGetPodQuery,
 } from "../api/graphql";
 import ResourceCard from "../components/cards/ResourceCard";
-import React from "react";
 export const AssignButton = (props: {
   template: ListImplementationFragment;
   pod: string;

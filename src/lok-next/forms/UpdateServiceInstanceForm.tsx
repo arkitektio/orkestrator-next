@@ -1,5 +1,5 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
+import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
@@ -9,10 +9,12 @@ import {
   UpdateServiceInstanceMutationVariables,
   useGroupOptionsLazyQuery,
   useUpdateServiceInstanceMutation,
-  useUserOptionsLazyQuery
+  useUserOptionsLazyQuery,
 } from "../api/graphql";
 
-export const UpdateServiceInstanceForm = (props: { instance: Partial<ServiceInstanceFragment> }) => {
+export const UpdateServiceInstanceForm = (props: {
+  instance: Partial<ServiceInstanceFragment>;
+}) => {
   const [createServiceInstance] = useUpdateServiceInstanceMutation();
 
   const cre = useGraphQlFormDialog(createServiceInstance);
@@ -20,9 +22,7 @@ export const UpdateServiceInstanceForm = (props: { instance: Partial<ServiceInst
   const [userSearch] = useUserOptionsLazyQuery();
   const [groupSearch] = useGroupOptionsLazyQuery();
 
-  const form = useForm<
-    UpdateServiceInstanceMutationVariables["input"]
-  >({
+  const form = useForm<UpdateServiceInstanceMutationVariables["input"]>({
     defaultValues: {
       id: props.instance.id,
       allowedUsers: props.instance.allowedUsers?.map((u) => u.id) ?? [],
@@ -47,33 +47,32 @@ export const UpdateServiceInstanceForm = (props: { instance: Partial<ServiceInst
         >
           <div className="grid grid-cols-2 gap-2 w-full">
             <div className="col-span-2 flex-col gap-1 flex">
-              <GraphQLSearchField
+              <GraphQLListSearchField
                 label="Allowed Users"
                 name="allowedUsers"
                 searchQuery={userSearch}
                 description="Users that are allowed to access this service instance."
               />
-              <GraphQLSearchField
+              <GraphQLListSearchField
                 label="Denied Users"
                 name="deniedUsers"
                 searchQuery={userSearch}
                 description="Users that are denied to access this service instance."
               />
-              <GraphQLSearchField
+              <GraphQLListSearchField
                 label="Allowed Groups"
                 name="allowedGroups"
                 searchQuery={groupSearch}
                 description="Groups that are allowed to access this service instance."
               />
-              <GraphQLSearchField
+              <GraphQLListSearchField
                 label="Denied Groups"
                 name="deniedGroups"
                 searchQuery={groupSearch}
                 description="Groups that are denied to access this service instance."
               />
             </div>
-            <div className="grid cols-2 w-full">
-            </div>
+            <div className="grid cols-2 w-full"></div>
           </div>
           <DialogFooter className="mt-2">
             <Button type="submit">Change</Button>

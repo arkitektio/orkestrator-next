@@ -1,8 +1,8 @@
 import { MikroROI } from "@/linkers";
-import { ListRoiFragment, RoiKind } from "@/mikro-next/api/graphql";
+import { ListRoiFragment, RoiKind, useDeleteRoiMutation } from "@/mikro-next/api/graphql";
 import { useCursor, Line } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import * as THREE from "three";
 import { PassThroughProps } from "../TwoDThree";
 
@@ -32,6 +32,42 @@ export const ROIPolygon = (
   const meshRef = useRef<THREE.Mesh>(null);
   const { camera, gl, size } = useThree();
   const [hovered, setHovered] = useState(false);
+  const [selected, setSelected] = useState(false);
+  const [deleteRoi] = useDeleteRoiMutation();
+
+  // Keyboard event handler for deletion
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Backspace" && selected) {
+        event.preventDefault();
+        event.stopPropagation();
+        deleteRoi({
+          variables: { id: roi.id },
+          onCompleted: () => {
+            console.log(`ROI ${roi.id} deleted`);
+          },
+          onError: (error) => {
+            console.error("Failed to delete ROI:", error);
+          },
+        });
+      }
+    };
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (meshRef.current && !meshRef.current.userData.contains?.(event.target)) {
+        setSelected(false);
+      }
+    };
+
+    if (selected) {
+      window.addEventListener("keydown", handleKeyDown);
+      window.addEventListener("click", handleClickOutside);
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+        window.removeEventListener("click", handleClickOutside);
+      };
+    }
+  }, [selected, roi.id, deleteRoi]);
 
   // Convert ROI vectors to Three.js coordinates
   const vertices = convertToThreeJSCoords(
@@ -83,6 +119,9 @@ export const ROIPolygon = (
 
       if (!meshRef.current) return;
 
+      // Set this ROI as selected for deletion
+      setSelected(true);
+
       // Project the rightmost point of the ROI to screen coordinates
       const screenPos = projectToScreenCoordinates(rightPoint);
 
@@ -94,30 +133,19 @@ export const ROIPolygon = (
         screenPos.y,
       );
 
-      props.setOpenPanels((panels) => {
-        const existingPanel = panels.find(
-          (p) => p.object === roi.id && p.identifier === MikroROI.identifier,
-        );
-
-        if (existingPanel) {
-          return panels.filter(
-            (p) =>
-              !(p.object === roi.id && p.identifier === MikroROI.identifier),
-          );
-        } else {
-          return [
-            ...panels,
-            {
-              positionX: screenPos.x,
-              positionY: screenPos.y,
-              identifier: MikroROI.identifier,
-              object: roi.id,
-            },
-          ];
-        }
+      props.setOpenPanels(() => {
+        return [
+          {
+            positionX: screenPos.x,
+            positionY: screenPos.y,
+            identifier: MikroROI.identifier,
+            object: roi.id,
+            isRightClick: false,
+          },
+        ];
       });
     },
-    [roi.id, rightPoint, camera, size],
+    [roi.id, rightPoint, camera, size, setSelected],
   );
 
   const onRightClick = useCallback(
@@ -125,6 +153,9 @@ export const ROIPolygon = (
       e.stopPropagation();
 
       if (!meshRef.current) return;
+
+      // Set this ROI as selected for deletion
+      setSelected(true);
 
       // Project the rightmost point of the ROI to screen coordinates
       const screenPos = projectToScreenCoordinates(rightPoint);
@@ -135,31 +166,19 @@ export const ROIPolygon = (
         screenPos.y,
       );
 
-      props.setOpenPanels((panels) => {
-        const existingPanel = panels.find(
-          (p) => p.object === roi.id && p.identifier === MikroROI.identifier,
-        );
-
-        if (existingPanel) {
-          return panels.filter(
-            (p) =>
-              !(p.object === roi.id && p.identifier === MikroROI.identifier),
-          );
-        } else {
-          return [
-            ...panels,
-            {
-              positionX: screenPos.x,
-              positionY: screenPos.y,
-              identifier: MikroROI.identifier,
-              object: roi.id,
-              isRightClick: true,
-            },
-          ];
-        }
+      props.setOpenPanels(() => {
+        return [
+          {
+            positionX: screenPos.x,
+            positionY: screenPos.y,
+            identifier: MikroROI.identifier,
+            object: roi.id,
+            isRightClick: true,
+          },
+        ];
       });
     },
-    [roi.id, rightPoint, camera, size],
+    [roi.id, rightPoint, camera, size, setSelected],
   );
 
   useCursor(hovered, "pointer");

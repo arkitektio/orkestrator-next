@@ -1,4 +1,4 @@
-import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
+import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { Button } from "@/components/ui/button";
 import {
   DialogDescription,
@@ -17,7 +17,7 @@ import { useWidgetRegistry } from "../widgets/WidgetsContext";
 export const SelectHooks = (props: {}) => {
   const [search, _] = useHooksSearchLazyQuery();
 
-  return <GraphQLSearchField name="hooks" searchQuery={search} />;
+  return <GraphQLListSearchField name="hooks" searchQuery={search} />;
 };
 
 export const ActionAssignForm = (props: {
@@ -57,7 +57,10 @@ export const ActionAssignForm = (props: {
       </DialogHeader>
       <DialogDescription className="mt2">
         {action?.description && (
-          <ActionDescription description={action?.description} variables={data} />
+          <ActionDescription
+            description={action?.description}
+            variables={data}
+          />
         )}
         <Form {...form}>
           <form

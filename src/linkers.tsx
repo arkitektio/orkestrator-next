@@ -342,7 +342,7 @@ export const MikroReferenceView = buildSmart(
   "mikro/referenceviews",
 );
 
-export const MikroRGBView = buildSmart("@mikronext/rgbview", "mikro/rgbviews");
+export const MikroRGBView = buildSmart("@mikro/rgbview", "mikro/rgbviews");
 
 export const MikroRGBContext = buildSmart(
   "@mikro/rgbcontext",

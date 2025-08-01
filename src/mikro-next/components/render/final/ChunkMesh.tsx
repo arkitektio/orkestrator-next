@@ -172,6 +172,7 @@ export const ChunkBitmapTexture = ({
 
   cLimMax = view.contrastLimitMax || texture?.max;
   cLimMin = view.contrastLimitMin || texture?.min;
+  const gamma = view.gamma || 1;
 
   console.log("cLimMax", cLimMax, "cLimMin", cLimMin, "texture", texture);
 
@@ -194,6 +195,7 @@ export const ChunkBitmapTexture = ({
             minValue: { value: cLimMin },
             maxValue: { value: cLimMax },
             opacity: { value: 1 },
+            gamma: { value: gamma },
           }}
           onBeforeCompile={(shader) => {
             // Animate opacity from 0 to 1
@@ -218,11 +220,13 @@ export const ChunkBitmapTexture = ({
         uniform float minValue;
         uniform float maxValue;
         uniform float opacity;
+        uniform float gamma;
         varying vec2 vUv;
 
         void main() {
           float value = texture2D(colorTexture, vUv).r;
           float normalized = clamp((value - minValue) / (maxValue - minValue), 0.0, 0.999);
+          normalized = pow(normalized, gamma);
           vec4 color = texture2D(colormapTexture, vec2(normalized, 0.5)).rgba;
           gl_FragColor = vec4(color.rgb, color.a); // should render grayscale 0-1
         }

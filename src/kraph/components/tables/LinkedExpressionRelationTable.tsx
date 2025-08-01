@@ -32,7 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
+import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { Form } from "@/components/ui/form";
 import {
   Popover,
@@ -364,7 +364,7 @@ export const LinkedExpressionRelationTable = (props: {
       <div className="flex items-center py-4 gap-2">
         <Form {...form}>
           {!props.linkedExpression && (
-            <GraphQLSearchField
+            <GraphQLListSearchField
               placeholder="Filter Kind"
               searchQuery={searchM}
               name="kinds"

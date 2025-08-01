@@ -2836,6 +2836,7 @@ export type Query = {
   randomImage: Image;
   renderTree: RenderTree;
   renderTrees: Array<RenderTree>;
+  rgbView: RgbView;
   rgbViews: Array<RgbView>;
   rgbcontext: RgbContext;
   rgbcontexts: Array<RgbContext>;
@@ -3038,6 +3039,17 @@ export type QueryRenderTreesArgs = {
 };
 
 
+export type QueryRgbViewArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryRgbViewsArgs = {
+  filters?: InputMaybe<RgbViewFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryRgbcontextArgs = {
   id: Scalars['ID']['input'];
 };
@@ -3154,6 +3166,12 @@ export type RgbContextSnapshotsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
+export type RgbContextViewsArgs = {
+  filters?: InputMaybe<RgbViewFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 export type RgbContextFilter = {
   AND?: InputMaybe<RgbContextFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3214,6 +3232,16 @@ export type RgbViewFullColourArgs = {
 
 export type RgbViewNameArgs = {
   long?: Scalars['Boolean']['input'];
+};
+
+export type RgbViewFilter = {
+  AND?: InputMaybe<RgbViewFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<RgbViewFilter>;
+  OR?: InputMaybe<RgbViewFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type RgbViewInput = {
@@ -4590,6 +4618,13 @@ export type CreateRoiMutationVariables = Exact<{
 
 export type CreateRoiMutation = { __typename?: 'Mutation', createRoi: { __typename?: 'ROI', id: string, pinned: boolean, createdAt: any, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> }, creator?: { __typename?: 'User', sub: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }> } };
 
+export type DeleteRoiMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteRoiMutation = { __typename?: 'Mutation', deleteRoi: string };
+
 export type CreateSnapshotMutationVariables = Exact<{
   image: Scalars['ID']['input'];
   file: Scalars['ImageFileLike']['input'];
@@ -4970,6 +5005,21 @@ export type GetTablesQueryVariables = Exact<{
 
 
 export type GetTablesQuery = { __typename?: 'Query', tables: Array<{ __typename?: 'Table', id: string, name: string, origins: Array<{ __typename?: 'Image', id: string }>, store: { __typename?: 'ParquetStore', id: string, key: string, bucket: string, path: string } }> };
+
+export type GetRgbViewQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetRgbViewQuery = { __typename?: 'Query', rgbView: { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> } };
+
+export type SearchRgbViewsQueryVariables = Exact<{
+  search?: InputMaybe<Scalars['String']['input']>;
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+}>;
+
+
+export type SearchRgbViewsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'RGBView', value: string, label: string }> };
 
 export type WatchImagesSubscriptionVariables = Exact<{
   dataset?: InputMaybe<Scalars['ID']['input']>;
@@ -6983,6 +7033,37 @@ export function useCreateRoiMutation(baseOptions?: ApolloReactHooks.MutationHook
 export type CreateRoiMutationHookResult = ReturnType<typeof useCreateRoiMutation>;
 export type CreateRoiMutationResult = Apollo.MutationResult<CreateRoiMutation>;
 export type CreateRoiMutationOptions = Apollo.BaseMutationOptions<CreateRoiMutation, CreateRoiMutationVariables>;
+export const DeleteRoiDocument = gql`
+    mutation DeleteROI($id: ID!) {
+  deleteRoi(input: {id: $id})
+}
+    `;
+export type DeleteRoiMutationFn = Apollo.MutationFunction<DeleteRoiMutation, DeleteRoiMutationVariables>;
+
+/**
+ * __useDeleteRoiMutation__
+ *
+ * To run a mutation, you first call `useDeleteRoiMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteRoiMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteRoiMutation, { data, loading, error }] = useDeleteRoiMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteRoiMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteRoiMutation, DeleteRoiMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<DeleteRoiMutation, DeleteRoiMutationVariables>(DeleteRoiDocument, options);
+      }
+export type DeleteRoiMutationHookResult = ReturnType<typeof useDeleteRoiMutation>;
+export type DeleteRoiMutationResult = Apollo.MutationResult<DeleteRoiMutation>;
+export type DeleteRoiMutationOptions = Apollo.BaseMutationOptions<DeleteRoiMutation, DeleteRoiMutationVariables>;
 export const CreateSnapshotDocument = gql`
     mutation CreateSnapshot($image: ID!, $file: ImageFileLike!) {
   createSnapshot(input: {file: $file, image: $image}) {
@@ -8731,6 +8812,81 @@ export function useGetTablesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHo
 export type GetTablesQueryHookResult = ReturnType<typeof useGetTablesQuery>;
 export type GetTablesLazyQueryHookResult = ReturnType<typeof useGetTablesLazyQuery>;
 export type GetTablesQueryResult = Apollo.QueryResult<GetTablesQuery, GetTablesQueryVariables>;
+export const GetRgbViewDocument = gql`
+    query GetRGBView($id: ID!) {
+  rgbView(id: $id) {
+    ...RGBView
+  }
+}
+    ${RgbViewFragmentDoc}`;
+
+/**
+ * __useGetRgbViewQuery__
+ *
+ * To run a query within a React component, call `useGetRgbViewQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetRgbViewQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetRgbViewQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetRgbViewQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetRgbViewQuery, GetRgbViewQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetRgbViewQuery, GetRgbViewQueryVariables>(GetRgbViewDocument, options);
+      }
+export function useGetRgbViewLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRgbViewQuery, GetRgbViewQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetRgbViewQuery, GetRgbViewQueryVariables>(GetRgbViewDocument, options);
+        }
+export type GetRgbViewQueryHookResult = ReturnType<typeof useGetRgbViewQuery>;
+export type GetRgbViewLazyQueryHookResult = ReturnType<typeof useGetRgbViewLazyQuery>;
+export type GetRgbViewQueryResult = Apollo.QueryResult<GetRgbViewQuery, GetRgbViewQueryVariables>;
+export const SearchRgbViewsDocument = gql`
+    query SearchRGBViews($search: String, $values: [ID!]) {
+  options: rgbViews(
+    filters: {search: $search, ids: $values}
+    pagination: {limit: 10}
+  ) {
+    value: id
+    label: name
+  }
+}
+    `;
+
+/**
+ * __useSearchRgbViewsQuery__
+ *
+ * To run a query within a React component, call `useSearchRgbViewsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchRgbViewsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchRgbViewsQuery({
+ *   variables: {
+ *      search: // value for 'search'
+ *      values: // value for 'values'
+ *   },
+ * });
+ */
+export function useSearchRgbViewsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchRgbViewsQuery, SearchRgbViewsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<SearchRgbViewsQuery, SearchRgbViewsQueryVariables>(SearchRgbViewsDocument, options);
+      }
+export function useSearchRgbViewsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchRgbViewsQuery, SearchRgbViewsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<SearchRgbViewsQuery, SearchRgbViewsQueryVariables>(SearchRgbViewsDocument, options);
+        }
+export type SearchRgbViewsQueryHookResult = ReturnType<typeof useSearchRgbViewsQuery>;
+export type SearchRgbViewsLazyQueryHookResult = ReturnType<typeof useSearchRgbViewsLazyQuery>;
+export type SearchRgbViewsQueryResult = Apollo.QueryResult<SearchRgbViewsQuery, SearchRgbViewsQueryVariables>;
 export const WatchImagesDocument = gql`
     subscription WatchImages($dataset: ID) {
   images(dataset: $dataset) {

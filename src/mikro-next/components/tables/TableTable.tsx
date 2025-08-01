@@ -35,7 +35,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
+import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { Form } from "@/components/ui/form";
 import { TooltipButton } from "@/components/ui/tooltip-button";
 import {

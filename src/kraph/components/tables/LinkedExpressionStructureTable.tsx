@@ -35,7 +35,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
+import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Form } from "@/components/ui/form";
 import { KraphNode, KraphLinkedExpression } from "@/linkers";
@@ -367,7 +367,7 @@ export const LinkedExpressionStructureTable = (props: {
       <div className="flex items-center py-4 gap-2">
         <Form {...form}>
           {!props.linkedExpression && (
-            <GraphQLSearchField
+            <GraphQLListSearchField
               placeholder="Filter Kind"
               searchQuery={searchM}
               name="kinds"

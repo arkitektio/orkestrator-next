@@ -1063,6 +1063,18 @@
             "deprecationReason": null
           },
           {
+            "name": "inCollection",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "kind",
             "description": null,
             "type": {
@@ -2331,7 +2343,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"de4937b2-07e3-4b9b-9920-b4d1f0b1751e\"",
+            "defaultValue": "\"df0a9d57-3833-472e-aeac-ac65a62c37c9\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -13889,7 +13901,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"5080e989-bd49-471b-8318-d266c91d678f\"",
+            "defaultValue": "\"73aa7211-5b50-47b1-9a22-947e617fe934\"",
             "isDeprecated": false,
             "deprecationReason": null
           },

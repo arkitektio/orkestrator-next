@@ -16,7 +16,10 @@ export const identifierFromSmartOrString = (identifier: Smart | string) => {
 export type DeleteActionParams = {
   identifier: Smart | string;
   title: string;
-  mutation: TypedDocumentNode<any, { input: {id: string, pin?: boolean | undefined} }>;
+  mutation: TypedDocumentNode<
+    unknown,
+    { input: { id: string; pin?: boolean | undefined } }
+  >;
   service: string;
   description?: string;
 };
@@ -31,19 +34,19 @@ export const buildDeleteAction = (params: DeleteActionParams): Action => ({
       identifier: identifierFromSmartOrString(params.identifier),
     },
   ],
-  execute: async ({ services, onProgress, abortSignal, state }) => {
-    let service = services[params.service]
+  execute: async ({ services, onProgress, state }) => {
+    const service = services[params.service]
       .client as ApolloClient<NormalizedCache>;
     if (!service) {
       throw new Error("Service not found");
     }
 
-    for (let i in state.left) {
+    for (const i in state.left) {
       await service.mutate({
         mutation: params.mutation,
         variables: {
           input: {
-            state.left[i].object,
+            id: state.left[i].object,
             pin: false,
           },
         },

@@ -14,6 +14,7 @@ import { ImageView, XArrayContext } from "./context";
 import { BasicIndexer } from "./indexing";
 import { S3Store } from "./store";
 import { getChunkItem } from "./utils";
+import { generateInstanceSegmentationColormapFormat } from "@/lib/colormap";
 export const available_color_maps = [
   "jet",
   "hot",
@@ -57,6 +58,7 @@ export const available_color_maps = [
   "velocity-blue",
   "velocity-green",
   "cubehelix",
+  "instance-segmentation",
 ] as const;
 
 export type AvailableColormap = (typeof available_color_maps)[number];
@@ -135,35 +137,78 @@ export const XArrayProvider: React.FC<{
     let min = cmin || view.min;
     let max = cmax || view.max;
 
-    let colors = c({
-      nshades: 256,
-      colormap: colormap,
-      format: "rgba",
-      alpha: alpha || 1,
-    });
+    let colors: [number, number, number, number][];
+    
+    if (colormap === "instance-segmentation") {
+      // For instance segmentation, determine number of unique values in the data
+      const uniqueValues = new Set(data);
+      const numInstances = uniqueValues.size;
+      
+      // Generate colors using our HSV-based colormap
+      colors = generateInstanceSegmentationColormapFormat(numInstances, 70, 90, 0);
+      
+      // Pad to 256 colors if needed for consistency with existing system
+      while (colors.length < 256) {
+        colors.push([0, 0, 0, alpha ? Math.round(alpha * 255) : 255]);
+      }
+      
+      // Apply alpha if specified
+      if (alpha !== undefined) {
+        colors = colors.map(([r, g, b, _]) => [r, g, b, Math.round(alpha * 255)] as [number, number, number, number]);
+      }
+    } else {
+      // Use existing colormap system for standard colormaps
+      colors = c({
+        nshades: 256,
+        colormap: colormap,
+        format: "rgba",
+        alpha: alpha || 1,
+      });
+    }
 
     let iData = new Array(imgwidth * imgheight * 4);
 
     let z = 0;
-    for (let j = 0; j < imgheight; j++) {
-      for (let i = 0; i < imgwidth; i++) {
-        let val = data[j * imgwidth + i];
-        let colorIndex = Math.floor(((val - min) / max) * 255);
-        if (colorIndex > 255) {
-          colorIndex = 255;
-        }
-        if (colorIndex < 0) {
-          colorIndex = 0;
-        }
-        //console.log((val / max) * 255);
+    if (colormap === "instance-segmentation") {
+      // For instance segmentation, map pixel values directly to color indices
+      const uniqueValues = Array.from(new Set(data)).sort((a, b) => a - b);
+      const valueToIndexMap = new Map(uniqueValues.map((val, idx) => [val, idx]));
+      
+      for (let j = 0; j < imgheight; j++) {
+        for (let i = 0; i < imgwidth; i++) {
+          let val = data[j * imgwidth + i];
+          let colorIndex = valueToIndexMap.get(val) || 0;
+          
+          let color = colors[colorIndex] || [0, 0, 0, 255];
 
-        let color = colors[colorIndex] || [255, 0, 255, 255];
+          iData[z] = color[0];
+          iData[z + 1] = color[1];
+          iData[z + 2] = color[2];
+          iData[z + 3] = color[3];
+          z += 4;
+        }
+      }
+    } else {
+      // Use existing logic for standard colormaps
+      for (let j = 0; j < imgheight; j++) {
+        for (let i = 0; i < imgwidth; i++) {
+          let val = data[j * imgwidth + i];
+          let colorIndex = Math.floor(((val - min) / max) * 255);
+          if (colorIndex > 255) {
+            colorIndex = 255;
+          }
+          if (colorIndex < 0) {
+            colorIndex = 0;
+          }
 
-        iData[z] = color[0];
-        iData[z + 1] = color[1];
-        iData[z + 2] = color[2];
-        iData[z + 3] = color[3];
-        z += 4;
+          let color = colors[colorIndex] || [255, 0, 255, 255];
+
+          iData[z] = color[0];
+          iData[z + 1] = color[1];
+          iData[z + 2] = color[2];
+          iData[z + 3] = color[3];
+          z += 4;
+        }
       }
     }
 

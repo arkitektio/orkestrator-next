@@ -18,3 +18,6 @@ export const enumToOptions = (e: any) => {
     value: e[key],
   }));
 };
+
+// Re-export colormap utilities for easy access
+export * from "./colormap";

@@ -33,7 +33,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
           title="Datasets"
           description="Datasets allow you to group your images and files together. Just like folders. "
         />
-        <DatasetList pagination={{ limit: 30 }} />
+        <DatasetList pagination={{ limit: 30 }} filters={{ parentless: true }} />
       </div>
     </PageLayout>
   );

@@ -102,8 +102,9 @@ export const ScaleViewRender = (props: {
   t: number;
   xSize: number;
   ySize: number;
+  availableScales?: number[];
 }) => {
-  const { derivedScaleView, view, z, t, xSize, ySize } = props;
+  const { derivedScaleView, view, z, t, xSize, ySize, availableScales } = props;
 
   const selection = [
     {
@@ -138,7 +139,7 @@ export const ScaleViewRender = (props: {
           <ChunkBitmapTexture
             renderFunc={renderView}
             chunk_coords={chunk_loader.chunk_coords}
-            chunk_shape={derivedScaleView.image.store.chunks}
+            chunk_shape={derivedScaleView.image.store.chunks || []}
             key={`${index}-${z}-${t}-${view.id}`}
             view={view}
             t={t}
@@ -149,6 +150,8 @@ export const ScaleViewRender = (props: {
             imageHeight={ySize}
             scaleX={derivedScaleView.scaleX}
             scaleY={derivedScaleView.scaleY}
+            availableScales={availableScales}
+            enableCulling={true}
           />
         );
       })}

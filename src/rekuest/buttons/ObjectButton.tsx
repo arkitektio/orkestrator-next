@@ -4,7 +4,7 @@ import {
   defaultRegistry,
   Structure,
 } from "@/actions/action-registry";
-import { useArkitekt } from "@/lib/arkitekt/provider";
+import { useDialog } from "@/app/dialog";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -18,7 +18,6 @@ import {
   ContextMenuContent,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import {
   Popover,
   PopoverContent,
@@ -34,39 +33,50 @@ import {
   ListDefinitionFragment,
   useAllPrimaryDefinitionsQuery,
 } from "@/kabinet/api/graphql";
-import { KabinetDefinition } from "@/linkers";
-import { CommandGroup } from "cmdk";
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import {
-  DemandKind,
-  ListShortcutFragment,
-  ListImplementationFragment,
-  PortKind,
-  PrimaryActionFragment,
-  ShortcutFragment,
-  useAllPrimaryActionsQuery,
-  useShortcutsQuery,
-  useImplementationsQuery,
-} from "../api/graphql";
-import { ActionAssignForm } from "../forms/ActionAssignForm";
-import { useAssign } from "../hooks/useAssign";
-import { useLiveAssignation } from "../hooks/useAssignations";
-import { useHashAction } from "../hooks/useHashActions";
-import { LightningBoltIcon } from "@radix-ui/react-icons";
-import { useDialog } from "@/app/dialog";
-import { e } from "node_modules/@udecode/plate-emoji/dist/IndexSearch-Dvqq913n";
-import {
+  ListMeasurementCategoryWithGraphFragment,
   ListStructureRelationCategoryWithGraphFragment,
   useCreateStructureMutation,
   useCreateStructureRelationMutation,
+  useListMeasurmentCategoryQuery,
   useListStructureRelationCategoryQuery,
 } from "@/kraph/api/graphql";
-import { Guard } from "@/lib/arkitekt/Arkitekt";
+import { Guard, useRekuest } from "@/lib/arkitekt/Arkitekt";
+import { useArkitekt } from "@/lib/arkitekt/provider";
+import { cn } from "@/lib/utils";
+import { KabinetDefinition } from "@/linkers";
+import { LightningBoltIcon } from "@radix-ui/react-icons";
+import { CommandGroup } from "cmdk";
+import React, { useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { v4 as uuidv4 } from "uuid";
+import {
+  AssignationChangeEvent,
+  AssignationEventFragment,
+  DemandKind,
+  ListImplementationFragment,
+  ListShortcutFragment,
+  PortKind,
+  PrimaryActionFragment,
+  useAllPrimaryActionsQuery,
+  useImplementationsQuery,
+  useShortcutsQuery
+} from "../api/graphql";
+import { registeredCallbacks } from "../components/functional/AssignationUpdater";
+import { useAssign } from "../hooks/useAssign";
+import { useLiveAssignation } from "../hooks/useAssignations";
+import { useHashAction } from "../hooks/useHashActions";
+import { useHashActionWithProgress } from "../hooks/useHashActionWithProgress";
 
-
-export type OnDone = () => void;
+export type OnDone = (args: {
+  event?: AssignationEventFragment;
+  kind: "local" | "action" | "shortcut" | "relation" | "measurement";
+}) => void;
+export type onError = (args: {
+  event?: AssignationEventFragment;
+  kind: "local" | "action" | "shortcut" | "relation" | "measurement";
+}) => void;
 
 export const DirectImplementationAssignment = (
   props: SmartContextProps & { action: PrimaryActionFragment },
@@ -103,15 +113,19 @@ export const DirectImplementationAssignment = (
     }
 
     try {
+      const reference = uuidv4();
+
       await assign({
         implementation: implementation.id,
         args: {
           [the_key]: props.object,
         },
+        reference: reference,
       });
-      if (props.onDone) {
-        props.onDone();
-      }
+
+      registeredCallbacks.set(reference, (event: AssignationChangeEvent) => {
+        props.onDone?.(event);
+      });
     } catch (e) {
       toast.error(e.message);
     }
@@ -134,6 +148,16 @@ export const DirectImplementationAssignment = (
           </>
         ))}
       </div>
+      <Button
+        onClick={() =>
+          openDialog("createshortcut", {
+            id: props.action.id,
+            args: { [props.action.args?.at(0)?.key || "object"]: props.object },
+          })
+        }
+      >
+        Create Shortcut
+      </Button>
     </>
   );
 };
@@ -141,14 +165,33 @@ export const DirectImplementationAssignment = (
 export const AssignButton = (
   props: SmartContextProps & { action: PrimaryActionFragment },
 ) => {
-  const status = useLiveAssignation({
-    identifier: props.identifier,
-    object: props.object,
-    action: props.action.id,
-  });
+  const [doing, setDoing] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [progress, setProgress] = React.useState<number | null>(0);
 
   const { assign } = useAssign();
   const { openDialog } = useDialog();
+
+  const doStuff = useCallback(
+    (event: AssignationEventFragment) => {
+      console.log("Assignation event received:", event);
+      if (event.kind == "DONE") {
+        setDoing(false);
+        setProgress(null);
+        props.onDone?.({ event, kind: "action" });
+      }
+      if (event.kind == "ERROR" || event.kind == "CRITICAL") {
+        setDoing(false);
+        setProgress(null);
+        setError(event.message || "Unknown error");
+        props.onError?.(event.message || "Unknown error");
+      }
+      if (event.kind == "PROGRESS") {
+        setProgress(event.progress || 0);
+      }
+    },
+    [setDoing, setProgress, setError, props.onDone, props.onError],
+  );
 
   const conditionalAssign = async (action: PrimaryActionFragment) => {
     let the_key = action.args?.at(0)?.key;
@@ -168,17 +211,25 @@ export const AssignButton = (
     }
 
     try {
+      const reference = uuidv4();
+
       await assign({
         action: action.id,
         args: {
           [the_key]: props.object,
         },
+        reference: reference,
+        ephemeral: props.ephemeral,
       });
-      if (props.onDone) {
-        props.onDone();
-      }
+
+      setDoing(true);
+      setError(null);
+
+      registeredCallbacks.set(reference, doStuff);
     } catch (e) {
       toast.error(e.message);
+      setDoing(false);
+      setError(e.message || "Unknown error");
     }
   };
 
@@ -189,16 +240,21 @@ export const AssignButton = (
           onSelect={() => conditionalAssign(props.action)}
           value={props.action.id}
           key={props.action.id}
-          className="flex-grow  flex flex-col group cursor-pointer"
+          className={cn(
+            "flex-grow  flex flex-col group cursor-pointer",
+            doing && "animate-pulse",
+            error && "border border-1 border-red-200",
+          )}
           style={{
-            backgroundSize: `${status?.progress || 0}% 100%`,
-            backgroundImage: `linear-gradient(to right, #10b981 ${status?.progress}%, #10b981 ${status?.progress}%)`,
+            backgroundSize: `${progress || 0}% 100%`,
+            backgroundImage: `linear-gradient(to right, #10b981 ${progress}%, #10b981 ${progress}%)`,
             backgroundRepeat: "no-repeat",
             backgroundPosition: "left center",
           }}
         >
           <span className="mr-auto text-md text-gray-100">
-            {props.action.name}
+            {props.action.name}{" "}
+            {error && <span className="text-red-800">{error}</span>}
           </span>
           <span className="mr-auto text-xs text-gray-400">
             {props.action.description}
@@ -279,19 +335,25 @@ export const ShortcutButton = (
 };
 
 export const AutoInstallButton = (props: { definition: string }) => {
-  const { assign, action } = useHashAction({
+  const { assign, progress, doing, installed } = useHashActionWithProgress({
     hash: KABINET_INSTALL_DEFINITION_HASH,
   });
 
   return (
     <Button
-      className="group-hover:block hidden"
+      className="group-hover:opacity-100 opacity-0 transition-opacity duration-300"
       variant={"outline"}
       onClick={(e) => {
         e.preventDefault();
-        assign({ action: action?.id, args: { definition: props.definition } });
+        assign({ definition: props.definition });
       }}
-      disabled={!action}
+      disabled={installed}
+      style={{
+        backgroundSize: `${progress || 0}% 100%`,
+        backgroundImage: `linear-gradient(to right, #10b981 ${progress}%, #10b981 ${progress}%)`,
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "left center",
+      }}
     >
       Auto Install
     </Button>
@@ -304,20 +366,32 @@ export const InstallButton = (props: {
 }) => {
   const navigate = useNavigate();
 
-  const objectAssign = async () => {
-    try {
-      navigate(KabinetDefinition.linkBuilder(props.definition.id));
-    } catch (e) {
-      toast.error(e.message);
-    }
-  };
+  const client = useRekuest();
+
+  const { assign, progress, doing, installed, onDone } = useHashActionWithProgress({
+    hash: KABINET_INSTALL_DEFINITION_HASH,
+    onDone: (event) => {
+      client.refetchQueries({ include: ["AllPrimaryActions"] });
+    },
+  });
+
+
 
   return (
     <CommandItem
-      value={props.definition.name}
+      value={props.definition.id}
       key={props.definition.id}
-      onSelect={objectAssign}
+      onSelect={(e) => {
+        assign({ definition: props.definition.id });
+      }}
       className="flex-1 "
+      style={{
+        backgroundSize: `${progress || 0}% 100%`,
+        backgroundImage: `linear-gradient(to right, #10b981 ${progress}%, #10b981 ${progress}%)`,
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "left center",
+      }}
+      disabled={!installed}
     >
       <Tooltip>
         <TooltipTrigger className="flex flex-row group w-full">
@@ -330,7 +404,6 @@ export const InstallButton = (props: {
             </div>
           </div>
           <div className="flex-grow"></div>
-          <AutoInstallButton definition={props.definition.id} />
         </TooltipTrigger>
         <TooltipContent>{props.definition.description}</TooltipContent>
       </Tooltip>
@@ -348,7 +421,7 @@ export const ApplicableActions = (props: PassDownProps) => {
     },
   ];
 
-  let firstPartner = props.partners?.at(0);
+  const firstPartner = props.partners?.at(0);
 
   if (firstPartner) {
     demands.push({
@@ -368,6 +441,7 @@ export const ApplicableActions = (props: PassDownProps) => {
       filters: {
         demands: demands,
         search: props.filter && props.filter != "" ? props.filter : undefined,
+        inCollection: props.collection,
       },
     },
     fetchPolicy: "cache-and-network",
@@ -397,7 +471,7 @@ export const ApplicableActions = (props: PassDownProps) => {
       }
     >
       {data?.actions.map((x) => (
-        <AssignButton action={x} {...props} key={x.id}/>
+        <AssignButton action={x} {...props} key={x.id} />
       ))}
     </CommandGroup>
   );
@@ -456,7 +530,7 @@ export const AppicableShortcuts = (props: PassDownProps) => {
   return (
     <div className="flex flex-row gap-2 p-2">
       {data?.shortcuts.map((x) => (
-        <ShortcutButton shortcut={x} {...props} key={x.id}/>
+        <ShortcutButton shortcut={x} {...props} key={x.id} />
       ))}
     </div>
   );
@@ -514,11 +588,17 @@ export const ApplicableDefinitions = (props: PassDownProps) => {
       }
     >
       {data?.definitions.map((x) => (
-        <InstallButton definition={x} key={x.id}>{x.name}</InstallButton>
+        <InstallButton definition={x} key={x.id}>
+          {x.name}
+        </InstallButton>
       ))}
     </CommandGroup>
   );
 };
+
+
+
+
 
 export const ApplicableRelations = (props: PassDownProps) => {
   const firstPartner = props.partners?.at(0);
@@ -540,7 +620,6 @@ export const ApplicableRelations = (props: PassDownProps) => {
     fetchPolicy: "network-only",
   });
 
-
   return (
     <CommandGroup
       heading={
@@ -559,29 +638,107 @@ export const ApplicableRelations = (props: PassDownProps) => {
           <span className="text-red-500">Error: {error.message}</span>
         </CommandItem>
       )}
-        <CommandItem
-          value={"no-relation"}
-          onSelect={() => dialog.openDialog("createnewrelation", {left: [{
-identifier: props.identifier, object: props.object
-          }], right: props.partners || []})}
-          className="flex-1 "
-        >
-          <Tooltip>
-            <TooltipTrigger className="flex flex-row group w-full">
-              <div className="flex-col">
-                <div className="text-md text-gray-100 text-left">
-                  Create.new Relation
-                </div>
-                <div className="text-xs text-gray-400 text-left">
-                  Will create a new relation
-                </div>
+      <CommandItem
+        value={"no-relation"}
+        onSelect={() =>
+          dialog.openDialog("createnewrelation", {
+            left: [
+              {
+                identifier: props.identifier,
+                object: props.object,
+              },
+            ],
+            right: props.partners || [],
+          })
+        }
+        className="flex-1 "
+      >
+        <Tooltip>
+          <TooltipTrigger className="flex flex-row group w-full">
+            <div className="flex-col">
+              <div className="text-md text-gray-100 text-left">
+                Create.new Relation
               </div>
-              <div className="flex-grow"></div>
-            </TooltipTrigger>
-            <TooltipContent>{props.filter}</TooltipContent>
-          </Tooltip>
+              <div className="text-xs text-gray-400 text-left">
+                Will create a new relation
+              </div>
+            </div>
+            <div className="flex-grow"></div>
+          </TooltipTrigger>
+          <TooltipContent>{props.filter}</TooltipContent>
+        </Tooltip>
+      </CommandItem>
+    </CommandGroup>
+  );
+};
+
+export const ApplicableMeasurements = (props: PassDownProps) => {
+  const firstPartner = props.partners?.at(0);
+
+  if (firstPartner) {
+    return null;
+  }
+
+  const dialog = useDialog();
+
+  const { data, error } = useListMeasurmentCategoryQuery({
+    variables: {
+      filters: {
+        sourceIdentifier: props.identifier,
+        search: props.filter && props.filter != "" ? props.filter : undefined,
+      },
+    },
+    fetchPolicy: "network-only",
+  });
+
+  return (
+    <CommandGroup
+      heading={
+        <span className="font-light text-xs w-full items-center ml-2 w-full">
+          Set as ...
+        </span>
+      }
+    >
+      {data?.measurementCategories.map((x) => (
+        <MeasurementButton measurement={x} left={props} key={x.id}>
+          {x.label}
+        </MeasurementButton>
+      ))}
+      {error && (
+        <CommandItem value={"error"} className="flex-1">
+          <span className="text-red-500">Error: {error.message}</span>
         </CommandItem>
-      
+      )}
+      <CommandItem
+        value={"no-relation"}
+        onSelect={() =>
+          dialog.openDialog("createnewmeasurement", {
+            left: [
+              {
+                identifier: props.identifier,
+                object: props.object,
+              },
+            ],
+            right: props.partners || [],
+          })
+        }
+        className="flex-1 "
+      >
+        <Tooltip>
+          <TooltipTrigger className="flex flex-row group w-full">
+            <div className="flex-col">
+              <div className="text-md text-gray-100 text-left">
+                Create new Measurement
+              </div>
+              <div className="text-xs text-gray-400 text-left">
+                Will create a new measurement
+              </div>
+            </div>
+            <div className="flex-grow"></div>
+          </TooltipTrigger>
+          <TooltipContent>{props.filter}</TooltipContent>
+        </Tooltip>
+      </CommandItem>
     </CommandGroup>
   );
 };
@@ -679,7 +836,53 @@ export const RelateButton = (props: {
   );
 };
 
-export const useAction = (props: { action: Action; state: ActionState, onDone?: OnDone }) => {
+export const MeasurementButton = (props: {
+  measurement: ListMeasurementCategoryWithGraphFragment;
+  left: PassDownProps;
+  children: React.ReactNode;
+}) => {
+  const dialog = useDialog();
+
+  return (
+    <CommandItem
+      value={props.measurement.label}
+      key={props.measurement.id}
+      onSelect={() =>
+        dialog.openDialog("setasmeasurement", {
+          left: [
+            {
+              identifier: props.left.identifier,
+              object: props.left.object,
+            },
+          ],
+          measurement: props.measurement,
+        })
+      }
+      className="flex-1 "
+    >
+      <Tooltip>
+        <TooltipTrigger className="flex flex-row group w-full">
+          <div className="flex-col">
+            <div className="text-md text-gray-100 text-left">
+              {props.measurement.label}
+            </div>
+            <div className="text-xs text-gray-400 text-left">
+              {props.measurement.graph.name}
+            </div>
+          </div>
+          <div className="flex-grow"></div>
+        </TooltipTrigger>
+        <TooltipContent>{props.measurement.description}</TooltipContent>
+      </Tooltip>
+    </CommandItem>
+  );
+};
+
+export const useAction = (props: {
+  action: Action;
+  state: ActionState;
+  onDone?: OnDone;
+}) => {
   const [progress, setProgress] = React.useState<number | undefined>(0);
   const [controller, setController] = React.useState<AbortController | null>(
     null,
@@ -764,7 +967,11 @@ export const LocalActionButton = (props: {
   );
 };
 
-export const Actions = (props: { state: ActionState; filter?: string, onDone?: OnDone }) => {
+export const Actions = (props: {
+  state: ActionState;
+  filter?: string;
+  onDone?: OnDone;
+}) => {
   const actions = useActions(props).filter(
     (x) => !props.filter || x.title.includes(props.filter),
   );
@@ -782,7 +989,12 @@ export const Actions = (props: { state: ActionState; filter?: string, onDone?: O
       }
     >
       {actions.map((x) => (
-        <LocalActionButton key={x.name} action={x} state={props.state} onDone={props.onDone} />
+        <LocalActionButton
+          key={x.name}
+          action={x}
+          state={props.state}
+          onDone={props.onDone}
+        />
       ))}
     </CommandGroup>
   );
@@ -808,7 +1020,11 @@ export type ObjectButtonProps = {
   children?: React.ReactNode;
   className?: string;
   partners?: Structure[];
-  onDone?: () => void;
+  expect?: string[];
+  collection?: string;
+  onDone?: OnDone;
+  onError?: (error: string) => void;
+  ephemeral?: boolean;
 };
 
 export type PassDownProps = SmartContextProps & {
@@ -854,24 +1070,26 @@ export const SmartContext = (props: SmartContextProps) => {
         />
 
         <CommandList>
-          
           <CommandEmpty>{"No Action available"}</CommandEmpty>
-
-          <ApplicableLocalActions {...props} filter={filter} />
           <Guard.Rekuest fallback={<></>}>
-          <AppicableShortcuts {...props} filter={filter} />
-          <ApplicableActions {...props} filter={filter} />
+            <AppicableShortcuts {...props} filter={filter} />
           </Guard.Rekuest>
+
           <Guard.Kraph fallback={<></>}>
             <ApplicableRelations {...props} filter={filter} />
           </Guard.Kraph>
 
+          <Guard.Rekuest fallback={<></>}>
+            <ApplicableActions {...props} filter={filter} />
+          </Guard.Rekuest>
+
+          <ApplicableLocalActions {...props} filter={filter} />
           <Guard.Kabinet fallback={<></>}>
-          <ApplicableDefinitions
-            {...props}
-            partners={props.partners}
-            filter={filter}
-          />
+            <ApplicableDefinitions
+              {...props}
+              partners={props.partners}
+              filter={filter}
+            />
           </Guard.Kabinet>
         </CommandList>
       </Command>

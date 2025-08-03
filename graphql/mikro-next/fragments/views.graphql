@@ -135,7 +135,10 @@ fragment MaskView on MaskView {
   id
   referenceView {
     id
-    
+    image {
+      id
+      name
+    }
   }
 }
 
@@ -149,9 +152,12 @@ fragment InstanceMaskView on InstanceMaskView {
   id
   referenceView {
     id
+    image {
+      id
+      name
+    }
   }
 }
-
 
 fragment AcquisitionView on AcquisitionView {
   ...View
@@ -190,5 +196,3 @@ fragment HistogramView on HistogramView {
   max
   histogram
 }
-
-

@@ -110,6 +110,12 @@ export type OffsetPaginationInput = {
   offset?: Scalars['Int']['input'];
 };
 
+export type Organization = {
+  __typename?: 'Organization';
+  id: Scalars['String']['output'];
+  slug: Scalars['String']['output'];
+};
+
 export type Query = {
   __typename?: 'Query';
   /** Get a collaborative broadcast by ID */
@@ -251,8 +257,8 @@ export type SubscriptionStreamsArgs = {
 
 export type User = {
   __typename?: 'User';
+  activeOrganization?: Maybe<Organization>;
   preferredUsername: Scalars['String']['output'];
-  roles: Array<Scalars['String']['output']>;
   sub: Scalars['String']['output'];
 };
 
@@ -261,6 +267,8 @@ export type SoloBroadcastFragment = { __typename?: 'SoloBroadcast', id: string, 
 export type CollaborativeBroadcastFragment = { __typename?: 'CollaborativeBroadcast', id: string, title: string, streamers: Array<{ __typename?: 'Streamer', user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }> };
 
 export type StreamFragment = { __typename?: 'Stream', id: string };
+
+export type ListStreamFragment = { __typename?: 'Stream', id: string };
 
 export type StreamerFragment = { __typename?: 'Streamer', user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } };
 
@@ -307,6 +315,13 @@ export type ListCollaborativeBroadcastsQueryVariables = Exact<{
 
 
 export type ListCollaborativeBroadcastsQuery = { __typename?: 'Query', collaborativeBroadcasts: Array<{ __typename?: 'CollaborativeBroadcast', id: string, title: string, streamers: Array<{ __typename?: 'Streamer', user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }> }> };
+
+export type GlobalSearchQueryVariables = Exact<{
+  search?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type GlobalSearchQuery = { __typename?: 'Query', streams: Array<{ __typename?: 'Stream', id: string }> };
 
 export type GetSoloBroadcastQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -384,6 +399,11 @@ export const CollaborativeBroadcastFragmentDoc = gql`
     ${StreamerFragmentDoc}`;
 export const StreamFragmentDoc = gql`
     fragment Stream on Stream {
+  id
+}
+    `;
+export const ListStreamFragmentDoc = gql`
+    fragment ListStream on Stream {
   id
 }
     `;
@@ -593,6 +613,41 @@ export function useListCollaborativeBroadcastsLazyQuery(baseOptions?: ApolloReac
 export type ListCollaborativeBroadcastsQueryHookResult = ReturnType<typeof useListCollaborativeBroadcastsQuery>;
 export type ListCollaborativeBroadcastsLazyQueryHookResult = ReturnType<typeof useListCollaborativeBroadcastsLazyQuery>;
 export type ListCollaborativeBroadcastsQueryResult = Apollo.QueryResult<ListCollaborativeBroadcastsQuery, ListCollaborativeBroadcastsQueryVariables>;
+export const GlobalSearchDocument = gql`
+    query GlobalSearch($search: String) {
+  streams(filters: {search: $search}) {
+    ...ListStream
+  }
+}
+    ${ListStreamFragmentDoc}`;
+
+/**
+ * __useGlobalSearchQuery__
+ *
+ * To run a query within a React component, call `useGlobalSearchQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGlobalSearchQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGlobalSearchQuery({
+ *   variables: {
+ *      search: // value for 'search'
+ *   },
+ * });
+ */
+export function useGlobalSearchQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
+      }
+export function useGlobalSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
+        }
+export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>;
+export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>;
+export type GlobalSearchQueryResult = Apollo.QueryResult<GlobalSearchQuery, GlobalSearchQueryVariables>;
 export const GetSoloBroadcastDocument = gql`
     query GetSoloBroadcast($id: ID!) {
   soloBroadcast(id: $id) {

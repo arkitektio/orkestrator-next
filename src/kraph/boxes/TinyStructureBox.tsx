@@ -1,10 +1,4 @@
-import { error } from "console";
-import {
-  useCreateStructureMutation,
-  useGetActiveGraphStructuresQuery,
-  useGetKnowledgeViewsQuery,
-} from "../api/graphql";
-import { SelectiveNodeViewRenderer } from "../components/renderers/NodeQueryRenderer";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   Carousel,
@@ -14,10 +8,12 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Guard } from "@/lib/arkitekt/Arkitekt";
-import { FormDialog } from "@/components/dialog/FormDialog";
-import { Button } from "@/components/ui/button";
-import AddMeasurementForm from "../forms/AddMeasurementForm";
-import { ref } from "yup";
+import {
+  useCreateStructureMutation,
+  useGetKnowledgeViewsQuery,
+} from "../api/graphql";
+import { SelectiveNodeViewRenderer } from "../components/renderers/NodeQueryRenderer";
+import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 
 export const ProtectedTinyStructureBox = (props: {
   identifier: string;
@@ -55,23 +51,12 @@ export const ProtectedTinyStructureBox = (props: {
                   <p className="text-sm text-scroll font-light">
                     Not connected yet to Graph
                   </p>
-                  <Button
-                    onClick={() => {
-                      addStructure({
-                        variables: {
-                          input: {
-                            structure: `${props.identifier}:${props.object}`,
-                            graph: view.structureCategory.graph.id,
-                          },
-                        },
-                      }).then(() => refetch());
-                    }}
-                    variant={"outline"}
-                    size="default"
-                    className="w-full"
+                  <ObjectButton
+                    identifier={props.identifier}
+                    object={props.object}
                   >
-                    Connect
-                  </Button>
+                    <Button>Connect</Button>
+                  </ObjectButton>
                 </div>
               )}
             </Card>

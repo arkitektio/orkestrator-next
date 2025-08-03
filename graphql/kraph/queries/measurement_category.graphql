@@ -19,6 +19,6 @@ query ListMeasurmentCategory(
   $pagination: OffsetPaginationInput
 ) {
   measurementCategories(filters: $filters, pagination: $pagination) {
-    ...ListMeasurementCategory
+    ...ListMeasurementCategoryWithGraph
   }
 }

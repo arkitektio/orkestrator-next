@@ -44,6 +44,8 @@ import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { PinToggle } from "../components/ui/PinToggle";
 import { AddImageViewForm } from "../forms/AddImageViewForm";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
+import InstanceMaskViewCard from "../components/cards/InstanceMaskViewCard";
+import MaskViewCard from "../components/cards/MaskViewCard";
 
 export type IRepresentationScreenProps = {};
 
@@ -263,25 +265,49 @@ export default asDetailQueryRoute(
                     {data?.image.views?.map((view, index) => (
                       <>
                         {view.__typename == "AffineTransformationView" && (
-                          <TransformationViewCard view={view} key={"affine-" + view.id} />
+                          <TransformationViewCard
+                            view={view}
+                            key={"affine-" + view.id}
+                          />
                         )}
                         {view.__typename == "LabelView" && (
                           <LabelViewCard view={view} key={"label-" + view.id} />
                         )}
+                        {view.__typename == "InstanceMaskView" && (
+                          <InstanceMaskViewCard
+                            item={view}
+                            key={"label-" + view.id}
+                          />
+                        )}
+                        {view.__typename == "MaskView" && (
+                          <MaskViewCard item={view} key={"label-" + view.id} />
+                        )}
                         {view.__typename == "OpticsView" && (
-                          <OpticsViewCard view={view} key={"optics-" + view.id} />
+                          <OpticsViewCard
+                            view={view}
+                            key={"optics-" + view.id}
+                          />
                         )}
                         {view.__typename == "ChannelView" && (
-                          <ChannelViewCard view={view} key={"channel-" + view.id} />
+                          <ChannelViewCard
+                            view={view}
+                            key={"channel-" + view.id}
+                          />
                         )}
                         {view.__typename == "RGBView" && (
                           <RGBViewCard view={view} key={"rgb-" + view.id} />
                         )}
                         {view.__typename == "AcquisitionView" && (
-                          <AcquisitionViewCard view={view} key={"acquisition-" + view.id} />
+                          <AcquisitionViewCard
+                            view={view}
+                            key={"acquisition-" + view.id}
+                          />
                         )}
                         {view.__typename == "WellPositionView" && (
-                          <WellPositionViewCard view={view} key={"well-position-" + view.id} />
+                          <WellPositionViewCard
+                            view={view}
+                            key={"well-position-" + view.id}
+                          />
                         )}
                         {view.__typename == "ROIView" && (
                           <ROIViewCard view={view} key={"roi-" + view.id} />
@@ -290,10 +316,16 @@ export default asDetailQueryRoute(
                           <FileViewCard view={view} key={"file-" + view.id} />
                         )}
                         {view.__typename == "DerivedView" && (
-                          <DerivedViewCard view={view} key={"derived-" + view.id} />
+                          <DerivedViewCard
+                            view={view}
+                            key={"derived-" + view.id}
+                          />
                         )}
                         {view.__typename == "HistogramView" && (
-                          <HistogramViewCard view={view} key={"histogram-" + view.id} />
+                          <HistogramViewCard
+                            view={view}
+                            key={"histogram-" + view.id}
+                          />
                         )}
                       </>
                     ))}

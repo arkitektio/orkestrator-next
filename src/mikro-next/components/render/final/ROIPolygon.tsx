@@ -1,8 +1,8 @@
 import { MikroROI } from "@/linkers";
-import { ListRoiFragment, RoiKind } from "@/mikro-next/api/graphql";
-import { useCursor } from "@react-three/drei";
+import { ListRoiFragment, RoiKind, useDeleteRoiMutation } from "@/mikro-next/api/graphql";
+import { useCursor, Line } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import * as THREE from "three";
 import { PassThroughProps } from "../TwoDThree";
 
@@ -21,25 +21,6 @@ const convertToThreeJSCoords = (
   return tr;
 };
 
-const convertFromThreeJSCoords = (
-  threeJSVertices: [number, number][],
-  imageWidth: number,
-  imageHeight: number,
-  c: number = 0,
-  t: number = 0,
-  z: number = 0,
-): [number, number, number, number, number][] => {
-  return threeJSVertices.map((vertex) => {
-    const [threeX, threeY] = vertex;
-    // Reverse the transformation: x = -(threeX + imageWidth / 2), y = threeY + imageHeight / 2
-    const x = -(threeX - imageWidth / 2);
-    const y = threeY + imageHeight / 2;
-    return [c, t, z, y, x] as [number, number, number, number, number];
-  });
-};
-
-
-
 export const ROIPolygon = (
   props: {
     roi: ListRoiFragment;
@@ -51,6 +32,42 @@ export const ROIPolygon = (
   const meshRef = useRef<THREE.Mesh>(null);
   const { camera, gl, size } = useThree();
   const [hovered, setHovered] = useState(false);
+  const [selected, setSelected] = useState(false);
+  const [deleteRoi] = useDeleteRoiMutation();
+
+  // Keyboard event handler for deletion
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Backspace" && selected) {
+        event.preventDefault();
+        event.stopPropagation();
+        deleteRoi({
+          variables: { id: roi.id },
+          onCompleted: () => {
+            console.log(`ROI ${roi.id} deleted`);
+          },
+          onError: (error) => {
+            console.error("Failed to delete ROI:", error);
+          },
+        });
+      }
+    };
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (meshRef.current && !meshRef.current.userData.contains?.(event.target)) {
+        setSelected(false);
+      }
+    };
+
+    if (selected) {
+      window.addEventListener("keydown", handleKeyDown);
+      window.addEventListener("click", handleClickOutside);
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+        window.removeEventListener("click", handleClickOutside);
+      };
+    }
+  }, [selected, roi.id, deleteRoi]);
 
   // Convert ROI vectors to Three.js coordinates
   const vertices = convertToThreeJSCoords(
@@ -102,6 +119,9 @@ export const ROIPolygon = (
 
       if (!meshRef.current) return;
 
+      // Set this ROI as selected for deletion
+      setSelected(true);
+
       // Project the rightmost point of the ROI to screen coordinates
       const screenPos = projectToScreenCoordinates(rightPoint);
 
@@ -113,40 +133,63 @@ export const ROIPolygon = (
         screenPos.y,
       );
 
-      props.setOpenPanels((panels) => {
-        const existingPanel = panels.find(
-          (p) => p.object === roi.id && p.identifier === MikroROI.identifier,
-        );
-
-        if (existingPanel) {
-          return panels.filter(
-            (p) =>
-              !(p.object === roi.id && p.identifier === MikroROI.identifier),
-          );
-        } else {
-          return [
-            ...panels,
-            {
-              positionX: screenPos.x,
-              positionY: screenPos.y,
-              identifier: MikroROI.identifier,
-              object: roi.id,
-            },
-          ];
-        }
+      props.setOpenPanels(() => {
+        return [
+          {
+            positionX: screenPos.x,
+            positionY: screenPos.y,
+            identifier: MikroROI.identifier,
+            object: roi.id,
+            isRightClick: false,
+          },
+        ];
       });
     },
-    [roi.id, rightPoint, camera, size],
+    [roi.id, rightPoint, camera, size, setSelected],
+  );
+
+  const onRightClick = useCallback(
+    (e) => {
+      e.stopPropagation();
+
+      if (!meshRef.current) return;
+
+      // Set this ROI as selected for deletion
+      setSelected(true);
+
+      // Project the rightmost point of the ROI to screen coordinates
+      const screenPos = projectToScreenCoordinates(rightPoint);
+
+      console.log(
+        "Right-click: Anchoring panel at screen position:",
+        screenPos.x,
+        screenPos.y,
+      );
+
+      props.setOpenPanels(() => {
+        return [
+          {
+            positionX: screenPos.x,
+            positionY: screenPos.y,
+            identifier: MikroROI.identifier,
+            object: roi.id,
+            isRightClick: true,
+          },
+        ];
+      });
+    },
+    [roi.id, rightPoint, camera, size, setSelected],
   );
 
   useCursor(hovered, "pointer");
 
-  if (roi.kind == RoiKind.Polygon) {
+  if (roi.kind == RoiKind.Rectangle) {
     return (
       <>
         <mesh
           ref={meshRef}
           onClick={onClick}
+          onContextMenu={onRightClick}
           onPointerOver={(e) => {
             e.stopPropagation();
             setHovered(true);
@@ -165,20 +208,18 @@ export const ROIPolygon = (
             depthWrite={false}
           />
         </mesh>
-        <line>
-          <shapeGeometry args={[shape]} />
-          <lineBasicMaterial color="black" linewidth={1} />
-        </line>
+        <Line points={shape.getPoints()} color="blue" lineWidth={2} />
       </>
     );
   }
 
-  if (roi.kind == RoiKind.Path) {
+  if (roi.kind == RoiKind.Ellipsis) {
     return (
       <>
-        <line
+        <mesh
           ref={meshRef}
           onClick={onClick}
+          onContextMenu={onRightClick}
           onPointerOver={(e) => {
             e.stopPropagation();
             setHovered(true);
@@ -188,31 +229,151 @@ export const ROIPolygon = (
             setHovered(false);
           }}
         >
-          <bufferGeometry>
-            <bufferAttribute
-              attach="attributes-position"
-              count={vertices.length}
-              array={new Float32Array(vertices.flatMap(([x, y]) => [x, y, 0]))}
-              itemSize={3}
-            />
-          </bufferGeometry>
-          <lineBasicMaterial
-            color="white"
-            linewidth={3}
+          <shapeGeometry args={[shape]} />
+          <meshBasicMaterial
+            color={"white"}
+            side={THREE.DoubleSide}
             transparent={true}
             opacity={hovered ? 0.5 : 0.2}
             depthWrite={false}
           />
+        </mesh>
+        <Line points={shape.getPoints()} color="green" lineWidth={2} />
+      </>
+    );
+  }
+
+  if (roi.kind == RoiKind.Line) {
+    const linePoints = vertices.map(([x, y]) => new THREE.Vector3(x, y, 0));
+
+    return (
+      <>
+        <Line
+          points={linePoints}
+          color={hovered ? "orange" : "red"}
+          lineWidth={hovered ? 5 : 3}
+          onClick={onClick}
+          onContextMenu={onRightClick}
+          onPointerOver={(e) => {
+            e.stopPropagation();
+            setHovered(true);
+          }}
+          onPointerOut={(e) => {
+            e.stopPropagation();
+            setHovered(false);
+          }}
+        />
+      </>
+    );
+  }
+
+  if (roi.kind == RoiKind.Point) {
+    const point = vertices[0];
+    if (!point) return null;
+
+    return (
+      <>
+        <mesh
+          ref={meshRef}
+          position={[point[0], point[1], 0]}
+          onClick={onClick}
+          onContextMenu={onRightClick}
+          onPointerOver={(e) => {
+            e.stopPropagation();
+            setHovered(true);
+          }}
+          onPointerOut={(e) => {
+            e.stopPropagation();
+            setHovered(false);
+          }}
+        >
+          <circleGeometry args={[hovered ? 8 : 5, 8]} />
+          <meshBasicMaterial
+            color="yellow"
+            transparent={true}
+            opacity={hovered ? 0.8 : 0.6}
+            depthWrite={false}
+          />
+        </mesh>
+        {/* Outer ring for better visibility */}
+        <mesh position={[point[0], point[1], 0.1]}>
+          <ringGeometry args={[hovered ? 8 : 5, hovered ? 10 : 7, 8]} />
+          <meshBasicMaterial
+            color="orange"
+            transparent={true}
+            opacity={hovered ? 0.6 : 0.4}
+            depthWrite={false}
+          />
+        </mesh>
+      </>
+    );
+  }
+
+  if (roi.kind == RoiKind.Polygon) {
+    return (
+      <>
+        <mesh
+          ref={meshRef}
+          onClick={onClick}
+          onContextMenu={onRightClick}
+          onPointerOver={(e) => {
+            e.stopPropagation();
+            setHovered(true);
+          }}
+          onPointerOut={(e) => {
+            e.stopPropagation();
+            setHovered(false);
+          }}
+        >
+          <shapeGeometry args={[shape]} />
+          <meshBasicMaterial
+            color={"white"}
+            side={THREE.DoubleSide}
+            transparent={true}
+            opacity={hovered ? 0.5 : 0.2}
+            depthWrite={false}
+          />
+        </mesh>
+        <line width={100}>
+          <shapeGeometry args={[shape]} />
+          <lineBasicMaterial color="black" linewidth={100} />
         </line>
       </>
     );
   }
 
+  if (roi.kind == RoiKind.Path) {
+    const pathPoints = vertices.map(([x, y]) => new THREE.Vector3(x, y, 0));
+
+    return (
+      <>
+        <Line
+          ref={meshRef}
+          points={pathPoints}
+          color={hovered ? "yellow" : "white"}
+          lineWidth={hovered ? 5 : 3}
+          onClick={onClick}
+          onContextMenu={onRightClick}
+          onPointerOver={(e) => {
+            e.stopPropagation();
+            setHovered(true);
+          }}
+          onPointerOut={(e) => {
+            e.stopPropagation();
+            setHovered(false);
+          }}
+        />
+      </>
+    );
+  }
+
+  // Default case for Polygon
   return (
     <>
       <mesh
         ref={meshRef}
         onClick={onClick}
+        onContextMenu={onRightClick}
         onPointerOver={(e) => {
           e.stopPropagation();
           setHovered(true);
@@ -223,9 +384,8 @@ export const ROIPolygon = (
         }}
       >
         <shapeGeometry args={[shape]} />
-
         <meshBasicMaterial
-          color={"white"}
+          color={"purple"}
           side={THREE.DoubleSide}
           transparent={true}
           opacity={hovered ? 0.5 : 0.2}
@@ -234,7 +394,7 @@ export const ROIPolygon = (
       </mesh>
       <line>
         <shapeGeometry args={[shape]} />
-        <lineBasicMaterial color="black" linewidth={1} />
+        <lineBasicMaterial color="black" />
       </line>
     </>
   );

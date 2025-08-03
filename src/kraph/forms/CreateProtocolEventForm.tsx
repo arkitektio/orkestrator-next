@@ -19,7 +19,7 @@ import {
   useSearchReagentsForRoleLazyQuery,
   VariableDefinitionFragment,
 } from "../api/graphql";
-import { GraphQLSearchField as GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
+import { GraphQLListSearchField as GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { IntField } from "@/components/fields/IntField";
 import { FloatField } from "@/components/fields/FloatField";

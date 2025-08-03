@@ -137,6 +137,7 @@ export type DocumentInput = {
 
 /** The type of the thinking block */
 export enum FeatureType {
+  Chat = 'CHAT',
   Chatting = 'CHATTING',
   Embedding = 'EMBEDDING'
 }
@@ -293,6 +294,13 @@ export type OllamaPullResult = {
   status: Scalars['String']['output'];
 };
 
+/** An Organization model to represent an organization in the system */
+export type Organization = {
+  __typename?: 'Organization';
+  id: Scalars['String']['output'];
+  slug: Scalars['String']['output'];
+};
+
 /** A provider of LLMs */
 export type Provider = {
   __typename?: 'Provider';
@@ -300,6 +308,8 @@ export type Provider = {
   apiBase: Scalars['String']['output'];
   apiKey: Scalars['String']['output'];
   id: Scalars['String']['output'];
+  /** The kind of the provider */
+  kind: ProviderKind;
   models: Array<LlmModel>;
   name: Scalars['String']['output'];
 };
@@ -327,8 +337,33 @@ export type ProviderInput = {
   apiBase?: InputMaybe<Scalars['String']['input']>;
   apiKey?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  kind: ProviderKind;
   name: Scalars['String']['input'];
 };
+
+/** The kind of LLM provider */
+export enum ProviderKind {
+  Anthropic = 'ANTHROPIC',
+  Anyscale = 'ANYSCALE',
+  Aws = 'AWS',
+  Azure = 'AZURE',
+  Cohere = 'COHERE',
+  Custom = 'CUSTOM',
+  Deepinfra = 'DEEPINFRA',
+  FireworksAi = 'FIREWORKS_AI',
+  Google = 'GOOGLE',
+  Groq = 'GROQ',
+  Huggingface = 'HUGGINGFACE',
+  Mistral = 'MISTRAL',
+  Ollama = 'OLLAMA',
+  Openai = 'OPENAI',
+  Palm = 'PALM',
+  Perplexity = 'PERPLEXITY',
+  Replicate = 'REPLICATE',
+  TogetherAi = 'TOGETHER_AI',
+  Unknown = 'UNKNOWN',
+  VertexAi = 'VERTEX_AI'
+}
 
 export type PullInput = {
   modelName: Scalars['String']['input'];
@@ -533,8 +568,8 @@ export type Usage = {
 /** A reflection on the real User */
 export type User = {
   __typename?: 'User';
+  activeOrganization?: Maybe<Organization>;
   preferredUsername: Scalars['String']['output'];
-  roles: Array<Scalars['String']['output']>;
   sub: Scalars['String']['output'];
 };
 
@@ -544,7 +579,7 @@ export type ListChromaCollectionFragment = { __typename?: 'ChromaCollection', id
 
 export type DocumentFragment = { __typename?: 'Document', id: string, content: string, metadata?: any | null, distance?: number | null, structure?: { __typename?: 'Structure', identifier: string, object: string } | null };
 
-export type LlmModelFragment = { __typename?: 'LLMModel', id: string, modelId: string, llmString: string, features: Array<FeatureType>, provider: { __typename?: 'Provider', id: string, name: string, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> }, embedderFor: Array<{ __typename?: 'ChromaCollection', id: string, name: string }> };
+export type LlmModelFragment = { __typename?: 'LLMModel', id: string, modelId: string, llmString: string, features: Array<FeatureType>, provider: { __typename?: 'Provider', id: string, name: string, kind: ProviderKind, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> }, embedderFor: Array<{ __typename?: 'ChromaCollection', id: string, name: string }> };
 
 export type ListLlmModelFragment = { __typename?: 'LLMModel', id: string, modelId: string };
 
@@ -552,9 +587,9 @@ export type MessageFragment = { __typename?: 'Message', id: string, text: string
 
 export type ListMessageFragment = { __typename?: 'Message', id: string, text: string, createdAt: any, agent: { __typename?: 'Agent', id: string }, attachedStructures: Array<{ __typename?: 'Structure', identifier: string, object: string }> };
 
-export type ProviderFragment = { __typename?: 'Provider', id: string, name: string, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> };
+export type ProviderFragment = { __typename?: 'Provider', id: string, name: string, kind: ProviderKind, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> };
 
-export type ListProviderFragment = { __typename?: 'Provider', id: string, name: string };
+export type ListProviderFragment = { __typename?: 'Provider', id: string, name: string, kind: ProviderKind };
 
 export type ChatResponseFragment = { __typename?: 'ChatResponse', id: string, object: string, created: number, model: string, usage?: { __typename?: 'Usage', promptTokens: number, completionTokens: number, totalTokens: number } | null, choices: Array<{ __typename?: 'Choice', index: number, finishReason?: string | null, message: { __typename?: 'ChatMessage', role: Role, content?: string | null, name?: string | null, toolCallId?: string | null, functionCall?: { __typename?: 'FunctionCall', name: string, arguments: string } | null, toolCalls?: Array<{ __typename?: 'ToolCall', id: string, type: ToolType, function: { __typename?: 'FunctionCall', name: string, arguments: string } }> | null } }> };
 
@@ -602,7 +637,7 @@ export type CreateProviderMutationVariables = Exact<{
 }>;
 
 
-export type CreateProviderMutation = { __typename?: 'Mutation', createProvider: { __typename?: 'Provider', id: string, name: string, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> } };
+export type CreateProviderMutation = { __typename?: 'Mutation', createProvider: { __typename?: 'Provider', id: string, name: string, kind: ProviderKind, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> } };
 
 export type PullMutationVariables = Exact<{
   input: PullInput;
@@ -663,7 +698,7 @@ export type GetLlmModelQueryVariables = Exact<{
 }>;
 
 
-export type GetLlmModelQuery = { __typename?: 'Query', llmModel: { __typename?: 'LLMModel', id: string, modelId: string, llmString: string, features: Array<FeatureType>, provider: { __typename?: 'Provider', id: string, name: string, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> }, embedderFor: Array<{ __typename?: 'ChromaCollection', id: string, name: string }> } };
+export type GetLlmModelQuery = { __typename?: 'Query', llmModel: { __typename?: 'LLMModel', id: string, modelId: string, llmString: string, features: Array<FeatureType>, provider: { __typename?: 'Provider', id: string, name: string, kind: ProviderKind, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> }, embedderFor: Array<{ __typename?: 'ChromaCollection', id: string, name: string }> } };
 
 export type SearchLlmModelsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -686,7 +721,7 @@ export type GetProviderQueryVariables = Exact<{
 }>;
 
 
-export type GetProviderQuery = { __typename?: 'Query', provider: { __typename?: 'Provider', id: string, name: string, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> } };
+export type GetProviderQuery = { __typename?: 'Query', provider: { __typename?: 'Provider', id: string, name: string, kind: ProviderKind, models: Array<{ __typename?: 'LLMModel', id: string, modelId: string }> } };
 
 export type SearchProvidersQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -702,7 +737,7 @@ export type ListProvidersQueryVariables = Exact<{
 }>;
 
 
-export type ListProvidersQuery = { __typename?: 'Query', providers: Array<{ __typename?: 'Provider', id: string, name: string }> };
+export type ListProvidersQuery = { __typename?: 'Query', providers: Array<{ __typename?: 'Provider', id: string, name: string, kind: ProviderKind }> };
 
 export type GetRoomQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -784,6 +819,7 @@ export const ProviderFragmentDoc = gql`
     id
     modelId
   }
+  kind
 }
     `;
 export const LlmModelFragmentDoc = gql`
@@ -825,6 +861,7 @@ export const ListProviderFragmentDoc = gql`
     fragment ListProvider on Provider {
   id
   name
+  kind
 }
     `;
 export const ChatResponseFragmentDoc = gql`

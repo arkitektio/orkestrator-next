@@ -123,21 +123,14 @@ export const ElektroExperiment = buildSmart(
   "elektro/experiments",
 );
 
-export const DokumentsFile = buildSmart(
-  "@dokuments/file",
-  "dokuments/files",
-);
+export const DokumentsFile = buildSmart("@dokuments/file", "dokuments/files");
 
 export const DokumentsDocument = buildSmart(
   "@dokuments/document",
   "dokuments/documents",
 );
 
-export const DokumentsPage = buildSmart(
-  "@dokuments/page",
-  "dokuments/pages",
-);
-
+export const DokumentsPage = buildSmart("@dokuments/page", "dokuments/pages");
 
 export const ElektroNeuronModel = buildSmart(
   "@elektro/neuronmodel",
@@ -339,7 +332,17 @@ export const MikroChannelView = buildSmart(
   "mikro/channelviews",
 );
 
-export const MikroRGBView = buildSmart("@mikronext/rgbview", "mikro/rgbviews");
+export const MikroMaskView = buildSmart("@mikro/maskview", "mikro/maskviews");
+export const MikroInstanceMaskView = buildSmart(
+  "@mikro/instancemaskview",
+  "mikro/instancemaskviews",
+);
+export const MikroReferenceView = buildSmart(
+  "@mikro/referenceview",
+  "mikro/referenceviews",
+);
+
+export const MikroRGBView = buildSmart("@mikro/rgbview", "mikro/rgbviews");
 
 export const MikroRGBContext = buildSmart(
   "@mikro/rgbcontext",

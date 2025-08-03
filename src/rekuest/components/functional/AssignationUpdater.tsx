@@ -9,6 +9,7 @@ import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
+  AssignationEventFragment,
   AssignationEventKind,
   AssignationsDocument,
   AssignationsQuery,
@@ -18,6 +19,11 @@ import {
   WatchAssignationsDocument,
   WatchAssignationsSubscription,
 } from "../../api/graphql";
+
+export const registeredCallbacks = new Map<
+  string,
+  (event: AssignationEventFragment) => void
+>();
 
 export const DynamicYieldDisplay = (props: {
   values: any[];
@@ -169,6 +175,8 @@ export const AssignationUpdater = (props: {}) => {
                     data?.assignations,
                   );
                 }
+
+                registeredCallbacks.get(event.assignation.reference)?.(event);
 
                 return {
                   assignations: (data?.assignations || []).map((ass) =>

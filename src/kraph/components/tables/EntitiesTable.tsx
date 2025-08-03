@@ -35,7 +35,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
+import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { Form } from "@/components/ui/form";
 import { KraphNode } from "@/linkers";
 import { useForm } from "react-hook-form";
@@ -234,13 +234,13 @@ export const EntitiesTable = (props: {
       <div className="flex items-center py-4 gap-2">
         <Form {...form}>
           {!props.linkedExpression && (
-            <GraphQLSearchField
+            <GraphQLListSearchField
               placeholder="Filter Kind"
               searchQuery={searchM}
               name="kinds"
             />
           )}
-          <GraphQLSearchField
+          <GraphQLListSearchField
             placeholder="Add Metric"
             searchQuery={searchM}
             name="metrics"

@@ -5,9 +5,17 @@ fragment Page on Page {
   image {
     ...BigFileStore
   }
+  ocrResult {
+    ...OCRPageResult
+  }
 }
 
 fragment ListPage on Page {
   id
   index
+  content
+  document {
+    id
+    title
+  }
 }

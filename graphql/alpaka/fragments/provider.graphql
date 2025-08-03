@@ -5,9 +5,11 @@ fragment Provider on Provider {
     id
     modelId
   }
+  kind
 }
 
 fragment ListProvider on Provider {
   id
   name
+  kind
 }

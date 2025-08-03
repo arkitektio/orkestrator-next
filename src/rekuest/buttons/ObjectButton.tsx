@@ -41,8 +41,9 @@ import {
   useListMeasurmentCategoryQuery,
   useListStructureRelationCategoryQuery,
 } from "@/kraph/api/graphql";
-import { Guard } from "@/lib/arkitekt/Arkitekt";
+import { Guard, useRekuest } from "@/lib/arkitekt/Arkitekt";
 import { useArkitekt } from "@/lib/arkitekt/provider";
+import { cn } from "@/lib/utils";
 import { KabinetDefinition } from "@/linkers";
 import { LightningBoltIcon } from "@radix-ui/react-icons";
 import { CommandGroup } from "cmdk";
@@ -53,7 +54,6 @@ import { v4 as uuidv4 } from "uuid";
 import {
   AssignationChangeEvent,
   AssignationEventFragment,
-  AssignationEventKind,
   DemandKind,
   ListImplementationFragment,
   ListShortcutFragment,
@@ -61,13 +61,13 @@ import {
   PrimaryActionFragment,
   useAllPrimaryActionsQuery,
   useImplementationsQuery,
-  useShortcutsQuery,
+  useShortcutsQuery
 } from "../api/graphql";
 import { registeredCallbacks } from "../components/functional/AssignationUpdater";
 import { useAssign } from "../hooks/useAssign";
 import { useLiveAssignation } from "../hooks/useAssignations";
 import { useHashAction } from "../hooks/useHashActions";
-import { cn } from "@/lib/utils";
+import { useHashActionWithProgress } from "../hooks/useHashActionWithProgress";
 
 export type OnDone = (args: {
   event?: AssignationEventFragment;
@@ -335,19 +335,25 @@ export const ShortcutButton = (
 };
 
 export const AutoInstallButton = (props: { definition: string }) => {
-  const { assign, action } = useHashAction({
+  const { assign, progress, doing, installed } = useHashActionWithProgress({
     hash: KABINET_INSTALL_DEFINITION_HASH,
   });
 
   return (
     <Button
-      className="group-hover:block hidden"
+      className="group-hover:opacity-100 opacity-0 transition-opacity duration-300"
       variant={"outline"}
       onClick={(e) => {
         e.preventDefault();
-        assign({ action: action?.id, args: { definition: props.definition } });
+        assign({ definition: props.definition });
       }}
-      disabled={!action}
+      disabled={installed}
+      style={{
+        backgroundSize: `${progress || 0}% 100%`,
+        backgroundImage: `linear-gradient(to right, #10b981 ${progress}%, #10b981 ${progress}%)`,
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "left center",
+      }}
     >
       Auto Install
     </Button>
@@ -360,20 +366,32 @@ export const InstallButton = (props: {
 }) => {
   const navigate = useNavigate();
 
-  const objectAssign = async () => {
-    try {
-      navigate(KabinetDefinition.linkBuilder(props.definition.id));
-    } catch (e) {
-      toast.error(e.message);
-    }
-  };
+  const client = useRekuest();
+
+  const { assign, progress, doing, installed, onDone } = useHashActionWithProgress({
+    hash: KABINET_INSTALL_DEFINITION_HASH,
+    onDone: (event) => {
+      client.refetchQueries({ include: ["AllPrimaryActions"] });
+    },
+  });
+
+
 
   return (
     <CommandItem
-      value={props.definition.name}
+      value={props.definition.id}
       key={props.definition.id}
-      onSelect={objectAssign}
+      onSelect={(e) => {
+        assign({ definition: props.definition.id });
+      }}
       className="flex-1 "
+      style={{
+        backgroundSize: `${progress || 0}% 100%`,
+        backgroundImage: `linear-gradient(to right, #10b981 ${progress}%, #10b981 ${progress}%)`,
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "left center",
+      }}
+      disabled={!installed}
     >
       <Tooltip>
         <TooltipTrigger className="flex flex-row group w-full">
@@ -386,7 +404,6 @@ export const InstallButton = (props: {
             </div>
           </div>
           <div className="flex-grow"></div>
-          <AutoInstallButton definition={props.definition.id} />
         </TooltipTrigger>
         <TooltipContent>{props.definition.description}</TooltipContent>
       </Tooltip>
@@ -578,6 +595,10 @@ export const ApplicableDefinitions = (props: PassDownProps) => {
     </CommandGroup>
   );
 };
+
+
+
+
 
 export const ApplicableRelations = (props: PassDownProps) => {
   const firstPartner = props.partners?.at(0);

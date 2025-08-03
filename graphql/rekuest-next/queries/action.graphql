@@ -26,6 +26,13 @@ query ReturnAction($assignation: ID!) {
   }
 }
 
+query ActionByHash($hash: ActionHash!) {
+  action(hash: $hash) {
+    id
+    ...Ports
+  }
+}
+
 query AllActions(
   $pagination: OffsetPaginationInput
   $filters: ActionFilter

@@ -25,4 +25,14 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: jhnnsrs/orkestrator_next:nightly
+          tags: jhnnsrs/orkestrator:latest
+      - name: Refresh Go-Arkitekt-live
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.GO_LIVE_HOST }}
+          key: ${{ secrets.GO_LIVE_SSH_KEY }}
+          username: ${{ secrets.GO_LIVE_USERNAME }}
+          script: |
+            cd /home/app
+            docker compose pull
+            docker compose up -d

@@ -25,6 +25,10 @@ export class SmartRegistry {
     console.log(registrations);
     return registrations;
   }
+
+  findModel(identifier: string): Registration | undefined {
+    return this.registry.get(identifier);
+  }
 }
 
 export const smartRegistry = new SmartRegistry();

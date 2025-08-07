@@ -3,6 +3,9 @@ import { ServiceMap } from "@/lib/arkitekt/provider";
 import { KRAPH_ACTIONS } from "@/lib/kraph/actions";
 import { MIKRO_ACTIONS } from "@/lib/mikro/actions";
 import { REKUEST_ACTIONS } from "@/lib/rekuest/actions";
+import { linkBuilder } from "@/providers/smart/builder";
+import { smartRegistry } from "@/providers/smart/registry";
+import { useNavigate } from "react-router-dom";
 
 export type Condition = {
   type: string;
@@ -55,6 +58,7 @@ export type ActionParams = {
   onProgress: (progress: number) => void;
   abortSignal: AbortSignal;
   dialog: ReturnType<typeof useDialog>;
+  navigate: ReturnType<typeof useNavigate>;
 };
 
 export type SetAction = ActionState;
@@ -128,3 +132,28 @@ for (let i of REKUEST_ACTIONS) {
 for (let i of KRAPH_ACTIONS) {
   defaultRegistry.registerAction(i);
 }
+
+defaultRegistry.registerAction({
+  title: "Open",
+  name: "open",
+  description: "Open the structure",
+  conditions: [
+    {
+      type: "nopartner",
+    },
+  ],
+  execute: async ({ state, navigate }) => {
+    const identifier = state.left[0].identifier;
+    const object = state.left[0].object;
+    if (!identifier) {
+      throw new Error("No identifier provided for Open action");
+    }
+
+    const path = smartRegistry.findModel(identifier)?.path;
+    if (!path) {
+      throw new Error(`No path found for identifier ${identifier}`);
+    }
+    navigate(linkBuilder(path)(object));
+  },
+  collections: ["smart"],
+});

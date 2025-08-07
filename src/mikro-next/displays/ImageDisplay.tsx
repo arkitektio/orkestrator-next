@@ -8,7 +8,6 @@ import {
 import { DisplayComponentProps } from "@/providers/display/DisplayContext";
 import { TwoDViewProvider } from "@/providers/view/ViewProvider";
 import { useGetImageQuery } from "../api/graphql";
-import { TwoDViewCanvas } from "../components/render/TwoDRender";
 
 const Display = (props: DisplayComponentProps) => {
   const { data } = useGetImageQuery({
@@ -34,11 +33,7 @@ const Display = (props: DisplayComponentProps) => {
           <AspectRatio
             ratio={aspectRatio}
             className="overflow-hidden rounded rounded-md shadow shadow-xl"
-          >
-            {data?.image?.store && (
-              <TwoDViewCanvas store={data?.image?.store} colormap={"viridis"} />
-            )}
-          </AspectRatio>
+          ></AspectRatio>
         </TwoDViewProvider>
       </CardContent>
     </CardHeader>

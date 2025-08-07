@@ -123,7 +123,6 @@ fragment Validator on Validator {
   dependencies
 }
 
-
 fragment FlussPort on Port {
   __typename
   key
@@ -138,6 +137,11 @@ fragment FlussPort on Port {
   }
   returnWidget {
     ...FlussReturnWidget
+  }
+  choices {
+    label
+    value
+    description
   }
   kind
   identifier

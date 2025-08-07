@@ -3,6 +3,7 @@ import { CreateNewRelation } from "@/dialogs/CreateNewRelation";
 import { RelateStructures } from "@/dialogs/RelateStructures";
 import { SetAsMeasurement } from "@/dialogs/SetAsMeasurement";
 import { createDialogProvider } from "@/lib/generic/providers/DialogProvider";
+import { CreateShortcutDialog } from "@/rekuest/components/dialogs/CreateShortcutDialog";
 import { ActionAssignForm } from "@/rekuest/forms/ActionAssignForm";
 import { ImplementationAssignForm } from "@/rekuest/forms/ImplementationAssignForm";
 import { ReserveForm } from "@/rekuest/forms/ShortcutForm";
@@ -15,5 +16,5 @@ export const { DialogProvider, useDialog } = createDialogProvider({
   createnewrelation: CreateNewRelation,
   createnewmeasurement: CreateNewMeasurement,
   setasmeasurement: SetAsMeasurement,
-  createshortcut: ReserveForm,
+  createshortcut: CreateShortcutDialog,
 });

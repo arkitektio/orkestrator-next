@@ -51,7 +51,7 @@ const buildModelLink = (to: string) => {
   };
 };
 
-const linkBuilder = (to: string) => (object: string | undefined) => {
+export const linkBuilder = (to: string) => (object: string | undefined) => {
   if (!object) {
     return `/error`;
   }

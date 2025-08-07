@@ -1,13 +1,16 @@
 {
   "__schema": {
     "queryType": {
-      "name": "Query"
+      "name": "Query",
+      "kind": "OBJECT"
     },
     "mutationType": {
-      "name": "Mutation"
+      "name": "Mutation",
+      "kind": "OBJECT"
     },
     "subscriptionType": {
-      "name": "Subscription"
+      "name": "Subscription",
+      "kind": "OBJECT"
     },
     "types": [
       {
@@ -437,7 +440,7 @@
                 }
               }
             },
-            "defaultValue": "null",
+            "defaultValue": "[]",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -1615,6 +1618,11 @@
           },
           {
             "kind": "OBJECT",
+            "name": "HideEffect",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
             "name": "MessageEffect",
             "ofType": null
           }
@@ -1644,6 +1652,18 @@
               }
             },
             "defaultValue": "[]",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "fade",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "true",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -1775,7 +1795,7 @@
       {
         "kind": "OBJECT",
         "name": "Flow",
-        "description": "Flow(id, created_at, workspace, creator, restrict, version, title, nodes, edges, graph, hash, description, brittle)",
+        "description": null,
         "isOneOf": null,
         "fields": [
           {
@@ -1895,7 +1915,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "FlowFilter",
-        "description": "Flow(id, created_at, workspace, creator, restrict, version, title, nodes, edges, graph, hash, description, brittle)",
+        "description": null,
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -1905,6 +1925,18 @@
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "FlowFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DISTINCT",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
               "ofType": null
             },
             "defaultValue": null,
@@ -3268,6 +3300,96 @@
         "possibleTypes": null
       },
       {
+        "kind": "OBJECT",
+        "name": "HideEffect",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "dependencies",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "fade",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "function",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "ValidatorFunction",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "kind",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "ENUM",
+                "name": "EffectKind",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [
+          {
+            "kind": "INTERFACE",
+            "name": "Effect",
+            "ofType": null
+          }
+        ],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "SCALAR",
         "name": "ID",
         "description": "The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `\"4\"`) or integer (such as `4`) input value will be accepted as an ID.",
@@ -3861,15 +3983,11 @@
             "name": "limit",
             "description": null,
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Int",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
             },
-            "defaultValue": "-1",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -3910,7 +4028,31 @@
             "deprecationReason": null
           },
           {
+            "name": "ASC_NULLS_FIRST",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ASC_NULLS_LAST",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "DESC",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DESC_NULLS_FIRST",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DESC_NULLS_LAST",
             "description": null,
             "isDeprecated": false,
             "deprecationReason": null
@@ -5523,7 +5665,7 @@
       {
         "kind": "OBJECT",
         "name": "ReactiveTemplate",
-        "description": "ReactiveTemplate(id, title, description, implementation, ins, outs, voids, constants)",
+        "description": null,
         "isOneOf": null,
         "fields": [
           {
@@ -5580,7 +5722,7 @@
           },
           {
             "name": "implementation",
-            "description": "Check async Programming Textbook",
+            "description": null,
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -5707,7 +5849,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "ReactiveTemplateFilter",
-        "description": "ReactiveTemplate(id, title, description, implementation, ins, outs, voids, constants)",
+        "description": null,
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -5717,6 +5859,18 @@
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "ReactiveTemplateFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DISTINCT",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
               "ofType": null
             },
             "defaultValue": null,
@@ -7212,7 +7366,7 @@
       {
         "kind": "OBJECT",
         "name": "Run",
-        "description": "Run(id, created_at, flow, assignation, status, snapshot_interval)",
+        "description": null,
         "isOneOf": null,
         "fields": [
           {
@@ -7390,7 +7544,7 @@
       {
         "kind": "OBJECT",
         "name": "RunEvent",
-        "description": "RunEvent(id, created_at, reference, run, kind, t, caused_by, source, handle, value, exception)",
+        "description": null,
         "isOneOf": null,
         "fields": [
           {
@@ -7479,7 +7633,7 @@
           },
           {
             "name": "kind",
-            "description": "The type of event",
+            "description": null,
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -7582,7 +7736,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "RunFilter",
-        "description": "Run(id, created_at, flow, assignation, status, snapshot_interval)",
+        "description": null,
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -7592,6 +7746,18 @@
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "RunFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DISTINCT",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
               "ofType": null
             },
             "defaultValue": null,
@@ -7662,7 +7828,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "RunOrder",
-        "description": "Run(id, created_at, flow, assignation, status, snapshot_interval)",
+        "description": null,
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -7672,6 +7838,18 @@
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "RunOrder",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DISTINCT",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
               "ofType": null
             },
             "defaultValue": null,
@@ -7957,7 +8135,7 @@
       {
         "kind": "OBJECT",
         "name": "Snapshot",
-        "description": "Snapshot(id, created_at, run, t, status)",
+        "description": null,
         "isOneOf": null,
         "fields": [
           {
@@ -9210,7 +9388,7 @@
       {
         "kind": "OBJECT",
         "name": "Workspace",
-        "description": "Graph is a Template for a Template",
+        "description": null,
         "isOneOf": null,
         "fields": [
           {
@@ -9343,7 +9521,7 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "WorkspaceFilter",
-        "description": "Graph is a Template for a Template",
+        "description": null,
         "isOneOf": false,
         "fields": null,
         "inputFields": [
@@ -9353,6 +9531,18 @@
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "WorkspaceFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DISTINCT",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
               "ofType": null
             },
             "defaultValue": null,
@@ -10439,74 +10629,6 @@
         ]
       },
       {
-        "name": "relation",
-        "description": "Make get stuff uppercase",
-        "isRepeatable": false,
-        "locations": [
-          "FIELD"
-        ],
-        "args": [
-          {
-            "name": "on",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ]
-      },
-      {
-        "name": "replace",
-        "description": null,
-        "isRepeatable": false,
-        "locations": [
-          "FIELD"
-        ],
-        "args": [
-          {
-            "name": "new",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "old",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ]
-      },
-      {
         "name": "skip",
         "description": "Directs the executor to skip this field or fragment when the `if` argument is true.",
         "isRepeatable": false,
@@ -10536,7 +10658,7 @@
       },
       {
         "name": "specifiedBy",
-        "description": "Exposes a URL that specifies the behaviour of this scalar.",
+        "description": "Exposes a URL that specifies the behavior of this scalar.",
         "isRepeatable": false,
         "locations": [
           "SCALAR"
@@ -10544,7 +10666,7 @@
         "args": [
           {
             "name": "url",
-            "description": "The URL that specifies the behaviour of this scalar.",
+            "description": "The URL that specifies the behavior of this scalar.",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -10559,15 +10681,6 @@
             "deprecationReason": null
           }
         ]
-      },
-      {
-        "name": "upper",
-        "description": "Make string uppercase",
-        "isRepeatable": false,
-        "locations": [
-          "FIELD"
-        ],
-        "args": []
       }
     ]
   }

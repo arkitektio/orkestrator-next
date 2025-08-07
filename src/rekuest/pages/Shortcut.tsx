@@ -1,32 +1,25 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { ListRender } from "@/components/layout/ListRender";
-import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { ArgsContainer } from "@/components/widgets/ArgsContainer";
 import { useActionDescription } from "@/lib/rekuest/ActionDescription";
-import { RekuestAction, RekuestShortcut, RekuestImplementation } from "@/linkers";
+import { RekuestShortcut } from "@/linkers";
 import {
   AssignationEventKind,
-  DetailActionFragment,
   ShortcutFragment,
-  useDetailActionQuery,
   useShortcutQuery,
 } from "@/rekuest/api/graphql";
 import { ArrowRight } from "lucide-react";
 import { useCallback, useState } from "react";
-import { TbMedicalCross } from "react-icons/tb";
-import { TiTick } from "react-icons/ti";
-import ReservationCard from "../components/cards/ReservationCard";
 import { useAction } from "../hooks/useAction";
 import { usePortForm } from "../hooks/usePortForm";
 import { ReturnsContainer } from "../widgets/tailwind";
 import { portToLabel } from "../widgets/utils";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
-export const ShortcutForm= ({ shortcut }: { shortcut: ShortcutFragment }) => {
+export const ShortcutForm = ({ shortcut }: { shortcut: ShortcutFragment }) => {
   const { assign, latestAssignation, cancel } = useAction({
     id: shortcut.action.id,
   });
@@ -40,7 +33,7 @@ export const ShortcutForm= ({ shortcut }: { shortcut: ShortcutFragment }) => {
     console.log(data);
     assign({
       action: shortcut.action.id,
-      args: {...data, ...shortcut.savedArgs},
+      args: { ...data, ...shortcut.savedArgs },
       hooks: [],
     }).then(
       (v) => {
@@ -188,12 +181,11 @@ export default asDetailQueryRoute(useShortcutQuery, ({ data, refetch }) => {
             {data?.shortcut?.name}
           </h1>
           <p className="mt-3 text-xl text-muted-foreground max-w-[80%]">
-            {description}
+            {description}{" "}
+            {data.shortcut.bindNumber ? `(${data.shortcut.bindNumber})` : ""}
           </p>
         </div>
         <ShortcutForm shortcut={data.shortcut} />
-
-        
       </div>
     </RekuestShortcut.ModelPage>
   );

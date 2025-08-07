@@ -155,9 +155,9 @@ export const ChunkBitmapTexture = ({
     (baseChunkWidth * scaleX) / 2 -
     imageWidth / 2;
   const yPosition =
-    box_position_3d[0] * baseChunkHeight * scaleY +
-    (baseChunkHeight * scaleY) / 2 -
-    imageHeight / 2;
+    imageHeight / 2 -
+    box_position_3d[0] * baseChunkHeight * scaleY -
+    (baseChunkHeight * scaleY) / 2;
 
   const gl = useThree((state) => state.gl);
 
@@ -224,7 +224,8 @@ export const ChunkBitmapTexture = ({
         varying vec2 vUv;
 
         void main() {
-          float value = texture2D(colorTexture, vUv).r;
+          vec2 flippedUv = vec2(vUv.x, 1.0 - vUv.y);
+          float value = texture2D(colorTexture, flippedUv).r;
           float normalized = clamp((value - minValue) / (maxValue - minValue), 0.0, 0.999);
           normalized = pow(normalized, gamma);
           vec4 color = texture2D(colormapTexture, vec2(normalized, 0.5)).rgba;

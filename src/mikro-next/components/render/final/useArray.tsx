@@ -21,7 +21,9 @@ export const useArray = (props: { store: ZarrStoreFragment }) => {
   });
 
   // Promise to track the loading process and prevent multiple simultaneous loads
-  const arrayLoadPromiseRef = useRef<Promise<Array<DataType, S3Store>> | null>(null);
+  const arrayLoadPromiseRef = useRef<Promise<Array<DataType, S3Store>> | null>(
+    null,
+  );
 
   const loadArray = useCallback(async (): Promise<Array<DataType, S3Store>> => {
     // If already loading, return the existing promise
@@ -61,7 +63,7 @@ export const useArray = (props: { store: ZarrStoreFragment }) => {
         console.log("Path", path);
         const store = new S3Store(path, aws);
         const loadedArray = await open.v3(store, { kind: "array" });
-        
+
         setArray(loadedArray);
         setIsLoading(false);
         return loadedArray;
@@ -78,7 +80,14 @@ export const useArray = (props: { store: ZarrStoreFragment }) => {
 
     arrayLoadPromiseRef.current = loadPromise;
     return loadPromise;
-  }, [array, request, props.store.id, datalayerEndpoint, props.store.bucket, props.store.key]);
+  }, [
+    array,
+    request,
+    props.store.id,
+    datalayerEndpoint,
+    props.store.bucket,
+    props.store.key,
+  ]);
 
   const renderView = useCallback(
     async (
@@ -120,10 +129,7 @@ export const useArray = (props: { store: ZarrStoreFragment }) => {
   );
 
   const renderSelection = useCallback(
-    async (
-      signal: AbortSignal,
-      selection: (number | Slice | null)[],
-    ) => {
+    async (signal: AbortSignal, selection: (number | Slice | null)[]) => {
       // Load array if not already loaded
       const loadedArray = await loadArray();
 

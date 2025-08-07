@@ -67,7 +67,7 @@ export const AutoZoomCamera = ({
       imageCenterY + offsetRef.current.y,
       5,
     );
-    cameraRef.current.rotation.set(0, 0, Math.PI / 2);
+    cameraRef.current.rotation.set(0, 0, 0);
 
     cameraRef.current.updateProjectionMatrix();
   });

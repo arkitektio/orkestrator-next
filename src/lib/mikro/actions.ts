@@ -7,6 +7,7 @@ import {
   PutDatasetsInDatasetMutation,
   PutDatasetsInDatasetMutationVariables,
   DeleteDatasetDocument,
+  DeleteRoiDocument,
 } from "@/mikro-next/api/graphql";
 
 export const MIKRO_ACTIONS: Action[] = [
@@ -26,6 +27,14 @@ export const MIKRO_ACTIONS: Action[] = [
     typename: "File",
     mutation: DeleteFileDocument,
   }),
+  buildDeleteAction({
+    title: "Delete Roi",
+    identifier: "@mikro/roi",
+    description: "Delete the roi",
+    service: "mikro",
+    typename: "ROI",
+    mutation: DeleteRoiDocument,
+  }),
   {
     name: "move_to_dataset",
     description: "Move images to a dataset",
@@ -40,7 +49,7 @@ export const MIKRO_ACTIONS: Action[] = [
         throw new Error("No partner provided for Move to Dataset action");
       }
       const datasets = state.left.filter(
-        (item) => item.identifier === "@mikro/dataset"
+        (item) => item.identifier === "@mikro/dataset",
       );
       if (datasets.length === 0) {
         throw new Error("No datasets selected for Move to Dataset action");
@@ -53,18 +62,22 @@ export const MIKRO_ACTIONS: Action[] = [
         throw new Error("No inside item found for Move to Dataset action");
       }
       if (inside.identifier !== "@mikro/dataset") {
-        throw new Error("Inside item must be a dataset for Move to Dataset action");
+        throw new Error(
+          "Inside item must be a dataset for Move to Dataset action",
+        );
       }
 
-
-      await client.mutate<PutDatasetsInDatasetMutation, PutDatasetsInDatasetMutationVariables>({
+      await client.mutate<
+        PutDatasetsInDatasetMutation,
+        PutDatasetsInDatasetMutationVariables
+      >({
         mutation: PutDatasetsInDatasetDocument,
         variables: {
           selfs: datasets.map((i) => i.object),
           other: inside.object, // Assuming 'inside' is the dataset where images will be moved
         },
       });
-    }
+    },
   },
   buildDeleteAction({
     title: "Delete Dataset",

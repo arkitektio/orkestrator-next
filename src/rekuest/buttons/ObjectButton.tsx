@@ -47,7 +47,7 @@ import { cn } from "@/lib/utils";
 import { KabinetDefinition } from "@/linkers";
 import { LightningBoltIcon } from "@radix-ui/react-icons";
 import { CommandGroup } from "cmdk";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
@@ -61,7 +61,7 @@ import {
   PrimaryActionFragment,
   useAllPrimaryActionsQuery,
   useImplementationsQuery,
-  useShortcutsQuery
+  useShortcutsQuery,
 } from "../api/graphql";
 import { registeredCallbacks } from "../components/functional/AssignationUpdater";
 import { useAssign } from "../hooks/useAssign";
@@ -271,12 +271,6 @@ export const AssignButton = (
 export const ShortcutButton = (
   props: SmartContextProps & { shortcut: ListShortcutFragment },
 ) => {
-  const status = useLiveAssignation({
-    identifier: props.identifier,
-    object: props.object,
-    action: props.shortcut.action.id,
-  });
-
   const { assign } = useAssign();
   const { openDialog } = useDialog();
 
@@ -312,23 +306,38 @@ export const ShortcutButton = (
     }
   };
 
+  useEffect(() => {
+    if (props.shortcut.bindNumber) {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === props.shortcut.bindNumber?.toString()) {
+          e.preventDefault();
+          conditionalAssign(props.shortcut);
+        }
+      };
+
+      window.addEventListener("keydown", handleKeyDown);
+
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+      };
+    }
+
+    return () => {
+      // No cleanup needed if bindNumber is null/undefined
+    };
+  }, [props.shortcut.bindNumber, props.shortcut]);
+
   return (
     <CommandItem
       onSelect={() => conditionalAssign(props.shortcut)}
       value={props.shortcut.id}
       key={props.shortcut.id}
       className="flex-initial flex flex-row group cursor-pointer border border-1 rounded rounded-full bg-slate-800 shadow-xl  h-8 overflow-hidden truncate max-w-[100px] ellipsis px-2"
-      style={{
-        backgroundSize: `${status?.progress || 0}% 100%`,
-        backgroundImage: `linear-gradient(to right, #10b981 ${status?.progress}%, #10b981 ${status?.progress}%)`,
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "left center",
-        borderColor: props.shortcut.allowQuick ? "#10b981" : "#4B5563",
-      }}
     >
       {props.shortcut.allowQuick && <LightningBoltIcon className="w-4 h-4" />}
       <span className="mr-auto text-md text-gray-100 ellipsis truncate w-full">
-        {props.shortcut.name}
+        {props.shortcut.name}{" "}
+        {props.shortcut.bindNumber && `(${props.shortcut.bindNumber})`}
       </span>
     </CommandItem>
   );
@@ -368,14 +377,13 @@ export const InstallButton = (props: {
 
   const client = useRekuest();
 
-  const { assign, progress, doing, installed, onDone } = useHashActionWithProgress({
-    hash: KABINET_INSTALL_DEFINITION_HASH,
-    onDone: (event) => {
-      client.refetchQueries({ include: ["AllPrimaryActions"] });
-    },
-  });
-
-
+  const { assign, progress, doing, installed, onDone } =
+    useHashActionWithProgress({
+      hash: KABINET_INSTALL_DEFINITION_HASH,
+      onDone: (event) => {
+        client.refetchQueries({ include: ["AllPrimaryActions"] });
+      },
+    });
 
   return (
     <CommandItem
@@ -595,10 +603,6 @@ export const ApplicableDefinitions = (props: PassDownProps) => {
     </CommandGroup>
   );
 };
-
-
-
-
 
 export const ApplicableRelations = (props: PassDownProps) => {
   const firstPartner = props.partners?.at(0);
@@ -889,6 +893,7 @@ export const useAction = (props: {
   );
   const app = useArkitekt();
   const dialog = useDialog();
+  const navigate = useNavigate();
 
   const assign = async () => {
     if (controller) {
@@ -907,6 +912,7 @@ export const useAction = (props: {
         abortSignal: newController.signal,
         services: app.connection?.clients || {},
         dialog,
+        navigate,
         state: props.state,
       });
       setController(null);
@@ -973,7 +979,9 @@ export const Actions = (props: {
   onDone?: OnDone;
 }) => {
   const actions = useActions(props).filter(
-    (x) => !props.filter || x.title.includes(props.filter),
+    (x) =>
+      !props.filter ||
+      x.title.toLowerCase().includes(props.filter.toLowerCase()),
   );
 
   if (actions.length === 0) {

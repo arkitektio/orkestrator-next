@@ -20,6 +20,7 @@
     ],
     "Effect": [
       "CustomEffect",
+      "HideEffect",
       "MessageEffect"
     ],
     "GraphEdge": [

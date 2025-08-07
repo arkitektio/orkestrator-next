@@ -2343,7 +2343,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"290d7c3f-0dae-49d0-8924-e378aaf3619a\"",
+            "defaultValue": "\"e4d0dc3a-11b4-43a2-9683-fad25f00247f\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -4722,6 +4722,18 @@
               }
             },
             "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "bindNumber",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -13901,7 +13913,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"44748640-fd54-4ee3-8811-2d0ba15dea5d\"",
+            "defaultValue": "\"961d1463-a1db-4e93-80a3-ed4769f2e9eb\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -14692,6 +14704,18 @@
                   }
                 }
               }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "bindNumber",
+            "description": "Which shortcut should be bound to this Action by default. 0 means no binding.",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null

@@ -1,5 +1,9 @@
 import { MikroROI } from "@/linkers";
-import { ListRoiFragment, RoiKind, useDeleteRoiMutation } from "@/mikro-next/api/graphql";
+import {
+  ListRoiFragment,
+  RoiKind,
+  useDeleteRoiMutation,
+} from "@/mikro-next/api/graphql";
 import { useCursor, Line } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { useCallback, useRef, useState, useEffect } from "react";
@@ -54,7 +58,10 @@ export const ROIPolygon = (
     };
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (meshRef.current && !meshRef.current.userData.contains?.(event.target)) {
+      if (
+        meshRef.current &&
+        !meshRef.current.userData.contains?.(event.target)
+      ) {
         setSelected(false);
       }
     };

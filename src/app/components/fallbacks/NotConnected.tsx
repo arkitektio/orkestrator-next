@@ -353,7 +353,7 @@ export const PreconfiguredEndpointsWidget = () => {
   );
 
   return (
-    <div className="flex-grow flex space-y-4 flex-row flex-wrap">
+    <div className="grid grid-cols-1 gap-4">
       {/* Show checking status */}
       {isDiscovering && checkingResults.length > 0 && (
         <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -362,45 +362,23 @@ export const PreconfiguredEndpointsWidget = () => {
         </div>
       )}
 
-      {/* Available endpoints */}
-      {discoveredResults.length > 0 && (
-        <div className="space-y-2">
-          <div className="grid gap-2">
-            {discoveredResults.map((result) => (
+      {discoveredResults.map((result) => (
               <ProbeCard
                 key={result.probe.base_url}
                 probeResult={result}
                 onConnect={handleConnect}
               />
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* Checking endpoints */}
-      {checkingResults.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium text-blue-600">Checking Probes</h3>
-          <div className="grid gap-2">
-            {checkingResults.map((result) => (
+       {checkingResults.map((result) => (
               <ProbeCard
                 key={result.probe.base_url}
                 probeResult={result}
                 onConnect={handleConnect}
               />
             ))}
-          </div>
-        </div>
-      )}
 
-      {/* Unreachable endpoints */}
-      {unreachableResults.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium text-red-600">
-            Unreachable Probes
-          </h3>
-          <div className="grid gap-2">
-            {unreachableResults.map((result) => (
+
+        {unreachableResults.map((result) => (
               <ProbeCard
                 key={result.probe.base_url}
                 probeResult={result}
@@ -408,9 +386,6 @@ export const PreconfiguredEndpointsWidget = () => {
                 className="grayscale"
               />
             ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

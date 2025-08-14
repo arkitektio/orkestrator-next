@@ -1,4 +1,4 @@
-query Assignations($instanceId: InstanceId!) {
+query Assignations($instanceId: InstanceID!) {
   assignations(instanceId: $instanceId) {
     ...PostmanAssignation
   }

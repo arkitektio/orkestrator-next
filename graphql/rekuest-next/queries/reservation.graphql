@@ -1,4 +1,4 @@
-query Reservations($instanceId: InstanceId!) {
+query Reservations($instanceId: InstanceID!) {
   reservations(instanceId: $instanceId) {
     ...PostmanReservation
   }

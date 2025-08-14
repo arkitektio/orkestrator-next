@@ -38,18 +38,7 @@ ipcMain.handle("discover-beacons", async () => {
   try {
     // For now, return some example local network probes
     // In the future, this could discover actual services via mDNS
-    const localProbes = [
-      {
-        name: "Local Network Discovery",
-        base_url: "http://192.168.1.100:3000",
-        description: "Discovered via mDNS beacon",
-        source: "beacon",
-      },
-      // More discovered services would be added here
-    ];
-
-    console.log("Beacon discovery requested, returning placeholder probes");
-    return localProbes;
+    return []
   } catch (error) {
     console.error("Beacon discovery failed:", error);
     return [];

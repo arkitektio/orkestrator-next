@@ -73,5 +73,6 @@ export const buildArkitekt = ({
 
     useWidgetRegistry: () => widgetRegistry,
     useToken: () => useArkitekt().connection?.token || null,
+    useArkitekt: useArkitekt,
   };
 };

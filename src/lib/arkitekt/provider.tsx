@@ -315,27 +315,6 @@ export const ArkitektProvider = ({
     localStorage.removeItem("token");
   };
 
-  const handler = async (e: KeyboardEvent) => {
-    const isReloadKey =
-      e.key === "F5" || (e.key === "r" && (e.ctrlKey || e.metaKey));
-
-    if (isReloadKey) {
-      e.preventDefault(); // prevent default reload
-      console.log("Reloading Arkitekt context...");
-
-      if (context.connection) {
-        for (const key in context.connection.clients) {
-          const client = context.connection.clients[key];
-          console.log(`Clearing store for client: ${key}`, client);
-          if (client instanceof ApolloClient) {
-            await client.clearStore(); // stops the Apollo clien
-            await client.resetStore();
-          }
-        }
-      }
-    }
-  };
-
   useEffect(() => {
     const handler = async (e: KeyboardEvent) => {
       const isReloadKey = e.key === "x" && (e.ctrlKey || e.metaKey);

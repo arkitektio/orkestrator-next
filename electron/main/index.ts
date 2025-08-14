@@ -30,6 +30,32 @@ ipcMain.handle("download-from-url", async (event, { url }: { url: string }) => {
   }
 });
 
+ipcMain.handle("discover-beacons", async () => {
+  // Placeholder for mDNS/Bonjour beacon discovery
+  // In a real implementation, this would use libraries like 'bonjour-service' or 'mdns'
+  // to discover Arkitekt instances on the local network
+
+  try {
+    // For now, return some example local network probes
+    // In the future, this could discover actual services via mDNS
+    const localProbes = [
+      {
+        name: "Local Network Discovery",
+        base_url: "http://192.168.1.100:3000",
+        description: "Discovered via mDNS beacon",
+        source: "beacon",
+      },
+      // More discovered services would be added here
+    ];
+
+    console.log("Beacon discovery requested, returning placeholder probes");
+    return localProbes;
+  } catch (error) {
+    console.error("Beacon discovery failed:", error);
+    return [];
+  }
+});
+
 function handleOrkestratorUrl(url: string) {
   try {
     const { host: modelIdentifier, pathname } = new URL(url);

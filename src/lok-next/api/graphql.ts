@@ -106,6 +106,13 @@ export enum ClientKind {
   Website = 'WEBSITE'
 }
 
+/** An Organization is a group of users that can work together on a project. */
+export type ComChannel = {
+  __typename?: 'ComChannel';
+  id: Scalars['ID']['output'];
+  user: User;
+};
+
 /**
  * Comments represent the comments of a user on a specific data item
  * tart are identified by the unique combination of `identifier` and `object`.
@@ -474,6 +481,8 @@ export type Mutation = {
   deleteStash: Scalars['ID']['output'];
   /** Delete items from a stash */
   deleteStashItems: Array<Scalars['ID']['output']>;
+  notifyUser: Scalars['Boolean']['output'];
+  registerComChannel: ComChannel;
   render: Scalars['Fakt']['output'];
   replyTo: Comment;
   requestMediaUpload: PresignedPostCredentials;
@@ -547,6 +556,16 @@ export type MutationDeleteStashItemsArgs = {
 };
 
 
+export type MutationNotifyUserArgs = {
+  input: NotifyUserInput;
+};
+
+
+export type MutationRegisterComChannelArgs = {
+  input: RegisterComChannelInput;
+};
+
+
 export type MutationRenderArgs = {
   input: RenderInput;
 };
@@ -591,6 +610,12 @@ export type MutationUpdateStashArgs = {
   input: UpdateStashInput;
 };
 
+export type NotifyUserInput = {
+  message: Scalars['String']['input'];
+  title: Scalars['String']['input'];
+  user: Scalars['ID']['input'];
+};
+
 /** OAuth2Client(id, user, organization, client_id, client_secret, redirect_uris, scope, token_endpoint_auth_method, grant_types, response_types) */
 export type Oauth2Client = {
   __typename?: 'Oauth2Client';
@@ -633,6 +658,17 @@ export type OrganizationActiveUsersArgs = {
 export type OrganizationUsersArgs = {
   filters?: InputMaybe<UserFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+/** __doc__ */
+export type OrganizationFilter = {
+  AND?: InputMaybe<OrganizationFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<OrganizationFilter>;
+  OR?: InputMaybe<OrganizationFilter>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** A Paragraph of text */
@@ -883,6 +919,11 @@ export type RedeemTokenFilter = {
   OR?: InputMaybe<RedeemTokenFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type RegisterComChannelInput = {
+  acknowledged: Scalars['Boolean']['input'];
+  id: Scalars['ID']['input'];
 };
 
 /** A Release is a version of an app. Releases might change over time. E.g. a release might be updated to fix a bug, and the release might be updated to add a new feature. This is why they are the home for `scopes` and `requirements`, which might change over the release cycle. */
@@ -1247,6 +1288,8 @@ export type UpdateStashInput = {
 export type User = {
   __typename?: 'User';
   avatar?: Maybe<Scalars['String']['output']>;
+  /** The communication channels that the user has */
+  comChannels: Array<ComChannel>;
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
   /** The groups this user belongs to. A user will get all permissions granted to each of their groups. */
@@ -1259,6 +1302,25 @@ export type User = {
   profile: Profile;
   /** Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only. */
   username: Scalars['String']['output'];
+};
+
+
+/**
+ *
+ * A User is a person that can log in to the system. They are uniquely identified by their username.
+ * And can have an email address associated with them (but don't have to).
+ *
+ * A user can be assigned to groups and has a profile that can be used to display information about them.
+ * Detail information about a user can be found in the profile.
+ *
+ * All users can have social accounts associated with them. These are used to authenticate the user with external services,
+ * such as ORCID or GitHub.
+ *
+ *
+ */
+export type UserComChannelsArgs = {
+  filters?: InputMaybe<OrganizationFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -1460,6 +1522,13 @@ export type CreateServiceInstanceMutationVariables = Exact<{
 
 
 export type CreateServiceInstanceMutation = { __typename?: 'Mutation', createServiceInstance: { __typename?: 'ServiceInstance', identifier: string, id: string, service: { __typename?: 'Service', identifier: any, id: string, description?: string | null, name: string }, allowedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, deniedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, allowedGroups: Array<{ __typename?: 'Group', id: string, name: string, profile?: { __typename?: 'GroupProfile', id: string, bio?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null }>, deniedGroups: Array<{ __typename?: 'Group', id: string, name: string, profile?: { __typename?: 'GroupProfile', id: string, bio?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null }>, mappings: Array<{ __typename?: 'ServiceInstanceMapping', id: string, key: string, optional: boolean, instance: { __typename?: 'ServiceInstance', id: string, identifier: string, service: { __typename?: 'Service', id: string }, allowedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }>, deniedUsers: Array<{ __typename?: 'User', username: string, firstName?: string | null, lastName?: string | null, email?: string | null, avatar?: string | null, id: string }> }, client: { __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } } }>, aliases: Array<{ __typename?: 'InstanceAlias', host?: string | null, port?: number | null, ssl: boolean, challenge: string, kind: string }>, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } };
+
+export type NotifyUserMutationVariables = Exact<{
+  input: NotifyUserInput;
+}>;
+
+
+export type NotifyUserMutation = { __typename?: 'Mutation', notifyUser: boolean };
 
 export type CreateUserProfileMutationVariables = Exact<{
   input: CreateProfileInput;
@@ -2589,6 +2658,37 @@ export function useCreateServiceInstanceMutation(baseOptions?: ApolloReactHooks.
 export type CreateServiceInstanceMutationHookResult = ReturnType<typeof useCreateServiceInstanceMutation>;
 export type CreateServiceInstanceMutationResult = Apollo.MutationResult<CreateServiceInstanceMutation>;
 export type CreateServiceInstanceMutationOptions = Apollo.BaseMutationOptions<CreateServiceInstanceMutation, CreateServiceInstanceMutationVariables>;
+export const NotifyUserDocument = gql`
+    mutation NotifyUser($input: NotifyUserInput!) {
+  notifyUser(input: $input)
+}
+    `;
+export type NotifyUserMutationFn = Apollo.MutationFunction<NotifyUserMutation, NotifyUserMutationVariables>;
+
+/**
+ * __useNotifyUserMutation__
+ *
+ * To run a mutation, you first call `useNotifyUserMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useNotifyUserMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [notifyUserMutation, { data, loading, error }] = useNotifyUserMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useNotifyUserMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<NotifyUserMutation, NotifyUserMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<NotifyUserMutation, NotifyUserMutationVariables>(NotifyUserDocument, options);
+      }
+export type NotifyUserMutationHookResult = ReturnType<typeof useNotifyUserMutation>;
+export type NotifyUserMutationResult = Apollo.MutationResult<NotifyUserMutation>;
+export type NotifyUserMutationOptions = Apollo.BaseMutationOptions<NotifyUserMutation, NotifyUserMutationVariables>;
 export const CreateUserProfileDocument = gql`
     mutation CreateUserProfile($input: CreateProfileInput!) {
   createProfile(input: $input) {

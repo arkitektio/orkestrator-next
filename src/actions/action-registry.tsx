@@ -1,6 +1,7 @@
 import { useDialog } from "@/app/dialog";
 import { ServiceMap } from "@/lib/arkitekt/provider";
 import { KRAPH_ACTIONS } from "@/lib/kraph/actions";
+import { LOK_ACTIONS } from "@/lib/lok/actions";
 import { MIKRO_ACTIONS } from "@/lib/mikro/actions";
 import { REKUEST_ACTIONS } from "@/lib/rekuest/actions";
 import { linkBuilder } from "@/providers/smart/builder";
@@ -130,6 +131,10 @@ for (let i of REKUEST_ACTIONS) {
 }
 
 for (let i of KRAPH_ACTIONS) {
+  defaultRegistry.registerAction(i);
+}
+
+for (let i of LOK_ACTIONS) {
   defaultRegistry.registerAction(i);
 }
 

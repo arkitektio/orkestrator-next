@@ -24,4 +24,21 @@ export const LOK_ACTIONS: Action[] = [
       dialog.openDialog("notifyusers", { users });
     },
   },
+  {
+    name: "Add User",
+    description: "Add a user to an organization",
+    title: "Add User",
+    conditions: [
+      { type: "identifier", identifier: "@lok/user" },
+      { type: "nopartner" },
+    ],
+    collections: ["notify"],
+    execute: async ({ state, services, dialog }) => {
+
+
+      const users = state.left.filter((item) => item.identifier === "@lok/user").map((item) => item.object);
+
+      dialog.openDialog("addusertoorganization", { users });
+    },
+  },
 ];

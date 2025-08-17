@@ -68,6 +68,7 @@ import { useAssign } from "../hooks/useAssign";
 import { useLiveAssignation } from "../hooks/useAssignations";
 import { useHashAction } from "../hooks/useHashActions";
 import { useHashActionWithProgress } from "../hooks/useHashActionWithProgress";
+import { PlayIcon } from "lucide-react";
 
 export type OnDone = (args: {
   event?: AssignationEventFragment;
@@ -1045,8 +1046,8 @@ export const ObjectButton = (props: ObjectButtonProps) => {
       <Popover>
         <PopoverTrigger asChild>
           {props.children || (
-            <Button variant={"outline"} className="w-6 h-9 text-white">
-              Do
+            <Button variant={"outline"} className="text-white">
+              <PlayIcon />
             </Button>
           )}
         </PopoverTrigger>

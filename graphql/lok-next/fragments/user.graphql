@@ -5,6 +5,9 @@ fragment ListUser on User {
   email
   avatar
   id
+  profile {
+    ...Profile
+  }
 }
 
 fragment DetailUser on User {
@@ -20,6 +23,9 @@ fragment DetailUser on User {
   }
   profile {
     ...Profile
+  }
+  memberships {
+    ...Membership
   }
 }
 

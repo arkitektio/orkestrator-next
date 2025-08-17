@@ -1,4 +1,5 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
@@ -6,15 +7,15 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
-  CreateProtocolEventCategoryMutationVariables,
   CreateRelationCategoryMutationVariables,
-  useCreateProtocolEventCategoryMutation,
+  useCreateInlineGraphMutation,
   useCreateRelationCategoryMutation,
   useSearchEntityCategoryLazyQuery,
   useSearchGraphsLazyQuery,
-  useSearchTagsLazyQuery,
+  useSearchTagsLazyQuery
 } from "../api/graphql";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
 
 const enumToOptions = (e: any) => {
   return Object.keys(e).map((key) => ({
@@ -23,10 +24,12 @@ const enumToOptions = (e: any) => {
   }));
 };
 
-export default (props: { graph?: string }) => {
+export const TForm = (props: { graph?: string }) => {
   const [add] = useCreateRelationCategoryMutation({
     refetchQueries: ["GetGraph"],
   });
+
+  const [create] = useCreateInlineGraphMutation();
 
   const dialog = useGraphQlFormDialog(add);
 
@@ -59,11 +62,12 @@ export default (props: { graph?: string }) => {
             <div className="col-span-2 flex-col gap-1 flex">
               {!props.graph && (
                 <>
-                  <GraphQLSearchField
+                  <GraphQLCreatableSearchField
                     label="Graph"
                     name="graph"
                     description="What graph do you want to add this expression to?"
                     searchQuery={search}
+                    createMutation={create}
                   />
                 </>
               )}
@@ -77,6 +81,9 @@ export default (props: { graph?: string }) => {
                 name="description"
                 description="What describes your expression the best? (e.g. 'A person is a human being')"
               />
+              <Collapsible>
+              <CollapsibleTrigger>Advanced</CollapsibleTrigger>
+              <CollapsibleContent>
               <StringField
                 label="PURL"
                 name="purl"
@@ -110,6 +117,8 @@ export default (props: { graph?: string }) => {
                   description="Filters for the entity's categories."
                 />
               </div>
+              </CollapsibleContent>
+              </Collapsible>
             </div>
           </div>
 
@@ -121,3 +130,6 @@ export default (props: { graph?: string }) => {
     </>
   );
 };
+
+
+export default TForm;

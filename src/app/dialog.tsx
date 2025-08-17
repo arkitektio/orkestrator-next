@@ -1,3 +1,4 @@
+import { AddUserToOrganizationDialog } from "@/dialogs/AddUserToOrganization";
 import { CreateNewMeasurement } from "@/dialogs/CreateNewMeasurement";
 import { CreateNewRelation } from "@/dialogs/CreateNewRelation";
 import { NotifyDialog } from "@/dialogs/NotifyDialog";
@@ -16,5 +17,6 @@ export const { DialogProvider, useDialog } = createDialogProvider({
   createnewmeasurement: CreateNewMeasurement,
   setasmeasurement: SetAsMeasurement,
   createshortcut: CreateShortcutDialog,
-  notifyusers: NotifyDialog
+  notifyusers: NotifyDialog,
+  addusertoorganization: AddUserToOrganizationDialog
 });

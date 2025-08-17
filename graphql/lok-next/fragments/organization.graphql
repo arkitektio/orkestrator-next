@@ -3,3 +3,10 @@ fragment Organization on Organization {
   name
   slug
 }
+
+
+fragment ListOrganization on Organization {
+  id
+  name
+  slug
+}

@@ -1601,7 +1601,7 @@
               "name": null,
               "ofType": {
                 "kind": "SCALAR",
-                "name": "InstanceID",
+                "name": "InstanceId",
                 "ofType": null
               }
             },
@@ -1962,30 +1962,6 @@
             "deprecationReason": null
           },
           {
-            "name": "me",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Boolean",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "org",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Boolean",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "pinned",
             "description": "Filter by pinned agents",
             "type": {
@@ -1998,11 +1974,11 @@
             "deprecationReason": null
           },
           {
-            "name": "public",
+            "name": "scope",
             "description": null,
             "type": {
-              "kind": "SCALAR",
-              "name": "Boolean",
+              "kind": "INPUT_OBJECT",
+              "name": "ScopeFilter",
               "ofType": null
             },
             "defaultValue": "null",
@@ -2015,18 +1991,6 @@
             "type": {
               "kind": "SCALAR",
               "name": "String",
-              "ofType": null
-            },
-            "defaultValue": "null",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "shared",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Boolean",
               "ofType": null
             },
             "defaultValue": "null",
@@ -2093,7 +2057,7 @@
               "name": null,
               "ofType": {
                 "kind": "SCALAR",
-                "name": "InstanceID",
+                "name": "InstanceId",
                 "ofType": null
               }
             },
@@ -2323,7 +2287,7 @@
               "name": null,
               "ofType": {
                 "kind": "SCALAR",
-                "name": "InstanceID",
+                "name": "InstanceId",
                 "ofType": null
               }
             },
@@ -2391,7 +2355,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"3247c6c5-b3e9-4269-b50a-fb9b371336f4\"",
+            "defaultValue": "\"7d119f82-ac5c-4c27-8003-bef891918b82\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -4717,7 +4681,7 @@
               "name": null,
               "ofType": {
                 "kind": "SCALAR",
-                "name": "InstanceID",
+                "name": "InstanceId",
                 "ofType": null
               }
             },
@@ -7988,7 +7952,7 @@
       },
       {
         "kind": "SCALAR",
-        "name": "InstanceID",
+        "name": "InstanceId",
         "description": "The `InstanceID` scalar type represents a unique instance identifier",
         "isOneOf": null,
         "fields": null,
@@ -11788,7 +11752,7 @@
                 "description": null,
                 "type": {
                   "kind": "SCALAR",
-                  "name": "InstanceID",
+                  "name": "InstanceId",
                   "ofType": null
                 },
                 "defaultValue": "null",
@@ -12572,7 +12536,7 @@
                 "description": null,
                 "type": {
                   "kind": "SCALAR",
-                  "name": "InstanceID",
+                  "name": "InstanceId",
                   "ofType": null
                 },
                 "defaultValue": "null",
@@ -12703,7 +12667,7 @@
                 "description": null,
                 "type": {
                   "kind": "SCALAR",
-                  "name": "InstanceID",
+                  "name": "InstanceId",
                   "ofType": null
                 },
                 "defaultValue": "null",
@@ -13957,7 +13921,7 @@
               "name": null,
               "ofType": {
                 "kind": "SCALAR",
-                "name": "InstanceID",
+                "name": "InstanceId",
                 "ofType": null
               }
             },
@@ -13973,7 +13937,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"b33bb9d7-10bb-4f24-9262-f529929ddd80\"",
+            "defaultValue": "\"644f95c2-e7a3-4bc3-bbd6-0aa44cf0858c\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -14298,6 +14262,66 @@
         "possibleTypes": null
       },
       {
+        "kind": "INPUT_OBJECT",
+        "name": "ScopeFilter",
+        "description": "A way to filter by scope",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "me",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "org",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "public",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "shared",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "OBJECT",
         "name": "SearchAssignWidget",
         "description": null,
@@ -14465,7 +14489,7 @@
               "name": null,
               "ofType": {
                 "kind": "SCALAR",
-                "name": "InstanceID",
+                "name": "InstanceId",
                 "ofType": null
               }
             },
@@ -14533,7 +14557,7 @@
               "name": null,
               "ofType": {
                 "kind": "SCALAR",
-                "name": "InstanceID",
+                "name": "InstanceId",
                 "ofType": null
               }
             },
@@ -14577,7 +14601,7 @@
               "name": null,
               "ofType": {
                 "kind": "SCALAR",
-                "name": "InstanceID",
+                "name": "InstanceId",
                 "ofType": null
               }
             },
@@ -14665,7 +14689,7 @@
               "name": null,
               "ofType": {
                 "kind": "SCALAR",
-                "name": "InstanceID",
+                "name": "InstanceId",
                 "ofType": null
               }
             },
@@ -16182,7 +16206,7 @@
                   "name": null,
                   "ofType": {
                     "kind": "SCALAR",
-                    "name": "InstanceID",
+                    "name": "InstanceId",
                     "ofType": null
                   }
                 },
@@ -16215,7 +16239,7 @@
                   "name": null,
                   "ofType": {
                     "kind": "SCALAR",
-                    "name": "InstanceID",
+                    "name": "InstanceId",
                     "ofType": null
                   }
                 },
@@ -16347,7 +16371,7 @@
                   "name": null,
                   "ofType": {
                     "kind": "SCALAR",
-                    "name": "InstanceID",
+                    "name": "InstanceId",
                     "ofType": null
                   }
                 },
@@ -17742,7 +17766,7 @@
               "name": null,
               "ofType": {
                 "kind": "SCALAR",
-                "name": "InstanceID",
+                "name": "InstanceId",
                 "ofType": null
               }
             },
@@ -17770,7 +17794,7 @@
               "name": null,
               "ofType": {
                 "kind": "SCALAR",
-                "name": "InstanceID",
+                "name": "InstanceId",
                 "ofType": null
               }
             },
@@ -18037,7 +18061,7 @@
               "name": null,
               "ofType": {
                 "kind": "SCALAR",
-                "name": "InstanceID",
+                "name": "InstanceId",
                 "ofType": null
               }
             },
@@ -18149,7 +18173,7 @@
               "name": null,
               "ofType": {
                 "kind": "SCALAR",
-                "name": "InstanceID",
+                "name": "InstanceId",
                 "ofType": null
               }
             },

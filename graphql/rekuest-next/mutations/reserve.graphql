@@ -1,5 +1,5 @@
 mutation Reserve(
-  $instanceId: InstanceID!
+  $instanceId: InstanceId!
   $action: ID
   $hash: ActionHash
   $implementation: ID

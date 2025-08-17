@@ -1,6 +1,6 @@
 
 
-subscription WatchReservations($instanceId: InstanceID!) {
+subscription WatchReservations($instanceId: InstanceId!) {
   reservations(instanceId: $instanceId) {
     ...PostmanReservation
   }

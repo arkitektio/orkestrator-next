@@ -99,13 +99,16 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
             <Arkitekt.Provider>
               <TooltipProvider>
+
                 <DisplayProvider registry={displayRegistry}>
 
                           <WidgetRegistryProvider>
+
+                        <SmartProvider>
+
                   <DialogProvider>
                     <SelectionProvider>
                       <CommandProvider>
-                        <SmartProvider>
                             <CommandMenu />
                             <Guard.Rekuest fallback={<></>}>
                               {/* Here we registed both the GraphQL Postman that will take care of assignments, and reserverations */}
@@ -137,10 +140,11 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                             <BackNavigationErrorCatcher>
                               {children}
                             </BackNavigationErrorCatcher>
-                        </SmartProvider>
                       </CommandProvider>
                     </SelectionProvider>
-                  </DialogProvider>
+
+                        </DialogProvider>
+                        </SmartProvider>
 
                           </WidgetRegistryProvider>
                 </DisplayProvider>

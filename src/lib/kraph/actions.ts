@@ -41,6 +41,22 @@ export const KRAPH_ACTIONS: Action[] = [
     typename: "EntityCategory",
     mutation: DeleteEntityCategoryDocument,
   }),
+  {
+    name: "CreateProtocolEventCategory",
+    title: "Create Protocol Event Category",
+    description: "Create a new Protocol Event Category",
+    conditions: [
+      {
+        type: "identifier", identifier: "@kraph/graph"
+      },
+    ],
+    execute: async ({ services, onProgress, abortSignal, state, dialog }) => {
+      dialog.openSheet("createprotocoleventcategory", {
+        graph: state.left[0].object,
+      }, { className: "w-[600px] max-w-none" });
+    },
+    collections: ["io"],
+  }
 ];
 
 export const relateAction = {

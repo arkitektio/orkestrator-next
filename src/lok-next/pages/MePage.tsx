@@ -1,16 +1,14 @@
-import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { LoadingPage } from "@/app/components/fallbacks/LoadingPage";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Image } from "@/components/ui/image";
+import { Separator } from "@/components/ui/separator";
 import { DragZone } from "@/components/upload/drag";
 import { useLokUpload } from "@/datalayer/hooks/useLokUpload";
-import { LokUser } from "@/linkers";
-import { useMeQuery, useUpdateUserProfileMutation, useUserQuery } from "../api/graphql";
-import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { LokUser } from "@/linkers";
 import { useRef } from "react";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { r } from "node_modules/@udecode/plate-ai/dist/BaseAIPlugin-BZ_YjTkV";
-import { LoadingPage } from "@/app/components/fallbacks/LoadingPage";
+import { useMeQuery, useUpdateUserProfileMutation } from "../api/graphql";
 
 // (legacy) export type removed – not used
 

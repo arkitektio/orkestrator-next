@@ -1,29 +1,24 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { DateField } from "@/components/fields/DateField";
+import { FloatField } from "@/components/fields/FloatField";
+import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
+import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
+import { IntField } from "@/components/fields/IntField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
-  CreateReagentMutationVariables,
   EntityRoleDefinitionFragment,
   MetricKind,
-  ProtocolEventCategory,
   ProtocolEventCategoryFragment,
   ReagentRoleDefinitionFragment,
-  useCreateReagentMutation,
-  useGetProtocolEventCategoryQuery,
   useRecordProtocolEventMutation,
   useSearchEntitiesForRoleLazyQuery,
-  useSearchEntitiesLazyQuery,
   useSearchReagentsForRoleLazyQuery,
-  VariableDefinitionFragment,
+  VariableDefinitionFragment
 } from "../api/graphql";
-import { GraphQLListSearchField as GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
-import { IntField } from "@/components/fields/IntField";
-import { FloatField } from "@/components/fields/FloatField";
-import { DateField } from "@/components/fields/DateField";
 
 export const EntityRoleInput = ({
   role,

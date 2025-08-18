@@ -1,6 +1,7 @@
 import { Plate } from "@udecode/plate-common/react";
 
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { ChoicesField } from "@/components/fields/ChoicesField";
 import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { StringField } from "@/components/fields/StringField";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
@@ -12,11 +13,14 @@ import { FloatingToolbar } from "@/components/plate-ui/floating-toolbar";
 import { FloatingToolbarButtons } from "@/components/plate-ui/floating-toolbar-buttons";
 import { TooltipProvider } from "@/components/plate-ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
+import { DragZone } from "@/components/upload/drag";
+import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
+import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
-  KraphNaturalEventCategory,
   KraphProtocolEventCategory,
-  KraphProtocolStepTemplate,
+  KraphProtocolStepTemplate
 } from "@/linkers";
 import { editor } from "@/plate/plugins";
 import {
@@ -24,26 +28,18 @@ import {
   useEditorRef,
   usePlateEditor,
 } from "@udecode/plate-common/react";
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import {
   MetricKind,
   NaturalEventCategoryFragment,
   ProtocolEventCategoryFragment,
-  UpdateNaturalEventCategoryMutationVariables,
   UpdateProtocolEventCategoryMutationVariables,
-  useGetNaturalEventCategoryQuery,
   useGetProtocolEventCategoryQuery,
   useSearchEntityCategoryLazyQuery,
   useSearchTagsLazyQuery,
-  useUpdateNaturalEventCategoryMutation,
-  useUpdateProtocolEventCategoryMutation,
+  useUpdateProtocolEventCategoryMutation
 } from "../api/graphql";
-import { Card } from "@/components/ui/card";
-import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
-import { useResolve } from "@/datalayer/hooks/useResolve";
-import { DragZone } from "@/components/upload/drag";
-import { ChoicesField } from "@/components/fields/ChoicesField";
 import { RoleProvider } from "../providers/RoleProvider";
 
 export type IRepresentationScreenProps = {};

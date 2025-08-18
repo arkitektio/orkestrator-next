@@ -15,6 +15,7 @@ const api = {
   openSecondWindow: (path: string) => {
     ipcRenderer.send("open-second-window", path);
   },
+  discoverBeacons: () => ipcRenderer.invoke("discover-beacons"),
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to
@@ -24,12 +25,15 @@ if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld("electron", electronAPI);
     contextBridge.exposeInMainWorld("api", api);
+    contextBridge.exposeInMainWorld("electronAPI", api);
   } catch (error) {
     console.error(error);
   }
 } else {
-  // @ts-ignore (define in dts)
+  // @ts-expect-error (define in dts)
   window.electron = electronAPI;
-  // @ts-ignore (define in dts)
+  // @ts-expect-error (define in dts)
   window.api = api;
+  // @ts-expect-error (define in dts)
+  window.electronAPI = api;
 }

@@ -1,13 +1,6 @@
-import { StringField } from "@/components/fields/StringField";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Form } from "@/components/ui/form";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Sheet,
   SheetContent,
@@ -17,228 +10,226 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
-import { discover } from "@/lib/arkitekt/fakts/discover";
-import { FaktsEndpoint } from "@/lib/arkitekt/fakts/endpointSchema";
 import { useMyContextQuery } from "@/lok-next/api/graphql";
+import {
+  Activity,
+  AlertCircle,
+  ArrowRight,
+  CheckCircle,
+  Globe,
+  Loader2,
+  Users,
+  Heart,
+} from "lucide-react";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { NotConnected } from "../components/fallbacks/NotConnected";
-import React from "react";
-import { ConnectingFallback } from "../components/fallbacks/Connecting";
+import { Instance } from "@/lib/arkitekt/fakts/faktsSchema";
+import { aliasToHttpPath } from "@/lib/arkitekt/alias/helpers";
+import { ScrollArea } from "@radix-ui/react-scroll-area";
 
-export const ConnectButton = () => {
-  const connect = Arkitekt.useConnect();
+type ServiceCardProps = {
+  instance: Instance;
+  serviceKey: string;
+};
 
-  const [endpoints, setEndpoints] = React.useState<FaktsEndpoint[]>([]);
+const ServiceWidget = (props: ServiceCardProps) => {
+  const [health, setHealth] = useState<boolean | null>(null);
+  const [healthyAliases, setHealthyAliases] = useState<number>(0);
+  const [totalAliases, setTotalAliases] = useState<number>(0);
 
-  const form = useForm({
-    defaultValues: {
-      url: "",
-    },
-  });
+  useEffect(() => {
+    const aliases = props.instance.aliases;
+    setTotalAliases(aliases.length);
 
-  const onSubmit = (data: any) => {
-    const controller = new AbortController();
+    if (aliases.length === 0) {
+      setHealth(false);
+      return;
+    }
 
-    discover({
-      url: data.url,
-      timeout: 2000,
-      controller: controller,
-    }).then((endpoint) => {
-      connect({
-        endpoint,
-        controller,
-      });
+    // Check all aliases
+    const aliasChecks = aliases.map(async (alias) => {
+      try {
+        const healthUrl = aliasToHttpPath(alias, alias.challenge);
+        // Create an AbortController for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+        const response = await fetch(healthUrl, {
+          method: "GET",
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        return response.ok;
+      } catch (error) {
+        console.error(`Health check failed for alias ${alias.host}:`, error);
+        return false;
+      }
     });
+
+    Promise.all(aliasChecks).then((results) => {
+      const healthyCount = results.filter(Boolean).length;
+      setHealthyAliases(healthyCount);
+      setHealth(healthyCount > 0); // Service is healthy if at least one alias is healthy
+    });
+  }, [props]);
+
+  const getHealthIcon = () => {
+    if (health === null)
+      return <Loader2 className="w-4 h-4 animate-spin text-blue-500" />;
+    if (health) return <CheckCircle className="w-4 h-4 text-green-500" />;
+    return <AlertCircle className="w-4 h-4 text-red-500" />;
+  };
+
+  const getHealthBadge = () => {
+    if (health === null) return <Badge variant="secondary">Checking...</Badge>;
+    if (health) {
+      const allHealthy = healthyAliases === totalAliases;
+      return (
+        <Badge
+          variant="default"
+          className={allHealthy ? "bg-green-500" : "bg-yellow-500"}
+        >
+          {allHealthy
+            ? "Healthy"
+            : `Partial (${healthyAliases}/${totalAliases})`}
+        </Badge>
+      );
+    }
+    return <Badge variant="destructive">Unhealthy</Badge>;
   };
 
   return (
-    <div className="flex flex-col w-full h-full flex items-center justify-center">
-      <div className="flex flex-col">
-        <div className="space-y-4">
-          <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl text-foreground">
-            Hi Stranger :)
-          </h1>
-          <h2 className="text-2xl font-light tracking-tighter sm:text-3xl md:text-4xl text-foreground">
-            Welcome to Arkitekt.
-          </h2>
-          <p className="max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-            The open-source platform for deploying, managing, and scaling
-            bioimage applications. In order to get you started, you need to
-            connect to an Arkitekt Server.
-          </p>
-
-          <div className="flex items-center space-x-2 text-foreground">
-            Discovered Endpoints
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Activity className="w-5 h-5 text-blue-500" />
+            <CardTitle className="text-md">{props.instance.service}</CardTitle>
           </div>
-
-          <div className="flex flex-col gap-2 min-[400px]:flex-row">
-            {endpoints.map((endpoint) => (
-              <Card
-                key={endpoint.base_url}
-                onClick={() =>
-                  connect({
-                    endpoint,
-                    controller: new AbortController(),
-                  })
-                }
-                className="cursor-pointer hover:bg-accent-300"
-              >
-                <CardHeader>
-                  <CardTitle className="text-lg font-bold">
-                    {endpoint.name}
-                  </CardTitle>
-                  <CardDescription className="text-gray-500">
-                    {endpoint?.description}
-                  </CardDescription>
-                </CardHeader>
-
-                <CardContent>
-                  <a href={endpoint.base_url} target="_blank">
-                    {endpoint.base_url}
-                  </a>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant={"secondary"}> Advanced Login</Button>
-            </SheetTrigger>
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle> Log in to your local server?</SheetTitle>
-                <SheetDescription>
-                  <div className="space-y-4">
-                    <p className=" dark:text-gray-400">
-                      Enter your username and password to access your local
-                      server.
-                    </p>
-                    <Form {...form}>
-                      <form onSubmit={form.handleSubmit(onSubmit)}>
-                        <div className="grid w-full max-w-sm gap-2">
-                          <StringField
-                            name="url"
-                            description="The local server url"
-                          />
-                          <Button
-                            className="w-full"
-                            type="submit"
-                            variant={"secondary"}
-                          >
-                            Connect
-                          </Button>
-                        </div>
-                      </form>
-                    </Form>
-                  </div>
-                </SheetDescription>
-              </SheetHeader>
-            </SheetContent>
-          </Sheet>
+          {getHealthBadge()}
         </div>
-      </div>
-    </div>
-  );
-};
-
-//
-type ConfiguredServices =
-  | "live.arkitekt.lok"
-  | "live.arkitekt.rekuest-next"
-  | "live.arkitekt.fluss";
-
-type ServiceCardProps = {
-  service: ConfiguredServices;
-  value: any;
-  key: string;
-};
-
-const LokServiceWidget = (props: ServiceCardProps) => {
-  const [health, setHealth] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    if (props.value?.healthz) {
-      fetch(props.value.healthz)
-        .then((res) => res.json())
-        .then((data) => {
-          setHealth(true);
-        })
-        .catch((e) => {
-          console.error(e, props.value.healthz);
-          setHealth(false);
-        });
-    }
-  }, [props.value]);
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{props.service}</CardTitle>
       </CardHeader>
       <CardContent>
-        <CardDescription>
-          <div className="flex items-center space-x-2">
-            <div>Health</div>
-            <div>
-              {health === null ? "Loading" : health ? "Healthy" : "Unhealthy"}
-            </div>
+        <div className="flex items-center gap-2">
+          {getHealthIcon()}
+          <span className="text-sm text-muted-foreground">
+            Service Status:{" "}
+            {health === null ? "Checking" : health ? "Operational" : "Down"}
+          </span>
+        </div>
+        {totalAliases > 0 && (
+          <div className="mt-2 space-y-1">
+            <p className="text-xs text-muted-foreground">
+              Aliases: {healthyAliases}/{totalAliases} healthy
+            </p>
+            {props.instance.aliases.map((alias, index) => (
+              <p key={index} className="text-xs text-muted-foreground">
+                {alias.ssl ? "https" : "http"}://{alias.host}
+                {alias.port ? `:${alias.port}` : ""}
+                {alias.path || ""}
+              </p>
+            ))}
           </div>
-        </CardDescription>
+        )}
       </CardContent>
     </Card>
   );
 };
 
-const serviceRegistry: {
-  [key in ConfiguredServices]: (props: ServiceCardProps) => React.ReactNode;
-} = {
-  "live.arkitekt.lok": LokServiceWidget,
-  "live.arkitekt.rekuest-next": LokServiceWidget,
-  "live.arkitekt.fluss": LokServiceWidget,
+export const ServiceInfo = (props: { value: Instance; serviceKey: string }) => {
+  return <ServiceWidget instance={props.value} serviceKey={props.serviceKey} />;
 };
 
-export const ServiceInfo = (props: {
-  value: any;
-  service: ConfiguredServices;
-  key: string;
-}) => {
-  const ServiceWidget = serviceRegistry[props.service];
-
-  if (!ServiceWidget) {
-    return <div>Service not found</div>;
-  }
+export const ServerHealthInfo = () => {
+  const { data } = useMyContextQuery({
+    fetchPolicy: "cache-and-network",
+  });
 
   return (
-    <ServiceWidget
-      service={props.service}
-      key={props.key}
-      value={props.value}
-    />
+    <div className="space-y-6">
+      {/* User/Organization Info */}
+      <div className="grid md:grid-cols-1 gap-6">
+        <Card className="border-none shadow-lg">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <Users className="w-6 h-6 text-blue-500" />
+              <CardTitle>User Information</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Username:</span>
+              <span className="font-medium">
+                {data?.mycontext?.user.username || "N/A"}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">User ID:</span>
+              <span className="font-mono text-sm">
+                {data?.mycontext?.user.id || "N/A"}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-none shadow-lg">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <Globe className="w-6 h-6 text-purple-500" />
+              <CardTitle>Organization</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Name:</span>
+              <span className="font-medium">
+                {data?.mycontext?.organization?.name || "N/A"}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Organization ID:</span>
+              <span className="font-mono text-sm">
+                {data?.mycontext?.organization?.id || "N/A"}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Services Section */}
+      <div className="space-y-4">
+        <div className="text-left">
+          <h3 className="text-md font-semibold mb-2">Available Services</h3>
+          <p className="text-muted-foreground text-sm">
+            Status and health information for connected services
+          </p>
+        </div>
+
+        <ServicesInfo />
+      </div>
+    </div>
   );
 };
-
 export const ServicesInfo = () => {
   const fakts = Arkitekt.useFakts();
 
   const listedServices = fakts
-    ? Object.keys(fakts)
+    ? Object.keys(fakts.instances)
         .map((key) => {
           return {
-            key: key,
-            value: fakts[key as keyof typeof fakts],
-            service: fakts[key as keyof typeof fakts]?.__service,
+            serviceKey: key,
+            value: fakts.instances[key as keyof typeof fakts],
           };
         })
-        .filter((e) => e.key && e.value && e.service)
+        .filter((e) => e.serviceKey)
     : [];
 
   return (
-    <div className="grid grid-cols-1 gap-2">
+    <ScrollArea className="grid grid-cols-1 gap-4 overflow-y-scroll">
       {listedServices.map((service) => {
-        return <ServiceInfo {...service} />;
+        return <ServiceInfo key={service.serviceKey} {...service} />;
       })}
-    </div>
+    </ScrollArea>
   );
 };
 
@@ -247,65 +238,107 @@ export const Home = () => {
   const disconnect = Arkitekt.useDisconnect();
   const reconnect = Arkitekt.useReconnect();
 
-  const { data, error } = useMyContextQuery({
+  const { data } = useMyContextQuery({
     fetchPolicy: "cache-and-network",
   });
 
   return (
-    <>
-      <div className="flex flex-col w-full h-full flex items-center justify-center">
-        <div className="flex flex-col">
-          <div className="space-y-4">
-            <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl text-foreground">
-              {" "}
-              Hi {data?.mycontext?.user.username} :)
-            </h1>
-            <p className="max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-              You are currently logged in to {fakts?.self?.deployment_name} and
-              are acting on behalf of {data?.mycontext.organization.name}.
-              <br />
-              You can now access all the features of your server for your
-              organization.
-            </p>
+    <div className="min-h-screen w-full h-full bg-gradient-to-br from-slate-50/20 to-slate-100/20 dark:from-slate-900/30 dark:to-slate-800/30 flex items-center justify-center">
+      <div className="container mx-auto my-auto px-4 py-16 min-h-screen flex flex-col">
+        <div className="max-w-6xl mx-auto my-auto">
+          {/* Welcome Section */}
+          <div className="text-center mb-12">
+            <div className="space-y-6">
+              <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
+                <span className="text-foreground">Welcome back,</span>
+                <br />
+                <span className="text-foreground">
+                  {data?.mycontext?.user.username || "User"}
+                </span>
+              </h1>
 
-            <div className="flex items-center space-x-2">
-              <Button
-                onClick={() => {
-                  disconnect();
-                }}
-                variant={"ghost"}
-                className="text-foreground"
-              >
-                Disconnect form server
-              </Button>
-              <Button
-                onClick={() => {
-                  reconnect({ controller: new AbortController() });
-                }}
-                variant={"ghost"}
-                className="text-foreground"
-              >
-                Change User / Organization
-              </Button>
+              <div className="max-w-3xl mx-auto space-y-4">
+                <p className="text-xl text-muted-foreground leading-relaxed">
+                  You are currently connected to{" "}
+                  <span className="font-semibold text-foreground">
+                    {fakts?.self?.deployment_name || "Arkitekt Server"}
+                  </span>
+                  {data?.mycontext?.organization && (
+                    <>
+                      {" "}
+                      and working with{" "}
+                      <span className="font-semibold text-foreground">
+                        {data.mycontext.organization.name}
+                      </span>
+                    </>
+                  )}
+                  .
+                </p>
+                <p className="text-muted-foreground">
+                  You now have access to all features and services available on
+                  your server.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center justify-center gap-4 pt-6">
+                <Button
+                  onClick={reconnect}
+                  variant="default"
+                  size="lg"
+                  className="text-base"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Switch User/Organization
+                </Button>
+                <Button
+                  onClick={disconnect}
+                  variant="outline"
+                  size="lg"
+                  className="text-base"
+                >
+                  <ArrowRight className="w-4 h-4 mr-2" />
+                  Disconnect
+                </Button>
+
+                {/* Server Health Button with Sheet */}
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="secondary" size="lg" className="text-base">
+                      <Heart className="w-4 h-4 mr-2" />
+                      Inspect
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent className="overflow-y-auto ">
+                    <SheetHeader>
+                      <SheetTitle>Server Health Information</SheetTitle>
+                      <SheetDescription>
+                        Overview of connected services and their status
+                      </SheetDescription>
+                    </SheetHeader>
+                    <div className="mt-6">
+                      <ServerHealthInfo />
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </div>
             </div>
-
-            <div className="flex-grow" />
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
 /**
- * This is the hero component, which is the main page of the public appliccation.
- * @todo: This component should be replaced with amore useful component for the public application.
+ * This is the hero component, which is the main page of the public application.
+ * @todo: This component should be replaced with a more useful component for the public application.
  */
 function Page() {
   return (
-    <>
+    <div className="min-h-screen w-full">
       <Home />
-    </>
+    </div>
   );
 }
 

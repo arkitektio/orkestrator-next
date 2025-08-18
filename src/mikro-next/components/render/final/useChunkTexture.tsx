@@ -114,6 +114,18 @@ export const useAsyncChunk = (props: {
           textureData = new Float32Array(array.data);
           format = THREE.RedFormat;
           type = THREE.FloatType;
+        } else if (array.data instanceof Uint8ClampedArray) {
+          textureData = new Float32Array(array.data);
+          format = THREE.RedFormat;
+          type = THREE.FloatType;
+        } else if (array.data instanceof ArrayBuffer) {
+          textureData = new Float32Array(array.data);
+          format = THREE.RedFormat;
+          type = THREE.FloatType;
+        } else if (array.data instanceof Float64Array) {
+          textureData = new Float32Array(array.data);
+          format = THREE.RedFormat;
+          type = THREE.FloatType;
         } else {
           console.error(
             "Unsupported data type for texture creation:",
@@ -130,6 +142,12 @@ export const useAsyncChunk = (props: {
           type,
         );
 
+        // Set filtering for smooth interpolation when zooming
+        tex.minFilter = THREE.NearestFilter;
+        tex.magFilter = THREE.NearestFilter;
+        tex.wrapS = THREE.ClampToEdgeWrapping;
+        tex.wrapT = THREE.ClampToEdgeWrapping;
+        tex.flipY = false; // Disable Y-flipping to match image orientation
         tex.needsUpdate = true;
 
         if (!abortController.signal.aborted) {

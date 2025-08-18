@@ -18,6 +18,7 @@ import GroupPage from "./pages/GroupPage";
 import UsersPage from "./pages/UsersPage";
 import LayersPage from "./pages/LayersPage";
 import LayerPage from "./pages/LayerPage";
+import MePage from "./pages/MePage";
 interface Props {}
 
 export const LokNextModule: React.FC<Props> = (props) => {
@@ -25,6 +26,7 @@ export const LokNextModule: React.FC<Props> = (props) => {
     <Guard.Lok fallback={<>Loading</>}>
       <ModuleLayout pane={<StandardPane />}>
         <Routes>
+          <Route path="me" element={<MePage />} />
           <Route path="users" element={<UsersPage />} />
           <Route path="users/:id" element={<UserPage />} />
           <Route path="apps" element={<AppsPage />} />

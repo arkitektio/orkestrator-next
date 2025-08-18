@@ -86,7 +86,7 @@ export const PageLayout = ({
             </Button>
             <Separator dir="vertical" className="w-2" />
             <div className="flex-grow flex flex-col truncate">
-              <h1 className="scroll-m-20 text-2xl font-extrabold tracking-tight lg:text-2xl truncate">
+              <h1 className="scroll-m-20 text-xl font-extrabold tracking-tight lg:text-xl truncate max-w-[70%]">
                 {title}
               </h1>
               <div className="flex-shrink ">

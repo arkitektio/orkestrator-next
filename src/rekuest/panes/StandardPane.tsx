@@ -12,12 +12,11 @@ import {
   useGlobalSearchQuery,
 } from "../api/graphql";
 import ActionCard from "../components/cards/ActionCard";
-import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
+import { FancyInput } from "@/components/ui/fancy-input";
+import { useDebounce } from "@uidotdev/usehooks";
 
-interface IDataSidebarProps {}
-
-export const NavigationPane = (props: {}) => {
-  const { data, refetch, variables } = useAgentsQuery({
+export const NavigationPane = () => {
+  const { data } = useAgentsQuery({
     variables: {
       filters: {
         pinned: false,
@@ -162,50 +161,49 @@ export const NavigationPane = (props: {}) => {
   );
 };
 
-const variables = {
-  search: "",
-  noActions: false,
-  pagination: {
-    limit: 10,
-  },
-};
+const Pane: React.FunctionComponent = () => {
+  const [search, setSearch] = React.useState("");
 
-const Pane: React.FunctionComponent<IDataSidebarProps> = (props) => {
-  const { data, refetch } = useGlobalSearchQuery({
-    variables: variables,
-  });
+  const debouncedSearch = useDebounce(search, 300);
 
-  const [currentVariables, setCurrentVariables] =
-    React.useState<GlobalSearchQueryVariables>(variables);
-
-  const onFilterChanged = (e: GlobalSearchQueryVariables) => {
-    refetch(e);
-    setCurrentVariables(e);
+  const variables: GlobalSearchQueryVariables = {
+    search: debouncedSearch,
+    noActions: false,
+    pagination: {
+      limit: 10,
+    },
   };
 
+  const { data, refetch } = useGlobalSearchQuery({ variables });
+
+  React.useEffect(() => {
+    refetch(variables);
+  }, [debouncedSearch]);
+
+  const searchBar = (
+    <div className="w-full flex flex-row">
+      <FancyInput
+        placeholder="Search..."
+        type="string"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="flex-grow h-full bg-background text-foreground w-full"
+      />
+    </div>
+  );
+
   return (
-    <>
-      <SidebarLayout
-        searchBar={
-          <GlobalSearchFilter
-            onFilterChanged={onFilterChanged}
-            defaultValue={{ search: "", noActions: false }}
-          />
-        }
-      >
-        {currentVariables?.search == "" ? (
-          <>
-            <NavigationPane />
-          </>
-        ) : (
-          <>
-            <ListRender array={data?.actions}>
-              {(item, i) => <ActionCard action={item} key={i} />}
-            </ListRender>
-          </>
-        )}
-      </SidebarLayout>
-    </>
+    <SidebarLayout searchBar={searchBar}>
+      {search.trim() === "" ? (
+        <NavigationPane />
+      ) : (
+        <div className="h-full">
+          <ListRender array={data?.actions}>
+            {(item, i) => <ActionCard action={item} key={i} />}
+          </ListRender>
+        </div>
+      )}
+    </SidebarLayout>
   );
 };
 

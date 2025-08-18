@@ -1,23 +1,34 @@
 import { MikroROI } from "@/linkers";
-import { ListRoiFragment, RoiKind, useDeleteRoiMutation } from "@/mikro-next/api/graphql";
+import {
+  ListRoiFragment,
+  RoiKind,
+  useDeleteRoiMutation,
+} from "@/mikro-next/api/graphql";
 import { useCursor, Line } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { useCallback, useRef, useState, useEffect } from "react";
 import * as THREE from "three";
-import { PassThroughProps } from "../TwoDThree";
-
 const convertToThreeJSCoords = (
   vertices: [number, number, number, number, number][],
   imageWidth: number,
   imageHeight: number,
 ): [number, number][] => {
-  console.log(vertices);
-  let tr = vertices.map((v) => {
-    console.log(v);
-    let [c, t, z, y, x] = v;
-    return [-(x - imageWidth / 2), y - imageHeight / 2] as [number, number];
+  console.log("Raw vertices:", vertices);
+  console.log("Image dimensions:", imageWidth, imageHeight);
+  const tr = vertices.map((v) => {
+    console.log("Processing vertex:", v);
+    const [c, t, z, y, x] = v; // Try the original order first
+    // Convert from image coordinates to Three.js coordinates
+    // Image: (0,0) = top-left, (width,height) = bottom-right
+    // Three.js: (0,0) = center, (-width/2, height/2) = top-left
+    const transformedX = x - imageWidth / 2; // Remove the negative sign
+    const transformedY = imageHeight / 2 - y; // Keep this transformation
+    console.log(
+      `Original: x=${x}, y=${y} -> Transformed: x=${transformedX}, y=${transformedY}`,
+    );
+    return [transformedX, transformedY] as [number, number];
   });
-  console.log(tr);
+  console.log("Transformed vertices:", tr);
   return tr;
 };
 
@@ -54,7 +65,10 @@ export const ROIPolygon = (
     };
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (meshRef.current && !meshRef.current.userData.contains?.(event.target)) {
+      if (
+        meshRef.current &&
+        !meshRef.current.userData.contains?.(event.target)
+      ) {
         setSelected(false);
       }
     };
@@ -334,10 +348,7 @@ export const ROIPolygon = (
             depthWrite={false}
           />
         </mesh>
-        <line width={100}>
-          <shapeGeometry args={[shape]} />
-          <lineBasicMaterial color="black" linewidth={100} />
-        </line>
+        <Line points={shape.getPoints()} color="purple" lineWidth={2} />
       </>
     );
   }

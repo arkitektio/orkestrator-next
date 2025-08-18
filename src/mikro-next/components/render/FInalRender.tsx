@@ -248,6 +248,7 @@ const PanelContent = ({
   setRoiDrawMode,
   allowRoiDrawing,
   setAllowRoiDrawing,
+  setOpenPanels,
   showRois,
   setShowRois,
   showLayerEdges,
@@ -261,6 +262,7 @@ const PanelContent = ({
   allowRoiDrawing: boolean;
   setAllowRoiDrawing: (allow: boolean) => void;
   showRois: boolean;
+  setOpenPanels: Dispatch<SetStateAction<Panel[]>>;
   setShowRois: (show: boolean) => void;
   showLayerEdges: boolean;
   setShowLayerEdges: (show: boolean) => void;
@@ -270,7 +272,13 @@ const PanelContent = ({
   const PanelIcon = getPanelKindIcon(panel.kind);
 
   if (panel.isRightClick) {
-    return <SmartContext identifier={panel.identifier} object={panel.object} />;
+    return (
+      <SmartContext
+        identifier={panel.identifier}
+        object={panel.object}
+        onDone={() => setOpenPanels([])}
+      />
+    );
   }
 
   switch (panel.kind) {
@@ -395,7 +403,11 @@ const PanelContent = ({
     default:
       return (
         <>
-          <ObjectButton identifier={panel.identifier} object={panel.object}>
+          <ObjectButton
+            identifier={panel.identifier}
+            object={panel.object}
+            onDone={() => setOpenPanels([])}
+          >
             <Button variant={"outline"} className="w-6 h-9 text-white">
               Do
             </Button>
@@ -534,17 +546,19 @@ export const FinalRenderInner = (props: RGBDProps) => {
     <div style={{ width: "100%", height: "100%" }} className="relative">
       <div className="absolute bottom-0 z-10 w-full mb-4 px-6 bg-gradient-to-t from-black to-transparent py-3">
         <div className="flex flex-col gap-2">
-          <div className="flex flex-row items-center">
+          <div className="flex flex-row items-center justify-between">
             <div className="my-auto mx-2 w-12">z: {z}</div>
-            <SliderTooltip
-              value={[z]}
-              onValueChange={(value) => setZ(value[0])}
-              min={0}
-              max={zSize - 1}
-              step={1}
-              className="w-full"
-              defaultValue={[0]}
-            />
+            {zSize > 1 && (
+              <SliderTooltip
+                value={[z]}
+                onValueChange={(value) => setZ(value[0])}
+                min={0}
+                max={zSize - 1}
+                step={1}
+                className="w-full"
+                defaultValue={[0]}
+              />
+            )}
 
             {/* Controls Menu Button */}
             <DropdownMenu>
@@ -813,6 +827,7 @@ export const FinalRenderInner = (props: RGBDProps) => {
 
           <PanelContent
             panel={panel}
+            setOpenPanels={setOpenPanels}
             roiDrawMode={roiDrawMode}
             setRoiDrawMode={setRoiDrawMode}
             allowRoiDrawing={allowRoiDrawing}

@@ -1,12 +1,13 @@
+import { AddUserToOrganizationDialog } from "@/dialogs/AddUserToOrganization";
 import { CreateNewMeasurement } from "@/dialogs/CreateNewMeasurement";
 import { CreateNewRelation } from "@/dialogs/CreateNewRelation";
+import { NotifyDialog } from "@/dialogs/NotifyDialog";
 import { RelateStructures } from "@/dialogs/RelateStructures";
 import { SetAsMeasurement } from "@/dialogs/SetAsMeasurement";
 import { createDialogProvider } from "@/lib/generic/providers/DialogProvider";
+import { CreateShortcutDialog } from "@/rekuest/components/dialogs/CreateShortcutDialog";
 import { ActionAssignForm } from "@/rekuest/forms/ActionAssignForm";
 import { ImplementationAssignForm } from "@/rekuest/forms/ImplementationAssignForm";
-import { ReserveForm } from "@/rekuest/forms/ShortcutForm";
-import { ShortcutForm } from "@/rekuest/pages/Shortcut";
 
 export const { DialogProvider, useDialog } = createDialogProvider({
   actionassign: ActionAssignForm,
@@ -15,5 +16,7 @@ export const { DialogProvider, useDialog } = createDialogProvider({
   createnewrelation: CreateNewRelation,
   createnewmeasurement: CreateNewMeasurement,
   setasmeasurement: SetAsMeasurement,
-  createshortcut: ReserveForm,
+  createshortcut: CreateShortcutDialog,
+  notifyusers: NotifyDialog,
+  addusertoorganization: AddUserToOrganizationDialog
 });

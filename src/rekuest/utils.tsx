@@ -146,6 +146,10 @@ export const convertPortToInput = (port: PortFragment): PortInput => {
     assignWidget: assignWidget && assignWidgetToInput(assignWidget),
     returnWidget: returnWidget && returnWidgetToInput(returnWidget),
     validators: rest.validators?.map(validatorToInput) || [],
+    choices: rest.choices?.map((c) => ({
+      ...c,
+      __typename: undefined,
+    })),
   };
   return input;
 };

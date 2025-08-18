@@ -4,6 +4,16 @@ mutation CreateGraph($input: GraphInput!) {
   }
 }
 
+
+mutation CreateInlineGraph($input: String!) {
+  result: createGraph(input: {
+    name: $input
+  }) {
+    value: id
+    label: name
+  }
+}
+
 mutation PinGraph($input: PinGraphInput!) {
   pinGraph(input: $input) {
     ...Graph

@@ -16,7 +16,7 @@ import { UserInfo } from "@/lok-next/components/protected/UserInfo";
 import { TwoDViewProvider } from "@/providers/view/ViewProvider";
 import { Matrix4 } from "@math.gl/core";
 import { HobbyKnifeIcon, PlusIcon } from "@radix-ui/react-icons";
-import { Download } from "lucide-react";
+import { Download, DownloadIcon } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import Timestamp from "react-timestamp";
 import {
@@ -46,6 +46,9 @@ import { AddImageViewForm } from "../forms/AddImageViewForm";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
 import InstanceMaskViewCard from "../components/cards/InstanceMaskViewCard";
 import MaskViewCard from "../components/cards/MaskViewCard";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/plate-ui/button";
+import { IconsManifest } from "react-icons/lib";
 
 export type IRepresentationScreenProps = {};
 
@@ -147,31 +150,42 @@ export default asDetailQueryRoute(
               Provenance: (
                 <ProvenanceSidebar items={data?.image.provenanceEntries} />
               ),
-              Renders: (
-                <div className="p-3 flex flex-col gap-2">
-                  {data.image.renders.map((render, index) => (
-                    <Card className="p-2 truncate">
-                      {render.__typename == "Snapshot" && (
-                        <Image
-                          src={resolve(render.store.presignedUrl)}
-                          className="w-full"
-                        />
-                      )}
-                      <a href={resolve(render.store.presignedUrl)} download>
-                        <Download size={24} />
-                        {render.__typename}
-                      </a>
-                    </Card>
-                  ))}
-                </div>
-              ),
             }}
           />
         }
         pageActions={
-          <>
+          <div className="flex flex-row gap-2 ml-2">
             <MikroImage.ObjectButton object={data?.image?.id} />
-          </>
+            {data.image.renders && data.image.renders.length > 0 && (
+                  <Popover>
+                    <PopoverTrigger>
+                      <Button variant="outline" className="w-full">
+                        <DownloadIcon className="mr-2" />
+                        Renders
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent>
+                      <div className="p-3 flex flex-col gap-2">
+                    {data.image.renders.map((render) => (
+                      <Card className="p-2 truncate" key={render.id}>
+                        {render.__typename == "Snapshot" && (
+                          <Image
+                            src={resolve(render.store.presignedUrl)}
+                            className="w-full"
+                          />
+                        )}
+                        <a href={resolve(render.store.presignedUrl)} download>
+                          <Download size={24} />
+                          {render.__typename}
+                        </a>
+                      </Card>
+                    ))}
+                  </div>
+                    </PopoverContent>
+                  </Popover>
+                  
+                )}
+          </div>
         }
         variant="black"
       >
@@ -348,8 +362,8 @@ export default asDetailQueryRoute(
                     <>
                       <div className="font-light">Derived images</div>
                       <div className="flex flex-col gap-2 mt-2">
-                        {data?.image.derivedFromViews?.map((view, index) => (
-                          <MikroImage.Smart object={view.image.id}>
+                        {data?.image.derivedFromViews?.map((view) => (
+                          <MikroImage.Smart object={view.image.id} key={view.image.id}>
                             <MikroImage.DetailLink
                               object={view.image?.id}
                               className="cursor-pointer"
@@ -365,6 +379,7 @@ export default asDetailQueryRoute(
                       </div>
                     </>
                   )}
+                
                 </DetailPaneContent>
               </DetailPane>
             </div>

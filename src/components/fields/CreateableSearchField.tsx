@@ -24,9 +24,10 @@ import {
 } from "@/components/ui/popover";
 import { cn, notEmpty } from "@/lib/utils";
 import { useDebounce } from "@uidotdev/usehooks";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { FieldProps } from "./types";
+import { PlusIcon } from "lucide-react";
 
 export type Option = {
   label: string;
@@ -118,6 +119,7 @@ export const CreateableSearchField = ({
 
   const createValue = (input: string) => {
     create(input).then((value) => {
+      search({ values: [value] })
       return form.setValue(name, value, {
         shouldValidate: false,
       });
@@ -203,9 +205,9 @@ export const CreateableSearchField = ({
                         </CommandItem>
                       ))}
                     </CommandGroup>
-                    <CommandItem onSelect={() => createValue(latestQuery)}>
-                      Create {latestQuery}{" "}
-                    </CommandItem>
+                    {latestQuery && latestQuery.length > 1 && <CommandItem onSelect={() => createValue(latestQuery)}>
+                      <PlusIcon className="mr-2"></PlusIcon> Create <pre className="ml-2 inline font-light p-1 bg-slate-700 rounded">{latestQuery}</pre>{" "}
+                    </CommandItem>}
                   </CommandList>
                 </Command>
               </PopoverContent>

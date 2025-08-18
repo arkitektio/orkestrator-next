@@ -5,6 +5,7 @@ fragment Shortcut on Shortcut {
   action {
     ...DetailAction
   }
+  bindNumber
   savedArgs
   args {
     ...Port
@@ -22,6 +23,7 @@ fragment ListShortcut on Shortcut {
   action {
     id
   }
+  bindNumber
   savedArgs
   args {
     ...Port

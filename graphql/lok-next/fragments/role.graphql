@@ -1,0 +1,11 @@
+fragment Role on Role {
+  id
+  identifier
+  description
+}
+
+fragment ListRole on Role {
+  id
+  identifier
+  description
+}

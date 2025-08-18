@@ -1,0 +1,19 @@
+query Role($id: ID!) {
+  role(id: $id) {
+    ...Role
+  }
+}
+
+
+query ListRoles($filters: RoleFilter, $pagination: OffsetPaginationInput) {
+  roles(filters: $filters, pagination: $pagination) {
+    ...ListRole
+  }
+}
+
+query RoleOptions($search: String, $values: [ID!]) {
+  options: roles(filters: { search: $search, ids: $values }) {
+    value: identifier
+    label: identifier
+  }
+}

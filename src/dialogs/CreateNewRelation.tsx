@@ -1,16 +1,19 @@
 import { Structure } from "@/actions/action-registry";
 import { useDialog } from "@/app/dialog";
+import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { ListSearchField } from "@/components/fields/ListSearchField copy";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { SearchField, SearchOptions } from "@/components/fields/SearchField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Form } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import {
   CreateStructureRelationCategoryMutationVariables,
   ListStructureRelationCategoryWithGraphFragment,
+  useCreateInlineGraphMutation,
   useCreateStructureCategoryMutation,
   useCreateStructureMutation,
   useCreateStructureRelationCategoryMutation,
@@ -63,6 +66,7 @@ export const CreateNewRelation = (props: {
   });
 
   const [searchGraphs] = useSearchGraphsLazyQuery();
+  const [createGraph] = useCreateInlineGraphMutation();
   const [searchTags] = useSearchTagsLazyQuery();
 
   const [createStructure] = useCreateStructureMutation({
@@ -168,11 +172,12 @@ export const CreateNewRelation = (props: {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleRelationCreation)} className="space-y-6">
             
-                    <GraphQLSearchField
+                    <GraphQLCreatableSearchField
                       label="Graph"
                       name="graph"
                       description="Select the graph for this relation"
                       searchQuery={searchGraphs}
+                      createMutation={createGraph}
                     />
                     <StringField
                       label="Label"
@@ -184,6 +189,10 @@ export const CreateNewRelation = (props: {
                       name="description"
                       description="Describe what this relation represents"
                     />
+
+                    <Collapsible>
+                    <CollapsibleTrigger>Advanced</CollapsibleTrigger>
+                    <CollapsibleContent>
                     <StringField
                       label="PURL"
                       name="purl"
@@ -229,6 +238,8 @@ export const CreateNewRelation = (props: {
                         </div>
                       </div>
                     </div>
+                    </CollapsibleContent>
+                    </Collapsible>
 
                   <Button
                     type="submit"

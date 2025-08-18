@@ -2,11 +2,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { KraphMetricCategory, KraphProtocolEventCategory } from "@/linkers";
+import { KraphMetricCategory } from "@/linkers";
 import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
-import { MetricNode, StructureNode } from "../types";
+import { MetricNode } from "../types";
 
 export default memo(({ data, id, selected }: NodeProps<MetricNode>) => {
   const resolve = useResolve();

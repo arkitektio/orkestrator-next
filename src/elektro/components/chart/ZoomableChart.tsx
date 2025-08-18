@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { CartesianGrid, Line, XAxis, YAxis, Brush, ComposedChart, ResponsiveContainer, ReferenceArea } from "recharts";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Brush, CartesianGrid, ComposedChart, Line, ReferenceArea, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { CategoricalChartState } from "recharts/types/chart/types";
 
 type DataPoint = {
@@ -30,10 +30,10 @@ const chartConfig: ChartConfig = {
   },
 };
 
-export function CustomChartComponent(values: {[key: string]}): JSX.Element {
+export function CustomChartComponent(values: { [key: string] }): JSX.Element {
   const [chartData, setChartData] = useState<DataPoint[]>([]);
   const [range, setRange] = useState({ left: 0, right: 0 });
-  const [selection, setSelection] = useState<{ left: number | null; right: number | null}>({ left: null, right: null });
+  const [selection, setSelection] = useState<{ left: number | null; right: number | null }>({ left: null, right: null });
   const [selecting, setSelecting] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
 

@@ -44,9 +44,9 @@ import {
 import { Guard, useRekuest } from "@/lib/arkitekt/Arkitekt";
 import { useArkitekt } from "@/lib/arkitekt/provider";
 import { cn } from "@/lib/utils";
-import { KabinetDefinition } from "@/linkers";
 import { LightningBoltIcon } from "@radix-ui/react-icons";
 import { CommandGroup } from "cmdk";
+import { PlayIcon } from "lucide-react";
 import React, { useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -65,10 +65,7 @@ import {
 } from "../api/graphql";
 import { registeredCallbacks } from "../components/functional/AssignationUpdater";
 import { useAssign } from "../hooks/useAssign";
-import { useLiveAssignation } from "../hooks/useAssignations";
-import { useHashAction } from "../hooks/useHashActions";
 import { useHashActionWithProgress } from "../hooks/useHashActionWithProgress";
-import { PlayIcon } from "lucide-react";
 
 export type OnDone = (args: {
   event?: AssignationEventFragment;

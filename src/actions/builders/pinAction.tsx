@@ -16,7 +16,7 @@ export const identifierFromSmartOrString = (identifier: Smart | string) => {
 export type DeleteActionParams = {
   identifier: Smart | string;
   title: string;
-  mutation: TypedDocumentNode<any, { input: {id: string, pin?: boolean | undefined} }>;
+  mutation: TypedDocumentNode<any, { input: { id: string, pin?: boolean | undefined } }>;
   service: string;
   description?: string;
 };

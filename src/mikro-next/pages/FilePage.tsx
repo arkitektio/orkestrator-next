@@ -2,26 +2,26 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DownloadButton } from "@/components/ui/download-button";
 import { Image } from "@/components/ui/image";
+import { Separator } from "@/components/ui/separator";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { MikroFile, MikroImage } from "@/linkers";
+import { DownloadIcon, FileIcon, FolderIcon, ImageIcon, UserIcon } from "lucide-react";
 import { useGetFileQuery } from "../api/graphql";
 import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
-import { FileIcon, FolderIcon, ImageIcon, DownloadIcon, UserIcon } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 
 export default asDetailQueryRoute(useGetFileQuery, ({ data }) => {
   const resolve = useResolve();
-  
+
   // Get file extension for icon display
   const getFileExtension = (filename: string) => {
     return filename.split('.').pop()?.toLowerCase() || '';
   };
 
   const fileExtension = getFileExtension(data.file.name);
-  
+
   return (
     <MikroFile.ModelPage
       actions={<MikroFile.Actions object={data.file.id} />}
@@ -94,7 +94,7 @@ export default asDetailQueryRoute(useGetFileQuery, ({ data }) => {
             </Badge>
           )}
         </div>
-        
+
         <ListRender array={data?.file?.views} title="">
           {(view) => (
             <MikroImage.Smart object={view.image?.id} key={view.image?.id}>
@@ -110,10 +110,10 @@ export default asDetailQueryRoute(useGetFileQuery, ({ data }) => {
                       <ImageIcon className="h-12 w-12 text-gray-400" />
                     </div>
                   )}
-                  
+
                   {/* Overlay with improved gradient */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  
+
                   {/* Content overlay */}
                   <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
                     <MikroImage.DetailLink
@@ -122,7 +122,7 @@ export default asDetailQueryRoute(useGetFileQuery, ({ data }) => {
                     >
                       {view.image?.name}
                     </MikroImage.DetailLink>
-                    
+
                     {view.seriesIdentifier && (
                       <Badge className="mt-2 bg-blue-600/90 hover:bg-blue-600 text-white border-0">
                         Series: {view.seriesIdentifier}

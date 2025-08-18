@@ -1,38 +1,33 @@
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { DroppableNavLink } from "@/components/ui/link";
 import {
+  KraphEntityCategory,
+  KraphProtocolEventCategory,
+  KraphReagentCategory,
+  KraphRelationCategory,
+  KraphStructureCategory
+} from "@/linkers";
+import {
   CatIcon,
   Divide,
-  File,
   FlaskRoundIcon,
-  Folder,
-  GitBranchPlusIcon,
   Home,
   Notebook,
   Ruler,
-  SparkleIcon,
+  SparkleIcon
 } from "lucide-react";
 import * as React from "react";
-import { FaChartArea } from "react-icons/fa";
+import { BsRecord } from "react-icons/bs";
+import { PiNumberCircleEight } from "react-icons/pi";
+import { TbRelationOneToOne } from "react-icons/tb";
 import {
   GlobalSearchQueryVariables,
   useGlobalSearchQuery,
   useStartPaneQuery,
 } from "../api/graphql";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
-import {
-  KraphEntity,
-  KraphEntityCategory,
-  KraphProtocolEventCategory,
-  KraphReagentCategory,
-  KraphRelationCategory,
-  KraphStructureCategory,
-} from "@/linkers";
-import { PiGif, PiNumberCircleEight } from "react-icons/pi";
-import { BsRecord } from "react-icons/bs";
-import { TbRelationManyToMany, TbRelationOneToOne } from "react-icons/tb";
 
-interface IDataSidebarProps {}
+interface IDataSidebarProps { }
 
 export const NavigationPane = (props: {}) => {
   const { data } = useStartPaneQuery();

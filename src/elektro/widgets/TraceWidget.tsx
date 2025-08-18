@@ -1,6 +1,6 @@
+import { ElektroSimulation } from "@/linkers";
 import { ReturnWidgetProps } from "@/rekuest/widgets/types";
 import { useDetailSimulationQuery } from "../api/graphql";
-import { ElektroSimulation } from "@/linkers";
 
 export default (props: ReturnWidgetProps) => {
   const { data } = useDetailSimulationQuery({

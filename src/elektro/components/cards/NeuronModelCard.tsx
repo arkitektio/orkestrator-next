@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { ElektroNeuronModel, ElektroSimulation } from "@/linkers";
+import { ElektroNeuronModel } from "@/linkers";
 import { ListNeuronModelFragment } from "../../api/graphql";
 
 

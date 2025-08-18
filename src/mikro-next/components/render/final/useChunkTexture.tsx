@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import * as THREE from "three";
 import { Chunk, DataType } from "zarrita";
+import { ChunkBounds, useChunkCulling } from "./useViewportCulling";
 import { mapDTypeToMinMax } from "./utils";
-import { useChunkCulling, ChunkBounds } from "./useViewportCulling";
 
 export const useAsyncChunk = (props: {
   renderFunc: (

@@ -1,4 +1,4 @@
-import { LokClient, LokComposition } from "@/linkers";
+import { LokComposition } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
 import { ListClientFragment } from "../../api/graphql";
 

@@ -4,9 +4,9 @@ import {
   RoiKind,
   useDeleteRoiMutation,
 } from "@/mikro-next/api/graphql";
-import { useCursor, Line } from "@react-three/drei";
+import { Line, useCursor } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
-import { useCallback, useRef, useState, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 const convertToThreeJSCoords = (
   vertices: [number, number, number, number, number][],

@@ -6,7 +6,6 @@ import {
   DeleteNaturalEventCategoryDocument,
   DeleteProtocolEventCategoryDocument,
 } from "@/kraph/api/graphql";
-import { ApolloClient, NormalizedCache } from "@apollo/client";
 
 export const KRAPH_ACTIONS: Action[] = [
   buildDeleteAction({

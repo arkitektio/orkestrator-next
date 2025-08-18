@@ -1,8 +1,7 @@
-import { StateFragment } from "../api/graphql";
-import { useWidgetRegistry } from "../widgets/WidgetsContext";
-import { useGetStateQuery, WatchStateEventsSubscription, WatchStateEventsSubscriptionVariables, WatchStateEventsDocument} from "../api/graphql";
-import { useEffect } from "react";
 import { Card } from "@/components/ui/card";
+import { useEffect } from "react";
+import { useGetStateQuery, WatchStateEventsDocument, WatchStateEventsSubscription, WatchStateEventsSubscriptionVariables } from "../api/graphql";
+import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
 
 export const useRekuestState = ({
@@ -24,7 +23,7 @@ export const useRekuestState = ({
 
   useEffect(() => {
     if (data?.state) {
-      console.log( "subscribing to", data.state.id);
+      console.log("subscribing to", data.state.id);
       return subscribeToMore<
         WatchStateEventsSubscription,
         WatchStateEventsSubscriptionVariables
@@ -52,7 +51,7 @@ export const useRekuestState = ({
       });
     }
 
-    return () => {};
+    return () => { };
   }, [subscribeToMore, data?.state?.id]);
 
 

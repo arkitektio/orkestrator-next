@@ -1,6 +1,5 @@
 import { FormDialog, useFormDialog } from "@/components/dialog/FormDialog";
 import { ChoicesField } from "@/components/fields/ChoicesField";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import {
   ListSearchField,
   SearchOptions,

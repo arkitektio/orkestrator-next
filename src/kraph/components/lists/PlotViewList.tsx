@@ -1,14 +1,10 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { KraphPlotView, MikroDataset } from "@/linkers";
+import { KraphPlotView } from "@/linkers";
 import {
   OffsetPaginationInput,
   OntologyFilter,
-  useListGraphsQuery,
-  useListOntologiesQuery,
-  useListPlotViewsQuery,
+  useListPlotViewsQuery
 } from "../../api/graphql";
-import OntologyCard from "../cards/OntologyCard";
-import GraphCard from "../cards/GraphCard";
 import PlotViewCard from "../cards/PlotViewCard";
 
 export type Props = {

@@ -1,7 +1,6 @@
 import { HideEffectFragment, PortFragment } from "@/rekuest/api/graphql";
-import { useEffect } from "react";
-import { useForm, useFormContext } from "react-hook-form";
-import React from "react";
+import React, { useEffect } from "react";
+import { useFormContext } from "react-hook-form";
 import ShadowRealm from "shadowrealm-api";
 
 export const useEffectOn = (effect: HideEffectFragment, port: PortFragment) => {

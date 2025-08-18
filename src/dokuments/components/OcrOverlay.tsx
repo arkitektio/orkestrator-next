@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { PageFragment } from "../api/graphql";
 
 // Color palette for OCR text overlays
@@ -29,33 +29,33 @@ export const OcrOverlay: React.FC<OcrOverlayProps> = ({ page, imageRef, show }) 
       setOverlays([]);
       return;
     }
-    
+
     const img = imageRef.current;
-    
+
     // Ensure image is loaded and has dimensions
     if (!img.naturalWidth || !img.naturalHeight) {
       setOverlays([]);
       return;
     }
-    
+
     const imgRect = img.getBoundingClientRect();
     const scaleX = imgRect.width / img.naturalWidth;
     const scaleY = imgRect.height / img.naturalHeight;
-    
+
     const newOverlays = page.ocrResult.lines.map((line, index) => {
       if (!line.bbox || line.bbox.length === 0) return null;
-      
+
       // Convert bbox points to polygon path
       const points = line.bbox.map(([x, y]) => `${x * scaleX},${y * scaleY}`).join(' ');
       const color = colors[index % colors.length];
-      
+
       return (
         <div key={index} className="absolute inset-0 pointer-events-none">
-          <svg 
+          <svg
             className="absolute inset-0 w-full h-full"
-            style={{ 
-              width: imgRect.width, 
-              height: imgRect.height 
+            style={{
+              width: imgRect.width,
+              height: imgRect.height
             }}
           >
             <polygon
@@ -84,7 +84,7 @@ export const OcrOverlay: React.FC<OcrOverlayProps> = ({ page, imageRef, show }) 
         </div>
       );
     }).filter(Boolean) as JSX.Element[];
-    
+
     setOverlays(newOverlays);
   }, [show, page.ocrResult?.lines, imageRef, imageLoaded]);
 

@@ -81,10 +81,10 @@ export const StageController = () => {
 
   return (
     <div className="relative w-full h-full">
-      <AsyncStageRender stageId={position.stage} onRectangleDrawn={onRectangleDrawn}/>
+      <AsyncStageRender stageId={position.stage} onRectangleDrawn={onRectangleDrawn} />
 
       {latestEvent?.message && <div className="absolute top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%] bg-gray-900 p-2 rounded-full px-3">
-        
+
         {latestEvent?.message}
       </div>}
       <div className="absolute top-4 right-3 bg-gray-900 p-2 rounded-md px-3 flex flex-row gap-2">

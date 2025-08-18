@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 
 import { cn, withRef, withVariants } from "@udecode/cn";
 import {

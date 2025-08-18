@@ -1,7 +1,5 @@
 import { PageLayout } from "@/components/layout/PageLayout";
-import { Alert } from "@/components/ui/alert";
 import { Card } from "@/components/ui/card";
-import { ApolloError } from "@apollo/client/errors";
 
 export const LoadingPage = (props) => {
   return (

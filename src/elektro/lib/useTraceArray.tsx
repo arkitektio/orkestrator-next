@@ -1,4 +1,3 @@
-import { Arkitekt, useElektro } from "@/lib/arkitekt/Arkitekt";
 import {
   AccessCredentialsFragment,
   RequestAccessDocument,
@@ -6,6 +5,7 @@ import {
   RequestAccessMutationVariables,
   ZarrStoreFragment,
 } from "@/elektro/api/graphql";
+import { Arkitekt, useElektro } from "@/lib/arkitekt/Arkitekt";
 import { S3Store } from "@/mikro-next/providers/xarray/store";
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { ApolloClient } from "@apollo/client";

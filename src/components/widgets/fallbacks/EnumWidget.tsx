@@ -1,6 +1,5 @@
 import { SearchField, SearchOptions } from "@/components/fields/SearchField";
 import { notEmpty } from "@/lib/utils";
-import { ChoiceAssignWidgetFragment } from "@/rekuest/api/graphql";
 import { InputWidgetProps } from "@/rekuest/widgets/types";
 import { pathToName } from "@/rekuest/widgets/utils";
 import { useCallback } from "react";

@@ -3,25 +3,17 @@ import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import {
   KraphGraph,
-  KraphGraphQuery,
   KraphGraphView,
-  KraphNodeQuery,
-  KraphOntology,
+  KraphNodeQuery
 } from "@/linkers";
 import {
-  useGetGraphQueryQuery,
-  useGetNodeQuery,
-  useGetNodeQueryQuery,
+  useGetNodeQueryQuery
 } from "../api/graphql";
 
-import { PathGraph } from "../components/renderers/graph/PathGraph";
-import { GraphTable } from "../components/renderers/table/GraphTable";
 
-import ScatterPlot from "../components/charts/scatterplot/ScatterPlot";
-import { CypherSidebar } from "../components/sidebars/CypherSidebar";
-import { CypherEditor } from "../components/cypher/CypherEditor";
 import { Card } from "@/components/ui/card";
-import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
+import { CypherEditor } from "../components/cypher/CypherEditor";
+import { CypherSidebar } from "../components/sidebars/CypherSidebar";
 
 export default asDetailQueryRoute(useGetNodeQueryQuery, ({ data, refetch }) => {
   return (

@@ -9,22 +9,22 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { aliasToHttpPath } from "@/lib/arkitekt/alias/helpers";
 import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
+import { Instance } from "@/lib/arkitekt/fakts/faktsSchema";
 import { useMyContextQuery } from "@/lok-next/api/graphql";
+import { ScrollArea } from "@radix-ui/react-scroll-area";
 import {
   Activity,
   AlertCircle,
   ArrowRight,
   CheckCircle,
   Globe,
+  Heart,
   Loader2,
   Users,
-  Heart,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Instance } from "@/lib/arkitekt/fakts/faktsSchema";
-import { aliasToHttpPath } from "@/lib/arkitekt/alias/helpers";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
 
 type ServiceCardProps = {
   instance: Instance;
@@ -215,13 +215,13 @@ export const ServicesInfo = () => {
 
   const listedServices = fakts
     ? Object.keys(fakts.instances)
-        .map((key) => {
-          return {
-            serviceKey: key,
-            value: fakts.instances[key as keyof typeof fakts],
-          };
-        })
-        .filter((e) => e.serviceKey)
+      .map((key) => {
+        return {
+          serviceKey: key,
+          value: fakts.instances[key as keyof typeof fakts],
+        };
+      })
+      .filter((e) => e.serviceKey)
     : [];
 
   return (

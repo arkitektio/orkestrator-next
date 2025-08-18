@@ -1,23 +1,19 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useFieldArray, useForm } from "react-hook-form";
 import {
-  BaseCategoryFragment,
   ColumnKind,
   CreateGraphQueryMutationVariables,
   MetricKind,
   StructureRelationCategoryFragment,
-  useCreateGraphMutation,
   useCreateGraphQueryMutation,
-  ViewKind,
+  ViewKind
 } from "../api/graphql";
-import { CypherEditor } from "../components/cypher/CypherEditor";
 import { CypherField } from "../components/cypher/CypherField";
-import { Card } from "@/components/ui/card";
 
 export const TForm = (props: {
   category: StructureRelationCategoryFragment;

@@ -1,5 +1,4 @@
 import { PageLayout } from "@/components/layout/PageLayout";
-import PanelList from "../components/lists/BlokList";
 import ShortcutList from "../components/lists/ShortcutList";
 
 const Page = () => {

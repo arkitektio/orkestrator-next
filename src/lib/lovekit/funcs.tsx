@@ -1,4 +1,4 @@
-import { useAlpaka, useLovekit } from "@/lib/arkitekt/Arkitekt";
+import { useLovekit } from "@/lib/arkitekt/Arkitekt";
 import {
   LazyQueryHookOptions,
   MutationHookOptions,
@@ -20,7 +20,7 @@ export type {
   LazyQueryHookOptions,
   MutationHookOptions,
   QueryHookOptions,
-  SubscriptionHookOptions,
+  SubscriptionHookOptions
 };
 
 export const useMutation: MutationFuncType = (doc, options) => {

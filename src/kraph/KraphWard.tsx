@@ -1,5 +1,4 @@
-import { useKraph, useMikro } from "@/lib/arkitekt/Arkitekt";
-import { useService } from "@/arkitekt/hooks";
+import { useKraph } from "@/lib/arkitekt/Arkitekt";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { gql } from "@apollo/client";
 import { useEffect } from "react";

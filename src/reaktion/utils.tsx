@@ -8,26 +8,26 @@ import {
   GraphNodeKind,
   FlussPortFragment as PortFragment,
   PortKind,
-  ReactiveNodeFragment,
   ReactiveImplementationFragment,
+  ReactiveNodeFragment,
   StreamItemInput,
 } from "@/reaktion/api/graphql";
 import {
+  ActionKind,
   DefinitionInput,
   DependencyInput,
-  ActionKind,
 } from "@/rekuest/api/graphql";
 import { convertPortToInput } from "@/rekuest/utils";
 import { portToDefaults } from "@/rekuest/widgets/utils";
 import { v4 as uuidv4 } from "uuid";
 import {
+  ActionFragment,
   EdgeFragement,
   EdgeInput,
   FlowEdge,
   FlowNode,
   GlobalFragment,
   GlobalInput,
-  ActionFragment,
   NodeInput,
   StreamItemFragment,
 } from "./types";
@@ -241,7 +241,7 @@ export const singleToList = (port: PortFragment): PortFragment => {
     kind: PortKind.List,
     key: port.key,
     __typename: "Port",
-    children: [{...port, key: "0"}],
+    children: [{ ...port, key: "0" }],
   };
 };
 

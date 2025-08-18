@@ -1,4 +1,4 @@
-import { useEdges, useNodes } from "@xyflow/react";
+import { useEdges } from "@xyflow/react";
 
 export const MeasurementContainer = (props: {
     self: string;

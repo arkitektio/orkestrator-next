@@ -240,7 +240,7 @@ function* product<T>(
   //     throw new Error("Input contains an empty iterator.");
   // }
 
-  for (let i = 0; ; ) {
+  for (let i = 0; ;) {
     if (results[i].done) {
       // reset the current iterator
       iterators[i] = iterables[i]();

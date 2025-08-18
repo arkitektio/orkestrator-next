@@ -2,14 +2,13 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Card } from "@/components/ui/card";
 import { DetailPane, DetailPaneContent } from "@/components/ui/pane";
-import { KraphNode, MikroImage, MikroROI } from "@/linkers";
+import { MikroImage, MikroROI } from "@/linkers";
 import { UserInfo } from "@/lok-next/components/protected/UserInfo";
 import { TwoDViewProvider } from "@/providers/view/ViewProvider";
 import Timestamp from "react-timestamp";
 import { useGetRoiQuery, usePinRoiMutation } from "../api/graphql";
-import { RoiRGBD } from "../components/render/TwoDThree";
-import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { DelegatingImageRender } from "../components/render/DelegatingImageRender";
+import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 
 export type IRepresentationScreenProps = {};
 
@@ -67,9 +66,9 @@ export default asDetailQueryRoute(useGetRoiQuery, ({ data, refetch }) => {
                 <Timestamp date={data?.roi?.createdAt} />
               </div>
               <div className="font-light my-2 ">
-                    Knowledge{" "}
-                  </div>
-                  <MikroROI.TinyKnowledge object={data?.roi?.id} />
+                Knowledge{" "}
+              </div>
+              <MikroROI.TinyKnowledge object={data?.roi?.id} />
               <div className="font-light mt-2 ">Created by</div>
               <div className="text-md mt-2 ">
                 {data?.roi?.creator?.sub && (

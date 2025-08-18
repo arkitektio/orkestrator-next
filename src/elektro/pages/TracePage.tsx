@@ -2,8 +2,6 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { ElektroTrace } from "@/linkers";
 import { useDetailTraceQuery } from "../api/graphql";
-import { useTraceArray } from "../lib/useTraceArray";
-import { Button } from "@/components/ui/button";
 import { TraceRender } from "../components/TraceRender";
 
 export type IRepresentationScreenProps = {};
@@ -11,7 +9,7 @@ export type IRepresentationScreenProps = {};
 export default asDetailQueryRoute(
   useDetailTraceQuery,
   ({ data, subscribeToMore }) => {
-    
+
     return (
       <ElektroTrace.ModelPage
         title={data?.trace?.name}

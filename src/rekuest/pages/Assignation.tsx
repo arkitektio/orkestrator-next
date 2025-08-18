@@ -11,6 +11,7 @@ import {
   TimelineTitle,
 } from "@/components/timeline/timeline";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReturnsContainer } from "@/components/widgets/returns/ReturnsContainer";
 import { RekuestAssignation } from "@/linkers";
 import { useRunForAssignationQuery } from "@/reaktion/api/graphql";
@@ -28,7 +29,6 @@ import { useNavigate } from "react-router-dom";
 import Timestamp from "react-timestamp";
 import { useAction } from "../hooks/useAction";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const AssignationFlow = (props: {
   id: string;

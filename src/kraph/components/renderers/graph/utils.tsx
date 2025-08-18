@@ -1,7 +1,7 @@
 import { PathFragment } from "@/kraph/api/graphql";
 import { PathEdge, PathNode } from "./types";
 
-import { Position, MarkerType } from "@xyflow/react";
+import { Position } from "@xyflow/react";
 export const entityNodesToNodes = (
   nodes: PathFragment["nodes"],
   root?: string | undefined,

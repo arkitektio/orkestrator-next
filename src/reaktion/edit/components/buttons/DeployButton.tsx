@@ -7,8 +7,8 @@ import {
 import { FlowFragment } from "@/reaktion/api/graphql";
 import { flowToDefinition, flowToDependencies } from "@/reaktion/utils";
 import {
-  ListAgentFragment,
   ImplementationsDocument,
+  ListAgentFragment,
   useAgentsQuery,
   useCreateForeignImplementationMutation,
 } from "@/rekuest/api/graphql";

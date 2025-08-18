@@ -1,31 +1,23 @@
+import { PageLayout } from "@/components/layout/PageLayout";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { MetaApplication, MetaApplicationAdds } from "@/hooks/use-metaapp";
 import { Guard } from "@/lib/arkitekt/Arkitekt";
-import registry, { Registry } from "../registry";
-import { ModuleWrapper } from "../Wrapper";
-import { useRef, useState } from "react";
+import { useSmartDrop } from "@/providers/smart/hooks";
+import {
+  useAgentsQuery,
+  useCreateBlokMutation
+} from "@/rekuest/api/graphql";
+import { Structure } from "@/types";
 import {
   DockviewApi,
   DockviewReact,
   DockviewReadyEvent,
   IDockviewPanelProps,
 } from "dockview";
-import {
-  PanelKind,
-  useAgentsQuery,
-  useCreateBlokMutation,
-} from "@/rekuest/api/graphql";
-import { Button } from "@/components/ui/button";
-import { MetaApplication, MetaApplicationAdds } from "@/hooks/use-metaapp";
-import React from "react";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
-import { PageLayout } from "@/components/layout/PageLayout";
-import { useSmartDrop } from "@/providers/smart/hooks";
-import { BlokBlok } from "@/linkers";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Structure } from "@/types";
+import { useRef, useState } from "react";
+import registry from "../registry";
+import { ModuleWrapper } from "../Wrapper";
 
 const components = registry.components
   .keys()

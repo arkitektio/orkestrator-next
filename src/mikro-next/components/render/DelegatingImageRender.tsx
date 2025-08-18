@@ -4,8 +4,6 @@ import {
 } from "@/mikro-next/api/graphql";
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { Matrix4 } from "@math.gl/core";
-import { RGBD } from "./TwoDThree";
-import { VivRenderer } from "./VivRenderer";
 import { FinalRender } from "./FInalRender";
 
 export interface DelegatingImageRenderProps {

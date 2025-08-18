@@ -2,6 +2,8 @@ import {
   ModelPageLayout,
   ModelPageLayoutProps,
 } from "@/components/layout/ModelPageLayout";
+import { TinyStructureBox } from "@/kraph/boxes/TinyStructureBox";
+import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
 import { Komments } from "@/lok-next/components/komments/Komments";
 import { usePrimaryActionsQuery } from "@/rekuest/api/graphql";
 import { NewButton, NewButtonProps } from "@/rekuest/buttons/NewButton";
@@ -12,6 +14,9 @@ import {
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
 import { NavLink } from "react-router-dom";
+import { SmartDropZone } from "./Drop";
+import { SearchFunction, smartRegistry } from "./registry";
+import { ShareDialog } from "./ShareDialog";
 import { SmartModel } from "./SmartModel";
 import {
   BaseLinkProps,
@@ -20,11 +25,6 @@ import {
   ModelLinkProps,
   OmitedNavLinkProps,
 } from "./types";
-import { SearchFunction, smartRegistry } from "./registry";
-import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
-import { SmartDropZone } from "./Drop";
-import { TinyStructureBox } from "@/kraph/boxes/TinyStructureBox";
-import { ShareDialog } from "./ShareDialog";
 
 const buildBaseLink = (to: string) => {
   return ({ children, ...props }: BaseLinkProps) => {

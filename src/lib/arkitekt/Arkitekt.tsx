@@ -1,32 +1,31 @@
 import alpakaResult from "@/alpaka/api/fragments";
 import { manifest } from "@/constants";
+import dokumentsResult from "@/dokuments/api/fragments";
 import elektroResult from "@/elektro/api/fragments";
 import kabinetResult from "@/kabinet/api/fragments";
+import { createKabinetClient } from "@/kabinet/lib/KabinetClient";
 import kraphResult from "@/kraph/api/fragments";
+import { createAlpakaClient } from "@/lib/alpaka/client";
+import { createElektroClient } from "@/lib/elektro/client";
+import { createFlussClient } from "@/lib/fluss/client";
+import { createKraphClient } from "@/lib/kraph/client";
 import { createLivekitClient, LivekitClient } from "@/lib/livekit/client";
+import { createLovekitClient } from "@/lib/lovekit/client";
 import { createMikroClient } from "@/lib/mikro/client";
+import { createOmeroArkClient } from "@/lib/omero-ark/client";
+import { createRekuestClient } from "@/lib/rekuest/client";
 import lokResult from "@/lok-next/api/fragments";
+import { createLokClient } from "@/lok-next/lib/LokClient";
 import lovekitResult from "@/lovekit/api/fragments";
 import mikroResult from "@/mikro-next/api/fragments";
 import omeroArkResult from "@/omero-ark/api/fragments";
-import dokumentsResult from "@/dokuments/api/fragments";
 import flussResult from "@/reaktion/api/fragments";
 import rekuestResult from "@/rekuest/api/fragments";
 import { ApolloClient, NormalizedCache } from "@apollo/client";
 import { buildArkitekt, buildGuard } from ".";
-import { ServiceBuilderMap, useArkitekt, useService } from "./provider";
-import { createRekuestClient } from "@/lib/rekuest/client";
-import { createLovekitClient } from "@/lib/lovekit/client";
-import { createFlussClient } from "@/lib/fluss/client";
-import { createLokClient } from "@/lok-next/lib/LokClient";
-import { createKabinetClient } from "@/kabinet/lib/KabinetClient";
-import { createOmeroArkClient } from "@/lib/omero-ark/client";
-import { createKraphClient } from "@/lib/kraph/client";
-import { createAlpakaClient } from "@/lib/alpaka/client";
-import { createElektroClient } from "@/lib/elektro/client";
-import { aliasToHttpPath, aliasToWsPath } from "./alias/helpers";
-import { use } from "cytoscape";
 import { createDokumentsClient } from "../dokuments/client";
+import { aliasToHttpPath, aliasToWsPath } from "./alias/helpers";
+import { ServiceBuilderMap, useService } from "./provider";
 
 export const electronRedirect = async (
   url: string,
@@ -228,9 +227,9 @@ export const serviceMap: ServiceBuilderMap = {
 // Check if running in tauri
 export const Arkitekt = window.electron
   ? buildArkitekt({
-      manifest,
-      serviceBuilderMap: serviceMap,
-    })
+    manifest,
+    serviceBuilderMap: serviceMap,
+  })
   : buildArkitekt({ manifest, serviceBuilderMap: serviceMap });
 
 export const Guard = {
@@ -293,7 +292,7 @@ export const useLivekit = (): LivekitClient => {
 };
 
 
-export const useDokuments = ():  ApolloClient<NormalizedCache>  => {
+export const useDokuments = (): ApolloClient<NormalizedCache> => {
   return useService("dokuments").client as ApolloClient<NormalizedCache>;
 };
 export const useDatalayerEndpoint = (): string => {

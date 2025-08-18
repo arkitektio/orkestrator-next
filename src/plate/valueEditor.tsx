@@ -1,3 +1,32 @@
+import { BlockquoteElement } from "@/components/plate-ui/blockquote-element";
+import { CodeBlockElement } from "@/components/plate-ui/code-block-element";
+import { CodeLeaf } from "@/components/plate-ui/code-leaf";
+import { CodeLineElement } from "@/components/plate-ui/code-line-element";
+import { CodeSyntaxLeaf } from "@/components/plate-ui/code-syntax-leaf";
+import { ColumnElement } from "@/components/plate-ui/column-element";
+import { ColumnGroupElement } from "@/components/plate-ui/column-group-element";
+import { CommentLeaf } from "@/components/plate-ui/comment-leaf";
+import { DateElement } from "@/components/plate-ui/date-element";
+import { ExcalidrawElement } from "@/components/plate-ui/excalidraw-element";
+import { HeadingElement } from "@/components/plate-ui/heading-element";
+import { HighlightLeaf } from "@/components/plate-ui/highlight-leaf";
+import { HrElement } from "@/components/plate-ui/hr-element";
+import { ImageElement } from "@/components/plate-ui/image-element";
+import { KbdLeaf } from "@/components/plate-ui/kbd-leaf";
+import { LinkElement } from "@/components/plate-ui/link-element";
+import { LinkFloatingToolbar } from "@/components/plate-ui/link-floating-toolbar";
+import { MediaEmbedElement } from "@/components/plate-ui/media-embed-element";
+import { ParagraphElement } from "@/components/plate-ui/paragraph-element";
+import { withPlaceholders } from "@/components/plate-ui/placeholder";
+import {
+  TableCellElement,
+  TableCellHeaderElement,
+} from "@/components/plate-ui/table-cell-element";
+import { TableElement } from "@/components/plate-ui/table-element";
+import { TableRowElement } from "@/components/plate-ui/table-row-element";
+import { TodoListElement } from "@/components/plate-ui/todo-list-element";
+import { ToggleElement } from "@/components/plate-ui/toggle-element";
+import { withDraggables } from "@/components/plate-ui/with-draggables";
 import { withProps } from "@udecode/cn";
 import { AIPlugin, CopilotPlugin } from "@udecode/plate-ai/react";
 import { AlignPlugin } from "@udecode/plate-alignment/react";
@@ -20,7 +49,7 @@ import {
   CodeSyntaxPlugin,
 } from "@udecode/plate-code-block/react";
 import { CommentsPlugin } from "@udecode/plate-comments/react";
-import { createPlatePlugin, ParagraphPlugin, PlateLeaf } from "@udecode/plate-common/react";
+import { ParagraphPlugin, PlateLeaf } from "@udecode/plate-common/react";
 import { CsvPlugin } from "@udecode/plate-csv";
 import { DatePlugin } from "@udecode/plate-date/react";
 import { DndPlugin } from "@udecode/plate-dnd";
@@ -67,38 +96,6 @@ import {
 } from "@udecode/plate-table/react";
 import { TogglePlugin } from "@udecode/plate-toggle/react";
 import { TrailingBlockPlugin } from "@udecode/plate-trailing-block";
-import { BlockquoteElement } from "@/components/plate-ui/blockquote-element";
-import { CodeBlockElement } from "@/components/plate-ui/code-block-element";
-import { CodeLeaf } from "@/components/plate-ui/code-leaf";
-import { CodeLineElement } from "@/components/plate-ui/code-line-element";
-import { CodeSyntaxLeaf } from "@/components/plate-ui/code-syntax-leaf";
-import { ColumnElement } from "@/components/plate-ui/column-element";
-import { ColumnGroupElement } from "@/components/plate-ui/column-group-element";
-import { CommentLeaf } from "@/components/plate-ui/comment-leaf";
-import { DateElement } from "@/components/plate-ui/date-element";
-import { ExcalidrawElement } from "@/components/plate-ui/excalidraw-element";
-import { HeadingElement } from "@/components/plate-ui/heading-element";
-import { HighlightLeaf } from "@/components/plate-ui/highlight-leaf";
-import { HrElement } from "@/components/plate-ui/hr-element";
-import { ImageElement } from "@/components/plate-ui/image-element";
-import { KbdLeaf } from "@/components/plate-ui/kbd-leaf";
-import { LinkElement } from "@/components/plate-ui/link-element";
-import { LinkFloatingToolbar } from "@/components/plate-ui/link-floating-toolbar";
-import { MediaEmbedElement } from "@/components/plate-ui/media-embed-element";
-import { MentionElement } from "@/components/plate-ui/mention-element";
-import { MentionInputElement } from "@/components/plate-ui/mention-input-element";
-import { ParagraphElement } from "@/components/plate-ui/paragraph-element";
-import { withPlaceholders } from "@/components/plate-ui/placeholder";
-import {
-  TableCellElement,
-  TableCellHeaderElement,
-} from "@/components/plate-ui/table-cell-element";
-import { TableElement } from "@/components/plate-ui/table-element";
-import { TableRowElement } from "@/components/plate-ui/table-row-element";
-import { TodoListElement } from "@/components/plate-ui/todo-list-element";
-import { ToggleElement } from "@/components/plate-ui/toggle-element";
-import { withDraggables } from "@/components/plate-ui/with-draggables";
-import { ReagentElement } from "./reagent/reagent-element";
 import { ReagentInputElement } from "./reagent/reagent-input-element";
 import { RoleValueElement } from "./value/role-value-element";
 

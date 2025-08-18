@@ -1,8 +1,8 @@
-import React from 'react'
-import * as AccordionPrimitive from '@radix-ui/react-accordion'
-import { ChevronRight } from 'lucide-react'
-import { cva } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
+import * as AccordionPrimitive from '@radix-ui/react-accordion'
+import { cva } from 'class-variance-authority'
+import { ChevronRight } from 'lucide-react'
+import React from 'react'
 
 const treeVariants = cva(
     'group hover:before:opacity-100 before:absolute before:rounded-lg before:left-0 px-2 before:w-full before:opacity-0 before:bg-accent/70 before:h-[2rem] before:-z-10'
@@ -57,7 +57,7 @@ const TreeView = React.forwardRef<HTMLDivElement, TreeProps>(
         const [selectedItemId, setSelectedItemId] = React.useState<
             string | undefined
         >(initialSelectedItemId)
-        
+
         const [draggedItem, setDraggedItem] = React.useState<TreeDataItem | null>(null)
 
         const handleSelectChange = React.useCallback(
@@ -128,7 +128,7 @@ const TreeView = React.forwardRef<HTMLDivElement, TreeProps>(
                 />
                 <div
                     className='w-full h-[48px]'
-                    onDrop={(e) => { handleDrop({id: '', name: 'parent_div'})}}>
+                    onDrop={(e) => { handleDrop({ id: '', name: 'parent_div' }) }}>
 
                 </div>
             </div>

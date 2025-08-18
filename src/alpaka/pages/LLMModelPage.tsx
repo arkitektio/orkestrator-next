@@ -1,10 +1,8 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { ChatLayout } from "@/components/chat/chat-layout";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { AlpakaCollection, AlpakaLLMModel } from "@/linkers";
 import {
-  useGetChromaCollectionQuery,
-  useGetLlmModelQuery,
+  useGetLlmModelQuery
 } from "../api/graphql";
 
 export type IRepresentationScreenProps = {};

@@ -2,7 +2,6 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { UploadIcon } from "lucide-react";
 import React from "react";
-import FileList from "../components/lists/FileList";
 import MeshList from "../components/lists/MeshList";
 
 export type IRepresentationScreenProps = {};

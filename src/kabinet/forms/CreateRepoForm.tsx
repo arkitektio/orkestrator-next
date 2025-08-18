@@ -3,7 +3,6 @@ import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter, DialogHeader } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { useCreateWorkspaceMutation } from "@/reaktion/api/graphql";
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { useForm } from "react-hook-form";
 import {
@@ -11,7 +10,6 @@ import {
   ListReleasesDocument,
   useCreateGithubRepoMutation,
 } from "../api/graphql";
-import { ReleasesDocument } from "@/lok-next/api/graphql";
 
 export const CreateRepoForm = (props: {}) => {
   const [add] = useCreateGithubRepoMutation({

@@ -59,7 +59,7 @@ const TheCard = ({ action, mates }: Props) => {
               </Button>
             </ActionButton>
             <ReserveActionButton id={action.id}>
-              <Button variant="outline" size="sm"  className="flex-1 truncate">
+              <Button variant="outline" size="sm" className="flex-1 truncate">
                 Short
               </Button>
             </ReserveActionButton>

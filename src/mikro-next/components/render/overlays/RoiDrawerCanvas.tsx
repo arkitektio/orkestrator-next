@@ -1,11 +1,11 @@
 import { RoiKind } from "@/mikro-next/api/graphql";
-import { RectangleRoiDrawer } from "./RectangleRoiDrawer";
+import { useViewerState } from "../ViewerStateProvider";
 import { EllipsisRoiDrawer } from "./EllipsisRoiDrawer";
 import { LineRoiDrawer } from "./LineRoiDrawer";
+import { PathRoiDrawer } from "./PathRoiDrawer";
 import { PointRoiDrawer } from "./PointRoiDrawer";
 import { PolygonRoiDrawer } from "./PolygonRoiDrawer";
-import { PathRoiDrawer } from "./PathRoiDrawer";
-import { useViewerState } from "../ViewerStateProvider";
+import { RectangleRoiDrawer } from "./RectangleRoiDrawer";
 
 export interface RoiDrawerProps {
   imageHeight: number;

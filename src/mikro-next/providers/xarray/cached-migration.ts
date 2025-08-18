@@ -8,24 +8,20 @@
 // Export enhanced versions with caching
 export { CachedS3Store as S3Store } from "./cached-store";
 export {
-  openZarrArrayCached as openZarrArray,
   clearZarrCache,
-  clearZarrCacheForUrl,
+  clearZarrCacheForUrl, openZarrArrayCached as openZarrArray
 } from "./cached-zarr";
 
 // Re-export types that might be needed
 export type {
-  Zattrs,
-  Zgroup,
   Compressor,
   DataZarray,
   DataZattrs,
-  Metadata,
-  XArrayMetadata,
-  SelectionLoader,
+  Metadata, SelectionLoader, XArrayMetadata, Zattrs,
+  Zgroup
 } from "./cached-zarr";
 
-export { HTTPError, KeyError, joinUrlParts } from "./cached-store";
+export { HTTPError, joinUrlParts, KeyError } from "./cached-store";
 
 /**
  * Usage:

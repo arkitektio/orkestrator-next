@@ -1,4 +1,4 @@
-import { Edges, useSelect, Text } from "@react-three/drei";
+import { Edges, Text, useSelect } from "@react-three/drei";
 
 import { ColorMap, RgbViewFragment } from "@/mikro-next/api/graphql";
 import { useThree } from "@react-three/fiber";

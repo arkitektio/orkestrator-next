@@ -1,13 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { Port } from "../widgets/types";
 import {
   buildZodSchema,
   portToDefaults,
   submittedDataToRekuestFormat,
 } from "../widgets/utils";
-import { toast } from "sonner";
 
 export const portHash = (port: Port[]) => {
   return port
@@ -37,7 +37,7 @@ export const usePortForm = (props: {
     return zodResolver(zodSchema);
   }, [hash, props.additionalSchema]);
 
-  const { handleSubmit,...form } = useForm({
+  const { handleSubmit, ...form } = useForm({
     defaultValues: defaultValues,
     reValidateMode: props.reValidateMode || "onChange",
     resolver: myResolver(),
@@ -72,5 +72,5 @@ export const usePortForm = (props: {
     form.reset(portToDefaults(props.ports, props.overwrites || {}));
   }, [hash]);
 
-  return { ...form, handleSubmit: overWrittenHandleSubmit,  };
+  return { ...form, handleSubmit: overWrittenHandleSubmit, };
 };

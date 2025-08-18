@@ -1,25 +1,25 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { Icons } from "@/components/icons";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Icons } from "@/components/icons";
 import { DokumentsDocument, DokumentsFile, LovekitStream } from "@/linkers";
-import { useGetFileQuery } from "../api/graphql";
-import { 
-  DownloadIcon, 
-  FileIcon, 
-  FolderIcon, 
+import {
   DatabaseIcon,
-  InfoIcon,
-  FileTextIcon
+  DownloadIcon,
+  FileIcon,
+  FileTextIcon,
+  FolderIcon,
+  InfoIcon
 } from "lucide-react";
+import { useGetFileQuery } from "../api/graphql";
 
 export default asDetailQueryRoute(
   useGetFileQuery,
   ({ data }) => {
     const file = data?.file;
-    
+
     // Helper functions
     const getFileExtension = (filename: string) => {
       return filename.split('.').pop()?.toUpperCase() || 'FILE';
@@ -29,7 +29,7 @@ export default asDetailQueryRoute(
       const extension = filename.split('.').pop()?.toLowerCase();
       switch (extension) {
         case 'pdf': return 'bg-red-100 text-red-700 border-red-200';
-        case 'doc': 
+        case 'doc':
         case 'docx': return 'bg-blue-100 text-blue-700 border-blue-200';
         case 'jpg':
         case 'jpeg':
@@ -88,8 +88,8 @@ export default asDetailQueryRoute(
                     {file?.name}
                   </CardTitle>
                   <CardDescription className="flex items-center gap-3 mt-2 text-base">
-                    <Badge 
-                      variant="secondary" 
+                    <Badge
+                      variant="secondary"
                       className={`${getFileTypeColor(file?.name || '')} font-semibold px-3 py-1`}
                     >
                       {getFileExtension(file?.name || '')}
@@ -178,9 +178,9 @@ export default asDetailQueryRoute(
                         </div>
                       </div>
                       <DokumentsDocument.DetailLink object={doc.id}>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           className="hover:bg-blue-100 hover:text-blue-700 transition-colors shadow-sm"
                         >
                           <Icons.externalLink className="w-4 h-4" />

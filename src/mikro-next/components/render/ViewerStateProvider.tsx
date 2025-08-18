@@ -1,5 +1,5 @@
 import { RoiKind } from "@/mikro-next/api/graphql";
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, ReactNode, useContext, useState } from "react";
 
 export interface ViewerState {
   // Z/T navigation
@@ -40,7 +40,7 @@ export interface ViewerStateActions {
 
 export interface ViewerStateContextType
   extends ViewerState,
-    ViewerStateActions {}
+  ViewerStateActions { }
 
 const ViewerStateContext = createContext<ViewerStateContextType | undefined>(
   undefined,

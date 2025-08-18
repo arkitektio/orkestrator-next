@@ -1,18 +1,10 @@
-import { Arkitekt, useMikro } from "@/lib/arkitekt/Arkitekt";
 import {
-  ColorMap,
-  RequestAccessDocument,
-  RequestAccessMutation,
-  RequestAccessMutationVariables,
-  RgbViewFragment,
-  ZarrStoreFragment,
+  ColorMap
 } from "@/mikro-next/api/graphql";
 import { AvailableColormap } from "@/mikro-next/providers/xarray/provider";
 import c from "colormap";
-import { useCallback, useEffect, useState } from "react";
 import { NestedArray, TypedArray } from "zarr";
 import { ArraySelection, Slice } from "zarr/types/core/types";
-import { DtypeString } from "zarr/types/types";
 import { DataType } from "zarrita";
 
 export const available_color_maps = [

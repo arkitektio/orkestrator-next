@@ -1,6 +1,6 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DialogTrigger } from "@radix-ui/react-dialog";
-import { ReserveForm, ReserveFormDialog } from "../forms/ShortcutForm";
+import { ReserveForm } from "../forms/ShortcutForm";
 
 export const ReserveActionButton = (props: {
   id: string;

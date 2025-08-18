@@ -19,9 +19,11 @@ import {
   useNodesState,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import ELK from "elkjs/lib/elk.bundled.js";
 import React, { useState } from "react";
 import { ClickContextual } from "./contextuals/ClickContextuals";
 import { ConnectContextual } from "./contextuals/ConnectContextual";
+import DescribeEdge from "./edges/DescribeEdge";
 import EntityRoleEdge from "./edges/EntityRoleEdge";
 import MeasurementEdge from "./edges/MeasurementEdge";
 import ReagentRoleEdge from "./edges/ReagentRoleEdge";
@@ -30,8 +32,10 @@ import StagingMeasurementEdge from "./edges/StagingMeasurementEdge";
 import StagingRelationEdge from "./edges/StagingRelationEdge";
 import StagingStepEdge from "./edges/StagingStepEdge";
 import StepEdge from "./edges/StepEdge";
+import StructureRelationEdge from "./edges/StructureRelationEdge";
 import "./index.css";
 import GenericCategoryNode from "./nodes/GenericCategoryNode";
+import MetricCategoryNode from "./nodes/MetricCategoryNode";
 import NaturalEventNode from "./nodes/NaturalEventNode";
 import ProtocolEventNode from "./nodes/ProtocolEventNode";
 import ReagentCategoryNode from "./nodes/ReagentCategoryNode";
@@ -47,11 +51,6 @@ import {
   StagingEdgeParams,
   StagingNodeParams,
 } from "./types";
-import MetricCategoryNode from "./nodes/MetricCategoryNode";
-import DescribeEdge from "./edges/DescribeEdge";
-import ELK from "elkjs/lib/elk.bundled.js";
-import { structure } from "@/hooks/use-metaapp";
-import StructureRelationEdge from "./edges/StructureRelationEdge";
 
 const ontologyToNodes = (graph: GraphFragment): MyNode[] => {
   const structureNodes = graph.structureCategories.map((cat, index) => ({

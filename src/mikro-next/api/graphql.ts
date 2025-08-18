@@ -1,6 +1,6 @@
-import { gql } from '@apollo/client';
-import * as Apollo from '@apollo/client';
 import * as ApolloReactHooks from '@/lib/mikro/funcs';
+import * as Apollo from '@apollo/client';
+import { gql } from '@apollo/client';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -5816,9 +5816,9 @@ export type CreateCameraMutationFn = Apollo.MutationFunction<CreateCameraMutatio
  * });
  */
 export function useCreateCameraMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateCameraMutation, CreateCameraMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateCameraMutation, CreateCameraMutationVariables>(CreateCameraDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateCameraMutation, CreateCameraMutationVariables>(CreateCameraDocument, options);
+}
 export type CreateCameraMutationHookResult = ReturnType<typeof useCreateCameraMutation>;
 export type CreateCameraMutationResult = Apollo.MutationResult<CreateCameraMutation>;
 export type CreateCameraMutationOptions = Apollo.BaseMutationOptions<CreateCameraMutation, CreateCameraMutationVariables>;
@@ -5857,9 +5857,9 @@ export type EnsureCameraMutationFn = Apollo.MutationFunction<EnsureCameraMutatio
  * });
  */
 export function useEnsureCameraMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<EnsureCameraMutation, EnsureCameraMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<EnsureCameraMutation, EnsureCameraMutationVariables>(EnsureCameraDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<EnsureCameraMutation, EnsureCameraMutationVariables>(EnsureCameraDocument, options);
+}
 export type EnsureCameraMutationHookResult = ReturnType<typeof useEnsureCameraMutation>;
 export type EnsureCameraMutationResult = Apollo.MutationResult<EnsureCameraMutation>;
 export type EnsureCameraMutationOptions = Apollo.BaseMutationOptions<EnsureCameraMutation, EnsureCameraMutationVariables>;
@@ -5891,9 +5891,9 @@ export type CreateDatasetMutationFn = Apollo.MutationFunction<CreateDatasetMutat
  * });
  */
 export function useCreateDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateDatasetMutation, CreateDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateDatasetMutation, CreateDatasetMutationVariables>(CreateDatasetDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateDatasetMutation, CreateDatasetMutationVariables>(CreateDatasetDocument, options);
+}
 export type CreateDatasetMutationHookResult = ReturnType<typeof useCreateDatasetMutation>;
 export type CreateDatasetMutationResult = Apollo.MutationResult<CreateDatasetMutation>;
 export type CreateDatasetMutationOptions = Apollo.BaseMutationOptions<CreateDatasetMutation, CreateDatasetMutationVariables>;
@@ -5926,9 +5926,9 @@ export type UpdateDatasetMutationFn = Apollo.MutationFunction<UpdateDatasetMutat
  * });
  */
 export function useUpdateDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateDatasetMutation, UpdateDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<UpdateDatasetMutation, UpdateDatasetMutationVariables>(UpdateDatasetDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<UpdateDatasetMutation, UpdateDatasetMutationVariables>(UpdateDatasetDocument, options);
+}
 export type UpdateDatasetMutationHookResult = ReturnType<typeof useUpdateDatasetMutation>;
 export type UpdateDatasetMutationResult = Apollo.MutationResult<UpdateDatasetMutation>;
 export type UpdateDatasetMutationOptions = Apollo.BaseMutationOptions<UpdateDatasetMutation, UpdateDatasetMutationVariables>;
@@ -5960,9 +5960,9 @@ export type PinDatasetMutationFn = Apollo.MutationFunction<PinDatasetMutation, P
  * });
  */
 export function usePinDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PinDatasetMutation, PinDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PinDatasetMutation, PinDatasetMutationVariables>(PinDatasetDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<PinDatasetMutation, PinDatasetMutationVariables>(PinDatasetDocument, options);
+}
 export type PinDatasetMutationHookResult = ReturnType<typeof usePinDatasetMutation>;
 export type PinDatasetMutationResult = Apollo.MutationResult<PinDatasetMutation>;
 export type PinDatasetMutationOptions = Apollo.BaseMutationOptions<PinDatasetMutation, PinDatasetMutationVariables>;
@@ -5994,9 +5994,9 @@ export type PutDatasetsInDatasetMutationFn = Apollo.MutationFunction<PutDatasets
  * });
  */
 export function usePutDatasetsInDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PutDatasetsInDatasetMutation, PutDatasetsInDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PutDatasetsInDatasetMutation, PutDatasetsInDatasetMutationVariables>(PutDatasetsInDatasetDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<PutDatasetsInDatasetMutation, PutDatasetsInDatasetMutationVariables>(PutDatasetsInDatasetDocument, options);
+}
 export type PutDatasetsInDatasetMutationHookResult = ReturnType<typeof usePutDatasetsInDatasetMutation>;
 export type PutDatasetsInDatasetMutationResult = Apollo.MutationResult<PutDatasetsInDatasetMutation>;
 export type PutDatasetsInDatasetMutationOptions = Apollo.BaseMutationOptions<PutDatasetsInDatasetMutation, PutDatasetsInDatasetMutationVariables>;
@@ -6028,9 +6028,9 @@ export type ReleaseDatasetsFromDatasetMutationFn = Apollo.MutationFunction<Relea
  * });
  */
 export function useReleaseDatasetsFromDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ReleaseDatasetsFromDatasetMutation, ReleaseDatasetsFromDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ReleaseDatasetsFromDatasetMutation, ReleaseDatasetsFromDatasetMutationVariables>(ReleaseDatasetsFromDatasetDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<ReleaseDatasetsFromDatasetMutation, ReleaseDatasetsFromDatasetMutationVariables>(ReleaseDatasetsFromDatasetDocument, options);
+}
 export type ReleaseDatasetsFromDatasetMutationHookResult = ReturnType<typeof useReleaseDatasetsFromDatasetMutation>;
 export type ReleaseDatasetsFromDatasetMutationResult = Apollo.MutationResult<ReleaseDatasetsFromDatasetMutation>;
 export type ReleaseDatasetsFromDatasetMutationOptions = Apollo.BaseMutationOptions<ReleaseDatasetsFromDatasetMutation, ReleaseDatasetsFromDatasetMutationVariables>;
@@ -6062,9 +6062,9 @@ export type PutImagesInDatasetMutationFn = Apollo.MutationFunction<PutImagesInDa
  * });
  */
 export function usePutImagesInDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PutImagesInDatasetMutation, PutImagesInDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PutImagesInDatasetMutation, PutImagesInDatasetMutationVariables>(PutImagesInDatasetDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<PutImagesInDatasetMutation, PutImagesInDatasetMutationVariables>(PutImagesInDatasetDocument, options);
+}
 export type PutImagesInDatasetMutationHookResult = ReturnType<typeof usePutImagesInDatasetMutation>;
 export type PutImagesInDatasetMutationResult = Apollo.MutationResult<PutImagesInDatasetMutation>;
 export type PutImagesInDatasetMutationOptions = Apollo.BaseMutationOptions<PutImagesInDatasetMutation, PutImagesInDatasetMutationVariables>;
@@ -6096,9 +6096,9 @@ export type ReleaseImagesFromDatasetMutationFn = Apollo.MutationFunction<Release
  * });
  */
 export function useReleaseImagesFromDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ReleaseImagesFromDatasetMutation, ReleaseImagesFromDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ReleaseImagesFromDatasetMutation, ReleaseImagesFromDatasetMutationVariables>(ReleaseImagesFromDatasetDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<ReleaseImagesFromDatasetMutation, ReleaseImagesFromDatasetMutationVariables>(ReleaseImagesFromDatasetDocument, options);
+}
 export type ReleaseImagesFromDatasetMutationHookResult = ReturnType<typeof useReleaseImagesFromDatasetMutation>;
 export type ReleaseImagesFromDatasetMutationResult = Apollo.MutationResult<ReleaseImagesFromDatasetMutation>;
 export type ReleaseImagesFromDatasetMutationOptions = Apollo.BaseMutationOptions<ReleaseImagesFromDatasetMutation, ReleaseImagesFromDatasetMutationVariables>;
@@ -6130,9 +6130,9 @@ export type PutFilesInDatasetMutationFn = Apollo.MutationFunction<PutFilesInData
  * });
  */
 export function usePutFilesInDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PutFilesInDatasetMutation, PutFilesInDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PutFilesInDatasetMutation, PutFilesInDatasetMutationVariables>(PutFilesInDatasetDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<PutFilesInDatasetMutation, PutFilesInDatasetMutationVariables>(PutFilesInDatasetDocument, options);
+}
 export type PutFilesInDatasetMutationHookResult = ReturnType<typeof usePutFilesInDatasetMutation>;
 export type PutFilesInDatasetMutationResult = Apollo.MutationResult<PutFilesInDatasetMutation>;
 export type PutFilesInDatasetMutationOptions = Apollo.BaseMutationOptions<PutFilesInDatasetMutation, PutFilesInDatasetMutationVariables>;
@@ -6164,9 +6164,9 @@ export type ReleaseFilesFromDatasetMutationFn = Apollo.MutationFunction<ReleaseF
  * });
  */
 export function useReleaseFilesFromDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ReleaseFilesFromDatasetMutation, ReleaseFilesFromDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ReleaseFilesFromDatasetMutation, ReleaseFilesFromDatasetMutationVariables>(ReleaseFilesFromDatasetDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<ReleaseFilesFromDatasetMutation, ReleaseFilesFromDatasetMutationVariables>(ReleaseFilesFromDatasetDocument, options);
+}
 export type ReleaseFilesFromDatasetMutationHookResult = ReturnType<typeof useReleaseFilesFromDatasetMutation>;
 export type ReleaseFilesFromDatasetMutationResult = Apollo.MutationResult<ReleaseFilesFromDatasetMutation>;
 export type ReleaseFilesFromDatasetMutationOptions = Apollo.BaseMutationOptions<ReleaseFilesFromDatasetMutation, ReleaseFilesFromDatasetMutationVariables>;
@@ -6200,9 +6200,9 @@ export type RevertDatasetMutationFn = Apollo.MutationFunction<RevertDatasetMutat
  * });
  */
 export function useRevertDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RevertDatasetMutation, RevertDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RevertDatasetMutation, RevertDatasetMutationVariables>(RevertDatasetDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<RevertDatasetMutation, RevertDatasetMutationVariables>(RevertDatasetDocument, options);
+}
 export type RevertDatasetMutationHookResult = ReturnType<typeof useRevertDatasetMutation>;
 export type RevertDatasetMutationResult = Apollo.MutationResult<RevertDatasetMutation>;
 export type RevertDatasetMutationOptions = Apollo.BaseMutationOptions<RevertDatasetMutation, RevertDatasetMutationVariables>;
@@ -6231,9 +6231,9 @@ export type DeleteDatasetMutationFn = Apollo.MutationFunction<DeleteDatasetMutat
  * });
  */
 export function useDeleteDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteDatasetMutation, DeleteDatasetMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteDatasetMutation, DeleteDatasetMutationVariables>(DeleteDatasetDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<DeleteDatasetMutation, DeleteDatasetMutationVariables>(DeleteDatasetDocument, options);
+}
 export type DeleteDatasetMutationHookResult = ReturnType<typeof useDeleteDatasetMutation>;
 export type DeleteDatasetMutationResult = Apollo.MutationResult<DeleteDatasetMutation>;
 export type DeleteDatasetMutationOptions = Apollo.BaseMutationOptions<DeleteDatasetMutation, DeleteDatasetMutationVariables>;
@@ -6266,9 +6266,9 @@ export type CreateEraMutationFn = Apollo.MutationFunction<CreateEraMutation, Cre
  * });
  */
 export function useCreateEraMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateEraMutation, CreateEraMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateEraMutation, CreateEraMutationVariables>(CreateEraDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateEraMutation, CreateEraMutationVariables>(CreateEraDocument, options);
+}
 export type CreateEraMutationHookResult = ReturnType<typeof useCreateEraMutation>;
 export type CreateEraMutationResult = Apollo.MutationResult<CreateEraMutation>;
 export type CreateEraMutationOptions = Apollo.BaseMutationOptions<CreateEraMutation, CreateEraMutationVariables>;
@@ -6304,9 +6304,9 @@ export type From_File_LikeMutationFn = Apollo.MutationFunction<From_File_LikeMut
  * });
  */
 export function useFrom_File_LikeMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<From_File_LikeMutation, From_File_LikeMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<From_File_LikeMutation, From_File_LikeMutationVariables>(From_File_LikeDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<From_File_LikeMutation, From_File_LikeMutationVariables>(From_File_LikeDocument, options);
+}
 export type From_File_LikeMutationHookResult = ReturnType<typeof useFrom_File_LikeMutation>;
 export type From_File_LikeMutationResult = Apollo.MutationResult<From_File_LikeMutation>;
 export type From_File_LikeMutationOptions = Apollo.BaseMutationOptions<From_File_LikeMutation, From_File_LikeMutationVariables>;
@@ -6338,9 +6338,9 @@ export type RequestFileUploadMutationFn = Apollo.MutationFunction<RequestFileUpl
  * });
  */
 export function useRequestFileUploadMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestFileUploadMutation, RequestFileUploadMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestFileUploadMutation, RequestFileUploadMutationVariables>(RequestFileUploadDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<RequestFileUploadMutation, RequestFileUploadMutationVariables>(RequestFileUploadDocument, options);
+}
 export type RequestFileUploadMutationHookResult = ReturnType<typeof useRequestFileUploadMutation>;
 export type RequestFileUploadMutationResult = Apollo.MutationResult<RequestFileUploadMutation>;
 export type RequestFileUploadMutationOptions = Apollo.BaseMutationOptions<RequestFileUploadMutation, RequestFileUploadMutationVariables>;
@@ -6372,9 +6372,9 @@ export type RequestFileUploadPresignedMutationFn = Apollo.MutationFunction<Reque
  * });
  */
 export function useRequestFileUploadPresignedMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestFileUploadPresignedMutation, RequestFileUploadPresignedMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestFileUploadPresignedMutation, RequestFileUploadPresignedMutationVariables>(RequestFileUploadPresignedDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<RequestFileUploadPresignedMutation, RequestFileUploadPresignedMutationVariables>(RequestFileUploadPresignedDocument, options);
+}
 export type RequestFileUploadPresignedMutationHookResult = ReturnType<typeof useRequestFileUploadPresignedMutation>;
 export type RequestFileUploadPresignedMutationResult = Apollo.MutationResult<RequestFileUploadPresignedMutation>;
 export type RequestFileUploadPresignedMutationOptions = Apollo.BaseMutationOptions<RequestFileUploadPresignedMutation, RequestFileUploadPresignedMutationVariables>;
@@ -6406,9 +6406,9 @@ export type RequestFileAccessMutationFn = Apollo.MutationFunction<RequestFileAcc
  * });
  */
 export function useRequestFileAccessMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestFileAccessMutation, RequestFileAccessMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestFileAccessMutation, RequestFileAccessMutationVariables>(RequestFileAccessDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<RequestFileAccessMutation, RequestFileAccessMutationVariables>(RequestFileAccessDocument, options);
+}
 export type RequestFileAccessMutationHookResult = ReturnType<typeof useRequestFileAccessMutation>;
 export type RequestFileAccessMutationResult = Apollo.MutationResult<RequestFileAccessMutation>;
 export type RequestFileAccessMutationOptions = Apollo.BaseMutationOptions<RequestFileAccessMutation, RequestFileAccessMutationVariables>;
@@ -6437,9 +6437,9 @@ export type DeleteFileMutationFn = Apollo.MutationFunction<DeleteFileMutation, D
  * });
  */
 export function useDeleteFileMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteFileMutation, DeleteFileMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteFileMutation, DeleteFileMutationVariables>(DeleteFileDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<DeleteFileMutation, DeleteFileMutationVariables>(DeleteFileDocument, options);
+}
 export type DeleteFileMutationHookResult = ReturnType<typeof useDeleteFileMutation>;
 export type DeleteFileMutationResult = Apollo.MutationResult<DeleteFileMutation>;
 export type DeleteFileMutationOptions = Apollo.BaseMutationOptions<DeleteFileMutation, DeleteFileMutationVariables>;
@@ -6471,9 +6471,9 @@ export type RequestUploadMutationFn = Apollo.MutationFunction<RequestUploadMutat
  * });
  */
 export function useRequestUploadMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestUploadMutation, RequestUploadMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestUploadMutation, RequestUploadMutationVariables>(RequestUploadDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<RequestUploadMutation, RequestUploadMutationVariables>(RequestUploadDocument, options);
+}
 export type RequestUploadMutationHookResult = ReturnType<typeof useRequestUploadMutation>;
 export type RequestUploadMutationResult = Apollo.MutationResult<RequestUploadMutation>;
 export type RequestUploadMutationOptions = Apollo.BaseMutationOptions<RequestUploadMutation, RequestUploadMutationVariables>;
@@ -6505,9 +6505,9 @@ export type RequestAccessMutationFn = Apollo.MutationFunction<RequestAccessMutat
  * });
  */
 export function useRequestAccessMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestAccessMutation, RequestAccessMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestAccessMutation, RequestAccessMutationVariables>(RequestAccessDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<RequestAccessMutation, RequestAccessMutationVariables>(RequestAccessDocument, options);
+}
 export type RequestAccessMutationHookResult = ReturnType<typeof useRequestAccessMutation>;
 export type RequestAccessMutationResult = Apollo.MutationResult<RequestAccessMutation>;
 export type RequestAccessMutationOptions = Apollo.BaseMutationOptions<RequestAccessMutation, RequestAccessMutationVariables>;
@@ -6539,9 +6539,9 @@ export type PinImageMutationFn = Apollo.MutationFunction<PinImageMutation, PinIm
  * });
  */
 export function usePinImageMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PinImageMutation, PinImageMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PinImageMutation, PinImageMutationVariables>(PinImageDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<PinImageMutation, PinImageMutationVariables>(PinImageDocument, options);
+}
 export type PinImageMutationHookResult = ReturnType<typeof usePinImageMutation>;
 export type PinImageMutationResult = Apollo.MutationResult<PinImageMutation>;
 export type PinImageMutationOptions = Apollo.BaseMutationOptions<PinImageMutation, PinImageMutationVariables>;
@@ -6572,9 +6572,9 @@ export type UpdateImageMutationFn = Apollo.MutationFunction<UpdateImageMutation,
  * });
  */
 export function useUpdateImageMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateImageMutation, UpdateImageMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<UpdateImageMutation, UpdateImageMutationVariables>(UpdateImageDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<UpdateImageMutation, UpdateImageMutationVariables>(UpdateImageDocument, options);
+}
 export type UpdateImageMutationHookResult = ReturnType<typeof useUpdateImageMutation>;
 export type UpdateImageMutationResult = Apollo.MutationResult<UpdateImageMutation>;
 export type UpdateImageMutationOptions = Apollo.BaseMutationOptions<UpdateImageMutation, UpdateImageMutationVariables>;
@@ -6603,9 +6603,9 @@ export type DeleteImageMutationFn = Apollo.MutationFunction<DeleteImageMutation,
  * });
  */
 export function useDeleteImageMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteImageMutation, DeleteImageMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteImageMutation, DeleteImageMutationVariables>(DeleteImageDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<DeleteImageMutation, DeleteImageMutationVariables>(DeleteImageDocument, options);
+}
 export type DeleteImageMutationHookResult = ReturnType<typeof useDeleteImageMutation>;
 export type DeleteImageMutationResult = Apollo.MutationResult<DeleteImageMutation>;
 export type DeleteImageMutationOptions = Apollo.BaseMutationOptions<DeleteImageMutation, DeleteImageMutationVariables>;
@@ -6641,9 +6641,9 @@ export type CreateInstrumentMutationFn = Apollo.MutationFunction<CreateInstrumen
  * });
  */
 export function useCreateInstrumentMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateInstrumentMutation, CreateInstrumentMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateInstrumentMutation, CreateInstrumentMutationVariables>(CreateInstrumentDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateInstrumentMutation, CreateInstrumentMutationVariables>(CreateInstrumentDocument, options);
+}
 export type CreateInstrumentMutationHookResult = ReturnType<typeof useCreateInstrumentMutation>;
 export type CreateInstrumentMutationResult = Apollo.MutationResult<CreateInstrumentMutation>;
 export type CreateInstrumentMutationOptions = Apollo.BaseMutationOptions<CreateInstrumentMutation, CreateInstrumentMutationVariables>;
@@ -6679,9 +6679,9 @@ export type EnsureInstrumentMutationFn = Apollo.MutationFunction<EnsureInstrumen
  * });
  */
 export function useEnsureInstrumentMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<EnsureInstrumentMutation, EnsureInstrumentMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<EnsureInstrumentMutation, EnsureInstrumentMutationVariables>(EnsureInstrumentDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<EnsureInstrumentMutation, EnsureInstrumentMutationVariables>(EnsureInstrumentDocument, options);
+}
 export type EnsureInstrumentMutationHookResult = ReturnType<typeof useEnsureInstrumentMutation>;
 export type EnsureInstrumentMutationResult = Apollo.MutationResult<EnsureInstrumentMutation>;
 export type EnsureInstrumentMutationOptions = Apollo.BaseMutationOptions<EnsureInstrumentMutation, EnsureInstrumentMutationVariables>;
@@ -6713,9 +6713,9 @@ export type RequestMediaUploadMutationFn = Apollo.MutationFunction<RequestMediaU
  * });
  */
 export function useRequestMediaUploadMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestMediaUploadMutation, RequestMediaUploadMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestMediaUploadMutation, RequestMediaUploadMutationVariables>(RequestMediaUploadDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<RequestMediaUploadMutation, RequestMediaUploadMutationVariables>(RequestMediaUploadDocument, options);
+}
 export type RequestMediaUploadMutationHookResult = ReturnType<typeof useRequestMediaUploadMutation>;
 export type RequestMediaUploadMutationResult = Apollo.MutationResult<RequestMediaUploadMutation>;
 export type RequestMediaUploadMutationOptions = Apollo.BaseMutationOptions<RequestMediaUploadMutation, RequestMediaUploadMutationVariables>;
@@ -6746,9 +6746,9 @@ export type CreateMultiWellPlateMutationFn = Apollo.MutationFunction<CreateMulti
  * });
  */
 export function useCreateMultiWellPlateMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateMultiWellPlateMutation, CreateMultiWellPlateMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateMultiWellPlateMutation, CreateMultiWellPlateMutationVariables>(CreateMultiWellPlateDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateMultiWellPlateMutation, CreateMultiWellPlateMutationVariables>(CreateMultiWellPlateDocument, options);
+}
 export type CreateMultiWellPlateMutationHookResult = ReturnType<typeof useCreateMultiWellPlateMutation>;
 export type CreateMultiWellPlateMutationResult = Apollo.MutationResult<CreateMultiWellPlateMutation>;
 export type CreateMultiWellPlateMutationOptions = Apollo.BaseMutationOptions<CreateMultiWellPlateMutation, CreateMultiWellPlateMutationVariables>;
@@ -6780,9 +6780,9 @@ export type AutoCreateMultiWellPlateMutationFn = Apollo.MutationFunction<AutoCre
  * });
  */
 export function useAutoCreateMultiWellPlateMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AutoCreateMultiWellPlateMutation, AutoCreateMultiWellPlateMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<AutoCreateMultiWellPlateMutation, AutoCreateMultiWellPlateMutationVariables>(AutoCreateMultiWellPlateDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<AutoCreateMultiWellPlateMutation, AutoCreateMultiWellPlateMutationVariables>(AutoCreateMultiWellPlateDocument, options);
+}
 export type AutoCreateMultiWellPlateMutationHookResult = ReturnType<typeof useAutoCreateMultiWellPlateMutation>;
 export type AutoCreateMultiWellPlateMutationResult = Apollo.MutationResult<AutoCreateMultiWellPlateMutation>;
 export type AutoCreateMultiWellPlateMutationOptions = Apollo.BaseMutationOptions<AutoCreateMultiWellPlateMutation, AutoCreateMultiWellPlateMutationVariables>;
@@ -6819,9 +6819,9 @@ export type CreateObjectiveMutationFn = Apollo.MutationFunction<CreateObjectiveM
  * });
  */
 export function useCreateObjectiveMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateObjectiveMutation, CreateObjectiveMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateObjectiveMutation, CreateObjectiveMutationVariables>(CreateObjectiveDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateObjectiveMutation, CreateObjectiveMutationVariables>(CreateObjectiveDocument, options);
+}
 export type CreateObjectiveMutationHookResult = ReturnType<typeof useCreateObjectiveMutation>;
 export type CreateObjectiveMutationResult = Apollo.MutationResult<CreateObjectiveMutation>;
 export type CreateObjectiveMutationOptions = Apollo.BaseMutationOptions<CreateObjectiveMutation, CreateObjectiveMutationVariables>;
@@ -6858,9 +6858,9 @@ export type EnsureObjectiveMutationFn = Apollo.MutationFunction<EnsureObjectiveM
  * });
  */
 export function useEnsureObjectiveMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<EnsureObjectiveMutation, EnsureObjectiveMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<EnsureObjectiveMutation, EnsureObjectiveMutationVariables>(EnsureObjectiveDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<EnsureObjectiveMutation, EnsureObjectiveMutationVariables>(EnsureObjectiveDocument, options);
+}
 export type EnsureObjectiveMutationHookResult = ReturnType<typeof useEnsureObjectiveMutation>;
 export type EnsureObjectiveMutationResult = Apollo.MutationResult<EnsureObjectiveMutation>;
 export type EnsureObjectiveMutationOptions = Apollo.BaseMutationOptions<EnsureObjectiveMutation, EnsureObjectiveMutationVariables>;
@@ -6894,9 +6894,9 @@ export type AssignUserPermissionsMutationFn = Apollo.MutationFunction<AssignUser
  * });
  */
 export function useAssignUserPermissionsMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AssignUserPermissionsMutation, AssignUserPermissionsMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<AssignUserPermissionsMutation, AssignUserPermissionsMutationVariables>(AssignUserPermissionsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<AssignUserPermissionsMutation, AssignUserPermissionsMutationVariables>(AssignUserPermissionsDocument, options);
+}
 export type AssignUserPermissionsMutationHookResult = ReturnType<typeof useAssignUserPermissionsMutation>;
 export type AssignUserPermissionsMutationResult = Apollo.MutationResult<AssignUserPermissionsMutation>;
 export type AssignUserPermissionsMutationOptions = Apollo.BaseMutationOptions<AssignUserPermissionsMutation, AssignUserPermissionsMutationVariables>;
@@ -6927,9 +6927,9 @@ export type CreateRgbContextMutationFn = Apollo.MutationFunction<CreateRgbContex
  * });
  */
 export function useCreateRgbContextMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateRgbContextMutation, CreateRgbContextMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateRgbContextMutation, CreateRgbContextMutationVariables>(CreateRgbContextDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateRgbContextMutation, CreateRgbContextMutationVariables>(CreateRgbContextDocument, options);
+}
 export type CreateRgbContextMutationHookResult = ReturnType<typeof useCreateRgbContextMutation>;
 export type CreateRgbContextMutationResult = Apollo.MutationResult<CreateRgbContextMutation>;
 export type CreateRgbContextMutationOptions = Apollo.BaseMutationOptions<CreateRgbContextMutation, CreateRgbContextMutationVariables>;
@@ -6960,9 +6960,9 @@ export type UpdateRgbContextMutationFn = Apollo.MutationFunction<UpdateRgbContex
  * });
  */
 export function useUpdateRgbContextMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateRgbContextMutation, UpdateRgbContextMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<UpdateRgbContextMutation, UpdateRgbContextMutationVariables>(UpdateRgbContextDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<UpdateRgbContextMutation, UpdateRgbContextMutationVariables>(UpdateRgbContextDocument, options);
+}
 export type UpdateRgbContextMutationHookResult = ReturnType<typeof useUpdateRgbContextMutation>;
 export type UpdateRgbContextMutationResult = Apollo.MutationResult<UpdateRgbContextMutation>;
 export type UpdateRgbContextMutationOptions = Apollo.BaseMutationOptions<UpdateRgbContextMutation, UpdateRgbContextMutationVariables>;
@@ -6994,9 +6994,9 @@ export type PinRoiMutationFn = Apollo.MutationFunction<PinRoiMutation, PinRoiMut
  * });
  */
 export function usePinRoiMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PinRoiMutation, PinRoiMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PinRoiMutation, PinRoiMutationVariables>(PinRoiDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<PinRoiMutation, PinRoiMutationVariables>(PinRoiDocument, options);
+}
 export type PinRoiMutationHookResult = ReturnType<typeof usePinRoiMutation>;
 export type PinRoiMutationResult = Apollo.MutationResult<PinRoiMutation>;
 export type PinRoiMutationOptions = Apollo.BaseMutationOptions<PinRoiMutation, PinRoiMutationVariables>;
@@ -7027,9 +7027,9 @@ export type CreateRoiMutationFn = Apollo.MutationFunction<CreateRoiMutation, Cre
  * });
  */
 export function useCreateRoiMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateRoiMutation, CreateRoiMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateRoiMutation, CreateRoiMutationVariables>(CreateRoiDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateRoiMutation, CreateRoiMutationVariables>(CreateRoiDocument, options);
+}
 export type CreateRoiMutationHookResult = ReturnType<typeof useCreateRoiMutation>;
 export type CreateRoiMutationResult = Apollo.MutationResult<CreateRoiMutation>;
 export type CreateRoiMutationOptions = Apollo.BaseMutationOptions<CreateRoiMutation, CreateRoiMutationVariables>;
@@ -7058,9 +7058,9 @@ export type DeleteRoiMutationFn = Apollo.MutationFunction<DeleteRoiMutation, Del
  * });
  */
 export function useDeleteRoiMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteRoiMutation, DeleteRoiMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteRoiMutation, DeleteRoiMutationVariables>(DeleteRoiDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<DeleteRoiMutation, DeleteRoiMutationVariables>(DeleteRoiDocument, options);
+}
 export type DeleteRoiMutationHookResult = ReturnType<typeof useDeleteRoiMutation>;
 export type DeleteRoiMutationResult = Apollo.MutationResult<DeleteRoiMutation>;
 export type DeleteRoiMutationOptions = Apollo.BaseMutationOptions<DeleteRoiMutation, DeleteRoiMutationVariables>;
@@ -7092,9 +7092,9 @@ export type CreateSnapshotMutationFn = Apollo.MutationFunction<CreateSnapshotMut
  * });
  */
 export function useCreateSnapshotMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateSnapshotMutation, CreateSnapshotMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateSnapshotMutation, CreateSnapshotMutationVariables>(CreateSnapshotDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateSnapshotMutation, CreateSnapshotMutationVariables>(CreateSnapshotDocument, options);
+}
 export type CreateSnapshotMutationHookResult = ReturnType<typeof useCreateSnapshotMutation>;
 export type CreateSnapshotMutationResult = Apollo.MutationResult<CreateSnapshotMutation>;
 export type CreateSnapshotMutationOptions = Apollo.BaseMutationOptions<CreateSnapshotMutation, CreateSnapshotMutationVariables>;
@@ -7126,9 +7126,9 @@ export type CreateStageMutationFn = Apollo.MutationFunction<CreateStageMutation,
  * });
  */
 export function useCreateStageMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateStageMutation, CreateStageMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateStageMutation, CreateStageMutationVariables>(CreateStageDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateStageMutation, CreateStageMutationVariables>(CreateStageDocument, options);
+}
 export type CreateStageMutationHookResult = ReturnType<typeof useCreateStageMutation>;
 export type CreateStageMutationResult = Apollo.MutationResult<CreateStageMutation>;
 export type CreateStageMutationOptions = Apollo.BaseMutationOptions<CreateStageMutation, CreateStageMutationVariables>;
@@ -7160,9 +7160,9 @@ export type PinStageMutationFn = Apollo.MutationFunction<PinStageMutation, PinSt
  * });
  */
 export function usePinStageMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PinStageMutation, PinStageMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PinStageMutation, PinStageMutationVariables>(PinStageDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<PinStageMutation, PinStageMutationVariables>(PinStageDocument, options);
+}
 export type PinStageMutationHookResult = ReturnType<typeof usePinStageMutation>;
 export type PinStageMutationResult = Apollo.MutationResult<PinStageMutation>;
 export type PinStageMutationOptions = Apollo.BaseMutationOptions<PinStageMutation, PinStageMutationVariables>;
@@ -7198,9 +7198,9 @@ export type From_Parquet_LikeMutationFn = Apollo.MutationFunction<From_Parquet_L
  * });
  */
 export function useFrom_Parquet_LikeMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<From_Parquet_LikeMutation, From_Parquet_LikeMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<From_Parquet_LikeMutation, From_Parquet_LikeMutationVariables>(From_Parquet_LikeDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<From_Parquet_LikeMutation, From_Parquet_LikeMutationVariables>(From_Parquet_LikeDocument, options);
+}
 export type From_Parquet_LikeMutationHookResult = ReturnType<typeof useFrom_Parquet_LikeMutation>;
 export type From_Parquet_LikeMutationResult = Apollo.MutationResult<From_Parquet_LikeMutation>;
 export type From_Parquet_LikeMutationOptions = Apollo.BaseMutationOptions<From_Parquet_LikeMutation, From_Parquet_LikeMutationVariables>;
@@ -7232,9 +7232,9 @@ export type RequestTableUploadMutationFn = Apollo.MutationFunction<RequestTableU
  * });
  */
 export function useRequestTableUploadMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestTableUploadMutation, RequestTableUploadMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestTableUploadMutation, RequestTableUploadMutationVariables>(RequestTableUploadDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<RequestTableUploadMutation, RequestTableUploadMutationVariables>(RequestTableUploadDocument, options);
+}
 export type RequestTableUploadMutationHookResult = ReturnType<typeof useRequestTableUploadMutation>;
 export type RequestTableUploadMutationResult = Apollo.MutationResult<RequestTableUploadMutation>;
 export type RequestTableUploadMutationOptions = Apollo.BaseMutationOptions<RequestTableUploadMutation, RequestTableUploadMutationVariables>;
@@ -7266,9 +7266,9 @@ export type RequestTableAccessMutationFn = Apollo.MutationFunction<RequestTableA
  * });
  */
 export function useRequestTableAccessMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestTableAccessMutation, RequestTableAccessMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestTableAccessMutation, RequestTableAccessMutationVariables>(RequestTableAccessDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<RequestTableAccessMutation, RequestTableAccessMutationVariables>(RequestTableAccessDocument, options);
+}
 export type RequestTableAccessMutationHookResult = ReturnType<typeof useRequestTableAccessMutation>;
 export type RequestTableAccessMutationResult = Apollo.MutationResult<RequestTableAccessMutation>;
 export type RequestTableAccessMutationOptions = Apollo.BaseMutationOptions<RequestTableAccessMutation, RequestTableAccessMutationVariables>;
@@ -7303,9 +7303,9 @@ export type CreateAffineTransformationViewMutationFn = Apollo.MutationFunction<C
  * });
  */
 export function useCreateAffineTransformationViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateAffineTransformationViewMutation, CreateAffineTransformationViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateAffineTransformationViewMutation, CreateAffineTransformationViewMutationVariables>(CreateAffineTransformationViewDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateAffineTransformationViewMutation, CreateAffineTransformationViewMutationVariables>(CreateAffineTransformationViewDocument, options);
+}
 export type CreateAffineTransformationViewMutationHookResult = ReturnType<typeof useCreateAffineTransformationViewMutation>;
 export type CreateAffineTransformationViewMutationResult = Apollo.MutationResult<CreateAffineTransformationViewMutation>;
 export type CreateAffineTransformationViewMutationOptions = Apollo.BaseMutationOptions<CreateAffineTransformationViewMutation, CreateAffineTransformationViewMutationVariables>;
@@ -7334,9 +7334,9 @@ export type DeleteAffineTransformationViewMutationFn = Apollo.MutationFunction<D
  * });
  */
 export function useDeleteAffineTransformationViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteAffineTransformationViewMutation, DeleteAffineTransformationViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteAffineTransformationViewMutation, DeleteAffineTransformationViewMutationVariables>(DeleteAffineTransformationViewDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<DeleteAffineTransformationViewMutation, DeleteAffineTransformationViewMutationVariables>(DeleteAffineTransformationViewDocument, options);
+}
 export type DeleteAffineTransformationViewMutationHookResult = ReturnType<typeof useDeleteAffineTransformationViewMutation>;
 export type DeleteAffineTransformationViewMutationResult = Apollo.MutationResult<DeleteAffineTransformationViewMutation>;
 export type DeleteAffineTransformationViewMutationOptions = Apollo.BaseMutationOptions<DeleteAffineTransformationViewMutation, DeleteAffineTransformationViewMutationVariables>;
@@ -7365,9 +7365,9 @@ export type DeleteRgbViewMutationFn = Apollo.MutationFunction<DeleteRgbViewMutat
  * });
  */
 export function useDeleteRgbViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteRgbViewMutation, DeleteRgbViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteRgbViewMutation, DeleteRgbViewMutationVariables>(DeleteRgbViewDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<DeleteRgbViewMutation, DeleteRgbViewMutationVariables>(DeleteRgbViewDocument, options);
+}
 export type DeleteRgbViewMutationHookResult = ReturnType<typeof useDeleteRgbViewMutation>;
 export type DeleteRgbViewMutationResult = Apollo.MutationResult<DeleteRgbViewMutation>;
 export type DeleteRgbViewMutationOptions = Apollo.BaseMutationOptions<DeleteRgbViewMutation, DeleteRgbViewMutationVariables>;
@@ -7396,9 +7396,9 @@ export type DeleteChannelViewMutationFn = Apollo.MutationFunction<DeleteChannelV
  * });
  */
 export function useDeleteChannelViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteChannelViewMutation, DeleteChannelViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteChannelViewMutation, DeleteChannelViewMutationVariables>(DeleteChannelViewDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<DeleteChannelViewMutation, DeleteChannelViewMutationVariables>(DeleteChannelViewDocument, options);
+}
 export type DeleteChannelViewMutationHookResult = ReturnType<typeof useDeleteChannelViewMutation>;
 export type DeleteChannelViewMutationResult = Apollo.MutationResult<DeleteChannelViewMutation>;
 export type DeleteChannelViewMutationOptions = Apollo.BaseMutationOptions<DeleteChannelViewMutation, DeleteChannelViewMutationVariables>;
@@ -7427,9 +7427,9 @@ export type DeleteHistogramViewMutationFn = Apollo.MutationFunction<DeleteHistog
  * });
  */
 export function useDeleteHistogramViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteHistogramViewMutation, DeleteHistogramViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteHistogramViewMutation, DeleteHistogramViewMutationVariables>(DeleteHistogramViewDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<DeleteHistogramViewMutation, DeleteHistogramViewMutationVariables>(DeleteHistogramViewDocument, options);
+}
 export type DeleteHistogramViewMutationHookResult = ReturnType<typeof useDeleteHistogramViewMutation>;
 export type DeleteHistogramViewMutationResult = Apollo.MutationResult<DeleteHistogramViewMutation>;
 export type DeleteHistogramViewMutationOptions = Apollo.BaseMutationOptions<DeleteHistogramViewMutation, DeleteHistogramViewMutationVariables>;
@@ -7469,9 +7469,9 @@ export type CreateRgbViewMutationFn = Apollo.MutationFunction<CreateRgbViewMutat
  * });
  */
 export function useCreateRgbViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateRgbViewMutation, CreateRgbViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateRgbViewMutation, CreateRgbViewMutationVariables>(CreateRgbViewDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateRgbViewMutation, CreateRgbViewMutationVariables>(CreateRgbViewDocument, options);
+}
 export type CreateRgbViewMutationHookResult = ReturnType<typeof useCreateRgbViewMutation>;
 export type CreateRgbViewMutationResult = Apollo.MutationResult<CreateRgbViewMutation>;
 export type CreateRgbViewMutationOptions = Apollo.BaseMutationOptions<CreateRgbViewMutation, CreateRgbViewMutationVariables>;
@@ -7502,9 +7502,9 @@ export type CreateWellPositionViewMutationFn = Apollo.MutationFunction<CreateWel
  * });
  */
 export function useCreateWellPositionViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateWellPositionViewMutation, CreateWellPositionViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateWellPositionViewMutation, CreateWellPositionViewMutationVariables>(CreateWellPositionViewDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateWellPositionViewMutation, CreateWellPositionViewMutationVariables>(CreateWellPositionViewDocument, options);
+}
 export type CreateWellPositionViewMutationHookResult = ReturnType<typeof useCreateWellPositionViewMutation>;
 export type CreateWellPositionViewMutationResult = Apollo.MutationResult<CreateWellPositionViewMutation>;
 export type CreateWellPositionViewMutationOptions = Apollo.BaseMutationOptions<CreateWellPositionViewMutation, CreateWellPositionViewMutationVariables>;
@@ -7535,9 +7535,9 @@ export type CreateContinousScanViewMutationFn = Apollo.MutationFunction<CreateCo
  * });
  */
 export function useCreateContinousScanViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateContinousScanViewMutation, CreateContinousScanViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateContinousScanViewMutation, CreateContinousScanViewMutationVariables>(CreateContinousScanViewDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateContinousScanViewMutation, CreateContinousScanViewMutationVariables>(CreateContinousScanViewDocument, options);
+}
 export type CreateContinousScanViewMutationHookResult = ReturnType<typeof useCreateContinousScanViewMutation>;
 export type CreateContinousScanViewMutationResult = Apollo.MutationResult<CreateContinousScanViewMutation>;
 export type CreateContinousScanViewMutationOptions = Apollo.BaseMutationOptions<CreateContinousScanViewMutation, CreateContinousScanViewMutationVariables>;
@@ -7568,9 +7568,9 @@ export type CreateMaskViewMutationFn = Apollo.MutationFunction<CreateMaskViewMut
  * });
  */
 export function useCreateMaskViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateMaskViewMutation, CreateMaskViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateMaskViewMutation, CreateMaskViewMutationVariables>(CreateMaskViewDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateMaskViewMutation, CreateMaskViewMutationVariables>(CreateMaskViewDocument, options);
+}
 export type CreateMaskViewMutationHookResult = ReturnType<typeof useCreateMaskViewMutation>;
 export type CreateMaskViewMutationResult = Apollo.MutationResult<CreateMaskViewMutation>;
 export type CreateMaskViewMutationOptions = Apollo.BaseMutationOptions<CreateMaskViewMutation, CreateMaskViewMutationVariables>;
@@ -7601,9 +7601,9 @@ export type CreateInstanceMaskViewMutationFn = Apollo.MutationFunction<CreateIns
  * });
  */
 export function useCreateInstanceMaskViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateInstanceMaskViewMutation, CreateInstanceMaskViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateInstanceMaskViewMutation, CreateInstanceMaskViewMutationVariables>(CreateInstanceMaskViewDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateInstanceMaskViewMutation, CreateInstanceMaskViewMutationVariables>(CreateInstanceMaskViewDocument, options);
+}
 export type CreateInstanceMaskViewMutationHookResult = ReturnType<typeof useCreateInstanceMaskViewMutation>;
 export type CreateInstanceMaskViewMutationResult = Apollo.MutationResult<CreateInstanceMaskViewMutation>;
 export type CreateInstanceMaskViewMutationOptions = Apollo.BaseMutationOptions<CreateInstanceMaskViewMutation, CreateInstanceMaskViewMutationVariables>;
@@ -7634,9 +7634,9 @@ export type UpdateRgbViewMutationFn = Apollo.MutationFunction<UpdateRgbViewMutat
  * });
  */
 export function useUpdateRgbViewMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateRgbViewMutation, UpdateRgbViewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<UpdateRgbViewMutation, UpdateRgbViewMutationVariables>(UpdateRgbViewDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<UpdateRgbViewMutation, UpdateRgbViewMutationVariables>(UpdateRgbViewDocument, options);
+}
 export type UpdateRgbViewMutationHookResult = ReturnType<typeof useUpdateRgbViewMutation>;
 export type UpdateRgbViewMutationResult = Apollo.MutationResult<UpdateRgbViewMutation>;
 export type UpdateRgbViewMutationOptions = Apollo.BaseMutationOptions<UpdateRgbViewMutation, UpdateRgbViewMutationVariables>;
@@ -7668,9 +7668,9 @@ export type CreateViewCollectionMutationFn = Apollo.MutationFunction<CreateViewC
  * });
  */
 export function useCreateViewCollectionMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateViewCollectionMutation, CreateViewCollectionMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateViewCollectionMutation, CreateViewCollectionMutationVariables>(CreateViewCollectionDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateViewCollectionMutation, CreateViewCollectionMutationVariables>(CreateViewCollectionDocument, options);
+}
 export type CreateViewCollectionMutationHookResult = ReturnType<typeof useCreateViewCollectionMutation>;
 export type CreateViewCollectionMutationResult = Apollo.MutationResult<CreateViewCollectionMutation>;
 export type CreateViewCollectionMutationOptions = Apollo.BaseMutationOptions<CreateViewCollectionMutation, CreateViewCollectionMutationVariables>;
@@ -7699,13 +7699,13 @@ export const GetCameraDocument = gql`
  * });
  */
 export function useGetCameraQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetCameraQuery, GetCameraQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetCameraQuery, GetCameraQueryVariables>(GetCameraDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetCameraQuery, GetCameraQueryVariables>(GetCameraDocument, options);
+}
 export function useGetCameraLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetCameraQuery, GetCameraQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetCameraQuery, GetCameraQueryVariables>(GetCameraDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetCameraQuery, GetCameraQueryVariables>(GetCameraDocument, options);
+}
 export type GetCameraQueryHookResult = ReturnType<typeof useGetCameraQuery>;
 export type GetCameraLazyQueryHookResult = ReturnType<typeof useGetCameraLazyQuery>;
 export type GetCameraQueryResult = Apollo.QueryResult<GetCameraQuery, GetCameraQueryVariables>;
@@ -7739,13 +7739,13 @@ ${ListDatasetFragmentDoc}`;
  * });
  */
 export function useChildrenQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ChildrenQuery, ChildrenQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ChildrenQuery, ChildrenQueryVariables>(ChildrenDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ChildrenQuery, ChildrenQueryVariables>(ChildrenDocument, options);
+}
 export function useChildrenLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ChildrenQuery, ChildrenQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ChildrenQuery, ChildrenQueryVariables>(ChildrenDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ChildrenQuery, ChildrenQueryVariables>(ChildrenDocument, options);
+}
 export type ChildrenQueryHookResult = ReturnType<typeof useChildrenQuery>;
 export type ChildrenLazyQueryHookResult = ReturnType<typeof useChildrenLazyQuery>;
 export type ChildrenQueryResult = Apollo.QueryResult<ChildrenQuery, ChildrenQueryVariables>;
@@ -7774,13 +7774,13 @@ export const GetDatasetDocument = gql`
  * });
  */
 export function useGetDatasetQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetDatasetQuery, GetDatasetQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetDatasetQuery, GetDatasetQueryVariables>(GetDatasetDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetDatasetQuery, GetDatasetQueryVariables>(GetDatasetDocument, options);
+}
 export function useGetDatasetLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetDatasetQuery, GetDatasetQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetDatasetQuery, GetDatasetQueryVariables>(GetDatasetDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetDatasetQuery, GetDatasetQueryVariables>(GetDatasetDocument, options);
+}
 export type GetDatasetQueryHookResult = ReturnType<typeof useGetDatasetQuery>;
 export type GetDatasetLazyQueryHookResult = ReturnType<typeof useGetDatasetLazyQuery>;
 export type GetDatasetQueryResult = Apollo.QueryResult<GetDatasetQuery, GetDatasetQueryVariables>;
@@ -7810,13 +7810,13 @@ export const GetDatasetsDocument = gql`
  * });
  */
 export function useGetDatasetsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetDatasetsQuery, GetDatasetsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetDatasetsQuery, GetDatasetsQueryVariables>(GetDatasetsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetDatasetsQuery, GetDatasetsQueryVariables>(GetDatasetsDocument, options);
+}
 export function useGetDatasetsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetDatasetsQuery, GetDatasetsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetDatasetsQuery, GetDatasetsQueryVariables>(GetDatasetsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetDatasetsQuery, GetDatasetsQueryVariables>(GetDatasetsDocument, options);
+}
 export type GetDatasetsQueryHookResult = ReturnType<typeof useGetDatasetsQuery>;
 export type GetDatasetsLazyQueryHookResult = ReturnType<typeof useGetDatasetsLazyQuery>;
 export type GetDatasetsQueryResult = Apollo.QueryResult<GetDatasetsQuery, GetDatasetsQueryVariables>;
@@ -7845,13 +7845,13 @@ export const GetFileDocument = gql`
  * });
  */
 export function useGetFileQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetFileQuery, GetFileQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetFileQuery, GetFileQueryVariables>(GetFileDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetFileQuery, GetFileQueryVariables>(GetFileDocument, options);
+}
 export function useGetFileLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetFileQuery, GetFileQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetFileQuery, GetFileQueryVariables>(GetFileDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetFileQuery, GetFileQueryVariables>(GetFileDocument, options);
+}
 export type GetFileQueryHookResult = ReturnType<typeof useGetFileQuery>;
 export type GetFileLazyQueryHookResult = ReturnType<typeof useGetFileLazyQuery>;
 export type GetFileQueryResult = Apollo.QueryResult<GetFileQuery, GetFileQueryVariables>;
@@ -7881,13 +7881,13 @@ export const GetFilesDocument = gql`
  * });
  */
 export function useGetFilesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetFilesQuery, GetFilesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetFilesQuery, GetFilesQueryVariables>(GetFilesDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetFilesQuery, GetFilesQueryVariables>(GetFilesDocument, options);
+}
 export function useGetFilesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetFilesQuery, GetFilesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetFilesQuery, GetFilesQueryVariables>(GetFilesDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetFilesQuery, GetFilesQueryVariables>(GetFilesDocument, options);
+}
 export type GetFilesQueryHookResult = ReturnType<typeof useGetFilesQuery>;
 export type GetFilesLazyQueryHookResult = ReturnType<typeof useGetFilesLazyQuery>;
 export type GetFilesQueryResult = Apollo.QueryResult<GetFilesQuery, GetFilesQueryVariables>;
@@ -7928,13 +7928,13 @@ ${ListDatasetFragmentDoc}`;
  * });
  */
 export function useGlobalSearchQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
+}
 export function useGlobalSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
+}
 export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>;
 export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>;
 export type GlobalSearchQueryResult = Apollo.QueryResult<GlobalSearchQuery, GlobalSearchQueryVariables>;
@@ -7962,13 +7962,13 @@ export const ImagesDocument = gql`
  * });
  */
 export function useImagesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ImagesQuery, ImagesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ImagesQuery, ImagesQueryVariables>(ImagesDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ImagesQuery, ImagesQueryVariables>(ImagesDocument, options);
+}
 export function useImagesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ImagesQuery, ImagesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ImagesQuery, ImagesQueryVariables>(ImagesDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ImagesQuery, ImagesQueryVariables>(ImagesDocument, options);
+}
 export type ImagesQueryHookResult = ReturnType<typeof useImagesQuery>;
 export type ImagesLazyQueryHookResult = ReturnType<typeof useImagesLazyQuery>;
 export type ImagesQueryResult = Apollo.QueryResult<ImagesQuery, ImagesQueryVariables>;
@@ -7997,13 +7997,13 @@ export const GetImageDocument = gql`
  * });
  */
 export function useGetImageQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetImageQuery, GetImageQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetImageQuery, GetImageQueryVariables>(GetImageDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetImageQuery, GetImageQueryVariables>(GetImageDocument, options);
+}
 export function useGetImageLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetImageQuery, GetImageQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetImageQuery, GetImageQueryVariables>(GetImageDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetImageQuery, GetImageQueryVariables>(GetImageDocument, options);
+}
 export type GetImageQueryHookResult = ReturnType<typeof useGetImageQuery>;
 export type GetImageLazyQueryHookResult = ReturnType<typeof useGetImageLazyQuery>;
 export type GetImageQueryResult = Apollo.QueryResult<GetImageQuery, GetImageQueryVariables>;
@@ -8034,13 +8034,13 @@ export const GetImagesDocument = gql`
  * });
  */
 export function useGetImagesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetImagesQuery, GetImagesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetImagesQuery, GetImagesQueryVariables>(GetImagesDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetImagesQuery, GetImagesQueryVariables>(GetImagesDocument, options);
+}
 export function useGetImagesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetImagesQuery, GetImagesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetImagesQuery, GetImagesQueryVariables>(GetImagesDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetImagesQuery, GetImagesQueryVariables>(GetImagesDocument, options);
+}
 export type GetImagesQueryHookResult = ReturnType<typeof useGetImagesQuery>;
 export type GetImagesLazyQueryHookResult = ReturnType<typeof useGetImagesLazyQuery>;
 export type GetImagesQueryResult = Apollo.QueryResult<GetImagesQuery, GetImagesQueryVariables>;
@@ -8069,13 +8069,13 @@ export const GetInstrumentDocument = gql`
  * });
  */
 export function useGetInstrumentQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetInstrumentQuery, GetInstrumentQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetInstrumentQuery, GetInstrumentQueryVariables>(GetInstrumentDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetInstrumentQuery, GetInstrumentQueryVariables>(GetInstrumentDocument, options);
+}
 export function useGetInstrumentLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetInstrumentQuery, GetInstrumentQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetInstrumentQuery, GetInstrumentQueryVariables>(GetInstrumentDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetInstrumentQuery, GetInstrumentQueryVariables>(GetInstrumentDocument, options);
+}
 export type GetInstrumentQueryHookResult = ReturnType<typeof useGetInstrumentQuery>;
 export type GetInstrumentLazyQueryHookResult = ReturnType<typeof useGetInstrumentLazyQuery>;
 export type GetInstrumentQueryResult = Apollo.QueryResult<GetInstrumentQuery, GetInstrumentQueryVariables>;
@@ -8104,13 +8104,13 @@ export const DetailMeshDocument = gql`
  * });
  */
 export function useDetailMeshQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailMeshQuery, DetailMeshQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<DetailMeshQuery, DetailMeshQueryVariables>(DetailMeshDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<DetailMeshQuery, DetailMeshQueryVariables>(DetailMeshDocument, options);
+}
 export function useDetailMeshLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailMeshQuery, DetailMeshQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<DetailMeshQuery, DetailMeshQueryVariables>(DetailMeshDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<DetailMeshQuery, DetailMeshQueryVariables>(DetailMeshDocument, options);
+}
 export type DetailMeshQueryHookResult = ReturnType<typeof useDetailMeshQuery>;
 export type DetailMeshLazyQueryHookResult = ReturnType<typeof useDetailMeshLazyQuery>;
 export type DetailMeshQueryResult = Apollo.QueryResult<DetailMeshQuery, DetailMeshQueryVariables>;
@@ -8140,13 +8140,13 @@ export const ListMeshesDocument = gql`
  * });
  */
 export function useListMeshesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListMeshesQuery, ListMeshesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListMeshesQuery, ListMeshesQueryVariables>(ListMeshesDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ListMeshesQuery, ListMeshesQueryVariables>(ListMeshesDocument, options);
+}
 export function useListMeshesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListMeshesQuery, ListMeshesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListMeshesQuery, ListMeshesQueryVariables>(ListMeshesDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ListMeshesQuery, ListMeshesQueryVariables>(ListMeshesDocument, options);
+}
 export type ListMeshesQueryHookResult = ReturnType<typeof useListMeshesQuery>;
 export type ListMeshesLazyQueryHookResult = ReturnType<typeof useListMeshesLazyQuery>;
 export type ListMeshesQueryResult = Apollo.QueryResult<ListMeshesQuery, ListMeshesQueryVariables>;
@@ -8175,13 +8175,13 @@ export const GetMultiWellPlateDocument = gql`
  * });
  */
 export function useGetMultiWellPlateQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetMultiWellPlateQuery, GetMultiWellPlateQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetMultiWellPlateQuery, GetMultiWellPlateQueryVariables>(GetMultiWellPlateDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetMultiWellPlateQuery, GetMultiWellPlateQueryVariables>(GetMultiWellPlateDocument, options);
+}
 export function useGetMultiWellPlateLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetMultiWellPlateQuery, GetMultiWellPlateQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetMultiWellPlateQuery, GetMultiWellPlateQueryVariables>(GetMultiWellPlateDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetMultiWellPlateQuery, GetMultiWellPlateQueryVariables>(GetMultiWellPlateDocument, options);
+}
 export type GetMultiWellPlateQueryHookResult = ReturnType<typeof useGetMultiWellPlateQuery>;
 export type GetMultiWellPlateLazyQueryHookResult = ReturnType<typeof useGetMultiWellPlateLazyQuery>;
 export type GetMultiWellPlateQueryResult = Apollo.QueryResult<GetMultiWellPlateQuery, GetMultiWellPlateQueryVariables>;
@@ -8211,13 +8211,13 @@ export const GetMultiWellPlatesDocument = gql`
  * });
  */
 export function useGetMultiWellPlatesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetMultiWellPlatesQuery, GetMultiWellPlatesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetMultiWellPlatesQuery, GetMultiWellPlatesQueryVariables>(GetMultiWellPlatesDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetMultiWellPlatesQuery, GetMultiWellPlatesQueryVariables>(GetMultiWellPlatesDocument, options);
+}
 export function useGetMultiWellPlatesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetMultiWellPlatesQuery, GetMultiWellPlatesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetMultiWellPlatesQuery, GetMultiWellPlatesQueryVariables>(GetMultiWellPlatesDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetMultiWellPlatesQuery, GetMultiWellPlatesQueryVariables>(GetMultiWellPlatesDocument, options);
+}
 export type GetMultiWellPlatesQueryHookResult = ReturnType<typeof useGetMultiWellPlatesQuery>;
 export type GetMultiWellPlatesLazyQueryHookResult = ReturnType<typeof useGetMultiWellPlatesLazyQuery>;
 export type GetMultiWellPlatesQueryResult = Apollo.QueryResult<GetMultiWellPlatesQuery, GetMultiWellPlatesQueryVariables>;
@@ -8251,13 +8251,13 @@ export const MultiWellPlateOptionsDocument = gql`
  * });
  */
 export function useMultiWellPlateOptionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<MultiWellPlateOptionsQuery, MultiWellPlateOptionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<MultiWellPlateOptionsQuery, MultiWellPlateOptionsQueryVariables>(MultiWellPlateOptionsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<MultiWellPlateOptionsQuery, MultiWellPlateOptionsQueryVariables>(MultiWellPlateOptionsDocument, options);
+}
 export function useMultiWellPlateOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<MultiWellPlateOptionsQuery, MultiWellPlateOptionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<MultiWellPlateOptionsQuery, MultiWellPlateOptionsQueryVariables>(MultiWellPlateOptionsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<MultiWellPlateOptionsQuery, MultiWellPlateOptionsQueryVariables>(MultiWellPlateOptionsDocument, options);
+}
 export type MultiWellPlateOptionsQueryHookResult = ReturnType<typeof useMultiWellPlateOptionsQuery>;
 export type MultiWellPlateOptionsLazyQueryHookResult = ReturnType<typeof useMultiWellPlateOptionsLazyQuery>;
 export type MultiWellPlateOptionsQueryResult = Apollo.QueryResult<MultiWellPlateOptionsQuery, MultiWellPlateOptionsQueryVariables>;
@@ -8286,13 +8286,13 @@ export const GetObjectiveDocument = gql`
  * });
  */
 export function useGetObjectiveQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetObjectiveQuery, GetObjectiveQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetObjectiveQuery, GetObjectiveQueryVariables>(GetObjectiveDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetObjectiveQuery, GetObjectiveQueryVariables>(GetObjectiveDocument, options);
+}
 export function useGetObjectiveLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetObjectiveQuery, GetObjectiveQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetObjectiveQuery, GetObjectiveQueryVariables>(GetObjectiveDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetObjectiveQuery, GetObjectiveQueryVariables>(GetObjectiveDocument, options);
+}
 export type GetObjectiveQueryHookResult = ReturnType<typeof useGetObjectiveQuery>;
 export type GetObjectiveLazyQueryHookResult = ReturnType<typeof useGetObjectiveLazyQuery>;
 export type GetObjectiveQueryResult = Apollo.QueryResult<GetObjectiveQuery, GetObjectiveQueryVariables>;
@@ -8325,13 +8325,13 @@ export const GetPermissionsDocument = gql`
  * });
  */
 export function useGetPermissionsQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetPermissionsQuery, GetPermissionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetPermissionsQuery, GetPermissionsQueryVariables>(GetPermissionsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetPermissionsQuery, GetPermissionsQueryVariables>(GetPermissionsDocument, options);
+}
 export function useGetPermissionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetPermissionsQuery, GetPermissionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetPermissionsQuery, GetPermissionsQueryVariables>(GetPermissionsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetPermissionsQuery, GetPermissionsQueryVariables>(GetPermissionsDocument, options);
+}
 export type GetPermissionsQueryHookResult = ReturnType<typeof useGetPermissionsQuery>;
 export type GetPermissionsLazyQueryHookResult = ReturnType<typeof useGetPermissionsLazyQuery>;
 export type GetPermissionsQueryResult = Apollo.QueryResult<GetPermissionsQuery, GetPermissionsQueryVariables>;
@@ -8367,13 +8367,13 @@ export const PermissionOptionsDocument = gql`
  * });
  */
 export function usePermissionOptionsQuery(baseOptions: ApolloReactHooks.QueryHookOptions<PermissionOptionsQuery, PermissionOptionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<PermissionOptionsQuery, PermissionOptionsQueryVariables>(PermissionOptionsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<PermissionOptionsQuery, PermissionOptionsQueryVariables>(PermissionOptionsDocument, options);
+}
 export function usePermissionOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<PermissionOptionsQuery, PermissionOptionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<PermissionOptionsQuery, PermissionOptionsQueryVariables>(PermissionOptionsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<PermissionOptionsQuery, PermissionOptionsQueryVariables>(PermissionOptionsDocument, options);
+}
 export type PermissionOptionsQueryHookResult = ReturnType<typeof usePermissionOptionsQuery>;
 export type PermissionOptionsLazyQueryHookResult = ReturnType<typeof usePermissionOptionsLazyQuery>;
 export type PermissionOptionsQueryResult = Apollo.QueryResult<PermissionOptionsQuery, PermissionOptionsQueryVariables>;
@@ -8402,13 +8402,13 @@ export const GetMaskedPixelInfoDocument = gql`
  * });
  */
 export function useGetMaskedPixelInfoQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetMaskedPixelInfoQuery, GetMaskedPixelInfoQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetMaskedPixelInfoQuery, GetMaskedPixelInfoQueryVariables>(GetMaskedPixelInfoDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetMaskedPixelInfoQuery, GetMaskedPixelInfoQueryVariables>(GetMaskedPixelInfoDocument, options);
+}
 export function useGetMaskedPixelInfoLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetMaskedPixelInfoQuery, GetMaskedPixelInfoQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetMaskedPixelInfoQuery, GetMaskedPixelInfoQueryVariables>(GetMaskedPixelInfoDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetMaskedPixelInfoQuery, GetMaskedPixelInfoQueryVariables>(GetMaskedPixelInfoDocument, options);
+}
 export type GetMaskedPixelInfoQueryHookResult = ReturnType<typeof useGetMaskedPixelInfoQuery>;
 export type GetMaskedPixelInfoLazyQueryHookResult = ReturnType<typeof useGetMaskedPixelInfoLazyQuery>;
 export type GetMaskedPixelInfoQueryResult = Apollo.QueryResult<GetMaskedPixelInfoQuery, GetMaskedPixelInfoQueryVariables>;
@@ -8437,13 +8437,13 @@ export const GetRgbContextDocument = gql`
  * });
  */
 export function useGetRgbContextQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetRgbContextQuery, GetRgbContextQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetRgbContextQuery, GetRgbContextQueryVariables>(GetRgbContextDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetRgbContextQuery, GetRgbContextQueryVariables>(GetRgbContextDocument, options);
+}
 export function useGetRgbContextLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRgbContextQuery, GetRgbContextQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetRgbContextQuery, GetRgbContextQueryVariables>(GetRgbContextDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetRgbContextQuery, GetRgbContextQueryVariables>(GetRgbContextDocument, options);
+}
 export type GetRgbContextQueryHookResult = ReturnType<typeof useGetRgbContextQuery>;
 export type GetRgbContextLazyQueryHookResult = ReturnType<typeof useGetRgbContextLazyQuery>;
 export type GetRgbContextQueryResult = Apollo.QueryResult<GetRgbContextQuery, GetRgbContextQueryVariables>;
@@ -8473,13 +8473,13 @@ export const GetRgbContextsDocument = gql`
  * });
  */
 export function useGetRgbContextsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetRgbContextsQuery, GetRgbContextsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetRgbContextsQuery, GetRgbContextsQueryVariables>(GetRgbContextsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetRgbContextsQuery, GetRgbContextsQueryVariables>(GetRgbContextsDocument, options);
+}
 export function useGetRgbContextsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRgbContextsQuery, GetRgbContextsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetRgbContextsQuery, GetRgbContextsQueryVariables>(GetRgbContextsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetRgbContextsQuery, GetRgbContextsQueryVariables>(GetRgbContextsDocument, options);
+}
 export type GetRgbContextsQueryHookResult = ReturnType<typeof useGetRgbContextsQuery>;
 export type GetRgbContextsLazyQueryHookResult = ReturnType<typeof useGetRgbContextsLazyQuery>;
 export type GetRgbContextsQueryResult = Apollo.QueryResult<GetRgbContextsQuery, GetRgbContextsQueryVariables>;
@@ -8513,13 +8513,13 @@ export const RgbContextOptionsDocument = gql`
  * });
  */
 export function useRgbContextOptionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<RgbContextOptionsQuery, RgbContextOptionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<RgbContextOptionsQuery, RgbContextOptionsQueryVariables>(RgbContextOptionsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<RgbContextOptionsQuery, RgbContextOptionsQueryVariables>(RgbContextOptionsDocument, options);
+}
 export function useRgbContextOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<RgbContextOptionsQuery, RgbContextOptionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<RgbContextOptionsQuery, RgbContextOptionsQueryVariables>(RgbContextOptionsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<RgbContextOptionsQuery, RgbContextOptionsQueryVariables>(RgbContextOptionsDocument, options);
+}
 export type RgbContextOptionsQueryHookResult = ReturnType<typeof useRgbContextOptionsQuery>;
 export type RgbContextOptionsLazyQueryHookResult = ReturnType<typeof useRgbContextOptionsLazyQuery>;
 export type RgbContextOptionsQueryResult = Apollo.QueryResult<RgbContextOptionsQuery, RgbContextOptionsQueryVariables>;
@@ -8548,13 +8548,13 @@ export const GetRoiDocument = gql`
  * });
  */
 export function useGetRoiQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetRoiQuery, GetRoiQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetRoiQuery, GetRoiQueryVariables>(GetRoiDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetRoiQuery, GetRoiQueryVariables>(GetRoiDocument, options);
+}
 export function useGetRoiLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRoiQuery, GetRoiQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetRoiQuery, GetRoiQueryVariables>(GetRoiDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetRoiQuery, GetRoiQueryVariables>(GetRoiDocument, options);
+}
 export type GetRoiQueryHookResult = ReturnType<typeof useGetRoiQuery>;
 export type GetRoiLazyQueryHookResult = ReturnType<typeof useGetRoiLazyQuery>;
 export type GetRoiQueryResult = Apollo.QueryResult<GetRoiQuery, GetRoiQueryVariables>;
@@ -8585,13 +8585,13 @@ export const GetRoIsDocument = gql`
  * });
  */
 export function useGetRoIsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetRoIsQuery, GetRoIsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetRoIsQuery, GetRoIsQueryVariables>(GetRoIsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetRoIsQuery, GetRoIsQueryVariables>(GetRoIsDocument, options);
+}
 export function useGetRoIsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRoIsQuery, GetRoIsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetRoIsQuery, GetRoIsQueryVariables>(GetRoIsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetRoIsQuery, GetRoIsQueryVariables>(GetRoIsDocument, options);
+}
 export type GetRoIsQueryHookResult = ReturnType<typeof useGetRoIsQuery>;
 export type GetRoIsLazyQueryHookResult = ReturnType<typeof useGetRoIsLazyQuery>;
 export type GetRoIsQueryResult = Apollo.QueryResult<GetRoIsQuery, GetRoIsQueryVariables>;
@@ -8620,13 +8620,13 @@ export const RowsDocument = gql`
  * });
  */
 export function useRowsQuery(baseOptions: ApolloReactHooks.QueryHookOptions<RowsQuery, RowsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<RowsQuery, RowsQueryVariables>(RowsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<RowsQuery, RowsQueryVariables>(RowsDocument, options);
+}
 export function useRowsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<RowsQuery, RowsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<RowsQuery, RowsQueryVariables>(RowsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<RowsQuery, RowsQueryVariables>(RowsDocument, options);
+}
 export type RowsQueryHookResult = ReturnType<typeof useRowsQuery>;
 export type RowsLazyQueryHookResult = ReturnType<typeof useRowsLazyQuery>;
 export type RowsQueryResult = Apollo.QueryResult<RowsQuery, RowsQueryVariables>;
@@ -8655,13 +8655,13 @@ export const GetStageDocument = gql`
  * });
  */
 export function useGetStageQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetStageQuery, GetStageQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetStageQuery, GetStageQueryVariables>(GetStageDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetStageQuery, GetStageQueryVariables>(GetStageDocument, options);
+}
 export function useGetStageLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStageQuery, GetStageQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetStageQuery, GetStageQueryVariables>(GetStageDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetStageQuery, GetStageQueryVariables>(GetStageDocument, options);
+}
 export type GetStageQueryHookResult = ReturnType<typeof useGetStageQuery>;
 export type GetStageLazyQueryHookResult = ReturnType<typeof useGetStageLazyQuery>;
 export type GetStageQueryResult = Apollo.QueryResult<GetStageQuery, GetStageQueryVariables>;
@@ -8691,13 +8691,13 @@ export const GetStagesDocument = gql`
  * });
  */
 export function useGetStagesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetStagesQuery, GetStagesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetStagesQuery, GetStagesQueryVariables>(GetStagesDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetStagesQuery, GetStagesQueryVariables>(GetStagesDocument, options);
+}
 export function useGetStagesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStagesQuery, GetStagesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetStagesQuery, GetStagesQueryVariables>(GetStagesDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetStagesQuery, GetStagesQueryVariables>(GetStagesDocument, options);
+}
 export type GetStagesQueryHookResult = ReturnType<typeof useGetStagesQuery>;
 export type GetStagesLazyQueryHookResult = ReturnType<typeof useGetStagesLazyQuery>;
 export type GetStagesQueryResult = Apollo.QueryResult<GetStagesQuery, GetStagesQueryVariables>;
@@ -8731,13 +8731,13 @@ export const StageOptionsDocument = gql`
  * });
  */
 export function useStageOptionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<StageOptionsQuery, StageOptionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<StageOptionsQuery, StageOptionsQueryVariables>(StageOptionsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<StageOptionsQuery, StageOptionsQueryVariables>(StageOptionsDocument, options);
+}
 export function useStageOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<StageOptionsQuery, StageOptionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<StageOptionsQuery, StageOptionsQueryVariables>(StageOptionsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<StageOptionsQuery, StageOptionsQueryVariables>(StageOptionsDocument, options);
+}
 export type StageOptionsQueryHookResult = ReturnType<typeof useStageOptionsQuery>;
 export type StageOptionsLazyQueryHookResult = ReturnType<typeof useStageOptionsLazyQuery>;
 export type StageOptionsQueryResult = Apollo.QueryResult<StageOptionsQuery, StageOptionsQueryVariables>;
@@ -8766,13 +8766,13 @@ export const GetTableDocument = gql`
  * });
  */
 export function useGetTableQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetTableQuery, GetTableQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetTableQuery, GetTableQueryVariables>(GetTableDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetTableQuery, GetTableQueryVariables>(GetTableDocument, options);
+}
 export function useGetTableLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetTableQuery, GetTableQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetTableQuery, GetTableQueryVariables>(GetTableDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetTableQuery, GetTableQueryVariables>(GetTableDocument, options);
+}
 export type GetTableQueryHookResult = ReturnType<typeof useGetTableQuery>;
 export type GetTableLazyQueryHookResult = ReturnType<typeof useGetTableLazyQuery>;
 export type GetTableQueryResult = Apollo.QueryResult<GetTableQuery, GetTableQueryVariables>;
@@ -8802,13 +8802,13 @@ export const GetTablesDocument = gql`
  * });
  */
 export function useGetTablesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetTablesQuery, GetTablesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetTablesQuery, GetTablesQueryVariables>(GetTablesDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetTablesQuery, GetTablesQueryVariables>(GetTablesDocument, options);
+}
 export function useGetTablesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetTablesQuery, GetTablesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetTablesQuery, GetTablesQueryVariables>(GetTablesDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetTablesQuery, GetTablesQueryVariables>(GetTablesDocument, options);
+}
 export type GetTablesQueryHookResult = ReturnType<typeof useGetTablesQuery>;
 export type GetTablesLazyQueryHookResult = ReturnType<typeof useGetTablesLazyQuery>;
 export type GetTablesQueryResult = Apollo.QueryResult<GetTablesQuery, GetTablesQueryVariables>;
@@ -8837,13 +8837,13 @@ export const GetRgbViewDocument = gql`
  * });
  */
 export function useGetRgbViewQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetRgbViewQuery, GetRgbViewQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetRgbViewQuery, GetRgbViewQueryVariables>(GetRgbViewDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetRgbViewQuery, GetRgbViewQueryVariables>(GetRgbViewDocument, options);
+}
 export function useGetRgbViewLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRgbViewQuery, GetRgbViewQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetRgbViewQuery, GetRgbViewQueryVariables>(GetRgbViewDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetRgbViewQuery, GetRgbViewQueryVariables>(GetRgbViewDocument, options);
+}
 export type GetRgbViewQueryHookResult = ReturnType<typeof useGetRgbViewQuery>;
 export type GetRgbViewLazyQueryHookResult = ReturnType<typeof useGetRgbViewLazyQuery>;
 export type GetRgbViewQueryResult = Apollo.QueryResult<GetRgbViewQuery, GetRgbViewQueryVariables>;
@@ -8877,13 +8877,13 @@ export const SearchRgbViewsDocument = gql`
  * });
  */
 export function useSearchRgbViewsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchRgbViewsQuery, SearchRgbViewsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchRgbViewsQuery, SearchRgbViewsQueryVariables>(SearchRgbViewsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<SearchRgbViewsQuery, SearchRgbViewsQueryVariables>(SearchRgbViewsDocument, options);
+}
 export function useSearchRgbViewsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchRgbViewsQuery, SearchRgbViewsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchRgbViewsQuery, SearchRgbViewsQueryVariables>(SearchRgbViewsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<SearchRgbViewsQuery, SearchRgbViewsQueryVariables>(SearchRgbViewsDocument, options);
+}
 export type SearchRgbViewsQueryHookResult = ReturnType<typeof useSearchRgbViewsQuery>;
 export type SearchRgbViewsLazyQueryHookResult = ReturnType<typeof useSearchRgbViewsLazyQuery>;
 export type SearchRgbViewsQueryResult = Apollo.QueryResult<SearchRgbViewsQuery, SearchRgbViewsQueryVariables>;
@@ -8918,9 +8918,9 @@ export const WatchImagesDocument = gql`
  * });
  */
 export function useWatchImagesSubscription(baseOptions?: ApolloReactHooks.SubscriptionHookOptions<WatchImagesSubscription, WatchImagesSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<WatchImagesSubscription, WatchImagesSubscriptionVariables>(WatchImagesDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useSubscription<WatchImagesSubscription, WatchImagesSubscriptionVariables>(WatchImagesDocument, options);
+}
 export type WatchImagesSubscriptionHookResult = ReturnType<typeof useWatchImagesSubscription>;
 export type WatchImagesSubscriptionResult = Apollo.SubscriptionResult<WatchImagesSubscription>;
 export const WatchRoisDocument = gql`
@@ -8954,9 +8954,9 @@ export const WatchRoisDocument = gql`
  * });
  */
 export function useWatchRoisSubscription(baseOptions: ApolloReactHooks.SubscriptionHookOptions<WatchRoisSubscription, WatchRoisSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<WatchRoisSubscription, WatchRoisSubscriptionVariables>(WatchRoisDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useSubscription<WatchRoisSubscription, WatchRoisSubscriptionVariables>(WatchRoisDocument, options);
+}
 export type WatchRoisSubscriptionHookResult = ReturnType<typeof useWatchRoisSubscription>;
 export type WatchRoisSubscriptionResult = Apollo.SubscriptionResult<WatchRoisSubscription>;
 export const WatchTransformationViewsDocument = gql`
@@ -9004,8 +9004,8 @@ export const WatchTransformationViewsDocument = gql`
  * });
  */
 export function useWatchTransformationViewsSubscription(baseOptions: ApolloReactHooks.SubscriptionHookOptions<WatchTransformationViewsSubscription, WatchTransformationViewsSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<WatchTransformationViewsSubscription, WatchTransformationViewsSubscriptionVariables>(WatchTransformationViewsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useSubscription<WatchTransformationViewsSubscription, WatchTransformationViewsSubscriptionVariables>(WatchTransformationViewsDocument, options);
+}
 export type WatchTransformationViewsSubscriptionHookResult = ReturnType<typeof useWatchTransformationViewsSubscription>;
 export type WatchTransformationViewsSubscriptionResult = Apollo.SubscriptionResult<WatchTransformationViewsSubscription>;

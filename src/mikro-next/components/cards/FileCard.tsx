@@ -1,7 +1,7 @@
 import { Card, CardTitle } from "@/components/ui/card";
 import { MikroFile } from "@/linkers";
-import { ListFileFragment } from "../../api/graphql";
 import { cn } from "@udecode/cn";
+import { ListFileFragment } from "../../api/graphql";
 
 interface Props {
   file: ListFileFragment;

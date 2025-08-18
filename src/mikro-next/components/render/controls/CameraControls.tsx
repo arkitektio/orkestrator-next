@@ -5,8 +5,8 @@ import { useRef } from 'react'
 import { DEG2RAD } from 'three/src/math/MathUtils.js'
 
 
-export const ComplexCameraControls = (props)    => {   
-    
+export const ComplexCameraControls = (props) => {
+
   const cameraControlsRef = useRef<CameraControls | null>(null)
 
   const { camera } = useThree()
@@ -109,16 +109,16 @@ export const ComplexCameraControls = (props)    => {
   }, {
     titlebar: false
   })
-        
-        
-    return   <CameraControls
-          ref={cameraControlsRef}
-          minDistance={minDistance}
-          enabled={enabled}
-          verticalDragToForward={verticalDragToForward}
-          dollyToCursor={dollyToCursor}
-          infinityDolly={infinityDolly}
 
-        />
+
+  return <CameraControls
+    ref={cameraControlsRef}
+    minDistance={minDistance}
+    enabled={enabled}
+    verticalDragToForward={verticalDragToForward}
+    dollyToCursor={dollyToCursor}
+    infinityDolly={infinityDolly}
+
+  />
 
 }

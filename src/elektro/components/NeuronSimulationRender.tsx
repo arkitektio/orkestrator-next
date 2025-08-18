@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import { Bounds, Html, OrbitControls, useCursor } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Html, Bounds, useCursor } from "@react-three/drei";
+import { useState } from "react";
 import * as THREE from "three";
-import { CompartmentFragment, CoordFragment, DetailNeuronModelFragment, DetailSimulationFragment, SectionFragment } from "../api/graphql";
-import { interpolateCoords } from "../model_render/utils";
+import { CompartmentFragment, CoordFragment, DetailSimulationFragment, SectionFragment } from "../api/graphql";
 import { RecordingMarker } from "../model_render/RecordingMarker";
 import { StimulusMarker } from "../model_render/StimulusMarker";
+import { interpolateCoords } from "../model_render/utils";
 
 const getColorFromIndex = (index: number) => {
   const hue = (index * 137.508) % 360;
@@ -69,7 +69,7 @@ const CylinderWithTooltip = ({
       {/* Visible geometry */}
       <mesh>
         <cylinderGeometry args={[section.diam / 2, section.diam / 2, length, 8]} />
-        <meshStandardMaterial color={hovered  ? "hotpink" : color} />
+        <meshStandardMaterial color={hovered ? "hotpink" : color} />
       </mesh>
 
       {(isSelected) && (
@@ -138,69 +138,69 @@ export const NeuronSimulationVisualizer = ({ simulation }: { simulation: DetailS
       <OrbitControls makeDefault />
 
       <Bounds fit clip observe margin={1.2}>
-        {cells.map( cell => 
-        <>
-        {cell.topology.sections.flatMap((section, secIndex) => {
-          const color = getColorFromIndex(secIndex);
+        {cells.map(cell =>
+          <>
+            {cell.topology.sections.flatMap((section, secIndex) => {
+              const color = getColorFromIndex(secIndex);
 
-          if (section.coords && section.coords.length > 1) {
-            return section.coords.slice(1).map((end, i) => (
-              <CylinderWithTooltip
-                key={`${section.id}-${i}`}
-                section={section}
-                start={section.coords[i]}
-                end={end}
-                color={color}
-                compartmentMap={compartmentMap}
-                selectedId={selectedId}
-                setSelectedId={setSelectedId}
-              />
-            ));
-          } else {
-            const zStart = -(section.length || 10) / 2;
-            const zEnd = (section.length || 10) / 2;
-            const start: CoordFragment = { x: 0, y: 0, z: zStart };
-            const end: CoordFragment = { x: 0, y: 0, z: zEnd };
+              if (section.coords && section.coords.length > 1) {
+                return section.coords.slice(1).map((end, i) => (
+                  <CylinderWithTooltip
+                    key={`${section.id}-${i}`}
+                    section={section}
+                    start={section.coords[i]}
+                    end={end}
+                    color={color}
+                    compartmentMap={compartmentMap}
+                    selectedId={selectedId}
+                    setSelectedId={setSelectedId}
+                  />
+                ));
+              } else {
+                const zStart = -(section.length || 10) / 2;
+                const zEnd = (section.length || 10) / 2;
+                const start: CoordFragment = { x: 0, y: 0, z: zStart };
+                const end: CoordFragment = { x: 0, y: 0, z: zEnd };
 
-            return (
-              <CylinderWithTooltip
-                key={`${section.id}-fallback`}
-                section={section}
-                start={start}
-                end={end}
-                color={color}
-                compartmentMap={compartmentMap}
-                selectedId={selectedId}
-                setSelectedId={setSelectedId}
-              />
-            );
-          }
-        }
-        )}
-        </>)}
+                return (
+                  <CylinderWithTooltip
+                    key={`${section.id}-fallback`}
+                    section={section}
+                    start={start}
+                    end={end}
+                    color={color}
+                    compartmentMap={compartmentMap}
+                    selectedId={selectedId}
+                    setSelectedId={setSelectedId}
+                  />
+                );
+              }
+            }
+            )}
+          </>)}
         {simulation.recordings.map((rec, i) => {
-            const cell = simulation.model.config.cells.find(c => c.id === rec.cell);
-            const section = cell?.topology.sections.find(s => s.id === rec.location);
+          const cell = simulation.model.config.cells.find(c => c.id === rec.cell);
+          const section = cell?.topology.sections.find(s => s.id === rec.location);
 
-            if (!section || !section.coords || typeof rec.position !== "number") throw new Error(`Invalid recording data ${JSON.stringify(rec)}`);
+          if (!section || !section.coords || typeof rec.position !== "number") throw new Error(`Invalid recording data ${JSON.stringify(rec)}`);
 
-            const point = interpolateCoords(section.coords, rec.position);
+          const point = interpolateCoords(section.coords, rec.position);
 
-            return (
-              <RecordingMarker key={`rec-marker-${i}`} recording={rec} position={point} />
-            );
+          return (
+            <RecordingMarker key={`rec-marker-${i}`} recording={rec} position={point} />
+          );
         })}
         {simulation.stimuli.map((stim, i) => {
-            const cell = simulation.model.config.cells.find(c => c.id === stim.cell);
-            const section = cell?.topology.sections.find(s => s.id === stim.location);
+          const cell = simulation.model.config.cells.find(c => c.id === stim.cell);
+          const section = cell?.topology.sections.find(s => s.id === stim.location);
 
-            if (!section || !section.coords || typeof stim.position !== "number") throw new Error(`Invalid stimulus data ${JSON.stringify(stim)}`);
+          if (!section || !section.coords || typeof stim.position !== "number") throw new Error(`Invalid stimulus data ${JSON.stringify(stim)}`);
 
-            const point = interpolateCoords(section.coords, stim.position);
+          const point = interpolateCoords(section.coords, stim.position);
 
-            return (
-              <StimulusMarker key={`rec-marker-${i}`} stimulus={stim} position={point} />
-            );
+          return (
+            <StimulusMarker key={`rec-marker-${i}`} stimulus={stim} position={point} />
+          );
         })}
 
       </Bounds>

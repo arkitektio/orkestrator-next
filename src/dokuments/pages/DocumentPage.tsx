@@ -6,8 +6,8 @@ import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { DokumentsDocument, DokumentsPage, LovekitStream } from "@/linkers";
 import { Eye, FileTextIcon } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
-import { useGetDocumentQuery, PageFragment } from "../api/graphql";
+import { useEffect, useRef, useState } from "react";
+import { PageFragment, useGetDocumentQuery } from "../api/graphql";
 import { OcrOverlay } from "../components/OcrOverlay";
 
 export default asDetailQueryRoute(
@@ -18,14 +18,14 @@ export default asDetailQueryRoute(
     const [selectedPage, setSelectedPage] = useState<PageFragment | null>(null);
     const [showOcrOverlay, setShowOcrOverlay] = useState(true);
     const imageRef = useRef<HTMLImageElement>(null);
-    
+
     // Auto-select first page when document loads
     useEffect(() => {
       if (document?.pages?.length > 0 && !selectedPage) {
         setSelectedPage(document.pages[0]);
       }
     }, [document?.pages, selectedPage]);
-    
+
     if (!document) return null;
 
     return (
@@ -74,13 +74,11 @@ export default asDetailQueryRoute(
                         <div
                           key={page.id}
                           onClick={() => setSelectedPage(page)}
-                          className={`group block cursor-pointer ${
-                            selectedPage?.id === page.id ? 'ring-2 ring-primary' : ''
-                          }`}
+                          className={`group block cursor-pointer ${selectedPage?.id === page.id ? 'ring-2 ring-primary' : ''
+                            }`}
                         >
-                          <Card className={`transition-all duration-200 hover:shadow-md ${
-                            selectedPage?.id === page.id ? 'bg-primary/5' : ''
-                          }`}>
+                          <Card className={`transition-all duration-200 hover:shadow-md ${selectedPage?.id === page.id ? 'bg-primary/5' : ''
+                            }`}>
                             <CardContent className="p-2">
                               {/* Page Thumbnail */}
                               <div className="aspect-[3/4] bg-muted rounded-md overflow-hidden mb-2">
@@ -95,12 +93,11 @@ export default asDetailQueryRoute(
                                   </div>
                                 )}
                               </div>
-                              
+
                               {/* Page Info */}
                               <div className="text-center">
-                                <div className={`text-xs font-medium transition-colors ${
-                                  selectedPage?.id === page.id ? 'text-primary' : 'group-hover:text-primary'
-                                }`}>
+                                <div className={`text-xs font-medium transition-colors ${selectedPage?.id === page.id ? 'text-primary' : 'group-hover:text-primary'
+                                  }`}>
                                   Page {page.index + 1}
                                 </div>
                               </div>
@@ -132,15 +129,14 @@ export default asDetailQueryRoute(
                       <>
                         <button
                           onClick={() => setShowOcrOverlay(!showOcrOverlay)}
-                          className={`px-3 py-1 text-xs rounded-md transition-colors ${
-                            showOcrOverlay 
-                              ? 'bg-primary text-primary-foreground' 
-                              : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                          }`}
+                          className={`px-3 py-1 text-xs rounded-md transition-colors ${showOcrOverlay
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                            }`}
                         >
                           OCR Overlay
                         </button>
-                        <DokumentsPage.DetailLink 
+                        <DokumentsPage.DetailLink
                           object={selectedPage!.id}
                           className="text-sm hover:text-primary transition-colors"
                         >
@@ -164,10 +160,10 @@ export default asDetailQueryRoute(
                             className="max-w-full max-h-full object-contain"
                             alt={`Page ${selectedPage!.index + 1}`}
                           />
-                          <OcrOverlay 
-                            page={selectedPage!} 
-                            imageRef={imageRef} 
-                            show={showOcrOverlay} 
+                          <OcrOverlay
+                            page={selectedPage!}
+                            imageRef={imageRef}
+                            show={showOcrOverlay}
                           />
                         </div>
                       ) : (

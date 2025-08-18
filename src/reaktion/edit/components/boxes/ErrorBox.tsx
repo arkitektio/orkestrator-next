@@ -14,7 +14,7 @@ export const ErrorBox = (props: { errors: ValidationError[] }) => {
           </div>
           <div className="gap-1 flex flex-col">
             {props.errors.map((e) => (
-              <RemainingErrorRender error={e} onClick={() => {}} />
+              <RemainingErrorRender error={e} onClick={() => { }} />
             ))}
           </div>
         </CardContent>

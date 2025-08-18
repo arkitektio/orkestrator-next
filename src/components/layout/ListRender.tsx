@@ -3,7 +3,6 @@ import React, { ReactNode, useEffect, useState } from "react";
 import { ListOffsetter, ListTitle } from "../ui/list";
 import { Refetcher } from "../ui/refetcher";
 import { ContainerGrid } from "./ContainerGrid";
-import { Card } from "../ui/card";
 
 export type ListRenderProps<T> = {
   title?: React.ReactNode;

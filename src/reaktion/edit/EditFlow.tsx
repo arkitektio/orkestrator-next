@@ -98,6 +98,7 @@ import {
 import { ValidationResult } from "../validation/types";
 import { validateState } from "../validation/validate";
 import { EdgeContextual } from "./components/EdgeContextual";
+import { SolvedErrorBox } from "./components/boxes/SolvedErrorBox";
 import { DeployInterfaceButton } from "./components/buttons/DeployButton";
 import { RunButton } from "./components/buttons/RunButton";
 import { EditRiverContext } from "./context";
@@ -107,7 +108,6 @@ import { RekuestFilterActionWidget } from "./nodes/RekuestFilterActionWidget";
 import { RekuestMapActionWidget } from "./nodes/RekuestMapActionWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
-import { SolvedErrorBox } from "./components/boxes/SolvedErrorBox";
 
 const nodeTypes: NodeTypes = {
   RekuestFilterActionNode: RekuestFilterActionWidget,

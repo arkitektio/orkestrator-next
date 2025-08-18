@@ -5,12 +5,12 @@ import { useGetPodQuery } from "@/kabinet/api/graphql";
 import GraphWidget from "@/kraph/widgets/GraphWidget";
 import { KabinetPod, MikroImage, MikroROI, RekuestAction } from "@/linkers";
 import { UserAvatar } from "@/lok-next/components/UserAvatar";
+import { StreamWidget } from "@/lovekit/widgets/StreamWidget";
 import { useGetImageQuery, useGetRoiQuery } from "@/mikro-next/api/graphql";
 import { DelegatingImageRender } from "@/mikro-next/components/render/DelegatingImageRender";
 import { useDetailActionQuery } from "@/rekuest/api/graphql";
 import { ReturnWidgetProps } from "@/rekuest/widgets/types";
 import { MeshWidget } from "@/widgets/MeshWidget";
-import { StreamWidget } from "@/lovekit/widgets/StreamWidget";
 import Timestamp from "react-timestamp";
 
 export const ImageWidget = (props: ReturnWidgetProps) => {

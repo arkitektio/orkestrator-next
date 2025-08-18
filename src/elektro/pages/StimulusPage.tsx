@@ -1,12 +1,9 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { ElektroRecording, ElektroSimulation, ElektroStimulus, ElektroTrace } from "@/linkers";
-import { useDetailRecordingQuery, useDetailSimulationQuery, useDetailStimulusQuery, useDetailTraceQuery } from "../api/graphql";
-import { useTraceArray } from "../lib/useTraceArray";
-import { Button } from "@/components/ui/button";
-import { TraceRender } from "../components/TraceRender";
+import { ElektroStimulus } from "@/linkers";
+import { useDetailStimulusQuery } from "../api/graphql";
 import { SimulationRender } from "../components/SImulationRender";
-import { NeuronVisualizer } from "../components/NeuronRenderer";
+import { useTraceArray } from "../lib/useTraceArray";
 
 export type IRepresentationScreenProps = {};
 
@@ -35,8 +32,8 @@ export default asDetailQueryRoute(
       >
         <div className="flex flex-row gap-2">
           <div className="flex-1">
-        <SimulationRender simulation={data.stimulus.simulation} highlight={[data.stimulus.id]} />
-        </div>
+            <SimulationRender simulation={data.stimulus.simulation} highlight={[data.stimulus.id]} />
+          </div>
         </div>
       </ElektroStimulus.ModelPage>
     );

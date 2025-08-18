@@ -24,9 +24,8 @@ export const getSpecialPath = (
   const centerX = (sourceX + targetX) / 2;
   const centerY = (sourceY + targetY) / 2;
 
-  return `M ${sourceX} ${sourceY} Q ${centerX + offset} ${
-    centerY + offset
-  } ${targetX} ${targetY}`;
+  return `M ${sourceX} ${sourceY} Q ${centerX + offset} ${centerY + offset
+    } ${targetX} ${targetY}`;
 };
 
 export default ({

@@ -1,6 +1,6 @@
 import { NodeQueryViewFragment } from "@/kraph/api/graphql";
-import { GraphTable } from "./table/GraphTable";
 import { PathGraph } from "./graph/PathGraph";
+import { GraphTable } from "./table/GraphTable";
 
 export const DelegatinNodeViewRenderer = (props: {
   nodeView: NodeQueryViewFragment;

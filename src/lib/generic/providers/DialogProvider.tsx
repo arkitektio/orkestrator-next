@@ -1,10 +1,10 @@
 // typed-dialog-provider.tsx
 
-import React, { createContext, useContext, useCallback, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Guard } from "@/lib/arkitekt/Arkitekt";
 import { cn } from "@/lib/utils";
+import React, { createContext, useCallback, useContext, useState } from "react";
 
 /**
  * Enhanced Dialog Provider with Sheet Support
@@ -67,43 +67,43 @@ export function createDialogProvider<
 
   const DialogContext = createContext<{
     openDialog: <K extends DialogId>(
-      id: K, 
+      id: K,
       props: DialogPropsMap[K],
       options?: { className?: string }
     ) => void;
     openSheet: <K extends DialogId>(
-      id: K, 
+      id: K,
       props: DialogPropsMap[K],
-      options?: { 
-        className?: string; 
+      options?: {
+        className?: string;
         side?: 'top' | 'bottom' | 'left' | 'right';
       }
     ) => void;
     closeDialog: () => void;
   }>({
-    openDialog: () => {},
-    openSheet: () => {},
-    closeDialog: () => {},
+    openDialog: () => { },
+    openSheet: () => { },
+    closeDialog: () => { },
   });
 
   const useDialog = () => useContext(DialogContext);
 
   const DialogProvider = ({ children }: { children: React.ReactNode }) => {
-    const [modalState, setModalState] = useState<ModalState>({ 
-      id: null, 
-      props: {}, 
+    const [modalState, setModalState] = useState<ModalState>({
+      id: null,
+      props: {},
       type: 'dialog'
     });
 
     const openDialog = useCallback(
       <K extends DialogId>(
-        id: K, 
+        id: K,
         props: DialogPropsMap[K],
         options?: { className?: string }
       ) => {
-        setModalState({ 
-          id: id as string, 
-          props, 
+        setModalState({
+          id: id as string,
+          props,
           type: 'dialog',
           className: options?.className
         });
@@ -113,16 +113,16 @@ export function createDialogProvider<
 
     const openSheet = useCallback(
       <K extends DialogId>(
-        id: K, 
+        id: K,
         props: DialogPropsMap[K],
-        options?: { 
-          className?: string; 
+        options?: {
+          className?: string;
           side?: 'top' | 'bottom' | 'left' | 'right';
         }
       ) => {
-        setModalState({ 
-          id: id as string, 
-          props, 
+        setModalState({
+          id: id as string,
+          props,
           type: 'sheet',
           className: options?.className,
           side: options?.side || 'right'
@@ -155,7 +155,7 @@ export function createDialogProvider<
             )}
           </Dialog>
         )}
-        
+
         {modalState.type === 'sheet' && (
           <Sheet
             open={!!Component}
@@ -163,18 +163,18 @@ export function createDialogProvider<
           >
             {children}
             {Component && (
-              <SheetContent 
-                side={modalState.side} 
+              <SheetContent
+                side={modalState.side}
                 className={cn(
                   "text-foreground",
                   // Reset default width/height classes when custom dimensions are provided
                   modalState.className && (
-                    modalState.className.includes('w-') || 
+                    modalState.className.includes('w-') ||
                     modalState.className.includes('!w-') ||
                     modalState.className.includes('max-w-')
                   ) && '!w-auto !max-w-none',
                   modalState.className && (
-                    modalState.className.includes('h-') || 
+                    modalState.className.includes('h-') ||
                     modalState.className.includes('!h-') ||
                     modalState.className.includes('max-h-')
                   ) && '!h-auto !max-h-none',
@@ -188,7 +188,7 @@ export function createDialogProvider<
             )}
           </Sheet>
         )}
-        
+
         {!Component && children}
       </DialogContext.Provider>
     );

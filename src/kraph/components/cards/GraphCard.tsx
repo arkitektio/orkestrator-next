@@ -1,4 +1,3 @@
-import { PinButton } from "@/components/pin/PinButton";
 import { Card } from "@/components/ui/card";
 import { KraphGraph } from "@/linkers";
 import { MateFinder } from "@/mates/types";

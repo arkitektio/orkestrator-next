@@ -1,3 +1,4 @@
+import { NotImplementedYet } from "@/app/components/fallbacks/NotImplemted";
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -7,10 +8,8 @@ import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import {
   StructureViewInput,
-  useCreateMaskViewMutation,
-  useCreateStructureViewMutation,
+  useCreateMaskViewMutation
 } from "../api/graphql";
-import { NotImplementedYet } from "@/app/components/fallbacks/NotImplemted";
 
 export const AddMaskViewForm = (props: { image: string }) => {
   const [add] = useCreateMaskViewMutation();

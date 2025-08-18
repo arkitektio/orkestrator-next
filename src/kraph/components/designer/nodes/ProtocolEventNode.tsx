@@ -3,15 +3,12 @@ import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
-  KraphEntityCategory,
-  KraphNaturalEventCategory,
-  KraphProtocolEventCategory,
+  KraphProtocolEventCategory
 } from "@/linkers";
 import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
-import { GenericNode, NaturalEventNode, ProtocolEventNode } from "../types";
-import { NaturalEvent } from "@/kraph/api/graphql";
+import { ProtocolEventNode } from "../types";
 
 export default memo(({ data, id, selected }: NodeProps<ProtocolEventNode>) => {
   const resolve = useResolve();

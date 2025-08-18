@@ -1,3 +1,4 @@
+import { WidgetRegistry } from "@/rekuest/widgets/Registry";
 import { Manifest, Requirement } from "./fakts/manifestSchema";
 import {
   buildArkitektProvider,
@@ -7,31 +8,30 @@ import {
   usePotentialService,
   useService,
 } from "./provider";
-import { WidgetRegistry } from "@/rekuest/widgets/Registry";
 // When using the Tauri API npm package:
 
 export const buildGuard =
   (key: string) =>
-  (props: { children: React.ReactNode; fallback?: React.ReactNode }) => {
-    const service = usePotentialService(key);
+    (props: { children: React.ReactNode; fallback?: React.ReactNode }) => {
+      const service = usePotentialService(key);
 
-    if (!service) {
-      return <div>{props.fallback || "Loading "}</div>;
-    }
+      if (!service) {
+        return <div>{props.fallback || "Loading "}</div>;
+      }
 
-    return props.children;
-  };
+      return props.children;
+    };
 
 export const buildWith =
   (key: string) =>
-  <T extends (options: any) => any>(func: T): T => {
-    const Wrapped = (nana: any) => {
-      const service = useService(key);
+    <T extends (options: any) => any>(func: T): T => {
+      const Wrapped = (nana: any) => {
+        const service = useService(key);
 
-      return func({ ...nana, client: service.client });
+        return func({ ...nana, client: service.client });
+      };
+      return Wrapped as T;
     };
-    return Wrapped as T;
-  };
 
 export const buildArkitekt = ({
   manifest,
@@ -44,10 +44,10 @@ export const buildArkitekt = ({
 }) => {
   const requirements: Requirement[] = serviceBuilderMap
     ? Object.values(serviceBuilderMap).map((s) => ({
-        service: s.service,
-        key: s.key,
-        optional: s.optional,
-      }))
+      service: s.service,
+      key: s.key,
+      optional: s.optional,
+    }))
     : [];
 
   const realManifest: Manifest = {

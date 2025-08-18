@@ -1,6 +1,6 @@
-import { gql } from '@apollo/client';
-import * as Apollo from '@apollo/client';
 import * as ApolloReactHooks from '@/lib/rekuest/hooks';
+import * as Apollo from '@apollo/client';
+import { gql } from '@apollo/client';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -4180,13 +4180,13 @@ export const AgentOptionsDocument = gql`
  * });
  */
 export function useAgentOptionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<AgentOptionsQuery, AgentOptionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<AgentOptionsQuery, AgentOptionsQueryVariables>(AgentOptionsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<AgentOptionsQuery, AgentOptionsQueryVariables>(AgentOptionsDocument, options);
+}
 export function useAgentOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<AgentOptionsQuery, AgentOptionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<AgentOptionsQuery, AgentOptionsQueryVariables>(AgentOptionsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<AgentOptionsQuery, AgentOptionsQueryVariables>(AgentOptionsDocument, options);
+}
 export type AgentOptionsQueryHookResult = ReturnType<typeof useAgentOptionsQuery>;
 export type AgentOptionsLazyQueryHookResult = ReturnType<typeof useAgentOptionsLazyQuery>;
 export type AgentOptionsQueryResult = Apollo.QueryResult<AgentOptionsQuery, AgentOptionsQueryVariables>;
@@ -4217,9 +4217,9 @@ export type AcknowledgeMutationFn = Apollo.MutationFunction<AcknowledgeMutation,
  * });
  */
 export function useAcknowledgeMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AcknowledgeMutation, AcknowledgeMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<AcknowledgeMutation, AcknowledgeMutationVariables>(AcknowledgeDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<AcknowledgeMutation, AcknowledgeMutationVariables>(AcknowledgeDocument, options);
+}
 export type AcknowledgeMutationHookResult = ReturnType<typeof useAcknowledgeMutation>;
 export type AcknowledgeMutationResult = Apollo.MutationResult<AcknowledgeMutation>;
 export type AcknowledgeMutationOptions = Apollo.BaseMutationOptions<AcknowledgeMutation, AcknowledgeMutationVariables>;
@@ -4250,9 +4250,9 @@ export type PinAgentMutationFn = Apollo.MutationFunction<PinAgentMutation, PinAg
  * });
  */
 export function usePinAgentMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PinAgentMutation, PinAgentMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PinAgentMutation, PinAgentMutationVariables>(PinAgentDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<PinAgentMutation, PinAgentMutationVariables>(PinAgentDocument, options);
+}
 export type PinAgentMutationHookResult = ReturnType<typeof usePinAgentMutation>;
 export type PinAgentMutationResult = Apollo.MutationResult<PinAgentMutation>;
 export type PinAgentMutationOptions = Apollo.BaseMutationOptions<PinAgentMutation, PinAgentMutationVariables>;
@@ -4281,9 +4281,9 @@ export type DeleteAgentMutationFn = Apollo.MutationFunction<DeleteAgentMutation,
  * });
  */
 export function useDeleteAgentMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteAgentMutation, DeleteAgentMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteAgentMutation, DeleteAgentMutationVariables>(DeleteAgentDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<DeleteAgentMutation, DeleteAgentMutationVariables>(DeleteAgentDocument, options);
+}
 export type DeleteAgentMutationHookResult = ReturnType<typeof useDeleteAgentMutation>;
 export type DeleteAgentMutationResult = Apollo.MutationResult<DeleteAgentMutation>;
 export type DeleteAgentMutationOptions = Apollo.BaseMutationOptions<DeleteAgentMutation, DeleteAgentMutationVariables>;
@@ -4314,9 +4314,9 @@ export type AssignMutationFn = Apollo.MutationFunction<AssignMutation, AssignMut
  * });
  */
 export function useAssignMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<AssignMutation, AssignMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<AssignMutation, AssignMutationVariables>(AssignDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<AssignMutation, AssignMutationVariables>(AssignDocument, options);
+}
 export type AssignMutationHookResult = ReturnType<typeof useAssignMutation>;
 export type AssignMutationResult = Apollo.MutationResult<AssignMutation>;
 export type AssignMutationOptions = Apollo.BaseMutationOptions<AssignMutation, AssignMutationVariables>;
@@ -4347,9 +4347,9 @@ export type CancelMutationFn = Apollo.MutationFunction<CancelMutation, CancelMut
  * });
  */
 export function useCancelMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CancelMutation, CancelMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CancelMutation, CancelMutationVariables>(CancelDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CancelMutation, CancelMutationVariables>(CancelDocument, options);
+}
 export type CancelMutationHookResult = ReturnType<typeof useCancelMutation>;
 export type CancelMutationResult = Apollo.MutationResult<CancelMutation>;
 export type CancelMutationOptions = Apollo.BaseMutationOptions<CancelMutation, CancelMutationVariables>;
@@ -4380,9 +4380,9 @@ export type InterruptMutationFn = Apollo.MutationFunction<InterruptMutation, Int
  * });
  */
 export function useInterruptMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<InterruptMutation, InterruptMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<InterruptMutation, InterruptMutationVariables>(InterruptDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<InterruptMutation, InterruptMutationVariables>(InterruptDocument, options);
+}
 export type InterruptMutationHookResult = ReturnType<typeof useInterruptMutation>;
 export type InterruptMutationResult = Apollo.MutationResult<InterruptMutation>;
 export type InterruptMutationOptions = Apollo.BaseMutationOptions<InterruptMutation, InterruptMutationVariables>;
@@ -4413,9 +4413,9 @@ export type CreateBlokMutationFn = Apollo.MutationFunction<CreateBlokMutation, C
  * });
  */
 export function useCreateBlokMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateBlokMutation, CreateBlokMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateBlokMutation, CreateBlokMutationVariables>(CreateBlokDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateBlokMutation, CreateBlokMutationVariables>(CreateBlokDocument, options);
+}
 export type CreateBlokMutationHookResult = ReturnType<typeof useCreateBlokMutation>;
 export type CreateBlokMutationResult = Apollo.MutationResult<CreateBlokMutation>;
 export type CreateBlokMutationOptions = Apollo.BaseMutationOptions<CreateBlokMutation, CreateBlokMutationVariables>;
@@ -4446,9 +4446,9 @@ export type MaterializeBlokMutationFn = Apollo.MutationFunction<MaterializeBlokM
  * });
  */
 export function useMaterializeBlokMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<MaterializeBlokMutation, MaterializeBlokMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<MaterializeBlokMutation, MaterializeBlokMutationVariables>(MaterializeBlokDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<MaterializeBlokMutation, MaterializeBlokMutationVariables>(MaterializeBlokDocument, options);
+}
 export type MaterializeBlokMutationHookResult = ReturnType<typeof useMaterializeBlokMutation>;
 export type MaterializeBlokMutationResult = Apollo.MutationResult<MaterializeBlokMutation>;
 export type MaterializeBlokMutationOptions = Apollo.BaseMutationOptions<MaterializeBlokMutation, MaterializeBlokMutationVariables>;
@@ -4480,9 +4480,9 @@ export type CreateDashboardMutationFn = Apollo.MutationFunction<CreateDashboardM
  * });
  */
 export function useCreateDashboardMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateDashboardMutation, CreateDashboardMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateDashboardMutation, CreateDashboardMutationVariables>(CreateDashboardDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateDashboardMutation, CreateDashboardMutationVariables>(CreateDashboardDocument, options);
+}
 export type CreateDashboardMutationHookResult = ReturnType<typeof useCreateDashboardMutation>;
 export type CreateDashboardMutationResult = Apollo.MutationResult<CreateDashboardMutation>;
 export type CreateDashboardMutationOptions = Apollo.BaseMutationOptions<CreateDashboardMutation, CreateDashboardMutationVariables>;
@@ -4510,9 +4510,9 @@ export type ReinitMutationFn = Apollo.MutationFunction<ReinitMutation, ReinitMut
  * });
  */
 export function useReinitMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ReinitMutation, ReinitMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ReinitMutation, ReinitMutationVariables>(ReinitDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<ReinitMutation, ReinitMutationVariables>(ReinitDocument, options);
+}
 export type ReinitMutationHookResult = ReturnType<typeof useReinitMutation>;
 export type ReinitMutationResult = Apollo.MutationResult<ReinitMutation>;
 export type ReinitMutationOptions = Apollo.BaseMutationOptions<ReinitMutation, ReinitMutationVariables>;
@@ -4550,9 +4550,9 @@ export type ReserveMutationFn = Apollo.MutationFunction<ReserveMutation, Reserve
  * });
  */
 export function useReserveMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<ReserveMutation, ReserveMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<ReserveMutation, ReserveMutationVariables>(ReserveDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<ReserveMutation, ReserveMutationVariables>(ReserveDocument, options);
+}
 export type ReserveMutationHookResult = ReturnType<typeof useReserveMutation>;
 export type ReserveMutationResult = Apollo.MutationResult<ReserveMutation>;
 export type ReserveMutationOptions = Apollo.BaseMutationOptions<ReserveMutation, ReserveMutationVariables>;
@@ -4583,9 +4583,9 @@ export type CreateShortcutMutationFn = Apollo.MutationFunction<CreateShortcutMut
  * });
  */
 export function useCreateShortcutMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateShortcutMutation, CreateShortcutMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateShortcutMutation, CreateShortcutMutationVariables>(CreateShortcutDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateShortcutMutation, CreateShortcutMutationVariables>(CreateShortcutDocument, options);
+}
 export type CreateShortcutMutationHookResult = ReturnType<typeof useCreateShortcutMutation>;
 export type CreateShortcutMutationResult = Apollo.MutationResult<CreateShortcutMutation>;
 export type CreateShortcutMutationOptions = Apollo.BaseMutationOptions<CreateShortcutMutation, CreateShortcutMutationVariables>;
@@ -4614,9 +4614,9 @@ export type DeleteShortcutMutationFn = Apollo.MutationFunction<DeleteShortcutMut
  * });
  */
 export function useDeleteShortcutMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteShortcutMutation, DeleteShortcutMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteShortcutMutation, DeleteShortcutMutationVariables>(DeleteShortcutDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<DeleteShortcutMutation, DeleteShortcutMutationVariables>(DeleteShortcutDocument, options);
+}
 export type DeleteShortcutMutationHookResult = ReturnType<typeof useDeleteShortcutMutation>;
 export type DeleteShortcutMutationResult = Apollo.MutationResult<DeleteShortcutMutation>;
 export type DeleteShortcutMutationOptions = Apollo.BaseMutationOptions<DeleteShortcutMutation, DeleteShortcutMutationVariables>;
@@ -4647,9 +4647,9 @@ export type CreateForeignImplementationMutationFn = Apollo.MutationFunction<Crea
  * });
  */
 export function useCreateForeignImplementationMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateForeignImplementationMutation, CreateForeignImplementationMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<CreateForeignImplementationMutation, CreateForeignImplementationMutationVariables>(CreateForeignImplementationDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<CreateForeignImplementationMutation, CreateForeignImplementationMutationVariables>(CreateForeignImplementationDocument, options);
+}
 export type CreateForeignImplementationMutationHookResult = ReturnType<typeof useCreateForeignImplementationMutation>;
 export type CreateForeignImplementationMutationResult = Apollo.MutationResult<CreateForeignImplementationMutation>;
 export type CreateForeignImplementationMutationOptions = Apollo.BaseMutationOptions<CreateForeignImplementationMutation, CreateForeignImplementationMutationVariables>;
@@ -4678,9 +4678,9 @@ export type DeleteImplementationMutationFn = Apollo.MutationFunction<DeleteImple
  * });
  */
 export function useDeleteImplementationMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteImplementationMutation, DeleteImplementationMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<DeleteImplementationMutation, DeleteImplementationMutationVariables>(DeleteImplementationDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<DeleteImplementationMutation, DeleteImplementationMutationVariables>(DeleteImplementationDocument, options);
+}
 export type DeleteImplementationMutationHookResult = ReturnType<typeof useDeleteImplementationMutation>;
 export type DeleteImplementationMutationResult = Apollo.MutationResult<DeleteImplementationMutation>;
 export type DeleteImplementationMutationOptions = Apollo.BaseMutationOptions<DeleteImplementationMutation, DeleteImplementationMutationVariables>;
@@ -4709,9 +4709,9 @@ export type UnreserveMutationFn = Apollo.MutationFunction<UnreserveMutation, Unr
  * });
  */
 export function useUnreserveMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UnreserveMutation, UnreserveMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<UnreserveMutation, UnreserveMutationVariables>(UnreserveDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<UnreserveMutation, UnreserveMutationVariables>(UnreserveDocument, options);
+}
 export type UnreserveMutationHookResult = ReturnType<typeof useUnreserveMutation>;
 export type UnreserveMutationResult = Apollo.MutationResult<UnreserveMutation>;
 export type UnreserveMutationOptions = Apollo.BaseMutationOptions<UnreserveMutation, UnreserveMutationVariables>;
@@ -4740,13 +4740,13 @@ export const ConstantActionDocument = gql`
  * });
  */
 export function useConstantActionQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ConstantActionQuery, ConstantActionQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ConstantActionQuery, ConstantActionQueryVariables>(ConstantActionDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ConstantActionQuery, ConstantActionQueryVariables>(ConstantActionDocument, options);
+}
 export function useConstantActionLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ConstantActionQuery, ConstantActionQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ConstantActionQuery, ConstantActionQueryVariables>(ConstantActionDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ConstantActionQuery, ConstantActionQueryVariables>(ConstantActionDocument, options);
+}
 export type ConstantActionQueryHookResult = ReturnType<typeof useConstantActionQuery>;
 export type ConstantActionLazyQueryHookResult = ReturnType<typeof useConstantActionLazyQuery>;
 export type ConstantActionQueryResult = Apollo.QueryResult<ConstantActionQuery, ConstantActionQueryVariables>;
@@ -4791,13 +4791,13 @@ export const AssignActionDocument = gql`
  * });
  */
 export function useAssignActionQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<AssignActionQuery, AssignActionQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<AssignActionQuery, AssignActionQueryVariables>(AssignActionDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<AssignActionQuery, AssignActionQueryVariables>(AssignActionDocument, options);
+}
 export function useAssignActionLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<AssignActionQuery, AssignActionQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<AssignActionQuery, AssignActionQueryVariables>(AssignActionDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<AssignActionQuery, AssignActionQueryVariables>(AssignActionDocument, options);
+}
 export type AssignActionQueryHookResult = ReturnType<typeof useAssignActionQuery>;
 export type AssignActionLazyQueryHookResult = ReturnType<typeof useAssignActionLazyQuery>;
 export type AssignActionQueryResult = Apollo.QueryResult<AssignActionQuery, AssignActionQueryVariables>;
@@ -4828,13 +4828,13 @@ export const ReturnActionDocument = gql`
  * });
  */
 export function useReturnActionQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ReturnActionQuery, ReturnActionQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ReturnActionQuery, ReturnActionQueryVariables>(ReturnActionDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ReturnActionQuery, ReturnActionQueryVariables>(ReturnActionDocument, options);
+}
 export function useReturnActionLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ReturnActionQuery, ReturnActionQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ReturnActionQuery, ReturnActionQueryVariables>(ReturnActionDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ReturnActionQuery, ReturnActionQueryVariables>(ReturnActionDocument, options);
+}
 export type ReturnActionQueryHookResult = ReturnType<typeof useReturnActionQuery>;
 export type ReturnActionLazyQueryHookResult = ReturnType<typeof useReturnActionLazyQuery>;
 export type ReturnActionQueryResult = Apollo.QueryResult<ReturnActionQuery, ReturnActionQueryVariables>;
@@ -4864,13 +4864,13 @@ export const ActionByHashDocument = gql`
  * });
  */
 export function useActionByHashQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ActionByHashQuery, ActionByHashQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ActionByHashQuery, ActionByHashQueryVariables>(ActionByHashDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ActionByHashQuery, ActionByHashQueryVariables>(ActionByHashDocument, options);
+}
 export function useActionByHashLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ActionByHashQuery, ActionByHashQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ActionByHashQuery, ActionByHashQueryVariables>(ActionByHashDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ActionByHashQuery, ActionByHashQueryVariables>(ActionByHashDocument, options);
+}
 export type ActionByHashQueryHookResult = ReturnType<typeof useActionByHashQuery>;
 export type ActionByHashLazyQueryHookResult = ReturnType<typeof useActionByHashLazyQuery>;
 export type ActionByHashQueryResult = Apollo.QueryResult<ActionByHashQuery, ActionByHashQueryVariables>;
@@ -4901,13 +4901,13 @@ export const AllActionsDocument = gql`
  * });
  */
 export function useAllActionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<AllActionsQuery, AllActionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<AllActionsQuery, AllActionsQueryVariables>(AllActionsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<AllActionsQuery, AllActionsQueryVariables>(AllActionsDocument, options);
+}
 export function useAllActionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<AllActionsQuery, AllActionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<AllActionsQuery, AllActionsQueryVariables>(AllActionsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<AllActionsQuery, AllActionsQueryVariables>(AllActionsDocument, options);
+}
 export type AllActionsQueryHookResult = ReturnType<typeof useAllActionsQuery>;
 export type AllActionsLazyQueryHookResult = ReturnType<typeof useAllActionsLazyQuery>;
 export type AllActionsQueryResult = Apollo.QueryResult<AllActionsQuery, AllActionsQueryVariables>;
@@ -4938,13 +4938,13 @@ export const AllPrimaryActionsDocument = gql`
  * });
  */
 export function useAllPrimaryActionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<AllPrimaryActionsQuery, AllPrimaryActionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<AllPrimaryActionsQuery, AllPrimaryActionsQueryVariables>(AllPrimaryActionsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<AllPrimaryActionsQuery, AllPrimaryActionsQueryVariables>(AllPrimaryActionsDocument, options);
+}
 export function useAllPrimaryActionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<AllPrimaryActionsQuery, AllPrimaryActionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<AllPrimaryActionsQuery, AllPrimaryActionsQueryVariables>(AllPrimaryActionsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<AllPrimaryActionsQuery, AllPrimaryActionsQueryVariables>(AllPrimaryActionsDocument, options);
+}
 export type AllPrimaryActionsQueryHookResult = ReturnType<typeof useAllPrimaryActionsQuery>;
 export type AllPrimaryActionsLazyQueryHookResult = ReturnType<typeof useAllPrimaryActionsLazyQuery>;
 export type AllPrimaryActionsQueryResult = Apollo.QueryResult<AllPrimaryActionsQuery, AllPrimaryActionsQueryVariables>;
@@ -4974,13 +4974,13 @@ export const ActionSearchDocument = gql`
  * });
  */
 export function useActionSearchQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ActionSearchQuery, ActionSearchQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ActionSearchQuery, ActionSearchQueryVariables>(ActionSearchDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ActionSearchQuery, ActionSearchQueryVariables>(ActionSearchDocument, options);
+}
 export function useActionSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ActionSearchQuery, ActionSearchQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ActionSearchQuery, ActionSearchQueryVariables>(ActionSearchDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ActionSearchQuery, ActionSearchQueryVariables>(ActionSearchDocument, options);
+}
 export type ActionSearchQueryHookResult = ReturnType<typeof useActionSearchQuery>;
 export type ActionSearchLazyQueryHookResult = ReturnType<typeof useActionSearchLazyQuery>;
 export type ActionSearchQueryResult = Apollo.QueryResult<ActionSearchQuery, ActionSearchQueryVariables>;
@@ -5009,13 +5009,13 @@ export const DetailActionDocument = gql`
  * });
  */
 export function useDetailActionQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailActionQuery, DetailActionQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<DetailActionQuery, DetailActionQueryVariables>(DetailActionDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<DetailActionQuery, DetailActionQueryVariables>(DetailActionDocument, options);
+}
 export function useDetailActionLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailActionQuery, DetailActionQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<DetailActionQuery, DetailActionQueryVariables>(DetailActionDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<DetailActionQuery, DetailActionQueryVariables>(DetailActionDocument, options);
+}
 export type DetailActionQueryHookResult = ReturnType<typeof useDetailActionQuery>;
 export type DetailActionLazyQueryHookResult = ReturnType<typeof useDetailActionLazyQuery>;
 export type DetailActionQueryResult = Apollo.QueryResult<DetailActionQuery, DetailActionQueryVariables>;
@@ -5051,13 +5051,13 @@ export const PrimaryActionsDocument = gql`
  * });
  */
 export function usePrimaryActionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<PrimaryActionsQuery, PrimaryActionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<PrimaryActionsQuery, PrimaryActionsQueryVariables>(PrimaryActionsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<PrimaryActionsQuery, PrimaryActionsQueryVariables>(PrimaryActionsDocument, options);
+}
 export function usePrimaryActionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<PrimaryActionsQuery, PrimaryActionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<PrimaryActionsQuery, PrimaryActionsQueryVariables>(PrimaryActionsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<PrimaryActionsQuery, PrimaryActionsQueryVariables>(PrimaryActionsDocument, options);
+}
 export type PrimaryActionsQueryHookResult = ReturnType<typeof usePrimaryActionsQuery>;
 export type PrimaryActionsLazyQueryHookResult = ReturnType<typeof usePrimaryActionsLazyQuery>;
 export type PrimaryActionsQueryResult = Apollo.QueryResult<PrimaryActionsQuery, PrimaryActionsQueryVariables>;
@@ -5093,13 +5093,13 @@ export const PrimaryReturnActionsDocument = gql`
  * });
  */
 export function usePrimaryReturnActionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<PrimaryReturnActionsQuery, PrimaryReturnActionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<PrimaryReturnActionsQuery, PrimaryReturnActionsQueryVariables>(PrimaryReturnActionsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<PrimaryReturnActionsQuery, PrimaryReturnActionsQueryVariables>(PrimaryReturnActionsDocument, options);
+}
 export function usePrimaryReturnActionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<PrimaryReturnActionsQuery, PrimaryReturnActionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<PrimaryReturnActionsQuery, PrimaryReturnActionsQueryVariables>(PrimaryReturnActionsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<PrimaryReturnActionsQuery, PrimaryReturnActionsQueryVariables>(PrimaryReturnActionsDocument, options);
+}
 export type PrimaryReturnActionsQueryHookResult = ReturnType<typeof usePrimaryReturnActionsQuery>;
 export type PrimaryReturnActionsLazyQueryHookResult = ReturnType<typeof usePrimaryReturnActionsLazyQuery>;
 export type PrimaryReturnActionsQueryResult = Apollo.QueryResult<PrimaryReturnActionsQuery, PrimaryReturnActionsQueryVariables>;
@@ -5130,13 +5130,13 @@ export const AgentsDocument = gql`
  * });
  */
 export function useAgentsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<AgentsQuery, AgentsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<AgentsQuery, AgentsQueryVariables>(AgentsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<AgentsQuery, AgentsQueryVariables>(AgentsDocument, options);
+}
 export function useAgentsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<AgentsQuery, AgentsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<AgentsQuery, AgentsQueryVariables>(AgentsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<AgentsQuery, AgentsQueryVariables>(AgentsDocument, options);
+}
 export type AgentsQueryHookResult = ReturnType<typeof useAgentsQuery>;
 export type AgentsLazyQueryHookResult = ReturnType<typeof useAgentsLazyQuery>;
 export type AgentsQueryResult = Apollo.QueryResult<AgentsQuery, AgentsQueryVariables>;
@@ -5165,13 +5165,13 @@ export const AgentDocument = gql`
  * });
  */
 export function useAgentQuery(baseOptions: ApolloReactHooks.QueryHookOptions<AgentQuery, AgentQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<AgentQuery, AgentQueryVariables>(AgentDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<AgentQuery, AgentQueryVariables>(AgentDocument, options);
+}
 export function useAgentLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<AgentQuery, AgentQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<AgentQuery, AgentQueryVariables>(AgentDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<AgentQuery, AgentQueryVariables>(AgentDocument, options);
+}
 export type AgentQueryHookResult = ReturnType<typeof useAgentQuery>;
 export type AgentLazyQueryHookResult = ReturnType<typeof useAgentLazyQuery>;
 export type AgentQueryResult = Apollo.QueryResult<AgentQuery, AgentQueryVariables>;
@@ -5200,13 +5200,13 @@ export const AssignationsDocument = gql`
  * });
  */
 export function useAssignationsQuery(baseOptions: ApolloReactHooks.QueryHookOptions<AssignationsQuery, AssignationsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<AssignationsQuery, AssignationsQueryVariables>(AssignationsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<AssignationsQuery, AssignationsQueryVariables>(AssignationsDocument, options);
+}
 export function useAssignationsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<AssignationsQuery, AssignationsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<AssignationsQuery, AssignationsQueryVariables>(AssignationsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<AssignationsQuery, AssignationsQueryVariables>(AssignationsDocument, options);
+}
 export type AssignationsQueryHookResult = ReturnType<typeof useAssignationsQuery>;
 export type AssignationsLazyQueryHookResult = ReturnType<typeof useAssignationsLazyQuery>;
 export type AssignationsQueryResult = Apollo.QueryResult<AssignationsQuery, AssignationsQueryVariables>;
@@ -5235,13 +5235,13 @@ export const DetailAssignationDocument = gql`
  * });
  */
 export function useDetailAssignationQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailAssignationQuery, DetailAssignationQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<DetailAssignationQuery, DetailAssignationQueryVariables>(DetailAssignationDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<DetailAssignationQuery, DetailAssignationQueryVariables>(DetailAssignationDocument, options);
+}
 export function useDetailAssignationLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailAssignationQuery, DetailAssignationQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<DetailAssignationQuery, DetailAssignationQueryVariables>(DetailAssignationDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<DetailAssignationQuery, DetailAssignationQueryVariables>(DetailAssignationDocument, options);
+}
 export type DetailAssignationQueryHookResult = ReturnType<typeof useDetailAssignationQuery>;
 export type DetailAssignationLazyQueryHookResult = ReturnType<typeof useDetailAssignationLazyQuery>;
 export type DetailAssignationQueryResult = Apollo.QueryResult<DetailAssignationQuery, DetailAssignationQueryVariables>;
@@ -5270,13 +5270,13 @@ export const GetBlokDocument = gql`
  * });
  */
 export function useGetBlokQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetBlokQuery, GetBlokQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetBlokQuery, GetBlokQueryVariables>(GetBlokDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetBlokQuery, GetBlokQueryVariables>(GetBlokDocument, options);
+}
 export function useGetBlokLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetBlokQuery, GetBlokQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetBlokQuery, GetBlokQueryVariables>(GetBlokDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetBlokQuery, GetBlokQueryVariables>(GetBlokDocument, options);
+}
 export type GetBlokQueryHookResult = ReturnType<typeof useGetBlokQuery>;
 export type GetBlokLazyQueryHookResult = ReturnType<typeof useGetBlokLazyQuery>;
 export type GetBlokQueryResult = Apollo.QueryResult<GetBlokQuery, GetBlokQueryVariables>;
@@ -5304,13 +5304,13 @@ export const ListBloksDocument = gql`
  * });
  */
 export function useListBloksQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListBloksQuery, ListBloksQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListBloksQuery, ListBloksQueryVariables>(ListBloksDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ListBloksQuery, ListBloksQueryVariables>(ListBloksDocument, options);
+}
 export function useListBloksLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListBloksQuery, ListBloksQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListBloksQuery, ListBloksQueryVariables>(ListBloksDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ListBloksQuery, ListBloksQueryVariables>(ListBloksDocument, options);
+}
 export type ListBloksQueryHookResult = ReturnType<typeof useListBloksQuery>;
 export type ListBloksLazyQueryHookResult = ReturnType<typeof useListBloksLazyQuery>;
 export type ListBloksQueryResult = Apollo.QueryResult<ListBloksQuery, ListBloksQueryVariables>;
@@ -5341,13 +5341,13 @@ export const ClientsDocument = gql`
  * });
  */
 export function useClientsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ClientsQuery, ClientsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ClientsQuery, ClientsQueryVariables>(ClientsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ClientsQuery, ClientsQueryVariables>(ClientsDocument, options);
+}
 export function useClientsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ClientsQuery, ClientsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ClientsQuery, ClientsQueryVariables>(ClientsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ClientsQuery, ClientsQueryVariables>(ClientsDocument, options);
+}
 export type ClientsQueryHookResult = ReturnType<typeof useClientsQuery>;
 export type ClientsLazyQueryHookResult = ReturnType<typeof useClientsLazyQuery>;
 export type ClientsQueryResult = Apollo.QueryResult<ClientsQuery, ClientsQueryVariables>;
@@ -5376,13 +5376,13 @@ export const GetDashboardDocument = gql`
  * });
  */
 export function useGetDashboardQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetDashboardQuery, GetDashboardQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetDashboardQuery, GetDashboardQueryVariables>(GetDashboardDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetDashboardQuery, GetDashboardQueryVariables>(GetDashboardDocument, options);
+}
 export function useGetDashboardLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetDashboardQuery, GetDashboardQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetDashboardQuery, GetDashboardQueryVariables>(GetDashboardDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetDashboardQuery, GetDashboardQueryVariables>(GetDashboardDocument, options);
+}
 export type GetDashboardQueryHookResult = ReturnType<typeof useGetDashboardQuery>;
 export type GetDashboardLazyQueryHookResult = ReturnType<typeof useGetDashboardLazyQuery>;
 export type GetDashboardQueryResult = Apollo.QueryResult<GetDashboardQuery, GetDashboardQueryVariables>;
@@ -5410,13 +5410,13 @@ export const ListDashboardsDocument = gql`
  * });
  */
 export function useListDashboardsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListDashboardsQuery, ListDashboardsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListDashboardsQuery, ListDashboardsQueryVariables>(ListDashboardsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ListDashboardsQuery, ListDashboardsQueryVariables>(ListDashboardsDocument, options);
+}
 export function useListDashboardsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListDashboardsQuery, ListDashboardsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListDashboardsQuery, ListDashboardsQueryVariables>(ListDashboardsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ListDashboardsQuery, ListDashboardsQueryVariables>(ListDashboardsDocument, options);
+}
 export type ListDashboardsQueryHookResult = ReturnType<typeof useListDashboardsQuery>;
 export type ListDashboardsLazyQueryHookResult = ReturnType<typeof useListDashboardsLazyQuery>;
 export type ListDashboardsQueryResult = Apollo.QueryResult<ListDashboardsQuery, ListDashboardsQueryVariables>;
@@ -5445,13 +5445,13 @@ export const DependencyDocument = gql`
  * });
  */
 export function useDependencyQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DependencyQuery, DependencyQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<DependencyQuery, DependencyQueryVariables>(DependencyDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<DependencyQuery, DependencyQueryVariables>(DependencyDocument, options);
+}
 export function useDependencyLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DependencyQuery, DependencyQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<DependencyQuery, DependencyQueryVariables>(DependencyDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<DependencyQuery, DependencyQueryVariables>(DependencyDocument, options);
+}
 export type DependencyQueryHookResult = ReturnType<typeof useDependencyQuery>;
 export type DependencyLazyQueryHookResult = ReturnType<typeof useDependencyLazyQuery>;
 export type DependencyQueryResult = Apollo.QueryResult<DependencyQuery, DependencyQueryVariables>;
@@ -5488,13 +5488,13 @@ export const SearchMemoryDrawerDocument = gql`
  * });
  */
 export function useSearchMemoryDrawerQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchMemoryDrawerQuery, SearchMemoryDrawerQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchMemoryDrawerQuery, SearchMemoryDrawerQueryVariables>(SearchMemoryDrawerDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<SearchMemoryDrawerQuery, SearchMemoryDrawerQueryVariables>(SearchMemoryDrawerDocument, options);
+}
 export function useSearchMemoryDrawerLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchMemoryDrawerQuery, SearchMemoryDrawerQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchMemoryDrawerQuery, SearchMemoryDrawerQueryVariables>(SearchMemoryDrawerDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<SearchMemoryDrawerQuery, SearchMemoryDrawerQueryVariables>(SearchMemoryDrawerDocument, options);
+}
 export type SearchMemoryDrawerQueryHookResult = ReturnType<typeof useSearchMemoryDrawerQuery>;
 export type SearchMemoryDrawerLazyQueryHookResult = ReturnType<typeof useSearchMemoryDrawerLazyQuery>;
 export type SearchMemoryDrawerQueryResult = Apollo.QueryResult<SearchMemoryDrawerQuery, SearchMemoryDrawerQueryVariables>;
@@ -5525,13 +5525,13 @@ export const GlobalSearchDocument = gql`
  * });
  */
 export function useGlobalSearchQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
+}
 export function useGlobalSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
+}
 export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>;
 export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>;
 export type GlobalSearchQueryResult = Apollo.QueryResult<GlobalSearchQuery, GlobalSearchQueryVariables>;
@@ -5563,13 +5563,13 @@ export const HooksSearchDocument = gql`
  * });
  */
 export function useHooksSearchQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<HooksSearchQuery, HooksSearchQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<HooksSearchQuery, HooksSearchQueryVariables>(HooksSearchDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<HooksSearchQuery, HooksSearchQueryVariables>(HooksSearchDocument, options);
+}
 export function useHooksSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<HooksSearchQuery, HooksSearchQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<HooksSearchQuery, HooksSearchQueryVariables>(HooksSearchDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<HooksSearchQuery, HooksSearchQueryVariables>(HooksSearchDocument, options);
+}
 export type HooksSearchQueryHookResult = ReturnType<typeof useHooksSearchQuery>;
 export type HooksSearchLazyQueryHookResult = ReturnType<typeof useHooksSearchLazyQuery>;
 export type HooksSearchQueryResult = Apollo.QueryResult<HooksSearchQuery, HooksSearchQueryVariables>;
@@ -5598,13 +5598,13 @@ export const ImplementationDocument = gql`
  * });
  */
 export function useImplementationQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ImplementationQuery, ImplementationQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ImplementationQuery, ImplementationQueryVariables>(ImplementationDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ImplementationQuery, ImplementationQueryVariables>(ImplementationDocument, options);
+}
 export function useImplementationLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ImplementationQuery, ImplementationQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ImplementationQuery, ImplementationQueryVariables>(ImplementationDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ImplementationQuery, ImplementationQueryVariables>(ImplementationDocument, options);
+}
 export type ImplementationQueryHookResult = ReturnType<typeof useImplementationQuery>;
 export type ImplementationLazyQueryHookResult = ReturnType<typeof useImplementationLazyQuery>;
 export type ImplementationQueryResult = Apollo.QueryResult<ImplementationQuery, ImplementationQueryVariables>;
@@ -5634,13 +5634,13 @@ export const ImplementationsDocument = gql`
  * });
  */
 export function useImplementationsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ImplementationsQuery, ImplementationsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ImplementationsQuery, ImplementationsQueryVariables>(ImplementationsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ImplementationsQuery, ImplementationsQueryVariables>(ImplementationsDocument, options);
+}
 export function useImplementationsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ImplementationsQuery, ImplementationsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ImplementationsQuery, ImplementationsQueryVariables>(ImplementationsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ImplementationsQuery, ImplementationsQueryVariables>(ImplementationsDocument, options);
+}
 export type ImplementationsQueryHookResult = ReturnType<typeof useImplementationsQuery>;
 export type ImplementationsLazyQueryHookResult = ReturnType<typeof useImplementationsLazyQuery>;
 export type ImplementationsQueryResult = Apollo.QueryResult<ImplementationsQuery, ImplementationsQueryVariables>;
@@ -5677,13 +5677,13 @@ export const ImplementationAtDocument = gql`
  * });
  */
 export function useImplementationAtQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ImplementationAtQuery, ImplementationAtQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ImplementationAtQuery, ImplementationAtQueryVariables>(ImplementationAtDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ImplementationAtQuery, ImplementationAtQueryVariables>(ImplementationAtDocument, options);
+}
 export function useImplementationAtLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ImplementationAtQuery, ImplementationAtQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ImplementationAtQuery, ImplementationAtQueryVariables>(ImplementationAtDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ImplementationAtQuery, ImplementationAtQueryVariables>(ImplementationAtDocument, options);
+}
 export type ImplementationAtQueryHookResult = ReturnType<typeof useImplementationAtQuery>;
 export type ImplementationAtLazyQueryHookResult = ReturnType<typeof useImplementationAtLazyQuery>;
 export type ImplementationAtQueryResult = Apollo.QueryResult<ImplementationAtQuery, ImplementationAtQueryVariables>;
@@ -5718,13 +5718,13 @@ export const MyImplementationAtDocument = gql`
  * });
  */
 export function useMyImplementationAtQuery(baseOptions: ApolloReactHooks.QueryHookOptions<MyImplementationAtQuery, MyImplementationAtQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<MyImplementationAtQuery, MyImplementationAtQueryVariables>(MyImplementationAtDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<MyImplementationAtQuery, MyImplementationAtQueryVariables>(MyImplementationAtDocument, options);
+}
 export function useMyImplementationAtLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<MyImplementationAtQuery, MyImplementationAtQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<MyImplementationAtQuery, MyImplementationAtQueryVariables>(MyImplementationAtDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<MyImplementationAtQuery, MyImplementationAtQueryVariables>(MyImplementationAtDocument, options);
+}
 export type MyImplementationAtQueryHookResult = ReturnType<typeof useMyImplementationAtQuery>;
 export type MyImplementationAtLazyQueryHookResult = ReturnType<typeof useMyImplementationAtLazyQuery>;
 export type MyImplementationAtQueryResult = Apollo.QueryResult<MyImplementationAtQuery, MyImplementationAtQueryVariables>;
@@ -5754,13 +5754,13 @@ export const ActionImplementationAtDocument = gql`
  * });
  */
 export function useActionImplementationAtQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ActionImplementationAtQuery, ActionImplementationAtQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ActionImplementationAtQuery, ActionImplementationAtQueryVariables>(ActionImplementationAtDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ActionImplementationAtQuery, ActionImplementationAtQueryVariables>(ActionImplementationAtDocument, options);
+}
 export function useActionImplementationAtLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ActionImplementationAtQuery, ActionImplementationAtQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ActionImplementationAtQuery, ActionImplementationAtQueryVariables>(ActionImplementationAtDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ActionImplementationAtQuery, ActionImplementationAtQueryVariables>(ActionImplementationAtDocument, options);
+}
 export type ActionImplementationAtQueryHookResult = ReturnType<typeof useActionImplementationAtQuery>;
 export type ActionImplementationAtLazyQueryHookResult = ReturnType<typeof useActionImplementationAtLazyQuery>;
 export type ActionImplementationAtQueryResult = Apollo.QueryResult<ActionImplementationAtQuery, ActionImplementationAtQueryVariables>;
@@ -5791,13 +5791,13 @@ export const MemoryShelvesDocument = gql`
  * });
  */
 export function useMemoryShelvesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<MemoryShelvesQuery, MemoryShelvesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<MemoryShelvesQuery, MemoryShelvesQueryVariables>(MemoryShelvesDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<MemoryShelvesQuery, MemoryShelvesQueryVariables>(MemoryShelvesDocument, options);
+}
 export function useMemoryShelvesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<MemoryShelvesQuery, MemoryShelvesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<MemoryShelvesQuery, MemoryShelvesQueryVariables>(MemoryShelvesDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<MemoryShelvesQuery, MemoryShelvesQueryVariables>(MemoryShelvesDocument, options);
+}
 export type MemoryShelvesQueryHookResult = ReturnType<typeof useMemoryShelvesQuery>;
 export type MemoryShelvesLazyQueryHookResult = ReturnType<typeof useMemoryShelvesLazyQuery>;
 export type MemoryShelvesQueryResult = Apollo.QueryResult<MemoryShelvesQuery, MemoryShelvesQueryVariables>;
@@ -5826,13 +5826,13 @@ export const MemoryShelveDocument = gql`
  * });
  */
 export function useMemoryShelveQuery(baseOptions: ApolloReactHooks.QueryHookOptions<MemoryShelveQuery, MemoryShelveQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<MemoryShelveQuery, MemoryShelveQueryVariables>(MemoryShelveDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<MemoryShelveQuery, MemoryShelveQueryVariables>(MemoryShelveDocument, options);
+}
 export function useMemoryShelveLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<MemoryShelveQuery, MemoryShelveQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<MemoryShelveQuery, MemoryShelveQueryVariables>(MemoryShelveDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<MemoryShelveQuery, MemoryShelveQueryVariables>(MemoryShelveDocument, options);
+}
 export type MemoryShelveQueryHookResult = ReturnType<typeof useMemoryShelveQuery>;
 export type MemoryShelveLazyQueryHookResult = ReturnType<typeof useMemoryShelveLazyQuery>;
 export type MemoryShelveQueryResult = Apollo.QueryResult<MemoryShelveQuery, MemoryShelveQueryVariables>;
@@ -5866,13 +5866,13 @@ export const ProtocolOptionsDocument = gql`
  * });
  */
 export function useProtocolOptionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ProtocolOptionsQuery, ProtocolOptionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ProtocolOptionsQuery, ProtocolOptionsQueryVariables>(ProtocolOptionsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ProtocolOptionsQuery, ProtocolOptionsQueryVariables>(ProtocolOptionsDocument, options);
+}
 export function useProtocolOptionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ProtocolOptionsQuery, ProtocolOptionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ProtocolOptionsQuery, ProtocolOptionsQueryVariables>(ProtocolOptionsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ProtocolOptionsQuery, ProtocolOptionsQueryVariables>(ProtocolOptionsDocument, options);
+}
 export type ProtocolOptionsQueryHookResult = ReturnType<typeof useProtocolOptionsQuery>;
 export type ProtocolOptionsLazyQueryHookResult = ReturnType<typeof useProtocolOptionsLazyQuery>;
 export type ProtocolOptionsQueryResult = Apollo.QueryResult<ProtocolOptionsQuery, ProtocolOptionsQueryVariables>;
@@ -5901,13 +5901,13 @@ export const ReservationsDocument = gql`
  * });
  */
 export function useReservationsQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ReservationsQuery, ReservationsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ReservationsQuery, ReservationsQueryVariables>(ReservationsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ReservationsQuery, ReservationsQueryVariables>(ReservationsDocument, options);
+}
 export function useReservationsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ReservationsQuery, ReservationsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ReservationsQuery, ReservationsQueryVariables>(ReservationsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ReservationsQuery, ReservationsQueryVariables>(ReservationsDocument, options);
+}
 export type ReservationsQueryHookResult = ReturnType<typeof useReservationsQuery>;
 export type ReservationsLazyQueryHookResult = ReturnType<typeof useReservationsLazyQuery>;
 export type ReservationsQueryResult = Apollo.QueryResult<ReservationsQuery, ReservationsQueryVariables>;
@@ -5936,13 +5936,13 @@ export const DetailReservationDocument = gql`
  * });
  */
 export function useDetailReservationQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailReservationQuery, DetailReservationQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<DetailReservationQuery, DetailReservationQueryVariables>(DetailReservationDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<DetailReservationQuery, DetailReservationQueryVariables>(DetailReservationDocument, options);
+}
 export function useDetailReservationLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailReservationQuery, DetailReservationQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<DetailReservationQuery, DetailReservationQueryVariables>(DetailReservationDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<DetailReservationQuery, DetailReservationQueryVariables>(DetailReservationDocument, options);
+}
 export type DetailReservationQueryHookResult = ReturnType<typeof useDetailReservationQuery>;
 export type DetailReservationLazyQueryHookResult = ReturnType<typeof useDetailReservationLazyQuery>;
 export type DetailReservationQueryResult = Apollo.QueryResult<DetailReservationQuery, DetailReservationQueryVariables>;
@@ -5973,13 +5973,13 @@ export const ShortcutsDocument = gql`
  * });
  */
 export function useShortcutsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ShortcutsQuery, ShortcutsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ShortcutsQuery, ShortcutsQueryVariables>(ShortcutsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ShortcutsQuery, ShortcutsQueryVariables>(ShortcutsDocument, options);
+}
 export function useShortcutsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ShortcutsQuery, ShortcutsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ShortcutsQuery, ShortcutsQueryVariables>(ShortcutsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ShortcutsQuery, ShortcutsQueryVariables>(ShortcutsDocument, options);
+}
 export type ShortcutsQueryHookResult = ReturnType<typeof useShortcutsQuery>;
 export type ShortcutsLazyQueryHookResult = ReturnType<typeof useShortcutsLazyQuery>;
 export type ShortcutsQueryResult = Apollo.QueryResult<ShortcutsQuery, ShortcutsQueryVariables>;
@@ -6008,13 +6008,13 @@ export const ShortcutDocument = gql`
  * });
  */
 export function useShortcutQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ShortcutQuery, ShortcutQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ShortcutQuery, ShortcutQueryVariables>(ShortcutDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ShortcutQuery, ShortcutQueryVariables>(ShortcutDocument, options);
+}
 export function useShortcutLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ShortcutQuery, ShortcutQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ShortcutQuery, ShortcutQueryVariables>(ShortcutDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ShortcutQuery, ShortcutQueryVariables>(ShortcutDocument, options);
+}
 export type ShortcutQueryHookResult = ReturnType<typeof useShortcutQuery>;
 export type ShortcutLazyQueryHookResult = ReturnType<typeof useShortcutLazyQuery>;
 export type ShortcutQueryResult = Apollo.QueryResult<ShortcutQuery, ShortcutQueryVariables>;
@@ -6043,13 +6043,13 @@ export const GetStateDocument = gql`
  * });
  */
 export function useGetStateQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetStateQuery, GetStateQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetStateQuery, GetStateQueryVariables>(GetStateDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetStateQuery, GetStateQueryVariables>(GetStateDocument, options);
+}
 export function useGetStateLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStateQuery, GetStateQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetStateQuery, GetStateQueryVariables>(GetStateDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetStateQuery, GetStateQueryVariables>(GetStateDocument, options);
+}
 export type GetStateQueryHookResult = ReturnType<typeof useGetStateQuery>;
 export type GetStateLazyQueryHookResult = ReturnType<typeof useGetStateLazyQuery>;
 export type GetStateQueryResult = Apollo.QueryResult<GetStateQuery, GetStateQueryVariables>;
@@ -6080,13 +6080,13 @@ export const GetStateForDocument = gql`
  * });
  */
 export function useGetStateForQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetStateForQuery, GetStateForQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetStateForQuery, GetStateForQueryVariables>(GetStateForDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetStateForQuery, GetStateForQueryVariables>(GetStateForDocument, options);
+}
 export function useGetStateForLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStateForQuery, GetStateForQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetStateForQuery, GetStateForQueryVariables>(GetStateForDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetStateForQuery, GetStateForQueryVariables>(GetStateForDocument, options);
+}
 export type GetStateForQueryHookResult = ReturnType<typeof useGetStateForQuery>;
 export type GetStateForLazyQueryHookResult = ReturnType<typeof useGetStateForLazyQuery>;
 export type GetStateForQueryResult = Apollo.QueryResult<GetStateForQuery, GetStateForQueryVariables>;
@@ -6117,13 +6117,13 @@ export const ToolboxesDocument = gql`
  * });
  */
 export function useToolboxesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ToolboxesQuery, ToolboxesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ToolboxesQuery, ToolboxesQueryVariables>(ToolboxesDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ToolboxesQuery, ToolboxesQueryVariables>(ToolboxesDocument, options);
+}
 export function useToolboxesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ToolboxesQuery, ToolboxesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ToolboxesQuery, ToolboxesQueryVariables>(ToolboxesDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ToolboxesQuery, ToolboxesQueryVariables>(ToolboxesDocument, options);
+}
 export type ToolboxesQueryHookResult = ReturnType<typeof useToolboxesQuery>;
 export type ToolboxesLazyQueryHookResult = ReturnType<typeof useToolboxesLazyQuery>;
 export type ToolboxesQueryResult = Apollo.QueryResult<ToolboxesQuery, ToolboxesQueryVariables>;
@@ -6152,13 +6152,13 @@ export const ToolboxDocument = gql`
  * });
  */
 export function useToolboxQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ToolboxQuery, ToolboxQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ToolboxQuery, ToolboxQueryVariables>(ToolboxDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ToolboxQuery, ToolboxQueryVariables>(ToolboxDocument, options);
+}
 export function useToolboxLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ToolboxQuery, ToolboxQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ToolboxQuery, ToolboxQueryVariables>(ToolboxDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ToolboxQuery, ToolboxQueryVariables>(ToolboxDocument, options);
+}
 export type ToolboxQueryHookResult = ReturnType<typeof useToolboxQuery>;
 export type ToolboxLazyQueryHookResult = ReturnType<typeof useToolboxLazyQuery>;
 export type ToolboxQueryResult = Apollo.QueryResult<ToolboxQuery, ToolboxQueryVariables>;
@@ -6186,9 +6186,9 @@ export const WatchAgentsDocument = gql`
  * });
  */
 export function useWatchAgentsSubscription(baseOptions?: ApolloReactHooks.SubscriptionHookOptions<WatchAgentsSubscription, WatchAgentsSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<WatchAgentsSubscription, WatchAgentsSubscriptionVariables>(WatchAgentsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useSubscription<WatchAgentsSubscription, WatchAgentsSubscriptionVariables>(WatchAgentsDocument, options);
+}
 export type WatchAgentsSubscriptionHookResult = ReturnType<typeof useWatchAgentsSubscription>;
 export type WatchAgentsSubscriptionResult = Apollo.SubscriptionResult<WatchAgentsSubscription>;
 export const WatchAssignationEventsDocument = gql`
@@ -6216,9 +6216,9 @@ export const WatchAssignationEventsDocument = gql`
  * });
  */
 export function useWatchAssignationEventsSubscription(baseOptions: ApolloReactHooks.SubscriptionHookOptions<WatchAssignationEventsSubscription, WatchAssignationEventsSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<WatchAssignationEventsSubscription, WatchAssignationEventsSubscriptionVariables>(WatchAssignationEventsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useSubscription<WatchAssignationEventsSubscription, WatchAssignationEventsSubscriptionVariables>(WatchAssignationEventsDocument, options);
+}
 export type WatchAssignationEventsSubscriptionHookResult = ReturnType<typeof useWatchAssignationEventsSubscription>;
 export type WatchAssignationEventsSubscriptionResult = Apollo.SubscriptionResult<WatchAssignationEventsSubscription>;
 export const WatchAssignationsDocument = gql`
@@ -6246,9 +6246,9 @@ export const WatchAssignationsDocument = gql`
  * });
  */
 export function useWatchAssignationsSubscription(baseOptions: ApolloReactHooks.SubscriptionHookOptions<WatchAssignationsSubscription, WatchAssignationsSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<WatchAssignationsSubscription, WatchAssignationsSubscriptionVariables>(WatchAssignationsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useSubscription<WatchAssignationsSubscription, WatchAssignationsSubscriptionVariables>(WatchAssignationsDocument, options);
+}
 export type WatchAssignationsSubscriptionHookResult = ReturnType<typeof useWatchAssignationsSubscription>;
 export type WatchAssignationsSubscriptionResult = Apollo.SubscriptionResult<WatchAssignationsSubscription>;
 export const WatchReservationsDocument = gql`
@@ -6276,9 +6276,9 @@ export const WatchReservationsDocument = gql`
  * });
  */
 export function useWatchReservationsSubscription(baseOptions: ApolloReactHooks.SubscriptionHookOptions<WatchReservationsSubscription, WatchReservationsSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<WatchReservationsSubscription, WatchReservationsSubscriptionVariables>(WatchReservationsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useSubscription<WatchReservationsSubscription, WatchReservationsSubscriptionVariables>(WatchReservationsDocument, options);
+}
 export type WatchReservationsSubscriptionHookResult = ReturnType<typeof useWatchReservationsSubscription>;
 export type WatchReservationsSubscriptionResult = Apollo.SubscriptionResult<WatchReservationsSubscription>;
 export const WatchStateEventsDocument = gql`
@@ -6306,9 +6306,9 @@ export const WatchStateEventsDocument = gql`
  * });
  */
 export function useWatchStateEventsSubscription(baseOptions: ApolloReactHooks.SubscriptionHookOptions<WatchStateEventsSubscription, WatchStateEventsSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<WatchStateEventsSubscription, WatchStateEventsSubscriptionVariables>(WatchStateEventsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useSubscription<WatchStateEventsSubscription, WatchStateEventsSubscriptionVariables>(WatchStateEventsDocument, options);
+}
 export type WatchStateEventsSubscriptionHookResult = ReturnType<typeof useWatchStateEventsSubscription>;
 export type WatchStateEventsSubscriptionResult = Apollo.SubscriptionResult<WatchStateEventsSubscription>;
 export const WatchImplementationDocument = gql`
@@ -6336,9 +6336,9 @@ export const WatchImplementationDocument = gql`
  * });
  */
 export function useWatchImplementationSubscription(baseOptions: ApolloReactHooks.SubscriptionHookOptions<WatchImplementationSubscription, WatchImplementationSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<WatchImplementationSubscription, WatchImplementationSubscriptionVariables>(WatchImplementationDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useSubscription<WatchImplementationSubscription, WatchImplementationSubscriptionVariables>(WatchImplementationDocument, options);
+}
 export type WatchImplementationSubscriptionHookResult = ReturnType<typeof useWatchImplementationSubscription>;
 export type WatchImplementationSubscriptionResult = Apollo.SubscriptionResult<WatchImplementationSubscription>;
 export const WatchImplementationsDocument = gql`
@@ -6372,8 +6372,8 @@ export const WatchImplementationsDocument = gql`
  * });
  */
 export function useWatchImplementationsSubscription(baseOptions: ApolloReactHooks.SubscriptionHookOptions<WatchImplementationsSubscription, WatchImplementationsSubscriptionVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<WatchImplementationsSubscription, WatchImplementationsSubscriptionVariables>(WatchImplementationsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useSubscription<WatchImplementationsSubscription, WatchImplementationsSubscriptionVariables>(WatchImplementationsDocument, options);
+}
 export type WatchImplementationsSubscriptionHookResult = ReturnType<typeof useWatchImplementationsSubscription>;
 export type WatchImplementationsSubscriptionResult = Apollo.SubscriptionResult<WatchImplementationsSubscription>;

@@ -3,6 +3,7 @@ import Hero from "@/app/pages/Hero";
 import BlokModule from "@/blok/BlokModule";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Toaster } from "@/components/ui/toaster";
+import DokumentsModule from "@/dokuments/DokumentsModule";
 import ElektroModule from "@/elektro/ElektroModule";
 import KabinetModule from "@/kabinet/KabinetModule";
 import KraphModule from "@/kraph/KraphModule";
@@ -22,7 +23,6 @@ import { ConnectingFallback } from "./components/fallbacks/Connecting";
 import { NotConnected } from "./components/fallbacks/NotConnected";
 import { NotFound } from "./components/fallbacks/NotFound";
 import { PrivateNavigationBar } from "./components/navigation/PrivateNavigationBar";
-import DokumentsModule from "@/dokuments/DokumentsModule";
 // Entrypoint of the application.
 // We provide two main routers, one for the public routes, and one for the private routes.
 export const protect = (component: React.ReactNode) => {

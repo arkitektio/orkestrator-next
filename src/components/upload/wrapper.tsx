@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useDrop } from "react-dnd";
 import { NativeTypes } from "react-dnd-html5-backend";
 import { Card } from "../ui/card";
-import { c } from "node_modules/@udecode/plate-emoji/dist/IndexSearch-Dvqq913n";
 
 export type UploadFunc = (
   file: File,
@@ -97,11 +96,9 @@ export const UploadWrapper: React.FC<{
               key={index}
               className="border border-gray-800 cursor-pointer rounded  text-white bg-gray-900 hover:shadow-lg group relative"
               style={{
-                background: `center bottom linear-gradient(to right, rgba(0,220,0,0.75) ${
-                  future.progress && Math.floor(future.progress * 100)
-                }%, rgba(0,0,0,0.95) ${
-                  future.progress && Math.floor(future.progress * 100)
-                }% ${future.progress && Math.floor((1 - future.progress) * 100)}%)`,
+                background: `center bottom linear-gradient(to right, rgba(0,220,0,0.75) ${future.progress && Math.floor(future.progress * 100)
+                  }%, rgba(0,0,0,0.95) ${future.progress && Math.floor(future.progress * 100)
+                  }% ${future.progress && Math.floor((1 - future.progress) * 100)}%)`,
               }}
             >
               <div className="truncate p-5">
@@ -122,9 +119,8 @@ export const UploadWrapper: React.FC<{
       )}
 
       <div
-        className={`${
-          !canDrop && "hidden"
-        } w-full h-full bg-black cursor-pointer rounded text-white hover:shadow-lg flex items-center bg-opacity-50 cursor-pointer rounded text-white hover:shadow-lg flex items-center bg-opacity-50`}
+        className={`${!canDrop && "hidden"
+          } w-full h-full bg-black cursor-pointer rounded text-white hover:shadow-lg flex items-center bg-opacity-50 cursor-pointer rounded text-white hover:shadow-lg flex items-center bg-opacity-50`}
       >
         <div className="truncate p-5">
           {isOver ? "Release to upload" : "Drag and drop a file here"}

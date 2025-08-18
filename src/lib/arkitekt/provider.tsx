@@ -1,6 +1,6 @@
 import { Ward } from "@/rekuest/widgets/WidgetsContext";
 import { ApolloClient } from "@apollo/client";
-import {
+import React, {
   createContext,
   ReactNode,
   useContext,
@@ -20,7 +20,6 @@ import { flow } from "./fakts/flow";
 import { Manifest } from "./fakts/manifestSchema";
 import { TokenResponse, TokenResponseSchema } from "./fakts/tokenSchema";
 import { login } from "./oauth/login";
-import React from "react";
 
 export type AvailableService = {
   key: string;
@@ -436,13 +435,13 @@ export type ArkitektBuilderOptions = {
 
 export const buildArkitektProvider =
   (options: ArkitektBuilderOptions) =>
-  ({ children }: { children: ReactNode }) => {
-    return (
-      <ArkitektProvider
-        manifest={options.manifest}
-        serviceBuilderMap={options.serviceBuilderMap}
-      >
-        {children}
-      </ArkitektProvider>
-    );
-  };
+    ({ children }: { children: ReactNode }) => {
+      return (
+        <ArkitektProvider
+          manifest={options.manifest}
+          serviceBuilderMap={options.serviceBuilderMap}
+        >
+          {children}
+        </ArkitektProvider>
+      );
+    };

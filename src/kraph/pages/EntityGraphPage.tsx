@@ -21,13 +21,11 @@ import {
 import { SearchField, SearchFunction } from "@/components/fields/SearchField";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { KraphNode } from "@/linkers";
 import cise from "cytoscape-cise";
 import dagre from "cytoscape-dagre";
 import { useNavigate, useParams } from "react-router-dom";
 import { EntityRelationSearchField } from "../components/fields/EntityRelationSearchField";
 import { EntitySearchField } from "../components/fields/EntitySearchField";
-import { EntityOverlay } from "../overlays/EntityOverlay";
 import { EntitySidebar } from "../overlays/EntitySidebar";
 
 cytoscape.use(cola);

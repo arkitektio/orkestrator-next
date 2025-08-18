@@ -11,8 +11,7 @@ import { ElektroRecording, ElektroSimulation } from "@/linkers";
 import { cn } from "@udecode/cn";
 import React from "react";
 import {
-  useDetailRecordingQuery,
-  useDetailSimulationQuery,
+  useDetailRecordingQuery
 } from "../api/graphql";
 import { NeuronSimulationVisualizer } from "../components/NeuronSimulationRender";
 import {

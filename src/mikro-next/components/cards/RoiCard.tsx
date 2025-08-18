@@ -1,9 +1,8 @@
-import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { cn } from "@/lib/utils";
-import { MikroImage, MikroROI } from "@/linkers";
+import { MikroROI } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
-import { ListImageFragment, ListRoiFragment } from "../../api/graphql";
+import { ListRoiFragment } from "../../api/graphql";
 
 interface ImageCardProps {
   item: ListRoiFragment;
@@ -23,7 +22,7 @@ const ImageCard = ({ item, mates, className }: ImageCardProps) => {
           className,
         )}
       >
-        
+
         <div
           className="px-2 py-2 h-full w-full absolute rounded-lg rounded  top-0 left-0 bg-opacity-20  hover:bg-opacity-10 transition-all ease-in-out duration-200 flex flex-row "
           style={{

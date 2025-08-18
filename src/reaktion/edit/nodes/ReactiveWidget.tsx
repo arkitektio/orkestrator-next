@@ -215,17 +215,17 @@ export const BufferCount = ({ data, id }: ShapeProps) => {
     <>
       <Card className="rounded-md border-blue-400/40 shadow-blue-400/20 dark:border-blue-300 dark:shadow-blue/20 shadow-xl">
         <CardHeader className="p-1">
-            <CardTitle className="text-sm font-light">Buffer</CardTitle>
-            <CardDescription>
-              
-              <Button onClick={() => updateCount(data.constantsMap.count + 1)} variant={"ghost"} size={"icon"}>
-                + 
-              </Button>
-              {data.constantsMap.count}
-              <Button onClick={() => updateCount(data.constantsMap.count - 1)} variant={"ghost"} size={"icon"}>
-                -
-              </Button>
-            </CardDescription>
+          <CardTitle className="text-sm font-light">Buffer</CardTitle>
+          <CardDescription>
+
+            <Button onClick={() => updateCount(data.constantsMap.count + 1)} variant={"ghost"} size={"icon"}>
+              +
+            </Button>
+            {data.constantsMap.count}
+            <Button onClick={() => updateCount(data.constantsMap.count - 1)} variant={"ghost"} size={"icon"}>
+              -
+            </Button>
+          </CardDescription>
         </CardHeader>
       </Card>
     </>

@@ -2,15 +2,10 @@ import { ListRender } from "@/components/layout/ListRender";
 import { MikroDataset } from "@/linkers";
 
 import {
-  ClientFilter,
   LayerFilter,
   OffsetPaginationInput,
-  useAppsQuery,
-  useClientsQuery,
-  useLayersQuery,
+  useLayersQuery
 } from "@/lok-next/api/graphql";
-import ClientCard from "../cards/ClientCard";
-import AppCard from "../cards/AppCard";
 import LayerCard from "../cards/LayerCard";
 
 export type Props = {

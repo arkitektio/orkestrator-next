@@ -6,9 +6,9 @@ import { useGetFlavourQuery } from "../api/graphql";
 
 
 export default asDetailQueryRoute(
- useGetFlavourQuery,
+  useGetFlavourQuery,
   ({ data, refetch }) => {
-    
+
     return (
       <KabinetFlavour.ModelPage
         title={data?.flavour?.name}
@@ -29,7 +29,7 @@ export default asDetailQueryRoute(
             <div className="mb-3">
               <h1
                 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl cursor-pointer"
-               
+
               >
                 {data?.flavour?.name}
               </h1>
@@ -39,7 +39,7 @@ export default asDetailQueryRoute(
             </div>
             {JSON.stringify(data.flavour.selectors)}
 
-            
+
           </div>
         </div>
       </KabinetFlavour.ModelPage>

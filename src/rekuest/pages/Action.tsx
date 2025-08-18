@@ -40,8 +40,8 @@ export const DoActionForm = ({ action }: { action: DetailActionFragment }) => {
       args: data,
       hooks: [],
     }).then(
-      (v) => {},
-      (error) => {},
+      (v) => { },
+      (error) => { },
     );
   };
 

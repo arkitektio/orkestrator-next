@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { cn, withRef } from '@udecode/cn';
 import { getMentionOnSelectItem } from '@udecode/plate-mention';
@@ -17,7 +17,7 @@ import { useRoles } from '@/kraph/providers/RoleProvider';
 const onSelectItem = getMentionOnSelectItem();
 
 
-export type Option ={
+export type Option = {
   label: string;
   value: string;
 }
@@ -32,11 +32,11 @@ export const ReagentInputElement = withRef<typeof PlateElement>(
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState("");
 
-    const { roles} = useRoles();
+    const { roles } = useRoles();
 
     const searchF = async (search: string) => {
       const troles = roles.filter(role => role.label.toLowerCase().includes(search.toLowerCase()));
-      return troles 
+      return troles
     }
 
     const query = (string: string) => {

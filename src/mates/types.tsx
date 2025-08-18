@@ -18,8 +18,8 @@ export type Mate = {
   label: React.ReactNode;
   className?: (options: { isOver: boolean }) => string | string;
   description?:
-    | ((options: { self: Structure; drops: Structure[] }) => React.ReactNode)
-    | React.ReactNode;
+  | ((options: { self: Structure; drops: Structure[] }) => React.ReactNode)
+  | React.ReactNode;
 };
 
 export type MateFinder = (options: MateOptions) => Promise<Mate[] | undefined>;

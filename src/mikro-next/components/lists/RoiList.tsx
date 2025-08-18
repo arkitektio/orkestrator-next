@@ -2,8 +2,8 @@ import { ListRender } from "@/components/layout/ListRender";
 import { MikroROI } from "@/linkers";
 import {
   OffsetPaginationInput,
-  RoiFilter,
   Ordering,
+  RoiFilter,
   useGetRoIsQuery
 } from "../../api/graphql";
 import RoiCard from "../cards/RoiCard";
@@ -18,7 +18,7 @@ const List = ({ filters, pagination }: Props) => {
     variables: { filters, pagination, order: { createdAt: Ordering.Desc } },
   });
 
-  
+
 
   return (
     <ListRender

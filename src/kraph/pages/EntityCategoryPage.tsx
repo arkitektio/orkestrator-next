@@ -1,27 +1,23 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
 import { DragZone } from "@/components/upload/drag";
 import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
-  KraphEntityCategory,
-  KraphGraphQuery,
-  KraphNodeQuery,
+  KraphEntityCategory
 } from "@/linkers";
-import { useNavigate } from "react-router-dom";
 import {
   useCreateEntityMutation,
   useGetEntityCategoryQuery,
   useUpdateEntityCategoryMutation,
 } from "../api/graphql";
 import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
-import { Button } from "@/components/ui/button";
-import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
+import { StructureQueriesPlanner } from "../components/StructureQueriesPlanner";
 import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import UpdateEntityCategoryForm from "../forms/UpdateEntityCategoryForm";
-import { Card } from "@/components/ui/card";
-import { StructureQueriesPlanner } from "../components/StructureQueriesPlanner";
 
 export default asDetailQueryRoute(
   useGetEntityCategoryQuery,

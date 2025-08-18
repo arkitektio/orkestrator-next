@@ -14,9 +14,9 @@ export type GraphQLSearchFieldProps = Omit<
   }) => Promise<{ data?: { options: Option[] }; errors?: any }>;
   createMutation: (x: { variables: { input: string } }) => Promise<{
     data?:
-      | { result?: { value?: string | number } | null | undefined }
-      | null
-      | undefined;
+    | { result?: { value?: string | number } | null | undefined }
+    | null
+    | undefined;
     errors?: any;
   }>;
 };

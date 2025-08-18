@@ -1,10 +1,4 @@
 import { Action } from "@/actions/action-registry";
-import {
-  NotifyUserDocument,
-  NotifyUserMutation,
-  NotifyUserMutationVariables,
-} from "@/lok-next/api/graphql";
-import { dialog } from "electron";
 
 export const LOK_ACTIONS: Action[] = [
   {

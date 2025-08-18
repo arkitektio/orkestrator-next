@@ -1,3 +1,5 @@
+import { Card } from "@/components/ui/card";
+import { KraphProtocolStepTemplate } from "@/linkers";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -6,10 +8,8 @@ import {
   type EdgeProps,
   type ReactFlowState,
 } from "@xyflow/react";
-import { StagingMeasurementEdge, StagingRelationEdge, StepEdge } from "../types";
+import { StepEdge } from "../types";
 import { getEdgeParams } from "../utils";
-import { Card } from "@/components/ui/card";
-import { KraphProtocolStepTemplate } from "@/linkers";
 
 export type GetSpecialPathParams = {
   sourceX: number;
@@ -25,9 +25,8 @@ export const getSpecialPath = (
   const centerX = (sourceX + targetX) / 2;
   const centerY = (sourceY + targetY) / 2;
 
-  return `M ${sourceX} ${sourceY} Q ${centerX + offset} ${
-    centerY + offset
-  } ${targetX} ${targetY}`;
+  return `M ${sourceX} ${sourceY} Q ${centerX + offset} ${centerY + offset
+    } ${targetX} ${targetY}`;
 };
 
 export default ({

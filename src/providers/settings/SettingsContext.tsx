@@ -8,7 +8,7 @@ export type SettingsContextType = {
 
 export const SettingsContext = React.createContext<SettingsContextType>({
   settings: defaultSettings,
-  setSettings: () => {},
+  setSettings: () => { },
 });
 
 export const useSettings = () => useContext(SettingsContext);

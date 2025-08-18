@@ -1,14 +1,11 @@
 import { Card } from "@/components/ui/card";
 import { ListServiceInstanceMappingFragment } from "@/lok-next/api/graphql";
-import { MergeIcon } from "lucide-react";
-import React from "react";
 import {
   BaseEdge,
   EdgeLabelRenderer,
   EdgeProps,
-  getSmoothStepPath,
   getBezierPath,
-  useStore,
+  useStore
 } from "reactflow";
 
 const connectionNodeIdSelector = (state: any) => state.connectionNodeId;

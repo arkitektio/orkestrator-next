@@ -1,5 +1,3 @@
-import { ArkitektLogo } from "@/app/components/logos/ArkitektLogo";
-import { BackLogo } from "@/app/components/logos/BackLogo";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export type AppLayoutProps = {

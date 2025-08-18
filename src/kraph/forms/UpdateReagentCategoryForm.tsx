@@ -8,11 +8,9 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
   ReagentCategoryFragment,
-  UpdateEntityCategoryMutationVariables,
   UpdateReagentCategoryMutationVariables,
   useSearchTagsLazyQuery,
-  useUpdateEntityCategoryMutation,
-  useUpdateReagentCategoryMutation,
+  useUpdateReagentCategoryMutation
 } from "../api/graphql";
 
 const enumToOptions = (e: any) => {

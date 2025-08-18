@@ -1,15 +1,14 @@
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { KraphGraphQuery, KraphNodeQuery } from "@/linkers";
 import {
   BaseCategoryFragment,
-  BaseNodeCategoryFragment,
   ListGraphQueryFragment,
   ListNodeQueryFragment,
   usePinGraphQueryMutation,
-  usePinNodeQueryMutation,
+  usePinNodeQueryMutation
 } from "../api/graphql";
-import { KraphGraphQuery, KraphNodeQuery } from "@/linkers";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 
 export const StructureQueriesPlanner = ({
   category,

@@ -1,27 +1,22 @@
+import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 import { MikroHistogramView } from "@/linkers";
+import {
+  Line,
+  LineChart,
+  XAxis
+} from "recharts";
 import { MateFinder } from "../../../mates/types";
 import {
   HistogramViewFragment,
   useDeleteHistogramViewMutation,
 } from "../../api/graphql";
 import { ViewCard } from "./meta/ViewCard";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  LabelList,
-  Line,
-  LineChart,
-  XAxis,
-} from "recharts";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import { c } from "node_modules/@udecode/plate-emoji/dist/IndexSearch-Dvqq913n";
-import { Button } from "@/components/ui/button";
 
 interface Props {
   view: HistogramViewFragment;

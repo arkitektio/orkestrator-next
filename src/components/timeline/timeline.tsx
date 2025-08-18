@@ -1,5 +1,5 @@
-import * as React from "react";
 import { cn } from "@/lib/utils";
+import * as React from "react";
 
 const Timeline = React.forwardRef<
   HTMLOListElement,
@@ -117,13 +117,5 @@ const TimelineContent = React.forwardRef<
 TimelineContent.displayName = "TimelineContent";
 
 export {
-  Timeline,
-  TimelineItem,
-  TimelineConnector,
-  TimelineHeader,
-  TimelineTitle,
-  TimelineIcon,
-  TimelineDescription,
-  TimelineContent,
-  TimelineTime,
+  Timeline, TimelineConnector, TimelineContent, TimelineDescription, TimelineHeader, TimelineIcon, TimelineItem, TimelineTime, TimelineTitle
 };

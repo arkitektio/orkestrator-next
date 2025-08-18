@@ -1,27 +1,20 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { ParagraphField } from "@/components/fields/ParagraphField";
+import { ChoicesField } from "@/components/fields/ChoicesField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useFieldArray, useForm } from "react-hook-form";
 import {
-  BaseCategoryFragment,
-  BaseNodeFragment,
   ColumnKind,
-  CreateGraphQueryMutationVariables,
   CreateNodeQueryMutationVariables,
   EntityFragment,
   MetricKind,
-  useCreateGraphMutation,
-  useCreateGraphQueryMutation,
   useCreateNodeQueryMutation,
-  ViewKind,
+  ViewKind
 } from "../api/graphql";
-import { CypherEditor } from "../components/cypher/CypherEditor";
 import { CypherField } from "../components/cypher/CypherField";
-import { Card } from "@/components/ui/card";
-import { ChoicesField } from "@/components/fields/ChoicesField";
 
 export default (props: { entity: EntityFragment }) => {
   const [add] = useCreateNodeQueryMutation();

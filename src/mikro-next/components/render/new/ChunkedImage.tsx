@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { RGBDProps, viewHasher } from "../TwoDRGBRender";
-import { PassThroughProps, useImageDimensions } from "../TwoDThree";
-import { use2DViewGridProjector } from "./useViewChunks";
 import { ChunkProjection } from "zarr/types/core/types";
+import { RGBDProps, viewHasher } from "../TwoDRGBRender";
+import { PassThroughProps } from "../TwoDThree";
+import { use2DViewGridProjector } from "./useViewChunks";
 
 const useAsyncTexture = (context: ListRgbContextFragment) => {
   const [texture, setTexture] = useState<THREE.Texture | null>(null);

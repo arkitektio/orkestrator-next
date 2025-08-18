@@ -1,9 +1,8 @@
-import React, { memo } from "react";
-import { EntityNodeWidgetProps } from "@/kraph/components/renderers/graph/types";
-import { Handle, NodeProps, Position } from "reactflow";
 import { Card } from "@/components/ui/card";
-import { KraphNode, LokClient, LokLayer, LokServiceInstance } from "@/linkers";
+import { LokServiceInstance } from "@/linkers";
 import { ListServiceInstanceFragment } from "@/lok-next/api/graphql";
+import { memo } from "react";
+import { Handle, NodeProps, Position } from "reactflow";
 
 export default memo(
   ({ data, isConnectable }: NodeProps<ListServiceInstanceFragment>) => {

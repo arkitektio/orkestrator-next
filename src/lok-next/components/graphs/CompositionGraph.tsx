@@ -1,9 +1,9 @@
 import { DetailClientFragment } from "@/lok-next/api/graphql";
 import React from "react";
 import ReactFlow, { ReactFlowInstance } from "reactflow";
+import InstanceMappingEdge from "./edges/InstanceMappingEdge";
 import ClientNode from "./nodes/ClientNode";
 import ServiceInstanceNode from "./nodes/ServiceInstanceNode";
-import InstanceMappingEdge from "./edges/InstanceMappingEdge";
 
 export default ({ client }: { client: DetailClientFragment }) => {
   const reactFlowWrapper = React.useRef(null);

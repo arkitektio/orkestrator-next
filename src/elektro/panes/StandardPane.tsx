@@ -7,15 +7,15 @@ import { DroppableNavLink } from "@/components/ui/link";
 import { CubeIcon } from "@radix-ui/react-icons";
 import { Home, LineChartIcon, Network } from "lucide-react";
 import * as React from "react";
+import { RiCheckboxMultipleLine } from "react-icons/ri";
 import {
   GlobalSearchQueryVariables,
   useGlobalSearchQuery,
 } from "../api/graphql";
 import TraceCard from "../components/cards/TraceCard";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
-import { RiCheckboxMultipleLine } from "react-icons/ri";
 
-interface IDataSidebarProps {}
+interface IDataSidebarProps { }
 
 export const NavigationPane = (props: {}) => {
   return (

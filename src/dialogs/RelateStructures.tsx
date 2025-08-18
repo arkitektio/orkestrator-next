@@ -1,11 +1,10 @@
 import { Structure } from "@/actions/action-registry";
 import { useDialog } from "@/app/dialog";
 import {
-  ListStructureRelationCategoryFragment,
   ListStructureRelationCategoryWithGraphFragment,
   useCreateStructureMutation,
   useCreateStructureRelationMutation,
-  useListStructureRelationCategoryQuery,
+  useListStructureRelationCategoryQuery
 } from "@/kraph/api/graphql";
 import { toast } from "sonner";
 

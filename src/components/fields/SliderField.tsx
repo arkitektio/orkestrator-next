@@ -7,9 +7,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useFormContext } from "react-hook-form";
+import { Button } from "../ui/button";
 import { Slider } from "../ui/slider";
 import { FieldProps } from "./types";
-import { Button } from "../ui/button";
 
 function throttle<T extends (...args: any[]) => void>(
   fn: T,
@@ -66,7 +66,7 @@ export const SliderField = (
                 step={props.step}
               />
             </FormControl>
-            <Button 
+            <Button
               variant="ghost"
               size="icon"
               onClick={(e) => {

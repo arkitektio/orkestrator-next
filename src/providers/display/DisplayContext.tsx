@@ -14,7 +14,7 @@ export type DisplayContextType = {
 
 export const DisplayContext = React.createContext<DisplayContextType>({
   registry: {},
-  registerDisplay: () => () => {},
+  registerDisplay: () => () => { },
 });
 
 export const useDisplay = () => useContext(DisplayContext);

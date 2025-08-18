@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { SliderTooltip } from "@/components/ui/slider-tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,24 +8,25 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SliderTooltip } from "@/components/ui/slider-tooltip";
 import { StructureInfo } from "@/kraph/components/mini/StructureInfo";
-import * as THREE from "three";
 import {
+  Check,
+  ChevronDown,
+  Circle,
+  Edit3,
   Eye,
   EyeOff,
-  Layers,
-  Settings,
-  ChevronDown,
-  Check,
   Grid3X3,
-  Type,
-  Edit3,
-  Square,
-  Circle,
+  Layers,
+  MapPin,
   Minus,
   MoreHorizontal,
-  MapPin,
+  Settings,
+  Square,
+  Type,
 } from "lucide-react";
+import * as THREE from "three";
 
 import {
   ListRgbContextFragment,
@@ -35,6 +35,7 @@ import {
   RgbViewFragment,
   RoiKind,
 } from "@/mikro-next/api/graphql";
+import { ObjectButton, SmartContext } from "@/rekuest/buttons/ObjectButton";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas as ThreeCanvas } from "@react-three/fiber";
 import { Dispatch, SetStateAction, Suspense, useState } from "react";
@@ -44,7 +45,6 @@ import { ROIPolygon } from "./final/ROIPolygon";
 import { useArray } from "./final/useArray";
 import { BasicIndexer, IndexerProjection, Slice } from "./indexer";
 import { RoiDrawerCanvas } from "./RoiDrawer";
-import { ObjectButton, SmartContext } from "@/rekuest/buttons/ObjectButton";
 import { ViewerStateProvider, useViewerState } from "./ViewerStateProvider";
 
 // Helper function to get icon for ROI type
@@ -580,11 +580,10 @@ export const FinalRenderInner = (props: RGBDProps) => {
                   </DropdownMenuLabel>
                   <DropdownMenuItem
                     onClick={() => setShowRois(!showRois)}
-                    className={`cursor-pointer ${
-                      showRois
-                        ? "bg-blue-800 text-white"
-                        : "text-gray-300 hover:bg-gray-800"
-                    }`}
+                    className={`cursor-pointer ${showRois
+                      ? "bg-blue-800 text-white"
+                      : "text-gray-300 hover:bg-gray-800"
+                      }`}
                   >
                     {showRois ? (
                       <Eye className="w-4 h-4 mr-2" />
@@ -597,11 +596,10 @@ export const FinalRenderInner = (props: RGBDProps) => {
                   {/* ROI Drawing Controls */}
                   <DropdownMenuItem
                     onClick={() => setAllowRoiDrawing(!allowRoiDrawing)}
-                    className={`cursor-pointer ${
-                      allowRoiDrawing
-                        ? "bg-green-800 text-white"
-                        : "text-gray-300 hover:bg-gray-800"
-                    }`}
+                    className={`cursor-pointer ${allowRoiDrawing
+                      ? "bg-green-800 text-white"
+                      : "text-gray-300 hover:bg-gray-800"
+                      }`}
                   >
                     <Edit3 className="w-4 h-4 mr-2" />
                     {allowRoiDrawing
@@ -629,11 +627,10 @@ export const FinalRenderInner = (props: RGBDProps) => {
                           <DropdownMenuItem
                             key={kind}
                             onClick={() => setRoiDrawMode(kind)}
-                            className={`cursor-pointer ${
-                              roiDrawMode === kind
-                                ? "bg-green-800 text-white"
-                                : "text-gray-300 hover:bg-gray-800"
-                            }`}
+                            className={`cursor-pointer ${roiDrawMode === kind
+                              ? "bg-green-800 text-white"
+                              : "text-gray-300 hover:bg-gray-800"
+                              }`}
                           >
                             <IconComponent className="w-4 h-4 mr-2" />
                             {kind.charAt(0) + kind.slice(1).toLowerCase()}
@@ -655,22 +652,20 @@ export const FinalRenderInner = (props: RGBDProps) => {
                 </DropdownMenuLabel>
                 <DropdownMenuItem
                   onClick={() => setShowLayerEdges(!showLayerEdges)}
-                  className={`cursor-pointer ${
-                    showLayerEdges
-                      ? "bg-blue-800 text-white"
-                      : "text-gray-300 hover:bg-gray-800"
-                  }`}
+                  className={`cursor-pointer ${showLayerEdges
+                    ? "bg-blue-800 text-white"
+                    : "text-gray-300 hover:bg-gray-800"
+                    }`}
                 >
                   <Grid3X3 className="w-4 h-4 mr-2" />
                   {showLayerEdges ? "Hide Layer Edges" : "Show Layer Edges"}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => setShowDebugText(!showDebugText)}
-                  className={`cursor-pointer ${
-                    showDebugText
-                      ? "bg-blue-800 text-white"
-                      : "text-gray-300 hover:bg-gray-800"
-                  }`}
+                  className={`cursor-pointer ${showDebugText
+                    ? "bg-blue-800 text-white"
+                    : "text-gray-300 hover:bg-gray-800"
+                    }`}
                 >
                   <Type className="w-4 h-4 mr-2" />
                   {showDebugText ? "Hide Debug Text" : "Show Debug Text"}
@@ -687,11 +682,10 @@ export const FinalRenderInner = (props: RGBDProps) => {
                       <DropdownMenuItem
                         key={scale}
                         onClick={() => toggleScale(scale)}
-                        className={`cursor-pointer ${
-                          enabledScales.has(scale)
-                            ? "bg-green-800 text-white"
-                            : "text-gray-400 hover:bg-gray-800"
-                        }`}
+                        className={`cursor-pointer ${enabledScales.has(scale)
+                          ? "bg-green-800 text-white"
+                          : "text-gray-400 hover:bg-gray-800"
+                          }`}
                       >
                         <Layers className="w-3 h-3 mr-2" />
                         {scale}x

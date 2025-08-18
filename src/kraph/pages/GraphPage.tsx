@@ -7,10 +7,9 @@ import { useNavigate } from "react-router-dom";
 import { useGetGraphQuery, useUpdateGraphMutation } from "../api/graphql";
 
 import { Button } from "@/components/ui/button";
-import PopularePlotViewsCarousel from "../components/carousels/PopularePlotViewsCarousel";
+import { Card } from "@/components/ui/card";
 import OntologyGraph from "../components/designer/OntologyGraph";
 import { UpdateGraphForm } from "../forms/UpdateGraphForm";
-import { Card } from "@/components/ui/card";
 
 export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
   const nagivate = useNavigate();

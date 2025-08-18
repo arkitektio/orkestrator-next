@@ -4,11 +4,9 @@ import { LokService } from "@/linkers";
 import {
   OffsetPaginationInput,
   ServiceFilter,
-  useListServiceInstancesQuery,
-  useListServicesQuery
+  useListServiceInstancesQuery
 } from "@/lok-next/api/graphql";
 import { PlusIcon } from "lucide-react";
-import ServiceCard from "../cards/ServiceCard";
 import ServiceInstanceCard from "../cards/ServiceInstanceCard";
 
 export type Props = {

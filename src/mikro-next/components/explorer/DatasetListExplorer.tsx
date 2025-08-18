@@ -12,13 +12,11 @@ import {
 } from "@/mikro-next/api/graphql";
 import { ViewType } from "@/mikro-next/pages/DatasetPage";
 import { ArrowLeft, ArrowRight, LayoutList, ListIcon } from "lucide-react";
+import { useState } from "react";
 import DatasetCard from "../cards/DatasetCard";
 import FileCard from "../cards/FileCard";
 import ImageCard from "../cards/ImageCard";
 import { ProvenanceSidebar } from "../sidebars/ProvenanceSidebar";
-import { offset } from "@udecode/plate-floating";
-import { useState } from "react";
-import { TreeView, TreeDataItem } from "@/components/tree-view";
 export type IRepresentationScreenProps = {};
 
 export const DatasetListExplorer = (props: {

@@ -1,28 +1,23 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
 import { DragZone } from "@/components/upload/drag";
+import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import {
-  KraphGraphQuery,
-  KraphNodeQuery,
-  KraphStructureCategory,
+  KraphStructureCategory
 } from "@/linkers";
 import { useNavigate } from "react-router-dom";
 import {
   useGetStructureCategoryQuery,
   useUpdateStructureCategoryMutation,
 } from "../api/graphql";
-import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
-import { Button } from "@/components/ui/button";
-import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
-import UpdateStructureCategoryForm from "../forms/UpdateStructureCategoryForm";
-import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
-import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import { StructureQueriesPlanner } from "../components/StructureQueriesPlanner";
+import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
+import UpdateStructureCategoryForm from "../forms/UpdateStructureCategoryForm";
 
 export default asDetailQueryRoute(
   useGetStructureCategoryQuery,

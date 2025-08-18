@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2 } from "lucide-react";
 import { ListOrganizationFragment } from "@/lok-next/api/graphql";
+import { Building2 } from "lucide-react";
 
 export type OrganizationCardProps = {
   item: ListOrganizationFragment;

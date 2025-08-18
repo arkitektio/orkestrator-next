@@ -15,6 +15,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { TooltipButton } from "@/components/ui/tooltip-button";
+import { useRekuest } from "@/lib/arkitekt/Arkitekt";
 import {
   FlussPortFragment,
   GraphNodeKind,
@@ -25,11 +26,10 @@ import { nodeIdBuilder } from "@/reaktion/utils";
 import {
   ConstantActionDocument,
   ConstantActionQuery,
-  ConstantNodeQuery,
   DemandKind,
   PortKind,
   useAllActionsQuery,
-  useProtocolOptionsLazyQuery,
+  useProtocolOptionsLazyQuery
 } from "@/rekuest/api/graphql";
 import { ArrowDown, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -41,7 +41,6 @@ import {
 } from "../../types";
 import { useEditRiver } from "../context";
 import { ContextualContainer } from "./ContextualContainer";
-import { useRekuest } from "@/lib/arkitekt/Arkitekt";
 
 export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   const form = useForm({

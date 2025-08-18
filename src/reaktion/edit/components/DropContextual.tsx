@@ -1,4 +1,3 @@
-import { useRekuest } from "@/lib/arkitekt/Arkitekt";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Card } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
@@ -15,6 +14,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useRekuest } from "@/lib/arkitekt/Arkitekt";
 import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import {
   FlussPortFragment,
@@ -22,20 +22,20 @@ import {
   PortKind,
   ReactiveImplementation,
 } from "@/reaktion/api/graphql";
-import { rekuestActionToMatchingNode as rekuestActionToMatchingNode } from "@/reaktion/plugins/rekuest";
+import { rekuestActionToMatchingNode } from "@/reaktion/plugins/rekuest";
 import {
   listPortToSingle,
   nodeIdBuilder,
   streamToReadable,
 } from "@/reaktion/utils";
 import {
+  ActionScope,
   AllActionsQueryVariables,
   ConstantActionDocument,
+  ConstantActionQuery,
   DemandKind,
-  ActionScope,
   useAllActionsQuery,
   useProtocolOptionsLazyQuery,
-  ConstantActionQuery,
 } from "@/rekuest/api/graphql";
 import clsx from "clsx";
 import { ArrowDown } from "lucide-react";
@@ -204,7 +204,7 @@ const reactiveNodes = (
         kind: GraphNodeKind.Reactive,
         ins:
           params.relativePosition == "topleft" ||
-          params.relativePosition == "topright"
+            params.relativePosition == "topright"
             ? [[], ports]
             : [ports, []],
         outs: [ports],

@@ -10,7 +10,7 @@ import * as React from "react";
 import { NavLink } from "react-router-dom";
 import useReactRouterBreadcrumbs from "use-react-router-breadcrumbs";
 
-interface IBreadCrumbsProps {}
+interface IBreadCrumbsProps { }
 
 const BreadCrumbs: React.FunctionComponent<IBreadCrumbsProps> = (props) => {
   const breadcrumbs = useReactRouterBreadcrumbs();

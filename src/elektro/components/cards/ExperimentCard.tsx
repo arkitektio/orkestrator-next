@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { ElektroExperiment, ElektroSimulation } from "@/linkers";
-import { ListExperimentFragment, ListSimulationFragment } from "../../api/graphql";
+import { ElektroExperiment } from "@/linkers";
+import { ListExperimentFragment } from "../../api/graphql";
 
 
 interface Props {

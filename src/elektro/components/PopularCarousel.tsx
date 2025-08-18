@@ -6,14 +6,14 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { AlpakaRoom, ElektroTrace } from "@/linkers";
+import { ElektroTrace } from "@/linkers";
 import { useTracesQuery } from "../api/graphql";
 
 export const Test = () => {
   return <div>Hallo</div>;
 };
 
-export const PopularCarousel = ({}) => {
+export const PopularCarousel = ({ }) => {
   const { data, error, subscribeToMore, refetch } = useTracesQuery({
     variables: {},
   });

@@ -1,3 +1,5 @@
+import { Card } from "@/components/ui/card";
+import { KraphStructureRelationCategory } from "@/linkers";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -7,13 +9,9 @@ import {
   type ReactFlowState,
 } from "@xyflow/react";
 import {
-  MeasurementEdge,
-  StagingMeasurementEdge,
-  StagingRelationEdge,
+  MeasurementEdge
 } from "../types";
 import { getEdgeParams } from "../utils";
-import { Card } from "@/components/ui/card";
-import { KraphStructureRelationCategory } from "@/linkers";
 
 export type GetSpecialPathParams = {
   sourceX: number;
@@ -29,9 +27,8 @@ export const getSpecialPath = (
   const centerX = (sourceX + targetX) / 2;
   const centerY = (sourceY + targetY) / 2;
 
-  return `M ${sourceX} ${sourceY} Q ${centerX + offset} ${
-    centerY + offset
-  } ${targetX} ${targetY}`;
+  return `M ${sourceX} ${sourceY} Q ${centerX + offset} ${centerY + offset
+    } ${targetX} ${targetY}`;
 };
 
 export const TEdge = ({
@@ -71,9 +68,8 @@ export const TEdge = ({
   if (source == target) {
     const radiusX = 100;
     const radiusY = 100;
-    path = `M ${sourceX - 10} ${sourceY} A ${radiusX} ${radiusY} 0 1 0 ${
-      targetX + 5
-    } ${targetY}`;
+    path = `M ${sourceX - 10} ${sourceY} A ${radiusX} ${radiusY} 0 1 0 ${targetX + 5
+      } ${targetY}`;
 
     centerX = sourceX - radiusX * 2;
     centerY = (sourceY + targetY) / 2;

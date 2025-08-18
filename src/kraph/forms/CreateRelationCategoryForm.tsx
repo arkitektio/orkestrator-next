@@ -1,8 +1,10 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
@@ -14,8 +16,6 @@ import {
   useSearchGraphsLazyQuery,
   useSearchTagsLazyQuery
 } from "../api/graphql";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
 
 const enumToOptions = (e: any) => {
   return Object.keys(e).map((key) => ({
@@ -82,42 +82,42 @@ export const TForm = (props: { graph?: string }) => {
                 description="What describes your expression the best? (e.g. 'A person is a human being')"
               />
               <Collapsible>
-              <CollapsibleTrigger>Advanced</CollapsibleTrigger>
-              <CollapsibleContent>
-              <StringField
-                label="PURL"
-                name="purl"
-                description="What is the PURL of this expression?"
-              />
-              <div className="col-span-2 flex-col gap-1 flex">
-                <GraphQLSearchField
-                  name={`sourceDefinition.tagFilters`}
-                  label="Tag Filters"
-                  searchQuery={searchTags}
-                  description="Filters for the entity's tags."
-                />
-                <GraphQLSearchField
-                  name={`sourceDefinition.categoryFilters`}
-                  label="Category Filters"
-                  searchQuery={searchEntityCategory}
-                  description="Filters for the entity's categories."
-                />
-              </div>
-              <div className="col-span-2 flex-col gap-1 flex">
-                <GraphQLSearchField
-                  name={`targetDefinition.tagFilters`}
-                  label="Tag Filters"
-                  searchQuery={searchTags}
-                  description="Filters for the entity's tags."
-                />
-                <GraphQLSearchField
-                  name={`targetDefinition.categoryFilters`}
-                  label="Category Filters"
-                  searchQuery={searchEntityCategory}
-                  description="Filters for the entity's categories."
-                />
-              </div>
-              </CollapsibleContent>
+                <CollapsibleTrigger>Advanced</CollapsibleTrigger>
+                <CollapsibleContent>
+                  <StringField
+                    label="PURL"
+                    name="purl"
+                    description="What is the PURL of this expression?"
+                  />
+                  <div className="col-span-2 flex-col gap-1 flex">
+                    <GraphQLSearchField
+                      name={`sourceDefinition.tagFilters`}
+                      label="Tag Filters"
+                      searchQuery={searchTags}
+                      description="Filters for the entity's tags."
+                    />
+                    <GraphQLSearchField
+                      name={`sourceDefinition.categoryFilters`}
+                      label="Category Filters"
+                      searchQuery={searchEntityCategory}
+                      description="Filters for the entity's categories."
+                    />
+                  </div>
+                  <div className="col-span-2 flex-col gap-1 flex">
+                    <GraphQLSearchField
+                      name={`targetDefinition.tagFilters`}
+                      label="Tag Filters"
+                      searchQuery={searchTags}
+                      description="Filters for the entity's tags."
+                    />
+                    <GraphQLSearchField
+                      name={`targetDefinition.categoryFilters`}
+                      label="Category Filters"
+                      searchQuery={searchEntityCategory}
+                      description="Filters for the entity's categories."
+                    />
+                  </div>
+                </CollapsibleContent>
               </Collapsible>
             </div>
           </div>

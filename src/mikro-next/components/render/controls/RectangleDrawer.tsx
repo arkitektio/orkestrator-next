@@ -1,4 +1,3 @@
-import {  useThree } from '@react-three/fiber'
 import { Line } from '@react-three/drei'
 import { useRef, useState } from 'react'
 import * as THREE from 'three'
@@ -6,7 +5,7 @@ import * as THREE from 'three'
 
 
 export type RectangleDrawerProps = {
-    onRectangleDrawn?: (start: THREE.Vector3, end: THREE.Vector3) => void
+  onRectangleDrawn?: (start: THREE.Vector3, end: THREE.Vector3) => void
 }
 
 export function RectangleDrawer(props: RectangleDrawerProps) {
@@ -18,7 +17,7 @@ export function RectangleDrawer(props: RectangleDrawerProps) {
 
   const handlePointerDown = (e) => {
     if (!e.shiftKey) return // 🟡 Require Shift to start
-    
+
     e.stopPropagation()
     // Always start fresh
     setStart(e.point.clone())
@@ -74,5 +73,5 @@ export function RectangleDrawer(props: RectangleDrawerProps) {
       {/* The drawn rectangle line */}
       {points.length > 0 && <Line points={points} color="orange" lineWidth={1} />}
     </>
-    )
+  )
 }

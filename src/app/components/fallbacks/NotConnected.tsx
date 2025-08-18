@@ -1,4 +1,5 @@
 import { StringField } from "@/components/fields/StringField";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,20 +17,19 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Badge } from "@/components/ui/badge";
 import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
 import { discover } from "@/lib/arkitekt/fakts/discover";
 import { FaktsEndpoint } from "@/lib/arkitekt/fakts/endpointSchema";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  Wifi,
+  WifiOff,
+} from "lucide-react";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { useLocation } from "react-router-dom";
-import {
-  Wifi,
-  WifiOff,
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
-} from "lucide-react";
 
 export interface DiscoveryProbe {
   name: string;
@@ -220,11 +220,10 @@ export const ProbeCard = ({
   return (
     <Card
       onClick={handleClick}
-      className={`cursor-pointer transition-all duration-200 ${
-        isDisabled
-          ? "opacity-50 cursor-not-allowed"
-          : "hover:bg-accent hover:shadow-md"
-      } ${className}`}
+      className={`cursor-pointer transition-all duration-200 ${isDisabled
+        ? "opacity-50 cursor-not-allowed"
+        : "hover:bg-accent hover:shadow-md"
+        } ${className}`}
     >
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
@@ -363,29 +362,29 @@ export const PreconfiguredEndpointsWidget = () => {
       )}
 
       {discoveredResults.map((result) => (
-              <ProbeCard
-                key={result.probe.base_url}
-                probeResult={result}
-                onConnect={handleConnect}
-              />
-            ))}
-       {checkingResults.map((result) => (
-              <ProbeCard
-                key={result.probe.base_url}
-                probeResult={result}
-                onConnect={handleConnect}
-              />
-            ))}
+        <ProbeCard
+          key={result.probe.base_url}
+          probeResult={result}
+          onConnect={handleConnect}
+        />
+      ))}
+      {checkingResults.map((result) => (
+        <ProbeCard
+          key={result.probe.base_url}
+          probeResult={result}
+          onConnect={handleConnect}
+        />
+      ))}
 
 
-        {unreachableResults.map((result) => (
-              <ProbeCard
-                key={result.probe.base_url}
-                probeResult={result}
-                onConnect={handleConnect}
-                className="grayscale"
-              />
-            ))}
+      {unreachableResults.map((result) => (
+        <ProbeCard
+          key={result.probe.base_url}
+          probeResult={result}
+          onConnect={handleConnect}
+          className="grayscale"
+        />
+      ))}
     </div>
   );
 };

@@ -1,12 +1,12 @@
-import { MikroImage, MikroMesh } from "@/linkers";
-import { useDetailMeshQuery, useGetImageQuery } from "@/mikro-next/api/graphql";
+import { MikroMesh } from "@/linkers";
+import { useDetailMeshQuery } from "@/mikro-next/api/graphql";
 import { ReturnWidgetProps } from "@/rekuest/widgets/types";
 
-import { Canvas, useLoader } from "@react-three/fiber";
-import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
-import { Suspense } from "react";
-import { OrbitControls } from "@react-three/drei";
 import { useResolve } from "@/datalayer/hooks/useResolve";
+import { OrbitControls } from "@react-three/drei";
+import { Canvas, useLoader } from "@react-three/fiber";
+import { Suspense } from "react";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 
 const ThreeMeshRenderer = ({ url }: { url: string }) => {
   const obj = useLoader(OBJLoader, url);

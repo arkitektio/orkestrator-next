@@ -1,10 +1,9 @@
 import { Explainer } from "@/components/explainer/Explainer";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
-import { ElektroModelCollection, ElektroSimulation } from "@/linkers";
+import { ElektroModelCollection } from "@/linkers";
 import { UploadIcon } from "lucide-react";
 import React from "react";
-import TraceList from "../components/lists/TraceList";
 import ModelCollectionList from "../components/lists/ModelCollectionList";
 
 export type IRepresentationScreenProps = {};

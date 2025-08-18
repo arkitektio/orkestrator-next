@@ -1,11 +1,8 @@
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
-  KraphProtocolEventCategory,
-  KraphStructure,
-  KraphStructureCategory,
+  KraphStructure
 } from "@/linkers";
 import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";

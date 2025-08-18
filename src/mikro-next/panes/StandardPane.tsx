@@ -1,28 +1,25 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import { FancyInput } from "@/components/ui/fancy-input";
 import { DroppableNavLink } from "@/components/ui/link";
-import { Input } from "@/components/ui/input";
 import {
   Popover,
+  PopoverAnchor,
   PopoverContent,
   PopoverTrigger,
-  PopoverAnchor,
 } from "@/components/ui/popover";
-import { ToggleField } from "@/components/fields/ToggleField";
+import { Toggle } from "@/components/ui/toggle";
 import { CubeIcon } from "@radix-ui/react-icons";
-import { File, Folder, Home, Image } from "lucide-react";
+import { useDebounce } from "@uidotdev/usehooks";
+import { ArrowDown, File, Folder, Home, Image } from "lucide-react";
 import * as React from "react";
 import {
   GlobalSearchQueryVariables,
   useGlobalSearchQuery,
 } from "../api/graphql";
+import DatasetCard from "../components/cards/DatasetCard";
 import FileCard from "../components/cards/FileCard";
 import ImageCard from "../components/cards/ImageCard";
-import { useDebounce } from "@uidotdev/usehooks";
-import { ArrowDown } from "lucide-react";
-import { FancyInput } from "@/components/ui/fancy-input";
-import { Toggle } from "@/components/ui/toggle";
-import DatasetCard from "../components/cards/DatasetCard";
 
 export const NavigationPane = () => (
   <div className="flex-1 flex-col">

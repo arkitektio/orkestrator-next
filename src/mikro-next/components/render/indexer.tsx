@@ -33,7 +33,7 @@ export function* product<T extends Array<Iterable<unknown>>>(
   if (results.some((r) => r.done)) {
     throw new Error("Input contains an empty iterator.");
   }
-  for (let i = 0; ; ) {
+  for (let i = 0; ;) {
     if (results[i].done) {
       // reset the current iterator
       iterators[i] = iterables[i][Symbol.iterator]();
@@ -140,9 +140,9 @@ export type Projection =
   | { from: null; to: number }
   | { from: number; to: null }
   | {
-      from: Indices;
-      to: Indices;
-    };
+    from: Indices;
+    to: Indices;
+  };
 
 export type Prepare<D extends DataType, NdArray extends Chunk<D>> = (
   data: TypedArray<D>,
@@ -375,9 +375,9 @@ interface BasicIndexerProps {
 export type IndexerProjection =
   | { from: number; to: null }
   | {
-      from: Indices;
-      to: Indices;
-    };
+    from: Indices;
+    to: Indices;
+  };
 
 interface ChunkProjection {
   chunk_coords: number[];

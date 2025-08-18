@@ -15,7 +15,7 @@ export const Test = () => {
   return <div>Hallo</div>;
 };
 
-export const ThreadsCarousel = ({}) => {
+export const ThreadsCarousel = ({ }) => {
   const { data, error, subscribeToMore, refetch } = useMyMentionsQuery({});
 
   if (!data?.myMentions) {

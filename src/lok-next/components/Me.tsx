@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useMeQuery, useMyContextQuery } from "../api/graphql";
 import { useResolve } from "@/datalayer/hooks/useResolve";
+import { useMeQuery, useMyContextQuery } from "../api/graphql";
 
 export const Me = () => {
   const { data } = useMeQuery();

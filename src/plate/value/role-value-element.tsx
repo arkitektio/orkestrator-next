@@ -8,7 +8,6 @@ import { PlateElement, useElement } from "@udecode/plate-common/react";
 import { useFocused, useSelected } from "slate-react";
 
 import { useMounted } from "@/hooks/use-mounted";
-import { useRoles } from "@/kraph/providers/RoleProvider";
 import { useGetNodeQuery } from "@/kraph/api/graphql";
 import { useRoleValue } from "./ValueProvider";
 

@@ -209,7 +209,7 @@ export const ListSearchField = ({
                               }
                             }
                           }}
-                          onClick={() => {}}
+                          onClick={() => { }}
                         >
                           {option.label}
                           <CheckIcon

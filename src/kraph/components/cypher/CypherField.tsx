@@ -1,5 +1,4 @@
-import { Editor, Monaco } from "@monaco-editor/react";
-import OneDarkPro from "./theme.json";
+import { FieldProps } from "@/components/fields/types";
 import {
   FormDescription,
   FormField,
@@ -7,8 +6,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Editor, Monaco } from "@monaco-editor/react";
 import { useFormContext } from "react-hook-form";
-import { FieldProps } from "@/components/fields/types";
+import OneDarkPro from "./theme.json";
 
 export const CypherField = ({
   name,

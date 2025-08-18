@@ -1,11 +1,10 @@
 import {
   GraphQueryFragment,
-  useGetGraphQuery,
-  useGetGraphQueryQuery,
+  useGetGraphQueryQuery
 } from "@/kraph/api/graphql";
 import { PathGraph } from "./graph/PathGraph";
-import { GraphTable } from "./table/GraphTable";
 import { Pairs } from "./pairs/Pairs";
+import { GraphTable } from "./table/GraphTable";
 
 export const SelectiveGraphQueryRenderer = (props: {
   graphQuery: GraphQueryFragment;

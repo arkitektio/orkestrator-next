@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -7,13 +8,9 @@ import {
   type ReactFlowState,
 } from "@xyflow/react";
 import {
-  EntityRoleEdge,
-  ReagentRoleEdge,
-  RelationEdge,
-  StagingRelationEdge,
+  EntityRoleEdge
 } from "../types";
 import { getEdgeParams } from "../utils";
-import { Card } from "@/components/ui/card";
 
 export type GetSpecialPathParams = {
   sourceX: number;
@@ -29,9 +26,8 @@ export const getSpecialPath = (
   const centerX = (sourceX + targetX) / 2;
   const centerY = (sourceY + targetY) / 2;
 
-  return `M ${sourceX} ${sourceY} Q ${centerX} ${
-    centerY + offset
-  } ${targetX} ${targetY}`;
+  return `M ${sourceX} ${sourceY} Q ${centerX} ${centerY + offset
+    } ${targetX} ${targetY}`;
 };
 
 export default ({

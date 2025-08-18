@@ -2,16 +2,12 @@ import { ListRender } from "@/components/layout/ListRender";
 import { MikroDataset } from "@/linkers";
 
 import {
-  ClientFilter,
-  OffsetPaginationInput,
-  useClientsQuery,
-} from "@/lok-next/api/graphql";
-import ClientCard from "../cards/RoomCard";
-import {
   ProviderFilter,
-  useListProvidersQuery,
-  useRoomsQuery,
+  useListProvidersQuery
 } from "@/alpaka/api/graphql";
+import {
+  OffsetPaginationInput
+} from "@/lok-next/api/graphql";
 import ProviderCard from "../cards/ProviderCard";
 
 export type Props = {

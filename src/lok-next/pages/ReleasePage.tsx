@@ -1,16 +1,10 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
-import {
-  DetailPane,
-  DetailPaneContent,
-  DetailPaneHeader,
-  DetailPaneTitle,
-} from "@/components/ui/pane";
+import { Image } from "@/components/ui/image";
+import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokApp } from "@/linkers";
 import { useDetailReleaseQuery } from "../api/graphql";
 import ClientCard from "../components/cards/ClientCard";
-import { Image } from "@/components/ui/image";
-import { useResolve } from "@/datalayer/hooks/useResolve";
 
 export default asDetailQueryRoute(useDetailReleaseQuery, ({ data }) => {
   const resolve = useResolve();

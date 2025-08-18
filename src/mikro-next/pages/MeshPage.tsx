@@ -1,21 +1,17 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { ListRender } from "@/components/layout/ListRender";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { MikroFile, MikroImage, MikroMesh } from "@/linkers";
+import { MikroMesh } from "@/linkers";
 import {
   useDetailMeshQuery,
-  useGetFileQuery,
-  usePinStageMutation,
+  usePinStageMutation
 } from "../api/graphql";
 
-import { Canvas, useLoader } from "@react-three/fiber";
-import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
-import { Suspense } from "react";
 import { OrbitControls } from "@react-three/drei";
+import { Canvas, useLoader } from "@react-three/fiber";
+import { Suspense } from "react";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 
 const ThreeMeshRenderer = ({ url }: { url: string }) => {
   const obj = useLoader(OBJLoader, url);

@@ -8,12 +8,12 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Guard } from "@/lib/arkitekt/Arkitekt";
+import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 import {
   useCreateStructureMutation,
   useGetKnowledgeViewsQuery,
 } from "../api/graphql";
 import { SelectiveNodeViewRenderer } from "../components/renderers/NodeQueryRenderer";
-import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 
 export const ProtectedTinyStructureBox = (props: {
   identifier: string;

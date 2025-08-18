@@ -1,13 +1,13 @@
 import { Action } from "@/actions/action-registry";
 import { buildDeleteAction } from "@/actions/builders/deleteAction";
 import {
+  DeleteDatasetDocument,
   DeleteFileDocument,
   DeleteImageDocument,
+  DeleteRoiDocument,
   PutDatasetsInDatasetDocument,
   PutDatasetsInDatasetMutation,
   PutDatasetsInDatasetMutationVariables,
-  DeleteDatasetDocument,
-  DeleteRoiDocument,
 } from "@/mikro-next/api/graphql";
 
 export const MIKRO_ACTIONS: Action[] = [

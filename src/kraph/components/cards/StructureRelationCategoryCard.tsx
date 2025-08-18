@@ -3,8 +3,7 @@ import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { ListStructureRelationCategoryFragment } from "@/kraph/api/graphql";
 import {
-  KraphRelationCategory,
-  KraphStructureRelationCategory,
+  KraphStructureRelationCategory
 } from "@/linkers";
 import { MateFinder } from "@/mates/types";
 

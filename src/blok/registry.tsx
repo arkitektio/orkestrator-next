@@ -1,16 +1,16 @@
-import { MetaApplication, MetaApplicationAdds } from "@/hooks/use-metaapp";
+import { MetaApplicationAdds } from "@/hooks/use-metaapp";
+import { Camera, CameraModule } from "./modules/Camera";
+import { IlluminationModule, Illuminator } from "./modules/Illumination";
 import {
   Positioner,
   PositionerModule,
   PositionerPlaceholder,
 } from "./modules/Positioner";
-import { IlluminationModule, Illuminator } from "./modules/Illumination";
-import TurretWidget, { TurretModule } from "./modules/Turret";
 import {
   StageController,
   StageControllerModule,
 } from "./modules/StageController";
-import { Camera, CameraModule } from "./modules/Camera";
+import TurretWidget, { TurretModule } from "./modules/Turret";
 
 export type Registration = {
   name: string;

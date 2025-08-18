@@ -66,7 +66,7 @@ const elk = new ELK();
 const stressLayout = {
   "elk.algorithm": "stress",
   "org.eclipse.elk.stress.desiredEdgeLength": "200",
-  "org.eclipse.elk.stress.dimension" : "XY",
+  "org.eclipse.elk.stress.dimension": "XY",
   "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
   "elk.layered.crossingMinimization.minimize": "LAYER_SWEEP",
   "elk.layered.spacing.nodeNode": "200",

@@ -24,10 +24,10 @@ import {
 } from "@/components/ui/popover";
 import { cn, notEmpty } from "@/lib/utils";
 import { useDebounce } from "@uidotdev/usehooks";
-import { useEffect, useRef, useState } from "react";
+import { PlusIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { FieldProps } from "./types";
-import { PlusIcon } from "lucide-react";
 
 export type Option = {
   label: string;

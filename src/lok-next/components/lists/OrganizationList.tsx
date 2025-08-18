@@ -1,8 +1,8 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { 
-  OrganizationFilter, 
-  OffsetPaginationInput, 
-  useListOrganizationsQuery 
+import {
+  OffsetPaginationInput,
+  OrganizationFilter,
+  useListOrganizationsQuery
 } from "@/lok-next/api/graphql";
 import OrganizationCard from "../cards/OrganizationCard";
 

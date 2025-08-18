@@ -1,6 +1,5 @@
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { useCallback } from "react";
-import { toast } from "sonner";
 import {
   AssignInput,
   AssignationEventKind,

@@ -9,8 +9,8 @@ import {
   ReserveMutationVariables,
   useActionByHashQuery
 } from "../api/graphql";
-import { useAssign } from "./useAssign";
 import { registeredCallbacks } from "../components/functional/AssignationUpdater";
+import { useAssign } from "./useAssign";
 
 export type ActionReserveVariables = Omit<
   ReserveMutationVariables,
@@ -32,7 +32,7 @@ export const useHashActionWithProgress = (
   options: useActionOptions
 ) => {
 
-  const { data} = useActionByHashQuery({
+  const { data } = useActionByHashQuery({
     variables: {
       hash: options.hash,
     },
@@ -44,7 +44,7 @@ export const useHashActionWithProgress = (
 
   const { assign: postAssign } = useAssign();
   const { openDialog } = useDialog();
-  
+
   const doStuff = useCallback(
     (event: AssignationEventFragment) => {
       console.log("Assignation event received:", event);
@@ -67,7 +67,7 @@ export const useHashActionWithProgress = (
   );
 
   const assign = async (args: { [key: string]: any }) => {
-    
+
     let actionArgs = data?.action?.args || [];
 
     actionArgs = actionArgs.map((arg) => {
@@ -77,7 +77,7 @@ export const useHashActionWithProgress = (
       return arg;
     });
 
-  
+
     try {
       const reference = uuidv4();
 
@@ -106,7 +106,7 @@ export const useHashActionWithProgress = (
     progress,
     error,
     action: data?.action,
-    installed: data?.action != undefined, 
+    installed: data?.action != undefined,
   };
 };
 

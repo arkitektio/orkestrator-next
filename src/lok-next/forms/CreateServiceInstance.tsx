@@ -1,5 +1,4 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { ChoicesField } from "@/components/fields/ChoicesField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -7,9 +6,7 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
   CreateServiceInstanceInput,
-  CreateUserDefinedServiceInstanceMutationVariables,
-  FaktValueType,
-  useCreateServiceInstanceMutation,
+  useCreateServiceInstanceMutation
 } from "../api/graphql";
 
 export const CreateServiceInstanceForm = (props: { identifier?: string }) => {

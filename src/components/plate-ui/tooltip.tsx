@@ -40,7 +40,7 @@ export function withTooltip<
       >;
       tooltip?: React.ReactNode;
     } & React.ComponentPropsWithoutRef<T> &
-      Omit<TooltipPrimitive.TooltipProviderProps, "children">
+    Omit<TooltipPrimitive.TooltipProviderProps, "children">
   >(function ExtendComponent(
     {
       delayDuration = 0,

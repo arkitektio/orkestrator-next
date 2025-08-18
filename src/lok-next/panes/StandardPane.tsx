@@ -1,25 +1,22 @@
+import { SubTree } from "@/components/explorer/SubTree";
+import { SubTreeTitle } from "@/components/explorer/SubTreeTitle";
+import { Tree } from "@/components/explorer/Tree";
 import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
-import { Button } from "@/components/ui/button";
 import { DroppableNavLink } from "@/components/ui/link";
-import { CubeIcon, PlusIcon } from "@radix-ui/react-icons";
+import { CubeIcon } from "@radix-ui/react-icons";
 import { Group, Home, User } from "lucide-react";
 import * as React from "react";
 import { RiProfileFill } from "react-icons/ri";
 import {
   GlobalSearchQueryVariables,
-  useCreateRoomMutation,
-  useGlobalSearchQuery,
-  useRoomsQuery,
+  useGlobalSearchQuery
 } from "../api/graphql";
 import GroupCard from "../components/cards/GroupCard";
 import UserCard from "../components/cards/UserCard";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
-import { Tree } from "@/components/explorer/Tree";
-import { SubTreeTitle } from "@/components/explorer/SubTreeTitle";
-import { SubTree } from "@/components/explorer/SubTree";
 
-interface IDataSidebarProps {}
+interface IDataSidebarProps { }
 
 export const NavigationPane = (props: {}) => {
   return (

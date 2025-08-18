@@ -1,4 +1,3 @@
-import { Guard } from "@/lib/arkitekt/Arkitekt";
 import { Badge } from "@/components/ui/badge";
 import {
   Command,
@@ -7,6 +6,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Dialog } from "@/components/ui/dialog";
+import { Guard } from "@/lib/arkitekt/Arkitekt";
 import { cn } from "@/lib/utils";
 import { useDisplayComponent } from "@/providers/display/DisplayContext";
 import * as DialogPrimitive from "@radix-ui/react-dialog";

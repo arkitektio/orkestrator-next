@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -8,7 +9,6 @@ import {
 } from "@xyflow/react";
 import { StagingRelationEdge } from "../types";
 import { getEdgeParams } from "../utils";
-import { Card } from "@/components/ui/card";
 
 export type GetSpecialPathParams = {
   sourceX: number;
@@ -24,9 +24,8 @@ export const getSpecialPath = (
   const centerX = (sourceX + targetX) / 2;
   const centerY = (sourceY + targetY) / 2;
 
-  return `M ${sourceX} ${sourceY} Q ${centerX + offset} ${
-    centerY + offset
-  } ${targetX} ${targetY}`;
+  return `M ${sourceX} ${sourceY} Q ${centerX + offset} ${centerY + offset
+    } ${targetX} ${targetY}`;
 };
 
 export default ({
@@ -74,9 +73,8 @@ export default ({
   if (isSelfEdge) {
     const radiusX = (sourceX - targetX) * 0.6;
     const radiusY = 50;
-    path = `M ${sourceX - 5} ${sourceY} A ${radiusX} ${radiusY} 0 1 0 ${
-      targetX + 2
-    } ${targetY}`;
+    path = `M ${sourceX - 5} ${sourceY} A ${radiusX} ${radiusY} 0 1 0 ${targetX + 2
+      } ${targetY}`;
   } else {
     path = getSpecialPath(
       { sourceX: sx, sourceY: sy, targetX: tx, targetY: ty },

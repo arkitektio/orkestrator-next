@@ -1,6 +1,6 @@
 import { OrthographicCamera } from "@react-three/drei";
-import { context, useFrame, useThree } from "@react-three/fiber";
-import { useRef, useEffect } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
 export const AutoZoomCamera = ({

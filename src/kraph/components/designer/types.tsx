@@ -1,9 +1,8 @@
+import { Connection, Edge, Node } from "@xyflow/react";
 import React from "react";
-import { Node, Edge, Connection } from "@xyflow/react";
 
 import {
   EntityCategoryInput,
-  EntityRoleDefinition,
   EntityRoleDefinitionFragment,
   ListEntityCategoryFragment,
   ListMeasurementCategoryFragment,
@@ -15,10 +14,9 @@ import {
   ListStructureCategoryFragment,
   ListStructureRelationCategoryFragment,
   MeasurementCategoryInput,
-  ReagentRoleDefinition,
   ReagentRoleDefinitionFragment,
   RelationCategoryInput,
-  StructureCategoryInput,
+  StructureCategoryInput
 } from "@/kraph/api/graphql";
 
 export type GenericNode = Node<ListEntityCategoryFragment, "genericcategory">;

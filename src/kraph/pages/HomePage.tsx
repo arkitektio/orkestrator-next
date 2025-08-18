@@ -1,6 +1,4 @@
 import { PageLayout } from "@/components/layout/PageLayout";
-import { useBigFileUpload } from "@/datalayer/hooks/useUpload";
-import { useCreateFile } from "@/lib/mikro/hooks";
 import React from "react";
 import {
   useListPrerenderedGraphQueriesQuery

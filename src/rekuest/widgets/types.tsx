@@ -1,11 +1,10 @@
 import {
   AssignWidgetFragment,
-  EffectKind,
   PortEffectFragment,
   PortFragment,
   PortGroupFragment,
   PortKind,
-  ReturnWidgetFragment,
+  ReturnWidgetFragment
 } from "../api/graphql";
 
 export interface InputWidgetProps<
@@ -32,17 +31,17 @@ export type Port = PortFragment;
 export type MappablePort = {
   kind: PortKind;
   assignWidget?:
-    | {
-        __typename: InputWidgetTypes;
-      }
-    | null
-    | undefined;
+  | {
+    __typename: InputWidgetTypes;
+  }
+  | null
+  | undefined;
   returnWidget?:
-    | {
-        __typename: ReturnWidgetTypes;
-      }
-    | null
-    | undefined;
+  | {
+    __typename: ReturnWidgetTypes;
+  }
+  | null
+  | undefined;
 };
 
 export type InputWidgetTypes = AssignWidgetFragment["__typename"];

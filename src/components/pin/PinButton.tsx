@@ -1,4 +1,3 @@
-import { usePinGraphMutation } from "@/kraph/api/graphql";
 import { Button, ButtonProps } from "../ui/button";
 
 type Func = (arg: {

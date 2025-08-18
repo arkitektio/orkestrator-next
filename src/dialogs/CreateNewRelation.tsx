@@ -4,7 +4,7 @@ import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateab
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { ListSearchField } from "@/components/fields/ListSearchField copy";
 import { ParagraphField } from "@/components/fields/ParagraphField";
-import { SearchField, SearchOptions } from "@/components/fields/SearchField";
+import { SearchOptions } from "@/components/fields/SearchField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -12,18 +12,14 @@ import { Form } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import {
   CreateStructureRelationCategoryMutationVariables,
-  ListStructureRelationCategoryWithGraphFragment,
   useCreateInlineGraphMutation,
-  useCreateStructureCategoryMutation,
   useCreateStructureMutation,
   useCreateStructureRelationCategoryMutation,
   useCreateStructureRelationMutation,
-  useSearchEntityCategoryLazyQuery,
   useSearchGraphsLazyQuery,
   useSearchTagsLazyQuery
 } from "@/kraph/api/graphql";
 import { smartRegistry } from "@/providers/smart/registry";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -101,8 +97,8 @@ export const CreateNewRelation = (props: {
   const handleRelationCreation = async (formData: FormData) => {
     try {
 
-      
-      
+
+
       const result = await createStructureRelationCategory({
         variables: {
           input: {
@@ -171,83 +167,83 @@ export const CreateNewRelation = (props: {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleRelationCreation)} className="space-y-6">
-            
-                    <GraphQLCreatableSearchField
-                      label="Graph"
-                      name="graph"
-                      description="Select the graph for this relation"
-                      searchQuery={searchGraphs}
-                      createMutation={createGraph}
-                    />
-                    <StringField
-                      label="Label"
-                      name="label"
-                      description="Name for the relation category (e.g., 'connects to', 'part of')"
-                    />
-                    <ParagraphField
-                      label="Description"
-                      name="description"
-                      description="Describe what this relation represents"
-                    />
 
-                    <Collapsible>
-                    <CollapsibleTrigger>Advanced</CollapsibleTrigger>
-                    <CollapsibleContent>
-                    <StringField
-                      label="PURL"
-                      name="purl"
-                      description="Permanent URL identifier (optional)"
+          <GraphQLCreatableSearchField
+            label="Graph"
+            name="graph"
+            description="Select the graph for this relation"
+            searchQuery={searchGraphs}
+            createMutation={createGraph}
+          />
+          <StringField
+            label="Label"
+            name="label"
+            description="Name for the relation category (e.g., 'connects to', 'part of')"
+          />
+          <ParagraphField
+            label="Description"
+            name="description"
+            description="Describe what this relation represents"
+          />
+
+          <Collapsible>
+            <CollapsibleTrigger>Advanced</CollapsibleTrigger>
+            <CollapsibleContent>
+              <StringField
+                label="PURL"
+                name="purl"
+                description="Permanent URL identifier (optional)"
+              />
+
+              <Separator />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium mb-2">Source Definition</h4>
+                  <div className="space-y-2">
+                    <GraphQLSearchField
+                      label="Tag Filters"
+                      name="sourceDefinition.tagFilters"
+                      description="Filter source structures by tags"
+                      searchQuery={searchTags}
                     />
-                    
-                    <Separator />
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <h4 className="font-medium mb-2">Source Definition</h4>
-                        <div className="space-y-2">
-                          <GraphQLSearchField
-                            label="Tag Filters"
-                            name="sourceDefinition.tagFilters"
-                            description="Filter source structures by tags"
-                            searchQuery={searchTags}
-                          />
-                          <ListSearchField
-                            label="Indentifier Filters"
-                            name="sourceDefinition.identifierFilters"
-                            description="Filter source structures by categories"
-                            search={searchIdentifiers}
-                          />
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h4 className="font-medium mb-2">Target Definition</h4>
-                        <div className="space-y-2">
-                          <GraphQLSearchField
-                            label="Tag Filters"
-                            name="targetDefinition.tagFilters"
-                            description="Filter target structures by tags"
-                            searchQuery={searchTags}
-                          />
-                          <ListSearchField
-                            label="Indentifier Filters"
-                            name="targetDefinition.identifierFilters"
-                            description="Filter target structures by categories"
-                            search={searchIdentifiers}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    </CollapsibleContent>
-                    </Collapsible>
+                    <ListSearchField
+                      label="Indentifier Filters"
+                      name="sourceDefinition.identifierFilters"
+                      description="Filter source structures by categories"
+                      search={searchIdentifiers}
+                    />
+                  </div>
+                </div>
 
-                  <Button
-                    type="submit"
-                    variant="outline"
+                <div>
+                  <h4 className="font-medium mb-2">Target Definition</h4>
+                  <div className="space-y-2">
+                    <GraphQLSearchField
+                      label="Tag Filters"
+                      name="targetDefinition.tagFilters"
+                      description="Filter target structures by tags"
+                      searchQuery={searchTags}
+                    />
+                    <ListSearchField
+                      label="Indentifier Filters"
+                      name="targetDefinition.identifierFilters"
+                      description="Filter target structures by categories"
+                      search={searchIdentifiers}
+                    />
+                  </div>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
-                  >
-                    Create New Relation Category
-                  </Button>
+          <Button
+            type="submit"
+            variant="outline"
+
+          >
+            Create New Relation Category
+          </Button>
         </form>
       </Form>
     </div>

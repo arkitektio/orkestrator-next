@@ -1,6 +1,6 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { MikroImage } from "@/linkers";
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import {
   ImageFilter,
   OffsetPaginationInput,
@@ -11,8 +11,6 @@ import {
   WatchImagesSubscriptionVariables,
 } from "../../api/graphql";
 import ImageCard from "../cards/ImageCard";
-import { sub } from "date-fns";
-import { el } from "date-fns/locale";
 
 export type Props = {
   filters?: ImageFilter;

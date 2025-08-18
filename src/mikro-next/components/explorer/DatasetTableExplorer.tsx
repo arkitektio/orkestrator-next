@@ -41,9 +41,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { Form } from "@/components/ui/form";
 import { MikroDataset, MikroFile, MikroImage } from "@/linkers";
 import { Komments } from "@/lok-next/components/komments/Komments";
 import {
@@ -373,9 +371,9 @@ export const DatasetTableExplorer = (props: {
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                       </TableHead>
                     );
                   })}

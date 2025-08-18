@@ -26,7 +26,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
             filters={{ notDerived: true }}
           />
           <Separator className="my-4" />
-          <DatasetList pagination={{ limit: 30 }} filters={{parentless: true }} />
+          <DatasetList pagination={{ limit: 30 }} filters={{ parentless: true }} />
           <Separator className="my-4" />
           <FileList pagination={{ limit: 30 }} />
         </div>

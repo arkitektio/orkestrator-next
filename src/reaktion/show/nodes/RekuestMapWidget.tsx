@@ -20,7 +20,7 @@ import { RekuestMapNodeProps } from "@/reaktion/types";
 import { GearIcon } from "@radix-ui/react-icons";
 import React from "react";
 import { useShowRiver } from "../context";
-import { useDependency, useResolvable } from "../hooks/useDependency";
+import { useDependency } from "../hooks/useDependency";
 
 export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
   data: { ins, outs, constants, ...data },

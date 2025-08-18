@@ -1,6 +1,6 @@
-import { gql } from '@apollo/client';
-import * as Apollo from '@apollo/client';
 import * as ApolloReactHooks from '@/lib/elektro/funcs';
+import * as Apollo from '@apollo/client';
+import { gql } from '@apollo/client';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -1936,9 +1936,9 @@ export type RequestUploadMutationFn = Apollo.MutationFunction<RequestUploadMutat
  * });
  */
 export function useRequestUploadMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestUploadMutation, RequestUploadMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestUploadMutation, RequestUploadMutationVariables>(RequestUploadDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<RequestUploadMutation, RequestUploadMutationVariables>(RequestUploadDocument, options);
+}
 export type RequestUploadMutationHookResult = ReturnType<typeof useRequestUploadMutation>;
 export type RequestUploadMutationResult = Apollo.MutationResult<RequestUploadMutation>;
 export type RequestUploadMutationOptions = Apollo.BaseMutationOptions<RequestUploadMutation, RequestUploadMutationVariables>;
@@ -1970,9 +1970,9 @@ export type RequestAccessMutationFn = Apollo.MutationFunction<RequestAccessMutat
  * });
  */
 export function useRequestAccessMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestAccessMutation, RequestAccessMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<RequestAccessMutation, RequestAccessMutationVariables>(RequestAccessDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useMutation<RequestAccessMutation, RequestAccessMutationVariables>(RequestAccessDocument, options);
+}
 export type RequestAccessMutationHookResult = ReturnType<typeof useRequestAccessMutation>;
 export type RequestAccessMutationResult = Apollo.MutationResult<RequestAccessMutation>;
 export type RequestAccessMutationOptions = Apollo.BaseMutationOptions<RequestAccessMutation, RequestAccessMutationVariables>;
@@ -2001,13 +2001,13 @@ export const DetailExperimentDocument = gql`
  * });
  */
 export function useDetailExperimentQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailExperimentQuery, DetailExperimentQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<DetailExperimentQuery, DetailExperimentQueryVariables>(DetailExperimentDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<DetailExperimentQuery, DetailExperimentQueryVariables>(DetailExperimentDocument, options);
+}
 export function useDetailExperimentLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailExperimentQuery, DetailExperimentQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<DetailExperimentQuery, DetailExperimentQueryVariables>(DetailExperimentDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<DetailExperimentQuery, DetailExperimentQueryVariables>(DetailExperimentDocument, options);
+}
 export type DetailExperimentQueryHookResult = ReturnType<typeof useDetailExperimentQuery>;
 export type DetailExperimentLazyQueryHookResult = ReturnType<typeof useDetailExperimentLazyQuery>;
 export type DetailExperimentQueryResult = Apollo.QueryResult<DetailExperimentQuery, DetailExperimentQueryVariables>;
@@ -2037,13 +2037,13 @@ export const ListExperimentsDocument = gql`
  * });
  */
 export function useListExperimentsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListExperimentsQuery, ListExperimentsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListExperimentsQuery, ListExperimentsQueryVariables>(ListExperimentsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ListExperimentsQuery, ListExperimentsQueryVariables>(ListExperimentsDocument, options);
+}
 export function useListExperimentsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListExperimentsQuery, ListExperimentsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListExperimentsQuery, ListExperimentsQueryVariables>(ListExperimentsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ListExperimentsQuery, ListExperimentsQueryVariables>(ListExperimentsDocument, options);
+}
 export type ListExperimentsQueryHookResult = ReturnType<typeof useListExperimentsQuery>;
 export type ListExperimentsLazyQueryHookResult = ReturnType<typeof useListExperimentsLazyQuery>;
 export type ListExperimentsQueryResult = Apollo.QueryResult<ListExperimentsQuery, ListExperimentsQueryVariables>;
@@ -2072,13 +2072,13 @@ export const DetailModelCollectionDocument = gql`
  * });
  */
 export function useDetailModelCollectionQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailModelCollectionQuery, DetailModelCollectionQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<DetailModelCollectionQuery, DetailModelCollectionQueryVariables>(DetailModelCollectionDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<DetailModelCollectionQuery, DetailModelCollectionQueryVariables>(DetailModelCollectionDocument, options);
+}
 export function useDetailModelCollectionLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailModelCollectionQuery, DetailModelCollectionQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<DetailModelCollectionQuery, DetailModelCollectionQueryVariables>(DetailModelCollectionDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<DetailModelCollectionQuery, DetailModelCollectionQueryVariables>(DetailModelCollectionDocument, options);
+}
 export type DetailModelCollectionQueryHookResult = ReturnType<typeof useDetailModelCollectionQuery>;
 export type DetailModelCollectionLazyQueryHookResult = ReturnType<typeof useDetailModelCollectionLazyQuery>;
 export type DetailModelCollectionQueryResult = Apollo.QueryResult<DetailModelCollectionQuery, DetailModelCollectionQueryVariables>;
@@ -2108,13 +2108,13 @@ export const ListModelCollectionsDocument = gql`
  * });
  */
 export function useListModelCollectionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListModelCollectionsQuery, ListModelCollectionsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListModelCollectionsQuery, ListModelCollectionsQueryVariables>(ListModelCollectionsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ListModelCollectionsQuery, ListModelCollectionsQueryVariables>(ListModelCollectionsDocument, options);
+}
 export function useListModelCollectionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListModelCollectionsQuery, ListModelCollectionsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListModelCollectionsQuery, ListModelCollectionsQueryVariables>(ListModelCollectionsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ListModelCollectionsQuery, ListModelCollectionsQueryVariables>(ListModelCollectionsDocument, options);
+}
 export type ListModelCollectionsQueryHookResult = ReturnType<typeof useListModelCollectionsQuery>;
 export type ListModelCollectionsLazyQueryHookResult = ReturnType<typeof useListModelCollectionsLazyQuery>;
 export type ListModelCollectionsQueryResult = Apollo.QueryResult<ListModelCollectionsQuery, ListModelCollectionsQueryVariables>;
@@ -2143,13 +2143,13 @@ export const DetailNeuronModelDocument = gql`
  * });
  */
 export function useDetailNeuronModelQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailNeuronModelQuery, DetailNeuronModelQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<DetailNeuronModelQuery, DetailNeuronModelQueryVariables>(DetailNeuronModelDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<DetailNeuronModelQuery, DetailNeuronModelQueryVariables>(DetailNeuronModelDocument, options);
+}
 export function useDetailNeuronModelLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailNeuronModelQuery, DetailNeuronModelQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<DetailNeuronModelQuery, DetailNeuronModelQueryVariables>(DetailNeuronModelDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<DetailNeuronModelQuery, DetailNeuronModelQueryVariables>(DetailNeuronModelDocument, options);
+}
 export type DetailNeuronModelQueryHookResult = ReturnType<typeof useDetailNeuronModelQuery>;
 export type DetailNeuronModelLazyQueryHookResult = ReturnType<typeof useDetailNeuronModelLazyQuery>;
 export type DetailNeuronModelQueryResult = Apollo.QueryResult<DetailNeuronModelQuery, DetailNeuronModelQueryVariables>;
@@ -2177,13 +2177,13 @@ export const ListNeuronModelsDocument = gql`
  * });
  */
 export function useListNeuronModelsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListNeuronModelsQuery, ListNeuronModelsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListNeuronModelsQuery, ListNeuronModelsQueryVariables>(ListNeuronModelsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ListNeuronModelsQuery, ListNeuronModelsQueryVariables>(ListNeuronModelsDocument, options);
+}
 export function useListNeuronModelsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListNeuronModelsQuery, ListNeuronModelsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListNeuronModelsQuery, ListNeuronModelsQueryVariables>(ListNeuronModelsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ListNeuronModelsQuery, ListNeuronModelsQueryVariables>(ListNeuronModelsDocument, options);
+}
 export type ListNeuronModelsQueryHookResult = ReturnType<typeof useListNeuronModelsQuery>;
 export type ListNeuronModelsLazyQueryHookResult = ReturnType<typeof useListNeuronModelsLazyQuery>;
 export type ListNeuronModelsQueryResult = Apollo.QueryResult<ListNeuronModelsQuery, ListNeuronModelsQueryVariables>;
@@ -2212,13 +2212,13 @@ export const DetailRecordingDocument = gql`
  * });
  */
 export function useDetailRecordingQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailRecordingQuery, DetailRecordingQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<DetailRecordingQuery, DetailRecordingQueryVariables>(DetailRecordingDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<DetailRecordingQuery, DetailRecordingQueryVariables>(DetailRecordingDocument, options);
+}
 export function useDetailRecordingLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailRecordingQuery, DetailRecordingQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<DetailRecordingQuery, DetailRecordingQueryVariables>(DetailRecordingDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<DetailRecordingQuery, DetailRecordingQueryVariables>(DetailRecordingDocument, options);
+}
 export type DetailRecordingQueryHookResult = ReturnType<typeof useDetailRecordingQuery>;
 export type DetailRecordingLazyQueryHookResult = ReturnType<typeof useDetailRecordingLazyQuery>;
 export type DetailRecordingQueryResult = Apollo.QueryResult<DetailRecordingQuery, DetailRecordingQueryVariables>;
@@ -2248,13 +2248,13 @@ export const ListRecordingsDocument = gql`
  * });
  */
 export function useListRecordingsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListRecordingsQuery, ListRecordingsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListRecordingsQuery, ListRecordingsQueryVariables>(ListRecordingsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ListRecordingsQuery, ListRecordingsQueryVariables>(ListRecordingsDocument, options);
+}
 export function useListRecordingsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListRecordingsQuery, ListRecordingsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListRecordingsQuery, ListRecordingsQueryVariables>(ListRecordingsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ListRecordingsQuery, ListRecordingsQueryVariables>(ListRecordingsDocument, options);
+}
 export type ListRecordingsQueryHookResult = ReturnType<typeof useListRecordingsQuery>;
 export type ListRecordingsLazyQueryHookResult = ReturnType<typeof useListRecordingsLazyQuery>;
 export type ListRecordingsQueryResult = Apollo.QueryResult<ListRecordingsQuery, ListRecordingsQueryVariables>;
@@ -2284,13 +2284,13 @@ export const GlobalSearchDocument = gql`
  * });
  */
 export function useGlobalSearchQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
+}
 export function useGlobalSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
+}
 export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>;
 export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>;
 export type GlobalSearchQueryResult = Apollo.QueryResult<GlobalSearchQuery, GlobalSearchQueryVariables>;
@@ -2319,13 +2319,13 @@ export const DetailSimulationDocument = gql`
  * });
  */
 export function useDetailSimulationQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailSimulationQuery, DetailSimulationQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<DetailSimulationQuery, DetailSimulationQueryVariables>(DetailSimulationDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<DetailSimulationQuery, DetailSimulationQueryVariables>(DetailSimulationDocument, options);
+}
 export function useDetailSimulationLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailSimulationQuery, DetailSimulationQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<DetailSimulationQuery, DetailSimulationQueryVariables>(DetailSimulationDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<DetailSimulationQuery, DetailSimulationQueryVariables>(DetailSimulationDocument, options);
+}
 export type DetailSimulationQueryHookResult = ReturnType<typeof useDetailSimulationQuery>;
 export type DetailSimulationLazyQueryHookResult = ReturnType<typeof useDetailSimulationLazyQuery>;
 export type DetailSimulationQueryResult = Apollo.QueryResult<DetailSimulationQuery, DetailSimulationQueryVariables>;
@@ -2353,13 +2353,13 @@ export const ListSimulationsDocument = gql`
  * });
  */
 export function useListSimulationsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListSimulationsQuery, ListSimulationsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListSimulationsQuery, ListSimulationsQueryVariables>(ListSimulationsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ListSimulationsQuery, ListSimulationsQueryVariables>(ListSimulationsDocument, options);
+}
 export function useListSimulationsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListSimulationsQuery, ListSimulationsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListSimulationsQuery, ListSimulationsQueryVariables>(ListSimulationsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ListSimulationsQuery, ListSimulationsQueryVariables>(ListSimulationsDocument, options);
+}
 export type ListSimulationsQueryHookResult = ReturnType<typeof useListSimulationsQuery>;
 export type ListSimulationsLazyQueryHookResult = ReturnType<typeof useListSimulationsLazyQuery>;
 export type ListSimulationsQueryResult = Apollo.QueryResult<ListSimulationsQuery, ListSimulationsQueryVariables>;
@@ -2388,13 +2388,13 @@ export const DetailStimulusDocument = gql`
  * });
  */
 export function useDetailStimulusQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailStimulusQuery, DetailStimulusQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<DetailStimulusQuery, DetailStimulusQueryVariables>(DetailStimulusDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<DetailStimulusQuery, DetailStimulusQueryVariables>(DetailStimulusDocument, options);
+}
 export function useDetailStimulusLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailStimulusQuery, DetailStimulusQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<DetailStimulusQuery, DetailStimulusQueryVariables>(DetailStimulusDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<DetailStimulusQuery, DetailStimulusQueryVariables>(DetailStimulusDocument, options);
+}
 export type DetailStimulusQueryHookResult = ReturnType<typeof useDetailStimulusQuery>;
 export type DetailStimulusLazyQueryHookResult = ReturnType<typeof useDetailStimulusLazyQuery>;
 export type DetailStimulusQueryResult = Apollo.QueryResult<DetailStimulusQuery, DetailStimulusQueryVariables>;
@@ -2424,13 +2424,13 @@ export const ListStimuliDocument = gql`
  * });
  */
 export function useListStimuliQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListStimuliQuery, ListStimuliQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListStimuliQuery, ListStimuliQueryVariables>(ListStimuliDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ListStimuliQuery, ListStimuliQueryVariables>(ListStimuliDocument, options);
+}
 export function useListStimuliLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListStimuliQuery, ListStimuliQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListStimuliQuery, ListStimuliQueryVariables>(ListStimuliDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ListStimuliQuery, ListStimuliQueryVariables>(ListStimuliDocument, options);
+}
 export type ListStimuliQueryHookResult = ReturnType<typeof useListStimuliQuery>;
 export type ListStimuliLazyQueryHookResult = ReturnType<typeof useListStimuliLazyQuery>;
 export type ListStimuliQueryResult = Apollo.QueryResult<ListStimuliQuery, ListStimuliQueryVariables>;
@@ -2459,13 +2459,13 @@ export const DetailTraceDocument = gql`
  * });
  */
 export function useDetailTraceQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailTraceQuery, DetailTraceQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<DetailTraceQuery, DetailTraceQueryVariables>(DetailTraceDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<DetailTraceQuery, DetailTraceQueryVariables>(DetailTraceDocument, options);
+}
 export function useDetailTraceLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailTraceQuery, DetailTraceQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<DetailTraceQuery, DetailTraceQueryVariables>(DetailTraceDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<DetailTraceQuery, DetailTraceQueryVariables>(DetailTraceDocument, options);
+}
 export type DetailTraceQueryHookResult = ReturnType<typeof useDetailTraceQuery>;
 export type DetailTraceLazyQueryHookResult = ReturnType<typeof useDetailTraceLazyQuery>;
 export type DetailTraceQueryResult = Apollo.QueryResult<DetailTraceQuery, DetailTraceQueryVariables>;
@@ -2493,13 +2493,13 @@ export const TracesDocument = gql`
  * });
  */
 export function useTracesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<TracesQuery, TracesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<TracesQuery, TracesQueryVariables>(TracesDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<TracesQuery, TracesQueryVariables>(TracesDocument, options);
+}
 export function useTracesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<TracesQuery, TracesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<TracesQuery, TracesQueryVariables>(TracesDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<TracesQuery, TracesQueryVariables>(TracesDocument, options);
+}
 export type TracesQueryHookResult = ReturnType<typeof useTracesQuery>;
 export type TracesLazyQueryHookResult = ReturnType<typeof useTracesLazyQuery>;
 export type TracesQueryResult = Apollo.QueryResult<TracesQuery, TracesQueryVariables>;

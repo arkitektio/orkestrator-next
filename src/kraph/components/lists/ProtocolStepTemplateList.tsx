@@ -1,12 +1,10 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { MikroDataset, KraphProtocolStepTemplate } from "@/linkers";
+import { KraphProtocolStepTemplate } from "@/linkers";
 import {
   OffsetPaginationInput,
   ProtocolStepFilter,
-  useListProtocolStepsQuery,
-  useListProtocolStepTemplatesQuery,
+  useListProtocolStepTemplatesQuery
 } from "../../api/graphql";
-import ProtocolStepCard from "../cards/ProtocolStepCard";
 import ProtocolStepTemplateCard from "../cards/ProtocolStepTemplateCard";
 
 export type Props = {

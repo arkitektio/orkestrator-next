@@ -1,28 +1,22 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
-import { ListRender } from "@/components/layout/ListRender";
-import { Badge } from "@/components/ui/badge";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Editor } from "@/components/plate-ui/editor";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import {
   KraphEntity,
   KraphProtocolEvent,
-  KraphProtocolEventCategory,
-  KraphReagent,
+  KraphProtocolEventCategory
 } from "@/linkers";
+import { RoleValueProvider } from "@/plate/value/ValueProvider";
+import { valueEditor } from "@/plate/valueEditor";
+import { notEmpty } from "@/reaktion/utils";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
-import { ProtocolEventCategoryFragment, ProtocolEventFragment, useGetEntityQuery, useGetProtocolEventQuery } from "../api/graphql";
+import { Plate, usePlateEditor } from "@udecode/plate-common/react";
+import { ProtocolEventFragment, useGetProtocolEventQuery } from "../api/graphql";
 import { SelectiveNodeViewRenderer } from "../components/renderers/NodeQueryRenderer";
 import CreateNodeQueryForm from "../forms/CreateNodeQueryForm";
-import LoadingCreateProtocolEventForm from "../forms/LoadingCreateProtocolEventForm";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { Plate, usePlateEditor } from "@udecode/plate-common/react";
-import { Editor } from "@/components/plate-ui/editor";
-import { valueEditor } from "@/plate/valueEditor";
-import ProtocolEventCategoryPage from "./ProtocolEventCategoryPage";
-import { RoleValueProvider } from "@/plate/value/ValueProvider";
-import { notEmpty } from "@/reaktion/utils";
 
 export function PlateEditor({
   protocolEvent,
@@ -67,9 +61,9 @@ export function PlateEditor({
 
   return (
     <RoleValueProvider values={roleValues}>
-    <Plate editor={plateEditor}>
+      <Plate editor={plateEditor}>
 
-      <Editor />
+        <Editor />
       </Plate>
     </RoleValueProvider>
 
@@ -114,16 +108,16 @@ export default asDetailQueryRoute(
             <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
               {data.protocolEvent.category.label}
             </h1>
-            
+
 
 
             <p className="mt-3 text-xl text-muted-foreground"></p>
             <p className="mt-3 text-xl text-muted-foreground">
-              <KraphProtocolEventCategory.DetailLink object={data.protocolEvent.category.id}>{data.protocolEvent.category.label}</KraphProtocolEventCategory.DetailLink> 
+              <KraphProtocolEventCategory.DetailLink object={data.protocolEvent.category.id}>{data.protocolEvent.category.label}</KraphProtocolEventCategory.DetailLink>
             </p>
           </div>
           <div className="flex flex-col gap-2">
-          <PlateEditor protocolEvent={data.protocolEvent} />
+            <PlateEditor protocolEvent={data.protocolEvent} />
           </div>
         </KraphEntity.Drop>
 
@@ -144,7 +138,7 @@ export default asDetailQueryRoute(
             </div>
           )}
 
-         
+
 
 
         </div>

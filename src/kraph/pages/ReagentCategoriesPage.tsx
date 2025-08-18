@@ -5,9 +5,8 @@ import { KraphGraph } from "@/linkers";
 import { PlusIcon } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import GraphList from "../components/lists/GraphList";
-import CreateGraphForm from "../forms/CreateGraphForm";
 import ReagentCategoryList from "../components/lists/ReagentCategoryList";
+import CreateGraphForm from "../forms/CreateGraphForm";
 
 export type IRepresentationScreenProps = {};
 

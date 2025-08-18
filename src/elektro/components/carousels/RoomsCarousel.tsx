@@ -1,3 +1,4 @@
+import { useRoomsQuery } from "@/alpaka/api/graphql";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Carousel,
@@ -7,15 +8,13 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { LokComment } from "@/linkers";
-import { useMyMentionsQuery } from "@/lok-next/api/graphql";
-import { useRoomsQuery } from "@/alpaka/api/graphql";
 import { Username } from "@/lok-next/components/Me";
 
 export const Test = () => {
   return <div>Hallo</div>;
 };
 
-export default ({}) => {
+export default ({ }) => {
   const { data, error, subscribeToMore, refetch } = useRoomsQuery({});
 
   if (!data?.rooms) {

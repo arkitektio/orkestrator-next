@@ -1,7 +1,6 @@
 import { FlowFragment } from "@/reaktion/api/graphql";
-import React, { useContext } from "react";
-import { ValidationResult } from "../validation/types";
 import { DetailImplementationFragment } from "@/rekuest/api/graphql";
+import React, { useContext } from "react";
 
 export type ShowRiverContextType = {
   flow?: FlowFragment | null;

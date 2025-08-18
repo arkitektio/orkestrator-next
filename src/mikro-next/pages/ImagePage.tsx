@@ -2,6 +2,7 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
 import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Button } from "@/components/plate-ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import {
@@ -10,6 +11,7 @@ import {
   DetailPaneHeader,
   DetailPaneTitle,
 } from "@/components/ui/pane";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { MikroImage } from "@/linkers";
 import { UserInfo } from "@/lok-next/components/protected/UserInfo";
@@ -32,9 +34,10 @@ import ChannelViewCard from "../components/cards/ChannelViewCard";
 import DerivedViewCard from "../components/cards/DerivedViewCard";
 import FileViewCard from "../components/cards/FileViewCard";
 import HistogramViewCard from "../components/cards/HistogramViewCard";
+import InstanceMaskViewCard from "../components/cards/InstanceMaskViewCard";
 import LabelViewCard from "../components/cards/LabelViewCard";
+import MaskViewCard from "../components/cards/MaskViewCard";
 import OpticsViewCard from "../components/cards/OpticsViewCard";
-import PixelViewCard from "../components/cards/PixelViewCard";
 import RGBViewCard from "../components/cards/RGBViewCard";
 import ROIViewCard from "../components/cards/ROIViewCard";
 import TransformationViewCard from "../components/cards/TransformationViewCard";
@@ -44,11 +47,6 @@ import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { PinToggle } from "../components/ui/PinToggle";
 import { AddImageViewForm } from "../forms/AddImageViewForm";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
-import InstanceMaskViewCard from "../components/cards/InstanceMaskViewCard";
-import MaskViewCard from "../components/cards/MaskViewCard";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/plate-ui/button";
-import { IconsManifest } from "react-icons/lib";
 
 export type IRepresentationScreenProps = {};
 
@@ -157,15 +155,15 @@ export default asDetailQueryRoute(
           <div className="flex flex-row gap-2 ml-2">
             <MikroImage.ObjectButton object={data?.image?.id} />
             {data.image.renders && data.image.renders.length > 0 && (
-                  <Popover>
-                    <PopoverTrigger>
-                      <Button variant="outline" className="w-full">
-                        <DownloadIcon className="mr-2" />
-                        Renders
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent>
-                      <div className="p-3 flex flex-col gap-2">
+              <Popover>
+                <PopoverTrigger>
+                  <Button variant="outline" className="w-full">
+                    <DownloadIcon className="mr-2" />
+                    Renders
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent>
+                  <div className="p-3 flex flex-col gap-2">
                     {data.image.renders.map((render) => (
                       <Card className="p-2 truncate" key={render.id}>
                         {render.__typename == "Snapshot" && (
@@ -181,10 +179,10 @@ export default asDetailQueryRoute(
                       </Card>
                     ))}
                   </div>
-                    </PopoverContent>
-                  </Popover>
-                  
-                )}
+                </PopoverContent>
+              </Popover>
+
+            )}
           </div>
         }
         variant="black"
@@ -379,7 +377,7 @@ export default asDetailQueryRoute(
                       </div>
                     </>
                   )}
-                
+
                 </DetailPaneContent>
               </DetailPane>
             </div>

@@ -21,10 +21,12 @@ import StructureNode from "./nodes/StructureNode";
 import ThisNode from "./nodes/ThisNode";
 import { PathEdge, PathNode } from "./types";
 import { entityNodesToNodes, entityRelationToEdges } from "./utils";
+import { ViewOptions } from "../DelegatingNodeViewRenderer";
 
 export type Props = {
   path: PathFragment;
   root?: string;
+  options?: ViewOptions;
 };
 
 const pathNodeTypes = {
@@ -76,7 +78,7 @@ const stressLayout = {
   "elk.layered.nodePlacement.bk.fixedAlignment": "LEFT",
 }
 
-export const PathGraph: React.FC<Props> = ({ path, root }) => {
+export const PathGraph: React.FC<Props> = ({ path, root, options }) => {
   const reactFlowWrapper = React.useRef<HTMLDivElement | null>(null);
   const [reactFlowInstance, setReactFlowInstance] =
     React.useState<ReactFlowInstance<PathNode, PathEdge> | null>(null);

@@ -4,6 +4,7 @@ import {
 } from "@/kraph/api/graphql";
 import { PathGraph } from "./graph/PathGraph";
 import { GraphTable } from "./table/GraphTable";
+import { ViewOptions } from "./DelegatingNodeViewRenderer";
 
 export const PathRenderer = (props: { path: PathFragment }) => {
   return (
@@ -17,6 +18,7 @@ export const PathRenderer = (props: { path: PathFragment }) => {
 
 export const SelectiveNodeViewRenderer = (props: {
   view: NodeQueryViewFragment;
+  options?: ViewOptions;
 }) => {
   if (props.view.render.__typename === "Pairs") {
     return <div>Pair Rendering</div>;
@@ -27,7 +29,7 @@ export const SelectiveNodeViewRenderer = (props: {
   }
 
   if (props.view.render.__typename === "Table") {
-    return <GraphTable table={props.view.render} />;
+    return <GraphTable table={props.view.render} options={props.options} />;
   }
 
   return <div>Unknown Type</div>;

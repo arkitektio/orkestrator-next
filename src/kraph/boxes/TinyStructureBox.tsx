@@ -41,7 +41,7 @@ export const ProtectedTinyStructureBox = (props: {
               {view.structure ? (
                 <div className="h-64">
                   {view.structure?.bestView ? (
-                    <SelectiveNodeViewRenderer view={view.structure.bestView} />
+                    <SelectiveNodeViewRenderer view={view.structure.bestView} options={{ minimal: true }} />
                   ) : (
                     "No view available"
                   )}

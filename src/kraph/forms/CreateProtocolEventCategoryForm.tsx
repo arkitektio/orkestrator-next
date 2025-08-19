@@ -23,6 +23,7 @@ import {
   useSearchTagsLazyQuery
 } from "../api/graphql";
 import { RoleProvider } from "../providers/RoleProvider";
+import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 
 const initialValue = [
   {
@@ -192,6 +193,12 @@ export const TForm = (props: { graph?: string }) => {
                                   label="Description"
                                   description="What describes this role the best"
                                 />
+                                <GraphQLSearchField
+                                  name={`sourceEntityRoles.${index}.createCategory`}
+                                  label="Create Category"
+                                  searchQuery={searchEntityCategory}
+                                  description="If the user is selecting create Category, which category should be used"
+                                />
 
                                 <Button
                                   type="button"
@@ -259,6 +266,12 @@ export const TForm = (props: { graph?: string }) => {
                                   name={`targetEntityRoles.${index}.description`}
                                   label="Description"
                                   description="What describes this role the best"
+                                />
+                                <GraphQLSearchField
+                                  name={`targetEntityRoles.${index}.createCategory`}
+                                  label="Create Category"
+                                  searchQuery={searchEntityCategory}
+                                  description="If the user is selecting create Category, which category should be used"
                                 />
 
                                 <Button

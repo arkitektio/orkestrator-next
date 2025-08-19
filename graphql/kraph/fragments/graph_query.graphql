@@ -23,4 +23,5 @@ fragment ListGraphQuery on GraphQuery {
   query
   description
   pinned
+  kind
 }

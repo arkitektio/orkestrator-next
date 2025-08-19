@@ -92,16 +92,17 @@ export const TEdge = ({
         <Card
           style={{
             position: "absolute",
-            transform: `translate(-50%, -50%) translate(${centerX}px,${centerY + offset}px) `,
+            transform: `translate(-50%, -50%) translate(${centerX}px,${centerY}px) `,
           }}
-          className="p-3 text-xs group z-10"
+          className="p-3 text-xs group z-10 nodrag nopan"
         >
-          <KraphStructureRelationCategory.DetailLink
-            object={id}
-            className={"font-bold"}
+          {data?.id && <KraphStructureRelationCategory.DetailLink
+            object={data?.id}
+            style={{ pointerEvents: 'all' }}
+            className={"font-bold cursor-pointer "}
           >
             {data?.label}
-          </KraphStructureRelationCategory.DetailLink>
+          </KraphStructureRelationCategory.DetailLink>}
         </Card>
       </EdgeLabelRenderer>
     </>

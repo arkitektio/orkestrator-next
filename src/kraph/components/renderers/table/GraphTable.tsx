@@ -83,9 +83,8 @@ export const GraphTable = (props: { table?: TableFragment }) => {
       <div className="flex items-center py-4 gap-2">
         <Input
           placeholder="Search..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
+            table.setGlobalFilter(event.target.value)
           }
           className="max-w-sm w-full bg-background"
         />

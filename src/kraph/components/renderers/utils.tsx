@@ -68,6 +68,14 @@ const columnToDef = (
         cell: ({ row, getValue }) => {
           const label = row.getValue(column.name) as string;
 
+          if (!label) {
+            return (
+              <div className="text-center font-medium">
+                No Date
+              </div>
+            );
+          }
+
           return (
             <div className="text-center font-medium">
               <Timestamp date={label.replaceAll('"', "")} relative />
@@ -140,4 +148,120 @@ export const calculateRows = (table: TableFragment | undefined) => {
     ),
   );
   return rowObjects;
+};
+
+
+export const buildCypherSchemaFromGraph = (graph: GraphFragment): CypherSchema => {
+  const schema: CypherSchema = { nodes: {}, relationships: {} };
+
+  // Build the schema from the graph data
+  graph.entityCategories.forEach((node) => {
+    schema.nodes[node.ageName] = {
+      type: node.__typename || "Unknown",
+      label: node.label,
+      description: node.description || "No Description",
+      properties: {
+        created_at: { description: "Creation timestamp" },
+        category_id: { description: "ID linking to the category group" },
+      },
+    };
+  });
+
+  graph.structureCategories.forEach((node) => {
+    schema.nodes[node.ageName] = {
+      type: node.__typename || "Unknown",
+      label: node.identifier,
+      description: node.description || "No Description",
+      properties: {
+        identifier: { description: "Unique identifier" },
+        object: { description: "The object being described as an ID" },
+        created_at: { description: "Creation timestamp" },
+        category_id: { description: "ID linking to the category group" },
+      },
+    };
+  });
+
+  graph.naturalEventCategories.forEach((node) => {
+    schema.nodes[node.ageName] = {
+      type: node.__typename || "Unknown",
+      label: node.label,
+      description: node.description || "No Description",
+      properties: {
+        created_at: { description: "Creation timestamp" },
+        category_id: { description: "ID linking to the category group" },
+      },
+    };
+  });
+
+  graph.metricCategories.forEach((node) => {
+    schema.nodes[node.ageName] = {
+      type: node.__typename || "Unknown",
+      label: node.label,
+      description: node.description || "No Description",
+      properties: {
+        created_at: { description: "Creation timestamp" },
+        category_id: { description: "ID linking to the category group" },
+      },
+    };
+  });
+
+  graph.protocolEventCategories.forEach((node) => {
+    schema.nodes[node.ageName] = {
+      type: node.__typename || "Unknown",
+      label: node.label,
+      description: node.description || "No Description",
+      properties: {
+        created_at: { description: "Creation timestamp" },
+        category_id: { description: "ID linking to the category group" },
+      },
+    };
+  });
+
+  graph.relationCategories.forEach((relation) => {
+    schema.relationships[relation.ageName] = {
+      type: relation.__typename || "Unknown",
+      label: relation.label,
+      description: relation.description || "No Description",
+      properties: {
+        created_at: { description: "Creation timestamp" },
+        category_id: { description: "ID linking to the category group" },
+      },
+    };
+  });
+
+
+  graph.structureRelationCategories.forEach((relation) => {
+    schema.relationships[relation.ageName] = {
+      type: relation.__typename || "Unknown",
+      label: relation.label,
+      description: relation.description || "No Description",
+      properties: {
+        created_at: { description: "Creation timestamp" },
+        category_id: { description: "ID linking to the category group" },
+      },
+    };
+  });
+
+  graph.measurementCategories.forEach((relation) => {
+    schema.relationships[relation.ageName] = {
+      type: relation.__typename || "Unknown",
+      label: relation.label,
+      description: relation.description || "No Description",
+      properties: {
+        created_at: { description: "Creation timestamp" },
+        category_id: { description: "ID linking to the category group" },
+      },
+    };
+  });
+
+  schema.relationships["DESCRIBES"] = {
+    type: "Unknown",
+    label: "Describes",
+    description: "A description edge",
+    properties: {
+      hallo: { description: "A description" },
+    },
+  };
+
+  return schema;
 };

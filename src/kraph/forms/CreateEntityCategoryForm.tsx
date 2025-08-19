@@ -23,7 +23,8 @@ const enumToOptions = (e: any) => {
 
 export default (props: Partial<CreateEntityCategoryMutationVariables["input"]>) => {
   const [add] = useCreateEntityCategoryMutation({
-    refetchQueries: [ListEntitiesDocument, GetGraphDocument],
+    refetchQueries: [props.graph ? { query: GetGraphDocument, variables: { id: props.graph } } : ListEntitiesDocument],
+
   });
 
   const dialog = useGraphQlFormDialog(add);

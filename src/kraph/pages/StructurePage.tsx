@@ -12,6 +12,7 @@ import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { useGetStructureQuery } from "../api/graphql";
 import { SelectiveNodeViewRenderer } from "../components/renderers/NodeQueryRenderer";
 import CreateStructureNodeQueryForm from "../forms/CreateStructureNodeQueryForm";
+import CreateNodeQueryForm from "../forms/CreateNodeQueryForm";
 
 export default asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
   const uploadFile = useMediaUpload();
@@ -32,6 +33,12 @@ export default asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
           <>
             <FormSheet trigger={<HobbyKnifeIcon />}>Not implemented</FormSheet>
           </>
+          <FormDialog
+            trigger={<Button variant="outline">Create</Button>}
+            onSubmit={() => refetch()}
+          >
+            <CreateStructureNodeQueryForm structure={data.structure} />
+          </FormDialog>
         </div>
       }
     >

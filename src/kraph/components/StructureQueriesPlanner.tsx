@@ -9,6 +9,7 @@ import {
   usePinGraphQueryMutation,
   usePinNodeQueryMutation
 } from "../api/graphql";
+import { Badge } from "@/components/ui/badge";
 
 export const StructureQueriesPlanner = ({
   category,
@@ -34,6 +35,7 @@ export const StructureQueriesPlanner = ({
             <KraphGraphQuery.DetailLink object={query.id} className="w-full">
               {query.name}
             </KraphGraphQuery.DetailLink>
+            <Badge variant={"outline"}>{query.kind}</Badge>
             <Button
               onClick={() => {
                 pin({

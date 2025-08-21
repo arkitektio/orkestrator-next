@@ -1,3 +1,5 @@
+import { FormDialog } from "@/components/dialog/FormDialog";
+import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -7,8 +9,19 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { Dialog, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Form } from "@/components/ui/form";
 import { Guard } from "@/lib/arkitekt/Arkitekt";
+import { KraphGraph, KraphStructure } from "@/linkers";
 import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
+import { DialogContent } from "@radix-ui/react-dialog";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import {
   ListGraphFragment,
   ListMeasurementCategoryFragment,
@@ -17,25 +30,10 @@ import {
   useGetInformedStructureQuery,
   useListGraphsQuery,
   useListMeasurmentCategoryQuery,
-  useSearchEntitiesForRoleLazyQuery,
-  useSearchEntitiesQuery,
+  useSearchEntitiesForRoleLazyQuery
 } from "../api/graphql";
 import { SelectiveNodeViewRenderer } from "../components/renderers/NodeQueryRenderer";
-import { KraphGraph, KraphStructure } from "@/linkers";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { FormDialog } from "@/components/dialog/FormDialog";
 import CreateMeasurementCategoryForm from "../forms/CreateMeasurementCategoryForm";
-import { Dialog, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
-import { DialogContent } from "@radix-ui/react-dialog";
-import { useForm } from "react-hook-form";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
-import { Form } from "@/components/ui/form";
-import { ref } from "yup";
-import { toast } from "sonner";
 
 const FindEntity = (props: {
   structure: string;
@@ -243,8 +241,7 @@ export const GraphKnowledgeView = (props: {
           </Button>
         )}
         <ObjectButton
-          identifier={props.identifier}
-          object={props.object}
+          objects={[{ identifier: props.identifier, object: props.object }]}
           className="w-full"
           partners={[
             {

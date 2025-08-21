@@ -61,7 +61,7 @@ import {
 import { registeredCallbacks } from "../components/functional/AssignationUpdater";
 import { useAssign } from "../hooks/useAssign";
 import { useHashActionWithProgress } from "../hooks/useHashActionWithProgress";
-import { Identifier, ObjectID } from "@/types";
+import { Identifier, ObjectID, Structure } from "@/types";
 import { usePerformAction } from "@/app/hooks/useLocalAction";
 import { useMatchingActions } from "@/app/localactions";
 import { Action, ActionState } from "@/lib/localactions/LocalActionProvider";
@@ -195,30 +195,55 @@ export const AssignButton = (
   const conditionalAssign = async (action: PrimaryActionFragment) => {
     const keys = {};
 
-    if (props.identifier && props.object) {
-      const the_key = action.args?.at(0)?.key;
-      if (!the_key) {
-        toast.error("No key found for self");
-        return;
+    if (props.objects) {
+      if (props.objects.length === 0) {
+        console.log("No oject passed");
       }
-      keys[the_key] = props.object;
+      if (props.objects.length === 1) {
+        const the_key = action.args?.at(0)?.key;
+        if (!the_key) {
+          toast.error("No key found for self");
+          return;
+        }
+        keys[the_key] = props.objects[0].object;
+      }
+      if (props.objects.length > 1) {
+        if (action.args.at(0)?.kind != PortKind.List) {
+          toast.error("Should be a list but is not");
+          return;
+        }
+        const the_key = action.args?.at(0)?.key;
+        if (!the_key) {
+          toast.error("No key found for self");
+          return;
+        }
+        keys[the_key] = props.objects.map((obj) => obj.object);
+      }
     }
 
-    if (props.partners && props.partners.length > 0) {
-      for (let i = 0; i < props.partners.length; i++) {
-        const port = action.args.at(i + 1);
-        if (!port) {
-          toast.error("No key found for partner " + i);
+    if (props.partners) {
+      if (props.partners.length === 0) {
+        console.log("No oject passed");
+      }
+      if (props.partners.length === 1) {
+        const the_key = action.args?.at(1)?.key;
+        if (!the_key) {
+          toast.error("No key found for self");
           return;
         }
-        if (port.identifier !== props.partners[i].identifier) {
-          toast.error(
-            `Key mismatch for partner ${i}: expected ${port.identifier}, got ${props.partners[i].identifier}`,
-          );
+        keys[the_key] = props.partners[0].object;
+      }
+      if (props.partners.length > 1) {
+        if (action.args.at(1)?.kind != PortKind.List) {
+          toast.error("Should be a list but is not");
           return;
         }
-        const partner = props.partners[i];
-        keys[port.key] = partner.object;
+        const the_key = action.args?.at(1)?.key;
+        if (!the_key) {
+          toast.error("No key found for self");
+          return;
+        }
+        keys[the_key] = props.partners.map((obj) => obj.object);
       }
     }
 
@@ -294,36 +319,115 @@ export const ShortcutButton = (
 ) => {
   const { assign } = useAssign();
   const { openDialog } = useDialog();
+  const [doing, setDoing] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [progress, setProgress] = React.useState<number | null>(0);
+
+  const doStuff = useCallback(
+    (event: AssignationEventFragment) => {
+      console.log("Assignation event received:", event);
+      if (event.kind == "DONE") {
+        setDoing(false);
+        setProgress(null);
+        props.onDone?.({ event, kind: "action" });
+      }
+      if (event.kind == "ERROR" || event.kind == "CRITICAL") {
+        setDoing(false);
+        setProgress(null);
+        setError(event.message || "Unknown error");
+        props.onError?.(event.message || "Unknown error");
+      }
+      if (event.kind == "PROGRESS") {
+        setProgress(event.progress || 0);
+      }
+    },
+    [setDoing, setProgress, setError, props.onDone, props.onError],
+  );
 
   const conditionalAssign = async (shortcut: ListShortcutFragment) => {
-    let the_key = shortcut.args?.at(0)?.key;
+    const keys = {};
 
-    if (!the_key) {
-      toast.error("No key found");
-      return;
+    if (props.objects) {
+      if (props.objects.length === 0) {
+        console.log("No oject passed");
+      }
+      if (props.objects.length === 1) {
+        const the_key = shortcut.args?.at(0)?.key;
+        if (!the_key) {
+          toast.error("No key found for self");
+          return;
+        }
+        keys[the_key] = props.objects[0].object;
+      }
+      if (props.objects.length > 1) {
+        if (shortcut.args.at(0)?.kind != PortKind.List) {
+          toast.error("Should be a list but is not");
+          return;
+        }
+        const the_key = shortcut.args?.at(0)?.key;
+        if (!the_key) {
+          toast.error("No key found for self");
+          return;
+        }
+        keys[the_key] = props.objects.map((obj) => obj.object);
+      }
     }
-    if (shortcut.args.length > 1) {
+
+    if (props.partners) {
+      if (props.partners.length === 0) {
+        console.log("No oject passed");
+      }
+      if (props.partners.length === 1) {
+        const the_key = shortcut.args?.at(1)?.key;
+        if (!the_key) {
+          toast.error("No key found for self");
+          return;
+        }
+        keys[the_key] = props.partners[0].object;
+      }
+      if (props.partners.length > 1) {
+        if (shortcut.args.at(1)?.kind != PortKind.List) {
+          toast.error("Should be a list but is not");
+          return;
+        }
+        const the_key = shortcut.args?.at(1)?.key;
+        if (!the_key) {
+          toast.error("No key found for self");
+          return;
+        }
+        keys[the_key] = props.partners.map((obj) => obj.object);
+      }
+    }
+
+    const unknownKeys = shortcut.args.filter((arg) => arg.key && !keys[arg.key]);
+
+    if (unknownKeys.length >= 1) {
       openDialog("actionassign", {
         id: shortcut.action.id,
-        args: { [the_key]: props.object, ...shortcut.savedArgs },
-        hidden: { [the_key]: props.object, ...shortcut.savedArgs },
+        args: { keys, ...shortcut.savedArgs },
+        hidden: { keys, ...shortcut.savedArgs }
       });
       return;
     }
 
     try {
+
+      const reference = uuidv4();
+
+
       await assign({
         action: shortcut.action.id,
         args: {
-          [the_key]: props.object,
+          ...keys,
           ...shortcut.savedArgs,
         },
       });
-      if (props.onDone) {
-        props.onDone();
-      }
+
+      registeredCallbacks.set(reference, doStuff);
+
     } catch (e) {
       toast.error(e.message);
+      props.onError?.(e.message);
     }
   };
 
@@ -443,29 +547,67 @@ export const InstallButton = (props: {
 export const ApplicableActions = (props: PassDownProps) => {
   const demands: PortDemandInput[] = [];
 
-  if (props.identifier) {
-    demands.push({
-      kind: DemandKind.Args,
-      matches: [
-        { at: 0, kind: PortKind.Structure, identifier: props.identifier },
-      ],
-    });
+  if (props.objects) {
+    if (props.objects.length === 0) {
+      console.log("No objects");
+    }
+    else if (props.objects.length === 1) {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [
+          { at: 0, kind: PortKind.Structure, identifier: props.objects[0].identifier },
+        ],
+      });
+    }
+    else {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [{
+          at: 0,
+          kind: PortKind.List,
+          children: [
+            {
+              at: 0,
+              kind: PortKind.Structure,
+              identifier: props.objects[0].identifier,
+            },
+          ],
+        }],
+      });
+    }
   }
 
-  const firstPartner = props.partners?.at(0);
-
-  if (firstPartner) {
-    demands.push({
-      kind: DemandKind.Args,
-      matches: [
-        {
+  if (props.partners) {
+    if (props.partners.length === 0) {
+      console.log("No partners");
+      // Maybe 
+    }
+    else if (props.partners.length === 1) {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [
+          { at: 1, kind: PortKind.Structure, identifier: props.partners[0].identifier },
+        ],
+      });
+    }
+    else {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [{
           at: 1,
-          kind: PortKind.Structure,
-          identifier: firstPartner.identifier,
-        },
-      ],
-    });
+          kind: PortKind.List,
+          children: [
+            {
+              at: 0,
+              kind: PortKind.Structure,
+              identifier: props.partners[0].identifier,
+            },
+          ],
+        }],
+      });
+    }
   }
+
 
   if (props.returns) {
     demands.push({
@@ -520,29 +662,83 @@ export const ApplicableActions = (props: PassDownProps) => {
 };
 
 export const ApplicableShortcuts = (props: PassDownProps) => {
-  const demands = [
-    {
-      kind: DemandKind.Args,
-      matches: [
-        { at: 0, kind: PortKind.Structure, identifier: props.identifier },
-      ],
-    },
-  ];
+  const demands: PortDemandInput[] = [];
 
-  let firstPartner = props.partners?.at(0);
 
-  if (firstPartner) {
+  if (props.objects) {
+    if (props.objects.length === 0) {
+      console.log("No objects");
+    }
+    else if (props.objects.length === 1) {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [
+          { at: 0, kind: PortKind.Structure, identifier: props.objects[0].identifier },
+        ],
+      });
+    }
+    else {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [{
+          at: 0,
+          kind: PortKind.List,
+          children: [
+            {
+              at: 0,
+              kind: PortKind.Structure,
+              identifier: props.objects[0].identifier,
+            },
+          ],
+        }],
+      });
+    }
+  }
+
+  if (props.partners) {
+    if (props.partners.length === 0) {
+      console.log("No partners");
+      // Maybe 
+    }
+    else if (props.partners.length === 1) {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [
+          { at: 1, kind: PortKind.Structure, identifier: props.partners[0].identifier },
+        ],
+      });
+    }
+    else {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [{
+          at: 0,
+          kind: PortKind.List,
+          children: [
+            {
+              at: 0,
+              kind: PortKind.Structure,
+              identifier: props.partners[0].identifier,
+            },
+          ],
+        }],
+      });
+    }
+  }
+
+
+  if (props.returns) {
     demands.push({
-      kind: DemandKind.Args,
-      matches: [
-        {
-          at: 1,
-          kind: PortKind.Structure,
-          identifier: firstPartner.identifier,
-        },
-      ],
+      kind: DemandKind.Returns,
+      matches: props.returns.map((r, index) => ({
+        at: index,
+        kind: PortKind.Structure,
+        identifier: r,
+      })),
     });
   }
+
+
 
   const { data, error } = useShortcutsQuery({
     variables: {
@@ -579,28 +775,71 @@ export const ApplicableShortcuts = (props: PassDownProps) => {
 };
 
 export const ApplicableDefinitions = (props: PassDownProps) => {
-  const demands = [
-    {
-      kind: DemandKind.Args,
-      matches: [
-        { at: 0, kind: PortKind.Structure, identifier: props.identifier },
-      ],
-    },
-  ];
+  const demands: PortDemandInput[] = [];
 
-  let firstPartner = props.partners?.at(0);
 
-  if (firstPartner) {
-    demands.push({
-      kind: DemandKind.Args,
-      matches: [
-        {
-          at: 1,
-          kind: PortKind.Structure,
-          identifier: firstPartner.identifier,
-        },
-      ],
-    });
+
+  if (props.objects) {
+    if (props.objects.length === 0) {
+      console.log("No objects");
+    }
+    else if (props.objects.length === 1) {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [
+          { at: 1, kind: PortKind.Structure, identifier: props.objects[0].identifier },
+        ],
+      });
+    }
+    else {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [{
+          at: 0,
+          kind: PortKind.List,
+          children: [
+            {
+              at: 0,
+              kind: PortKind.Structure,
+              identifier: props.objects[0].identifier,
+            },
+          ],
+        }],
+      });
+    }
+  }
+
+  if (props.partners) {
+    if (props.partners.length === 0) {
+      demands.push({
+        kind: DemandKind.Args,
+        forceStructureLength: 0,
+      });
+    }
+    else if (props.partners.length === 1) {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [
+          { at: 1, kind: PortKind.Structure, identifier: props.partners[0].identifier },
+        ],
+      });
+    }
+    else {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [{
+          at: 0,
+          kind: PortKind.List,
+          children: [
+            {
+              at: 0,
+              kind: PortKind.Structure,
+              identifier: props.partners[0].identifier,
+            },
+          ],
+        }],
+      });
+    }
   }
 
   const { data } = useAllPrimaryDefinitionsQuery({
@@ -640,8 +879,9 @@ export const ApplicableDefinitions = (props: PassDownProps) => {
 
 export const ApplicableRelations = (props: PassDownProps) => {
   const firstPartner = props.partners?.at(0);
+  const firstObject = props.objects?.at(0);
 
-  if (!firstPartner) {
+  if (!firstPartner || !firstObject) {
     return null;
   }
 
@@ -650,7 +890,7 @@ export const ApplicableRelations = (props: PassDownProps) => {
   const { data, error } = useListStructureRelationCategoryQuery({
     variables: {
       filters: {
-        sourceIdentifier: props.identifier,
+        sourceIdentifier: firstObject.identifier,
         targetIdentifier: firstPartner.identifier,
         search: props.filter && props.filter != "" ? props.filter : undefined,
       },
@@ -680,12 +920,7 @@ export const ApplicableRelations = (props: PassDownProps) => {
         value={"no-relation"}
         onSelect={() =>
           dialog.openDialog("createnewrelation", {
-            left: [
-              {
-                identifier: props.identifier,
-                object: props.object,
-              },
-            ],
+            left: props.objects || [],
             right: props.partners || [],
           })
         }
@@ -712,8 +947,9 @@ export const ApplicableRelations = (props: PassDownProps) => {
 
 export const ApplicableMeasurements = (props: PassDownProps) => {
   const firstPartner = props.partners?.at(0);
+  const firstObject = props.objects?.at(0);
 
-  if (firstPartner) {
+  if (firstPartner || !firstObject) {
     return null;
   }
 
@@ -722,7 +958,7 @@ export const ApplicableMeasurements = (props: PassDownProps) => {
   const { data, error } = useListMeasurmentCategoryQuery({
     variables: {
       filters: {
-        sourceIdentifier: props.identifier,
+        sourceIdentifier: firstObject.identifier,
         search: props.filter && props.filter != "" ? props.filter : undefined,
       },
     },
@@ -751,12 +987,7 @@ export const ApplicableMeasurements = (props: PassDownProps) => {
         value={"no-relation"}
         onSelect={() =>
           dialog.openDialog("createnewmeasurement", {
-            left: [
-              {
-                identifier: props.identifier,
-                object: props.object,
-              },
-            ],
+            left: props.objects || [],
             right: props.partners || [],
           })
         }
@@ -887,12 +1118,7 @@ export const MeasurementButton = (props: {
       key={props.measurement.id}
       onSelect={() =>
         dialog.openDialog("setasmeasurement", {
-          left: [
-            {
-              identifier: props.left.identifier,
-              object: props.left.object,
-            },
-          ],
+          left: props.left.objects,
           measurement: props.measurement,
         })
       }
@@ -987,10 +1213,7 @@ export const ApplicableLocalActions = (props: PassDownProps) => {
   return (
     <Actions
       state={{
-        left:
-          props.identifier && props.object
-            ? [{ object: props.object, identifier: props.identifier }]
-            : [],
+        left: props.objects,
         right: props.partners,
         isCommand: false,
       }}
@@ -1001,10 +1224,9 @@ export const ApplicableLocalActions = (props: PassDownProps) => {
 };
 
 export type SmartContextProps = {
-  object?: ObjectID;
-  identifier?: Identifier;
   children?: React.ReactNode;
   className?: string;
+  objects: Structure[];
   partners?: Structure[];
   returns?: string[];
   expect?: string[];

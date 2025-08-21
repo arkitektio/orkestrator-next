@@ -61,24 +61,10 @@ export const DisplayStructuresPanel = ({
         <div className="max-h-32 overflow-y-auto">
           <div className="text-xs text-gray-500 mb-1">Structures:</div>
 
-          {displayStructures.map((roiId) => {
-            const roi = rois.find((r) => r.id === roiId);
-            return (
-              <div
-                key={roiId}
-                className="flex items-center justify-between p-1 text-xs bg-gray-800 rounded mb-1"
-              >
-                <span>ROI {roi?.kind || "Unknown"}</span>
-                <button
-                  onClick={() => removeDisplayStructure(roiId)}
-                  className="text-red-500 hover:text-red-700 text-xs"
-                  title="Remove from structures"
-                >
-                  ×
-                </button>
-              </div>
-            );
-          })}
+          <SmartContext
+            objects={displayStructures.map(r => ({ identifier: "@mikro/roi", object: r }))}
+
+          />
         </div>
       )}
 

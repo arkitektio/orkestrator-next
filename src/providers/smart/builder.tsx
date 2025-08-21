@@ -26,6 +26,7 @@ import {
   OmitedNavLinkProps,
 } from "./types";
 import { DisplayWidgetProps } from "@/lib/display/registry";
+import { ObjectID } from "@/types";
 
 const buildBaseLink = (to: string) => {
   return ({ children, ...props }: BaseLinkProps) => {
@@ -154,18 +155,18 @@ const buildUseLive = (model: Identifier, object: string) => {
   });
 };
 
-export type SmartObjectButtonProps = Omit<ObjectButtonProps, "identifier">;
-export type SmartNewButtonProps = Omit<NewButtonProps, "identifier">;
+export type SmartObjectButtonProps = Omit<ObjectButtonProps, "objects"> & { object: ObjectID };
+export type SmartNewButtonProps = Omit<ObjectButtonProps, "objects">;
 
 const buildObjectButton = (model: Identifier) => {
-  return ({ ...props }: SmartObjectButtonProps) => {
-    return <ObjectButton identifier={model} {...props} />;
+  return ({ object, ...props }: SmartObjectButtonProps) => {
+    return <ObjectButton objects={[{ identifier: model, object }]} {...props} />;
   };
 };
 
 const buildNewButton = (model: Identifier) => {
   return ({ ...props }: SmartNewButtonProps) => {
-    return <ObjectButton returns={[model]} {...props} />;
+    return <ObjectButton returns={[model]} objects={[]} {...props} />;
   };
 };
 

@@ -3,5 +3,5 @@ export type ObjectID = string;
 
 export type Structure = {
   identifier: Identifier;
-  object: string;
+  object: ObjectID;
 };

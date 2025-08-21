@@ -184,8 +184,7 @@ export const SmartModel = ({
             <>Multiselect is not implemented yet</>
           ) : (
             <SmartContext
-              identifier={props.identifier}
-              object={props.object}
+              objects={[{ identifier: props.identifier, object: props.object }]}
               partners={[]}
             />
           )}
@@ -215,8 +214,7 @@ export const SmartModel = ({
                   onClick={(e) => e.stopPropagation()}
                 >
                   <SmartContext
-                    identifier={props.identifier}
-                    object={props.object}
+                    objects={[{ identifier: props.identifier, object: props.object }]}
                     partners={partners}
                     onDone={() => clearPartners()}
                   />

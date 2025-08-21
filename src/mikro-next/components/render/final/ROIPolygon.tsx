@@ -53,6 +53,7 @@ export const ROIPolygon = (
     setShowRois,
     addDisplayStructure,
     setShowDisplayStructures,
+    removeDisplayStructure,
     displayStructures,
     showDisplayStructures,
   } = useViewerState();
@@ -150,8 +151,13 @@ export const ROIPolygon = (
           "Shift+click detected, adding ROI to display structures:",
           roi.id,
         );
-        addDisplayStructure(roi.id);
-        setShowDisplayStructures(true);
+        if (!isDisplayStructure) {
+          addDisplayStructure(roi.id);
+          setShowDisplayStructures(true);
+        }
+        else {
+          removeDisplayStructure(roi.id);
+        }
 
         // Project the rightmost point of the ROI to screen coordinates
         const screenPos = projectToScreenCoordinates(rightPoint);

@@ -1,6 +1,7 @@
 import { Line } from "@react-three/drei";
 import { useRef, useState } from "react";
 import * as THREE from "three";
+import { EventKeyProps, createEventKeyChecker } from "./eventKeyUtils";
 
 export type EllipsisDrawerProps = {
   onEllipsisDrawn?: (
@@ -8,16 +9,20 @@ export type EllipsisDrawerProps = {
     radiusX: number,
     radiusY: number,
   ) => void;
-};
+} & EventKeyProps;
 
 export function EllipsisDrawer(props: EllipsisDrawerProps) {
+  const { event_key = "shift" } = props;
   const planeRef = useRef<THREE.Mesh>(null);
 
   const [center, setCenter] = useState<THREE.Vector3 | null>(null);
   const [current, setCurrent] = useState<THREE.Vector3 | null>(null);
   const [drawing, setDrawing] = useState(false);
 
+  const checkEventKey = createEventKeyChecker(event_key);
+
   const handlePointerDown = (e) => {
+    if (!checkEventKey(e)) return; // Check for required event key
     if (!e.shiftKey) return; // Require Shift to start
 
     e.stopPropagation();

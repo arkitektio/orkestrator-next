@@ -1,29 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { SliderTooltip } from "@/components/ui/slider-tooltip";
-import { StructureInfo } from "@/kraph/components/mini/StructureInfo";
 import {
-  Check,
-  ChevronDown,
-  Circle,
   Edit3,
   Eye,
   EyeOff,
   Grid3X3,
   Layers,
-  MapPin,
-  Minus,
   MoreHorizontal,
   Settings,
-  Square,
   Type,
 } from "lucide-react";
 import * as THREE from "three";
@@ -33,12 +18,11 @@ import {
   ListRoiFragment,
   RgbImageFragment,
   RgbViewFragment,
-  RoiKind,
 } from "@/mikro-next/api/graphql";
 import { ObjectButton, SmartContext } from "@/rekuest/buttons/ObjectButton";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas as ThreeCanvas } from "@react-three/fiber";
-import { Dispatch, SetStateAction, Suspense, useState } from "react";
+import { Dispatch, SetStateAction, Suspense, useEffect, useState } from "react";
 import { AutoZoomCamera } from "./final/AutoZoomCamera";
 import { ChunkBitmapTexture } from "./final/ChunkMesh";
 import { ROIPolygon } from "./final/ROIPolygon";
@@ -46,26 +30,10 @@ import { useArray } from "./final/useArray";
 import { BasicIndexer, IndexerProjection, Slice } from "./indexer";
 import { RoiDrawerCanvas } from "./RoiDrawer";
 import { ViewerStateProvider, useViewerState } from "./ViewerStateProvider";
-
-// Helper function to get icon for ROI type
-const getRoiIcon = (roiKind: RoiKind) => {
-  switch (roiKind) {
-    case RoiKind.Rectangle:
-      return Square;
-    case RoiKind.Ellipsis:
-      return Circle;
-    case RoiKind.Line:
-      return Minus;
-    case RoiKind.Point:
-      return MapPin;
-    case RoiKind.Polygon:
-      return MoreHorizontal;
-    case RoiKind.Path:
-      return Edit3;
-    default:
-      return Square;
-  }
-};
+import { RenderControlsMenu } from "./RenderControlsMenu";
+import { ROIContextMenu } from "./ROIContextMenu";
+import { TinyStructureBox } from "@/kraph/boxes/TinyStructureBox";
+import { EventPlane } from "./overlays/invisible/EventPlane";
 
 // Helper function to get icon for panel kind
 const getPanelKindIcon = (kind?: PanelKind) => {
@@ -244,8 +212,6 @@ export const LayerRender = (props: {
 // PanelContent component to render different panel types
 const PanelContent = ({
   panel,
-  roiDrawMode,
-  setRoiDrawMode,
   allowRoiDrawing,
   setAllowRoiDrawing,
   setOpenPanels,
@@ -257,8 +223,6 @@ const PanelContent = ({
   setShowDebugText,
 }: {
   panel: Panel;
-  roiDrawMode: RoiKind;
-  setRoiDrawMode: (mode: RoiKind) => void;
   allowRoiDrawing: boolean;
   setAllowRoiDrawing: (allow: boolean) => void;
   showRois: boolean;
@@ -290,8 +254,7 @@ const PanelContent = ({
             <span className="text-sm font-medium">ROI Tools</span>
           </div>
           <div className="text-xs text-gray-400 mb-2">
-            Click to open ROI tools • Shift+Click for Layer Controls •
-            Ctrl+Click for View Settings
+            Click to open ROI tools
           </div>
 
           {/* ROI Drawing Toggle */}
@@ -304,34 +267,6 @@ const PanelContent = ({
             <Edit3 className="w-4 h-4 mr-2" />
             {allowRoiDrawing ? "Disable Drawing" : "Enable Drawing"}
           </Button>
-
-          {/* ROI Drawing Mode Selection */}
-          {allowRoiDrawing && (
-            <div className="grid grid-cols-2 gap-1">
-              {[
-                RoiKind.Rectangle,
-                RoiKind.Ellipsis,
-                RoiKind.Polygon,
-                RoiKind.Line,
-                RoiKind.Point,
-                RoiKind.Path,
-              ].map((kind) => {
-                const IconComponent = getRoiIcon(kind);
-                return (
-                  <Button
-                    key={kind}
-                    size="sm"
-                    variant={roiDrawMode === kind ? "default" : "outline"}
-                    onClick={() => setRoiDrawMode(kind)}
-                    className="p-2"
-                    title={kind.charAt(0) + kind.slice(1).toLowerCase()}
-                  >
-                    <IconComponent className="w-3 h-3" />
-                  </Button>
-                );
-              })}
-            </div>
-          )}
 
           {/* ROI Visibility Toggle */}
           <Button
@@ -358,7 +293,7 @@ const PanelContent = ({
             <span className="text-sm font-medium">Layer Controls</span>
           </div>
           <div className="text-xs text-gray-400 mb-2">
-            Opened with Shift+Click on image
+            Opened with Alt+Click on image
           </div>
 
           <Button
@@ -414,64 +349,39 @@ const PanelContent = ({
           </ObjectButton>
 
           <div className="text-xs text-gray-500"> Knowledge </div>
-          <StructureInfo identifier={panel.identifier} object={panel.object} />
+          <TinyStructureBox
+            identifier={panel.identifier}
+            object={panel.object}
+          />
         </>
       );
   }
 };
 
-// Clickable plane component for handling background clicks
-const ClickablePlane = ({
-  xSize,
-  ySize,
-  setOpenPanels,
-}: {
-  xSize: number;
-  ySize: number;
-  setOpenPanels: Dispatch<SetStateAction<Panel[]>>;
-}) => {
-  const handleClick = (event: any) => {
-    // Determine panel type based on click modifier keys
-    let panelKind: PanelKind = "roi_tools"; // default
-
-    // Check for modifier keys to determine panel type
-    if (event.altKey) {
-      panelKind = "layer_controls";
-    } else if (event.ctrlKey || event.metaKey) {
-      panelKind = "view_settings";
-    } else {
-      return; // Do nothing if Alt is pressed
-    }
-
-    event.stopPropagation();
-
-    // Calculate position - use center of screen as fallback
-    const positionX = window.innerWidth / 2;
-    const positionY = window.innerHeight / 2;
-
-    // Close all existing panels and create a new one
-    setOpenPanels([
-      {
-        identifier: "image_click_panel",
-        object: `canvas_${Date.now()}`, // unique object id
-        positionX,
-        positionY,
-        kind: panelKind,
-      },
-    ]);
-  };
-
-  return (
-    <mesh position={[0, 0, -0.001]} onClick={handleClick}>
-      <planeGeometry args={[xSize, ySize]} />
-      <meshBasicMaterial transparent={true} opacity={0} depthWrite={false} />
-    </mesh>
-  );
-};
-
 export const FinalRenderInner = (props: RGBDProps) => {
   const [openPanels, setOpenPanels] = useState<Panel[]>([]);
+  const [roiContextMenu, setRoiContextMenu] = useState<{
+    open: boolean;
+    x: number;
+    y: number;
+  } | null>(null);
   const rbgContext = props.context;
+
+  // Close ROI context menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (roiContextMenu) {
+        setRoiContextMenu(null);
+      }
+    };
+
+    if (roiContextMenu) {
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
+    }
+
+    return undefined;
+  }, [roiContextMenu]);
 
   // Use the viewer state from context
   const {
@@ -482,15 +392,12 @@ export const FinalRenderInner = (props: RGBDProps) => {
     showDebugText,
     enabledScales,
     allowRoiDrawing,
-    roiDrawMode,
     setZ,
     setT,
     setShowRois,
     setShowLayerEdges,
     setShowDebugText,
     setAllowRoiDrawing,
-    setRoiDrawMode,
-    toggleScale,
   } = useViewerState();
 
   const version = rbgContext.image.store.version;
@@ -561,143 +468,7 @@ export const FinalRenderInner = (props: RGBDProps) => {
             )}
 
             {/* Controls Menu Button */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="bg-gray-800 text-gray-300 hover:bg-gray-700"
-                  title="Toggle controls menu"
-                >
-                  <Settings className="w-4 h-4" />
-                  <ChevronDown className="w-3 h-3 ml-1" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-64 bg-gray-900 border-gray-700">
-                <>
-                  <DropdownMenuLabel className="text-gray-400">
-                    Enable Rois
-                  </DropdownMenuLabel>
-                  <DropdownMenuItem
-                    onClick={() => setShowRois(!showRois)}
-                    className={`cursor-pointer ${showRois
-                      ? "bg-blue-800 text-white"
-                      : "text-gray-300 hover:bg-gray-800"
-                      }`}
-                  >
-                    {showRois ? (
-                      <Eye className="w-4 h-4 mr-2" />
-                    ) : (
-                      <EyeOff className="w-4 h-4 mr-2" />
-                    )}
-                    {showRois ? "Hide ROIs" : "Show ROIs"}
-                  </DropdownMenuItem>
-
-                  {/* ROI Drawing Controls */}
-                  <DropdownMenuItem
-                    onClick={() => setAllowRoiDrawing(!allowRoiDrawing)}
-                    className={`cursor-pointer ${allowRoiDrawing
-                      ? "bg-green-800 text-white"
-                      : "text-gray-300 hover:bg-gray-800"
-                      }`}
-                  >
-                    <Edit3 className="w-4 h-4 mr-2" />
-                    {allowRoiDrawing
-                      ? "Disable ROI Drawing"
-                      : "Enable ROI Drawing"}
-                  </DropdownMenuItem>
-
-                  {/* ROI Drawing Mode Selection */}
-                  {allowRoiDrawing && (
-                    <>
-                      <DropdownMenuSeparator className="bg-gray-700" />
-                      <DropdownMenuLabel className="text-gray-400">
-                        Drawing Mode
-                      </DropdownMenuLabel>
-                      {[
-                        RoiKind.Rectangle,
-                        RoiKind.Ellipsis,
-                        RoiKind.Polygon,
-                        RoiKind.Line,
-                        RoiKind.Point,
-                        RoiKind.Path,
-                      ].map((kind) => {
-                        const IconComponent = getRoiIcon(kind);
-                        return (
-                          <DropdownMenuItem
-                            key={kind}
-                            onClick={() => setRoiDrawMode(kind)}
-                            className={`cursor-pointer ${roiDrawMode === kind
-                              ? "bg-green-800 text-white"
-                              : "text-gray-300 hover:bg-gray-800"
-                              }`}
-                          >
-                            <IconComponent className="w-4 h-4 mr-2" />
-                            {kind.charAt(0) + kind.slice(1).toLowerCase()}
-                            {roiDrawMode === kind && (
-                              <Check className="w-3 h-3 ml-auto" />
-                            )}
-                          </DropdownMenuItem>
-                        );
-                      })}
-                    </>
-                  )}
-
-                  <DropdownMenuSeparator className="bg-gray-700" />
-                </>
-
-                {/* Layer Display Controls */}
-                <DropdownMenuLabel className="text-gray-400">
-                  Layer Display
-                </DropdownMenuLabel>
-                <DropdownMenuItem
-                  onClick={() => setShowLayerEdges(!showLayerEdges)}
-                  className={`cursor-pointer ${showLayerEdges
-                    ? "bg-blue-800 text-white"
-                    : "text-gray-300 hover:bg-gray-800"
-                    }`}
-                >
-                  <Grid3X3 className="w-4 h-4 mr-2" />
-                  {showLayerEdges ? "Hide Layer Edges" : "Show Layer Edges"}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setShowDebugText(!showDebugText)}
-                  className={`cursor-pointer ${showDebugText
-                    ? "bg-blue-800 text-white"
-                    : "text-gray-300 hover:bg-gray-800"
-                    }`}
-                >
-                  <Type className="w-4 h-4 mr-2" />
-                  {showDebugText ? "Hide Debug Text" : "Show Debug Text"}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-gray-700" />
-
-                {/* Scale Selection Controls */}
-                {availableScales.length > 1 && (
-                  <>
-                    <DropdownMenuLabel className="text-gray-400">
-                      Render Scales
-                    </DropdownMenuLabel>
-                    {availableScales.map((scale) => (
-                      <DropdownMenuItem
-                        key={scale}
-                        onClick={() => toggleScale(scale)}
-                        className={`cursor-pointer ${enabledScales.has(scale)
-                          ? "bg-green-800 text-white"
-                          : "text-gray-400 hover:bg-gray-800"
-                          }`}
-                      >
-                        <Layers className="w-3 h-3 mr-2" />
-                        {scale}x
-                        {enabledScales.has(scale) && (
-                          <Check className="w-3 h-3 ml-auto" />
-                        )}
-                      </DropdownMenuItem>
-                    ))}
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <RenderControlsMenu availableScales={availableScales} />
           </div>
           {tSize > 1 && (
             <div className="flex flex-row">
@@ -763,10 +534,10 @@ export const FinalRenderInner = (props: RGBDProps) => {
           })}
 
           {/* Clickable background plane for creating panels */}
-          <ClickablePlane
+          <EventPlane
             xSize={xSize}
             ySize={ySize}
-            setOpenPanels={setOpenPanels}
+            setContextMenu={setRoiContextMenu}
           />
 
           {showRois && (
@@ -789,6 +560,7 @@ export const FinalRenderInner = (props: RGBDProps) => {
                   t={t}
                   c={0}
                   image={props.context.image}
+                  event_key="ctrl"
                 />
               )}
             </>
@@ -822,8 +594,6 @@ export const FinalRenderInner = (props: RGBDProps) => {
           <PanelContent
             panel={panel}
             setOpenPanels={setOpenPanels}
-            roiDrawMode={roiDrawMode}
-            setRoiDrawMode={setRoiDrawMode}
             allowRoiDrawing={allowRoiDrawing}
             setAllowRoiDrawing={setAllowRoiDrawing}
             showRois={showRois}
@@ -835,6 +605,20 @@ export const FinalRenderInner = (props: RGBDProps) => {
           />
         </Card>
       ))}
+
+      {/* ROI Context Menu */}
+      {roiContextMenu && (
+        <ROIContextMenu
+          open={roiContextMenu.open}
+          onOpenChange={(open) => {
+            if (!open) {
+              setRoiContextMenu(null);
+            }
+          }}
+          x={roiContextMenu.x}
+          y={roiContextMenu.y}
+        />
+      )}
     </div>
   );
 };

@@ -10,59 +10,279 @@ import {
 import { Guard } from "@/lib/arkitekt/Arkitekt";
 import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 import {
+  ListGraphFragment,
+  ListMeasurementCategoryFragment,
+  useCreateMeasurementMutation,
   useCreateStructureMutation,
-  useGetKnowledgeViewsQuery,
+  useGetInformedStructureQuery,
+  useListGraphsQuery,
+  useListMeasurmentCategoryQuery,
+  useSearchEntitiesForRoleLazyQuery,
+  useSearchEntitiesQuery,
 } from "../api/graphql";
 import { SelectiveNodeViewRenderer } from "../components/renderers/NodeQueryRenderer";
+import { KraphGraph, KraphStructure } from "@/linkers";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { FormDialog } from "@/components/dialog/FormDialog";
+import CreateMeasurementCategoryForm from "../forms/CreateMeasurementCategoryForm";
+import { Dialog, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import { DialogContent } from "@radix-ui/react-dialog";
+import { useForm } from "react-hook-form";
+import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
+import { Form } from "@/components/ui/form";
+
+const FindEntity = (props: {
+  structure: string;
+  measurement: ListMeasurementCategoryFragment;
+}) => {
+  const [search] = useSearchEntitiesForRoleLazyQuery({
+    variables: {
+      tags:
+        props.measurement?.targetDefinition?.tagFilters?.map((tag) => tag) ||
+        [],
+      categories:
+        props.measurement?.targetDefinition?.categoryFilters?.map(
+          (cat) => cat,
+        ) || [],
+    },
+    nextFetchPolicy: "cache-and-network",
+  });
+
+  const form = useForm({
+    defaultValues: {
+      entity: null,
+    },
+  });
+
+  const [createMeasurement] = useCreateMeasurementMutation({
+    refetchQueries: ["GetGraph"],
+  });
+
+  return (
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(async (data) => {
+          createMeasurement({
+            variables: {
+              input: {
+                entity: data.entity,
+                category: props.measurement.id,
+                structure: props.structure,
+              },
+            },
+          });
+        })}
+      >
+        <GraphQLSearchField
+          label="Entity"
+          name="entity"
+          searchQuery={search}
+          description="Search for an entity to connect to this measurement."
+        />
+        <DialogFooter>
+          <Button type="submit">Create</Button>
+        </DialogFooter>
+      </form>
+    </Form>
+  );
+};
+
+const ConnectableAs = (props: {
+  identifier: string;
+  structure: string;
+  graph: ListGraphFragment;
+}) => {
+  const { data } = useListMeasurmentCategoryQuery({
+    variables: {
+      filters: {
+        graph: props.graph.id,
+        sourceIdentifier: props.identifier,
+      },
+    },
+  });
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" className="w-full">
+          Connect to {props.identifier}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        {data?.measurementCategories.map((category) => (
+          <Dialog key={category.id}>
+            <DialogTrigger>
+              <Button variant="outline" className="w-full">
+                {category.label}
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <div className="flex flex-col gap-2">
+                <h3 className="text-scroll font-semibold text-xs">
+                  {category.label}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {category.description}
+                </p>
+                <FindEntity
+                  structure={props.structure}
+                  measurement={category}
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
+        ))}
+        <FormDialog
+          trigger={
+            <Button variant="outline" className="w-full">
+              Create Measurement Category
+            </Button>
+          }
+        >
+          <CreateMeasurementCategoryForm
+            graph={props.graph.id}
+            identifier={props.identifier}
+          />
+        </FormDialog>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+export const GraphKnowledgeView = (props: {
+  identifier: string;
+  object: string;
+  graph: ListGraphFragment;
+}) => {
+  const { data, refetch, error, loading } = useGetInformedStructureQuery({
+    variables: {
+      identifier: props.identifier,
+      object: props.object,
+      graph: props.graph.id,
+    },
+  });
+
+  const [addStructure] = useCreateStructureMutation({
+    onCompleted: () => refetch(),
+  });
+
+  return (
+    <div className="flex flex-col gap-2">
+      <KraphGraph.DetailLink object={props.graph.id}>
+        <h3 className="text-scroll font-semibold text-xs">
+          {props.graph.name}
+        </h3>
+      </KraphGraph.DetailLink>
+      {loading && <p className="text-xs text-muted-foreground">Loading...</p>}
+      {error && <p className="text-red-500 text-xs">Error: {error.message}</p>}
+      {
+        <>
+          {data?.structureByIdentifier.bestView ? (
+            <div className="h-64 w-full">
+              <SelectiveNodeViewRenderer
+                view={data.structureByIdentifier.bestView}
+                options={{ minimal: true }}
+              />
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              No best view available for this structure.
+            </p>
+          )}
+          <KraphStructure.DetailLink
+            object={data?.structureByIdentifier.id}
+            className="text-xs text-scroll font-light"
+          >
+            {data?.structureByIdentifier.label}
+          </KraphStructure.DetailLink>
+        </>
+      }
+      <div className="flex flex-row gap-2">
+        {data?.structureByIdentifier ? (
+          <ConnectableAs
+            identifier={props.identifier}
+            structure={data.structureByIdentifier.id}
+            graph={props.graph}
+          />
+        ) : (
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() =>
+              addStructure({
+                variables: {
+                  input: {
+                    structure: `${props.identifier}:${props.object}`,
+                    graph: props.graph.id,
+                  },
+                },
+              })
+            }
+          >
+            Connect
+          </Button>
+        )}
+        <ObjectButton
+          identifier={props.identifier}
+          object={props.object}
+          className="w-full"
+          partners={[
+            {
+              identifier: "@kraph/graph",
+              object: props.graph.id,
+            },
+          ]}
+          disableKraph={true}
+          expect={["@mikro/metric"]}
+          onDone={() => {
+            refetch();
+          }}
+        >
+          <Button variant="outline" className="w-full">
+            Measure
+          </Button>
+        </ObjectButton>
+      </div>
+    </div>
+  );
+};
 
 export const ProtectedTinyStructureBox = (props: {
   identifier: string;
   object: string;
 }) => {
-  const { data, loading, error, refetch } = useGetKnowledgeViewsQuery({
+  const { data, error, loading } = useListGraphsQuery({
     variables: {
-      identifier: props.identifier,
-      object: props.object,
+      filters: {
+        pinned: true,
+      },
     },
   });
 
-  const [addStructure] = useCreateStructureMutation({});
+  if (loading) {
+    return <p className="text-xs text-muted-foreground">Loading...</p>;
+  }
 
   return (
     <Carousel className="w-full dark:text-white">
       <CarouselPrevious />
       <CarouselContent>
-        {data?.knowledgeViews.map((view) => (
-          <CarouselItem key={view.structureCategory.id}>
+        {data?.graphs.map((graph) => (
+          <CarouselItem key={graph.id}>
             <Card className="p-3 ">
-              <h3 className="text-scroll font-semibold text-xs">
-                {view.structureCategory.graph.name}
-              </h3>
-              {view.structure ? (
-                <div className="h-64">
-                  {view.structure?.bestView ? (
-                    <SelectiveNodeViewRenderer view={view.structure.bestView} options={{ minimal: true }} />
-                  ) : (
-                    "No view available"
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col w-full gap-2">
-                  <p className="text-sm text-scroll font-light">
-                    Not connected yet to Graph
-                  </p>
-                  <ObjectButton
-                    identifier={props.identifier}
-                    object={props.object}
-                  >
-                    <Button>Connect</Button>
-                  </ObjectButton>
-                </div>
-              )}
+              <GraphKnowledgeView
+                identifier={props.identifier}
+                object={props.object}
+                graph={graph}
+              />
             </Card>
           </CarouselItem>
         ))}
-        {data?.knowledgeViews.length == 0 && (
+        {data?.graphs.length == 0 && (
           <CarouselItem>
             <Card className="p-3 flex flex-col gap-2">
               <h3 className="text-scroll font-semibold text-xs">

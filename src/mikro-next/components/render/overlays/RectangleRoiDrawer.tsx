@@ -13,6 +13,7 @@ export const RectangleRoiDrawer = ({
   c,
   z,
   t,
+  event_key = "shift",
 }: RoiDrawerProps) => {
   const createRoi = useRoiCreation(image.id);
 
@@ -59,5 +60,10 @@ export const RectangleRoiDrawer = ({
     }
   };
 
-  return <RectangleDrawer onRectangleDrawn={onRectangleDrawn} />;
+  return (
+    <RectangleDrawer
+      onRectangleDrawn={onRectangleDrawn}
+      event_key={event_key}
+    />
+  );
 };

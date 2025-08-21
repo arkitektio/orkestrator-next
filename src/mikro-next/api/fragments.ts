@@ -1,10 +1,10 @@
 
-export interface PossibleTypesResultData {
-  possibleTypes: {
-    [key: string]: string[]
-  }
-}
-const result: PossibleTypesResultData = {
+      export interface PossibleTypesResultData {
+        possibleTypes: {
+          [key: string]: string[]
+        }
+      }
+      const result: PossibleTypesResultData = {
   "possibleTypes": {
     "Accessor": [
       "ImageAccessor",
@@ -37,7 +37,13 @@ const result: PossibleTypesResultData = {
       "ScaleView",
       "TimepointView",
       "WellPositionView"
+    ],
+    "_Entity": [
+      "File",
+      "Image",
+      "Table"
     ]
   }
 };
-export default result;
+      export default result;
+    

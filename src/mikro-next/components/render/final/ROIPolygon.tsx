@@ -8,6 +8,8 @@ import { Line, useCursor } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import { useViewerState } from "../ViewerStateProvider";
+import { PassThroughProps } from "../FInalRender";
 const convertToThreeJSCoords = (
   vertices: [number, number, number, number, number][],
   imageWidth: number,
@@ -41,10 +43,11 @@ export const ROIPolygon = (
 ) => {
   const { roi } = props;
   const meshRef = useRef<THREE.Mesh>(null);
-  const { camera, gl, size } = useThree();
+  const { camera, size } = useThree();
   const [hovered, setHovered] = useState(false);
   const [selected, setSelected] = useState(false);
   const [deleteRoi] = useDeleteRoiMutation();
+  const { setAllowRoiDrawing, setRoiDrawMode, setShowRois } = useViewerState();
 
   // Keyboard event handler for deletion
   useEffect(() => {
@@ -136,10 +139,13 @@ export const ROIPolygon = (
       // Set this ROI as selected for deletion
       setSelected(true);
 
+      // Enable ROI drawing mode with the same type as the clicked ROI
+      setShowRois(true);
+      setAllowRoiDrawing(true);
+      setRoiDrawMode(roi.kind);
+
       // Project the rightmost point of the ROI to screen coordinates
       const screenPos = projectToScreenCoordinates(rightPoint);
-
-      // Add the offset to position the panel to the right
 
       console.log(
         "Anchoring panel at screen position:",
@@ -159,7 +165,17 @@ export const ROIPolygon = (
         ];
       });
     },
-    [roi.id, rightPoint, camera, size, setSelected],
+    [
+      roi.id,
+      roi.kind,
+      rightPoint,
+      camera,
+      size,
+      setSelected,
+      setShowRois,
+      setAllowRoiDrawing,
+      setRoiDrawMode,
+    ],
   );
 
   const onRightClick = useCallback(

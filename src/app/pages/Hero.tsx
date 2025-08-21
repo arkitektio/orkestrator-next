@@ -9,6 +9,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { aliasToHttpPath } from "@/lib/arkitekt/alias/helpers";
 import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
 import { Instance } from "@/lib/arkitekt/fakts/faktsSchema";
@@ -215,13 +220,13 @@ export const ServicesInfo = () => {
 
   const listedServices = fakts
     ? Object.keys(fakts.instances)
-      .map((key) => {
-        return {
-          serviceKey: key,
-          value: fakts.instances[key as keyof typeof fakts],
-        };
-      })
-      .filter((e) => e.serviceKey)
+        .map((key) => {
+          return {
+            serviceKey: key,
+            value: fakts.instances[key as keyof typeof fakts],
+          };
+        })
+        .filter((e) => e.serviceKey)
     : [];
 
   return (
@@ -235,6 +240,7 @@ export const ServicesInfo = () => {
 
 export const Home = () => {
   const fakts = Arkitekt.useFakts();
+  const connection = Arkitekt.useConnection();
   const disconnect = Arkitekt.useDisconnect();
   const reconnect = Arkitekt.useReconnect();
 
@@ -260,9 +266,18 @@ export const Home = () => {
               <div className="max-w-3xl mx-auto space-y-4">
                 <p className="text-xl text-muted-foreground leading-relaxed">
                   You are currently connected to{" "}
-                  <span className="font-semibold text-foreground">
-                    {fakts?.self?.deployment_name || "Arkitekt Server"}
-                  </span>
+                  <Tooltip>
+                    <TooltipTrigger className="cursor-pointer">
+                      <span className="cursor-default font-semibold text-foreground">
+                        {fakts?.self?.deployment_name || "Arkitekt Server"}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">
+                        {connection?.endpoint?.base_url}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
                   {data?.mycontext?.organization && (
                     <>
                       {" "}

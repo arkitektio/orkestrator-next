@@ -6,7 +6,7 @@ import { PlusIcon } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import ReagentCategoryList from "../components/lists/ReagentCategoryList";
-import CreateGraphForm from "../forms/CreateGraphForm";
+import CreateReagentCategoryForm from "../forms/CreateReagentCategoryForm";
 
 export type IRepresentationScreenProps = {};
 
@@ -35,7 +35,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
                 navigate(KraphGraph.linkBuilder(item.createGraph.id));
               }}
             >
-              <CreateGraphForm />
+              <CreateReagentCategoryForm />
             </FormDialogAction>
           </>
         </div>
@@ -48,9 +48,10 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
               Your Reagent categories
             </h1>
             <p className="mt-3 text-xl text-muted-foreground">
-              Reagents represent experimental additives that are used in your protocols.
-              As opposed to entities, they are are reactants and will not be measured in the graph.
-              They are rather metadata that will be used to filter the data.
+              Reagents represent experimental additives that are used in your
+              protocols. As opposed to entities, they are are reactants and will
+              not be measured in the graph. They are rather metadata that will
+              be used to filter the data.
             </p>
           </div>
           <Card className="w-full h-full flex-row relative"></Card>

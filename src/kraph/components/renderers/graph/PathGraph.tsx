@@ -3,7 +3,7 @@ import {
   ReactFlow,
   ReactFlowInstance,
   useEdgesState,
-  useNodesState
+  useNodesState,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import ELK from "elkjs/lib/elk.bundled.js";
@@ -22,6 +22,7 @@ import ThisNode from "./nodes/ThisNode";
 import { PathEdge, PathNode } from "./types";
 import { entityNodesToNodes, entityRelationToEdges } from "./utils";
 import { ViewOptions } from "../DelegatingNodeViewRenderer";
+import { hash } from "crypto";
 
 export type Props = {
   path: PathFragment;
@@ -76,7 +77,11 @@ const stressLayout = {
   "elk.layered.spacing.nodeNodeBetweenLayrs": "200",
   "elk.direction": "RIGHT",
   "elk.layered.nodePlacement.bk.fixedAlignment": "LEFT",
-}
+};
+
+const hashPash = (path: PathFragment): string => {
+  return JSON.stringify(path);
+};
 
 export const PathGraph: React.FC<Props> = ({ path, root, options }) => {
   const reactFlowWrapper = React.useRef<HTMLDivElement | null>(null);
@@ -84,9 +89,7 @@ export const PathGraph: React.FC<Props> = ({ path, root, options }) => {
     React.useState<ReactFlowInstance<PathNode, PathEdge> | null>(null);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<PathNode>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<PathEdge>(
-    entityRelationToEdges(path.edges),
-  );
+  const [edges, setEdges, onEdgesChange] = useEdgesState<PathEdge>([]);
 
   useEffect(() => {
     const the_nodes = entityNodesToNodes(path.nodes, root);
@@ -121,6 +124,7 @@ export const PathGraph: React.FC<Props> = ({ path, root, options }) => {
       });
 
       setNodes(newNodes);
+      setEdges(entityRelationToEdges(path.edges));
     });
   }, [reactFlowInstance]);
 

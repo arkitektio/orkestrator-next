@@ -51,6 +51,7 @@ import {
   StagingEdgeParams,
   StagingNodeParams,
 } from "./types";
+import { KraphGraph } from "@/linkers";
 
 const ontologyToNodes = (graph: GraphFragment): MyNode[] => {
   const structureNodes = graph.structureCategories.map((cat, index) => ({
@@ -491,6 +492,10 @@ const stressLayout = {
   "elk.layered.nodePlacement.bk.fixedAlignment": "LEFT",
 };
 
+const hashGraph = (graph: GraphFragment) => {
+  return JSON.stringify(graph);
+};
+
 export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
   const [update] = useUpdateGraphMutation();
 
@@ -513,8 +518,10 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
   React.useEffect(() => {
     if (reactFlowInstance) {
       reactFlowInstance.fitView({ padding: 0.2 });
+      setNodes(ontologyToNodes(graph));
+      setEdges(ontologyToEdges(graph));
     }
-  }, [reactFlowInstance]);
+  }, [reactFlowInstance, hashGraph(graph)]);
 
   const save = () => {
     const nodes = reactFlowInstance?.getNodes() as MyNode[];
@@ -748,6 +755,14 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
           <Button onClick={() => layout(layeredLayout)} variant={"outline"}>
             Layered
           </Button>
+
+          <KraphGraph.DetailLink
+            object={graph.id}
+            subroute={"reagentcategories"}
+            className="text-sm"
+          >
+            Reagent Categories
+          </KraphGraph.DetailLink>
         </div>
       </div>
     </OntologyGraphProvider>

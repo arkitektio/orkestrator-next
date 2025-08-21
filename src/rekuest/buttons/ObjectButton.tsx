@@ -57,6 +57,7 @@ import {
   DemandKind,
   ListImplementationFragment,
   ListShortcutFragment,
+  PortDemandInput,
   PortKind,
   PrimaryActionFragment,
   useAllPrimaryActionsQuery,
@@ -66,6 +67,7 @@ import {
 import { registeredCallbacks } from "../components/functional/AssignationUpdater";
 import { useAssign } from "../hooks/useAssign";
 import { useHashActionWithProgress } from "../hooks/useHashActionWithProgress";
+import { Identifier, ObjectID } from "@/types";
 
 export type OnDone = (args: {
   event?: AssignationEventFragment;
@@ -153,6 +155,8 @@ export const DirectImplementationAssignment = (
             args: { [props.action.args?.at(0)?.key || "object"]: props.object },
           })
         }
+        variant={"outline"}
+        className="mt-2"
       >
         Create Shortcut
       </Button>
@@ -192,19 +196,43 @@ export const AssignButton = (
   );
 
   const conditionalAssign = async (action: PrimaryActionFragment) => {
-    let the_key = action.args?.at(0)?.key;
+    const keys = {};
 
-    if (!the_key) {
-      toast.error("No key found");
-      return;
+    if (props.identifier && props.object) {
+      const the_key = action.args?.at(0)?.key;
+      if (!the_key) {
+        toast.error("No key found for self");
+        return;
+      }
+      keys[the_key] = props.object;
     }
-    if (action.args.length > 1) {
+
+    if (props.partners && props.partners.length > 0) {
+      for (let i = 0; i < props.partners.length; i++) {
+        const port = action.args.at(i + 1);
+        if (!port) {
+          toast.error("No key found for partner " + i);
+          return;
+        }
+        if (port.identifier !== props.partners[i].identifier) {
+          toast.error(
+            `Key mismatch for partner ${i}: expected ${port.identifier}, got ${props.partners[i].identifier}`,
+          );
+          return;
+        }
+        const partner = props.partners[i];
+        keys[port.key] = partner.object;
+      }
+    }
+
+    const unknownKeys = action.args.filter((arg) => arg.key && !keys[arg.key]);
+
+    if (unknownKeys.length >= 1) {
       openDialog("actionassign", {
         id: action.id,
-        args: { [the_key]: props.object },
-        hidden: { [the_key]: props.object },
+        args: keys,
+        hidden: keys,
       });
-      event.stopPropagation();
       return;
     }
 
@@ -213,9 +241,7 @@ export const AssignButton = (
 
       await assign({
         action: action.id,
-        args: {
-          [the_key]: props.object,
-        },
+        args: keys,
         reference: reference,
         ephemeral: props.ephemeral,
       });
@@ -418,14 +444,16 @@ export const InstallButton = (props: {
 };
 
 export const ApplicableActions = (props: PassDownProps) => {
-  const demands = [
-    {
+  const demands: PortDemandInput[] = [];
+
+  if (props.identifier) {
+    demands.push({
       kind: DemandKind.Args,
       matches: [
         { at: 0, kind: PortKind.Structure, identifier: props.identifier },
       ],
-    },
-  ];
+    });
+  }
 
   const firstPartner = props.partners?.at(0);
 
@@ -439,6 +467,17 @@ export const ApplicableActions = (props: PassDownProps) => {
           identifier: firstPartner.identifier,
         },
       ],
+    });
+  }
+
+  if (props.returns) {
+    demands.push({
+      kind: DemandKind.Returns,
+      matches: props.returns.map((r, index) => ({
+        at: index,
+        kind: PortKind.Structure,
+        identifier: r,
+      })),
     });
   }
 
@@ -483,7 +522,7 @@ export const ApplicableActions = (props: PassDownProps) => {
   );
 };
 
-export const AppicableShortcuts = (props: PassDownProps) => {
+export const ApplicableShortcuts = (props: PassDownProps) => {
   const demands = [
     {
       kind: DemandKind.Args,
@@ -1010,7 +1049,10 @@ export const ApplicableLocalActions = (props: PassDownProps) => {
   return (
     <Actions
       state={{
-        left: [{ object: props.object, identifier: props.identifier }],
+        left:
+          props.identifier && props.object
+            ? [{ object: props.object, identifier: props.identifier }]
+            : [],
         right: props.partners,
         isCommand: false,
       }}
@@ -1020,17 +1062,27 @@ export const ApplicableLocalActions = (props: PassDownProps) => {
   );
 };
 
-export type ObjectButtonProps = {
-  object: string;
-  identifier: string;
+export type SmartContextProps = {
+  object?: ObjectID;
+  identifier?: Identifier;
   children?: React.ReactNode;
   className?: string;
   partners?: Structure[];
+  returns?: string[];
   expect?: string[];
   collection?: string;
   onDone?: OnDone;
   onError?: (error: string) => void;
   ephemeral?: boolean;
+  disableShortcuts?: boolean;
+  disableKraph?: boolean;
+  disableKabinet?: boolean;
+  disableActions?: boolean;
+};
+
+export type ObjectButtonProps = SmartContextProps & {
+  children?: React.ReactNode;
+  className?: string;
 };
 
 export type PassDownProps = SmartContextProps & {
@@ -1056,8 +1108,6 @@ export const ObjectButton = (props: ObjectButtonProps) => {
   );
 };
 
-export type SmartContextProps = ObjectButtonProps & {};
-
 export const SmartContext = (props: SmartContextProps) => {
   const [filter, setFilterValue] = React.useState<string | undefined>(
     undefined,
@@ -1078,15 +1128,19 @@ export const SmartContext = (props: SmartContextProps) => {
         <CommandList>
           <CommandEmpty>{"No Action available"}</CommandEmpty>
           <Guard.Rekuest fallback={<></>}>
-            <AppicableShortcuts {...props} filter={filter} />
+            <ApplicableShortcuts {...props} filter={filter} />
           </Guard.Rekuest>
 
           <Guard.Kraph fallback={<></>}>
-            <ApplicableRelations {...props} filter={filter} />
+            {!props.disableKraph && (
+              <ApplicableRelations {...props} filter={filter} />
+            )}
           </Guard.Kraph>
 
           <Guard.Rekuest fallback={<></>}>
-            <ApplicableActions {...props} filter={filter} />
+            {!props.disableActions && (
+              <ApplicableActions {...props} filter={filter} />
+            )}
           </Guard.Rekuest>
 
           <ApplicableLocalActions {...props} filter={filter} />

@@ -12,26 +12,26 @@ import {
 
 export const buildGuard =
   (key: string) =>
-    (props: { children: React.ReactNode; fallback?: React.ReactNode }) => {
-      const service = usePotentialService(key);
+  (props: { children: React.ReactNode; fallback?: React.ReactNode }) => {
+    const service = usePotentialService(key);
 
-      if (!service) {
-        return <div>{props.fallback || "Loading "}</div>;
-      }
+    if (!service) {
+      return <div>{props.fallback || "Loading "}</div>;
+    }
 
-      return props.children;
-    };
+    return props.children;
+  };
 
 export const buildWith =
   (key: string) =>
-    <T extends (options: any) => any>(func: T): T => {
-      const Wrapped = (nana: any) => {
-        const service = useService(key);
+  <T extends (options: any) => any>(func: T): T => {
+    const Wrapped = (nana: any) => {
+      const service = useService(key);
 
-        return func({ ...nana, client: service.client });
-      };
-      return Wrapped as T;
+      return func({ ...nana, client: service.client });
     };
+    return Wrapped as T;
+  };
 
 export const buildArkitekt = ({
   manifest,
@@ -44,10 +44,10 @@ export const buildArkitekt = ({
 }) => {
   const requirements: Requirement[] = serviceBuilderMap
     ? Object.values(serviceBuilderMap).map((s) => ({
-      service: s.service,
-      key: s.key,
-      optional: s.optional,
-    }))
+        service: s.service,
+        key: s.key,
+        optional: s.optional,
+      }))
     : [];
 
   const realManifest: Manifest = {
@@ -65,6 +65,7 @@ export const buildArkitekt = ({
     useDisconnect: () => useArkitekt().disconnect,
     useReconnect: () => useArkitekt().reconnect,
     useManifest: () => realManifest,
+    useConnection: () => useArkitekt().connection,
     useFakts: () => useArkitekt().connection?.fakts,
     useService: useService,
     useServices: () => useArkitekt().connection?.availableServices || [],

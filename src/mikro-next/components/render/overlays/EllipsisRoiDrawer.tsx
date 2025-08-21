@@ -13,6 +13,7 @@ export const EllipsisRoiDrawer = ({
   c,
   z,
   t,
+  event_key = "shift",
 }: RoiDrawerProps) => {
   const createRoi = useRoiCreation(image.id);
 
@@ -64,5 +65,7 @@ export const EllipsisRoiDrawer = ({
     }
   };
 
-  return <EllipsisDrawer onEllipsisDrawn={onEllipsisDrawn} />;
+  return (
+    <EllipsisDrawer onEllipsisDrawn={onEllipsisDrawn} event_key={event_key} />
+  );
 };

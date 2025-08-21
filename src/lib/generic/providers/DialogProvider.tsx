@@ -8,37 +8,37 @@ import React, { createContext, useCallback, useContext, useState } from "react";
 
 /**
  * Enhanced Dialog Provider with Sheet Support
- * 
+ *
  * Usage Examples:
- * 
+ *
  * 1. Basic Dialog:
  * const { openDialog } = useDialog();
  * openDialog("mydialog", { prop1: "value" });
- * 
+ *
  * 2. Dialog with custom className:
- * openDialog("mydialog", { prop1: "value" }, { 
- *   className: "max-w-4xl" 
+ * openDialog("mydialog", { prop1: "value" }, {
+ *   className: "max-w-4xl"
  * });
- * 
+ *
  * 3. Basic Sheet (right side, default):
  * const { openSheet } = useDialog();
  * openSheet("mysheet", { prop1: "value" });
- * 
+ *
  * 4. Sheet with custom width:
- * openSheet("mysheet", { prop1: "value" }, { 
- *   className: "!w-[600px] !max-w-none" 
+ * openSheet("mysheet", { prop1: "value" }, {
+ *   className: "!w-[600px] !max-w-none"
  * });
- * 
+ *
  * 5. Sheet from different side:
- * openSheet("mysheet", { prop1: "value" }, { 
+ * openSheet("mysheet", { prop1: "value" }, {
  *   side: "left",
- *   className: "!w-96" 
+ *   className: "!w-96"
  * });
- * 
+ *
  * 6. Full-width bottom sheet:
- * openSheet("mysheet", { prop1: "value" }, { 
+ * openSheet("mysheet", { prop1: "value" }, {
  *   side: "bottom",
- *   className: "!h-[80vh]" 
+ *   className: "!h-[80vh]"
  * });
  */
 
@@ -50,9 +50,9 @@ type ExtractProps<T> =
 type ModalState = {
   id: string | null;
   props: Record<string, unknown>;
-  type: 'dialog' | 'sheet';
+  type: "dialog" | "sheet";
   className?: string;
-  side?: 'top' | 'bottom' | 'left' | 'right';
+  side?: "top" | "bottom" | "left" | "right";
 };
 
 // --- 2. Factory Function ---
@@ -69,21 +69,21 @@ export function createDialogProvider<
     openDialog: <K extends DialogId>(
       id: K,
       props: DialogPropsMap[K],
-      options?: { className?: string }
+      options?: { className?: string },
     ) => void;
     openSheet: <K extends DialogId>(
       id: K,
       props: DialogPropsMap[K],
       options?: {
         className?: string;
-        side?: 'top' | 'bottom' | 'left' | 'right';
-      }
+        side?: "top" | "bottom" | "left" | "right";
+      },
     ) => void;
     closeDialog: () => void;
   }>({
-    openDialog: () => { },
-    openSheet: () => { },
-    closeDialog: () => { },
+    openDialog: () => {},
+    openSheet: () => {},
+    closeDialog: () => {},
   });
 
   const useDialog = () => useContext(DialogContext);
@@ -92,20 +92,20 @@ export function createDialogProvider<
     const [modalState, setModalState] = useState<ModalState>({
       id: null,
       props: {},
-      type: 'dialog'
+      type: "dialog",
     });
 
     const openDialog = useCallback(
       <K extends DialogId>(
         id: K,
         props: DialogPropsMap[K],
-        options?: { className?: string }
+        options?: { className?: string },
       ) => {
         setModalState({
           id: id as string,
           props,
-          type: 'dialog',
-          className: options?.className
+          type: "dialog",
+          className: options?.className,
         });
       },
       [],
@@ -117,77 +117,71 @@ export function createDialogProvider<
         props: DialogPropsMap[K],
         options?: {
           className?: string;
-          side?: 'top' | 'bottom' | 'left' | 'right';
-        }
+          side?: "top" | "bottom" | "left" | "right";
+        },
       ) => {
         setModalState({
           id: id as string,
           props,
-          type: 'sheet',
+          type: "sheet",
           className: options?.className,
-          side: options?.side || 'right'
+          side: options?.side || "right",
         });
       },
       [],
     );
 
     const closeDialog = useCallback(() => {
-      setModalState({ id: null, props: {}, type: 'dialog' });
+      setModalState({ id: null, props: {}, type: "dialog" });
     }, []);
 
     const Component = modalState.id ? registry[modalState.id] : null;
 
     return (
       <DialogContext.Provider value={{ openDialog, openSheet, closeDialog }}>
-        {modalState.type === 'dialog' && (
-          <Dialog
-            open={!!Component}
-            onOpenChange={closeDialog}
-            modal={true}
-          >
-            {children}
-            {Component && (
-              <DialogContent className={modalState.className}>
-                <Guard.Rekuest>
-                  <Component {...modalState.props} />
-                </Guard.Rekuest>
-              </DialogContent>
-            )}
-          </Dialog>
-        )}
+        <Dialog
+          open={!!Component && modalState.type === "dialog"}
+          onOpenChange={closeDialog}
+          modal={true}
+        >
+          {Component && (
+            <DialogContent className={modalState.className}>
+              <Guard.Rekuest>
+                <Component {...modalState.props} />
+              </Guard.Rekuest>
+            </DialogContent>
+          )}
+        </Dialog>
 
-        {modalState.type === 'sheet' && (
-          <Sheet
-            open={!!Component}
-            onOpenChange={closeDialog}
-          >
-            {children}
-            {Component && (
-              <SheetContent
-                side={modalState.side}
-                className={cn(
-                  "text-foreground",
-                  // Reset default width/height classes when custom dimensions are provided
-                  modalState.className && (
-                    modalState.className.includes('w-') ||
-                    modalState.className.includes('!w-') ||
-                    modalState.className.includes('max-w-')
-                  ) && '!w-auto !max-w-none',
-                  modalState.className && (
-                    modalState.className.includes('h-') ||
-                    modalState.className.includes('!h-') ||
-                    modalState.className.includes('max-h-')
-                  ) && '!h-auto !max-h-none',
-                  modalState.className
-                )}
-              >
-                <Guard.Rekuest>
-                  <Component {...modalState.props} />
-                </Guard.Rekuest>
-              </SheetContent>
-            )}
-          </Sheet>
-        )}
+        <Sheet
+          open={!!Component && modalState.type === "sheet"}
+          onOpenChange={closeDialog}
+        >
+          {Component && (
+            <SheetContent
+              side={modalState.side}
+              className={cn(
+                "text-foreground",
+                // Reset default width/height classes when custom dimensions are provided
+                modalState.className &&
+                  (modalState.className.includes("w-") ||
+                    modalState.className.includes("!w-") ||
+                    modalState.className.includes("max-w-")) &&
+                  "!w-auto !max-w-none",
+                modalState.className &&
+                  (modalState.className.includes("h-") ||
+                    modalState.className.includes("!h-") ||
+                    modalState.className.includes("max-h-")) &&
+                  "!h-auto !max-h-none",
+                modalState.className,
+              )}
+            >
+              <Guard.Rekuest>
+                <Component {...modalState.props} />
+              </Guard.Rekuest>
+            </SheetContent>
+          )}
+        </Sheet>
 
         {!Component && children}
       </DialogContext.Provider>

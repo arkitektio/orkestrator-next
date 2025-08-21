@@ -1,5 +1,6 @@
 import { RoiKind } from "@/mikro-next/api/graphql";
 import { useViewerState } from "../ViewerStateProvider";
+import { EventKeyProps } from "../controls/eventKeyUtils";
 import { EllipsisRoiDrawer } from "./EllipsisRoiDrawer";
 import { LineRoiDrawer } from "./LineRoiDrawer";
 import { PathRoiDrawer } from "./PathRoiDrawer";
@@ -7,7 +8,7 @@ import { PointRoiDrawer } from "./PointRoiDrawer";
 import { PolygonRoiDrawer } from "./PolygonRoiDrawer";
 import { RectangleRoiDrawer } from "./RectangleRoiDrawer";
 
-export interface RoiDrawerProps {
+export interface RoiDrawerProps extends EventKeyProps {
   imageHeight: number;
   imageWidth: number;
   image: { id: string };
@@ -23,6 +24,7 @@ export const RoiDrawerCanvas = ({
   c,
   z,
   t,
+  event_key = "shift",
 }: RoiDrawerProps) => {
   const { roiDrawMode } = useViewerState();
 
@@ -33,6 +35,7 @@ export const RoiDrawerCanvas = ({
     c,
     z,
     t,
+    event_key,
   };
 
   // Render the appropriate drawer based on the selected mode

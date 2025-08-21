@@ -8,7 +8,8 @@ import {
 import { Dialog } from "@/components/ui/dialog";
 import { Guard } from "@/lib/arkitekt/Arkitekt";
 import { cn } from "@/lib/utils";
-import { useDisplayComponent } from "@/providers/display/DisplayContext";
+import { ApplicableActions } from "@/rekuest/buttons/ObjectButton";
+import { Structure } from "@/types";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { DialogPortal } from "@radix-ui/react-dialog";
 import { Cross2Icon } from "@radix-ui/react-icons";
@@ -21,10 +22,9 @@ import {
   useSmartExtension,
 } from "./ExtensionContext";
 import { LocalActionExtensions } from "./extensions/LocalActionExtension";
-import { NodeActionExtension } from "./extensions/NodeActionExtension";
-import { NodeExtensions } from "./extensions/NodeExtension";
-import { ReservationExtensions } from "./extensions/ReservationActionExtension";
 import { SearchExtensions } from "./extensions/SearchExtensions";
+import { ShortcutExtensions } from "./extensions/ShortcutExtensions";
+import { useDisplayComponent } from "@/app/display";
 
 export const DisplayWidget = (props: {
   identifier: string;
@@ -38,7 +38,11 @@ export const DisplayWidget = (props: {
 
   return (
     <Suspense>
-      <Widget small={true} object={props.object} />
+      <Widget
+        small={true}
+        object={props.object}
+        identifier={props.identifier}
+      />
     </Suspense>
   );
 };
@@ -83,7 +87,10 @@ export const ModifierRender = (props: { modifier: Modifier }) => {
  * And allows for the execution of these commands.
  *
  **/
-export const CommandMenu = () => {
+export const CommandMenu = (props: {
+  self?: Structure;
+  returns?: Structure;
+}) => {
   const [context, setContext] = useState<Context>({
     open: false,
     query: "",
@@ -191,10 +198,12 @@ export const CommandMenu = () => {
                   }}
                 >
                   <Guard.Rekuest>
-                    <NodeExtensions />
-                    <NodeActionExtension />
-
-                    <ReservationExtensions />
+                    <ShortcutExtensions />
+                    <ApplicableActions
+                      filter={context.query}
+                      object={props.self?.object}
+                      identifier={props.self?.identifier}
+                    />
                   </Guard.Rekuest>
                   <LocalActionExtensions />
                   <Guard.Mikro fallback={<></>}>

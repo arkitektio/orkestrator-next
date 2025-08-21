@@ -1,7 +1,4 @@
-import {
-  NodeQueryViewFragment,
-  PathFragment
-} from "@/kraph/api/graphql";
+import { NodeQueryViewFragment, PathFragment } from "@/kraph/api/graphql";
 import { PathGraph } from "./graph/PathGraph";
 import { GraphTable } from "./table/GraphTable";
 import { ViewOptions } from "./DelegatingNodeViewRenderer";

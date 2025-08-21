@@ -13,6 +13,7 @@ export const PointRoiDrawer = ({
   c,
   z,
   t,
+  event_key = "shift",
 }: RoiDrawerProps) => {
   const createRoi = useRoiCreation(image.id);
 
@@ -51,5 +52,5 @@ export const PointRoiDrawer = ({
     }
   };
 
-  return <PointDrawer onPointDrawn={onPointDrawn} />;
+  return <PointDrawer onPointDrawn={onPointDrawn} event_key={event_key} />;
 };

@@ -12,7 +12,6 @@ import OntologyGraph from "../components/designer/OntologyGraph";
 import { UpdateGraphForm } from "../forms/UpdateGraphForm";
 
 export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
-  const nagivate = useNavigate();
   const [update] = useUpdateGraphMutation({
     refetchQueries: ["GetGraph"],
   });

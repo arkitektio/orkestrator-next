@@ -165,8 +165,10 @@ export const CreateShortcutDialog = (props: {
     ports: action?.args.filter((arg) => chosenArgs.includes(arg.key)) || [],
     overwrites: { ...props.args, name: action?.name },
     additionalSchema: z.object({
+      toolbox: z.string().optional(),
       name: z.string().nonempty(),
       allowQuick: z.boolean().default(false),
+      bindNumber: z.coerce.number().int().min(0).max(9).optional(),
     }),
   });
 
@@ -181,8 +183,9 @@ export const CreateShortcutDialog = (props: {
         input: {
           name: name,
           action: props.id,
+          toolbox: toolbox || null,
           args: rest,
-          bindNumber: bindNumber || 5,
+          bindNumber: bindNumber,
           allowQuick: allowQuick,
         },
       },

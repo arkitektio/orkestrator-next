@@ -9,22 +9,14 @@ import {
   BaseCategoryFragment,
   ColumnKind,
   CreateGraphQueryMutationVariables,
-  GraphFragment,
   MetricKind,
   useCreateGraphQueryMutation,
   useGetGraphQuery,
-  ViewKind
+  ViewKind,
 } from "../api/graphql";
-import { CypherField, CypherSchema } from "../components/cypher/CypherField";
+import { CypherField } from "../components/cypher/CypherField";
 import { ChoicesField } from "@/components/fields/ChoicesField";
 import { buildCypherSchemaFromGraph } from "../components/renderers/utils";
-
-
-
-
-
-
-
 
 export default (props: { category: BaseCategoryFragment }) => {
   const [add] = useCreateGraphQueryMutation();
@@ -36,11 +28,6 @@ export default (props: { category: BaseCategoryFragment }) => {
       id: props.category.graph.id,
     },
   });
-
-
-
-
-
 
   const form = useForm<CreateGraphQueryMutationVariables["input"]>({
     defaultValues: {
@@ -103,16 +90,18 @@ RETURN id(n), n.__created_at`,
               options={[
                 { value: ViewKind.Table, label: "Table" },
                 { value: ViewKind.Path, label: "Graph" },
-                { value: ViewKind.Pairs, label: "Pairs" }
+                { value: ViewKind.Pairs, label: "Pairs" },
               ]}
             />
 
-            {data && <CypherField
-              label="Query"
-              name="query"
-              schema={buildCypherSchemaFromGraph(data.graph)}
-              description="The Cypher query to execute"
-            />}
+            {data && (
+              <CypherField
+                label="Query"
+                name="query"
+                schema={buildCypherSchemaFromGraph(data.graph)}
+                description="The Cypher query to execute"
+              />
+            )}
             {kind == "TABLE" && (
               <div className="flex flex-row gap-4 w-full">
                 {columnFieldArray.fields.map((item, index) => (
@@ -151,7 +140,8 @@ RETURN id(n), n.__created_at`,
                 >
                   +
                 </Button>
-              </div>)}
+              </div>
+            )}
           </div>
 
           <DialogFooter className="mt-2">

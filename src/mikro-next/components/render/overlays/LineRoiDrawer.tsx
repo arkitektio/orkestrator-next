@@ -13,6 +13,7 @@ export const LineRoiDrawer = ({
   c,
   z,
   t,
+  event_key = "shift",
 }: RoiDrawerProps) => {
   const createRoi = useRoiCreation(image.id);
 
@@ -54,5 +55,5 @@ export const LineRoiDrawer = ({
     }
   };
 
-  return <LineDrawer onLineDrawn={onLineDrawn} />;
+  return <LineDrawer onLineDrawn={onLineDrawn} event_key={event_key} />;
 };

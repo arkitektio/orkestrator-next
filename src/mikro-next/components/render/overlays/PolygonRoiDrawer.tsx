@@ -13,6 +13,7 @@ export const PolygonRoiDrawer = ({
   c,
   z,
   t,
+  event_key = "shift",
 }: RoiDrawerProps) => {
   const createRoi = useRoiCreation(image.id);
 
@@ -51,5 +52,7 @@ export const PolygonRoiDrawer = ({
     }
   };
 
-  return <PolygonDrawer onPolygonDrawn={onPolygonDrawn} />;
+  return (
+    <PolygonDrawer onPolygonDrawn={onPolygonDrawn} event_key={event_key} />
+  );
 };

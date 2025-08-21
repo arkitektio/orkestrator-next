@@ -1,18 +1,22 @@
 import { Line } from "@react-three/drei";
 import { useRef, useState } from "react";
 import * as THREE from "three";
+import { EventKeyProps, createEventKeyChecker } from "./eventKeyUtils";
 
 export type PolygonDrawerProps = {
   onPolygonDrawn?: (points: THREE.Vector3[]) => void;
-};
+} & EventKeyProps;
 
 export function PolygonDrawer(props: PolygonDrawerProps) {
+  const { event_key = "shift" } = props;
   const planeRef = useRef<THREE.Mesh>(null);
   const [points, setPoints] = useState<THREE.Vector3[]>([]);
   const [currentPoint, setCurrentPoint] = useState<THREE.Vector3 | null>(null);
 
+  const checkEventKey = createEventKeyChecker(event_key);
+
   const handlePointerDown = (e) => {
-    if (!e.shiftKey) return; // Require Shift to draw
+    if (!checkEventKey(e)) return; // Check for required event key
 
     e.stopPropagation();
     const newPoint = e.point.clone();

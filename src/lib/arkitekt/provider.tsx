@@ -9,7 +9,7 @@ import React, {
   useState,
 } from "react";
 import { resolveWorkingAlias } from "./alias/resolve";
-import { FaktsEndpoint } from "./fakts/endpointSchema";
+import { FaktsEndpoint, FaktsEndpointSchema } from "./fakts/endpointSchema";
 import {
   ActiveFakts,
   ActiveFaktsSchema,
@@ -20,6 +20,7 @@ import { flow } from "./fakts/flow";
 import { Manifest } from "./fakts/manifestSchema";
 import { TokenResponse, TokenResponseSchema } from "./fakts/tokenSchema";
 import { login } from "./oauth/login";
+import { end } from "slate";
 
 export type AvailableService = {
   key: string;
@@ -81,6 +82,7 @@ export type ConnectedContext = {
   token: Token;
   availableServices: AvailableService[];
   unresolvedServices?: UnresolvedService[];
+  endpoint: FaktsEndpoint;
 };
 
 export type ConnectFunction = (options: {
@@ -132,12 +134,14 @@ export const useToken = () => {
 };
 
 export const buildContext = async ({
+  endpoint,
   fakts,
   manifest,
   serviceBuilderMap,
   token,
   controller,
 }: {
+  endpoint: FaktsEndpoint;
   fakts: ActiveFakts;
   manifest: Manifest;
   serviceBuilderMap: ServiceBuilderMap;
@@ -240,6 +244,7 @@ export const buildContext = async ({
     unresolvedServices:
       unresolvedServices.length > 0 ? unresolvedServices : undefined,
     token: token,
+    endpoint: endpoint,
   };
 };
 
@@ -288,6 +293,7 @@ export const ArkitektProvider = ({
       serviceBuilderMap,
       token: token.access_token,
       controller: options.controller,
+      endpoint: options.endpoint,
     });
 
     setContext((context) => ({
@@ -354,11 +360,15 @@ export const ArkitektProvider = ({
   const tryReconnect = async (manifest, serviceBuilderMap) => {
     const faktsRaw = localStorage.getItem("fakts");
     const tokenRaw = localStorage.getItem("token");
+    const endpointRaw = localStorage.getItem("endpoint");
 
-    if (!faktsRaw || !tokenRaw) return;
+    if (!faktsRaw || !tokenRaw || !endpointRaw) return;
 
     try {
       const fakts: ActiveFakts = ActiveFaktsSchema.parse(JSON.parse(faktsRaw));
+      const endpoint: FaktsEndpoint = FaktsEndpointSchema.parse(
+        JSON.parse(endpointRaw),
+      );
       const token: TokenResponse = TokenResponseSchema.parse(
         JSON.parse(tokenRaw),
       );
@@ -373,6 +383,7 @@ export const ArkitektProvider = ({
         serviceBuilderMap,
         token: token.access_token,
         controller,
+        endpoint: endpoint,
       });
 
       setConnecting(false);
@@ -435,13 +446,13 @@ export type ArkitektBuilderOptions = {
 
 export const buildArkitektProvider =
   (options: ArkitektBuilderOptions) =>
-    ({ children }: { children: ReactNode }) => {
-      return (
-        <ArkitektProvider
-          manifest={options.manifest}
-          serviceBuilderMap={options.serviceBuilderMap}
-        >
-          {children}
-        </ArkitektProvider>
-      );
-    };
+  ({ children }: { children: ReactNode }) => {
+    return (
+      <ArkitektProvider
+        manifest={options.manifest}
+        serviceBuilderMap={options.serviceBuilderMap}
+      >
+        {children}
+      </ArkitektProvider>
+    );
+  };

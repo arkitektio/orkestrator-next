@@ -25,6 +25,7 @@ import {
   ModelLinkProps,
   OmitedNavLinkProps,
 } from "./types";
+import { DisplayWidgetProps } from "@/lib/display/registry";
 
 const buildBaseLink = (to: string) => {
   return ({ children, ...props }: BaseLinkProps) => {
@@ -164,19 +165,21 @@ const buildObjectButton = (model: Identifier) => {
 
 const buildNewButton = (model: Identifier) => {
   return ({ ...props }: SmartNewButtonProps) => {
-    return <NewButton identifier={model} {...props} />;
+    return <ObjectButton returns={[model]} {...props} />;
   };
 };
 
 export const buildSmart = (
   model: Identifier,
   to: string,
-  searchFunction?: SearchFunction,
+  options?: {
+    searchFunction?: SearchFunction;
+  },
 ) => {
   smartRegistry.register({
     identifier: model,
     path: to,
-    search: searchFunction,
+    search: options?.searchFunction,
     description: "A smart model",
   });
 

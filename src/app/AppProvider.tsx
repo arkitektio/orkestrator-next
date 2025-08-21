@@ -6,7 +6,6 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ShadnWigets } from "@/components/widgets/ShadnWigets";
 import { baseName, Router } from "@/constants";
 import { ElektroWard } from "@/elektro/ElektroWard";
 import { KabinetWard } from "@/kabinet/KabinetWard";
@@ -17,7 +16,6 @@ import ImageDisplay from "@/mikro-next/displays/ImageDisplay";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { CommandProvider } from "@/providers/command/CommandProvider";
 import { DebugProvider } from "@/providers/debug/DebugProvider";
-import { DisplayProvider } from "@/providers/display/DisplayProvider";
 import { SelectionProvider } from "@/providers/selection/SelectionProvider";
 import { SettingsProvider } from "@/providers/settings/SettingsProvider";
 import { SmartProvider } from "@/providers/smart/provider";
@@ -30,10 +28,10 @@ import { WidgetRegistryProvider } from "@/rekuest/widgets/WidgetsProvider";
 import React from "react";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import { useNavigate } from "react-router-dom";
-const displayRegistry = {
-  "@mikro-next/image": ImageDisplay,
-  "@rekuest/node": NodeDisplay,
-};
+import { THE_WIDGET_REGISTRY } from "./shadCnWidgetRegistry";
+import { DisplayRegistryProvider } from "@/lib/display/registry";
+import { displayRegistry } from "./displayRegistry";
+import { DisplayProvider } from "./display";
 
 function fallbackRender({ error, resetErrorBoundary }: FallbackProps) {
   // Call resetErrorBoundary() to reset the error boundary and retry the render.
@@ -99,13 +97,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
             <Arkitekt.Provider>
               <TooltipProvider>
-
-                <DisplayProvider registry={displayRegistry}>
-
-                  <WidgetRegistryProvider>
-
+                <DisplayProvider>
+                  <WidgetRegistryProvider registry={THE_WIDGET_REGISTRY}>
                     <SmartProvider>
-
                       <DialogProvider>
                         <SelectionProvider>
                           <CommandProvider>
@@ -116,7 +110,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                               <AgentUpdater />
                               {/* We register the Shadn powered widgets to the widget registry. */}
                               <RekuestNextWard />
-                              <ShadnWigets />
                               <Toaster />
                             </Guard.Rekuest>
                             <Guard.Kabinet fallback={<></>}>
@@ -142,10 +135,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                             </BackNavigationErrorCatcher>
                           </CommandProvider>
                         </SelectionProvider>
-
                       </DialogProvider>
                     </SmartProvider>
-
                   </WidgetRegistryProvider>
                 </DisplayProvider>
               </TooltipProvider>

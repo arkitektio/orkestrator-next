@@ -13,6 +13,7 @@ export const PathRoiDrawer = ({
   c,
   z,
   t,
+  event_key = "shift",
 }: RoiDrawerProps) => {
   const createRoi = useRoiCreation(image.id);
 
@@ -51,5 +52,5 @@ export const PathRoiDrawer = ({
     }
   };
 
-  return <PathDrawer onPathDrawn={onPathDrawn} />;
+  return <PathDrawer onPathDrawn={onPathDrawn} event_key={event_key} />;
 };

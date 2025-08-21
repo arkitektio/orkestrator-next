@@ -1,18 +1,22 @@
 import { Line } from "@react-three/drei";
 import { useCallback, useRef, useState } from "react";
 import * as THREE from "three";
+import { EventKeyProps, createEventKeyChecker } from "./eventKeyUtils";
 
 export type PathDrawerProps = {
   onPathDrawn?: (points: THREE.Vector3[]) => void;
-};
+} & EventKeyProps;
 
 export function PathDrawer(props: PathDrawerProps) {
+  const { event_key = "shift" } = props;
   const planeRef = useRef<THREE.Mesh>(null);
   const [points, setPoints] = useState<THREE.Vector3[]>([]);
   const [drawing, setDrawing] = useState(false);
 
+  const checkEventKey = createEventKeyChecker(event_key);
+
   const handlePointerDown = (e) => {
-    if (!e.shiftKey) return; // Require Shift to start drawing
+    if (!checkEventKey(e)) return; // Check for required event key
 
     e.stopPropagation();
     setDrawing(true);
@@ -22,7 +26,7 @@ export function PathDrawer(props: PathDrawerProps) {
 
   const handlePointerMove = useCallback(
     (e) => {
-      if (!drawing || !e.shiftKey) return;
+      if (!drawing || !checkEventKey(e)) return;
       e.stopPropagation();
 
       const newPoint = e.point.clone();

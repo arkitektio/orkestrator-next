@@ -1,5 +1,7 @@
 import { Identifier } from "@/types";
 import { PageLayout, PageVariant } from "./PageLayout";
+import { ContextMenu } from "../ui/context-menu";
+import { CommandMenu } from "@/command/Menu";
 
 export type ModelPageLayoutProps = {
   children: React.ReactNode;
@@ -20,7 +22,6 @@ export const ModelPageLayout = ({
   identifier,
   object,
   variant,
-  callback,
   actions,
   pageActions,
 }: ModelPageLayoutProps) => {
@@ -33,6 +34,7 @@ export const ModelPageLayout = ({
         variant={variant}
         pageActions={pageActions}
       >
+        <CommandMenu self={{ identifier, object }} />
         {children}
       </PageLayout>
     </div>

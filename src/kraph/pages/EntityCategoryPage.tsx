@@ -6,9 +6,7 @@ import { Image } from "@/components/ui/image";
 import { DragZone } from "@/components/upload/drag";
 import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import {
-  KraphEntityCategory
-} from "@/linkers";
+import { KraphEntityCategory } from "@/linkers";
 import {
   useCreateEntityMutation,
   useGetEntityCategoryQuery,
@@ -18,6 +16,9 @@ import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryR
 import { StructureQueriesPlanner } from "../components/StructureQueriesPlanner";
 import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import UpdateEntityCategoryForm from "../forms/UpdateEntityCategoryForm";
+import { ActionButton } from "@/components/ui/action";
+import { LocalActionButton } from "@/components/ui/localactionbutton";
+import { DialogButton, LocalDialogButton } from "@/components/ui/dialogbutton";
 
 export default asDetailQueryRoute(
   useGetEntityCategoryQuery,
@@ -77,6 +78,27 @@ export default asDetailQueryRoute(
         }
         pageActions={
           <div className="flex flex-row gap-2">
+            <Button
+              onClick={() => {
+                quickCreate().then(refetch);
+              }}
+              className="w-full"
+              variant="outline"
+            >
+              Quick+
+            </Button>
+            <LocalActionButton
+              name="create-new-entity"
+              state={{
+                isCommand: false,
+                left: [
+                  {
+                    identifier: KraphEntityCategory.identifier,
+                    object: data.entityCategory.id,
+                  },
+                ],
+              }}
+            />
             <Button
               onClick={() => {
                 quickCreate().then(refetch);

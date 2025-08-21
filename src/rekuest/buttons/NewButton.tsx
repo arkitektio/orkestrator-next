@@ -1,8 +1,3 @@
-import {
-  Action,
-  ActionState,
-  defaultRegistry,
-} from "@/actions/action-registry";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -45,6 +40,9 @@ import {
 import { useAction } from "../hooks/useAction";
 import { useLiveAssignation } from "../hooks/useAssignations";
 import { ImplementationActionButton } from "./ImplementationActionButton";
+import { Action, ActionState } from "@/lib/localactions/LocalActionProvider";
+import { useMatchingActions } from "@/app/localactions";
+import { usePerformAction } from "@/app/hooks/useLocalAction";
 
 export const DirectImplementationAssignment = (props: {
   action: PrimaryActionFragment;
@@ -239,58 +237,11 @@ export const ApplicableNewDefinitions = (props: {
   );
 };
 
-export const useLocalAction = (props: {
-  action: Action;
-  state: ActionState;
-}) => {
-  const [progress, setProgress] = React.useState<number | undefined>(0);
-  const [controller, setController] = React.useState<AbortController | null>(
-    null,
-  );
-  const app = useArkitekt();
-
-  const assign = async () => {
-    if (controller) {
-      controller.abort();
-      return;
-    }
-    let newController = new AbortController();
-
-    setController(newController);
-
-    try {
-      await props.action.execute({
-        onProgress: (p) => {
-          setProgress(p);
-        },
-        abortSignal: newController.signal,
-        services: app.clients,
-        state: props.state,
-      });
-      setController(null);
-      setProgress(undefined);
-    } catch (e) {
-      setProgress(undefined);
-      setController(null);
-      console.error(e);
-    }
-  };
-
-  return {
-    progress,
-    assign,
-  };
-};
-
-export const useActions = (props: { state: ActionState; filter?: string }) => {
-  return defaultRegistry.getActionsForState(props.state);
-};
-
 export const LocalActionButton = (props: {
   action: Action;
   state: ActionState;
 }) => {
-  const { assign, progress } = useLocalAction(props);
+  const { assign, progress } = usePerformAction(props);
 
   return (
     <CommandItem
@@ -319,7 +270,7 @@ export const LocalActionButton = (props: {
 };
 
 export const Actions = (props: { state: ActionState; filter?: string }) => {
-  const actions = useActions(props).filter(
+  const actions = useMatchingActions(props).filter(
     (x) => !props.filter || x.title.includes(props.filter),
   );
 

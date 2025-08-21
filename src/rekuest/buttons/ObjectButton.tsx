@@ -1,9 +1,3 @@
-import {
-  Action,
-  ActionState,
-  defaultRegistry,
-  Structure,
-} from "@/actions/action-registry";
 import { useDialog } from "@/app/dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -68,6 +62,9 @@ import { registeredCallbacks } from "../components/functional/AssignationUpdater
 import { useAssign } from "../hooks/useAssign";
 import { useHashActionWithProgress } from "../hooks/useHashActionWithProgress";
 import { Identifier, ObjectID } from "@/types";
+import { usePerformAction } from "@/app/hooks/useLocalAction";
+import { useMatchingActions } from "@/app/localactions";
+import { Action, ActionState } from "@/lib/localactions/LocalActionProvider";
 
 export type OnDone = (args: {
   event?: AssignationEventFragment;
@@ -919,70 +916,12 @@ export const MeasurementButton = (props: {
   );
 };
 
-export const useAction = (props: {
+export const LocalActionCommand = (props: {
   action: Action;
   state: ActionState;
   onDone?: OnDone;
 }) => {
-  const [progress, setProgress] = React.useState<number | undefined>(0);
-  const [controller, setController] = React.useState<AbortController | null>(
-    null,
-  );
-  const app = useArkitekt();
-  const dialog = useDialog();
-  const navigate = useNavigate();
-
-  const assign = async () => {
-    if (controller) {
-      controller.abort();
-      return;
-    }
-    let newController = new AbortController();
-
-    setController(newController);
-
-    try {
-      await props.action.execute({
-        onProgress: (p) => {
-          setProgress(p);
-        },
-        abortSignal: newController.signal,
-        services: app.connection?.clients || {},
-        dialog,
-        navigate,
-        state: props.state,
-      });
-      setController(null);
-      setProgress(undefined);
-      if (props.onDone) {
-        props.onDone();
-      }
-    } catch (e) {
-      setProgress(undefined);
-      setController(null);
-      if (props.onDone) {
-        props.onDone();
-      }
-      console.error(e);
-    }
-  };
-
-  return {
-    progress,
-    assign,
-  };
-};
-
-export const useActions = (props: { state: ActionState; filter?: string }) => {
-  return defaultRegistry.getActionsForState(props.state);
-};
-
-export const LocalActionButton = (props: {
-  action: Action;
-  state: ActionState;
-  onDone?: OnDone;
-}) => {
-  const { assign, progress } = useAction(props);
+  const { assign, progress } = usePerformAction(props);
 
   return (
     <CommandItem
@@ -1015,11 +954,10 @@ export const Actions = (props: {
   filter?: string;
   onDone?: OnDone;
 }) => {
-  const actions = useActions(props).filter(
-    (x) =>
-      !props.filter ||
-      x.title.toLowerCase().includes(props.filter.toLowerCase()),
-  );
+  const actions = useMatchingActions({
+    state: props.state,
+    search: props.filter,
+  });
 
   if (actions.length === 0) {
     return null;
@@ -1034,8 +972,8 @@ export const Actions = (props: {
       }
     >
       {actions.map((x) => (
-        <LocalActionButton
-          key={x.name}
+        <LocalActionCommand
+          key={x.title}
           action={x}
           state={props.state}
           onDone={props.onDone}

@@ -4,7 +4,7 @@ import {
   NormalizedCache,
   TypedDocumentNode,
 } from "@apollo/client";
-import { Action } from "../action-registry";
+import { Action } from "../LocalActionProvider";
 
 export const identifierFromSmartOrString = (identifier: Smart | string) => {
   if (typeof identifier === "string") {
@@ -22,7 +22,7 @@ export type DeleteActionParams = {
 };
 
 export const buildDeleteAction = (params: DeleteActionParams): Action => ({
-  name: params.title,
+
   title: params.title,
   description: params.description || "Delete the structure",
   conditions: [

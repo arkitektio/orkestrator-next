@@ -58,7 +58,7 @@ type ModalState = {
 // --- 2. Factory Function ---
 
 export function createDialogProvider<
-  Components extends Record<string, React.ComponentType<unknown>>,
+  Components extends Record<string, React.ComponentType<any>>,
 >(registry: Components) {
   type DialogId = keyof Components;
   type DialogPropsMap = {
@@ -191,5 +191,6 @@ export function createDialogProvider<
   return {
     DialogProvider,
     useDialog,
+    registry,
   };
 }

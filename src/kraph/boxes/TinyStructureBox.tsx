@@ -34,10 +34,13 @@ import { DialogContent } from "@radix-ui/react-dialog";
 import { useForm } from "react-hook-form";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Form } from "@/components/ui/form";
+import { ref } from "yup";
+import { toast } from "sonner";
 
 const FindEntity = (props: {
   structure: string;
   measurement: ListMeasurementCategoryFragment;
+  refetch?: () => void;
 }) => {
   const [search] = useSearchEntitiesForRoleLazyQuery({
     variables: {
@@ -74,7 +77,14 @@ const FindEntity = (props: {
                 structure: props.structure,
               },
             },
-          });
+          })
+            .then(() => {
+              props.refetch?.();
+              toast.success("Measurement created successfully.");
+            })
+            .catch((e) => {
+              toast.error("Error creating measurement:", e);
+            });
         })}
       >
         <GraphQLSearchField
@@ -95,8 +105,9 @@ const ConnectableAs = (props: {
   identifier: string;
   structure: string;
   graph: ListGraphFragment;
+  refetch?: () => void;
 }) => {
-  const { data } = useListMeasurmentCategoryQuery({
+  const { data, refetch } = useListMeasurmentCategoryQuery({
     variables: {
       filters: {
         graph: props.graph.id,
@@ -131,6 +142,7 @@ const ConnectableAs = (props: {
                 <FindEntity
                   structure={props.structure}
                   measurement={category}
+                  refetch={props.refetch}
                 />
               </div>
             </DialogContent>
@@ -142,6 +154,9 @@ const ConnectableAs = (props: {
               Create Measurement Category
             </Button>
           }
+          onSubmit={() => {
+            refetch();
+          }}
         >
           <CreateMeasurementCategoryForm
             graph={props.graph.id}
@@ -207,6 +222,7 @@ export const GraphKnowledgeView = (props: {
             identifier={props.identifier}
             structure={data.structureByIdentifier.id}
             graph={props.graph}
+            refetch={() => refetch()}
           />
         ) : (
           <Button

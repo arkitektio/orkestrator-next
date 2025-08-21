@@ -45,5 +45,6 @@ export function createDisplayProvider<
     DisplayProvider,
     useDisplay,
     useDisplayComponent,
+    registry,
   };
 }

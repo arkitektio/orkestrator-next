@@ -6,6 +6,7 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
   CreateEntityMutationVariables,
+  GetEntityCategoryDocument,
   useCreateEntityMutation,
 } from "../api/graphql";
 import { toast } from "sonner";
@@ -15,6 +16,12 @@ export default (props: { category: string }) => {
     variables: {
       input: { entityCategory: props.category },
     },
+    refetchQueries: [
+      {
+        query: GetEntityCategoryDocument,
+        variables: { id: props.category },
+      },
+    ],
   });
 
   const { closeDialog } = useDialog();

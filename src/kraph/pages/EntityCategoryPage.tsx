@@ -6,7 +6,7 @@ import { Image } from "@/components/ui/image";
 import { DragZone } from "@/components/upload/drag";
 import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { KraphEntityCategory } from "@/linkers";
+import { KraphEntity, KraphEntityCategory } from "@/linkers";
 import {
   useCreateEntityMutation,
   useGetEntityCategoryQuery,
@@ -87,27 +87,6 @@ export default asDetailQueryRoute(
             >
               Quick+
             </Button>
-            <LocalActionButton
-              name="create-new-entity"
-              state={{
-                isCommand: false,
-                left: [
-                  {
-                    identifier: KraphEntityCategory.identifier,
-                    object: data.entityCategory.id,
-                  },
-                ],
-              }}
-            />
-            <Button
-              onClick={() => {
-                quickCreate().then(refetch);
-              }}
-              className="w-full"
-              variant="outline"
-            >
-              Quick+
-            </Button>
             <Button
               onClick={() => {
                 pin().then(refetch);
@@ -129,6 +108,10 @@ export default asDetailQueryRoute(
             >
               <UpdateEntityCategoryForm entityCategory={data.entityCategory} />
             </FormSheet>
+            <KraphEntityCategory.ObjectButton
+              object={data.entityCategory.id}
+              className="w-full"
+            />
           </div>
         }
       >

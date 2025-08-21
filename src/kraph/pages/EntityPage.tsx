@@ -8,7 +8,8 @@ import { Card } from "@/components/ui/card";
 import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import {
   KraphEntity,
-  KraphProtocolEventCategory
+  KraphEntityCategory,
+  KraphProtocolEventCategory,
 } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { useGetEntityQuery } from "../api/graphql";
@@ -32,6 +33,10 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
         <div className="flex flex-row gap-2">
           <>
             <FormSheet trigger={<HobbyKnifeIcon />}>Not implemented</FormSheet>
+            <KraphEntity.ObjectButton
+              object={data.entity.id}
+              className="w-full"
+            />
           </>
         </div>
       }
@@ -46,7 +51,12 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
           </h1>
           <p className="mt-3 text-xl text-muted-foreground"></p>
           <p className="mt-3 text-xl text-muted-foreground">
-            <Badge>{data.entity.category.label}</Badge>
+            <KraphEntityCategory.DetailLink
+              object={data.entity.category.id}
+              className="hover:underline"
+            >
+              <Badge>{data.entity.category.label}</Badge>
+            </KraphEntityCategory.DetailLink>
           </p>
         </div>
       </KraphEntity.Drop>

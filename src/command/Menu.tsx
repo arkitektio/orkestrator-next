@@ -8,7 +8,11 @@ import {
 import { Dialog } from "@/components/ui/dialog";
 import { Guard } from "@/lib/arkitekt/Arkitekt";
 import { cn } from "@/lib/utils";
-import { ApplicableActions } from "@/rekuest/buttons/ObjectButton";
+import {
+  ApplicableActions,
+  ApplicableLocalActions,
+  ApplicableShortcuts,
+} from "@/rekuest/buttons/ObjectButton";
 import { Structure } from "@/types";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { DialogPortal } from "@radix-ui/react-dialog";
@@ -170,6 +174,14 @@ export const CommandMenu = (props: {
               ))}
             </div>
           )}
+          {props.self && (
+            <div className="flex flex-row justify-between items-center relative gap-4 border border rounded rounded-lg bg-background shadow-lg sm:rounded-lg md:w-full p-3">
+              <DisplayWidget
+                identifier={props.self.identifier}
+                object={props.self.object}
+              />
+            </div>
+          )}
 
           <div className="flex flex-row justify-between items-center relative gap-4 border border-gray-800 bg-background shadow-lg sm:rounded-lg md:w-full">
             <Command
@@ -198,14 +210,22 @@ export const CommandMenu = (props: {
                   }}
                 >
                   <Guard.Rekuest>
-                    <ShortcutExtensions />
+                    <ApplicableShortcuts
+                      filter={context.query}
+                      object={props.self?.object}
+                      identifier={props.self?.identifier}
+                    />
                     <ApplicableActions
                       filter={context.query}
                       object={props.self?.object}
                       identifier={props.self?.identifier}
                     />
                   </Guard.Rekuest>
-                  <LocalActionExtensions />
+                  <ApplicableLocalActions
+                    filter={context.query}
+                    object={props.self?.object}
+                    identifier={props.self?.identifier}
+                  />
                   <Guard.Mikro fallback={<></>}>
                     <SearchExtensions />
                   </Guard.Mikro>

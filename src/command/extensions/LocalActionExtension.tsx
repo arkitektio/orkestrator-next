@@ -6,7 +6,11 @@ export const LocalActionExtensions = () => {
 
   return (
     <>
-      <ApplicableLocalActions filter={query} />
+      <ApplicableLocalActions
+        filter={query}
+        object={props.self?.object}
+        identifier={props.self?.identifier}
+      />
     </>
   );
 };

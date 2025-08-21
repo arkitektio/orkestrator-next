@@ -26,7 +26,7 @@ export function PointDrawer(props: PointDrawerProps) {
   };
 
   const handlePointerMove = (e) => {
-    if (!e.shiftKey) return;
+    if (!checkEventKey(e)) return;
     e.stopPropagation();
     setPreviewPoint(e.point.clone());
   };

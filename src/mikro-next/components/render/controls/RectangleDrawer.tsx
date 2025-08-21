@@ -28,7 +28,7 @@ export function RectangleDrawer(props: RectangleDrawerProps) {
   };
 
   const handlePointerMove = (e) => {
-    if (!drawing || !start || !e.shiftKey) return; // 🟡 Still require Shift while dragging
+    if (!drawing || !start || !checkEventKey(e)) return; // 🟡 Still require Shift while dragging
     e.stopPropagation();
     setEnd(e.point.clone());
   };

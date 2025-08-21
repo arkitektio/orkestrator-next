@@ -11,12 +11,16 @@ export interface ViewerState {
   showRois: boolean;
   showLayerEdges: boolean;
   showDebugText: boolean;
+  showDisplayStructures: boolean;
 
   allowRoiDrawing: boolean; // Optional, used for ROIs
   roiDrawMode: RoiKind; // Optional, used for ROIs
 
   // Scale management
   enabledScales: Set<number>;
+
+  // Display structures
+  displayStructures: string[]; // Array of ROI IDs to display as structures
 }
 
 export interface ViewerStateActions {
@@ -29,6 +33,7 @@ export interface ViewerStateActions {
   setShowRois: (show: boolean) => void;
   setShowLayerEdges: (show: boolean) => void;
   setShowDebugText: (show: boolean) => void;
+  setShowDisplayStructures: (show: boolean) => void;
 
   setAllowRoiDrawing: (allow: boolean) => void;
   setRoiDrawMode: (mode: RoiKind) => void;
@@ -36,11 +41,16 @@ export interface ViewerStateActions {
   // Scale management
   setEnabledScales: (scales: Set<number>) => void;
   toggleScale: (scale: number) => void;
+
+  // Display structures
+  addDisplayStructure: (roiId: string) => void;
+  removeDisplayStructure: (roiId: string) => void;
+  clearDisplayStructures: () => void;
 }
 
 export interface ViewerStateContextType
   extends ViewerState,
-  ViewerStateActions { }
+    ViewerStateActions {}
 
 const ViewerStateContext = createContext<ViewerStateContextType | undefined>(
   undefined,
@@ -71,11 +81,17 @@ export const ViewerStateProvider: React.FC<ViewerStateProviderProps> = ({
   const [showDebugText, setShowDebugText] = useState(
     initialState.showDebugText ?? false,
   );
+  const [showDisplayStructures, setShowDisplayStructures] = useState(
+    initialState.showDisplayStructures ?? false,
+  );
   const [roiDrawMode, setRoiDrawMode] = useState(
     initialState.roiDrawMode ?? RoiKind.Rectangle,
   );
   const [allowRoiDrawing, setAllowRoiDrawing] = useState(
     initialState.allowRoiDrawing ?? false,
+  );
+  const [displayStructures, setDisplayStructures] = useState<string[]>(
+    initialState.displayStructures ?? [],
   );
 
   // Default to only the most downscaled version enabled
@@ -95,6 +111,24 @@ export const ViewerStateProvider: React.FC<ViewerStateProviderProps> = ({
     setEnabledScales(newEnabledScales);
   };
 
+  // Display structures management
+  const addDisplayStructure = (roiId: string) => {
+    setDisplayStructures((prev) => {
+      if (prev.includes(roiId)) {
+        return prev; // Already in the list
+      }
+      return [...prev, roiId];
+    });
+  };
+
+  const removeDisplayStructure = (roiId: string) => {
+    setDisplayStructures((prev) => prev.filter((id) => id !== roiId));
+  };
+
+  const clearDisplayStructures = () => {
+    setDisplayStructures([]);
+  };
+
   const contextValue: ViewerStateContextType = {
     // State
     z,
@@ -103,7 +137,9 @@ export const ViewerStateProvider: React.FC<ViewerStateProviderProps> = ({
     showRois,
     showLayerEdges,
     showDebugText,
+    showDisplayStructures,
     enabledScales,
+    displayStructures,
 
     allowRoiDrawing,
     roiDrawMode,
@@ -115,10 +151,14 @@ export const ViewerStateProvider: React.FC<ViewerStateProviderProps> = ({
     setShowRois,
     setShowLayerEdges,
     setShowDebugText,
+    setShowDisplayStructures,
     setEnabledScales,
     setAllowRoiDrawing,
     setRoiDrawMode,
     toggleScale,
+    addDisplayStructure,
+    removeDisplayStructure,
+    clearDisplayStructures,
   };
 
   return (

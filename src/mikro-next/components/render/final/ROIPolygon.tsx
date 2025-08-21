@@ -47,7 +47,15 @@ export const ROIPolygon = (
   const [hovered, setHovered] = useState(false);
   const [selected, setSelected] = useState(false);
   const [deleteRoi] = useDeleteRoiMutation();
-  const { setAllowRoiDrawing, setRoiDrawMode, setShowRois } = useViewerState();
+  const {
+    setAllowRoiDrawing,
+    setRoiDrawMode,
+    setShowRois,
+    addDisplayStructure,
+    setShowDisplayStructures,
+    displayStructures,
+    showDisplayStructures,
+  } = useViewerState();
 
   // Keyboard event handler for deletion
   useEffect(() => {
@@ -136,6 +144,34 @@ export const ROIPolygon = (
 
       if (!meshRef.current) return;
 
+      // Check for shift+click to add to display structures
+      if (e.shiftKey) {
+        console.log(
+          "Shift+click detected, adding ROI to display structures:",
+          roi.id,
+        );
+        addDisplayStructure(roi.id);
+        setShowDisplayStructures(true);
+
+        // Project the rightmost point of the ROI to screen coordinates
+        const screenPos = projectToScreenCoordinates(rightPoint);
+
+        // Open the display structures panel
+        props.setOpenPanels(() => {
+          return [
+            {
+              positionX: screenPos.x,
+              positionY: screenPos.y,
+              identifier: "display_structures",
+              object: "structures_panel",
+              kind: "display_structures",
+              isRightClick: false,
+            },
+          ];
+        });
+        return;
+      }
+
       // Set this ROI as selected for deletion
       setSelected(true);
 
@@ -175,6 +211,8 @@ export const ROIPolygon = (
       setShowRois,
       setAllowRoiDrawing,
       setRoiDrawMode,
+      addDisplayStructure,
+      setShowDisplayStructures,
     ],
   );
 
@@ -213,6 +251,10 @@ export const ROIPolygon = (
 
   useCursor(hovered, "pointer");
 
+  // Check if this ROI is currently in display structures
+  const isDisplayStructure =
+    showDisplayStructures && displayStructures.includes(roi.id);
+
   if (roi.kind == RoiKind.Rectangle) {
     return (
       <>
@@ -238,7 +280,11 @@ export const ROIPolygon = (
             depthWrite={false}
           />
         </mesh>
-        <Line points={shape.getPoints()} color="blue" lineWidth={2} />
+        <Line
+          points={shape.getPoints()}
+          color={isDisplayStructure ? "orange" : "blue"}
+          lineWidth={2}
+        />
       </>
     );
   }
@@ -268,7 +314,11 @@ export const ROIPolygon = (
             depthWrite={false}
           />
         </mesh>
-        <Line points={shape.getPoints()} color="green" lineWidth={2} />
+        <Line
+          points={shape.getPoints()}
+          color={isDisplayStructure ? "orange" : "green"}
+          lineWidth={2}
+        />
       </>
     );
   }
@@ -280,7 +330,15 @@ export const ROIPolygon = (
       <>
         <Line
           points={linePoints}
-          color={hovered ? "orange" : "red"}
+          color={
+            isDisplayStructure
+              ? hovered
+                ? "yellow"
+                : "orange"
+              : hovered
+                ? "orange"
+                : "red"
+          }
           lineWidth={hovered ? 5 : 3}
           onClick={onClick}
           onContextMenu={onRightClick}
@@ -319,7 +377,7 @@ export const ROIPolygon = (
         >
           <circleGeometry args={[hovered ? 8 : 5, 8]} />
           <meshBasicMaterial
-            color="yellow"
+            color={isDisplayStructure ? "cyan" : "yellow"}
             transparent={true}
             opacity={hovered ? 0.8 : 0.6}
             depthWrite={false}
@@ -329,7 +387,7 @@ export const ROIPolygon = (
         <mesh position={[point[0], point[1], 0.1]}>
           <ringGeometry args={[hovered ? 8 : 5, hovered ? 10 : 7, 8]} />
           <meshBasicMaterial
-            color="orange"
+            color={isDisplayStructure ? "blue" : "orange"}
             transparent={true}
             opacity={hovered ? 0.6 : 0.4}
             depthWrite={false}
@@ -364,7 +422,11 @@ export const ROIPolygon = (
             depthWrite={false}
           />
         </mesh>
-        <Line points={shape.getPoints()} color="purple" lineWidth={2} />
+        <Line
+          points={shape.getPoints()}
+          color={isDisplayStructure ? "orange" : "purple"}
+          lineWidth={2}
+        />
       </>
     );
   }
@@ -377,7 +439,15 @@ export const ROIPolygon = (
         <Line
           ref={meshRef}
           points={pathPoints}
-          color={hovered ? "yellow" : "white"}
+          color={
+            isDisplayStructure
+              ? hovered
+                ? "cyan"
+                : "orange"
+              : hovered
+                ? "yellow"
+                : "white"
+          }
           lineWidth={hovered ? 5 : 3}
           onClick={onClick}
           onContextMenu={onRightClick}
@@ -412,7 +482,7 @@ export const ROIPolygon = (
       >
         <shapeGeometry args={[shape]} />
         <meshBasicMaterial
-          color={"purple"}
+          color={isDisplayStructure ? "orange" : "purple"}
           side={THREE.DoubleSide}
           transparent={true}
           opacity={hovered ? 0.5 : 0.2}
@@ -421,7 +491,7 @@ export const ROIPolygon = (
       </mesh>
       <line>
         <shapeGeometry args={[shape]} />
-        <lineBasicMaterial color="black" />
+        <lineBasicMaterial color={isDisplayStructure ? "orange" : "black"} />
       </line>
     </>
   );

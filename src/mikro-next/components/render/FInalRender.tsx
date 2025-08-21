@@ -1,16 +1,5 @@
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SliderTooltip } from "@/components/ui/slider-tooltip";
-import {
-  Edit3,
-  Eye,
-  EyeOff,
-  Grid3X3,
-  Layers,
-  MoreHorizontal,
-  Settings,
-  Type,
-} from "lucide-react";
 import * as THREE from "three";
 
 import {
@@ -19,7 +8,6 @@ import {
   RgbImageFragment,
   RgbViewFragment,
 } from "@/mikro-next/api/graphql";
-import { ObjectButton, SmartContext } from "@/rekuest/buttons/ObjectButton";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas as ThreeCanvas } from "@react-three/fiber";
 import { Dispatch, SetStateAction, Suspense, useEffect, useState } from "react";
@@ -32,26 +20,8 @@ import { RoiDrawerCanvas } from "./RoiDrawer";
 import { ViewerStateProvider, useViewerState } from "./ViewerStateProvider";
 import { RenderControlsMenu } from "./RenderControlsMenu";
 import { ROIContextMenu } from "./ROIContextMenu";
-import { TinyStructureBox } from "@/kraph/boxes/TinyStructureBox";
 import { EventPlane } from "./overlays/invisible/EventPlane";
-
-// Helper function to get icon for panel kind
-const getPanelKindIcon = (kind?: PanelKind) => {
-  switch (kind) {
-    case "roi_tools":
-      return Edit3;
-    case "layer_controls":
-      return Layers;
-    case "view_settings":
-      return Settings;
-    case "object_info":
-      return Eye;
-    case "context_menu":
-      return MoreHorizontal;
-    default:
-      return Settings;
-  }
-};
+import { PanelContent, Panel } from "./panels";
 
 export interface RGBDProps {
   context: ListRgbContextFragment;
@@ -64,22 +34,6 @@ export interface RGBDProps {
 export type PassThroughProps = {
   setOpenPanels: Dispatch<SetStateAction<Panel[]>>;
 };
-
-export type PanelKind =
-  | "roi_tools"
-  | "layer_controls"
-  | "view_settings"
-  | "object_info"
-  | "context_menu";
-
-export interface Panel {
-  identifier: string;
-  object: string;
-  positionX: number;
-  positionY: number;
-  kind?: PanelKind; // Optional to maintain backward compatibility
-  isRightClick?: boolean; // Optional, used for right-click context menu
-}
 
 export const calculateChunkGrid = (
   selection: (number | Slice | null)[],
@@ -209,155 +163,6 @@ export const LayerRender = (props: {
   );
 };
 
-// PanelContent component to render different panel types
-const PanelContent = ({
-  panel,
-  allowRoiDrawing,
-  setAllowRoiDrawing,
-  setOpenPanels,
-  showRois,
-  setShowRois,
-  showLayerEdges,
-  setShowLayerEdges,
-  showDebugText,
-  setShowDebugText,
-}: {
-  panel: Panel;
-  allowRoiDrawing: boolean;
-  setAllowRoiDrawing: (allow: boolean) => void;
-  showRois: boolean;
-  setOpenPanels: Dispatch<SetStateAction<Panel[]>>;
-  setShowRois: (show: boolean) => void;
-  showLayerEdges: boolean;
-  setShowLayerEdges: (show: boolean) => void;
-  showDebugText: boolean;
-  setShowDebugText: (show: boolean) => void;
-}) => {
-  const PanelIcon = getPanelKindIcon(panel.kind);
-
-  if (panel.isRightClick) {
-    return (
-      <SmartContext
-        identifier={panel.identifier}
-        object={panel.object}
-        onDone={() => setOpenPanels([])}
-      />
-    );
-  }
-
-  switch (panel.kind) {
-    case "roi_tools":
-      return (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 mb-2">
-            <PanelIcon className="w-4 h-4" />
-            <span className="text-sm font-medium">ROI Tools</span>
-          </div>
-          <div className="text-xs text-gray-400 mb-2">
-            Click to open ROI tools
-          </div>
-
-          {/* ROI Drawing Toggle */}
-          <Button
-            size="sm"
-            variant={allowRoiDrawing ? "default" : "outline"}
-            onClick={() => setAllowRoiDrawing(!allowRoiDrawing)}
-            className="w-full justify-start"
-          >
-            <Edit3 className="w-4 h-4 mr-2" />
-            {allowRoiDrawing ? "Disable Drawing" : "Enable Drawing"}
-          </Button>
-
-          {/* ROI Visibility Toggle */}
-          <Button
-            size="sm"
-            variant={showRois ? "default" : "outline"}
-            onClick={() => setShowRois(!showRois)}
-            className="w-full justify-start"
-          >
-            {showRois ? (
-              <Eye className="w-4 h-4 mr-2" />
-            ) : (
-              <EyeOff className="w-4 h-4 mr-2" />
-            )}
-            {showRois ? "Hide ROIs" : "Show ROIs"}
-          </Button>
-        </div>
-      );
-
-    case "layer_controls":
-      return (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 mb-2">
-            <PanelIcon className="w-4 h-4" />
-            <span className="text-sm font-medium">Layer Controls</span>
-          </div>
-          <div className="text-xs text-gray-400 mb-2">
-            Opened with Alt+Click on image
-          </div>
-
-          <Button
-            size="sm"
-            variant={showLayerEdges ? "default" : "outline"}
-            onClick={() => setShowLayerEdges(!showLayerEdges)}
-            className="w-full justify-start"
-          >
-            <Grid3X3 className="w-4 h-4 mr-2" />
-            {showLayerEdges ? "Hide Edges" : "Show Edges"}
-          </Button>
-
-          <Button
-            size="sm"
-            variant={showDebugText ? "default" : "outline"}
-            onClick={() => setShowDebugText(!showDebugText)}
-            className="w-full justify-start"
-          >
-            <Type className="w-4 h-4 mr-2" />
-            {showDebugText ? "Hide Debug" : "Show Debug"}
-          </Button>
-        </div>
-      );
-
-    case "view_settings":
-      return (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 mb-2">
-            <PanelIcon className="w-4 h-4" />
-            <span className="text-sm font-medium">View Settings</span>
-          </div>
-          <div className="text-xs text-gray-400 mb-2">
-            Opened with Ctrl+Click on image
-          </div>
-          <div className="text-xs text-gray-500">
-            View configuration options would go here
-          </div>
-        </div>
-      );
-
-    case "object_info":
-    default:
-      return (
-        <>
-          <ObjectButton
-            identifier={panel.identifier}
-            object={panel.object}
-            onDone={() => setOpenPanels([])}
-          >
-            <Button variant={"outline"} className="w-6 h-9 text-white">
-              Do
-            </Button>
-          </ObjectButton>
-
-          <div className="text-xs text-gray-500"> Knowledge </div>
-          <TinyStructureBox
-            identifier={panel.identifier}
-            object={panel.object}
-          />
-        </>
-      );
-  }
-};
-
 export const FinalRenderInner = (props: RGBDProps) => {
   const [openPanels, setOpenPanels] = useState<Panel[]>([]);
   const [roiContextMenu, setRoiContextMenu] = useState<{
@@ -390,14 +195,19 @@ export const FinalRenderInner = (props: RGBDProps) => {
     showRois,
     showLayerEdges,
     showDebugText,
+    showDisplayStructures,
     enabledScales,
     allowRoiDrawing,
+    displayStructures,
     setZ,
     setT,
     setShowRois,
     setShowLayerEdges,
     setShowDebugText,
+    setShowDisplayStructures,
     setAllowRoiDrawing,
+    removeDisplayStructure,
+    clearDisplayStructures,
   } = useViewerState();
 
   const version = rbgContext.image.store.version;
@@ -602,6 +412,12 @@ export const FinalRenderInner = (props: RGBDProps) => {
             setShowLayerEdges={setShowLayerEdges}
             showDebugText={showDebugText}
             setShowDebugText={setShowDebugText}
+            showDisplayStructures={showDisplayStructures}
+            setShowDisplayStructures={setShowDisplayStructures}
+            displayStructures={displayStructures}
+            removeDisplayStructure={removeDisplayStructure}
+            clearDisplayStructures={clearDisplayStructures}
+            rois={props.rois}
           />
         </Card>
       ))}

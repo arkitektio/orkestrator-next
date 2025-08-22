@@ -9,6 +9,7 @@ import {
 } from "@xyflow/react";
 import { StructureRelationEdge } from "../types";
 import { getEdgeParams } from "../utils";
+import { KraphStructureRelation } from "@/linkers";
 
 export type GetSpecialPathParams = {
   sourceX: number;
@@ -90,9 +91,11 @@ export default ({
             position: "absolute",
             transform: `translate(-50%, -50%) translate(${centerX}px,${centerY + offset}px)`,
           }}
-          className="p-1 text-xs group"
+          className="p-1 text-xs group nodrag nopan"
         >
-          {data?.category.label}
+          <KraphStructureRelation.DetailLink object={data?.id} style={{ pointerEvents: 'all' }}>
+            {data?.category.label}
+          </KraphStructureRelation.DetailLink>
         </Card>
       </EdgeLabelRenderer>
     </>

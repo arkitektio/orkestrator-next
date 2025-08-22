@@ -145,6 +145,16 @@ export const KraphExpression = buildSmart(
   "kraph/expressions",
 );
 
+export const KraphRelation = buildSmart(
+  "@kraph/relation",
+  "kraph/relations",
+);
+
+export const KraphStructureRelation = buildSmart(
+  "@kraph/structurerelation",
+  "kraph/structurerelations",
+);
+
 export const KraphStructureCategory = buildSmart(
   "@kraph/structurecategory",
   "kraph/structurecategories",

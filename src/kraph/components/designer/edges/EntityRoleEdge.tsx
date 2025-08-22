@@ -87,7 +87,7 @@ export default ({
             position: "absolute",
             transform: `translate(-50%, -50%) translate(${centerX}px,${centerY + offset}px)`,
           }}
-          className="p-1 text-xs group flex-row flex gap-2 "
+          className="p-1 text-xs group flex-row flex gap-2 nodrag nopan"
         >
           <div className="text-slate-300">as</div>{" "}
           <div className="text-xs">{data?.role}</div>

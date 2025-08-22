@@ -336,7 +336,7 @@ export const TargetDropContextual = (props: {
       )}
       <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
         {data?.actions.map((node) => (
-          <Tooltip>
+          <Tooltip key={node.id}>
             <TooltipTrigger>
               <Card
                 onClick={() => onNodeClick(node.id)}
@@ -368,7 +368,7 @@ export const TargetDropContextual = (props: {
       </div>
       <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
         {calculatedNodes.map((sug) => (
-          <Tooltip>
+          <Tooltip key={sug.title}>
             <TooltipTrigger>
               <Card
                 onClick={() => addContextualNode(sug.node, props.params)}

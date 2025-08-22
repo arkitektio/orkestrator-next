@@ -93,7 +93,7 @@ export default ({
             position: "absolute",
             transform: `translate(-50%, -50%) translate(${centerX}px,${centerY + offset}px)`,
           }}
-          className="p-3 text-xs group"
+          className="p-3 text-xs group nodrag nopan"
         >
           {data?.label}
         </Card>

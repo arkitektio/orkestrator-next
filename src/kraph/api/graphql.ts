@@ -2150,9 +2150,11 @@ export type Query = {
   /** List of all structure categories */
   structureCategories: Array<StructureCategory>;
   structureCategory: StructureCategory;
+  structureRelation: StructureRelation;
   /** List of all structure relation categories */
   structureRelationCategories: Array<StructureRelationCategory>;
   structureRelationCategory: StructureRelationCategory;
+  structureRelations: Array<StructureRelation>;
   structures: Array<Structure>;
   /** List of all tags in the system */
   tags: Array<Tag>;
@@ -2471,6 +2473,11 @@ export type QueryStructureCategoryArgs = {
 };
 
 
+export type QueryStructureRelationArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type QueryStructureRelationCategoriesArgs = {
   filters?: InputMaybe<StructureRelationCategoryFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -2479,6 +2486,12 @@ export type QueryStructureRelationCategoriesArgs = {
 
 export type QueryStructureRelationCategoryArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryStructureRelationsArgs = {
+  filters?: InputMaybe<StructureRelationFilter>;
+  pagination?: InputMaybe<GraphPaginationInput>;
 };
 
 
@@ -3228,6 +3241,24 @@ export type StructureRelationCategoryInput = {
   targetDefinition: StructureCategoryDefinitionInput;
 };
 
+/** Filter for entity relations in the graph */
+export type StructureRelationFilter = {
+  /** Filter by graph ID */
+  graph?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by list of relation IDs */
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Filter by relation kind */
+  kind?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by left entity ID */
+  leftId?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by right entity ID */
+  rightId?: InputMaybe<Scalars['ID']['input']>;
+  /** Search relations by text */
+  search?: InputMaybe<Scalars['String']['input']>;
+  /** Include self-relations */
+  withSelf?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
 /** Input type for creating a relation between two entities */
 export type StructureRelationInput = {
   /** ID of the relation category (LinkedExpression) */
@@ -3907,6 +3938,8 @@ export type InformedStructureFragment = { __typename?: 'Structure', id: any, lab
 export type StructureCategoryFragment = { __typename?: 'StructureCategory', identifier: string, ageName: string, description?: string | null, pinned: boolean, id: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, graph: { __typename?: 'Graph', id: string, name: string }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, bestQuery?: { __typename?: 'GraphQuery', id: string, query: string, name: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string, xColumn: string, yColumn: string }>, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', source: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any }, target: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: number, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, edges: Array<{ __typename?: 'Description', id: any, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity?: number | null } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } } | { __typename?: 'StructureRelation', id: any, leftId: string, rightId: string, left: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Metric', id: any, label: string } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Metric', id: any, label: string } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, category: { __typename?: 'StructureRelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, tags: Array<{ __typename?: 'Tag', id: string, value: string }>, relevantQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean, kind: ViewKind }>, relevantNodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean }> };
 
 export type ListStructureCategoryFragment = { __typename?: 'StructureCategory', identifier: string, description?: string | null, id: string, purl?: string | null, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'Tag', id: string, value: string }>, graph: { __typename?: 'Graph', id: string }, relevantQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean, kind: ViewKind }>, relevantNodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean }> };
+
+export type DetailStructureRelationFragment = { __typename?: 'StructureRelation', validFrom: any, validTo: any, leftId: string, rightId: string, id: any, category: { __typename?: 'StructureRelationCategory', id: string, label: string } };
 
 export type StructureRelationCategoryFragment = { __typename?: 'StructureRelationCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, purl?: string | null, sourceDefinition: { __typename?: 'StructureCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null, identifierFilters?: Array<any> | null }, targetDefinition: { __typename?: 'StructureCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null, identifierFilters?: Array<any> | null }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, bestQuery?: { __typename?: 'GraphQuery', id: string, query: string, name: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string, xColumn: string, yColumn: string }>, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', source: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any }, target: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: number, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, edges: Array<{ __typename?: 'Description', id: any, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity?: number | null } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } } | { __typename?: 'StructureRelation', id: any, leftId: string, rightId: string, left: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Metric', id: any, label: string } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Metric', id: any, label: string } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, category: { __typename?: 'StructureRelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, graph: { __typename?: 'Graph', id: string }, tags: Array<{ __typename?: 'Tag', id: string, value: string }>, relevantQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean, kind: ViewKind }>, relevantNodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean }> };
 
@@ -4811,6 +4844,21 @@ export type ListStructureCategoryQueryVariables = Exact<{
 
 
 export type ListStructureCategoryQuery = { __typename?: 'Query', structureCategories: Array<{ __typename?: 'StructureCategory', identifier: string, ageName: string, description?: string | null, pinned: boolean, id: string, purl?: string | null, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, graph: { __typename?: 'Graph', id: string, name: string }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, bestQuery?: { __typename?: 'GraphQuery', id: string, query: string, name: string, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string, xColumn: string, yColumn: string }>, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', source: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any }, target: { __typename?: 'Entity', id: any } | { __typename?: 'Metric', id: any } | { __typename?: 'NaturalEvent', id: any } | { __typename?: 'ProtocolEvent', id: any } | { __typename?: 'Reagent', id: any } | { __typename?: 'Structure', id: any } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: number, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, edges: Array<{ __typename?: 'Description', id: any, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity?: number | null } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } } | { __typename?: 'StructureRelation', id: any, leftId: string, rightId: string, left: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Metric', id: any, label: string } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Metric', id: any, label: string } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, category: { __typename?: 'StructureRelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, tags: Array<{ __typename?: 'Tag', id: string, value: string }>, relevantQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean, kind: ViewKind }>, relevantNodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean }> }> };
+
+export type GetStructureRelationQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetStructureRelationQuery = { __typename?: 'Query', structureRelation: { __typename?: 'StructureRelation', validFrom: any, validTo: any, leftId: string, rightId: string, id: any, category: { __typename?: 'StructureRelationCategory', id: string, label: string } } };
+
+export type SearchStructureRelationsQueryVariables = Exact<{
+  search?: InputMaybe<Scalars['String']['input']>;
+  values?: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+}>;
+
+
+export type SearchStructureRelationsQuery = { __typename?: 'Query', options: Array<{ __typename?: 'StructureRelation', value: any, label: string }> };
 
 export type GetStructureRelationCategoryQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -5927,6 +5975,19 @@ export const InformedStructureFragmentDoc = gql`
   }
 }
     ${BaseNodeFragmentDoc}`;
+export const DetailStructureRelationFragmentDoc = gql`
+    fragment DetailStructureRelation on StructureRelation {
+  validFrom
+  validTo
+  category {
+    id
+    label
+  }
+  leftId
+  rightId
+  id
+}
+    `;
 export const StructureRelationCategoryFragmentDoc = gql`
     fragment StructureRelationCategory on StructureRelationCategory {
   ...BaseEdgeCategory
@@ -10273,6 +10334,81 @@ export function useListStructureCategoryLazyQuery(baseOptions?: ApolloReactHooks
 export type ListStructureCategoryQueryHookResult = ReturnType<typeof useListStructureCategoryQuery>;
 export type ListStructureCategoryLazyQueryHookResult = ReturnType<typeof useListStructureCategoryLazyQuery>;
 export type ListStructureCategoryQueryResult = Apollo.QueryResult<ListStructureCategoryQuery, ListStructureCategoryQueryVariables>;
+export const GetStructureRelationDocument = gql`
+    query GetStructureRelation($id: ID!) {
+  structureRelation(id: $id) {
+    ...DetailStructureRelation
+  }
+}
+    ${DetailStructureRelationFragmentDoc}`;
+
+/**
+ * __useGetStructureRelationQuery__
+ *
+ * To run a query within a React component, call `useGetStructureRelationQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetStructureRelationQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetStructureRelationQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetStructureRelationQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetStructureRelationQuery, GetStructureRelationQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetStructureRelationQuery, GetStructureRelationQueryVariables>(GetStructureRelationDocument, options);
+      }
+export function useGetStructureRelationLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetStructureRelationQuery, GetStructureRelationQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetStructureRelationQuery, GetStructureRelationQueryVariables>(GetStructureRelationDocument, options);
+        }
+export type GetStructureRelationQueryHookResult = ReturnType<typeof useGetStructureRelationQuery>;
+export type GetStructureRelationLazyQueryHookResult = ReturnType<typeof useGetStructureRelationLazyQuery>;
+export type GetStructureRelationQueryResult = Apollo.QueryResult<GetStructureRelationQuery, GetStructureRelationQueryVariables>;
+export const SearchStructureRelationsDocument = gql`
+    query SearchStructureRelations($search: String, $values: [ID!]) {
+  options: structureRelations(
+    filters: {search: $search, ids: $values}
+    pagination: {limit: 10}
+  ) {
+    value: id
+    label: label
+  }
+}
+    `;
+
+/**
+ * __useSearchStructureRelationsQuery__
+ *
+ * To run a query within a React component, call `useSearchStructureRelationsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchStructureRelationsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchStructureRelationsQuery({
+ *   variables: {
+ *      search: // value for 'search'
+ *      values: // value for 'values'
+ *   },
+ * });
+ */
+export function useSearchStructureRelationsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchStructureRelationsQuery, SearchStructureRelationsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<SearchStructureRelationsQuery, SearchStructureRelationsQueryVariables>(SearchStructureRelationsDocument, options);
+      }
+export function useSearchStructureRelationsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchStructureRelationsQuery, SearchStructureRelationsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<SearchStructureRelationsQuery, SearchStructureRelationsQueryVariables>(SearchStructureRelationsDocument, options);
+        }
+export type SearchStructureRelationsQueryHookResult = ReturnType<typeof useSearchStructureRelationsQuery>;
+export type SearchStructureRelationsLazyQueryHookResult = ReturnType<typeof useSearchStructureRelationsLazyQuery>;
+export type SearchStructureRelationsQueryResult = Apollo.QueryResult<SearchStructureRelationsQuery, SearchStructureRelationsQueryVariables>;
 export const GetStructureRelationCategoryDocument = gql`
     query GetStructureRelationCategory($id: ID!) {
   structureRelationCategory(id: $id) {

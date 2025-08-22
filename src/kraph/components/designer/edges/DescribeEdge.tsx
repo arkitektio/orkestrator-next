@@ -10,6 +10,7 @@ import {
   DescribeEdge
 } from "../types";
 import { getEdgeParams } from "../utils";
+import { Card } from "@/components/ui/card";
 
 export type GetSpecialPathParams = {
   sourceX: number;
@@ -86,7 +87,17 @@ export default ({
         label={data?.label}
         color="#ff00ff"
       />
-      <EdgeLabelRenderer></EdgeLabelRenderer>
+      <EdgeLabelRenderer>
+        <Card
+          style={{
+            position: "absolute",
+            transform: `translate(-50%, -50%) translate(${centerX}px,${centerY + offset}px)`,
+          }}
+          className="p-3 text-xs group nodrag nopan"
+        >
+          {data?.label}
+        </Card>
+      </EdgeLabelRenderer>
     </>
   );
 };

@@ -1275,7 +1275,10 @@ export const ObjectButton = (props: ObjectButtonProps) => {
             </Button>
           )}
         </PopoverTrigger>
-        <PopoverContent className="text-white border-gray-800 px-2 py-2 items-left">
+        <PopoverContent
+          className="text-white border-gray-800 px-2 py-2 items-left"
+          data-nonbreaker
+        >
           <SmartContext {...props} />
         </PopoverContent>
       </Popover>
@@ -1290,6 +1293,19 @@ export const SmartContext = (props: SmartContextProps) => {
 
   return (
     <>
+      <div className="flex flex-row text-xs">
+        {props.objects && props.objects.length > 1 && (
+          <div className="text-slate-500 p-2 text-xs">
+            {props.objects.length}
+          </div>
+        )}
+        {props.partners && props.partners.length >= 1 && (
+          <div className="text-slate-500 p-2 text-xs">
+            {" "}
+            with {props.partners.length}
+          </div>
+        )}
+      </div>
       <Command shouldFilter={false}>
         <CommandInput
           placeholder={"Search"}

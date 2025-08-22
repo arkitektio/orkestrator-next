@@ -20,7 +20,7 @@ export type {
   LazyQueryHookOptions,
   MutationHookOptions,
   QueryHookOptions,
-  SubscriptionHookOptions
+  SubscriptionHookOptions,
 };
 
 export const useMutation: MutationFuncType = (doc, options) => {
@@ -36,7 +36,11 @@ export const useMutation: MutationFuncType = (doc, options) => {
 export const useQuery: QueryFuncType = (doc, options) => {
   const rekuest = useRekuest();
 
-  return useApolloQuery(doc, { ...options, client: rekuest });
+  return useApolloQuery(doc, {
+    ...options,
+    client: rekuest,
+    nextFetchPolicy: "network-only",
+  });
 };
 
 export const useSubscription: SubscriptionFuncType = (doc, options) => {

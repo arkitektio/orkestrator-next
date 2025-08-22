@@ -1,5 +1,5 @@
 import { OffsetPaginationInput } from "@/rekuest/api/graphql";
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { ReactNode, useEffect, useMemo, useState } from "react";
 import { ListOffsetter, ListTitle } from "../ui/list";
 import { Refetcher } from "../ui/refetcher";
 import { ContainerGrid } from "./ContainerGrid";
@@ -39,9 +39,14 @@ export const ListRender = <T extends any>({
     }
   }, [offset, limit]);
 
+  const childrenComponents = useMemo(
+    () => array?.map(children),
+    [array?.at(0), offset],
+  );
+
   return (
     <>
-      {array && (array.length > 0 || offset > 0) && (
+      {childrenComponents && (childrenComponents.length > 0 || offset > 0) && (
         <>
           <ListTitle
             right={
@@ -69,8 +74,10 @@ export const ListRender = <T extends any>({
           >
             {title}
           </ListTitle>
-          <ContainerGrid fitLength={fit ? array.length : undefined}>
-            {array?.map(children)}
+          <ContainerGrid
+            fitLength={fit ? childrenComponents.length : undefined}
+          >
+            {childrenComponents}
             {additionalChildren}
             <div key="xxx" className="flex items-center justify-left group">
               <div className="p-3 group-hover:visible invisible">{actions}</div>

@@ -13,5 +13,6 @@ export type SelectionContextType = {
   unselect: (identifier: Structure[]) => void;
   setIsMultiSelecting: (state: boolean) => void;
   registerSelectables: (selectable: Selectable[]) => void;
+  toggleSelection: (structure: Structure) => void;
   unregisterSelectables: (selectables: Selectable[]) => void;
 };

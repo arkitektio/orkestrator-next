@@ -138,6 +138,10 @@ export default asDetailQueryRoute(
 
         <StructureQueriesPlanner category={data.entityCategory} />
 
+        {data.entityCategory.latest.map((x) => (
+          <div key={x.category.id}>{x.label}</div>
+        ))}
+
         <div className="flex flex-col p-6 h-full">
           {data.entityCategory.bestQuery ? (
             <SelectiveGraphQueryRenderer

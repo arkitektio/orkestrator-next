@@ -20,7 +20,7 @@ export type {
   LazyQueryHookOptions,
   MutationHookOptions,
   QueryHookOptions,
-  SubscriptionHookOptions
+  SubscriptionHookOptions,
 };
 
 export const useMutation: MutationFuncType = (doc, options) => {
@@ -36,7 +36,11 @@ export const useMutation: MutationFuncType = (doc, options) => {
 export const useQuery: QueryFuncType = (doc, options) => {
   const mikro = useMikro();
 
-  return useApolloQuery(doc, { ...options, client: mikro });
+  return useApolloQuery(doc, {
+    ...options,
+    client: mikro,
+    nextFetchPolicy: "network-only",
+  });
 };
 
 export const useSubscription: SubscriptionFuncType = (doc, options) => {

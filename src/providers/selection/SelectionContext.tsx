@@ -10,6 +10,7 @@ export const SelectionContext = React.createContext<SelectionContextType>({
   setIsMultiSelecting: () => {},
   registerSelectables: () => {},
   unregisterSelectables: () => {},
+  toggleSelection: () => {},
 });
 
 export const useSelection = () => useContext(SelectionContext);
@@ -54,8 +55,6 @@ export const useMySelection = (
     (event: any) => {
       if (event.detail === 1) {
         if (event.nativeEvent.shiftKey || event.nativeEvent.shiftKey) {
-          event.stopPropagation();
-          event.preventDefault();
           if (!isMultiSelecting) {
             // We are not multi selecting, so we should select this item
             setIsMultiSelecting(true);
@@ -98,5 +97,6 @@ export const useMySelection = (
   return {
     bind,
     ...variables,
+    selection,
   };
 };

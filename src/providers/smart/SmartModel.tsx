@@ -10,7 +10,7 @@ import { Structure } from "@/types";
 import React, { useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { NativeTypes } from "react-dnd-html5-backend";
-import { useMySelection } from "../selection/SelectionContext";
+import { useMySelection, useSelection } from "../selection/SelectionContext";
 import { SmartModelProps } from "./types";
 
 export const SmartModel = ({
@@ -154,16 +154,19 @@ export const SmartModel = ({
     };
   }, [partners.length, clearPartners]);
 
-  const { isSelected, bind } = useMySelection({
+  const { isSelected } = useMySelection({
     identifier: props.identifier,
     object: props.object,
   });
+
+  const { toggleSelection, selection } = useSelection();
 
   const className = React.useMemo(
     () =>
       cn(
         "@container relative z-10 cursor-pointer",
-        isSelected && "group ring ring-1 ",
+        isSelected &&
+          "group ring ring-1 ring-offset-4 ring-offset-transparent rounded",
         isDragging && "opacity-50 ring-2 ring-gray-600 ring rounded rounded-md",
         isOver && "shadow-xl ring-2 border-gray-200 ring rounded rounded-md",
       ),
@@ -174,15 +177,21 @@ export const SmartModel = ({
     <div
       key={`${props.identifier}:${props.object}`}
       ref={drop}
-      {...bind}
+      onClick={(e) => {
+        if (e.shiftKey) {
+          toggleSelection(self);
+          return;
+        }
+      }}
       onDragStart={handleDragStart}
       data-identifier={props.identifier}
       data-object={props.object}
+      data-selected={isSelected ? "true" : "false"}
     >
       <ContextMenu modal={false}>
         <ContextMenuContent className="dark:border-gray-700 max-w-md">
-          {isSelected ? (
-            <>Multiselect is not implemented yet</>
+          {selection && selection.length > 0 ? (
+            <SmartContext objects={selection} partners={[]} />
           ) : (
             <SmartContext objects={[self]} partners={[]} />
           )}
@@ -212,9 +221,9 @@ export const SmartModel = ({
                   onClick={(e) => e.stopPropagation()}
                 >
                   <SmartContext
-                    objects={[
-                      { identifier: props.identifier, object: props.object },
-                    ]}
+                    objects={
+                      selection && selection.length > 1 ? selection : [self]
+                    }
                     partners={partners}
                     onDone={() => clearPartners()}
                   />

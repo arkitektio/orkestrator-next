@@ -5,8 +5,9 @@ import {
 } from "@air/react-drag-to-select";
 import React, { useEffect, useState } from "react";
 import { Structure } from "../../types";
-import { SelectionContext } from "./SelectionContext";
+import { SelectionContext, useSelection } from "./SelectionContext";
 import { Selectable } from "./types";
+import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 export type ArkitektProps = { children: React.ReactNode };
 
 export const SelectionProvider: React.FC<ArkitektProps> = ({ children }) => {
@@ -70,27 +71,6 @@ export const SelectionProvider: React.FC<ArkitektProps> = ({ children }) => {
       document.removeEventListener("click", onOutListener);
     };
   }, [selectables]);
-
-  useEffect(() => {
-    if (isMultiSelecting) {
-      const handler = (e: any) => {
-        e.stopPropagation();
-        if (isMultiSelecting) {
-          console.log(e);
-          console.log("Called");
-          setIsMultiSelecting(false);
-          setSelection([]);
-          setBSelection([]);
-        }
-      };
-
-      document.body.addEventListener("mousedown", handler);
-
-      return () => {
-        document.body.removeEventListener("mousedown", handler);
-      };
-    }
-  }, [isMultiSelecting, setIsMultiSelecting]);
 
   const handleSelectionChange = (box: Box) => {
     const scrollAwareBox = {
@@ -169,13 +149,130 @@ export const SelectionProvider: React.FC<ArkitektProps> = ({ children }) => {
             ),
           );
         },
-
+        toggleSelection(structure: Structure) {
+          setSelection((old) => {
+            const exists = old.find(
+              (item) =>
+                item.identifier === structure.identifier &&
+                item.object === structure.object,
+            );
+            if (exists) {
+              const filtered = old.filter(
+                (item) =>
+                  item.identifier !== structure.identifier ||
+                  item.object !== structure.object,
+              );
+              return filtered;
+            }
+            return [...old, structure];
+          });
+        },
         unselect,
         isMultiSelecting,
       }}
     >
       <DragSelection />
       {children}
+      <SelectionBox />
     </SelectionContext.Provider>
+  );
+};
+
+export const SelectionBox = (props: {}) => {
+  const { selection, setSelection } = useSelection();
+  useEffect(() => {
+    // Only attach handlers while there is an active selection
+    if (selection.length === 0) return;
+
+    const onMouseDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      // Walk up the DOM to find an element that explicitly declares
+      // a data-selectable attribute. If found and it's a non-selectable
+      // value ("false" or "0"), clear the selection.
+      let el: HTMLElement | null = target;
+      let val: boolean | null = false;
+      while (el && el !== document.body) {
+        if (
+          el.hasAttribute("data-object") ||
+          el.hasAttribute("data-nonbreaker")
+        ) {
+          val = true;
+          break;
+        }
+        el = el.parentElement;
+      }
+
+      if (!val) {
+        e.stopPropagation();
+        setSelection([]);
+      }
+
+      // If no ancestor declares data-selectable, do nothing.
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        setSelection([]);
+      }
+    };
+
+    document.body.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [selection, setSelection]);
+
+  if (selection.length === 0) return <></>;
+
+  // count unique identifiers
+  const uniqueIdentifiers = Array.from(
+    new Set(selection.map((s) => s.identifier)),
+  );
+
+  const total = selection.length;
+  const types = uniqueIdentifiers.length;
+
+  return (
+    <div
+      className="fixed bottom-3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50"
+      aria-live="polite"
+      data-nonbreaker
+    >
+      <div
+        className={
+          "flex items-center gap-3 bg-background border border-border rounded-full px-4 py-2 shadow-2xl will-change-transform transition-transform transition-opacity duration-200 ease-out transform "
+        }
+      >
+        <div className="flex items-baseline gap-2">
+          <div className="font-semibold">{total}</div>
+
+          <div className="ml-2 text-sm text-muted-foreground">
+            {uniqueIdentifiers.map((c) => c).join(", ")}
+          </div>
+          <div className="text-sm text-muted-foreground">selected</div>
+        </div>
+
+        <div className="w-px h-6 bg-border opacity-30" />
+
+        {types == 1 && <ObjectButton objects={selection} />}
+
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelection([]);
+          }}
+          aria-label="Clear selection"
+          className="ml-3 mr-2 p-1 rounded-full hover:bg-gray-200/10 focus:outline-none"
+        >
+          <span className="text-xl leading-none">×</span>
+        </button>
+      </div>
+    </div>
   );
 };

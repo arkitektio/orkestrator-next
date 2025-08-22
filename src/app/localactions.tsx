@@ -30,10 +30,36 @@ const NavigateAction: Action = {
   },
   collections: ["smart"],
 };
+const PopOutAction: Action = {
+  title: "Open in new window",
+  description: "Open the structure in a new window",
+  conditions: [
+    {
+      type: "nopartner",
+    },
+  ],
+  execute: async ({ state, navigate }) => {
+    for (const item of state.left) {
+      const identifier = item.identifier;
+      const object = item.object;
+      if (!identifier) {
+        throw new Error("No identifier provided for Open action");
+      }
+
+      const path = smartRegistry.findModel(identifier)?.path;
+      if (!path) {
+        throw new Error(`No path found for identifier ${identifier}`);
+      }
+      window.api.openSecondWindow(linkBuilder(path)(object));
+    }
+  },
+  collections: ["smart"],
+};
 
 export const { LocalActionProvider, useAction, useMatchingActions, registry } =
   createLocalActionProvider({
     ...MIKRO_ACTIONS,
     ...KRAPH_ACTIONS,
+    popout: PopOutAction,
     navigate: NavigateAction,
   } as const);

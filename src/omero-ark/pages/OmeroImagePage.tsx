@@ -1,3 +1,4 @@
+import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { PageLayout } from "@/components/layout/PageLayout";
 import {
@@ -7,24 +8,13 @@ import {
 } from "@/components/ui/pane";
 import { MikroDataset } from "@/linkers";
 import { Komments } from "@/lok-next/components/komments/Komments";
-import React from "react";
-import { useParams } from "react-router";
-import { useGetImageQuery } from "../api/graphql";
+import { useGetOmeroImageQuery } from "../api/graphql";
 import AuthorizedImage from "../components/Thumbnail";
 
-export type IRepresentationScreenProps = {};
-
-const Page: React.FC<IRepresentationScreenProps> = () => {
-  const { id } = useParams<{ id: string }>();
-  if (!id) return <></>;
-
-  const { data } = useGetImageQuery({
-    variables: { id },
-  });
-
+const Page = asDetailQueryRoute(useGetOmeroImageQuery, ({ data }) => {
   return (
     <PageLayout
-      title={data?.image?.name}
+      title={data?.image?.name || "Image"}
       actions={<MikroDataset.Actions id={id} />}
       sidebars={
         <MultiSidebar
@@ -63,6 +53,6 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       </div>
     </PageLayout>
   );
-};
+});
 
 export default Page;

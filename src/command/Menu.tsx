@@ -10,6 +10,7 @@ import { Guard } from "@/lib/arkitekt/Arkitekt";
 import { cn } from "@/lib/utils";
 import {
   ApplicableActions,
+  ApplicableDefinitions,
   ApplicableLocalActions,
   ApplicableShortcuts,
 } from "@/rekuest/buttons/ObjectButton";
@@ -92,8 +93,10 @@ export const ModifierRender = (props: { modifier: Modifier }) => {
  *
  **/
 export const CommandMenu = (props: {
-  self?: Structure;
-  returns?: Structure;
+  objects?: Structure[];
+  collection?: string;
+  partners?: Structure[];
+  returns?: string[];
 }) => {
   const [context, setContext] = useState<Context>({
     open: false,
@@ -174,12 +177,26 @@ export const CommandMenu = (props: {
               ))}
             </div>
           )}
-          {props.self && (
-            <div className="flex flex-row justify-between items-center relative gap-4 border border rounded rounded-lg bg-background shadow-lg sm:rounded-lg md:w-full p-3">
-              <DisplayWidget
-                identifier={props.self.identifier}
-                object={props.self.object}
-              />
+
+          {props.objects && props.objects.length > 0 && (
+            <div className="flex flex-col justify-between items-center relative gap-1">
+              {props.objects.map((m, index) => (
+                <>
+                  <div className="border bg-background shadow-lg sm:rounded-lg md:w-full relative">
+                    <div
+                      onClick={() => removeModifier(index)}
+                      className="absolute right-4 top-[50%] translate-y-[-50%] cursor-pointer rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+                    >
+                      <Cross2Icon className="h-4 w-4" />
+                      <span className="sr-only">Close</span>
+                    </div>
+                    <DisplayWidget
+                      identifier={m.identifier}
+                      object={m.object}
+                    />
+                  </div>
+                </>
+              ))}
             </div>
           )}
 
@@ -212,20 +229,31 @@ export const CommandMenu = (props: {
                   <Guard.Rekuest>
                     <ApplicableShortcuts
                       filter={context.query}
-                      object={props.self?.object}
-                      identifier={props.self?.identifier}
+                      objects={props.objects || []}
+                      partners={props.partners}
+                      onDone={() => setContext((c) => ({ ...c, open: false }))}
                     />
                     <ApplicableActions
                       filter={context.query}
-                      object={props.self?.object}
-                      identifier={props.self?.identifier}
+                      objects={props.objects || []}
+                      collection={props.collections}
+                      partners={props.partners}
+                      onDone={() => setContext((c) => ({ ...c, open: false }))}
                     />
                   </Guard.Rekuest>
                   <ApplicableLocalActions
                     filter={context.query}
-                    object={props.self?.object}
-                    identifier={props.self?.identifier}
+                    objects={props.objects || []}
+                    partners={props.partners}
                   />
+                  <Guard.Kabinet>
+                    <ApplicableDefinitions
+                      filter={context.query}
+                      objects={props.objects || []}
+                      partners={props.partners}
+                      returns={props.returns || []}
+                    />
+                  </Guard.Kabinet>
                   <Guard.Mikro fallback={<></>}>
                     <SearchExtensions />
                   </Guard.Mikro>

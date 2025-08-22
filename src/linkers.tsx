@@ -78,6 +78,7 @@ export const RekuestDashboard = buildSmart(
 );
 
 export const MikroImage = buildSmart("@mikro/image", "mikro/images");
+export const MikroSnapshot = buildSmart("@mikro/snapshot", "mikro/snapshots");
 export const MikroEntityMetric = buildSmart(
   "@mikro/entitymetric",
   "mikro/entitymetric",
@@ -251,7 +252,7 @@ export const KraphProtocolStepTemplate = buildSmart(
 
 export const OmeroArkProject = buildSmart(
   "@omero-ark/project",
-  "omero-ark/projects",
+  "omero_ark/projects",
 );
 
 export const PortPod = buildSmart("@port-next/pod", "port-next/pod");
@@ -262,10 +263,10 @@ export const PortDefinition = buildSmart(
 
 export const OmeroArkDataset = buildSmart(
   "@omero-ark/dataset",
-  "omero-ark/datasets",
+  "omero_ark/datasets",
 );
 
-export const OmeroArkImage = buildSmart("@omero-ark/image", "omero-ark/images");
+export const OmeroArkImage = buildSmart("@omero-ark/image", "omero_ark/images");
 
 export const MikroHistory = buildSmart("@mikro/history", "mikro/history");
 

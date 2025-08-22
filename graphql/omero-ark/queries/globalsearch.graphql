@@ -1,0 +1,10 @@
+query GlobalSearch(
+  $search: String
+  $noImages: Boolean!
+  $pagination: OffsetPaginationInput
+) {
+  images: images(filters: { search: $search }, pagination: $pagination)
+    @skip(if: $noImages) {
+    ...ListOmeroImage
+  }
+}

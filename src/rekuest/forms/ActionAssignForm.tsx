@@ -13,6 +13,7 @@ import { useHooksSearchLazyQuery } from "../api/graphql";
 import { useAction } from "../hooks/useAction";
 import { usePortForm } from "../hooks/usePortForm";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
+import { useDialog } from "@/app/dialog";
 
 export const SelectHooks = (props: {}) => {
   const [search, _] = useHooksSearchLazyQuery();
@@ -29,6 +30,8 @@ export const ActionAssignForm = (props: {
     id: props.id,
   });
 
+  const dialog = useDialog();
+
   const form = usePortForm({
     ports: action?.args || [],
     overwrites: props.args,
@@ -42,6 +45,7 @@ export const ActionAssignForm = (props: {
       args: data,
       hooks: [],
     });
+    dialog.closeDialog();
   };
 
   const data = form.watch();

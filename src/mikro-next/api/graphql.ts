@@ -4995,6 +4995,13 @@ export type RowsQueryVariables = Exact<{
 
 export type RowsQuery = { __typename?: 'Query', rows: Array<any> };
 
+export type GetSnapshotQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetSnapshotQuery = { __typename?: 'Query', snapshot: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', presignedUrl: string } } };
+
 export type GetStageQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
@@ -8694,6 +8701,44 @@ export function useRowsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOpt
 export type RowsQueryHookResult = ReturnType<typeof useRowsQuery>;
 export type RowsLazyQueryHookResult = ReturnType<typeof useRowsLazyQuery>;
 export type RowsQueryResult = Apollo.QueryResult<RowsQuery, RowsQueryVariables>;
+export const GetSnapshotDocument = gql`
+    query GetSnapshot($id: ID!) {
+  snapshot(id: $id) {
+    id
+    store {
+      presignedUrl
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetSnapshotQuery__
+ *
+ * To run a query within a React component, call `useGetSnapshotQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSnapshotQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSnapshotQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetSnapshotQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetSnapshotQuery, GetSnapshotQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetSnapshotQuery, GetSnapshotQueryVariables>(GetSnapshotDocument, options);
+      }
+export function useGetSnapshotLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetSnapshotQuery, GetSnapshotQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetSnapshotQuery, GetSnapshotQueryVariables>(GetSnapshotDocument, options);
+        }
+export type GetSnapshotQueryHookResult = ReturnType<typeof useGetSnapshotQuery>;
+export type GetSnapshotLazyQueryHookResult = ReturnType<typeof useGetSnapshotLazyQuery>;
+export type GetSnapshotQueryResult = Apollo.QueryResult<GetSnapshotQuery, GetSnapshotQueryVariables>;
 export const GetStageDocument = gql`
     query GetStage($id: ID!) {
   stage(id: $id) {

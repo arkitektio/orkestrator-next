@@ -6,13 +6,13 @@ import { TinyStructureBox } from "@/kraph/boxes/TinyStructureBox";
 import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
 import { Komments } from "@/lok-next/components/komments/Komments";
 import { usePrimaryActionsQuery } from "@/rekuest/api/graphql";
-import { NewButton, NewButtonProps } from "@/rekuest/buttons/NewButton";
 import {
   ObjectButton,
   ObjectButtonProps,
 } from "@/rekuest/buttons/ObjectButton";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
+import { ObjectID } from "@/types";
 import { NavLink } from "react-router-dom";
 import { SmartDropZone } from "./Drop";
 import { SearchFunction, smartRegistry } from "./registry";
@@ -25,8 +25,6 @@ import {
   ModelLinkProps,
   OmitedNavLinkProps,
 } from "./types";
-import { DisplayWidgetProps } from "@/lib/display/registry";
-import { ObjectID } from "@/types";
 
 const buildBaseLink = (to: string) => {
   return ({ children, ...props }: BaseLinkProps) => {
@@ -70,14 +68,6 @@ export const buildSmartModel = (
         {children}
       </SmartModel>
     );
-  };
-};
-
-export const buildShareModel = (
-  identifier: Identifier,
-): React.FC<CreatedSmartSmartProps> => {
-  return ({ children, ...props }) => {
-    return <ShareDialog identifier={identifier} object={props.object} />;
   };
 };
 
@@ -155,12 +145,16 @@ const buildUseLive = (model: Identifier, object: string) => {
   });
 };
 
-export type SmartObjectButtonProps = Omit<ObjectButtonProps, "objects"> & { object: ObjectID };
+export type SmartObjectButtonProps = Omit<ObjectButtonProps, "objects"> & {
+  object: ObjectID;
+};
 export type SmartNewButtonProps = Omit<ObjectButtonProps, "objects">;
 
 const buildObjectButton = (model: Identifier) => {
   return ({ object, ...props }: SmartObjectButtonProps) => {
-    return <ObjectButton objects={[{ identifier: model, object }]} {...props} />;
+    return (
+      <ObjectButton objects={[{ identifier: model, object }]} {...props} />
+    );
   };
 };
 
@@ -189,7 +183,6 @@ export const buildSmart = (
     ListLink: buildBaseLink(to),
     linkBuilder: linkBuilder(to),
     Smart: buildSmartModel(model),
-    Share: buildShareModel(model),
     Drop: buildDropModel(model),
     Actions: buildSelfActions(model),
     Komments: buildKomments(model),

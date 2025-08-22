@@ -227,9 +227,9 @@ export const serviceMap: ServiceBuilderMap = {
 // Check if running in tauri
 export const Arkitekt = window.electron
   ? buildArkitekt({
-    manifest,
-    serviceBuilderMap: serviceMap,
-  })
+      manifest,
+      serviceBuilderMap: serviceMap,
+    })
   : buildArkitekt({ manifest, serviceBuilderMap: serviceMap });
 
 export const Guard = {
@@ -290,7 +290,6 @@ export const useElektro = (): ApolloClient<NormalizedCache> => {
 export const useLivekit = (): LivekitClient => {
   return useService("livekit").client as LivekitClient;
 };
-
 
 export const useDokuments = (): ApolloClient<NormalizedCache> => {
   return useService("dokuments").client as ApolloClient<NormalizedCache>;

@@ -4,12 +4,12 @@ import { SelectionContextType } from "./types";
 
 export const SelectionContext = React.createContext<SelectionContextType>({
   selection: [],
-  setSelection: () => { },
-  unselect: () => { },
+  setSelection: () => {},
+  unselect: () => {},
   isMultiSelecting: false,
-  setIsMultiSelecting: () => { },
-  registerSelectables: () => { },
-  unregisterSelectables: () => { },
+  setIsMultiSelecting: () => {},
+  registerSelectables: () => {},
+  unregisterSelectables: () => {},
 });
 
 export const useSelection = () => useContext(SelectionContext);
@@ -20,8 +20,8 @@ export const useMySelection = (
     onClick?: (event: any) => {};
     unselectOutside?: boolean;
   } = {
-      unselectOutside: false,
-    },
+    unselectOutside: false,
+  },
 ) => {
   const {
     isMultiSelecting,
@@ -52,9 +52,10 @@ export const useMySelection = (
 
   const onMouseDown = useCallback(
     (event: any) => {
-      event.stopPropagation();
       if (event.detail === 1) {
-        if (event.nativeEvent.ctrlKey || event.nativeEvent.metaKey) {
+        if (event.nativeEvent.shiftKey || event.nativeEvent.shiftKey) {
+          event.stopPropagation();
+          event.preventDefault();
           if (!isMultiSelecting) {
             // We are not multi selecting, so we should select this item
             setIsMultiSelecting(true);
@@ -62,7 +63,7 @@ export const useMySelection = (
             return;
           }
           if (iam) {
-            let array = selection.filter(
+            const array = selection.filter(
               (item) =>
                 item.object !== iam.object ||
                 item.identifier !== iam.identifier,

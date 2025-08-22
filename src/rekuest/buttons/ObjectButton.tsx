@@ -399,21 +399,21 @@ export const ShortcutButton = (
       }
     }
 
-    const unknownKeys = shortcut.args.filter((arg) => arg.key && !keys[arg.key]);
+    const unknownKeys = shortcut.args.filter(
+      (arg) => arg.key && !keys[arg.key],
+    );
 
     if (unknownKeys.length >= 1) {
       openDialog("actionassign", {
         id: shortcut.action.id,
         args: { keys, ...shortcut.savedArgs },
-        hidden: { keys, ...shortcut.savedArgs }
+        hidden: { keys, ...shortcut.savedArgs },
       });
       return;
     }
 
     try {
-
       const reference = uuidv4();
-
 
       await assign({
         action: shortcut.action.id,
@@ -424,7 +424,6 @@ export const ShortcutButton = (
       });
 
       registeredCallbacks.set(reference, doStuff);
-
     } catch (e) {
       toast.error(e.message);
       props.onError?.(e.message);
@@ -550,29 +549,33 @@ export const ApplicableActions = (props: PassDownProps) => {
   if (props.objects) {
     if (props.objects.length === 0) {
       console.log("No objects");
-    }
-    else if (props.objects.length === 1) {
+    } else if (props.objects.length === 1) {
       demands.push({
         kind: DemandKind.Args,
         matches: [
-          { at: 0, kind: PortKind.Structure, identifier: props.objects[0].identifier },
+          {
+            at: 0,
+            kind: PortKind.Structure,
+            identifier: props.objects[0].identifier,
+          },
         ],
       });
-    }
-    else {
+    } else {
       demands.push({
         kind: DemandKind.Args,
-        matches: [{
-          at: 0,
-          kind: PortKind.List,
-          children: [
-            {
-              at: 0,
-              kind: PortKind.Structure,
-              identifier: props.objects[0].identifier,
-            },
-          ],
-        }],
+        matches: [
+          {
+            at: 0,
+            kind: PortKind.List,
+            children: [
+              {
+                at: 0,
+                kind: PortKind.Structure,
+                identifier: props.objects[0].identifier,
+              },
+            ],
+          },
+        ],
       });
     }
   }
@@ -580,34 +583,37 @@ export const ApplicableActions = (props: PassDownProps) => {
   if (props.partners) {
     if (props.partners.length === 0) {
       console.log("No partners");
-      // Maybe 
-    }
-    else if (props.partners.length === 1) {
+      // Maybe
+    } else if (props.partners.length === 1) {
       demands.push({
         kind: DemandKind.Args,
         matches: [
-          { at: 1, kind: PortKind.Structure, identifier: props.partners[0].identifier },
+          {
+            at: 1,
+            kind: PortKind.Structure,
+            identifier: props.partners[0].identifier,
+          },
+        ],
+      });
+    } else {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [
+          {
+            at: 1,
+            kind: PortKind.List,
+            children: [
+              {
+                at: 0,
+                kind: PortKind.Structure,
+                identifier: props.partners[0].identifier,
+              },
+            ],
+          },
         ],
       });
     }
-    else {
-      demands.push({
-        kind: DemandKind.Args,
-        matches: [{
-          at: 1,
-          kind: PortKind.List,
-          children: [
-            {
-              at: 0,
-              kind: PortKind.Structure,
-              identifier: props.partners[0].identifier,
-            },
-          ],
-        }],
-      });
-    }
   }
-
 
   if (props.returns) {
     demands.push({
@@ -664,33 +670,36 @@ export const ApplicableActions = (props: PassDownProps) => {
 export const ApplicableShortcuts = (props: PassDownProps) => {
   const demands: PortDemandInput[] = [];
 
-
   if (props.objects) {
     if (props.objects.length === 0) {
       console.log("No objects");
-    }
-    else if (props.objects.length === 1) {
+    } else if (props.objects.length === 1) {
       demands.push({
         kind: DemandKind.Args,
         matches: [
-          { at: 0, kind: PortKind.Structure, identifier: props.objects[0].identifier },
+          {
+            at: 0,
+            kind: PortKind.Structure,
+            identifier: props.objects[0].identifier,
+          },
         ],
       });
-    }
-    else {
+    } else {
       demands.push({
         kind: DemandKind.Args,
-        matches: [{
-          at: 0,
-          kind: PortKind.List,
-          children: [
-            {
-              at: 0,
-              kind: PortKind.Structure,
-              identifier: props.objects[0].identifier,
-            },
-          ],
-        }],
+        matches: [
+          {
+            at: 0,
+            kind: PortKind.List,
+            children: [
+              {
+                at: 0,
+                kind: PortKind.Structure,
+                identifier: props.objects[0].identifier,
+              },
+            ],
+          },
+        ],
       });
     }
   }
@@ -698,34 +707,37 @@ export const ApplicableShortcuts = (props: PassDownProps) => {
   if (props.partners) {
     if (props.partners.length === 0) {
       console.log("No partners");
-      // Maybe 
-    }
-    else if (props.partners.length === 1) {
+      // Maybe
+    } else if (props.partners.length === 1) {
       demands.push({
         kind: DemandKind.Args,
         matches: [
-          { at: 1, kind: PortKind.Structure, identifier: props.partners[0].identifier },
+          {
+            at: 1,
+            kind: PortKind.Structure,
+            identifier: props.partners[0].identifier,
+          },
+        ],
+      });
+    } else {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [
+          {
+            at: 0,
+            kind: PortKind.List,
+            children: [
+              {
+                at: 0,
+                kind: PortKind.Structure,
+                identifier: props.partners[0].identifier,
+              },
+            ],
+          },
         ],
       });
     }
-    else {
-      demands.push({
-        kind: DemandKind.Args,
-        matches: [{
-          at: 0,
-          kind: PortKind.List,
-          children: [
-            {
-              at: 0,
-              kind: PortKind.Structure,
-              identifier: props.partners[0].identifier,
-            },
-          ],
-        }],
-      });
-    }
   }
-
 
   if (props.returns) {
     demands.push({
@@ -737,8 +749,6 @@ export const ApplicableShortcuts = (props: PassDownProps) => {
       })),
     });
   }
-
-
 
   const { data, error } = useShortcutsQuery({
     variables: {
@@ -777,67 +787,70 @@ export const ApplicableShortcuts = (props: PassDownProps) => {
 export const ApplicableDefinitions = (props: PassDownProps) => {
   const demands: PortDemandInput[] = [];
 
-
-
   if (props.objects) {
     if (props.objects.length === 0) {
       console.log("No objects");
-    }
-    else if (props.objects.length === 1) {
+    } else if (props.objects.length === 1) {
       demands.push({
         kind: DemandKind.Args,
         matches: [
-          { at: 1, kind: PortKind.Structure, identifier: props.objects[0].identifier },
+          {
+            at: 0,
+            kind: PortKind.Structure,
+            identifier: props.objects[0].identifier,
+          },
         ],
       });
-    }
-    else {
+    } else {
       demands.push({
         kind: DemandKind.Args,
-        matches: [{
-          at: 0,
-          kind: PortKind.List,
-          children: [
-            {
-              at: 0,
-              kind: PortKind.Structure,
-              identifier: props.objects[0].identifier,
-            },
-          ],
-        }],
+        matches: [
+          {
+            at: 0,
+            kind: PortKind.List,
+            children: [
+              {
+                at: 0,
+                kind: PortKind.Structure,
+                identifier: props.objects[0].identifier,
+              },
+            ],
+          },
+        ],
       });
     }
   }
 
   if (props.partners) {
     if (props.partners.length === 0) {
-      demands.push({
-        kind: DemandKind.Args,
-        forceStructureLength: 0,
-      });
-    }
-    else if (props.partners.length === 1) {
+      console.log("No partners");
+    } else if (props.partners.length === 1) {
       demands.push({
         kind: DemandKind.Args,
         matches: [
-          { at: 1, kind: PortKind.Structure, identifier: props.partners[0].identifier },
+          {
+            at: 1,
+            kind: PortKind.Structure,
+            identifier: props.partners[0].identifier,
+          },
         ],
       });
-    }
-    else {
+    } else {
       demands.push({
         kind: DemandKind.Args,
-        matches: [{
-          at: 0,
-          kind: PortKind.List,
-          children: [
-            {
-              at: 0,
-              kind: PortKind.Structure,
-              identifier: props.partners[0].identifier,
-            },
-          ],
-        }],
+        matches: [
+          {
+            at: 1,
+            kind: PortKind.List,
+            children: [
+              {
+                at: 1,
+                kind: PortKind.Structure,
+                identifier: props.partners[0].identifier,
+              },
+            ],
+          },
+        ],
       });
     }
   }
@@ -1039,44 +1052,46 @@ export const RelateButton = (props: {
   const handleRelationCreation = async (
     category: ListStructureRelationCategoryWithGraphFragment,
   ) => {
-    try {
-      const leftStructureString = `${props.left.identifier}:${props.left.object}`;
-      const rightStructureString = `${props.right.identifier}:${props.right.object}`;
+    for (const obj of props.left.objects) {
+      try {
+        const leftStructureString = `${obj.identifier}:${obj.object}`;
+        const rightStructureString = `${props.right.identifier}:${props.right.object}`;
 
-      const left = await createStructure({
-        variables: {
-          input: {
-            structure: leftStructureString,
-            graph: category.graph.id,
+        const left = await createStructure({
+          variables: {
+            input: {
+              structure: leftStructureString,
+              graph: category.graph.id,
+            },
           },
-        },
-      });
+        });
 
-      const right = await createStructure({
-        variables: {
-          input: {
-            structure: rightStructureString,
-            graph: category.graph.id,
+        const right = await createStructure({
+          variables: {
+            input: {
+              structure: rightStructureString,
+              graph: category.graph.id,
+            },
           },
-        },
-      });
+        });
 
-      await createSRelation({
-        variables: {
-          input: {
-            source: left.data?.createStructure.id,
-            target: right.data?.createStructure.id,
-            category: category.id,
+        await createSRelation({
+          variables: {
+            input: {
+              source: left.data?.createStructure.id,
+              target: right.data?.createStructure.id,
+              category: category.id,
+            },
           },
-        },
-      });
+        });
 
-      toast.success("Relation created successfully!");
-    } catch (error) {
-      toast.error(
-        `Failed to create relation: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
-      console.error("Failed to create relation:", error);
+        toast.success("Relation created successfully!");
+      } catch (error) {
+        toast.error(
+          `Failed to create relation: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
+        console.error("Failed to create relation:", error);
+      }
     }
   };
 
@@ -1305,11 +1320,7 @@ export const SmartContext = (props: SmartContextProps) => {
 
           <ApplicableLocalActions {...props} filter={filter} />
           <Guard.Kabinet fallback={<></>}>
-            <ApplicableDefinitions
-              {...props}
-              partners={props.partners}
-              filter={filter}
-            />
+            <ApplicableDefinitions {...props} filter={filter} />
           </Guard.Kabinet>
         </CommandList>
       </Command>

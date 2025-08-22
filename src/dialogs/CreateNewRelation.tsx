@@ -7,7 +7,11 @@ import { ParagraphField } from "@/components/fields/ParagraphField";
 import { SearchOptions } from "@/components/fields/SearchField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Form } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -17,12 +21,11 @@ import {
   useCreateStructureRelationCategoryMutation,
   useCreateStructureRelationMutation,
   useSearchGraphsLazyQuery,
-  useSearchTagsLazyQuery
+  useSearchTagsLazyQuery,
 } from "@/kraph/api/graphql";
 import { smartRegistry } from "@/providers/smart/registry";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-
 
 const searchIdentifiers = async ({ search, values }: SearchOptions) => {
   const models = smartRegistry
@@ -40,7 +43,8 @@ const searchIdentifiers = async ({ search, values }: SearchOptions) => {
   return models || [];
 };
 
-export type FormData = CreateStructureRelationCategoryMutationVariables["input"]
+export type FormData =
+  CreateStructureRelationCategoryMutationVariables["input"];
 
 export const CreateNewRelation = (props: {
   left: Structure[];
@@ -51,11 +55,11 @@ export const CreateNewRelation = (props: {
   const form = useForm<FormData>({
     defaultValues: {
       sourceDefinition: {
-        identifierFilters: props.left.map(s => s.identifier),
+        identifierFilters: props.left.map((s) => s.identifier),
         tagFilters: [],
       },
       targetDefinition: {
-        identifierFilters: props.right.map(s => s.identifier),
+        identifierFilters: props.right.map((s) => s.identifier),
         tagFilters: [],
       },
     },
@@ -74,15 +78,15 @@ export const CreateNewRelation = (props: {
     },
   });
 
-
-  const [createStructureRelationCategory] = useCreateStructureRelationCategoryMutation({
-    onCompleted: (data) => {
-      console.log("Relation category created:", data);
-    },
-    onError: (error) => {
-      console.error("Error creating relation category:", error);
-    },
-  });
+  const [createStructureRelationCategory] =
+    useCreateStructureRelationCategoryMutation({
+      onCompleted: (data) => {
+        console.log("Relation category created:", data);
+      },
+      onError: (error) => {
+        console.error("Error creating relation category:", error);
+      },
+    });
 
   const [createSRelation] = useCreateStructureRelationMutation({
     onCompleted: (data) => {
@@ -93,16 +97,12 @@ export const CreateNewRelation = (props: {
     },
   });
 
-
   const handleRelationCreation = async (formData: FormData) => {
     try {
-
-
-
       const result = await createStructureRelationCategory({
         variables: {
           input: {
-            ...formData
+            ...formData,
           },
         },
       });
@@ -161,13 +161,16 @@ export const CreateNewRelation = (props: {
       <div className="mb-6">
         <h2 className="text-2xl font-bold">Create New Relation</h2>
         <p className="text-muted-foreground">
-          Relating {props.left[0]?.identifier}:{props.left[0]?.object} to {props.right[0]?.identifier}:{props.right[0]?.object}
+          Relating {props.left[0]?.identifier}:{props.left[0]?.object} to{" "}
+          {props.right[0]?.identifier}:{props.right[0]?.object}
         </p>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleRelationCreation)} className="space-y-6">
-
+        <form
+          onSubmit={form.handleSubmit(handleRelationCreation)}
+          className="space-y-6"
+        >
           <GraphQLCreatableSearchField
             label="Graph"
             name="graph"
@@ -237,11 +240,7 @@ export const CreateNewRelation = (props: {
             </CollapsibleContent>
           </Collapsible>
 
-          <Button
-            type="submit"
-            variant="outline"
-
-          >
+          <Button type="submit" variant="outline">
             Create New Relation Category
           </Button>
         </form>

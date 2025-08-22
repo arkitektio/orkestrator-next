@@ -20,8 +20,6 @@ export const SmartModel = ({
   mates,
   ...props
 }: SmartModelProps) => {
-
-
   const self: Structure = React.useMemo(
     () => ({
       identifier: props.identifier,
@@ -156,7 +154,7 @@ export const SmartModel = ({
     };
   }, [partners.length, clearPartners]);
 
-  const { isSelected } = useMySelection({
+  const { isSelected, bind } = useMySelection({
     identifier: props.identifier,
     object: props.object,
   });
@@ -176,6 +174,7 @@ export const SmartModel = ({
     <div
       key={`${props.identifier}:${props.object}`}
       ref={drop}
+      {...bind}
       onDragStart={handleDragStart}
       data-identifier={props.identifier}
       data-object={props.object}
@@ -185,10 +184,7 @@ export const SmartModel = ({
           {isSelected ? (
             <>Multiselect is not implemented yet</>
           ) : (
-            <SmartContext
-              objects={[{ identifier: props.identifier, object: props.object }]}
-              partners={[]}
-            />
+            <SmartContext objects={[self]} partners={[]} />
           )}
         </ContextMenuContent>
         <ContextMenuTrigger>
@@ -216,7 +212,9 @@ export const SmartModel = ({
                   onClick={(e) => e.stopPropagation()}
                 >
                   <SmartContext
-                    objects={[{ identifier: props.identifier, object: props.object }]}
+                    objects={[
+                      { identifier: props.identifier, object: props.object },
+                    ]}
                     partners={partners}
                     onDone={() => clearPartners()}
                   />

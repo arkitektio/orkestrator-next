@@ -53,7 +53,7 @@ function App() {
             <Route path="rekuest/*" element={protect(<RekuestNextModule />)} />
             <Route path="fluss/*" element={protect(<ReaktionModule />)} />
             <Route path="kabinet/*" element={protect(<KabinetModule />)} />
-            <Route path="omero-ark/*" element={protect(<OmeroArkModule />)} />
+            <Route path="omero_ark/*" element={protect(<OmeroArkModule />)} />
             <Route path="kraph/*" element={protect(<KraphModule />)} />
             <Route path="lok/*" element={protect(<LokNextModule />)} />
             <Route path="settings/*" element={protect(<SettingsModule />)} />

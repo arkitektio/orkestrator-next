@@ -1,0 +1,8 @@
+query GetSnapshot($id: ID!) {
+  snapshot(id: $id) {
+    id
+    store {
+      presignedUrl
+    }
+  }
+}

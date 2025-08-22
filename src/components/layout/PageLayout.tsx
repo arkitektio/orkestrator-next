@@ -18,6 +18,7 @@ import {
   ResizablePanelGroup,
 } from "../ui/resizable";
 import { Actionbar } from "./Actionbar";
+import { CommandMenu } from "@/command/Menu";
 
 export type PageVariant = "black" | "default";
 

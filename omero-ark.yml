@@ -1,8 +1,8 @@
 overwrite: true
-schema: "http://jhnnsrs-lab/omero-ark/graphql"
+schema: "http://jhnnsrs-lab/omeroark/graphql"
 documents: "graphql/omero-ark/**/*.graphql"
 generates:
-  src/omero-arkk/api/fragments.ts:
+  src/omero-ark/api/fragments.ts:
     plugins:
       - "fragment-matcher"
   src/omero-ark/api/graphql.ts:

@@ -20,33 +20,33 @@ export type {
   LazyQueryHookOptions,
   MutationHookOptions,
   QueryHookOptions,
-  SubscriptionHookOptions
+  SubscriptionHookOptions,
 };
 
 export const useMutation: MutationFuncType = (doc, options) => {
-  const fluss = useOmeroArk();
+  const kraph = useOmeroArk();
 
   return useApolloMutation(doc, {
     ...options,
-    client: fluss,
-    onError: onApolloError("fluss"),
+    client: kraph,
+    onError: onApolloError("kraph"),
   });
 };
 
 export const useQuery: QueryFuncType = (doc, options) => {
-  const fluss = useOmeroArk();
+  const kraph = useOmeroArk();
 
-  return useApolloQuery(doc, { ...options, client: fluss });
+  return useApolloQuery(doc, { ...options, client: kraph });
 };
 
 export const useSubscription: SubscriptionFuncType = (doc, options) => {
-  const fluss = useOmeroArk();
+  const kraph = useOmeroArk();
 
-  return useApolloSubscription(doc, { ...options, client: fluss });
+  return useApolloSubscription(doc, { ...options, client: kraph });
 };
 
 export const useLazyQuery: LazyQueryFuncType = (doc, options) => {
-  const fluss = useOmeroArk();
+  const kraph = useOmeroArk();
 
-  return useApolloLazyQuery(doc, { ...options, client: fluss });
+  return useApolloLazyQuery(doc, { ...options, client: kraph });
 };

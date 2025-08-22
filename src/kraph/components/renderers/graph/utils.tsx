@@ -28,15 +28,22 @@ export const entityNodesToNodes = (
 export const entityRelationToEdges = (
   relations: PathFragment["edges"],
 ): PathEdge[] => {
-  return relations.map((relation) => {
-    return {
-      type: relation.__typename,
-      id: relation.id,
-      source: relation.leftId,
-      target: relation.rightId,
-      data: relation,
-    } as PathEdge;
-  });
+  return Array.from(
+    relations
+      .reduce((map, relation) => {
+        if (!map.has(relation.id) && relation.__typename) {
+          map.set(relation.id, {
+            type: relation.__typename,
+            id: relation.id,
+            source: relation.leftId,
+            target: relation.rightId,
+            data: relation,
+          });
+        }
+        return map;
+      }, new Map<string, PathEdge>())
+      .values(),
+  );
 };
 
 // this helper function returns the intersection point

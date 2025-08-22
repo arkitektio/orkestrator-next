@@ -89,7 +89,7 @@ export const KRAPH_ACTIONS = {
     collections: ["io"],
   },
   "relate-structures": {
-    title: "relate things",
+    title: "Relate Structures",
     description: "Delete the structure",
     conditions: [
       {

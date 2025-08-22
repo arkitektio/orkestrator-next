@@ -72,7 +72,7 @@ export const ListRender = <T extends any>({
           <ContainerGrid fitLength={fit ? array.length : undefined}>
             {array?.map(children)}
             {additionalChildren}
-            <div className="flex items-center justify-left group">
+            <div key="xxx" className="flex items-center justify-left group">
               <div className="p-3 group-hover:visible invisible">{actions}</div>
             </div>
           </ContainerGrid>

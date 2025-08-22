@@ -1,10 +1,10 @@
-fragment ListImage on Image {
+fragment ListOmeroImage on Image {
   id
   name
   description
 }
 
-fragment Image on Image {
+fragment OmeroImage on Image {
   id
   name
   acquisitionDate

@@ -11,7 +11,7 @@ export const entityNodesToNodes = (
       .reduce((map, node) => {
         if (!map.has(node.id) && node.__typename) {
           map.set(node.id, {
-            type: node.id === root ? "__THIS__" : node.__typename,
+            type: node.__typename || "Entity",
             position: { x: 0, y: 0 },
             id: node.id,
             data: node,

@@ -20,6 +20,8 @@ export const SmartModel = ({
   mates,
   ...props
 }: SmartModelProps) => {
+
+
   const self: Structure = React.useMemo(
     () => ({
       identifier: props.identifier,
@@ -172,7 +174,7 @@ export const SmartModel = ({
 
   return (
     <div
-      key={props.object}
+      key={`${props.identifier}:${props.object}`}
       ref={drop}
       onDragStart={handleDragStart}
       data-identifier={props.identifier}

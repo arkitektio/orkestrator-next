@@ -17,18 +17,24 @@ app.commandLine.appendSwitch("ignore-certificate-errors", "true");
 
 let mainWindow: BrowserWindow | null = null;
 
-ipcMain.handle("download-from-url", async (event, { url }: { url: string }) => {
-  // Check if the URL is valid
-  const win = BrowserWindow.getFocusedWindow();
-  if (!win) return { success: false, error: "No active window" };
+ipcMain.handle(
+  "download-from-url",
+  async (_event, { url }: { url: string }) => {
+    // Check if the URL is valid
+    const win = BrowserWindow.getFocusedWindow();
+    if (!win) return { success: false, error: "No active window" };
 
-  try {
-    const dl = await download(win, url);
-    return { success: true, path: dl.getSavePath() };
-  } catch (err: any) {
-    return { success: false, error: err.message };
-  }
-});
+    try {
+      const dl = await download(win, url);
+      return { success: true, path: dl.getSavePath() };
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : String(err),
+      };
+    }
+  },
+);
 
 ipcMain.handle("discover-beacons", async () => {
   // Placeholder for mDNS/Bonjour beacon discovery
@@ -59,7 +65,7 @@ function handleOrkestratorUrl(url: string) {
 
     openSecondaryWindow(fullPath);
   } catch (err) {
-    console.error("Invalid orkestrator URL", url);
+    console.error("Invalid orkestrator URL", url, err);
     dialog.showErrorBox(
       "Invalid Link",
       `The URL '${url}' could not be processed.`,
@@ -88,7 +94,7 @@ function createWindow(): BrowserWindow {
   });
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    let url = new URL(details.url);
+    const url = new URL(details.url);
 
     console.log(url.hash);
     openSecondaryWindow(url.hash.split("#")[1]);
@@ -207,7 +213,7 @@ function openSecondaryWindow(path: string): void {
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-    let loaded_url = process.env["ELECTRON_RENDERER_URL"] + "#" + path;
+    const loaded_url = process.env["ELECTRON_RENDERER_URL"] + "#" + path;
     console.log("Loading URL", loaded_url);
     secondaryWindow.loadURL(loaded_url);
   } else {
@@ -275,9 +281,9 @@ if (process.platform == "darwin") {
   // initialization and is ready to create browser windows.
   // Some APIs can only be used after this event occurs.
 
-  // Handle the protocol. In this case, we choose to show an Error Box.
-  app.on("open-url", (_, url) => {
-    dialog.showErrorBox("Welcome Back", `You arrived from: ${url}`);
+  // Handle the protocol by forwarding the url to the application logic.
+  app.on("open-url", (_event, url) => {
+    handleOrkestratorUrl(url);
   });
 }
 
@@ -286,17 +292,17 @@ const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
 } else {
-  app.on("second-instance", (_, commandLine) => {
+  app.on("second-instance", (_event, commandLine) => {
     // Someone tried to run a second instance, we should focus our window.
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
     }
     // the commandLine is array of strings in which last element is deep link url
-    dialog.showErrorBox(
-      "Welcome Back",
-      `You arrived from: ${commandLine.pop()}`,
-    );
+    const url = commandLine.pop();
+    if (url) {
+      handleOrkestratorUrl(url);
+    }
   });
 
   // Create mainWindow, load the rest of the app, etc...

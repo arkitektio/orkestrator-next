@@ -23,6 +23,11 @@ import { PathEdge, PathNode } from "./types";
 import { entityNodesToNodes, entityRelationToEdges } from "./utils";
 import { ViewOptions } from "../DelegatingNodeViewRenderer";
 import { hash } from "crypto";
+import { Button } from "@/components/ui/button";
+import {
+  PathViewerStateProvider,
+  usePathViewerState,
+} from "./PathViewerStateProvider";
 
 export type Props = {
   path: PathFragment;
@@ -83,10 +88,12 @@ const hashPash = (path: PathFragment): string => {
   return JSON.stringify(path);
 };
 
-export const PathGraph: React.FC<Props> = ({ path, root, options }) => {
+export const PathGraphInner: React.FC<Props> = ({ path, root, options }) => {
   const reactFlowWrapper = React.useRef<HTMLDivElement | null>(null);
   const [reactFlowInstance, setReactFlowInstance] =
     React.useState<ReactFlowInstance<PathNode, PathEdge> | null>(null);
+
+  const { viewerState, setViewerState } = usePathViewerState();
 
   const [nodes, setNodes, onNodesChange] = useNodesState<PathNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<PathEdge>([]);
@@ -140,6 +147,13 @@ export const PathGraph: React.FC<Props> = ({ path, root, options }) => {
 
   return (
     <div ref={reactFlowWrapper} className="relative h-full">
+      <Button
+        onClick={() =>
+          setViewerState((s) => ({ ...s, showWidgets: !s.showWidgets }))
+        }
+      >
+        {viewerState.showWidgets ? "Hide" : "Show"} Widgets
+      </Button>
       <ReactFlow<PathNode, PathEdge>
         nodes={nodes}
         edges={edges}
@@ -153,5 +167,13 @@ export const PathGraph: React.FC<Props> = ({ path, root, options }) => {
         className="relative"
       ></ReactFlow>
     </div>
+  );
+};
+
+export const PathGraph = (props: Props) => {
+  return (
+    <PathViewerStateProvider>
+      <PathGraphInner {...props} key={hashPash(props.path)} />
+    </PathViewerStateProvider>
   );
 };

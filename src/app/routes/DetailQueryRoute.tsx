@@ -99,7 +99,7 @@ export const asDetailQueryRoute = <T extends any>(
 
     if (passyProps.loading) return <LoadingPage />;
 
-    if (passyProps) {
+    if (passyProps && passyProps.data) {
       if (debug) {
         return <DebugPage data={passyProps.data} />;
       }

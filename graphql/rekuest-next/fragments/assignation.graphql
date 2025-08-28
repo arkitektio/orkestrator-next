@@ -31,6 +31,9 @@ fragment PostmanAssignation on Assignation {
 
 fragment DetailAssignation on Assignation {
   ...PostmanAssignation
+  children {
+    ...PostmanAssignation
+  }
 }
 
 fragment AssignationEvent on AssignationEvent {
@@ -46,6 +49,17 @@ fragment AssignationEvent on AssignationEvent {
   reference
   createdAt
   message
+  delegatedTo {
+    id
+    implementation {
+      id
+      interface
+      action {
+        name
+      }
+      extension
+    }
+  }
 }
 fragment AssignationChangeEvent on AssignationChangeEvent {
   create {

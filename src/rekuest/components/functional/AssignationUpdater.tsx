@@ -19,6 +19,7 @@ import {
   WatchAssignationsDocument,
   WatchAssignationsSubscription,
 } from "../../api/graphql";
+import { RekuestAssignation } from "@/linkers";
 
 export const registeredCallbacks = new Map<
   string,
@@ -118,6 +119,9 @@ export const AssignationToaster = (props: { id: string }) => {
             Accept{" "}
           </Button>
         )}
+        <RekuestAssignation.DetailLink object={props.id}>
+          Open
+        </RekuestAssignation.DetailLink>
         <Button
           variant={"ghost"}
           size={"sm"}

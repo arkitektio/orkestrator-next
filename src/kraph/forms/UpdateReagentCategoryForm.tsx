@@ -14,6 +14,7 @@ import {
   useUpdateReagentCategoryMutation
 } from "../api/graphql";
 import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
+import { GraphQLCreatableListSearchField } from "@/components/fields/GraphQLCreatableListSearchField";
 
 const enumToOptions = (e: any) => {
   return Object.keys(e).map((key) => ({
@@ -79,7 +80,7 @@ export default (props: { reagentCategory: ReagentCategoryFragment }) => {
                 name="purl"
                 description="What is the PURL of this expression?"
               />
-              <GraphQLCreatableSearchField
+              <GraphQLCreatableListSearchField
                 searchQuery={searchTags}
                 label="Tags"
                 name="tags"

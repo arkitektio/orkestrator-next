@@ -20,10 +20,12 @@ import {
   MetricKind,
   useCreateProtocolEventCategoryMutation,
   useSearchEntityCategoryLazyQuery,
+  useSearchReagentCategoryLazyQuery,
   useSearchTagsLazyQuery
 } from "../api/graphql";
 import { RoleProvider } from "../providers/RoleProvider";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
+import { useDialog } from "@/app/dialog";
 
 const initialValue = [
   {
@@ -38,6 +40,8 @@ export const TForm = (props: { graph?: string }) => {
     refetchQueries: ["GetGraph"],
   });
 
+  const dialog = useDialog()
+
 
   const plateEditor = usePlateEditor({
     ...editor,
@@ -49,7 +53,8 @@ export const TForm = (props: { graph?: string }) => {
       variables: {
         input: { ...data, plateChildren: plateEditor.children },
       },
-    });
+    }).then(() => dialog.closeDialog());
+
   };
 
   const myform = useForm<CreateProtocolEventCategoryMutationVariables["input"]>(
@@ -106,6 +111,7 @@ export const TForm = (props: { graph?: string }) => {
 
   const [searchTags] = useSearchTagsLazyQuery();
   const [searchEntityCategory] = useSearchEntityCategoryLazyQuery();
+  const [searchReagentCategory] = useSearchReagentCategoryLazyQuery()
 
   const sourceArray = useFieldArray({
     control: myform.control, // control props comes from useForm (optional: if you are using FormProvider)
@@ -339,7 +345,7 @@ export const TForm = (props: { graph?: string }) => {
                                 <GraphQLListSearchField
                                   name={`targetReagentRoles.${index}.categoryDefinition.categoryFilters`}
                                   label="Category Filters"
-                                  searchQuery={searchEntityCategory}
+                                  searchQuery={searchReagentCategory}
                                   description="Filters for the entity's categories."
                                 />
                                 <StringField
@@ -406,7 +412,7 @@ export const TForm = (props: { graph?: string }) => {
                                 <GraphQLListSearchField
                                   name={`sourceReagentRoles.${index}.categoryDefinition.categoryFilters`}
                                   label="Category Filters"
-                                  searchQuery={searchEntityCategory}
+                                  searchQuery={searchReagentCategory}
                                   description="Filters for the entity's categories."
                                 />
                                 <StringField

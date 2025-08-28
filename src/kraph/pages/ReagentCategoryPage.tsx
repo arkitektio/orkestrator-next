@@ -105,9 +105,11 @@ export default asDetailQueryRoute(
             <p className="mt-3 text-xs text-muted-foreground">
               {data.reagentCategory.ageName}
             </p>
-            {data.reagentCategory.tags.map((tag) => (
-              <Badge key={tag.id}>{tag.value}</Badge>
-            ))}
+            <div className="flex flex-row gap-2">
+              {data.reagentCategory.tags.map((tag) => (
+                <Badge key={tag.id}>{tag.value}</Badge>
+              ))}
+            </div>
           </div>
           <div className="w-full h-full flex-row relative">
             {data.reagentCategory?.store?.presignedUrl && (

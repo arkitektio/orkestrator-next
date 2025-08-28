@@ -16,6 +16,7 @@ import { useGetEntityQuery } from "../api/graphql";
 import { SelectiveNodeViewRenderer } from "../components/renderers/NodeQueryRenderer";
 import CreateNodeQueryForm from "../forms/CreateNodeQueryForm";
 import LoadingCreateProtocolEventForm from "../forms/LoadingCreateProtocolEventForm";
+import { UpdateEntityForm } from "../forms/UpdateEntityForm";
 
 export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
   const uploadFile = useMediaUpload();
@@ -32,7 +33,9 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
       pageActions={
         <div className="flex flex-row gap-2">
           <>
-            <FormSheet trigger={<HobbyKnifeIcon />}>Not implemented</FormSheet>
+            <FormSheet trigger={<Button variant="outline"><HobbyKnifeIcon /></Button>}>
+              {data?.entity && <UpdateEntityForm entity={data?.entity} />}</FormSheet>
+
             <KraphEntity.ObjectButton
               object={data.entity.id}
               className="w-full"

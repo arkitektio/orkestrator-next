@@ -4,6 +4,11 @@ mutation CreateEntity($input: EntityInput!) {
   }
 }
 
+mutation UpdateEntity($input: UpdateEntityInput!) {
+  updateEntity(input: $input) {
+    ...Entity
+  }
+}
 
 mutation CreateEntityInline($input: String!, $category: ID!) {
   result: createEntity(input: {

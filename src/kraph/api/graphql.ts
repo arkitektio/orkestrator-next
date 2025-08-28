@@ -1180,6 +1180,8 @@ export type Mutation = {
   recordProtocolEvent: ProtocolEvent;
   /** Request a new file upload */
   requestUpload: PresignedPostCredentials;
+  /** Update an existing entity */
+  updateEntity: Entity;
   /** Update an existing expression */
   updateEntityCategory: EntityCategory;
   /** Update an existing graph */
@@ -1420,6 +1422,11 @@ export type MutationRecordProtocolEventArgs = {
 
 export type MutationRequestUploadArgs = {
   input: RequestMediaUploadInput;
+};
+
+
+export type MutationUpdateEntityArgs = {
+  input: UpdateEntityInput;
 };
 
 
@@ -3369,6 +3376,15 @@ export type UpdateEntityCategoryInput = {
   width?: InputMaybe<Scalars['Float']['input']>;
 };
 
+/** Input type for creating a new entity */
+export type UpdateEntityInput = {
+  /** An optional external ID for the entity (will upsert if exists) */
+  externalId?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['ID']['input'];
+  /** Optional name for the entity */
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
 /** Input type for updating an existing ontology */
 export type UpdateGraphInput = {
   /** New description for the ontology */
@@ -3985,6 +4001,13 @@ export type CreateEntityMutationVariables = Exact<{
 
 
 export type CreateEntityMutation = { __typename?: 'Mutation', createEntity: { __typename?: 'Entity', id: any, externalId?: string | null, label: string, graph: { __typename?: 'Graph', id: string }, category: { __typename?: 'EntityCategory', id: string, label: string, ageName: string }, subjectableTo: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, targetableBy: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, bestView?: { __typename?: 'NodeQueryView', nodeId: string, query: { __typename?: 'NodeQuery', id: string, name: string, pinned: boolean, query: string, graph: { __typename?: 'Graph', id: string, name: string } }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', source: { __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: number, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, target: { __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: number, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: number, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, edges: Array<{ __typename?: 'Description', id: any, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity?: number | null } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } } | { __typename?: 'StructureRelation', id: any, leftId: string, rightId: string, left: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Metric', id: any, label: string } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Metric', id: any, label: string } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, category: { __typename?: 'StructureRelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, relevantQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean }> } };
+
+export type UpdateEntityMutationVariables = Exact<{
+  input: UpdateEntityInput;
+}>;
+
+
+export type UpdateEntityMutation = { __typename?: 'Mutation', updateEntity: { __typename?: 'Entity', id: any, externalId?: string | null, label: string, graph: { __typename?: 'Graph', id: string }, category: { __typename?: 'EntityCategory', id: string, label: string, ageName: string }, subjectableTo: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, targetableBy: Array<{ __typename?: 'PlayableEntityRoleInProtocolEvent', role: string, category: { __typename?: 'ProtocolEventCategory', id: string, label: string } }>, bestView?: { __typename?: 'NodeQueryView', nodeId: string, query: { __typename?: 'NodeQuery', id: string, name: string, pinned: boolean, query: string, graph: { __typename?: 'Graph', id: string, name: string } }, render: { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', source: { __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: number, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, target: { __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: number, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: number, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, edges: Array<{ __typename?: 'Description', id: any, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity?: number | null } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } } | { __typename?: 'StructureRelation', id: any, leftId: string, rightId: string, left: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Metric', id: any, label: string } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Metric', id: any, label: string } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, category: { __typename?: 'StructureRelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, relevantQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean }> } };
 
 export type CreateEntityInlineMutationVariables = Exact<{
   input: Scalars['String']['input'];
@@ -6149,6 +6172,39 @@ export function useCreateEntityMutation(baseOptions?: ApolloReactHooks.MutationH
 export type CreateEntityMutationHookResult = ReturnType<typeof useCreateEntityMutation>;
 export type CreateEntityMutationResult = Apollo.MutationResult<CreateEntityMutation>;
 export type CreateEntityMutationOptions = Apollo.BaseMutationOptions<CreateEntityMutation, CreateEntityMutationVariables>;
+export const UpdateEntityDocument = gql`
+    mutation UpdateEntity($input: UpdateEntityInput!) {
+  updateEntity(input: $input) {
+    ...Entity
+  }
+}
+    ${EntityFragmentDoc}`;
+export type UpdateEntityMutationFn = Apollo.MutationFunction<UpdateEntityMutation, UpdateEntityMutationVariables>;
+
+/**
+ * __useUpdateEntityMutation__
+ *
+ * To run a mutation, you first call `useUpdateEntityMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateEntityMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateEntityMutation, { data, loading, error }] = useUpdateEntityMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateEntityMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateEntityMutation, UpdateEntityMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<UpdateEntityMutation, UpdateEntityMutationVariables>(UpdateEntityDocument, options);
+      }
+export type UpdateEntityMutationHookResult = ReturnType<typeof useUpdateEntityMutation>;
+export type UpdateEntityMutationResult = Apollo.MutationResult<UpdateEntityMutation>;
+export type UpdateEntityMutationOptions = Apollo.BaseMutationOptions<UpdateEntityMutation, UpdateEntityMutationVariables>;
 export const CreateEntityInlineDocument = gql`
     mutation CreateEntityInline($input: String!, $category: ID!) {
   result: createEntity(input: {externalId: $input, entityCategory: $category}) {

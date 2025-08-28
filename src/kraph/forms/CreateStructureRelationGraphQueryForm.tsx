@@ -11,9 +11,12 @@ import {
   MetricKind,
   StructureRelationCategoryFragment,
   useCreateGraphQueryMutation,
+  useGetGraphQuery,
   ViewKind
 } from "../api/graphql";
 import { CypherField } from "../components/cypher/CypherField";
+import { buildCypherSchemaFromGraph } from "../components/renderers/utils";
+import { ChoicesField } from "@/components/fields/ChoicesField";
 
 export const TForm = (props: {
   category: StructureRelationCategoryFragment;
@@ -21,6 +24,12 @@ export const TForm = (props: {
   const [add] = useCreateGraphQueryMutation();
 
   const dialog = useGraphQlFormDialog(add);
+
+  const { data } = useGetGraphQuery({
+    variables: {
+      id: props.category.graph.id,
+    },
+  });
 
   const form = useForm<CreateGraphQueryMutationVariables["input"]>({
     defaultValues: {
@@ -34,6 +43,8 @@ RETURN n, r, m`,
       relevantFor: [props.category.id],
     },
   });
+
+  const kind = form.watch("kind");
 
   const columnFieldArray = useFieldArray({
     control: form.control,
@@ -60,49 +71,64 @@ RETURN n, r, m`,
               name="name"
               description="How do you can to call this Query?"
             />
-            <CypherField
-              label="Query"
-              name="query"
-              description="The Cypher query to execute"
+            <ChoicesField
+              label="Kind"
+              name="kind"
+              options={[
+                { label: "Table", value: ViewKind.Table },
+                { label: "Path", value: ViewKind.Path },
+                { label: "Pairs", value: ViewKind.Pairs },
+              ]}
+              description="What kind of the query is it??"
             />
-            <div className="flex flex-row gap-4 w-full">
-              {columnFieldArray.fields.map((item, index) => (
-                <Card
-                  key={item.id}
-                  className="gap-2 flex-col flex group p-2 min-w-lg"
+            {data && (
+              <CypherField
+                label="Query"
+                name="query"
+                schema={buildCypherSchemaFromGraph(data.graph)}
+                description="The Cypher query to execute"
+              />
+            )}
+            {kind == ViewKind.Table && (
+              <div className="flex flex-row gap-4 w-full">
+                {columnFieldArray.fields.map((item, index) => (
+                  <Card
+                    key={item.id}
+                    className="gap-2 flex-col flex group p-2 min-w-lg"
+                  >
+                    <StringField
+                      name={`columns.${index}.name`}
+                      label="Role"
+                      description="Which role does the entity play?"
+                    />
+                    <div className="group-hover:block group-hover:opacity-100 opacity-0 transition-opacity hidden">
+                      <Button
+                        type="button"
+                        onClick={() => columnFieldArray.remove(index)}
+                        variant={"destructive"}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+                <Button
+                  className="h-full max-w-xs"
+                  type="button"
+                  onClick={() =>
+                    columnFieldArray.append({
+                      name: "",
+                      description: "",
+                      kind: ColumnKind.Node,
+                      valueKind: MetricKind.String,
+                    })
+                  }
+                  variant={"ghost"}
                 >
-                  <StringField
-                    name={`columns.${index}.name`}
-                    label="Role"
-                    description="Which role does the entity play?"
-                  />
-                  <div className="group-hover:block group-hover:opacity-100 opacity-0 transition-opacity hidden">
-                    <Button
-                      type="button"
-                      onClick={() => columnFieldArray.remove(index)}
-                      variant={"destructive"}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </Card>
-              ))}
-              <Button
-                className="h-full max-w-xs"
-                type="button"
-                onClick={() =>
-                  columnFieldArray.append({
-                    name: "",
-                    description: "",
-                    kind: ColumnKind.Node,
-                    valueKind: MetricKind.String,
-                  })
-                }
-                variant={"ghost"}
-              >
-                +
-              </Button>
-            </div>
+                  +
+                </Button>
+              </div>
+            )}
           </div>
 
           <DialogFooter className="mt-2">

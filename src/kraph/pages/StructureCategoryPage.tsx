@@ -18,6 +18,7 @@ import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryR
 import { StructureQueriesPlanner } from "../components/StructureQueriesPlanner";
 import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import UpdateStructureCategoryForm from "../forms/UpdateStructureCategoryForm";
+import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
 
 export default asDetailQueryRoute(
   useGetStructureCategoryQuery,
@@ -82,6 +83,9 @@ export default asDetailQueryRoute(
             >
               {data.structureCategory.pinned ? "Unpin" : "Pin"}
             </Button>
+            <KraphStructureCategory.ObjectButton
+              object={data.structureCategory.id}
+            />
             <FormDialog
               trigger={<Button variant="outline">Create</Button>}
               onSubmit={() => refetch()}
@@ -105,7 +109,7 @@ export default asDetailQueryRoute(
               {data.structureCategory.identifier}
             </h1>
             <p className="mt-3 text-xl text-muted-foreground">
-              {data.structureCategory.graph.name}
+              {data.structureCategory.description}
             </p>
           </div>
           <div className="w-full h-full flex-row relative">

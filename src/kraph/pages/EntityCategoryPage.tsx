@@ -19,6 +19,7 @@ import UpdateEntityCategoryForm from "../forms/UpdateEntityCategoryForm";
 import { ActionButton } from "@/components/ui/action";
 import { LocalActionButton } from "@/components/ui/localactionbutton";
 import { DialogButton, LocalDialogButton } from "@/components/ui/dialogbutton";
+import { Badge } from "@/components/ui/badge";
 
 export default asDetailQueryRoute(
   useGetEntityCategoryQuery,
@@ -123,6 +124,12 @@ export default asDetailQueryRoute(
             <p className="mt-3 text-xl text-muted-foreground">
               {data.entityCategory.description}
             </p>
+            <p className="mt-3 text-xs text-muted-foreground">
+              {data.entityCategory.ageName}
+            </p>
+            {data.entityCategory.tags.map((tag) => (
+              <Badge key={tag.id}>{tag.value}</Badge>
+            ))}
           </div>
           <div className="w-full h-full flex-row relative">
             {data.entityCategory?.store?.presignedUrl && (
@@ -138,9 +145,6 @@ export default asDetailQueryRoute(
 
         <StructureQueriesPlanner category={data.entityCategory} />
 
-        {data.entityCategory.latest.map((x) => (
-          <div key={x.category.id}>{x.label}</div>
-        ))}
 
         <div className="flex flex-col p-6 h-full">
           {data.entityCategory.bestQuery ? (

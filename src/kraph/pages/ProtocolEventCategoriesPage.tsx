@@ -7,6 +7,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import ProtocolEventCategoryList from "../components/lists/ProtocolEventCategoryList";
 import CreateProtocolEventCategoryForm from "../forms/CreateProtocolEventCategoryForm";
+import { FormSheetAction } from "@/components/ui/form-sheet-action";
 
 export type IRepresentationScreenProps = {};
 
@@ -19,7 +20,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       pageActions={
         <div className="flex flex-row gap-2">
           <>
-            <FormDialogAction
+            <FormSheetAction
               variant={"outline"}
               size={"sm"}
               label="Create"
@@ -40,7 +41,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
               }}
             >
               <CreateProtocolEventCategoryForm />
-            </FormDialogAction>
+            </FormSheetAction>
           </>
         </div>
       }

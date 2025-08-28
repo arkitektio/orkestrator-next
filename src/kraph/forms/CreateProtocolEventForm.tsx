@@ -1,6 +1,8 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
 import { DateField } from "@/components/fields/DateField";
+import { DateTimeField } from "@/components/fields/DateTimeField";
 import { FloatField } from "@/components/fields/FloatField";
+import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
 import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { IntField } from "@/components/fields/IntField";
@@ -8,6 +10,8 @@ import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
+import { Separator } from "@/components/ui/separator";
+import { useUserOptionsLazyQuery } from "@/lok-next/api/graphql";
 import { useForm } from "react-hook-form";
 import {
   EntityRoleDefinitionFragment,
@@ -15,17 +19,11 @@ import {
   ProtocolEventCategoryFragment,
   ReagentRoleDefinitionFragment,
   useCreateEntityInlineMutation,
-  useCreateEntityMutation,
   useRecordProtocolEventMutation,
   useSearchEntitiesForRoleLazyQuery,
   useSearchReagentsForRoleLazyQuery,
   VariableDefinitionFragment
 } from "../api/graphql";
-import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
-import { DateTimeField } from "@/components/fields/DateTimeField";
-import { map } from "zod";
-import { useUserOptionsLazyQuery } from "@/lok-next/api/graphql";
-import { Separator } from "@/components/ui/separator";
 
 export const EntityRoleInput = ({
   role,

@@ -34,9 +34,8 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
       title={data.graph.name}
       pageActions={
         <div className="flex flex-row gap-2">
-          <FormSheet trigger={<HobbyKnifeIcon />}>
-            {data?.graph && <UpdateGraphForm graph={data?.graph} />}
-          </FormSheet>
+          <FormSheet trigger={<Button variant="outline"><HobbyKnifeIcon /></Button>}>
+            {data?.graph && <UpdateGraphForm graph={data?.graph} />}</FormSheet>
           <KraphGraph.ObjectButton object={data.graph.id} />
           <Button
             onClick={() => {

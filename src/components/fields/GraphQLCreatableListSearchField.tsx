@@ -1,13 +1,14 @@
 import { useCallback } from "react";
 import {
-  CreatableSearchFieldProps,
-  CreateableSearchField,
-} from "./CreateableSearchField";
-import { Option } from "./SearchField";
+  ListSearchField,
+  ListSearchFieldProps,
+  Option,
+} from "./ListSearchField";
+import { CreatableListSearchField } from "./CreatableListSearchField";
 
-export type GraphQLSearchFieldProps = Omit<
-  CreatableSearchFieldProps,
-  "search" | "create"
+export type GraphQLListSearchFieldProps = Omit<
+  ListSearchFieldProps,
+  "search"
 > & {
   searchQuery: (x: {
     variables: { search?: string | undefined; values?: string[] };
@@ -21,17 +22,17 @@ export type GraphQLSearchFieldProps = Omit<
   }>;
 };
 
-export const GraphQLCreatableSearchField = ({
+export const GraphQLCreatableListSearchField: React.FC<GraphQLListSearchFieldProps> = ({
   searchQuery,
   createMutation,
   ...props
-}: GraphQLSearchFieldProps) => {
+}) => {
   const search = useCallback(
     async (x: {
       search?: string | undefined;
       values?: (string | number)[] | undefined;
     }) => {
-      const queryResult = await searchQuery({
+      let queryResult = await searchQuery({
         variables: {
           search: x.search,
           values: x.values?.map((x) => x.toString()),
@@ -67,5 +68,5 @@ export const GraphQLCreatableSearchField = ({
     [createMutation],
   );
 
-  return <CreateableSearchField {...props} search={search} create={create} />;
+  return <CreatableListSearchField {...props} search={search} create={create} />;
 };

@@ -36,6 +36,26 @@ const buildBaseLink = (to: string) => {
   };
 };
 
+
+export const SmartLink = ({ identifier, object, subroute, subobject, children, ...props }: { identifier: string, object: string, subroute?: string, subobject?: string } & OmitedNavLinkProps) => {
+
+  const model = smartRegistry.findModel(identifier);
+  if (!model) {
+    return null;
+  }
+
+  return (
+    <NavLink
+      {...props}
+      to={`/${model.path}/${object}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}`}
+      title="Open"
+      className={props.className}
+    >
+      {children}
+    </NavLink>
+  );
+};
+
 const buildModelLink = (to: string) => {
   return ({ children, subroute, subobject, ...props }: ModelLinkProps) => {
     return (

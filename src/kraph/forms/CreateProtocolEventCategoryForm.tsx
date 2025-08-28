@@ -137,8 +137,18 @@ export const TForm = (props: { graph?: string }) => {
       <Form {...myform}>
         <form
           onSubmit={myform.handleSubmit(onUpdate)}
-          className="flex flex-row gap-4 p-6 min-w-[90vw] min-h-[90vh]"
+          className="flex flex-col gap-4 p-6 min-w-[90vw] min-h-[90vh]"
         >
+          <StringField
+            name={`label`}
+            label="Label"
+            description="Which label for the protocol"
+          />
+          <StringField
+            name={`description`}
+            label="Description"
+            description="Which description for the protocol"
+          />
           <div className="flex grow flex-col ">
             <RoleProvider roles={roles}>
               <TooltipProvider>
@@ -149,6 +159,8 @@ export const TForm = (props: { graph?: string }) => {
                       Save
                     </Button>
                   </FixedToolbar>
+
+
 
                   <div className="grid grid-cols-12  w-full h-full flex-grow flex rounded-lg">
                     <div className="col-span-10 h-full flex">
@@ -523,6 +535,9 @@ export const TForm = (props: { graph?: string }) => {
               </TooltipProvider>
             </RoleProvider>
           </div>
+          <Button type="submit" variant={"outline"}>
+            Save
+          </Button>
         </form>
       </Form>
     </>

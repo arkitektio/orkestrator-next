@@ -41,8 +41,8 @@ export const EllipsisRoiDrawer = ({
         imageWidth,
         imageHeight,
         c,
-        z,
         t,
+        z,
       );
 
       const result = await createRoi({

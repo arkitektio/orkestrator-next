@@ -33,8 +33,8 @@ export const RoiDrawerCanvas = ({
     imageWidth,
     image,
     c,
-    z,
     t,
+    z,
     event_key,
   };
 

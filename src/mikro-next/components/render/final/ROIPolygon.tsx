@@ -48,6 +48,7 @@ export const ROIPolygon = (
   const [selected, setSelected] = useState(false);
   const [deleteRoi] = useDeleteRoiMutation();
   const {
+    z,
     setAllowRoiDrawing,
     setRoiDrawMode,
     setShowRois,
@@ -57,6 +58,9 @@ export const ROIPolygon = (
     displayStructures,
     showDisplayStructures,
   } = useViewerState();
+
+  // Check if ROI should be visible based on z values
+  const roiZValues = roi.vectors.map(v => v[2]);
 
   // Keyboard event handler for deletion
   useEffect(() => {
@@ -102,7 +106,8 @@ export const ROIPolygon = (
     props.imageHeight,
   );
 
-  if (!vertices.at(0)) return null;
+
+
 
   // Create shape from vertices
   const shape = new THREE.Shape();
@@ -261,6 +266,9 @@ export const ROIPolygon = (
   const isDisplayStructure =
     showDisplayStructures && displayStructures.includes(roi.id);
 
+
+  if (!roiZValues.includes(z)) return null;
+  if (!vertices.at(0)) return null;
   if (roi.kind == RoiKind.Rectangle) {
     return (
       <>

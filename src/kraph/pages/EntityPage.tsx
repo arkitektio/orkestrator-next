@@ -49,7 +49,7 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
             {data.entity.label}
           </h1>
-          <p className="mt-3 text-xl text-muted-foreground"></p>
+          <p className="mt-3 text-xl text-muted-foreground">{data.entity.externalId}</p>
           <p className="mt-3 text-xl text-muted-foreground">
             <KraphEntityCategory.DetailLink
               object={data.entity.category.id}

@@ -4,6 +4,7 @@ fragment Entity on Entity {
   graph {
     id
   }
+  externalId
   category {
     id
     label

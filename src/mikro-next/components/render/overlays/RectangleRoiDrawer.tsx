@@ -36,9 +36,11 @@ export const RectangleRoiDrawer = ({
         imageWidth,
         imageHeight,
         c,
-        z,
         t,
+        z,
       );
+
+      console.log("Converted vectors for ROI:", vectors);
 
       const result = await createRoi({
         variables: {

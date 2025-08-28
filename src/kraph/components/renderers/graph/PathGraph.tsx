@@ -147,13 +147,15 @@ export const PathGraphInner: React.FC<Props> = ({ path, root, options }) => {
 
   return (
     <div ref={reactFlowWrapper} className="relative h-full">
-      <Button
-        onClick={() =>
-          setViewerState((s) => ({ ...s, showWidgets: !s.showWidgets }))
-        }
-      >
-        {viewerState.showWidgets ? "Hide" : "Show"} Widgets
-      </Button>
+      {options?.minimal ? (
+        <Button
+          onClick={() =>
+            setViewerState((s) => ({ ...s, showWidgets: !s.showWidgets }))
+          }
+        >
+          {viewerState.showWidgets ? "Hide" : "Show"} Widgets
+        </Button>
+      ) : null}
       <ReactFlow<PathNode, PathEdge>
         nodes={nodes}
         edges={edges}

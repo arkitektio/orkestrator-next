@@ -6,14 +6,16 @@ import {
   ZarrStoreFragment,
 } from "@/elektro/api/graphql";
 import { Arkitekt, useElektro } from "@/lib/arkitekt/Arkitekt";
-import { S3Store } from "@/mikro-next/providers/xarray/store";
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { ApolloClient } from "@apollo/client";
 import { AwsClient } from "aws4fetch";
 import { useCallback } from "react";
-import { ArraySelection, Slice } from "zarr/types/core/types";
 import { Chunk, DataType, get, open } from "zarrita";
 import { DetailTraceFragment } from "../api/graphql";
+import { ArraySelection, Slice } from "zarr/types/core/types";
+import { S3Store } from "./store";
+
+
 
 export type DownloadedArray = {
   shape: [number, number, number, number, number];

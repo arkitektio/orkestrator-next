@@ -8,6 +8,72 @@ enum HTTPMethod {
   Put = "PUT",
 }
 
+class LRUCache<K, V> {
+  private cache = new Map<K, V>();
+  private maxSize: number;
+
+  constructor(maxSize: number = 100) {
+    this.maxSize = maxSize;
+  }
+
+  get(key: K): V | undefined {
+    if (this.cache.has(key)) {
+      // Move to end (most recently used)
+      const value = this.cache.get(key)!;
+      this.cache.delete(key);
+      this.cache.set(key, value);
+      return value;
+    }
+    return undefined;
+  }
+
+  set(key: K, value: V): void {
+    if (this.cache.has(key)) {
+      this.cache.delete(key);
+    } else if (this.cache.size >= this.maxSize) {
+      // Remove least recently used (first item)
+      const firstKey = this.cache.keys().next().value;
+      if (firstKey !== undefined) {
+        this.cache.delete(firstKey);
+      }
+    }
+    this.cache.set(key, value);
+  }
+
+  has(key: K): boolean {
+    return this.cache.has(key);
+  }
+
+  clear(): void {
+    this.cache.clear();
+  }
+
+  size(): number {
+    return this.cache.size;
+  }
+
+  getMaxSize(): number {
+    return this.maxSize;
+  }
+}
+
+class AsyncLockManager {
+  private locks = new Map<string, Promise<any>>();
+
+  async withLock<T>(key: string, fn: () => Promise<T>): Promise<T> {
+    if (this.locks.has(key)) {
+      return await this.locks.get(key)!;
+    }
+
+    const promise = fn().finally(() => {
+      this.locks.delete(key);
+    });
+
+    this.locks.set(key, promise);
+    return await promise;
+  }
+}
+
 export class HTTPError extends Error {
   __zarr__: string;
   constructor(code: any) {
@@ -16,6 +82,15 @@ export class HTTPError extends Error {
     Object.setPrototypeOf(this, HTTPError.prototype);
   }
 }
+
+
+
+
+
+
+
+
+
 
 export class KeyError extends Error {
   __zarr__: string;
@@ -66,62 +141,71 @@ async function handle_response(
   );
 }
 
+const global_cache = new LRUCache<string, ArrayBuffer>(100);
+
 export class S3Store extends FetchStore {
   aws: AwsClient;
+  private cache: LRUCache<string, ArrayBuffer>;
+  private lockManager: AsyncLockManager;
 
   constructor(url: string, aws: AwsClient, options: any = {}) {
     super(url, options);
     this.aws = aws;
     this.url = url;
+    this.cache = global_cache;
+    this.lockManager = new AsyncLockManager();
   }
 
   async get(key: AbsolutePath, options: RequestInit = {}) {
-    let href = resolve(this.url, key).href;
-    let response = await this.aws.fetch(href, { ...options });
-    return handle_response(response);
-  }
+    const cacheKey = key + this.url;
+    console.log("getting", cacheKey);
 
-  async getItem(item: any, opts: any) {
-    const url = joinUrlParts(this.url as string, item);
-    console.warn("Getting item", url);
-    let value: any;
-    try {
-      value = await this.aws.fetch(url, { ...opts });
-    } catch (e) {
-      console.log(e);
-      throw new HTTPError("present");
+    // Check cache first
+    const cached = this.cache.get(cacheKey);
+    if (cached) {
+      console.log("Cache hit for", cacheKey);
+      return new Uint8Array(cached);
     }
-    if (value.status === 404) {
-      // Item is not found
-      throw new KeyError(item);
-    } else if (value.status !== 200) {
-      throw new HTTPError(String(value.status));
-    }
-    return value.arrayBuffer(); // Browser
-    // only decode if 200
-  }
-  async setItem(item: any, value: any) {
-    const url = joinUrlParts(this.url as string, item);
-    if (typeof value === "string") {
-      value = new TextEncoder().encode(value).buffer;
-    }
-    const set = await this.aws.fetch(url, {
-      method: HTTPMethod.Put,
-      body: value,
+
+    // Use async lock to prevent duplicate requests
+    return this.lockManager.withLock(cacheKey, async () => {
+      // Double-check cache in case another request filled it
+      const cachedAfterLock = this.cache.get(cacheKey);
+      if (cachedAfterLock) {
+        return new Uint8Array(cachedAfterLock);
+      }
+
+      const href = resolve(this.url, key).href;
+      const response = await this.aws.fetch(href, { ...options });
+      const result = await handle_response(response);
+
+      if (result) {
+        // Cache the result - convert to ArrayBuffer if it's not already
+        const bufferToCache = result instanceof Uint8Array ? result.buffer.slice(result.byteOffset, result.byteOffset + result.byteLength) : result;
+        this.cache.set(cacheKey, bufferToCache as ArrayBuffer);
+      }
+
+      return result;
     });
-    return set.status.toString()[0] === "2";
   }
 
-  async containsItem(item: any) {
-    const url = joinUrlParts(this.url as string, item);
-    try {
-      const value = await this.aws.fetch(url, {});
 
-      return value.status === 200;
-    } catch (e) {
-      console.error(url, e);
-      return false;
-    }
+
+  // Cache management methods
+  clearCache(): void {
+    this.cache.clear();
+  }
+
+  getCacheStats(): { size: number; maxSize: number } {
+    return {
+      size: this.cache.size(),
+      maxSize: this.cache.getMaxSize()
+    };
+  }
+
+  // Check if an item is cached
+  isCached(key: string): boolean {
+    return this.cache.has(key) || this.cache.has(`getItem:${key}`);
   }
 }
 

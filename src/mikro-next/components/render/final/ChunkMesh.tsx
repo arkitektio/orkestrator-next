@@ -8,10 +8,17 @@ import {
   blueColormap,
   createColormapTexture,
   greenColormap,
+  infernoColormap,
+  magmaColormap,
+  plasmaColormap,
   redColormap,
   viridisColormap,
 } from "./colormaps";
 import { useAsyncChunk } from "./useChunkTexture";
+
+
+
+
 
 const getColormapForView = (view: RgbViewFragment) => {
   switch (view.colorMap) {
@@ -23,6 +30,15 @@ const getColormapForView = (view: RgbViewFragment) => {
     }
     case ColorMap.Red: {
       return redColormap;
+    }
+    case ColorMap.Plasma: {
+      return plasmaColormap
+    }
+    case ColorMap.Magma: {
+      return magmaColormap
+    }
+    case ColorMap.Inferno: {
+      return infernoColormap
     }
     case ColorMap.Intensity: {
       const base = view.baseColor ?? [1, 1, 1];

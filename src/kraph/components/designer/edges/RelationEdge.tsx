@@ -57,25 +57,25 @@ export default ({
 
   const { sx, sy, tx, ty } = getEdgeParams(sourceNode, targetNode);
 
-  const edgePathParams = {
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition,
-  };
-
   let path = "";
   const offset = 0;
+  let centerX = (sourceX + targetX) / 2;
+  let centerY = (sourceY + targetY) / 2;
 
-  path = getSpecialPath(
-    { sourceX: sx, sourceY: sy, targetX: tx, targetY: ty },
-    offset,
-  );
+  if (source == target) {
+    const radiusX = 100;
+    const radiusY = 100;
+    path = `M ${sourceX - 10} ${sourceY} A ${radiusX} ${radiusY} 0 1 0 ${targetX + 5
+      } ${targetY}`;
 
-  const centerX = (sourceX + targetX) / 2;
-  const centerY = (sourceY + targetY) / 2;
+    centerX = sourceX - radiusX * 2;
+    centerY = (sourceY + targetY) / 2;
+  } else {
+    path = getSpecialPath(
+      { sourceX: sx, sourceY: sy, targetX: tx, targetY: ty },
+      offset,
+    );
+  }
 
   return (
     <>

@@ -8,7 +8,7 @@ import {
   MetricKind,
   TableFragment,
 } from "@/kraph/api/graphql";
-import { KraphNode } from "@/linkers";
+import { KraphEntity, KraphNode } from "@/linkers";
 import Timestamp from "react-timestamp";
 
 const columnToDef = (
@@ -28,11 +28,11 @@ const columnToDef = (
         const concat_id = table.graph.ageName + ":" + label;
 
         return (
-          <KraphNode.Smart object={concat_id}>
-            <KraphNode.DetailLink object={concat_id}>
-              {label || ""}
-            </KraphNode.DetailLink>
-          </KraphNode.Smart>
+          <KraphEntity.Smart object={concat_id}>
+            <KraphEntity.DetailLink object={concat_id}>
+              {label || ""}{concat_id}
+            </KraphEntity.DetailLink>
+          </KraphEntity.Smart>
         );
       },
       enableSorting: true,

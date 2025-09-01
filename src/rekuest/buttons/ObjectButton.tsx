@@ -29,10 +29,14 @@ import {
 } from "@/kabinet/api/graphql";
 import {
   ListMeasurementCategoryWithGraphFragment,
+  ListRelationCategoryFragment,
   ListStructureRelationCategoryWithGraphFragment,
+  useCreateRelationMutation,
   useCreateStructureMutation,
   useCreateStructureRelationMutation,
+  useListEntityCategoryQuery,
   useListMeasurmentCategoryQuery,
+  useListRelationCategoryQuery,
   useListStructureRelationCategoryQuery,
 } from "@/kraph/api/graphql";
 import { Guard, useRekuest } from "@/lib/arkitekt/Arkitekt";
@@ -890,7 +894,78 @@ export const ApplicableDefinitions = (props: PassDownProps) => {
   );
 };
 
-export const ApplicableRelations = (props: PassDownProps) => {
+
+export const EntityRelationActions = (props: PassDownProps) => {
+
+  const firstPartner = props.partners?.at(0);
+  const firstObject = props.objects?.at(0);
+
+  if (!firstPartner || !firstObject) {
+    return null;
+  }
+
+  const dialog = useDialog();
+
+  const { data, error } = useListRelationCategoryQuery({
+    variables: {
+      filters: {
+        sourceEntity: firstObject.object,
+        targetEntity: firstPartner.object,
+        search: props.filter && props.filter != "" ? props.filter : undefined,
+      },
+    },
+    fetchPolicy: "network-only",
+  });
+
+  return (
+    <CommandGroup
+      heading={
+        <span className="font-light text-xs w-full items-center ml-2 w-full">
+          Relate Entities
+        </span>
+      }
+    >
+      {data?.relationCategories.map((x) => (
+        <EntityRelateButton relation={x} right={props.partners || []} left={props.objects || []} key={x.id}>
+          {x.label}
+        </EntityRelateButton>
+      ))}
+      {error && (
+        <CommandItem value={"error"} className="flex-1">
+          <span className="text-red-500">Error: {error.message}</span>
+        </CommandItem>
+      )}
+      <CommandItem
+        value={"no-relation"}
+        onSelect={() =>
+          dialog.openDialog("createnewrelation", {
+            left: props.objects || [],
+            right: props.partners || [],
+          })
+        }
+        className="flex-1 "
+      >
+        <Tooltip>
+          <TooltipTrigger className="flex flex-row group w-full">
+            <div className="flex-col">
+              <div className="text-md text-gray-100 text-left">
+                Create new Relation
+              </div>
+              <div className="text-xs text-gray-400 text-left">
+                Will create a new relation
+              </div>
+            </div>
+            <div className="flex-grow"></div>
+          </TooltipTrigger>
+          <TooltipContent>{props.filter}</TooltipContent>
+        </Tooltip>
+      </CommandItem>
+    </CommandGroup>
+  );
+}
+
+
+export const StructureRelationActions = (props: PassDownProps) => {
   const firstPartner = props.partners?.at(0);
   const firstObject = props.objects?.at(0);
 
@@ -920,9 +995,9 @@ export const ApplicableRelations = (props: PassDownProps) => {
       }
     >
       {data?.structureRelationCategories.map((x) => (
-        <RelateButton relation={x} right={firstPartner} left={props} key={x.id}>
+        <StructureRelateButton relation={x} right={firstPartner} left={props} key={x.id}>
           {x.label}
-        </RelateButton>
+        </StructureRelateButton>
       ))}
       {error && (
         <CommandItem value={"error"} className="flex-1">
@@ -956,6 +1031,22 @@ export const ApplicableRelations = (props: PassDownProps) => {
       </CommandItem>
     </CommandGroup>
   );
+};
+
+export const ApplicableRelations = (props: PassDownProps) => {
+  const firstPartner = props.partners?.at(0);
+  const firstObject = props.objects?.at(0);
+
+  if (!firstPartner || !firstObject) {
+    return null;
+  }
+
+  if (firstPartner.identifier == "@kraph/entity" && firstObject.identifier == "@kraph/entity") {
+    return <EntityRelationActions {...props} />;
+  }
+
+  return <StructureRelationActions {...props} />;
+
 };
 
 export const ApplicableMeasurements = (props: PassDownProps) => {
@@ -1025,7 +1116,7 @@ export const ApplicableMeasurements = (props: PassDownProps) => {
   );
 };
 
-export const RelateButton = (props: {
+export const StructureRelateButton = (props: {
   relation: ListStructureRelationCategoryWithGraphFragment;
   left: PassDownProps;
   right: Structure;
@@ -1110,6 +1201,76 @@ export const RelateButton = (props: {
             </div>
             <div className="text-xs text-gray-400 text-left">
               {props.relation.graph.name}
+            </div>
+          </div>
+          <div className="flex-grow"></div>
+        </TooltipTrigger>
+        <TooltipContent>{props.relation.description}</TooltipContent>
+      </Tooltip>
+    </CommandItem>
+  );
+};
+
+export const EntityRelateButton = (props: {
+  relation: ListRelationCategoryFragment;
+  left: Structure[];
+  right: Structure[];
+  children: React.ReactNode;
+}) => {
+  const [createRelation] = useCreateRelationMutation({
+    onCompleted: (data) => {
+      console.log("Relation created:", data);
+    },
+    onError: (error) => {
+      console.error("Error creating relation:", error);
+    },
+  });
+
+
+  const handleRelationCreation = async (
+    category: ListRelationCategoryFragment,
+  ) => {
+    for (const left of props.left) {
+      for (const right of props.right) {
+        try {
+
+
+          await createRelation({
+            variables: {
+              input: {
+                source: left.object,
+                target: right.object,
+                category: category.id,
+              },
+            },
+          });
+
+          toast.success("Relation created successfully!");
+        } catch (error) {
+          toast.error(
+            `Failed to create relation: ${error instanceof Error ? error.message : "Unknown error"}`,
+          );
+          console.error("Failed to create relation:", error);
+        }
+      }
+    }
+  };
+
+  return (
+    <CommandItem
+      value={props.relation.label}
+      key={props.relation.id}
+      onSelect={() => handleRelationCreation(props.relation)}
+      className="flex-1 "
+    >
+      <Tooltip>
+        <TooltipTrigger className="flex flex-row group w-full">
+          <div className="flex-col">
+            <div className="text-md text-gray-100 text-left">
+              {props.relation.label}
+            </div>
+            <div className="text-xs text-gray-400 text-left">
+              {props.relation.description}
             </div>
           </div>
           <div className="flex-grow"></div>

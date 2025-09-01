@@ -10,6 +10,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { useViewerState } from "../ViewerStateProvider";
 import { PassThroughProps } from "../FInalRender";
+
+
+
 const convertToThreeJSCoords = (
   vertices: [number, number, number, number, number][],
   imageWidth: number,

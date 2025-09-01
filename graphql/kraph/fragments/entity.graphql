@@ -18,6 +18,10 @@ fragment Entity on Entity {
       label
     }
   }
+  tags {
+    id
+    value
+  }
   targetableBy {
     role
     category {

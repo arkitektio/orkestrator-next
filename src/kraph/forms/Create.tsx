@@ -12,7 +12,6 @@ import {
   CreateRelationCategoryMutationVariables,
   useCreateInlineGraphMutation,
   useCreateRelationCategoryMutation,
-  useCreateStructureRelationCategoryMutation,
   useSearchEntityCategoryLazyQuery,
   useSearchGraphsLazyQuery,
   useSearchTagsLazyQuery
@@ -26,7 +25,7 @@ const enumToOptions = (e: any) => {
 };
 
 export const TForm = (props: { graph?: string }) => {
-  const [add] = useCreateStructureRelationCategoryMutation({
+  const [add] = useCreateRelationCategoryMutation({
     refetchQueries: ["GetGraph"],
   });
 

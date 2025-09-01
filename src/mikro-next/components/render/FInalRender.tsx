@@ -11,7 +11,7 @@ import {
 import { OrbitControls } from "@react-three/drei";
 import { Canvas as ThreeCanvas } from "@react-three/fiber";
 import { Dispatch, SetStateAction, Suspense, useEffect, useState } from "react";
-import { AutoZoomCamera } from "./final/AutoZoomCamera";
+import { AutoZoomCamera } from "./cameras/AutoZoomCamera";
 import { ChunkBitmapTexture } from "./final/ChunkMesh";
 import { ROIPolygon } from "./final/ROIPolygon";
 import { useArray } from "./final/useArray";

@@ -24,7 +24,7 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
   return (
     <KraphEntity.ModelPage
       object={data.entity.id}
-      title={data?.entity.label}
+      title={<div>{data.entity.category.label} - {data?.entity.label}</div>}
       sidebars={
         <MultiSidebar
           map={{ Comments: <KraphEntity.Komments object={data.entity.id} /> }}
@@ -49,17 +49,16 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
         className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center p-6"
       >
         <div>
-          <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-            {data.entity.label}
+          <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl flex-row flex">
+            <KraphEntityCategory.DetailLink object={data.entity.category.id} className="text-muted-foreground font-light mr-2">{data.entity.category.label}</KraphEntityCategory.DetailLink> <div>{data.entity.label}</div>
           </h1>
           <p className="mt-3 text-xl text-muted-foreground">{data.entity.externalId}</p>
           <p className="mt-3 text-xl text-muted-foreground">
-            <KraphEntityCategory.DetailLink
-              object={data.entity.category.id}
-              className="hover:underline"
-            >
-              <Badge>{data.entity.category.label}</Badge>
-            </KraphEntityCategory.DetailLink>
+            <div className="flex flex-row gap-2">
+              {data.entity.tags?.map((tag) => (
+                <Badge key={tag.id}>{tag.value}</Badge>
+              ))}
+            </div>
           </p>
         </div>
       </KraphEntity.Drop>

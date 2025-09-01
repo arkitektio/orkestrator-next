@@ -10,32 +10,30 @@ import {
   usePinNodeQueryMutation
 } from "../api/graphql";
 import { Badge } from "@/components/ui/badge";
+import { Pin, UnplugIcon } from "lucide-react";
+import { TbPin, TbPinned } from "react-icons/tb";
 
 export const StructureQueriesPlanner = ({
   category,
-  onGraphQueryClick,
-  onNodeQueryClick,
 }: {
   category: BaseCategoryFragment;
-  onGraphQueryClick?: (query: ListGraphQueryFragment) => void;
-  onNodeQueryClick?: (query: ListNodeQueryFragment) => void;
 }) => {
   const [pin] = usePinGraphQueryMutation();
-  const [pinNode] = usePinNodeQueryMutation();
 
   return (
     <>
-      <div className="flex flex-row p-6">
+      <div className="flex flex-row ">
         {category.relevantQueries.map((query) => (
           <Card
             key={query.id}
             className="p-2 m-2 flex-row gap-2 flex"
-            onClick={() => onGraphQueryClick && onGraphQueryClick(query)}
           >
-            <KraphGraphQuery.DetailLink object={query.id} className="w-full">
-              {query.name}
-            </KraphGraphQuery.DetailLink>
-            <Badge variant={"outline"}>{query.kind}</Badge>
+            <div className="flex flex-col">
+              <KraphGraphQuery.DetailLink object={query.id} className="w-full font-light">
+                {query.name}
+              </KraphGraphQuery.DetailLink>
+              {query.description && <p className="text-sm text-muted-foreground">{query.description}</p>}
+            </div>
             <Button
               onClick={() => {
                 pin({
@@ -47,38 +45,9 @@ export const StructureQueriesPlanner = ({
                   },
                 });
               }}
+              variant={"outline"}
             >
-              Pin
-            </Button>
-          </Card>
-        ))}
-      </div>
-      <div className="flex flex-row p-6">
-        {category.relevantNodeQueries.map((query) => (
-          <Card
-            key={query.id}
-            className={cn(
-              "p-2 m-2 flex-row gap-2 flex",
-              query.pinned && "bg-yellow-200",
-            )}
-            onClick={() => onNodeQueryClick && onNodeQueryClick(query)}
-          >
-            <KraphNodeQuery.DetailLink object={query.id} className="w-full">
-              {query.name}
-            </KraphNodeQuery.DetailLink>
-            <Button
-              onClick={() => {
-                pinNode({
-                  variables: {
-                    input: {
-                      id: query.id,
-                      pin: !query.pinned,
-                    },
-                  },
-                });
-              }}
-            >
-              Pin
+              {query.pinned ? <TbPin /> : <TbPinned />}
             </Button>
           </Card>
         ))}

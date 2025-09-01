@@ -47,6 +47,7 @@ import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { PinToggle } from "../components/ui/PinToggle";
 import { AddImageViewForm } from "../forms/AddImageViewForm";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export type IRepresentationScreenProps = {};
 
@@ -238,18 +239,43 @@ export default asDetailQueryRoute(
                 </DetailPaneHeader>
 
                 <DetailPaneContent className="flex flex-col">
-                  <div className="font-light">Shape</div>
-                  <div className="text-xl flex mb-2">
-                    {data?.image?.store?.shape?.map((val, index) => (
-                      <div key={index}>
-                        <span className="font-semibold">{val}</span>{" "}
-                        <span className="text-xs font-light mr-1 ml-1 my-auto">
-                          {" "}
-                          {dimensionOrder[index]}
-                        </span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex flex-col">
+                        <div className="font-light">Shape</div>
+                        <div className="text-xl flex mb-2">
+                          {data?.image?.store?.shape?.map((val, index) => (
+                            <div key={index}>
+                              <span className="font-semibold">{val}</span>{" "}
+                              <span className="text-xs font-light mr-1 ml-1 my-auto">
+                                {" "}
+                                {dimensionOrder[index]}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    ))}
-                  </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <div className="flex flex-col">
+                        <div className="font-light">Chunks</div>
+                        <div className="text-xl flex mb-2">
+                          {data?.image?.store?.chunks?.map((val, index) => (
+                            <div key={index}>
+                              <span className="font-semibold">{val}</span>{" "}
+                              <span className="text-xs font-light mr-1 ml-1 my-auto">
+                                {" "}
+                                {dimensionOrder[index]}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+
+
+                    </TooltipContent>
+                  </Tooltip>
                   <div className="font-light text-xs mb-2">
                     ZarrV {data?.image?.store?.version} [
                     {data.image.store.dtype}]

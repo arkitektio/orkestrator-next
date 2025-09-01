@@ -166,7 +166,7 @@ export const SmartModel = ({
       cn(
         "@container relative z-10 cursor-pointer",
         isSelected &&
-          "group ring ring-1 ring-offset-2 ring-offset-transparent rounded",
+        "group ring ring-1 ring-offset-2 ring-offset-transparent rounded",
         isDragging && "opacity-50 ring-2 ring-gray-600 ring rounded rounded-md",
         isOver && "shadow-xl ring-2 border-gray-200 ring rounded rounded-md",
       ),

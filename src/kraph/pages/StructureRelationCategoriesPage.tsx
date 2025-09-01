@@ -7,6 +7,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import StructureRelationCategoryList from "../components/lists/StructureRelationCategoryList";
 import CreateRelationCategoryForm from "../forms/CreateRelationCategoryForm";
+import CreateStructureRelationCategoryForm from "../forms/CreateStructureRelationCategoryForm";
 
 export type IRepresentationScreenProps = {};
 
@@ -35,7 +36,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
                 navigate(KraphGraph.linkBuilder(item.createGraph.id));
               }}
             >
-              <CreateRelationCategoryForm />
+              <CreateStructureRelationCategoryForm />
             </FormDialogAction>
           </>
         </div>

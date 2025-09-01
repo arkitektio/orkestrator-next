@@ -26,7 +26,7 @@ export default asDetailQueryRoute(
                 Graph
               </Button>
             </KraphGraph.DetailLink>
-            <KraphGraphQuery.DetailLink object={data.graphQuery.id}>
+            <KraphGraphQuery.DetailLink object={data.graphQuery.id} subroute="designer">
               <Button variant="outline" size="sm">
                 Edit Query
               </Button>

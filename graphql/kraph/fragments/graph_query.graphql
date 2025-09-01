@@ -6,6 +6,10 @@ fragment GraphQuery on GraphQuery {
     id
     name
   }
+  columns {
+    ...Column
+  }
+  kind
   scatterPlots(pagination: { limit: 1 }) {
     ...ListScatterPlot
   }

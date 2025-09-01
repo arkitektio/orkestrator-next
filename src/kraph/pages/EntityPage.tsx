@@ -63,17 +63,17 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
         </div>
       </KraphEntity.Drop>
 
-      <div className="flex flex-col p-6">
+      <div className="flex flex-col gap-2">
         <ListRender array={data.entity.subjectableTo}>
           {(playable) => (
             <Card
               key={`${playable.role}-${playable.category.id}`}
-              className="p-2 m-2 flex-row gap-2 flex"
+              className="p-2 flex-row gap-2 flex"
             >
               <KraphProtocolEventCategory.DetailLink
                 object={playable.category.id}
               >
-                Subject as {playable.role} in {playable.category.label}
+                Subject as <pre>{playable.role}</pre> in <pre>{playable.category.label}</pre>
               </KraphProtocolEventCategory.DetailLink>
 
               <FormSheet
@@ -99,7 +99,7 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
               <KraphProtocolEventCategory.DetailLink
                 object={playable.category.id}
               >
-                Target as {playable.role} in {playable.category.label}
+                Target as <pre>{playable.role}</pre> in <pre>{playable.category.label}</pre>
               </KraphProtocolEventCategory.DetailLink>
 
               <FormSheet

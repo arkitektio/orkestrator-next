@@ -41,6 +41,7 @@ import GraphReagentCategoriesPage from "./pages/graph/GraphReagentCategoriesPage
 import MetricPage from "./pages/MetricPage";
 import RelationPage from "./pages/RelationPage";
 import StructureRelationPage from "./pages/StructureRelationPage";
+import GraphQueryDesignerPage from "./pages/designer/GraphQueryDesignerPage";
 interface Props { }
 
 export const KraphModule: React.FC<Props> = (props) => {
@@ -64,6 +65,7 @@ export const KraphModule: React.FC<Props> = (props) => {
           <Route path="graphs" element={<GraphsPage />} />
           <Route path="graphs/:id" element={<GraphPage />} />
           <Route path="graphqueries/:id" element={<GraphQueryPage />} />
+          <Route path="graphqueries/:id/designer" element={<GraphQueryDesignerPage />} />
           <Route path="nodequeries/:id" element={<NodeQueryPage />} />
           <Route
             path="nodequeries/:id/view/:nodeid"

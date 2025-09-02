@@ -1,5 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ChoicesField } from "@/components/fields/ChoicesField";
+import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
@@ -87,6 +88,12 @@ const Page: React.FC<IRepresentationScreenProps> = asDetailQueryRoute(
                     name="name"
                     description="How do you can to call this Query?"
                   />
+                  <ParagraphField
+                    label="Description"
+                    name="description"
+                    description="Provide a brief description of the query"
+                  />
+
                   <ChoicesField
                     label="Kind"
                     name="kind"
@@ -94,6 +101,7 @@ const Page: React.FC<IRepresentationScreenProps> = asDetailQueryRoute(
                       { value: ViewKind.Table, label: "Table" },
                       { value: ViewKind.Path, label: "Graph" },
                       { value: ViewKind.Pairs, label: "Pairs" },
+                      { value: ViewKind.NodeList, label: "Node List" },
                     ]}
                   />
 

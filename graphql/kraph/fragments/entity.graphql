@@ -18,6 +18,42 @@ fragment Entity on Entity {
       label
     }
   }
+  measuredBy {
+    id
+    category {
+      label
+    }
+    source {
+      ... on Structure {
+        identifier
+        object
+      }
+    }
+  }
+  subjectedTo {
+    id
+    role
+    target {
+      ... on ProtocolEvent {
+        id
+        label
+        validFrom
+        validTo
+      }
+    }
+  }
+  targetedBy {
+    id
+    role
+    source {
+      ... on ProtocolEvent {
+        id
+        label
+        validFrom
+        validTo
+      }
+    }
+  }
   tags {
     id
     value

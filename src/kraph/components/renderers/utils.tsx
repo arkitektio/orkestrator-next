@@ -5,11 +5,13 @@ import { ColumnDef } from "@tanstack/react-table";
 import {
   ColumnFragment,
   ColumnKind,
+  GraphFragment,
   MetricKind,
   TableFragment,
 } from "@/kraph/api/graphql";
 import { KraphEntity, KraphNode } from "@/linkers";
 import Timestamp from "react-timestamp";
+import { CypherSchema } from "../cypher/CypherField";
 
 const columnToDef = (
   column: ColumnFragment,

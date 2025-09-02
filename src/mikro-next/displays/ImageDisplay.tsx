@@ -15,7 +15,7 @@ export const ImageDisplay = (props: DisplayWidgetProps) => {
   return (
     <MikroImage.DetailLink object={props.object}>
       <div className="w-[200px] h-[200px]">
-        {defaultContext && <FinalRender context={defaultContext} rois={[]} />}
+        {defaultContext && <FinalRender context={defaultContext} rois={[]} hideControls={true} />}
       </div>
     </MikroImage.DetailLink>
   );

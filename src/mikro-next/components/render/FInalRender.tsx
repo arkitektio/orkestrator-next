@@ -28,6 +28,7 @@ export interface RGBDProps {
   rois: ListRoiFragment[];
   className?: string;
   follow?: "width" | "height";
+  hideControls?: boolean;
   onValueClick?: (value: number) => void;
 }
 
@@ -261,7 +262,7 @@ export const FinalRenderInner = (props: RGBDProps) => {
 
   return (
     <div style={{ width: "100%", height: "100%" }} className="relative">
-      <div className="absolute bottom-0 z-10 w-full mb-4 px-6 bg-gradient-to-t from-black to-transparent py-3">
+      {!props.hideControls && <div className="absolute bottom-0 z-10 w-full mb-4 px-6 bg-gradient-to-t from-black to-transparent py-3">
         <div className="flex flex-col gap-2">
           <div className="flex flex-row items-center justify-between">
             <div className="my-auto mx-2 w-12">z: {z}</div>
@@ -296,6 +297,7 @@ export const FinalRenderInner = (props: RGBDProps) => {
           )}
         </div>
       </div>
+      }
 
       <Suspense
         fallback={<div className="w-full h-full bg-gray-100"> Loading</div>}

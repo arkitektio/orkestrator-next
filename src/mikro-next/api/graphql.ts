@@ -363,14 +363,28 @@ export enum ColorFormat {
 }
 
 export enum ColorMap {
+  Black = 'BLACK',
   Blue = 'BLUE',
+  Brown = 'BROWN',
+  Cool = 'COOL',
+  Cyan = 'CYAN',
   Green = 'GREEN',
+  Grey = 'GREY',
   Inferno = 'INFERNO',
   Intensity = 'INTENSITY',
+  Magenta = 'MAGENTA',
   Magma = 'MAGMA',
+  Orange = 'ORANGE',
+  Pink = 'PINK',
   Plasma = 'PLASMA',
+  Purple = 'PURPLE',
+  Rainbow = 'RAINBOW',
   Red = 'RED',
-  Viridis = 'VIRIDIS'
+  Spectral = 'SPECTRAL',
+  Viridis = 'VIRIDIS',
+  Warm = 'WARM',
+  White = 'WHITE',
+  Yellow = 'YELLOW'
 }
 
 export enum ContinousScanDirection {

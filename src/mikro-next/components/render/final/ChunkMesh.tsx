@@ -11,6 +11,7 @@ import {
   infernoColormap,
   magmaColormap,
   plasmaColormap,
+  rainbowColormap,
   redColormap,
   viridisColormap,
 } from "./colormaps";
@@ -39,6 +40,9 @@ const getColormapForView = (view: RgbViewFragment) => {
     }
     case ColorMap.Inferno: {
       return infernoColormap
+    }
+    case ColorMap.Rainbow: {
+      return rainbowColormap
     }
     case ColorMap.Intensity: {
       const base = view.baseColor ?? [1, 1, 1];

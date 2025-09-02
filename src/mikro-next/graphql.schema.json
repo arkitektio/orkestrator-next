@@ -2903,13 +2903,43 @@
         "interfaces": null,
         "enumValues": [
           {
+            "name": "BLACK",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "BLUE",
             "description": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
+            "name": "BROWN",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "COOL",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "CYAN",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "GREEN",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "GREY",
             "description": null,
             "isDeprecated": false,
             "deprecationReason": null
@@ -2927,7 +2957,25 @@
             "deprecationReason": null
           },
           {
+            "name": "MAGENTA",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "MAGMA",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ORANGE",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "PINK",
             "description": null,
             "isDeprecated": false,
             "deprecationReason": null
@@ -2939,13 +2987,49 @@
             "deprecationReason": null
           },
           {
+            "name": "PURPLE",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "RAINBOW",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "RED",
             "description": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
+            "name": "SPECTRAL",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "VIRIDIS",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "WARM",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "WHITE",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "YELLOW",
             "description": null,
             "isDeprecated": false,
             "deprecationReason": null

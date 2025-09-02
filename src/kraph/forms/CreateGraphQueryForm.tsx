@@ -91,6 +91,7 @@ RETURN id(n), n.__created_at`,
                 { value: ViewKind.Table, label: "Table" },
                 { value: ViewKind.Path, label: "Graph" },
                 { value: ViewKind.Pairs, label: "Pairs" },
+                { value: ViewKind.NodeList, label: "Node List" },
               ]}
             />
 

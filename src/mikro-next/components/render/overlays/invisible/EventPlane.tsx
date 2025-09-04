@@ -1,13 +1,15 @@
+import { useViewerState } from "../../ViewerStateProvider";
+
 // Clickable plane component for handling background clicks
 export const EventPlane = ({
   xSize,
   ySize,
-  setContextMenu,
 }: {
   xSize: number;
   ySize: number;
-  setContextMenu(context: { open: boolean; x: number; y: number }): void;
 }) => {
+  const { setRoiContextMenu } = useViewerState();
+
   const handleClick = (event: any) => {
     // Handle shift+right-click for ROI context menu
     if (event.shiftKey) {
@@ -18,7 +20,7 @@ export const EventPlane = ({
       const x = event.clientX;
       const y = event.clientY;
 
-      setContextMenu({ open: true, x, y });
+      setRoiContextMenu({ open: true, x, y });
     }
   };
 

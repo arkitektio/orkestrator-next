@@ -26,7 +26,11 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
   return (
     <KraphEntity.ModelPage
       object={data.entity.id}
-      title={<div>{data.entity.category.label} - {data?.entity.label}</div>}
+      title={
+        <div>
+          {data.entity.category.label} - {data?.entity.label}
+        </div>
+      }
       sidebars={
         <MultiSidebar
           map={{ Comments: <KraphEntity.Komments object={data.entity.id} /> }}
@@ -35,8 +39,15 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
       pageActions={
         <div className="flex flex-row gap-2">
           <>
-            <FormSheet trigger={<Button variant="outline"><HobbyKnifeIcon /></Button>}>
-              {data?.entity && <UpdateEntityForm entity={data?.entity} />}</FormSheet>
+            <FormSheet
+              trigger={
+                <Button variant="outline">
+                  <HobbyKnifeIcon />
+                </Button>
+              }
+            >
+              {data?.entity && <UpdateEntityForm entity={data?.entity} />}
+            </FormSheet>
 
             <KraphEntity.ObjectButton
               object={data.entity.id}
@@ -52,9 +63,17 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
       >
         <div>
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl flex-row flex">
-            <KraphEntityCategory.DetailLink object={data.entity.category.id} className="text-muted-foreground font-light mr-2">{data.entity.category.label}</KraphEntityCategory.DetailLink> <div>{data.entity.label}</div>
+            <KraphEntityCategory.DetailLink
+              object={data.entity.category.id}
+              className="text-muted-foreground font-light mr-2"
+            >
+              {data.entity.category.label}
+            </KraphEntityCategory.DetailLink>{" "}
+            <div>{data.entity.label}</div>
           </h1>
-          <p className="mt-3 text-xl text-muted-foreground">{data.entity.externalId}</p>
+          <p className="mt-3 text-xl text-muted-foreground">
+            {data.entity.externalId}
+          </p>
           <p className="mt-3 text-xl text-muted-foreground">
             <div className="flex flex-row gap-2">
               {data.entity.tags?.map((tag) => (
@@ -62,6 +81,7 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
               ))}
             </div>
           </p>
+          {data.entity.pinned && <>Pinned</>}
         </div>
       </KraphEntity.Drop>
 
@@ -75,7 +95,8 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
               <KraphProtocolEventCategory.DetailLink
                 object={playable.category.id}
               >
-                Subject as <pre>{playable.role}</pre> in <pre>{playable.category.label}</pre>
+                Subject as <pre>{playable.role}</pre> in{" "}
+                <pre>{playable.category.label}</pre>
               </KraphProtocolEventCategory.DetailLink>
 
               <FormSheet
@@ -117,9 +138,7 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
           >
             <pre>{subjected.role}</pre>
             {subjected.target.__typename == "ProtocolEvent" && (
-              <KraphProtocolEvent.DetailLink
-                object={subjected.target.id}
-              >
+              <KraphProtocolEvent.DetailLink object={subjected.target.id}>
                 {subjected.target.label}
                 {subjected.target.validFrom}
                 {subjected.target.validTo}
@@ -131,15 +150,10 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
       <div className="p-6">Targeted by</div>
       <div className="flex flex-row gap-2 p-6">
         {data.entity.targetedBy.map((targeted) => (
-          <Card
-            key={`${targeted.id}`}
-            className="p-2 flex-row gap-2 flex w-96"
-          >
+          <Card key={`${targeted.id}`} className="p-2 flex-row gap-2 flex w-96">
             <pre>{targeted.role}</pre>
             {targeted.source.__typename == "ProtocolEvent" && (
-              <KraphProtocolEvent.DetailLink
-                object={targeted.source.id}
-              >
+              <KraphProtocolEvent.DetailLink object={targeted.source.id}>
                 {targeted.source.label}
                 {targeted.source.validFrom}
                 {targeted.source.validTo}
@@ -158,7 +172,8 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
               <KraphProtocolEventCategory.DetailLink
                 object={playable.category.id}
               >
-                Target as <pre>{playable.role}</pre> in <pre>{playable.category.label}</pre>
+                Target as <pre>{playable.role}</pre> in{" "}
+                <pre>{playable.category.label}</pre>
               </KraphProtocolEventCategory.DetailLink>
 
               <FormSheet

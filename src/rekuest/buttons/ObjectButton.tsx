@@ -28,9 +28,12 @@ import {
   useAllPrimaryDefinitionsQuery,
 } from "@/kabinet/api/graphql";
 import {
+  ListMeasurementCategoryFragment,
   ListMeasurementCategoryWithGraphFragment,
   ListRelationCategoryFragment,
   ListStructureRelationCategoryWithGraphFragment,
+  useCreateEntityMutation,
+  useCreateMeasurementMutation,
   useCreateRelationMutation,
   useCreateStructureMutation,
   useCreateStructureRelationMutation,
@@ -69,6 +72,8 @@ import { Identifier, ObjectID, Structure } from "@/types";
 import { usePerformAction } from "@/app/hooks/useLocalAction";
 import { useMatchingActions } from "@/app/localactions";
 import { Action, ActionState } from "@/lib/localactions/LocalActionProvider";
+import { TinyStructureBox } from "@/kraph/boxes/TinyStructureBox";
+import { use } from "cytoscape";
 
 export type OnDone = (args: {
   event?: AssignationEventFragment;
@@ -894,9 +899,7 @@ export const ApplicableDefinitions = (props: PassDownProps) => {
   );
 };
 
-
 export const EntityRelationActions = (props: PassDownProps) => {
-
   const firstPartner = props.partners?.at(0);
   const firstObject = props.objects?.at(0);
 
@@ -926,7 +929,12 @@ export const EntityRelationActions = (props: PassDownProps) => {
       }
     >
       {data?.relationCategories.map((x) => (
-        <EntityRelateButton relation={x} right={props.partners || []} left={props.objects || []} key={x.id}>
+        <EntityRelateButton
+          relation={x}
+          right={props.partners || []}
+          left={props.objects || []}
+          key={x.id}
+        >
           {x.label}
         </EntityRelateButton>
       ))}
@@ -962,8 +970,7 @@ export const EntityRelationActions = (props: PassDownProps) => {
       </CommandItem>
     </CommandGroup>
   );
-}
-
+};
 
 export const StructureRelationActions = (props: PassDownProps) => {
   const firstPartner = props.partners?.at(0);
@@ -995,7 +1002,12 @@ export const StructureRelationActions = (props: PassDownProps) => {
       }
     >
       {data?.structureRelationCategories.map((x) => (
-        <StructureRelateButton relation={x} right={firstPartner} left={props} key={x.id}>
+        <StructureRelateButton
+          relation={x}
+          right={firstPartner}
+          left={props}
+          key={x.id}
+        >
           {x.label}
         </StructureRelateButton>
       ))}
@@ -1033,20 +1045,96 @@ export const StructureRelationActions = (props: PassDownProps) => {
   );
 };
 
+export const MeasurementActions = (props: PassDownProps) => {
+  const firstObject = props.objects?.at(0);
+  const dialog = useDialog();
+
+  if (!firstObject) {
+    return null;
+  }
+
+  const { data, error } = useListMeasurmentCategoryQuery({
+    variables: {
+      filters: {
+        sourceIdentifier: firstObject.identifier,
+        search: props.filter && props.filter != "" ? props.filter : undefined,
+      },
+    },
+    fetchPolicy: "network-only",
+  });
+
+  return (
+    <CommandGroup
+      heading={
+        <span className="font-light text-xs w-full items-center ml-2 w-full">
+          Relate...
+        </span>
+      }
+    >
+      {data?.measurementCategories.map((x) => (
+        <StructureRelateButton
+          relation={x}
+          right={firstPartner}
+          left={props}
+          key={x.id}
+        >
+          {x.label}
+        </StructureRelateButton>
+      ))}
+      {error && (
+        <CommandItem value={"error"} className="flex-1">
+          <span className="text-red-500">Error: {error.message}</span>
+        </CommandItem>
+      )}
+      <CommandItem
+        value={"no-relation"}
+        onSelect={() =>
+          dialog.openDialog("createnewrelation", {
+            left: props.objects || [],
+            right: props.partners || [],
+          })
+        }
+        className="flex-1 "
+      >
+        <Tooltip>
+          <TooltipTrigger className="flex flex-row group w-full">
+            <div className="flex-col">
+              <div className="text-md text-gray-100 text-left">
+                Create.new Measurement
+              </div>
+              <div className="text-xs text-gray-400 text-left">
+                Will create a a new Measurment
+              </div>
+            </div>
+            <div className="flex-grow"></div>
+          </TooltipTrigger>
+          <TooltipContent>{props.filter}</TooltipContent>
+        </Tooltip>
+      </CommandItem>
+    </CommandGroup>
+  );
+};
+
 export const ApplicableRelations = (props: PassDownProps) => {
   const firstPartner = props.partners?.at(0);
   const firstObject = props.objects?.at(0);
 
-  if (!firstPartner || !firstObject) {
+  if (!firstPartner && !firstObject) {
     return null;
   }
 
-  if (firstPartner.identifier == "@kraph/entity" && firstObject.identifier == "@kraph/entity") {
+  if (!firstPartner && firstObject) {
+    return <ApplicableMeasurements {...props} />;
+  }
+
+  if (
+    firstPartner?.identifier == "@kraph/entity" &&
+    firstObject?.identifier == "@kraph/entity"
+  ) {
     return <EntityRelationActions {...props} />;
   }
 
   return <StructureRelationActions {...props} />;
-
 };
 
 export const ApplicableMeasurements = (props: PassDownProps) => {
@@ -1073,14 +1161,18 @@ export const ApplicableMeasurements = (props: PassDownProps) => {
     <CommandGroup
       heading={
         <span className="font-light text-xs w-full items-center ml-2 w-full">
-          Set as ...
+          Measures...
         </span>
       }
     >
       {data?.measurementCategories.map((x) => (
-        <MeasurementButton measurement={x} left={props} key={x.id}>
+        <CreateMeasurementButton
+          measurementCategory={x}
+          left={props}
+          key={x.id}
+        >
           {x.label}
-        </MeasurementButton>
+        </CreateMeasurementButton>
       ))}
       {error && (
         <CommandItem value={"error"} className="flex-1">
@@ -1211,6 +1303,123 @@ export const StructureRelateButton = (props: {
   );
 };
 
+export const CreateMeasurementButton = (props: {
+  measurementCategory: ListMeasurementCategoryWithGraphFragment;
+  left: PassDownProps;
+  children: React.ReactNode;
+}) => {
+  const [createMeasurment] = useCreateMeasurementMutation({
+    onCompleted: (data) => {
+      console.log("Relation created:", data);
+    },
+    onError: (error) => {
+      console.error("Error creating relation:", error);
+    },
+  });
+
+  const dialog = useDialog();
+
+  const [createStructure] = useCreateStructureMutation({
+    onCompleted: (data) => {
+      console.log("Structure created:", data);
+    },
+    onError: (error) => {
+      console.error("Error creating structure:", error);
+    },
+  });
+
+  const [createEntity] = useCreateEntityMutation({
+    onCompleted: (data) => {
+      console.log("Entity created:", data);
+    },
+  });
+
+  const defaultNew = props.measurementCategory.targetDefinition.defaultUseNew;
+
+  const handleDirectCreation = async (
+    category: ListMeasurementCategoryWithGraphFragment,
+  ) => {
+    if (!defaultNew) {
+      dialog.openDialog("setasmeasurement", {
+        left: props.left.objects,
+        measurement: props.measurementCategory,
+      });
+      toast.error("No default entity category set for measurement target");
+      return;
+    }
+
+    for (const obj of props.left.objects) {
+      try {
+        const leftStructureString = `${obj.identifier}:${obj.object}`;
+
+        const left = await createStructure({
+          variables: {
+            input: {
+              structure: leftStructureString,
+              graph: category.graph.id,
+            },
+          },
+        });
+
+        const entityResponse = await createEntity({
+          variables: {
+            input: {
+              entityCategory: defaultNew.id,
+            },
+          },
+        });
+
+        await createMeasurment({
+          variables: {
+            input: {
+              structure: left.data?.createStructure.id,
+              entity: entityResponse.data?.createEntity.id,
+              category: category.id,
+            },
+          },
+        });
+
+        toast.success("Relation created successfully!");
+      } catch (error) {
+        toast.error(
+          `Failed to create relation: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
+        console.error("Failed to create relation:", error);
+      }
+    }
+  };
+
+  return (
+    <CommandItem
+      value={props.measurementCategory.label}
+      key={props.measurementCategory.id}
+      onSelect={() => handleDirectCreation(props.measurementCategory)}
+      className="flex-1 "
+    >
+      <Tooltip>
+        <TooltipTrigger className="flex flex-row group w-full">
+          <div className="flex-1">
+            <div className="text-md text-gray-100 text-left">
+              {props.measurementCategory.label}
+            </div>
+            <div className="text-xs text-gray-400 text-left">
+              {props.measurementCategory.graph.name}
+            </div>
+          </div>
+          {defaultNew?.label && (
+            <div className="flex-col text-xs text-gray-400 mr-2">
+              <div className="text-right">Will create</div>
+
+              <pre className="flex-1 my-auto">{defaultNew?.label}</pre>
+            </div>
+          )}
+        </TooltipTrigger>
+        <TooltipContent>{props.measurementCategory.description}</TooltipContent>
+      </Tooltip>
+    </CommandItem>
+  );
+};
+
 export const EntityRelateButton = (props: {
   relation: ListRelationCategoryFragment;
   left: Structure[];
@@ -1226,15 +1435,12 @@ export const EntityRelateButton = (props: {
     },
   });
 
-
   const handleRelationCreation = async (
     category: ListRelationCategoryFragment,
   ) => {
     for (const left of props.left) {
       for (const right of props.right) {
         try {
-
-
           await createRelation({
             variables: {
               input: {
@@ -1276,43 +1482,6 @@ export const EntityRelateButton = (props: {
           <div className="flex-grow"></div>
         </TooltipTrigger>
         <TooltipContent>{props.relation.description}</TooltipContent>
-      </Tooltip>
-    </CommandItem>
-  );
-};
-
-export const MeasurementButton = (props: {
-  measurement: ListMeasurementCategoryWithGraphFragment;
-  left: PassDownProps;
-  children: React.ReactNode;
-}) => {
-  const dialog = useDialog();
-
-  return (
-    <CommandItem
-      value={props.measurement.label}
-      key={props.measurement.id}
-      onSelect={() =>
-        dialog.openDialog("setasmeasurement", {
-          left: props.left.objects,
-          measurement: props.measurement,
-        })
-      }
-      className="flex-1 "
-    >
-      <Tooltip>
-        <TooltipTrigger className="flex flex-row group w-full">
-          <div className="flex-col">
-            <div className="text-md text-gray-100 text-left">
-              {props.measurement.label}
-            </div>
-            <div className="text-xs text-gray-400 text-left">
-              {props.measurement.graph.name}
-            </div>
-          </div>
-          <div className="flex-grow"></div>
-        </TooltipTrigger>
-        <TooltipContent>{props.measurement.description}</TooltipContent>
       </Tooltip>
     </CommandItem>
   );
@@ -1467,6 +1636,8 @@ export const SmartContext = (props: SmartContextProps) => {
           </div>
         )}
       </div>
+      <div className="h-2" />
+
       <Command shouldFilter={false}>
         <CommandInput
           placeholder={"Search"}

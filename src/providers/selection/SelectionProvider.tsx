@@ -3,7 +3,7 @@ import {
   boxesIntersect,
   useSelectionContainer,
 } from "@air/react-drag-to-select";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Structure } from "../../types";
 import { SelectionContext, useSelection } from "./SelectionContext";
 import { Selectable } from "./types";
@@ -98,6 +98,55 @@ export const SelectionProvider: React.FC<ArkitektProps> = ({ children }) => {
     }
   };
 
+  const toggleSelection = useCallback(
+    (structure: Structure) => {
+      setSelection((old) => {
+        const exists = old.find(
+          (item) =>
+            item.identifier === structure.identifier &&
+            item.object === structure.object,
+        );
+        if (exists) {
+          const filtered = old.filter(
+            (item) =>
+              item.identifier !== structure.identifier ||
+              item.object !== structure.object,
+          );
+          return filtered;
+        }
+        return [...old, structure];
+      });
+    },
+    [setSelection],
+  );
+
+  const toggleBSelection = useCallback(
+    (structure: Structure) => {
+      setBSelection((old) => {
+        const exists = old.find(
+          (item) =>
+            item.identifier === structure.identifier &&
+            item.object === structure.object,
+        );
+        if (exists) {
+          const filtered = old.filter(
+            (item) =>
+              item.identifier !== structure.identifier ||
+              item.object !== structure.object,
+          );
+          return filtered;
+        }
+        return [...old, structure];
+      });
+    },
+    [setBSelection],
+  );
+
+  const removeSelection = useCallback(() => {
+    setSelection([]);
+    setBSelection([]);
+  }, []);
+
   const { DragSelection } = useSelectionContainer({
     onSelectionChange: handleSelectionChange,
     shouldStartSelecting: (target) => {
@@ -131,7 +180,9 @@ export const SelectionProvider: React.FC<ArkitektProps> = ({ children }) => {
     <SelectionContext.Provider
       value={{
         selection: selection,
+        bselection: bselection,
         setSelection: setSelection,
+        setBSelection: setBSelection,
         setIsMultiSelecting,
         focus: focus,
         registerSelectables: (newselectables) => {
@@ -149,25 +200,10 @@ export const SelectionProvider: React.FC<ArkitektProps> = ({ children }) => {
             ),
           );
         },
-        toggleSelection(structure: Structure) {
-          setSelection((old) => {
-            const exists = old.find(
-              (item) =>
-                item.identifier === structure.identifier &&
-                item.object === structure.object,
-            );
-            if (exists) {
-              const filtered = old.filter(
-                (item) =>
-                  item.identifier !== structure.identifier ||
-                  item.object !== structure.object,
-              );
-              return filtered;
-            }
-            return [...old, structure];
-          });
-        },
+        toggleSelection,
+        toggleBSelection,
         unselect,
+        removeSelection,
         isMultiSelecting,
       }}
     >
@@ -179,10 +215,9 @@ export const SelectionProvider: React.FC<ArkitektProps> = ({ children }) => {
 };
 
 export const SelectionBox = (props: {}) => {
-  const { selection, setSelection } = useSelection();
+  const { selection, setSelection, bselection, setBSelection } = useSelection();
   useEffect(() => {
     // Only attach handlers while there is an active selection
-    if (selection.length === 0) return;
 
     const onMouseDown = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
@@ -207,6 +242,7 @@ export const SelectionBox = (props: {}) => {
       if (!val) {
         e.stopPropagation();
         setSelection([]);
+        setBSelection([]);
       }
 
       // If no ancestor declares data-selectable, do nothing.
@@ -216,6 +252,7 @@ export const SelectionBox = (props: {}) => {
       if (e.key === "Escape") {
         e.stopPropagation();
         setSelection([]);
+        setBSelection([]);
       }
     };
 
@@ -226,7 +263,7 @@ export const SelectionBox = (props: {}) => {
       document.body.removeEventListener("mousedown", onMouseDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [selection, setSelection]);
+  }, [selection, setSelection, setBSelection, bselection]);
 
   if (selection.length === 0) return <></>;
 
@@ -234,6 +271,12 @@ export const SelectionBox = (props: {}) => {
   const uniqueIdentifiers = Array.from(
     new Set(selection.map((s) => s.identifier)),
   );
+
+  const buniqueIdentifiers = Array.from(
+    new Set(bselection.map((s) => s.identifier)),
+  );
+
+  const btotal = bselection.length;
 
   const total = selection.length;
   const types = uniqueIdentifiers.length;
@@ -250,7 +293,7 @@ export const SelectionBox = (props: {}) => {
         }
       >
         <div className="flex items-baseline gap-2">
-          <div className="font-semibold">{total}</div>
+          <div className="font-semibold text-primary">{total}</div>
 
           <div className="ml-2 text-sm text-muted-foreground">
             {uniqueIdentifiers.map((c) => c).join(", ")}
@@ -258,14 +301,30 @@ export const SelectionBox = (props: {}) => {
           <div className="text-sm text-muted-foreground">selected</div>
         </div>
 
+        {btotal && btotal > 0 && (
+          <>
+            <div className="flex items-baseline gap-2">
+              <div className="font-semibold text-red-500"> + {btotal}</div>
+
+              <div className="ml-2 text-sm text-muted-foreground">
+                {buniqueIdentifiers.map((c) => c).join(", ")}
+              </div>
+              <div className="text-sm text-muted-foreground">selected</div>
+            </div>
+          </>
+        )}
+
         <div className="w-px h-6 bg-border opacity-30" />
 
-        {types == 1 && <ObjectButton objects={selection} />}
+        {types == 1 && (
+          <ObjectButton objects={selection} partners={bselection} />
+        )}
 
         <button
           onClick={(e) => {
             e.stopPropagation();
             setSelection([]);
+            setBSelection([]);
           }}
           aria-label="Clear selection"
           className="ml-3 mr-2 p-1 rounded-full hover:bg-gray-200/10 focus:outline-none"

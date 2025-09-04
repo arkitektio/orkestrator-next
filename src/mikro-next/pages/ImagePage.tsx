@@ -11,7 +11,11 @@ import {
   DetailPaneHeader,
   DetailPaneTitle,
 } from "@/components/ui/pane";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { MikroImage } from "@/linkers";
 import { UserInfo } from "@/lok-next/components/protected/UserInfo";
@@ -47,7 +51,11 @@ import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { PinToggle } from "../components/ui/PinToggle";
 import { AddImageViewForm } from "../forms/AddImageViewForm";
 import { UpdateImageForm } from "../forms/UpdateImageForm";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export type IRepresentationScreenProps = {};
 
@@ -182,7 +190,6 @@ export default asDetailQueryRoute(
                   </div>
                 </PopoverContent>
               </Popover>
-
             )}
           </div>
         }
@@ -271,9 +278,6 @@ export default asDetailQueryRoute(
                           ))}
                         </div>
                       </div>
-
-
-
                     </TooltipContent>
                   </Tooltip>
                   <div className="font-light text-xs mb-2">
@@ -387,7 +391,10 @@ export default asDetailQueryRoute(
                       <div className="font-light">Derived images</div>
                       <div className="flex flex-col gap-2 mt-2">
                         {data?.image.derivedFromViews?.map((view) => (
-                          <MikroImage.Smart object={view.image.id} key={view.image.id}>
+                          <MikroImage.Smart
+                            object={view.image.id}
+                            key={view.image.id}
+                          >
                             <MikroImage.DetailLink
                               object={view.image?.id}
                               className="cursor-pointer"
@@ -403,7 +410,6 @@ export default asDetailQueryRoute(
                       </div>
                     </>
                   )}
-
                 </DetailPaneContent>
               </DetailPane>
             </div>

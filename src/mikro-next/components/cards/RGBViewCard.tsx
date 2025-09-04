@@ -23,7 +23,7 @@ import {
   GetImageDocument,
   RgbViewFragment,
   useGetRgbViewLazyQuery,
-  useUpdateRgbViewMutation
+  useUpdateRgbViewMutation,
 } from "../../api/graphql";
 import { ViewCard } from "./meta/ViewCard";
 
@@ -85,6 +85,20 @@ const TheCard = ({ view }: Props) => {
     }).catch((error) => {
       console.error("Error updating colormap:", error);
       alert("Failed to update colormap.");
+    });
+  };
+
+  const handleToggleActive = () => {
+    updateRgbView({
+      variables: {
+        input: {
+          id: view.id,
+          active: !view.active,
+        },
+      },
+    }).catch((error) => {
+      console.error("Error toggling active state:", error);
+      alert("Failed to toggle active state.");
     });
   };
 
@@ -197,6 +211,15 @@ const TheCard = ({ view }: Props) => {
             <Scale3DIcon className="mr-2" />
           </Button>
         </MikroRGBView.ObjectButton>
+        <Button
+          onClick={() => handleToggleActive()}
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+          aria-label="Toggle View Visibility"
+        >
+          {view.active ? "👁️" : "🚫"}
+        </Button>
       </ViewCard>
     </MikroRGBView.Smart>
   );

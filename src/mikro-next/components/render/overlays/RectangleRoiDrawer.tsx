@@ -30,6 +30,10 @@ export const RectangleRoiDrawer = ({
         [start.x, end.y], // Bottom-left
       ];
 
+      if (Math.abs(start.x - end.x) <= 2 || Math.abs(start.y - end.y) <= 2) {
+        return;
+      }
+
       // Convert to FiveDVector format [c, t, z, y, x]
       const vectors = convertFromThreeJSCoords(
         rectangleCorners,

@@ -8,4 +8,16 @@ fragment DetailStructureRelation on StructureRelation {
   leftId
   rightId
   id
+  source {
+    ... on Structure {
+      identifier
+      object
+    }
+  }
+  target {
+    ... on Structure {
+      identifier
+      object
+    }
+  }
 }

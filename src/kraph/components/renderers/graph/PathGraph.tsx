@@ -28,6 +28,7 @@ import {
   PathViewerStateProvider,
   usePathViewerState,
 } from "./PathViewerStateProvider";
+import StructureRelationEdge from "./edges/StructureRelationEdge";
 
 export type Props = {
   path: PathFragment;
@@ -49,7 +50,7 @@ const pathEdgeTypes = {
   Measurement: MeasurementEdge,
   Participant: EntityRoleEdge,
   Relation: RelationEdge,
-  StructureRelation: RelationEdge,
+  StructureRelation: StructureRelationEdge,
   Description: DescribeEdge,
 };
 

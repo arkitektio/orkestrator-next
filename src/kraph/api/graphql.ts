@@ -214,6 +214,8 @@ export type Description = Edge & {
   label: Scalars['String']['output'];
   left: Node;
   leftId: Scalars['String']['output'];
+  /** The unique identifier of the entity within its graph */
+  reverseLabel: Scalars['String']['output'];
   right: Node;
   rightId: Scalars['String']['output'];
   source: Node;
@@ -226,6 +228,8 @@ export type Edge = {
   label: Scalars['String']['output'];
   left: Node;
   leftId: Scalars['String']['output'];
+  /** The unique identifier of the entity within its graph */
+  reverseLabel: Scalars['String']['output'];
   right: Node;
   rightId: Scalars['String']['output'];
   source: Node;
@@ -778,6 +782,8 @@ export type Measurement = Edge & {
   label: Scalars['String']['output'];
   left: Node;
   leftId: Scalars['String']['output'];
+  /** The unique identifier of the entity within its graph */
+  reverseLabel: Scalars['String']['output'];
   right: Node;
   rightId: Scalars['String']['output'];
   source: Node;
@@ -1866,6 +1872,8 @@ export type Participant = Edge & {
   leftId: Scalars['String']['output'];
   /** Timestamp from when this entity is valid */
   quantity?: Maybe<Scalars['Float']['output']>;
+  /** The unique identifier of the entity within its graph */
+  reverseLabel: Scalars['String']['output'];
   right: Node;
   rightId: Scalars['String']['output'];
   /** Timestamp from when this entity is valid */
@@ -2826,6 +2834,8 @@ export type Relation = Edge & {
   label: Scalars['String']['output'];
   left: Node;
   leftId: Scalars['String']['output'];
+  /** The unique identifier of the entity within its graph */
+  reverseLabel: Scalars['String']['output'];
   right: Node;
   rightId: Scalars['String']['output'];
   source: Node;
@@ -3212,20 +3222,22 @@ export type StructureRelation = Edge & {
   __typename?: 'StructureRelation';
   category: StructureRelationCategory;
   /** When this entity was created */
-  createdAt: Scalars['DateTime']['output'];
+  createdAt?: Maybe<Scalars['DateTime']['output']>;
   /** The unique identifier of the entity within its graph */
   id: Scalars['NodeID']['output'];
   label: Scalars['String']['output'];
   left: Node;
   leftId: Scalars['String']['output'];
+  /** The unique identifier of the entity within its graph */
+  reverseLabel: Scalars['String']['output'];
   right: Node;
   rightId: Scalars['String']['output'];
   source: Node;
   target: Node;
   /** Timestamp from when this entity is valid */
-  validFrom: Scalars['DateTime']['output'];
+  validFrom?: Maybe<Scalars['DateTime']['output']>;
   /** Timestamp until when this entity is valid */
-  validTo: Scalars['DateTime']['output'];
+  validTo?: Maybe<Scalars['DateTime']['output']>;
 };
 
 export type StructureRelationCategory = BaseCategory & EdgeCategory & {
@@ -3673,6 +3685,8 @@ export type UpdateStructureRelationCategoryInput = {
   color?: InputMaybe<Array<Scalars['Int']['input']>>;
   /** A detailed description of the expression */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** The ID of the expression to update */
+  id: Scalars['ID']['input'];
   /** An optional image associated with this expression */
   image?: InputMaybe<Scalars['ID']['input']>;
   /** New label for the expression */
@@ -4049,7 +4063,7 @@ export type StructureCategoryFragment = { __typename?: 'StructureCategory', iden
 
 export type ListStructureCategoryFragment = { __typename?: 'StructureCategory', identifier: string, description?: string | null, id: string, purl?: string | null, ageName: string, positionX?: number | null, positionY?: number | null, width?: number | null, height?: number | null, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, tags: Array<{ __typename?: 'Tag', id: string, value: string }>, graph: { __typename?: 'Graph', id: string }, relevantQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean, kind: ViewKind }>, relevantNodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean }> };
 
-export type DetailStructureRelationFragment = { __typename?: 'StructureRelation', validFrom: any, validTo: any, leftId: string, rightId: string, id: any, category: { __typename?: 'StructureRelationCategory', id: string, label: string } };
+export type DetailStructureRelationFragment = { __typename?: 'StructureRelation', validFrom?: any | null, validTo?: any | null, leftId: string, rightId: string, id: any, category: { __typename?: 'StructureRelationCategory', id: string, label: string }, source: { __typename?: 'Entity' } | { __typename?: 'Metric' } | { __typename?: 'NaturalEvent' } | { __typename?: 'ProtocolEvent' } | { __typename?: 'Reagent' } | { __typename?: 'Structure', identifier: string, object: string }, target: { __typename?: 'Entity' } | { __typename?: 'Metric' } | { __typename?: 'NaturalEvent' } | { __typename?: 'ProtocolEvent' } | { __typename?: 'Reagent' } | { __typename?: 'Structure', identifier: string, object: string } };
 
 export type StructureRelationCategoryFragment = { __typename?: 'StructureRelationCategory', ageName: string, label: string, description?: string | null, pinned: boolean, id: string, purl?: string | null, sourceDefinition: { __typename?: 'StructureCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null, identifierFilters?: Array<any> | null }, targetDefinition: { __typename?: 'StructureCategoryDefinition', tagFilters?: Array<string> | null, categoryFilters?: Array<string> | null, identifierFilters?: Array<any> | null }, store?: { __typename?: 'MediaStore', presignedUrl: string } | null, bestQuery?: { __typename?: 'GraphQuery', id: string, query: string, name: string, description?: string | null, kind: ViewKind, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }>, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string, xColumn: string, yColumn: string }>, render: { __typename?: 'NodeList', nodes: Array<{ __typename: 'Entity', label: string, id: any, externalId?: string | null } | { __typename?: 'Metric', id: any, externalId?: string | null } | { __typename?: 'NaturalEvent', id: any, externalId?: string | null } | { __typename?: 'ProtocolEvent', id: any, externalId?: string | null } | { __typename?: 'Reagent', id: any, externalId?: string | null } | { __typename?: 'Structure', id: any, externalId?: string | null }> } | { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', source: { __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: number, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, target: { __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: number, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: number, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, edges: Array<{ __typename?: 'Description', id: any, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity?: number | null } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } } | { __typename?: 'StructureRelation', id: any, leftId: string, rightId: string, left: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Metric', id: any, label: string } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Metric', id: any, label: string } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, category: { __typename?: 'StructureRelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } | null, graph: { __typename?: 'Graph', id: string }, tags: Array<{ __typename?: 'Tag', id: string, value: string }>, relevantQueries: Array<{ __typename?: 'GraphQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean, kind: ViewKind }>, relevantNodeQueries: Array<{ __typename?: 'NodeQuery', id: string, name: string, query: string, description?: string | null, pinned: boolean }> };
 
@@ -4982,7 +4996,7 @@ export type GetStructureRelationQueryVariables = Exact<{
 }>;
 
 
-export type GetStructureRelationQuery = { __typename?: 'Query', structureRelation: { __typename?: 'StructureRelation', validFrom: any, validTo: any, leftId: string, rightId: string, id: any, category: { __typename?: 'StructureRelationCategory', id: string, label: string } } };
+export type GetStructureRelationQuery = { __typename?: 'Query', structureRelation: { __typename?: 'StructureRelation', validFrom?: any | null, validTo?: any | null, leftId: string, rightId: string, id: any, category: { __typename?: 'StructureRelationCategory', id: string, label: string }, source: { __typename?: 'Entity' } | { __typename?: 'Metric' } | { __typename?: 'NaturalEvent' } | { __typename?: 'ProtocolEvent' } | { __typename?: 'Reagent' } | { __typename?: 'Structure', identifier: string, object: string }, target: { __typename?: 'Entity' } | { __typename?: 'Metric' } | { __typename?: 'NaturalEvent' } | { __typename?: 'ProtocolEvent' } | { __typename?: 'Reagent' } | { __typename?: 'Structure', identifier: string, object: string } } };
 
 export type SearchStructureRelationsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -6185,6 +6199,18 @@ export const DetailStructureRelationFragmentDoc = gql`
   leftId
   rightId
   id
+  source {
+    ... on Structure {
+      identifier
+      object
+    }
+  }
+  target {
+    ... on Structure {
+      identifier
+      object
+    }
+  }
 }
     `;
 export const StructureRelationCategoryFragmentDoc = gql`

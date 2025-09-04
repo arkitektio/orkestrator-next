@@ -38,7 +38,6 @@ export default asDetailQueryRoute(useGetStructureRelationQuery, ({ data, refetch
               object={data.structureRelation.source.object}
             />
           )}
-          ----
           {data.structureRelation.target.__typename == "Structure" && (
             <DisplayWidget
               identifier={data.structureRelation.target.identifier}

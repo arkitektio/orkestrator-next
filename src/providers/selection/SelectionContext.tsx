@@ -4,6 +4,7 @@ import { SelectionContextType } from "./types";
 
 export const SelectionContext = React.createContext<SelectionContextType>({
   selection: [],
+  bselection: [],
   setSelection: () => {},
   unselect: () => {},
   isMultiSelecting: false,
@@ -11,9 +12,49 @@ export const SelectionContext = React.createContext<SelectionContextType>({
   registerSelectables: () => {},
   unregisterSelectables: () => {},
   toggleSelection: () => {},
+  toggleBSelection: () => {},
+  removeSelection: () => {},
 });
 
 export const useSelection = () => useContext(SelectionContext);
+
+export const useMySelect = (options: { self: Structure }) => {
+  const { self } = options;
+
+  const {
+    selection,
+    toggleSelection,
+    toggleBSelection,
+    bselection,
+    removeSelection,
+  } = useSelection();
+
+  const isSelected = useMemo(() => {
+    const me = selection.findIndex(
+      (item) =>
+        item.identifier === self.identifier && item.object === self.object,
+    );
+    return me != -1 ? me + 1 : undefined;
+  }, [selection, self]);
+
+  const isBSelected = useMemo(() => {
+    const me = bselection.findIndex(
+      (item) =>
+        item.identifier === self.identifier && item.object === self.object,
+    );
+    return me != -1 ? me + 1 : undefined;
+  }, [bselection, self]);
+
+  const toggle = useCallback(() => {
+    toggleSelection(self);
+  }, [self, toggleSelection]);
+
+  const toggleB = useCallback(() => {
+    toggleBSelection(self);
+  }, [self, toggleBSelection]);
+
+  return { isSelected, toggle, isBSelected, toggleB, selection };
+};
 
 export const useMySelection = (
   iam: Structure,

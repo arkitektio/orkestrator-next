@@ -16,15 +16,15 @@ export const checkEventKey = (
 ): boolean => {
   switch (eventKey) {
     case "shift":
-      return event.shiftKey;
+      return event.shiftKey && !event.ctrlKey && !event.altKey;
     case "ctrl":
-      return event.ctrlKey;
+      return event.ctrlKey && !event.shiftKey && !event.altKey;
     case "alt":
-      return event.altKey;
+      return event.altKey && !event.shiftKey && !event.ctrlKey;
     case "none":
       return true;
     default:
-      return event.shiftKey;
+      return event.shiftKey && !event.ctrlKey && !event.altKey; // Default to "shift" behavior
   }
 };
 

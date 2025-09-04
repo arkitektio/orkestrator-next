@@ -1,10 +1,19 @@
 import { RoiKind } from "@/mikro-next/api/graphql";
-import React, { createContext, ReactNode, useContext, useState } from "react";
+import React, {
+  createContext,
+  Dispatch,
+  ReactNode,
+  useContext,
+  useState,
+} from "react";
+import { Panel } from "./panels";
 
 export interface ViewerState {
   // Z/T navigation
   z: number;
   t: number;
+  openPanels: Panel[];
+  roiContextMenu: { open: boolean; x: number; y: number } | null;
   selectedScale: number;
 
   // Display options
@@ -34,6 +43,10 @@ export interface ViewerStateActions {
   setShowLayerEdges: (show: boolean) => void;
   setShowDebugText: (show: boolean) => void;
   setShowDisplayStructures: (show: boolean) => void;
+  setOpenPanels: Dispatch<React.SetStateAction<Panel[]>>;
+  setRoiContextMenu: (
+    menu: { open: boolean; x: number; y: number } | null,
+  ) => void;
 
   setAllowRoiDrawing: (allow: boolean) => void;
   setRoiDrawMode: (mode: RoiKind) => void;
@@ -73,6 +86,13 @@ export const ViewerStateProvider: React.FC<ViewerStateProviderProps> = ({
   const [selectedScale, setSelectedScale] = useState(
     initialState.selectedScale ?? 0,
   );
+
+  const [openPanels, setOpenPanels] = useState<Panel[]>([]);
+  const [roiContextMenu, setRoiContextMenu] = useState<{
+    open: boolean;
+    x: number;
+    y: number;
+  } | null>(null);
 
   const [showRois, setShowRois] = useState(initialState.showRois ?? false);
   const [showLayerEdges, setShowLayerEdges] = useState(
@@ -151,6 +171,10 @@ export const ViewerStateProvider: React.FC<ViewerStateProviderProps> = ({
     setShowRois,
     setShowLayerEdges,
     setShowDebugText,
+    setRoiContextMenu,
+    roiContextMenu,
+    setOpenPanels,
+    openPanels,
     setShowDisplayStructures,
     setEnabledScales,
     setAllowRoiDrawing,

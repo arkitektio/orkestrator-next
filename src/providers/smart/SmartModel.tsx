@@ -10,8 +10,13 @@ import { Structure } from "@/types";
 import React, { useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { NativeTypes } from "react-dnd-html5-backend";
-import { useMySelection, useSelection } from "../selection/SelectionContext";
+import {
+  useMySelect,
+  useMySelection,
+  useSelection,
+} from "../selection/SelectionContext";
 import { SmartModelProps } from "./types";
+import { is } from "date-fns/locale";
 
 export const SmartModel = ({
   showSelfMates = true,
@@ -154,23 +159,21 @@ export const SmartModel = ({
     };
   }, [partners.length, clearPartners]);
 
-  const { isSelected } = useMySelection({
-    identifier: props.identifier,
-    object: props.object,
+  const { isBSelected, toggleB, isSelected, toggle, selection } = useMySelect({
+    self,
   });
-
-  const { toggleSelection, selection } = useSelection();
 
   const className = React.useMemo(
     () =>
       cn(
         "@container relative z-10 cursor-pointer",
         isSelected &&
-        "group ring ring-1 ring-offset-2 ring-offset-transparent rounded",
+          "group ring ring-1 ring-offset-2 ring-offset-transparent rounded",
+        isBSelected && "group ring ring-2  rounded ring-red-500",
         isDragging && "opacity-50 ring-2 ring-gray-600 ring rounded rounded-md",
         isOver && "shadow-xl ring-2 border-gray-200 ring rounded rounded-md",
       ),
-    [isSelected, isDragging, isOver],
+    [isSelected, isDragging, isOver, isBSelected],
   );
 
   return (
@@ -178,8 +181,12 @@ export const SmartModel = ({
       key={`${props.identifier}:${props.object}`}
       ref={drop}
       onClick={(e) => {
-        if (e.shiftKey) {
-          toggleSelection(self);
+        if (e.shiftKey && !e.ctrlKey) {
+          toggle();
+          return;
+        }
+        if (e.shiftKey && e.ctrlKey) {
+          toggleB();
           return;
         }
       }}
@@ -206,6 +213,16 @@ export const SmartModel = ({
           >
             {props.children}
             {isOver && <CombineButton />}
+            {isBSelected && (
+              <div className="absolute top-0 right-0 text-white z-[9998] translate-x-1/2 -translate-y-1/2 bg-red-500 w-6 h-6 flex items-center justify-center rounded-full text-xs font-semibold">
+                {isBSelected}
+              </div>
+            )}
+            {isSelected && (
+              <div className="absolute top-0 right-0 text-white z-[9998] translate-x-1/2 -translate-y-1/2 bg-primary w-6 h-6 flex items-center justify-center rounded-full text-xs font-semibold">
+                {isSelected}
+              </div>
+            )}
 
             {partners.length > 0 && (
               <div

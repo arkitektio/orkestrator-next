@@ -97,6 +97,12 @@ const TForm = (props: { graph?: string; identifier?: string }) => {
                   searchQuery={searchEntityCategory}
                   description="Filters for the entity's categories."
                 />
+                <GraphQLSearchField
+                  label="Default Category"
+                  name="entityDefinition.defaultUseNew"
+                  description="Default category for entities created with this measurement category."
+                  searchQuery={searchEntityCategory}
+                />
               </div>
             </div>
           </div>

@@ -145,10 +145,7 @@ export const KraphExpression = buildSmart(
   "kraph/expressions",
 );
 
-export const KraphRelation = buildSmart(
-  "@kraph/relation",
-  "kraph/relations",
-);
+export const KraphRelation = buildSmart("@kraph/relation", "kraph/relations");
 
 export const KraphStructureRelation = buildSmart(
   "@kraph/structurerelation",
@@ -384,7 +381,10 @@ export const ReaktionModuleLink = buildModuleLink("fluss");
 export const OmeroArkModuleLink = buildModuleLink("omero-ark");
 
 export const LokUser = buildSmart("@lok/user", "lok/users");
-export const LokRedeemToken = buildSmart("@lok/redeem_token", "lok/users");
+export const LokRedeemToken = buildSmart(
+  "@lok/redeemtoken",
+  "lok/redeemtokens",
+);
 export const LokGroup = buildSmart("@lok/group", "lok/groups");
 export const LokClient = buildSmart("@lok/client", "lok/clients");
 export const LokApp = buildSmart("@lok/app", "lok/apps");

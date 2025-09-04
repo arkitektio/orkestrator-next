@@ -25,15 +25,18 @@ import { toast } from "sonner";
 import {
   ListGraphFragment,
   ListMeasurementCategoryFragment,
+  useCreateEntityInlineMutation,
+  useCreateEntityMutation,
   useCreateMeasurementMutation,
   useCreateStructureMutation,
   useGetInformedStructureQuery,
   useListGraphsQuery,
   useListMeasurmentCategoryQuery,
-  useSearchEntitiesForRoleLazyQuery
+  useSearchEntitiesForRoleLazyQuery,
 } from "../api/graphql";
 import { SelectiveNodeViewRenderer } from "../components/renderers/NodeQueryRenderer";
 import CreateMeasurementCategoryForm from "../forms/CreateMeasurementCategoryForm";
+import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
 
 const FindEntity = (props: {
   structure: string;
@@ -63,6 +66,12 @@ const FindEntity = (props: {
     refetchQueries: ["GetGraph"],
   });
 
+  const [create] = useCreateEntityInlineMutation({
+    refetchQueries: ["SearchEntitiesForRole"],
+  });
+
+  const createCategory = props.measurement.targetDefinition.defaultUseNew;
+
   return (
     <Form {...form}>
       <form
@@ -85,12 +94,30 @@ const FindEntity = (props: {
             });
         })}
       >
-        <GraphQLSearchField
-          label="Entity"
-          name="entity"
-          searchQuery={search}
-          description="Search for an entity to connect to this measurement."
-        />
+        {createCategory ? (
+          <GraphQLCreatableSearchField
+            label="Entity"
+            name="entity"
+            searchQuery={search}
+            description="Search for an entity to connect to this measurement."
+            createMutation={(s) =>
+              create({
+                variables: {
+                  input: s.variables.input,
+                  category: createCategory.id,
+                },
+              })
+            }
+          />
+        ) : (
+          <GraphQLSearchField
+            label="Entity"
+            name="entity"
+            searchQuery={search}
+            description="Search for an entity to connect to this measurement."
+          />
+        )}
+
         <DialogFooter>
           <Button type="submit">Create</Button>
         </DialogFooter>
@@ -216,12 +243,25 @@ export const GraphKnowledgeView = (props: {
       }
       <div className="flex flex-row gap-2">
         {data?.structureByIdentifier ? (
-          <ConnectableAs
-            identifier={props.identifier}
-            structure={data.structureByIdentifier.id}
-            graph={props.graph}
-            refetch={() => refetch()}
-          />
+          <ObjectButton
+            objects={[{ identifier: props.identifier, object: props.object }]}
+            className="w-full"
+            partners={[
+              {
+                identifier: "@kraph/graph",
+                object: props.graph.id,
+              },
+            ]}
+            disableKraph={true}
+            expect={["@mikro/metric"]}
+            onDone={() => {
+              refetch();
+            }}
+          >
+            <Button variant="outline" className="w-full">
+              Measure
+            </Button>
+          </ObjectButton>
         ) : (
           <Button
             variant="outline"
@@ -240,25 +280,6 @@ export const GraphKnowledgeView = (props: {
             Connect
           </Button>
         )}
-        <ObjectButton
-          objects={[{ identifier: props.identifier, object: props.object }]}
-          className="w-full"
-          partners={[
-            {
-              identifier: "@kraph/graph",
-              object: props.graph.id,
-            },
-          ]}
-          disableKraph={true}
-          expect={["@mikro/metric"]}
-          onDone={() => {
-            refetch();
-          }}
-        >
-          <Button variant="outline" className="w-full">
-            Measure
-          </Button>
-        </ObjectButton>
       </div>
     </div>
   );

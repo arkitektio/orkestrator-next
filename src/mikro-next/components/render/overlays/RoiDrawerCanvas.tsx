@@ -12,27 +12,21 @@ export interface RoiDrawerProps extends EventKeyProps {
   imageHeight: number;
   imageWidth: number;
   image: { id: string };
-  c: number;
-  z: number;
-  t: number;
 }
 
 export const RoiDrawerCanvas = ({
   imageHeight,
   imageWidth,
   image,
-  c,
-  z,
-  t,
   event_key = "shift",
 }: RoiDrawerProps) => {
-  const { roiDrawMode } = useViewerState();
+  const { roiDrawMode, z, t } = useViewerState();
 
   const commonProps = {
     imageHeight,
     imageWidth,
     image,
-    c,
+    c: 0,
     t,
     z,
     event_key,

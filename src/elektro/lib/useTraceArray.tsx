@@ -5,7 +5,7 @@ import {
   RequestAccessMutationVariables,
   ZarrStoreFragment,
 } from "@/elektro/api/graphql";
-import { Arkitekt, useElektro } from "@/lib/arkitekt/Arkitekt";
+import { Arkitekt, useDatalayerEndpoint, useElektro } from "@/lib/arkitekt/Arkitekt";
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { ApolloClient } from "@apollo/client";
 import { AwsClient } from "aws4fetch";
@@ -111,12 +111,11 @@ export const renderArray = async (
 
 const downloadArray = async (
   client: ApolloClient<any> | undefined,
-  fakts: any,
+  endpoint_url: string | undefined,
   t: number | null,
   store: ZarrStoreFragment,
   signal?: AbortSignal,
 ) => {
-  let endpoint_url = (fakts?.datalayer as any)?.endpoint_url;
   if (endpoint_url === undefined) {
     throw Error("No datalayer found");
   }
@@ -143,7 +142,8 @@ export const useTraceArray = () => {
     settings: { experimentalCache },
   } = useSettings();
   const client = useElektro();
-  const fakts = Arkitekt.useFakts();
+
+  const endpoint_url = useDatalayerEndpoint();
 
   const renderView = useCallback(
     async (
@@ -155,13 +155,13 @@ export const useTraceArray = () => {
         throw Error("No client found");
       }
 
-      if (!fakts) {
+      if (!endpoint_url) {
         throw Error("No fakts found");
       }
 
       const imageData = await downloadArray(
         client,
-        fakts,
+        endpoint_url,
         t,
         trace.store,
         signal,
@@ -169,7 +169,7 @@ export const useTraceArray = () => {
 
       return imageData;
     },
-    [client, fakts, experimentalCache],
+    [client, endpoint_url, experimentalCache],
   );
 
   return {

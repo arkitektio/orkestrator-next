@@ -341,7 +341,7 @@ export const SimulationRender = (props: {
             <Line
               key={recordingToID(rec)}
               dataKey={recordingToID(rec)}
-              type="natural"
+              type="linear"
               stroke={getColorForRecording(rec, props.highlight)}
               fillOpacity={0.4}
               strokeWidth={2}

@@ -220,10 +220,11 @@ export const ProbeCard = ({
   return (
     <Card
       onClick={handleClick}
-      className={`cursor-pointer transition-all duration-200 ${isDisabled
-        ? "opacity-50 cursor-not-allowed"
-        : "hover:bg-accent hover:shadow-md"
-        } ${className}`}
+      className={`cursor-pointer transition-all duration-200 ${
+        isDisabled
+          ? "opacity-50 cursor-not-allowed"
+          : "hover:bg-accent hover:shadow-md"
+      } ${className}`}
     >
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
@@ -375,7 +376,6 @@ export const PreconfiguredEndpointsWidget = () => {
           onConnect={handleConnect}
         />
       ))}
-
 
       {unreachableResults.map((result) => (
         <ProbeCard

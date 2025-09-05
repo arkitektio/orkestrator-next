@@ -492,6 +492,15 @@ const stressLayout = {
   "elk.layered.nodePlacement.bk.fixedAlignment": "LEFT",
 };
 
+const radialLayout = {
+  "elk.algorithm": "radial",
+  "elk.radial.radius": "200",
+  "elk.radial.compactionStrategy": "NONE",
+  "elk.radial.wedgeToLength": "32",
+  "elk.spacing.nodeNode": "50",
+  "elk.direction": "RIGHT",
+};
+
 const hashGraph = (graph: GraphFragment) => {
   return JSON.stringify(graph);
 };
@@ -608,6 +617,86 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
 
       setNodes(newNodes);
     });
+  };
+
+  const nodelayout = (layout: { [key: string]: string }, root: string) => {
+    const elk = new ELK();
+    const the_nodes = nodes;
+
+    // Filter out self-referencing edges and duplicate edges to prevent cycles
+    const filteredEdges = edges.filter((edge, index, arr) => {
+      // Remove self-referencing edges
+      if (edge.source === edge.target) {
+        return false;
+      }
+
+      // Remove duplicate edges (same source and target)
+      const firstIndex = arr.findIndex(
+        (e) => e.source === edge.source && e.target === edge.target,
+      );
+      return index === firstIndex;
+    });
+
+    const graph = {
+      id: "root",
+      layoutOptions: {
+        ...layout,
+        "elk.radial.rootNode": root, // Specify the root node for radial layout
+      },
+      children: the_nodes.map((node) => ({
+        id: node.id,
+        x: node.position.x,
+        y: node.position.y,
+        width: node.width,
+        height: node.height,
+      })),
+      edges: filteredEdges.map((edge) => ({
+        id: edge.id,
+        sources: [edge.source],
+        targets: [edge.target],
+      })),
+    };
+
+    elk
+      .layout(graph)
+      .then(({ children }) => {
+        // By mutating the children in-place we saves ourselves from creating a
+        // needless copy of the nodes array.
+        if (!children) {
+          return;
+        }
+
+        const newNodes = children.map((node) => {
+          const child = the_nodes.find((n) => n.id === node.id);
+          return { ...child, position: { x: node.x, y: node.y } };
+        });
+
+        setNodes(newNodes);
+      })
+      .catch((error) => {
+        console.error("ELK Layout failed:", error);
+        console.error(
+          "This might be due to circular dependencies or self-referencing nodes",
+        );
+        // Fallback: Just arrange nodes in a simple circle manually
+        const centerX = 400;
+        const centerY = 300;
+        const radius = 200;
+        const angleStep = (2 * Math.PI) / the_nodes.length;
+
+        const fallbackNodes = the_nodes.map((node, index) => {
+          const angle = index * angleStep;
+          return {
+            ...node,
+            position: {
+              x: centerX + radius * Math.cos(angle),
+              y: centerY + radius * Math.sin(angle),
+            },
+          };
+        });
+
+        setNodes(fallbackNodes);
+      });
   };
 
   const onConnect = (connection: Connection) => {
@@ -754,6 +843,17 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
           </Button>
           <Button onClick={() => layout(layeredLayout)} variant={"outline"}>
             Layered
+          </Button>
+          <Button
+            onClick={() => {
+              const rootNode = nodes.at(0)?.id;
+              if (rootNode) {
+                nodelayout(radialLayout, rootNode);
+              }
+            }}
+            variant={"outline"}
+          >
+            Circle
           </Button>
 
           <KraphGraph.DetailLink

@@ -3,7 +3,7 @@ import { Action, ActionState } from "@/lib/localactions/LocalActionProvider";
 import { OnDone } from "@/rekuest/buttons/ObjectButton";
 import { useState } from "react";
 import { useDialog } from "../dialog";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 export const usePerformAction = (props: {
@@ -35,6 +35,7 @@ export const usePerformAction = (props: {
         services: app.connection?.clients || {},
         dialog,
         navigate,
+        location: window.location,
         state: props.state,
       });
       setController(null);

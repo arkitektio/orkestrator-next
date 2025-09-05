@@ -166,14 +166,15 @@ export const SmartModel = ({
   const className = React.useMemo(
     () =>
       cn(
+        props.className,
         "@container relative z-10 cursor-pointer",
         isSelected &&
           "group ring ring-1 ring-offset-2 ring-offset-transparent rounded",
-        isBSelected && "group ring ring-2  rounded ring-red-500",
+        isBSelected && "group ring ring-2 rounded ring-red-500",
         isDragging && "opacity-50 ring-2 ring-gray-600 ring rounded rounded-md",
         isOver && "shadow-xl ring-2 border-gray-200 ring rounded rounded-md",
       ),
-    [isSelected, isDragging, isOver, isBSelected],
+    [props.className, isSelected, isDragging, isOver, isBSelected],
   );
 
   return (
@@ -190,11 +191,23 @@ export const SmartModel = ({
           return;
         }
       }}
+      className={props.containerClassName}
       onDragStart={handleDragStart}
       data-identifier={props.identifier}
       data-object={props.object}
       data-selected={isSelected ? "true" : "false"}
+      data-bselected={isBSelected ? "true" : "false"}
     >
+      {isBSelected && (
+        <div className="absolute top-0 right-0 text-white z-[9998] translate-x-1/2 -translate-y-1/2 bg-red-500 w-6 h-6 flex items-center justify-center rounded-full text-xs font-semibold">
+          {isBSelected}
+        </div>
+      )}
+      {isSelected && (
+        <div className="absolute top-0 right-0 text-white z-[9998] translate-x-1/2 -translate-y-1/2 bg-primary w-6 h-6 flex items-center justify-center rounded-full text-xs font-semibold">
+          {isSelected}
+        </div>
+      )}
       <ContextMenu modal={false}>
         <ContextMenuContent className="dark:border-gray-700 max-w-md">
           {selection && selection.length > 0 ? (
@@ -203,7 +216,7 @@ export const SmartModel = ({
             <SmartContext objects={[self]} partners={[]} />
           )}
         </ContextMenuContent>
-        <ContextMenuTrigger>
+        <ContextMenuTrigger asChild>
           <div
             ref={drag}
             className={className}
@@ -213,16 +226,6 @@ export const SmartModel = ({
           >
             {props.children}
             {isOver && <CombineButton />}
-            {isBSelected && (
-              <div className="absolute top-0 right-0 text-white z-[9998] translate-x-1/2 -translate-y-1/2 bg-red-500 w-6 h-6 flex items-center justify-center rounded-full text-xs font-semibold">
-                {isBSelected}
-              </div>
-            )}
-            {isSelected && (
-              <div className="absolute top-0 right-0 text-white z-[9998] translate-x-1/2 -translate-y-1/2 bg-primary w-6 h-6 flex items-center justify-center rounded-full text-xs font-semibold">
-                {isSelected}
-              </div>
-            )}
 
             {partners.length > 0 && (
               <div

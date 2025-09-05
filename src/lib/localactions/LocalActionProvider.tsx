@@ -9,6 +9,10 @@ export type IdentifierActive = {
   identifier: string;
 };
 
+export type ObjectHomogenous = {
+  type: "homogenous";
+};
+
 export type PartnerActive = {
   type: "partner";
   partner: string;
@@ -22,6 +26,11 @@ export type HasPartner = {
   type: "haspartner";
 };
 
+export type OnRoute = {
+  type: "onroute";
+  route: string;
+};
+
 export type CommandSelect = {
   type: "command";
   command: boolean;
@@ -32,7 +41,9 @@ export type Condition =
   | PartnerActive
   | CommandSelect
   | PartnerIsNull
-  | HasPartner;
+  | ObjectHomogenous
+  | HasPartner
+  | OnRoute;
 
 export type Structure = {
   object: string;
@@ -47,6 +58,7 @@ export type ActionState = {
 
 export type ActionParams = {
   state: ActionState;
+  location: Location;
   services: ServiceMap;
   onProgress: (progress: number) => void;
   abortSignal: AbortSignal;
@@ -77,6 +89,16 @@ export const getActionsForState = (
           (structure) => structure.identifier === condition.identifier,
         );
       }
+      if (condition.type === "homogenous") {
+        const identifier = state.left.at(0)?.identifier;
+        if (!identifier) {
+          return true;
+        }
+        return state.left.every(
+          (structure) => structure.identifier === identifier,
+        );
+      }
+
       if (condition.type === "nopartner") {
         return !state.right || state.right.length === 0;
       }
@@ -88,6 +110,10 @@ export const getActionsForState = (
           (structure) => structure.identifier === condition.partner,
         );
       }
+      if (condition.type === "onroute") {
+        return window.location.pathname.includes(condition.route);
+      }
+
       if (condition.type === "command") {
         return state.isCommand === condition.command;
       }

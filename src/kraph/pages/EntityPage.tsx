@@ -85,110 +85,7 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
         </div>
       </KraphEntity.Drop>
 
-      <div className="flex flex-col gap-2">
-        <ListRender array={data.entity.subjectableTo}>
-          {(playable) => (
-            <Card
-              key={`${playable.role}-${playable.category.id}`}
-              className="p-2 flex-row gap-2 flex"
-            >
-              <KraphProtocolEventCategory.DetailLink
-                object={playable.category.id}
-              >
-                Subject as <pre>{playable.role}</pre> in{" "}
-                <pre>{playable.category.label}</pre>
-              </KraphProtocolEventCategory.DetailLink>
 
-              <FormSheet
-                trigger={<Button variant="outline"> {">>"}</Button>}
-                onSubmit={() => refetch()}
-              >
-                <LoadingCreateProtocolEventForm
-                  id={playable.category.id}
-                  rolemap={{ [playable.role]: data.entity.id }}
-                />
-              </FormSheet>
-            </Card>
-          )}
-        </ListRender>
-      </div>
-      <div className="p-6">Measured by</div>
-      <div className="flex flex-row gap-2 p-6">
-        {data.entity.measuredBy.map((measurement) => (
-          <Card
-            key={`${measurement.id}`}
-            className="p-2 flex-row gap-2 flex w-96"
-          >
-            <pre>{measurement.category.label}</pre>
-            {measurement.source.__typename == "Structure" && (
-              <DisplayWidget
-                identifier={measurement.source.identifier}
-                object={measurement.source.object}
-              />
-            )}
-          </Card>
-        ))}
-      </div>
-      <div className="p-6">Subjected to</div>
-      <div className="flex flex-row gap-2 p-6">
-        {data.entity.subjectedTo.map((subjected) => (
-          <Card
-            key={`${subjected.id}`}
-            className="p-2 flex-row gap-2 flex w-96"
-          >
-            <pre>{subjected.role}</pre>
-            {subjected.target.__typename == "ProtocolEvent" && (
-              <KraphProtocolEvent.DetailLink object={subjected.target.id}>
-                {subjected.target.label}
-                {subjected.target.validFrom}
-                {subjected.target.validTo}
-              </KraphProtocolEvent.DetailLink>
-            )}
-          </Card>
-        ))}
-      </div>
-      <div className="p-6">Targeted by</div>
-      <div className="flex flex-row gap-2 p-6">
-        {data.entity.targetedBy.map((targeted) => (
-          <Card key={`${targeted.id}`} className="p-2 flex-row gap-2 flex w-96">
-            <pre>{targeted.role}</pre>
-            {targeted.source.__typename == "ProtocolEvent" && (
-              <KraphProtocolEvent.DetailLink object={targeted.source.id}>
-                {targeted.source.label}
-                {targeted.source.validFrom}
-                {targeted.source.validTo}
-              </KraphProtocolEvent.DetailLink>
-            )}
-          </Card>
-        ))}
-      </div>
-      <div className="flex flex-col p-6">
-        <ListRender array={data.entity.targetableBy}>
-          {(playable) => (
-            <Card
-              key={`${playable.role}-${playable.category.id}`}
-              className="p-2 m-2 flex-row gap-2 flex"
-            >
-              <KraphProtocolEventCategory.DetailLink
-                object={playable.category.id}
-              >
-                Target as <pre>{playable.role}</pre> in{" "}
-                <pre>{playable.category.label}</pre>
-              </KraphProtocolEventCategory.DetailLink>
-
-              <FormSheet
-                trigger={<Button variant="outline"> {"<<"} </Button>}
-                onSubmit={() => refetch()}
-              >
-                <LoadingCreateProtocolEventForm
-                  id={playable.category.id}
-                  rolemap={{ [playable.role]: data.entity.id }}
-                />
-              </FormSheet>
-            </Card>
-          )}
-        </ListRender>
-      </div>
       <div className="flex flex-col p-6 h-full">
         {data.entity.bestView ? (
           <SelectiveNodeViewRenderer view={data.entity.bestView} />
@@ -206,6 +103,6 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
           </div>
         )}
       </div>
-    </KraphEntity.ModelPage>
+    </KraphEntity.ModelPage >
   );
 });

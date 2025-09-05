@@ -5,6 +5,7 @@ import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import { KraphStructureRelation } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { useGetStructureRelationQuery } from "../api/graphql";
+import { DisplayWidget } from "@/command/Menu";
 
 export default asDetailQueryRoute(useGetStructureRelationQuery, ({ data, refetch }) => {
   const uploadFile = useMediaUpload();
@@ -31,11 +32,19 @@ export default asDetailQueryRoute(useGetStructureRelationQuery, ({ data, refetch
           <p className="mt-3 text-xl text-muted-foreground">
             <Badge>{data.structureRelation.id}</Badge>
           </p>
+          {data.structureRelation.source.__typename == "Structure" && (
+            <DisplayWidget
+              identifier={data.structureRelation.source.identifier}
+              object={data.structureRelation.source.object}
+            />
+          )}
+          {data.structureRelation.target.__typename == "Structure" && (
+            <DisplayWidget
+              identifier={data.structureRelation.target.identifier}
+              object={data.structureRelation.target.object}
+            />
+          )}
         </div>
-      </div>
-
-      <div className="flex flex-col p-6">
-        <p className="text-sm font-light">Appears in </p>
       </div>
     </KraphStructureRelation.ModelPage>
   );

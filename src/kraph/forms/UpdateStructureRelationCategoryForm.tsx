@@ -9,9 +9,11 @@ import { useForm } from "react-hook-form";
 import {
   StructureRelationCategoryFragment,
   UpdateStructureRelationCategoryMutationVariables,
+  useCreateGraphTagInlineMutation,
   useSearchTagsLazyQuery,
   useUpdateStructureRelationCategoryMutation
 } from "../api/graphql";
+import { GraphQLCreatableListSearchField } from "@/components/fields/GraphQLCreatableListSearchField";
 
 const enumToOptions = (e: any) => {
   return Object.keys(e).map((key) => ({
@@ -38,6 +40,13 @@ export const TForm = (props: {
       description: props.structureRelationCategory.description,
       purl: props.structureRelationCategory.purl || "",
       tags: props.structureRelationCategory.tags.map((tag) => tag.value),
+    },
+  });
+
+  const [createTag] = useCreateGraphTagInlineMutation({
+    variables: {
+      graph: props.structureRelationCategory.graph.id,
+      input: "",
     },
   });
 
@@ -74,11 +83,12 @@ export const TForm = (props: {
                 name="purl"
                 description="What is the PURL of this expression?"
               />
-              <GraphQLListSearchField
+              <GraphQLCreatableListSearchField
                 searchQuery={searchTags}
                 label="Tags"
                 name="tags"
                 description="Search for related entities"
+                createMutation={(v) => createTag({ variables: { input: v.variables.input, graph: props.structureRelationCategory.graph.id } })}
               />
             </div>
           </div>

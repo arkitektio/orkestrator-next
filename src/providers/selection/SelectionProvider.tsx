@@ -7,7 +7,8 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Structure } from "../../types";
 import { SelectionContext, useSelection } from "./SelectionContext";
 import { Selectable } from "./types";
-import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
+import { ObjectButton, SmartContext } from "@/rekuest/buttons/ObjectButton";
+import { motion } from "framer-motion";
 export type ArkitektProps = { children: React.ReactNode };
 
 export const SelectionProvider: React.FC<ArkitektProps> = ({ children }) => {
@@ -282,14 +283,20 @@ export const SelectionBox = (props: {}) => {
   const types = uniqueIdentifiers.length;
 
   return (
-    <div
-      className="fixed bottom-3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50"
+    <motion.div
+      className="fixed bottom-3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 "
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 20 }}
+      transition={{ duration: 0.4 }}
+      role="status"
       aria-live="polite"
       data-nonbreaker
     >
+
       <div
         className={
-          "flex items-center gap-3 bg-background border border-border rounded-full px-4 py-2 shadow-2xl will-change-transform transition-transform transition-opacity duration-200 ease-out transform "
+          "shadow-3xl shadow-black/10 flex items-center gap-3 bg-background border border-border rounded-full px-4 py-2 shadow-2xl will-change-transform transition-transform transition-opacity duration-200 ease-out transform "
         }
       >
         <div className="flex items-baseline gap-2">
@@ -320,6 +327,7 @@ export const SelectionBox = (props: {}) => {
           <ObjectButton objects={selection} partners={bselection} />
         )}
 
+
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -332,6 +340,6 @@ export const SelectionBox = (props: {}) => {
           <span className="text-xl leading-none">×</span>
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 };

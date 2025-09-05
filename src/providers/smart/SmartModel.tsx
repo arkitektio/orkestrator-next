@@ -159,9 +159,10 @@ export const SmartModel = ({
     };
   }, [partners.length, clearPartners]);
 
-  const { isBSelected, toggleB, isSelected, toggle, selection } = useMySelect({
-    self,
-  });
+  const { isBSelected, toggleB, isSelected, toggle, selection, bselection } =
+    useMySelect({
+      self,
+    });
 
   const className = React.useMemo(
     () =>
@@ -170,7 +171,7 @@ export const SmartModel = ({
         "@container relative z-10 cursor-pointer",
         isSelected &&
           "group ring ring-1 ring-offset-2 ring-offset-transparent rounded",
-        isBSelected && "group ring ring-2 rounded ring-red-500",
+        isBSelected && "group ring ring-2  rounded ring-red-500",
         isDragging && "opacity-50 ring-2 ring-gray-600 ring rounded rounded-md",
         isOver && "shadow-xl ring-2 border-gray-200 ring rounded rounded-md",
       ),
@@ -211,7 +212,7 @@ export const SmartModel = ({
       <ContextMenu modal={false}>
         <ContextMenuContent className="dark:border-gray-700 max-w-md">
           {selection && selection.length > 0 ? (
-            <SmartContext objects={selection} partners={[]} />
+            <SmartContext objects={selection} partners={bselection} />
           ) : (
             <SmartContext objects={[self]} partners={[]} />
           )}

@@ -19,6 +19,8 @@ import CreateNodeQueryForm from "../forms/CreateNodeQueryForm";
 import LoadingCreateProtocolEventForm from "../forms/LoadingCreateProtocolEventForm";
 import { UpdateEntityForm } from "../forms/UpdateEntityForm";
 import { DisplayWidget } from "@/command/Menu";
+import { StructureQueriesPlanner } from "../components/StructureQueriesPlanner";
+import { NodeQueriesPlanner } from "../components/NodeQueriesPlanner";
 
 export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
   const uploadFile = useMediaUpload();
@@ -48,7 +50,12 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
             >
               {data?.entity && <UpdateEntityForm entity={data?.entity} />}
             </FormSheet>
-
+            <FormSheet
+              trigger={<Button variant="outline">New Query</Button>}
+              onSubmit={() => refetch()}
+            >
+              <CreateNodeQueryForm entity={data.entity} />
+            </FormSheet>
             <KraphEntity.ObjectButton
               object={data.entity.id}
               className="w-full"
@@ -86,7 +93,7 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
       </KraphEntity.Drop>
       <div className="p-6">Measured by</div>
 
-      <div className="flex flex-col gap-2 p-6">
+      <div className="flex flex-row gap-2 p-6">
         {data.entity.measuredBy.map((measurement) => (
           <Card
             key={`${measurement.id}`}
@@ -145,6 +152,8 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
           </Card>
         ))}
       </div>
+
+      <NodeQueriesPlanner entity={data.entity} />
 
       <div className="flex flex-col p-6 h-full">
         {data.entity.bestView ? (

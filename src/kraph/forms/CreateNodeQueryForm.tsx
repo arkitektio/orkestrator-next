@@ -31,12 +31,12 @@ export default (props: { entity: EntityFragment }) => {
 
   const form = useForm<CreateNodeQueryMutationVariables["input"]>({
     defaultValues: {
-      query: `MATCH (n:${props.entity.category.ageName})
+      query: `MATCH p=(n:${props.entity.category.ageName})-[*0..3]-()
 WHERE id(n) = %s
-RETURN id(n), n.__created_at`,
+RETURN p`,
       description: "No Description",
       name: "New Step",
-      kind: ViewKind.Table,
+      kind: ViewKind.Path,
       graph: props.entity.graph.id,
       columns: [
         {

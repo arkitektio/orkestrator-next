@@ -12,6 +12,8 @@ export interface DelegatingImageRenderProps {
   modelMatrix?: Matrix4;
   className?: string;
   follow?: "width" | "height";
+  z?: number;
+  t?: number;
 }
 
 export const DelegatingImageRender: React.FC<DelegatingImageRenderProps> = (

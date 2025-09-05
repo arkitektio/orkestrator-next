@@ -29,6 +29,9 @@ export interface RGBDProps {
   className?: string;
   follow?: "width" | "height";
   hideControls?: boolean;
+  z?: number;
+  t?: number;
+  // Callback when a value is clicked, e.g., for updating external state
   onValueClick?: (value: number) => void;
 }
 
@@ -448,6 +451,8 @@ export const FinalRender = (props: RGBDProps) => {
         // Only most downscaled version enabled by default
         enabledScales: new Set([Math.max(...availableScales)]),
         showRois: true,
+        z: props.z || 0,
+        t: props.t || 0,
         allowRoiDrawing: false,
       }}
     >

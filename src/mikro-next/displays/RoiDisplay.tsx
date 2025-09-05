@@ -3,6 +3,8 @@ import { MikroROI } from "@/linkers";
 import { UserAvatar } from "@/lok-next/components/UserAvatar";
 import { useGetRoiQuery } from "@/mikro-next/api/graphql";
 import Timestamp from "react-timestamp";
+import { DelegatingImageRender } from "../components/render/DelegatingImageRender";
+import { FinalRender } from "../components/render/FInalRender";
 
 export const RoiDisplay = (props: DisplayWidgetProps) => {
   const { data } = useGetRoiQuery({
@@ -12,15 +14,21 @@ export const RoiDisplay = (props: DisplayWidgetProps) => {
   });
 
   const roi = data?.roi;
-
+  if (!roi) {
+    return <div>ROI not found</div>;
+  }
+  const context = data?.roi.image.rgbContexts.at(0);
   return (
-    <MikroROI.DetailLink object={props.object}>
-      {roi?.creator && <UserAvatar sub={roi.creator.sub} />}
-      {roi?.createdAt && (
-        <p>
-          Marked <Timestamp date={roi.createdAt} relative />
-        </p>
+    <div className="w-96 h-96">
+      {context && (
+        <FinalRender
+          context={context}
+          rois={[data.roi]}
+          z={data.roi.vectors.at(0).at(2)}
+          t={data.roi.vectors.at(0).at(0)}
+          hideControls={true}
+        />
       )}
-    </MikroROI.DetailLink>
+    </div>
   );
 };

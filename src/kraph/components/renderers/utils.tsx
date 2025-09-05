@@ -32,7 +32,8 @@ const columnToDef = (
         return (
           <KraphEntity.Smart object={concat_id}>
             <KraphEntity.DetailLink object={concat_id}>
-              {label || ""}{concat_id}
+              {label || ""}
+              {concat_id}
             </KraphEntity.DetailLink>
           </KraphEntity.Smart>
         );
@@ -71,11 +72,7 @@ const columnToDef = (
           const label = row.getValue(column.name) as string;
 
           if (!label) {
-            return (
-              <div className="text-center font-medium">
-                No Date
-              </div>
-            );
+            return <div className="text-center font-medium">No Date</div>;
           }
 
           return (
@@ -152,8 +149,17 @@ export const calculateRows = (table: TableFragment | undefined) => {
   return rowObjects;
 };
 
+export const baseProperties = {
+  sequence: { description: "A sequence number" },
+  created_at: { description: "Creation timestamp" },
+  category_id: { description: "ID linking to the category group" },
+  type: { description: "The type of the entity" },
+  category_type: { description: "The category type" },
+};
 
-export const buildCypherSchemaFromGraph = (graph: GraphFragment): CypherSchema => {
+export const buildCypherSchemaFromGraph = (
+  graph: GraphFragment,
+): CypherSchema => {
   const schema: CypherSchema = { nodes: {}, relationships: {} };
 
   // Build the schema from the graph data
@@ -163,8 +169,23 @@ export const buildCypherSchemaFromGraph = (graph: GraphFragment): CypherSchema =
       label: node.label,
       description: node.description || "No Description",
       properties: {
-        created_at: { description: "Creation timestamp" },
-        category_id: { description: "ID linking to the category group" },
+        ...baseProperties,
+        tags: { description: "Tags associated with the entity" },
+        pinned_by: { description: "Users who pinned this entity" },
+      },
+    };
+  });
+
+  graph.reagentCategories.forEach((node) => {
+    schema.nodes[node.ageName] = {
+      type: node.__typename || "Unknown",
+      label: node.label,
+      description: node.description || "No Description",
+      properties: {
+        ...baseProperties,
+        tags: { description: "Tags associated with the entity" },
+        pinned_by: { description: "Users who pinned this entity" },
+        active: { description: "Is the reagent active?" },
       },
     };
   });
@@ -203,6 +224,7 @@ export const buildCypherSchemaFromGraph = (graph: GraphFragment): CypherSchema =
       properties: {
         created_at: { description: "Creation timestamp" },
         category_id: { description: "ID linking to the category group" },
+        value: { description: "The value of the metric" },
       },
     };
   });
@@ -213,10 +235,24 @@ export const buildCypherSchemaFromGraph = (graph: GraphFragment): CypherSchema =
       label: node.label,
       description: node.description || "No Description",
       properties: {
-        created_at: { description: "Creation timestamp" },
-        category_id: { description: "ID linking to the category group" },
+        ...baseProperties,
+        valid_from: { description: "When the event is valid from" },
+        valid_to: { description: "When the event is valid to" },
+        performed_by: { description: "Who performed the event" },
       },
     };
+
+    for (const variable of node.sourceEntityRoles) {
+      schema.relationships[variable.role] = {
+        type: "Role",
+        label: "Role",
+        description: "A description edge",
+        properties: {
+          quantity: { description: "A description" },
+          role: { description: "The role played by the entity" },
+        },
+      };
+    }
   });
 
   graph.relationCategories.forEach((relation) => {
@@ -230,7 +266,6 @@ export const buildCypherSchemaFromGraph = (graph: GraphFragment): CypherSchema =
       },
     };
   });
-
 
   graph.structureRelationCategories.forEach((relation) => {
     schema.relationships[relation.ageName] = {

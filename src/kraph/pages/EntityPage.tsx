@@ -84,7 +84,67 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
           {data.entity.pinned && <>Pinned</>}
         </div>
       </KraphEntity.Drop>
+      <div className="p-6">Measured by</div>
 
+      <div className="flex flex-col gap-2 p-6">
+        {data.entity.measuredBy.map((measurement) => (
+          <Card
+            key={`${measurement.id}`}
+            className="p-2 flex-col gap-2 flex w-96"
+          >
+            {measurement.source.__typename == "Structure" && (
+              <DisplayWidget
+                identifier={measurement.source.identifier}
+                object={measurement.source.object}
+              />
+            )}
+            <pre>{measurement.category.label}</pre>
+          </Card>
+        ))}
+      </div>
+
+      <div className="p-6">Subjected to</div>
+
+      <div className="flex flex-row gap-2 p-6">
+        {data.entity.subjectedTo.map((subjected) => (
+          <Card
+            key={`${subjected.id}`}
+            className="p-2 flex-row gap-2 flex w-96"
+          >
+            <pre>{subjected.role}</pre>
+
+            {subjected.target.__typename == "ProtocolEvent" && (
+              <KraphProtocolEvent.DetailLink object={subjected.target.id}>
+                {subjected.target.label}
+
+                {subjected.target.validFrom}
+
+                {subjected.target.validTo}
+              </KraphProtocolEvent.DetailLink>
+            )}
+          </Card>
+        ))}
+      </div>
+
+      <div className="p-6">Targeted by</div>
+
+      <div className="flex flex-row gap-2 p-6">
+        {data.entity.targetedBy.map((targeted) => (
+          <Card key={`${targeted.id}`} className="p-2 flex-row gap-2 flex w-96">
+            <pre>{targeted.role}</pre>
+
+            {targeted.source.__typename == "ProtocolEvent" && (
+              <KraphProtocolEvent.DetailLink object={targeted.source.id}>
+                {targeted.source.label}
+
+                {targeted.source.validFrom}
+
+                {targeted.source.validTo}
+              </KraphProtocolEvent.DetailLink>
+            )}
+          </Card>
+        ))}
+      </div>
 
       <div className="flex flex-col p-6 h-full">
         {data.entity.bestView ? (
@@ -103,6 +163,6 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
           </div>
         )}
       </div>
-    </KraphEntity.ModelPage >
+    </KraphEntity.ModelPage>
   );
 });

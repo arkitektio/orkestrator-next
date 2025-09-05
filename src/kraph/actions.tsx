@@ -3,6 +3,7 @@ import { Action } from "@/lib/localactions/LocalActionProvider";
 import {
   DeleteEntityCategoryDocument,
   DeleteGraphDocument,
+  DeleteMeasurementCategoryDocument,
   DeleteNaturalEventCategoryDocument,
   DeleteProtocolEventCategoryDocument,
 } from "./api/graphql";
@@ -68,6 +69,14 @@ export const KRAPH_ACTIONS = {
     typename: "EntityCategory",
     mutation: DeleteEntityCategoryDocument,
   }),
+  "delete-kraph-measurementcategory": buildDeleteAction({
+    title: "Delete Measurement Category",
+    identifier: "@kraph/measurementcategory",
+    description: "Delete the Measurment Category",
+    service: "kraph",
+    typename: "MeasurementCategory",
+    mutation: DeleteMeasurementCategoryDocument,
+  }),
   "create-protocol-event-category": {
     title: "Create Protocol Event Category",
     description: "Create a new Protocol Event Category",
@@ -101,6 +110,53 @@ export const KRAPH_ACTIONS = {
         left: state.left,
         right: state.right,
       });
+    },
+    collections: ["io"],
+  },
+  "create-new-measurment-category": {
+    title: "Create New Measurement Category",
+    description:
+      "Create a new measurement category between structure and entity",
+    conditions: [
+      {
+        type: "identifier",
+        identifier: "@kraph/structurecategory",
+      },
+      {
+        type: "pidentifier",
+        identifier: "@kraph/entitycategory",
+      },
+    ],
+    execute: async ({ services, onProgress, abortSignal, state, dialog }) => {
+      dialog.openDialog("createnewmeasurement", {
+        left: state.left,
+        right: state.right || [],
+      });
+    },
+    collections: ["io"],
+  },
+  "create-protocol-event": {
+    title: "Create Protocol Event Category",
+    description: "Delete the structure",
+    conditions: [
+      {
+        type: "mixture",
+        identifiers: ["@kraph/reagentcategory", "@kraph/entitycategory"],
+      },
+      {
+        type: "pmixture",
+        identifiers: ["@kraph/reagentcategory", "@kraph/entitycategory"],
+      },
+    ],
+    execute: async ({ services, onProgress, abortSignal, state, dialog }) => {
+      dialog.openSheet(
+        "createpprotocoleventfrominsandouts",
+        {
+          ins: state.left,
+          outs: state.right || [],
+        },
+        { className: "w-[800px] max-w-none" },
+      );
     },
     collections: ["io"],
   },

@@ -41,6 +41,8 @@ export const ROIPolygon = (props: {
   imageWidth: number;
   imageHeight: number;
 }) => {
+  if (!props.roi.vectors || props.roi.vectors.length == 0) return null;
+
   const { roi } = props;
   const meshRef = useRef<THREE.Mesh>(null);
   const { camera, size } = useThree();

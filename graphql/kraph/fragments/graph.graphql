@@ -36,6 +36,9 @@ fragment Graph on Graph {
     ...Node
   }
   pinned
+  store {
+    ...MediaStore
+  }
 }
 
 fragment ListGraph on Graph {
@@ -43,4 +46,7 @@ fragment ListGraph on Graph {
   name
   description
   pinned
+  store {
+    ...MediaStore
+  }
 }

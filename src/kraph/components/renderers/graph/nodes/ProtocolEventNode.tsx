@@ -1,9 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import {
-  KraphProtocolEvent
-} from "@/linkers";
+import { KraphProtocolEvent } from "@/linkers";
 import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
 import { Handles } from "../components/Handles";
@@ -44,6 +42,21 @@ export default memo(({ data, id, selected }: NodeProps<ProtocolEventNode>) => {
               >
                 {data.category.label}
               </KraphProtocolEvent.DetailLink>
+              {data.variables.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {data.variables.map((variable) => (
+                    <div
+                      key={variable.role + variable.value}
+                      className="px-3 py-1 bg-gray-800 rounded-full text-xs"
+                    >
+                      <span className="font-semibold text-xs">
+                        {variable.role}:
+                      </span>{" "}
+                      {variable.value}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </Card>

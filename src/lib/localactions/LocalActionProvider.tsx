@@ -6,11 +6,31 @@ import { useNavigate } from "react-router-dom";
 
 export type IdentifierActive = {
   type: "identifier";
+  optional?: boolean;
   identifier: string;
+};
+
+export type MixtureActive = {
+  type: "mixture";
+  identifiers: string[];
+};
+
+export type PartnerIdentifierActive = {
+  type: "pidentifier";
+  identifier: string;
+};
+
+export type PartnerMixtureActive = {
+  type: "pmixture";
+  identifiers: string[];
 };
 
 export type ObjectHomogenous = {
   type: "homogenous";
+};
+
+export type PartnerHomogenous = {
+  type: "phomogenous";
 };
 
 export type PartnerActive = {
@@ -43,7 +63,11 @@ export type Condition =
   | PartnerIsNull
   | ObjectHomogenous
   | HasPartner
-  | OnRoute;
+  | OnRoute
+  | PartnerIdentifierActive
+  | PartnerHomogenous
+  | MixtureActive
+  | PartnerMixtureActive;
 
 export type Structure = {
   object: string;
@@ -95,6 +119,31 @@ export const getActionsForState = (
           return true;
         }
         return state.left.every(
+          (structure) => structure.identifier === identifier,
+        );
+      }
+      if (condition.type === "pidentifier") {
+        return state.right?.some(
+          (structure) => structure.identifier === condition.identifier,
+        );
+      }
+      if (condition.type === "mixture") {
+        return condition.identifiers.some((id) =>
+          state.left.some((structure) => structure.identifier === id),
+        );
+      }
+      if (condition.type === "pmixture") {
+        return condition.identifiers.some((id) =>
+          state.right?.some((structure) => structure.identifier === id),
+        );
+      }
+
+      if (condition.type === "phomogenous") {
+        const identifier = state.right?.at(0)?.identifier;
+        if (!identifier) {
+          return true;
+        }
+        return state.right?.every(
           (structure) => structure.identifier === identifier,
         );
       }

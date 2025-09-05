@@ -6,6 +6,8 @@ import { RelateStructures } from "@/dialogs/RelateStructures";
 import { SetAsMeasurement } from "@/dialogs/SetAsMeasurement";
 import CreateEntityForm from "@/kraph/forms/CreateEntityForm";
 import CreateProtocolEventCategoryForm from "@/kraph/forms/CreateProtocolEventCategoryForm";
+import CreateProtocolEventForm from "@/kraph/forms/CreateProtocolEventForm";
+import CreateProtocolEventFromInsAndOuts from "@/kraph/forms/CreateProtocolEventFromInsAndOuts";
 import { createDialogProvider } from "@/lib/generic/providers/DialogProvider";
 import { CreateShortcutDialog } from "@/rekuest/components/dialogs/CreateShortcutDialog";
 import { ActionAssignForm } from "@/rekuest/forms/ActionAssignForm";
@@ -23,4 +25,5 @@ export const { DialogProvider, useDialog, registry } = createDialogProvider({
   addusertoorganization: AddUserToOrganizationDialog,
   createprotocoleventcategory: CreateProtocolEventCategoryForm,
   createentity: CreateEntityForm,
+  createpprotocoleventfrominsandouts: CreateProtocolEventFromInsAndOuts,
 });

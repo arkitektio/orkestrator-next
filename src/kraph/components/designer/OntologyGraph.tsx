@@ -9,6 +9,7 @@ import {
   StructureCategoryDefinition,
   useUpdateGraphMutation,
 } from "@/kraph/api/graphql";
+import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import { notEmpty } from "@/lib/utils";
 import {
   Connection,
@@ -28,10 +29,6 @@ import EntityRoleEdge from "./edges/EntityRoleEdge";
 import MeasurementEdge from "./edges/MeasurementEdge";
 import ReagentRoleEdge from "./edges/ReagentRoleEdge";
 import RelationEdge from "./edges/RelationEdge";
-import StagingMeasurementEdge from "./edges/StagingMeasurementEdge";
-import StagingRelationEdge from "./edges/StagingRelationEdge";
-import StagingStepEdge from "./edges/StagingStepEdge";
-import StepEdge from "./edges/StepEdge";
 import StructureRelationEdge from "./edges/StructureRelationEdge";
 import "./index.css";
 import GenericCategoryNode from "./nodes/GenericCategoryNode";
@@ -229,10 +226,10 @@ const ontologyToEdges = (graph: GraphFragment) => {
   });
 
   graph.measurementCategories.forEach((cat) => {
-    let source_nodes = graph.structureCategories.filter(
-      withCategoryFilter(cat.sourceDefinition),
+    const source_nodes = graph.structureCategories.filter(
+      withStructureCategoryFilter(cat.sourceDefinition),
     );
-    let target_nodes = graph.entityCategories.filter(
+    const target_nodes = graph.entityCategories.filter(
       withCategoryFilter(cat.targetDefinition),
     );
 
@@ -254,7 +251,7 @@ const ontologyToEdges = (graph: GraphFragment) => {
 
   graph.metricCategories.forEach((cat) => {
     let source_nodes = graph.structureCategories.filter(
-      withCategoryFilter(cat.structureDefinition),
+      (n) => n.id == cat.structureCategory.id,
     );
 
     for (let i = 0; i < source_nodes.length; i++) {
@@ -401,15 +398,10 @@ const nodeTypes = {
 
 const edgeTypes = {
   measurement: MeasurementEdge,
-  stagingrelation: StagingRelationEdge,
   structure_relation: StructureRelationEdge,
-  stagingmeasurement: StagingMeasurementEdge,
   relation: RelationEdge,
-  stagingstep: StagingStepEdge,
-  step: StepEdge,
   entityrole: EntityRoleEdge,
   describe: DescribeEdge,
-
   reagentrole: ReagentRoleEdge,
 };
 
@@ -487,7 +479,7 @@ const stressLayout = {
   "elk.layered.crossingMinimization.minimize": "LAYER_SWEEP",
   "elk.layered.spacing.nodeNode": "200",
   "elk.spacing.nodeNode": "200",
-  "elk.layered.spacing.nodeNodeBetweenLayrs": "200",
+  "elk.layered.spacing.nodeNodeBetweenLayers": "200",
   "elk.direction": "RIGHT",
   "elk.layered.nodePlacement.bk.fixedAlignment": "LEFT",
 };
@@ -507,6 +499,7 @@ const hashGraph = (graph: GraphFragment) => {
 
 export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
   const [update] = useUpdateGraphMutation();
+  const uploadFile = useKraphUpload();
 
   const reactFlowWrapper = React.useRef<HTMLDivElement | null>(null);
 
@@ -532,22 +525,90 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
     }
   }, [reactFlowInstance, hashGraph(graph)]);
 
-  const save = () => {
+  const captureAndUploadScreenshot = async (): Promise<string | null> => {
+    if (!reactFlowWrapper.current) return null;
+
+    try {
+      // Try to dynamically import html2canvas
+      let html2canvas: typeof import("html2canvas").default;
+      try {
+        html2canvas = (await import("html2canvas")).default;
+      } catch {
+        console.warn("html2canvas not available, skipping screenshot capture");
+        return null;
+      }
+
+      const canvas = await html2canvas(reactFlowWrapper.current, {
+        backgroundColor: "#ffffff",
+        scale: 1,
+        logging: false,
+        useCORS: true,
+      });
+
+      // Convert canvas to blob
+      return new Promise((resolve) => {
+        canvas.toBlob(async (blob: Blob | null) => {
+          if (!blob) {
+            resolve(null);
+            return;
+          }
+
+          try {
+            // Convert blob to file
+            const file = new File(
+              [blob],
+              `graph-${graph.id}-${Date.now()}.png`,
+              {
+                type: "image/png",
+              },
+            );
+
+            // Upload the file
+            const uploadedImageId = await uploadFile(file);
+            resolve(uploadedImageId);
+          } catch (error) {
+            console.error("Failed to upload screenshot:", error);
+            resolve(null);
+          }
+        }, "image/png");
+      });
+    } catch (error) {
+      console.error("Failed to capture screenshot:", error);
+      return null;
+    }
+  };
+
+  const save = async () => {
     const nodes = reactFlowInstance?.getNodes() as MyNode[];
-    const edges = reactFlowInstance?.getEdges() as MyEdge[];
 
     const nodeInputs = nodes
       .map(nodeToNodeInput)
       .filter((n) => n != null) as GraphNodeInput[];
 
+    console.log("Saving graph and capturing screenshot...");
+
+    // Capture and upload screenshot
+    const imageId = await captureAndUploadScreenshot();
+
+    if (imageId) {
+      console.log("Screenshot captured and uploaded successfully");
+    } else {
+      console.log("Screenshot capture skipped or failed");
+    }
+
+    const updateInput = {
+      id: graph.id,
+      nodes: nodeInputs,
+      ...(imageId && { image: imageId }),
+    };
+
     update({
       variables: {
-        input: {
-          id: graph.id,
-          nodes: nodeInputs,
-        },
+        input: updateInput,
       },
     });
+
+    console.log("Graph saved successfully");
   };
 
   const onPaneClick = (event: React.MouseEvent) => {
@@ -806,6 +867,7 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
           edgeTypes={edgeTypes}
           onInit={(r) => setReactFlowInstance(r)}
           fitView
+          proOptions={{ hideAttribution: true }}
         />
         {showClickContextual && showClickContextual.type == "click" && (
           <ClickContextual

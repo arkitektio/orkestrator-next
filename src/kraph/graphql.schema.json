@@ -3783,7 +3783,7 @@
               "name": null,
               "ofType": {
                 "kind": "INPUT_OBJECT",
-                "name": "CategoryDefinitionInput",
+                "name": "EntityCategoryDefinitionInput",
                 "ofType": null
               }
             },
@@ -4603,6 +4603,18 @@
                   }
                 }
               }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "store",
+            "description": "The media store that contains the image for this graph",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "MediaStore",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -7588,15 +7600,15 @@
             "deprecationReason": null
           },
           {
-            "name": "structureDefinition",
-            "description": "The unique identifier of the expression within its graph",
+            "name": "structureCategory",
+            "description": "The structure that this metric measures",
             "args": [],
             "type": {
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
                 "kind": "OBJECT",
-                "name": "StructureCategoryDefinition",
+                "name": "StructureCategory",
                 "ofType": null
               }
             },
@@ -7993,18 +8005,26 @@
             "deprecationReason": null
           },
           {
-            "name": "structureDefinition",
-            "description": "The structure category for this expression",
+            "name": "structureCategory",
+            "description": "The structure category that this metric describes",
             "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "INPUT_OBJECT",
-                "name": "CategoryDefinitionInput",
-                "ofType": null
-              }
+              "kind": "SCALAR",
+              "name": "ID",
+              "ofType": null
             },
-            "defaultValue": null,
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "structureIdentifier",
+            "description": "The structure identifier within the structure category",
+            "type": {
+              "kind": "SCALAR",
+              "name": "StructureIdentifier",
+              "ofType": null
+            },
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -18998,6 +19018,82 @@
       },
       {
         "kind": "INPUT_OBJECT",
+        "name": "ReagentCategoryDefinitionInput",
+        "description": "Input for creating a new expression",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "categoryFilters",
+            "description": "A list of classes to filter the entities",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "ID",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "defaultUseActive",
+            "description": "The default ACTIVE reagent category to use for this port if a reagent is not provided",
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "defaultUseNew",
+            "description": "The default creation of entity or reagent to use for this port if a reagent is not provided",
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "tagFilters",
+            "description": "A list of tags to filter the entities by",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
         "name": "ReagentCategoryFilter",
         "description": null,
         "isOneOf": false,
@@ -19711,7 +19807,7 @@
               "name": null,
               "ofType": {
                 "kind": "INPUT_OBJECT",
-                "name": "CategoryDefinitionInput",
+                "name": "ReagentCategoryDefinitionInput",
                 "ofType": null
               }
             },
@@ -20961,7 +21057,7 @@
               "name": null,
               "ofType": {
                 "kind": "INPUT_OBJECT",
-                "name": "CategoryDefinitionInput",
+                "name": "EntityCategoryDefinitionInput",
                 "ofType": null
               }
             },
@@ -20997,7 +21093,7 @@
               "name": null,
               "ofType": {
                 "kind": "INPUT_OBJECT",
-                "name": "CategoryDefinitionInput",
+                "name": "EntityCategoryDefinitionInput",
                 "ofType": null
               }
             },

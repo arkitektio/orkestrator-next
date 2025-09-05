@@ -8,9 +8,7 @@ import {
   type EdgeProps,
   type ReactFlowState,
 } from "@xyflow/react";
-import {
-  MeasurementEdge
-} from "../types";
+import { MeasurementEdge } from "../types";
 import { getEdgeParams } from "../utils";
 
 export type GetSpecialPathParams = {
@@ -27,8 +25,9 @@ export const getSpecialPath = (
   const centerX = (sourceX + targetX) / 2;
   const centerY = (sourceY + targetY) / 2;
 
-  return `M ${sourceX} ${sourceY} Q ${centerX + offset} ${centerY + offset
-    } ${targetX} ${targetY}`;
+  return `M ${sourceX} ${sourceY} Q ${centerX + offset} ${
+    centerY + offset
+  } ${targetX} ${targetY}`;
 };
 
 export const TEdge = ({
@@ -68,8 +67,9 @@ export const TEdge = ({
   if (source == target) {
     const radiusX = 100;
     const radiusY = 100;
-    path = `M ${sourceX - 10} ${sourceY} A ${radiusX} ${radiusY} 0 1 0 ${targetX + 5
-      } ${targetY}`;
+    path = `M ${sourceX - 10} ${sourceY} A ${radiusX} ${radiusY} 0 1 0 ${
+      targetX + 5
+    } ${targetY}`;
 
     centerX = sourceX - radiusX * 2;
     centerY = (sourceY + targetY) / 2;
@@ -96,13 +96,20 @@ export const TEdge = ({
           }}
           className="p-3 text-xs group z-10 nodrag nopan"
         >
-          {data?.id && <KraphStructureRelationCategory.DetailLink
-            object={data?.id}
-            style={{ pointerEvents: 'all' }}
-            className={"font-bold cursor-pointer "}
+          <KraphStructureRelationCategory.Smart
+            object={data?.id || "0"}
+            className="w-20"
           >
-            {data?.label}
-          </KraphStructureRelationCategory.DetailLink>}
+            {data?.id && (
+              <KraphStructureRelationCategory.DetailLink
+                object={data?.id}
+                style={{ pointerEvents: "all" }}
+                className={"font-bold cursor-pointer "}
+              >
+                {data?.label}
+              </KraphStructureRelationCategory.DetailLink>
+            )}
+          </KraphStructureRelationCategory.Smart>
         </Card>
       </EdgeLabelRenderer>
     </>

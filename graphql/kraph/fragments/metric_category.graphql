@@ -23,8 +23,8 @@ fragment ListMetricCategory on MetricCategory {
   ...BaseNodeCategory
   label
   metricKind
-  structureDefinition {
-    tagFilters
-    categoryFilters
+  structureCategory {
+    id
+    identifier
   }
 }

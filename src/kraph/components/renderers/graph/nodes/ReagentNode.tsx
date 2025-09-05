@@ -34,6 +34,7 @@ export default memo(({ data, id, selected }: NodeProps<ReagentNode>) => {
           />
         )}
         <div className="absolute top-0 left-0 right-0 bottom-0 z-10 flex items-center justify-center flex-col gap-2 bg-black/50 truncate ">
+          {data.category.label}
           <KraphReagentCategory.DetailLink object={data.id}>
             {data.label}
           </KraphReagentCategory.DetailLink>

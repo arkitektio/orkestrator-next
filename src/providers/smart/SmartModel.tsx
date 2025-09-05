@@ -192,7 +192,7 @@ export const SmartModel = ({
           return;
         }
       }}
-      className={props.containerClassName}
+      className={cn("relative", props.containerClassName)}
       onDragStart={handleDragStart}
       data-identifier={props.identifier}
       data-object={props.object}

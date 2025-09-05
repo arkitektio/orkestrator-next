@@ -169,9 +169,9 @@ export const SelectionProvider: React.FC<ArkitektProps> = ({ children }) => {
     },
     selectionProps: {
       style: {
-        border: "2px hsl(var(--primary))",
+        border: "2px orange dashed",
         borderRadius: 4,
-        backgroundColor: "hsl(var(--primary))",
+        backgroundColor: "orange",
         opacity: 0,
       },
     },
@@ -293,7 +293,6 @@ export const SelectionBox = (props: {}) => {
       aria-live="polite"
       data-nonbreaker
     >
-
       <div
         className={
           "shadow-3xl shadow-black/10 flex items-center gap-3 bg-background border border-border rounded-full px-4 py-2 shadow-2xl will-change-transform transition-transform transition-opacity duration-200 ease-out transform "
@@ -326,7 +325,6 @@ export const SelectionBox = (props: {}) => {
         {types == 1 && (
           <ObjectButton objects={selection} partners={bselection} />
         )}
-
 
         <button
           onClick={(e) => {

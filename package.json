@@ -165,6 +165,7 @@
     "graphql": "^16.8.0",
     "handlebars": "^4.7.8",
     "hls.js": "^1.5.12",
+    "html2canvas": "^1.4.1",
     "idb": "^8.0.2",
     "input-otp": "^1.2.4",
     "leva": "^0.10.0",

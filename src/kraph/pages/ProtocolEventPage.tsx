@@ -7,14 +7,17 @@ import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import {
   KraphEntity,
   KraphProtocolEvent,
-  KraphProtocolEventCategory
+  KraphProtocolEventCategory,
 } from "@/linkers";
 import { RoleValueProvider } from "@/plate/value/ValueProvider";
 import { valueEditor } from "@/plate/valueEditor";
 import { notEmpty } from "@/reaktion/utils";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { Plate, usePlateEditor } from "@udecode/plate-common/react";
-import { ProtocolEventFragment, useGetProtocolEventQuery } from "../api/graphql";
+import {
+  ProtocolEventFragment,
+  useGetProtocolEventQuery,
+} from "../api/graphql";
 import { SelectiveNodeViewRenderer } from "../components/renderers/NodeQueryRenderer";
 import CreateNodeQueryForm from "../forms/CreateNodeQueryForm";
 
@@ -28,49 +31,49 @@ export function PlateEditor({
     value: protocolEvent.category.plateChildren || [],
   });
 
-  const leftRoleValues = protocolEvent.leftEdges.map((e) => {
-    if (e.__typename === "Participant") {
+  const leftRoleValues = protocolEvent.leftEdges
+    .map((e) => {
+      if (e.__typename === "Participant") {
+        return {
+          id: e.leftId,
+          role: e.role,
+          value: e.leftId,
+        };
+      }
+    })
+    .filter(notEmpty);
+
+  const rightRoleValues = protocolEvent.rightEdges
+    .map((e) => {
+      if (e.__typename === "Participant") {
+        return {
+          id: e.rightId,
+          role: e.role,
+          value: e.rightId,
+        };
+      }
+    })
+    .filter(notEmpty);
+
+  const variableRoles = protocolEvent.variables
+    .map((e) => {
       return {
-        id: e.leftId,
         role: e.role,
-        value: e.leftId,
+        value: e.value,
       };
-    }
-  }).filter(notEmpty);
-
-  const rightRoleValues = protocolEvent.rightEdges.map((e) => {
-    if (e.__typename === "Participant") {
-      return {
-        id: e.rightId,
-        role: e.role,
-        value: e.rightId,
-      };
-    }
-  }).filter(notEmpty);
-
-  const variableRoles = protocolEvent.variables.map((e) => {
-    return {
-      role: e.role,
-      value: e.value,
-    }
-  }
-  ).filter(notEmpty);
-
+    })
+    .filter(notEmpty);
 
   const roleValues = [...leftRoleValues, ...rightRoleValues, ...variableRoles];
 
   return (
     <RoleValueProvider values={roleValues}>
       <Plate editor={plateEditor}>
-
         <Editor />
       </Plate>
     </RoleValueProvider>
-
-
   );
 }
-
 
 export default asDetailQueryRoute(
   useGetProtocolEventQuery,
@@ -109,11 +112,13 @@ export default asDetailQueryRoute(
               {data.protocolEvent.category.label}
             </h1>
 
-
-
             <p className="mt-3 text-xl text-muted-foreground"></p>
             <p className="mt-3 text-xl text-muted-foreground">
-              <KraphProtocolEventCategory.DetailLink object={data.protocolEvent.category.id}>{data.protocolEvent.category.label}</KraphProtocolEventCategory.DetailLink>
+              <KraphProtocolEventCategory.DetailLink
+                object={data.protocolEvent.category.id}
+              >
+                {data.protocolEvent.category.label}
+              </KraphProtocolEventCategory.DetailLink>
             </p>
           </div>
           <div className="flex flex-col gap-2">
@@ -127,7 +132,7 @@ export default asDetailQueryRoute(
           ) : (
             <div className="h-ful w-ull flex flex-col items-center justify-center">
               <p className="text-sm font-light mb-3">
-                No Node Query yet for this category
+                No Node Query yet for this event
               </p>
               <FormDialog
                 trigger={<Button variant="outline">Create Query</Button>}
@@ -138,9 +143,22 @@ export default asDetailQueryRoute(
             </div>
           )}
 
-
-
-
+          {data.protocolEvent.variables.length > 0 && (
+            <div className="mt-6">
+              <h2 className="text-2xl font-bold mb-2">Variables</h2>
+              <div className="flex flex-wrap gap-2">
+                {data.protocolEvent.variables.map((variable) => (
+                  <div
+                    key={variable.role + variable.value}
+                    className="px-3 py-1 bg-gray-200 rounded-full text-sm"
+                  >
+                    <span className="font-semibold">{variable.role}:</span>{" "}
+                    {variable.value}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </KraphProtocolEvent.ModelPage>
     );

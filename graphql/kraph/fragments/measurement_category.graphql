@@ -31,6 +31,7 @@ fragment ListMeasurementCategory on MeasurementCategory {
   sourceDefinition {
     tagFilters
     categoryFilters
+    identifierFilters
   }
   targetDefinition {
     tagFilters

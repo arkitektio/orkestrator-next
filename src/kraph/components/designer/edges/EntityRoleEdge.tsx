@@ -7,9 +7,7 @@ import {
   type EdgeProps,
   type ReactFlowState,
 } from "@xyflow/react";
-import {
-  EntityRoleEdge
-} from "../types";
+import { EntityRoleEdge } from "../types";
 import { getEdgeParams } from "../utils";
 
 export type GetSpecialPathParams = {
@@ -26,8 +24,9 @@ export const getSpecialPath = (
   const centerX = (sourceX + targetX) / 2;
   const centerY = (sourceY + targetY) / 2;
 
-  return `M ${sourceX} ${sourceY} Q ${centerX} ${centerY + offset
-    } ${targetX} ${targetY}`;
+  return `M ${sourceX} ${sourceY} Q ${centerX} ${
+    centerY + offset
+  } ${targetX} ${targetY}`;
 };
 
 export default ({
@@ -69,7 +68,12 @@ export default ({
   };
 
   let path = "";
-  const offset = 0;
+  // Calculate offset based on whether there are multiple edges and the current edge's index
+  const isMultipleEdges = theEdges.length > 1;
+  const offset = isMultipleEdges
+    ? (myIndex - (theEdges.length - 1) / 2) * 60
+    : 0;
+
   path = getSpecialPath(
     { sourceX: sx, sourceY: sy, targetX: tx, targetY: ty },
     offset,

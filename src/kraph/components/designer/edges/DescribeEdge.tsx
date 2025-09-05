@@ -6,9 +6,7 @@ import {
   type EdgeProps,
   type ReactFlowState,
 } from "@xyflow/react";
-import {
-  DescribeEdge
-} from "../types";
+import { DescribeEdge } from "../types";
 import { getEdgeParams } from "../utils";
 import { Card } from "@/components/ui/card";
 
@@ -26,8 +24,9 @@ export const getSpecialPath = (
   const centerX = (sourceX + targetX) / 2;
   const centerY = (sourceY + targetY) / 2;
 
-  return `M ${sourceX} ${sourceY} Q ${centerX + offset} ${centerY + offset
-    } ${targetX} ${targetY}`;
+  return `M ${sourceX} ${sourceY} Q ${centerX + offset} ${
+    centerY + offset
+  } ${targetX} ${targetY}`;
 };
 
 export default ({
@@ -87,17 +86,6 @@ export default ({
         label={data?.label}
         color="#ff00ff"
       />
-      <EdgeLabelRenderer>
-        <Card
-          style={{
-            position: "absolute",
-            transform: `translate(-50%, -50%) translate(${centerX}px,${centerY + offset}px)`,
-          }}
-          className="p-3 text-xs group nodrag nopan"
-        >
-          {data?.label}
-        </Card>
-      </EdgeLabelRenderer>
     </>
   );
 };

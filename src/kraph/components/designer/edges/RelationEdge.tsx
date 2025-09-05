@@ -9,6 +9,7 @@ import {
 } from "@xyflow/react";
 import { RelationEdge } from "../types";
 import { getEdgeParams } from "../utils";
+import { KraphRelationCategory } from "@/linkers";
 
 export type GetSpecialPathParams = {
   sourceX: number;
@@ -24,8 +25,9 @@ export const getSpecialPath = (
   const centerX = (sourceX + targetX) / 2;
   const centerY = (sourceY + targetY) / 2;
 
-  return `M ${sourceX} ${sourceY} Q ${centerX} ${centerY + offset
-    } ${targetX} ${targetY}`;
+  return `M ${sourceX} ${sourceY} Q ${centerX} ${
+    centerY + offset
+  } ${targetX} ${targetY}`;
 };
 
 export default ({
@@ -65,8 +67,9 @@ export default ({
   if (source == target) {
     const radiusX = 100;
     const radiusY = 100;
-    path = `M ${sourceX - 10} ${sourceY} A ${radiusX} ${radiusY} 0 1 0 ${targetX + 5
-      } ${targetY}`;
+    path = `M ${sourceX - 10} ${sourceY} A ${radiusX} ${radiusY} 0 1 0 ${
+      targetX + 5
+    } ${targetY}`;
 
     centerX = sourceX - radiusX * 2;
     centerY = (sourceY + targetY) / 2;
@@ -88,7 +91,20 @@ export default ({
           }}
           className="p-1 text-xs group nodrag nopan"
         >
-          {data?.label}
+          <KraphRelationCategory.Smart
+            object={data?.id || "0"}
+            className="w-20"
+          >
+            {data?.id && (
+              <KraphRelationCategory.DetailLink
+                object={data?.id}
+                style={{ pointerEvents: "all" }}
+                className={"font-bold cursor-pointer "}
+              >
+                {data?.label}
+              </KraphRelationCategory.DetailLink>
+            )}
+          </KraphRelationCategory.Smart>
         </Card>
       </EdgeLabelRenderer>
     </>

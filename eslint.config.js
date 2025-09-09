@@ -19,6 +19,8 @@ export default defineConfig([
     rules: {
       ...pluginReact.configs.flat.recommended.rules,
       "react/react-in-jsx-scope": "off",
+      "react/display-name": "off",
+      "react/no-unknown-property": "off"
     },
   },
 ]);

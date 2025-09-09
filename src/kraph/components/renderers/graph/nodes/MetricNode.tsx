@@ -1,11 +1,8 @@
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
-  KraphMetric,
-  KraphMetricCategory,
-  KraphProtocolEventCategory,
+  KraphMetric
 } from "@/linkers";
 import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
@@ -41,7 +38,7 @@ export default memo(({ data, id, selected }: NodeProps<MetricNode>) => {
           )}
           <div className="absolute top-0 left-0 right-0 bottom-0 z-10 flex items-center justify-center flex-col bg-black/50  ">
             <KraphMetric.DetailLink object={data.id} className={"font-bold"}>
-              {data.label}
+              {data.category.label}
             </KraphMetric.DetailLink>
             <div className="flex flex-row gap-2">{data.value}</div>
           </div>

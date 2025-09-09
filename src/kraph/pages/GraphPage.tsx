@@ -7,13 +7,11 @@ import { useNavigate } from "react-router-dom";
 import { useGetGraphQuery, useUpdateGraphMutation } from "../api/graphql";
 
 import { Button } from "@/components/ui/button";
-import PopularePlotViewsCarousel from "../components/carousels/PopularePlotViewsCarousel";
+import { Card } from "@/components/ui/card";
 import OntologyGraph from "../components/designer/OntologyGraph";
 import { UpdateGraphForm } from "../forms/UpdateGraphForm";
-import { Card } from "@/components/ui/card";
 
 export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
-  const nagivate = useNavigate();
   const [update] = useUpdateGraphMutation({
     refetchQueries: ["GetGraph"],
   });
@@ -36,9 +34,8 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
       title={data.graph.name}
       pageActions={
         <div className="flex flex-row gap-2">
-          <FormSheet trigger={<HobbyKnifeIcon />}>
-            {data?.graph && <UpdateGraphForm graph={data?.graph} />}
-          </FormSheet>
+          <FormSheet trigger={<Button variant="outline"><HobbyKnifeIcon /></Button>}>
+            {data?.graph && <UpdateGraphForm graph={data?.graph} />}</FormSheet>
           <KraphGraph.ObjectButton object={data.graph.id} />
           <Button
             onClick={() => {

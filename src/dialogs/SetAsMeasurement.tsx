@@ -1,29 +1,15 @@
 import { Structure } from "@/actions/action-registry";
 import { useDialog } from "@/app/dialog";
-import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
-import { ListSearchField } from "@/components/fields/ListSearchField copy";
-import { ParagraphField } from "@/components/fields/ParagraphField";
 import { SearchOptions } from "@/components/fields/SearchField";
-import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
-import { Separator } from "@/components/ui/separator";
 import {
   CreateMeasurementCategoryMutationVariables,
-  ListMeasurementCategoryFragment,
   ListMeasurementCategoryWithGraphFragment,
-  useCreateMeasurementCategoryMutation,
   useCreateMeasurementMutation,
   useCreateStructureMutation,
-  useCreateStructureRelationMutation,
-  useListEntitiesQuery,
-  useSearchEntityCategoryLazyQuery,
-  useSearchGraphsLazyQuery,
-  useSearchTagsLazyQuery,
+  useListEntitiesQuery
 } from "@/kraph/api/graphql";
 import { smartRegistry } from "@/providers/smart/registry";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 const searchIdentifiers = async ({ search, values }: SearchOptions) => {

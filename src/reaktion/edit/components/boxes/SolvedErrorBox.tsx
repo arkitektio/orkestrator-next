@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ValidationError } from "@/reaktion/validation/types";
-import { RemainingErrorRender } from "../../ErrorRender";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
+import { RemainingErrorRender } from "../../ErrorRender";
 
 export const SolvedErrorBox = (props: { errors: ValidationError[] }) => {
   return (
@@ -14,7 +14,7 @@ export const SolvedErrorBox = (props: { errors: ValidationError[] }) => {
           </div>
           <div className="gap-1 flex flex-col">
             {props.errors.map((e) => (
-              <RemainingErrorRender error={e} onClick={() => {}} />
+              <RemainingErrorRender error={e} onClick={() => { }} />
             ))}
           </div>
         </CardContent>

@@ -9,7 +9,6 @@ import { AlpakaRoom } from "@/linkers";
 import { CubeIcon, PlusIcon } from "@radix-ui/react-icons";
 import { Home } from "lucide-react";
 import * as React from "react";
-import { RiProfileFill } from "react-icons/ri";
 import {
   GlobalSearchQueryVariables,
   useCreateRoomMutation,
@@ -19,7 +18,7 @@ import {
 import RoomCard from "../components/cards/RoomCard";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
 
-interface IDataSidebarProps {}
+interface IDataSidebarProps { }
 
 export const NavigationPane = (props: {}) => {
   const [createRoom] = useCreateRoomMutation({

@@ -1,19 +1,14 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { StringField } from "@/components/fields/StringField";
+import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
-  CreateMeasurementCategoryMutation,
   CreateMeasurementMutationVariables,
-  CreateReagentMutationVariables,
   useCreateMeasurementMutation,
-  useCreateReagentMutation,
-  useSearchMeasurmentCategoryLazyQuery,
-  useSearchMeasurmentCategoryQuery,
+  useSearchMeasurmentCategoryLazyQuery
 } from "../api/graphql";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 
 export default (props: {
   identifier: string
@@ -59,7 +54,7 @@ export default (props: {
                 name="category"
                 description="Search for related entities"
               />
-              {}
+              { }
             </div>
           </div>
 

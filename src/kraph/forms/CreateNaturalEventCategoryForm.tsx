@@ -1,4 +1,5 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
+import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
@@ -8,10 +9,8 @@ import { useForm } from "react-hook-form";
 import {
   CreateProtocolEventCategoryMutationVariables,
   useCreateNaturalEventCategoryMutation,
-  useCreateProtocolEventCategoryMutation,
-  useSearchGraphsLazyQuery,
+  useSearchGraphsLazyQuery
 } from "../api/graphql";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 
 const enumToOptions = (e: any) => {
   return Object.keys(e).map((key) => ({

@@ -2,9 +2,9 @@ import { RoiKind } from "@/mikro-next/api/graphql";
 import { toast } from "sonner";
 import * as THREE from "three";
 import { EllipsisDrawer } from "../controls/EllipsisDrawer";
+import { RoiDrawerProps } from "./RoiDrawerCanvas";
 import { convertFromThreeJSCoords } from "./roiUtils";
 import { useRoiCreation } from "./useRoiCreation";
-import { RoiDrawerProps } from "./RoiDrawerCanvas";
 
 export const EllipsisRoiDrawer = ({
   imageHeight,
@@ -13,6 +13,7 @@ export const EllipsisRoiDrawer = ({
   c,
   z,
   t,
+  event_key = "shift",
 }: RoiDrawerProps) => {
   const createRoi = useRoiCreation(image.id);
 
@@ -40,8 +41,8 @@ export const EllipsisRoiDrawer = ({
         imageWidth,
         imageHeight,
         c,
-        z,
         t,
+        z,
       );
 
       const result = await createRoi({
@@ -64,5 +65,7 @@ export const EllipsisRoiDrawer = ({
     }
   };
 
-  return <EllipsisDrawer onEllipsisDrawn={onEllipsisDrawn} />;
+  return (
+    <EllipsisDrawer onEllipsisDrawn={onEllipsisDrawn} event_key={event_key} />
+  );
 };

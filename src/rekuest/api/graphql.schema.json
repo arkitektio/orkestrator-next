@@ -969,6 +969,170 @@
       },
       {
         "kind": "INPUT_OBJECT",
+        "name": "ActionDependencyInput",
+        "description": "A dependency for a implementation. By defining dependencies, you can\n    create a dependency graph for your implementations and actions",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "argMatches",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "PortMatchInput",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "description",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "forceArgLength",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "forceReturnLength",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "hash",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "ActionHash",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "key",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "name",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "optional",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "defaultValue": "false",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "protocols",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "ID",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "returnMatches",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "PortMatchInput",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
         "name": "ActionFilter",
         "description": null,
         "isOneOf": false,
@@ -1499,6 +1663,30 @@
             "deprecationReason": null
           },
           {
+            "name": "hookUrl",
+            "description": "Webhook URL for this Agent (only if webhook)",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "hookUrlSecret",
+            "description": "Webhook URL secret for this Agent (only if webhook)",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "id",
             "description": "Unique ID of the agent.",
             "args": [],
@@ -1602,6 +1790,22 @@
               "ofType": {
                 "kind": "SCALAR",
                 "name": "InstanceId",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "kind",
+            "description": "Kind of the agent.",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "ENUM",
+                "name": "AgentKind",
                 "ofType": null
               }
             },
@@ -2083,6 +2287,30 @@
         "possibleTypes": null
       },
       {
+        "kind": "ENUM",
+        "name": "AgentKind",
+        "description": null,
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": [
+          {
+            "name": "WEBHOOK",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "WEBSOCKET",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "possibleTypes": null
+      },
+      {
         "kind": "INPUT_OBJECT",
         "name": "AgentOrder",
         "description": null,
@@ -2355,7 +2583,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"7d119f82-ac5c-4c27-8003-bef891918b82\"",
+            "defaultValue": "\"bef97572-c837-422e-a014-ad61a82c0c75\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -2771,6 +2999,55 @@
             "deprecationReason": null
           },
           {
+            "name": "children",
+            "description": "Child assignations spawned from this one.",
+            "args": [
+              {
+                "name": "filters",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "AssignationFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "pagination",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "OffsetPaginationInput",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "Assignation",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "createdAt",
             "description": "Creation timestamp.",
             "args": [],
@@ -3103,6 +3380,18 @@
             "deprecationReason": null
           },
           {
+            "name": "delegatedTo",
+            "description": "If this event was delegated, the assignation it was delegated to.",
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Assignation",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "id",
             "description": "Unique ID of the event.",
             "args": [],
@@ -3264,6 +3553,12 @@
             "deprecationReason": null
           },
           {
+            "name": "DELEGATE",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "DISCONNECTED",
             "description": null,
             "isDeprecated": false,
@@ -3318,6 +3613,130 @@
             "deprecationReason": null
           }
         ],
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "AssignationFilter",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "AND",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "AssignationFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DISTINCT",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "NOT",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "AssignationFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "OR",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "AssignationFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ids",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "ID",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "instanceId",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "InstanceId",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "reservation",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "ReservationFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "status",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "ENUM",
+                  "name": "AssignationStatus",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
         "possibleTypes": null
       },
       {
@@ -3443,6 +3862,48 @@
           },
           {
             "name": "STEP",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "possibleTypes": null
+      },
+      {
+        "kind": "ENUM",
+        "name": "AssignationStatus",
+        "description": "The event kind of the assignationevent",
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": [
+          {
+            "name": "ASSIGNING",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "CANCELLED",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "CRITICAL",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DONE",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "ONGOING",
             "description": null,
             "isDeprecated": false,
             "deprecationReason": null
@@ -5754,40 +6215,32 @@
         "isOneOf": null,
         "fields": [
           {
-            "name": "action",
-            "description": "Optional action this dependency refers to.",
+            "name": "actionHash",
+            "description": "Original hash when the dependency was created.",
             "args": [],
             "type": {
-              "kind": "OBJECT",
-              "name": "Action",
+              "kind": "SCALAR",
+              "name": "ActionHash",
               "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
-            "name": "binds",
-            "description": "Binds information attached to the dependency.",
+            "name": "argMatches",
+            "description": "Protocols that this dependency needs to match.",
             "args": [],
             "type": {
-              "kind": "OBJECT",
-              "name": "Binds",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "hash",
-            "description": "Current hash of the dependency.",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
+              "kind": "LIST",
               "name": null,
               "ofType": {
-                "kind": "SCALAR",
-                "name": "ActionHash",
-                "ofType": null
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "PortMatch",
+                  "ofType": null
+                }
               }
             },
             "isDeprecated": false,
@@ -5826,15 +6279,15 @@
             "deprecationReason": null
           },
           {
-            "name": "initialHash",
-            "description": "Original hash when the dependency was created.",
+            "name": "key",
+            "description": "Optional string identifier or tag for reference.",
             "args": [],
             "type": {
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
                 "kind": "SCALAR",
-                "name": "ActionHash",
+                "name": "String",
                 "ofType": null
               }
             },
@@ -5858,18 +6311,6 @@
             "deprecationReason": null
           },
           {
-            "name": "reference",
-            "description": "Optional string identifier or tag for reference.",
-            "args": [],
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "resolvable",
             "description": "Check if this dependency can be resolved by a connected agent.",
             "args": [],
@@ -5880,6 +6321,26 @@
                 "kind": "SCALAR",
                 "name": "Boolean",
                 "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "returnMatches",
+            "description": "Protocols that this dependency needs to match.",
+            "args": [],
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "PortMatch",
+                  "ofType": null
+                }
               }
             },
             "isDeprecated": false,
@@ -5961,82 +6422,6 @@
                   "ofType": null
                 }
               }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "interfaces": null,
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "INPUT_OBJECT",
-        "name": "DependencyInput",
-        "description": "A dependency for a implementation. By defining dependencies, you can\n    create a dependency graph for your implementations and actions",
-        "isOneOf": false,
-        "fields": null,
-        "inputFields": [
-          {
-            "name": "binds",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "BindsInput",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "hash",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "ActionHash",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "optional",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "Boolean",
-                "ofType": null
-              }
-            },
-            "defaultValue": "false",
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "reference",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "viableInstances",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Int",
-              "ofType": null
             },
             "defaultValue": null,
             "isDeprecated": false,
@@ -7823,7 +8208,7 @@
                   "name": null,
                   "ofType": {
                     "kind": "INPUT_OBJECT",
-                    "name": "DependencyInput",
+                    "name": "ActionDependencyInput",
                     "ofType": null
                   }
                 }
@@ -11034,7 +11419,7 @@
       {
         "kind": "OBJECT",
         "name": "PortMatch",
-        "description": "Port matching in action demands.",
+        "description": null,
         "isOneOf": null,
         "fields": [
           {
@@ -11107,7 +11492,7 @@
           },
           {
             "name": "nullable",
-            "description": null,
+            "description": "Whether the port is nullable. ",
             "args": [],
             "type": {
               "kind": "SCALAR",
@@ -11126,13 +11511,13 @@
       {
         "kind": "INPUT_OBJECT",
         "name": "PortMatchInput",
-        "description": "The input for creating a port match.",
+        "description": "A dependency for a implementation. By defining dependencies, you can\n    create a dependency graph for your implementations and actions",
         "isOneOf": false,
         "fields": null,
         "inputFields": [
           {
             "name": "at",
-            "description": "The index of the port to match. ",
+            "description": null,
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -11144,7 +11529,7 @@
           },
           {
             "name": "children",
-            "description": "The matches for the children of the port to match. ",
+            "description": null,
             "type": {
               "kind": "LIST",
               "name": null,
@@ -11164,7 +11549,7 @@
           },
           {
             "name": "identifier",
-            "description": "The identifier of the port to match. ",
+            "description": null,
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -11176,7 +11561,7 @@
           },
           {
             "name": "key",
-            "description": "The key of the port to match.",
+            "description": null,
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -11188,7 +11573,7 @@
           },
           {
             "name": "kind",
-            "description": "The kind of the port to match. ",
+            "description": null,
             "type": {
               "kind": "ENUM",
               "name": "PortKind",
@@ -11200,7 +11585,7 @@
           },
           {
             "name": "nullable",
-            "description": "Whether the port is nullable. ",
+            "description": null,
             "type": {
               "kind": "SCALAR",
               "name": "Boolean",
@@ -13937,7 +14322,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"644f95c2-e7a3-4bc3-bbd6-0aa44cf0858c\"",
+            "defaultValue": "\"d016410b-08b0-40dd-9bb8-0acbe3c5a060\"",
             "isDeprecated": false,
             "deprecationReason": null
           },

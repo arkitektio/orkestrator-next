@@ -1,7 +1,6 @@
 import { FilterSearchField } from "@/components/fields/FilterSearchField";
 import { SearchField, SearchOptions } from "@/components/fields/SearchField";
 import { Badge } from "@/components/ui/badge";
-import { FilterSearch } from "@/kabinet/forms/filter/GlobalSearchFilter";
 import { SearchAssignWidgetFragment } from "@/rekuest/api/graphql";
 import useWidgetDependencies from "@/rekuest/hooks/useWidgetDependencies";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
@@ -9,7 +8,6 @@ import { InputWidgetProps } from "@/rekuest/widgets/types";
 import { pathToName } from "@/rekuest/widgets/utils";
 
 import { useCallback, useMemo } from "react";
-import { useFormContext } from "react-hook-form";
 
 
 
@@ -33,7 +31,7 @@ export const SearchWidget = (
     [registry, wardKey],
   );
 
-  const { values, met} = useWidgetDependencies({
+  const { values, met } = useWidgetDependencies({
     widget: props.widget,
     path: props.path,
   });
@@ -75,14 +73,14 @@ export const SearchWidget = (
 
   return (
     <>
-    <SearchField
-      name={pathToName(props.path)}
-      label={props.port.label || props.port.key}
-      search={search}
-      description={props.port.description || undefined}
-      noOptionFoundPlaceholder="No options found"
-      commandPlaceholder="Search..."
-    />
+      <SearchField
+        name={pathToName(props.path)}
+        label={props.port.label || props.port.key}
+        search={search}
+        description={props.port.description || undefined}
+        noOptionFoundPlaceholder="No options found"
+        commandPlaceholder="Search..."
+      />
     </>
   );
 };

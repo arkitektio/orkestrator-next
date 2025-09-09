@@ -12,8 +12,7 @@ const Card = ({ project, mates }: Props) => {
     <OmeroArkProject.Smart
       object={project?.id}
       dropClassName={({ isOver, canDrop, isDragging }) =>
-        `relative rounded group text-white bg-center bg-back-999 shadow-lg h-20  hover:bg-back-800 transition-all ease-in-out duration-200 group ${
-          isOver && !isDragging && "border-primary-200 border"
+        `relative rounded group text-white bg-center bg-back-999 shadow-lg h-20  hover:bg-back-800 transition-all ease-in-out duration-200 group ${isOver && !isDragging && "border-primary-200 border"
         } ${isDragging && "ring-primary-200 ring"} `
       }
       mates={mates}

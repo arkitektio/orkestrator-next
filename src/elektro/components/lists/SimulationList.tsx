@@ -1,9 +1,8 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { ElektroSimulation, ElektroTrace } from "@/linkers";
+import { ElektroSimulation } from "@/linkers";
 
-import { SimulationFilter, TraceFilter, useListSimulationsQuery, useTracesQuery } from "@/elektro/api/graphql";
+import { SimulationFilter, useListSimulationsQuery } from "@/elektro/api/graphql";
 import { OffsetPaginationInput } from "@/lok-next/api/graphql";
-import TraceCard from "../cards/TraceCard";
 import SimulationCard from "../cards/SimulationCard";
 
 export type Props = {

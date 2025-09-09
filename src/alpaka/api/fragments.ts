@@ -1,11 +1,10 @@
 
-      export interface PossibleTypesResultData {
-        possibleTypes: {
-          [key: string]: string[]
-        }
-      }
-      const result: PossibleTypesResultData = {
+export interface PossibleTypesResultData {
+  possibleTypes: {
+    [key: string]: string[]
+  }
+}
+const result: PossibleTypesResultData = {
   "possibleTypes": {}
 };
-      export default result;
-    
+export default result;

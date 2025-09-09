@@ -1,7 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ViewFragment } from "@/mikro-next/api/graphql";
-import { useMatchedView } from "@/providers/view/ViewContext";
 import { ComponentProps } from "react";
 
 export interface ViewCardProps extends ComponentProps<typeof Card> {

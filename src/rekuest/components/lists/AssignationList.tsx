@@ -5,7 +5,7 @@ import AssignationCard from "../cards/AssignationCard";
 
 export type Props = {};
 
-const List = ({}: Props) => {
+const List = ({ }: Props) => {
   const { data } = useAssignations();
 
   return (

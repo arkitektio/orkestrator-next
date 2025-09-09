@@ -406,7 +406,12 @@ export type ManifestInput = {
   version: Scalars['String']['input'];
 };
 
-/** MediaStore(id, path, key, bucket, populated, s3store_ptr) */
+/**
+ * Small helper around S3-backed stored objects.
+ *
+ * Provides convenience helpers for generating presigned URLs and
+ * uploading content.
+ */
 export type MediaStore = {
   __typename?: 'MediaStore';
   bucket: Scalars['String']['output'];
@@ -418,7 +423,12 @@ export type MediaStore = {
 };
 
 
-/** MediaStore(id, path, key, bucket, populated, s3store_ptr) */
+/**
+ * Small helper around S3-backed stored objects.
+ *
+ * Provides convenience helpers for generating presigned URLs and
+ * uploading content.
+ */
 export type MediaStorePresignedUrlArgs = {
   host?: InputMaybe<Scalars['String']['input']>;
 };
@@ -482,6 +492,7 @@ export type Mutation = {
   createGroupProfile: GroupProfile;
   createInstanceAlias: InstanceAlias;
   createProfile: Profile;
+  createRedeemToken: RedeemToken;
   createServiceInstance: ServiceInstance;
   /** Create a new stash */
   createStash: Stash;
@@ -541,6 +552,11 @@ export type MutationCreateInstanceAliasArgs = {
 
 export type MutationCreateProfileArgs = {
   input: CreateProfileInput;
+};
+
+
+export type MutationCreateRedeemTokenArgs = {
+  input: RedeemTokenInput;
 };
 
 
@@ -625,7 +641,7 @@ export type MutationUpdateStashArgs = {
 
 export type NotifyUserInput = {
   message: Scalars['String']['input'];
-  title: Scalars['String']['input'];
+  title?: InputMaybe<Scalars['String']['input']>;
   user: Scalars['ID']['input'];
 };
 
@@ -746,11 +762,13 @@ export type Query = {
   myActiveMessages: Array<SystemMessage>;
   myManagedClients: Client;
   myMentions: Array<Comment>;
+  myRedeemTokens: Array<RedeemToken>;
   myStashes: Array<Stash>;
   mycontext: Context;
   mygroups: Array<Group>;
   organization: Organization;
   organizations: Array<Organization>;
+  redeemToken: RedeemToken;
   redeemTokens: Array<RedeemToken>;
   release: Release;
   releases: Array<Release>;
@@ -846,6 +864,11 @@ export type QueryOrganizationArgs = {
 export type QueryOrganizationsArgs = {
   filters?: InputMaybe<OrganizationFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryRedeemTokenArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -960,6 +983,10 @@ export type RedeemTokenFilter = {
   OR?: InputMaybe<RedeemTokenFilter>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type RedeemTokenInput = {
+  token?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type RegisterComChannelInput = {
@@ -1484,6 +1511,8 @@ export type ProfileFragment = { __typename?: 'Profile', id: string, name?: strin
 
 export type ListRedeemTokenFragment = { __typename?: 'RedeemToken', id: string, token: string, user: { __typename?: 'User', id: string, email?: string | null }, client?: { __typename?: 'Client', id: string, release: { __typename?: 'Release', version: any, app: { __typename?: 'App', identifier: any } } } | null };
 
+export type DetailRedeemTokenFragment = { __typename?: 'RedeemToken', id: string, token: string, user: { __typename?: 'User', id: string, email?: string | null }, client?: { __typename?: 'Client', id: string, release: { __typename?: 'Release', version: any, app: { __typename?: 'App', identifier: any } } } | null };
+
 export type DetailReleaseFragment = { __typename?: 'Release', id: string, version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null }, clients: Array<{ __typename?: 'Client', id: string, name: string, kind: ClientKind, user?: { __typename?: 'User', id: string, username: string } | null, release: { __typename?: 'Release', version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }> };
 
 export type ListReleaseFragment = { __typename?: 'Release', id: string, version: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null, app: { __typename?: 'App', id: string, identifier: any, logo?: { __typename?: 'MediaStore', presignedUrl: string } | null } };
@@ -1597,6 +1626,13 @@ export type UpdateUserProfileMutationVariables = Exact<{
 
 
 export type UpdateUserProfileMutation = { __typename?: 'Mutation', updateProfile: { __typename?: 'Profile', id: string, name?: string | null, bio?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } };
+
+export type CreateRedeemTokenMutationVariables = Exact<{
+  input: RedeemTokenInput;
+}>;
+
+
+export type CreateRedeemTokenMutation = { __typename?: 'Mutation', createRedeemToken: { __typename?: 'RedeemToken', token: string } };
 
 export type CreateStashMutationVariables = Exact<{
   name?: InputMaybe<Scalars['String']['input']>;
@@ -1794,6 +1830,13 @@ export type RedeemTokensQueryVariables = Exact<{
 
 
 export type RedeemTokensQuery = { __typename?: 'Query', redeemTokens: Array<{ __typename?: 'RedeemToken', id: string, token: string, user: { __typename?: 'User', id: string, email?: string | null }, client?: { __typename?: 'Client', id: string, release: { __typename?: 'Release', version: any, app: { __typename?: 'App', identifier: any } } } | null }> };
+
+export type GetRedeemTokenQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetRedeemTokenQuery = { __typename?: 'Query', redeemToken: { __typename?: 'RedeemToken', id: string, token: string, user: { __typename?: 'User', id: string, email?: string | null }, client?: { __typename?: 'Client', id: string, release: { __typename?: 'Release', version: any, app: { __typename?: 'App', identifier: any } } } | null } };
 
 export type ReleasesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -2336,6 +2379,11 @@ export const ListRedeemTokenFragmentDoc = gql`
   }
 }
     `;
+export const DetailRedeemTokenFragmentDoc = gql`
+    fragment DetailRedeemToken on RedeemToken {
+  ...ListRedeemToken
+}
+    ${ListRedeemTokenFragmentDoc}`;
 export const DetailReleaseFragmentDoc = gql`
     fragment DetailRelease on Release {
   id
@@ -2903,6 +2951,39 @@ export function useUpdateUserProfileMutation(baseOptions?: ApolloReactHooks.Muta
 export type UpdateUserProfileMutationHookResult = ReturnType<typeof useUpdateUserProfileMutation>;
 export type UpdateUserProfileMutationResult = Apollo.MutationResult<UpdateUserProfileMutation>;
 export type UpdateUserProfileMutationOptions = Apollo.BaseMutationOptions<UpdateUserProfileMutation, UpdateUserProfileMutationVariables>;
+export const CreateRedeemTokenDocument = gql`
+    mutation CreateRedeemToken($input: RedeemTokenInput!) {
+  createRedeemToken(input: $input) {
+    token
+  }
+}
+    `;
+export type CreateRedeemTokenMutationFn = Apollo.MutationFunction<CreateRedeemTokenMutation, CreateRedeemTokenMutationVariables>;
+
+/**
+ * __useCreateRedeemTokenMutation__
+ *
+ * To run a mutation, you first call `useCreateRedeemTokenMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateRedeemTokenMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createRedeemTokenMutation, { data, loading, error }] = useCreateRedeemTokenMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateRedeemTokenMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateRedeemTokenMutation, CreateRedeemTokenMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateRedeemTokenMutation, CreateRedeemTokenMutationVariables>(CreateRedeemTokenDocument, options);
+      }
+export type CreateRedeemTokenMutationHookResult = ReturnType<typeof useCreateRedeemTokenMutation>;
+export type CreateRedeemTokenMutationResult = Apollo.MutationResult<CreateRedeemTokenMutation>;
+export type CreateRedeemTokenMutationOptions = Apollo.BaseMutationOptions<CreateRedeemTokenMutation, CreateRedeemTokenMutationVariables>;
 export const CreateStashDocument = gql`
     mutation CreateStash($name: String, $description: String = "") {
   createStash(input: {name: $name, description: $description}) {
@@ -3848,6 +3929,41 @@ export function useRedeemTokensLazyQuery(baseOptions?: ApolloReactHooks.LazyQuer
 export type RedeemTokensQueryHookResult = ReturnType<typeof useRedeemTokensQuery>;
 export type RedeemTokensLazyQueryHookResult = ReturnType<typeof useRedeemTokensLazyQuery>;
 export type RedeemTokensQueryResult = Apollo.QueryResult<RedeemTokensQuery, RedeemTokensQueryVariables>;
+export const GetRedeemTokenDocument = gql`
+    query GetRedeemToken($id: ID!) {
+  redeemToken(id: $id) {
+    ...DetailRedeemToken
+  }
+}
+    ${DetailRedeemTokenFragmentDoc}`;
+
+/**
+ * __useGetRedeemTokenQuery__
+ *
+ * To run a query within a React component, call `useGetRedeemTokenQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetRedeemTokenQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetRedeemTokenQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetRedeemTokenQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetRedeemTokenQuery, GetRedeemTokenQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetRedeemTokenQuery, GetRedeemTokenQueryVariables>(GetRedeemTokenDocument, options);
+      }
+export function useGetRedeemTokenLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRedeemTokenQuery, GetRedeemTokenQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetRedeemTokenQuery, GetRedeemTokenQueryVariables>(GetRedeemTokenDocument, options);
+        }
+export type GetRedeemTokenQueryHookResult = ReturnType<typeof useGetRedeemTokenQuery>;
+export type GetRedeemTokenLazyQueryHookResult = ReturnType<typeof useGetRedeemTokenLazyQuery>;
+export type GetRedeemTokenQueryResult = Apollo.QueryResult<GetRedeemTokenQuery, GetRedeemTokenQueryVariables>;
 export const ReleasesDocument = gql`
     query Releases {
   releases {

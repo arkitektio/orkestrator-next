@@ -1,10 +1,10 @@
-export { RoiDrawerCanvas } from "./RoiDrawerCanvas";
-export { RectangleRoiDrawer } from "./RectangleRoiDrawer";
 export { EllipsisRoiDrawer } from "./EllipsisRoiDrawer";
 export { LineRoiDrawer } from "./LineRoiDrawer";
+export { PathRoiDrawer } from "./PathRoiDrawer";
 export { PointRoiDrawer } from "./PointRoiDrawer";
 export { PolygonRoiDrawer } from "./PolygonRoiDrawer";
-export { PathRoiDrawer } from "./PathRoiDrawer";
+export { RectangleRoiDrawer } from "./RectangleRoiDrawer";
+export { RoiDrawerCanvas } from "./RoiDrawerCanvas";
+export type { RoiDrawerProps } from "./RoiDrawerCanvas";
 export { convertFromThreeJSCoords } from "./roiUtils";
 export { useRoiCreation } from "./useRoiCreation";
-export type { RoiDrawerProps } from "./RoiDrawerCanvas";

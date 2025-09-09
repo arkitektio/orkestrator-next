@@ -1,22 +1,22 @@
-import { Guard } from "@/lib/arkitekt/Arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import { Guard } from "@/lib/arkitekt/Arkitekt";
 import React from "react";
 import { Route, Routes } from "react-router";
-import HomePage from "./pages/HomePage";
-import TracePage from "./pages/TracePage";
-import StandardPane from "./panes/StandardPane";
-import SimulationPage from "./pages/SimulationPage";
-import NeuronModelPage from "./pages/NeuronModelPage";
 import ExperimentPage from "./pages/ExperimentPage";
-import SimulationsPage from "./pages/SimulationsPage";
 import ExperimentsPage from "./pages/ExperimentsPage";
-import NeuronModelsPage from "./pages/NeuronModelsPage";
-import TracesPage from "./pages/TracesPage";
+import HomePage from "./pages/HomePage";
 import ModelCollectionPage from "./pages/ModelCollectionPage";
 import ModelCollectionsPage from "./pages/ModelCollectionsPage";
+import NeuronModelPage from "./pages/NeuronModelPage";
+import NeuronModelsPage from "./pages/NeuronModelsPage";
 import RecordingPage from "./pages/RecordingPage";
+import SimulationPage from "./pages/SimulationPage";
+import SimulationsPage from "./pages/SimulationsPage";
 import StimulusPage from "./pages/StimulusPage";
-interface Props {}
+import TracePage from "./pages/TracePage";
+import TracesPage from "./pages/TracesPage";
+import StandardPane from "./panes/StandardPane";
+interface Props { }
 
 export const ElektroModule: React.FC<Props> = (props) => {
   return (

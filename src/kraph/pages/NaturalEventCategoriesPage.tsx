@@ -54,8 +54,8 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
             <p className="mt-3 text-xl text-muted-foreground">
               Natural events represent the events that happen during your
               experiments. Instead of protocol events, they are happening without
-              external control (intrinsic events). They allow you to track cell 
-              lineages, births and deaths, and other events that are  measurable 
+              external control (intrinsic events). They allow you to track cell
+              lineages, births and deaths, and other events that are  measurable
               during your eperiments.
             </p>
           </div>

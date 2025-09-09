@@ -217,11 +217,8 @@ export const SmartDropZone = ({
                 style={floatingStyles}
               >
                 <SmartContext
-                  identifier={props.identifier}
-                  object={props.object}
+                  objects={[{ identifier: props.identifier, object: props.object }]}
                   partners={partners}
-                  onSelectNode={conditionalAssign}
-                  onSelectTemplate={onTemplateSelect}
                 />
               </div>
             </Portal>

@@ -1,6 +1,6 @@
 import { Guard } from "@/lib/arkitekt/Arkitekt";
-import { UserAvatar } from "../UserAvatar";
 import { LokUser } from "@/linkers";
+import { UserAvatar } from "../UserAvatar";
 
 export const UserInfo = (props: { sub: string | undefined }) => {
   return (

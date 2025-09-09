@@ -1,5 +1,3 @@
-import { ArkitektLogo } from "@/app/components/logos/ArkitektLogo";
-import { BackLogo } from "@/app/components/logos/BackLogo";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export type AppLayoutProps = {
@@ -9,15 +7,6 @@ export type AppLayoutProps = {
 
 export const AppLayout = ({ children, navigationBar }: AppLayoutProps) => {
   const navigate = useNavigate();
-  const location = useLocation();
-
-  const onClick = () => {
-    if (window.electron) {
-      navigate(-1);
-    } else {
-      navigate("/");
-    }
-  };
 
   return (
     <div className="flex-grow flex flex-col sm:flex-row bg-background  dark:text-white  h-screen">

@@ -1,16 +1,12 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Card } from "@/components/ui/card";
 import { FormDialogAction } from "@/components/ui/form-dialog-action";
-import { KraphEntityCategory, KraphGraph } from "@/linkers";
+import { KraphEntityCategory } from "@/linkers";
 import { PlusIcon } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import GraphList from "../components/lists/GraphList";
-import CreateGraphForm from "../forms/CreateGraphForm";
-import ReagentCategoryList from "../components/lists/ReagentCategoryList";
-import CreateEntityCategoryForm from "../forms/CreateEntityCategoryForm";
-import EntityCategoryList from "../components/lists/EntityCategoryList";
 import StructureCategoryList from "../components/lists/StructureCategoryList";
+import CreateEntityCategoryForm from "../forms/CreateEntityCategoryForm";
 
 export type IRepresentationScreenProps = {};
 
@@ -52,9 +48,9 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
               Your Structure categories
             </h1>
             <p className="mt-3 text-xl text-muted-foreground">
-             Oh Structures! Structures represent the data that carries measurments and links to the underlining
-             biological entity. They are the main focus of your analysis and carry metrics.
-              </p>
+              Oh Structures! Structures represent the data that carries measurments and links to the underlining
+              biological entity. They are the main focus of your analysis and carry metrics.
+            </p>
 
           </div>
           <Card className="w-full h-full flex-row relative"></Card>

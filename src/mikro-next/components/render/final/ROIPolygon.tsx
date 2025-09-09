@@ -4,10 +4,14 @@ import {
   RoiKind,
   useDeleteRoiMutation,
 } from "@/mikro-next/api/graphql";
-import { useCursor, Line } from "@react-three/drei";
+import { Line, Text, useCursor } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
-import { useCallback, useRef, useState, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import { useViewerState } from "../ViewerStateProvider";
+import { useMySelect } from "@/providers/selection/SelectionContext";
+import { t } from "node_modules/@udecode/plate-list/dist/BaseListPlugin-B0eGlA5x";
+
 const convertToThreeJSCoords = (
   vertices: [number, number, number, number, number][],
   imageWidth: number,
@@ -32,56 +36,29 @@ const convertToThreeJSCoords = (
   return tr;
 };
 
-export const ROIPolygon = (
-  props: {
-    roi: ListRoiFragment;
-    imageWidth: number;
-    imageHeight: number;
-  } & PassThroughProps,
-) => {
+export const ROIPolygon = (props: {
+  roi: ListRoiFragment;
+  imageWidth: number;
+  imageHeight: number;
+}) => {
+  if (!props.roi.vectors || props.roi.vectors.length == 0) return null;
+
   const { roi } = props;
   const meshRef = useRef<THREE.Mesh>(null);
-  const { camera, gl, size } = useThree();
+  const { camera, size } = useThree();
   const [hovered, setHovered] = useState(false);
-  const [selected, setSelected] = useState(false);
-  const [deleteRoi] = useDeleteRoiMutation();
+  const {
+    z,
+    setAllowRoiDrawing,
+    setRoiDrawMode,
+    setShowRois,
+    addDisplayStructure,
+    setShowDisplayStructures,
+    setOpenPanels,
+  } = useViewerState();
 
-  // Keyboard event handler for deletion
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Backspace" && selected) {
-        event.preventDefault();
-        event.stopPropagation();
-        deleteRoi({
-          variables: { id: roi.id },
-          onCompleted: () => {
-            console.log(`ROI ${roi.id} deleted`);
-          },
-          onError: (error) => {
-            console.error("Failed to delete ROI:", error);
-          },
-        });
-      }
-    };
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        meshRef.current &&
-        !meshRef.current.userData.contains?.(event.target)
-      ) {
-        setSelected(false);
-      }
-    };
-
-    if (selected) {
-      window.addEventListener("keydown", handleKeyDown);
-      window.addEventListener("click", handleClickOutside);
-      return () => {
-        window.removeEventListener("keydown", handleKeyDown);
-        window.removeEventListener("click", handleClickOutside);
-      };
-    }
-  }, [selected, roi.id, deleteRoi]);
+  // Check if ROI should be visible based on z values
+  const roiZValues = roi.vectors.map((v) => v[2]);
 
   // Convert ROI vectors to Three.js coordinates
   const vertices = convertToThreeJSCoords(
@@ -89,8 +66,6 @@ export const ROIPolygon = (
     props.imageWidth,
     props.imageHeight,
   );
-
-  if (!vertices.at(0)) return null;
 
   // Create shape from vertices
   const shape = new THREE.Shape();
@@ -106,11 +81,40 @@ export const ROIPolygon = (
   const center = new THREE.Vector2();
   boundingBox.getCenter(center);
 
+  const { toggle, toggleB, isSelected, isBSelected } = useMySelect({
+    self: { identifier: "@mikro/roi", object: props.roi.id },
+  });
   // Find the rightmost point of the bounding box
   const rightPoint = new THREE.Vector2(boundingBox.max.x, center.y);
 
   // Add a small offset to position the panel to the right
   const OFFSET_X = 20; // pixels to the right
+
+  // Labels: show b-selection number near the ROI (if present),
+  // and show the normal selection number centered inside the ROI when selected.
+  const bLabel = isBSelected ? (
+    <Text
+      position={[center.x, center.y, 1]}
+      fontSize={10}
+      color="red"
+      anchorX="center"
+      anchorY="middle"
+    >
+      {String(isBSelected)}
+    </Text>
+  ) : null;
+
+  const selectedLabel = isSelected ? (
+    <Text
+      position={[center.x, center.y, 1]}
+      fontSize={14}
+      color="white"
+      anchorX="center"
+      anchorY="middle"
+    >
+      {String(isSelected)}
+    </Text>
+  ) : null;
 
   // Project point to screen coordinates
   const projectToScreenCoordinates = (point: THREE.Vector2) => {
@@ -127,19 +131,29 @@ export const ROIPolygon = (
     return { x, y };
   };
 
+  const color = isSelected ? "blue" : isBSelected ? "red" : "white";
+
   const onClick = useCallback(
     (e) => {
       e.stopPropagation();
 
       if (!meshRef.current) return;
 
-      // Set this ROI as selected for deletion
-      setSelected(true);
+      // Check for shift+click to add to display structures
+      if (e.shiftKey && !e.ctrlKey) {
+        toggle();
+        e.preventDefault();
+        return;
+      }
+
+      if (e.shiftKey && e.ctrlKey) {
+        toggleB();
+        e.preventDefault();
+        return;
+      }
 
       // Project the rightmost point of the ROI to screen coordinates
       const screenPos = projectToScreenCoordinates(rightPoint);
-
-      // Add the offset to position the panel to the right
 
       console.log(
         "Anchoring panel at screen position:",
@@ -147,7 +161,7 @@ export const ROIPolygon = (
         screenPos.y,
       );
 
-      props.setOpenPanels(() => {
+      setOpenPanels(() => {
         return [
           {
             positionX: screenPos.x,
@@ -159,7 +173,19 @@ export const ROIPolygon = (
         ];
       });
     },
-    [roi.id, rightPoint, camera, size, setSelected],
+    [
+      roi.id,
+      roi.kind,
+      rightPoint,
+      camera,
+      size,
+      setShowRois,
+      setAllowRoiDrawing,
+      setRoiDrawMode,
+      addDisplayStructure,
+      setShowDisplayStructures,
+      setOpenPanels,
+    ],
   );
 
   const onRightClick = useCallback(
@@ -167,9 +193,6 @@ export const ROIPolygon = (
       e.stopPropagation();
 
       if (!meshRef.current) return;
-
-      // Set this ROI as selected for deletion
-      setSelected(true);
 
       // Project the rightmost point of the ROI to screen coordinates
       const screenPos = projectToScreenCoordinates(rightPoint);
@@ -180,7 +203,7 @@ export const ROIPolygon = (
         screenPos.y,
       );
 
-      props.setOpenPanels(() => {
+      setOpenPanels(() => {
         return [
           {
             positionX: screenPos.x,
@@ -192,11 +215,13 @@ export const ROIPolygon = (
         ];
       });
     },
-    [roi.id, rightPoint, camera, size, setSelected],
+    [roi.id, rightPoint, camera, size],
   );
 
   useCursor(hovered, "pointer");
 
+  if (!roiZValues.includes(z)) return null;
+  if (!vertices.at(0)) return null;
   if (roi.kind == RoiKind.Rectangle) {
     return (
       <>
@@ -215,14 +240,16 @@ export const ROIPolygon = (
         >
           <shapeGeometry args={[shape]} />
           <meshBasicMaterial
-            color={"white"}
+            color={color}
             side={THREE.DoubleSide}
             transparent={true}
             opacity={hovered ? 0.5 : 0.2}
             depthWrite={false}
           />
         </mesh>
-        <Line points={shape.getPoints()} color="blue" lineWidth={2} />
+        <Line points={shape.getPoints()} color={color} lineWidth={2} />
+        {bLabel}
+        {selectedLabel}
       </>
     );
   }
@@ -245,14 +272,16 @@ export const ROIPolygon = (
         >
           <shapeGeometry args={[shape]} />
           <meshBasicMaterial
-            color={"white"}
+            color={color}
             side={THREE.DoubleSide}
             transparent={true}
-            opacity={hovered ? 0.5 : 0.2}
+            opacity={hovered ? 0.2 : 0.5}
             depthWrite={false}
           />
         </mesh>
-        <Line points={shape.getPoints()} color="green" lineWidth={2} />
+        <Line points={shape.getPoints()} color={color} lineWidth={2} />
+        {bLabel}
+        {selectedLabel}
       </>
     );
   }
@@ -264,19 +293,20 @@ export const ROIPolygon = (
       <>
         <Line
           points={linePoints}
-          color={hovered ? "orange" : "red"}
+          color={color}
           lineWidth={hovered ? 5 : 3}
           onClick={onClick}
           onContextMenu={onRightClick}
           onPointerOver={(e) => {
-            e.stopPropagation();
             setHovered(true);
           }}
           onPointerOut={(e) => {
-            e.stopPropagation();
             setHovered(false);
           }}
         />
+
+        {bLabel}
+        {selectedLabel}
       </>
     );
   }
@@ -303,7 +333,7 @@ export const ROIPolygon = (
         >
           <circleGeometry args={[hovered ? 8 : 5, 8]} />
           <meshBasicMaterial
-            color="yellow"
+            color={color}
             transparent={true}
             opacity={hovered ? 0.8 : 0.6}
             depthWrite={false}
@@ -313,12 +343,13 @@ export const ROIPolygon = (
         <mesh position={[point[0], point[1], 0.1]}>
           <ringGeometry args={[hovered ? 8 : 5, hovered ? 10 : 7, 8]} />
           <meshBasicMaterial
-            color="orange"
+            color={color}
             transparent={true}
             opacity={hovered ? 0.6 : 0.4}
             depthWrite={false}
           />
         </mesh>
+        {bLabel}
       </>
     );
   }
@@ -341,14 +372,16 @@ export const ROIPolygon = (
         >
           <shapeGeometry args={[shape]} />
           <meshBasicMaterial
-            color={"white"}
+            color={color}
             side={THREE.DoubleSide}
             transparent={true}
             opacity={hovered ? 0.5 : 0.2}
             depthWrite={false}
           />
         </mesh>
-        <Line points={shape.getPoints()} color="purple" lineWidth={2} />
+        <Line points={shape.getPoints()} color={color} lineWidth={2} />
+        {bLabel}
+        {selectedLabel}
       </>
     );
   }
@@ -359,9 +392,8 @@ export const ROIPolygon = (
     return (
       <>
         <Line
-          ref={meshRef}
           points={pathPoints}
-          color={hovered ? "yellow" : "white"}
+          color={color}
           lineWidth={hovered ? 5 : 3}
           onClick={onClick}
           onContextMenu={onRightClick}
@@ -374,6 +406,9 @@ export const ROIPolygon = (
             setHovered(false);
           }}
         />
+
+        {bLabel}
+        {selectedLabel}
       </>
     );
   }
@@ -396,7 +431,7 @@ export const ROIPolygon = (
       >
         <shapeGeometry args={[shape]} />
         <meshBasicMaterial
-          color={"purple"}
+          color={color}
           side={THREE.DoubleSide}
           transparent={true}
           opacity={hovered ? 0.5 : 0.2}
@@ -405,8 +440,10 @@ export const ROIPolygon = (
       </mesh>
       <line>
         <shapeGeometry args={[shape]} />
-        <lineBasicMaterial color="black" />
+        <lineBasicMaterial color={color} />
       </line>
+      {bLabel}
+      {selectedLabel}
     </>
   );
 };

@@ -1,6 +1,6 @@
+import { ElektroExperiment } from "@/linkers";
 import { ReturnWidgetProps } from "@/rekuest/widgets/types";
-import { useDetailExperimentQuery, useDetailSimulationQuery } from "../api/graphql";
-import { ElektroExperiment, ElektroSimulation } from "@/linkers";
+import { useDetailExperimentQuery } from "../api/graphql";
 
 export default (props: ReturnWidgetProps) => {
   const { data } = useDetailExperimentQuery({

@@ -2,10 +2,10 @@ import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { KraphEntity } from "@/linkers";
-import { NodeProps, NodeResizer } from "@xyflow/react";
+import { NodeProps } from "@xyflow/react";
 import { memo } from "react";
-import { EntityNode } from "../types";
 import { Handles } from "../components/Handles";
+import { EntityNode } from "../types";
 
 export default memo(({ data, id, selected }: NodeProps<EntityNode>) => {
   const resolve = useResolve();

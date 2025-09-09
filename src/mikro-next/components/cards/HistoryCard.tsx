@@ -11,7 +11,7 @@ import { AppInfo } from "@/lok-next/components/protected/AppInfo";
 import { UserInfo } from "@/lok-next/components/protected/UserInfo";
 import Timestamp from "react-timestamp";
 import { MateFinder } from "../../../mates/types";
-import { ProvenanceEntry, HistoryKind } from "../../api/graphql";
+import { HistoryKind, ProvenanceEntry } from "../../api/graphql";
 
 interface HistoryCardProps {
   history: ProvenanceEntry;

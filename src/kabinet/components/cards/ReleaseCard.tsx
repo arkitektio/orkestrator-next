@@ -11,7 +11,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { KABINET_INSTALL_POD_HASH } from "@/constants";
 import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import { KabinetRelease } from "@/linkers";
 import {

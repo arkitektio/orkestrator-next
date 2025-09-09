@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -6,13 +7,14 @@ import {
   type EdgeProps,
   type ReactFlowState,
 } from "@xyflow/react";
-import {
-  MeasurementEdge,
-  StagingMeasurementEdge,
-  StagingRelationEdge,
-} from "../types";
+import { MeasurementEdge } from "../types";
 import { getEdgeParams } from "../utils";
-import { Card } from "@/components/ui/card";
+import { KraphMeasurementCategory } from "@/linkers";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export type GetSpecialPathParams = {
   sourceX: number;
@@ -72,7 +74,11 @@ export default ({
   };
 
   let path = "";
-  const offset = 0;
+  // Calculate offset based on whether there are multiple edges and the current edge's index
+  const isMultipleEdges = theEdges.length > 1;
+  const offset = isMultipleEdges
+    ? (myIndex - (theEdges.length - 1) / 2) * 60
+    : 0;
 
   path = getSpecialPath(
     { sourceX: sx, sourceY: sy, targetX: tx, targetY: ty },
@@ -94,11 +100,33 @@ export default ({
         <Card
           style={{
             position: "absolute",
-            transform: `translate(-50%, -50%) translate(${centerX}px,${centerY + offset}px)`,
+            transform: `translate(-50%, -50%) translate(${centerX + offset}px,${centerY + offset}px)`,
           }}
-          className="p-3 text-xs group"
+          className="p-3 text-xs group nodrag nopan"
         >
-          {data?.label}
+          <KraphMeasurementCategory.Smart
+            object={data?.id || "0"}
+            className="w-16 overflow-hidden items-center justify-center flex"
+          >
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {data?.id && (
+                  <KraphMeasurementCategory.DetailLink
+                    object={data?.id}
+                    style={{ pointerEvents: "all" }}
+                    className={"font-bold cursor-pointer "}
+                  >
+                    {data?.label}
+                  </KraphMeasurementCategory.DetailLink>
+                )}
+              </TooltipTrigger>
+              <TooltipContent>
+                <span className="max-w-xs break-words">
+                  {data?.description}
+                </span>
+              </TooltipContent>
+            </Tooltip>
+          </KraphMeasurementCategory.Smart>
         </Card>
       </EdgeLabelRenderer>
     </>

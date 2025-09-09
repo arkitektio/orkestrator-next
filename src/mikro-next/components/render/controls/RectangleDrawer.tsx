@@ -1,56 +1,57 @@
-import {  useThree } from '@react-three/fiber'
-import { Line } from '@react-three/drei'
-import { useRef, useState } from 'react'
-import * as THREE from 'three'
-
-
+import { Line } from "@react-three/drei";
+import { useRef, useState } from "react";
+import * as THREE from "three";
+import { EventKeyProps, createEventKeyChecker } from "./eventKeyUtils";
 
 export type RectangleDrawerProps = {
-    onRectangleDrawn?: (start: THREE.Vector3, end: THREE.Vector3) => void
-}
+  onRectangleDrawn?: (start: THREE.Vector3, end: THREE.Vector3) => void;
+} & EventKeyProps;
 
 export function RectangleDrawer(props: RectangleDrawerProps) {
-  const planeRef = useRef<THREE.Mesh>(null)
+  const { event_key = "shift" } = props;
+  const planeRef = useRef<THREE.Mesh>(null);
 
-  const [start, setStart] = useState<THREE.Vector3 | null>(null)
-  const [end, setEnd] = useState<THREE.Vector3 | null>(null)
-  const [drawing, setDrawing] = useState(false)
+  const [start, setStart] = useState<THREE.Vector3 | null>(null);
+  const [end, setEnd] = useState<THREE.Vector3 | null>(null);
+  const [drawing, setDrawing] = useState(false);
+
+  const checkEventKey = createEventKeyChecker(event_key);
 
   const handlePointerDown = (e) => {
-    if (!e.shiftKey) return // 🟡 Require Shift to start
-    
-    e.stopPropagation()
+    if (!checkEventKey(e)) return; // Check for required event key
+
+    e.stopPropagation();
     // Always start fresh
-    setStart(e.point.clone())
-    setEnd(e.point.clone())
-    setDrawing(true)
-  }
+    setStart(e.point.clone());
+    setEnd(e.point.clone());
+    setDrawing(true);
+  };
 
   const handlePointerMove = (e) => {
-    if (!drawing || !start || !e.shiftKey) return // 🟡 Still require Shift while dragging
-    e.stopPropagation()
-    setEnd(e.point.clone())
-  }
+    if (!drawing || !start || !checkEventKey(e)) return; // 🟡 Still require Shift while dragging
+    e.stopPropagation();
+    setEnd(e.point.clone());
+  };
 
   const handlePointerUp = () => {
-    setDrawing(false)
+    setDrawing(false);
     if (start && end) {
       // Call the callback with the rectangle corners
-      props.onRectangleDrawn?.(start.clone(), end.clone())
+      props.onRectangleDrawn?.(start.clone(), end.clone());
       // Clear the states after drawing is complete
-      setStart(null)
-      setEnd(null)
+      setStart(null);
+      setEnd(null);
     }
-  }
+  };
 
   const points = (() => {
-    if (!start || !end) return []
-    const a = new THREE.Vector3(start.x, start.y, 0)
-    const b = new THREE.Vector3(end.x, start.y, 0)
-    const c = new THREE.Vector3(end.x, end.y, 0)
-    const d = new THREE.Vector3(start.x, end.y, 0)
-    return [a, b, c, d, a]
-  })()
+    if (!start || !end) return [];
+    const a = new THREE.Vector3(start.x, start.y, 0);
+    const b = new THREE.Vector3(end.x, start.y, 0);
+    const c = new THREE.Vector3(end.x, end.y, 0);
+    const d = new THREE.Vector3(start.x, end.y, 0);
+    return [a, b, c, d, a];
+  })();
 
   return (
     <>
@@ -72,7 +73,9 @@ export function RectangleDrawer(props: RectangleDrawerProps) {
       </mesh>
 
       {/* The drawn rectangle line */}
-      {points.length > 0 && <Line points={points} color="orange" lineWidth={1} />}
+      {points.length > 0 && (
+        <Line points={points} color="orange" lineWidth={1} />
+      )}
     </>
-    )
+  );
 }

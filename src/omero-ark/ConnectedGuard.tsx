@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useEnsureOmeroUserMutation, useMeQuery } from "./api/graphql";
+import { hostname } from "os";
 
 export const EnsureMeButton = () => {
   const [setMe, data] = useEnsureOmeroUserMutation({
@@ -9,7 +10,16 @@ export const EnsureMeButton = () => {
   return (
     <Button
       onClick={() =>
-        setMe({ variables: { password: "omero", username: "root" } })
+        setMe({
+          variables: {
+            input: {
+              password: "O8K9nvMXXUkg",
+              username: "JohannesRoos",
+              host: "omeroserver",
+              port: 4064,
+            },
+          },
+        })
       }
     >
       {" "}
@@ -26,7 +36,7 @@ export const ConnectedGuard = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!data) {
-    return <> Loading...</>;
+    return <> Checking Connection.</>;
   }
 
   if (!data.me.omeroUser) {

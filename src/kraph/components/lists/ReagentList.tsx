@@ -1,12 +1,10 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { MikroDataset, KraphReagent } from "@/linkers";
+import { KraphReagent } from "@/linkers";
 import {
   OffsetPaginationInput,
   OntologyFilter,
-  useListOntologiesQuery,
-  useListReagentsQuery,
+  useListReagentsQuery
 } from "../../api/graphql";
-import OntologyCard from "../cards/OntologyCard";
 import ReagentCard from "../cards/ReagentCard";
 
 export type Props = {

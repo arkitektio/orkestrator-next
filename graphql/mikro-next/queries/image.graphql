@@ -13,3 +13,13 @@ query GetImages(
     ...ListImage
   }
 }
+
+query ListImages(
+  $filters: ImageFilter
+  $pagination: OffsetPaginationInput
+  $order: ImageOrder
+) {
+  images(filters: $filters, pagination: $pagination, order: $order) {
+    ...ListImage
+  }
+}

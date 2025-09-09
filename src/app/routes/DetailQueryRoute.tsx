@@ -54,6 +54,7 @@ export const PassedDownComponent = <T extends DocumentNode>(props: {
 export const asDetailQueryRoute = <T extends any>(
   hook: HookFunction<T, DetailVariables>,
   Component: React.FC<{
+    id: string;
     data: T;
     refetch: (
       variables?: Partial<DetailVariables> | undefined,
@@ -98,12 +99,12 @@ export const asDetailQueryRoute = <T extends any>(
 
     if (passyProps.loading) return <LoadingPage />;
 
-    if (passyProps) {
+    if (passyProps && passyProps.data) {
       if (debug) {
         return <DebugPage data={passyProps.data} />;
       }
 
-      return <Component {...passyProps} />;
+      return <Component {...passyProps} id={id} />;
     }
   };
 };

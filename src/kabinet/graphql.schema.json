@@ -1,13 +1,16 @@
 {
   "__schema": {
     "queryType": {
-      "name": "Query"
+      "name": "Query",
+      "kind": "OBJECT"
     },
     "mutationType": {
-      "name": "Mutation"
+      "name": "Mutation",
+      "kind": "OBJECT"
     },
     "subscriptionType": {
-      "name": "Subscription"
+      "name": "Subscription",
+      "kind": "OBJECT"
     },
     "types": [
       {
@@ -2324,6 +2327,18 @@
                 "deprecationReason": null
               },
               {
+                "name": "order",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "FlavourOrder",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
                 "name": "pagination",
                 "description": null,
                 "type": {
@@ -4115,6 +4130,26 @@
             "deprecationReason": null
           },
           {
+            "name": "hasDefinitions",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "ID",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "ids",
             "description": null,
             "type": {
@@ -4130,7 +4165,7 @@
                 }
               }
             },
-            "defaultValue": "null",
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -4142,7 +4177,31 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "null",
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "FlavourOrder",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "releasedAt",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -4169,6 +4228,22 @@
         "isOneOf": null,
         "fields": [
           {
+            "name": "addedAt",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "DateTime",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "branch",
             "description": null,
             "args": [],
@@ -4194,6 +4269,18 @@
                 "type": {
                   "kind": "INPUT_OBJECT",
                   "name": "FlavourFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "order",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "FlavourOrder",
                   "ofType": null
                 },
                 "defaultValue": null,
@@ -4282,6 +4369,22 @@
             "deprecationReason": null
           },
           {
+            "name": "updatedAt",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "DateTime",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "user",
             "description": null,
             "args": [],
@@ -4359,6 +4462,18 @@
             "deprecationReason": null
           },
           {
+            "name": "branch",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "ids",
             "description": null,
             "type": {
@@ -4379,7 +4494,31 @@
             "deprecationReason": null
           },
           {
+            "name": "repo",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "search",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "user",
             "description": null,
             "type": {
               "kind": "SCALAR",
@@ -5447,6 +5586,50 @@
       },
       {
         "kind": "OBJECT",
+        "name": "Organization",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "id",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "slug",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
         "name": "Pod",
         "description": "A user of the bridge server. Maps to an authentikate user",
         "isOneOf": null,
@@ -6034,7 +6217,7 @@
         "inputFields": [
           {
             "name": "forceLength",
-            "description": null,
+            "description": "Require that the action has a specific number of ports. This is used to identify the demand in the system.",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -6046,7 +6229,19 @@
           },
           {
             "name": "forceNonNullableLength",
-            "description": null,
+            "description": "Require that the action has a specific number of non-nullable ports. This is used to identify the demand in the system.",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "forceStructureLength",
+            "description": "Require that the action has a specific number of structure ports. This is used to identify the demand in the system.",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -6058,7 +6253,7 @@
           },
           {
             "name": "kind",
-            "description": null,
+            "description": "The kind of the demand. You can ask for args or returns",
             "type": {
               "kind": "NON_NULL",
               "name": null,
@@ -6074,7 +6269,7 @@
           },
           {
             "name": "matches",
-            "description": null,
+            "description": "The matches of the demand. ",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -6494,7 +6689,7 @@
         "inputFields": [
           {
             "name": "at",
-            "description": null,
+            "description": "The index of the port to match. ",
             "type": {
               "kind": "SCALAR",
               "name": "Int",
@@ -6506,7 +6701,7 @@
           },
           {
             "name": "children",
-            "description": null,
+            "description": "The matches for the children of the port to match. ",
             "type": {
               "kind": "LIST",
               "name": null,
@@ -6526,7 +6721,7 @@
           },
           {
             "name": "identifier",
-            "description": null,
+            "description": "The identifier of the port to match. ",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -6538,7 +6733,7 @@
           },
           {
             "name": "key",
-            "description": null,
+            "description": "The key of the port to match.",
             "type": {
               "kind": "SCALAR",
               "name": "String",
@@ -6550,7 +6745,7 @@
           },
           {
             "name": "kind",
-            "description": null,
+            "description": "The kind of the port to match. ",
             "type": {
               "kind": "ENUM",
               "name": "PortKind",
@@ -6562,7 +6757,7 @@
           },
           {
             "name": "nullable",
-            "description": null,
+            "description": "Whether the port is nullable. ",
             "type": {
               "kind": "SCALAR",
               "name": "Boolean",
@@ -6996,6 +7191,18 @@
                 "type": {
                   "kind": "INPUT_OBJECT",
                   "name": "FlavourFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "order",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "FlavourOrder",
                   "ofType": null
                 },
                 "defaultValue": null,
@@ -7567,6 +7774,18 @@
                 "type": {
                   "kind": "INPUT_OBJECT",
                   "name": "FlavourFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "order",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "FlavourOrder",
                   "ofType": null
                 },
                 "defaultValue": null,
@@ -9235,6 +9454,18 @@
         "isOneOf": null,
         "fields": [
           {
+            "name": "activeOrganization",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Organization",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "preferredUsername",
             "description": null,
             "args": [],
@@ -9245,30 +9476,6 @@
                 "kind": "SCALAR",
                 "name": "String",
                 "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "roles",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "LIST",
-                "name": null,
-                "ofType": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "kind": "SCALAR",
-                    "name": "String",
-                    "ofType": null
-                  }
-                }
               }
             },
             "isDeprecated": false,

@@ -6,19 +6,17 @@ import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import {
-  CreateEntityCategoryMutation,
   CreateEntityCategoryMutationVariables,
   CreateStructureCategoryMutationVariables,
-  GraphFragment,
+  GraphFragment
 } from "@/kraph/api/graphql";
+import CreateEntityCategoryForm from "@/kraph/forms/CreateEntityCategoryForm";
 import { cn } from "@/lib/utils";
 import { smartRegistry } from "@/providers/smart/registry";
 import { ContextualContainer } from "@/reaktion/edit/components/ContextualContainer";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { ClickContextualParams, StagingNodeParams } from "../types";
-import { identifierToNodeAgeName, labelToNodeAgeName } from "../utils";
-import CreateEntityCategoryForm from "@/kraph/forms/CreateEntityCategoryForm";
 
 const search = async ({ search, values }: SearchOptions) => {
   const models = smartRegistry
@@ -133,7 +131,7 @@ export const ClickContextual = (props: {
 }) => {
   const [search, setSearch] = useState(undefined);
 
-  
+
 
 
   return (

@@ -81,9 +81,8 @@ export const NodeShowLayout: React.FC<NodeProps> = ({
         className=""
       >
         <div
-          className={`${
-            !selected && "hidden"
-          }  absolute bottom-0 right-0 w-3 h-3 z-10 translate-x-[-1/2] translate-y-[-1/2] bg-white rounded-full shadow-md border-2 border-white dark:border-gray-800 dark:bg-gray-800 dark:shadow-none/0`}
+          className={`${!selected && "hidden"
+            }  absolute bottom-0 right-0 w-3 h-3 z-10 translate-x-[-1/2] translate-y-[-1/2] bg-white rounded-full shadow-md border-2 border-white dark:border-gray-800 dark:bg-gray-800 dark:shadow-none/0`}
         >
           <svg
             width="15"

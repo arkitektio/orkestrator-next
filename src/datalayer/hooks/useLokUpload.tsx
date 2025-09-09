@@ -1,8 +1,6 @@
 import {
-  Arkitekt,
   useDatalayerEndpoint,
-  useLok,
-  useMikro,
+  useLok
 } from "@/lib/arkitekt/Arkitekt";
 import {
   PresignedPostCredentialsFragment,

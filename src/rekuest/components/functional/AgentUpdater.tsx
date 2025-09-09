@@ -1,22 +1,14 @@
 import { useRekuest } from "@/lib/arkitekt/Arkitekt";
 import { useSettings } from "@/providers/settings/SettingsContext";
-import { ReturnsContainer } from "@/rekuest/widgets/tailwind";
-import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import {
   AgentsDocument,
   AgentsQuery,
-  AssignationsDocument,
-  AssignationsQuery,
   useAgentQuery,
-  useDetailActionQuery,
   WatchAgentsDocument,
   WatchAgentsSubscription,
-  WatchAgentsSubscriptionVariables,
-  WatchAssignationEventsSubscriptionVariables,
-  WatchAssignationsDocument,
-  WatchAssignationsSubscription,
+  WatchAgentsSubscriptionVariables
 } from "../../api/graphql";
 
 export const AgentToatser = (props: { id: string }) => {

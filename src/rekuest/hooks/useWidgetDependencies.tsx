@@ -1,6 +1,5 @@
-import { is } from "date-fns/locale";
 import { useMemo } from "react";
-import { useFormContext, UseFormReturn } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 
 
 const resolveValue = (
@@ -44,21 +43,21 @@ export const useWidgetDependencies = (props: {
   path: string[];
 }) => {
 
-   const form = useFormContext();
+  const form = useFormContext();
 
   const values = useMemo(() => form.getValues(), [form.formState]);
 
   const foundValues = useMemo(() => {
-      return (
-      ( props.widget?.dependencies || [])
-          .map((wanted_path, index) => {
-            return {["arg" + index]: resolveValue(values, wanted_path, props.path) };
-          })
-          .reduce((acc, curr) => {
-            return { ...acc, ...curr };
-          }, {}) || {}
-      );
-    }, [values, props.widget?.dependencies]);
+    return (
+      (props.widget?.dependencies || [])
+        .map((wanted_path, index) => {
+          return { ["arg" + index]: resolveValue(values, wanted_path, props.path) };
+        })
+        .reduce((acc, curr) => {
+          return { ...acc, ...curr };
+        }, {}) || {}
+    );
+  }, [values, props.widget?.dependencies]);
 
 
   console.log("Found values", foundValues, props.widget?.dependencies, foundValues.length, props.widget?.dependencies?.length);

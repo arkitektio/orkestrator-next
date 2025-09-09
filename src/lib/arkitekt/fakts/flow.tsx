@@ -1,9 +1,9 @@
-import { popOutWindowOpen } from "./popout";
 import { challenge } from "./challenge";
+import { claim } from "./claim";
 import { FaktsEndpoint } from "./endpointSchema";
 import { ActiveFakts } from "./faktsSchema";
+import { popOutWindowOpen } from "./popout";
 import { start } from "./start";
-import { claim } from "./claim";
 
 export const flow = async ({
   endpoint,

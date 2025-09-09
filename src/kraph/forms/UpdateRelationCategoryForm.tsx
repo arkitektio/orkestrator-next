@@ -7,17 +7,10 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
-  MetricCategoryFragment,
-  ReagentCategoryFragment,
   RelationCategoryFragment,
-  UpdateEntityCategoryMutationVariables,
   UpdateMetricCategoryMutationVariables,
-  UpdateReagentCategoryMutationVariables,
   useSearchTagsLazyQuery,
-  useUpdateEntityCategoryMutation,
-  useUpdateMetricCategoryMutation,
-  useUpdateReagentCategoryMutation,
-  useUpdateRelationCategoryMutation,
+  useUpdateRelationCategoryMutation
 } from "../api/graphql";
 
 const enumToOptions = (e: any) => {

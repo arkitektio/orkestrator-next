@@ -2,7 +2,6 @@ import { cn, notEmpty } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { EffectWrapper } from "./EffectWrapper";
 import { Port, PortGroup, PortOptions, WidgetRegistryType } from "./types";
-import { hi } from "date-fns/locale";
 
 export type ArgsContainerProps = {
   registry: WidgetRegistryType;

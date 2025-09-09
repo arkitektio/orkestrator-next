@@ -32,9 +32,9 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
       className={cn(
         "border-blue-400/40 shadow-blue-400/10 dark:border-blue-300 dark:shadow-blue/20 shadow-xl",
         latestEvent?.kind === RunEventKind.Error &&
-          "border-red-400 dark:border-red-300  dark:shadow-red/20 shadow-red-400/10",
+        "border-red-400 dark:border-red-300  dark:shadow-red/20 shadow-red-400/10",
         latestEvent?.kind === RunEventKind.Complete &&
-          "border-green-400 dark:border-green-300  dark:shadow-green/20 shadow-green-400/10",
+        "border-green-400 dark:border-green-300  dark:shadow-green/20 shadow-green-400/10",
       )}
       selected={selected}
     >

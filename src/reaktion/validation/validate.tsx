@@ -3,7 +3,6 @@ import { buildZodSchema } from "@/rekuest/widgets/utils";
 import { ZodError } from "zod";
 import { FlowEdge, FlowNode } from "../types";
 import { SolvedError, ValidationError, ValidationResult } from "./types";
-import { e } from "node_modules/@udecode/plate-emoji/dist/IndexSearch-Dvqq913n";
 
 const validateNoEdgeWithItself = (
   previous: ValidationResult,

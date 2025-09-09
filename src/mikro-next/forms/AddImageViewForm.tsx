@@ -1,9 +1,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddContinousScanViewForm } from "./AddContinousScanViewForm";
+import { AddMaskViewForm } from "./AddMaskViewForm";
 import { AddMultiPositionViewForm } from "./AddMultiPositionViewForm";
 import { AddRGBViewForm } from "./AddRGBViewForm";
 import { AddTransformationViewForm } from "./AddTransformationViewForm";
-import { AddMaskViewForm } from "./AddMaskViewForm";
 
 export const AddImageViewForm = (props: { image: string }) => {
   return (

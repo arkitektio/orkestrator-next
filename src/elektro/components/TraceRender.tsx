@@ -1,22 +1,16 @@
-import { useEffect, useState } from "react";
-import { DetailTraceFragment } from "../api/graphql";
-import { useTraceArray } from "../lib/useTraceArray";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+  Card
 } from "@/components/ui/card";
-import { Car, TrendingUp } from "lucide-react";
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Area, CartesianGrid, XAxis, AreaChart } from "recharts";
+import { useEffect, useState } from "react";
+import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
+import { DetailTraceFragment } from "../api/graphql";
+import { useTraceArray } from "../lib/useTraceArray";
 
 const chartConfig = {
   desktop: {
@@ -31,7 +25,7 @@ export const TraceRender = (props: { trace: DetailTraceFragment }) => {
 
   useEffect(() => {
     renderView(props.trace, 0).then((data) => {
-      const values = data.map((x, index) => ({index: index, c: x}));
+      const values = data.map((x, index) => ({ index: index, c: x }));
       setValues(values);
     });
   }, [props.trace]);

@@ -1,6 +1,6 @@
 import { ListRender } from "@/components/layout/ListRender";
-import HistoryCard from "../cards/HistoryCard";
 import { ProvenanceEntryFragment } from "@/mikro-next/api/graphql";
+import HistoryCard from "../cards/HistoryCard";
 
 export const ProvenanceSidebar = (props: {
   items: ProvenanceEntryFragment[] | undefined;

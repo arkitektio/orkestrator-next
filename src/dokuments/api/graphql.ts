@@ -1,6 +1,6 @@
-import { gql } from '@apollo/client';
-import * as Apollo from '@apollo/client';
 import * as ApolloReactHooks from '@/lib/dokuments/funcs';
+import * as Apollo from '@apollo/client';
+import { gql } from '@apollo/client';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -538,13 +538,13 @@ export const GetDocumentDocument = gql`
  * });
  */
 export function useGetDocumentQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetDocumentQuery, GetDocumentQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetDocumentQuery, GetDocumentQueryVariables>(GetDocumentDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetDocumentQuery, GetDocumentQueryVariables>(GetDocumentDocument, options);
+}
 export function useGetDocumentLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetDocumentQuery, GetDocumentQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetDocumentQuery, GetDocumentQueryVariables>(GetDocumentDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetDocumentQuery, GetDocumentQueryVariables>(GetDocumentDocument, options);
+}
 export type GetDocumentQueryHookResult = ReturnType<typeof useGetDocumentQuery>;
 export type GetDocumentLazyQueryHookResult = ReturnType<typeof useGetDocumentLazyQuery>;
 export type GetDocumentQueryResult = Apollo.QueryResult<GetDocumentQuery, GetDocumentQueryVariables>;
@@ -578,13 +578,13 @@ export const SearchDocumentsDocument = gql`
  * });
  */
 export function useSearchDocumentsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchDocumentsQuery, SearchDocumentsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchDocumentsQuery, SearchDocumentsQueryVariables>(SearchDocumentsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<SearchDocumentsQuery, SearchDocumentsQueryVariables>(SearchDocumentsDocument, options);
+}
 export function useSearchDocumentsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchDocumentsQuery, SearchDocumentsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchDocumentsQuery, SearchDocumentsQueryVariables>(SearchDocumentsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<SearchDocumentsQuery, SearchDocumentsQueryVariables>(SearchDocumentsDocument, options);
+}
 export type SearchDocumentsQueryHookResult = ReturnType<typeof useSearchDocumentsQuery>;
 export type SearchDocumentsLazyQueryHookResult = ReturnType<typeof useSearchDocumentsLazyQuery>;
 export type SearchDocumentsQueryResult = Apollo.QueryResult<SearchDocumentsQuery, SearchDocumentsQueryVariables>;
@@ -614,13 +614,13 @@ export const ListDocumentsDocument = gql`
  * });
  */
 export function useListDocumentsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListDocumentsQuery, ListDocumentsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListDocumentsQuery, ListDocumentsQueryVariables>(ListDocumentsDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ListDocumentsQuery, ListDocumentsQueryVariables>(ListDocumentsDocument, options);
+}
 export function useListDocumentsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListDocumentsQuery, ListDocumentsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListDocumentsQuery, ListDocumentsQueryVariables>(ListDocumentsDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ListDocumentsQuery, ListDocumentsQueryVariables>(ListDocumentsDocument, options);
+}
 export type ListDocumentsQueryHookResult = ReturnType<typeof useListDocumentsQuery>;
 export type ListDocumentsLazyQueryHookResult = ReturnType<typeof useListDocumentsLazyQuery>;
 export type ListDocumentsQueryResult = Apollo.QueryResult<ListDocumentsQuery, ListDocumentsQueryVariables>;
@@ -649,13 +649,13 @@ export const GetFileDocument = gql`
  * });
  */
 export function useGetFileQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetFileQuery, GetFileQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetFileQuery, GetFileQueryVariables>(GetFileDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetFileQuery, GetFileQueryVariables>(GetFileDocument, options);
+}
 export function useGetFileLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetFileQuery, GetFileQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetFileQuery, GetFileQueryVariables>(GetFileDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetFileQuery, GetFileQueryVariables>(GetFileDocument, options);
+}
 export type GetFileQueryHookResult = ReturnType<typeof useGetFileQuery>;
 export type GetFileLazyQueryHookResult = ReturnType<typeof useGetFileLazyQuery>;
 export type GetFileQueryResult = Apollo.QueryResult<GetFileQuery, GetFileQueryVariables>;
@@ -689,13 +689,13 @@ export const SearchFilesDocument = gql`
  * });
  */
 export function useSearchFilesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchFilesQuery, SearchFilesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchFilesQuery, SearchFilesQueryVariables>(SearchFilesDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<SearchFilesQuery, SearchFilesQueryVariables>(SearchFilesDocument, options);
+}
 export function useSearchFilesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchFilesQuery, SearchFilesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchFilesQuery, SearchFilesQueryVariables>(SearchFilesDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<SearchFilesQuery, SearchFilesQueryVariables>(SearchFilesDocument, options);
+}
 export type SearchFilesQueryHookResult = ReturnType<typeof useSearchFilesQuery>;
 export type SearchFilesLazyQueryHookResult = ReturnType<typeof useSearchFilesLazyQuery>;
 export type SearchFilesQueryResult = Apollo.QueryResult<SearchFilesQuery, SearchFilesQueryVariables>;
@@ -725,13 +725,13 @@ export const ListFilesDocument = gql`
  * });
  */
 export function useListFilesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListFilesQuery, ListFilesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListFilesQuery, ListFilesQueryVariables>(ListFilesDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ListFilesQuery, ListFilesQueryVariables>(ListFilesDocument, options);
+}
 export function useListFilesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListFilesQuery, ListFilesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListFilesQuery, ListFilesQueryVariables>(ListFilesDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ListFilesQuery, ListFilesQueryVariables>(ListFilesDocument, options);
+}
 export type ListFilesQueryHookResult = ReturnType<typeof useListFilesQuery>;
 export type ListFilesLazyQueryHookResult = ReturnType<typeof useListFilesLazyQuery>;
 export type ListFilesQueryResult = Apollo.QueryResult<ListFilesQuery, ListFilesQueryVariables>;
@@ -760,13 +760,13 @@ export const GetPageDocument = gql`
  * });
  */
 export function useGetPageQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetPageQuery, GetPageQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetPageQuery, GetPageQueryVariables>(GetPageDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GetPageQuery, GetPageQueryVariables>(GetPageDocument, options);
+}
 export function useGetPageLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetPageQuery, GetPageQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetPageQuery, GetPageQueryVariables>(GetPageDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GetPageQuery, GetPageQueryVariables>(GetPageDocument, options);
+}
 export type GetPageQueryHookResult = ReturnType<typeof useGetPageQuery>;
 export type GetPageLazyQueryHookResult = ReturnType<typeof useGetPageLazyQuery>;
 export type GetPageQueryResult = Apollo.QueryResult<GetPageQuery, GetPageQueryVariables>;
@@ -800,13 +800,13 @@ export const SearchPagesDocument = gql`
  * });
  */
 export function useSearchPagesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SearchPagesQuery, SearchPagesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<SearchPagesQuery, SearchPagesQueryVariables>(SearchPagesDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<SearchPagesQuery, SearchPagesQueryVariables>(SearchPagesDocument, options);
+}
 export function useSearchPagesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchPagesQuery, SearchPagesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<SearchPagesQuery, SearchPagesQueryVariables>(SearchPagesDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<SearchPagesQuery, SearchPagesQueryVariables>(SearchPagesDocument, options);
+}
 export type SearchPagesQueryHookResult = ReturnType<typeof useSearchPagesQuery>;
 export type SearchPagesLazyQueryHookResult = ReturnType<typeof useSearchPagesLazyQuery>;
 export type SearchPagesQueryResult = Apollo.QueryResult<SearchPagesQuery, SearchPagesQueryVariables>;
@@ -836,13 +836,13 @@ export const ListPagesDocument = gql`
  * });
  */
 export function useListPagesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListPagesQuery, ListPagesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<ListPagesQuery, ListPagesQueryVariables>(ListPagesDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<ListPagesQuery, ListPagesQueryVariables>(ListPagesDocument, options);
+}
 export function useListPagesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListPagesQuery, ListPagesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<ListPagesQuery, ListPagesQueryVariables>(ListPagesDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<ListPagesQuery, ListPagesQueryVariables>(ListPagesDocument, options);
+}
 export type ListPagesQueryHookResult = ReturnType<typeof useListPagesQuery>;
 export type ListPagesLazyQueryHookResult = ReturnType<typeof useListPagesLazyQuery>;
 export type ListPagesQueryResult = Apollo.QueryResult<ListPagesQuery, ListPagesQueryVariables>;
@@ -871,13 +871,13 @@ export const GlobalSearchDocument = gql`
  * });
  */
 export function useGlobalSearchQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
-      }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
+}
 export function useGlobalSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
-        }
+  const options = { ...defaultOptions, ...baseOptions }
+  return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
+}
 export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>;
 export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>;
 export type GlobalSearchQueryResult = Apollo.QueryResult<GlobalSearchQuery, GlobalSearchQueryVariables>;

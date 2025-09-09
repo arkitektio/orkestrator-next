@@ -27,8 +27,8 @@ export type ExtensionContextType = Context & {
 export const ExtensionContext = React.createContext<ExtensionContextType>({
   open: false,
   query: "",
-  activateModifier: (modifier: Modifier) => {},
-  removeModifier: (index: number) => {},
+  activateModifier: (modifier: Modifier) => { },
+  removeModifier: (index: number) => { },
   modifiers: [],
 });
 

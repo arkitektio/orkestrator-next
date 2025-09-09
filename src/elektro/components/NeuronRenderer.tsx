@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import { Bounds, Html, OrbitControls, useCursor } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Html, Bounds, useCursor } from "@react-three/drei";
+import { EffectComposer, Vignette } from '@react-three/postprocessing';
+import { useState } from "react";
 import * as THREE from "three";
 import { CompartmentFragment, CoordFragment, DetailNeuronModelFragment, SectionFragment } from "../api/graphql";
-import { Bloom, DepthOfField, EffectComposer, Noise, Vignette } from '@react-three/postprocessing'
 
 
 const getColorFromIndex = (index: number) => {
@@ -68,7 +68,7 @@ const CylinderWithTooltip = ({
       {/* Visible geometry */}
       <mesh>
         <cylinderGeometry args={[section.diam / 2, section.diam / 2, length, 8]} />
-        <meshStandardMaterial color={hovered  ? "hotpink" : color} />
+        <meshStandardMaterial color={hovered ? "hotpink" : color} />
       </mesh>
 
       {(isSelected) && (
@@ -174,7 +174,7 @@ export const NeuronVisualizer = ({ model }: { model: DetailNeuronModelFragment }
       </Bounds>
       <EffectComposer>
 
-    
+
         <Vignette eskil={false} offset={0.1} darkness={1.1} />
       </EffectComposer>
     </Canvas>

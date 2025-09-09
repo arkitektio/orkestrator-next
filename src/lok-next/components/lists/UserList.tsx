@@ -1,18 +1,11 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { LokGroup, LokUser, MikroDataset } from "@/linkers";
+import { LokUser } from "@/linkers";
 
 import {
-  ClientFilter,
   GroupFilter,
   OffsetPaginationInput,
-  useAppsQuery,
-  useClientsQuery,
-  useGroupsQuery,
-  useUsersQuery,
+  useUsersQuery
 } from "@/lok-next/api/graphql";
-import ClientCard from "../cards/ClientCard";
-import AppCard from "../cards/AppCard";
-import GroupCard from "../cards/GroupCard";
 import UserCard from "../cards/UserCard";
 
 export type Props = {

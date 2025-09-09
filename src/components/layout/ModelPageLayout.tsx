@@ -1,5 +1,8 @@
 import { Identifier } from "@/types";
 import { PageLayout, PageVariant } from "./PageLayout";
+import { ContextMenu } from "../ui/context-menu";
+import { CommandMenu } from "@/command/Menu";
+import { useMemo } from "react";
 
 export type ModelPageLayoutProps = {
   children: React.ReactNode;
@@ -20,10 +23,11 @@ export const ModelPageLayout = ({
   identifier,
   object,
   variant,
-  callback,
   actions,
   pageActions,
 }: ModelPageLayoutProps) => {
+  const objects = useMemo(() => [{ identifier, object }], [identifier, object]);
+
   return (
     <div className="h-full w-full">
       <PageLayout
@@ -33,6 +37,7 @@ export const ModelPageLayout = ({
         variant={variant}
         pageActions={pageActions}
       >
+        <CommandMenu objects={objects} />
         {children}
       </PageLayout>
     </div>

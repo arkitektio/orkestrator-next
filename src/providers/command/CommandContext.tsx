@@ -54,7 +54,7 @@ export type GeneralMenuContextType = {
 
 export const CommandContext = React.createContext<GeneralMenuContextType>({
   actions: [],
-  registerAction: () => () => {},
+  registerAction: () => () => { },
 });
 
 export const useCommand = () => useContext(CommandContext);

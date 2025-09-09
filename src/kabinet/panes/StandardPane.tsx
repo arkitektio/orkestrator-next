@@ -1,12 +1,14 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
-import { DroppableNavLink } from "@/components/ui/link";
 import { FancyInput } from "@/components/ui/fancy-input";
+import { DroppableNavLink } from "@/components/ui/link";
+import { PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { KabinetBackend } from "@/linkers";
 import { CubeIcon } from "@radix-ui/react-icons";
+import { Popover } from "@radix-ui/react-popover";
+import { useDebounce } from "@uidotdev/usehooks";
 import { HelpCircle, Home, ShoppingCart } from "lucide-react";
 import * as React from "react";
-import { useDebounce } from "@uidotdev/usehooks";
 import {
   GlobalSearchQueryVariables,
   useGlobalSearchQuery,
@@ -14,8 +16,6 @@ import {
 } from "../api/graphql";
 import DefinitionCard from "../components/cards/DefinitionCard";
 import { IconForBackendKind } from "../components/IconForBackendKind";
-import { PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Popover } from "@radix-ui/react-popover";
 
 export const NavigationPane = () => {
   const { data } = useListBackendsQuery();

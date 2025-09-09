@@ -1,10 +1,9 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { RekuestAction } from "@/linkers";
 import {
-  AgentFilter,
   OffsetPaginationInput,
   ShortcutFilter,
-  useShortcutsQuery,
+  useShortcutsQuery
 } from "@/rekuest/api/graphql";
 import ShortcutCard from "../cards/ShortcutCard";
 

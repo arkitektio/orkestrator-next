@@ -37,14 +37,13 @@ import {
 
 import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { Form } from "@/components/ui/form";
-import { KraphNode } from "@/linkers";
-import { useForm } from "react-hook-form";
 import {
-  ListEntitiesQueryVariables,
   ListEntityFragment,
   useListEntitiesQuery,
-  useSearchEntityCategoryLazyQuery,
+  useSearchEntityCategoryLazyQuery
 } from "@/kraph/api/graphql";
+import { KraphNode } from "@/linkers";
+import { useForm } from "react-hook-form";
 
 export const columns: ColumnDef<ListEntityFragment>[] = [
   {
@@ -292,9 +291,9 @@ export const EntitiesTable = (props: {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   );
                 })}

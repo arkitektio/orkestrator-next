@@ -1,7 +1,7 @@
-import { useThree } from "@react-three/fiber";
 import { Line } from "@react-three/drei";
 import { useRef, useState } from "react";
 import * as THREE from "three";
+import { EventKeyProps, createEventKeyChecker } from "./eventKeyUtils";
 
 export type EllipsisDrawerProps = {
   onEllipsisDrawn?: (
@@ -9,7 +9,7 @@ export type EllipsisDrawerProps = {
     radiusX: number,
     radiusY: number,
   ) => void;
-};
+} & EventKeyProps;
 
 export function EllipsisDrawer(props: EllipsisDrawerProps) {
   const planeRef = useRef<THREE.Mesh>(null);
@@ -18,8 +18,10 @@ export function EllipsisDrawer(props: EllipsisDrawerProps) {
   const [current, setCurrent] = useState<THREE.Vector3 | null>(null);
   const [drawing, setDrawing] = useState(false);
 
+  const checkEventKey = createEventKeyChecker(props.event_key);
+
   const handlePointerDown = (e) => {
-    if (!e.shiftKey) return; // Require Shift to start
+    if (!checkEventKey(e)) return; // Check for required event key
 
     e.stopPropagation();
     // Start from center
@@ -29,7 +31,7 @@ export function EllipsisDrawer(props: EllipsisDrawerProps) {
   };
 
   const handlePointerMove = (e) => {
-    if (!drawing || !center || !e.shiftKey) return; // Still require Shift while dragging
+    if (!drawing || !center || !checkEventKey(e)) return; // Still require Shift while dragging
     e.stopPropagation();
     setCurrent(e.point.clone());
   };

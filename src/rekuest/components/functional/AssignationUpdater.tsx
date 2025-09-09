@@ -1,7 +1,7 @@
-import { useRekuest } from "@/lib/arkitekt/Arkitekt";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { useRekuest } from "@/lib/arkitekt/Arkitekt";
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 import { ReturnsContainer } from "@/rekuest/widgets/tailwind";
@@ -19,6 +19,7 @@ import {
   WatchAssignationsDocument,
   WatchAssignationsSubscription,
 } from "../../api/graphql";
+import { RekuestAssignation } from "@/linkers";
 
 export const registeredCallbacks = new Map<
   string,
@@ -118,6 +119,9 @@ export const AssignationToaster = (props: { id: string }) => {
             Accept{" "}
           </Button>
         )}
+        <RekuestAssignation.DetailLink object={props.id}>
+          Open
+        </RekuestAssignation.DetailLink>
         <Button
           variant={"ghost"}
           size={"sm"}

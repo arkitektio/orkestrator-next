@@ -6,3 +6,9 @@ query RedeemTokens(
     ...ListRedeemToken
   }
 }
+
+query GetRedeemToken($id: ID!) {
+  redeemToken(id: $id) {
+    ...DetailRedeemToken
+  }
+}

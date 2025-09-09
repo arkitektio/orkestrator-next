@@ -24,6 +24,9 @@ fragment ProtocolEventCategory on ProtocolEventCategory {
   variableDefinitions {
     ...VariableDefinition
   }
+  bestQuery {
+    ...GraphQuery
+  }
 }
 
 fragment ListProtocolEventCategory on ProtocolEventCategory {

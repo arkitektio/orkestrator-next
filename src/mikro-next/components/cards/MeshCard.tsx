@@ -1,7 +1,7 @@
 import { Card, CardTitle } from "@/components/ui/card";
-import { MikroFile, MikroMesh } from "@/linkers";
+import { MikroMesh } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
-import { ListFileFragment, ListMeshFragment } from "../../api/graphql";
+import { ListMeshFragment } from "../../api/graphql";
 
 interface Props {
   mesh: ListMeshFragment;

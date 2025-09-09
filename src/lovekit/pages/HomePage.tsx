@@ -2,8 +2,6 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { ActionButton } from "@/components/ui/action";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import { AlpakaRoom } from "@/linkers";
 
 export type IRepresentationScreenProps = {};
 

@@ -6,7 +6,7 @@ import ReservationCard from "../cards/ReservationCard";
 
 export type Props = {};
 
-const List = ({}: Props) => {
+const List = ({ }: Props) => {
   const { settings } = useSettings();
   const { data, error, subscribeToMore, refetch } = useReservations();
   return (

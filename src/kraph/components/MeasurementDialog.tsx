@@ -1,9 +1,7 @@
-import {
-  useCreateMeasurementMutation,
-  useCreateMeasurementCategoryMutation,
-  useSearchEntitiesLazyQuery,
-  useListMeasurmentCategoryLazyQuery,
-} from "../api/graphql";
+import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
+import { ParagraphField } from "@/components/fields/ParagraphField";
+import { StringField } from "@/components/fields/StringField";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -13,12 +11,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
-import { StringField } from "@/components/fields/StringField";
-import { ParagraphField } from "@/components/fields/ParagraphField";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
+import { useForm } from "react-hook-form";
+import {
+  useCreateMeasurementCategoryMutation,
+  useCreateMeasurementMutation,
+  useListMeasurmentCategoryLazyQuery,
+  useSearchEntitiesLazyQuery,
+} from "../api/graphql";
 
 interface MeasurementDialogProps {
   open: boolean;

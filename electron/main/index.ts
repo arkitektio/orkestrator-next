@@ -38,7 +38,7 @@ ipcMain.handle("discover-beacons", async () => {
   try {
     // For now, return some example local network probes
     // In the future, this could discover actual services via mDNS
-    return []
+    return [];
   } catch (error) {
     console.error("Beacon discovery failed:", error);
     return [];
@@ -83,16 +83,12 @@ function createWindow(): BrowserWindow {
     },
   });
 
-  mainWindow.on("ready-to-show", () => {
-    mainWindow?.show();
+  mainWindow.webContents.setWindowOpenHandler((details) => {
+    return { action: "deny" };
   });
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
-    let url = new URL(details.url);
-
-    console.log(url.hash);
-    openSecondaryWindow(url.hash.split("#")[1]);
-    return { action: "deny" };
+  mainWindow.on("ready-to-show", () => {
+    mainWindow?.show();
   });
 
   // HMR for renderer base on electron-vite cli.

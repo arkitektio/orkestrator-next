@@ -1,27 +1,25 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
 import { DragZone } from "@/components/upload/drag";
 import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import {
-  KraphEntityCategory,
-  KraphGraphQuery,
-  KraphNodeQuery,
-} from "@/linkers";
-import { useNavigate } from "react-router-dom";
+import { KraphEntity, KraphEntityCategory } from "@/linkers";
 import {
   useCreateEntityMutation,
   useGetEntityCategoryQuery,
   useUpdateEntityCategoryMutation,
 } from "../api/graphql";
 import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
-import { Button } from "@/components/ui/button";
-import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
+import { StructureQueriesPlanner } from "../components/StructureQueriesPlanner";
 import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import UpdateEntityCategoryForm from "../forms/UpdateEntityCategoryForm";
-import { Card } from "@/components/ui/card";
-import { StructureQueriesPlanner } from "../components/StructureQueriesPlanner";
+import { ActionButton } from "@/components/ui/action";
+import { LocalActionButton } from "@/components/ui/localactionbutton";
+import { DialogButton, LocalDialogButton } from "@/components/ui/dialogbutton";
+import { Badge } from "@/components/ui/badge";
 
 export default asDetailQueryRoute(
   useGetEntityCategoryQuery,
@@ -111,6 +109,10 @@ export default asDetailQueryRoute(
             >
               <UpdateEntityCategoryForm entityCategory={data.entityCategory} />
             </FormSheet>
+            <KraphEntityCategory.ObjectButton
+              object={data.entityCategory.id}
+              className="w-full"
+            />
           </div>
         }
       >
@@ -122,6 +124,14 @@ export default asDetailQueryRoute(
             <p className="mt-3 text-xl text-muted-foreground">
               {data.entityCategory.description}
             </p>
+            <p className="mt-3 text-xs text-muted-foreground">
+              {data.entityCategory.ageName}
+            </p>
+            <div className="flex flex-row gap-2">
+              {data.entityCategory.tags.map((tag) => (
+                <Badge key={tag.id}>{tag.value}</Badge>
+              ))}
+            </div>
           </div>
           <div className="w-full h-full flex-row relative">
             {data.entityCategory?.store?.presignedUrl && (
@@ -136,6 +146,7 @@ export default asDetailQueryRoute(
         <DragZone uploadFile={uploadFile} createFile={createFile} />
 
         <StructureQueriesPlanner category={data.entityCategory} />
+
 
         <div className="flex flex-col p-6 h-full">
           {data.entityCategory.bestQuery ? (

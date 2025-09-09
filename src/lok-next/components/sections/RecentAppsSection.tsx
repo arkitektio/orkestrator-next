@@ -1,12 +1,12 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Shield } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppsQuery } from "@/lok-next/api/graphql";
+import { Clock, Shield } from "lucide-react";
 import AppCard from "../cards/AppCard";
 
 export const RecentAppsSection = () => {
   const { data, loading } = useAppsQuery({
-    variables: { 
+    variables: {
       pagination: { limit: 6 },
     },
   });

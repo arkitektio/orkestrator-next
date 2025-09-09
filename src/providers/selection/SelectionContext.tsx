@@ -4,15 +4,57 @@ import { SelectionContextType } from "./types";
 
 export const SelectionContext = React.createContext<SelectionContextType>({
   selection: [],
+  bselection: [],
   setSelection: () => {},
   unselect: () => {},
   isMultiSelecting: false,
   setIsMultiSelecting: () => {},
   registerSelectables: () => {},
   unregisterSelectables: () => {},
+  toggleSelection: () => {},
+  toggleBSelection: () => {},
+  removeSelection: () => {},
 });
 
 export const useSelection = () => useContext(SelectionContext);
+
+export const useMySelect = (options: { self: Structure }) => {
+  const { self } = options;
+
+  const {
+    selection,
+    toggleSelection,
+    toggleBSelection,
+    bselection,
+    removeSelection,
+  } = useSelection();
+
+  const isSelected = useMemo(() => {
+    const me = selection.findIndex(
+      (item) =>
+        item.identifier === self.identifier && item.object === self.object,
+    );
+    return me != -1 ? me + 1 : undefined;
+  }, [selection, self]);
+
+  const isBSelected = useMemo(() => {
+    const me = bselection.findIndex(
+      (item) =>
+        item.identifier === self.identifier && item.object === self.object,
+    );
+    return me != -1 ? me + 1 : undefined;
+  }, [bselection, self]);
+
+  const toggle = useCallback(() => {
+    toggleSelection(self);
+  }, [self, toggleSelection]);
+
+  const toggleB = useCallback(() => {
+    toggleBSelection(self);
+  }, [self, toggleBSelection]);
+
+  return { isSelected, toggle, isBSelected, toggleB, selection };
+};
 
 export const useMySelection = (
   iam: Structure,
@@ -52,9 +94,8 @@ export const useMySelection = (
 
   const onMouseDown = useCallback(
     (event: any) => {
-      event.stopPropagation();
       if (event.detail === 1) {
-        if (event.nativeEvent.ctrlKey || event.nativeEvent.metaKey) {
+        if (event.nativeEvent.shiftKey || event.nativeEvent.shiftKey) {
           if (!isMultiSelecting) {
             // We are not multi selecting, so we should select this item
             setIsMultiSelecting(true);
@@ -62,7 +103,7 @@ export const useMySelection = (
             return;
           }
           if (iam) {
-            let array = selection.filter(
+            const array = selection.filter(
               (item) =>
                 item.object !== iam.object ||
                 item.identifier !== iam.identifier,
@@ -97,5 +138,6 @@ export const useMySelection = (
   return {
     bind,
     ...variables,
+    selection,
   };
 };

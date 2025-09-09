@@ -1,6 +1,6 @@
+import { ElektroNeuronModel } from "@/linkers";
 import { ReturnWidgetProps } from "@/rekuest/widgets/types";
-import { useDetailNeuronModelQuery, useDetailSimulationQuery } from "../api/graphql";
-import { ElektroNeuronModel, ElektroSimulation } from "@/linkers";
+import { useDetailNeuronModelQuery } from "../api/graphql";
 import { NeuronVisualizer } from "../components/NeuronRenderer";
 
 export default (props: ReturnWidgetProps) => {
@@ -13,6 +13,6 @@ export default (props: ReturnWidgetProps) => {
   return (
     <ElektroNeuronModel.DetailLink object={props.value}>
       {data?.neuronModel && <NeuronVisualizer model={data?.neuronModel} />}
-      </ElektroNeuronModel.DetailLink>
+    </ElektroNeuronModel.DetailLink>
   );
 };

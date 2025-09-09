@@ -1,13 +1,11 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { ElektroExperiment, ElektroSimulation, ElektroTrace } from "@/linkers";
+import { ElektroExperiment } from "@/linkers";
 
-import { SimulationFilter, TraceFilter, useListExperimentsQuery, useListSimulationsQuery, useTracesQuery } from "@/elektro/api/graphql";
-import { OffsetPaginationInput } from "@/lok-next/api/graphql";
-import TraceCard from "../cards/TraceCard";
-import SimulationCard from "../cards/SimulationCard";
-import ExperimentCard from "../cards/ExperimentCard";
-import { ExperimentFilter } from "@/mikro-next/api/graphql";
 import { Button } from "@/components/ui/button";
+import { useListExperimentsQuery } from "@/elektro/api/graphql";
+import { OffsetPaginationInput } from "@/lok-next/api/graphql";
+import { ExperimentFilter } from "@/mikro-next/api/graphql";
+import ExperimentCard from "../cards/ExperimentCard";
 
 export type Props = {
   filters?: ExperimentFilter;
@@ -20,7 +18,7 @@ const List = ({ filters, pagination }: Props) => {
       filters: filters,
       pagination: pagination,
     },
-    
+
   });
 
   return (

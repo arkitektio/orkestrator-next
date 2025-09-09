@@ -6,7 +6,6 @@ import {
   buildState,
 } from "@/hooks/use-metaapp";
 import { AsyncSoloBroadcastWidget } from "@/lovekit/widgets/SoloBroadcastWidget";
-import { StreamWidget } from "@/lovekit/widgets/StreamWidget";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpIcon } from "lucide-react";
 
 export const PositionerModule = buildModule({

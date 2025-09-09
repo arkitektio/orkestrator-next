@@ -1,10 +1,8 @@
 import { useDialog } from "@/app/dialog";
-import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
-import {  DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DialogFooter } from "@/components/ui/dialog";
+import { DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useNotifyUserMutation } from "@/lok-next/api/graphql";
 import { useForm } from "react-hook-form";
@@ -35,7 +33,7 @@ export const NotifyDialog = (props: { users: string[] }) => {
         },
       })
     );
-    
+
     try {
       await Promise.all(promises);
       toast.success(`Notification sent to ${props.users.length} user${props.users.length > 1 ? 's' : ''}`);
@@ -64,19 +62,19 @@ export const NotifyDialog = (props: { users: string[] }) => {
         <DialogHeader>
           <DialogTitle>Send Notification</DialogTitle>
         </DialogHeader>
-        
+
         <div className="grid gap-4">
           <div className="text-sm text-muted-foreground">
             Sending notification to {props.users.length} user{props.users.length > 1 ? 's' : ''}
           </div>
-          
+
           <StringField
             name="title"
             label="Notification Title"
             description="A brief title for your notification"
             placeholder="Enter notification title..."
           />
-          
+
           <ParagraphField
             name="message"
             label="Message"

@@ -198,5 +198,5 @@ export {
   ContextMenuSub,
   ContextMenuSubContent,
   ContextMenuSubTrigger,
-  ContextMenuTrigger,
+  ContextMenuTrigger
 };

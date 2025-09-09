@@ -1,12 +1,9 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
 import { Badge } from "@/components/ui/badge";
-import { DragZone } from "@/components/upload/drag";
-import { useResolve } from "@/datalayer/hooks/useResolve";
 import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import { KraphReagent } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
-import { useNavigate } from "react-router-dom";
 import { useGetReagentQuery } from "../api/graphql";
 
 export default asDetailQueryRoute(useGetReagentQuery, ({ data, refetch }) => {

@@ -1,14 +1,11 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { MikroDataset } from "@/linkers";
 
+import { useListRoomsQuery } from "@/alpaka/api/graphql";
 import {
-  ClientFilter,
   OffsetPaginationInput,
-  RoomFilter,
-  useClientsQuery,
+  RoomFilter
 } from "@/lok-next/api/graphql";
-import ClientCard from "../cards/RoomCard";
-import { useListRoomsQuery, useRoomsQuery } from "@/alpaka/api/graphql";
 import RoomCard from "../cards/RoomCard";
 
 export type Props = {

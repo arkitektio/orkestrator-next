@@ -1,27 +1,12 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
-import {
-  DetailPane,
-  DetailPaneContent,
-  DetailPaneHeader,
-  DetailPaneTitle,
-} from "@/components/ui/pane";
-import { LokApp, LokComment, LokGroup, LokLayer } from "@/linkers";
-import {
-  useCreateGroupProfileMutation,
-  useDetailAppQuery,
-  useDetailGroupQuery,
-  useDetailLayerQuery,
-  useUpdateGroupProfileMutation,
-  useUpdateUserProfileMutation,
-} from "../api/graphql";
-import ReleaseCard from "../components/cards/ReleaseCard";
+import { Card, CardContent } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { Card, CardContent } from "@/components/ui/card";
-import UserCard from "../components/cards/UserCard";
-import { useLokUpload } from "@/datalayer/hooks/useLokUpload";
-import { DragZone } from "@/components/upload/drag";
+import { LokLayer } from "@/linkers";
+import {
+  useDetailLayerQuery
+} from "../api/graphql";
 import ServiceInstanceCard from "../components/cards/ServiceInstanceCard";
 
 export default asDetailQueryRoute(useDetailLayerQuery, ({ data }) => {

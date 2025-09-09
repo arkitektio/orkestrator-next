@@ -7,24 +7,15 @@ import { DragZone } from "@/components/upload/drag";
 import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
-  KraphEntityCategory,
-  KraphMetricCategory,
-  KraphRelationCategory,
+  KraphRelationCategory
 } from "@/linkers";
 import { useNavigate } from "react-router-dom";
 import {
-  useCreateMetricMutation,
-  useCreateReagentMutation,
-  useGetMeasurmentCategoryQuery,
-  useGetMetricCategoryQuery,
-  useGetReagentCategoryQuery,
   useGetRelationCategoryQuery,
-  useUpdateEntityCategoryMutation,
+  useUpdateEntityCategoryMutation
 } from "../api/graphql";
 import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
 import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
-import UpdateReagentCategoryForm from "../forms/UpdateReagentCategoryForm";
-import UpdateMetricCategoryForm from "../forms/UpdateMetricCategoryForm";
 import UpdateRelationCategoryForm from "../forms/UpdateRelationCategoryForm";
 
 export default asDetailQueryRoute(

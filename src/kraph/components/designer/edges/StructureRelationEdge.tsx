@@ -1,3 +1,5 @@
+import { Card } from "@/components/ui/card";
+import { KraphStructureRelationCategory } from "@/linkers";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -6,14 +8,8 @@ import {
   type EdgeProps,
   type ReactFlowState,
 } from "@xyflow/react";
-import {
-  MeasurementEdge,
-  StagingMeasurementEdge,
-  StagingRelationEdge,
-} from "../types";
+import { MeasurementEdge } from "../types";
 import { getEdgeParams } from "../utils";
-import { Card } from "@/components/ui/card";
-import { KraphStructureRelationCategory } from "@/linkers";
 
 export type GetSpecialPathParams = {
   sourceX: number;
@@ -96,16 +92,24 @@ export const TEdge = ({
         <Card
           style={{
             position: "absolute",
-            transform: `translate(-50%, -50%) translate(${centerX}px,${centerY + offset}px) `,
+            transform: `translate(-50%, -50%) translate(${centerX}px,${centerY}px) `,
           }}
-          className="p-3 text-xs group z-10"
+          className="p-3 text-xs group z-10 nodrag nopan"
         >
-          <KraphStructureRelationCategory.DetailLink
-            object={id}
-            className={"font-bold"}
+          <KraphStructureRelationCategory.Smart
+            object={data?.id || "0"}
+            className="w-20"
           >
-            {data?.label}
-          </KraphStructureRelationCategory.DetailLink>
+            {data?.id && (
+              <KraphStructureRelationCategory.DetailLink
+                object={data?.id}
+                style={{ pointerEvents: "all" }}
+                className={"font-bold cursor-pointer "}
+              >
+                {data?.label}
+              </KraphStructureRelationCategory.DetailLink>
+            )}
+          </KraphStructureRelationCategory.Smart>
         </Card>
       </EdgeLabelRenderer>
     </>

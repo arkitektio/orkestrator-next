@@ -7,7 +7,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { GlobalSearchQueryVariables } from "@/mikro-next/api/graphql";
 import { PopoverAnchor } from "@radix-ui/react-popover";
 import { ArrowDown } from "lucide-react";
 import { useForm } from "react-hook-form";

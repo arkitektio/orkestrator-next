@@ -1,19 +1,5 @@
-import { CardHeader, CardTitle } from "@/components/ui/card";
-import { MikroRGBView } from "@/linkers";
-import { MateFinder } from "@/mates/types";
-import { closest } from "color-2-name";
-import {
-  ColorMap,
-  GetImageDocument,
-  RgbViewFragment,
-  useGetRgbViewLazyQuery,
-  useGetRgbViewQuery,
-  useUpdateRgbViewMutation,
-} from "../../api/graphql";
-import { ViewCard } from "./meta/ViewCard";
 import { Button } from "@/components/ui/button";
-import { useCalculateMinMaxFor } from "../render/calculations/calculateMinMax";
-import { Scale3DIcon, Edit2 } from "lucide-react";
+import { CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,9 +12,20 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { enumToOptions } from "@/lib/utils";
-import { RgbColorPicker } from "react-colorful";
+import { MikroRGBView } from "@/linkers";
+import { MateFinder } from "@/mates/types";
+import { closest } from "color-2-name";
+import { Edit2, Scale3DIcon } from "lucide-react";
 import { useState } from "react";
-import { ObjectButton } from "@/rekuest/buttons/ObjectButton";
+import { RgbColorPicker } from "react-colorful";
+import {
+  ColorMap,
+  GetImageDocument,
+  RgbViewFragment,
+  useGetRgbViewLazyQuery,
+  useUpdateRgbViewMutation,
+} from "../../api/graphql";
+import { ViewCard } from "./meta/ViewCard";
 
 interface Props {
   view: RgbViewFragment;
@@ -88,6 +85,20 @@ const TheCard = ({ view }: Props) => {
     }).catch((error) => {
       console.error("Error updating colormap:", error);
       alert("Failed to update colormap.");
+    });
+  };
+
+  const handleToggleActive = () => {
+    updateRgbView({
+      variables: {
+        input: {
+          id: view.id,
+          active: !view.active,
+        },
+      },
+    }).catch((error) => {
+      console.error("Error toggling active state:", error);
+      alert("Failed to toggle active state.");
     });
   };
 
@@ -200,6 +211,15 @@ const TheCard = ({ view }: Props) => {
             <Scale3DIcon className="mr-2" />
           </Button>
         </MikroRGBView.ObjectButton>
+        <Button
+          onClick={() => handleToggleActive()}
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+          aria-label="Toggle View Visibility"
+        >
+          {view.active ? "👁️" : "🚫"}
+        </Button>
       </ViewCard>
     </MikroRGBView.Smart>
   );

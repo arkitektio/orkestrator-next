@@ -1,21 +1,19 @@
-import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { LoadingPage } from "@/app/components/fallbacks/LoadingPage";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Image } from "@/components/ui/image";
+import { Separator } from "@/components/ui/separator";
 import { DragZone } from "@/components/upload/drag";
 import { useLokUpload } from "@/datalayer/hooks/useLokUpload";
-import { LokUser } from "@/linkers";
-import { useMeQuery, useUpdateUserProfileMutation, useUserQuery } from "../api/graphql";
-import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { LokUser } from "@/linkers";
 import { useRef } from "react";
-import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { r } from "node_modules/@udecode/plate-ai/dist/BaseAIPlugin-BZ_YjTkV";
-import { LoadingPage } from "@/app/components/fallbacks/LoadingPage";
+import { useMeQuery, useUpdateUserProfileMutation } from "../api/graphql";
 
 // (legacy) export type removed – not used
 
 const Page = (props) => {
-  const { data} = useMeQuery();
+  const { data } = useMeQuery();
 
   if (!data) {
     return <LoadingPage />;
@@ -69,7 +67,7 @@ const Page = (props) => {
       <div className="relative mb-10">
         <div className="h-32 w-full bg-gradient-to-r from-indigo-600/15 via-fuchsia-500/15 to-pink-500/15 dark:from-indigo-500/10 dark:via-fuchsia-500/10 dark:to-pink-500/10 border-b border-border/40" />
         <div className="pl-6 pr-6 -mt-14 flex flex-row gap-6 items-end max-w-3xl">
-          <div className="relative group w-36 h-36 cursor-pointer" onClick={openFileDialog} role="button" aria-label="Change avatar" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openFileDialog(); }}}>
+          <div className="relative group w-36 h-36 cursor-pointer" onClick={openFileDialog} role="button" aria-label="Change avatar" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openFileDialog(); } }}>
             <div className="w-36 h-36 rounded-full ring-4 ring-background shadow-xl overflow-hidden bg-muted flex items-center justify-center text-4xl font-semibold select-none">
               {data.me.profile.avatar ? (
                 <Image
@@ -99,7 +97,7 @@ const Page = (props) => {
             <h1 className="text-3xl font-semibold tracking-tight">
               {data.me.username}
             </h1>
-            { (data.me.firstName || data.me.lastName) && (
+            {(data.me.firstName || data.me.lastName) && (
               <p className="text-base font-medium">
                 {[data.me.firstName, data.me.lastName].filter(Boolean).join(" ")}
               </p>
@@ -120,8 +118,8 @@ const Page = (props) => {
         </div>
       </div>
 
-  {/* Content Sections */}
-  <div className="pl-6 pr-6 space-y-8 max-w-3xl">
+      {/* Content Sections */}
+      <div className="pl-6 pr-6 space-y-8 max-w-3xl">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle>Profile</CardTitle>

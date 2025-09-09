@@ -1,7 +1,7 @@
 import { Explainer } from "@/components/explainer/Explainer";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
-import { DownloadIcon, PlusIcon, UploadIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import React from "react";
 import { useCreateDatasetMutation } from "../api/graphql";
 import DatasetList from "../components/lists/DatasetList";

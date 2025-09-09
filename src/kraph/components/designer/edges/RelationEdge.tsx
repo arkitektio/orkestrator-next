@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -6,9 +7,9 @@ import {
   type EdgeProps,
   type ReactFlowState,
 } from "@xyflow/react";
-import { RelationEdge, StagingRelationEdge } from "../types";
+import { RelationEdge } from "../types";
 import { getEdgeParams } from "../utils";
-import { Card } from "@/components/ui/card";
+import { KraphRelationCategory } from "@/linkers";
 
 export type GetSpecialPathParams = {
   sourceX: number;
@@ -58,25 +59,26 @@ export default ({
 
   const { sx, sy, tx, ty } = getEdgeParams(sourceNode, targetNode);
 
-  const edgePathParams = {
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition,
-  };
-
   let path = "";
   const offset = 0;
+  let centerX = (sourceX + targetX) / 2;
+  let centerY = (sourceY + targetY) / 2;
 
-  path = getSpecialPath(
-    { sourceX: sx, sourceY: sy, targetX: tx, targetY: ty },
-    offset,
-  );
+  if (source == target) {
+    const radiusX = 100;
+    const radiusY = 100;
+    path = `M ${sourceX - 10} ${sourceY} A ${radiusX} ${radiusY} 0 1 0 ${
+      targetX + 5
+    } ${targetY}`;
 
-  const centerX = (sourceX + targetX) / 2;
-  const centerY = (sourceY + targetY) / 2;
+    centerX = sourceX - radiusX * 2;
+    centerY = (sourceY + targetY) / 2;
+  } else {
+    path = getSpecialPath(
+      { sourceX: sx, sourceY: sy, targetX: tx, targetY: ty },
+      offset,
+    );
+  }
 
   return (
     <>
@@ -87,9 +89,22 @@ export default ({
             position: "absolute",
             transform: `translate(-50%, -50%) translate(${centerX}px,${centerY + offset}px)`,
           }}
-          className="p-1 text-xs group"
+          className="p-1 text-xs group nodrag nopan"
         >
-          {data?.label}
+          <KraphRelationCategory.Smart
+            object={data?.id || "0"}
+            className="w-20"
+          >
+            {data?.id && (
+              <KraphRelationCategory.DetailLink
+                object={data?.id}
+                style={{ pointerEvents: "all" }}
+                className={"font-bold cursor-pointer "}
+              >
+                {data?.label}
+              </KraphRelationCategory.DetailLink>
+            )}
+          </KraphRelationCategory.Smart>
         </Card>
       </EdgeLabelRenderer>
     </>

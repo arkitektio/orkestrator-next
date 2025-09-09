@@ -1,10 +1,10 @@
 import { Card } from "@/components/ui/card";
+import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokClient, LokUser } from "@/linkers";
 import { DetailClientFragment } from "@/lok-next/api/graphql";
 import { memo } from "react";
 import { Handle, NodeProps, Position } from "reactflow";
-import { Image } from "@/components/ui/image";
 
 export default memo(
   ({ data, isConnectable }: NodeProps<DetailClientFragment>) => {

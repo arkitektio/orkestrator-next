@@ -11,6 +11,7 @@ import {
   TimelineTitle,
 } from "@/components/timeline/timeline";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReturnsContainer } from "@/components/widgets/returns/ReturnsContainer";
 import { RekuestAssignation } from "@/linkers";
 import { useRunForAssignationQuery } from "@/reaktion/api/graphql";
@@ -28,7 +29,6 @@ import { useNavigate } from "react-router-dom";
 import Timestamp from "react-timestamp";
 import { useAction } from "../hooks/useAction";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const AssignationFlow = (props: {
   id: string;
@@ -80,6 +80,34 @@ export const LogItem = (props: { event: any }) => {
   );
 };
 
+export const DelegateItem = (props: { event: AssignationEventFragment }) => {
+  return (
+    <TimelineItem className="w-full">
+      <TimelineConnector />
+      <TimelineHeader>
+        <TimelineIcon />
+        <TimelineTitle>{props.event.kind}</TimelineTitle>
+      </TimelineHeader>
+      <TimelineContent>
+        <TimelineDescription>
+          <p className="text-xs mb-1">
+            <Timestamp date={props.event.createdAt} />
+          </p>
+          This assignmenent was delegated to{" "}
+          {props.event.delegatedTo?.implementation.action.name}
+          <RekuestAssignation.DetailLink
+            object={props.event.delegatedTo?.id || ""}
+            className="font-semibold"
+          >
+            {" "}
+            (see details)
+          </RekuestAssignation.DetailLink>
+        </TimelineDescription>
+      </TimelineContent>
+    </TimelineItem>
+  );
+};
+
 export const YieldItem = (props: {
   assignation: DetailAssignationFragment;
   event: AssignationEventFragment;
@@ -91,7 +119,7 @@ export const YieldItem = (props: {
       <TimelineConnector />
       <TimelineHeader>
         <TimelineIcon />
-        <TimelineTitle>{"Yield"}</TimelineTitle>
+        <TimelineTitle>Yielded</TimelineTitle>
       </TimelineHeader>
       <TimelineContent>
         <TimelineDescription>
@@ -130,7 +158,14 @@ export const AssignationTimeLine = (props: {
           {e.kind === AssignationEventKind.Yield && (
             <YieldItem assignation={props.assignation} event={e} />
           )}
-          {e.kind !== AssignationEventKind.Yield && <LogItem event={e} />}
+          {e.kind === AssignationEventKind.Delegate && (
+            <DelegateItem event={e} />
+          )}
+
+          {![
+            AssignationEventKind.Yield,
+            AssignationEventKind.Delegate,
+          ].includes(e.kind) && <LogItem event={e} />}
         </>
       ))}
     </Timeline>
@@ -253,12 +288,12 @@ export default asDetailQueryRoute(
                   />
                 </TabsContent>
                 <TabsContent value="logs" className="h-full w-full">
-                  <AssignationTimeLine assignation={data.assignation} />
+                  <AssignationTimeLine assignation={data?.assignation} />
                 </TabsContent>
               </Tabs>
             </>
           ) : (
-            <DefaultRenderer assignation={data.assignation} />
+            <DefaultRenderer assignation={data?.assignation} />
           )}
         </div>
       </RekuestAssignation.ModelPage>

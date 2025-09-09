@@ -15,9 +15,8 @@ export const Refetcher = (props: { refetch: () => Promise<any> }) => {
   return (
     <Button onClick={onClick} variant={"ghost"} size={"sm"}>
       <BiRefresh
-        className={`hover:text-gray-200 transition-all cursor-pointer ${
-          refetching ? "animate-spin" : ""
-        } `}
+        className={`hover:text-gray-200 transition-all cursor-pointer ${refetching ? "animate-spin" : ""
+          } `}
       />
     </Button>
   );

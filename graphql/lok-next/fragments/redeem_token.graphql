@@ -15,3 +15,7 @@ fragment ListRedeemToken on RedeemToken {
     }
   }
 }
+
+fragment DetailRedeemToken on RedeemToken {
+  ...ListRedeemToken
+}

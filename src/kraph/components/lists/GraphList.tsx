@@ -3,10 +3,8 @@ import { MikroDataset } from "@/linkers";
 import {
   OffsetPaginationInput,
   OntologyFilter,
-  useListGraphsQuery,
-  useListOntologiesQuery,
+  useListGraphsQuery
 } from "../../api/graphql";
-import OntologyCard from "../cards/OntologyCard";
 import GraphCard from "../cards/GraphCard";
 
 export type Props = {

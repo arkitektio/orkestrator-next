@@ -6,14 +6,11 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import {
-  GraphQueryFragment,
-  ListGraphQueryFragment,
+  GraphQueryFragment
 } from "@/kraph/api/graphql";
 import {
   KraphGraphQuery,
-  KraphPlotView,
-  KraphProtocolStepTemplate,
-  KraphScatterPlot,
+  KraphScatterPlot
 } from "@/linkers";
 import ScatterPlot from "../charts/scatterplot/ScatterPlot";
 

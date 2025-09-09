@@ -1,17 +1,15 @@
-import { ToggleField } from "@/components/fields/ToggleField";
-import { Input } from "@/components/ui/input";
+import { FancyInput } from "@/components/ui/fancy-input";
 import {
   Popover,
+  PopoverAnchor,
   PopoverContent,
   PopoverTrigger,
-  PopoverAnchor,
 } from "@/components/ui/popover";
-import { GlobalSearchQueryVariables } from "@/mikro-next/api/graphql";
-import { ArrowDown } from "lucide-react";
-import { useDebounce } from "@uidotdev/usehooks";
-import { useEffect, useState } from "react";
-import { FancyInput } from "@/components/ui/fancy-input";
 import { Toggle } from "@/components/ui/toggle";
+import { GlobalSearchQueryVariables } from "@/mikro-next/api/graphql";
+import { useDebounce } from "@uidotdev/usehooks";
+import { ArrowDown } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export type FilterProps = {
   onFilterChanged: (values: GlobalSearchQueryVariables) => any;

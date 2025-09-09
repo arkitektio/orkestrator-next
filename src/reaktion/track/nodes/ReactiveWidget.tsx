@@ -15,6 +15,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ActionDescription } from "@/lib/rekuest/ActionDescription";
+import { cn } from "@/lib/utils";
 import { ReactiveImplementation, RunEventKind } from "@/reaktion/api/graphql";
 import { InStream } from "@/reaktion/base/Instream";
 import { OutStream } from "@/reaktion/base/Outstream";
@@ -22,10 +23,9 @@ import { portToLabel } from "@/rekuest/widgets/utils";
 import React from "react";
 import { ReactiveNodeData, ReactiveNodeProps } from "../../types";
 import { useLatestNodeEvent } from "../hooks/useLatestNodeEvent";
-import { cn } from "@/lib/utils";
-import TriangleToRight from "./reactive/TriangleToRight";
-import Math from "./reactive/Math";
 import JustTrack from "./reactive/JustTrack";
+import Math from "./reactive/Math";
+import TriangleToRight from "./reactive/TriangleToRight";
 
 export type ShapeProps = {
   implementation: ReactiveImplementation;
@@ -173,7 +173,7 @@ export const BufferCount = ({ data }: ShapeProps) => {
   return (
     <>
       <Card className="rounded-md">
-          Buffer {data.constantsMap.count}
+        Buffer {data.constantsMap.count}
       </Card>
     </>
   );
@@ -313,9 +313,9 @@ export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({
               className={cn(
                 "border-blue-400/40 shadow-blue-400/10 dark:border-blue-300 dark:shadow-blue/20 shadow-xl",
                 latestEvent?.kind === RunEventKind.Error &&
-                  "border-red-400 dark:border-red-300  dark:shadow-red/20 shadow-red-400/10",
+                "border-red-400 dark:border-red-300  dark:shadow-red/20 shadow-red-400/10",
                 latestEvent?.kind === RunEventKind.Complete &&
-                  "border-green-400 dark:border-green-300  dark:shadow-green/20 shadow-green-400/10",
+                "border-green-400 dark:border-green-300  dark:shadow-green/20 shadow-green-400/10",
               )}
             />
 

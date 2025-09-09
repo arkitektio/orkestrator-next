@@ -1,10 +1,9 @@
 import { Explainer } from "@/components/explainer/Explainer";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
-import { AlpakaCollection, AlpakaLLMModel } from "@/linkers";
+import { AlpakaLLMModel } from "@/linkers";
 import { UploadIcon } from "lucide-react";
 import React from "react";
-import CollectionList from "../components/lists/CollectionList";
 import LLMModelList from "../components/lists/LLMModelList";
 
 export type IRepresentationScreenProps = {};

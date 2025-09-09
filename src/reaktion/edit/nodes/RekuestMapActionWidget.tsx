@@ -36,7 +36,7 @@ import React, { useCallback } from "react";
 import { TbBurger } from "react-icons/tb";
 import { useEditNodeErrors, useEditRiver } from "../context";
 
-export const DeviceSelector = (props) => {};
+export const DeviceSelector = (props) => { };
 
 const TemplateSelector = (props: {
   data: RekuestMapActionNodeFragment;

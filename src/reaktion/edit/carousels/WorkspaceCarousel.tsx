@@ -11,7 +11,7 @@ import { useWorkspaceCarouselQuery } from "@/reaktion/api/graphql";
 import { ShowFlow } from "@/reaktion/show/ShowFlow";
 import { Ordering } from "@/rekuest/api/graphql";
 
-export default ({}) => {
+export default ({ }) => {
   const { data, error, subscribeToMore, refetch } = useWorkspaceCarouselQuery({
     variables: {
       pagination: {

@@ -1,4 +1,3 @@
-import { Arkitekt, Guard } from "@/lib/arkitekt/Arkitekt";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,35 +11,31 @@ import {
   NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
+import { Arkitekt, Guard } from "@/lib/arkitekt/Arkitekt";
+import { cn } from "@/lib/utils";
 import { Me, Username } from "@/lok-next/components/Me";
 import { useDebug } from "@/providers/debug/DebugContext";
 import { ChatBubbleIcon, DashIcon, HomeIcon } from "@radix-ui/react-icons";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import {
-  Bolt,
   Bug,
   Database,
-  Eye,
   Podcast,
   Settings,
   ShoppingBasket,
   Users2,
-  Workflow,
+  Workflow
 } from "lucide-react";
 import React from "react";
+import { BsLightning } from "react-icons/bs";
 import { GoWorkflow } from "react-icons/go";
 import { IconContext } from "react-icons/lib";
+import { MdStream } from "react-icons/md";
 import { PiDatabaseLight, PiGraph } from "react-icons/pi";
 import { TbBugOff } from "react-icons/tb";
-import { ModeToggle } from "../ModeToggle";
-import { Icons } from "@/components/icons";
-import { BiSolidWidget } from "react-icons/bi";
-import { BsLightning } from "react-icons/bs";
-import { MdStream } from "react-icons/md";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ArkitektLogo } from "../logos/ArkitektLogo";
 import { BackLogo } from "../logos/BackLogo";
-import { cn } from "@/lib/utils";
 
 export type INavigationBarProps = {
   children?: React.ReactNode;

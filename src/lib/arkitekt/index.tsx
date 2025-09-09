@@ -1,3 +1,4 @@
+import { WidgetRegistry } from "@/rekuest/widgets/Registry";
 import { Manifest, Requirement } from "./fakts/manifestSchema";
 import {
   buildArkitektProvider,
@@ -7,7 +8,6 @@ import {
   usePotentialService,
   useService,
 } from "./provider";
-import { WidgetRegistry } from "@/rekuest/widgets/Registry";
 // When using the Tauri API npm package:
 
 export const buildGuard =
@@ -65,6 +65,7 @@ export const buildArkitekt = ({
     useDisconnect: () => useArkitekt().disconnect,
     useReconnect: () => useArkitekt().reconnect,
     useManifest: () => realManifest,
+    useConnection: () => useArkitekt().connection,
     useFakts: () => useArkitekt().connection?.fakts,
     useService: useService,
     useServices: () => useArkitekt().connection?.availableServices || [],

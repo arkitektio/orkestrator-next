@@ -1,14 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { action, integer, module, state, structure } from "@/hooks/use-metaapp";
+import { module, state, structure } from "@/hooks/use-metaapp";
 import { MikroImage } from "@/linkers";
 import { AsyncSoloBroadcastWidget } from "@/lovekit/widgets/SoloBroadcastWidget";
-import {
-  AsyncStreamWidget,
-  StreamWidget,
-} from "@/lovekit/widgets/StreamWidget";
 import { useGetImageQuery } from "@/mikro-next/api/graphql";
 import { DelegatingImageRender } from "@/mikro-next/components/render/DelegatingImageRender";
-import { ImageWidget } from "@/widgets/ImageWidget";
 
 export const CameraModule = module({
   name: "Camera",

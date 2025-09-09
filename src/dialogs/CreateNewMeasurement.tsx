@@ -11,14 +11,12 @@ import { Form } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import {
   CreateMeasurementCategoryMutationVariables,
-  CreateStructureRelationCategoryMutationVariables,
   useCreateMeasurementCategoryMutation,
   useCreateStructureMutation,
-  useCreateStructureRelationCategoryMutation,
   useCreateStructureRelationMutation,
   useSearchEntityCategoryLazyQuery,
   useSearchGraphsLazyQuery,
-  useSearchTagsLazyQuery,
+  useSearchTagsLazyQuery
 } from "@/kraph/api/graphql";
 import { smartRegistry } from "@/providers/smart/registry";
 import { useForm } from "react-hook-form";

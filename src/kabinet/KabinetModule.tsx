@@ -1,17 +1,17 @@
-import { Guard } from "@/lib/arkitekt/Arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import { Guard } from "@/lib/arkitekt/Arkitekt";
 import React from "react";
 import { Route, Routes } from "react-router";
 import BackendPage from "./pages/BackendPage";
 import DefinitionPage from "./pages/DefinitionPage";
+import FlavourPage from "./pages/FlavourPage";
 import HomePage from "./pages/HomePage";
 import PodPage from "./pages/PodPage";
 import PodsPage from "./pages/PodsPage";
 import ReleasePage from "./pages/ReleasePage";
-import StandardPane from "./panes/StandardPane";
 import ResourcePage from "./pages/ResourcePage";
-import FlavourPage from "./pages/FlavourPage";
-interface Props {}
+import StandardPane from "./panes/StandardPane";
+interface Props { }
 
 export const KabinetModule: React.FC<Props> = (props) => {
   return (

@@ -6,7 +6,7 @@ export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
   return (
-    <PageLayout actions={<></>}>
+    <PageLayout title="title" actions={<></>}>
       <ProjectList />
     </PageLayout>
   );

@@ -1,5 +1,4 @@
-import { Arkitekt, useOmeroArk } from "@/lib/arkitekt/Arkitekt";
-import { useService } from "@/lib/arkitekt/provider";
+import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
 import { OmeroArkImage } from "@/linkers";
 import { MateFinder } from "@/mates/types";
 import { ListImageFragment } from "@/omero-ark/api/graphql";
@@ -50,8 +49,7 @@ const Card = ({ image, mates }: Props) => {
     <OmeroArkImage.Smart
       object={image?.id}
       dropClassName={({ isOver, canDrop, isDragging }) =>
-        `relative rounded group text-white bg-center bg-back-999 shadow-lg h-40 rounded rounded-xl  hover:bg-back-800 transition-all ease-in-out duration-200 group ${
-          isOver && !isDragging && "border-primary-200 border"
+        `relative rounded group text-white bg-center bg-back-999 shadow-lg h-40 rounded rounded-xl  hover:bg-back-800 transition-all ease-in-out duration-200 group ${isOver && !isDragging && "border-primary-200 border"
         } ${isDragging && "ring-primary-200 ring"} `
       }
       mates={mates}

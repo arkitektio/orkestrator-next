@@ -4,29 +4,28 @@ import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateab
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { ListSearchField } from "@/components/fields/ListSearchField copy";
 import { ParagraphField } from "@/components/fields/ParagraphField";
-import { SearchField, SearchOptions } from "@/components/fields/SearchField";
+import { SearchOptions } from "@/components/fields/SearchField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Form } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import {
   CreateStructureRelationCategoryMutationVariables,
-  ListStructureRelationCategoryWithGraphFragment,
   useCreateInlineGraphMutation,
-  useCreateStructureCategoryMutation,
   useCreateStructureMutation,
   useCreateStructureRelationCategoryMutation,
   useCreateStructureRelationMutation,
-  useSearchEntityCategoryLazyQuery,
   useSearchGraphsLazyQuery,
-  useSearchTagsLazyQuery
+  useSearchTagsLazyQuery,
 } from "@/kraph/api/graphql";
 import { smartRegistry } from "@/providers/smart/registry";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-
 
 const searchIdentifiers = async ({ search, values }: SearchOptions) => {
   const models = smartRegistry
@@ -44,7 +43,8 @@ const searchIdentifiers = async ({ search, values }: SearchOptions) => {
   return models || [];
 };
 
-export type FormData = CreateStructureRelationCategoryMutationVariables["input"]
+export type FormData =
+  CreateStructureRelationCategoryMutationVariables["input"];
 
 export const CreateNewRelation = (props: {
   left: Structure[];
@@ -55,11 +55,11 @@ export const CreateNewRelation = (props: {
   const form = useForm<FormData>({
     defaultValues: {
       sourceDefinition: {
-        identifierFilters: props.left.map(s => s.identifier),
+        identifierFilters: props.left.map((s) => s.identifier),
         tagFilters: [],
       },
       targetDefinition: {
-        identifierFilters: props.right.map(s => s.identifier),
+        identifierFilters: props.right.map((s) => s.identifier),
         tagFilters: [],
       },
     },
@@ -78,15 +78,15 @@ export const CreateNewRelation = (props: {
     },
   });
 
-
-  const [createStructureRelationCategory] = useCreateStructureRelationCategoryMutation({
-    onCompleted: (data) => {
-      console.log("Relation category created:", data);
-    },
-    onError: (error) => {
-      console.error("Error creating relation category:", error);
-    },
-  });
+  const [createStructureRelationCategory] =
+    useCreateStructureRelationCategoryMutation({
+      onCompleted: (data) => {
+        console.log("Relation category created:", data);
+      },
+      onError: (error) => {
+        console.error("Error creating relation category:", error);
+      },
+    });
 
   const [createSRelation] = useCreateStructureRelationMutation({
     onCompleted: (data) => {
@@ -97,16 +97,12 @@ export const CreateNewRelation = (props: {
     },
   });
 
-
   const handleRelationCreation = async (formData: FormData) => {
     try {
-
-      
-      
       const result = await createStructureRelationCategory({
         variables: {
           input: {
-            ...formData
+            ...formData,
           },
         },
       });
@@ -165,89 +161,88 @@ export const CreateNewRelation = (props: {
       <div className="mb-6">
         <h2 className="text-2xl font-bold">Create New Relation</h2>
         <p className="text-muted-foreground">
-          Relating {props.left[0]?.identifier}:{props.left[0]?.object} to {props.right[0]?.identifier}:{props.right[0]?.object}
+          Relating {props.left[0]?.identifier}:{props.left[0]?.object} to{" "}
+          {props.right[0]?.identifier}:{props.right[0]?.object}
         </p>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleRelationCreation)} className="space-y-6">
-            
-                    <GraphQLCreatableSearchField
-                      label="Graph"
-                      name="graph"
-                      description="Select the graph for this relation"
-                      searchQuery={searchGraphs}
-                      createMutation={createGraph}
-                    />
-                    <StringField
-                      label="Label"
-                      name="label"
-                      description="Name for the relation category (e.g., 'connects to', 'part of')"
-                    />
-                    <ParagraphField
-                      label="Description"
-                      name="description"
-                      description="Describe what this relation represents"
-                    />
+        <form
+          onSubmit={form.handleSubmit(handleRelationCreation)}
+          className="space-y-6"
+        >
+          <GraphQLCreatableSearchField
+            label="Graph"
+            name="graph"
+            description="Select the graph for this relation"
+            searchQuery={searchGraphs}
+            createMutation={createGraph}
+          />
+          <StringField
+            label="Label"
+            name="label"
+            description="Name for the relation category (e.g., 'connects to', 'part of')"
+          />
+          <ParagraphField
+            label="Description"
+            name="description"
+            description="Describe what this relation represents"
+          />
 
-                    <Collapsible>
-                    <CollapsibleTrigger>Advanced</CollapsibleTrigger>
-                    <CollapsibleContent>
-                    <StringField
-                      label="PURL"
-                      name="purl"
-                      description="Permanent URL identifier (optional)"
+          <Collapsible>
+            <CollapsibleTrigger>Advanced</CollapsibleTrigger>
+            <CollapsibleContent>
+              <StringField
+                label="PURL"
+                name="purl"
+                description="Permanent URL identifier (optional)"
+              />
+
+              <Separator />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium mb-2">Source Definition</h4>
+                  <div className="space-y-2">
+                    <GraphQLSearchField
+                      label="Tag Filters"
+                      name="sourceDefinition.tagFilters"
+                      description="Filter source structures by tags"
+                      searchQuery={searchTags}
                     />
-                    
-                    <Separator />
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <h4 className="font-medium mb-2">Source Definition</h4>
-                        <div className="space-y-2">
-                          <GraphQLSearchField
-                            label="Tag Filters"
-                            name="sourceDefinition.tagFilters"
-                            description="Filter source structures by tags"
-                            searchQuery={searchTags}
-                          />
-                          <ListSearchField
-                            label="Indentifier Filters"
-                            name="sourceDefinition.identifierFilters"
-                            description="Filter source structures by categories"
-                            search={searchIdentifiers}
-                          />
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h4 className="font-medium mb-2">Target Definition</h4>
-                        <div className="space-y-2">
-                          <GraphQLSearchField
-                            label="Tag Filters"
-                            name="targetDefinition.tagFilters"
-                            description="Filter target structures by tags"
-                            searchQuery={searchTags}
-                          />
-                          <ListSearchField
-                            label="Indentifier Filters"
-                            name="targetDefinition.identifierFilters"
-                            description="Filter target structures by categories"
-                            search={searchIdentifiers}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    </CollapsibleContent>
-                    </Collapsible>
+                    <ListSearchField
+                      label="Indentifier Filters"
+                      name="sourceDefinition.identifierFilters"
+                      description="Filter source structures by categories"
+                      search={searchIdentifiers}
+                    />
+                  </div>
+                </div>
 
-                  <Button
-                    type="submit"
-                    variant="outline"
+                <div>
+                  <h4 className="font-medium mb-2">Target Definition</h4>
+                  <div className="space-y-2">
+                    <GraphQLSearchField
+                      label="Tag Filters"
+                      name="targetDefinition.tagFilters"
+                      description="Filter target structures by tags"
+                      searchQuery={searchTags}
+                    />
+                    <ListSearchField
+                      label="Indentifier Filters"
+                      name="targetDefinition.identifierFilters"
+                      description="Filter target structures by categories"
+                      search={searchIdentifiers}
+                    />
+                  </div>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
-                  >
-                    Create New Relation Category
-                  </Button>
+          <Button type="submit" variant="outline">
+            Create New Relation Category
+          </Button>
         </form>
       </Form>
     </div>

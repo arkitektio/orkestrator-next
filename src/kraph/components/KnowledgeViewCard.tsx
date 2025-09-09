@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
+import type { GetKnowledgeViewsQuery } from "../api/graphql";
 import { SelectiveNodeViewRenderer } from "../components/renderers/NodeQueryRenderer";
 import { StructureConnectionActions } from "./StructureConnectionActions";
-import type { GetKnowledgeViewsQuery } from "../api/graphql";
 
 type KnowledgeView = GetKnowledgeViewsQuery["knowledgeViews"][0];
 

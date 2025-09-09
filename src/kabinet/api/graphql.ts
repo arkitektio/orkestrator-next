@@ -314,6 +314,7 @@ export type Definition = {
 
 export type DefinitionFlavoursArgs = {
   filters?: InputMaybe<FlavourFilter>;
+  order?: InputMaybe<FlavourOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -533,18 +534,25 @@ export type FlavourFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<FlavourFilter>;
   OR?: InputMaybe<FlavourFilter>;
+  hasDefinitions?: InputMaybe<Array<Scalars['ID']['input']>>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type FlavourOrder = {
+  releasedAt?: InputMaybe<Ordering>;
 };
 
 /** A user of the bridge server. Maps to an authentikate user */
 export type GithubRepo = {
   __typename?: 'GithubRepo';
+  addedAt: Scalars['DateTime']['output'];
   branch: Scalars['String']['output'];
   flavours: Array<Flavour>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   repo: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
   user: Scalars['String']['output'];
 };
 
@@ -552,6 +560,7 @@ export type GithubRepo = {
 /** A user of the bridge server. Maps to an authentikate user */
 export type GithubRepoFlavoursArgs = {
   filters?: InputMaybe<FlavourFilter>;
+  order?: InputMaybe<FlavourOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -561,8 +570,11 @@ export type GithubRepoFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<GithubRepoFilter>;
   OR?: InputMaybe<GithubRepoFilter>;
+  branch?: InputMaybe<Scalars['String']['input']>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  repo?: InputMaybe<Scalars['String']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
+  user?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** A implementation is a blueprint for a action. It is composed of a definition, a list of dependencies, and a list of params. */
@@ -717,6 +729,12 @@ export enum Ordering {
   DescNullsLast = 'DESC_NULLS_LAST'
 }
 
+export type Organization = {
+  __typename?: 'Organization';
+  id: Scalars['String']['output'];
+  slug: Scalars['String']['output'];
+};
+
 /** A user of the bridge server. Maps to an authentikate user */
 export type Pod = {
   __typename?: 'Pod';
@@ -779,9 +797,15 @@ export type Port = {
 };
 
 export type PortDemandInput = {
+  /** Require that the action has a specific number of ports. This is used to identify the demand in the system. */
   forceLength?: InputMaybe<Scalars['Int']['input']>;
+  /** Require that the action has a specific number of non-nullable ports. This is used to identify the demand in the system. */
   forceNonNullableLength?: InputMaybe<Scalars['Int']['input']>;
+  /** Require that the action has a specific number of structure ports. This is used to identify the demand in the system. */
+  forceStructureLength?: InputMaybe<Scalars['Int']['input']>;
+  /** The kind of the demand. You can ask for args or returns */
   kind: DemandKind;
+  /** The matches of the demand.  */
   matches?: InputMaybe<Array<PortMatchInput>>;
 };
 
@@ -848,11 +872,17 @@ export enum PortKind {
 }
 
 export type PortMatchInput = {
+  /** The index of the port to match.  */
   at?: InputMaybe<Scalars['Int']['input']>;
+  /** The matches for the children of the port to match.  */
   children?: InputMaybe<Array<PortMatchInput>>;
+  /** The identifier of the port to match.  */
   identifier?: InputMaybe<Scalars['String']['input']>;
+  /** The key of the port to match. */
   key?: InputMaybe<Scalars['String']['input']>;
+  /** The kind of the port to match.  */
   kind?: InputMaybe<PortKind>;
+  /** Whether the port is nullable.  */
   nullable?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
@@ -947,6 +977,7 @@ export type QueryFlavourArgs = {
 
 export type QueryFlavoursArgs = {
   filters?: InputMaybe<FlavourFilter>;
+  order?: InputMaybe<FlavourOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1032,6 +1063,7 @@ export type Release = {
 /** A user of the bridge server. Maps to an authentikate user */
 export type ReleaseFlavoursArgs = {
   filters?: InputMaybe<FlavourFilter>;
+  order?: InputMaybe<FlavourOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1233,8 +1265,8 @@ export type UpdatePodInput = {
 
 export type User = {
   __typename?: 'User';
+  activeOrganization?: Maybe<Organization>;
   preferredUsername: Scalars['String']['output'];
-  roles: Array<Scalars['String']['output']>;
   sub: Scalars['String']['output'];
 };
 

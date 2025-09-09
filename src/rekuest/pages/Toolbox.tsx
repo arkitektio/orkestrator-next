@@ -1,5 +1,4 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { RekuestToolbox } from "@/linkers";
 import { useToolboxQuery } from "@/rekuest/api/graphql";

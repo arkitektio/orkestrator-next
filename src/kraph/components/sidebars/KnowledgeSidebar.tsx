@@ -1,22 +1,13 @@
 import { Button } from "@/components/ui/button";
 import {
   GetStructureDocument,
-  GraphFragment,
-  KnowledgeStructureFragment,
   ListGraphFragment,
   useCreateStructureMutation,
   useGetStructureQuery,
-  useListGraphsQuery,
-  useMyActiveGraphQuery,
+  useListGraphsQuery
 } from "@/kraph/api/graphql";
 import { Identifier } from "@/providers/smart/types";
 import { DelegatinNodeViewRenderer } from "../renderers/DelegatingNodeViewRenderer";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 
 export type KnowledgeSidebarProps = {
   identifier: Identifier;

@@ -12,9 +12,7 @@ import {
 
 export type WidgetRegistryProviderProps = {
   children: React.ReactNode;
-  unknownInputWidget?: React.FC<InputWidgetProps>;
-  unknownReturnWidget?: React.FC<ReturnWidgetProps>;
-  unknownEffectWidget?: React.FC<EffectWidgetProps>;
+  registry: WidgetRegistryType;
 };
 
 export const UnknownInputWidget: React.FC<InputWidgetProps> = ({ port }) => {
@@ -48,32 +46,18 @@ export const UnknownEffectWidget: React.FC<EffectWidgetProps> = ({
 
 export const WidgetRegistryProvider: React.FC<WidgetRegistryProviderProps> = ({
   children,
-  unknownInputWidget = UnknownInputWidget,
-  unknownReturnWidget = UnknownReturnWidget,
-  unknownEffectWidget = UnknownEffectWidget,
+  registry,
 }) => {
-  const [widgetRegistry, setWidgetRegistry] = useState<WidgetRegistryType>(
-    () => {
-      let x = new WidgetRegistry(
-        unknownInputWidget,
-        unknownReturnWidget,
-        unknownEffectWidget,
-      );
-
-      x.registerReturnWidgetFallback(
-        PortKind.Structure,
-        DelegatingStructureWidget,
-      );
-
-      return x;
-    },
-  );
+  const [widgetRegistry, setWidgetRegistry] =
+    useState<WidgetRegistryType>(registry);
 
   return (
     <WidgetRegistryContext.Provider
       value={{
         registry: widgetRegistry,
-        setRegistry: setWidgetRegistry,
+        setRegistry: (newRegistry: WidgetRegistryType) => {
+          alert("This is not implemented yet");
+        },
       }}
     >
       {children}

@@ -1,4 +1,3 @@
-import { Arkitekt, useElektro } from "@/lib/arkitekt/Arkitekt";
 import {
   AccessCredentialsFragment,
   RequestAccessDocument,
@@ -6,14 +5,17 @@ import {
   RequestAccessMutationVariables,
   ZarrStoreFragment,
 } from "@/elektro/api/graphql";
-import { S3Store } from "@/mikro-next/providers/xarray/store";
+import { Arkitekt, useDatalayerEndpoint, useElektro } from "@/lib/arkitekt/Arkitekt";
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { ApolloClient } from "@apollo/client";
 import { AwsClient } from "aws4fetch";
 import { useCallback } from "react";
-import { ArraySelection, Slice } from "zarr/types/core/types";
 import { Chunk, DataType, get, open } from "zarrita";
 import { DetailTraceFragment } from "../api/graphql";
+import { ArraySelection, Slice } from "zarr/types/core/types";
+import { S3Store } from "./store";
+
+
 
 export type DownloadedArray = {
   shape: [number, number, number, number, number];
@@ -109,12 +111,11 @@ export const renderArray = async (
 
 const downloadArray = async (
   client: ApolloClient<any> | undefined,
-  fakts: any,
+  endpoint_url: string | undefined,
   t: number | null,
   store: ZarrStoreFragment,
   signal?: AbortSignal,
 ) => {
-  let endpoint_url = (fakts?.datalayer as any)?.endpoint_url;
   if (endpoint_url === undefined) {
     throw Error("No datalayer found");
   }
@@ -141,7 +142,8 @@ export const useTraceArray = () => {
     settings: { experimentalCache },
   } = useSettings();
   const client = useElektro();
-  const fakts = Arkitekt.useFakts();
+
+  const endpoint_url = useDatalayerEndpoint();
 
   const renderView = useCallback(
     async (
@@ -153,13 +155,13 @@ export const useTraceArray = () => {
         throw Error("No client found");
       }
 
-      if (!fakts) {
+      if (!endpoint_url) {
         throw Error("No fakts found");
       }
 
       const imageData = await downloadArray(
         client,
-        fakts,
+        endpoint_url,
         t,
         trace.store,
         signal,
@@ -167,7 +169,7 @@ export const useTraceArray = () => {
 
       return imageData;
     },
-    [client, fakts, experimentalCache],
+    [client, endpoint_url, experimentalCache],
   );
 
   return {

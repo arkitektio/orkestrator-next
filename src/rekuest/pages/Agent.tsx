@@ -1,6 +1,7 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useGetPodForAgentQuery } from "@/kabinet/api/graphql";
 import { cn } from "@/lib/utils";
@@ -21,7 +22,6 @@ import { ImplementationActionButton } from "../buttons/ImplementationActionButto
 import ImplementationCard from "../components/cards/ImplementationCard";
 import AgentCarousel from "../components/carousels/AgentCarousel";
 import { StateDisplay } from "../components/State";
-import { Badge } from "@/components/ui/badge";
 
 export const sizer = (length: number, index: number): string => {
   const divider = 3;

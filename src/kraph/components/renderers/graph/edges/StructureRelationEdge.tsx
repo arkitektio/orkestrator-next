@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -6,9 +7,9 @@ import {
   type EdgeProps,
   type ReactFlowState,
 } from "@xyflow/react";
-import { RelationEdge, StructureRelationEdge } from "../types";
+import { StructureRelationEdge } from "../types";
 import { getEdgeParams } from "../utils";
-import { Card } from "@/components/ui/card";
+import { KraphStructureRelation } from "@/linkers";
 
 export type GetSpecialPathParams = {
   sourceX: number;
@@ -24,9 +25,8 @@ export const getSpecialPath = (
   const centerX = (sourceX + targetX) / 2;
   const centerY = (sourceY + targetY) / 2;
 
-  return `M ${sourceX} ${sourceY} Q ${centerX} ${
-    centerY + offset
-  } ${targetX} ${targetY}`;
+  return `M ${sourceX} ${sourceY} Q ${centerX} ${centerY + offset
+    } ${targetX} ${targetY}`;
 };
 
 export default ({
@@ -91,9 +91,11 @@ export default ({
             position: "absolute",
             transform: `translate(-50%, -50%) translate(${centerX}px,${centerY + offset}px)`,
           }}
-          className="p-1 text-xs group"
+          className="p-1 text-xs group nodrag nopan"
         >
-          {data?.category.label}
+          <KraphStructureRelation.DetailLink object={data?.id} style={{ pointerEvents: 'all' }}>
+            {data?.category.label}
+          </KraphStructureRelation.DetailLink>
         </Card>
       </EdgeLabelRenderer>
     </>

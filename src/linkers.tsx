@@ -78,6 +78,7 @@ export const RekuestDashboard = buildSmart(
 );
 
 export const MikroImage = buildSmart("@mikro/image", "mikro/images");
+export const MikroSnapshot = buildSmart("@mikro/snapshot", "mikro/snapshots");
 export const MikroEntityMetric = buildSmart(
   "@mikro/entitymetric",
   "mikro/entitymetric",
@@ -142,6 +143,13 @@ export const KraphNode = buildSmart("@kraph/node", "kraph/nodes");
 export const KraphExpression = buildSmart(
   "@kraph/expression",
   "kraph/expressions",
+);
+
+export const KraphRelation = buildSmart("@kraph/relation", "kraph/relations");
+
+export const KraphStructureRelation = buildSmart(
+  "@kraph/structurerelation",
+  "kraph/structurerelations",
 );
 
 export const KraphStructureCategory = buildSmart(
@@ -251,7 +259,7 @@ export const KraphProtocolStepTemplate = buildSmart(
 
 export const OmeroArkProject = buildSmart(
   "@omero-ark/project",
-  "omero-ark/projects",
+  "omero_ark/projects",
 );
 
 export const PortPod = buildSmart("@port-next/pod", "port-next/pod");
@@ -262,10 +270,10 @@ export const PortDefinition = buildSmart(
 
 export const OmeroArkDataset = buildSmart(
   "@omero-ark/dataset",
-  "omero-ark/datasets",
+  "omero_ark/datasets",
 );
 
-export const OmeroArkImage = buildSmart("@omero-ark/image", "omero-ark/images");
+export const OmeroArkImage = buildSmart("@omero-ark/image", "omero_ark/images");
 
 export const MikroHistory = buildSmart("@mikro/history", "mikro/history");
 
@@ -373,7 +381,10 @@ export const ReaktionModuleLink = buildModuleLink("fluss");
 export const OmeroArkModuleLink = buildModuleLink("omero-ark");
 
 export const LokUser = buildSmart("@lok/user", "lok/users");
-export const LokRedeemToken = buildSmart("@lok/redeem_token", "lok/users");
+export const LokRedeemToken = buildSmart(
+  "@lok/redeemtoken",
+  "lok/redeemtokens",
+);
 export const LokGroup = buildSmart("@lok/group", "lok/groups");
 export const LokClient = buildSmart("@lok/client", "lok/clients");
 export const LokApp = buildSmart("@lok/app", "lok/apps");

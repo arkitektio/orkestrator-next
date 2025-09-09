@@ -1,16 +1,13 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { LokService, MikroDataset } from "@/linkers";
+import { LokService } from "@/linkers";
 
 import {
-  ClientFilter,
   OffsetPaginationInput,
   ServiceFilter,
-  useClientsQuery,
-  useListServicesQuery,
+  useListServicesQuery
 } from "@/lok-next/api/graphql";
-import ClientCard from "../cards/ClientCard";
-import ServiceCard from "../cards/ServiceCard";
 import { PlusIcon } from "lucide-react";
+import ServiceCard from "../cards/ServiceCard";
 
 export type Props = {
   filters?: ServiceFilter;

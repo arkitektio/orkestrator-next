@@ -1,10 +1,9 @@
 import { Explainer } from "@/components/explainer/Explainer";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
-import { ElektroExperiment, ElektroNeuronModel, ElektroSimulation, MikroImage } from "@/linkers";
+import { ElektroSimulation } from "@/linkers";
 import { UploadIcon } from "lucide-react";
 import React from "react";
-import NeuronModelList from "../components/lists/NeuronModelList";
 import SimulationList from "../components/lists/SimulationList";
 
 export type IRepresentationScreenProps = {};

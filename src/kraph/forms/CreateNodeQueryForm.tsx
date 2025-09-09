@@ -1,41 +1,42 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { ParagraphField } from "@/components/fields/ParagraphField";
+import { ChoicesField } from "@/components/fields/ChoicesField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useFieldArray, useForm } from "react-hook-form";
 import {
-  BaseCategoryFragment,
-  BaseNodeFragment,
   ColumnKind,
-  CreateGraphQueryMutationVariables,
   CreateNodeQueryMutationVariables,
   EntityFragment,
   MetricKind,
-  useCreateGraphMutation,
-  useCreateGraphQueryMutation,
   useCreateNodeQueryMutation,
+  useGetGraphQuery,
   ViewKind,
 } from "../api/graphql";
-import { CypherEditor } from "../components/cypher/CypherEditor";
 import { CypherField } from "../components/cypher/CypherField";
-import { Card } from "@/components/ui/card";
-import { ChoicesField } from "@/components/fields/ChoicesField";
+import { buildCypherSchemaFromGraph } from "../components/renderers/utils";
 
 export default (props: { entity: EntityFragment }) => {
   const [add] = useCreateNodeQueryMutation();
+
+  const { data } = useGetGraphQuery({
+    variables: {
+      id: props.entity.graph.id,
+    },
+  });
 
   const dialog = useGraphQlFormDialog(add);
 
   const form = useForm<CreateNodeQueryMutationVariables["input"]>({
     defaultValues: {
-      query: `MATCH (n {__category_id: ${props.entity.category.id}})
+      query: `MATCH p=(n:${props.entity.category.ageName})-[*0..3]-()
 WHERE id(n) = %s
-RETURN id(n), n.__created_at`,
+RETURN p`,
       description: "No Description",
       name: "New Step",
-      kind: ViewKind.Table,
+      kind: ViewKind.Path,
       graph: props.entity.graph.id,
       columns: [
         {
@@ -95,49 +96,54 @@ RETURN id(n), n.__created_at`,
               ]}
               description="What kind of the query is it??"
             />
-            <CypherField
-              label="Query"
-              name="query"
-              description="The Cypher query to execute"
-            />
-            {kind == ViewKind.Table && <div className="flex flex-row gap-4 w-full">
-              {columnFieldArray.fields.map((item, index) => (
-                <Card
-                  key={item.id}
-                  className="gap-2 flex-col flex group p-2 min-w-lg"
+            {data && (
+              <CypherField
+                label="Query"
+                name="query"
+                schema={buildCypherSchemaFromGraph(data.graph)}
+                description="The Cypher query to execute"
+              />
+            )}
+            {kind == ViewKind.Table && (
+              <div className="flex flex-row gap-4 w-full">
+                {columnFieldArray.fields.map((item, index) => (
+                  <Card
+                    key={item.id}
+                    className="gap-2 flex-col flex group p-2 min-w-lg"
+                  >
+                    <StringField
+                      name={`columns.${index}.name`}
+                      label="Role"
+                      description="Which role does the entity play?"
+                    />
+                    <div className="group-hover:block group-hover:opacity-100 opacity-0 transition-opacity hidden">
+                      <Button
+                        type="button"
+                        onClick={() => columnFieldArray.remove(index)}
+                        variant={"destructive"}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+                <Button
+                  className="h-full max-w-xs"
+                  type="button"
+                  onClick={() =>
+                    columnFieldArray.append({
+                      name: "",
+                      description: "",
+                      kind: ColumnKind.Node,
+                      valueKind: MetricKind.String,
+                    })
+                  }
+                  variant={"ghost"}
                 >
-                  <StringField
-                    name={`columns.${index}.name`}
-                    label="Role"
-                    description="Which role does the entity play?"
-                  />
-                  <div className="group-hover:block group-hover:opacity-100 opacity-0 transition-opacity hidden">
-                    <Button
-                      type="button"
-                      onClick={() => columnFieldArray.remove(index)}
-                      variant={"destructive"}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </Card>
-              ))}
-              <Button
-                className="h-full max-w-xs"
-                type="button"
-                onClick={() =>
-                  columnFieldArray.append({
-                    name: "",
-                    description: "",
-                    kind: ColumnKind.Node,
-                    valueKind: MetricKind.String,
-                  })
-                }
-                variant={"ghost"}
-              >
-                +
-              </Button>
-            </div>}
+                  +
+                </Button>
+              </div>
+            )}
           </div>
 
           <DialogFooter className="mt-2">

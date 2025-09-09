@@ -13,6 +13,9 @@ fragment EntityRoleDefinition on EntityRoleDefinition {
   currentDefault {
     id
   }
+  createCategory {
+    id
+  }
   label
 }
 

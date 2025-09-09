@@ -1,24 +1,26 @@
-import { Guard } from "@/lib/arkitekt/Arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import { Guard } from "@/lib/arkitekt/Arkitekt";
 import React from "react";
 import { Route, Routes } from "react-router";
-import ClientPage from "./pages/ClientPage";
-import HomePage from "./pages/HomePage";
-import UserPage from "./pages/UserPage";
-import StandardPane from "./panes/StandardPane";
-import ServicesPage from "./pages/ServicesPage";
-import ServicePage from "./pages/ServicePage";
-import ServiceInstancePage from "./pages/ServiceInstancePage";
-import InstancesPage from "./pages/InstancesPage";
 import AppPage from "./pages/AppPage";
-import ReleasePage from "./pages/ReleasePage";
 import AppsPage from "./pages/AppsPage";
-import GroupsPage from "./pages/GroupsPage";
+import ClientPage from "./pages/ClientPage";
 import GroupPage from "./pages/GroupPage";
-import UsersPage from "./pages/UsersPage";
-import LayersPage from "./pages/LayersPage";
+import GroupsPage from "./pages/GroupsPage";
+import HomePage from "./pages/HomePage";
+import InstancesPage from "./pages/InstancesPage";
 import LayerPage from "./pages/LayerPage";
+import LayersPage from "./pages/LayersPage";
 import MePage from "./pages/MePage";
+import ReleasePage from "./pages/ReleasePage";
+import ServiceInstancePage from "./pages/ServiceInstancePage";
+import ServicePage from "./pages/ServicePage";
+import ServicesPage from "./pages/ServicesPage";
+import UserPage from "./pages/UserPage";
+import UsersPage from "./pages/UsersPage";
+import StandardPane from "./panes/StandardPane";
+import RedeemTokensPage from "./pages/RedeemTokensPage";
+import RedeemTokenPage from "./pages/RedeemTokenPage";
 interface Props {}
 
 export const LokNextModule: React.FC<Props> = (props) => {
@@ -40,6 +42,8 @@ export const LokNextModule: React.FC<Props> = (props) => {
           <Route path="layers/:id" element={<LayerPage />} />
           <Route path="groups/:id" element={<GroupPage />} />
           <Route path="services/:id" element={<ServicePage />} />
+          <Route path="redeemtokens" element={<RedeemTokensPage />} />
+          <Route path="redeemtokens/:id" element={<RedeemTokenPage />} />
           <Route
             path="serviceinstances/:id"
             element={<ServiceInstancePage />}

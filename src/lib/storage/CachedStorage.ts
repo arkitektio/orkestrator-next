@@ -20,8 +20,7 @@ interface LocalStorageCacheEntry {
  * - IndexedDB caching for larger items
  */
 export class CachedStorage<Options = unknown>
-  implements AsyncReadable<Options>
-{
+  implements AsyncReadable<Options> {
   private storage: AsyncReadable<Options>;
   protected memoryCache: Map<string, CacheEntry> = new Map();
   private pendingRequests: Map<string, Promise<Uint8Array | undefined>> =

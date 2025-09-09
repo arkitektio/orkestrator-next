@@ -2,16 +2,21 @@ import {
   ModelPageLayout,
   ModelPageLayoutProps,
 } from "@/components/layout/ModelPageLayout";
+import { TinyStructureBox } from "@/kraph/boxes/TinyStructureBox";
+import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
 import { Komments } from "@/lok-next/components/komments/Komments";
 import { usePrimaryActionsQuery } from "@/rekuest/api/graphql";
-import { NewButton, NewButtonProps } from "@/rekuest/buttons/NewButton";
 import {
   ObjectButton,
   ObjectButtonProps,
 } from "@/rekuest/buttons/ObjectButton";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
+import { ObjectID } from "@/types";
 import { NavLink } from "react-router-dom";
+import { SmartDropZone } from "./Drop";
+import { SearchFunction, smartRegistry } from "./registry";
+import { ShareDialog } from "./ShareDialog";
 import { SmartModel } from "./SmartModel";
 import {
   BaseLinkProps,
@@ -20,11 +25,6 @@ import {
   ModelLinkProps,
   OmitedNavLinkProps,
 } from "./types";
-import { SearchFunction, smartRegistry } from "./registry";
-import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
-import { SmartDropZone } from "./Drop";
-import { TinyStructureBox } from "@/kraph/boxes/TinyStructureBox";
-import { ShareDialog } from "./ShareDialog";
 
 const buildBaseLink = (to: string) => {
   return ({ children, ...props }: BaseLinkProps) => {
@@ -34,6 +34,26 @@ const buildBaseLink = (to: string) => {
       </NavLink>
     );
   };
+};
+
+
+export const SmartLink = ({ identifier, object, subroute, subobject, children, ...props }: { identifier: string, object: string, subroute?: string, subobject?: string } & OmitedNavLinkProps) => {
+
+  const model = smartRegistry.findModel(identifier);
+  if (!model) {
+    return null;
+  }
+
+  return (
+    <NavLink
+      {...props}
+      to={`/${model.path}/${object}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}`}
+      title="Open"
+      className={props.className}
+    >
+      {children}
+    </NavLink>
+  );
 };
 
 const buildModelLink = (to: string) => {
@@ -68,14 +88,6 @@ export const buildSmartModel = (
         {children}
       </SmartModel>
     );
-  };
-};
-
-export const buildShareModel = (
-  identifier: Identifier,
-): React.FC<CreatedSmartSmartProps> => {
-  return ({ children, ...props }) => {
-    return <ShareDialog identifier={identifier} object={props.object} />;
   };
 };
 
@@ -153,30 +165,36 @@ const buildUseLive = (model: Identifier, object: string) => {
   });
 };
 
-export type SmartObjectButtonProps = Omit<ObjectButtonProps, "identifier">;
-export type SmartNewButtonProps = Omit<NewButtonProps, "identifier">;
+export type SmartObjectButtonProps = Omit<ObjectButtonProps, "objects"> & {
+  object: ObjectID;
+};
+export type SmartNewButtonProps = Omit<ObjectButtonProps, "objects">;
 
 const buildObjectButton = (model: Identifier) => {
-  return ({ ...props }: SmartObjectButtonProps) => {
-    return <ObjectButton identifier={model} {...props} />;
+  return ({ object, ...props }: SmartObjectButtonProps) => {
+    return (
+      <ObjectButton objects={[{ identifier: model, object }]} {...props} />
+    );
   };
 };
 
 const buildNewButton = (model: Identifier) => {
   return ({ ...props }: SmartNewButtonProps) => {
-    return <NewButton identifier={model} {...props} />;
+    return <ObjectButton returns={[model]} objects={[]} {...props} />;
   };
 };
 
 export const buildSmart = (
   model: Identifier,
   to: string,
-  searchFunction?: SearchFunction,
+  options?: {
+    searchFunction?: SearchFunction;
+  },
 ) => {
   smartRegistry.register({
     identifier: model,
     path: to,
-    search: searchFunction,
+    search: options?.searchFunction,
     description: "A smart model",
   });
 
@@ -185,7 +203,6 @@ export const buildSmart = (
     ListLink: buildBaseLink(to),
     linkBuilder: linkBuilder(to),
     Smart: buildSmartModel(model),
-    Share: buildShareModel(model),
     Drop: buildDropModel(model),
     Actions: buildSelfActions(model),
     Komments: buildKomments(model),

@@ -1,10 +1,9 @@
-import { Card, CardHeader } from "@/components/ui/card";
 import { ShapeProps } from "../ReactiveWidget";
 
 export default ({ data, implementation }: ShapeProps) => {
-    return (
-      <>
-        <svg height="40" width="40">
+  return (
+    <>
+      <svg height="40" width="40">
         <polygon
           points="0,40 40,20 0,0"
           style={{
@@ -15,6 +14,6 @@ export default ({ data, implementation }: ShapeProps) => {
         />
         <text>{implementation}</text>
       </svg>
-      </>
-    );
-  };
+    </>
+  );
+};

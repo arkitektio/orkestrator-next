@@ -3,11 +3,11 @@ import {
   useRequestAccessMutation,
   ZarrStoreFragment,
 } from "@/mikro-next/api/graphql";
-import { S3Store } from "@/mikro-next/providers/xarray/store";
 import { AwsClient } from "aws4fetch";
 import { useCallback, useRef, useState } from "react";
 import { Array, Chunk, DataType, get, open } from "zarrita";
 import { Slice } from "../indexer";
+import { S3Store } from "./store";
 
 export const useArray = (props: { store: ZarrStoreFragment }) => {
   const datalayerEndpoint = useDatalayerEndpoint();

@@ -1,10 +1,4 @@
 import { Action } from "@/actions/action-registry";
-import {
-  NotifyUserDocument,
-  NotifyUserMutation,
-  NotifyUserMutationVariables,
-} from "@/lok-next/api/graphql";
-import { dialog } from "electron";
 
 export const LOK_ACTIONS: Action[] = [
   {
@@ -38,7 +32,7 @@ export const LOK_ACTIONS: Action[] = [
 
       const users = state.left.filter((item) => item.identifier === "@lok/user").map((item) => item.object);
 
-      dialog.openDialog("addusertoorganization", { users });
+      dialog.openSheet("addusertoorganization", { users }, { className: "max-w-4xl", });
     },
   },
 ];

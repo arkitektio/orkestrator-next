@@ -1,8 +1,8 @@
+import registry from "@/blok/registry";
 import { PageLayout } from "@/components/layout/PageLayout";
-import BlokList from "../components/lists/BlokList";
 import { Button } from "@/components/ui/button";
 import { useCreateBlokMutation } from "../api/graphql";
-import registry from "@/blok/registry";
+import BlokList from "../components/lists/BlokList";
 
 const Page = () => {
   const [createBlok] = useCreateBlokMutation();

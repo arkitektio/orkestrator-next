@@ -1,8 +1,7 @@
 import { useLivekit } from "@/lib/arkitekt/Arkitekt";
 import {
   EnsuredStreamFragment,
-  useCreateVideoStreamMutation,
-  useGetStreamQuery,
+  useGetStreamQuery
 } from "@/lovekit/api/graphql";
 import { ReturnWidgetProps } from "@/rekuest/widgets/types";
 import {
@@ -11,7 +10,6 @@ import {
   useTracks,
   VideoTrack,
 } from "@livekit/components-react";
-import { Value } from "@udecode/plate-common";
 import { Track } from "livekit-client";
 
 function VideoRenderer() {

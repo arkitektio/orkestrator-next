@@ -1,4 +1,3 @@
-import { Guard } from "@/lib/arkitekt/Arkitekt";
 import { Badge } from "@/components/ui/badge";
 import {
   Command,
@@ -7,8 +6,15 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Dialog } from "@/components/ui/dialog";
+import { Guard } from "@/lib/arkitekt/Arkitekt";
 import { cn } from "@/lib/utils";
-import { useDisplayComponent } from "@/providers/display/DisplayContext";
+import {
+  ApplicableActions,
+  ApplicableDefinitions,
+  ApplicableLocalActions,
+  ApplicableShortcuts,
+} from "@/rekuest/buttons/ObjectButton";
+import { Structure } from "@/types";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { DialogPortal } from "@radix-ui/react-dialog";
 import { Cross2Icon } from "@radix-ui/react-icons";
@@ -21,10 +27,9 @@ import {
   useSmartExtension,
 } from "./ExtensionContext";
 import { LocalActionExtensions } from "./extensions/LocalActionExtension";
-import { NodeActionExtension } from "./extensions/NodeActionExtension";
-import { NodeExtensions } from "./extensions/NodeExtension";
-import { ReservationExtensions } from "./extensions/ReservationActionExtension";
 import { SearchExtensions } from "./extensions/SearchExtensions";
+import { ShortcutExtensions } from "./extensions/ShortcutExtensions";
+import { useDisplayComponent } from "@/app/display";
 
 export const DisplayWidget = (props: {
   identifier: string;
@@ -38,7 +43,11 @@ export const DisplayWidget = (props: {
 
   return (
     <Suspense>
-      <Widget small={true} object={props.object} />
+      <Widget
+        small={true}
+        object={props.object}
+        identifier={props.identifier}
+      />
     </Suspense>
   );
 };
@@ -83,7 +92,12 @@ export const ModifierRender = (props: { modifier: Modifier }) => {
  * And allows for the execution of these commands.
  *
  **/
-export const CommandMenu = () => {
+export const CommandMenu = (props: {
+  objects?: Structure[];
+  collection?: string;
+  partners?: Structure[];
+  returns?: string[];
+}) => {
   const [context, setContext] = useState<Context>({
     open: false,
     query: "",
@@ -164,6 +178,28 @@ export const CommandMenu = () => {
             </div>
           )}
 
+          {props.objects && props.objects.length > 0 && (
+            <div className="flex flex-col justify-between items-center relative gap-1">
+              {props.objects.map((m, index) => (
+                <>
+                  <div className="border bg-background shadow-lg sm:rounded-lg md:w-full relative">
+                    <div
+                      onClick={() => removeModifier(index)}
+                      className="absolute right-4 top-[50%] translate-y-[-50%] cursor-pointer rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+                    >
+                      <Cross2Icon className="h-4 w-4" />
+                      <span className="sr-only">Close</span>
+                    </div>
+                    <DisplayWidget
+                      identifier={m.identifier}
+                      object={m.object}
+                    />
+                  </div>
+                </>
+              ))}
+            </div>
+          )}
+
           <div className="flex flex-row justify-between items-center relative gap-4 border border-gray-800 bg-background shadow-lg sm:rounded-lg md:w-full">
             <Command
               shouldFilter={false}
@@ -191,12 +227,33 @@ export const CommandMenu = () => {
                   }}
                 >
                   <Guard.Rekuest>
-                    <NodeExtensions />
-                    <NodeActionExtension />
-
-                    <ReservationExtensions />
+                    <ApplicableShortcuts
+                      filter={context.query}
+                      objects={props.objects || []}
+                      partners={props.partners}
+                      onDone={() => setContext((c) => ({ ...c, open: false }))}
+                    />
+                    <ApplicableActions
+                      filter={context.query}
+                      objects={props.objects || []}
+                      collection={props.collections}
+                      partners={props.partners}
+                      onDone={() => setContext((c) => ({ ...c, open: false }))}
+                    />
                   </Guard.Rekuest>
-                  <LocalActionExtensions />
+                  <ApplicableLocalActions
+                    filter={context.query}
+                    objects={props.objects || []}
+                    partners={props.partners}
+                  />
+                  <Guard.Kabinet>
+                    <ApplicableDefinitions
+                      filter={context.query}
+                      objects={props.objects || []}
+                      partners={props.partners}
+                      returns={props.returns || []}
+                    />
+                  </Guard.Kabinet>
                   <Guard.Mikro fallback={<></>}>
                     <SearchExtensions />
                   </Guard.Mikro>

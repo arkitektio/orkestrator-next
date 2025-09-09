@@ -1,13 +1,10 @@
 import { useDialog } from "@/app/dialog";
 import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
-import { ParagraphField } from "@/components/fields/ParagraphField";
-import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
-import {  DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DialogFooter } from "@/components/ui/dialog";
+import { DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { useAddUserToOrganizationMutation, useOrganizationOptionsLazyQuery, useOrganizationOptionsQuery, useRoleOptionsLazyQuery } from "@/lok-next/api/graphql";
+import { useAddUserToOrganizationMutation, useOrganizationOptionsLazyQuery, useRoleOptionsLazyQuery } from "@/lok-next/api/graphql";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -38,7 +35,7 @@ export const AddUserToOrganizationDialog = (props: { users: string[], organizati
         },
       })
     );
-    
+
     try {
       await Promise.all(promises);
       toast.success(`Notification sent to ${props.users.length} user${props.users.length > 1 ? 's' : ''}`);
@@ -66,12 +63,12 @@ export const AddUserToOrganizationDialog = (props: { users: string[], organizati
         <DialogHeader>
           <DialogTitle>Send Notification</DialogTitle>
         </DialogHeader>
-        
+
         <div className="grid gap-4">
           <div className="text-sm text-muted-foreground">
             Sending notification to {props.users.length} user{props.users.length > 1 ? 's' : ''}
           </div>
-          
+
           {!props.organization && (
             <GraphQLSearchField
               name="organization"

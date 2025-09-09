@@ -1,9 +1,9 @@
 import { OrthographicCamera } from "@react-three/drei";
-import { useFrame, useThree } from "@react-three/fiber";
-import { useRef, useEffect } from "react";
+import { useThree } from "@react-three/fiber";
+import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
-export const StageCamera = ({}: { contextId: string }) => {
+export const StageCamera = ({ }: { contextId: string }) => {
   const cameraRef = useRef<THREE.OrthographicCamera | null>(null);
   const { size } = useThree();
 

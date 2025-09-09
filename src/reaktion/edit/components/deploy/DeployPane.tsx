@@ -57,7 +57,7 @@ export const DeployButton = (props: {
           );
         }}
       >
-        Run and Deploy {}
+        Run and Deploy { }
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

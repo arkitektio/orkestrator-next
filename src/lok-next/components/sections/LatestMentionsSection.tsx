@@ -1,10 +1,10 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Clock, User } from "lucide-react";
-import { useMyMentionsQuery } from "@/lok-next/api/graphql";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LokComment } from "@/linkers";
-import { Comment } from "../komments/display/Comment";
+import { useMyMentionsQuery } from "@/lok-next/api/graphql";
 import { formatDistanceToNow } from "date-fns";
+import { Clock, MessageSquare, User } from "lucide-react";
+import { Comment } from "../komments/display/Comment";
 
 export const LatestMentionsSection = () => {
   const { data, loading } = useMyMentionsQuery();
@@ -65,15 +65,15 @@ export const LatestMentionsSection = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         {data.myMentions.slice(0, 5).map((mention) => (
-          <div 
-            key={mention.id} 
+          <div
+            key={mention.id}
             className="flex space-x-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
           >
             <div className="flex-shrink-0">
               <User className="h-5 w-5 text-muted-foreground" />
             </div>
             <div className="flex-1 min-w-0">
-              <LokComment.DetailLink 
+              <LokComment.DetailLink
                 object={mention.id}
                 className="block hover:text-foreground"
               >
@@ -91,7 +91,7 @@ export const LatestMentionsSection = () => {
             </div>
           </div>
         ))}
-        
+
         {data.myMentions.length > 5 && (
           <div className="text-center pt-4 border-t">
             <LokComment.ListLink className="text-sm text-muted-foreground hover:text-foreground">

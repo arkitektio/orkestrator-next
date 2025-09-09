@@ -1,6 +1,6 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { MikroImage } from "@/linkers";
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import {
   ImageFilter,
   OffsetPaginationInput,
@@ -11,8 +11,6 @@ import {
   WatchImagesSubscriptionVariables,
 } from "../../api/graphql";
 import ImageCard from "../cards/ImageCard";
-import { sub } from "date-fns";
-import { el } from "date-fns/locale";
 
 export type Props = {
   filters?: ImageFilter;
@@ -20,7 +18,7 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = useGetImagesQuery({
+  const { data, subscribeToMore, refetch } = useGetImagesQuery({
     variables: { filters, pagination, order: { createdAt: Ordering.Desc } },
   });
 
@@ -70,7 +68,7 @@ const List = ({ filters, pagination }: Props) => {
       actions={<MikroImage.NewButton minimal />}
       refetch={refetch}
     >
-      {(ex, index) => <ImageCard key={ex.id} image={ex} mates={[]} />}
+      {(ex, index) => <ImageCard key={ex.id} image={ex} />}
     </ListRender>
   );
 };

@@ -2,10 +2,15 @@ fragment GraphQuery on GraphQuery {
   id
   query
   name
+  description
   graph {
     id
     name
   }
+  columns {
+    ...Column
+  }
+  kind
   scatterPlots(pagination: { limit: 1 }) {
     ...ListScatterPlot
   }
@@ -13,6 +18,7 @@ fragment GraphQuery on GraphQuery {
     ...Path
     ...Pairs
     ...Table
+    ...NodeList
   }
   pinned
 }
@@ -23,4 +29,5 @@ fragment ListGraphQuery on GraphQuery {
   query
   description
   pinned
+  kind
 }

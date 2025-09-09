@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";

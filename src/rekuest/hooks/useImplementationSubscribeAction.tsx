@@ -11,7 +11,6 @@ import {
   useCancelMutation,
   useImplementationQuery,
 } from "../api/graphql";
-import { v4 } from "uuid";
 
 export type ActionReserveVariables = Omit<
   ReserveMutationVariables,

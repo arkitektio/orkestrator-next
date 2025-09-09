@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import {
   Carousel,
   CarouselContent,
@@ -5,9 +6,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Card } from "@/components/ui/card";
-import { KnowledgeViewCard } from "./KnowledgeViewCard";
 import type { GetKnowledgeViewsQuery } from "../api/graphql";
+import { KnowledgeViewCard } from "./KnowledgeViewCard";
 
 interface KnowledgeViewCarouselProps {
   knowledgeViews: GetKnowledgeViewsQuery["knowledgeViews"];

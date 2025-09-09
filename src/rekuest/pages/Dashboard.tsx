@@ -1,10 +1,10 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { ModuleWrapper } from "@/blok/Wrapper";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { RekuestDashboard } from "@/linkers";
-import { useSmartDrop } from "@/providers/smart/hooks";
-import { Structure } from "@/types";
 import {
   Direction,
   DockviewApi,
@@ -15,7 +15,7 @@ import {
   positionToDirection,
   SerializedDockview,
 } from "dockview";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   MaterializedBlokFragment,
@@ -24,10 +24,6 @@ import {
   useListBloksQuery,
   useMaterializeBlokMutation,
 } from "../api/graphql";
-import BlokCard from "../components/cards/BlokCard";
-import { ModuleWrapper } from "@/blok/Wrapper";
-import { m } from "framer-motion";
-import { Card } from "@/components/ui/card";
 
 const components: {} = {
   MBLOK: (
@@ -46,12 +42,12 @@ export const BlokSidebar = (props: {}) => {
   return (
     <div className="flex flex-col gap-2 p-3">
       {data?.bloks.map((blok) => <Card key={blok.id} onDragStart={(event) => {
-            if (event.dataTransfer) {
-                event.dataTransfer.effectAllowed = 'move';
+        if (event.dataTransfer) {
+          event.dataTransfer.effectAllowed = 'move';
 
-                event.dataTransfer.setData('text/plain', "blok-" + blok.id);
-            }
-        }}
+          event.dataTransfer.setData('text/plain', "blok-" + blok.id);
+        }
+      }}
         className="p-3 cursor-move"
         draggable={true}>{blok.name}</Card>)}
     </div>
@@ -113,31 +109,31 @@ export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
     const mySerializedLayout = localStorage.getItem(`layout_${data.dashboard.id}`);
 
     if (mySerializedLayout) {
-        try {
-            const layout = JSON.parse(mySerializedLayout);
+      try {
+        const layout = JSON.parse(mySerializedLayout);
 
-            console.log("Restoring layout", layout.panels);
+        console.log("Restoring layout", layout.panels);
 
-            layout.panels = data.dashboard.materializedBloks?.map((b) => ({
-                id: b.id,
-                contentComponent: "MBLOK",
-                params: {
-                    title: b.blok.name,
-                    mblok: b
-                },
-                title: b.blok.name,
-            })).reduce((acc, cur) => {
-                acc[cur.id] = cur;
-                return acc;
-            }, {});
+        layout.panels = data.dashboard.materializedBloks?.map((b) => ({
+          id: b.id,
+          contentComponent: "MBLOK",
+          params: {
+            title: b.blok.name,
+            mblok: b
+          },
+          title: b.blok.name,
+        })).reduce((acc, cur) => {
+          acc[cur.id] = cur;
+          return acc;
+        }, {});
 
-            event.api.fromJSON(layout);
-        } catch (err) {
-          alert("Failed to parse layout: " + err);
-          data.dashboard.materializedBloks?.forEach((b) =>
-            addMaterializedBlok(b, event.api),
-          );
-        }
+        event.api.fromJSON(layout);
+      } catch (err) {
+        alert("Failed to parse layout: " + err);
+        data.dashboard.materializedBloks?.forEach((b) =>
+          addMaterializedBlok(b, event.api),
+        );
+      }
     }
     else {
       data.dashboard.materializedBloks?.forEach((b) =>
@@ -161,8 +157,8 @@ export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
       return;
     }
     const disposable = api.onUnhandledDragOverEvent((event) => {
-            event.accept();
-        });
+      event.accept();
+    });
 
     const disposableL = api.onDidLayoutChange(() => {
       const layout: SerializedDockview = api.toJSON();
@@ -174,7 +170,7 @@ export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
       disposableL.dispose();
     };
   }, [api]);
-  
+
 
   const addMaterializedBlok = (
     mblok: MaterializedBlokFragment,
@@ -217,8 +213,8 @@ export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
             },
             title: mblok.blok.name,
             position: {
-                direction: dropContext?.direction,
-                referenceGroup: dropContext?.group,
+              direction: dropContext?.direction,
+              referenceGroup: dropContext?.group,
             },
           });
           setDropContext(undefined);
@@ -230,11 +226,11 @@ export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
         toast.error(error.message);
       },
     );
-    
+
   }, [data.dashboard.id, materialize, api, dropContext]);
 
 
- 
+
 
   const onSave = () => {
     if (api) {
@@ -276,7 +272,7 @@ export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
           onOpenChange={() => {
             setDropContext(undefined);
           }}
-          
+
         >
           <DialogContent>
             {dropContext &&
@@ -284,12 +280,12 @@ export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
             }
           </DialogContent>
         </Dialog>
-          <DockviewReact
-            components={components}
-            onReady={onReady}
-            className={"dockview-theme-abyss h-[800px] w-full"}
-            onDidDrop={onDidDrop}
-          />
+        <DockviewReact
+          components={components}
+          onReady={onReady}
+          className={"dockview-theme-abyss h-[800px] w-full"}
+          onDidDrop={onDidDrop}
+        />
 
         <Button
           variant="outline"
@@ -299,7 +295,7 @@ export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
           Save
         </Button>
 
-        </div>
+      </div>
     </RekuestDashboard.ModelPage>
   );
 });

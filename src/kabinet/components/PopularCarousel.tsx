@@ -13,7 +13,7 @@ export const Test = () => {
   return <div>Hallo</div>;
 };
 
-export const PopularCarousel = ({}) => {
+export const PopularCarousel = ({ }) => {
   const { data, error, subscribeToMore, refetch } = useListDefinitionsQuery({
     variables: {},
   });

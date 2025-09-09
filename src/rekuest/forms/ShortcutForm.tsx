@@ -1,4 +1,12 @@
+import { StringField } from "@/components/fields/StringField";
+import { SwitchField } from "@/components/fields/SwitchField";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   DialogDescription,
   DialogFooter,
@@ -7,35 +15,21 @@ import {
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { ActionDescription } from "@/lib/rekuest/ActionDescription";
-import { useAction } from "../hooks/useAction";
-import { usePortForm } from "../hooks/usePortForm";
-import { useWidgetRegistry } from "../widgets/WidgetsContext";
-import * as z from "zod";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { notEmpty } from "@/lib/utils";
+import { RekuestShortcut } from "@/linkers";
 import { EffectWrapper } from "@/rekuest/widgets/EffectWrapper";
 import { ArgsContainerProps } from "@/rekuest/widgets/tailwind";
 import { Port, PortGroup } from "@/rekuest/widgets/types";
-import { useMemo } from "react";
-import { useGetActionQuery } from "@/kraph/api/graphql";
+import React, { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import * as z from "zod";
 import {
   useAgentOptionsLazyQuery,
-  useAgentsLazyQuery,
   useCreateShortcutMutation,
-  useDetailActionQuery,
-  useReserveMutation,
+  useDetailActionQuery
 } from "../api/graphql";
-import { Badge } from "@/components/ui/badge";
-import React from "react";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
-import { StringField } from "@/components/fields/StringField";
-import { RekuestAgent, RekuestShortcut } from "@/linkers";
-import { useNavigate } from "react-router-dom";
-import { SwitchField } from "@/components/fields/SwitchField";
+import { usePortForm } from "../hooks/usePortForm";
+import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
 export type FilledGroup = PortGroup & {
   filledPorts: Port[];

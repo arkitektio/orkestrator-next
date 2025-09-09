@@ -1,8 +1,6 @@
-import { AlpakaProvider } from "@/linkers";
-import { MateFinder } from "../../../mates/types";
-import { ListProviderFragment, ProviderKind } from "../../api/graphql";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { AlpakaProvider } from "@/linkers";
 import Anthropic from "@lobehub/icons-static-svg/icons/anthropic.svg";
 import Aws from "@lobehub/icons-static-svg/icons/aws.svg";
 import Azure from "@lobehub/icons-static-svg/icons/azure.svg";
@@ -13,6 +11,8 @@ import Ollama from "@lobehub/icons-static-svg/icons/ollama.svg";
 import OpenAI from "@lobehub/icons-static-svg/icons/openai.svg";
 import Perplexity from "@lobehub/icons-static-svg/icons/perplexity.svg";
 import { Bot, Cloud, Cpu, Server } from "lucide-react";
+import { MateFinder } from "../../../mates/types";
+import { ListProviderFragment, ProviderKind } from "../../api/graphql";
 
 interface Props {
   item: ListProviderFragment;

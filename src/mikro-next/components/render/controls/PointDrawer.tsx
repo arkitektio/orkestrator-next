@@ -1,16 +1,20 @@
 import { useRef, useState } from "react";
 import * as THREE from "three";
+import { EventKeyProps, createEventKeyChecker } from "./eventKeyUtils";
 
 export type PointDrawerProps = {
   onPointDrawn?: (point: THREE.Vector3) => void;
-};
+} & EventKeyProps;
 
 export function PointDrawer(props: PointDrawerProps) {
+  const { event_key = "shift" } = props;
   const planeRef = useRef<THREE.Mesh>(null);
   const [previewPoint, setPreviewPoint] = useState<THREE.Vector3 | null>(null);
 
+  const checkEventKey = createEventKeyChecker(event_key);
+
   const handlePointerDown = (e) => {
-    if (!e.shiftKey) return; // Require Shift to draw
+    if (!checkEventKey(e)) return; // Check for required event key
 
     e.stopPropagation();
     const point = e.point.clone();
@@ -22,7 +26,7 @@ export function PointDrawer(props: PointDrawerProps) {
   };
 
   const handlePointerMove = (e) => {
-    if (!e.shiftKey) return;
+    if (!checkEventKey(e)) return;
     e.stopPropagation();
     setPreviewPoint(e.point.clone());
   };

@@ -1,5 +1,4 @@
 import {
-  EntityFragment,
   PathDescriptionFragment,
   PathEntityFragment,
   PathMeasurementFragment,
@@ -12,8 +11,7 @@ import {
   PathStructureFragment,
   StructureRelationFragment
 } from "@/kraph/api/graphql";
-import React from "react";
-import { Node, Edge, Connection } from "@xyflow/react";
+import { Edge, Node } from "@xyflow/react";
 
 export type EntityNode = Node<PathEntityFragment, "Entity">;
 export type ThisNode = Node<{}, "__THIS__">;

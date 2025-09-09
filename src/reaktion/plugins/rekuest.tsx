@@ -1,14 +1,13 @@
 import {
+  ActionKind,
   GraphNodeKind,
   MapStrategy,
-  ActionKind,
   RekuesFilterActionNodeFragment,
   RekuestMapActionNodeFragment,
 } from "@/reaktion/api/graphql";
 import {
   ConstantActionQuery,
-  ConstantNodeQuery,
-  GraphNodeActionFragment,
+  GraphNodeActionFragment
 } from "@/rekuest/api/graphql";
 import { portToDefaults } from "@/rekuest/widgets/utils";
 import { v4 as uuidv4 } from "uuid";

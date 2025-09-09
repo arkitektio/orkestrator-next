@@ -2,7 +2,7 @@
 
 /* eslint-disable unicorn/prefer-export-from */
 
-import React, { useState } from "react";
+import { useState } from "react";
 
 import { cn } from "@udecode/cn";
 import {
@@ -160,7 +160,7 @@ export function CodeBlockCombobox() {
         >
           {state.value
             ? languages.find((language) => language.value === state.value)
-                ?.label
+              ?.label
             : "Plain Text"}
           <Icons.chevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
         </Button>

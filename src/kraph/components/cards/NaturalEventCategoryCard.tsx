@@ -1,8 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { ListNaturalEventCategoryFragment, ListProtocolEventCategoryFragment } from "@/kraph/api/graphql";
-import { KraphNaturalEventCategory, KraphProtocolEventCategory } from "@/linkers";
+import { ListNaturalEventCategoryFragment } from "@/kraph/api/graphql";
+import { KraphNaturalEventCategory } from "@/linkers";
 import { MateFinder } from "@/mates/types";
 
 interface Props {

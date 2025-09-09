@@ -1,0 +1,23 @@
+fragment DetailStructureRelation on StructureRelation {
+  validFrom
+  validTo
+  category {
+    id
+    label
+  }
+  leftId
+  rightId
+  id
+  source {
+    ... on Structure {
+      identifier
+      object
+    }
+  }
+  target {
+    ... on Structure {
+      identifier
+      object
+    }
+  }
+}

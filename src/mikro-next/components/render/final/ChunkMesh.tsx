@@ -1,4 +1,4 @@
-import { Edges, useSelect, Text } from "@react-three/drei";
+import { Edges, Text, useSelect } from "@react-three/drei";
 
 import { ColorMap, RgbViewFragment } from "@/mikro-next/api/graphql";
 import { useThree } from "@react-three/fiber";
@@ -8,10 +8,15 @@ import {
   blueColormap,
   createColormapTexture,
   greenColormap,
+  infernoColormap,
+  magmaColormap,
+  plasmaColormap,
+  rainbowColormap,
   redColormap,
   viridisColormap,
 } from "./colormaps";
 import { useAsyncChunk } from "./useChunkTexture";
+import { useViewerState } from "../ViewerStateProvider";
 
 const getColormapForView = (view: RgbViewFragment) => {
   switch (view.colorMap) {
@@ -23,6 +28,18 @@ const getColormapForView = (view: RgbViewFragment) => {
     }
     case ColorMap.Red: {
       return redColormap;
+    }
+    case ColorMap.Plasma: {
+      return plasmaColormap;
+    }
+    case ColorMap.Magma: {
+      return magmaColormap;
+    }
+    case ColorMap.Inferno: {
+      return infernoColormap;
+    }
+    case ColorMap.Rainbow: {
+      return rainbowColormap;
     }
     case ColorMap.Intensity: {
       const base = view.baseColor ?? [1, 1, 1];
@@ -90,9 +107,9 @@ export const ChunkBitmapTexture = ({
   chunk_coords,
   chunk_shape,
   view,
+  cLimMin,
   z,
   t,
-  cLimMin,
   cLimMax,
   imageWidth,
   imageHeight,
@@ -103,11 +120,11 @@ export const ChunkBitmapTexture = ({
   showDebugText = false,
 }: {
   renderFunc: any;
+  z: number;
+  t: number;
   chunk_coords: number[];
   chunk_shape: number[];
   view: RgbViewFragment;
-  z: number;
-  t: number;
   cLimMin?: number | undefined | null;
   cLimMax?: number | undefined | null;
   imageWidth: number;
@@ -196,16 +213,6 @@ export const ChunkBitmapTexture = ({
             maxValue: { value: cLimMax },
             opacity: { value: 1 },
             gamma: { value: gamma },
-          }}
-          onBeforeCompile={(shader) => {
-            // Animate opacity from 0 to 1
-            let startTime = Date.now();
-            const animate = () => {
-              const elapsedTime = (Date.now() - startTime) / 1000;
-              shader.uniforms.opacity.value = Math.min(elapsedTime, 1);
-              if (elapsedTime < 1) requestAnimationFrame(animate);
-            };
-            animate();
           }}
           vertexShader={`
         varying vec2 vUv;

@@ -1,6 +1,6 @@
 import { PageLayout } from "@/components/layout/PageLayout";
-import { Separator } from "@radix-ui/react-dropdown-menu";
 import FileList from "@/dokuments/components/lists/FileList";
+import { Separator } from "@radix-ui/react-dropdown-menu";
 import React from "react";
 
 export type IRepresentationScreenProps = {};

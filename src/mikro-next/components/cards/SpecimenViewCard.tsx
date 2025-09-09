@@ -1,6 +1,5 @@
-import { Badge } from "@/components/ui/badge";
 import { CardHeader, CardTitle } from "@/components/ui/card";
-import { KraphNode, KraphProtocolStep, MikroSpecimenView } from "@/linkers";
+import { KraphNode, MikroSpecimenView } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
 import { SpecimenViewFragment } from "../../api/graphql";
 import { ViewCard } from "./meta/ViewCard";

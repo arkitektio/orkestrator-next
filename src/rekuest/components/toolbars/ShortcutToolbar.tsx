@@ -3,30 +3,30 @@ import { DemandKind, ListShortcutFragment, PortKind, useShortcutsQuery } from "@
 import { LightningBoltIcon } from "@radix-ui/react-icons";
 
 export const ShortcutButton = (
-    props: { shortcut: ListShortcutFragment },
-  ) => {
-
-  
-    return (
-      <Button
-        onClick={() => {alert("Not implemented")}}
-        value={props.shortcut.id}
-        key={props.shortcut.id}
-        className="flex-initial flex flex-row group cursor-pointer border border-1 rounded rounded-full bg-slate-800 shadow-xl  h-8 overflow-hidden truncate max-w-[400px] ellipsis px-2"
-        
-      >
-        {props.shortcut.allowQuick && <LightningBoltIcon className="w-4 h-4" />}
-        <span className="mr-auto text-md text-gray-100 ellipsis truncate w-full">
-          {props.shortcut.name}
-        </span>
-      </Button>
-    );
-  };
-  
+  props: { shortcut: ListShortcutFragment },
+) => {
 
 
+  return (
+    <Button
+      onClick={() => { alert("Not implemented") }}
+      value={props.shortcut.id}
+      key={props.shortcut.id}
+      className="flex-initial flex flex-row group cursor-pointer border border-1 rounded rounded-full bg-slate-800 shadow-xl  h-8 overflow-hidden truncate max-w-[400px] ellipsis px-2"
 
-export const ShortcutToolbar = (props: {identifier: string, object: string}) => {
+    >
+      {props.shortcut.allowQuick && <LightningBoltIcon className="w-4 h-4" />}
+      <span className="mr-auto text-md text-gray-100 ellipsis truncate w-full">
+        {props.shortcut.name}
+      </span>
+    </Button>
+  );
+};
+
+
+
+
+export const ShortcutToolbar = (props: { identifier: string, object: string }) => {
   const demands = [
     {
       kind: DemandKind.Args,
@@ -36,7 +36,7 @@ export const ShortcutToolbar = (props: {identifier: string, object: string}) => 
     },
   ];
 
-  
+
 
   const { data, error } = useShortcutsQuery({
     variables: {

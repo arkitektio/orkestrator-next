@@ -1,8 +1,8 @@
 import { createContext, useContext } from "react";
 
 type Option = {
-    label: string;
-    value: string;
+  label: string;
+  value: string;
 }
 
 export type RoleContextType = {
@@ -11,7 +11,7 @@ export type RoleContextType = {
 
 const RoleContext = createContext<RoleContextType | null>(null);
 
-export const RoleProvider = (props : RoleContextType & {children: React.ReactNode}) => {
+export const RoleProvider = (props: RoleContextType & { children: React.ReactNode }) => {
   const { roles } = props;
 
   return (

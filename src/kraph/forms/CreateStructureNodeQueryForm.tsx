@@ -22,9 +22,9 @@ export default (props: { structure: StructureFragment }) => {
 
   const form = useForm<CreateNodeQueryMutationVariables["input"]>({
     defaultValues: {
-      query: `MATCH (n {__category_id: ${props.structure.category.id}}) -[r: Measurement]-> (m)
+      query: `MATCH (n) <-[r: DESCRIBES]- (m)
 WHERE id(n) = %s
-RETURN id(r), r.__label, id(m), m.__label`,
+RETURN id(m), head(labels(m)), m.__value`,
       description: "New Measurements",
       name: "Measurments",
       kind: ViewKind.Table,
@@ -38,22 +38,16 @@ RETURN id(r), r.__label, id(m), m.__label`,
           valueKind: MetricKind.String,
         },
         {
-          name: "rlabel",
-          label: "ID",
-          description: "The name of the measurment",
+          name: "mlabel",
+          label: "Label",
+          description: "The value of the entity",
           kind: ColumnKind.Value,
           valueKind: MetricKind.String,
         },
         {
-          name: "mid",
-          label: "ID",
-          description: "The id of the entity",
-          kind: ColumnKind.Node,
-        },
-        {
-          name: "mlabel",
-          label: "Label",
-          description: "The name of the entity",
+          name: "mvalue",
+          label: "Value",
+          description: "The value of the entity",
           kind: ColumnKind.Value,
           valueKind: MetricKind.String,
         },

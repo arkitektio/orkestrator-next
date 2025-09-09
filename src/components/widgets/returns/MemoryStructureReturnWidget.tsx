@@ -3,13 +3,13 @@ import { notEmpty } from "@/lib/utils";
 import {
   useMemoryShelveQuery,
 } from "@/rekuest/api/graphql";
-import { InputWidgetProps, ReturnWidgetProps } from "@/rekuest/widgets/types";
+import { ReturnWidgetProps } from "@/rekuest/widgets/types";
 import { pathToName } from "@/rekuest/widgets/utils";
 import { useCallback } from "react";
 
 export const MemoryStructureWidget = (
   props: ReturnWidgetProps,
-  
+
 ) => {
   if (!props.value) {
     return (

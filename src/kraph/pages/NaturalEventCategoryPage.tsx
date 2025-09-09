@@ -20,11 +20,8 @@ import { useResolve } from "@/datalayer/hooks/useResolve";
 import { KraphNaturalEventCategory } from "@/linkers";
 import { editor } from "@/plate/plugins";
 import {
-  useEditorReadOnly,
-  useEditorRef,
-  usePlateEditor,
+  usePlateEditor
 } from "@udecode/plate-common/react";
-import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import {
   NaturalEventCategoryFragment,
@@ -32,8 +29,7 @@ import {
   useGetNaturalEventCategoryQuery,
   useSearchEntityCategoryLazyQuery,
   useSearchTagsLazyQuery,
-  useUpdateNaturalEventCategoryMutation,
-  useUpdateProtocolEventCategoryMutation,
+  useUpdateNaturalEventCategoryMutation
 } from "../api/graphql";
 
 export type IRepresentationScreenProps = {};

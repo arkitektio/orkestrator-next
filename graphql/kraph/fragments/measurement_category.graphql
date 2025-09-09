@@ -7,6 +7,10 @@ fragment MeasurementCategory on MeasurementCategory {
   }
   targetDefinition {
     tagFilters
+    defaultUseNew {
+      id
+      label
+    }
     categoryFilters
   }
   ageName
@@ -27,9 +31,14 @@ fragment ListMeasurementCategory on MeasurementCategory {
   sourceDefinition {
     tagFilters
     categoryFilters
+    identifierFilters
   }
   targetDefinition {
     tagFilters
+    defaultUseNew {
+      id
+      label
+    }
     categoryFilters
   }
   label

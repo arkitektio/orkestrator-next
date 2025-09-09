@@ -1,12 +1,12 @@
-import { cn } from "@/lib/utils";
 import {
-  RoomFragment,
   ListMessageFragment,
+  RoomFragment,
 } from "@/alpaka/api/graphql";
+import { cn } from "@/lib/utils";
 import { PortKind } from "@/rekuest/api/graphql";
 import { AnimatePresence, motion } from "framer-motion";
 import React, { useRef } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Avatar, AvatarImage } from "../ui/avatar";
 import { DelegatingStructureWidget } from "../widgets/returns/DelegatingStructureWidget";
 import ChatBottombar from "./chat-bottombar";
 

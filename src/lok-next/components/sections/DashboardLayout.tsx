@@ -1,10 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useMeQuery } from "@/lok-next/api/graphql";
+import { Username } from "../Me";
 import { LatestMentionsSection } from "./LatestMentionsSection";
 import { RecentAppsSection } from "./RecentAppsSection";
 import { UserOrganizationsSection } from "./UserOrganizationsSection";
-import { Username } from "../Me";
 
 export const DashboardLayout = () => {
   const { data: userData } = useMeQuery();
@@ -38,7 +38,7 @@ export const DashboardLayout = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Apps */}
         <RecentAppsSection />
-        
+
         {/* User Organizations */}
         <UserOrganizationsSection />
       </div>

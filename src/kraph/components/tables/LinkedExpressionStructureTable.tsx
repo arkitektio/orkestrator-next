@@ -11,7 +11,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
+import { ArrowUpDown, ChevronDown } from "lucide-react";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
@@ -20,10 +20,7 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
@@ -36,31 +33,27 @@ import {
 } from "@/components/ui/table";
 
 import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
-import { PageLayout } from "@/components/layout/PageLayout";
 import { Form } from "@/components/ui/form";
-import { KraphNode, KraphLinkedExpression } from "@/linkers";
 import {
-  EntityFragment,
-  ListEntitiesQuery,
-  ListEntitiesQueryVariables,
-  ListEntityFragment,
-  useGetLinkedExpressionByAgeNameQuery,
-  useGetLinkedExpressionQuery,
-  useListEntitiesQuery,
-  useSearchLinkedExpressionLazyQuery,
-} from "@/kraph/api/graphql";
-import { useForm } from "react-hook-form";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  ListEntitiesQueryVariables,
+  ListEntityFragment,
+  useGetLinkedExpressionByAgeNameQuery,
+  useListEntitiesQuery,
+  useSearchLinkedExpressionLazyQuery
+} from "@/kraph/api/graphql";
 import { EntityOverlay } from "@/kraph/overlays/EntityOverlay";
+import { KraphLinkedExpression, KraphNode } from "@/linkers";
+import { useForm } from "react-hook-form";
 import Timestamp from "react-timestamp";
 
 export const columns: ColumnDef<ListEntityFragment>[] = [
@@ -420,9 +413,9 @@ export const LinkedExpressionStructureTable = (props: {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   );
                 })}

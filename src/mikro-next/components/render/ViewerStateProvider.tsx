@@ -1,22 +1,35 @@
 import { RoiKind } from "@/mikro-next/api/graphql";
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, {
+  createContext,
+  Dispatch,
+  ReactNode,
+  useContext,
+  useState,
+} from "react";
+import { Panel } from "./panels";
 
 export interface ViewerState {
   // Z/T navigation
   z: number;
   t: number;
+  openPanels: Panel[];
+  roiContextMenu: { open: boolean; x: number; y: number } | null;
   selectedScale: number;
 
   // Display options
   showRois: boolean;
   showLayerEdges: boolean;
   showDebugText: boolean;
+  showDisplayStructures: boolean;
 
   allowRoiDrawing: boolean; // Optional, used for ROIs
   roiDrawMode: RoiKind; // Optional, used for ROIs
 
   // Scale management
   enabledScales: Set<number>;
+
+  // Display structures
+  displayStructures: string[]; // Array of ROI IDs to display as structures
 }
 
 export interface ViewerStateActions {
@@ -29,6 +42,11 @@ export interface ViewerStateActions {
   setShowRois: (show: boolean) => void;
   setShowLayerEdges: (show: boolean) => void;
   setShowDebugText: (show: boolean) => void;
+  setShowDisplayStructures: (show: boolean) => void;
+  setOpenPanels: Dispatch<React.SetStateAction<Panel[]>>;
+  setRoiContextMenu: (
+    menu: { open: boolean; x: number; y: number } | null,
+  ) => void;
 
   setAllowRoiDrawing: (allow: boolean) => void;
   setRoiDrawMode: (mode: RoiKind) => void;
@@ -36,6 +54,11 @@ export interface ViewerStateActions {
   // Scale management
   setEnabledScales: (scales: Set<number>) => void;
   toggleScale: (scale: number) => void;
+
+  // Display structures
+  addDisplayStructure: (roiId: string) => void;
+  removeDisplayStructure: (roiId: string) => void;
+  clearDisplayStructures: () => void;
 }
 
 export interface ViewerStateContextType
@@ -64,6 +87,13 @@ export const ViewerStateProvider: React.FC<ViewerStateProviderProps> = ({
     initialState.selectedScale ?? 0,
   );
 
+  const [openPanels, setOpenPanels] = useState<Panel[]>([]);
+  const [roiContextMenu, setRoiContextMenu] = useState<{
+    open: boolean;
+    x: number;
+    y: number;
+  } | null>(null);
+
   const [showRois, setShowRois] = useState(initialState.showRois ?? false);
   const [showLayerEdges, setShowLayerEdges] = useState(
     initialState.showLayerEdges ?? false,
@@ -71,11 +101,17 @@ export const ViewerStateProvider: React.FC<ViewerStateProviderProps> = ({
   const [showDebugText, setShowDebugText] = useState(
     initialState.showDebugText ?? false,
   );
+  const [showDisplayStructures, setShowDisplayStructures] = useState(
+    initialState.showDisplayStructures ?? false,
+  );
   const [roiDrawMode, setRoiDrawMode] = useState(
     initialState.roiDrawMode ?? RoiKind.Rectangle,
   );
   const [allowRoiDrawing, setAllowRoiDrawing] = useState(
     initialState.allowRoiDrawing ?? false,
+  );
+  const [displayStructures, setDisplayStructures] = useState<string[]>(
+    initialState.displayStructures ?? [],
   );
 
   // Default to only the most downscaled version enabled
@@ -95,6 +131,24 @@ export const ViewerStateProvider: React.FC<ViewerStateProviderProps> = ({
     setEnabledScales(newEnabledScales);
   };
 
+  // Display structures management
+  const addDisplayStructure = (roiId: string) => {
+    setDisplayStructures((prev) => {
+      if (prev.includes(roiId)) {
+        return prev; // Already in the list
+      }
+      return [...prev, roiId];
+    });
+  };
+
+  const removeDisplayStructure = (roiId: string) => {
+    setDisplayStructures((prev) => prev.filter((id) => id !== roiId));
+  };
+
+  const clearDisplayStructures = () => {
+    setDisplayStructures([]);
+  };
+
   const contextValue: ViewerStateContextType = {
     // State
     z,
@@ -103,7 +157,9 @@ export const ViewerStateProvider: React.FC<ViewerStateProviderProps> = ({
     showRois,
     showLayerEdges,
     showDebugText,
+    showDisplayStructures,
     enabledScales,
+    displayStructures,
 
     allowRoiDrawing,
     roiDrawMode,
@@ -115,10 +171,18 @@ export const ViewerStateProvider: React.FC<ViewerStateProviderProps> = ({
     setShowRois,
     setShowLayerEdges,
     setShowDebugText,
+    setRoiContextMenu,
+    roiContextMenu,
+    setOpenPanels,
+    openPanels,
+    setShowDisplayStructures,
     setEnabledScales,
     setAllowRoiDrawing,
     setRoiDrawMode,
     toggleScale,
+    addDisplayStructure,
+    removeDisplayStructure,
+    clearDisplayStructures,
   };
 
   return (

@@ -1,9 +1,8 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { PageLayout } from "@/components/layout/PageLayout";
+import { FlussRun } from "@/linkers";
 import { useFlowQuery, useGetRunQuery } from "@/reaktion/api/graphql";
 import { EditFlow } from "@/reaktion/edit/EditFlow";
 import { TrackFlow } from "../track/TrackFlow";
-import { FlussRun } from "@/linkers";
 
 export const FlowDetail = (props: { id: string }) => {
   const { data, error } = useFlowQuery({

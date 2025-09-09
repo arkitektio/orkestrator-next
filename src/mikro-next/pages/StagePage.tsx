@@ -8,7 +8,7 @@ import { MikroStage } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import React, { useEffect } from "react";
 import { useParams } from "react-router";
-import { useGetStageQuery, usePinStageMutation, WatchTransformationViewsDocument, WatchTransformationViewsSubscription, WatchTransformationViewsSubscriptionResult, WatchTransformationViewsSubscriptionVariables } from "../api/graphql";
+import { useGetStageQuery, usePinStageMutation, WatchTransformationViewsDocument, WatchTransformationViewsSubscription, WatchTransformationViewsSubscriptionVariables } from "../api/graphql";
 import { StageRender } from "../components/render/StageRender";
 import { PinToggle } from "../components/ui/PinToggle";
 import { UpdateStageForm } from "../forms/UpdateStageForm";
@@ -43,7 +43,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
         let newView = subscriptionData.data.affineTransformationViews.create;
 
         if (!subscriptionData.data.affineTransformationViews.create) return prev;
-      
+
 
         const affineViews = [
           ...(stage.affineViews || []),
@@ -95,7 +95,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
             {data?.stage?.name}
           </DetailPaneTitle>
         </DetailPaneHeader>
-        </DetailPane>
+      </DetailPane>
       <div className="w-full h-full">
         {data?.stage && <StageRender stage={data?.stage} />}
       </div>

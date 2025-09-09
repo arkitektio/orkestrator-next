@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users } from "lucide-react";
 import { useMeQuery } from "@/lok-next/api/graphql";
+import { Building2, Users } from "lucide-react";
 import OrganizationCard from "../cards/OrganizationCard";
 
 export const UserOrganizationsSection = () => {

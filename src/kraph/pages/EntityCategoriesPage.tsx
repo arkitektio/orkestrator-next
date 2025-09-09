@@ -1,15 +1,12 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Card } from "@/components/ui/card";
 import { FormDialogAction } from "@/components/ui/form-dialog-action";
-import { KraphEntityCategory, KraphGraph } from "@/linkers";
+import { KraphEntityCategory } from "@/linkers";
 import { PlusIcon } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import GraphList from "../components/lists/GraphList";
-import CreateGraphForm from "../forms/CreateGraphForm";
-import ReagentCategoryList from "../components/lists/ReagentCategoryList";
-import CreateEntityCategoryForm from "../forms/CreateEntityCategoryForm";
 import EntityCategoryList from "../components/lists/EntityCategoryList";
+import CreateEntityCategoryForm from "../forms/CreateEntityCategoryForm";
 
 export type IRepresentationScreenProps = {};
 

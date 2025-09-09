@@ -37,6 +37,11 @@
       "ScaleView",
       "TimepointView",
       "WellPositionView"
+    ],
+    "_Entity": [
+      "File",
+      "Image",
+      "Table"
     ]
   }
 };

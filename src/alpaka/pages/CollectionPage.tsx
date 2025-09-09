@@ -1,19 +1,18 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { ChatLayout } from "@/components/chat/chat-layout";
+import { StringField } from "@/components/fields/StringField";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Form } from "@/components/ui/form";
+import { DelegatingStructureWidget } from "@/components/widgets/returns/DelegatingStructureWidget";
 import { AlpakaCollection } from "@/linkers";
+import { PortKind } from "@/rekuest/api/graphql";
+import { useDebounce } from "@uidotdev/usehooks";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
 import {
   ChromaCollectionFragment,
   useGetChromaCollectionQuery,
   useQueryDocumentsLazyQuery,
 } from "../api/graphql";
-import { Form } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { useEffect } from "react";
-import { useDebounce } from "@uidotdev/usehooks";
-import { StringField } from "@/components/fields/StringField";
-import { DelegatingStructureWidget } from "@/components/widgets/returns/DelegatingStructureWidget";
-import { PortKind } from "@/rekuest/api/graphql";
 
 export type IRepresentationScreenProps = {};
 

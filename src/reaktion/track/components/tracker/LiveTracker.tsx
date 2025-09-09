@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 
-import { useTrackRiver } from "../../context";
 import {
   DetailRunFragment,
   EventsDocument,
@@ -8,8 +7,8 @@ import {
   RunEventFragment,
   useEventsBetweenQuery,
 } from "@/reaktion/api/graphql";
-import { RiStopLine } from "react-icons/ri";
 import { FiPlay } from "react-icons/fi";
+import { useTrackRiver } from "../../context";
 
 export const LiveTracker = ({
   startT,

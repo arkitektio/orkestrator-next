@@ -1,5 +1,7 @@
 import { cn } from "@/lib/utils";
+import { Separator } from "@radix-ui/react-dropdown-menu";
 import { GearIcon } from "@radix-ui/react-icons";
+import { PanelLeft } from "lucide-react";
 import { useCallback } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import BreadCrumbs from "../navigation/BreadCrumbs";
@@ -16,8 +18,7 @@ import {
   ResizablePanelGroup,
 } from "../ui/resizable";
 import { Actionbar } from "./Actionbar";
-import { Separator } from "@radix-ui/react-dropdown-menu";
-import { PanelLeft } from "lucide-react";
+import { CommandMenu } from "@/command/Menu";
 
 export type PageVariant = "black" | "default";
 

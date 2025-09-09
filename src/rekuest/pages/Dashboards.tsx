@@ -1,7 +1,7 @@
 import { PageLayout } from "@/components/layout/PageLayout";
-import DashboardList from "../components/lists/DashboardList";
-import { useCreateDashboardMutation } from "../api/graphql";
 import { Button } from "@/components/ui/button";
+import { useCreateDashboardMutation } from "../api/graphql";
+import DashboardList from "../components/lists/DashboardList";
 
 const Page = () => {
   const [createDashboard] = useCreateDashboardMutation();

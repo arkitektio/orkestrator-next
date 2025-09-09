@@ -48,7 +48,7 @@ export default asDetailQueryRoute(
               {JSON.stringify(data?.reservation?.binds)}
             </DetailPaneDescription>
           </DetailPaneHeader>
-          
+
         </DetailPane>
         <DetailPane className="mt-2">
           <DetailPaneHeader>Assign</DetailPaneHeader>

@@ -8,21 +8,15 @@ import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
   KraphGraphQuery,
-  KraphRelationCategory,
-  KraphStructureRelationCategory,
+  KraphStructureRelationCategory
 } from "@/linkers";
-import { useNavigate } from "react-router-dom";
 import {
-  useGetRelationCategoryQuery,
   useGetStructureRelationCategoryQuery,
-  useUpdateEntityCategoryMutation,
+  useUpdateEntityCategoryMutation
 } from "../api/graphql";
 import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
-import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
-import UpdateRelationCategoryForm from "../forms/UpdateRelationCategoryForm";
-import UpdateStructureCategoryForm from "../forms/UpdateStructureCategoryForm";
-import UpdateStructureRelationCategoryForm from "../forms/UpdateStructureRelationCategoryForm";
 import CreateStructureRelationGraphQueryForm from "../forms/CreateStructureRelationGraphQueryForm";
+import UpdateStructureRelationCategoryForm from "../forms/UpdateStructureRelationCategoryForm";
 
 export default asDetailQueryRoute(
   useGetStructureRelationCategoryQuery,

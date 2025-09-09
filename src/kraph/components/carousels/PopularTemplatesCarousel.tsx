@@ -17,7 +17,7 @@ export const Test = () => {
   return <div>Hallo</div>;
 };
 
-export const PopularProtocolEventCategories = ({}) => {
+export const PopularProtocolEventCategories = ({ }) => {
   const { data, error, subscribeToMore, refetch } =
     useListProtocolEventCategoriesQuery({
       variables: {

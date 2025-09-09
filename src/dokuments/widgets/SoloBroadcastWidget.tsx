@@ -1,22 +1,16 @@
 import { useLivekit } from "@/lib/arkitekt/Arkitekt";
 import {
-  EnsuredStreamFragment,
   SoloBroadcastFragment,
-  useCreateVideoStreamMutation,
   useGetSoloBroadcastQuery,
-  useGetStreamQuery,
-  useJoinBroadcastMutation,
+  useJoinBroadcastMutation
 } from "@/lovekit/api/graphql";
-import { ReturnWidgetProps } from "@/rekuest/widgets/types";
 import {
   GridLayout,
   LiveKitRoom,
   useTracks,
   VideoTrack,
 } from "@livekit/components-react";
-import { Value } from "@udecode/plate-common";
 import { Track } from "livekit-client";
-import { t } from "node_modules/@udecode/plate-list/dist/BaseListPlugin-B0eGlA5x";
 import { useEffect, useRef, useState } from "react";
 
 function VideoRenderer() {

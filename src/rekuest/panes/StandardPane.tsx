@@ -1,8 +1,10 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import { FancyInput } from "@/components/ui/fancy-input";
 import { DroppableNavLink } from "@/components/ui/link";
 import { RekuestAgent } from "@/linkers";
 import { CardStackIcon, CubeIcon } from "@radix-ui/react-icons";
+import { useDebounce } from "@uidotdev/usehooks";
 import { Box, FunctionSquare, Home, ShoppingCart } from "lucide-react";
 import * as React from "react";
 import {
@@ -12,8 +14,6 @@ import {
   useGlobalSearchQuery,
 } from "../api/graphql";
 import ActionCard from "../components/cards/ActionCard";
-import { FancyInput } from "@/components/ui/fancy-input";
-import { useDebounce } from "@uidotdev/usehooks";
 
 export const NavigationPane = () => {
   const { data } = useAgentsQuery({

@@ -6,14 +6,14 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { useRoomsQuery } from "../api/graphql";
 import { AlpakaRoom } from "@/linkers";
+import { useRoomsQuery } from "../api/graphql";
 
 export const Test = () => {
   return <div>Hallo</div>;
 };
 
-export const PopularCarousel = ({}) => {
+export const PopularCarousel = ({ }) => {
   const { data, error, subscribeToMore, refetch } = useRoomsQuery({
     variables: {},
   });

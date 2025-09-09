@@ -1,7 +1,5 @@
 import { RgbViewFragment } from "@/mikro-next/api/graphql";
 import { useArray } from "../final/useArray";
-import { calculateChunkGrid } from "../FInalRender";
-import { cn } from "@udecode/cn";
 
 export const useCalculateMinMaxFor = (view: RgbViewFragment) => {
   const { renderSelection } = useArray({

@@ -79,9 +79,8 @@ export const MarkButton = ({
   const editor = useSlate();
   return (
     <button
-      className={`${
-        isMarkActive(editor, format) ? "opacity-100" : "opacity-20"
-      }`}
+      className={`${isMarkActive(editor, format) ? "opacity-100" : "opacity-20"
+        }`}
       onMouseDown={(event) => {
         event.preventDefault();
         toggleMark(editor, format);

@@ -1,0 +1,6 @@
+mutation CreateGraphTagInline($graph: ID!, $input: String!) {
+  result: createTag(input: {graph: $graph, value: $input}) {
+    value: value
+    label: value
+  }
+}

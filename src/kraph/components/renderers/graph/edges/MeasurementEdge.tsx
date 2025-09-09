@@ -24,9 +24,8 @@ export const getSpecialPath = (
   const centerX = (sourceX + targetX) / 2;
   const centerY = (sourceY + targetY) / 2;
 
-  return `M ${sourceX} ${sourceY} Q ${centerX + offset} ${
-    centerY + offset
-  } ${targetX} ${targetY}`;
+  return `M ${sourceX} ${sourceY} Q ${centerX + offset} ${centerY + offset
+    } ${targetX} ${targetY}`;
 };
 
 export default ({
@@ -92,7 +91,7 @@ export default ({
             position: "absolute",
             transform: `translate(-50%, -50%) translate(${centerX}px,${centerY + offset}px)`,
           }}
-          className="p-3 text-xs group"
+          className="p-3 text-xs group nodrag nopan"
         >
           {data?.category.label}
         </Card>

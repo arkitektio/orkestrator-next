@@ -30,6 +30,7 @@ export type Scalars = {
   Milliseconds: { input: any; output: any; }
   ParquetLike: { input: any; output: any; }
   ThreeDVector: { input: any; output: any; }
+  _Any: { input: any; output: any; }
 };
 
 /** Temporary Credentials for a file download that can be used by a Client (e.g. in a python datalayer) */
@@ -106,9 +107,11 @@ export type AffineTransformationView = View & {
   id: Scalars['ID']['output'];
   image: Image;
   isGlobal: Scalars['Boolean']['output'];
+  isotropic: Scalars['Boolean']['output'];
   pixelSize: Scalars['ThreeDVector']['output'];
   pixelSizeX: Scalars['Micrometers']['output'];
   pixelSizeY: Scalars['Micrometers']['output'];
+  pixelSizeZ: Scalars['Micrometers']['output'];
   position: Scalars['ThreeDVector']['output'];
   stage: Stage;
   tMax?: Maybe<Scalars['Int']['output']>;
@@ -360,14 +363,28 @@ export enum ColorFormat {
 }
 
 export enum ColorMap {
+  Black = 'BLACK',
   Blue = 'BLUE',
+  Brown = 'BROWN',
+  Cool = 'COOL',
+  Cyan = 'CYAN',
   Green = 'GREEN',
+  Grey = 'GREY',
   Inferno = 'INFERNO',
   Intensity = 'INTENSITY',
+  Magenta = 'MAGENTA',
   Magma = 'MAGMA',
+  Orange = 'ORANGE',
+  Pink = 'PINK',
   Plasma = 'PLASMA',
+  Purple = 'PURPLE',
+  Rainbow = 'RAINBOW',
   Red = 'RED',
-  Viridis = 'VIRIDIS'
+  Spectral = 'SPECTRAL',
+  Viridis = 'VIRIDIS',
+  Warm = 'WARM',
+  White = 'WHITE',
+  Yellow = 'YELLOW'
 }
 
 export enum ContinousScanDirection {
@@ -526,6 +543,7 @@ export type DatasetFilter = {
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   name?: InputMaybe<StrFilterLookup>;
   parentless?: InputMaybe<Scalars['Boolean']['input']>;
+  scope?: InputMaybe<ScopeFilter>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -2793,6 +2811,8 @@ export type ProvenanceEntry = {
 
 export type Query = {
   __typename?: 'Query';
+  _entities: Array<Maybe<_Entity>>;
+  _service: _Service;
   acquisitionViews: Array<AcquisitionView>;
   affineTransformationViews: Array<AffineTransformationView>;
   /** Get available permissions for a specific identifier */
@@ -2856,6 +2876,11 @@ export type Query = {
   tables: Array<Table>;
   timepointViews: Array<TimepointView>;
   wellPositionViews: Array<WellPositionView>;
+};
+
+
+export type Query_EntitiesArgs = {
+  representations: Array<Scalars['_Any']['input']>;
 };
 
 
@@ -4181,6 +4206,13 @@ export type ZarrStoreFilter = {
   shape?: InputMaybe<IntFilterLookup>;
 };
 
+export type _Entity = File | Image | Table;
+
+export type _Service = {
+  __typename?: '_Service';
+  sdl: Scalars['String']['output'];
+};
+
 type Accessor_ImageAccessor_Fragment = { __typename?: 'ImageAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null };
 
 type Accessor_LabelAccessor_Fragment = { __typename?: 'LabelAccessor', id: string, keys: Array<string>, minIndex?: number | null, maxIndex?: number | null };
@@ -4844,6 +4876,15 @@ export type GetImagesQueryVariables = Exact<{
 
 export type GetImagesQuery = { __typename?: 'Query', images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }> };
 
+export type ListImagesQueryVariables = Exact<{
+  filters?: InputMaybe<ImageFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  order?: InputMaybe<ImageOrder>;
+}>;
+
+
+export type ListImagesQuery = { __typename?: 'Query', images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }> };
+
 export type GetInstrumentQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
@@ -4967,6 +5008,13 @@ export type RowsQueryVariables = Exact<{
 
 
 export type RowsQuery = { __typename?: 'Query', rows: Array<any> };
+
+export type GetSnapshotQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetSnapshotQuery = { __typename?: 'Query', snapshot: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', presignedUrl: string } } };
 
 export type GetStageQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -8044,6 +8092,43 @@ export function useGetImagesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHo
 export type GetImagesQueryHookResult = ReturnType<typeof useGetImagesQuery>;
 export type GetImagesLazyQueryHookResult = ReturnType<typeof useGetImagesLazyQuery>;
 export type GetImagesQueryResult = Apollo.QueryResult<GetImagesQuery, GetImagesQueryVariables>;
+export const ListImagesDocument = gql`
+    query ListImages($filters: ImageFilter, $pagination: OffsetPaginationInput, $order: ImageOrder) {
+  images(filters: $filters, pagination: $pagination, order: $order) {
+    ...ListImage
+  }
+}
+    ${ListImageFragmentDoc}`;
+
+/**
+ * __useListImagesQuery__
+ *
+ * To run a query within a React component, call `useListImagesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListImagesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListImagesQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *      pagination: // value for 'pagination'
+ *      order: // value for 'order'
+ *   },
+ * });
+ */
+export function useListImagesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListImagesQuery, ListImagesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListImagesQuery, ListImagesQueryVariables>(ListImagesDocument, options);
+      }
+export function useListImagesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListImagesQuery, ListImagesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListImagesQuery, ListImagesQueryVariables>(ListImagesDocument, options);
+        }
+export type ListImagesQueryHookResult = ReturnType<typeof useListImagesQuery>;
+export type ListImagesLazyQueryHookResult = ReturnType<typeof useListImagesLazyQuery>;
+export type ListImagesQueryResult = Apollo.QueryResult<ListImagesQuery, ListImagesQueryVariables>;
 export const GetInstrumentDocument = gql`
     query GetInstrument($id: ID!) {
   instrument(id: $id) {
@@ -8630,6 +8715,44 @@ export function useRowsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOpt
 export type RowsQueryHookResult = ReturnType<typeof useRowsQuery>;
 export type RowsLazyQueryHookResult = ReturnType<typeof useRowsLazyQuery>;
 export type RowsQueryResult = Apollo.QueryResult<RowsQuery, RowsQueryVariables>;
+export const GetSnapshotDocument = gql`
+    query GetSnapshot($id: ID!) {
+  snapshot(id: $id) {
+    id
+    store {
+      presignedUrl
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetSnapshotQuery__
+ *
+ * To run a query within a React component, call `useGetSnapshotQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSnapshotQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSnapshotQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetSnapshotQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetSnapshotQuery, GetSnapshotQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetSnapshotQuery, GetSnapshotQueryVariables>(GetSnapshotDocument, options);
+      }
+export function useGetSnapshotLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetSnapshotQuery, GetSnapshotQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetSnapshotQuery, GetSnapshotQueryVariables>(GetSnapshotDocument, options);
+        }
+export type GetSnapshotQueryHookResult = ReturnType<typeof useGetSnapshotQuery>;
+export type GetSnapshotLazyQueryHookResult = ReturnType<typeof useGetSnapshotLazyQuery>;
+export type GetSnapshotQueryResult = Apollo.QueryResult<GetSnapshotQuery, GetSnapshotQueryVariables>;
 export const GetStageDocument = gql`
     query GetStage($id: ID!) {
   stage(id: $id) {

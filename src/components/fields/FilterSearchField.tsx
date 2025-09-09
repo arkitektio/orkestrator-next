@@ -1,5 +1,6 @@
 import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
 
+import { NotImplementedYet } from "@/app/components/fallbacks/NotImplemted";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -23,12 +24,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn, notEmpty } from "@/lib/utils";
+import { FilterPortFragment } from "@/rekuest/api/graphql";
 import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { FieldProps } from "./types";
-import { NotImplementedYet } from "@/app/components/fallbacks/NotImplemted";
-import { DocumentNode } from "graphql";
-import { FilterPortFragment } from "@/rekuest/api/graphql";
 
 export type Option = {
   label: string;

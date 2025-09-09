@@ -1,8 +1,6 @@
 import { SearchField, SearchOptions } from "@/components/fields/SearchField";
-import { notEmpty } from "@/lib/utils";
 import {
-  useMemoryShelveQuery,
-  useSearchMemoryDrawerLazyQuery,
+  useSearchMemoryDrawerLazyQuery
 } from "@/rekuest/api/graphql";
 import { InputWidgetProps } from "@/rekuest/widgets/types";
 import { pathToName } from "@/rekuest/widgets/utils";
@@ -20,22 +18,22 @@ export const MemoryStructureWidget = (
     );
   }
 
-    const [searchD] = useSearchMemoryDrawerLazyQuery()
-  
-    const search = useCallback(
-      async (searching: SearchOptions) => {
-        console.log("Searching", searching)
-        let w = await searchD({
-          variables: {
-            ...searching,
-            implementation: props.bound,
-  
-          }
-        })
-        return w.data?.options
-      },
-      [searchD, props.bound],
-    );
+  const [searchD] = useSearchMemoryDrawerLazyQuery()
+
+  const search = useCallback(
+    async (searching: SearchOptions) => {
+      console.log("Searching", searching)
+      let w = await searchD({
+        variables: {
+          ...searching,
+          implementation: props.bound,
+
+        }
+      })
+      return w.data?.options
+    },
+    [searchD, props.bound],
+  );
 
   return (
     <>
@@ -47,7 +45,7 @@ export const MemoryStructureWidget = (
         noOptionFoundPlaceholder="No options found"
         commandPlaceholder="Search..."
       />
-      
+
     </>
   );
 };

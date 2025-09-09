@@ -1,12 +1,11 @@
-import { ListSearchField } from "@/components/fields/ListSearchField";
 import { SearchOptions } from "@/components/fields/SearchField";
 import { SearchAssignWidgetFragment } from "@/rekuest/api/graphql";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { InputWidgetProps } from "@/rekuest/widgets/types";
 import { pathToName } from "@/rekuest/widgets/utils";
-import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
+import { CheckIcon } from "@radix-ui/react-icons";
 
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Command,
   CommandEmpty,
@@ -16,17 +15,15 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import {
-  FormControl,
   FormDescription,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 import { cn, notEmpty } from "@/lib/utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { Badge } from "@/components/ui/badge";
 
 export type Option = {
   label: string;
@@ -35,8 +32,8 @@ export type Option = {
 
 export const ListButtonLabel = (props: {
   search: SearchFunction;
-  value: {__value: string}[] | undefined;
-  setValue: (vars: {__value: string}[]) => void;
+  value: { __value: string }[] | undefined;
+  setValue: (vars: { __value: string }[]) => void;
   placeholder?: string;
 }) => {
   const [options, setOptions] = useState<Option[]>([]);
@@ -158,7 +155,7 @@ export const ListSearchWidget = (
       if (input) {
         if (e.key === "Delete" || e.key === "Backspace") {
           if (input.value === "") {
-            form.setValue(name, {__value: undefined}, {
+            form.setValue(name, { __value: undefined }, {
               shouldValidate: true,
             });
           }
@@ -173,7 +170,7 @@ export const ListSearchWidget = (
   );
 
   return (
-    <FormField<{[name: string]: {__value: string}[]}>
+    <FormField<{ [name: string]: { __value: string }[] }>
       control={form.control}
       name={name}
       render={({ field }) => (
@@ -257,10 +254,10 @@ export const ListSearchWidget = (
                                     name,
                                     [
                                       ...(field.value &&
-                                      Array.isArray(field.value)
+                                        Array.isArray(field.value)
                                         ? field.value
                                         : []),
-                                      {__value: option.value },
+                                      { __value: option.value },
                                     ],
                                     {
                                       shouldValidate: false,

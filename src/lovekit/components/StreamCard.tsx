@@ -1,7 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { ElektroExperiment, ElektroSimulation, LovekitStream } from "@/linkers";
-import { ListExperimentFragment, ListSimulationFragment } from "../../api/graphql";
+import { LovekitStream } from "@/linkers";
 import { ListStreamFragment } from "../api/graphql";
 
 

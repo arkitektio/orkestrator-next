@@ -8,6 +8,8 @@ fragment BaseListCategory on BaseCategory {
     id
     value
   }
+  ageName
+
 }
 
 fragment BaseListNodeCategory on NodeCategory {

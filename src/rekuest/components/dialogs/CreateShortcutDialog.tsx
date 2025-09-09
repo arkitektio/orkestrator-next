@@ -1,3 +1,5 @@
+import { useDialog } from "@/app/dialog";
+import { IntField } from "@/components/fields/IntField";
 import { StringField } from "@/components/fields/StringField";
 import { SwitchField } from "@/components/fields/SwitchField";
 import { Badge } from "@/components/ui/badge";
@@ -16,12 +18,10 @@ import {
 import { Form } from "@/components/ui/form";
 import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import { notEmpty } from "@/lib/utils";
-import { RekuestShortcut } from "@/linkers";
 import { EffectWrapper } from "@/rekuest/widgets/EffectWrapper";
 import { ArgsContainerProps } from "@/rekuest/widgets/tailwind";
 import { Port, PortGroup } from "@/rekuest/widgets/types";
 import React, { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import * as z from "zod";
 import {
   useAgentOptionsLazyQuery,
@@ -30,8 +30,6 @@ import {
 } from "../../api/graphql";
 import { usePortForm } from "../../hooks/usePortForm";
 import { useWidgetRegistry } from "../../widgets/WidgetsContext";
-import { IntField } from "@/components/fields/IntField";
-import { useDialog } from "@/app/dialog";
 
 export type FilledGroup = PortGroup & {
   filledPorts: Port[];
@@ -167,8 +165,10 @@ export const CreateShortcutDialog = (props: {
     ports: action?.args.filter((arg) => chosenArgs.includes(arg.key)) || [],
     overwrites: { ...props.args, name: action?.name },
     additionalSchema: z.object({
+      toolbox: z.string().optional(),
       name: z.string().nonempty(),
       allowQuick: z.boolean().default(false),
+      bindNumber: z.coerce.number().int().min(0).max(9).optional(),
     }),
   });
 
@@ -183,8 +183,9 @@ export const CreateShortcutDialog = (props: {
         input: {
           name: name,
           action: props.id,
+          toolbox: toolbox || null,
           args: rest,
-          bindNumber: bindNumber || 5,
+          bindNumber: bindNumber,
           allowQuick: allowQuick,
         },
       },

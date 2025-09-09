@@ -2,9 +2,9 @@ import { RoiKind } from "@/mikro-next/api/graphql";
 import { toast } from "sonner";
 import * as THREE from "three";
 import { PathDrawer } from "../controls/PathDrawer";
+import { RoiDrawerProps } from "./RoiDrawerCanvas";
 import { convertFromThreeJSCoords } from "./roiUtils";
 import { useRoiCreation } from "./useRoiCreation";
-import { RoiDrawerProps } from "./RoiDrawerCanvas";
 
 export const PathRoiDrawer = ({
   imageHeight,
@@ -13,6 +13,7 @@ export const PathRoiDrawer = ({
   c,
   z,
   t,
+  event_key = "shift",
 }: RoiDrawerProps) => {
   const createRoi = useRoiCreation(image.id);
 
@@ -27,8 +28,8 @@ export const PathRoiDrawer = ({
         imageWidth,
         imageHeight,
         c,
-        z,
         t,
+        z,
       );
 
       const result = await createRoi({
@@ -51,5 +52,5 @@ export const PathRoiDrawer = ({
     }
   };
 
-  return <PathDrawer onPathDrawn={onPathDrawn} />;
+  return <PathDrawer onPathDrawn={onPathDrawn} event_key={event_key} />;
 };

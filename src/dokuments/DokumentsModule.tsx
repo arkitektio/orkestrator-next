@@ -2,12 +2,12 @@ import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { Guard } from "@/lib/arkitekt/Arkitekt";
 import React from "react";
 import { Route, Routes } from "react-router";
+import DocumentPage from "./pages/DocumentPage";
 import FilePage from "./pages/FilePage";
 import HomePage from "./pages/HomePage";
-import StandardPane from "./panes/StandardPane";
 import PagePage from "./pages/PagePage";
-import DocumentPage from "./pages/DocumentPage";
-interface Props {}
+import StandardPane from "./panes/StandardPane";
+interface Props { }
 
 export const Module: React.FC<Props> = (props) => {
   return (

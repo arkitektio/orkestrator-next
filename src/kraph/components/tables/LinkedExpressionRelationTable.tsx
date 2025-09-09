@@ -44,17 +44,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { KraphNode, KraphLinkedExpression } from "@/linkers";
 import {
-  EntityFragment,
   EntityRelationFragment,
   ListEntitiesQueryVariables,
   ListEntityRelationsQuery,
   useGetLinkedExpressionByAgeNameQuery,
   useListEntityRelationsQuery,
-  useSearchLinkedExpressionLazyQuery,
+  useSearchLinkedExpressionLazyQuery
 } from "@/kraph/api/graphql";
 import { EntityOverlay } from "@/kraph/overlays/EntityOverlay";
+import { KraphLinkedExpression, KraphNode } from "@/linkers";
 import { useForm } from "react-hook-form";
 
 export const columns: ColumnDef<EntityRelationFragment>[] = [
@@ -418,9 +417,9 @@ export const LinkedExpressionRelationTable = (props: {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   );
                 })}

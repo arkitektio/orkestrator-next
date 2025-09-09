@@ -2,9 +2,9 @@ import { RoiKind } from "@/mikro-next/api/graphql";
 import { toast } from "sonner";
 import * as THREE from "three";
 import { RectangleDrawer } from "../controls/RectangleDrawer";
+import { RoiDrawerProps } from "./RoiDrawerCanvas";
 import { convertFromThreeJSCoords } from "./roiUtils";
 import { useRoiCreation } from "./useRoiCreation";
-import { RoiDrawerProps } from "./RoiDrawerCanvas";
 
 export const RectangleRoiDrawer = ({
   imageHeight,
@@ -13,6 +13,7 @@ export const RectangleRoiDrawer = ({
   c,
   z,
   t,
+  event_key = "shift",
 }: RoiDrawerProps) => {
   const createRoi = useRoiCreation(image.id);
 
@@ -29,15 +30,21 @@ export const RectangleRoiDrawer = ({
         [start.x, end.y], // Bottom-left
       ];
 
+      if (Math.abs(start.x - end.x) <= 2 || Math.abs(start.y - end.y) <= 2) {
+        return;
+      }
+
       // Convert to FiveDVector format [c, t, z, y, x]
       const vectors = convertFromThreeJSCoords(
         rectangleCorners,
         imageWidth,
         imageHeight,
         c,
-        z,
         t,
+        z,
       );
+
+      console.log("Converted vectors for ROI:", vectors);
 
       const result = await createRoi({
         variables: {
@@ -59,5 +66,10 @@ export const RectangleRoiDrawer = ({
     }
   };
 
-  return <RectangleDrawer onRectangleDrawn={onRectangleDrawn} />;
+  return (
+    <RectangleDrawer
+      onRectangleDrawn={onRectangleDrawn}
+      event_key={event_key}
+    />
+  );
 };

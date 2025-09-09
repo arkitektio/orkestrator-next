@@ -1,14 +1,14 @@
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { useCallback } from "react";
 import {
-  AssignInput,
   AssignActionQuery,
   AssignationEventKind,
+  AssignInput,
   PostmanAssignationFragment,
   ReserveMutationVariables,
-  useAssignMutation,
   useAssignActionQuery,
   useAssignationsQuery,
+  useAssignMutation,
   useCancelMutation,
 } from "../api/graphql";
 

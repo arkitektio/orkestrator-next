@@ -4,11 +4,8 @@ mutation CreateGraph($input: GraphInput!) {
   }
 }
 
-
 mutation CreateInlineGraph($input: String!) {
-  result: createGraph(input: {
-    name: $input
-  }) {
+  result: createGraph(input: { name: $input }) {
     value: id
     label: name
   }
@@ -16,6 +13,12 @@ mutation CreateInlineGraph($input: String!) {
 
 mutation PinGraph($input: PinGraphInput!) {
   pinGraph(input: $input) {
+    ...Graph
+  }
+}
+
+mutation MaterializeGraph($input: MaterializeGraphInput!) {
+  materializeGraph(input: $input) {
     ...Graph
   }
 }

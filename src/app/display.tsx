@@ -2,7 +2,9 @@ import { EntityCategoryDisplay } from "@/kraph/displays/EntityCategoryDisplay";
 import { createDisplayProvider } from "@/lib/display/registry";
 import { ImageDisplay } from "@/mikro-next/displays/ImageDisplay";
 import { RoiDisplay } from "@/mikro-next/displays/RoiDisplay";
+import { PodDisplay } from "@/kabinet/displays/PodDisplay";
 import SnapshotDisplay from "@/mikro-next/displays/SnapshotDisplay";
+import { MetricDisplay } from "@/kraph/displays/MetricDisplay";
 
 // Import your display components here
 // Example:
@@ -19,4 +21,7 @@ export const { DisplayProvider, useDisplay, useDisplayComponent } =
     "@mikro/roi": RoiDisplay,
     "@mikro/snapshot": SnapshotDisplay,
     "@kraph/entitycategory": EntityCategoryDisplay,
+    "@kraph/metric": MetricDisplay,
+    "@kabinet/pod": PodDisplay,
+
   });

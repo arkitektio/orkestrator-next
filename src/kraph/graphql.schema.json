@@ -5404,6 +5404,22 @@
         "fields": null,
         "inputFields": [
           {
+            "name": "checkExists",
+            "description": "If true, will check that the query can be rendered. If false, will skip this check.",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "defaultValue": "true",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "columns",
             "description": "The columns (if ViewKind is Table)",
             "type": {
@@ -25458,6 +25474,22 @@
         "isOneOf": false,
         "fields": null,
         "inputFields": [
+          {
+            "name": "checkExists",
+            "description": "If true, will check that the query can be rendered. If false, will skip this check.",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "defaultValue": "true",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
           {
             "name": "columns",
             "description": "The columns (if ViewKind is Table)",

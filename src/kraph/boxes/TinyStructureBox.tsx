@@ -1,4 +1,5 @@
 import { FormDialog } from "@/components/dialog/FormDialog";
+import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -26,17 +27,15 @@ import {
   ListGraphFragment,
   ListMeasurementCategoryFragment,
   useCreateEntityInlineMutation,
-  useCreateEntityMutation,
   useCreateMeasurementMutation,
   useCreateStructureMutation,
   useGetInformedStructureQuery,
   useListGraphsQuery,
   useListMeasurmentCategoryQuery,
-  useSearchEntitiesForRoleLazyQuery,
+  useSearchEntitiesForRoleLazyQuery
 } from "../api/graphql";
 import { SelectiveNodeViewRenderer } from "../components/renderers/NodeQueryRenderer";
 import CreateMeasurementCategoryForm from "../forms/CreateMeasurementCategoryForm";
-import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
 
 const FindEntity = (props: {
   structure: string;
@@ -212,11 +211,19 @@ export const GraphKnowledgeView = (props: {
 
   return (
     <div className="flex flex-col gap-2">
-      <KraphGraph.DetailLink object={props.graph.id}>
-        <h3 className="text-scroll font-semibold text-xs">
-          {props.graph.name}
-        </h3>
-      </KraphGraph.DetailLink>
+      <div className="flex flex-row justify-between items-center">
+        <KraphGraph.DetailLink object={props.graph.id}>
+          <h3 className="text-scroll font-semibold text-xs">
+            {props.graph.name}
+          </h3>
+        </KraphGraph.DetailLink>
+        {data && <KraphStructure.DetailLink
+          object={data?.structureByIdentifier.id}
+          className="text-xs text-scroll font-light"
+        >
+          Open
+        </KraphStructure.DetailLink>}
+      </div>
       {loading && <p className="text-xs text-muted-foreground">Loading...</p>}
       {error && <p className="text-red-500 text-xs">Error: {error.message}</p>}
       {
@@ -233,12 +240,7 @@ export const GraphKnowledgeView = (props: {
               No best view available for this structure.
             </p>
           )}
-          <KraphStructure.DetailLink
-            object={data?.structureByIdentifier.id}
-            className="text-xs text-scroll font-light"
-          >
-            {data?.structureByIdentifier.label}
-          </KraphStructure.DetailLink>
+
         </>
       }
       <div className="flex flex-row gap-2">

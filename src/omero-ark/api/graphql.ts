@@ -49,6 +49,10 @@ export type DeleteImageInput = {
   id: Scalars['ID']['input'];
 };
 
+export type DeleteMeInput = {
+  reason?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type DeleteResult = {
   __typename?: 'DeleteResult';
   id: Scalars['String']['output'];
@@ -91,6 +95,11 @@ export type MutationCreateProjectArgs = {
 
 export type MutationDeleteImageArgs = {
   input: DeleteImageInput;
+};
+
+
+export type MutationDeleteMeArgs = {
+  input: DeleteMeInput;
 };
 
 
@@ -216,12 +225,33 @@ export type ListProjectFragment = { __typename?: 'Project', id: string, name: st
 
 export type ProjectFragment = { __typename?: 'Project', id: string, name: string, description: string, tags: Array<string>, datasets: Array<{ __typename?: 'Dataset', id: string, name: string, description: string }> };
 
+export type CreateDatasetMutationVariables = Exact<{
+  input: CreateDatasetInput;
+}>;
+
+
+export type CreateDatasetMutation = { __typename?: 'Mutation', createDataset: { __typename?: 'Dataset', id: string, name: string, description: string } };
+
+export type CreateProjectMutationVariables = Exact<{
+  input: CreateProjectInput;
+}>;
+
+
+export type CreateProjectMutation = { __typename?: 'Mutation', createProject: { __typename?: 'Project', id: string, name: string, description: string } };
+
 export type EnsureOmeroUserMutationVariables = Exact<{
   input: OmeroUserInput;
 }>;
 
 
 export type EnsureOmeroUserMutation = { __typename?: 'Mutation', ensureOmeroUser: { __typename?: 'OmeroUser', id: string, omeroUsername: string, omeroPassword: string, user: { __typename?: 'User', id: string, sub: string } } };
+
+export type DeleteMeMutationVariables = Exact<{
+  input: DeleteMeInput;
+}>;
+
+
+export type DeleteMeMutation = { __typename?: 'Mutation', deleteMe: { __typename?: 'User', id: string } };
 
 export type ListDatasetsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -324,6 +354,76 @@ export const ProjectFragmentDoc = gql`
   tags
 }
     ${ListDatasetFragmentDoc}`;
+export const CreateDatasetDocument = gql`
+    mutation CreateDataset($input: CreateDatasetInput!) {
+  createDataset(input: $input) {
+    id
+    name
+    description
+  }
+}
+    `;
+export type CreateDatasetMutationFn = Apollo.MutationFunction<CreateDatasetMutation, CreateDatasetMutationVariables>;
+
+/**
+ * __useCreateDatasetMutation__
+ *
+ * To run a mutation, you first call `useCreateDatasetMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateDatasetMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createDatasetMutation, { data, loading, error }] = useCreateDatasetMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateDatasetMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateDatasetMutation, CreateDatasetMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateDatasetMutation, CreateDatasetMutationVariables>(CreateDatasetDocument, options);
+      }
+export type CreateDatasetMutationHookResult = ReturnType<typeof useCreateDatasetMutation>;
+export type CreateDatasetMutationResult = Apollo.MutationResult<CreateDatasetMutation>;
+export type CreateDatasetMutationOptions = Apollo.BaseMutationOptions<CreateDatasetMutation, CreateDatasetMutationVariables>;
+export const CreateProjectDocument = gql`
+    mutation CreateProject($input: CreateProjectInput!) {
+  createProject(input: $input) {
+    id
+    name
+    description
+  }
+}
+    `;
+export type CreateProjectMutationFn = Apollo.MutationFunction<CreateProjectMutation, CreateProjectMutationVariables>;
+
+/**
+ * __useCreateProjectMutation__
+ *
+ * To run a mutation, you first call `useCreateProjectMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateProjectMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createProjectMutation, { data, loading, error }] = useCreateProjectMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateProjectMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateProjectMutation, CreateProjectMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateProjectMutation, CreateProjectMutationVariables>(CreateProjectDocument, options);
+      }
+export type CreateProjectMutationHookResult = ReturnType<typeof useCreateProjectMutation>;
+export type CreateProjectMutationResult = Apollo.MutationResult<CreateProjectMutation>;
+export type CreateProjectMutationOptions = Apollo.BaseMutationOptions<CreateProjectMutation, CreateProjectMutationVariables>;
 export const EnsureOmeroUserDocument = gql`
     mutation EnsureOmeroUser($input: OmeroUserInput!) {
   ensureOmeroUser(input: $input) {
@@ -363,6 +463,39 @@ export function useEnsureOmeroUserMutation(baseOptions?: ApolloReactHooks.Mutati
 export type EnsureOmeroUserMutationHookResult = ReturnType<typeof useEnsureOmeroUserMutation>;
 export type EnsureOmeroUserMutationResult = Apollo.MutationResult<EnsureOmeroUserMutation>;
 export type EnsureOmeroUserMutationOptions = Apollo.BaseMutationOptions<EnsureOmeroUserMutation, EnsureOmeroUserMutationVariables>;
+export const DeleteMeDocument = gql`
+    mutation DeleteMe($input: DeleteMeInput!) {
+  deleteMe(input: $input) {
+    id
+  }
+}
+    `;
+export type DeleteMeMutationFn = Apollo.MutationFunction<DeleteMeMutation, DeleteMeMutationVariables>;
+
+/**
+ * __useDeleteMeMutation__
+ *
+ * To run a mutation, you first call `useDeleteMeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteMeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteMeMutation, { data, loading, error }] = useDeleteMeMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useDeleteMeMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteMeMutation, DeleteMeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<DeleteMeMutation, DeleteMeMutationVariables>(DeleteMeDocument, options);
+      }
+export type DeleteMeMutationHookResult = ReturnType<typeof useDeleteMeMutation>;
+export type DeleteMeMutationResult = Apollo.MutationResult<DeleteMeMutation>;
+export type DeleteMeMutationOptions = Apollo.BaseMutationOptions<DeleteMeMutation, DeleteMeMutationVariables>;
 export const ListDatasetsDocument = gql`
     query ListDatasets {
   datasets {

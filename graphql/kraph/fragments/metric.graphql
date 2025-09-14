@@ -3,6 +3,7 @@ fragment Metric on Metric {
   category {
     id
     label
+    description
   }
   value
 }

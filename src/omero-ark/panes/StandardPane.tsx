@@ -41,11 +41,11 @@ export const NavigationPane = () => (
       </div>
       <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-5">
         <DroppableNavLink
-          to="/omero_ark/images"
+          to="/omero_ark/datasets"
           className="flex gap-3 w-full hover:text-primary"
         >
           <Image className="h-4 w-4" />
-          Images
+          Datasets
         </DroppableNavLink>
         <DroppableNavLink
           to="/omero_ark/projects"

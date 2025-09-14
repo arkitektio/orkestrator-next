@@ -4,7 +4,11 @@ import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { KraphGraph, KraphGraphQuery } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { useNavigate } from "react-router-dom";
-import { useGetGraphQuery, useUpdateGraphMutation } from "../api/graphql";
+import {
+  useGetGraphQuery,
+  useMaterializeGraphMutation,
+  useUpdateGraphMutation,
+} from "../api/graphql";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,6 +17,10 @@ import { UpdateGraphForm } from "../forms/UpdateGraphForm";
 
 export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
   const [update] = useUpdateGraphMutation({
+    refetchQueries: ["GetGraph"],
+  });
+
+  const [materialize] = useMaterializeGraphMutation({
     refetchQueries: ["GetGraph"],
   });
 
@@ -34,8 +42,15 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
       title={data.graph.name}
       pageActions={
         <div className="flex flex-row gap-2">
-          <FormSheet trigger={<Button variant="outline"><HobbyKnifeIcon /></Button>}>
-            {data?.graph && <UpdateGraphForm graph={data?.graph} />}</FormSheet>
+          <FormSheet
+            trigger={
+              <Button variant="outline">
+                <HobbyKnifeIcon />
+              </Button>
+            }
+          >
+            {data?.graph && <UpdateGraphForm graph={data?.graph} />}
+          </FormSheet>
           <KraphGraph.ObjectButton object={data.graph.id} />
           <Button
             onClick={() => {
@@ -45,6 +60,17 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
             variant="outline"
           >
             {data.graph.pinned ? "Unpin" : "Pin"}
+          </Button>
+          <Button
+            onClick={() => {
+              materialize({
+                variables: { input: { id: data.graph.id } },
+              });
+            }}
+            className="w-full"
+            variant="outline"
+          >
+            Materialize
           </Button>
         </div>
       }

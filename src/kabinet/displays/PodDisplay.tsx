@@ -2,11 +2,11 @@ import { DisplayWidgetProps } from "@/lib/display/registry";
 import { useGetPodQuery } from "../api/graphql";
 import { KabinetPod } from "@/linkers";
 
-export const PodWidget = (props: DisplayWidgetProps) => {
+export const PodDisplay = (props: DisplayWidgetProps) => {
   const { data } = useGetPodQuery({
     variables: {
       id: props.object,
-    },
+    }
   });
 
   return (

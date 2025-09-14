@@ -5,6 +5,8 @@ import { AlpakaProvider } from "@/linkers";
 import { UploadIcon } from "lucide-react";
 import React from "react";
 import ProviderList from "../components/lists/ProviderList";
+import { FormSheet } from "@/components/dialog/FormDialog";
+import CreateProviderForm from "../forms/CreateProviderForm";
 
 export type IRepresentationScreenProps = {};
 
@@ -20,6 +22,10 @@ const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
               New
             </Button>
           </AlpakaProvider.NewButton>
+
+          <FormSheet trigger={<Button variant="outline">New Provider</Button>}>
+            <CreateProviderForm />
+          </FormSheet>
         </>
       }
     >

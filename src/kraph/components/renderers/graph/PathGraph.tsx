@@ -166,6 +166,7 @@ export const PathGraphInner: React.FC<Props> = ({ path, root, options }) => {
         snapToGrid={true}
         autoFocus
         fitView
+        proOptions={{ hideAttribution: true }}
         attributionPosition="top-right"
         className="relative"
       ></ReactFlow>

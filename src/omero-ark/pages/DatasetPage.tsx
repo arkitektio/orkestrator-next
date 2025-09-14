@@ -10,22 +10,17 @@ import React from "react";
 import { useParams } from "react-router";
 import { useGetDatasetQuery } from "../api/graphql";
 import ImageCard from "../components/cards/ImageCard";
+import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 
 export type IRepresentationScreenProps = {};
 
-const Page: React.FC<IRepresentationScreenProps> = () => {
-  const { id } = useParams<{ id: string }>();
-  if (!id) return <></>;
+const Page = asDetailQueryRoute(useGetDatasetQuery, ({ data }) => {
 
-  const { data } = useGetDatasetQuery({
-    variables: { id },
-  });
 
   return (
     <OmeroArkDataset.ModelPage
-      object={id}
-      actions={<OmeroArkDataset.Actions id={id} />}
-      sidebars={<Komments identifier="@omero-ark/dataset" object={id} />}
+      object={data.dataset.id}
+      title={data?.dataset?.name}
     >
       <DetailPane className="p-3 @container">
         <DetailPaneHeader>
@@ -52,6 +47,6 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       </DetailPane>
     </OmeroArkDataset.ModelPage>
   );
-};
+});
 
 export default Page;

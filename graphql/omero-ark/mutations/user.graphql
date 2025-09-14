@@ -9,3 +9,10 @@ mutation EnsureOmeroUser($input: OmeroUserInput!) {
     }
   }
 }
+
+
+mutation DeleteMe($input: DeleteMeInput!) {
+  deleteMe(input: $input) {
+    id
+  }
+}

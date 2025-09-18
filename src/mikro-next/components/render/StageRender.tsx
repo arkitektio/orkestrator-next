@@ -1,13 +1,11 @@
 import {
   ImageFragment,
-  ListRgbContextFragment,
-  RgbViewFragment,
   StageFragment,
   useGetImageQuery,
   useGetStageQuery,
   WatchTransformationViewsDocument,
   WatchTransformationViewsSubscription,
-  WatchTransformationViewsSubscriptionVariables,
+  WatchTransformationViewsSubscriptionVariables
 } from "@/mikro-next/api/graphql";
 import { OrbitControls, Select } from "@react-three/drei";
 import { Canvas as ThreeCanvas } from "@react-three/fiber";
@@ -27,9 +25,6 @@ import {
   RectangleDrawer,
   RectangleDrawerProps,
 } from "./controls/RectangleDrawer";
-import { ChunkBitmapTexture } from "./final/ChunkMesh";
-import { useArray } from "./final/useArray";
-import { BasicIndexer, IndexerProjection, Slice } from "./indexer";
 import { RGBContextRender } from "./FInalRender";
 import { ViewerStateProvider } from "./ViewerStateProvider";
 
@@ -101,15 +96,15 @@ export const StageRender = ({ stage, onRectangleDrawn }: StageRenderProps) => {
       }}
     >
       <div
-        style={{ width: "100%", height: "100%" }}
-        className="relative"
+        style={{ width: "100%", height: "100%", }}
+        className="relative bg-black"
         ref={containerRef}
       >
         <Suspense
           fallback={<div className="w-full h-full bg-gray-100"> Loading</div>}
         >
           <ThreeCanvas style={{ width: "100%", height: "100%" }}>
-            <StageCamera />
+            <StageCamera stage={stage} />
 
             <OrbitControls
               enableRotate={false}

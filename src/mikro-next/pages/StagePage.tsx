@@ -1,6 +1,7 @@
 import { FormSheet } from "@/components/dialog/FormDialog";
 import {
   DetailPane,
+  DetailPaneContent,
   DetailPaneHeader,
   DetailPaneTitle,
 } from "@/components/ui/pane";
@@ -67,34 +68,45 @@ const Page = asDetailQueryRoute(
 
     return (
       <MikroStage.ModelPage
+        variant={"black"}
         actions={<MikroStage.Actions object={id} />}
         object={id}
         title={data?.stage?.name}
       >
-        <DetailPane className="p-3 @container">
+
+
+        <div className="w-full h-full">
+          {data?.stage && <StageRender stage={data?.stage} />}
+        </div>
+        <DetailPane className="w-full absolute w-[200px] top-3 left-3 @container p-2 bg-black bg-clip-padding backdrop-filter backdrop-blur-2xl bg-opacity-10 z-100 overflow-hidden flex flex-col h-max-[400px]">
           <DetailPaneHeader>
             <DetailPaneTitle
               actions={
                 <>
                   <PinToggle
                     onPin={(e) => {
-                      data?.stage.id;
+                      data?.stage.id &&
+                        pinImage({
+                          variables: {
+                            id: data?.stage.id,
+                            pin: e,
+                          },
+                        });
                     }}
                     pinned={data?.stage?.pinned || false}
                   />
-                  <FormSheet trigger={<HobbyKnifeIcon />}>
-                    {data?.stage && <UpdateStageForm stage={data?.stage} />}
-                  </FormSheet>
                 </>
               }
+              className="group "
             >
               {data?.stage?.name}
             </DetailPaneTitle>
           </DetailPaneHeader>
+
+          <DetailPaneContent className="flex flex-col">
+            {data?.stage?.name}
+          </DetailPaneContent>
         </DetailPane>
-        <div className="w-full h-full">
-          {data?.stage && <StageRender stage={data?.stage} />}
-        </div>
       </MikroStage.ModelPage>
     );
   },

@@ -1,7 +1,6 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import * as THREE from "three";
 import { Chunk, DataType } from "zarrita";
-import { ChunkBounds, useChunkCulling } from "./useViewportCulling";
 import { mapDTypeToMinMax } from "./utils";
 
 export const useAsyncChunk = (props: {
@@ -24,6 +23,7 @@ export const useAsyncChunk = (props: {
   t: number;
   z: number;
   enableCulling?: boolean;
+  shouldRender: boolean; // New parameter to control when to load texture
 }) => {
   const [texture, setTexture] = useState<{
     texture: THREE.Texture | null;
@@ -31,39 +31,9 @@ export const useAsyncChunk = (props: {
     max: number;
   } | null>(null);
 
-  // Calculate chunk bounds for viewport culling - must match ChunkMesh positioning logic
-  const box_shape_3d = props.chunk_shape?.slice(3, 5) || [0, 0];
-  const baseChunkWidth = box_shape_3d[1];
-  const baseChunkHeight = box_shape_3d[0];
-  const scaledWidth = baseChunkWidth * props.scaleX;
-  const scaledHeight = baseChunkHeight * props.scaleY;
-
-  const box_position_3d = props.chunk_coords.slice(3, 5);
-
-  const chunkBounds: ChunkBounds = {
-    x:
-      box_position_3d[1] * scaledWidth + scaledWidth / 2 - props.imageWidth / 2,
-    y:
-      box_position_3d[0] * scaledHeight +
-      scaledHeight / 2 -
-      props.imageHeight / 2,
-    width: scaledWidth,
-    height: scaledHeight,
-  };
-
-  // Use viewport culling if enabled
-  const cullingResult = useChunkCulling(
-    chunkBounds,
-    props.scaleX,
-    props.imageWidth,
-    props.imageHeight,
-  );
-
-  const shouldRender = true;
-
   useEffect(() => {
-    // Don't render if culling is enabled and chunk should not be rendered
-    if (!shouldRender) {
+    // Don't render if shouldRender is false
+    if (!props.shouldRender) {
       setTexture(null);
       return;
     }
@@ -72,7 +42,7 @@ export const useAsyncChunk = (props: {
       "Rendering chunk with coords",
       props.chunk_coords,
       "shouldRender:",
-      shouldRender,
+      props.shouldRender,
     );
     const abortController = new AbortController();
 
@@ -143,8 +113,8 @@ export const useAsyncChunk = (props: {
         );
 
         // Set filtering for smooth interpolation when zooming
-        tex.minFilter = THREE.NearestFilter;
-        tex.magFilter = THREE.NearestFilter;
+        tex.minFilter = THREE.LinearFilter;
+        tex.magFilter = THREE.LinearFilter;
         tex.wrapS = THREE.ClampToEdgeWrapping;
         tex.wrapT = THREE.ClampToEdgeWrapping;
         tex.flipY = false; // Disable Y-flipping to match image orientation
@@ -170,7 +140,7 @@ export const useAsyncChunk = (props: {
     props.c,
     props.t,
     props.z,
-    shouldRender, // Include shouldRender in dependencies
+    props.shouldRender, // Include shouldRender in dependencies
   ]);
 
   return texture;

@@ -7,6 +7,7 @@ import React, {
   useState,
 } from "react";
 import { Panel } from "./panels";
+import { tr } from "date-fns/locale";
 
 export interface ViewerState {
   // Z/T navigation

@@ -10,18 +10,18 @@ import {
 } from "@/mikro-next/api/graphql";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas as ThreeCanvas } from "@react-three/fiber";
-import { Dispatch, SetStateAction, Suspense, useEffect, useState } from "react";
+import { Suspense } from "react";
 import { AutoZoomCamera } from "./cameras/AutoZoomCamera";
-import { ChunkBitmapTexture } from "./final/ChunkMesh";
+import { ChunkBitmapTexture, CameraFieldOfViewDebug } from "./final/ChunkMesh";
 import { ROIPolygon } from "./final/ROIPolygon";
 import { useArray } from "./final/useArray";
 import { BasicIndexer, IndexerProjection, Slice } from "./indexer";
-import { RoiDrawerCanvas } from "./RoiDrawer";
-import { ViewerStateProvider, useViewerState } from "./ViewerStateProvider";
+import { EventPlane } from "./overlays/invisible/EventPlane";
+import { PanelContent } from "./panels";
 import { RenderControlsMenu } from "./RenderControlsMenu";
 import { ROIContextMenu } from "./ROIContextMenu";
-import { EventPlane } from "./overlays/invisible/EventPlane";
-import { PanelContent, Panel } from "./panels";
+import { RoiDrawerCanvas } from "./RoiDrawer";
+import { ViewerStateProvider, useViewerState } from "./ViewerStateProvider";
 
 export interface RGBDProps {
   context: ListRgbContextFragment;
@@ -81,12 +81,16 @@ export const useAspectRatio = (context: ListRgbContextFragment) => {
   return width / height;
 };
 
+export type ScaledView =
+  ListRgbContextFragment["image"]["derivedScaleViews"][0];
+
 export const LayerRender = (props: {
-  derivedScaleView: ListRgbContextFragment["image"]["derivedScaleViews"][0];
+  derivedScaleView: ScaledView;
   view: RgbViewFragment;
   z: number;
   t: number;
   xSize: number;
+  availableScales: ScaledView[];
   ySize: number;
 }) => {
   const { derivedScaleView, view, xSize, ySize } = props;
@@ -119,11 +123,17 @@ export const LayerRender = (props: {
     return <div>Chunk shape not found</div>;
   }
 
+  // Calculate z-position based on scale: higher resolution (lower scaleX) should be on top
+  // Use negative values so 1x is at z=0, 2x at z=-0.001, 4x at z=-0.002, etc.
+  const zPosition = (derivedScaleView.scaleX - 1) * 0.001;
+
   return (
     <group key={`${view.id}-${derivedScaleView.id}`}>
+      {/* 1) Depth pre-pass for the blocker */}
       {chunk_loaders.map((chunk_loader) => {
         return (
           <ChunkBitmapTexture
+            availableScales={props.availableScales}
             renderFunc={renderView}
             chunk_coords={chunk_loader.chunk_coords}
             chunk_shape={derivedScaleView.image.store.chunks || []}
@@ -135,6 +145,7 @@ export const LayerRender = (props: {
             cLimMax={view.contrastLimitMax}
             imageWidth={xSize}
             imageHeight={ySize}
+            derivedScaleView={derivedScaleView}
             scaleX={derivedScaleView.scaleX}
             scaleY={derivedScaleView.scaleY}
             enableCulling={true}
@@ -402,6 +413,7 @@ export const FinalRenderInner = (props: RGBDProps) => {
                       view={view}
                       xSize={xSize}
                       ySize={ySize}
+                      availableScales={selectedLayers}
                     />
                   );
                 })}
@@ -411,6 +423,9 @@ export const FinalRenderInner = (props: RGBDProps) => {
 
           {/* Clickable background plane for creating panels */}
           <EventPlane xSize={xSize} ySize={ySize} />
+
+          {/* Debug visualization for camera field of view */}
+          <CameraFieldOfViewDebug />
 
           <>
             {props.rois.map((roi) => (

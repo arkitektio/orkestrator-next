@@ -88,6 +88,8 @@ export const LayerRender = (props: {
   derivedScaleView: ScaledView;
   view: RgbViewFragment;
   z: number;
+  affineScaleX: number;
+  affineScaleY: number;
   t: number;
   xSize: number;
   availableScales: ScaledView[];
@@ -143,6 +145,8 @@ export const LayerRender = (props: {
             t={t}
             cLimMin={view.contrastLimitMin}
             cLimMax={view.contrastLimitMax}
+            affineScaleX={props.affineScaleX}
+            affineScaleY={props.affineScaleY}
             imageWidth={xSize}
             imageHeight={ySize}
             derivedScaleView={derivedScaleView}
@@ -298,6 +302,95 @@ export const RoiContextMenu = () => {
   );
 };
 
+export const RGBContextRender = (props: {
+  context: ListRgbContextFragment;
+  matrix?: THREE.Matrix4;
+}) => {
+  const rbgContext = props.context;
+
+  const matrix = props.matrix || new THREE.Matrix4().identity();
+
+  const version = rbgContext.image.store.version;
+  const zSize = rbgContext.image?.store.shape?.at(2) || 1;
+  const tSize = rbgContext.image?.store.shape?.at(1) || 1;
+  const xSize = rbgContext.image?.store.shape?.at(3) || 1;
+  const ySize = rbgContext.image?.store.shape?.at(4) || 1;
+
+  const affineScaleX = matrix.elements[0];
+  const affineScaleY = matrix.elements[5];
+
+  // Get available scales from layers
+  const allLayers = rbgContext.image.derivedScaleViews;
+  const availableScales = Array.from(
+    new Set([1, ...allLayers.map((layer) => layer.scaleX)]),
+  ).sort((a, b) => a - b);
+
+  // Get image dimensions for the auto-zoom camera
+
+  if (
+    rbgContext.image.store.chunks?.length !=
+    rbgContext.image.store.shape?.length
+  ) {
+    return null;
+  }
+
+  if (version != "3") {
+    return null;
+  }
+
+  const layers = props.context.image.derivedScaleViews.concat({
+    image: props.context.image,
+    scaleX: 1,
+    scaleY: 1,
+    scaleC: 1,
+    scaleT: 1,
+    scaleZ: 1,
+    __typename: "ScaleView",
+    id: "extra",
+  });
+
+  const selectedLayers = layers;
+  // Calculate which chunks are needed for the view
+
+  const chunk_shape = props.context.image.store.chunks;
+
+  if (!chunk_shape) {
+    return <div>Chunk shape not found</div>;
+  }
+
+  console.log("Views", props.context.views);
+
+  return (
+    <>
+      {props.context.views.map((view, viewIndex) => {
+        // Calculate available scales from all layers
+        if (!view.active) {
+          return null;
+        }
+
+        return (
+          <group key={view.id}>
+            {selectedLayers.map((layer) => {
+              return (
+                <LayerRender
+                  key={`${viewIndex}-${layer.id}`}
+                  derivedScaleView={layer}
+                  view={view}
+                  affineScaleX={affineScaleX}
+                  affineScaleY={affineScaleY}
+                  xSize={xSize}
+                  ySize={ySize}
+                  availableScales={selectedLayers}
+                />
+              );
+            })}
+          </group>
+        );
+      })}
+    </>
+  );
+};
+
 export const FinalRenderInner = (props: RGBDProps) => {
   const rbgContext = props.context;
 
@@ -397,29 +490,7 @@ export const FinalRenderInner = (props: RGBDProps) => {
             }}
           />
 
-          {props.context.views.map((view, viewIndex) => {
-            // Calculate available scales from all layers
-            if (!view.active) {
-              return null;
-            }
-
-            return (
-              <group key={view.id}>
-                {selectedLayers.map((layer) => {
-                  return (
-                    <LayerRender
-                      key={`${viewIndex}-${layer.id}`}
-                      derivedScaleView={layer}
-                      view={view}
-                      xSize={xSize}
-                      ySize={ySize}
-                      availableScales={selectedLayers}
-                    />
-                  );
-                })}
-              </group>
-            );
-          })}
+          <RGBContextRender context={props.context} />
 
           {/* Clickable background plane for creating panels */}
           <EventPlane xSize={xSize} ySize={ySize} />

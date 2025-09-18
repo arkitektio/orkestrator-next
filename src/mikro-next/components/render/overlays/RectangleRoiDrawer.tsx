@@ -70,6 +70,9 @@ export const RectangleRoiDrawer = ({
     <RectangleDrawer
       onRectangleDrawn={onRectangleDrawn}
       event_key={event_key}
+      imageHeight={imageHeight}
+      imageWidth={imageWidth}
+      imageId={image.id}
     />
   );
 };

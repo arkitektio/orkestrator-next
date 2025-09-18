@@ -19,6 +19,7 @@ import {
   viridisColormap,
 } from "./colormaps";
 import { useAsyncChunk } from "./useChunkTexture";
+import { a, useSpring } from "@react-spring/three";
 
 const VIEW_RADIUS = 20000; // Render radius around camera center
 
@@ -110,12 +111,16 @@ export const useShouldRender = ({
   availableScales,
   selfScale,
   chunkCoords,
+  affineScaleX,
+  affineScaleY,
   chunkShape,
 }: {
   availableScales: ScaledView[];
   selfScale: ScaledView;
   chunkCoords?: number[];
   chunkShape?: number[];
+  affineScaleX: number;
+  affineScaleY: number;
 }) => {
   if (!availableScales?.length) {
     throw new Error("useTileLOD: provide at least one level in opts.levels");
@@ -131,9 +136,9 @@ export const useShouldRender = ({
   const step = 5; // measure every N frames
 
   // Configuration for view culling and LOD
-  const viewRadius = VIEW_RADIUS; // Base render radius around camera center
-  const minPixelSize = 200; // Minimum pixel size to render (increased from 0.5)
-  const maxPixelSize = 400; // Maximum pixel size to render (increased from 100)
+  const viewRadius = VIEW_RADIUS / affineScaleX; // Base render radius around camera center
+  const minPixelSize = 200 * affineScaleX; // Minimum pixel size to render (increased from 0.5)
+  const maxPixelSize = 400 * affineScaleY; // Maximum pixel size to render (increased from 100)
 
   // Simple function to find optimal scale for given pixel size
   const findOptimalScale = useMemo(() => {
@@ -427,6 +432,8 @@ export const ChunkBitmapTexture = ({
   renderFunc,
   chunk_coords,
   chunk_shape,
+  affineScaleX,
+  affineScaleY,
   view,
   cLimMin,
   z,
@@ -460,6 +467,8 @@ export const ChunkBitmapTexture = ({
   scaleX: number;
   scaleY: number;
   enableCulling?: boolean;
+  affineScaleX: number;
+  affineScaleY: number;
   showEdges?: boolean;
   showDebugText?: boolean;
   derivedScaleView: ScaledView;
@@ -470,6 +479,8 @@ export const ChunkBitmapTexture = ({
     selfScale: derivedScaleView,
     chunkCoords: chunk_coords,
     chunkShape: chunk_shape,
+    affineScaleX: affineScaleX,
+    affineScaleY: affineScaleY,
   });
 
   const texture = useAsyncChunk({
@@ -531,8 +542,14 @@ export const ChunkBitmapTexture = ({
   // Use negative values so 1x is at z=0, 2x at z=-0.001, 4x at z=-0.002, etc.
   const zPosition = (scaleX - 1) * 0.001;
 
+  const { opacity } = useSpring({
+    from: { opacity: 0 },
+    to: { opacity: 1 },
+    config: { duration: 8000 },
+  });
+
   return (
-    <mesh
+    <a.mesh
       renderOrder={1}
       ref={meshRef}
       position={[xPosition, yPosition, zPosition]}
@@ -552,7 +569,7 @@ export const ChunkBitmapTexture = ({
             colormapTexture: { value: colormapTexture },
             minValue: { value: cLimMin },
             maxValue: { value: cLimMax },
-            opacity: { value: 1 },
+            opacity: { value: opacity },
             gamma: { value: gamma },
           }}
           vertexShader={`
@@ -611,6 +628,6 @@ export const ChunkBitmapTexture = ({
           {`${derivedScaleView.scaleX}x\n${shouldRender ? "RENDER" : "SKIP"}`}
         </Text>
       )}
-    </mesh>
+    </a.mesh>
   );
 };

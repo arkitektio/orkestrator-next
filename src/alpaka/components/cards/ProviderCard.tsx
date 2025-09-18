@@ -181,9 +181,9 @@ const getProviderKindDisplayName = (kind: ProviderKind): string => {
 const TheCard = ({ item, mates }: Props) => {
   return (
     <AlpakaProvider.Smart object={item?.id} mates={mates}>
-      <Card className="w-full h-48 relative overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border-0 group">
+      <Card className="w-full h-48 relative overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border-1 border border-gray-200 group">
         <div
-          className={`absolute inset-0 ${getProviderGradient(item.kind)} opacity-90 group-hover:opacity-100 transition-opacity duration-300`}
+          className={`absolute inset-0 ${getProviderGradient(item.kind)} opacity-20 group-hover:opacity-40 transition-opacity duration-300`}
         />
 
         {/* Main content */}
@@ -207,7 +207,7 @@ const TheCard = ({ item, mates }: Props) => {
             <div className="flex items-center justify-center">
               <Badge
                 variant="outline"
-                className="text-xs bg-white/20 border-white/30 text-white hover:bg-white/30 transition-colors"
+                className="text-xs transition-colors"
               >
                 {getProviderKindDisplayName(item.kind)}
               </Badge>

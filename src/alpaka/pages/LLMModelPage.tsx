@@ -27,7 +27,14 @@ export default asDetailQueryRoute(
           />
         }
       >
-        {data.llmModel.id}
+        {data.llmModel.modelId}
+
+        <div className="text-lg font-light text-muted-foreground mb-2">
+          {data.llmModel.provider?.name}
+        </div>
+        <div className="text-md font-light text-muted-foreground mb-4">
+          {data.llmModel.provider.kind}
+        </div>
 
         {data.llmModel.features?.map((feature) => (
           <div key={feature} className="text-sm text-gray-500">

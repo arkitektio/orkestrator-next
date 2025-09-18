@@ -31,13 +31,11 @@ import ReagentRoleEdge from "./edges/ReagentRoleEdge";
 import RelationEdge from "./edges/RelationEdge";
 import StructureRelationEdge from "./edges/StructureRelationEdge";
 import "./index.css";
-import GenericCategoryNode from "./nodes/GenericCategoryNode";
+import GenericCategoryNode from "./nodes/EntityCategoryNode";
 import MetricCategoryNode from "./nodes/MetricCategoryNode";
-import NaturalEventNode from "./nodes/NaturalEventNode";
-import ProtocolEventNode from "./nodes/ProtocolEventNode";
+import NaturalEventNode from "./nodes/NaturalEventCategoryNode";
+import ProtocolEventNode from "./nodes/ProtocolEventCategoryNode";
 import ReagentCategoryNode from "./nodes/ReagentCategoryNode";
-import StagingGenericNode from "./nodes/StagingGenericNode";
-import StagingStructureNode from "./nodes/StagingStructureNode";
 import StructureCategoryNode from "./nodes/StructureCategoryNode";
 import { OntologyGraphProvider } from "./OntologyGraphProvider";
 import {
@@ -177,10 +175,10 @@ const ontologyToEdges = (graph: GraphFragment) => {
   console.log("Relations", graph.relationCategories);
 
   graph.relationCategories.forEach((cat) => {
-    let source_nodes = graph.entityCategories.filter(
+    const source_nodes = graph.entityCategories.filter(
       withCategoryFilter(cat.sourceDefinition),
     );
-    let target_nodes = graph.entityCategories.filter(
+    const target_nodes = graph.entityCategories.filter(
       withCategoryFilter(cat.targetDefinition),
     );
 
@@ -201,11 +199,11 @@ const ontologyToEdges = (graph: GraphFragment) => {
   });
 
   graph.structureRelationCategories.forEach((cat) => {
-    let source_nodes = graph.structureCategories.filter(
+    const source_nodes = graph.structureCategories.filter(
       withStructureCategoryFilter(cat.sourceDefinition),
     );
 
-    let target_nodes = graph.structureCategories.filter(
+    const target_nodes = graph.structureCategories.filter(
       withStructureCategoryFilter(cat.targetDefinition),
     );
 
@@ -250,7 +248,7 @@ const ontologyToEdges = (graph: GraphFragment) => {
   });
 
   graph.metricCategories.forEach((cat) => {
-    let source_nodes = graph.structureCategories.filter(
+    const source_nodes = graph.structureCategories.filter(
       (n) => n.id == cat.structureCategory.id,
     );
 
@@ -272,7 +270,7 @@ const ontologyToEdges = (graph: GraphFragment) => {
 
   graph.protocolEventCategories.forEach((cat) => {
     cat.sourceEntityRoles.filter(notEmpty).forEach((role) => {
-      let source_nodes = graph.entityCategories.filter(
+      const source_nodes = graph.entityCategories.filter(
         withCategoryFilter(role.categoryDefinition),
       );
 
@@ -292,7 +290,7 @@ const ontologyToEdges = (graph: GraphFragment) => {
     });
 
     cat.targetEntityRoles.forEach((role) => {
-      let targetNodes = graph.entityCategories.filter(
+      const targetNodes = graph.entityCategories.filter(
         withCategoryFilter(role.categoryDefinition),
       );
 
@@ -311,7 +309,7 @@ const ontologyToEdges = (graph: GraphFragment) => {
     });
 
     cat.sourceReagentRoles.filter(notEmpty).forEach((role) => {
-      let source_nodes = graph.reagentCategories.filter(
+      const source_nodes = graph.reagentCategories.filter(
         withCategoryFilter(role.categoryDefinition),
       );
 
@@ -330,7 +328,7 @@ const ontologyToEdges = (graph: GraphFragment) => {
     });
 
     cat.targetReagentRoles.forEach((role) => {
-      let targetNodes = graph.reagentCategories.filter(
+      const targetNodes = graph.reagentCategories.filter(
         withCategoryFilter(role.categoryDefinition),
       );
 
@@ -348,7 +346,7 @@ const ontologyToEdges = (graph: GraphFragment) => {
 
   graph.naturalEventCategories.forEach((cat) => {
     cat.sourceEntityRoles.filter(notEmpty).forEach((role) => {
-      let source_nodes = graph.entityCategories.filter(
+      const source_nodes = graph.entityCategories.filter(
         withCategoryFilter(role.categoryDefinition),
       );
 
@@ -364,7 +362,7 @@ const ontologyToEdges = (graph: GraphFragment) => {
     });
 
     cat.targetEntityRoles.forEach((role) => {
-      let targetNodes = graph.entityCategories.filter(
+      const targetNodes = graph.entityCategories.filter(
         withCategoryFilter(role.categoryDefinition),
       );
 
@@ -388,8 +386,6 @@ const ontologyToEdges = (graph: GraphFragment) => {
 const nodeTypes = {
   structurecategory: StructureCategoryNode,
   genericcategory: GenericCategoryNode,
-  stagingstructure: StagingStructureNode,
-  staginggeneric: StagingGenericNode,
   naturaleventcategory: NaturalEventNode,
   protocoleventcategory: ProtocolEventNode,
   reagentcategory: ReagentCategoryNode,

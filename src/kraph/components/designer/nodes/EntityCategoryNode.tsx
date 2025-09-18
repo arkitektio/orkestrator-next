@@ -21,7 +21,7 @@ export default memo(({ data, id, selected }: NodeProps<GenericNode>) => {
       <Handles self={id} />
       <KraphEntityCategory.Smart
         object={data.id}
-        containerClassName="h-full w-full relative group ring-4 ring-green-200  bg-black  data-[selected=true]:ring-4 data-[selected=true]:ring-primary data-[nselected=true]:ring-4 data-[bselected=true]:ring-red-400"
+        containerClassName="h-full w-full relative group ring-4 rounded rounded-md ring-green-200  bg-black  data-[selected=true]:ring-4 data-[selected=true]:ring-primary data-[nselected=true]:ring-4 data-[bselected=true]:ring-red-400"
         className="h-full w-full  overflow-hidden"
       >
         {/* If handles are conditionally rendered and not present initially, you need to update the node internals https://reactflow.dev/docs/api/hooks/use-update-node-internals/ */}

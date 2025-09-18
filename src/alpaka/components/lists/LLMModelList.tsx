@@ -1,5 +1,5 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { MikroDataset } from "@/linkers";
+import { AlpakaLLMModel, MikroDataset } from "@/linkers";
 
 import { ProviderFilter, useListLlModelsQuery } from "@/alpaka/api/graphql";
 import { OffsetPaginationInput } from "@/lok-next/api/graphql";
@@ -23,9 +23,9 @@ const List = ({ filters, pagination }: Props) => {
     <ListRender
       array={data?.llmModels}
       title={
-        <MikroDataset.ListLink className="flex-0">
-          Chroma Collections
-        </MikroDataset.ListLink>
+        <AlpakaLLMModel.ListLink className="flex-0">
+          Large Language Models
+        </AlpakaLLMModel.ListLink>
       }
       refetch={refetch}
     >

@@ -1632,7 +1632,7 @@ export type CreateRedeemTokenMutationVariables = Exact<{
 }>;
 
 
-export type CreateRedeemTokenMutation = { __typename?: 'Mutation', createRedeemToken: { __typename?: 'RedeemToken', token: string } };
+export type CreateRedeemTokenMutation = { __typename?: 'Mutation', createRedeemToken: { __typename?: 'RedeemToken', id: string, token: string } };
 
 export type CreateStashMutationVariables = Exact<{
   name?: InputMaybe<Scalars['String']['input']>;
@@ -2954,6 +2954,7 @@ export type UpdateUserProfileMutationOptions = Apollo.BaseMutationOptions<Update
 export const CreateRedeemTokenDocument = gql`
     mutation CreateRedeemToken($input: RedeemTokenInput!) {
   createRedeemToken(input: $input) {
+    id
     token
   }
 }

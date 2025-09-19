@@ -94,6 +94,10 @@ export const asDetailQueryRoute = <T extends any>(
       });
 
     if (passyProps.error) {
+      if (debug) {
+        return <DebugPage data={passyProps.error} />;
+      }
+
       return <ErrorPage error={passyProps.error} />;
     }
 

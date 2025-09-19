@@ -1,0 +1,129 @@
+fragment OpticalElement on OpticalElement {
+  id
+  label
+  kind
+  manufacturer
+  model
+  pose {
+    position {
+      x
+      y
+      z
+    }
+    orientation {
+      rx
+      ry
+      rz
+    }
+  }
+  ports {
+    id
+    name
+    role
+    channel
+  }
+}
+
+fragment Spectrum on Spectrum {
+  minNm
+  maxNm
+}
+
+fragment DetectorElement on DetectorElement {
+  ...OpticalElement
+  nepdWPerSqrtHz
+}
+
+fragment LaserElement on LaserElement {
+  ...OpticalElement
+  nominalWavelengthNm
+}
+
+fragment CCDElement on CCDElement {
+  ...OpticalElement
+  pixelSizeUm
+}
+
+fragment ObjectiveElement on ObjectiveElement {
+  ...OpticalElement
+  magnification
+  numericalAperture
+  workingDistanceMm
+}
+
+fragment FilterElement on FilterElement {
+  ...OpticalElement
+  label
+}
+
+fragment OtherElement on OtherElement {
+  ...OpticalElement
+  label
+}
+
+fragment OtherSourceElement on OtherSourceElement {
+  ...OpticalElement
+  channel
+}
+
+fragment MirrorElement on MirrorElement {
+  ...OpticalElement
+  angleDeg
+  band {
+    ...Spectrum
+  }
+}
+
+fragment BeamSplitterElement on BeamSplitterElement {
+  ...OpticalElement
+  rFraction
+  tFraction
+  band {
+    ...Spectrum
+  }
+}
+
+fragment LensElement on LensElement {
+  ...OpticalElement
+  focalLengthMm
+}
+
+fragment PinholeElement on PinholeElement {
+  ...OpticalElement
+  diameterUm
+}
+
+fragment SampleElement on SampleElement {
+  ...OpticalElement
+  label
+}
+
+fragment LightEdge on LightEdge {
+  id
+  sourceElementId
+  sourcePortId
+  targetElementId
+  targetPortId
+  medium
+}
+
+fragment LightpathGraph on LightpathGraph {
+  elements {
+    __typename
+    ...OpticalElement
+    ...SampleElement
+    ...OtherSourceElement
+    ...DetectorElement
+    ...MirrorElement
+    ...BeamSplitterElement
+    ...LensElement
+    ...ObjectiveElement
+    ...LaserElement
+    ...FilterElement
+    ...OtherElement
+    ...PinholeElement
+  }
+  edges {
+    ...LightEdge
+  }
+}

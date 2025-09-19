@@ -20,6 +20,14 @@ fragment ChannelView on ChannelView {
   acquisitionMode
 }
 
+fragment LightpathView on LightpathView {
+  ...View
+  id
+  graph {
+    ...LightpathGraph
+  }
+}
+
 fragment DerivedView on DerivedView {
   ...View
   id

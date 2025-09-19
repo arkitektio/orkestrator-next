@@ -15,6 +15,21 @@
       "File",
       "Image"
     ],
+    "OpticalElement": [
+      "BeamSplitterElement",
+      "CCDElement",
+      "DetectorElement",
+      "FilterElement",
+      "LampElement",
+      "LaserElement",
+      "LensElement",
+      "MirrorElement",
+      "ObjectiveElement",
+      "OtherElement",
+      "OtherSourceElement",
+      "PinholeElement",
+      "SampleElement"
+    ],
     "Render": [
       "Snapshot",
       "Video"
@@ -29,6 +44,7 @@
       "HistogramView",
       "InstanceMaskView",
       "LabelView",
+      "LightpathView",
       "MaskView",
       "OpticsView",
       "RGBView",

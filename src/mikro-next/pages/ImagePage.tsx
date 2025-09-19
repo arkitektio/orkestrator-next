@@ -56,6 +56,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import LightpathViewCard from "../components/cards/LightpathViewCard";
 
 export type IRepresentationScreenProps = {};
 
@@ -310,6 +311,12 @@ export default asDetailQueryRoute(
                           <TransformationViewCard
                             view={view}
                             key={"affine-" + view.id}
+                          />
+                        )}
+                        {view.__typename == "LightpathView" && (
+                          <LightpathViewCard
+                            view={view}
+                            key={"lightpath-" + view.id}
                           />
                         )}
                         {view.__typename == "LabelView" && (

@@ -18,6 +18,7 @@ fragment Image on Image {
     ...ROIView
     ...FileView
     ...HistogramView
+    ...LightpathView
   }
   derivedFromViews {
     image {

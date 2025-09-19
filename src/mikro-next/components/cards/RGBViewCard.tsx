@@ -11,6 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useDebounce } from "@/hooks/use-debounce";
 import { enumToOptions } from "@/lib/utils";
 import { MikroRGBView } from "@/linkers";
 import { MateFinder } from "@/mates/types";
@@ -63,11 +64,17 @@ const colorMapOptions = enumToOptions(ColorMap).map((option) => ({
 
 const TheCard = ({ view }: Props) => {
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+  const [delayedValues, setDelayedValues] = useState<[number, number]>([
+    view.contrastLimitMin,
+    view.contrastLimitMax,
+  ]);
 
   const [updateRgbView] = useUpdateRgbViewMutation({
     variables: { input: { id: view.id } },
     refetchQueries: [GetImageDocument],
   });
+
+  const debouncedValues = useDebounce(delayedValues, 300);
 
   const [getRgbView] = useGetRgbViewLazyQuery({
     variables: { id: view.id },
@@ -124,8 +131,8 @@ const TheCard = ({ view }: Props) => {
 
   return (
     <MikroRGBView.Smart object={view?.id}>
-      <ViewCard view={view} className="group flex flex-row p-2 justify-between">
-        <CardHeader className="flex flex-col gap-1">
+      <ViewCard view={view} className="group flex flex-rowjustify-between">
+        <CardHeader className="flex flex-col justify-between w-full">
           <CardTitle className="flex w-full items-center gap-2">
             Channel {view.cMin}{" "}
             {view.colorMap == ColorMap.Intensity && (
@@ -153,8 +160,35 @@ const TheCard = ({ view }: Props) => {
                 </PopoverContent>
               </Popover>
             )}
+            <MikroRGBView.ObjectButton
+              object={view.id}
+              collection="rescale"
+              onDone={() => {
+                getRgbView();
+              }}
+              className="flex-shrink-0"
+              ephemeral
+            >
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                aria-label="Rescale RGB View"
+              >
+                <Scale3DIcon className="mr-2" />
+              </Button>
+            </MikroRGBView.ObjectButton>
+            <Button
+              onClick={() => handleToggleActive()}
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              aria-label="Toggle View Visibility"
+            >
+              {view.active ? "👁️" : "🚫"}
+            </Button>
           </CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full">
             {view.colorMap == ColorMap.Intensity ? (
               <p className="text-xs text-foreground-muted">
                 {baseColorToName(view.baseColor)}
@@ -187,39 +221,7 @@ const TheCard = ({ view }: Props) => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-
-          {view.contrastLimitMin || view.contrastLimitMax ? (
-            <p className="text-xs text-foreground-muted">
-              Contrast: {view.contrastLimitMin} - {view.contrastLimitMax}
-            </p>
-          ) : null}
         </CardHeader>
-        <MikroRGBView.ObjectButton
-          object={view.id}
-          collection="rescale"
-          onDone={() => {
-            getRgbView();
-          }}
-          ephemeral
-        >
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            aria-label="Rescale RGB View"
-          >
-            <Scale3DIcon className="mr-2" />
-          </Button>
-        </MikroRGBView.ObjectButton>
-        <Button
-          onClick={() => handleToggleActive()}
-          variant="outline"
-          size="icon"
-          className="h-8 w-8"
-          aria-label="Toggle View Visibility"
-        >
-          {view.active ? "👁️" : "🚫"}
-        </Button>
       </ViewCard>
     </MikroRGBView.Smart>
   );

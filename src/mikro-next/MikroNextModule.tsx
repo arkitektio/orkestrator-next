@@ -10,6 +10,7 @@ import FilesPage from "./pages/FilesPage";
 import HomePage from "./pages/HomePage";
 import ImagePage from "./pages/ImagePage";
 import ImagesPage from "./pages/ImagesPage";
+import LightpathViewPage from "./pages/LightpathViewPage";
 import MeshPage from "./pages/MeshPage";
 import MeshesPage from "./pages/MeshesPage";
 import RoiPage from "./pages/RoiPage";
@@ -19,7 +20,6 @@ import StagesPage from "./pages/StagesPage";
 import TablePage from "./pages/TablePage";
 import TablesPage from "./pages/TablesPage";
 import StandardPane from "./panes/StandardPane";
-interface Props { }
 
 export const MikroNextModule: React.FC<Props> = (props) => {
   return (
@@ -28,6 +28,7 @@ export const MikroNextModule: React.FC<Props> = (props) => {
         <Routes>
           <Route index element={<HomePage />} />
           <Route path="images/:id" element={<ImagePage />} />
+          <Route path="lightpathviews/:id" element={<LightpathViewPage />} />
           <Route path="images" element={<ImagesPage />} />
           <Route path="datasets/:id" element={<DatasetPage />} />
           <Route path="datasets" element={<DatasetsPage />} />

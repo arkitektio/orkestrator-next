@@ -3,10 +3,13 @@ import { SliderTooltip } from "@/components/ui/slider-tooltip";
 import * as THREE from "three";
 
 import {
+  DimSelectorKind,
   ListRgbContextFragment,
   ListRoiFragment,
+  RgbContextFragment,
   RgbImageFragment,
   RgbViewFragment,
+  useActiveImageViewsQuery,
 } from "@/mikro-next/api/graphql";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas as ThreeCanvas } from "@react-three/fiber";
@@ -22,6 +25,22 @@ import { RenderControlsMenu } from "./RenderControlsMenu";
 import { ROIContextMenu } from "./ROIContextMenu";
 import { RoiDrawerCanvas } from "./RoiDrawer";
 import { ViewerStateProvider, useViewerState } from "./ViewerStateProvider";
+import HistogramViewCard from "../cards/HistogramViewCard";
+import DerivedViewCard from "../cards/DerivedViewCard";
+import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
+import TransformationViewCard from "../cards/TransformationViewCard";
+import LightpathViewCard from "../cards/LightpathViewCard";
+import LabelViewCard from "../cards/LabelViewCard";
+import InstanceMaskViewCard from "../cards/InstanceMaskViewCard";
+import MaskViewCard from "../cards/MaskViewCard";
+import OpticsViewCard from "../cards/OpticsViewCard";
+import ChannelViewCard from "../cards/ChannelViewCard";
+import RGBViewCard from "../cards/RGBViewCard";
+import AcquisitionViewCard from "../cards/AcquisitionViewCard";
+import WellPositionViewCard from "../cards/WellPositionViewCard";
+import ROIViewCard from "../cards/ROIViewCard";
+import FileViewCard from "../cards/FileViewCard";
+import { notEmpty } from "@/lib/utils";
 
 export interface RGBDProps {
   context: ListRgbContextFragment;
@@ -83,6 +102,99 @@ export const useAspectRatio = (context: ListRgbContextFragment) => {
 
 export type ScaledView =
   ListRgbContextFragment["image"]["derivedScaleViews"][0];
+
+export const ActiveImageViews = (props: {
+  context: ListRgbContextFragment;
+}) => {
+  const { t, z } = useViewerState();
+
+  const { data, error } = useActiveImageViewsQuery({
+    variables: {
+      image: props.context.image.id,
+      selector: {
+        t: { kind: DimSelectorKind.Index, index: t },
+        z: { kind: DimSelectorKind.Index, index: z },
+        c: {
+          kind: DimSelectorKind.Indices,
+          indices: props.context.views
+            .filter((v) => v.active)
+            .map((v) => v.cMax)
+            .filter(notEmpty),
+        },
+      },
+    },
+  });
+
+  if (error) {
+    return <div>Error loading active views: {error.message}</div>;
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  if (data.activeViews.length == 0) {
+    return <div>No active views found for this image.</div>;
+  }
+
+  if (data.activeViews.length > 1) {
+    return (
+      <div className="w-full h-full overflow-y-auto p-2 flex flex-col gap-2">
+        {data?.activeViews.map((view, index) => (
+          <>
+            {view.__typename == "AffineTransformationView" && (
+              <TransformationViewCard view={view} key={"affine-" + view.id} />
+            )}
+            {view.__typename == "LightpathView" && (
+              <LightpathViewCard view={view} key={"lightpath-" + view.id} />
+            )}
+            {view.__typename == "LabelView" && (
+              <LabelViewCard view={view} key={"label-" + view.id} />
+            )}
+            {view.__typename == "InstanceMaskView" && (
+              <InstanceMaskViewCard item={view} key={"label-" + view.id} />
+            )}
+            {view.__typename == "MaskView" && (
+              <MaskViewCard item={view} key={"label-" + view.id} />
+            )}
+            {view.__typename == "OpticsView" && (
+              <OpticsViewCard view={view} key={"optics-" + view.id} />
+            )}
+            {view.__typename == "ChannelView" && (
+              <ChannelViewCard view={view} key={"channel-" + view.id} />
+            )}
+            {view.__typename == "RGBView" && (
+              <RGBViewCard view={view} key={"rgb-" + view.id} />
+            )}
+            {view.__typename == "AcquisitionView" && (
+              <AcquisitionViewCard view={view} key={"acquisition-" + view.id} />
+            )}
+            {view.__typename == "WellPositionView" && (
+              <WellPositionViewCard
+                view={view}
+                key={"well-position-" + view.id}
+              />
+            )}
+            {view.__typename == "ROIView" && (
+              <ROIViewCard view={view} key={"roi-" + view.id} />
+            )}
+            {view.__typename == "FileView" && (
+              <FileViewCard view={view} key={"file-" + view.id} />
+            )}
+            {view.__typename == "DerivedView" && (
+              <DerivedViewCard view={view} key={"derived-" + view.id} />
+            )}
+            {view.__typename == "HistogramView" && (
+              <HistogramViewCard view={view} key={"histogram-" + view.id} />
+            )}
+          </>
+        ))}
+      </div>
+    );
+  }
+
+  return <>Hallo</>;
+};
 
 export const LayerRender = (props: {
   derivedScaleView: ScaledView;
@@ -515,6 +627,12 @@ export const FinalRenderInner = (props: RGBDProps) => {
             />
           </>
         </ThreeCanvas>
+
+        {!props.hideControls && (
+          <div className="absolute top-0 right-0 z-10 w-[500px]  py-3 h-[500px] w-20">
+            <ActiveImageViews context={props.context} />
+          </div>
+        )}
 
         <Panels />
       </Suspense>

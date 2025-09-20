@@ -3434,8 +3434,9 @@ export type Query_EntitiesArgs = {
 
 
 export type QueryActiveViewsArgs = {
+  exclude?: InputMaybe<Array<ViewKind>>;
   image: Scalars['ID']['input'];
-  kinds?: InputMaybe<Array<ViewKind>>;
+  include?: InputMaybe<Array<ViewKind>>;
   selector?: InputMaybe<Selector>;
 };
 
@@ -4712,6 +4713,7 @@ export enum ViewKind {
   MaskView = 'MASK_VIEW',
   Optics = 'OPTICS',
   Reference = 'REFERENCE',
+  Rgb = 'RGB',
   Timepoint = 'TIMEPOINT'
 }
 
@@ -4849,7 +4851,7 @@ export type FileFragment = { __typename?: 'File', id: string, name: string, orig
 
 export type ListFileFragment = { __typename?: 'File', id: string, name: string };
 
-export type ImageFragment = { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, views: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, excitationWavelength?: number | null, emissionWavelength?: number | null, acquisitionMode?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channelName?: string | null } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView', id: string, operation?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, originImage: { __typename?: 'Image', id: string, name: string } } | { __typename?: 'FileView', id: string, seriesIdentifier?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, file: { __typename?: 'File', id: string, name: string } } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } } } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelengthNm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLengthMm: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistanceMm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameterUm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } } | { __typename?: 'MaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } } } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> } | { __typename?: 'ROIView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, roi: { __typename?: 'ROI', id: string, name: string } } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }>, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> };
+export type ImageFragment = { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> };
 
 export type RgbImageFragment = { __typename?: 'Image', name: string, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }> };
 
@@ -5208,14 +5210,14 @@ export type PinImageMutationVariables = Exact<{
 }>;
 
 
-export type PinImageMutation = { __typename?: 'Mutation', pinImage: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, views: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, excitationWavelength?: number | null, emissionWavelength?: number | null, acquisitionMode?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channelName?: string | null } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView', id: string, operation?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, originImage: { __typename?: 'Image', id: string, name: string } } | { __typename?: 'FileView', id: string, seriesIdentifier?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, file: { __typename?: 'File', id: string, name: string } } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } } } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelengthNm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLengthMm: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistanceMm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameterUm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } } | { __typename?: 'MaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } } } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> } | { __typename?: 'ROIView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, roi: { __typename?: 'ROI', id: string, name: string } } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }>, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
+export type PinImageMutation = { __typename?: 'Mutation', pinImage: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
 
 export type UpdateImageMutationVariables = Exact<{
   input: UpdateImageInput;
 }>;
 
 
-export type UpdateImageMutation = { __typename?: 'Mutation', updateImage: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, views: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, excitationWavelength?: number | null, emissionWavelength?: number | null, acquisitionMode?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channelName?: string | null } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView', id: string, operation?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, originImage: { __typename?: 'Image', id: string, name: string } } | { __typename?: 'FileView', id: string, seriesIdentifier?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, file: { __typename?: 'File', id: string, name: string } } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } } } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelengthNm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLengthMm: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistanceMm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameterUm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } } | { __typename?: 'MaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } } } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> } | { __typename?: 'ROIView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, roi: { __typename?: 'ROI', id: string, name: string } } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }>, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
+export type UpdateImageMutation = { __typename?: 'Mutation', updateImage: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
 
 export type DeleteImageMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -5535,7 +5537,7 @@ export type GetImageQueryVariables = Exact<{
 }>;
 
 
-export type GetImageQuery = { __typename?: 'Query', image: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, views: Array<{ __typename?: 'AcquisitionView', id: string, description?: string | null, acquiredAt?: any | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, operator?: { __typename?: 'User', sub: string } | null } | { __typename?: 'AffineTransformationView', id: string, affineMatrix: any, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, stage: { __typename?: 'Stage', id: string, name: string } } | { __typename?: 'ChannelView', id: string, excitationWavelength?: number | null, emissionWavelength?: number | null, acquisitionMode?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, channelName?: string | null } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView', id: string, operation?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, originImage: { __typename?: 'Image', id: string, name: string } } | { __typename?: 'FileView', id: string, seriesIdentifier?: string | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, file: { __typename?: 'File', id: string, name: string } } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } } } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, graph: { __typename?: 'LightpathGraph', elements: Array<{ __typename: 'BeamSplitterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, rFraction: number, tFraction: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'CCDElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'DetectorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nepdWPerSqrtHz?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'FilterElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LampElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LaserElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, nominalWavelengthNm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'LensElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, focalLengthMm: number, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'MirrorElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, angleDeg?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }>, band?: { __typename?: 'Spectrum', minNm: number, maxNm: number } | null } | { __typename: 'ObjectiveElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, magnification?: number | null, numericalAperture?: number | null, workingDistanceMm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'OtherSourceElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, channel?: ChannelKind | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'PinholeElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, diameterUm?: number | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> } | { __typename: 'SampleElement', id: string, label: string, kind: ElementKind, manufacturer?: string | null, model?: string | null, pose?: { __typename?: 'Pose3D', position?: { __typename?: 'Vec3', x?: number | null, y?: number | null, z?: number | null } | null, orientation?: { __typename?: 'Euler', rx?: number | null, ry?: number | null, rz?: number | null } | null } | null, ports: Array<{ __typename?: 'LightPort', id: string, name: string, role: PortRole, channel: ChannelKind }> }>, edges: Array<{ __typename?: 'LightEdge', id: string, sourceElementId: string, sourcePortId: string, targetElementId: string, targetPortId: string, medium?: string | null }> } } | { __typename?: 'MaskView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, referenceView: { __typename?: 'ReferenceView', id: string, image: { __typename?: 'Image', id: string, name: string } } } | { __typename?: 'OpticsView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, objective?: { __typename?: 'Objective', id: string, name: string, serialNumber: string } | null, camera?: { __typename?: 'Camera', id: string, name: string, serialNumber: string } | null, instrument?: { __typename?: 'Instrument', id: string, name: string, serialNumber: string } | null } | { __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> } | { __typename?: 'ROIView', id: string, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, roi: { __typename?: 'ROI', id: string, name: string } } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView', id: string, msSinceStart?: any | null, indexSinceStart?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, era: { __typename?: 'Era', id: string, begin?: any | null, name: string } } | { __typename?: 'WellPositionView', id: string, column?: number | null, row?: number | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, well?: { __typename?: 'MultiWellPlate', id: string, rows?: number | null, columns?: number | null, name?: string | null } | null }>, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
+export type GetImageQuery = { __typename?: 'Query', image: { __typename?: 'Image', id: string, name: string, pinned: boolean, createdAt: any, tags: Array<string>, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedFromViews: Array<{ __typename?: 'DerivedView', image: { __typename?: 'Image', id: string, name: string } }>, renders: Array<{ __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | { __typename?: 'Video', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } }>, dataset?: { __typename?: 'Dataset', name: string, id: string } | null, provenanceEntries: Array<{ __typename?: 'ProvenanceEntry', id: string, during?: string | null, kind: HistoryKind, date: any, user?: { __typename?: 'User', sub: string } | null, client?: { __typename?: 'Client', clientId: string } | null, effectiveChanges: Array<{ __typename?: 'ModelChange', field: string, oldValue?: string | null, newValue?: string | null }> }>, creator?: { __typename?: 'User', sub: string } | null, rgbContexts: Array<{ __typename?: 'RGBContext', id: string, name: string, blending: Blending, t: number, z: number, c: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, views: Array<{ __typename?: 'RGBView', id: string, name: string, colorMap: ColorMap, contrastLimitMin?: number | null, contrastLimitMax?: number | null, gamma?: number | null, active: boolean, fullColour: string, baseColor?: Array<number> | null, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null, contexts: Array<{ __typename?: 'RGBContext', id: string, name: string }>, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string }, derivedScaleViews: Array<{ __typename?: 'ScaleView', id: string, scaleX: number, scaleY: number, scaleZ: number, scaleT: number, scaleC: number, image: { __typename?: 'Image', id: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null, chunks?: Array<number> | null, version: string } } }> }, congruentViews: Array<{ __typename?: 'AcquisitionView' } | { __typename?: 'AffineTransformationView' } | { __typename?: 'ChannelView' } | { __typename?: 'ContinousScanView' } | { __typename?: 'DerivedView' } | { __typename?: 'FileView' } | { __typename?: 'HistogramView', id: string, bins: Array<number>, min: number, max: number, histogram: Array<number>, xMin?: number | null, xMax?: number | null, yMin?: number | null, yMax?: number | null, tMin?: number | null, tMax?: number | null, cMin?: number | null, cMax?: number | null, zMin?: number | null, zMax?: number | null } | { __typename?: 'InstanceMaskView' } | { __typename?: 'LabelView' } | { __typename?: 'LightpathView' } | { __typename?: 'MaskView' } | { __typename?: 'OpticsView' } | { __typename?: 'RGBView' } | { __typename?: 'ROIView' } | { __typename?: 'ReferenceView' } | { __typename?: 'ScaleView' } | { __typename?: 'TimepointView' } | { __typename?: 'WellPositionView' }> }> }>, rois: Array<{ __typename?: 'ROI', id: string, kind: RoiKind, vectors: Array<any>, image: { __typename?: 'Image', id: string, name: string } }> } };
 
 export type GetImagesQueryVariables = Exact<{
   filters?: InputMaybe<ImageFilter>;
@@ -5749,6 +5751,7 @@ export type SearchRgbViewsQuery = { __typename?: 'Query', options: Array<{ __typ
 export type ActiveImageViewsQueryVariables = Exact<{
   image: Scalars['ID']['input'];
   selector?: InputMaybe<Selector>;
+  exclude?: InputMaybe<Array<ViewKind> | ViewKind>;
 }>;
 
 
@@ -5942,6 +5945,24 @@ export const ZarrStoreFragmentDoc = gql`
   version
 }
     `;
+export const SnapshotFragmentDoc = gql`
+    fragment Snapshot on Snapshot {
+  id
+  store {
+    key
+    presignedUrl
+  }
+}
+    `;
+export const VideoFragmentDoc = gql`
+    fragment Video on Video {
+  id
+  store {
+    key
+    presignedUrl
+  }
+}
+    `;
 export const ViewFragmentDoc = gql`
     fragment View on View {
   xMin
@@ -5956,104 +5977,6 @@ export const ViewFragmentDoc = gql`
   zMax
 }
     `;
-export const ChannelViewFragmentDoc = gql`
-    fragment ChannelView on ChannelView {
-  ...View
-  id
-  channelName: name
-  excitationWavelength
-  emissionWavelength
-  acquisitionMode
-}
-    ${ViewFragmentDoc}`;
-export const AffineTransformationViewFragmentDoc = gql`
-    fragment AffineTransformationView on AffineTransformationView {
-  ...View
-  id
-  affineMatrix
-  stage {
-    id
-    name
-  }
-}
-    ${ViewFragmentDoc}`;
-export const MaskViewFragmentDoc = gql`
-    fragment MaskView on MaskView {
-  ...View
-  id
-  referenceView {
-    id
-    image {
-      id
-      name
-    }
-  }
-}
-    ${ViewFragmentDoc}`;
-export const InstanceMaskViewFragmentDoc = gql`
-    fragment InstanceMaskView on InstanceMaskView {
-  ...View
-  id
-  referenceView {
-    id
-    image {
-      id
-      name
-    }
-  }
-}
-    ${ViewFragmentDoc}`;
-export const EraFragmentDoc = gql`
-    fragment Era on Era {
-  id
-  begin
-  name
-}
-    `;
-export const TimepointViewFragmentDoc = gql`
-    fragment TimepointView on TimepointView {
-  ...View
-  id
-  msSinceStart
-  indexSinceStart
-  era {
-    ...Era
-  }
-}
-    ${ViewFragmentDoc}
-${EraFragmentDoc}`;
-export const OpticsViewFragmentDoc = gql`
-    fragment OpticsView on OpticsView {
-  ...View
-  id
-  objective {
-    id
-    name
-    serialNumber
-  }
-  camera {
-    id
-    name
-    serialNumber
-  }
-  instrument {
-    id
-    name
-    serialNumber
-  }
-}
-    ${ViewFragmentDoc}`;
-export const AcquisitionViewFragmentDoc = gql`
-    fragment AcquisitionView on AcquisitionView {
-  ...View
-  id
-  description
-  acquiredAt
-  operator {
-    sub
-  }
-}
-    ${ViewFragmentDoc}`;
 export const HistogramViewFragmentDoc = gql`
     fragment HistogramView on HistogramView {
   ...View
@@ -6107,52 +6030,101 @@ export const RgbViewFragmentDoc = gql`
     ${ViewFragmentDoc}
 ${ZarrStoreFragmentDoc}
 ${HistogramViewFragmentDoc}`;
-export const WellPositionViewFragmentDoc = gql`
-    fragment WellPositionView on WellPositionView {
-  ...View
-  id
-  column
-  row
-  well {
+export const ListRgbContextFragmentDoc = gql`
+    fragment ListRGBContext on RGBContext {
+  image {
     id
-    rows
-    columns
-    name
+    store {
+      ...ZarrStore
+    }
+    derivedScaleViews {
+      id
+      image {
+        id
+        store {
+          ...ZarrStore
+        }
+      }
+      scaleX
+      scaleY
+      scaleZ
+      scaleT
+      scaleC
+    }
   }
-}
-    ${ViewFragmentDoc}`;
-export const DerivedViewFragmentDoc = gql`
-    fragment DerivedView on DerivedView {
-  ...View
   id
-  originImage {
-    id
-    name
+  name
+  views {
+    ...RGBView
   }
-  operation
+  blending
+  t
+  z
+  c
 }
-    ${ViewFragmentDoc}`;
-export const RoiViewFragmentDoc = gql`
-    fragment ROIView on ROIView {
-  ...View
+    ${ZarrStoreFragmentDoc}
+${RgbViewFragmentDoc}`;
+export const ListRoiFragmentDoc = gql`
+    fragment ListROI on ROI {
   id
-  roi {
-    id
-    name
-  }
-}
-    ${ViewFragmentDoc}`;
-export const FileViewFragmentDoc = gql`
-    fragment FileView on FileView {
-  ...View
-  id
-  seriesIdentifier
-  file {
+  image {
     id
     name
   }
+  kind
+  vectors
 }
-    ${ViewFragmentDoc}`;
+    `;
+export const ImageFragmentDoc = gql`
+    fragment Image on Image {
+  id
+  name
+  store {
+    ...ZarrStore
+  }
+  derivedFromViews {
+    image {
+      id
+      name
+    }
+  }
+  pinned
+  renders {
+    ...Snapshot
+    ...Video
+  }
+  dataset {
+    name
+    id
+  }
+  createdAt
+  provenanceEntries {
+    ...ProvenanceEntry
+  }
+  creator {
+    sub
+  }
+  tags
+  rgbContexts {
+    ...ListRGBContext
+  }
+  rois {
+    ...ListROI
+  }
+}
+    ${ZarrStoreFragmentDoc}
+${SnapshotFragmentDoc}
+${VideoFragmentDoc}
+${ProvenanceEntryFragmentDoc}
+${ListRgbContextFragmentDoc}
+${ListRoiFragmentDoc}`;
+export const InstrumentFragmentDoc = gql`
+    fragment Instrument on Instrument {
+  model
+  name
+  serialNumber
+}
+    `;
 export const OpticalElementFragmentDoc = gql`
     fragment OpticalElement on OpticalElement {
   id
@@ -6180,6 +6152,254 @@ export const OpticalElementFragmentDoc = gql`
   }
 }
     `;
+export const CcdElementFragmentDoc = gql`
+    fragment CCDElement on CCDElement {
+  ...OpticalElement
+  pixelSizeUm
+}
+    ${OpticalElementFragmentDoc}`;
+export const MeshStoreFragmentDoc = gql`
+    fragment MeshStore on MeshStore {
+  id
+  key
+  presignedUrl
+}
+    `;
+export const MeshFragmentDoc = gql`
+    fragment Mesh on Mesh {
+  id
+  name
+  store {
+    ...MeshStore
+  }
+}
+    ${MeshStoreFragmentDoc}`;
+export const ListMeshFragmentDoc = gql`
+    fragment ListMesh on Mesh {
+  id
+  name
+}
+    `;
+export const WellPositionViewFragmentDoc = gql`
+    fragment WellPositionView on WellPositionView {
+  ...View
+  id
+  column
+  row
+  well {
+    id
+    rows
+    columns
+    name
+  }
+}
+    ${ViewFragmentDoc}`;
+export const MultiWellPlateFragmentDoc = gql`
+    fragment MultiWellPlate on MultiWellPlate {
+  id
+  views {
+    ...WellPositionView
+  }
+  name
+}
+    ${WellPositionViewFragmentDoc}`;
+export const ListMultiWellPlateFragmentDoc = gql`
+    fragment ListMultiWellPlate on MultiWellPlate {
+  id
+  name
+}
+    `;
+export const ObjectiveFragmentDoc = gql`
+    fragment Objective on Objective {
+  na
+  name
+  serialNumber
+}
+    `;
+export const RgbContextFragmentDoc = gql`
+    fragment RGBContext on RGBContext {
+  id
+  views {
+    ...RGBView
+  }
+  image {
+    id
+    store {
+      ...ZarrStore
+    }
+    derivedScaleViews {
+      id
+      image {
+        id
+        store {
+          ...ZarrStore
+        }
+      }
+      scaleX
+      scaleY
+      scaleZ
+      scaleT
+      scaleC
+    }
+  }
+  pinned
+  name
+  z
+  t
+  c
+  blending
+}
+    ${RgbViewFragmentDoc}
+${ZarrStoreFragmentDoc}`;
+export const RgbImageFragmentDoc = gql`
+    fragment RGBImage on Image {
+  name
+  rgbContexts {
+    ...ListRGBContext
+  }
+}
+    ${ListRgbContextFragmentDoc}`;
+export const RoiFragmentDoc = gql`
+    fragment ROI on ROI {
+  id
+  pinned
+  image {
+    id
+    ...RGBImage
+  }
+  createdAt
+  creator {
+    sub
+  }
+  provenanceEntries {
+    ...ProvenanceEntry
+  }
+  kind
+  vectors
+}
+    ${RgbImageFragmentDoc}
+${ProvenanceEntryFragmentDoc}`;
+export const AffineTransformationViewFragmentDoc = gql`
+    fragment AffineTransformationView on AffineTransformationView {
+  ...View
+  id
+  affineMatrix
+  stage {
+    id
+    name
+  }
+}
+    ${ViewFragmentDoc}`;
+export const StageFragmentDoc = gql`
+    fragment Stage on Stage {
+  id
+  affineViews {
+    ...AffineTransformationView
+    image {
+      id
+      store {
+        shape
+      }
+      name
+    }
+  }
+  pinned
+  name
+}
+    ${AffineTransformationViewFragmentDoc}`;
+export const ListStageFragmentDoc = gql`
+    fragment ListStage on Stage {
+  id
+  name
+}
+    `;
+export const MediaStoreFragmentDoc = gql`
+    fragment MediaStore on MediaStore {
+  id
+  key
+  presignedUrl
+}
+    `;
+export const ParquetStoreFragmentDoc = gql`
+    fragment ParquetStore on ParquetStore {
+  id
+  key
+  bucket
+  path
+}
+    `;
+export const AccessorFragmentDoc = gql`
+    fragment Accessor on Accessor {
+  id
+  keys
+  minIndex
+  maxIndex
+}
+    `;
+export const ImageAccessorFragmentDoc = gql`
+    fragment ImageAccessor on ImageAccessor {
+  ...Accessor
+  id
+}
+    ${AccessorFragmentDoc}`;
+export const LabelAccessorFragmentDoc = gql`
+    fragment LabelAccessor on LabelAccessor {
+  ...Accessor
+  maskView {
+    id
+  }
+}
+    ${AccessorFragmentDoc}`;
+export const TableFragmentDoc = gql`
+    fragment Table on Table {
+  origins {
+    id
+  }
+  id
+  name
+  store {
+    ...ParquetStore
+  }
+  columns {
+    name
+    type
+    accessors {
+      ...Accessor
+      ...ImageAccessor
+      ...LabelAccessor
+    }
+  }
+  accessors {
+    ...ImageAccessor
+    ...LabelAccessor
+  }
+}
+    ${ParquetStoreFragmentDoc}
+${AccessorFragmentDoc}
+${ImageAccessorFragmentDoc}
+${LabelAccessorFragmentDoc}`;
+export const ListTableFragmentDoc = gql`
+    fragment ListTable on Table {
+  origins {
+    id
+  }
+  id
+  name
+  store {
+    ...ParquetStore
+  }
+}
+    ${ParquetStoreFragmentDoc}`;
+export const ChannelViewFragmentDoc = gql`
+    fragment ChannelView on ChannelView {
+  ...View
+  id
+  channelName: name
+  excitationWavelength
+  emissionWavelength
+  acquisitionMode
+}
+    ${ViewFragmentDoc}`;
 export const SampleElementFragmentDoc = gql`
     fragment SampleElement on SampleElement {
   ...OpticalElement
@@ -6317,366 +6537,119 @@ export const LightpathViewFragmentDoc = gql`
 }
     ${ViewFragmentDoc}
 ${LightpathGraphFragmentDoc}`;
-export const SnapshotFragmentDoc = gql`
-    fragment Snapshot on Snapshot {
+export const DerivedViewFragmentDoc = gql`
+    fragment DerivedView on DerivedView {
+  ...View
   id
-  store {
-    key
-    presignedUrl
-  }
-}
-    `;
-export const VideoFragmentDoc = gql`
-    fragment Video on Video {
-  id
-  store {
-    key
-    presignedUrl
-  }
-}
-    `;
-export const ListRgbContextFragmentDoc = gql`
-    fragment ListRGBContext on RGBContext {
-  image {
-    id
-    store {
-      ...ZarrStore
-    }
-    derivedScaleViews {
-      id
-      image {
-        id
-        store {
-          ...ZarrStore
-        }
-      }
-      scaleX
-      scaleY
-      scaleZ
-      scaleT
-      scaleC
-    }
-  }
-  id
-  name
-  views {
-    ...RGBView
-  }
-  blending
-  t
-  z
-  c
-}
-    ${ZarrStoreFragmentDoc}
-${RgbViewFragmentDoc}`;
-export const ListRoiFragmentDoc = gql`
-    fragment ListROI on ROI {
-  id
-  image {
+  originImage {
     id
     name
   }
-  kind
-  vectors
+  operation
+}
+    ${ViewFragmentDoc}`;
+export const RoiViewFragmentDoc = gql`
+    fragment ROIView on ROIView {
+  ...View
+  id
+  roi {
+    id
+    name
+  }
+}
+    ${ViewFragmentDoc}`;
+export const FileViewFragmentDoc = gql`
+    fragment FileView on FileView {
+  ...View
+  id
+  seriesIdentifier
+  file {
+    id
+    name
+  }
+}
+    ${ViewFragmentDoc}`;
+export const EraFragmentDoc = gql`
+    fragment Era on Era {
+  id
+  begin
+  name
 }
     `;
-export const ImageFragmentDoc = gql`
-    fragment Image on Image {
+export const TimepointViewFragmentDoc = gql`
+    fragment TimepointView on TimepointView {
+  ...View
   id
-  name
-  store {
-    ...ZarrStore
+  msSinceStart
+  indexSinceStart
+  era {
+    ...Era
   }
-  views {
-    ...ChannelView
-    ...AffineTransformationView
-    ...MaskView
-    ...InstanceMaskView
-    ...TimepointView
-    ...OpticsView
-    ...AcquisitionView
-    ...RGBView
-    ...WellPositionView
-    ...DerivedView
-    ...ROIView
-    ...FileView
-    ...HistogramView
-    ...LightpathView
+}
+    ${ViewFragmentDoc}
+${EraFragmentDoc}`;
+export const OpticsViewFragmentDoc = gql`
+    fragment OpticsView on OpticsView {
+  ...View
+  id
+  objective {
+    id
+    name
+    serialNumber
   }
-  derivedFromViews {
+  camera {
+    id
+    name
+    serialNumber
+  }
+  instrument {
+    id
+    name
+    serialNumber
+  }
+}
+    ${ViewFragmentDoc}`;
+export const MaskViewFragmentDoc = gql`
+    fragment MaskView on MaskView {
+  ...View
+  id
+  referenceView {
+    id
     image {
       id
       name
     }
   }
-  pinned
-  renders {
-    ...Snapshot
-    ...Video
-  }
-  dataset {
-    name
-    id
-  }
-  createdAt
-  provenanceEntries {
-    ...ProvenanceEntry
-  }
-  creator {
-    sub
-  }
-  tags
-  rgbContexts {
-    ...ListRGBContext
-  }
-  rois {
-    ...ListROI
-  }
 }
-    ${ZarrStoreFragmentDoc}
-${ChannelViewFragmentDoc}
-${AffineTransformationViewFragmentDoc}
-${MaskViewFragmentDoc}
-${InstanceMaskViewFragmentDoc}
-${TimepointViewFragmentDoc}
-${OpticsViewFragmentDoc}
-${AcquisitionViewFragmentDoc}
-${RgbViewFragmentDoc}
-${WellPositionViewFragmentDoc}
-${DerivedViewFragmentDoc}
-${RoiViewFragmentDoc}
-${FileViewFragmentDoc}
-${HistogramViewFragmentDoc}
-${LightpathViewFragmentDoc}
-${SnapshotFragmentDoc}
-${VideoFragmentDoc}
-${ProvenanceEntryFragmentDoc}
-${ListRgbContextFragmentDoc}
-${ListRoiFragmentDoc}`;
-export const InstrumentFragmentDoc = gql`
-    fragment Instrument on Instrument {
-  model
-  name
-  serialNumber
-}
-    `;
-export const CcdElementFragmentDoc = gql`
-    fragment CCDElement on CCDElement {
-  ...OpticalElement
-  pixelSizeUm
-}
-    ${OpticalElementFragmentDoc}`;
-export const MeshStoreFragmentDoc = gql`
-    fragment MeshStore on MeshStore {
-  id
-  key
-  presignedUrl
-}
-    `;
-export const MeshFragmentDoc = gql`
-    fragment Mesh on Mesh {
-  id
-  name
-  store {
-    ...MeshStore
-  }
-}
-    ${MeshStoreFragmentDoc}`;
-export const ListMeshFragmentDoc = gql`
-    fragment ListMesh on Mesh {
-  id
-  name
-}
-    `;
-export const MultiWellPlateFragmentDoc = gql`
-    fragment MultiWellPlate on MultiWellPlate {
-  id
-  views {
-    ...WellPositionView
-  }
-  name
-}
-    ${WellPositionViewFragmentDoc}`;
-export const ListMultiWellPlateFragmentDoc = gql`
-    fragment ListMultiWellPlate on MultiWellPlate {
-  id
-  name
-}
-    `;
-export const ObjectiveFragmentDoc = gql`
-    fragment Objective on Objective {
-  na
-  name
-  serialNumber
-}
-    `;
-export const RgbContextFragmentDoc = gql`
-    fragment RGBContext on RGBContext {
-  id
-  views {
-    ...RGBView
-  }
-  image {
-    id
-    store {
-      ...ZarrStore
-    }
-    derivedScaleViews {
-      id
-      image {
-        id
-        store {
-          ...ZarrStore
-        }
-      }
-      scaleX
-      scaleY
-      scaleZ
-      scaleT
-      scaleC
-    }
-  }
-  pinned
-  name
-  z
-  t
-  c
-  blending
-}
-    ${RgbViewFragmentDoc}
-${ZarrStoreFragmentDoc}`;
-export const RgbImageFragmentDoc = gql`
-    fragment RGBImage on Image {
-  name
-  rgbContexts {
-    ...ListRGBContext
-  }
-}
-    ${ListRgbContextFragmentDoc}`;
-export const RoiFragmentDoc = gql`
-    fragment ROI on ROI {
-  id
-  pinned
-  image {
-    id
-    ...RGBImage
-  }
-  createdAt
-  creator {
-    sub
-  }
-  provenanceEntries {
-    ...ProvenanceEntry
-  }
-  kind
-  vectors
-}
-    ${RgbImageFragmentDoc}
-${ProvenanceEntryFragmentDoc}`;
-export const StageFragmentDoc = gql`
-    fragment Stage on Stage {
-  id
-  affineViews {
-    ...AffineTransformationView
-    image {
-      id
-      store {
-        shape
-      }
-      name
-    }
-  }
-  pinned
-  name
-}
-    ${AffineTransformationViewFragmentDoc}`;
-export const ListStageFragmentDoc = gql`
-    fragment ListStage on Stage {
-  id
-  name
-}
-    `;
-export const MediaStoreFragmentDoc = gql`
-    fragment MediaStore on MediaStore {
-  id
-  key
-  presignedUrl
-}
-    `;
-export const ParquetStoreFragmentDoc = gql`
-    fragment ParquetStore on ParquetStore {
-  id
-  key
-  bucket
-  path
-}
-    `;
-export const AccessorFragmentDoc = gql`
-    fragment Accessor on Accessor {
-  id
-  keys
-  minIndex
-  maxIndex
-}
-    `;
-export const ImageAccessorFragmentDoc = gql`
-    fragment ImageAccessor on ImageAccessor {
-  ...Accessor
-  id
-}
-    ${AccessorFragmentDoc}`;
-export const LabelAccessorFragmentDoc = gql`
-    fragment LabelAccessor on LabelAccessor {
-  ...Accessor
-  maskView {
-    id
-  }
-}
-    ${AccessorFragmentDoc}`;
-export const TableFragmentDoc = gql`
-    fragment Table on Table {
-  origins {
-    id
-  }
-  id
-  name
-  store {
-    ...ParquetStore
-  }
-  columns {
-    name
-    type
-    accessors {
-      ...Accessor
-      ...ImageAccessor
-      ...LabelAccessor
-    }
-  }
-  accessors {
-    ...ImageAccessor
-    ...LabelAccessor
-  }
-}
-    ${ParquetStoreFragmentDoc}
-${AccessorFragmentDoc}
-${ImageAccessorFragmentDoc}
-${LabelAccessorFragmentDoc}`;
-export const ListTableFragmentDoc = gql`
-    fragment ListTable on Table {
-  origins {
-    id
-  }
-  id
-  name
-  store {
-    ...ParquetStore
-  }
-}
-    ${ParquetStoreFragmentDoc}`;
+    ${ViewFragmentDoc}`;
 export const ReferenceViewFragmentDoc = gql`
     fragment ReferenceView on ReferenceView {
   ...View
   id
+}
+    ${ViewFragmentDoc}`;
+export const InstanceMaskViewFragmentDoc = gql`
+    fragment InstanceMaskView on InstanceMaskView {
+  ...View
+  id
+  referenceView {
+    id
+    image {
+      id
+      name
+    }
+  }
+}
+    ${ViewFragmentDoc}`;
+export const AcquisitionViewFragmentDoc = gql`
+    fragment AcquisitionView on AcquisitionView {
+  ...View
+  id
+  description
+  acquiredAt
+  operator {
+    sub
+  }
 }
     ${ViewFragmentDoc}`;
 export const ContinousScanViewFragmentDoc = gql`
@@ -9903,8 +9876,8 @@ export type SearchRgbViewsQueryHookResult = ReturnType<typeof useSearchRgbViewsQ
 export type SearchRgbViewsLazyQueryHookResult = ReturnType<typeof useSearchRgbViewsLazyQuery>;
 export type SearchRgbViewsQueryResult = Apollo.QueryResult<SearchRgbViewsQuery, SearchRgbViewsQueryVariables>;
 export const ActiveImageViewsDocument = gql`
-    query ActiveImageViews($image: ID!, $selector: Selector) {
-  activeViews(image: $image, selector: $selector) {
+    query ActiveImageViews($image: ID!, $selector: Selector, $exclude: [ViewKind!]) {
+  activeViews(image: $image, selector: $selector, exclude: $exclude) {
     ...ChannelView
     ...AffineTransformationView
     ...MaskView
@@ -9950,6 +9923,7 @@ ${LightpathViewFragmentDoc}`;
  *   variables: {
  *      image: // value for 'image'
  *      selector: // value for 'selector'
+ *      exclude: // value for 'exclude'
  *   },
  * });
  */

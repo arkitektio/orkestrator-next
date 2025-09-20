@@ -14,8 +14,8 @@ query SearchRGBViews($search: String, $values: [ID!]) {
   }
 }
 
-query ActiveImageViews($image: ID!, $selector: Selector) {
-  activeViews(image: $image, selector: $selector) {
+query ActiveImageViews($image: ID!, $selector: Selector, $exclude: [ViewKind!]) {
+  activeViews(image: $image, selector: $selector, exclude: $exclude) {
     ...ChannelView
     ...AffineTransformationView
     ...MaskView

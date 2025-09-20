@@ -10,6 +10,7 @@ import {
   RgbImageFragment,
   RgbViewFragment,
   useActiveImageViewsQuery,
+  ViewKind,
 } from "@/mikro-next/api/graphql";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas as ThreeCanvas } from "@react-three/fiber";
@@ -41,6 +42,7 @@ import WellPositionViewCard from "../cards/WellPositionViewCard";
 import ROIViewCard from "../cards/ROIViewCard";
 import FileViewCard from "../cards/FileViewCard";
 import { notEmpty } from "@/lib/utils";
+import { View } from "lucide-react";
 
 export interface RGBDProps {
   context: ListRgbContextFragment;
@@ -122,6 +124,7 @@ export const ActiveImageViews = (props: {
             .filter(notEmpty),
         },
       },
+      exclude: [ViewKind.Rgb]
     },
   });
 
@@ -162,9 +165,6 @@ export const ActiveImageViews = (props: {
             )}
             {view.__typename == "ChannelView" && (
               <ChannelViewCard view={view} key={"channel-" + view.id} />
-            )}
-            {view.__typename == "RGBView" && (
-              <RGBViewCard view={view} key={"rgb-" + view.id} />
             )}
             {view.__typename == "AcquisitionView" && (
               <AcquisitionViewCard view={view} key={"acquisition-" + view.id} />
@@ -558,7 +558,6 @@ export const FinalRenderInner = (props: RGBDProps) => {
     id: "extra",
   });
 
-  const selectedLayers = layers;
   // Calculate which chunks are needed for the view
 
   const chunk_shape = props.context.image.store.chunks;
@@ -629,7 +628,7 @@ export const FinalRenderInner = (props: RGBDProps) => {
         </ThreeCanvas>
 
         {!props.hideControls && (
-          <div className="absolute top-0 right-0 z-10 w-[500px]  py-3 h-[500px] w-20">
+          <div className="absolute top-0 right-4 z-10 w-[20%]  py-3 h-[100vh] ">
             <ActiveImageViews context={props.context} />
           </div>
         )}

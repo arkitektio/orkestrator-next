@@ -1,6 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -11,13 +16,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Slider } from "@/components/ui/slider";
 import { useDebounce } from "@/hooks/use-debounce";
 import { enumToOptions } from "@/lib/utils";
 import { MikroRGBView } from "@/linkers";
 import { MateFinder } from "@/mates/types";
 import { closest } from "color-2-name";
-import { Edit2, Scale3DIcon } from "lucide-react";
-import { useState } from "react";
+import { Edit2, Scale3DIcon, ChevronDown } from "lucide-react";
+import { useState, useEffect } from "react";
 import { RgbColorPicker } from "react-colorful";
 import {
   ColorMap,
@@ -34,9 +40,9 @@ interface Props {
 }
 
 export const baseColorToRGB = (baseColor: number[] | undefined | null) => {
-  let r = baseColor?.at(0) || 0;
-  let g = baseColor?.at(1) || 0;
-  let b = baseColor?.at(2) || 0;
+  const r = baseColor?.at(0) || 0;
+  const g = baseColor?.at(1) || 0;
+  const b = baseColor?.at(2) || 0;
   return `rgb(${r}, ${g}, ${b})`;
 };
 
@@ -64,9 +70,39 @@ const colorMapOptions = enumToOptions(ColorMap).map((option) => ({
 
 const TheCard = ({ view }: Props) => {
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
-  const [delayedValues, setDelayedValues] = useState<[number, number]>([
-    view.contrastLimitMin,
-    view.contrastLimitMax,
+  const [isContrastExpanded, setIsContrastExpanded] = useState(false);
+
+  // Helper function to calculate min/max values from image dtype
+  const getImageMinMax = () => {
+    const dtype = view.image?.store?.dtype;
+    if (!dtype) return { min: 0, max: 65535 }; // Default fallback
+
+    switch (dtype) {
+      case 'uint8':
+        return { min: 0, max: 255 };
+      case 'uint16':
+        return { min: 0, max: 65535 };
+      case 'uint32':
+        return { min: 0, max: 4294967295 };
+      case 'int8':
+        return { min: 0, max: 127 };
+      case 'int16':
+        return { min: 0, max: 32767 };
+      case 'int32':
+        return { min: 0, max: 2147483647 };
+      case 'float32':
+      case 'float64':
+        return { min: 0, max: 1 };
+      default:
+        return { min: 0, max: 65535 };
+    }
+  };
+
+  const { min: imageMin, max: imageMax } = getImageMinMax();
+
+  const [contrastValues, setContrastValues] = useState<[number, number]>([
+    view.contrastLimitMin ?? imageMin,
+    view.contrastLimitMax ?? imageMax,
   ]);
 
   const [updateRgbView] = useUpdateRgbViewMutation({
@@ -74,12 +110,40 @@ const TheCard = ({ view }: Props) => {
     refetchQueries: [GetImageDocument],
   });
 
-  const debouncedValues = useDebounce(delayedValues, 300);
+  const debouncedContrastValues = useDebounce(contrastValues, 300);
 
   const [getRgbView] = useGetRgbViewLazyQuery({
     variables: { id: view.id },
     fetchPolicy: "network-only",
   });
+
+  // Handle debounced contrast updates
+  useEffect(() => {
+    const currentMin = view.contrastLimitMin ?? imageMin;
+    const currentMax = view.contrastLimitMax ?? imageMax;
+
+    if (
+      debouncedContrastValues[0] !== currentMin ||
+      debouncedContrastValues[1] !== currentMax
+    ) {
+      updateRgbView({
+        variables: {
+          input: {
+            id: view.id,
+            contrastLimitMin: debouncedContrastValues[0],
+            contrastLimitMax: debouncedContrastValues[1],
+          },
+        },
+      }).catch((error) => {
+        console.error("Error updating contrast limits:", error);
+        alert("Failed to update contrast limits.");
+      });
+    }
+  }, [debouncedContrastValues, view.contrastLimitMin, view.contrastLimitMax, view.id, updateRgbView, imageMin, imageMax]);
+
+  const handleContrastChange = (values: number[]) => {
+    setContrastValues([values[0], values[1]]);
+  };
 
   const handleColorMapChange = (newColorMap: ColorMap) => {
     updateRgbView({
@@ -221,6 +285,44 @@ const TheCard = ({ view }: Props) => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+
+          {/* Collapsible Contrast Slider */}
+          <Collapsible
+            open={isContrastExpanded}
+            onOpenChange={setIsContrastExpanded}
+            className="space-y-2"
+          >
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-between p-2 h-auto"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Contrast
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {contrastValues[0].toFixed(0)} - {contrastValues[1].toFixed(0)}
+                  </span>
+                </div>
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform duration-200 ${isContrastExpanded ? "rotate-180" : ""
+                    }`}
+                />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-2">
+              <Slider
+                value={contrastValues}
+                onValueChange={handleContrastChange}
+                min={imageMin}
+                max={imageMax}
+                step={1}
+                className="w-full"
+              />
+            </CollapsibleContent>
+          </Collapsible>
         </CardHeader>
       </ViewCard>
     </MikroRGBView.Smart>

@@ -171,7 +171,7 @@ export const LightPathGraph = ({
     if (reactFlowInstance) {
       setNodes(graphToNodes(graph));
       setEdges(graphToEdges(graph));
-      layout(layeredLayout);
+      layout(stressLayout);
 
       reactFlowInstance.fitView({ padding: 0.2 });
     }

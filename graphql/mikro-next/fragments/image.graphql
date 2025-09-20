@@ -4,29 +4,12 @@ fragment Image on Image {
   store {
     ...ZarrStore
   }
-  views {
-    ...ChannelView
-    ...AffineTransformationView
-    ...MaskView
-    ...InstanceMaskView
-    ...TimepointView
-    ...OpticsView
-    ...AcquisitionView
-    ...RGBView
-    ...WellPositionView
-    ...DerivedView
-    ...ROIView
-    ...FileView
-    ...HistogramView
-    ...LightpathView
-  }
   derivedFromViews {
     image {
       id
       name
     }
   }
-
   pinned
   renders {
     ...Snapshot

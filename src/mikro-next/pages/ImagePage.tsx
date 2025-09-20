@@ -67,35 +67,10 @@ export default asDetailQueryRoute(
   ({ data, refetch, subscribeToMore }) => {
     const x = data?.image?.store?.shape?.at(4);
     const y = data?.image?.store?.shape?.at(4);
-    const z = data?.image?.store?.shape?.at(2) || 1;
-    const t = data?.image?.store?.shape?.at(1) || 1;
-    const c = data?.image?.store?.shape?.at(0) || 1;
 
     const aspectRatio = x && y ? x / y : 1;
 
     const [pinImage] = usePinImageMutation();
-
-    const modelMatrix = useMemo(() => {
-      const affineView = data?.image?.views.find(
-        (x) => x.__typename == "AffineTransformationView",
-      ) as AffineTransformationViewFragment;
-      if (!affineView) {
-        return new Matrix4().identity();
-      }
-
-      console.log(affineView.affineMatrix);
-
-      const scaleX = affineView.affineMatrix[0][0];
-      const scaleY = affineView.affineMatrix[1][1];
-      const scaleZ = affineView.affineMatrix[2][2];
-      const min = Math.min(scaleX, scaleY, scaleZ);
-
-      const scale = [scaleX / min, scaleY / min, scaleZ / min];
-
-      console.log("scale", scale);
-
-      return new Matrix4().scale(scale);
-    }, [data?.image?.views]);
 
     useEffect(() => {
       return subscribeToMore<
@@ -145,6 +120,9 @@ export default asDetailQueryRoute(
         },
       });
     }, [data?.image?.id]);
+
+
+    const defautContext = data?.image?.rgbContexts?.at(0);
 
     const resolve = useResolve();
     return (
@@ -199,19 +177,18 @@ export default asDetailQueryRoute(
         <TwoDViewProvider initialC={0} initialT={0} initialZ={0}>
           <div className="grid grid-cols-12 grid-reverse flex-col rounded-md gap-4 mt-2 h-full">
             <div className="absolute w-full h-full overflow-hidden border-0">
-              {data?.image?.rgbContexts?.map((context, index) => (
+              {defautContext && (
                 <div
                   className={"h-full w-full mt-0 rounded rounded-md relative"}
                 >
                   <div className="w-full h-full items-center flex justify-center flex-col">
                     <FinalRender
-                      context={context}
+                      context={defautContext}
                       rois={data.image.rois}
-                      modelMatrix={modelMatrix}
                     />
                   </div>
                 </div>
-              ))}
+              )}
             </div>
             <div className="lg:col-span-3 col-span-12 flex flex-row items-end lg:items-start">
               <DetailPane className="w-full col-span-3 @container p-2 bg-black bg-clip-padding backdrop-filter backdrop-blur-2xl bg-opacity-10 z-100 overflow-hidden flex flex-col h-max-[400px]">
@@ -302,96 +279,14 @@ export default asDetailQueryRoute(
 
                   <div className="flex-row flex gap-2 mt-2"></div>
 
-                  <div className="font-light mb-2">Views</div>
+                  <div className="font-light mb-2">Channels</div>
 
                   <ResponsiveContainerGrid className="gap-3 ">
-                    {data?.image.views?.map((view, index) => (
+                    {defautContext?.views.map((view, index) => (
                       <>
-                        {view.__typename == "AffineTransformationView" && (
-                          <TransformationViewCard
-                            view={view}
-                            key={"affine-" + view.id}
-                          />
-                        )}
-                        {view.__typename == "LightpathView" && (
-                          <LightpathViewCard
-                            view={view}
-                            key={"lightpath-" + view.id}
-                          />
-                        )}
-                        {view.__typename == "LabelView" && (
-                          <LabelViewCard view={view} key={"label-" + view.id} />
-                        )}
-                        {view.__typename == "InstanceMaskView" && (
-                          <InstanceMaskViewCard
-                            item={view}
-                            key={"label-" + view.id}
-                          />
-                        )}
-                        {view.__typename == "MaskView" && (
-                          <MaskViewCard item={view} key={"label-" + view.id} />
-                        )}
-                        {view.__typename == "OpticsView" && (
-                          <OpticsViewCard
-                            view={view}
-                            key={"optics-" + view.id}
-                          />
-                        )}
-                        {view.__typename == "ChannelView" && (
-                          <ChannelViewCard
-                            view={view}
-                            key={"channel-" + view.id}
-                          />
-                        )}
-                        {view.__typename == "RGBView" && (
-                          <RGBViewCard view={view} key={"rgb-" + view.id} />
-                        )}
-                        {view.__typename == "AcquisitionView" && (
-                          <AcquisitionViewCard
-                            view={view}
-                            key={"acquisition-" + view.id}
-                          />
-                        )}
-                        {view.__typename == "WellPositionView" && (
-                          <WellPositionViewCard
-                            view={view}
-                            key={"well-position-" + view.id}
-                          />
-                        )}
-                        {view.__typename == "ROIView" && (
-                          <ROIViewCard view={view} key={"roi-" + view.id} />
-                        )}
-                        {view.__typename == "FileView" && (
-                          <FileViewCard view={view} key={"file-" + view.id} />
-                        )}
-                        {view.__typename == "DerivedView" && (
-                          <DerivedViewCard
-                            view={view}
-                            key={"derived-" + view.id}
-                          />
-                        )}
-                        {view.__typename == "HistogramView" && (
-                          <HistogramViewCard
-                            view={view}
-                            key={"histogram-" + view.id}
-                          />
-                        )}
+                        <RGBViewCard view={view} key={"rgb-" + view.id} />
                       </>
                     ))}
-                    {data?.image && (
-                      <Card className="opacity-0 hover:opacity-100 relative">
-                        <CardContent className="grid place-items-center w-full h-full">
-                          <FormDialog
-                            trigger={<PlusIcon className="text-xl" />}
-                            onSubmit={async (data) => {
-                              await refetch();
-                            }}
-                          >
-                            <AddImageViewForm image={data?.image.id} />
-                          </FormDialog>
-                        </CardContent>
-                      </Card>
-                    )}
                   </ResponsiveContainerGrid>
                   {data?.image.derivedFromViews?.length > 0 && (
                     <>

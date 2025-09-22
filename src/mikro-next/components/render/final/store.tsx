@@ -141,7 +141,7 @@ async function handle_response(
   );
 }
 
-const global_cache = new LRUCache<string, ArrayBuffer>(100);
+const global_cache = new LRUCache<string, ArrayBuffer>(500);
 
 export class S3Store extends FetchStore {
   aws: AwsClient;

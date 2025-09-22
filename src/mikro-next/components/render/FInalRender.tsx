@@ -3,25 +3,83 @@ import { SliderTooltip } from "@/components/ui/slider-tooltip";
 import * as THREE from "three";
 
 import {
+  DimSelectorKind,
   ListRgbContextFragment,
   ListRoiFragment,
+  RgbContextFragment,
   RgbImageFragment,
   RgbViewFragment,
+  useActiveImageViewsQuery,
+  ViewKind,
 } from "@/mikro-next/api/graphql";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas as ThreeCanvas } from "@react-three/fiber";
-import { Dispatch, SetStateAction, Suspense, useEffect, useState } from "react";
+import { Suspense } from "react";
 import { AutoZoomCamera } from "./cameras/AutoZoomCamera";
-import { ChunkBitmapTexture } from "./final/ChunkMesh";
+import { ChunkBitmapTexture, CameraFieldOfViewDebug } from "./final/ChunkMesh";
 import { ROIPolygon } from "./final/ROIPolygon";
 import { useArray } from "./final/useArray";
 import { BasicIndexer, IndexerProjection, Slice } from "./indexer";
-import { RoiDrawerCanvas } from "./RoiDrawer";
-import { ViewerStateProvider, useViewerState } from "./ViewerStateProvider";
+import { EventPlane } from "./overlays/invisible/EventPlane";
+import { PanelContent } from "./panels";
 import { RenderControlsMenu } from "./RenderControlsMenu";
 import { ROIContextMenu } from "./ROIContextMenu";
-import { EventPlane } from "./overlays/invisible/EventPlane";
-import { PanelContent, Panel } from "./panels";
+import { RoiDrawerCanvas } from "./RoiDrawer";
+import { ViewerStateProvider, useViewerState } from "./ViewerStateProvider";
+import HistogramViewCard from "../cards/HistogramViewCard";
+import DerivedViewCard from "../cards/DerivedViewCard";
+import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
+import TransformationViewCard from "../cards/TransformationViewCard";
+import LightpathViewCard from "../cards/LightpathViewCard";
+import LabelViewCard from "../cards/LabelViewCard";
+import InstanceMaskViewCard from "../cards/InstanceMaskViewCard";
+import MaskViewCard from "../cards/MaskViewCard";
+import OpticsViewCard from "../cards/OpticsViewCard";
+import ChannelViewCard from "../cards/ChannelViewCard";
+import RGBViewCard from "../cards/RGBViewCard";
+import AcquisitionViewCard from "../cards/AcquisitionViewCard";
+import WellPositionViewCard from "../cards/WellPositionViewCard";
+import ROIViewCard from "../cards/ROIViewCard";
+import FileViewCard from "../cards/FileViewCard";
+import { notEmpty } from "@/lib/utils";
+import { View } from "lucide-react";
+
+// Grid overlay component with milestone positions
+const GridOverlay = ({
+  imageWidth,
+  imageHeight,
+}: {
+  imageWidth: number;
+  imageHeight: number;
+}) => {
+  const gridSize = 50; // Grid spacing in image units
+
+  return (
+    <group position={[0, 0, 0.01]}>
+      {/* Grid lines as individual meshes */}
+      {Array.from({ length: Math.ceil(imageWidth / gridSize) + 1 }, (_, i) => {
+        const x = i * gridSize - imageWidth / 2;
+        return (
+          <mesh key={`grid-v-${i}`} position={[x, 0, 0]}>
+            <boxGeometry args={[0.5, imageHeight, 0.1]} />
+            <meshBasicMaterial color="#ffffff" transparent opacity={0.3} />
+          </mesh>
+        );
+      })}
+
+      {Array.from({ length: Math.ceil(imageHeight / gridSize) + 1 }, (_, i) => {
+        const y = i * gridSize - imageHeight / 2;
+        return (
+          <mesh key={`grid-h-${i}`} position={[0, y, 0]}>
+            <boxGeometry args={[imageWidth, 0.5, 0.1]} />
+            <meshBasicMaterial color="#ffffff" transparent opacity={0.3} />
+          </mesh>
+        );
+      })}
+
+    </group>
+  );
+};
 
 export interface RGBDProps {
   context: ListRgbContextFragment;
@@ -31,8 +89,14 @@ export interface RGBDProps {
   hideControls?: boolean;
   z?: number;
   t?: number;
+  xStart?: number;
+  xEnd?: number;
+  yStart?: number;
+  yEnd?: number;
   // Callback when a value is clicked, e.g., for updating external state
   onValueClick?: (value: number) => void;
+  // Milestone options
+  milestones?: Array<{ x: number; y: number; label: string; color?: string }>;
 }
 
 export const calculateChunkGrid = (
@@ -81,12 +145,105 @@ export const useAspectRatio = (context: ListRgbContextFragment) => {
   return width / height;
 };
 
+export type ScaledView =
+  ListRgbContextFragment["image"]["derivedScaleViews"][0];
+
+export const ActiveImageViews = (props: {
+  context: ListRgbContextFragment;
+}) => {
+  const { t, z } = useViewerState();
+
+  const { data, error } = useActiveImageViewsQuery({
+    variables: {
+      image: props.context.image.id,
+      selector: {
+        t: { kind: DimSelectorKind.Index, index: t },
+        z: { kind: DimSelectorKind.Index, index: z },
+        c: {
+          kind: DimSelectorKind.Indices,
+          indices: props.context.views
+            .filter((v) => v.active)
+            .map((v) => v.cMax)
+            .filter(notEmpty),
+        },
+      },
+      exclude: [ViewKind.Rgb]
+    },
+  });
+
+  if (error) {
+    return <div>Error loading active views: {error.message}</div>;
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  if (data.activeViews.length == 0) {
+    return <div>No active views found for this image.</div>;
+  }
+
+  return (
+    <div className="w-full h-full overflow-y-auto p-2 flex flex-col gap-2">
+      {data?.activeViews.map((view, index) => (
+        <>
+          {view.__typename == "AffineTransformationView" && (
+            <TransformationViewCard view={view} key={"affine-" + view.id} />
+          )}
+          {view.__typename == "LightpathView" && (
+            <LightpathViewCard view={view} key={"lightpath-" + view.id} />
+          )}
+          {view.__typename == "LabelView" && (
+            <LabelViewCard view={view} key={"label-" + view.id} />
+          )}
+          {view.__typename == "InstanceMaskView" && (
+            <InstanceMaskViewCard item={view} key={"label-" + view.id} />
+          )}
+          {view.__typename == "MaskView" && (
+            <MaskViewCard item={view} key={"label-" + view.id} />
+          )}
+          {view.__typename == "OpticsView" && (
+            <OpticsViewCard view={view} key={"optics-" + view.id} />
+          )}
+          {view.__typename == "ChannelView" && (
+            <ChannelViewCard view={view} key={"channel-" + view.id} />
+          )}
+          {view.__typename == "AcquisitionView" && (
+            <AcquisitionViewCard view={view} key={"acquisition-" + view.id} />
+          )}
+          {view.__typename == "WellPositionView" && (
+            <WellPositionViewCard
+              view={view}
+              key={"well-position-" + view.id}
+            />
+          )}
+          {view.__typename == "ROIView" && (
+            <ROIViewCard view={view} key={"roi-" + view.id} />
+          )}
+          {view.__typename == "FileView" && (
+            <FileViewCard view={view} key={"file-" + view.id} />
+          )}
+          {view.__typename == "DerivedView" && (
+            <DerivedViewCard view={view} key={"derived-" + view.id} />
+          )}
+          {view.__typename == "HistogramView" && (
+            <HistogramViewCard view={view} key={"histogram-" + view.id} />
+          )}
+        </>
+      ))}
+    </div>
+  );
+};
+
 export const LayerRender = (props: {
-  derivedScaleView: ListRgbContextFragment["image"]["derivedScaleViews"][0];
+  derivedScaleView: ScaledView;
   view: RgbViewFragment;
   z: number;
+  affineScaleX: number;
+  affineScaleY: number;
   t: number;
   xSize: number;
+  availableScales: ScaledView[];
   ySize: number;
 }) => {
   const { derivedScaleView, view, xSize, ySize } = props;
@@ -119,11 +276,17 @@ export const LayerRender = (props: {
     return <div>Chunk shape not found</div>;
   }
 
+  // Calculate z-position based on scale: higher resolution (lower scaleX) should be on top
+  // Use negative values so 1x is at z=0, 2x at z=-0.001, 4x at z=-0.002, etc.
+  const zPosition = (derivedScaleView.scaleX - 1) * 0.001;
+
   return (
     <group key={`${view.id}-${derivedScaleView.id}`}>
+      {/* 1) Depth pre-pass for the blocker */}
       {chunk_loaders.map((chunk_loader) => {
         return (
           <ChunkBitmapTexture
+            availableScales={props.availableScales}
             renderFunc={renderView}
             chunk_coords={chunk_loader.chunk_coords}
             chunk_shape={derivedScaleView.image.store.chunks || []}
@@ -133,8 +296,11 @@ export const LayerRender = (props: {
             t={t}
             cLimMin={view.contrastLimitMin}
             cLimMax={view.contrastLimitMax}
+            affineScaleX={props.affineScaleX}
+            affineScaleY={props.affineScaleY}
             imageWidth={xSize}
             imageHeight={ySize}
+            derivedScaleView={derivedScaleView}
             scaleX={derivedScaleView.scaleX}
             scaleY={derivedScaleView.scaleY}
             enableCulling={true}
@@ -287,10 +453,99 @@ export const RoiContextMenu = () => {
   );
 };
 
+export const RGBContextRender = (props: {
+  context: ListRgbContextFragment;
+  matrix?: THREE.Matrix4;
+}) => {
+  const rbgContext = props.context;
+
+  const matrix = props.matrix || new THREE.Matrix4().identity();
+
+  const version = rbgContext.image.store.version;
+  const zSize = rbgContext.image?.store.shape?.at(2) || 1;
+  const tSize = rbgContext.image?.store.shape?.at(1) || 1;
+  const xSize = rbgContext.image?.store.shape?.at(3) || 1;
+  const ySize = rbgContext.image?.store.shape?.at(4) || 1;
+
+  const affineScaleX = matrix.elements[0];
+  const affineScaleY = matrix.elements[5];
+
+  // Get available scales from layers
+  const allLayers = rbgContext.image.derivedScaleViews;
+  const availableScales = Array.from(
+    new Set([1, ...allLayers.map((layer) => layer.scaleX)]),
+  ).sort((a, b) => a - b);
+
+  // Get image dimensions for the auto-zoom camera
+
+  if (
+    rbgContext.image.store.chunks?.length !=
+    rbgContext.image.store.shape?.length
+  ) {
+    return null;
+  }
+
+  if (version != "3") {
+    return null;
+  }
+
+  const layers = props.context.image.derivedScaleViews.concat({
+    image: props.context.image,
+    scaleX: 1,
+    scaleY: 1,
+    scaleC: 1,
+    scaleT: 1,
+    scaleZ: 1,
+    __typename: "ScaleView",
+    id: "extra",
+  });
+
+  const selectedLayers = layers;
+  // Calculate which chunks are needed for the view
+
+  const chunk_shape = props.context.image.store.chunks;
+
+  if (!chunk_shape) {
+    return <div>Chunk shape not found</div>;
+  }
+
+  console.log("Views", props.context.views);
+
+  return (
+    <>
+      {props.context.views.map((view, viewIndex) => {
+        // Calculate available scales from all layers
+        if (!view.active) {
+          return null;
+        }
+
+        return (
+          <group key={view.id}>
+            {selectedLayers.map((layer) => {
+              return (
+                <LayerRender
+                  key={`${viewIndex}-${layer.id}`}
+                  derivedScaleView={layer}
+                  view={view}
+                  affineScaleX={affineScaleX}
+                  affineScaleY={affineScaleY}
+                  xSize={xSize}
+                  ySize={ySize}
+                  availableScales={selectedLayers}
+                />
+              );
+            })}
+          </group>
+        );
+      })}
+    </>
+  );
+};
+
 export const FinalRenderInner = (props: RGBDProps) => {
   const rbgContext = props.context;
 
-  const { setZ, z } = useViewerState();
+  const { setZ, z, showGrid } = useViewerState();
 
   const version = rbgContext.image.store.version;
   const zSize = rbgContext.image?.store.shape?.at(2) || 1;
@@ -342,7 +597,6 @@ export const FinalRenderInner = (props: RGBDProps) => {
     id: "extra",
   });
 
-  const selectedLayers = layers;
   // Calculate which chunks are needed for the view
 
   const chunk_shape = props.context.image.store.chunks;
@@ -373,8 +627,14 @@ export const FinalRenderInner = (props: RGBDProps) => {
           <AutoZoomCamera
             imageHeight={ySize}
             imageWidth={xSize}
-            contextId={props.context.id}
+            xEnd={props.xEnd}
+            xStart={props.xStart}
+            yEnd={props.yEnd}
+            yStart={props.yStart}
+            follow={props.follow || "width"}
           />
+          <ambientLight intensity={0.5} />
+          <pointLight position={[10, 10, 10]} />
           <OrbitControls
             enableRotate={false}
             enablePan={true}
@@ -386,31 +646,21 @@ export const FinalRenderInner = (props: RGBDProps) => {
             }}
           />
 
-          {props.context.views.map((view, viewIndex) => {
-            // Calculate available scales from all layers
-            if (!view.active) {
-              return null;
-            }
+          <RGBContextRender context={props.context} />
 
-            return (
-              <group key={view.id}>
-                {selectedLayers.map((layer) => {
-                  return (
-                    <LayerRender
-                      key={`${viewIndex}-${layer.id}`}
-                      derivedScaleView={layer}
-                      view={view}
-                      xSize={xSize}
-                      ySize={ySize}
-                    />
-                  );
-                })}
-              </group>
-            );
-          })}
+          {/* Grid overlay with milestone positions */}
+          {showGrid && (
+            <GridOverlay
+              imageWidth={xSize}
+              imageHeight={ySize}
+            />
+          )}
 
           {/* Clickable background plane for creating panels */}
           <EventPlane xSize={xSize} ySize={ySize} />
+
+          {/* Debug visualization for camera field of view */}
+          <CameraFieldOfViewDebug />
 
           <>
             {props.rois.map((roi) => (
@@ -429,6 +679,12 @@ export const FinalRenderInner = (props: RGBDProps) => {
             />
           </>
         </ThreeCanvas>
+
+        {!props.hideControls && (
+          <div className="absolute top-0 right-4 z-10 w-[20%]  py-3 h-[100vh] ">
+            <ActiveImageViews context={props.context} />
+          </div>
+        )}
 
         <Panels />
       </Suspense>
@@ -451,6 +707,7 @@ export const FinalRender = (props: RGBDProps) => {
         // Only most downscaled version enabled by default
         enabledScales: new Set([Math.max(...availableScales)]),
         showRois: true,
+        showGrid: true,
         z: props.z || 0,
         t: props.t || 0,
         allowRoiDrawing: false,

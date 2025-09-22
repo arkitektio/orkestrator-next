@@ -118,11 +118,12 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
             key={`${subjected.id}`}
             className="p-2 flex-row gap-2 flex w-96"
           >
-            <pre>{subjected.role}</pre>
+            subjected as <pre>{subjected.role}</pre> in
+
 
             {subjected.target.__typename == "ProtocolEvent" && (
               <KraphProtocolEvent.DetailLink object={subjected.target.id}>
-                {subjected.target.label}
+                {subjected.target.category.label}
 
                 {subjected.target.validFrom}
 

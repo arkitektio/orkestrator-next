@@ -26,6 +26,13 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld("electron", electronAPI);
     contextBridge.exposeInMainWorld("api", api);
     contextBridge.exposeInMainWorld("electronAPI", api);
+    contextBridge.exposeInMainWorld("updates", {
+      onStatus: (cb) => ipcRenderer.on("updater:status", (_e, s) => cb(s)),
+      onAvailable: (cb) => ipcRenderer.on("updater:available", (_e, info) => cb(info)),
+      onNone: (cb) => ipcRenderer.on("updater:none", cb),
+      onProgress: (cb) => ipcRenderer.on("updater:progress", (_e, p) => cb(p)),
+      onError: (cb) => ipcRenderer.on("updater:error", (_e, err) => cb(err))
+    });
   } catch (error) {
     console.error(error);
   }

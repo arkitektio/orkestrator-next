@@ -3,6 +3,7 @@ import {
   Action,
   createLocalActionProvider,
 } from "@/lib/localactions/LocalActionProvider";
+import { LOK_ACTIONS } from "@/lib/lok/actions";
 import { MIKRO_ACTIONS } from "@/lib/mikro/actions";
 import { linkBuilder } from "@/providers/smart/builder";
 import { smartRegistry } from "@/providers/smart/registry";
@@ -60,6 +61,7 @@ export const { LocalActionProvider, useAction, useMatchingActions, registry } =
   createLocalActionProvider({
     ...MIKRO_ACTIONS,
     ...KRAPH_ACTIONS,
+    ...LOK_ACTIONS,
     popout: PopOutAction,
     navigate: NavigateAction,
   } as const);

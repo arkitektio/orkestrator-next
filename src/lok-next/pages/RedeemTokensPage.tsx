@@ -26,12 +26,12 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
             buttonChildren={
               <>
                 <PlusIcon className="h-4 w-4 mr-2" />
-                New Service
+                New Token
               </>
             }
-            onSubmit={(item) => {
-              console.log(item);
-              navigate(LokRedeemToken.linkBuilder(item.createRedeemToken.id));
+            onSubmit={(data) => {
+              console.log(data);
+              navigate(LokRedeemToken.linkBuilder(data.createRedeemToken.id));
             }}
           >
             <CreateRedeemTokenForm />
@@ -41,7 +41,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
     >
       <Explainer
         title="Redeem Tokens"
-        description="Services are the building blocks of every arkitekt server. They define data endpoints, that your apps can interact with. These as the currently available services in your federation."
+        description="Redeem Tokens allow users to authorize new apps or devices to access your arkitekt account. Each token can be used to securely link a new application or device, ensuring that only trusted entities gain access. Manage your tokens carefully to maintain the security of your account."
       />
       <RedeemTokenList />
 

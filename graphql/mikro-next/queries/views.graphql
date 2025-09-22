@@ -13,3 +13,22 @@ query SearchRGBViews($search: String, $values: [ID!]) {
     label: name
   }
 }
+
+query ActiveImageViews($image: ID!, $selector: Selector, $exclude: [ViewKind!]) {
+  activeViews(image: $image, selector: $selector, exclude: $exclude) {
+    ...ChannelView
+    ...AffineTransformationView
+    ...MaskView
+    ...InstanceMaskView
+    ...TimepointView
+    ...OpticsView
+    ...AcquisitionView
+    ...RGBView
+    ...WellPositionView
+    ...DerivedView
+    ...ROIView
+    ...FileView
+    ...HistogramView
+    ...LightpathView
+  }
+}

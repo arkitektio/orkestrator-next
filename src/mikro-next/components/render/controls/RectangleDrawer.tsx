@@ -4,6 +4,9 @@ import * as THREE from "three";
 import { EventKeyProps, createEventKeyChecker } from "./eventKeyUtils";
 
 export type RectangleDrawerProps = {
+  imageHeight: number;
+  imageWidth: number;
+  imageId: string;
   onRectangleDrawn?: (start: THREE.Vector3, end: THREE.Vector3) => void;
 } & EventKeyProps;
 
@@ -63,10 +66,10 @@ export function RectangleDrawer(props: RectangleDrawerProps) {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
       >
-        <planeGeometry args={[10000, 10000]} />
+        <planeGeometry args={[props.imageHeight, props.imageWidth]} />
         <meshStandardMaterial
           color="lightgray"
-          opacity={0.001}
+          opacity={0.0001}
           transparent
           depthWrite={false}
         />

@@ -362,6 +362,11 @@ export const MikroOpticsView = buildSmart(
   "mikro/opticsviews",
 );
 
+export const MikroLightpathView = buildSmart(
+  "@mikro/lightpathview",
+  "mikro/lightpathviews",
+);
+
 export const MikroInstrument = buildSmart(
   "@mikro/instrument",
   "mikro/instruments",

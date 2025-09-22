@@ -1,5 +1,15 @@
 appId: live.arkitekt.orkestrator.next
 productName: orkestrator-next
+
+
+publish:
+  provider: github
+  owner: arkitektio
+  repo: orkestrator-next
+  releaseType: release         # must be published (not draft) to update
+
+
+
 directories:
   buildResources: build
 files:
@@ -20,6 +30,9 @@ nsis:
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
 mac:
+  target:                      # IMPORTANT: both dmg + zip for auto-update
+    - dmg
+    - zip
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.
@@ -38,6 +51,3 @@ linux:
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
-publish:
-  provider: generic
-  url: https://arkitekt.live/auto-updates

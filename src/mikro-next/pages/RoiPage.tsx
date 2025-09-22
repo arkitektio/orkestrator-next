@@ -7,9 +7,8 @@ import { UserInfo } from "@/lok-next/components/protected/UserInfo";
 import { TwoDViewProvider } from "@/providers/view/ViewProvider";
 import Timestamp from "react-timestamp";
 import { useGetRoiQuery, usePinRoiMutation } from "../api/graphql";
-import { DelegatingImageRender } from "../components/render/DelegatingImageRender";
-import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 import { FinalRender } from "../components/render/FInalRender";
+import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
 
 export type IRepresentationScreenProps = {};
 
@@ -47,11 +46,22 @@ export default asDetailQueryRoute(useGetRoiQuery, ({ data, refetch }) => {
                 rois={[data.roi]}
                 z={data.roi.vectors.at(0).at(2)}
                 t={data.roi.vectors.at(0).at(0)}
+                xStart={data.roi.vectors.at(0).at(3)}
+                xEnd={data.roi.vectors.at(3).at(3)}
+                yStart={data.roi.vectors.at(0).at(4)}
+                yEnd={data.roi.vectors.at(3).at(4)}
+                className="object-contain"
               />
             )}
           </div>
           <DetailPane className="col-span-3 p-3 @container bg-black max-h-[40%] bg-clip-padding backdrop-filter backdrop-blur-2xl bg-opacity-10 z-100 overflow-hidden">
             <DetailPaneContent>
+              <p>Coordinates:</p>
+              {data.roi.vectors.length}
+              <p>{data.roi.vectors.at(0).at(4)}xStart</p>
+              <p>{data.roi.vectors.at(3).at(4)}xEnd</p>
+              <p>{data.roi.vectors.at(0).at(3)}yStart</p>
+              <p>{data.roi.vectors.at(3).at(3)}yEnd</p>
               {data?.roi?.image && (
                 <>
                   <div className="font-light">Marked in</div>

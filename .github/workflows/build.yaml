@@ -10,7 +10,6 @@ permissions:
 env:
   GH_TOKEN: ${{ github.token }}       # electron-builder reads GH_TOKEN
 
-
 jobs:
   release:
     continue-on-error: true

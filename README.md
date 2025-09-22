@@ -30,7 +30,7 @@ xattr -c /Applications/orkestrator-next.app # or wherever you installed it
 ```
 
 This will remove the quarantine attribute from the application and you should be able to open it.
-We are sorry for the inconvenience.
+We are sorry for the inconvenience. Soon we will go the signing route, but for now this is the only way.
 
 ### Windows
 

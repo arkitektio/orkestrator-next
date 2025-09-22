@@ -1,15 +1,14 @@
-name: Build/release Electron Dev app
+name: Build & Publish Electron (on Release)
 
 on:
-  push:
-    branches:
-      - dev
+  release:
+    types: [published, prereleased]   # stable from main, prerelease from dev
 
-permissions: write-all
-
+permissions:
+  contents: write
 
 env:
-  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # 👈 electron-builder reads GH_TOKEN
+  GH_TOKEN: ${{ github.token }}       # electron-builder reads GH_TOKEN
 
 
 jobs:
@@ -64,109 +63,3 @@ jobs:
           NODE_OPTIONS: "--max_old_space_size=4096"
         run: yarn run build:win
 
-      # Step 5: Upload only specific release artifacts
-      - name: Upload artifacts for release
-        uses: actions/upload-artifact@v4
-        with:
-          if-no-files-found: error
-          name: build-artifacts-${{ matrix.os }}
-          path: |
-            dist/*.exe
-            dist/*.dmg
-            dist/*.AppImage
-            dist/*.snap
-            dist/*.deb
-            dist/*.rpm
-            dist/*.tar.gz
-
-  publish-and-release:
-    needs: release
-    runs-on: ubuntu-latest
-    steps:
-      # Step 1: Checkout repository to get commit history
-      - name: Check out Git repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0 # Fetch full history for release notes
-
-      # Step 2: Download all artifacts from matrix jobs
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: all-artifacts
-
-      # Step 3: Set the release name with timestamp
-      - name: Set Release Name
-        id: release_name
-        run: echo "RELEASE_NAME=Orkestrator Nightly $(date +"%Y-%m-%d %H:%M")" >> $GITHUB_ENV
-
-      # Step 4: Generate release notes from commits
-      - name: Generate Release Notes
-        id: release_notes
-        run: |
-          # Get the last release tag (if any)
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-
-          if [ -z "$LAST_TAG" ]; then
-            # If no previous release, get commits from the last 10 commits
-            echo "## 🚀 What's New" > release_notes.md
-            echo "" >> release_notes.md
-            git log --oneline -10 --pretty=format:"- %s (%h)" >> release_notes.md
-          else
-            # Get commits since last release
-            echo "## 🚀 What's New" > release_notes.md
-            echo "" >> release_notes.md
-            echo "Changes since $LAST_TAG:" >> release_notes.md
-            echo "" >> release_notes.md
-            git log $LAST_TAG..HEAD --oneline --pretty=format:"- %s (%h)" >> release_notes.md
-          fi
-
-          # Check if this is a merge commit (potential PR merge)
-          if [ "$(git log -1 --pretty=format:'%P' | wc -w)" -gt 1 ]; then
-            PR_TITLE=$(git log -1 --pretty=format:'%s')
-            if [[ "$PR_TITLE" == *"Merge pull request"* ]] || [[ "$PR_TITLE" == *"#"* ]]; then
-              echo "" >> release_notes.md
-              echo "## 📝 Pull Request" >> release_notes.md
-              echo "- $PR_TITLE" >> release_notes.md
-            fi
-          fi
-
-          echo "" >> release_notes.md
-          echo "## ⚠️ Notice" >> release_notes.md
-          echo "This is a nightly development build and may contain experimental features or bugs. Use at your own risk." >> release_notes.md
-
-          # Set the release notes as output
-          {
-            echo 'RELEASE_NOTES<<EOF'
-            cat release_notes.md
-            echo 'EOF'
-          } >> $GITHUB_OUTPUT
-
-      # Step 5: Rename artifacts with release name
-      - name: Rename artifacts
-        run: |
-          cd all-artifacts
-          for dir in */; do
-            cd "$dir"
-            for file in *; do
-              if [ -f "$file" ]; then
-                ext="${file##*.}"
-                base="${file%.*}"
-                mv "$file" "${base}-$(date +"%Y-%m-%d-%H-%M").$ext"
-              fi
-            done
-            cd ..
-          done
-
-      # Step 6: Create GitHub Release and upload all artifacts
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            all-artifacts/**/*
-          tag_name: "v${{ github.run_number }}"
-          name: "Nightly ${{ env.RELEASE_NAME }}"
-          prerelease: true
-          body: ${{ steps.release_notes.outputs.RELEASE_NOTES }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

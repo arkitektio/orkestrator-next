@@ -7,6 +7,9 @@ on:
 
 permissions: write-all
 
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # 👈 electron-builder reads GH_TOKEN
+
 jobs:
   release:
     continue-on-error: true

@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/arkitektio/orkestrator-next/compare/v1.3.0...v1.3.1) (2025-09-22)
+
+
+### Bug Fixes
+
+* remove unnecessary console logs from StreamWidget component ([9cc7778](https://github.com/arkitektio/orkestrator-next/commit/9cc7778ccb04536cab46bb474f75ae1e0121480a))
+
 # [1.3.0](https://github.com/arkitektio/orkestrator-next/compare/v1.2.0...v1.3.0) (2025-09-22)
 
 

@@ -140,60 +140,56 @@ export const ActiveImageViews = (props: {
     return <div>No active views found for this image.</div>;
   }
 
-  if (data.activeViews.length > 1) {
-    return (
-      <div className="w-full h-full overflow-y-auto p-2 flex flex-col gap-2">
-        {data?.activeViews.map((view, index) => (
-          <>
-            {view.__typename == "AffineTransformationView" && (
-              <TransformationViewCard view={view} key={"affine-" + view.id} />
-            )}
-            {view.__typename == "LightpathView" && (
-              <LightpathViewCard view={view} key={"lightpath-" + view.id} />
-            )}
-            {view.__typename == "LabelView" && (
-              <LabelViewCard view={view} key={"label-" + view.id} />
-            )}
-            {view.__typename == "InstanceMaskView" && (
-              <InstanceMaskViewCard item={view} key={"label-" + view.id} />
-            )}
-            {view.__typename == "MaskView" && (
-              <MaskViewCard item={view} key={"label-" + view.id} />
-            )}
-            {view.__typename == "OpticsView" && (
-              <OpticsViewCard view={view} key={"optics-" + view.id} />
-            )}
-            {view.__typename == "ChannelView" && (
-              <ChannelViewCard view={view} key={"channel-" + view.id} />
-            )}
-            {view.__typename == "AcquisitionView" && (
-              <AcquisitionViewCard view={view} key={"acquisition-" + view.id} />
-            )}
-            {view.__typename == "WellPositionView" && (
-              <WellPositionViewCard
-                view={view}
-                key={"well-position-" + view.id}
-              />
-            )}
-            {view.__typename == "ROIView" && (
-              <ROIViewCard view={view} key={"roi-" + view.id} />
-            )}
-            {view.__typename == "FileView" && (
-              <FileViewCard view={view} key={"file-" + view.id} />
-            )}
-            {view.__typename == "DerivedView" && (
-              <DerivedViewCard view={view} key={"derived-" + view.id} />
-            )}
-            {view.__typename == "HistogramView" && (
-              <HistogramViewCard view={view} key={"histogram-" + view.id} />
-            )}
-          </>
-        ))}
-      </div>
-    );
-  }
-
-  return <>Hallo</>;
+  return (
+    <div className="w-full h-full overflow-y-auto p-2 flex flex-col gap-2">
+      {data?.activeViews.map((view, index) => (
+        <>
+          {view.__typename == "AffineTransformationView" && (
+            <TransformationViewCard view={view} key={"affine-" + view.id} />
+          )}
+          {view.__typename == "LightpathView" && (
+            <LightpathViewCard view={view} key={"lightpath-" + view.id} />
+          )}
+          {view.__typename == "LabelView" && (
+            <LabelViewCard view={view} key={"label-" + view.id} />
+          )}
+          {view.__typename == "InstanceMaskView" && (
+            <InstanceMaskViewCard item={view} key={"label-" + view.id} />
+          )}
+          {view.__typename == "MaskView" && (
+            <MaskViewCard item={view} key={"label-" + view.id} />
+          )}
+          {view.__typename == "OpticsView" && (
+            <OpticsViewCard view={view} key={"optics-" + view.id} />
+          )}
+          {view.__typename == "ChannelView" && (
+            <ChannelViewCard view={view} key={"channel-" + view.id} />
+          )}
+          {view.__typename == "AcquisitionView" && (
+            <AcquisitionViewCard view={view} key={"acquisition-" + view.id} />
+          )}
+          {view.__typename == "WellPositionView" && (
+            <WellPositionViewCard
+              view={view}
+              key={"well-position-" + view.id}
+            />
+          )}
+          {view.__typename == "ROIView" && (
+            <ROIViewCard view={view} key={"roi-" + view.id} />
+          )}
+          {view.__typename == "FileView" && (
+            <FileViewCard view={view} key={"file-" + view.id} />
+          )}
+          {view.__typename == "DerivedView" && (
+            <DerivedViewCard view={view} key={"derived-" + view.id} />
+          )}
+          {view.__typename == "HistogramView" && (
+            <HistogramViewCard view={view} key={"histogram-" + view.id} />
+          )}
+        </>
+      ))}
+    </div>
+  );
 };
 
 export const LayerRender = (props: {

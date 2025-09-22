@@ -1,8 +1,8 @@
-name: Build & Publish Electron (on Release)
-
+name: Publish a Release
 on:
   release:
     types: [published, prereleased]   # stable from main, prerelease from dev
+  workflow_dispatch: {}
 
 permissions:
   contents: write

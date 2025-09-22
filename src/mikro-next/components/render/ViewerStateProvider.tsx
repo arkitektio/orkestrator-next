@@ -7,7 +7,6 @@ import React, {
   useState,
 } from "react";
 import { Panel } from "./panels";
-import { tr } from "date-fns/locale";
 
 export interface ViewerState {
   // Z/T navigation
@@ -22,6 +21,7 @@ export interface ViewerState {
   showLayerEdges: boolean;
   showDebugText: boolean;
   showDisplayStructures: boolean;
+  showGrid: boolean;
 
   allowRoiDrawing: boolean; // Optional, used for ROIs
   roiDrawMode: RoiKind; // Optional, used for ROIs
@@ -44,6 +44,7 @@ export interface ViewerStateActions {
   setShowLayerEdges: (show: boolean) => void;
   setShowDebugText: (show: boolean) => void;
   setShowDisplayStructures: (show: boolean) => void;
+  setShowGrid: (show: boolean) => void;
   setOpenPanels: Dispatch<React.SetStateAction<Panel[]>>;
   setRoiContextMenu: (
     menu: { open: boolean; x: number; y: number } | null,
@@ -64,7 +65,7 @@ export interface ViewerStateActions {
 
 export interface ViewerStateContextType
   extends ViewerState,
-    ViewerStateActions {}
+  ViewerStateActions { }
 
 const ViewerStateContext = createContext<ViewerStateContextType | undefined>(
   undefined,
@@ -105,6 +106,7 @@ export const ViewerStateProvider: React.FC<ViewerStateProviderProps> = ({
   const [showDisplayStructures, setShowDisplayStructures] = useState(
     initialState.showDisplayStructures ?? false,
   );
+  const [showGrid, setShowGrid] = useState(initialState.showGrid ?? false);
   const [roiDrawMode, setRoiDrawMode] = useState(
     initialState.roiDrawMode ?? RoiKind.Rectangle,
   );
@@ -159,6 +161,7 @@ export const ViewerStateProvider: React.FC<ViewerStateProviderProps> = ({
     showLayerEdges,
     showDebugText,
     showDisplayStructures,
+    showGrid,
     enabledScales,
     displayStructures,
 
@@ -172,11 +175,12 @@ export const ViewerStateProvider: React.FC<ViewerStateProviderProps> = ({
     setShowRois,
     setShowLayerEdges,
     setShowDebugText,
+    setShowDisplayStructures,
+    setShowGrid,
     setRoiContextMenu,
     roiContextMenu,
     setOpenPanels,
     openPanels,
-    setShowDisplayStructures,
     setEnabledScales,
     setAllowRoiDrawing,
     setRoiDrawMode,

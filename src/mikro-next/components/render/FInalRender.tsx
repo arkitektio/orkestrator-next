@@ -44,6 +44,43 @@ import FileViewCard from "../cards/FileViewCard";
 import { notEmpty } from "@/lib/utils";
 import { View } from "lucide-react";
 
+// Grid overlay component with milestone positions
+const GridOverlay = ({
+  imageWidth,
+  imageHeight,
+}: {
+  imageWidth: number;
+  imageHeight: number;
+}) => {
+  const gridSize = 50; // Grid spacing in image units
+
+  return (
+    <group position={[0, 0, 0.01]}>
+      {/* Grid lines as individual meshes */}
+      {Array.from({ length: Math.ceil(imageWidth / gridSize) + 1 }, (_, i) => {
+        const x = i * gridSize - imageWidth / 2;
+        return (
+          <mesh key={`grid-v-${i}`} position={[x, 0, 0]}>
+            <boxGeometry args={[0.5, imageHeight, 0.1]} />
+            <meshBasicMaterial color="#ffffff" transparent opacity={0.3} />
+          </mesh>
+        );
+      })}
+
+      {Array.from({ length: Math.ceil(imageHeight / gridSize) + 1 }, (_, i) => {
+        const y = i * gridSize - imageHeight / 2;
+        return (
+          <mesh key={`grid-h-${i}`} position={[0, y, 0]}>
+            <boxGeometry args={[imageWidth, 0.5, 0.1]} />
+            <meshBasicMaterial color="#ffffff" transparent opacity={0.3} />
+          </mesh>
+        );
+      })}
+
+    </group>
+  );
+};
+
 export interface RGBDProps {
   context: ListRgbContextFragment;
   rois: ListRoiFragment[];
@@ -52,8 +89,14 @@ export interface RGBDProps {
   hideControls?: boolean;
   z?: number;
   t?: number;
+  xStart?: number;
+  xEnd?: number;
+  yStart?: number;
+  yEnd?: number;
   // Callback when a value is clicked, e.g., for updating external state
   onValueClick?: (value: number) => void;
+  // Milestone options
+  milestones?: Array<{ x: number; y: number; label: string; color?: string }>;
 }
 
 export const calculateChunkGrid = (
@@ -502,7 +545,7 @@ export const RGBContextRender = (props: {
 export const FinalRenderInner = (props: RGBDProps) => {
   const rbgContext = props.context;
 
-  const { setZ, z } = useViewerState();
+  const { setZ, z, showGrid } = useViewerState();
 
   const version = rbgContext.image.store.version;
   const zSize = rbgContext.image?.store.shape?.at(2) || 1;
@@ -584,8 +627,14 @@ export const FinalRenderInner = (props: RGBDProps) => {
           <AutoZoomCamera
             imageHeight={ySize}
             imageWidth={xSize}
-            contextId={props.context.id}
+            xEnd={props.xEnd}
+            xStart={props.xStart}
+            yEnd={props.yEnd}
+            yStart={props.yStart}
+            follow={props.follow || "width"}
           />
+          <ambientLight intensity={0.5} />
+          <pointLight position={[10, 10, 10]} />
           <OrbitControls
             enableRotate={false}
             enablePan={true}
@@ -598,6 +647,14 @@ export const FinalRenderInner = (props: RGBDProps) => {
           />
 
           <RGBContextRender context={props.context} />
+
+          {/* Grid overlay with milestone positions */}
+          {showGrid && (
+            <GridOverlay
+              imageWidth={xSize}
+              imageHeight={ySize}
+            />
+          )}
 
           {/* Clickable background plane for creating panels */}
           <EventPlane xSize={xSize} ySize={ySize} />
@@ -650,6 +707,7 @@ export const FinalRender = (props: RGBDProps) => {
         // Only most downscaled version enabled by default
         enabledScales: new Set([Math.max(...availableScales)]),
         showRois: true,
+        showGrid: true,
         z: props.z || 0,
         t: props.t || 0,
         allowRoiDrawing: false,

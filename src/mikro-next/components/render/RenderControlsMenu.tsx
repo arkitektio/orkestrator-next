@@ -57,12 +57,14 @@ export const RenderControlsMenu = ({
     showRois,
     showLayerEdges,
     showDebugText,
+    showGrid,
     enabledScales,
     allowRoiDrawing,
     roiDrawMode,
     setShowRois,
     setShowLayerEdges,
     setShowDebugText,
+    setShowGrid,
     setAllowRoiDrawing,
     setRoiDrawMode,
     toggleScale,
@@ -95,11 +97,10 @@ export const RenderControlsMenu = ({
         </DropdownMenuLabel>
         <DropdownMenuItem
           onClick={() => setShowRois(!showRois)}
-          className={`cursor-pointer ${
-            showRois
+          className={`cursor-pointer ${showRois
               ? "bg-blue-800 text-white"
               : "text-gray-300 hover:bg-gray-800"
-          }`}
+            }`}
         >
           {showRois ? (
             <Eye className="w-4 h-4 mr-2" />
@@ -128,11 +129,10 @@ export const RenderControlsMenu = ({
             <DropdownMenuItem
               key={kind}
               onClick={() => handleRoiKindClick(kind)}
-              className={`cursor-pointer ${
-                isActive
+              className={`cursor-pointer ${isActive
                   ? "bg-green-800 text-white"
                   : "text-gray-300 hover:bg-gray-800"
-              }`}
+                }`}
             >
               <IconComponent className="w-4 h-4 mr-2" />
               {kind.charAt(0) + kind.slice(1).toLowerCase()}
@@ -143,28 +143,47 @@ export const RenderControlsMenu = ({
 
         <DropdownMenuSeparator className="bg-gray-700" />
 
+        {/* Grid Controls */}
+        <DropdownMenuLabel className="text-gray-400">
+          Grid & Overlays
+        </DropdownMenuLabel>
+        <DropdownMenuItem
+          onClick={() => setShowGrid(!showGrid)}
+          className={`cursor-pointer ${showGrid
+              ? "bg-blue-800 text-white"
+              : "text-gray-300 hover:bg-gray-800"
+            }`}
+        >
+          {showGrid ? (
+            <Grid3X3 className="w-4 h-4 mr-2" />
+          ) : (
+            <Grid3X3 className="w-4 h-4 mr-2 opacity-50" />
+          )}
+          {showGrid ? "Hide Grid" : "Show Grid"}
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator className="bg-gray-700" />
+
         {/* Layer Display Controls */}
         <DropdownMenuLabel className="text-gray-400">
           Layer Display
         </DropdownMenuLabel>
         <DropdownMenuItem
           onClick={() => setShowLayerEdges(!showLayerEdges)}
-          className={`cursor-pointer ${
-            showLayerEdges
+          className={`cursor-pointer ${showLayerEdges
               ? "bg-blue-800 text-white"
               : "text-gray-300 hover:bg-gray-800"
-          }`}
+            }`}
         >
           <Grid3X3 className="w-4 h-4 mr-2" />
           {showLayerEdges ? "Hide Layer Edges" : "Show Layer Edges"}
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setShowDebugText(!showDebugText)}
-          className={`cursor-pointer ${
-            showDebugText
+          className={`cursor-pointer ${showDebugText
               ? "bg-blue-800 text-white"
               : "text-gray-300 hover:bg-gray-800"
-          }`}
+            }`}
         >
           <Type className="w-4 h-4 mr-2" />
           {showDebugText ? "Hide Debug Text" : "Show Debug Text"}
@@ -182,11 +201,10 @@ export const RenderControlsMenu = ({
               <DropdownMenuItem
                 key={scale}
                 onClick={() => toggleScale(scale)}
-                className={`cursor-pointer ${
-                  enabledScales.has(scale)
+                className={`cursor-pointer ${enabledScales.has(scale)
                     ? "bg-green-800 text-white"
                     : "text-gray-400 hover:bg-gray-800"
-                }`}
+                  }`}
               >
                 <Layers className="w-3 h-3 mr-2" />
                 {scale}x

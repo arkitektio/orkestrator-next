@@ -194,138 +194,136 @@ const TheCard = ({ view }: Props) => {
   };
 
   return (
-    <MikroRGBView.Smart object={view?.id}>
-      <ViewCard view={view} className="group flex flex-rowjustify-between">
-        <CardHeader className="flex flex-col justify-between w-full">
-          <CardTitle className="flex w-full items-center gap-2">
-            Channel {view.cMin}{" "}
-            {view.colorMap == ColorMap.Intensity && (
-              <Popover
-                open={isColorPickerOpen}
-                onOpenChange={setIsColorPickerOpen}
-              >
-                <PopoverTrigger asChild>
-                  <button
-                    className="w-4 h-4 rounded-full cursor-pointer hover:ring-2 hover:ring-offset-2 hover:ring-primary transition-all"
-                    style={{ backgroundColor: baseColorToRGB(view.baseColor) }}
-                    aria-label="Select base color"
-                  />
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-3" align="start">
-                  <div className="space-y-3">
-                    <RgbColorPicker
-                      color={baseColorToRGBObject(view.baseColor)}
-                      onChange={handleColorChange}
-                    />
-                    <div className="text-sm text-muted-foreground">
-                      Current: {baseColorToName(view.baseColor)}
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            )}
-            <MikroRGBView.ObjectButton
-              object={view.id}
-              collection="rescale"
-              onDone={() => {
-                getRgbView();
-              }}
-              className="flex-shrink-0"
-              ephemeral
+    <ViewCard view={view} className="group flex flex-rowjustify-between">
+      <CardHeader className="flex flex-col justify-between w-full">
+        <CardTitle className="flex w-full items-center gap-2">
+          Channel {view.cMin}{" "}
+          {view.colorMap == ColorMap.Intensity && (
+            <Popover
+              open={isColorPickerOpen}
+              onOpenChange={setIsColorPickerOpen}
             >
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                aria-label="Rescale RGB View"
-              >
-                <Scale3DIcon className="mr-2" />
-              </Button>
-            </MikroRGBView.ObjectButton>
+              <PopoverTrigger asChild>
+                <button
+                  className="w-4 h-4 rounded-full cursor-pointer hover:ring-2 hover:ring-offset-2 hover:ring-primary transition-all"
+                  style={{ backgroundColor: baseColorToRGB(view.baseColor) }}
+                  aria-label="Select base color"
+                />
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-3" align="start">
+                <div className="space-y-3">
+                  <RgbColorPicker
+                    color={baseColorToRGBObject(view.baseColor)}
+                    onChange={handleColorChange}
+                  />
+                  <div className="text-sm text-muted-foreground">
+                    Current: {baseColorToName(view.baseColor)}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
+          <MikroRGBView.ObjectButton
+            object={view.id}
+            collection="rescale"
+            onDone={() => {
+              getRgbView();
+            }}
+            className="flex-shrink-0"
+            ephemeral
+          >
             <Button
-              onClick={() => handleToggleActive()}
               variant="outline"
               size="icon"
               className="h-8 w-8"
-              aria-label="Toggle View Visibility"
+              aria-label="Rescale RGB View"
             >
-              {view.active ? "👁️" : "🚫"}
+              <Scale3DIcon className="mr-2" />
             </Button>
-          </CardTitle>
-          <div className="flex items-center gap-2 w-full">
-            {view.colorMap == ColorMap.Intensity ? (
-              <p className="text-xs text-foreground-muted">
-                {baseColorToName(view.baseColor)}
-              </p>
-            ) : (
-              <p className="text-xs text-foreground-muted">{view.colorMap}</p>
-            )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 w-4 p-0 group-hover:opacity-100 opacity-0"
-                >
-                  <Edit2 className="h-3 w-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                {colorMapOptions.map((option) => (
-                  <DropdownMenuItem
-                    key={option.value}
-                    onClick={() => handleColorMapChange(option.value)}
-                    className={
-                      view.colorMap === option.value ? "bg-accent" : ""
-                    }
-                  >
-                    {option.label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          {/* Collapsible Contrast Slider */}
-          <Collapsible
-            open={isContrastExpanded}
-            onOpenChange={setIsContrastExpanded}
-            className="space-y-2"
+          </MikroRGBView.ObjectButton>
+          <Button
+            onClick={() => handleToggleActive()}
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            aria-label="Toggle View Visibility"
           >
-            <CollapsibleTrigger asChild>
+            {view.active ? "👁️" : "🚫"}
+          </Button>
+        </CardTitle>
+        <div className="flex items-center gap-2 w-full">
+          {view.colorMap == ColorMap.Intensity ? (
+            <p className="text-xs text-foreground-muted">
+              {baseColorToName(view.baseColor)}
+            </p>
+          ) : (
+            <p className="text-xs text-foreground-muted">{view.colorMap}</p>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="sm"
-                className="w-full justify-between p-2 h-auto"
+                className="h-4 w-4 p-0 group-hover:opacity-100 opacity-0"
               >
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    Contrast
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {contrastValues[0].toFixed(0)} - {contrastValues[1].toFixed(0)}
-                  </span>
-                </div>
-                <ChevronDown
-                  className={`h-4 w-4 transition-transform duration-200 ${isContrastExpanded ? "rotate-180" : ""
-                    }`}
-                />
+                <Edit2 className="h-3 w-3" />
               </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-2">
-              <Slider
-                value={contrastValues}
-                onValueChange={handleContrastChange}
-                min={imageMin}
-                max={imageMax}
-                step={1}
-                className="w-full"
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {colorMapOptions.map((option) => (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => handleColorMapChange(option.value)}
+                  className={
+                    view.colorMap === option.value ? "bg-accent" : ""
+                  }
+                >
+                  {option.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Collapsible Contrast Slider */}
+        <Collapsible
+          open={isContrastExpanded}
+          onOpenChange={setIsContrastExpanded}
+          className="space-y-2"
+        >
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-between p-2 h-auto"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-muted-foreground">
+                  Contrast
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {contrastValues[0].toFixed(0)} - {contrastValues[1].toFixed(0)}
+                </span>
+              </div>
+              <ChevronDown
+                className={`h-4 w-4 transition-transform duration-200 ${isContrastExpanded ? "rotate-180" : ""
+                  }`}
               />
-            </CollapsibleContent>
-          </Collapsible>
-        </CardHeader>
-      </ViewCard>
-    </MikroRGBView.Smart>
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-2">
+            <Slider
+              value={contrastValues}
+              onValueChange={handleContrastChange}
+              min={imageMin}
+              max={imageMax}
+              step={1}
+              className="w-full"
+            />
+          </CollapsibleContent>
+        </Collapsible>
+      </CardHeader>
+    </ViewCard>
   );
 };
 

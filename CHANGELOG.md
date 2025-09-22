@@ -1,3 +1,10 @@
+# [1.3.0-dev.4](https://github.com/arkitektio/orkestrator-next/compare/v1.3.0-dev.3...v1.3.0-dev.4) (2025-09-22)
+
+
+### Bug Fixes
+
+* add readme ([4baf831](https://github.com/arkitektio/orkestrator-next/commit/4baf831e799064e9396678007586d69fe5237ac9))
+
 # [1.3.0-dev.3](https://github.com/arkitektio/orkestrator-next/compare/v1.3.0-dev.2...v1.3.0-dev.3) (2025-09-22)
 
 

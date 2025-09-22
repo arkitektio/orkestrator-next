@@ -6,7 +6,6 @@
 
 This repository includes the Next version of Orkestrator frontend
 for the arkitekt platform. It is currently under development and not ready for production.
-If you are looking for the current version of Orkestrator, you can find it [here](https://github.com/arkitektio/orkestrator).
 
 > [!IMPORTANT]
 > This version of Orkestrator is only working with the next version of the arkitekt platform. It is not compatible with the released version of the platform.

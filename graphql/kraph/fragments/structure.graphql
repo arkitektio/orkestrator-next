@@ -26,6 +26,7 @@ fragment PathStructure on Structure {
       presignedUrl
     }
   }
+  object
 }
 
 fragment InformedStructure on Structure {

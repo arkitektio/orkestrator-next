@@ -1,10 +1,8 @@
-import { withKabinet } from "@/arkitekt";
 import { ListRender } from "@/components/layout/ListRender";
 import { KabinetRelease } from "@/linkers";
 
-import ReleaseCard from "../cards/ReleaseCard";
-import React from "react";
 import { OffsetPaginationInput, useListReleasesQuery } from "../../api/graphql";
+import ReleaseCard from "../cards/ReleaseCard";
 
 export type Props = {
   filters?: any;
@@ -12,9 +10,7 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = withKabinet(
-    useListReleasesQuery,
-  )({
+  const { data, error, subscribeToMore, refetch } = useListReleasesQuery({
     variables: {},
   });
 

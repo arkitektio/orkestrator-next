@@ -1,25 +1,22 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import { FancyInput } from "@/components/ui/fancy-input";
 import { DroppableNavLink } from "@/components/ui/link";
 import { RekuestAgent } from "@/linkers";
 import { CardStackIcon, CubeIcon } from "@radix-ui/react-icons";
+import { useDebounce } from "@uidotdev/usehooks";
 import { Box, FunctionSquare, Home, ShoppingCart } from "lucide-react";
 import * as React from "react";
 import {
-  AgentStatus,
   GlobalSearchQueryVariables,
   Ordering,
   useAgentsQuery,
   useGlobalSearchQuery,
 } from "../api/graphql";
-import NodeCard from "../components/cards/NodeCard";
-import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
-import { useDescriptors } from "../interfaces/hooks/useDescriptors";
+import ActionCard from "../components/cards/ActionCard";
 
-interface IDataSidebarProps {}
-
-export const NavigationPane = (props: {}) => {
-  const { data, refetch, variables } = useAgentsQuery({
+export const NavigationPane = () => {
+  const { data } = useAgentsQuery({
     variables: {
       filters: {
         pinned: false,
@@ -40,8 +37,6 @@ export const NavigationPane = (props: {}) => {
       },
     },
   });
-
-  const descriptors = useDescriptors();
 
   return (
     <div className="flex-1 flex-col">
@@ -71,11 +66,11 @@ export const NavigationPane = (props: {}) => {
             Reservations
           </DroppableNavLink>
           <DroppableNavLink
-            to="/rekuest/nodes"
+            to="/rekuest/actions"
             className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
           >
             <FunctionSquare className="h-4 w-4" />
-            Nodes
+            Actions
           </DroppableNavLink>
           <DroppableNavLink
             to="/rekuest/toolboxes"
@@ -85,18 +80,25 @@ export const NavigationPane = (props: {}) => {
             Toolboxes
           </DroppableNavLink>
           <DroppableNavLink
+            to="/rekuest/dashboards"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <Box className="h-4 w-4" />
+            Dashboards
+          </DroppableNavLink>
+          <DroppableNavLink
+            to="/rekuest/bloks"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <Box className="h-4 w-4" />
+            Bloks
+          </DroppableNavLink>
+          <DroppableNavLink
             to="/rekuest/shortcuts"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >
             <ShoppingCart className="h-4 w-4" />
             Shortcuts
-          </DroppableNavLink>
-          <DroppableNavLink
-            to="/rekuest/panels"
-            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-          >
-            <Home className="h-4 w-4" />
-            Panels
           </DroppableNavLink>
         </div>
         {JSON.stringify(error)}
@@ -118,10 +120,9 @@ export const NavigationPane = (props: {}) => {
                     <div
                       className="w-3 h-3 rounded rounded-full my-auto animate-pulse"
                       style={{
-                        backgroundColor:
-                          agent.status == AgentStatus.Active
-                            ? "#00FF00"
-                            : "#FF0000",
+                        backgroundColor: agent.connected
+                          ? "#00FF00"
+                          : "#FF0000",
                       }}
                     />
                   </RekuestAgent.DetailLink>
@@ -145,10 +146,7 @@ export const NavigationPane = (props: {}) => {
                   <CardStackIcon
                     className="h-4 w-4"
                     style={{
-                      color:
-                        agent.status == AgentStatus.Active
-                          ? "#00FF00"
-                          : "#A9A9A9",
+                      color: agent.connected ? "#00FF00" : "#A9A9A9",
                     }}
                   />
                   {agent.name}
@@ -163,50 +161,49 @@ export const NavigationPane = (props: {}) => {
   );
 };
 
-const variables = {
-  search: "",
-  noNodes: false,
-  pagination: {
-    limit: 10,
-  },
-};
+const Pane: React.FunctionComponent = () => {
+  const [search, setSearch] = React.useState("");
 
-const Pane: React.FunctionComponent<IDataSidebarProps> = (props) => {
-  const { data, refetch } = useGlobalSearchQuery({
-    variables: variables,
-  });
+  const debouncedSearch = useDebounce(search, 300);
 
-  const [currentVariables, setCurrentVariables] =
-    React.useState<GlobalSearchQueryVariables>(variables);
-
-  const onFilterChanged = (e: GlobalSearchQueryVariables) => {
-    refetch(e);
-    setCurrentVariables(e);
+  const variables: GlobalSearchQueryVariables = {
+    search: debouncedSearch,
+    noActions: false,
+    pagination: {
+      limit: 10,
+    },
   };
 
+  const { data, refetch } = useGlobalSearchQuery({ variables });
+
+  React.useEffect(() => {
+    refetch(variables);
+  }, [debouncedSearch]);
+
+  const searchBar = (
+    <div className="w-full flex flex-row">
+      <FancyInput
+        placeholder="Search..."
+        type="string"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="flex-grow h-full bg-background text-foreground w-full"
+      />
+    </div>
+  );
+
   return (
-    <>
-      <SidebarLayout
-        searchBar={
-          <GlobalSearchFilter
-            onFilterChanged={onFilterChanged}
-            defaultValue={{ search: "", noNodes: false }}
-          />
-        }
-      >
-        {currentVariables?.search == "" ? (
-          <>
-            <NavigationPane />
-          </>
-        ) : (
-          <>
-            <ListRender array={data?.nodes}>
-              {(item, i) => <NodeCard node={item} key={i} />}
-            </ListRender>
-          </>
-        )}
-      </SidebarLayout>
-    </>
+    <SidebarLayout searchBar={searchBar}>
+      {search.trim() === "" ? (
+        <NavigationPane />
+      ) : (
+        <div className="h-full">
+          <ListRender array={data?.actions}>
+            {(item, i) => <ActionCard action={item} key={i} />}
+          </ListRender>
+        </div>
+      )}
+    </SidebarLayout>
   );
 };
 

@@ -1,0 +1,34 @@
+query GetRGBView($id: ID!) {
+  rgbView(id: $id) {
+    ...RGBView
+  }
+}
+
+query SearchRGBViews($search: String, $values: [ID!]) {
+  options: rgbViews(
+    filters: { search: $search, ids: $values }
+    pagination: { limit: 10 }
+  ) {
+    value: id
+    label: name
+  }
+}
+
+query ActiveImageViews($image: ID!, $selector: Selector, $exclude: [ViewKind!]) {
+  activeViews(image: $image, selector: $selector, exclude: $exclude) {
+    ...ChannelView
+    ...AffineTransformationView
+    ...MaskView
+    ...InstanceMaskView
+    ...TimepointView
+    ...OpticsView
+    ...AcquisitionView
+    ...RGBView
+    ...WellPositionView
+    ...DerivedView
+    ...ROIView
+    ...FileView
+    ...HistogramView
+    ...LightpathView
+  }
+}

@@ -39,6 +39,7 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
             args: vars.args,
             instanceId: settings.instanceId,
             hooks: [],
+            reference: vars.reference || "",
           },
         },
       });

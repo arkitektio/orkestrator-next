@@ -1,0 +1,11 @@
+fragment NodeList on NodeList {
+  nodes {
+    id
+    externalId
+    ... on Entity {
+      __typename
+      label
+      id
+    }
+  }
+}

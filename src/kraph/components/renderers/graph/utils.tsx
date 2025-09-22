@@ -1,7 +1,7 @@
 import { PathFragment } from "@/kraph/api/graphql";
 import { PathEdge, PathNode } from "./types";
 
-import { Position, MarkerType } from "@xyflow/react";
+import { Position } from "@xyflow/react";
 export const entityNodesToNodes = (
   nodes: PathFragment["nodes"],
   root?: string | undefined,
@@ -11,7 +11,7 @@ export const entityNodesToNodes = (
       .reduce((map, node) => {
         if (!map.has(node.id) && node.__typename) {
           map.set(node.id, {
-            type: node.id === root ? "__THIS__" : node.__typename,
+            type: node.__typename || "Entity",
             position: { x: 0, y: 0 },
             id: node.id,
             data: node,
@@ -28,15 +28,22 @@ export const entityNodesToNodes = (
 export const entityRelationToEdges = (
   relations: PathFragment["edges"],
 ): PathEdge[] => {
-  return relations.map((relation) => {
-    return {
-      type: relation.__typename,
-      id: relation.id,
-      source: relation.leftId,
-      target: relation.rightId,
-      data: relation,
-    } as PathEdge;
-  });
+  return Array.from(
+    relations
+      .reduce((map, relation) => {
+        if (!map.has(relation.id) && relation.__typename) {
+          map.set(relation.id, {
+            type: relation.__typename,
+            id: relation.id,
+            source: relation.leftId,
+            target: relation.rightId,
+            data: relation,
+          });
+        }
+        return map;
+      }, new Map<string, PathEdge>())
+      .values(),
+  );
 };
 
 // this helper function returns the intersection point

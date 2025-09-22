@@ -1,214 +1,292 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { ModuleWrapper } from "@/blok/Wrapper";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
-import { ArgsContainer } from "@/components/widgets/ArgsContainer";
+import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { RekuestDashboard } from "@/linkers";
 import {
+  Direction,
   DockviewApi,
+  DockviewDidDropEvent,
   DockviewReact,
   DockviewReadyEvent,
   IDockviewPanelProps,
+  positionToDirection,
+  SerializedDockview,
 } from "dockview";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
-  PanelFragment,
-  PanelKind,
+  MaterializedBlokFragment,
+  useGetBlokQuery,
   useGetDashboardQuery,
-  useGetStateQuery,
-  WatchStateEventsDocument,
-  WatchStateEventsSubscription,
-  WatchStateEventsSubscriptionVariables,
+  useListBloksQuery,
+  useMaterializeBlokMutation,
 } from "../api/graphql";
-import { StateDisplay } from "../components/State";
-import { usePortForm } from "../hooks/usePortForm";
-import { useTemplateAction } from "../hooks/useTemplateAction";
-import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
-const StateWidget = (props: {
-  state: string;
-  accessors?: string[] | null | undefined;
-}) => {
-  const { data, subscribeToMore } = useGetStateQuery({
-    variables: {
-      id: props.state,
-    },
-  });
+const components: {} = {
+  MBLOK: (
+    props: IDockviewPanelProps<{
+      title: string;
+      mblok: MaterializedBlokFragment;
+    }>,
+  ) => {
+    return <DynamicLoader blok={props.params.mblok} />;
+  },
+};
 
-  useEffect(() => {
-    console.log("Starting subscription");
-    const unsubscribe = subscribeToMore<
-      WatchStateEventsSubscription,
-      WatchStateEventsSubscriptionVariables
-    >({
-      document: WatchStateEventsDocument,
-      variables: { stateID: props.state },
-      updateQuery: (prev, { subscriptionData }) => {
-        console.log("Subscription data for state", subscriptionData);
-        if (!subscriptionData.data.stateUpdateEvents.value) return prev;
-
-        let newState = subscriptionData.data.stateUpdateEvents;
-        return {
-          ...prev,
-          state: { ...prev.state, ...newState },
-        };
-      },
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [props.state]);
+export const BlokSidebar = (props: {}) => {
+  const { data, subscribeToMore } = useListBloksQuery();
 
   return (
-    <>
-      {data?.state && (
-        <StateDisplay state={data?.state} select={props.accessors} />
-      )}
-    </>
+    <div className="flex flex-col gap-2 p-3">
+      {data?.bloks.map((blok) => <Card key={blok.id} onDragStart={(event) => {
+        if (event.dataTransfer) {
+          event.dataTransfer.effectAllowed = 'move';
+
+          event.dataTransfer.setData('text/plain', "blok-" + blok.id);
+        }
+      }}
+        className="p-3 cursor-move"
+        draggable={true}>{blok.name}</Card>)}
+    </div>
   );
 };
 
-const Fake = (props: { template: string; panel: PanelFragment }) => {
-  const { assign, latestAssignation, cancel, template } = useTemplateAction({
-    id: props.template,
+export const DynamicLoader = (props: { blok: MaterializedBlokFragment }) => {
+
+
+
+
+  return <ModuleWrapper mblok={props.blok} />;
+};
+
+export const Selector = (props: {
+  module: string;
+  addPanel: (key: string, agent: string) => void;
+}) => {
+  const { data, variables, error } = useGetBlokQuery({
+    variables: {
+      id: props.module,
+    },
   });
 
-  const form = usePortForm({
-    ports: template?.node.args || [],
-  });
+  if (error) {
+    return <div>Error loading blok: {error.message}</div>;
+  }
 
-  const onSubmit = (data: any) => {
-    console.log("Submitting");
-    console.log(data);
-    assign({
-      template: props.template,
-      args: data,
-      hooks: [],
+  if (!data) {
+    return <></>;
+  }
+
+  if (data.blok.possibleAgents.length === 0) {
+    return (
+      <div>
+        No agents Implementing this. {JSON.stringify(data.blok, null, 3)}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      {data.blok.possibleAgents.map((agent) => (
+        <Button onClick={() => props.addPanel(props.module, agent.id)}>
+          {agent.name}
+        </Button>
+      ))}
+    </div>
+  );
+};
+
+export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
+  const [api, setApi] = useState<DockviewApi | null>(null);
+
+  const [materialize] = useMaterializeBlokMutation();
+
+  const onReady = (event: DockviewReadyEvent) => {
+
+    const mySerializedLayout = localStorage.getItem(`layout_${data.dashboard.id}`);
+
+    if (mySerializedLayout) {
+      try {
+        const layout = JSON.parse(mySerializedLayout);
+
+        console.log("Restoring layout", layout.panels);
+
+        layout.panels = data.dashboard.materializedBloks?.map((b) => ({
+          id: b.id,
+          contentComponent: "MBLOK",
+          params: {
+            title: b.blok.name,
+            mblok: b
+          },
+          title: b.blok.name,
+        })).reduce((acc, cur) => {
+          acc[cur.id] = cur;
+          return acc;
+        }, {});
+
+        event.api.fromJSON(layout);
+      } catch (err) {
+        alert("Failed to parse layout: " + err);
+        data.dashboard.materializedBloks?.forEach((b) =>
+          addMaterializedBlok(b, event.api),
+        );
+      }
+    }
+    else {
+      data.dashboard.materializedBloks?.forEach((b) =>
+        addMaterializedBlok(b, event.api),
+      );
+    }
+
+
+
+    setApi(event.api);
+  };
+
+  const [dropContext, setDropContext] = useState<{
+    blok: string
+    group: string | undefined;
+    direction: Direction
+  } | undefined>(undefined);
+
+  useEffect(() => {
+    if (!api) {
+      return;
+    }
+    const disposable = api.onUnhandledDragOverEvent((event) => {
+      event.accept();
+    });
+
+    const disposableL = api.onDidLayoutChange(() => {
+      const layout: SerializedDockview = api.toJSON();
+      localStorage.setItem(`layout_${data.dashboard.id}`, JSON.stringify(layout));
+    });
+
+    return () => {
+      disposable.dispose();
+      disposableL.dispose();
+    };
+  }, [api]);
+
+
+  const addMaterializedBlok = (
+    mblok: MaterializedBlokFragment,
+    api: DockviewApi,
+  ) => {
+
+    api.addPanel({
+      id: mblok.id,
+      component: "MBLOK",
+      params: {
+        title: "Panel 1",
+        mblok: mblok,
+      },
+      title: mblok.blok.name,
+    });
+  };
+
+  const addPanel = useCallback((blok: string, agent: string) => {
+    materialize({
+      variables: {
+        input: { blok: blok, agent: agent, dashboard: data.dashboard.id },
+      },
     }).then(
       (result) => {
-        console.log("Result", result);
+        let mblok = result.data?.materializeBlok;
+        if (mblok) {
+          console.log("Materialized Blok", mblok);
+          if (!api || dropContext == undefined) {
+            toast.error("API reference is not set");
+            return;
+          }
+
+
+          api.addPanel({
+            id: mblok.id,
+            component: "MBLOK",
+            params: {
+              title: mblok.blok.name,
+              mblok: mblok,
+            },
+            title: mblok.blok.name,
+            position: {
+              direction: dropContext?.direction,
+              referenceGroup: dropContext?.group,
+            },
+          });
+          setDropContext(undefined);
+        } else {
+          toast.error("Failed to materialize blok");
+        }
       },
       (error) => {
         toast.error(error.message);
       },
     );
-  };
 
-  const { handleSubmit, watch } = form;
+  }, [data.dashboard.id, materialize, api, dropContext]);
 
-  useEffect(() => {
-    // TypeScript users
-    if (props.panel.submitOnChange) {
-      console.log("Watching for changes");
-      const subscription = watch(() => handleSubmit(onSubmit)());
 
-      return () => subscription.unsubscribe();
-    }
-  }, [handleSubmit, watch, props.panel]);
 
-  const { registry } = useWidgetRegistry();
-
-  return (
-    <>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="">
-          <p className="text-muted-foreground text-xs mb-2">
-            {props.panel.name}
-          </p>
-          <ArgsContainer
-            registry={registry}
-            ports={template?.node.args || []}
-            path={[]}
-            bound={props.template}
-          />
-          {!props.panel.submitOnChange && (
-            <Button type="submit" className="btn">
-              {" "}
-              Do{" "}
-            </Button>
-          )}
-        </form>
-      </Form>
-    </>
-  );
-};
-
-const components: { [key in PanelKind]: any } = {
-  STATE: (
-    props: IDockviewPanelProps<{ title: string; panel: PanelFragment }>,
-  ) => {
-    return (
-      <>
-        {props.params.panel.state ? (
-          <StateWidget
-            state={props.params.panel.state.id}
-            accessors={props.params.panel.accessors}
-          />
-        ) : (
-          <> State kind but now state? </>
-        )}
-      </>
-    );
-  },
-  ASSIGN: (
-    props: IDockviewPanelProps<{ title: string; panel: PanelFragment }>,
-  ) => {
-    return (
-      <div style={{ padding: "20px", color: "white" }}>
-        {props.params.panel.reservation?.template ? (
-          <Fake
-            template={props.params.panel.reservation?.template.id}
-            panel={props.params.panel}
-          />
-        ) : (
-          <> State kind but now state? </>
-        )}
-      </div>
-    );
-  },
-};
-
-export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
-  const apiRef = useRef<DockviewApi>();
-
-  const onReady = (event: DockviewReadyEvent) => {
-    let one_before: string | undefined = undefined;
-    data.dashboard.panels?.forEach((p) => {
-      event.api.addPanel({
-        id: p.id,
-        component: p.kind,
-        params: {
-          title: "Panel 1",
-          panel: p,
-        },
-        position: one_before
-          ? { referencePanel: one_before, direction: "right" }
-          : undefined,
-      });
-
-      one_before = p.id;
-    });
-  };
 
   const onSave = () => {
-    let api = apiRef.current;
     if (api) {
-      console.log(api.toJSON());
+      alert(JSON.stringify(api.toJSON()));
     }
+  };
+
+  const onDidDrop = (event: DockviewDidDropEvent) => {
+
+    let blok = event.nativeEvent?.dataTransfer?.getData("text/plain");
+    if (!blok || !blok.startsWith("blok-")) {
+      alert("Dropped item is not a blok");
+      return;
+    }
+    blok = blok.replace("blok-", "");
+
+    setDropContext({
+      blok: blok,
+      group: event.group?.id,
+      direction: positionToDirection(event.position),
+    });
   };
 
   return (
     <RekuestDashboard.ModelPage
       title={data.dashboard.name || "New Dasboard"}
       object={data.dashboard.id}
+      sidebars={
+        <MultiSidebar
+          map={{
+            Bloks: <BlokSidebar />,
+          }}
+        />
+      }
     >
-      <div className="relative w-full h-[800px] flex">
+      <div className="relative w-full h-full flex">
+        <Dialog
+          open={dropContext != undefined}
+          onOpenChange={() => {
+            setDropContext(undefined);
+          }}
+
+        >
+          <DialogContent>
+            {dropContext &&
+              <Selector module={dropContext.blok} addPanel={addPanel} />
+            }
+          </DialogContent>
+        </Dialog>
         <DockviewReact
           components={components}
           onReady={onReady}
           className={"dockview-theme-abyss h-[800px] w-full"}
+          onDidDrop={onDidDrop}
         />
+
         <Button
           variant="outline"
           className="absolute bottom-0 right-0"
@@ -216,6 +294,7 @@ export default asDetailQueryRoute(useGetDashboardQuery, ({ data, refetch }) => {
         >
           Save
         </Button>
+
       </div>
     </RekuestDashboard.ModelPage>
   );

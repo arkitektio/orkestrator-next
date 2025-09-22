@@ -11,11 +11,11 @@ import {
   Ward,
 } from "./types";
 
-export const fakeWard: Ward = {
+export const fakeWard = (key: string): Ward => ({
   search: async () => {
-    throw new Error("No ward set");
+    throw new Error("No ward set for " + key);
   },
-};
+});
 
 export class WardRegistry {
   ward_registry: { [ward_key: string]: Ward };
@@ -29,7 +29,7 @@ export class WardRegistry {
   }
 
   public getWard(ward_key: string): Ward {
-    return this.ward_registry[ward_key] || fakeWard;
+    return this.ward_registry[ward_key] || fakeWard(ward_key);
   }
 
   public deleteWard(ward_key: string): void {

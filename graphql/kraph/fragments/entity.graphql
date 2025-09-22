@@ -1,12 +1,20 @@
 fragment Entity on Entity {
   ...BaseNode
+  ... on Node {
+    pinnedBy {
+      sub
+    }
+    pinned
+  }
   id
   graph {
     id
   }
+  externalId
   category {
     id
     label
+    ageName
   }
   label
   subjectableTo {
@@ -15,6 +23,53 @@ fragment Entity on Entity {
       id
       label
     }
+  }
+
+  measuredBy {
+    id
+    category {
+      label
+    }
+    source {
+      ... on Structure {
+        identifier
+        object
+      }
+    }
+  }
+  subjectedTo {
+    id
+    role
+    target {
+      ... on ProtocolEvent {
+        id
+        label
+        validFrom
+        validTo
+        category {
+          label
+        }
+      }
+    }
+  }
+  targetedBy {
+    id
+    role
+    source {
+      ... on ProtocolEvent {
+        id
+        label
+        validFrom
+        validTo
+        category {
+          label
+        }
+      }
+    }
+  }
+  tags {
+    id
+    value
   }
   targetableBy {
     role

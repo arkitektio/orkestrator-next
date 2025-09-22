@@ -1,13 +1,10 @@
 import { ListRender } from "@/components/layout/ListRender";
 import { MikroDataset, MikroMesh } from "@/linkers";
 import {
-  FileFilter,
   MeshFilter,
   OffsetPaginationInput,
-  useGetFilesQuery,
-  useListMeshesQuery,
+  useListMeshesQuery
 } from "../../api/graphql";
-import FileCard from "../cards/FileCard";
 import MeshCard from "../cards/MeshCard";
 
 export type Props = {

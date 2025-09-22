@@ -1,14 +1,13 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Card } from "@/components/ui/card";
 import { FormDialogAction } from "@/components/ui/form-dialog-action";
-import { KraphEntityCategory, KraphProtocolEventCategory } from "@/linkers";
+import { KraphProtocolEventCategory } from "@/linkers";
 import { PlusIcon } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import StructureCategoryList from "../components/lists/StructureCategoryList";
-import CreateEntityCategoryForm from "../forms/CreateEntityCategoryForm";
 import ProtocolEventCategoryList from "../components/lists/ProtocolEventCategoryList";
 import CreateProtocolEventCategoryForm from "../forms/CreateProtocolEventCategoryForm";
+import { FormSheetAction } from "@/components/ui/form-sheet-action";
 
 export type IRepresentationScreenProps = {};
 
@@ -21,7 +20,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       pageActions={
         <div className="flex flex-row gap-2">
           <>
-            <FormDialogAction
+            <FormSheetAction
               variant={"outline"}
               size={"sm"}
               label="Create"
@@ -42,7 +41,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
               }}
             >
               <CreateProtocolEventCategoryForm />
-            </FormDialogAction>
+            </FormSheetAction>
           </>
         </div>
       }

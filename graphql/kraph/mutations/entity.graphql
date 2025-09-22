@@ -3,3 +3,19 @@ mutation CreateEntity($input: EntityInput!) {
     ...Entity
   }
 }
+
+mutation UpdateEntity($input: UpdateEntityInput!) {
+  updateEntity(input: $input) {
+    ...Entity
+  }
+}
+
+mutation CreateEntityInline($input: String!, $category: ID!) {
+  result: createEntity(input: {
+    externalId: $input,
+    entityCategory: $category
+  }) {
+    value: id
+    label: label
+  }
+}

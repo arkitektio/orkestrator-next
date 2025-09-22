@@ -1,7 +1,7 @@
 import { Plate } from "@udecode/plate-common/react";
 
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
+import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { StringField } from "@/components/fields/StringField";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { CommentsPopover } from "@/components/plate-ui/comments-popover";
@@ -17,16 +17,11 @@ import { Form } from "@/components/ui/form";
 import { DragZone } from "@/components/upload/drag";
 import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import {
-  KraphNaturalEventCategory
-} from "@/linkers";
+import { KraphNaturalEventCategory } from "@/linkers";
 import { editor } from "@/plate/plugins";
 import {
-  useEditorReadOnly,
-  useEditorRef,
-  usePlateEditor,
+  usePlateEditor
 } from "@udecode/plate-common/react";
-import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import {
   NaturalEventCategoryFragment,
@@ -34,8 +29,7 @@ import {
   useGetNaturalEventCategoryQuery,
   useSearchEntityCategoryLazyQuery,
   useSearchTagsLazyQuery,
-  useUpdateNaturalEventCategoryMutation,
-  useUpdateProtocolEventCategoryMutation
+  useUpdateNaturalEventCategoryMutation
 } from "../api/graphql";
 
 export type IRepresentationScreenProps = {};
@@ -47,7 +41,6 @@ const initialValue = [
     children: [{ text: "Hello, World!" }],
   },
 ];
-
 
 export function PlateDisplay({ plates }: { plates: any[] }) {
   const plateEditor = usePlateEditor({
@@ -88,38 +81,32 @@ export const RoleDefinitionCreator = ({
     });
   };
 
-  const myform = useForm<UpdateNaturalEventCategoryMutationVariables["input"]>(
-    {
-      defaultValues: {
-        id: naturalEventCategory.id,
-        label: naturalEventCategory.label,
-        description: naturalEventCategory.description,
-        sourceEntityRoles: naturalEventCategory.sourceEntityRoles.map(
-          (role) => ({
-            ...role,
-            categoryDefinition: {
-              ...role.categoryDefinition,
+  const myform = useForm<UpdateNaturalEventCategoryMutationVariables["input"]>({
+    defaultValues: {
+      id: naturalEventCategory.id,
+      label: naturalEventCategory.label,
+      description: naturalEventCategory.description,
+      sourceEntityRoles: naturalEventCategory.sourceEntityRoles.map((role) => ({
+        ...role,
+        categoryDefinition: {
+          ...role.categoryDefinition,
 
-              __typename: undefined,
-            },
-            __typename: undefined,
-            currentDefault: undefined,
-          }),
-        ),
-        targetEntityRoles: naturalEventCategory.targetEntityRoles.map(
-          (role) => ({
-            ...role,
-            categoryDefinition: {
-              ...role.categoryDefinition,
-              __typename: undefined,
-            },
-            __typename: undefined,
-            currentDefault: undefined,
-          }),
-        ),
-      },
+          __typename: undefined,
+        },
+        __typename: undefined,
+        currentDefault: undefined,
+      })),
+      targetEntityRoles: naturalEventCategory.targetEntityRoles.map((role) => ({
+        ...role,
+        categoryDefinition: {
+          ...role.categoryDefinition,
+          __typename: undefined,
+        },
+        __typename: undefined,
+        currentDefault: undefined,
+      })),
     },
-  );
+  });
 
   const [searchTags] = useSearchTagsLazyQuery();
   const [searchEntityCategory] = useSearchEntityCategoryLazyQuery();
@@ -133,8 +120,6 @@ export const RoleDefinitionCreator = ({
     control: myform.control, // control props comes from useForm (optional: if you are using FormProvider)
     name: "targetEntityRoles", // unique name for your Field Array
   });
-
-  
 
   return (
     <>
@@ -174,13 +159,13 @@ export const RoleDefinitionCreator = ({
                               description="Which role does the entity play?"
                             />
                             <div className="group-hover:block group-hover:opacity-100 opacity-0 transition-opacity hidden">
-                              <GraphQLSearchField
+                              <GraphQLListSearchField
                                 name={`sourceEntityRoles.${index}.categoryDefinition.tagFilters`}
                                 label="Tag Filters"
                                 searchQuery={searchTags}
                                 description="Filters for the entity's tags."
                               />
-                              <GraphQLSearchField
+                              <GraphQLListSearchField
                                 name={`sourceEntityRoles.${index}.categoryDefinition.categoryFilters`}
                                 label="Category Filters"
                                 searchQuery={searchEntityCategory}
@@ -242,13 +227,13 @@ export const RoleDefinitionCreator = ({
                               description="Which role does the entity play?"
                             />
                             <div className="group-hover:block group-hover:opacity-100 opacity-0 transition-opacity hidden">
-                              <GraphQLSearchField
+                              <GraphQLListSearchField
                                 name={`targetEntityRoles.${index}.categoryDefinition.tagFilters`}
                                 label="Tag Filters"
                                 searchQuery={searchTags}
                                 description="Filters for the entity's tags."
                               />
-                              <GraphQLSearchField
+                              <GraphQLListSearchField
                                 name={`targetEntityRoles.${index}.categoryDefinition.categoryFilters`}
                                 label="Category Filters"
                                 searchQuery={searchEntityCategory}

@@ -1,4 +1,3 @@
-import React from "react";
 
 import type { TColumnElement } from "@udecode/plate-layout";
 

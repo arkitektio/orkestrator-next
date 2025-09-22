@@ -1,11 +1,14 @@
 import { Option } from "@/components/fields/ListSearchField";
+import { DisplayWidgetProps } from "@/lib/display/registry";
 
 export type SearchFunction = (search: string) => Promise<Option[]>;
+
 export type Registration = {
   identifier: string;
   description?: string;
   path: string;
   search?: SearchFunction;
+  diplayWidget?: React.ComponentType<DisplayWidgetProps>;
 };
 
 export class SmartRegistry {
@@ -21,9 +24,13 @@ export class SmartRegistry {
   }
 
   registeredModels(): Registration[] {
-    let registrations = Array.from(this.registry.values());
+    const registrations = Array.from(this.registry.values());
     console.log(registrations);
     return registrations;
+  }
+
+  findModel(identifier: string): Registration | undefined {
+    return this.registry.get(identifier);
   }
 }
 

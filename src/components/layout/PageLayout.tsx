@@ -1,5 +1,7 @@
 import { cn } from "@/lib/utils";
+import { Separator } from "@radix-ui/react-dropdown-menu";
 import { GearIcon } from "@radix-ui/react-icons";
+import { PanelLeft } from "lucide-react";
 import { useCallback } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import BreadCrumbs from "../navigation/BreadCrumbs";
@@ -16,8 +18,7 @@ import {
   ResizablePanelGroup,
 } from "../ui/resizable";
 import { Actionbar } from "./Actionbar";
-import { Separator } from "@radix-ui/react-dropdown-menu";
-import { PanelLeft } from "lucide-react";
+import { CommandMenu } from "@/command/Menu";
 
 export type PageVariant = "black" | "default";
 
@@ -86,7 +87,7 @@ export const PageLayout = ({
             </Button>
             <Separator dir="vertical" className="w-2" />
             <div className="flex-grow flex flex-col truncate">
-              <h1 className="scroll-m-20 text-2xl font-extrabold tracking-tight lg:text-2xl truncate">
+              <h1 className="scroll-m-20 text-xl font-extrabold tracking-tight lg:text-xl truncate max-w-[70%]">
                 {title}
               </h1>
               <div className="flex-shrink ">

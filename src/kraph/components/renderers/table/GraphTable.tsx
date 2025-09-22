@@ -32,6 +32,7 @@ import {
 
 import { TableFragment } from "@/kraph/api/graphql";
 import { calculateColumns, calculateRows } from "../utils";
+import { ViewOptions } from "../DelegatingNodeViewRenderer";
 
 export type FormValues = {
   metrics?: string[];
@@ -39,7 +40,7 @@ export type FormValues = {
   search?: string | null;
 };
 
-export const GraphTable = (props: { table?: TableFragment }) => {
+export const GraphTable = (props: { table?: TableFragment, options?: ViewOptions }) => {
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize: 20,
@@ -80,42 +81,43 @@ export const GraphTable = (props: { table?: TableFragment }) => {
 
   return (
     <div className="w-full h-full">
-      <div className="flex items-center py-4 gap-2">
-        <Input
-          placeholder="Search..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm w-full bg-background"
-        />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columns <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+      {!props.options?.minimal && (
+        <div className="flex items-center py-4 gap-2">
+          <Input
+            placeholder="Search..."
+            onChange={(event) =>
+              table.setGlobalFilter(event.target.value)
+            }
+            className="max-w-sm w-full bg-background"
+          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="ml-auto">
+                Columns <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => {
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) =>
+                        column.toggleVisibility(!!value)
+                      }
+                    >
+                      {column.id}
+                    </DropdownMenuCheckboxItem>
+                  );
+                })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
       <div className="flex-grow flex flex-justify-between">
         <Table>
           <TableHeader>
@@ -127,9 +129,9 @@ export const GraphTable = (props: { table?: TableFragment }) => {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   );
                 })}

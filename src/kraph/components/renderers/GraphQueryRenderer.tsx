@@ -1,16 +1,17 @@
 import {
   GraphQueryFragment,
-  useGetGraphQuery,
-  useGetGraphQueryQuery,
+  useGetGraphQueryQuery
 } from "@/kraph/api/graphql";
 import { PathGraph } from "./graph/PathGraph";
+import { Pairs } from "./pairs/Pairs";
 import { GraphTable } from "./table/GraphTable";
+import { NodeListRender } from "./node_list/NodeList";
 
 export const SelectiveGraphQueryRenderer = (props: {
   graphQuery: GraphQueryFragment;
 }) => {
   if (props.graphQuery.render.__typename === "Pairs") {
-    return <div>Pair Rendering</div>;
+    return <Pairs pairs={props.graphQuery.render} />;
   }
 
   if (props.graphQuery.render.__typename === "Path") {
@@ -20,6 +21,11 @@ export const SelectiveGraphQueryRenderer = (props: {
   if (props.graphQuery.render.__typename === "Table") {
     return <GraphTable table={props.graphQuery.render} />;
   }
+
+  if (props.graphQuery.render.__typename === "NodeList") {
+    return <NodeListRender list={props.graphQuery.render} />;
+  }
+
 };
 
 export const GraphQueryRenderer = (props: { id: string }) => {

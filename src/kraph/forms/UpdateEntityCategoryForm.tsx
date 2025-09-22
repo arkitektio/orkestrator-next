@@ -1,5 +1,5 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
+import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,11 @@ import { useForm } from "react-hook-form";
 import {
   EntityCategoryFragment,
   UpdateEntityCategoryMutationVariables,
+  useCreateGraphTagInlineMutation,
   useSearchTagsLazyQuery,
   useUpdateEntityCategoryMutation,
 } from "../api/graphql";
+import { GraphQLCreatableListSearchField } from "@/components/fields/GraphQLCreatableListSearchField";
 
 const enumToOptions = (e: any) => {
   return Object.keys(e).map((key) => ({
@@ -38,6 +40,13 @@ export default (props: { entityCategory: EntityCategoryFragment }) => {
   });
 
   const [searchTags] = useSearchTagsLazyQuery();
+
+  const [createTag] = useCreateGraphTagInlineMutation({
+    variables: {
+      graph: props.entityCategory.graph.id,
+      input: "",
+    },
+  });
 
   return (
     <>
@@ -70,11 +79,12 @@ export default (props: { entityCategory: EntityCategoryFragment }) => {
                 name="purl"
                 description="What is the PURL of this expression?"
               />
-              <GraphQLSearchField
+              <GraphQLCreatableListSearchField
                 searchQuery={searchTags}
                 label="Tags"
                 name="tags"
                 description="Search for related entities"
+                createMutation={(v) => createTag({ variables: { input: v.variables.input, graph: props.entityCategory.graph.id } })}
               />
             </div>
           </div>

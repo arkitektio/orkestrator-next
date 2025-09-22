@@ -1,13 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { RekuestTemplate } from "@/linkers";
+import { RekuestImplementation } from "@/linkers";
 import { FlowFragment } from "@/reaktion/api/graphql";
 import { flowToDefinition, flowToDependencies } from "@/reaktion/utils";
 import {
   ListAgentFragment,
   useAgentsQuery,
-  useCreateForeignTemplateMutation,
-  useTemplateAtQuery,
+  useCreateForeignImplementationMutation,
+  useImplementationAtQuery,
 } from "@/rekuest/api/graphql";
 import React from "react";
 import { useNavigate } from "react-router-dom";
@@ -16,7 +16,7 @@ export const DeployButton = (props: {
   flow: FlowFragment;
   agent: ListAgentFragment;
 }) => {
-  const { data } = useTemplateAtQuery({
+  const { data } = useImplementationAtQuery({
     variables: {
       agent: props.agent.id,
       extension: "reaktion",
@@ -24,7 +24,7 @@ export const DeployButton = (props: {
     },
   });
 
-  const [deploy, tdata] = useCreateForeignTemplateMutation({
+  const [deploy, tdata] = useCreateForeignImplementationMutation({
     variables: {
       input: {
         agent: props.agent.id,
@@ -57,7 +57,7 @@ export const DeployButton = (props: {
           );
         }}
       >
-        Run and Deploy {}
+        Run and Deploy { }
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
@@ -66,7 +66,7 @@ export const DeployButton = (props: {
             <Button
               onClick={() =>
                 navigate(
-                  RekuestTemplate.linkBuilder(
+                  RekuestImplementation.linkBuilder(
                     tdata?.data?.createForeignTemplate.id,
                   ),
                 )

@@ -4,29 +4,12 @@ fragment Image on Image {
   store {
     ...ZarrStore
   }
-  views {
-    ...ChannelView
-    ...AffineTransformationView
-    ...LabelView
-    ...TimepointView
-    ...OpticsView
-    ...AcquisitionView
-    ...RGBView
-    ...WellPositionView
-    ...StructureView
-    ...DerivedView
-    ...ROIView
-    ...FileView
-    ...PixelView
-    ...HistogramView
-  }
   derivedFromViews {
     image {
       id
       name
     }
   }
-
   pinned
   renders {
     ...Snapshot
@@ -37,8 +20,8 @@ fragment Image on Image {
     id
   }
   createdAt
-  history(pagination: { limit: 3 }) {
-    ...History
+  provenanceEntries {
+    ...ProvenanceEntry
   }
   creator {
     sub

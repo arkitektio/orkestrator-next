@@ -1,11 +1,11 @@
-import { Guard } from "@/arkitekt/Arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import { Guard } from "@/lib/arkitekt/Arkitekt";
 import React from "react";
 import { Route, Routes } from "react-router";
+import { Dashboards } from "./pages/Dashboards";
 import { Home } from "./pages/Home";
 import StandardPane from "./panes/StandardPane";
-import { Dashboards } from "./pages/Dashboards";
-interface Props {}
+interface Props { }
 /**
  *
  * The Rekuest Module is the entrypoint to all specfic rekuest functionality.

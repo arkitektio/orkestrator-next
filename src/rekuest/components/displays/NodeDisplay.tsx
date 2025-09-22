@@ -1,9 +1,9 @@
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DisplayComponentProps } from "@/providers/display/DisplayContext";
-import { useConstantNodeQuery } from "@/rekuest/api/graphql";
+import { useConstantActionQuery } from "@/rekuest/api/graphql";
 
 const Display = (props: DisplayComponentProps) => {
-  const { data } = useConstantNodeQuery({
+  const { data } = useConstantActionQuery({
     variables: {
       id: props.object,
     },
@@ -11,8 +11,8 @@ const Display = (props: DisplayComponentProps) => {
 
   return (
     <CardHeader>
-      <CardTitle>{data?.node?.name}</CardTitle>
-      <CardDescription>{data?.node?.description}</CardDescription>
+      <CardTitle>{data?.action?.name}</CardTitle>
+      <CardDescription>{data?.action?.description}</CardDescription>
     </CardHeader>
   );
 };

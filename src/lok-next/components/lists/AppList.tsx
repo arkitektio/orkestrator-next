@@ -3,12 +3,9 @@ import { MikroDataset } from "@/linkers";
 
 import {
   AppFilter,
-  ClientFilter,
   OffsetPaginationInput,
-  useAppsQuery,
-  useClientsQuery,
+  useAppsQuery
 } from "@/lok-next/api/graphql";
-import ClientCard from "../cards/ClientCard";
 import AppCard from "../cards/AppCard";
 
 export type Props = {

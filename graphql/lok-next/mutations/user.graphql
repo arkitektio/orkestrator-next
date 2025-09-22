@@ -1,0 +1,5 @@
+mutation AddUserToOrganization($input: AddUserToOrganizationInput!) {
+  addUserToOrganization(input: $input) {
+    id
+  }
+}

@@ -1,7 +1,5 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { Button, ButtonProps } from "./button";
-import { p } from "node_modules/@udecode/plate-media/dist/BasePlaceholderPlugin-Huy5PFfu";
-import React from "react";
 
 export type Props = ButtonProps & {
   registerKey: string;

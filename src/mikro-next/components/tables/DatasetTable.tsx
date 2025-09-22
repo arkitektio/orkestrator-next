@@ -35,8 +35,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
-import { Form } from "@/components/ui/form";
 import { KraphNode } from "@/linkers";
 import {
   ChildrenQuery,
@@ -255,9 +253,9 @@ export const DatasetTable = (props: { dataset: string }) => {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   );
                 })}

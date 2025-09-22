@@ -1,5 +1,5 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { ChoicesField } from "@/components/fields/ChoicesField";
+import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,6 @@ import {
   useCreateEntityCategoryMutation,
   useSearchGraphsLazyQuery,
 } from "../api/graphql";
-import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 
 const enumToOptions = (e: any) => {
   return Object.keys(e).map((key) => ({
@@ -24,7 +23,8 @@ const enumToOptions = (e: any) => {
 
 export default (props: Partial<CreateEntityCategoryMutationVariables["input"]>) => {
   const [add] = useCreateEntityCategoryMutation({
-    refetchQueries: [ListEntitiesDocument, GetGraphDocument],
+    refetchQueries: [props.graph ? { query: GetGraphDocument, variables: { id: props.graph } } : ListEntitiesDocument],
+
   });
 
   const dialog = useGraphQlFormDialog(add);

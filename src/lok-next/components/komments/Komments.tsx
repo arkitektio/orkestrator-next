@@ -10,7 +10,7 @@ import { CommentEdit } from "./edit/CommentEdit";
 import { KommentProps } from "./types";
 
 export const Komments = ({ identifier, object }: KommentProps) => {
-  const { data } = useCommentsForQuery({
+  const { data, error } = useCommentsForQuery({
     variables: { identifier, object },
   });
 
@@ -47,6 +47,7 @@ export const Komments = ({ identifier, object }: KommentProps) => {
             createComment={createComment}
           />
         </Card>
+        {JSON.stringify(error)}
         {data?.commentsFor && <CommentList comments={data?.commentsFor} />}
       </div>
     </div>

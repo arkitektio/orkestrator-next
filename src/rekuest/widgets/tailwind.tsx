@@ -2,14 +2,13 @@ import { cn, notEmpty } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { EffectWrapper } from "./EffectWrapper";
 import { Port, PortGroup, PortOptions, WidgetRegistryType } from "./types";
-import { hi } from "date-fns/locale";
 
 export type ArgsContainerProps = {
   registry: WidgetRegistryType;
   ports: (Port | null | undefined)[];
   groups?: (PortGroup | null | undefined)[] | undefined;
   options?: PortOptions | undefined;
-  bound?: string; // Are we bound to a specific template?
+  bound?: string; // Are we bound to a specific implementation?
   path: string[];
   hidden?: { [key: string]: boolean };
 };

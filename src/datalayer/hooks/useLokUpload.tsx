@@ -1,4 +1,7 @@
-import { Arkitekt, useLok, useMikro } from "@/arkitekt/Arkitekt";
+import {
+  useDatalayerEndpoint,
+  useLok
+} from "@/lib/arkitekt/Arkitekt";
 import {
   PresignedPostCredentialsFragment,
   RequestMediaUploadDocument,
@@ -110,15 +113,11 @@ const uploadToStore = async (
 
 export const useLokUpload = () => {
   const client = useLok();
-  const fakts = Arkitekt.useFakts();
+  const datalayerEndpoint = useDatalayerEndpoint();
 
   const upload = useCallback(
     async (file: File) => {
       if (!client) {
-        throw Error("No client configured");
-      }
-      const endPointUrl = fakts?.datalayer?.endpoint_url;
-      if (!endPointUrl) {
         throw Error("No client configured");
       }
 
@@ -139,9 +138,9 @@ export const useLokUpload = () => {
 
       let z = data.data.requestMediaUpload;
 
-      return await uploadToStore(file, endPointUrl, z, {});
+      return await uploadToStore(file, datalayerEndpoint, z, {});
     },
-    [client, fakts],
+    [client, datalayerEndpoint],
   );
 
   return upload;

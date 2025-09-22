@@ -20,7 +20,7 @@ function replaceUndefinedValuesWithKeyName(obj: any) {
   return obj;
 }
 
-export const NodeDescription = (props: {
+export const ActionDescription = (props: {
   description: string;
   variables?: { [key: string]: any };
 }) => {
@@ -41,7 +41,7 @@ export const NodeDescription = (props: {
   return <>{text}</>;
 };
 
-export const useNodeDescription = (props: {
+export const useActionDescription = (props: {
   description: string;
   variables?: { [key: string]: any };
 }) => {

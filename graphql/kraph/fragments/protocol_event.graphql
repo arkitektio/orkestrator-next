@@ -9,16 +9,15 @@ fragment ProtocolEvent on ProtocolEvent {
     plateChildren
   }
   leftEdges {
-    ...PathEdge
+    ...Edge
   }
   rightEdges {
-    ...PathEdge
+    ...Edge
   }
   variables {
     role
     value
   }
-
 }
 
 fragment ListProtocolEvent on ProtocolEvent {
@@ -38,5 +37,9 @@ fragment PathProtocolEvent on ProtocolEvent {
     store {
       presignedUrl
     }
+  }
+  variables {
+    role
+    value
   }
 }

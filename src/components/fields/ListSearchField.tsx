@@ -1,6 +1,5 @@
-import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
+import { CheckIcon } from "@radix-ui/react-icons";
 
-import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -10,18 +9,12 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import {
-  FormControl,
   FormDescription,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { cn, notEmpty } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
@@ -255,7 +248,7 @@ export const ListSearchField = ({
                                     name,
                                     [
                                       ...(field.value &&
-                                      Array.isArray(field.value)
+                                        Array.isArray(field.value)
                                         ? field.value
                                         : []),
                                       option.value,

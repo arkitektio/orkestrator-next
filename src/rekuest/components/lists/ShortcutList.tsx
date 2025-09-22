@@ -1,10 +1,9 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { RekuestNode } from "@/linkers";
+import { RekuestAction } from "@/linkers";
 import {
-  AgentFilter,
   OffsetPaginationInput,
   ShortcutFilter,
-  useShortcutsQuery,
+  useShortcutsQuery
 } from "@/rekuest/api/graphql";
 import ShortcutCard from "../cards/ShortcutCard";
 
@@ -22,9 +21,9 @@ const List = ({ filters, pagination }: Props) => {
     <ListRender
       array={data?.shortcuts}
       title={
-        <RekuestNode.ListLink className="flex-0">
+        <RekuestAction.ListLink className="flex-0">
           Toolboxes
-        </RekuestNode.ListLink>
+        </RekuestAction.ListLink>
       }
       refetch={refetch}
     >

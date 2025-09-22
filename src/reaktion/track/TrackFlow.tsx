@@ -22,8 +22,8 @@ import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
 import { RunState } from "./types";
 
 const nodeTypes: NodeTypes = {
-  RekuestFilterNode: RekuestFilterWidget,
-  RekuestMapNode: RekuestMapWidget,
+  RekuestFilterActionNode: RekuestFilterWidget,
+  RekuestMapActionNode: RekuestMapWidget,
   ReactiveNode: ReactiveTrackNodeWidget,
   ArgNode: ArgTrackNodeWidget,
   ReturnNode: ReturnTrackNodeWidget,
@@ -43,11 +43,7 @@ export type Props = {
 export const TrackFlow: React.FC<Props> = ({ run, assignation, onSave }) => {
   console.log("THE FLOW", run);
 
-  console.log;
-
   const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
-  const [showEdgeLabels, setShowEdgeLabels] = useState(false);
-  const [showNodeErrors, setShowNodeErrors] = useState(true);
 
   const [runState, setRunState] = useState<RunState>({ t: 0 });
   const [live, setLive] = useState<boolean>(true);
@@ -74,7 +70,7 @@ export const TrackFlow: React.FC<Props> = ({ run, assignation, onSave }) => {
     >
       <div
         ref={reactFlowWrapper}
-        className="h-full w-full flex flex-col relative"
+        className="h-full w-full flex flex-col relative "
         data-disableselect
       >
         <div className="flex flex-grow h-full w-full">
@@ -91,7 +87,6 @@ export const TrackFlow: React.FC<Props> = ({ run, assignation, onSave }) => {
         </div>
         <AnimatePresence>
           <div className=" w-full flex-initial ">
-            {run.status}
             {run?.status != RunStatus.Completed ? (
               <LiveTracker run={run} startT={run?.latestSnapshot?.t || 0} />
             ) : (

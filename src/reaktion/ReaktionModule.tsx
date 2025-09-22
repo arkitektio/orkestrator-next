@@ -1,5 +1,5 @@
-import { Guard } from "@/arkitekt/Arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import { Guard } from "@/lib/arkitekt/Arkitekt";
 import React from "react";
 import { Route, Routes } from "react-router";
 import Flow from "./pages/Flow";
@@ -10,7 +10,7 @@ import Workspace from "./pages/Workspace";
 import Workspaces from "./pages/Workspaces";
 import SearchPane from "./panes/SearchPane";
 
-interface Props {}
+interface Props { }
 
 /**
  * The Reaktion Module is the entrypoint to all stream workflow related functionality

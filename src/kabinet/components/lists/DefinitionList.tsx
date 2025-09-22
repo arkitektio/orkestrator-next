@@ -1,4 +1,3 @@
-import { withKabinet } from "@/arkitekt";
 import { ListRender } from "@/components/layout/ListRender";
 import { KabinetDefinition } from "@/linkers";
 import {
@@ -14,9 +13,7 @@ export type Props = {
 };
 
 const List = ({ filters, pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = withKabinet(
-    useListDefinitionsQuery,
-  )({
+  const { data, error, subscribeToMore, refetch } = useListDefinitionsQuery({
     variables: {},
   });
 

@@ -1,13 +1,12 @@
 fragment Binds on Binds {
-  templates
+  implementations
 }
 
 fragment PostmanReservation on Reservation {
   title
-  status
   id
   reference
-  node {
+  action {
     ...Ports
     name
     description
@@ -16,29 +15,15 @@ fragment PostmanReservation on Reservation {
   binds {
     ...Binds
   }
-  events {
-    ...ReservationEvent
-  }
   viable
   happy
-}
-
-fragment ReservationEvent on ReservationEvent {
-  id
-  kind
-  level
-  reservation {
-    id
-  }
-  createdAt
 }
 
 fragment ListReservation on Reservation {
   id
   title
-  status
   reference
-  node {
+  action {
     name
     description
     hash
@@ -47,15 +32,9 @@ fragment ListReservation on Reservation {
 
 fragment DetailReservation on Reservation {
   ...PostmanReservation
-  provisions {
-    ...ListProvision
-  }
-  node {
+  action {
     name
     description
     ...Ports
-  }
-  dependencyGraph {
-    ...DependencyGraph
   }
 }

@@ -1,4 +1,3 @@
-import { withKabinet } from "@/arkitekt";
 import { ListRender } from "@/components/layout/ListRender";
 import { KabinetDefinition } from "@/linkers";
 import { OffsetPaginationInput, useListPodQuery } from "../../api/graphql";
@@ -9,9 +8,7 @@ export type Props = {
 };
 
 const List = ({ pagination }: Props) => {
-  const { data, error, subscribeToMore, refetch } = withKabinet(
-    useListPodQuery,
-  )({
+  const { data, error, subscribeToMore, refetch } = useListPodQuery({
     variables: {},
   });
 

@@ -21,7 +21,7 @@ export const DroppableNavLink = (props: NavLinkProps) => {
       accept: [SMART_MODEL_DROP_TYPE],
       drop: (item, monitor) => {
         if (!monitor.didDrop()) {
-          console.log("Ommitting Parent Drop");
+          console.log("Dropping item on NavLink", item);
         }
         return {};
       },

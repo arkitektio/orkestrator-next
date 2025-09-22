@@ -1,4 +1,4 @@
-import { Arkitekt } from "@/arkitekt/Arkitekt";
+import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
 import { OmeroArkImage } from "@/linkers";
 import { MateFinder } from "@/mates/types";
 import { ListImageFragment } from "@/omero-ark/api/graphql";
@@ -10,6 +10,7 @@ interface Props {
 }
 
 const apiUrlFromImageID = (id: string, fakts: any) => {
+  //TODO: CURRENTLY NOT FUNCTIONAL
   return `${fakts.omero_ark.endpoint_url.replace(
     "/graphql",
     "",
@@ -17,8 +18,8 @@ const apiUrlFromImageID = (id: string, fakts: any) => {
 };
 
 const Card = ({ image, mates }: Props) => {
-  const fakts = Arkitekt.useFakts();
   const token = Arkitekt.useToken();
+  const omeroArk = Arkitekt.useService("omero_ark");
 
   // Components refs
   const ref: React.Ref<HTMLImageElement> = React.createRef();
@@ -27,7 +28,7 @@ const Card = ({ image, mates }: Props) => {
   React.useEffect(() => {
     if (!image.id) return;
     if (ref.current === null) return;
-    fetch(apiUrlFromImageID(image.id, fakts), {
+    fetch(apiUrlFromImageID(image.id, omeroArk.client.url), {
       headers: {
         Accept: "image/jpeg",
         Authorization: "Bearer " + token,
@@ -48,8 +49,7 @@ const Card = ({ image, mates }: Props) => {
     <OmeroArkImage.Smart
       object={image?.id}
       dropClassName={({ isOver, canDrop, isDragging }) =>
-        `relative rounded group text-white bg-center bg-back-999 shadow-lg h-40 rounded rounded-xl  hover:bg-back-800 transition-all ease-in-out duration-200 group ${
-          isOver && !isDragging && "border-primary-200 border"
+        `relative rounded group text-white bg-center bg-back-999 shadow-lg h-40 rounded rounded-xl  hover:bg-back-800 transition-all ease-in-out duration-200 group ${isOver && !isDragging && "border-primary-200 border"
         } ${isDragging && "ring-primary-200 ring"} `
       }
       mates={mates}

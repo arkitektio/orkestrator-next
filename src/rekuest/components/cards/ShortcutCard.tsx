@@ -1,9 +1,8 @@
-import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { RekuestAgent, RekuestShortcut } from "@/linkers";
-import { UserAvatarUsername } from "@/lok-next/components/UserAvatar";
+import { RekuestShortcut } from "@/linkers";
 import { MateFinder } from "@/mates/types";
-import { ListAgentFragment, ListShortcutFragment } from "@/rekuest/api/graphql";
+import { ListShortcutFragment } from "@/rekuest/api/graphql";
 
 interface Props {
   item: ListShortcutFragment;

@@ -1,16 +1,13 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Separator } from "@/components/ui/separator";
-import { UploadZone } from "@/components/upload/zone";
+import { UploadWrapper } from "@/components/upload/wrapper";
 import { useBigFileUpload } from "@/datalayer/hooks/useUpload";
 import { useCreateFile } from "@/lib/mikro/hooks";
 import React from "react";
 import DatasetList from "../components/lists/DatasetList";
 import FileList from "../components/lists/FileList";
 import ImageList from "../components/lists/ImageList";
-import RenderedPlotList from "../components/lists/RenderedPlotList";
-import RenderTreeList from "../components/lists/RenderTreeList";
-import { MikroImage } from "@/linkers";
-import { UploadWrapper } from "@/components/upload/wrapper";
+import { CommandMenu } from "@/command/Menu";
 
 export type IRepresentationScreenProps = {};
 
@@ -20,6 +17,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
 
   return (
     <PageLayout actions={<></>} title="Your data">
+      <CommandMenu />
       <UploadWrapper
         uploadFile={performDataLayerUpload}
         createFile={createFile}
@@ -30,11 +28,12 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
             filters={{ notDerived: true }}
           />
           <Separator className="my-4" />
-          <DatasetList pagination={{ limit: 30 }} />
+          <DatasetList
+            pagination={{ limit: 30 }}
+            filters={{ parentless: true }}
+          />
           <Separator className="my-4" />
           <FileList pagination={{ limit: 30 }} />
-          <RenderTreeList pagination={{ limit: 30 }} />
-          <RenderedPlotList pagination={{ limit: 30 }} />
         </div>
       </UploadWrapper>
     </PageLayout>

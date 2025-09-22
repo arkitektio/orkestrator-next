@@ -25,6 +25,7 @@ const List = ({ filters, pagination }: Props) => {
           Recently used Datasets
         </MikroDataset.ListLink>
       }
+
       refetch={refetch}
     >
       {(ex, index) => <DatasetCard key={index} dataset={ex} mates={[]} />}

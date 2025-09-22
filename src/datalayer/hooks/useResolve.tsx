@@ -1,4 +1,4 @@
-import { Arkitekt } from "@/arkitekt/Arkitekt";
+import { useDatalayerEndpoint } from "@/lib/arkitekt/Arkitekt";
 import { useCallback } from "react";
 
 const s3resolveWithEndpoint = (endpointUrl: string, key: string) => {
@@ -16,7 +16,7 @@ const s3resolveWithEndpoint = (endpointUrl: string, key: string) => {
 };
 
 export const useResolve = () => {
-  const fakts = Arkitekt.useFakts();
+  let endpoint = useDatalayerEndpoint();
 
   const s3resolve = useCallback(
     (key: string | undefined) => {
@@ -24,16 +24,11 @@ export const useResolve = () => {
         return "";
       }
 
-      const endPointUrl = fakts?.datalayer?.endpoint_url;
-      if (!endPointUrl) {
-        console.error(fakts);
-        throw Error("No client configured ");
-      }
-      let url = s3resolveWithEndpoint(endPointUrl, key);
+      let url = s3resolveWithEndpoint(endpoint, key);
       console.log("s3resolve", url);
       return url;
     },
-    [fakts],
+    [endpoint],
   );
 
   return s3resolve;

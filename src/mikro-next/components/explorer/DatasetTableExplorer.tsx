@@ -41,9 +41,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { Form } from "@/components/ui/form";
 import { MikroDataset, MikroFile, MikroImage } from "@/linkers";
 import { Komments } from "@/lok-next/components/komments/Komments";
 import {
@@ -290,12 +288,14 @@ export const DatasetTableExplorer = (props: {
     <MikroDataset.ModelPage
       object={props.dataset.id}
       title={props.dataset.name}
+      actions={<MikroDataset.Actions object={props.dataset.id} />}
       sidebars={
         <MultiSidebar
           map={{
             Comments: (
               <Komments identifier="@mikro/dataset" object={props.dataset.id} />
             ),
+            Share: <MikroDataset.Share object={props.dataset.id} />,
             Provenance: <ProvenanceSidebar items={props?.dataset.history} />,
           }}
         />
@@ -371,9 +371,9 @@ export const DatasetTableExplorer = (props: {
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                       </TableHead>
                     );
                   })}

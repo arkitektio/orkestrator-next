@@ -1,5 +1,4 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { PageLayout } from "@/components/layout/PageLayout";
 import {
   DetailPane,
   DetailPaneHeader,
@@ -11,21 +10,17 @@ import React from "react";
 import { useParams } from "react-router";
 import { useGetDatasetQuery } from "../api/graphql";
 import ImageCard from "../components/cards/ImageCard";
+import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 
 export type IRepresentationScreenProps = {};
 
-const Page: React.FC<IRepresentationScreenProps> = () => {
-  const { id } = useParams<{ id: string }>();
-  if (!id) return <></>;
+const Page = asDetailQueryRoute(useGetDatasetQuery, ({ data }) => {
 
-  const { data } = useGetDatasetQuery({
-    variables: { id },
-  });
 
   return (
-    <PageLayout
-      actions={<OmeroArkDataset.Actions id={id} />}
-      sidebars={<Komments identifier="@omero-ark/dataset" object={id} />}
+    <OmeroArkDataset.ModelPage
+      object={data.dataset.id}
+      title={data?.dataset?.name}
     >
       <DetailPane className="p-3 @container">
         <DetailPaneHeader>
@@ -50,8 +45,8 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
           {(item, index) => <ImageCard image={item} key={index} />}
         </ListRender>
       </DetailPane>
-    </PageLayout>
+    </OmeroArkDataset.ModelPage>
   );
-};
+});
 
 export default Page;

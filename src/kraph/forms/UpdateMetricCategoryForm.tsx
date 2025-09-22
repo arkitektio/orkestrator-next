@@ -1,5 +1,5 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
+import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
@@ -8,14 +8,9 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
   MetricCategoryFragment,
-  ReagentCategoryFragment,
-  UpdateEntityCategoryMutationVariables,
   UpdateMetricCategoryMutationVariables,
-  UpdateReagentCategoryMutationVariables,
   useSearchTagsLazyQuery,
-  useUpdateEntityCategoryMutation,
-  useUpdateMetricCategoryMutation,
-  useUpdateReagentCategoryMutation,
+  useUpdateMetricCategoryMutation
 } from "../api/graphql";
 
 const enumToOptions = (e: any) => {
@@ -75,7 +70,7 @@ export default (props: { metricCategory: MetricCategoryFragment }) => {
                 name="purl"
                 description="What is the PURL of this expression?"
               />
-              <GraphQLSearchField
+              <GraphQLListSearchField
                 searchQuery={searchTags}
                 label="Tags"
                 name="tags"

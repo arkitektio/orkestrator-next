@@ -16,9 +16,9 @@ export type ViewType = ViewFragment & {
 
 export const ViewContext = React.createContext<ViewType>({
   activeView: {},
-  setActiveView: () => {},
-  extendToInclude: () => {},
-  setWith: () => {},
+  setActiveView: () => { },
+  extendToInclude: () => { },
+  setWith: () => { },
 });
 
 export const useView = () => useContext(ViewContext);

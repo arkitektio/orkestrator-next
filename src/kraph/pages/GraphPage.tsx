@@ -1,20 +1,26 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { KraphGraph } from "@/linkers";
+import { KraphGraph, KraphGraphQuery } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { useNavigate } from "react-router-dom";
-import { useGetGraphQuery, useUpdateGraphMutation } from "../api/graphql";
+import {
+  useGetGraphQuery,
+  useMaterializeGraphMutation,
+  useUpdateGraphMutation,
+} from "../api/graphql";
 
-import NodeCard from "../components/cards/NodeCard";
-import PopularePlotViewsCarousel from "../components/carousels/PopularePlotViewsCarousel";
-import { UpdateGraphForm } from "../forms/UpdateGraphForm";
-import OntologyGraph from "../components/designer/OntologyGraph";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import OntologyGraph from "../components/designer/OntologyGraph";
+import { UpdateGraphForm } from "../forms/UpdateGraphForm";
 
 export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
-  const nagivate = useNavigate();
   const [update] = useUpdateGraphMutation({
+    refetchQueries: ["GetGraph"],
+  });
+
+  const [materialize] = useMaterializeGraphMutation({
     refetchQueries: ["GetGraph"],
   });
 
@@ -36,7 +42,13 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
       title={data.graph.name}
       pageActions={
         <div className="flex flex-row gap-2">
-          <FormSheet trigger={<HobbyKnifeIcon />}>
+          <FormSheet
+            trigger={
+              <Button variant="outline">
+                <HobbyKnifeIcon />
+              </Button>
+            }
+          >
             {data?.graph && <UpdateGraphForm graph={data?.graph} />}
           </FormSheet>
           <KraphGraph.ObjectButton object={data.graph.id} />
@@ -49,6 +61,17 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
           >
             {data.graph.pinned ? "Unpin" : "Pin"}
           </Button>
+          <Button
+            onClick={() => {
+              materialize({
+                variables: { input: { id: data.graph.id } },
+              });
+            }}
+            className="w-full"
+            variant="outline"
+          >
+            Materialize
+          </Button>
         </div>
       }
       sidebars={
@@ -59,9 +82,40 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
         />
       }
     >
-      <PopularePlotViewsCarousel queries={data.graph.graphQueries} />
+      <div className="grid md:grid-cols-12 gap-4 md:gap-8 xl:gap-20 md:items-center px-6 py-2">
+        <div className="col-span-5">
+          <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+            {data.graph.name}
+          </h1>
+          <p className="mt-3 text-xl text-muted-foreground">
+            {data.graph.description}
+          </p>
+        </div>
+        <div className="col-span-7 flex justify-end"></div>
+      </div>
       <OntologyGraph graph={data.graph} />
+      {data.graph.graphQueries.length > 0 && (
+        <>
+          <h2 className="mt-4 text-xl f">Popular Queries</h2>
 
+          <div className="mt-1 flex flex-row gap-2">
+            {data.graph.graphQueries.map((x) => (
+              <>
+                <Card className=" p-3">
+                  <KraphGraphQuery.DetailLink
+                    object={x.id}
+                    className="scroll-m-20 text-xl font-semibold tracking-tight"
+                  >
+                    <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">
+                      {x.name}
+                    </h3>
+                  </KraphGraphQuery.DetailLink>
+                </Card>
+              </>
+            ))}
+          </div>
+        </>
+      )}
     </KraphGraph.ModelPage>
   );
 });

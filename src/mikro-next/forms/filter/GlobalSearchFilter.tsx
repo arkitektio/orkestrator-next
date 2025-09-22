@@ -1,71 +1,67 @@
-import { ToggleField } from "@/components/fields/ToggleField";
-import { AutoSubmitter } from "@/components/form/AutoSubmitter";
-import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { FancyInput } from "@/components/ui/fancy-input";
 import {
   Popover,
+  PopoverAnchor,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Toggle } from "@/components/ui/toggle";
 import { GlobalSearchQueryVariables } from "@/mikro-next/api/graphql";
-import { PopoverAnchor } from "@radix-ui/react-popover";
+import { useDebounce } from "@uidotdev/usehooks";
 import { ArrowDown } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
 
-interface FilterProps {
+export type FilterProps = {
   onFilterChanged: (values: GlobalSearchQueryVariables) => any;
-  defaultValue: GlobalSearchQueryVariables & { search: string };
+  defaultValue: GlobalSearchQueryVariables
   className?: string;
   placeholder?: string;
 }
 
-export const FilterSearch = () => {
-  return <Input type="text" placeholder="Search" />;
-};
+const Filter = ({
+  onFilterChanged,
+  defaultValue,
+  className,
+  placeholder = "Search...",
+}: FilterProps) => {
+  const [search, setSearch] = useState(defaultValue.search ?? "");
+  const [noImages, setNoImages] = useState(defaultValue.noImages ?? false);
 
-const Filter: React.FC<FilterProps> = ({ onFilterChanged, defaultValue }) => {
-  const form = useForm({
-    defaultValues: defaultValue,
-    mode: "onChange",
-  });
+  const debouncedSearch = useDebounce(search, 300);
+
+  useEffect(() => {
+    onFilterChanged({ search: debouncedSearch, noImages });
+  }, [debouncedSearch, noImages]);
 
   return (
-    <Form {...form}>
-      <AutoSubmitter onSubmit={onFilterChanged} debounce={200} />
-      <div className="w-full flex flex-row">
-        <Popover>
-          <FormField
-            control={form.control}
-            name={"search"}
-            render={({ field }) => (
-              <PopoverAnchor asChild>
-                <FormItem className="h-full w-full relative flex-row flex relative">
-                  <FormControl>
-                    <Input
-                      placeholder={"Search...."}
-                      {...field}
-                      type="string"
-                      className="flex-grow h-full bg-background text-foreground w-full"
-                    />
-                  </FormControl>
-
-                  <PopoverTrigger className="absolute right-1 top-1 text-foreground">
-                    <ArrowDown />
-                  </PopoverTrigger>
-                </FormItem>
-              </PopoverAnchor>
-            )}
-          />
-          <PopoverContent>
-            <div className="flex flex-row gap-2">
-              <ToggleField label="No Images" name="noImages">
-                Exclude Globals
-              </ToggleField>
-            </div>
-          </PopoverContent>
-        </Popover>
-      </div>
-    </Form>
+    <div className={`w-full flex flex-row ${className ?? ""}`}>
+      <Popover>
+        <PopoverAnchor asChild>
+          <div className="h-full w-full relative flex flex-row">
+            <FancyInput
+              placeholder={placeholder}
+              type="string"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="flex-grow h-full bg-background text-foreground w-full"
+            />
+            <PopoverTrigger className="absolute right-1 top-1 text-foreground">
+              <ArrowDown />
+            </PopoverTrigger>
+          </div>
+        </PopoverAnchor>
+        <PopoverContent>
+          <div className="flex flex-row gap-2">
+            <Toggle
+              isChecked={noImages}
+              onCheckedChange={setNoImages}
+            >
+              Exclude Globals
+            </Toggle>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 };
 

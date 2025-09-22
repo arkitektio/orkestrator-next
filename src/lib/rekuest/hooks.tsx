@@ -1,4 +1,4 @@
-import { useRekuest } from "@/arkitekt/Arkitekt";
+import { useRekuest } from "@/lib/arkitekt/Arkitekt";
 import {
   LazyQueryHookOptions,
   MutationHookOptions,
@@ -9,7 +9,6 @@ import {
   useQuery as useApolloQuery,
   useSubscription as useApolloSubscription,
 } from "@apollo/client";
-import { toast } from "sonner";
 import { onApolloError } from "../errorHandler";
 
 type MutationFuncType = typeof useApolloMutation;
@@ -37,7 +36,11 @@ export const useMutation: MutationFuncType = (doc, options) => {
 export const useQuery: QueryFuncType = (doc, options) => {
   const rekuest = useRekuest();
 
-  return useApolloQuery(doc, { ...options, client: rekuest });
+  return useApolloQuery(doc, {
+    ...options,
+    client: rekuest,
+    nextFetchPolicy: "network-only",
+  });
 };
 
 export const useSubscription: SubscriptionFuncType = (doc, options) => {

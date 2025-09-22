@@ -2,14 +2,13 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Card } from "@/components/ui/card";
 import { DetailPane, DetailPaneContent } from "@/components/ui/pane";
-import { KraphNode, MikroImage, MikroROI } from "@/linkers";
+import { MikroImage, MikroROI } from "@/linkers";
 import { UserInfo } from "@/lok-next/components/protected/UserInfo";
 import { TwoDViewProvider } from "@/providers/view/ViewProvider";
 import Timestamp from "react-timestamp";
 import { useGetRoiQuery, usePinRoiMutation } from "../api/graphql";
-import { RoiRGBD } from "../components/render/TwoDThree";
+import { FinalRender } from "../components/render/FInalRender";
 import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
-import { DelegatingImageRender } from "../components/render/DelegatingImageRender";
 
 export type IRepresentationScreenProps = {};
 
@@ -18,12 +17,10 @@ export const dimensionOrder = ["c", "t", "z", "y", "x"];
 export default asDetailQueryRoute(useGetRoiQuery, ({ data, refetch }) => {
   const [pinRoi] = usePinRoiMutation();
 
-  const context = data.roi.image.rgbContexts.at(0)
+  const context = data.roi.image.rgbContexts.at(0);
   return (
     <MikroROI.ModelPage
-      title={
-        data?.roi?.id
-      }
+      title={data?.roi?.id}
       object={data?.roi?.id}
       sidebars={
         <MultiSidebar
@@ -43,10 +40,28 @@ export default asDetailQueryRoute(useGetRoiQuery, ({ data, refetch }) => {
       <TwoDViewProvider initialC={0} initialT={0} initialZ={0}>
         <div className="grid grid-cols-12 grid-reverse flex-col rounded-md gap-4 mt-2 h-full">
           <div className="absolute w-full h-full overflow-hidden border-0">
-            {context && <DelegatingImageRender context={context} rois={[data.roi]} />}
+            {context && (
+              <FinalRender
+                context={context}
+                rois={[data.roi]}
+                z={data.roi.vectors.at(0).at(2)}
+                t={data.roi.vectors.at(0).at(0)}
+                xStart={data.roi.vectors.at(0).at(3)}
+                xEnd={data.roi.vectors.at(3).at(3)}
+                yStart={data.roi.vectors.at(0).at(4)}
+                yEnd={data.roi.vectors.at(3).at(4)}
+                className="object-contain"
+              />
+            )}
           </div>
           <DetailPane className="col-span-3 p-3 @container bg-black max-h-[40%] bg-clip-padding backdrop-filter backdrop-blur-2xl bg-opacity-10 z-100 overflow-hidden">
             <DetailPaneContent>
+              <p>Coordinates:</p>
+              {data.roi.vectors.length}
+              <p>{data.roi.vectors.at(0).at(4)}xStart</p>
+              <p>{data.roi.vectors.at(3).at(4)}xEnd</p>
+              <p>{data.roi.vectors.at(0).at(3)}yStart</p>
+              <p>{data.roi.vectors.at(3).at(3)}yEnd</p>
               {data?.roi?.image && (
                 <>
                   <div className="font-light">Marked in</div>
@@ -61,15 +76,12 @@ export default asDetailQueryRoute(useGetRoiQuery, ({ data, refetch }) => {
                 </>
               )}
 
-
               <div className="font-light mt-2 ">Created At</div>
               <div className="text-md mt-2 ">
                 <Timestamp date={data?.roi?.createdAt} />
               </div>
-              <div className="font-light my-2 ">
-                    Knowledge{" "}
-                  </div>
-                  <MikroROI.TinyKnowledge object={data?.roi?.id} />
+              <div className="font-light my-2 ">Knowledge </div>
+              <MikroROI.TinyKnowledge object={data?.roi?.id} />
               <div className="font-light mt-2 ">Created by</div>
               <div className="text-md mt-2 ">
                 {data?.roi?.creator?.sub && (

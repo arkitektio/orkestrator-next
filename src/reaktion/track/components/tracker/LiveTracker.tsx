@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 
-import { useTrackRiver } from "../../context";
 import {
   DetailRunFragment,
   EventsDocument,
@@ -8,6 +7,8 @@ import {
   RunEventFragment,
   useEventsBetweenQuery,
 } from "@/reaktion/api/graphql";
+import { FiPlay } from "react-icons/fi";
+import { useTrackRiver } from "../../context";
 
 export const LiveTracker = ({
   startT,
@@ -67,5 +68,13 @@ export const LiveTracker = ({
     };
   }, [run.id]);
 
-  return <></>;
+  return (
+    <div className="flex flex-row z-50">
+      <div className="flex-initial my-auto mr-4 dark:text-white cursor-pointer my-auto">
+        <FiPlay size={"1em"} />
+      </div>
+
+      <div className="flex-grow relative group my-auto">Live...</div>
+    </div>
+  );
 };

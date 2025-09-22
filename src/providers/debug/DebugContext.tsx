@@ -18,7 +18,7 @@ export type DebugContextType = {
 
 export const DebugContext = React.createContext<DebugContextType>({
   debug: false,
-  setDebug: () => {},
+  setDebug: () => { },
 });
 
 export const useDebug = () => useContext(DebugContext);

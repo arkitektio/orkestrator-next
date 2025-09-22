@@ -1,9 +1,9 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card } from "@/components/ui/card";
+import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokGroup } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
 import { ListGroupFragment } from "../../api/graphql";
-import { Card } from "@/components/ui/card";
-import { useResolve } from "@/datalayer/hooks/useResolve";
 
 interface Props {
   item: ListGroupFragment;

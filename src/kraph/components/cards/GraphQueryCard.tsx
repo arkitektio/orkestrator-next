@@ -1,3 +1,4 @@
+import { PinButton } from "@/components/pin/PinButton";
 import { Card } from "@/components/ui/card";
 import { KraphGraphQuery } from "@/linkers";
 import { MateFinder } from "@/mates/types";
@@ -5,7 +6,6 @@ import {
   ListGraphQueryFragment,
   usePinGraphQueryMutation,
 } from "../../api/graphql";
-import { PinButton } from "@/components/pin/PinButton";
 
 interface Props {
   item: ListGraphQueryFragment;

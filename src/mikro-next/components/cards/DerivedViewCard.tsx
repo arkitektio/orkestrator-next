@@ -1,21 +1,11 @@
-import { Badge } from "@/components/ui/badge";
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  KraphNode,
-  MikroFile,
   MikroFileView,
-  MikroImage,
-  KraphProtocolStep,
-  MikroROI,
-  MikroROIView,
-  MikroSpecimenView,
+  MikroImage
 } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
 import {
-  DerivedViewFragment,
-  FileViewFragment,
-  RoiViewFragment,
-  SpecimenViewFragment,
+  DerivedViewFragment
 } from "../../api/graphql";
 import { ViewCard } from "./meta/ViewCard";
 

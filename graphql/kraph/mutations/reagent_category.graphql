@@ -4,8 +4,8 @@ mutation CreateReagentCategory($input: ReagentCategoryInput!) {
   }
 }
 
-mutation UpdateReagentCategory($id: ID!) {
-  updateReagentCategory(input: {id: $id}) {
+mutation UpdateReagentCategory($input: UpdateReagentCategoryInput!) {
+  updateReagentCategory(input: $input) {
     ...ReagentCategory
   }
 }

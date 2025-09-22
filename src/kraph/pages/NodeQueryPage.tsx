@@ -1,27 +1,13 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
-import {
-  KraphGraph,
-  KraphGraphQuery,
-  KraphGraphView,
-  KraphNodeQuery,
-  KraphOntology,
-} from "@/linkers";
-import {
-  useGetGraphQueryQuery,
-  useGetNodeQuery,
-  useGetNodeQueryQuery,
-} from "../api/graphql";
+import { KraphGraph, KraphGraphView, KraphNodeQuery } from "@/linkers";
+import { useGetNodeQueryQuery } from "../api/graphql";
 
-import { PathGraph } from "../components/renderers/graph/PathGraph";
-import { GraphTable } from "../components/renderers/table/GraphTable";
-
-import ScatterPlot from "../components/charts/scatterplot/ScatterPlot";
-import { CypherSidebar } from "../components/sidebars/CypherSidebar";
-import { CypherEditor } from "../components/cypher/CypherEditor";
 import { Card } from "@/components/ui/card";
-import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
+import { CypherEditor } from "../components/cypher/CypherEditor";
+import { CypherSidebar } from "../components/sidebars/CypherSidebar";
+import { useParams, useSearchParams } from "react-router-dom";
 
 export default asDetailQueryRoute(useGetNodeQueryQuery, ({ data, refetch }) => {
   return (
@@ -65,9 +51,7 @@ export default asDetailQueryRoute(useGetNodeQueryQuery, ({ data, refetch }) => {
             </KraphGraph.DetailLink>
           </p>
         </div>
-        <Card className="p-6 h-96 col-span-7">
-          <CypherEditor cypher={data.nodeQuery.query} />
-        </Card>
+        {params}
       </div>
     </KraphNodeQuery.ModelPage>
   );

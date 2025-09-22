@@ -1,33 +1,45 @@
+import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
-import { PageLayout } from "@/components/layout/PageLayout";
+import { FormDialogAction } from "@/components/ui/form-dialog-action";
 import {
   DetailPane,
   DetailPaneHeader,
   DetailPaneTitle,
 } from "@/components/ui/pane";
-import { MikroDataset } from "@/linkers";
-import { Komments } from "@/lok-next/components/komments/Komments";
-import React from "react";
-import { useParams } from "react-router";
+import { OmeroArkProject } from "@/linkers";
+import { PlusIcon } from "lucide-react";
+import { useNavigate } from "react-router";
 import { useGetProjectQuery } from "../api/graphql";
 import DatasetCard from "../components/cards/DatasetCard";
+import { CreateDatasetForm } from "../forms/CreateDatasetForm";
 
-export type IRepresentationScreenProps = {};
 
-const Page: React.FC<IRepresentationScreenProps> = () => {
-  const { id } = useParams<{ id: string }>();
-  if (!id) return <></>;
+const Page = asDetailQueryRoute(useGetProjectQuery, ({ data, refetch }) => {
 
-  const { data } = useGetProjectQuery({
-    variables: { id },
-  });
-
+  const navigate = useNavigate();
   return (
-    <PageLayout
+    <OmeroArkProject.ModelPage
+      object={data?.project.id}
       title={data?.project?.name}
-      actions={<MikroDataset.Actions id={id} />}
-      sidebars={<Komments identifier="@omero-ark/project" object={id} />}
-    >
+      pageActions={<> <FormDialogAction
+        variant={"outline"}
+        size={"sm"}
+        label="Create"
+        description="Create a new Graph"
+        buttonChildren={
+          <>
+            <PlusIcon className="h-4 w-4 mr-2" />
+            Create
+          </>
+        }
+        onSubmit={(item) => {
+          console.log(item);
+          refetch();
+        }}
+      >
+        <CreateDatasetForm project={data?.project} />
+      </FormDialogAction></>}>
+
       <DetailPane className="p-3 @container">
         <DetailPaneHeader>
           <DetailPaneTitle actions={<></>}>
@@ -51,8 +63,8 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
           {(item, index) => <DatasetCard dataset={item} key={index} />}
         </ListRender>
       </DetailPane>
-    </PageLayout>
+    </OmeroArkProject.ModelPage>
   );
-};
+});
 
 export default Page;

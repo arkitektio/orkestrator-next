@@ -15,20 +15,21 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { TooltipButton } from "@/components/ui/tooltip-button";
+import { useRekuest } from "@/lib/arkitekt/Arkitekt";
 import {
   FlussPortFragment,
   GraphNodeKind,
   ReactiveImplementation,
 } from "@/reaktion/api/graphql";
-import { rekuestNodeToMatchingNode } from "@/reaktion/plugins/rekuest";
+import { rekuestActionToMatchingNode } from "@/reaktion/plugins/rekuest";
 import { nodeIdBuilder } from "@/reaktion/utils";
 import {
-  ConstantNodeDocument,
-  ConstantNodeQuery,
+  ConstantActionDocument,
+  ConstantActionQuery,
   DemandKind,
   PortKind,
-  useAllNodesQuery,
-  useProtocolOptionsLazyQuery,
+  useAllActionsQuery,
+  useProtocolOptionsLazyQuery
 } from "@/rekuest/api/graphql";
 import { ArrowDown, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -40,7 +41,6 @@ import {
 } from "../../types";
 import { useEditRiver } from "../context";
 import { ContextualContainer } from "./ContextualContainer";
-import { useRekuest } from "@/arkitekt/Arkitekt";
 
 export const SearchForm = (props: { onSubmit: (data: any) => void }) => {
   const form = useForm({
@@ -328,7 +328,7 @@ export const EdgeContextualRekuestNode = (props: {
   const leftPorts = props.params.leftNode.data.outs[props.params.leftStream];
   const rightPorts = props.params.rightNode.data.ins[props.params.rightStream];
 
-  const { data, refetch, variables } = useAllNodesQuery({
+  const { data, refetch, variables } = useAllActionsQuery({
     variables: {
       filters: {
         demands: [
@@ -374,19 +374,19 @@ export const EdgeContextualRekuestNode = (props: {
   }, [props.search]);
 
   const { addEdgeContextualNode } = useEditRiver();
-  const { client } = useRekuest();
+  const client = useRekuest();
 
   const onNodeClick = (id: string) => {
     client &&
       client
-        .query<ConstantNodeQuery>({
-          query: ConstantNodeDocument,
+        .query<ConstantActionQuery>({
+          query: ConstantActionDocument,
           variables: { id: id },
         })
         .then(async (event) => {
           console.log(event);
-          if (event.data?.node) {
-            let flownode = rekuestNodeToMatchingNode(event.data?.node, {
+          if (event.data?.action) {
+            let flownode = rekuestActionToMatchingNode(event.data?.action, {
               x: 0,
               y: 0,
             });
@@ -398,7 +398,7 @@ export const EdgeContextualRekuestNode = (props: {
 
   return (
     <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
-      {data?.nodes.map((node) => (
+      {data?.actions.map((node) => (
         <Tooltip>
           <TooltipTrigger>
             <Card

@@ -92,11 +92,9 @@ export const UploadZone: React.FC<{
           key={index}
           className="border border-gray-800 cursor-pointer rounded  text-white bg-gray-900 hover:shadow-lg group relative"
           style={{
-            background: `center bottom linear-gradient(to right, rgba(0,220,0,0.75) ${
-              future.progress && Math.floor(future.progress * 100)
-            }%, rgba(0,0,0,0.95) ${
-              future.progress && Math.floor(future.progress * 100)
-            }% ${future.progress && Math.floor((1 - future.progress) * 100)}%)`,
+            background: `center bottom linear-gradient(to right, rgba(0,220,0,0.75) ${future.progress && Math.floor(future.progress * 100)
+              }%, rgba(0,0,0,0.95) ${future.progress && Math.floor(future.progress * 100)
+              }% ${future.progress && Math.floor((1 - future.progress) * 100)}%)`,
           }}
         >
           <div className="truncate p-5">
@@ -114,9 +112,8 @@ export const UploadZone: React.FC<{
         </div>
       ))}
       <div
-        className={`${
-          !canDrop && "hidden"
-        } bg-slate-300 border border-gray-800 cursor-pointer rounded text-white  hover:shadow-lg`}
+        className={`${!canDrop && "hidden"
+          } bg-slate-300 border border-gray-800 cursor-pointer rounded text-white  hover:shadow-lg`}
         ref={drop}
       >
         <div className="truncate p-5">

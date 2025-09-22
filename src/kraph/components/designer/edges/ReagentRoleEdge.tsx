@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -7,13 +8,9 @@ import {
   type ReactFlowState,
 } from "@xyflow/react";
 import {
-  EntityRoleEdge,
-  ReagentRoleEdge,
-  RelationEdge,
-  StagingRelationEdge,
+  ReagentRoleEdge
 } from "../types";
 import { getEdgeParams } from "../utils";
-import { Card } from "@/components/ui/card";
 
 export type GetSpecialPathParams = {
   sourceX: number;
@@ -29,9 +26,8 @@ export const getSpecialPath = (
   const centerX = (sourceX + targetX) / 2;
   const centerY = (sourceY + targetY) / 2;
 
-  return `M ${sourceX} ${sourceY} Q ${centerX} ${
-    centerY + offset
-  } ${targetX} ${targetY}`;
+  return `M ${sourceX} ${sourceY} Q ${centerX} ${centerY + offset
+    } ${targetX} ${targetY}`;
 };
 
 export default ({
@@ -92,7 +88,7 @@ export default ({
             position: "absolute",
             transform: `translate(-50%, -50%) translate(${centerX}px,${centerY + offset}px)`,
           }}
-          className="p-1 text-xs group flex-row flex gap-2 ring-2 ring-blue ring-blue-200"
+          className="p-1 text-xs group flex-row flex gap-2 ring-2 ring-blue ring-blue-200 nodrag nopan"
         >
           <div className="text-slate-300">as</div>{" "}
           <div className="text-xs">{data?.role}</div>

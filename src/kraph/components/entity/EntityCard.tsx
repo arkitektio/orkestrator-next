@@ -4,8 +4,8 @@ import {
   CardDescription,
   CardTitle,
 } from "@/components/ui/card";
-import { KraphNode, MikroSpecimen } from "@/linkers";
 import { useGetEntityQuery } from "@/kraph/api/graphql";
+import { KraphNode, MikroSpecimen } from "@/linkers";
 
 export const EntityCard = ({ id }: { id: string }) => {
   const { data } = useGetEntityQuery({

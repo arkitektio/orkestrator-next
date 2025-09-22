@@ -1,27 +1,23 @@
-import { Guard } from "@/arkitekt/Arkitekt";
-import registry, { Registry } from "../registry";
-import { ModuleWrapper } from "../Wrapper";
-import { useRef, useState } from "react";
+import { PageLayout } from "@/components/layout/PageLayout";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { MetaApplication, MetaApplicationAdds } from "@/hooks/use-metaapp";
+import { Guard } from "@/lib/arkitekt/Arkitekt";
+import { useSmartDrop } from "@/providers/smart/hooks";
+import {
+  useAgentsQuery,
+  useCreateBlokMutation
+} from "@/rekuest/api/graphql";
+import { Structure } from "@/types";
 import {
   DockviewApi,
   DockviewReact,
   DockviewReadyEvent,
   IDockviewPanelProps,
 } from "dockview";
-import { PanelKind, useAgentsQuery } from "@/rekuest/api/graphql";
-import { Button } from "@/components/ui/button";
-import { MetaApplication } from "@/hooks/use-metaapp";
-import React from "react";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
-import { PageLayout } from "@/components/layout/PageLayout";
-import { useSmartDrop } from "@/providers/smart/hooks";
-import { BlokBlok } from "@/linkers";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Structure } from "@/types";
+import { useRef, useState } from "react";
+import registry from "../registry";
+import { ModuleWrapper } from "../Wrapper";
 
 const components = registry.components
   .keys()
@@ -54,25 +50,26 @@ const components = registry.components
 
 export const Selector = (props: {
   module: string;
-  app: MetaApplication<any, any>;
+  app: MetaApplicationAdds<any>;
   addPanel: (key: string, agent: string) => void;
 }) => {
-  const stateHashes = Object.keys(props.app.states).map((key) => {
-    return props.app.states[key].manifest?.hash || "";
+  if (!props.app.app) {
+    return <>No app defined</>;
+  }
+
+  const stateDemands = Object.keys(props.app.app.states).map((key) => {
+    return props.app.app.states[key].demand;
   });
 
-  const templateHashes = Object.keys(props.app.actions).map((key) => {
-    return props.app.actions[key].manifest?.hash || "";
+  const actionDemands = Object.keys(props.app.app.actions).map((key) => {
+    return props.app.app.actions[key].demand;
   });
 
-  console.log("STATE_HASHES", stateHashes);
-  console.log("TEMPLATE_HASHES", templateHashes);
-
-  const { data } = useAgentsQuery({
+  const { data, variables } = useAgentsQuery({
     variables: {
       filters: {
-        hasStates: stateHashes.length > 0 ? stateHashes : undefined,
-        hasTemplates: templateHashes.length > 0 ? templateHashes : undefined,
+        stateDemands: stateDemands.length > 0 ? stateDemands : undefined,
+        actionDemands: actionDemands.length > 0 ? actionDemands : undefined,
         distinct: true,
       },
     },
@@ -83,7 +80,11 @@ export const Selector = (props: {
   }
 
   if (data.agents.length === 0) {
-    return <div>No agents Implementing this</div>;
+    return (
+      <div>
+        No agents Implementing this. {JSON.stringify(variables, null, 3)}
+      </div>
+    );
   }
 
   return (
@@ -137,7 +138,6 @@ export const Home = (props) => {
     if (api) {
       const layout = api.toJSON();
       localStorage.setItem("dockview-layout", JSON.stringify(layout));
-      console.log("Layout saved to localStorage");
     }
   };
 
@@ -147,8 +147,40 @@ export const Home = (props) => {
     setDroppedItems(items);
   }, []);
 
+  const [createBlok] = useCreateBlokMutation();
+
+  const createBloks = async () => {
+    for (const [key, mod] of registry.modules.entries()) {
+      if (mod.app) {
+        const stateDemands = Object.keys(mod.app.states).map((key) => {
+          return { key: key, ...mod.app.states[key].demand };
+        });
+
+        const actionDemands = Object.keys(mod.app.actions).map((key) => {
+          return { key: key, ...mod.app.actions[key].demand };
+        });
+
+        let x = await createBlok({
+          variables: {
+            input: {
+              name: mod.app.name,
+              stateDemands: stateDemands,
+              actionDemands: actionDemands,
+              url: `orkestrator:///${key}`,
+            },
+          },
+        });
+
+        console.log("Created blok", x.data?.createBlok);
+      }
+    }
+  };
+
   return (
-    <PageLayout title="Bloks">
+    <PageLayout
+      title="Bloks"
+      pageActions={<Button onClick={() => createBloks()}>Materialize</Button>}
+    >
       <div className="h-full w-full flex flex-col">
         <Guard.Rekuest>
           <Dialog

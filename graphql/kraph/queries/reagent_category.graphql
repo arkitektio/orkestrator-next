@@ -22,3 +22,9 @@ query ListReagentCategory(
     ...ListReagentCategory
   }
 }
+
+query ListGraphReagentCategories($id: ID!) {
+  reagentCategories(filters: { graph: $id }) {
+    ...ListReagentCategory
+  }
+}

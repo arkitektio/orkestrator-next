@@ -1,5 +1,5 @@
-query GetPixelView($id: ID!) {
-  pixelView(id: $id) {
-    ...DetailPixelView
+query GetMaskedPixelInfo($id: ID!) {
+  maskedPixelInfo(id: $id) {
+    label
   }
 }

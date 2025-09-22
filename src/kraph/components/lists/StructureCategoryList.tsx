@@ -1,11 +1,10 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { KraphReagentCategory, KraphStructureCategory } from "@/linkers";
+import { KraphStructureCategory } from "@/linkers";
 import {
   OffsetPaginationInput,
   OntologyFilter,
   useListStructureCategoryQuery
 } from "../../api/graphql";
-import ReagentCategoryCard from "../cards/ReagentCategoryCard";
 import StructureCategoryCard from "../cards/StructureCategoryCard";
 
 export type Props = {

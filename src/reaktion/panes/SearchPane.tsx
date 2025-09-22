@@ -21,7 +21,7 @@ import WorkspaceCard from "../components/cards/WorkspaceCard";
 import { CreateWorkspaceForm } from "../components/forms/CreateWorkspaceForm";
 import NodeSearchFilter from "../components/forms/filter/NodeSearchFilter";
 
-interface IDataSidebarProps {}
+interface IDataSidebarProps { }
 
 export const NavigationPane = (props: {}) => {
   const { data, refetch, variables } = useWorkspacesQuery();

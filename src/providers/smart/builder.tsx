@@ -2,16 +2,21 @@ import {
   ModelPageLayout,
   ModelPageLayoutProps,
 } from "@/components/layout/ModelPageLayout";
+import { TinyStructureBox } from "@/kraph/boxes/TinyStructureBox";
+import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
 import { Komments } from "@/lok-next/components/komments/Komments";
-import { usePrimaryNodesQuery } from "@/rekuest/api/graphql";
-import { NewButton, NewButtonProps } from "@/rekuest/buttons/NewButton";
+import { usePrimaryActionsQuery } from "@/rekuest/api/graphql";
 import {
   ObjectButton,
   ObjectButtonProps,
 } from "@/rekuest/buttons/ObjectButton";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
 import { useAssignProgress } from "@/rekuest/hooks/useAssignProgress";
+import { ObjectID } from "@/types";
 import { NavLink } from "react-router-dom";
+import { SmartDropZone } from "./Drop";
+import { SearchFunction, smartRegistry } from "./registry";
+import { ShareDialog } from "./ShareDialog";
 import { SmartModel } from "./SmartModel";
 import {
   BaseLinkProps,
@@ -20,10 +25,6 @@ import {
   ModelLinkProps,
   OmitedNavLinkProps,
 } from "./types";
-import { SearchFunction, smartRegistry } from "./registry";
-import { KnowledgeSidebar } from "@/kraph/components/sidebars/KnowledgeSidebar";
-import { SmartDropZone } from "./Drop";
-import { TinyStructureBox } from "@/kraph/boxes/TinyStructureBox";
 
 const buildBaseLink = (to: string) => {
   return ({ children, ...props }: BaseLinkProps) => {
@@ -33,6 +34,26 @@ const buildBaseLink = (to: string) => {
       </NavLink>
     );
   };
+};
+
+
+export const SmartLink = ({ identifier, object, subroute, subobject, children, ...props }: { identifier: string, object: string, subroute?: string, subobject?: string } & OmitedNavLinkProps) => {
+
+  const model = smartRegistry.findModel(identifier);
+  if (!model) {
+    return null;
+  }
+
+  return (
+    <NavLink
+      {...props}
+      to={`/${model.path}/${object}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}`}
+      title="Open"
+      className={props.className}
+    >
+      {children}
+    </NavLink>
+  );
 };
 
 const buildModelLink = (to: string) => {
@@ -50,7 +71,7 @@ const buildModelLink = (to: string) => {
   };
 };
 
-const linkBuilder = (to: string) => (object: string | undefined) => {
+export const linkBuilder = (to: string) => (object: string | undefined) => {
   if (!object) {
     return `/error`;
   }
@@ -123,7 +144,7 @@ const buildModelPage = (model: Identifier) => {
 };
 
 const buildUseNodesQuery = (model: Identifier) => {
-  return usePrimaryNodesQuery({
+  return usePrimaryActionsQuery({
     variables: {
       identifier: model,
     },
@@ -144,30 +165,36 @@ const buildUseLive = (model: Identifier, object: string) => {
   });
 };
 
-export type SmartObjectButtonProps = Omit<ObjectButtonProps, "identifier">;
-export type SmartNewButtonProps = Omit<NewButtonProps, "identifier">;
+export type SmartObjectButtonProps = Omit<ObjectButtonProps, "objects"> & {
+  object: ObjectID;
+};
+export type SmartNewButtonProps = Omit<ObjectButtonProps, "objects">;
 
 const buildObjectButton = (model: Identifier) => {
-  return ({ ...props }: SmartObjectButtonProps) => {
-    return <ObjectButton identifier={model} {...props} />;
+  return ({ object, ...props }: SmartObjectButtonProps) => {
+    return (
+      <ObjectButton objects={[{ identifier: model, object }]} {...props} />
+    );
   };
 };
 
 const buildNewButton = (model: Identifier) => {
   return ({ ...props }: SmartNewButtonProps) => {
-    return <NewButton identifier={model} {...props} />;
+    return <ObjectButton returns={[model]} objects={[]} {...props} />;
   };
 };
 
 export const buildSmart = (
   model: Identifier,
   to: string,
-  searchFunction?: SearchFunction,
+  options?: {
+    searchFunction?: SearchFunction;
+  },
 ) => {
   smartRegistry.register({
     identifier: model,
     path: to,
-    search: searchFunction,
+    search: options?.searchFunction,
     description: "A smart model",
   });
 

@@ -10,12 +10,12 @@ import {
 import { KabinetFlavour } from "@/linkers";
 import {
   DemandKind,
-  ListTemplateFragment,
+  ListImplementationFragment,
   PortKind,
-  useTemplatesQuery,
+  useImplementationsQuery,
 } from "@/rekuest/api/graphql";
 import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
-import { useTemplateAction } from "@/rekuest/hooks/useTemplateAction";
+import { useImplementationAction } from "@/rekuest/hooks/useImplementationAction";
 import { MateFinder } from "../../../mates/types";
 import { ListFlavourFragment } from "../../api/graphql";
 
@@ -25,15 +25,17 @@ interface Props {
 }
 
 export const AssignButton = (props: {
-  template: ListTemplateFragment;
+  template: ListImplementationFragment;
   release: string;
 }) => {
-  const { assign, latestAssignation, template } = useTemplateAction({
-    id: props.template.id,
-  });
+  const { assign, latestAssignation, implementation } = useImplementationAction(
+    {
+      id: props.template.id,
+    },
+  );
 
   const doassign = async () => {
-    let argKey = template?.node.args.at(0)?.key;
+    let argKey = implementation?.action.args.at(0)?.key;
     if (!argKey) {
       return;
     }
@@ -55,10 +57,10 @@ export const AssignButton = (props: {
 };
 
 const InstallDialog = (props: { item: { id: string } }) => {
-  const { data } = useTemplatesQuery({
+  const { data } = useImplementationsQuery({
     variables: {
       filters: {
-        node: {
+        action: {
           demands: [
             {
               kind: DemandKind.Args,
@@ -95,7 +97,7 @@ const InstallDialog = (props: { item: { id: string } }) => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right">
-          {data?.templates.map((t) => (
+          {data?.implementations.map((t) => (
             <AssignButton template={t} release={props.item.id} />
           ))}
         </DropdownMenuContent>

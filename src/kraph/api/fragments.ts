@@ -14,7 +14,8 @@
       "ProtocolEventCategory",
       "ReagentCategory",
       "RelationCategory",
-      "StructureCategory"
+      "StructureCategory",
+      "StructureRelationCategory"
     ],
     "CategoryDefintion": [
       "EntityCategoryDefinition",
@@ -25,11 +26,13 @@
       "Description",
       "Measurement",
       "Participant",
-      "Relation"
+      "Relation",
+      "StructureRelation"
     ],
     "EdgeCategory": [
       "MeasurementCategory",
-      "RelationCategory"
+      "RelationCategory",
+      "StructureRelationCategory"
     ],
     "Node": [
       "Entity",
@@ -53,6 +56,12 @@
       "Table"
     ],
     "PathPairsTable": [
+      "Pairs",
+      "Path",
+      "Table"
+    ],
+    "PathPairsTableNodeList": [
+      "NodeList",
       "Pairs",
       "Path",
       "Table"

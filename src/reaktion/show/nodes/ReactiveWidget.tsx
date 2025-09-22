@@ -19,7 +19,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { NodeDescription } from "@/lib/rekuest/NodeDescription";
+import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import { ReactiveImplementation } from "@/reaktion/api/graphql";
 import { InStream } from "@/reaktion/base/Instream";
 import { OutStream } from "@/reaktion/base/Outstream";
@@ -65,7 +65,7 @@ export const Default = ({ data }: ShapeProps) => {
           <Tooltip>
             <TooltipTrigger>
               <CardTitle className="text-sm font-light">
-                <NodeDescription
+                <ActionDescription
                   description={data.title}
                   variables={{ ...data.constantsMap, __ports: data.ins }}
                 />
@@ -73,7 +73,7 @@ export const Default = ({ data }: ShapeProps) => {
             </TooltipTrigger>
             <TooltipContent>
               <CardDescription className="text-xs">
-                <NodeDescription
+                <ActionDescription
                   description={data.description}
                   variables={data.constantsMap}
                 />
@@ -99,7 +99,7 @@ export const Select = ({ data }: ShapeProps) => {
             </TooltipTrigger>
             <TooltipContent>
               <CardDescription className="text-xs">
-                <NodeDescription
+                <ActionDescription
                   description={data.description}
                   variables={data.constantsMap}
                 />
@@ -264,6 +264,7 @@ const contextMenuMap: {
   [ReactiveImplementation.BufferComplete]: DefaultContext,
   [ReactiveImplementation.Chunk]: DefaultContext,
   [ReactiveImplementation.Omit]: DefaultContext,
+  [ReactiveImplementation.BufferCount]: DefaultContext,
   [ReactiveImplementation.Add]: DefaultContext,
   [ReactiveImplementation.All]: DefaultContext,
   [ReactiveImplementation.And]: DefaultContext,
@@ -299,6 +300,8 @@ const shapeMap: { [key in ReactiveImplementation]: React.FC<ShapeProps> } = {
   [ReactiveImplementation.All]: Default,
   [ReactiveImplementation.And]: Default,
   [ReactiveImplementation.BufferUntil]: Default,
+  [ReactiveImplementation.Reorder]: Reorder,
+  [ReactiveImplementation.BufferCount]: Default,
   [ReactiveImplementation.Delay]: Default,
   [ReactiveImplementation.DelayUntil]: Default,
   [ReactiveImplementation.Divide]: Default,
@@ -318,13 +321,13 @@ const shapeMap: { [key in ReactiveImplementation]: React.FC<ShapeProps> } = {
 const shapeForImplementation = (
   implementation: ReactiveImplementation,
 ): React.FC<ShapeProps> => {
-  return shapeMap[implementation];
+  return shapeMap[implementation] || Default;
 };
 
 const contextMenuForImplementation = (
   implementation: ReactiveImplementation,
 ): React.FC<ContextMenuProps> => {
-  return contextMenuMap[implementation];
+  return contextMenuMap[implementation] || DefaultContext;
 };
 
 export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({

@@ -7,24 +7,16 @@ import { SMART_MODEL_DROP_TYPE } from "@/constants";
 import { cn } from "@/lib/utils";
 import { SmartContext } from "@/rekuest/buttons/ObjectButton";
 import { Structure } from "@/types";
-import { useFloating } from "@floating-ui/react";
-import { Portal } from "@radix-ui/react-portal";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
-import { useMySelection } from "../selection/SelectionContext";
-import { SmartModelProps } from "./types";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { useAssign } from "@/rekuest/hooks/useAssign";
-import {
-  ListTemplateFragment,
-  PrimaryNodeFragment,
-} from "@/rekuest/api/graphql";
-import { toast } from "sonner";
-import { NodeAssignForm } from "@/rekuest/forms/NodeAssignForm";
 import { NativeTypes } from "react-dnd-html5-backend";
-import { TemplateAssignForm } from "@/rekuest/forms/TemplateAssignForm";
-import { p } from "node_modules/@udecode/plate-media/dist/BasePlaceholderPlugin-Huy5PFfu";
-import { el } from "date-fns/locale";
+import {
+  useMySelect,
+  useMySelection,
+  useSelection,
+} from "../selection/SelectionContext";
+import { SmartModelProps } from "./types";
+import { is } from "date-fns/locale";
 
 export const SmartModel = ({
   showSelfMates = true,
@@ -33,285 +25,235 @@ export const SmartModel = ({
   mates,
   ...props
 }: SmartModelProps) => {
-  const self: Structure = {
-    identifier: props.identifier,
-    object: props.object,
-  };
+  const self: Structure = React.useMemo(
+    () => ({
+      identifier: props.identifier,
+      object: props.object,
+    }),
+    [props.identifier, props.object],
+  );
+
+  const portalRef = React.useRef<HTMLDivElement>(null);
 
   const [partners, setPartners] = useState<Structure[]>([]);
-  const { refs, floatingStyles } = useFloating({
-    strategy: "fixed",
-    transform: true,
-    open: partners.length > 0,
-    onOpenChange: (open) => {
-      if (!open) {
-        setPartners([]);
-      }
-    },
-  });
 
-  useEffect(() => {
-    if (partners.length > 0) {
-      const listener = {
-        handleEvent: (e: Event) => {
-          const target = e.target as HTMLElement;
-          const partnerCard = target.closest(".partnercard");
-          if (!partnerCard) {
-            setPartners([]);
-          }
-        },
-      };
-      document.addEventListener("mousedown", listener);
+  const dropHandler = React.useCallback((item: any, monitor: any) => {
+    console.log("drop", item);
 
-      return () => {
-        document.removeEventListener("mousedown", listener);
-      };
+    if (monitor.getItemType() === SMART_MODEL_DROP_TYPE) {
+      console.log("SMART", item);
+      setPartners(item);
+      return {};
     }
-  }, [partners]);
 
-  const [{ isOver, canDrop }, drop] = useDrop(() => {
-    return {
-      accept: [SMART_MODEL_DROP_TYPE, NativeTypes.TEXT, NativeTypes.URL],
-      drop: (item, monitor) => {
-        console.log("drop", item);
-
-        if (monitor.getItemType() === SMART_MODEL_DROP_TYPE) {
-          console.log("SMART", item);
-          setPartners(item);
-          return {};
+    if (monitor.getItemType() === NativeTypes.URL) {
+      console.log("URL", item);
+      const url = item.urls;
+      const partners: Structure[] = [];
+      for (let i = 0; i < url.length; i++) {
+        const the_url = url[i];
+        console.log("URL", the_url);
+        const match = the_url.match(/arkitekt:\/\/([^:]+):([^\/]+)/);
+        if (match) {
+          console.log("MATCH", match);
+          const [_, identifier, object] = match;
+          const structure: Structure = { identifier, object };
+          partners.push(structure);
         }
-
-        if (monitor.getItemType() === NativeTypes.URL) {
-          console.log("URL", item);
-          let url = item.urls;
-          let partners: Structure[] = [];
-          for (let i = 0; i < url.length; i++) {
-            let the_url = url[i];
-            console.log("URL", the_url);
-            let match = the_url.match(/arkitekt:\/\/([^:]+):([^\/]+)/);
-            if (match) {
-              console.log("MATCH", match);
-              let [_, identifier, object] = match;
-              let structure: Structure = { identifier, object };
-              partners.push(structure);
-            }
-          }
-          if (partners.length > 0) {
-            setPartners(partners);
-            return {};
-          }
-        }
-
-        let text = item.text;
-
-        if (item.text) {
-          try {
-            let structure: Structure = JSON.parse(text);
-            setPartners([structure]);
-            return {};
-          } catch (e) {
-            console.error(e);
-          }
-        }
-
-        alert(`Drop unkonwn ${item}`);
-
+      }
+      if (partners.length > 0) {
+        setPartners(partners);
         return {};
-      },
-      collect: (monitor) => {
-        return {
-          isOver: !!monitor.isOver(),
-          canDrop: !!monitor.canDrop(),
-        };
-      },
-    };
-  });
+      }
+    }
+
+    const text = item.text;
+
+    if (item.text) {
+      try {
+        const structure: Structure = JSON.parse(text);
+        setPartners([structure]);
+        return {};
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    alert(`Drop unknown ${item}`);
+    return {};
+  }, []);
+
+  const collectDrop = React.useCallback(
+    (monitor: any) => ({
+      isOver: !!monitor.isOver(),
+      canDrop: !!monitor.canDrop(),
+    }),
+    [],
+  );
+
+  const [{ isOver }, drop] = useDrop(
+    () => ({
+      accept: [SMART_MODEL_DROP_TYPE, NativeTypes.TEXT, NativeTypes.URL],
+      drop: dropHandler,
+      collect: collectDrop,
+    }),
+    [dropHandler, collectDrop],
+  );
+
+  const collectDrag = React.useCallback(
+    (monitor: any) => ({
+      isDragging: monitor.isDragging(),
+    }),
+    [],
+  );
 
   const [{ isDragging }, drag] = useDrag(
     () => ({
       type: SMART_MODEL_DROP_TYPE,
       item: [self],
-      collect: (monitor) => {
-        console.log("dragging", monitor.isDragging());
-        return {
-          isDragging: monitor.isDragging(),
-        };
-      },
+      collect: collectDrag,
     }),
-    [self],
+    [self, collectDrag],
   );
 
-  const { isSelected } = useMySelection({
-    identifier: props.identifier,
-    object: props.object,
-  });
+  const clearPartners = React.useCallback(() => {
+    setPartners([]);
+  }, []);
 
-  const [dialogNode, setDialogNode] = React.useState<{
-    node: PrimaryNodeFragment;
-    args: { [key: string]: any };
-    template?: ListTemplateFragment;
-  } | null>(null);
+  const handleDragStart = React.useCallback(
+    (e: React.DragEvent) => {
+      const data = JSON.stringify(self);
+      e.dataTransfer.setData("text/plain", data);
+      e.dataTransfer.setData(
+        "text/uri-list",
+        `arkitekt://${props.identifier}:${props.object}`,
+      );
+    },
+    [self, props.identifier, props.object],
+  );
 
-  const { assign } = useAssign();
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        portalRef.current &&
+        !portalRef.current.contains(event.target as Node)
+      ) {
+        clearPartners();
+      }
+    };
 
-  const conditionalAssign = async (node: PrimaryNodeFragment) => {
-    let the_key = node.args?.at(0)?.key;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        clearPartners();
+      }
+    };
 
-    let neededAdditionalPorts = node.args.filter(
-      (x) => !x.nullable && x.key != the_key,
-    );
-    if (!the_key) {
-      toast.error("No key found");
-      return;
-    }
-    if (neededAdditionalPorts.length > 0) {
-      setDialogNode({ node: node, args: { [the_key]: props.object } });
-      return;
-    }
-
-    try {
-      await assign({
-        node: node.id,
-        args: {
-          [the_key]: props.object,
-        },
-      });
-    } catch (e) {
-      toast.error(e.message);
-    }
-  };
-
-  const onTemplateSelect = async (
-    node: PrimaryNodeFragment,
-    template: ListTemplateFragment,
-  ) => {
-    let the_key = node.args?.at(0)?.key;
-
-    let neededAdditionalPorts = node.args.filter(
-      (x) => !x.nullable && x.key != the_key,
-    );
-    if (!the_key) {
-      toast.error("No key found");
-      return;
+    if (partners.length > 0) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
     }
 
-    if (neededAdditionalPorts.length > 0) {
-      setDialogNode({
-        node: node,
-        args: { [the_key]: props.object },
-        template: template,
-      });
-      return;
-    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [partners.length, clearPartners]);
 
-    try {
-      await assign({
-        template: template.id,
-        args: {
-          [the_key]: props.object,
-        },
-      });
-    } catch (e) {
-      toast.error(e.message);
-    }
-  };
+  const { isBSelected, toggleB, isSelected, toggle, selection, bselection } =
+    useMySelect({
+      self,
+    });
+
+  const className = React.useMemo(
+    () =>
+      cn(
+        props.className,
+        "@container relative z-10 cursor-pointer",
+        isSelected &&
+          "group ring ring-1 ring-offset-2 ring-offset-transparent rounded",
+        isBSelected && "group ring ring-2  rounded ring-red-500",
+        isDragging && "opacity-50 ring-2 ring-gray-600 ring rounded rounded-md",
+        isOver && "shadow-xl ring-2 border-gray-200 ring rounded rounded-md",
+      ),
+    [props.className, isSelected, isDragging, isOver, isBSelected],
+  );
 
   return (
     <div
-      key={props.object}
+      key={`${props.identifier}:${props.object}`}
       ref={drop}
-      onDragStart={(e) => {
-        // Package the data as text/uri-list
-        const data = JSON.stringify(self);
-        e.dataTransfer.setData("text/plain", data);
-        e.dataTransfer.setData(
-          "text/uri-list",
-          `arkitekt://${props.identifier}:${props.object}`,
-        );
+      onClick={(e) => {
+        if (e.shiftKey && !e.ctrlKey) {
+          toggle();
+          return;
+        }
+        if (e.shiftKey && e.ctrlKey) {
+          toggleB();
+          return;
+        }
       }}
+      className={cn("relative", props.containerClassName)}
+      onDragStart={handleDragStart}
       data-identifier={props.identifier}
       data-object={props.object}
+      data-selected={isSelected ? "true" : "false"}
+      data-bselected={isBSelected ? "true" : "false"}
     >
-      <Dialog>
-        <ContextMenu>
-          <ContextMenuContent className="dark:border-gray-700 max-w-md">
-            {isSelected ? (
-              <>Multiselect is not implemented yet</>
-            ) : (
-              <SmartContext
-                identifier={props.identifier}
-                object={props.object}
-                partners={[]}
-                onSelectNode={conditionalAssign}
-                onSelectTemplate={onTemplateSelect}
-              />
-            )}
-          </ContextMenuContent>
-          <ContextMenuTrigger asChild>
-            <div
-              ref={drag}
-              className={cn(
-                "@container relative z-10 cursor-pointer",
-                isSelected && "group ring ring-1 ",
-                isDragging &&
-                  "opacity-50 ring-2 ring-gray-600 ring rounded rounded-md",
-                isOver &&
-                  "shadow-xl ring-2 border-gray-200 ring rounded rounded-md",
-              )}
-              draggable={true}
-              onDragStart={(e) => {
-                // Package the data as text/uri-list
-                const data = JSON.stringify(self);
-                e.dataTransfer.setData("text/plain", data);
-              }}
-              data-identifier={props.identifier}
-              data-object={props.object}
-            >
-              {props.children}
-              {isOver && <CombineButton />}
-              <div
-                className="absolute top-0 right-0 "
-                ref={refs.setReference}
-              />
-
-              {partners.length > 0 && (
-                <Portal>
-                  <div
-                    ref={refs.setFloating}
-                    className={cn(
-                      " bg-background border border-gray-500 rounded-lg shadow-lg p-2 z-[9999] w-[300px] aspect-square",
-                    )}
-                    style={floatingStyles}
-                  >
-                    <SmartContext
-                      identifier={props.identifier}
-                      object={props.object}
-                      partners={partners}
-                      onSelectNode={conditionalAssign}
-                      onSelectTemplate={onTemplateSelect}
-                    />
-                  </div>
-                </Portal>
-              )}
-            </div>
-          </ContextMenuTrigger>
-        </ContextMenu>
-        <DialogContent>
-          {dialogNode?.template ? (
-            <TemplateAssignForm
-              id={dialogNode.template.id}
-              args={dialogNode.args}
-              hidden={dialogNode.args}
-            />
+      {isBSelected && (
+        <div className="absolute top-0 right-0 text-white z-[9998] translate-x-1/2 -translate-y-1/2 bg-red-500 w-6 h-6 flex items-center justify-center rounded-full text-xs font-semibold">
+          {isBSelected}
+        </div>
+      )}
+      {isSelected && (
+        <div className="absolute top-0 right-0 text-white z-[9998] translate-x-1/2 -translate-y-1/2 bg-primary w-6 h-6 flex items-center justify-center rounded-full text-xs font-semibold">
+          {isSelected}
+        </div>
+      )}
+      <ContextMenu modal={false}>
+        <ContextMenuContent className="dark:border-gray-700 max-w-md">
+          {selection && selection.length > 0 ? (
+            <SmartContext objects={selection} partners={bselection} />
           ) : (
-            <NodeAssignForm
-              id={dialogNode?.node.id || ""}
-              args={dialogNode?.args}
-              hidden={dialogNode?.args}
-            />
+            <SmartContext objects={[self]} partners={[]} />
           )}
-        </DialogContent>
-      </Dialog>
+        </ContextMenuContent>
+        <ContextMenuTrigger asChild>
+          <div
+            ref={drag}
+            className={className}
+            draggable={false}
+            data-identifier={props.identifier}
+            data-object={props.object}
+          >
+            {props.children}
+            {isOver && <CombineButton />}
+
+            {partners.length > 0 && (
+              <div
+                className="fixed inset-0 z-[9998] flex items-center justify-center"
+                ref={portalRef}
+              >
+                <div
+                  className="fixed inset-0 bg-black bg-opacity-50"
+                  onClick={clearPartners}
+                />
+                <div
+                  className="bg-background border border-gray-500 rounded-lg shadow-lg p-2 z-[9999] w-[300px] aspect-square relative"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <SmartContext
+                    objects={
+                      selection && selection.length > 1 ? selection : [self]
+                    }
+                    partners={partners}
+                    onDone={() => clearPartners()}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </ContextMenuTrigger>
+      </ContextMenu>
     </div>
   );
 };

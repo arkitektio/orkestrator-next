@@ -1,4 +1,4 @@
-import { useFluss } from "@/arkitekt/Arkitekt";
+import { useFluss } from "@/lib/arkitekt/Arkitekt";
 import {
   LazyQueryHookOptions,
   MutationHookOptions,
@@ -9,7 +9,6 @@ import {
   useQuery as useApolloQuery,
   useSubscription as useApolloSubscription,
 } from "@apollo/client";
-import { toast } from "sonner";
 import { onApolloError } from "../errorHandler";
 
 type MutationFuncType = typeof useApolloMutation;
@@ -21,7 +20,7 @@ export type {
   LazyQueryHookOptions,
   MutationHookOptions,
   QueryHookOptions,
-  SubscriptionHookOptions,
+  SubscriptionHookOptions
 };
 
 export const useMutation: MutationFuncType = (doc, options) => {

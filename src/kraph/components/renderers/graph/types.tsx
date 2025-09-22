@@ -1,5 +1,4 @@
 import {
-  EntityFragment,
   PathDescriptionFragment,
   PathEntityFragment,
   PathMeasurementFragment,
@@ -10,10 +9,9 @@ import {
   PathReagentFragment,
   PathRelationFragment,
   PathStructureFragment,
-  StructureFragment,
+  StructureRelationFragment
 } from "@/kraph/api/graphql";
-import React from "react";
-import { Node, Edge, Connection } from "@xyflow/react";
+import { Edge, Node } from "@xyflow/react";
 
 export type EntityNode = Node<PathEntityFragment, "Entity">;
 export type ThisNode = Node<{}, "__THIS__">;
@@ -30,6 +28,7 @@ export type MeasurementEdge = Edge<PathMeasurementFragment, "Measurement">;
 export type RelationEdge = Edge<PathRelationFragment, "Relation">;
 export type DescribeEdge = Edge<PathDescriptionFragment, "Description">;
 export type ParticipantEdge = Edge<PathParticipantFragment, "Participant">;
+export type StructureRelationEdge = Edge<StructureRelationFragment, "StructureRelation">;
 
 export type PathNode =
   | EntityNode
@@ -43,7 +42,8 @@ export type PathEdgeData = PathEdge["data"];
 export type PathNodeData = PathNode["data"];
 
 export type PathEdge =
-  | MeasurmentEdge
+  | MeasurementEdge
   | RelationEdge
   | ParticipantEdge
-  | DescribeEdge;
+  | DescribeEdge
+  | StructureRelationEdge

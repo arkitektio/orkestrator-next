@@ -14,24 +14,24 @@ export type GraphQLSearchFieldProps = Omit<
   }) => Promise<{ data?: { options: Option[] }; errors?: any }>;
   createMutation: (x: { variables: { input: string } }) => Promise<{
     data?:
-      | { result?: { value?: string | number } | null | undefined }
-      | null
-      | undefined;
+    | { result?: { value?: string | number } | null | undefined }
+    | null
+    | undefined;
     errors?: any;
   }>;
 };
 
-export const GraphQLCreatableSearchField: React.FC<GraphQLSearchFieldProps> = ({
+export const GraphQLCreatableSearchField = ({
   searchQuery,
   createMutation,
   ...props
-}) => {
+}: GraphQLSearchFieldProps) => {
   const search = useCallback(
     async (x: {
       search?: string | undefined;
       values?: (string | number)[] | undefined;
     }) => {
-      let queryResult = await searchQuery({
+      const queryResult = await searchQuery({
         variables: {
           search: x.search,
           values: x.values?.map((x) => x.toString()),

@@ -1,4 +1,3 @@
-import { useService } from "@/arkitekt/hooks";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,7 +15,9 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/use-toast";
+import { useRekuest } from "@/lib/arkitekt/Arkitekt";
 import { cn } from "@/lib/utils";
+import { FlussReactiveTemplate, RekuestAction } from "@/linkers";
 import { useSmartDrop } from "@/providers/smart/hooks";
 import {
   BaseGraphNodeFragment,
@@ -34,10 +35,9 @@ import { DropContextual } from "@/reaktion/edit/components/DropContextual";
 import { BoundNodesBox } from "@/reaktion/edit/components/boxes/BoundNodesBox";
 import { ErrorBox } from "@/reaktion/edit/components/boxes/ErrorBox";
 import {
-  ConstantNodeDocument,
-  ConstantNodeQuery,
-  PortScope,
-  useTemplatesQuery,
+  ConstantActionDocument,
+  ConstantActionQuery,
+  PortKind,
 } from "@/rekuest/api/graphql";
 import {
   DoubleArrowLeftIcon,
@@ -66,9 +66,8 @@ import {
   applyNodeChanges,
 } from "reactflow";
 import useUndoable, { MutationBehavior } from "use-undoable";
-import { Constants } from "../base/Constants";
 import { Graph } from "../base/Graph";
-import { rekuestNodeToMatchingNode } from "../plugins/rekuest";
+import { rekuestActionToMatchingNode } from "../plugins/rekuest";
 import {
   ClickContextualParams,
   ConnectContextualParams,
@@ -99,20 +98,20 @@ import {
 import { ValidationResult } from "../validation/types";
 import { validateState } from "../validation/validate";
 import { EdgeContextual } from "./components/EdgeContextual";
+import { SolvedErrorBox } from "./components/boxes/SolvedErrorBox";
 import { DeployInterfaceButton } from "./components/buttons/DeployButton";
+import { RunButton } from "./components/buttons/RunButton";
 import { EditRiverContext } from "./context";
 import { LabeledShowEdge } from "./edges/LabeledShowEdge";
 import { ReactiveTrackNodeWidget } from "./nodes/ReactiveWidget";
-import { RekuestFilterWidget } from "./nodes/RekuestFilterWidget";
-import { RekuestMapWidget } from "./nodes/RekuestMapWidget";
+import { RekuestFilterActionWidget } from "./nodes/RekuestFilterActionWidget";
+import { RekuestMapActionWidget } from "./nodes/RekuestMapActionWidget";
 import { ArgTrackNodeWidget } from "./nodes/generic/ArgShowNodeWidget";
 import { ReturnTrackNodeWidget } from "./nodes/generic/ReturnShowNodeWidget";
-import { useRekuest } from "@/arkitekt/Arkitekt";
-import { RunButton } from "./components/buttons/RunButton";
 
 const nodeTypes: NodeTypes = {
-  RekuestFilterNode: RekuestFilterWidget,
-  RekuestMapNode: RekuestMapWidget,
+  RekuestFilterActionNode: RekuestFilterActionWidget,
+  RekuestMapActionNode: RekuestMapActionWidget,
   ReactiveNode: ReactiveTrackNodeWidget,
   ArgNode: ArgTrackNodeWidget,
   ReturnNode: ReturnTrackNodeWidget,
@@ -141,13 +140,13 @@ function calculateMidpoint(
 const hasBoundPort = (node: FlowNode<BaseGraphNodeFragment>): boolean => {
   return (
     node.data.ins?.find(
-      (s) => s && s.length && s.find((i) => i.scope == PortScope.Local),
+      (s) => s && s.length && s.find((i) => i.kind == PortKind.MemoryStructure),
     ) ||
     node.data.outs?.find(
-      (s) => s && s.length && s.find((i) => i.scope == PortScope.Local),
+      (s) => s && s.length && s.find((i) => i.kind == PortKind.MemoryStructure),
     ) ||
-    node.data.voids?.find((i) => i.scope == PortScope.Local) ||
-    node.data.constants?.find((i) => i.scope == PortScope.Local)
+    node.data.voids?.find((i) => i.kind == PortKind.MemoryStructure) ||
+    node.data.constants?.find((i) => i.kind == PortKind.MemoryStructure)
   );
 };
 
@@ -1270,18 +1269,18 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
             y: y - reactFlowBounds.top + index * 100,
           });
 
-          if (type == "@rekuest-next/node") {
+          if (type == RekuestAction.identifier) {
             arkitektapi &&
               arkitektapi
-                .query<ConstantNodeQuery>({
-                  query: ConstantNodeDocument,
+                .query<ConstantActionQuery>({
+                  query: ConstantActionDocument,
                   variables: { id: id },
                 })
                 .then(async (event) => {
                   console.log(event);
-                  if (event.data?.node) {
-                    let flownode = rekuestNodeToMatchingNode(
-                      event.data?.node,
+                  if (event.data?.action) {
+                    let flownode = rekuestActionToMatchingNode(
+                      event.data?.action,
                       position,
                     );
                     addNode(flownode);
@@ -1289,7 +1288,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                 });
           }
 
-          if (type == "@rekuest-next/reactive-template") {
+          if (type == FlussReactiveTemplate.identifier) {
             arkitektapi &&
               arkitektapi
                 .query<ReactiveTemplateQuery>({
@@ -1351,7 +1350,6 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                 {flow.id && isEqual && <RunButton flow={flow} />}
               </div>
             )}
-
             {globals.length > 0 && (
               <div className="absolute  top-0 left-0  ml-3 mt-5 z-50">
                 <Card className="max-w-md">
@@ -1362,17 +1360,12 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
                     <CardDescription className="text-xs text-muted-foreground ">
                       {" "}
                       These are global variables that will be constants to the
-                      whole workflow and are mapping to the following ports:{" "}
+                      whole workflow and are mapping to the following
+                      ports:{" "}
                     </CardDescription>
-                    <Constants
-                      ports={globals.map((x) => ({ ...x.port, key: x.key }))}
-                      overwrites={{}}
-                      onToArg={(e) => removeGlobal(e.key)}
-                      onSubmit={() =>
-                        console.log("setting values here has no impact")
-                      }
-                      path={["globals"]}
-                    />
+                    {globals.map((g) => (
+                      <>{g.key}</>
+                    ))}
                   </CardContent>
                 </Card>
               </div>
@@ -1381,6 +1374,9 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
             <div className="absolute top-0 right-0  mr-3 mt-5 z-50 max-w-xs gap-1 flex flex-col ">
               {state.remainingErrors.length != 0 && (
                 <ErrorBox errors={state.remainingErrors} />
+              )}
+              {state.solvedErrors.length != 0 && (
+                <SolvedErrorBox errors={state.solvedErrors} />
               )}
               {boundNodes.length > 0 && <BoundNodesBox nodes={boundNodes} />}
             </div>

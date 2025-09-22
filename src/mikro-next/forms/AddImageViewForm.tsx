@@ -1,9 +1,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddContinousScanViewForm } from "./AddContinousScanViewForm";
+import { AddMaskViewForm } from "./AddMaskViewForm";
 import { AddMultiPositionViewForm } from "./AddMultiPositionViewForm";
 import { AddRGBViewForm } from "./AddRGBViewForm";
 import { AddTransformationViewForm } from "./AddTransformationViewForm";
-import { AddStructureViewForm } from "./AddSpecimenViewForm";
 
 export const AddImageViewForm = (props: { image: string }) => {
   return (
@@ -27,7 +27,7 @@ export const AddImageViewForm = (props: { image: string }) => {
           value="structure"
           className={"h-full w-full mt-0 rounded rounded-md "}
         >
-          <AddStructureViewForm {...props} />
+          <AddMaskViewForm {...props} />
         </TabsContent>
         <TabsContent
           value="rgb"

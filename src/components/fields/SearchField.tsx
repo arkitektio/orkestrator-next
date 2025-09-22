@@ -49,9 +49,7 @@ export const ButtonLabel = (props: {
 
   return (
     <div className="flex flex-row items-center">
-      {option?.label && (
-        <div className="text-slate-200">{option.label}</div>
-      )}
+      {option?.label && <div className="text-slate-200">{option.label}</div>}
       {error}
     </div>
   );
@@ -163,17 +161,17 @@ export const SearchField = ({
                     onBlur={() => setOpen(false)}
                     onFocus={() => setOpen(true)}
                   />
-                  {field.value && (
+                  {field.value != undefined && field.value != null && (
                     <div
                       className={cn(
-                        "z-10 absolute w-full h-full cursor-pointer flex flex-row items-center bg-slate-800 top-0 left-0 rounded-md px-2 flex h-10 w-full rounded-md  py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
+                        "z-8 absolute w-full h-full cursor-pointer flex flex-row items-center bg-slate-800 top-0 left-0 rounded-md px-2 flex h-10 w-full rounded-md  py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
                       )}
                       onClick={() => {
                         setInputValue("");
                         form.setValue(name, undefined, {
                           shouldValidate: false,
                         });
-                        setOpen(true)
+                        setOpen(true);
                         field.onChange(undefined);
                         inputRef.current?.focus();
                       }}
@@ -185,7 +183,7 @@ export const SearchField = ({
               </div>
               <div className="relative mt-2">
                 {open && (
-                  <CommandList slot="list" className="w-full">
+                  <CommandList slot="list" className="w-full t-10">
                     <div className="absolute top-0 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
                       <CommandEmpty>{noOptionFoundPlaceholder}</CommandEmpty>
                       {error && (

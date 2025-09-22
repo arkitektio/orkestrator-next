@@ -1,4 +1,3 @@
-import { useRekuest } from "@/arkitekt/Arkitekt";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Card } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
@@ -11,15 +10,15 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useRekuest } from "@/lib/arkitekt/Arkitekt";
 import { GraphNodeKind, ReactiveImplementation } from "@/reaktion/api/graphql";
-import { rekuestNodeToMatchingNode } from "@/reaktion/plugins/rekuest";
+import { rekuestActionToMatchingNode } from "@/reaktion/plugins/rekuest";
 import { nodeIdBuilder } from "@/reaktion/utils";
 import {
-  ConstantNodeDocument,
-  ConstantNodeQuery,
+  ConstantActionDocument,
+  ConstantActionQuery,
   PortKind,
-  PortScope,
-  useAllNodesQuery,
+  useAllActionsQuery,
   useProtocolOptionsLazyQuery,
 } from "@/rekuest/api/graphql";
 import { Tooltip } from "@radix-ui/react-tooltip";
@@ -141,10 +140,11 @@ const clickReactiveNodes = (search: string): ReactiveNodeSuggestions[] => {
           outs: [
             [
               {
-                scope: PortScope.Global,
                 description: "Just an Int",
                 key: "the_int",
                 kind: PortKind.Int,
+                nullable: false,
+                __typename: "Port",
               },
             ],
           ],
@@ -174,7 +174,8 @@ const clickReactiveNodes = (search: string): ReactiveNodeSuggestions[] => {
         outs: [
           [
             {
-              scope: PortScope.Global,
+              __typename: "Port",
+              nullable: false,
               description: "Just a String",
               key: "string",
               kind: PortKind.String,
@@ -227,7 +228,7 @@ const ClickArkitektNodes = (props: {
   search: string | undefined;
   params: ClickContextualParams;
 }) => {
-  const { data, refetch } = useAllNodesQuery({
+  const { data, refetch } = useAllActionsQuery({
     variables: {
       filters: {
         search: props.search,
@@ -256,14 +257,14 @@ const ClickArkitektNodes = (props: {
   const onNodeClick = (id: string) => {
     client &&
       client
-        .query<ConstantNodeQuery>({
-          query: ConstantNodeDocument,
+        .query<ConstantActionQuery>({
+          query: ConstantActionDocument,
           variables: { id: id },
         })
         .then(async (event) => {
           console.log(event);
-          if (event.data?.node) {
-            let flownode = rekuestNodeToMatchingNode(event.data?.node, {
+          if (event.data?.action) {
+            let flownode = rekuestActionToMatchingNode(event.data?.action, {
               x: 0,
               y: 0,
             });
@@ -276,14 +277,14 @@ const ClickArkitektNodes = (props: {
   const onTemplateClick = (nodeid: string, template: string) => {
     client &&
       client
-        .query<ConstantNodeQuery>({
-          query: ConstantNodeDocument,
+        .query<ConstantActionQuery>({
+          query: ConstantActionDocument,
           variables: { id: nodeid },
         })
         .then(async (event) => {
           console.log(event);
-          if (event.data?.node) {
-            let flownode = rekuestNodeToMatchingNode(event.data?.node, {
+          if (event.data?.action) {
+            let flownode = rekuestActionToMatchingNode(event.data?.action, {
               x: 0,
               y: 0,
             });
@@ -297,7 +298,7 @@ const ClickArkitektNodes = (props: {
 
   return (
     <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
-      {data?.nodes.map((node) => (
+      {data?.actions.map((node) => (
         <Tooltip>
           <TooltipTrigger>
             <>

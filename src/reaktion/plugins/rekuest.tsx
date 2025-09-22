@@ -1,13 +1,13 @@
 import {
+  ActionKind,
   GraphNodeKind,
   MapStrategy,
-  NodeKind,
-  RekuestFilterNodeFragment,
-  RekuestMapNodeFragment,
+  RekuesFilterActionNodeFragment,
+  RekuestMapActionNodeFragment,
 } from "@/reaktion/api/graphql";
 import {
-  ConstantNodeQuery,
-  GraphNodeNodeFragment,
+  ConstantActionQuery,
+  GraphNodeActionFragment
 } from "@/rekuest/api/graphql";
 import { portToDefaults } from "@/rekuest/widgets/utils";
 import { v4 as uuidv4 } from "uuid";
@@ -16,13 +16,13 @@ import { FlowNode } from "../types";
 export const rekuestNodeToMapNode = (
   node: GraphNodeNodeFragment,
   position: { x: number; y: number },
-): FlowNode<RekuestMapNodeFragment> => {
+): FlowNode<RekuestMapActionNodeFragment> => {
   let nodeId = "ark-" + uuidv4();
 
   console.log(nodeId);
-  let node_: FlowNode<RekuestMapNodeFragment> = {
+  let node_: FlowNode<RekuestMapActionNodeFragment> = {
     id: nodeId,
-    type: "RekuestMapNode",
+    type: "RekuestMapActionNode",
     dragHandle: ".custom-drag-handle",
     data: {
       ins: [
@@ -43,9 +43,9 @@ export const rekuestNodeToMapNode = (
       hash: node.hash,
       kind: GraphNodeKind.Rekuest,
       globalsMap: {},
-      binds: { templates: [] },
+      binds: { implementations: [] },
       constantsMap: portToDefaults(node.args, {}),
-      nodeKind: node.kind || NodeKind.Generator,
+      actionKind: node.kind || ActionKind.Generator,
     },
     position: position,
   };
@@ -53,8 +53,8 @@ export const rekuestNodeToMapNode = (
   return node_;
 };
 
-export const rekuestNodeToMatchingNode = (
-  node: ConstantNodeQuery["node"],
+export const rekuestActionToMatchingNode = (
+  node: ConstantActionQuery["action"],
   position: { x: number; y: number },
 ) => {
   if (node.protocols.find((p) => p.name == "predicate")) {
@@ -65,15 +65,15 @@ export const rekuestNodeToMatchingNode = (
 };
 
 export const rekuestNodeToFilterNode = (
-  node: GraphNodeNodeFragment,
+  node: GraphNodeActionFragment,
   position: { x: number; y: number },
-): FlowNode<RekuestFilterNodeFragment> => {
+): FlowNode<RekuesFilterActionNodeFragment> => {
   let nodeId = "arkfilter-" + uuidv4();
 
   console.log(nodeId);
-  let node_: FlowNode<RekuestFilterNodeFragment> = {
+  let node_: FlowNode<RekuesFilterActionNodeFragment> = {
     id: nodeId,
-    type: "RekuestFilterNode",
+    type: "RekuestFilterActionNode",
     dragHandle: ".custom-drag-handle",
     data: {
       ins: [
@@ -99,7 +99,7 @@ export const rekuestNodeToFilterNode = (
       globalsMap: {},
       binds: { templates: [] },
       constantsMap: portToDefaults(node.args, {}),
-      nodeKind: node.kind || NodeKind.Function,
+      nodeKind: node.kind || ActionKind.Function,
     },
     position: position,
   };

@@ -1,12 +1,9 @@
 import {
-  ListRgbContextFragment,
-  ListRoiFragment,
-  PixelViewFragment,
+  PixelViewFragment
 } from "@/mikro-next/api/graphql";
 import { useSettings } from "@/providers/settings/SettingsContext";
-import { VivRenderer } from "./VivRenderer";
-import { RGBD } from "./TwoDThree";
 import { Matrix4 } from "@math.gl/core";
+import { RGBD } from "./TwoDThree";
 
 export interface DelegatingPixelViewRenderProps {
   view: PixelViewFragment;

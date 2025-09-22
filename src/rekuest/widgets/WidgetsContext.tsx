@@ -1,5 +1,6 @@
 import React, { useContext } from "react";
 import { WidgetRegistryType } from "./types";
+import { THE_WIDGET_REGISTRY } from "@/app/shadCnWidgetRegistry";
 
 export type Ward = (...args: any[]) => Promise<any | undefined>;
 
@@ -43,7 +44,7 @@ export type WidgetRegistryContextType = {
 
 export const WidgetRegistryContext =
   React.createContext<WidgetRegistryContextType>({
-    registry: fakeWidgetRegistry,
+    registry: null,
     setRegistry: () => {
       throw new Error(
         "Set registry is not implemented. Do you have a Registry provider?",
@@ -51,4 +52,16 @@ export const WidgetRegistryContext =
     },
   });
 
-export const useWidgetRegistry = () => useContext(WidgetRegistryContext);
+export const useWidgetRegistry = () => {
+  const { registry, setRegistry } = useContext(WidgetRegistryContext);
+  if (!registry) {
+    throw new Error(
+      "WidgetRegistryContext is not set. Did you forget to wrap your component in a WidgetRegistryProvider?",
+    );
+  }
+
+  return {
+    registry,
+    setRegistry,
+  };
+};

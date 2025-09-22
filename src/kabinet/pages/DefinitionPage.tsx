@@ -1,19 +1,14 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { withKabinet } from "@/arkitekt";
+import { ListRender } from "@/components/layout/ListRender";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import { KABINET_REFRESH_POD_HASH } from "@/constants";
-import {
-  NodeDescription,
-  useNodeDescription,
-} from "@/lib/rekuest/NodeDescription";
+import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { KabinetDefinition } from "@/linkers";
-import { useTemplatesQuery } from "@/rekuest/api/graphql";
-import { useTemplateAction } from "@/rekuest/hooks/useTemplateAction";
-import { useGetDefinitionQuery } from "../api/graphql";
+import { useImplementationsQuery } from "@/rekuest/api/graphql";
+import { useImplementationAction } from "@/rekuest/hooks/useImplementationAction";
 import { useCallback } from "react";
-import ReleaseCard from "../components/cards/ReleaseCard";
-import { ListRender } from "@/components/layout/ListRender";
+import { useGetDefinitionQuery } from "../api/graphql";
 import FlavourCard from "../components/cards/FlavourCard";
 
 export const AssignButton = (props: {
@@ -21,7 +16,7 @@ export const AssignButton = (props: {
   pod: string;
   refetch: () => void;
 }) => {
-  const { assign } = useTemplateAction({
+  const { assign } = useImplementationAction({
     id: props.id,
   });
 
@@ -44,17 +39,17 @@ export const AssignButton = (props: {
 };
 
 const RefreshLogsButton = (props: { item: string; refetch: () => void }) => {
-  const { data } = useTemplatesQuery({
+  const { data } = useImplementationsQuery({
     variables: {
       filters: {
-        nodeHash: KABINET_REFRESH_POD_HASH,
+        actionHash: KABINET_REFRESH_POD_HASH,
       },
     },
   });
 
   return (
     <div className="flex flex-row gap-2">
-      {data?.templates.map((t) => (
+      {data?.implementations.map((t) => (
         <AssignButton id={t.id} pod={props.item} refetch={props.refetch} />
       ))}
     </div>
@@ -62,9 +57,9 @@ const RefreshLogsButton = (props: { item: string; refetch: () => void }) => {
 };
 
 export default asDetailQueryRoute(
-  withKabinet(useGetDefinitionQuery),
+  useGetDefinitionQuery,
   ({ data, refetch }) => {
-    const description = useNodeDescription({
+    const description = useActionDescription({
       description: data.definition.description || "",
     });
 

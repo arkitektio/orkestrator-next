@@ -1,175 +1,115 @@
 import { FormSheet } from "@/components/dialog/FormDialog";
-import { ListRender } from "@/components/layout/ListRender";
-import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
 import {
   DetailPane,
+  DetailPaneContent,
   DetailPaneHeader,
   DetailPaneTitle,
 } from "@/components/ui/pane";
-import { MikroImage, MikroStage } from "@/linkers";
+import { MikroStage } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
-import { OrbitControls } from "@react-three/drei";
-import { Canvas } from "@react-three/fiber";
-import React from "react";
+import React, { useEffect } from "react";
 import { useParams } from "react-router";
-import { useGetStageQuery, usePinStageMutation } from "../api/graphql";
-import StageTransformationViewCard from "../components/cards/StageTransformationViewCard";
+import {
+  useGetStageQuery,
+  usePinStageMutation,
+  WatchTransformationViewsDocument,
+  WatchTransformationViewsSubscription,
+  WatchTransformationViewsSubscriptionVariables,
+} from "../api/graphql";
+import { StageRender } from "../components/render/StageRender";
 import { PinToggle } from "../components/ui/PinToggle";
 import { UpdateStageForm } from "../forms/UpdateStageForm";
+import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 
 export type IRepresentationScreenProps = {};
 
-export const MyBox = ({ x, y, z, width, height, depth }) => {
-  const [click, setClick] = React.useState(false);
+const Page = asDetailQueryRoute(
+  useGetStageQuery,
+  ({ data, refetch, subscribeToMore, id }) => {
+    useEffect(() => {
+      const unsubscribe = subscribeToMore<
+        WatchTransformationViewsSubscription,
+        WatchTransformationViewsSubscriptionVariables
+      >({
+        document: WatchTransformationViewsDocument,
+        variables: { stage: id },
+        updateQuery: (prev, { subscriptionData }) => {
+          if (!subscriptionData.data) return prev;
 
-  return (
-    <mesh position={[x, y, z]} onClick={() => setClick(!click)}>
-      <boxGeometry args={[width, height, depth]} />
-      <meshNormalMaterial wireframe wireframeLinewidth={click ? 1000 : 10} />
-    </mesh>
-  );
-};
+          const stage = prev.stage;
+          if (!stage) return prev;
+          if (!stage.affineViews) {
+            stage.affineViews = [];
+          }
 
-const MyCanvasComponent = ({ data }) => {
-  // Calculate the bounding environment
-  let minX = Infinity,
-    minY = Infinity,
-    minZ = Infinity;
-  let maxX = -Infinity,
-    maxY = -Infinity,
-    maxZ = -Infinity;
+          let newView = subscriptionData.data.affineTransformationViews.create;
 
-  data?.stage?.affineViews.forEach((view) => {
-    let x = view.affineMatrix[0][3];
-    let y = view.affineMatrix[1][3];
-    let z = view.affineMatrix[2][3];
+          if (!subscriptionData.data.affineTransformationViews.create)
+            return prev;
 
-    let xScale = view.affineMatrix[0][0];
-    let yScale = view.affineMatrix[1][1];
-    let zScale = view.affineMatrix[2][2];
+          const affineViews = [...(stage.affineViews || []), newView];
 
-    let scaledXSize = (view.image.store.shape?.at(4) || 1) * xScale;
-    let scaledYSize = (view.image.store.shape?.at(3) || 1) * yScale;
-    let scaledZSize = (view.image.store.shape?.at(2) || 1) * zScale;
+          return {
+            ...prev,
+            stage: {
+              ...stage,
+              affineViews: affineViews,
+            },
+          };
+        },
+      });
 
-    minX = Math.min(minX, x - scaledXSize / 2);
-    minY = Math.min(minY, y - scaledYSize / 2);
-    minZ = Math.min(minZ, z - scaledZSize / 2);
+      return () => {
+        unsubscribe();
+      };
+    }, [id, subscribeToMore]);
 
-    maxX = Math.max(maxX, x + scaledXSize / 2);
-    maxY = Math.max(maxY, y + scaledYSize / 2);
-    maxZ = Math.max(maxZ, z + scaledZSize / 2);
-  });
+    const [pinStage] = usePinStageMutation();
 
-  // Calculate the center and size of the bounding box
-  const centerX = (minX + maxX) / 2;
-  const centerY = (minY + maxY) / 2;
-  const centerZ = (minZ + maxZ) / 2;
+    return (
+      <MikroStage.ModelPage
+        variant={"black"}
+        actions={<MikroStage.Actions object={id} />}
+        object={id}
+        title={data?.stage?.name}
+      >
 
-  const boundingWidth = maxX - minX;
-  const boundingHeight = maxY - minY;
-  const boundingDepth = maxZ - minZ;
 
-  const maxDimension = Math.max(boundingWidth, boundingHeight, boundingDepth);
-
-  return (
-    <Canvas>
-      <pointLight position={[10, 10, 10]} />
-      {data?.stage?.affineViews.map((view, index) => {
-        let x = view.affineMatrix[0][3];
-        let y = view.affineMatrix[1][3];
-        let z = view.affineMatrix[2][3];
-
-        let xScale = view.affineMatrix[0][0];
-        let yScale = view.affineMatrix[1][1];
-        let zScale = view.affineMatrix[2][2];
-
-        let scaledXSize = (view.image.store.shape?.at(4) || 1) * xScale;
-        let scaledYSize = (view.image.store.shape?.at(3) || 1) * yScale;
-        let scaledZSize = (view.image.store.shape?.at(2) || 1) * zScale;
-
-        // Normalize the sizes relative to the max dimension
-        const normalizedXSize = (scaledXSize / maxDimension) * boundingWidth;
-        const normalizedYSize = (scaledYSize / maxDimension) * boundingHeight;
-        const normalizedZSize = (scaledZSize / maxDimension) * boundingDepth;
-
-        // Normalize the positions relative to the bounding box center
-        const normalizedX = ((x - centerX) / maxDimension) * boundingWidth;
-        const normalizedY = ((y - centerY) / maxDimension) * boundingHeight;
-        const normalizedZ = ((z - centerZ) / maxDimension) * boundingDepth;
-
-        return (
-          <MyBox
-            x={normalizedX}
-            y={normalizedY}
-            z={normalizedZ}
-            width={normalizedXSize}
-            height={normalizedYSize}
-            depth={normalizedZSize}
-          />
-        );
-      })}
-      <OrbitControls />
-    </Canvas>
-  );
-};
-
-const Page: React.FC<IRepresentationScreenProps> = () => {
-  const { id } = useParams<{ id: string }>();
-  if (!id) return <></>;
-
-  const { data, refetch } = useGetStageQuery({
-    variables: {
-      id: id,
-    },
-  });
-
-  const [pinStage] = usePinStageMutation();
-
-  return (
-    <MikroStage.ModelPage
-      actions={<MikroStage.Actions object={id} />}
-      object={id}
-      title={data?.stage?.name}
-    >
-      <DetailPane className="p-3 @container">
-        <DetailPaneHeader>
-          <DetailPaneTitle
-            actions={
-              <>
-                <PinToggle
-                  onPin={(e) => {
-                    data?.stage.id;
-                  }}
-                  pinned={data?.stage?.pinned || false}
-                />
-                <FormSheet trigger={<HobbyKnifeIcon />}>
-                  {data?.stage && <UpdateStageForm stage={data?.stage} />}
-                </FormSheet>
-              </>
-            }
-          >
-            {data?.stage?.name}
-          </DetailPaneTitle>
-        </DetailPaneHeader>
-        <ListRender array={data?.stage?.affineViews}>
-          {(view, index) => (
-            <>
-              {view.__typename == "AffineTransformationView" && (
+        <div className="w-full h-full">
+          {data?.stage && <StageRender stage={data?.stage} />}
+        </div>
+        <DetailPane className="w-full absolute w-[200px] top-3 left-3 @container p-2 bg-black bg-clip-padding backdrop-filter backdrop-blur-2xl bg-opacity-10 z-100 overflow-hidden flex flex-col h-max-[400px]">
+          <DetailPaneHeader>
+            <DetailPaneTitle
+              actions={
                 <>
-                  <StageTransformationViewCard view={view} key={index} />
+                  <PinToggle
+                    onPin={(e) => {
+                      data?.stage.id &&
+                        pinImage({
+                          variables: {
+                            id: data?.stage.id,
+                            pin: e,
+                          },
+                        });
+                    }}
+                    pinned={data?.stage?.pinned || false}
+                  />
                 </>
-              )}
-            </>
-          )}
-        </ListRender>
-      </DetailPane>
+              }
+              className="group "
+            >
+              {data?.stage?.name}
+            </DetailPaneTitle>
+          </DetailPaneHeader>
 
-      <div className="w-full h-full">
-        <MyCanvasComponent data={data} />
-      </div>
-    </MikroStage.ModelPage>
-  );
-};
+          <DetailPaneContent className="flex flex-col">
+            {data?.stage?.name}
+          </DetailPaneContent>
+        </DetailPane>
+      </MikroStage.ModelPage>
+    );
+  },
+);
 
 export default Page;

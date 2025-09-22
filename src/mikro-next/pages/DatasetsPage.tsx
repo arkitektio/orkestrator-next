@@ -1,7 +1,7 @@
 import { Explainer } from "@/components/explainer/Explainer";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
-import { DownloadIcon, PlusIcon, UploadIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import React from "react";
 import { useCreateDatasetMutation } from "../api/graphql";
 import DatasetList from "../components/lists/DatasetList";
@@ -21,17 +21,9 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       title="Datasets"
       pageActions={
         <>
-          <Button variant="outline" size="sm">
-            <UploadIcon className="h-4 w-4 mr-2" />
-            Upload
-          </Button>
           <Button variant="outline" size="sm" onClick={() => createDataset()}>
             <PlusIcon className="h-4 w-4 mr-2" />
-            Create
-          </Button>
-          <Button variant="outline" size="sm">
-            <DownloadIcon className="h-4 w-4 mr-2" />
-            Download
+            New
           </Button>
         </>
       }
@@ -41,7 +33,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
           title="Datasets"
           description="Datasets allow you to group your images and files together. Just like folders. "
         />
-        <DatasetList pagination={{ limit: 30 }} />
+        <DatasetList pagination={{ limit: 30 }} filters={{ parentless: true }} />
       </div>
     </PageLayout>
   );

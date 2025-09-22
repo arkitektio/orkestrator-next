@@ -1,0 +1,3 @@
+mutation NotifyUser($input: NotifyUserInput!) {
+  notifyUser(input: $input) 
+}

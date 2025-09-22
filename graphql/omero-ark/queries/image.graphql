@@ -1,11 +1,11 @@
-query ListImages {
+query ListOmeroImages {
   images {
-    ...ListImage
+    ...ListOmeroImage
   }
 }
 
-query GetImage($id: ID!) {
+query GetOmeroImage($id: ID!) {
   image(id: $id) {
-    ...Image
+    ...OmeroImage
   }
 }

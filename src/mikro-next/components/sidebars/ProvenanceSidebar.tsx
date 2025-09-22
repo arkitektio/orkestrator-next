@@ -1,9 +1,9 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { HistoryFragment } from "@/mikro-next/api/graphql";
+import { ProvenanceEntryFragment } from "@/mikro-next/api/graphql";
 import HistoryCard from "../cards/HistoryCard";
 
 export const ProvenanceSidebar = (props: {
-  items: HistoryFragment[] | undefined;
+  items: ProvenanceEntryFragment[] | undefined;
 }) => {
   return (
     <div className="p-3">

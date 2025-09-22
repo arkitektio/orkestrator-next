@@ -1,13 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { Port } from "../widgets/types";
 import {
   buildZodSchema,
   portToDefaults,
   submittedDataToRekuestFormat,
 } from "../widgets/utils";
-import { toast } from "sonner";
 
 export const portHash = (port: Port[]) => {
   return port
@@ -59,8 +59,8 @@ export const usePortForm = (props: {
             ...additionalData,
           });
         },
-        (e) => {
-          toast.error(JSON.stringify(e));
+        (errors) => {
+          toast.error(JSON.stringify(errors));
         },
       );
     },
@@ -72,5 +72,5 @@ export const usePortForm = (props: {
     form.reset(portToDefaults(props.ports, props.overwrites || {}));
   }, [hash]);
 
-  return { ...form, handleSubmit: overWrittenHandleSubmit };
+  return { ...form, handleSubmit: overWrittenHandleSubmit, };
 };

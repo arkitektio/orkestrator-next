@@ -1,16 +1,16 @@
 mutation Reserve(
   $instanceId: InstanceId!
-  $node: ID
-  $hash: NodeHash
-  $template: ID
+  $action: ID
+  $hash: ActionHash
+  $implementation: ID
   $binds: BindsInput
   $title: String
 ) {
   reserve(
     input: {
       instanceId: $instanceId
-      node: $node
-      template: $template
+      action: $action
+      implementation: $implementation
       hash: $hash
       binds: $binds
       title: $title

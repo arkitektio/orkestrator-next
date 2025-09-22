@@ -16,6 +16,7 @@ import {
 import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
 import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import UpdateReagentCategoryForm from "../forms/UpdateReagentCategoryForm";
+import { Badge } from "@/components/ui/badge";
 
 export default asDetailQueryRoute(
   useGetReagentCategoryQuery,
@@ -87,7 +88,7 @@ export default asDetailQueryRoute(
               onSubmit={() => refetch()}
             >
               <UpdateReagentCategoryForm
-                entityCategory={data.reagentCategory}
+                reagentCategory={data.reagentCategory}
               />
             </FormSheet>
           </div>
@@ -99,8 +100,16 @@ export default asDetailQueryRoute(
               {data.reagentCategory.label}
             </h1>
             <p className="mt-3 text-xl text-muted-foreground">
+              {data.reagentCategory.description}
+            </p>
+            <p className="mt-3 text-xs text-muted-foreground">
               {data.reagentCategory.ageName}
             </p>
+            <div className="flex flex-row gap-2">
+              {data.reagentCategory.tags.map((tag) => (
+                <Badge key={tag.id}>{tag.value}</Badge>
+              ))}
+            </div>
           </div>
           <div className="w-full h-full flex-row relative">
             {data.reagentCategory?.store?.presignedUrl && (

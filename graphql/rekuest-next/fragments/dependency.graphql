@@ -1,24 +1,17 @@
 fragment DetailDependency on Dependency {
   id
-  reference
-  initialHash
-  node {
-    id
-    name
-    hash
+  key
+  actionHash
+  argMatches {
+    ...PortMatch
   }
-  reference
+  returnMatches {
+    ...PortMatch
+  }
   resolvable
 }
 
 fragment ListDependency on Dependency {
   id
-  initialHash
-  node {
-    id
-    name
-    hash
-  }
-  reference
-  resolvable
+  key
 }

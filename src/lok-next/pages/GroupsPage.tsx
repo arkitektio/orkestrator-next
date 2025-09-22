@@ -6,9 +6,8 @@ import { Separator } from "@radix-ui/react-dropdown-menu";
 import { PlusIcon } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import AppList from "../components/lists/AppList";
-import { CreateServiceInstanceForm } from "../forms/CreateServiceInstance";
 import GroupList from "../components/lists/GroupList";
+import { CreateServiceInstanceForm } from "../forms/CreateServiceInstance";
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
@@ -16,14 +15,14 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
 
   return (
     <PageLayout
-      title="Groups"
+      title="Roles"
       pageActions={
         <>
           <FormDialogAction
             variant={"outline"}
             size={"sm"}
             label="Create"
-            description="Create a new Group"
+            description="Create a new Role"
             buttonChildren={
               <>
                 <PlusIcon className="h-4 w-4 mr-2" />

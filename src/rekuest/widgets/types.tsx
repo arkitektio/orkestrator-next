@@ -4,14 +4,14 @@ import {
   PortFragment,
   PortGroupFragment,
   PortKind,
-  ReturnWidgetFragment,
+  ReturnWidgetFragment
 } from "../api/graphql";
 
 export interface InputWidgetProps<
   W extends AssignWidgetFragment = AssignWidgetFragment,
 > {
   port: PortFragment;
-  widget?: W | null;
+  widget: W;
   options?: PortOptions;
   parentKind?: PortKind;
   path: string[];
@@ -31,17 +31,17 @@ export type Port = PortFragment;
 export type MappablePort = {
   kind: PortKind;
   assignWidget?:
-    | {
-        __typename: InputWidgetTypes;
-      }
-    | null
-    | undefined;
+  | {
+    __typename: InputWidgetTypes;
+  }
+  | null
+  | undefined;
   returnWidget?:
-    | {
-        __typename: ReturnWidgetTypes;
-      }
-    | null
-    | undefined;
+  | {
+    __typename: ReturnWidgetTypes;
+  }
+  | null
+  | undefined;
 };
 
 export type InputWidgetTypes = AssignWidgetFragment["__typename"];
@@ -89,6 +89,7 @@ export type LabellablePort = {
   identifier?: string;
   nullable?: boolean;
   children?: (LabellablePort | null)[] | null;
+  choices?: Port["choices"];
 };
 
 export type PortablePort = LabellablePort & {

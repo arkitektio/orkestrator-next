@@ -1,7 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ModelPageLayout } from "@/components/layout/ModelPageLayout";
 import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
 import {
   DetailPane,
   DetailPaneDescription,
@@ -9,160 +8,15 @@ import {
   DetailPaneTitle,
 } from "@/components/ui/pane";
 import { toast } from "@/components/ui/use-toast";
-import { ArgsContainer } from "@/components/widgets/ArgsContainer";
-import { notEmpty } from "@/lib/utils";
 import { RekuestAssignation } from "@/linkers";
 import { TestConstants } from "@/reaktion/base/Constants";
 import {
-  PostmanReservationFragment,
   useAssignMutation,
-  useDetailReservationQuery,
+  useDetailReservationQuery
 } from "@/rekuest/api/graphql";
-import { yupResolver } from "@hookform/resolvers/yup";
 import { ClipboardIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import { useNavigate, useParams } from "react-router-dom";
-import { DependencyGraphFlow } from "../components/dependencyGraph/DependencyGraph";
+import { useNavigate } from "react-router-dom";
 
-export const portHash = (port: Port[]) => {
-  return port
-    .map((port) => `${port.key}-${port.kind}-${port.identifier}`)
-    .join("-");
-};
-
-export const usePortForm = (props: {
-  ports: Port[];
-  overwrites?: { [key: string]: any };
-  doNotAutoReset?: boolean;
-}) => {
-  const hash = portHash(props.ports);
-
-  const schema = useMemo(() => yupSchemaBuilder(props.ports), [hash]);
-  const resolver = useCallback(
-    async (data: any, context: any, options: any) => {
-      console.log(data);
-      return await yupResolver(schema)(data, context, options);
-    },
-    [hash, schema],
-  );
-
-  const defaultValues = useCallback(async () => {
-    return portToDefaults(props.ports, props.overwrites || {});
-  }, [hash, props.overwrites]);
-
-  const form = useForm({
-    defaultValues: defaultValues,
-    resolver: resolver,
-    reValidateMode: "onChange",
-  });
-
-  useEffect(() => {
-    if (props.doNotAutoReset) return;
-    form.reset(portToDefaults(props.ports, props.overwrites || {}));
-  }, [hash]);
-
-  return form;
-};
-
-export const PortForm = (props: {
-  description: string;
-  reservation: PostmanReservationFragment;
-  ports: Port[];
-  groups: PortGroup[];
-  overwrites?: { [key: string]: any };
-}) => {
-  const { assign } = usePostman();
-  const { registry } = useWidgetRegistry();
-  const [argDict, setArgDict] = useState<{ [key: string]: any }>({});
-
-  const form = usePortForm({
-    ports: props.ports,
-    overwrites: props.overwrites,
-  });
-
-  function onSubmit(data: any) {
-    console.log(data);
-    setArgDict(data);
-    assign({
-      reservation: props.reservation.id,
-      args: argDictToArgs(data, props.ports),
-    }).then((res) => {
-      toast({
-        title: "Assigned",
-        description: "The reservation has been assigned",
-      });
-    });
-  }
-
-  const description = useNodeDescription({
-    description: props.description,
-    variables: argDict,
-  });
-
-  return (
-    <>
-      {description}
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit, () => {
-            toast({
-              title: "Error",
-              description: "Something went wrong",
-            });
-          })}
-          className="space-y-6 mt-4"
-        >
-          <ArgsContainer
-            registry={registry}
-            ports={props.ports}
-            groups={props.groups}
-            path={[]}
-          />
-        </form>
-        <Button type="submit">Assign</Button>
-      </Form>
-    </>
-  );
-};
-
-export const Assigner = (props: { id: string }) => {
-  const { data } = useDetailReservationQuery({
-    variables: {
-      id: props.id,
-    },
-  });
-
-  return (
-    <>
-      {data?.reservation?.node?.args && (
-        <PortForm
-          description={data?.reservation?.node?.description}
-          reservation={data?.reservation}
-          ports={data?.reservation?.node?.args.filter(notEmpty) || []}
-          groups={data?.reservation?.node?.portGroups?.filter(notEmpty) || []}
-        />
-      )}
-    </>
-  );
-};
-
-function Page() {
-  const { id } = useParams<{ id: string }>();
-  if (!id) {
-    return <div>Missing id</div>;
-  }
-
-  return (
-    <>
-      <EasyGuard>
-        <RekuestGuard>
-          <Assigner id={id} />
-        </RekuestGuard>
-      </EasyGuard>
-    </>
-  );
-}
 
 export default asDetailQueryRoute(
   useDetailReservationQuery,
@@ -174,7 +28,7 @@ export default asDetailQueryRoute(
     return (
       <ModelPageLayout
         identifier="@rekuest/reservation"
-        title={data?.reservation?.title || data?.reservation.node?.name}
+        title={data?.reservation?.title || data?.reservation.action?.name}
         object={data.reservation.id}
       >
         <DetailPane>
@@ -186,27 +40,20 @@ export default asDetailQueryRoute(
                 </Button>
               }
             >
-              {data?.reservation?.title || data?.reservation.node?.name}
+              {data?.reservation?.title || data?.reservation.action?.name}
             </DetailPaneTitle>
             <DetailPaneDescription>
-              {data?.reservation?.node?.description}
+              {data?.reservation?.action?.description}
 
               {JSON.stringify(data?.reservation?.binds)}
             </DetailPaneDescription>
           </DetailPaneHeader>
-          {data?.reservation?.dependencyGraph && (
-            <>
-              <DependencyGraphFlow
-                graph={data?.reservation?.dependencyGraph}
-                refetch={refetch}
-              />
-            </>
-          )}
+
         </DetailPane>
         <DetailPane className="mt-2">
           <DetailPaneHeader>Assign</DetailPaneHeader>
           <TestConstants
-            ports={data?.reservation.node?.args || []}
+            ports={data?.reservation.action?.args || []}
             overwrites={{}}
             onSubmit={(e) => {
               console.log("submit", e);
@@ -214,7 +61,7 @@ export default asDetailQueryRoute(
                 variables: {
                   reservation: data.reservation.id,
                   args:
-                    data?.reservation?.node?.args.map(
+                    data?.reservation?.action?.args.map(
                       (arg) => e[arg.key] || null,
                     ) || [],
                 },

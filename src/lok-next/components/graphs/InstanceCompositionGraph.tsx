@@ -1,9 +1,9 @@
 import { ServiceInstanceFragment } from "@/lok-next/api/graphql";
 import React from "react";
 import ReactFlow, { ReactFlowInstance } from "reactflow";
+import InstanceMappingEdge from "./edges/InstanceMappingEdge";
 import ClientNode from "./nodes/ClientNode";
 import ServiceInstanceNode from "./nodes/ServiceInstanceNode";
-import InstanceMappingEdge from "./edges/InstanceMappingEdge";
 
 export default ({ service }: { service: ServiceInstanceFragment }) => {
   const reactFlowWrapper = React.useRef(null);
@@ -29,7 +29,7 @@ export default ({ service }: { service: ServiceInstanceFragment }) => {
           Math.sin(
             ((2 * Math.PI) / service.mappings.length) * index, // corrected to use service.mappings.length
           ) *
-            200,
+          200,
       },
       data: mapping.client,
       type: "client",

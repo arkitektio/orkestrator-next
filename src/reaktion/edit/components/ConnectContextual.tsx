@@ -1,4 +1,3 @@
-import { useRekuest } from "@/arkitekt/Arkitekt";
 import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Card } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
@@ -15,21 +14,24 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { NodeDescription } from "@/lib/rekuest/NodeDescription";
+import { useRekuest } from "@/lib/arkitekt/Arkitekt";
+import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import {
+  FlussChildPortFragment,
   FlussPortFragment,
   GraphNodeKind,
   ReactiveImplementation,
 } from "@/reaktion/api/graphql";
-import { rekuestNodeToMatchingNode } from "@/reaktion/plugins/rekuest";
+import { rekuestActionToMatchingNode } from "@/reaktion/plugins/rekuest";
 import { nodeIdBuilder, streamToReadable } from "@/reaktion/utils";
 import {
-  ConstantNodeDocument,
-  ConstantNodeQuery,
+  ActionScope,
+  AllActionsQueryVariables,
+  ConstantActionDocument,
+  ConstantActionQuery,
   DemandKind,
-  NodeScope,
   PortKind,
-  useAllNodesQuery,
+  useAllActionsQuery,
   useProtocolOptionsLazyQuery,
 } from "@/rekuest/api/graphql";
 import clsx from "clsx";
@@ -192,10 +194,33 @@ const combineOptions = [
   },
 ];
 
+const bufferOptions = [
+  {
+    title: "Buffer Count",
+    description: "Buffer the count stream",
+    implementation: ReactiveImplementation.BufferCount,
+    constantsMap: {
+      count: 1,
+    },
+  },
+  {
+    title: "BufferComplete",
+    description: "Buffer the stream until complete",
+    implementation: ReactiveImplementation.BufferComplete,
+    constantsMap: {},
+  },
+  {
+    title: "BufferUntil",
+    description: "Buffer the stream until a condition is met",
+    implementation: ReactiveImplementation.BufferUntil,
+    constantsMap: {},
+  },
+];
+
 // Checks if two items are structurally equal, that means they have the same kind and identifier. (If the kind is a structure)
 const isStructuralMatch = (
-  item1: FlussPortFragment | undefined,
-  item2: FlussPortFragment | undefined,
+  item1: FlussPortFragment | FlussChildPortFragment | undefined,
+  item2: FlussPortFragment | FlussChildPortFragment | undefined,
 ) => {
   if (!item1 || !item2) {
     return false;
@@ -305,6 +330,37 @@ const connectReactiveNodes = (
       },
       title: "Chunk",
       description: "Chunk the stream",
+    });
+  }
+
+  if (
+    rightPorts.length == 1 &&
+    rightPorts.at(0)?.kind == PortKind.List &&
+    isStructuralMatch(rightPorts.at(0)?.children?.at(0), leftPorts.at(0))
+  ) {
+    // Is chunk transferable
+    bufferOptions.map((option) => {
+      nodes.push({
+        node: {
+          id: nodeIdBuilder(),
+          type: "ReactiveNode",
+          position: { x: 0, y: 0 },
+          data: {
+            globalsMap: {},
+            title: option.title,
+            description: option.description,
+            kind: GraphNodeKind.Reactive,
+            ins: [leftPorts],
+            constantsMap: option.constantsMap,
+            outs: [rightPorts],
+            voids: [],
+            constants: [],
+            implementation: option.implementation,
+          },
+        },
+        title: option.title,
+        description: option.description,
+      });
     });
   }
 
@@ -443,7 +499,7 @@ const ConnectReactiveNodes = (props: {
   return (
     <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
       {nodes.map((sug) => (
-        <Tooltip>
+        <Tooltip key={sug.node.id}>
           <TooltipTrigger>
             <Card
               onClick={() => addConnectContextualNode(sug.node, props.params)}
@@ -459,7 +515,11 @@ const ConnectReactiveNodes = (props: {
   );
 };
 
-const buildVariabels = (leftPorts, rightPorts, search) => ({
+const buildVariabels = (
+  leftPorts: FlussPortFragment[],
+  rightPorts: FlussPortFragment[],
+  search: string | undefined,
+): AllActionsQueryVariables => ({
   filters: {
     search: search,
     demands: [
@@ -506,7 +566,7 @@ const ConnectArkitektNodes = (props: {
   leftPorts: FlussPortFragment[];
   rightPorts: FlussPortFragment[];
 }) => {
-  const { data, refetch, variables } = useAllNodesQuery({
+  const { data, refetch, variables, error } = useAllActionsQuery({
     variables: buildVariabels(props.leftPorts, props.rightPorts, props.search),
     fetchPolicy: "network-only",
   });
@@ -522,14 +582,14 @@ const ConnectArkitektNodes = (props: {
   const onNodeClick = (id: string) => {
     client &&
       client
-        .query<ConstantNodeQuery>({
-          query: ConstantNodeDocument,
+        .query<ConstantActionQuery>({
+          query: ConstantActionDocument,
           variables: { id: id },
         })
         .then(async (event) => {
           console.log(event);
           if (event.data?.node) {
-            let flownode = rekuestNodeToMatchingNode(event.data?.node, {
+            let flownode = rekuestActionToMatchingNode(event.data?.node, {
               x: 0,
               y: 0,
             });
@@ -542,14 +602,14 @@ const ConnectArkitektNodes = (props: {
   const onTemplateClick = (node: string, template: string) => {
     client &&
       client
-        .query<ConstantNodeQuery>({
-          query: ConstantNodeDocument,
+        .query<ConstantActionQuery>({
+          query: ConstantActionDocument,
           variables: { id: node },
         })
         .then(async (event) => {
           console.log(event);
           if (event.data?.node) {
-            let flownode = rekuestNodeToMatchingNode(event.data?.node, {
+            let flownode = rekuestActionToMatchingNode(event.data?.node, {
               x: 0,
               y: 0,
             });
@@ -562,14 +622,15 @@ const ConnectArkitektNodes = (props: {
 
   return (
     <div className="flex flex-row gap-1 my-auto flex-wrap mt-2">
-      {data?.nodes.map((node) => (
-        <Tooltip>
+      {error && <div className="text-red-500">Error: {error.message}</div>}
+      {data?.actions.map((action) => (
+        <Tooltip key={action.id}>
           <TooltipTrigger>
-            {node.stateful ? (
+            {action.stateful ? (
               <Popover>
                 <PopoverTrigger>
                   <Card className="px-2 py-1 border-solid border-2 border-green-300 border ">
-                    {node.name}
+                    {action.name}
                   </Card>
                 </PopoverTrigger>
                 <PopoverContent className="rounded rounded-lg">
@@ -578,29 +639,31 @@ const ConnectArkitektNodes = (props: {
                     instance
                   </div>
                   <TemplateSelector
-                    hash={node.hash}
-                    node={node.id}
+                    hash={action.hash}
+                    node={action.id}
                     onClick={onTemplateClick}
                   />
                 </PopoverContent>
               </Popover>
             ) : (
               <Card
-                onClick={() => onNodeClick(node.id)}
+                onClick={() => onNodeClick(action.id)}
                 className={clsx(
                   "px-2 py-1 border",
-                  node.scope == NodeScope.Global ? "" : "dark:border-blue-200",
+                  action.scope == ActionScope.Global
+                    ? ""
+                    : "dark:border-blue-200",
                 )}
               >
-                {node.name}
+                {action.name}
               </Card>
             )}
           </TooltipTrigger>
           <TooltipContent align="center">
-            {node.description && (
-              <NodeDescription description={node.description} />
+            {action.description && (
+              <ActionDescription description={action.description} />
             )}
-            {node.scope == NodeScope.Global ? (
+            {action.scope == ActionScope.Global ? (
               " "
             ) : (
               <div className="text-blue-200 mt-2">

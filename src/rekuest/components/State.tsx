@@ -1,8 +1,7 @@
-import { StateFragment } from "../api/graphql";
-import { useWidgetRegistry } from "../widgets/WidgetsContext";
-import { useGetStateQuery, WatchStateEventsSubscription, WatchStateEventsSubscriptionVariables, WatchStateEventsDocument} from "../api/graphql";
-import { useEffect } from "react";
 import { Card } from "@/components/ui/card";
+import { useEffect } from "react";
+import { useGetStateQuery, WatchStateEventsDocument, WatchStateEventsSubscription, WatchStateEventsSubscriptionVariables } from "../api/graphql";
+import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
 
 export const useRekuestState = ({
@@ -24,7 +23,7 @@ export const useRekuestState = ({
 
   useEffect(() => {
     if (data?.state) {
-      console.log( "subscribing to", data.state.id);
+      console.log("subscribing to", data.state.id);
       return subscribeToMore<
         WatchStateEventsSubscription,
         WatchStateEventsSubscriptionVariables
@@ -52,7 +51,7 @@ export const useRekuestState = ({
       });
     }
 
-    return () => {};
+    return () => { };
   }, [subscribeToMore, data?.state?.id]);
 
 
@@ -86,7 +85,7 @@ export const StateDisplay = ({
         const Widget = registry.getReturnWidgetForPort(port);
 
         return (
-          <div className="flex-1">
+          <div className="flex-1 h-96 w-96 flex flex-col gap-2" key={index}>
             {label && <label>{port.key}</label>}
             <Widget
               key={index}

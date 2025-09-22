@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import { cn } from "@/lib/utils";
 import "./RadialProgressButton.css";
 import { Button, ButtonProps } from "./button";
-import { cn } from "@/lib/utils";
 
 const ProgressButton = ({
   progress,

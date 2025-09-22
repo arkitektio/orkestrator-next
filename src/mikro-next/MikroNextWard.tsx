@@ -1,5 +1,4 @@
-import { useMikro } from "@/arkitekt/Arkitekt";
-import { useService } from "@/arkitekt/hooks";
+import { useMikro } from "@/lib/arkitekt/Arkitekt";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { gql } from "@apollo/client";
 import { useEffect } from "react";

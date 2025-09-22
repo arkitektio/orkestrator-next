@@ -1,13 +1,14 @@
 fragment PostmanAssignation on Assignation {
   id
-  status
+  latestEventKind
   args
   reference
+  isDone
   events {
     ...AssignationEvent
   }
   ephemeral
-  node {
+  action {
     hash
     id
     name
@@ -16,32 +17,22 @@ fragment PostmanAssignation on Assignation {
   reservation {
     id
     title
-    node {
+    action {
       name
     }
   }
-  provision {
-    id
-    template {
-      id
-    }
-  }
-  template {
+  implementation {
     id
     interface
+    extension
   }
   createdAt
 }
 
 fragment DetailAssignation on Assignation {
   ...PostmanAssignation
-  provision {
-    template {
-      id
-      interface
-      params
-      extension
-    }
+  children {
+    ...PostmanAssignation
   }
 }
 
@@ -52,11 +43,23 @@ fragment AssignationEvent on AssignationEvent {
   returns
   assignation {
     id
+    reference
   }
   progress
   reference
   createdAt
   message
+  delegatedTo {
+    id
+    implementation {
+      id
+      interface
+      action {
+        name
+      }
+      extension
+    }
+  }
 }
 fragment AssignationChangeEvent on AssignationChangeEvent {
   create {

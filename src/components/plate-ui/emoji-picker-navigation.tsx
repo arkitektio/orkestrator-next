@@ -1,4 +1,3 @@
-import React from "react";
 
 import type {
   EmojiCategoryList,
@@ -56,7 +55,7 @@ export function EmojiPickerNavigation({
               className={cn(
                 "flex grow cursor-pointer items-center justify-center border-none bg-transparent fill-current text-sm text-gray-500 hover:text-gray-800",
                 id === focusedCategory &&
-                  "pointer-events-none fill-current text-blue-600",
+                "pointer-events-none fill-current text-blue-600",
               )}
               key={id}
               onClick={() => onClick(id)}

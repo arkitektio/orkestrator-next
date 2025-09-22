@@ -1,5 +1,5 @@
 query HooksSearch($search: String, $values: [ID!]) {
-  options: nodes(
+  options: actions(
     filters: { protocols: ["hook"], ids: $values, search: $search }
   ) {
     value: id

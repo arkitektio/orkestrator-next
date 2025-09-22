@@ -1,13 +1,14 @@
 import {
+  DescendantInput,
   DescendantKind,
   useUserOptionsLazyQuery,
 } from "@/lok-next/api/graphql";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BiBold, BiCode, BiItalic, BiUnderline } from "react-icons/bi";
 import { TiTick } from "react-icons/ti";
-import { Editor, Node, Range, Transforms, createEditor } from "slate";
-import { Editable, ReactEditor, Slate, useSlate, withReact } from "slate-react";
-import { CreateCommentFunc, KommentEditor } from "../types";
+import { Editor, Element, Node, Range, Text, Transforms, createEditor } from "slate";
+import { Editable, ReactEditor, RenderElementProps, RenderLeafProps, Slate, useSlate, withReact } from "slate-react";
+import { CreateCommentFunc } from "../types";
 import {
   KommentElement,
   KommentLeaf,
@@ -15,6 +16,21 @@ import {
   insertMention,
   withMentions,
 } from "./utils";
+
+// Custom text node with formatting properties
+interface CustomText extends Text {
+  bold?: boolean;
+  italic?: boolean;
+  code?: boolean;
+  underline?: boolean;
+}
+
+// Custom element node
+interface CustomElement extends Element {
+  kind?: DescendantKind;
+  user?: string;
+  text?: string;
+}
 
 export type ICommentEditProps<T> = {
   id: string;
@@ -24,22 +40,21 @@ export type ICommentEditProps<T> = {
 
 const initialValue: Node[] = [
   {
-    kind: DescendantKind.Paragraph,
-    children: [{ text: "", kind: DescendantKind.Leaf }],
-  },
+    type: 'paragraph',
+    children: [{ text: "" }],
+  } as Node,
 ];
 
 export type CommentEditProps = {
-  identifier?: string;
-  object?: string;
+  identifier: string;
+  object: string;
   parent?: string;
   createComment: CreateCommentFunc;
 };
 
-const marks = ["bold", "italic", "underline", "code"] as const;
-type Mark = (typeof marks)[number];
+type Mark = "bold" | "italic" | "underline" | "code";
 
-const toggleMark = (editor: KommentEditor, format: Mark) => {
+const toggleMark = (editor: Editor, format: Mark) => {
   const isActive = isMarkActive(editor, format);
 
   if (isActive) {
@@ -49,7 +64,7 @@ const toggleMark = (editor: KommentEditor, format: Mark) => {
   }
 };
 
-const isMarkActive = (editor: KommentEditor, format: Mark) => {
+const isMarkActive = (editor: Editor, format: Mark) => {
   const marks = Editor.marks(editor);
   return marks ? marks[format] === true : false;
 };
@@ -64,9 +79,8 @@ export const MarkButton = ({
   const editor = useSlate();
   return (
     <button
-      className={`${
-        isMarkActive(editor, format) ? "opacity-100" : "opacity-20"
-      }`}
+      className={`${isMarkActive(editor, format) ? "opacity-100" : "opacity-20"
+        }`}
       onMouseDown={(event) => {
         event.preventDefault();
         toggleMark(editor, format);
@@ -94,12 +108,21 @@ export const CommentEdit = ({
   const [saving, setSaving] = useState(false);
 
   const renderElement = useCallback(
-    (props: any) => <KommentElement {...props} />,
+    (props: RenderElementProps) => {
+      // Create a mock element that matches what KommentElement expects
+      const mockElement = {
+        kind: (props.element as CustomElement).kind || DescendantKind.Paragraph,
+        user: (props.element as CustomElement).user,
+        text: (props.element as CustomElement).text,
+        children: [],
+      };
+      return <KommentElement {...props} element={mockElement} />;
+    },
     [],
   );
 
   const renderLeaf = useCallback(
-    (props: any) => <KommentLeaf {...props} />,
+    (props: RenderLeafProps) => <KommentLeaf {...props} />,
     [],
   );
 
@@ -117,6 +140,37 @@ export const CommentEdit = ({
     }
   }, [data, editor, index, search, target]);
 
+  const convertToDescendantInput = (nodes: Node[]): DescendantInput[] => {
+    return nodes.map((node): DescendantInput => {
+      if (Text.isText(node)) {
+        const textNode = node as CustomText;
+        return {
+          kind: DescendantKind.Leaf,
+          text: textNode.text,
+          bold: textNode.bold || undefined,
+          italic: textNode.italic || undefined,
+          code: textNode.code || undefined,
+        };
+      } else {
+        // This is an element
+        const element = node as CustomElement;
+        if (element.kind === DescendantKind.Mention) {
+          return {
+            kind: DescendantKind.Mention,
+            user: element.user,
+            text: element.text,
+            children: element.children ? convertToDescendantInput(element.children) : [],
+          };
+        } else {
+          return {
+            kind: DescendantKind.Paragraph,
+            children: element.children ? convertToDescendantInput(element.children) : [],
+          };
+        }
+      }
+    });
+  };
+
   const saveComment = () => {
     console.log(editor.children);
     setSaving(true);
@@ -125,7 +179,7 @@ export const CommentEdit = ({
         identifier: identifier,
         object: object,
         parent: parent,
-        descendants: editor.children.filter((y) => y.kind !== undefined),
+        descendants: convertToDescendantInput(editor.children),
       },
     })
       .catch(console.error)
@@ -138,7 +192,7 @@ export const CommentEdit = ({
   };
 
   const onKeyDown = useCallback(
-    (event: any) => {
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
       console.log("Definining target", target);
       if (event.ctrlKey && event.key === "Enter") {
         saveComment();

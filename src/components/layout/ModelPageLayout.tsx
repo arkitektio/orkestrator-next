@@ -1,17 +1,8 @@
-import { Identifier, Structure } from "@/types";
+import { Identifier } from "@/types";
 import { PageLayout, PageVariant } from "./PageLayout";
-import { useSmartDrop } from "@/providers/smart/hooks";
-import { useState } from "react";
-import { Card } from "../ui/card";
-import { SmartContext } from "@/rekuest/buttons/ObjectButton";
-import { toast } from "sonner";
-import { useAssign } from "@/rekuest/hooks/useAssign";
-import {
-  ListTemplateFragment,
-  PrimaryNodeFragment,
-} from "@/rekuest/api/graphql";
-import { Dialog, DialogContent } from "../ui/dialog";
-import { NodeAssignForm } from "@/rekuest/forms/NodeAssignForm";
+import { ContextMenu } from "../ui/context-menu";
+import { CommandMenu } from "@/command/Menu";
+import { useMemo } from "react";
 
 export type ModelPageLayoutProps = {
   children: React.ReactNode;
@@ -32,10 +23,11 @@ export const ModelPageLayout = ({
   identifier,
   object,
   variant,
-  callback,
   actions,
   pageActions,
 }: ModelPageLayoutProps) => {
+  const objects = useMemo(() => [{ identifier, object }], [identifier, object]);
+
   return (
     <div className="h-full w-full">
       <PageLayout
@@ -45,6 +37,7 @@ export const ModelPageLayout = ({
         variant={variant}
         pageActions={pageActions}
       >
+        <CommandMenu objects={objects} />
         {children}
       </PageLayout>
     </div>

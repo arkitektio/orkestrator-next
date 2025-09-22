@@ -1,34 +1,39 @@
 import { PathFragment } from "@/kraph/api/graphql.js";
-import ELK from "elkjs/lib/elk.bundled.js";
-import { AnimatePresence } from "framer-motion";
-import React, { useEffect } from "react";
 import {
-  Background,
   ReactFlow,
   ReactFlowInstance,
   useEdgesState,
   useNodesState,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { ClickContextual } from "./components/ClickContextual";
-import { PathEdge, PathNode } from "./types";
-import { entityNodesToNodes, entityRelationToEdges } from "./utils";
+import ELK from "elkjs/lib/elk.bundled.js";
+import React, { useEffect } from "react";
+import DescribeEdge from "./edges/DescribeEdge";
+import EntityRoleEdge from "./edges/EntityRoleEdge";
+import MeasurementEdge from "./edges/MeasurementEdge";
+import RelationEdge from "./edges/RelationEdge";
 import EntityNode from "./nodes/EntityNode";
+import MetricNode from "./nodes/MetricNode";
 import NaturalEventNode from "./nodes/NaturalEventNode";
 import ProtocolEventNode from "./nodes/ProtocolEventNode";
-import StructureNode from "./nodes/StructureNode";
 import ReagentNode from "./nodes/ReagentNode";
-import MetricNode from "./nodes/MetricNode";
-import MeasurementEdge from "./edges/MeasurementEdge";
-import EntityRoleEdge from "./edges/EntityRoleEdge";
-import RelationEdge from "./edges/RelationEdge";
-import { Description } from "@radix-ui/react-dialog";
-import DescribeEdge from "./edges/DescribeEdge";
+import StructureNode from "./nodes/StructureNode";
 import ThisNode from "./nodes/ThisNode";
+import { PathEdge, PathNode } from "./types";
+import { entityNodesToNodes, entityRelationToEdges } from "./utils";
+import { ViewOptions } from "../DelegatingNodeViewRenderer";
+import { hash } from "crypto";
+import { Button } from "@/components/ui/button";
+import {
+  PathViewerStateProvider,
+  usePathViewerState,
+} from "./PathViewerStateProvider";
+import StructureRelationEdge from "./edges/StructureRelationEdge";
 
 export type Props = {
   path: PathFragment;
   root?: string;
+  options?: ViewOptions;
 };
 
 const pathNodeTypes = {
@@ -45,6 +50,7 @@ const pathEdgeTypes = {
   Measurement: MeasurementEdge,
   Participant: EntityRoleEdge,
   Relation: RelationEdge,
+  StructureRelation: StructureRelationEdge,
   Description: DescribeEdge,
 };
 
@@ -69,7 +75,7 @@ const elk = new ELK();
 const stressLayout = {
   "elk.algorithm": "stress",
   "org.eclipse.elk.stress.desiredEdgeLength": "200",
-  "org.eclipse.elk.stress.dimension" : "XY",
+  "org.eclipse.elk.stress.dimension": "XY",
   "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
   "elk.layered.crossingMinimization.minimize": "LAYER_SWEEP",
   "elk.layered.spacing.nodeNode": "200",
@@ -77,17 +83,21 @@ const stressLayout = {
   "elk.layered.spacing.nodeNodeBetweenLayrs": "200",
   "elk.direction": "RIGHT",
   "elk.layered.nodePlacement.bk.fixedAlignment": "LEFT",
-}
+};
 
-export const PathGraph: React.FC<Props> = ({ path, root }) => {
+const hashPash = (path: PathFragment): string => {
+  return JSON.stringify(path);
+};
+
+export const PathGraphInner: React.FC<Props> = ({ path, root, options }) => {
   const reactFlowWrapper = React.useRef<HTMLDivElement | null>(null);
   const [reactFlowInstance, setReactFlowInstance] =
     React.useState<ReactFlowInstance<PathNode, PathEdge> | null>(null);
 
+  const { viewerState, setViewerState } = usePathViewerState();
+
   const [nodes, setNodes, onNodesChange] = useNodesState<PathNode>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<PathEdge>(
-    entityRelationToEdges(path.edges),
-  );
+  const [edges, setEdges, onEdgesChange] = useEdgesState<PathEdge>([]);
 
   useEffect(() => {
     const the_nodes = entityNodesToNodes(path.nodes, root);
@@ -122,6 +132,7 @@ export const PathGraph: React.FC<Props> = ({ path, root }) => {
       });
 
       setNodes(newNodes);
+      setEdges(entityRelationToEdges(path.edges));
     });
   }, [reactFlowInstance]);
 
@@ -137,6 +148,15 @@ export const PathGraph: React.FC<Props> = ({ path, root }) => {
 
   return (
     <div ref={reactFlowWrapper} className="relative h-full">
+      {options?.minimal ? (
+        <Button
+          onClick={() =>
+            setViewerState((s) => ({ ...s, showWidgets: !s.showWidgets }))
+          }
+        >
+          {viewerState.showWidgets ? "Hide" : "Show"} Widgets
+        </Button>
+      ) : null}
       <ReactFlow<PathNode, PathEdge>
         nodes={nodes}
         edges={edges}
@@ -146,9 +166,18 @@ export const PathGraph: React.FC<Props> = ({ path, root }) => {
         snapToGrid={true}
         autoFocus
         fitView
+        proOptions={{ hideAttribution: true }}
         attributionPosition="top-right"
         className="relative"
       ></ReactFlow>
     </div>
+  );
+};
+
+export const PathGraph = (props: Props) => {
+  return (
+    <PathViewerStateProvider>
+      <PathGraphInner {...props} key={hashPash(props.path)} />
+    </PathViewerStateProvider>
   );
 };

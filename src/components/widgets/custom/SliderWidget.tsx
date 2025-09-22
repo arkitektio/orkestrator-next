@@ -1,4 +1,3 @@
-import { FloatField } from "@/components/fields/FloatField";
 import { SliderField } from "@/components/fields/SliderField";
 import { SliderAssignWidgetFragment } from "@/rekuest/api/graphql";
 import { usePortValidate } from "@/rekuest/hooks/usePortValidator";

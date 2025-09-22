@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardDescription,
@@ -9,7 +8,6 @@ import { RekuestDependency } from "@/linkers";
 import { useReserveMate } from "@/mates/reserve/useReserveMate";
 import { MateFinder } from "@/mates/types";
 import { ListDependencyFragment } from "@/rekuest/api/graphql";
-import { useUsage } from "@/rekuest/hooks/useNode";
 
 interface Props {
   item: ListDependencyFragment;
@@ -19,7 +17,6 @@ interface Props {
 const TheCard = ({ item, mates }: Props) => {
   const reserveMate = useReserveMate();
 
-  const [isUsed, toggle] = useUsage({ template: item.id });
 
   return (
     <RekuestDependency.Smart object={item?.id} mates={[reserveMate]}>
@@ -29,16 +26,11 @@ const TheCard = ({ item, mates }: Props) => {
             <CardTitle>
               <RekuestDependency.DetailLink object={item?.id}>
                 {" "}
-                {item.node?.hash}
+                {item.action?.hash}
               </RekuestDependency.DetailLink>
             </CardTitle>
             <CardDescription></CardDescription>
           </div>
-          <CardTitle>
-            <Button onClick={() => toggle()} variant={"ghost"}>
-              {isUsed ? "Stop Using" : "Use"}
-            </Button>
-          </CardTitle>
         </CardHeader>
       </Card>
     </RekuestDependency.Smart>

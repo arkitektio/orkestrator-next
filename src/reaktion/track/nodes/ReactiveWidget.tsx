@@ -10,16 +10,12 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { NodeDescription } from "@/lib/rekuest/NodeDescription";
+import { ActionDescription } from "@/lib/rekuest/ActionDescription";
+import { cn } from "@/lib/utils";
 import { ReactiveImplementation, RunEventKind } from "@/reaktion/api/graphql";
 import { InStream } from "@/reaktion/base/Instream";
 import { OutStream } from "@/reaktion/base/Outstream";
@@ -27,7 +23,9 @@ import { portToLabel } from "@/rekuest/widgets/utils";
 import React from "react";
 import { ReactiveNodeData, ReactiveNodeProps } from "../../types";
 import { useLatestNodeEvent } from "../hooks/useLatestNodeEvent";
-import { cn } from "@/lib/utils";
+import JustTrack from "./reactive/JustTrack";
+import Math from "./reactive/Math";
+import TriangleToRight from "./reactive/TriangleToRight";
 
 export type ShapeProps = {
   implementation: ReactiveImplementation;
@@ -42,23 +40,6 @@ export type ContextMenuProps = {
   id: string;
 };
 
-export const TriangleToRight = ({ data, implementation }: ShapeProps) => {
-  return (
-    <>
-      <svg height="40" width="40">
-        <polygon
-          points="0,40 40,20 0,0"
-          style={{
-            strokeWidth: 1,
-            stroke: "hsl(var(--accent))",
-            fill: "hsl(var(--accent))",
-          }}
-        />
-        <text>{implementation}</text>
-      </svg>
-    </>
-  );
-};
 
 export const Default = ({ data, className }: ShapeProps) => {
   return (
@@ -73,7 +54,7 @@ export const Default = ({ data, className }: ShapeProps) => {
           <Tooltip>
             <TooltipTrigger>
               <CardTitle className="text-sm font-light">
-                <NodeDescription
+                <ActionDescription
                   description={data.title}
                   variables={{ ...data.constantsMap, __ports: data.ins }}
                 />
@@ -81,7 +62,7 @@ export const Default = ({ data, className }: ShapeProps) => {
             </TooltipTrigger>
             <TooltipContent>
               <CardDescription className="text-xs">
-                <NodeDescription
+                <ActionDescription
                   description={data.description}
                   variables={data.constantsMap}
                 />
@@ -107,7 +88,7 @@ export const Select = ({ data, className }: ShapeProps) => {
             </TooltipTrigger>
             <TooltipContent>
               <CardDescription className="text-xs">
-                <NodeDescription
+                <ActionDescription
                   description={data.description}
                   variables={data.constantsMap}
                 />
@@ -120,51 +101,9 @@ export const Select = ({ data, className }: ShapeProps) => {
   );
 };
 
-export const Just = ({ data }: ShapeProps) => {
-  return (
-    <>
-      <Card className="rounded-md border-blue-400/40 shadow-blue-400/20 dark:border-blue-300 dark:shadow-blue/20 shadow-xl">
-        <CardHeader className="p-1">
-          <Tooltip>
-            <TooltipTrigger>
-              <CardTitle className="text-sm font-light">
-                Just <pre>{data.constantsMap.value}</pre>
-              </CardTitle>
-            </TooltipTrigger>
-            <TooltipContent>
-              <CardDescription className="text-xs">
-                Just a {data.constantsMap.value}
-              </CardDescription>
-            </TooltipContent>
-          </Tooltip>
-        </CardHeader>
-      </Card>
-    </>
-  );
-};
 
-export const Add = ({ data }: ShapeProps) => {
-  return (
-    <>
-      <Card className="rounded-md border-blue-400/40 shadow-blue-400/20 dark:border-blue-300 dark:shadow-blue/20 shadow-xl">
-        <CardHeader className="p-1">
-          <Tooltip>
-            <TooltipTrigger>
-              <CardTitle className="text-sm font-light">
-                Add <pre>{data.constantsMap.value}</pre>
-              </CardTitle>
-            </TooltipTrigger>
-            <TooltipContent>
-              <CardDescription className="text-xs">
-                Just add {data.constantsMap.value}
-              </CardDescription>
-            </TooltipContent>
-          </Tooltip>
-        </CardHeader>
-      </Card>
-    </>
-  );
-};
+
+
 
 export const Reorder = ({ data }: ShapeProps) => {
   return (
@@ -230,6 +169,16 @@ export const ToList = ({ data }: ShapeProps) => {
   );
 };
 
+export const BufferCount = ({ data }: ShapeProps) => {
+  return (
+    <>
+      <Card className="rounded-md">
+        Buffer {data.constantsMap.count}
+      </Card>
+    </>
+  );
+};
+
 export const DefaultContext = ({ data }: ContextMenuProps) => {
   return (
     <>
@@ -276,6 +225,7 @@ const contextMenuMap: {
   [ReactiveImplementation.All]: DefaultContext,
   [ReactiveImplementation.And]: DefaultContext,
   [ReactiveImplementation.BufferUntil]: DefaultContext,
+  [ReactiveImplementation.BufferCount]: DefaultContext,
   [ReactiveImplementation.Delay]: DefaultContext,
   [ReactiveImplementation.DelayUntil]: DefaultContext,
   [ReactiveImplementation.Divide]: DefaultContext,
@@ -290,6 +240,7 @@ const contextMenuMap: {
   [ReactiveImplementation.Suffix]: DefaultContext,
   [ReactiveImplementation.Select]: DefaultContext,
   [ReactiveImplementation.Just]: DefaultContext,
+  [ReactiveImplementation.Reorder]: DefaultContext,
 };
 
 const shapeMap: { [key in ReactiveImplementation]: React.FC<ShapeProps> } = {
@@ -302,8 +253,10 @@ const shapeMap: { [key in ReactiveImplementation]: React.FC<ShapeProps> } = {
   [ReactiveImplementation.ToList]: ToList,
   [ReactiveImplementation.BufferComplete]: Default,
   [ReactiveImplementation.Chunk]: Default,
+  [ReactiveImplementation.Reorder]: Default,
+  [ReactiveImplementation.BufferCount]: BufferCount,
   [ReactiveImplementation.Omit]: Default,
-  [ReactiveImplementation.Add]: Add,
+  [ReactiveImplementation.Add]: Math,
   [ReactiveImplementation.All]: Default,
   [ReactiveImplementation.And]: Default,
   [ReactiveImplementation.BufferUntil]: Default,
@@ -316,23 +269,23 @@ const shapeMap: { [key in ReactiveImplementation]: React.FC<ShapeProps> } = {
   [ReactiveImplementation.Modulo]: Default,
   [ReactiveImplementation.Power]: Default,
   [ReactiveImplementation.Prefix]: Default,
-  [ReactiveImplementation.Subtract]: Default,
-  [ReactiveImplementation.Multiply]: Default,
-  [ReactiveImplementation.Suffix]: Default,
+  [ReactiveImplementation.Subtract]: Math,
+  [ReactiveImplementation.Multiply]: Math,
+  [ReactiveImplementation.Suffix]: Math,
   [ReactiveImplementation.Select]: Select,
-  [ReactiveImplementation.Just]: Just,
+  [ReactiveImplementation.Just]: JustTrack,
 };
 
 const shapeForImplementation = (
   implementation: ReactiveImplementation,
 ): React.FC<ShapeProps> => {
-  return shapeMap[implementation];
+  return shapeMap[implementation] || Default;
 };
 
 const contextMenuForImplementation = (
   implementation: ReactiveImplementation,
 ): React.FC<ContextMenuProps> => {
-  return contextMenuMap[implementation];
+  return contextMenuMap[implementation] || DefaultContext;
 };
 
 export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({
@@ -342,36 +295,29 @@ export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({
   const latestEvent = useLatestNodeEvent(id);
 
   const Shape = shapeForImplementation(data.implementation);
-  const ContextMenuImplementatoin = contextMenuForImplementation(
-    data.implementation,
-  );
+  console.log("SHAPE", data.implementation, Shape);
+
+
   return (
     <>
-      {/* <AssignEventOverlay event={data.latestAssignEvent} />
-				<ProvideEventOverlay event={data.latestProvideEvent} /> */}
       <ContextMenu>
         <ContextMenuTrigger>
           <div className="group custom-drag-handle relative">
             {data.ins.map((s, index) => (
               <InStream stream={s} id={index} length={data.ins.length} />
             ))}
-            <Popover>
-              <PopoverTrigger>
-                <Shape
-                  implementation={data.implementation}
-                  data={data}
-                  id={id}
-                  className={cn(
-                    "border-blue-400/40 shadow-blue-400/10 dark:border-blue-300 dark:shadow-blue/20 shadow-xl",
-                    latestEvent?.kind === RunEventKind.Error &&
-                      "border-red-400 dark:border-red-300  dark:shadow-red/20 shadow-red-400/10",
-                    latestEvent?.kind === RunEventKind.Complete &&
-                      "border-green-400 dark:border-green-300  dark:shadow-green/20 shadow-green-400/10",
-                  )}
-                />
-              </PopoverTrigger>
-              <PopoverContent></PopoverContent>
-            </Popover>
+            <Shape
+              implementation={data.implementation}
+              data={data}
+              id={id}
+              className={cn(
+                "border-blue-400/40 shadow-blue-400/10 dark:border-blue-300 dark:shadow-blue/20 shadow-xl",
+                latestEvent?.kind === RunEventKind.Error &&
+                "border-red-400 dark:border-red-300  dark:shadow-red/20 shadow-red-400/10",
+                latestEvent?.kind === RunEventKind.Complete &&
+                "border-green-400 dark:border-green-300  dark:shadow-green/20 shadow-green-400/10",
+              )}
+            />
 
             {data.outs.map((s, index) => (
               <OutStream stream={s} id={index} length={data.outs.length} />
@@ -379,11 +325,14 @@ export const ReactiveTrackNodeWidget: React.FC<ReactiveNodeProps> = ({
           </div>
         </ContextMenuTrigger>
         <ContextMenuContent>
-          <ContextMenuImplementatoin
-            implementation={data.implementation}
-            data={data}
-            id={id}
-          />
+          <div className="text-xs">
+            {data.implementation} {id}
+          </div>
+          <div className="text-xs">Latest Event: {latestEvent?.kind}</div>
+          <div className="text-xs">Latest Event: {latestEvent?.id}</div>
+          <div className="text-xs">
+            Latest Event:{" "}
+          </div>
         </ContextMenuContent>
       </ContextMenu>
     </>

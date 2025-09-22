@@ -1,9 +1,9 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
+import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokUser } from "@/linkers";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import { useUserQuery } from "../api/graphql";
-import { useResolve } from "@/datalayer/hooks/useResolve";
 
 export const UserAvatar = (props: { sub: string }) => {
   const { data } = useUserQuery({
@@ -19,8 +19,8 @@ export const UserAvatar = (props: { sub: string }) => {
       <AvatarImage
         src={
           resolve(data?.user?.profile.avatar?.presignedUrl) as
-            | string
-            | undefined
+          | string
+          | undefined
         }
         alt={data?.user?.username}
       />
@@ -47,8 +47,8 @@ export const UserAvatarUsername = (props: { sub: string }) => {
               className="rounded-md"
               src={
                 resolve(data?.user?.profile.avatar?.presignedUrl) as
-                  | string
-                  | undefined
+                | string
+                | undefined
               }
               alt={data?.user?.username}
             />

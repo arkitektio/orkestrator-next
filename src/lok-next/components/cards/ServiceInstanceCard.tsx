@@ -15,7 +15,7 @@ const TheCard = ({ item, mates }: Props) => {
         <LokServiceInstance.DetailLink object={item.id} className="">
           {item.identifier}
         </LokServiceInstance.DetailLink>
-        <div className="text-xs">configured by {item.backend}</div>
+        <div className="text-xs">configured for {item.service.id}</div>
       </Card>
     </LokServiceInstance.Smart>
   );

@@ -1,4 +1,3 @@
-import { Arkitekt, useElektro } from "@/arkitekt/Arkitekt";
 import {
   AccessCredentialsFragment,
   RequestAccessDocument,
@@ -6,14 +5,17 @@ import {
   RequestAccessMutationVariables,
   ZarrStoreFragment,
 } from "@/elektro/api/graphql";
-import { S3Store } from "@/mikro-next/providers/xarray/store";
+import { Arkitekt, useDatalayerEndpoint, useElektro } from "@/lib/arkitekt/Arkitekt";
 import { useSettings } from "@/providers/settings/SettingsContext";
 import { ApolloClient } from "@apollo/client";
 import { AwsClient } from "aws4fetch";
 import { useCallback } from "react";
-import { ArraySelection, Slice } from "zarr/types/core/types";
 import { Chunk, DataType, get, open } from "zarrita";
 import { DetailTraceFragment } from "../api/graphql";
+import { ArraySelection, Slice } from "zarr/types/core/types";
+import { S3Store } from "./store";
+
+
 
 export type DownloadedArray = {
   shape: [number, number, number, number, number];
@@ -63,17 +65,11 @@ export const downloadSelectionFromStore = async (
   };
 };
 
-export const viewToSlices = (t: number, z: number): Slice[] => {
+export const viewToSlices = (t: number | null): Slice[] => {
   let selection: Slice[] = [
     {
       _slice: true,
-      step: 1,
-      start: null,
-      stop: null,
-    },
-    {
-      _slice: true,
-      step: 1,
+      step: t,
       start: null,
       stop: null,
     },
@@ -92,10 +88,10 @@ export const renderArray = async (
   credentials: AccessCredentialsFragment,
   datalayerUrl: string,
   store: ZarrStoreFragment,
-  t: number,
+  t: number | null,
   abortSignal?: AbortSignal,
-): Promise<Plot> => {
-  let slices = viewToSlices(t, t);
+): Promise<number[]> => {
+  let slices = viewToSlices(t);
   console.log("Slices", slices);
 
   let selection = await downloadSelectionFromStore(
@@ -107,23 +103,19 @@ export const renderArray = async (
   );
 
   console.log("Array is", selection.out.data);
-  const reduced = Array.from(selection.out.data).map((x, i) => {
-    return { t: i, c: x };
-  });
 
-  console.log("Reduced array", reduced);
+  console.log("Reduced array", selection.out.data);
 
-  return reduced as Plot;
+  return selection.out.data as number[];
 };
 
 const downloadArray = async (
   client: ApolloClient<any> | undefined,
-  fakts: any,
-  t: number,
+  endpoint_url: string | undefined,
+  t: number | null,
   store: ZarrStoreFragment,
   signal?: AbortSignal,
 ) => {
-  let endpoint_url = (fakts?.datalayer as any)?.endpoint_url;
   if (endpoint_url === undefined) {
     throw Error("No datalayer found");
   }
@@ -150,21 +142,26 @@ export const useTraceArray = () => {
     settings: { experimentalCache },
   } = useSettings();
   const client = useElektro();
-  const fakts = Arkitekt.useFakts();
+
+  const endpoint_url = useDatalayerEndpoint();
 
   const renderView = useCallback(
-    async (trace: DetailTraceFragment, t: number, signal?: AbortSignal) => {
+    async (
+      trace: DetailTraceFragment,
+      t: number | null,
+      signal?: AbortSignal,
+    ) => {
       if (!client) {
         throw Error("No client found");
       }
 
-      if (!fakts) {
+      if (!endpoint_url) {
         throw Error("No fakts found");
       }
 
       const imageData = await downloadArray(
         client,
-        fakts,
+        endpoint_url,
         t,
         trace.store,
         signal,
@@ -172,7 +169,7 @@ export const useTraceArray = () => {
 
       return imageData;
     },
-    [client, fakts, experimentalCache],
+    [client, endpoint_url, experimentalCache],
   );
 
   return {

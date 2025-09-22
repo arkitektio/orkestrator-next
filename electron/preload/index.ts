@@ -7,43 +7,15 @@ const api = {
     // @ts-ignore (define in dts)
     return ipcRenderer.send("fakts-start", url);
   },
-
-  authenticate: async (url: string) => {
-    // @ts-ignore (define in dts)
-    console.log("Running oauth?", url);
-
-    let response = await fetch(url);
-    if (response.status !== 200) {
-      throw new Error("Failed to authenticate. Server does not respond");
-    }
-
-    const promise = new Promise<string>((resolve, reject) => {
-      ipcRenderer.on("oauth-response", (event, arg) => {
-        console.log("Got oauth response", arg);
-        resolve(arg);
-      });
-      ipcRenderer.on("oauth-error", (event, arg) => {
-        console.error("Got oauth error", arg);
-        reject(arg);
-      });
-    });
-
-    console.log("Running oauth?", url);
-
-    ipcRenderer.send("oauth-start", url);
-
-    return await promise;
-  },
-  openJitsiWindow: async () => {
-    // @ts-ignore (define in dts)
-    return ipcRenderer.send("jitsi");
-  },
+  downloadFromUrl: (url: string) =>
+    ipcRenderer.invoke("download-from-url", { url }),
   startDrag: (structure) => {
     ipcRenderer.send("ondragstart", structure);
   },
   openSecondWindow: (path: string) => {
     ipcRenderer.send("open-second-window", path);
   },
+  discoverBeacons: () => ipcRenderer.invoke("discover-beacons"),
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to
@@ -53,12 +25,22 @@ if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld("electron", electronAPI);
     contextBridge.exposeInMainWorld("api", api);
+    contextBridge.exposeInMainWorld("electronAPI", api);
+    contextBridge.exposeInMainWorld("updates", {
+      onStatus: (cb) => ipcRenderer.on("updater:status", (_e, s) => cb(s)),
+      onAvailable: (cb) => ipcRenderer.on("updater:available", (_e, info) => cb(info)),
+      onNone: (cb) => ipcRenderer.on("updater:none", cb),
+      onProgress: (cb) => ipcRenderer.on("updater:progress", (_e, p) => cb(p)),
+      onError: (cb) => ipcRenderer.on("updater:error", (_e, err) => cb(err))
+    });
   } catch (error) {
     console.error(error);
   }
 } else {
-  // @ts-ignore (define in dts)
+  // @ts-expect-error (define in dts)
   window.electron = electronAPI;
-  // @ts-ignore (define in dts)
+  // @ts-expect-error (define in dts)
   window.api = api;
+  // @ts-expect-error (define in dts)
+  window.electronAPI = api;
 }

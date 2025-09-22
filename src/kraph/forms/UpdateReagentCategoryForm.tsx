@@ -1,5 +1,5 @@
 import { useGraphQlFormDialog } from "@/components/dialog/FormDialog";
-import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
+import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { ParagraphField } from "@/components/fields/ParagraphField";
 import { StringField } from "@/components/fields/StringField";
 import { Button } from "@/components/ui/button";
@@ -8,12 +8,13 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
   ReagentCategoryFragment,
-  UpdateEntityCategoryMutationVariables,
   UpdateReagentCategoryMutationVariables,
+  useCreateGraphTagInlineMutation,
   useSearchTagsLazyQuery,
-  useUpdateEntityCategoryMutation,
-  useUpdateReagentCategoryMutation,
+  useUpdateReagentCategoryMutation
 } from "../api/graphql";
+import { GraphQLCreatableSearchField } from "@/components/fields/GraphQLCreateableSearchField";
+import { GraphQLCreatableListSearchField } from "@/components/fields/GraphQLCreatableListSearchField";
 
 const enumToOptions = (e: any) => {
   return Object.keys(e).map((key) => ({
@@ -22,7 +23,7 @@ const enumToOptions = (e: any) => {
   }));
 };
 
-export default (props: { entityCategory: ReagentCategoryFragment }) => {
+export default (props: { reagentCategory: ReagentCategoryFragment }) => {
   const [update] = useUpdateReagentCategoryMutation({
     refetchQueries: ["GetGraph"],
   });
@@ -31,11 +32,18 @@ export default (props: { entityCategory: ReagentCategoryFragment }) => {
 
   const form = useForm<UpdateReagentCategoryMutationVariables["input"]>({
     defaultValues: {
-      id: props.entityCategory.id,
-      label: props.entityCategory.label,
-      description: props.entityCategory.description,
-      purl: props.entityCategory.purl || "",
-      tags: props.entityCategory.tags.map((tag) => tag.value),
+      id: props.reagentCategory.id,
+      label: props.reagentCategory.label,
+      description: props.reagentCategory.description,
+      purl: props.reagentCategory.purl || "",
+      tags: props.reagentCategory.tags.map((tag) => tag.value),
+    },
+  });
+
+  const [createTag] = useCreateGraphTagInlineMutation({
+    variables: {
+      graph: props.reagentCategory.graph.id,
+      input: "",
     },
   });
 
@@ -72,11 +80,12 @@ export default (props: { entityCategory: ReagentCategoryFragment }) => {
                 name="purl"
                 description="What is the PURL of this expression?"
               />
-              <GraphQLSearchField
+              <GraphQLCreatableListSearchField
                 searchQuery={searchTags}
                 label="Tags"
                 name="tags"
                 description="Search for related entities"
+                createMutation={(v) => createTag({ variables: { input: v.variables.input, graph: props.reagentCategory.graph.id } })}
               />
             </div>
           </div>

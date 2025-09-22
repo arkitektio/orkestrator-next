@@ -253,12 +253,54 @@ function atLeastOneNode(previous: ValidationResult) {
   };
 }
 
+function noDoubleEdgeForOutput(previous: ValidationResult) {
+  const solved: ValidationError[] = previous.solvedErrors;
+  const remain: ValidationError[] = previous.remainingErrors;
+  const nodes = previous.nodes;
+  const edges = previous.edges;
+  // If the number of visited nodes is the same as the number of nodes, the graph is connected
+
+  const returnNode = nodes.find((n) => n.data.kind == GraphNodeKind.Returns);
+  if (!returnNode) {
+    remain.push({
+      type: "graph",
+      id: "",
+      level: "critical",
+      message: "You need an Return node",
+    });
+  }
+
+  const returnEdges = edges.filter((e) => e.target == returnNode?.id);
+
+  if (returnEdges.length > 1) {
+    solved.push({
+      type: "graph",
+      id: "",
+      level: "critical",
+      message:
+        "You can only have one edge to the return node: Mabye merge them before sending them to the return node? We will remove the other edges",
+    });
+  }
+
+  const newEdges = edges
+    .filter((e) => e.target != returnNode?.id)
+    .concat([returnEdges[0]]);
+
+  return {
+    ...previous,
+    edges: newEdges,
+    remainingErrors: remain,
+    solvedErrors: solved,
+  };
+}
+
 const validators = [
   validateNoEdgeWithItself,
   validateMatchingPorts,
   validateNoUnconnectedNodes,
   validateGraphIsConnected,
   atLeastOneNode,
+  noDoubleEdgeForOutput,
 ];
 
 export const validateNodeConstants = (

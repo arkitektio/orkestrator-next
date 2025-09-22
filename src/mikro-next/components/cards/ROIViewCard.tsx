@@ -1,14 +1,10 @@
-import { Badge } from "@/components/ui/badge";
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  KraphNode,
-  KraphProtocolStep,
   MikroROI,
-  MikroROIView,
-  MikroSpecimenView,
+  MikroROIView
 } from "@/linkers";
 import { MateFinder } from "../../../mates/types";
-import { RoiViewFragment, SpecimenViewFragment } from "../../api/graphql";
+import { RoiViewFragment } from "../../api/graphql";
 import { ViewCard } from "./meta/ViewCard";
 
 interface Props {

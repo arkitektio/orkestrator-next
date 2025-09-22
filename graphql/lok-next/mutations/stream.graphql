@@ -1,5 +1,0 @@
-mutation CreateStream($input: CreateStreamInput!) {
-  createStream(input: $input) {
-    ...EnsuredStream
-  }
-}

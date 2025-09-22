@@ -1,18 +1,19 @@
 import {
-  AssignationEventKind,
+  ActionDemandInput,
+  MaterializedBlokFragment,
   PortInput,
   PortKind,
-  PortScope,
   PostmanAssignationFragment,
-  useGetStateForQuery,
+  SchemaDemandInput,
+  useGetStateQuery,
   WatchStateEventsDocument,
   WatchStateEventsSubscription,
-  WatchStateEventsSubscriptionVariables,
+  WatchStateEventsSubscriptionVariables
 } from "@/rekuest/api/graphql";
+import { useAssign } from "@/rekuest/hooks/useAssign";
+import { useFilteredAssignations } from "@/rekuest/hooks/useAssignations";
 import React, { useEffect } from "react";
 import zod from "zod";
-import { useAction } from "./use-action";
-import { T } from "node_modules/@udecode/plate-emoji/dist/IndexSearch-Dvqq913n";
 
 export const ports = zod.object;
 
@@ -25,13 +26,9 @@ export const port = {
   any: zod.any(),
 };
 
-type ManifestedState = {
-  hash: string;
-};
-
 export type StateDefinition<T extends { [key: string]: any }> = {
   ports: T;
-  manifest?: ManifestedState;
+  demand: SchemaDemandInput;
 };
 
 // Function to extract schema definition as JSON
@@ -71,25 +68,21 @@ export const build = {
     kind: PortKind.Int,
     description: description,
     zodType: zod.number(),
-    scope: PortScope.Global,
   }),
   int: (description?: string): StatePort => ({
     kind: PortKind.Int,
     description: description,
     zodType: zod.number(),
-    scope: PortScope.Global,
   }),
   float: (description?: string): StatePort => ({
     kind: PortKind.Float,
     description: description,
     zodType: zod.number(),
-    scope: PortScope.Global,
   }),
   string: (description?: string): StatePort => ({
     kind: PortKind.String,
     description: description,
     zodType: zod.string(),
-    scope: PortScope.Global,
   }),
   structure(identifier: string, description?: string): StatePort {
     return {
@@ -97,7 +90,6 @@ export const build = {
       identifier: identifier,
       description: description,
       zodType: zod.string(),
-      scope: PortScope.Global,
     };
   },
   model: <T extends Record<string, StatePort>>(ports: T) => {
@@ -114,61 +106,74 @@ export const build = {
       zodType: zod.object(shape) as zod.ZodObject<{
         [K in keyof T]: T[K]["zodType"];
       }>,
-      scope: PortScope.Global,
     };
   },
   array: <T extends StatePort>(port: T): StatePort => {
     return {
       kind: PortKind.List,
       zodType: zod.array(port.zodType) as zod.ZodArray<T["zodType"]>,
-      scope: PortScope.Global,
     };
   },
 };
 
 export type StatePort = { zodType: zod.ZodTypeAny } & Omit<PortInput, "key">;
 
-export const hashifyState = <T extends Record<string, StatePort>>(
+export const statePortsToDemand = <T extends Record<string, StatePort>>(
   ports: T,
   options?: StateOptions,
-): string => {
-  if (options?.forceHash) {
-    return options.forceHash;
-  }
-  const shape = Object.entries(ports).reduce(
-    (acc, [key, value]) => {
-      acc[key] = schemaToJson(value.zodType);
-      return acc;
-    },
-    {} as { [key: string]: any },
-  );
+): SchemaDemandInput => {
+  const matches = Object.entries(ports).map(([key, value]) => {
+    return {
+      key: key,
+      kind: value.kind,
+      identifier: value.identifier,
+    };
+  });
 
-  return JSON.stringify(shape);
+  return {
+    hash: options?.forceHash,
+    matches: matches,
+  };
 };
 
-export const hashifyAction = <T extends Record<string, StatePort>>(
-  ports: T,
+export const buildActionManifest = <
+  T extends Record<string, StatePort>,
+  R extends Record<string, StatePort>,
+>(
+  args?: T,
+  returns?: R,
   options?: ActionOptions,
-): string => {
-  if (options?.forceHash) {
-    return options.forceHash;
-  }
-  const shape = Object.entries(ports).reduce(
-    (acc, [key, value]) => {
-      acc[key] = schemaToJson(value.zodType);
-      return acc;
-    },
-    {} as { [key: string]: any },
-  );
+): Omit<ActionDemandInput, "key"> => {
+  const argMatches = Object.entries(args || {}).map(([key, value]) => {
+    return {
+      key: key,
+      kind: value.kind,
+    };
+  });
 
-  return JSON.stringify(shape);
+  const returnMatches = Object.entries(returns || {}).map(([key, value]) => {
+    return {
+      key: key,
+      kind: value.kind,
+    };
+  });
+
+  return {
+    hash: options?.forceHash,
+    name: options?.name,
+    argMatches: argMatches,
+    returnMatches: returnMatches,
+  };
 };
+
+export type BuildStateOptions<T extends Record<string, StatePort>> = {
+  keys: T;
+} & StateOptions;
 
 export const buildState = <T extends Record<string, StatePort>>(
-  ports: T,
-  options?: StateOptions,
+  options: BuildStateOptions<T>,
 ): StateDefinition<zod.ZodObject<{ [K in keyof T]: T[K]["zodType"] }>> => {
-  const shape = Object.entries(ports).reduce(
+  const shape = Object.entries(options.keys).reduce(
     (acc, [key, value]) => {
       acc[key] = value.zodType;
       return acc;
@@ -178,22 +183,28 @@ export const buildState = <T extends Record<string, StatePort>>(
 
   return {
     ports: zod.object(shape) as any,
-    manifest: { hash: hashifyState(ports, options) },
+    demand: statePortsToDemand(options.keys, options),
   };
 };
+
+export type BuildActionOptions<
+  T extends Record<string, StatePort>,
+  R extends Record<string, StatePort>,
+> = {
+  args?: T;
+  returns?: R;
+} & ActionOptions;
 
 export const buildAction = <
   T extends Record<string, StatePort>,
   R extends Record<string, StatePort>,
 >(
-  args: T = {} as T,
-  returns: R = {} as R,
-  options?: ActionOptions,
+  options: BuildActionOptions<T, R>,
 ): ActionDefinition<
   zod.ZodObject<{ [K in keyof T]: T[K]["zodType"] }>,
   zod.ZodObject<{ [K in keyof R]: R[K]["zodType"] }>
 > => {
-  const argsShape = Object.entries(args).reduce(
+  const argsShape = Object.entries(options.args || {}).reduce(
     (acc, [key, value]) => {
       acc[key] = value.zodType;
       return acc;
@@ -201,9 +212,9 @@ export const buildAction = <
     {} as { [key: string]: zod.ZodTypeAny },
   );
 
-  const returnsShape = Object.entries(returns).reduce(
+  const returnsShape = Object.entries(options.returns || {}).reduce(
     (acc, [key, value]) => {
-      acc[key] = value;
+      acc[key] = value.zodType;
       return acc;
     },
     {} as { [key: string]: zod.ZodTypeAny },
@@ -212,20 +223,22 @@ export const buildAction = <
   return {
     args: zod.object(argsShape) as any,
     returns: zod.object(returnsShape) as any,
-    manifest: { hash: hashifyAction(args, options) },
+    demand: buildActionManifest(options.args, options.returns, options),
   };
 };
 
 export type ActionManifest = {
-  hash: string;
+  demand: ActionDemandInput;
 };
 
 export type ActionOptions = {
-  forceHash: string;
+  forceHash?: string;
+  name?: string;
+  interface?: string;
 };
 
 export type StateOptions = {
-  forceHash: string;
+  forceHash?: string;
 };
 
 export type ActionDefinition<
@@ -234,26 +247,33 @@ export type ActionDefinition<
 > = {
   args: T;
   returns: R;
-  manifest?: ActionManifest;
+  demand: Omit<ActionDemandInput, "key">;
 };
 
 export type MetaApplication<
   States extends { [key: string]: StateDefinition<any> },
   Actions extends { [key: string]: ActionDefinition<any, any> },
 > = {
+  name: string;
+  description?: string;
   states: States;
   actions: Actions;
 };
 
 export type UseActionOptions = {
-  ephemeral: boolean;
+  track: boolean;
   debounce?: number;
 };
 
-export type MetaApplicationAdds<T extends MetaApplication<any, any>> = T & {
+export type MetaApplicationAdds<T extends MetaApplication<any, any>> = {
+  app: T;
   useState: <K extends keyof T["states"]>(
     state: K,
-  ) => { value?: zod.infer<T["states"][K]["ports"]>; updatedAt?: string };
+  ) => {
+    value?: zod.infer<T["states"][K]["ports"]>;
+    updatedAt?: string;
+    errors: any;
+  };
   useAction: <K extends keyof T["actions"]>(
     action: K,
     options?: UseActionOptions,
@@ -270,13 +290,14 @@ export type MetaApplicationAdds<T extends MetaApplication<any, any>> = T & {
   };
 };
 
-export type AgentContext = {
-  agent: string;
+export type MaterializedBlokContext = {
+  mblok: MaterializedBlokFragment;
 };
 
-export const UsedAgentContext = React.createContext<AgentContext>({
-  agent: "",
-});
+export const MaterializedBlokContext =
+  React.createContext<MaterializedBlokContext>({
+    mblok: null as any,
+  });
 
 const debounce = (callback: Function, delay: number) => {
   let timeout: NodeJS.Timeout | undefined;
@@ -288,52 +309,60 @@ const debounce = (callback: Function, delay: number) => {
   };
 };
 
-export const useAgentContext = () => React.useContext(UsedAgentContext);
+export const useMaterializedBlokContext = () =>
+  React.useContext(MaterializedBlokContext);
 
 const buildUseRekuestState = <T extends MetaApplication<any, any>>(
   app: T,
 ): MetaApplicationAdds<T>["useState"] => {
   const hook = (state: keyof T["states"]) => {
-    const { agent } = useAgentContext();
+    const { mblok } = useMaterializedBlokContext();
 
-    const { data, subscribeToMore, refetch } = useGetStateForQuery({
+    let stateID = mblok.stateMappings.find((s) => s.key === state)?.state.id;
+
+    if (!stateID) {
+      console.error(
+        `State ${String(state)} not found in materialized blok ${mblok.id}`,
+      );
+      return {
+        value: undefined,
+        updatedAt: undefined,
+        errors: new Error(`State ${String(state)} not found`),
+      };
+    }
+
+    const { data, subscribeToMore, refetch, error } = useGetStateQuery({
       variables: {
-        agent,
-        stateHash: app.states[state].manifest.hash,
+        id: stateID,
       },
     });
 
     useEffect(() => {
       console.log("Refetching");
-      refetch({
-        agent,
-        stateHash: app.states[state].manifest.hash,
-      });
-    }, [agent, app.states[state].manifest.hash]);
+      refetch({ id: stateID });
+    }, [stateID]);
 
     useEffect(() => {
-      if (data?.stateFor) {
-        console.log("State", state, "subscribing to", data.stateFor.id);
+      if (data?.state) {
+        console.log("State", state, "subscribing to", data.state.id);
         return subscribeToMore<
           WatchStateEventsSubscription,
           WatchStateEventsSubscriptionVariables
         >({
           document: WatchStateEventsDocument,
           variables: {
-            stateID: data.stateFor.id,
+            stateID: data.state.id,
           },
           updateQuery: (prev, { subscriptionData }) => {
             if (!subscriptionData.data) return prev;
             console.log("State update for", state, subscriptionData.data);
             // TODO: This is so weird and hacky because why is it subscribing to the other state as well?
-            if (
-              subscriptionData.data.stateUpdateEvents.id !== data.stateFor.id
-            ) {
+            if (subscriptionData.data.stateUpdateEvents.id !== data.state.id) {
               return prev;
             }
             return {
               stateFor: {
-                ...prev.stateFor,
+                ...prev.state,
                 ...subscriptionData.data.stateUpdateEvents,
               },
             };
@@ -341,8 +370,17 @@ const buildUseRekuestState = <T extends MetaApplication<any, any>>(
         });
       }
 
-      return () => {};
-    }, [subscribeToMore, data?.stateFor?.id]);
+      return () => { };
+    }, [subscribeToMore, data?.state?.id]);
+
+    if (error) {
+      console.error("Error", error);
+      return {
+        value: undefined,
+        updatedAt: undefined,
+        errors: error,
+      };
+    }
 
     if (!data) {
       return {
@@ -351,7 +389,7 @@ const buildUseRekuestState = <T extends MetaApplication<any, any>>(
       };
     }
 
-    return data?.stateFor;
+    return data?.state;
   };
 
   return hook as any;
@@ -361,37 +399,42 @@ const buildUseRekuestActions = <T extends MetaApplication<any, any>>(
   app: T,
 ): MetaApplicationAdds<T>["useAction"] => {
   const hook = (action: keyof T["actions"], options?: UseActionOptions) => {
-    const { agent } = useAgentContext();
+    const { mblok } = useMaterializedBlokContext();
 
-    const { assign, reassign, cancel, latestAssignation } = useAction({
-      nodeHash: app.actions[action].manifest?.hash,
-      agent: agent,
-    });
+    let actionId = mblok.actionMappings.find((s) => s.key === action)
+      ?.implementation.id;
+
+
+    const { assign } = useAssign();
+
+    const assingation = useFilteredAssignations({
+      implementation: actionId,
+    })
+
 
     const nodeAssign = async (args: any) => {
       if (options?.debounce) {
-        debounce(
-          () => assign({ args: args, ephemeral: options?.ephemeral }),
+        return debounce(
+          () =>
+            assign({
+              implementation: actionId,
+              args: args,
+              ephemeral: options?.track ? false : true,
+            }),
           options.debounce,
         );
       } else {
-        return assign({ args: args, ephemeral: options?.ephemeral });
+        return assign({
+          implementation: actionId,
+          args: args,
+          ephemeral: options?.track ? false : true,
+        });
       }
     };
 
     return {
       assign: nodeAssign,
-      reassign,
-      cancel,
-      returns: latestAssignation?.events
-        .filter((a) => a.kind == AssignationEventKind.Yield)
-        .at(0)?.returns,
-      events: latestAssignation?.events,
-      latestEvent: latestAssignation?.events.at(0),
-      done:
-        latestAssignation?.events.some(
-          (a) => a.kind == AssignationEventKind.Done,
-        ) || false,
+      latestEvent: assingation?.at(-1)?.events?.at(0),
     };
   };
 
@@ -402,8 +445,18 @@ export const buildModule = <T extends MetaApplication<any, any>>(
   app: T,
 ): MetaApplicationAdds<T> => {
   return {
-    ...app,
+    app: app,
     useState: buildUseRekuestState(app),
     useAction: buildUseRekuestActions(app),
-  } as unknown as MetaApplicationAdds<T>;
+  };
 };
+
+export const module = buildModule;
+export const action = buildAction;
+export const state = buildState;
+export const integer = build.integer;
+export const string = build.string;
+export const structure = build.structure;
+export const model = build.model;
+export const list = build.array;
+export const float = build.float;

@@ -35,9 +35,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
-import { Form } from "@/components/ui/form";
-import { TooltipButton } from "@/components/ui/tooltip-button";
+import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
+import { MikroPixelView } from "@/linkers";
 import {
   ChildrenQuery,
   ImageAccessorFragment,
@@ -45,10 +44,8 @@ import {
   TableFragment,
   useRowsQuery,
 } from "@/mikro-next/api/graphql";
-import { useForm } from "react-hook-form";
-import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
 import { TooltipContent } from "@radix-ui/react-tooltip";
-import { MikroPixelView } from "@/linkers";
+import { useForm } from "react-hook-form";
 
 export type Item = ChildrenQuery["rows"][0];
 
@@ -355,9 +352,9 @@ export const TableTable = (props: { table: TableFragment }) => {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   );
                 })}

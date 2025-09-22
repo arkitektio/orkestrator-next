@@ -1,56 +1,23 @@
-import { useRekuest } from "@/arkitekt/Arkitekt";
-import { Alert } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { useRekuest } from "@/lib/arkitekt/Arkitekt";
 import { useSettings } from "@/providers/settings/SettingsContext";
-import { useLiveAssignation } from "@/rekuest/hooks/useAssignations";
-import { ReturnsContainer } from "@/rekuest/widgets/tailwind";
-import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import {
-  AssignationEventKind,
-  AssignationsDocument,
-  AssignationsQuery,
-  useCancelMutation,
-  useDetailNodeQuery,
-  WatchAssignationEventsSubscriptionVariables,
-  WatchAssignationsDocument,
-  WatchAssignationsSubscription,
+  AgentsDocument,
+  AgentsQuery,
+  useAgentQuery,
+  WatchAgentsDocument,
+  WatchAgentsSubscription,
+  WatchAgentsSubscriptionVariables
 } from "../../api/graphql";
 
-export const DynamicYieldDisplay = (props: {
-  values: any[];
-  nodeId: string;
-}) => {
-  const { data } = useDetailNodeQuery({
-    variables: {
-      id: props.nodeId,
-    },
-  });
-
-  const { registry } = useWidgetRegistry();
-
-  if (!data) {
-    return <> Loaaading </>;
-  }
-
-  return (
-    <div>
-      <ReturnsContainer
-        ports={data.node.returns}
-        values={props.values}
-        registry={registry}
-        className="p-2"
-      />
-    </div>
-  );
-};
-
 export const AgentToatser = (props: { id: string }) => {
+  const { data } = useAgentQuery({});
+
   return (
     <div className="h-full relative w-full overflow-hidden group p-2">
-      I bims 1 Agent
+      {data?.agent?.name} is now{" "}
+      {data?.agent.connected ? "connected" : "disconnected"}
     </div>
   );
 };
@@ -63,47 +30,25 @@ export const AgentUpdater = (props: {}) => {
     if (client) {
       console.log("Subscribing to Postman Agents");
       const subscription = client
-        ?.subscribe<
-          WatchAssignationsSubscription,
-          WatchAssignationEventsSubscriptionVariables
-        >({
-          query: WatchAssignationsDocument,
-          variables: {
-            instanceId: settings.instanceId,
-          },
+        ?.subscribe<WatchAgentsSubscription, WatchAgentsSubscriptionVariables>({
+          query: WatchAgentsDocument,
+          variables: {},
         })
         .subscribe((res) => {
-          console.log("Received assignation update", res);
+          console.error("Received agent update", res);
 
-          let event = res.data?.assignations.event;
-          let create = res?.data?.assignations.create;
+          let update = res.data?.agents.update;
+          let create = res?.data?.agents.create;
 
-          if (event) {
-            client.cache.updateQuery<AssignationsQuery>(
+          if (update) {
+            client.cache.updateQuery<AgentsQuery>(
               {
-                query: AssignationsDocument,
-                variables: {
-                  instanceId: settings.instanceId,
-                },
+                query: AgentsDocument,
               },
               (data) => {
-                let assignation = data?.assignations.find(
-                  (a) => a.id === event.assignation.id,
-                );
-
-                if (!assignation) {
-                  console.error(
-                    "Assignation not found",
-                    event.assignation.id,
-                    data?.assignations,
-                  );
-                }
-
                 return {
-                  assignations: (data?.assignations || []).map((ass) =>
-                    ass.id == event.assignation.id
-                      ? { ...ass, events: [event, ...ass.events] }
-                      : ass,
+                  agents: (data?.agents || []).map((ass) =>
+                    ass.id == update.id ? { ...ass, update } : ass,
                   ),
                 };
               },
@@ -111,30 +56,21 @@ export const AgentUpdater = (props: {}) => {
           }
 
           if (create) {
-            client.cache.updateQuery<AssignationsQuery>(
+            client.cache.updateQuery<AgentsQuery>(
               {
-                query: AssignationsDocument,
-                variables: {
-                  instanceId: settings.instanceId,
-                },
+                query: AgentsDocument,
               },
               (data) => {
                 return {
-                  assignations: data?.assignations.concat([create]) || [create],
+                  agents: data?.agents.concat([create]) || [create],
                 };
               },
             );
 
-            if (create.ephemeral) {
-              // Ephemeral Assignations do not get a notification
-              return;
-            }
-
-            console.error("Added assignation", create.reference);
             const toastId = create.id; // Use the assignation id as the toastId
             toast(<AgentToatser id={toastId} />, {
               id: toastId,
-              duration: Infinity, // Keep toast open until manually closed or task completes
+              duration: 300, // Keep toast open until manually closed or task completes
               dismissible: true,
             });
           }

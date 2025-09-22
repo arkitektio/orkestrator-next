@@ -4,11 +4,11 @@ import {
   CardDescription,
   CardTitle,
 } from "@/components/ui/card";
-import { KraphNode } from "@/linkers";
 import {
   useGetLinkedExpressionQuery,
   usePinLinkedExpressionMutation,
 } from "@/kraph/api/graphql";
+import { KraphNode } from "@/linkers";
 
 export const EntityKindCard = ({ id }: { id: string }) => {
   const { data } = useGetLinkedExpressionQuery({

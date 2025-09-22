@@ -5,14 +5,108 @@ import {
   dialog,
   ipcMain,
   IpcMainEvent,
+  Menu,
   shell,
 } from "electron";
 import { writeFileSync } from "fs";
 import { join, resolve } from "path";
 import icon from "../../resources/icon.png?asset";
 import { fileURLToPath } from "url";
+import { download } from "electron-dl";
+import { autoUpdater } from "electron-updater";
+import log from "electron-log";
+
+
+app.commandLine.appendSwitch("ignore-certificate-errors", "true");
 
 let mainWindow: BrowserWindow | null = null;
+
+ipcMain.handle("download-from-url", async (event, { url }: { url: string }) => {
+  // Check if the URL is valid
+  const win = BrowserWindow.getFocusedWindow();
+  if (!win) return { success: false, error: "No active window" };
+
+  try {
+    const dl = await download(win, url);
+    return { success: true, path: dl.getSavePath() };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+
+function setupAutoUpdater() {
+  // Logging helps a LOT when debugging user update issues
+  log.transports.file.level = "info";
+  autoUpdater.logger = log;
+
+  // Optional: opt into prereleases / channels (see section 4)
+  // autoUpdater.allowPrerelease = true;       // allow beta/alpha if installed version has prerelease
+  // autoUpdater.channel = "beta";             // force the channel this client follows
+
+  // Don’t auto-install while running – safer UX
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  // Events -> wire to your UI
+  autoUpdater.on("checking-for-update", () => mainWindow?.webContents.send("updater:status", "Checking…"));
+  autoUpdater.on("update-available", (info) => mainWindow?.webContents.send("updater:available", info));
+  autoUpdater.on("update-not-available", () => mainWindow?.webContents.send("updater:none"));
+  autoUpdater.on("download-progress", (p) => mainWindow?.webContents.send("updater:progress", p));
+  autoUpdater.on("error", (err) => mainWindow?.webContents.send("updater:error", String(err)));
+  autoUpdater.on("update-downloaded", async (info) => {
+    const r = await dialog.showMessageBox({
+      type: "info",
+      buttons: ["Restart now", "Later"],
+      defaultId: 0,
+      message: `Update ${info.version} downloaded`,
+      detail: "Restart to install."
+    });
+    if (r.response === 0) autoUpdater.quitAndInstall();
+  });
+
+  // Start the first check a little after launch
+  setTimeout(() => autoUpdater.checkForUpdates(), 5000);
+  // And a periodic check (e.g., every 4 hours)
+  setInterval(() => autoUpdater.checkForUpdates(), 4 * 60 * 60 * 1000);
+}
+
+ipcMain.handle("discover-beacons", async () => {
+  // Placeholder for mDNS/Bonjour beacon discovery
+  // In a real implementation, this would use libraries like 'bonjour-service' or 'mdns'
+  // to discover Arkitekt instances on the local network
+
+  try {
+    // For now, return some example local network probes
+    // In the future, this could discover actual services via mDNS
+    return [];
+  } catch (error) {
+    console.error("Beacon discovery failed:", error);
+    return [];
+  }
+});
+
+function handleOrkestratorUrl(url: string) {
+  try {
+    const { host: modelIdentifier, pathname } = new URL(url);
+    const id = pathname.replace(/^\/+/, ""); // strip leading slashes
+    const fullPath = `${modelIdentifier}/${id}`;
+    console.log("Handling orkestrator URL:", fullPath);
+
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+
+    openSecondaryWindow(fullPath);
+  } catch (err) {
+    console.error("Invalid orkestrator URL", url);
+    dialog.showErrorBox(
+      "Invalid Link",
+      `The URL '${url}' could not be processed.`,
+    );
+  }
+}
 
 function createWindow(): BrowserWindow {
   // Create the browser window.
@@ -30,16 +124,12 @@ function createWindow(): BrowserWindow {
     },
   });
 
-  mainWindow.on("ready-to-show", () => {
-    mainWindow?.show();
+  mainWindow.webContents.setWindowOpenHandler((details) => {
+    return { action: "deny" };
   });
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
-    let url = new URL(details.url);
-
-    console.log(url.hash);
-    openSecondaryWindow(url.hash.split("#")[1]);
-    return { action: "deny" };
+  mainWindow.on("ready-to-show", () => {
+    mainWindow?.show();
   });
 
   // HMR for renderer base on electron-vite cli.
@@ -271,6 +361,8 @@ app.whenReady().then(() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId("com.electron");
 
+  setupAutoUpdater();
+
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
   // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
@@ -288,6 +380,21 @@ app.whenReady().then(() => {
   ipcMain.on("open-second-window", (_: IpcMainEvent, path) =>
     openSecondaryWindow(path),
   );
+
+
+  const menu = Menu.buildFromTemplate([
+    {
+      label: app.name,
+      submenu: [
+        {
+          label: "Check for Updates…",
+          click: () => autoUpdater.checkForUpdates()
+        },
+        { role: "quit" }
+      ]
+    }
+  ]);
+  Menu.setApplicationMenu(menu);
 });
 
 // In this file you can include the rest of your app"s specific main process

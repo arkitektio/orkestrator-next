@@ -1,10 +1,10 @@
 fragment Pairs on Pairs {
   pairs {
-    left {
-      id
+    source {
+      ...PathNode
     }
-    right {
-      id
+    target {
+      ...PathNode
     }
   }
 }

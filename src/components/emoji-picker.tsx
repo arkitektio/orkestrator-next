@@ -5,9 +5,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { SmileIcon } from "lucide-react";
-import Picker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
+import Picker from "@emoji-mart/react";
+import { SmileIcon } from "lucide-react";
 
 interface EmojiPickerProps {
   onChange: (value: string) => void;

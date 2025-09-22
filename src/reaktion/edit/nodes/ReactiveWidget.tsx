@@ -20,7 +20,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { NodeDescription } from "@/lib/rekuest/NodeDescription";
+import { ActionDescription } from "@/lib/rekuest/ActionDescription";
 import { ReactiveImplementation } from "@/reaktion/api/graphql";
 import { Constants } from "@/reaktion/base/Constants";
 import { InStream } from "@/reaktion/base/Instream";
@@ -69,7 +69,7 @@ export const Default = ({ data }: ShapeProps) => {
           <Tooltip>
             <TooltipTrigger>
               <CardTitle className="text-sm font-light">
-                <NodeDescription
+                <ActionDescription
                   description={data.title}
                   variables={{ ...data.constantsMap, __ports: data.ins }}
                 />
@@ -77,7 +77,7 @@ export const Default = ({ data }: ShapeProps) => {
             </TooltipTrigger>
             <TooltipContent>
               <CardDescription className="text-xs">
-                <NodeDescription
+                <ActionDescription
                   description={data.description}
                   variables={data.constantsMap}
                 />
@@ -103,7 +103,7 @@ export const Select = ({ data }: ShapeProps) => {
             </TooltipTrigger>
             <TooltipContent>
               <CardDescription className="text-xs">
-                <NodeDescription
+                <ActionDescription
                   description={data.description}
                   variables={data.constantsMap}
                 />
@@ -190,6 +190,42 @@ export const Reorder = ({ data }: ShapeProps) => {
               <CardDescription className="text-xs">Just a</CardDescription>
             </TooltipContent>
           </Tooltip>
+        </CardHeader>
+      </Card>
+    </>
+  );
+};
+
+export const BufferCount = ({ data, id }: ShapeProps) => {
+
+
+  const { updateData } = useEditRiver();
+  const updateNodeInternal = useUpdateNodeInternals();
+
+
+  const updateCount = (count: number) => {
+    updateData(
+      { constantsMap: { ...data.constantsMap, count: count } },
+      id,
+    );
+    updateNodeInternal(id);
+  };
+
+  return (
+    <>
+      <Card className="rounded-md border-blue-400/40 shadow-blue-400/20 dark:border-blue-300 dark:shadow-blue/20 shadow-xl">
+        <CardHeader className="p-1">
+          <CardTitle className="text-sm font-light">Buffer</CardTitle>
+          <CardDescription>
+
+            <Button onClick={() => updateCount(data.constantsMap.count + 1)} variant={"ghost"} size={"icon"}>
+              +
+            </Button>
+            {data.constantsMap.count}
+            <Button onClick={() => updateCount(data.constantsMap.count - 1)} variant={"ghost"} size={"icon"}>
+              -
+            </Button>
+          </CardDescription>
         </CardHeader>
       </Card>
     </>
@@ -286,12 +322,13 @@ const contextMenuMap: {
   [ReactiveImplementation.Split]: DefaultContext,
   [ReactiveImplementation.ToList]: DefaultContext,
   [ReactiveImplementation.BufferComplete]: DefaultContext,
+  [ReactiveImplementation.BufferUntil]: DefaultContext,
+  [ReactiveImplementation.BufferCount]: DefaultContext,
   [ReactiveImplementation.Chunk]: DefaultContext,
   [ReactiveImplementation.Omit]: DefaultContext,
   [ReactiveImplementation.Add]: DefaultContext,
   [ReactiveImplementation.All]: DefaultContext,
   [ReactiveImplementation.And]: DefaultContext,
-  [ReactiveImplementation.BufferUntil]: DefaultContext,
   [ReactiveImplementation.Delay]: DefaultContext,
   [ReactiveImplementation.DelayUntil]: DefaultContext,
   [ReactiveImplementation.Divide]: DefaultContext,
@@ -318,12 +355,13 @@ const shapeMap: { [key in ReactiveImplementation]: React.FC<ShapeProps> } = {
   [ReactiveImplementation.Split]: Default,
   [ReactiveImplementation.ToList]: ToList,
   [ReactiveImplementation.BufferComplete]: Default,
+  [ReactiveImplementation.BufferUntil]: Default,
+  [ReactiveImplementation.BufferCount]: BufferCount,
   [ReactiveImplementation.Chunk]: Default,
   [ReactiveImplementation.Omit]: Default,
   [ReactiveImplementation.Add]: Add,
   [ReactiveImplementation.All]: Default,
   [ReactiveImplementation.And]: Default,
-  [ReactiveImplementation.BufferUntil]: Default,
   [ReactiveImplementation.Delay]: Default,
   [ReactiveImplementation.DelayUntil]: Default,
   [ReactiveImplementation.Divide]: Default,

@@ -366,5 +366,5 @@ export {
   InlineComboboxContent,
   InlineComboboxEmpty,
   InlineComboboxInput,
-  InlineComboboxItem,
+  InlineComboboxItem
 };

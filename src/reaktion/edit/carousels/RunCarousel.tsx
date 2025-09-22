@@ -10,7 +10,7 @@ import { FlussRun } from "@/linkers";
 import { useRunCarouselQuery } from "@/reaktion/api/graphql";
 import { TrackFlow } from "@/reaktion/track/TrackFlow";
 
-export default ({}) => {
+export default ({ }) => {
   const { data, error, subscribeToMore, refetch } = useRunCarouselQuery({
     variables: {
       pagination: {

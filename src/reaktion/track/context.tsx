@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { DetailRunFragment, FlowFragment } from "../api/graphql";
-import { RunState } from "./types";
 import { FlowNode } from "../types";
+import { RunState } from "./types";
 
 export type TrackRiverContextType = {
   flow?: FlowFragment | null;

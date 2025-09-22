@@ -7,7 +7,7 @@ import React from "react";
 import GlobalSearchFilter from "../filters/GlobalSearchFilter";
 import registry, { Registration } from "../registry";
 
-interface IDataSidebarProps {}
+interface IDataSidebarProps { }
 
 export const NavigationPane = (props: {}) => {
   return (

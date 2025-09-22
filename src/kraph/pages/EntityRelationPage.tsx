@@ -1,19 +1,14 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { useGetEntityQuery, useGetEntityRelationQuery } from "../api/graphql";
+import { useGetEntityRelationQuery } from "../api/graphql";
 
 import { FormDialog } from "@/components/dialog/FormDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   KraphNode,
-  MikroEntityMetric,
   MikroEntityRelation,
-  MikroEntityRelationMetric,
-  MikroImage,
-  KraphProtocolStep,
-  MikroROI,
+  MikroEntityRelationMetric
 } from "@/linkers";
-import { ImageRGBD, RoiRGBD } from "../components/render/TwoDThree";
 import CreateEntityMetricForm from "../forms/CreateEntityMetricForm";
 
 export default asDetailQueryRoute(

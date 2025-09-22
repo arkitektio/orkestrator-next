@@ -1,18 +1,17 @@
 "use client";
 
-import React from "react";
+import { TimelineElement } from "@/app/data";
 import {
   Timeline,
-  TimelineItem,
   TimelineConnector,
-  TimelineHeader,
-  TimelineTitle,
-  TimelineIcon,
-  TimelineDescription,
   TimelineContent,
+  TimelineDescription,
+  TimelineHeader,
+  TimelineIcon,
+  TimelineItem,
   TimelineTime,
+  TimelineTitle,
 } from "@/components/timeline/timeline";
-import { TimelineElement } from "@/app/data";
 
 interface TimelineLayoutProps {
   items: TimelineElement[]; // Replace any[] with the actual type of items.

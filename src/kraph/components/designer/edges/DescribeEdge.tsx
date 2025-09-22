@@ -6,12 +6,7 @@ import {
   type EdgeProps,
   type ReactFlowState,
 } from "@xyflow/react";
-import {
-  DescribeEdge,
-  MeasurementEdge,
-  StagingMeasurementEdge,
-  StagingRelationEdge,
-} from "../types";
+import { DescribeEdge } from "../types";
 import { getEdgeParams } from "../utils";
 import { Card } from "@/components/ui/card";
 
@@ -91,7 +86,6 @@ export default ({
         label={data?.label}
         color="#ff00ff"
       />
-      <EdgeLabelRenderer></EdgeLabelRenderer>
     </>
   );
 };

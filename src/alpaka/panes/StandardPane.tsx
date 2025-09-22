@@ -9,7 +9,6 @@ import { AlpakaRoom } from "@/linkers";
 import { CubeIcon, PlusIcon } from "@radix-ui/react-icons";
 import { Home } from "lucide-react";
 import * as React from "react";
-import { RiProfileFill } from "react-icons/ri";
 import {
   GlobalSearchQueryVariables,
   useCreateRoomMutation,
@@ -19,7 +18,7 @@ import {
 import RoomCard from "../components/cards/RoomCard";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
 
-interface IDataSidebarProps {}
+interface IDataSidebarProps { }
 
 export const NavigationPane = (props: {}) => {
   const [createRoom] = useCreateRoomMutation({
@@ -41,7 +40,7 @@ export const NavigationPane = (props: {}) => {
         </DroppableNavLink>
       </SubTree>
 
-      <SubTreeTitle>Conversations</SubTreeTitle>
+      <SubTreeTitle>Data</SubTreeTitle>
       <SubTree>
         <DroppableNavLink
           to="/alpaka/rooms"
@@ -50,10 +49,38 @@ export const NavigationPane = (props: {}) => {
           <CubeIcon className="h-4 w-4" />
           Rooms
         </DroppableNavLink>
+        <DroppableNavLink
+          to="/alpaka/collections"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <CubeIcon className="h-4 w-4" />
+          Collections
+        </DroppableNavLink>
+        <DroppableNavLink
+          to="/alpaka/llmmodels"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <CubeIcon className="h-4 w-4" />
+          Models
+        </DroppableNavLink>
+        <DroppableNavLink
+          to="/alpaka/providers"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <CubeIcon className="h-4 w-4" />
+          Providers
+        </DroppableNavLink>
       </SubTree>
       <SubTreeTitle
         action={
-          <Button onClick={() => createRoom()} variant={"ghost"} size={"icon"}>
+          <Button onClick={() => createRoom({
+            variables: {
+              input: {
+                title: "Conversation at " + new Date().toLocaleString(),
+                description: "Created by the sidebar",
+              }
+            }
+          })} variant={"ghost"} size={"icon"}>
             <PlusIcon className="h-3 w-3" />
           </Button>
         }

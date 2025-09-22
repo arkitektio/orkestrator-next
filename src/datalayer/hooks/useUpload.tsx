@@ -1,5 +1,7 @@
-import { Arkitekt, useMikro } from "@/arkitekt/Arkitekt";
-import { useService } from "@/arkitekt/hooks";
+import {
+  useDatalayerEndpoint,
+  useMikro
+} from "@/lib/arkitekt/Arkitekt";
 import {
   PresignedPostCredentialsFragment,
   RequestFileUploadPresignedDocument,
@@ -10,6 +12,7 @@ import {
   RequestMediaUploadMutationVariables,
 } from "@/mikro-next/api/graphql";
 import { useCallback } from "react";
+import { toast } from "sonner";
 
 export const uploadFetch = (
   url: RequestInfo | URL,
@@ -114,18 +117,10 @@ const uploadToStore = async (
 
 export const useMediaUpload = () => {
   const client = useMikro();
-  const fakts = Arkitekt.useFakts();
+  const datalayerEndpoint = useDatalayerEndpoint();
 
   const upload = useCallback(
     async (file: File) => {
-      if (!client) {
-        throw Error("No client configured");
-      }
-      const endPointUrl = fakts?.datalayer?.endpoint_url;
-      if (!endPointUrl) {
-        throw Error("No client configured");
-      }
-
       let data = await client.mutate<
         RequestMediaUploadMutation,
         RequestMediaUploadMutationVariables
@@ -143,9 +138,9 @@ export const useMediaUpload = () => {
 
       let z = data.data.requestMediaUpload;
 
-      return await uploadToStore(file, endPointUrl, z, {});
+      return await uploadToStore(file, datalayerEndpoint, z, {});
     },
-    [client, fakts],
+    [client, datalayerEndpoint],
   );
 
   return upload;
@@ -158,40 +153,48 @@ export type FileUploadOptions = {
 
 export const useBigFileUpload = () => {
   const client = useMikro();
-  const fakts = Arkitekt.useFakts();
+  const datalayerEndpoint = useDatalayerEndpoint();
 
   const upload = useCallback(
     async (file: File, options: FileUploadOptions) => {
       if (!client) {
         throw Error("No client configured");
       }
-      const endPointUrl = fakts?.datalayer?.endpoint_url;
-      if (!endPointUrl) {
-        throw Error("No client configured");
+
+      console.log("uploading", file, options, datalayerEndpoint);
+
+      try {
+        const data = await client.mutate<
+          RequestFileUploadPresignedMutation,
+          RequestFileUploadPresignedMutationVariables
+        >({
+          mutation: RequestFileUploadPresignedDocument,
+          variables: {
+            key: file.name,
+            datalayer: "default",
+          },
+        });
+
+        if (data.errors) {
+          toast.error(
+            `Failed to request upload: ${data.errors.map((e) => e.message).join(", ")}`,
+          );
+        }
+
+        if (!data.data?.requestFileUploadPresigned) {
+          throw Error("Failed to request upload");
+        }
+
+        let z = data.data.requestFileUploadPresigned;
+
+        return await uploadToStore(file, datalayerEndpoint, z, options);
+      } catch (e) {
+        console.error("Failed to upload file", e);
+        toast.error(`Failed to upload file: ${(e as Error).message}`);
+        throw e;
       }
-
-      console.log("uploading", file, options);
-
-      let data = await client.mutate<
-        RequestFileUploadPresignedMutation,
-        RequestFileUploadPresignedMutationVariables
-      >({
-        mutation: RequestFileUploadPresignedDocument,
-        variables: {
-          key: file.name,
-          datalayer: "default",
-        },
-      });
-
-      if (!data.data?.requestFileUploadPresigned) {
-        throw Error("Failed to request upload");
-      }
-
-      let z = data.data.requestFileUploadPresigned;
-
-      return await uploadToStore(file, endPointUrl, z, options);
     },
-    [client, fakts],
+    [client, datalayerEndpoint],
   );
 
   return upload;

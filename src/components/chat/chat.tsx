@@ -1,17 +1,17 @@
 import {
-  DetailRoomFragment,
-  useSendMessageMutation,
+  RoomFragment,
+  useSendMessageMutation
 } from "@/alpaka/api/graphql";
-import { ChatList } from "./chat-list";
-import { Message, UserData } from "./data";
 import { useSmartDrop } from "@/providers/smart/hooks";
 import { Card } from "../ui/card";
+import { ChatList } from "./chat-list";
+import { Message, UserData } from "./data";
 
 interface ChatProps {
   messages?: Message[];
   selectedUser: UserData;
   isMobile: boolean;
-  room: DetailRoomFragment;
+  room: RoomFragment;
 }
 
 export function Chat({ messages, selectedUser, isMobile, room }: ChatProps) {

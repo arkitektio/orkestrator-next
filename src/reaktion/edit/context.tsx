@@ -54,8 +54,8 @@ export type ShowRiverContextType = {
 };
 
 export const EditRiverContext = React.createContext<ShowRiverContextType>({
-  updateData: () => {},
-  setGlobals: () => {},
+  updateData: () => { },
+  setGlobals: () => { },
   state: {
     valid: true,
     remainingErrors: [],
@@ -65,17 +65,17 @@ export const EditRiverContext = React.createContext<ShowRiverContextType>({
     globals: [],
   },
   showEdgeLabels: false,
-  removeGlobal: () => {},
-  removeEdge: () => {},
-  moveConstantToGlobals: () => {},
-  moveStreamToConstants: () => {},
-  moveConstantToStream: () => {},
-  moveOutStreamToVoid: () => {},
-  moveVoidtoOutstream: () => {},
+  removeGlobal: () => { },
+  removeEdge: () => { },
+  moveConstantToGlobals: () => { },
+  moveStreamToConstants: () => { },
+  moveConstantToStream: () => { },
+  moveOutStreamToVoid: () => { },
+  moveVoidtoOutstream: () => { },
   showNodeErrors: true,
-  addContextualNode: () => {},
-  addEdgeContextualNode: () => {},
-  addClickNode: () => {},
+  addContextualNode: () => { },
+  addEdgeContextualNode: () => { },
+  addClickNode: () => { },
   addConnectContextualNode(node, params) {
     console.log(node, params);
   },

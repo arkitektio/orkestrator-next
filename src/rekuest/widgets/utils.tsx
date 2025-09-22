@@ -5,7 +5,6 @@ import { PortKind } from "../api/graphql";
 import { LabellablePort, PortablePort } from "./types";
 
 export const pathToName = (path: string[]): string => {
-  console.log(path);
   return path.join(".");
 };
 
@@ -51,6 +50,12 @@ export const portToLabel = (port: LabellablePort): string => {
   if (port.kind == PortKind.Model) {
     return port.identifier || "Unknown Model";
   }
+  if (port.kind == PortKind.Enum) {
+    return port.identifier || "Unknown Enum";
+  }
+  if (port.kind == PortKind.MemoryStructure) {
+    return port.identifier || "Unknown Memory Structure";
+  }
   if (port.kind == PortKind.Dict) {
     const firstChild = port.children?.at(0);
     return firstChild
@@ -60,37 +65,33 @@ export const portToLabel = (port: LabellablePort): string => {
   return "Unknown";
 };
 
-import * as Yup from "yup";
-
-export const buildModelSchema = (ports: LabellablePort[]) => {
-  return Yup.object(
-    ports.reduce(
-      (prev, curr) => {
-        prev[curr.key] = portToValidation(curr);
-        return prev;
-      },
-      {} as { [key: string]: any },
-    ),
-  );
-};
-
 export const portToZod = (port: LabellablePort): any => {
   let baseType;
   switch (port?.kind) {
     case PortKind.String:
       baseType = z.string({ message: "Please enter a string" });
       break;
+    case PortKind.Enum:
+      baseType = z.enum(
+        (port.choices?.map((c) => c.value) || ["fake"]) as [string],
+        { message: "Please enter a kind" },
+      );
+      break;
     case PortKind.Int:
       baseType = z.coerce.number({ message: "Please enter a valid integer" });
       break;
+    case PortKind.MemoryStructure:
+      baseType = z.string({ message: "Please enter a valid memory structure" });
+      break;
     case PortKind.Float:
-      baseType = z.preprocess(
-        (a) => parseFloat(z.string().parse(a)),
-        z.number({ message: "Please enter a float" }),
-      );
+      baseType = z.coerce
+        .number({ message: "Please enter a valid float" })
+        .refine((val) => !isNaN(val), {
+          message: "Please enter a valid float",
+        });
       break;
     case PortKind.Structure:
-      baseType = z.string();
+      baseType = z.string({ message: "Please enter a valid structure" });
       break;
     case PortKind.Union:
       let variants = port.children?.filter(notEmpty);
@@ -100,14 +101,12 @@ export const portToZod = (port: LabellablePort): any => {
       }
       baseType = z.discriminatedUnion(
         "__use",
-        port.children
-          ?.filter((v) => v != undefined)
-          .map((v, index) =>
-            z.object({
-              __value: portToZod(v),
-              __use: z.literal(index.toString()),
-            }),
-          ) || [],
+        variants.map((v, index) =>
+          z.object({
+            __value: portToZod(v),
+            __use: z.literal(index.toString()),
+          }),
+        ) || [],
       );
       break;
     case PortKind.Bool:
@@ -130,7 +129,6 @@ export const portToZod = (port: LabellablePort): any => {
         break;
       }
       baseType = z.array(z.object({ __value: portToZod(child) }));
-
       break;
     case PortKind.Date:
       baseType = z.date();
@@ -138,9 +136,10 @@ export const portToZod = (port: LabellablePort): any => {
     case PortKind.Model:
       baseType = buildZodSchema(port.children?.filter(notEmpty) || []);
       break;
-
     default:
-      baseType = z.string();
+      throw new Error(
+        `Port kind ${port.kind} is not supported for zod validation`,
+      );
       break;
   }
   if (port.nullable) {
@@ -188,9 +187,7 @@ export const buildZodSchema = (ports: PortablePort[], path: string[] = []) => {
           ) => boolean;
 
           let params = validator.dependencies?.map((dep) => values[dep]);
-          console.log("Params", params);
           if (params?.every((predicate) => predicate != undefined)) {
-            console.log("Calling validator with params", params);
             let serialized_values = JSON.stringify(params);
             let x = func(v, serialized_values);
             console.log(x);
@@ -200,7 +197,7 @@ export const buildZodSchema = (ports: PortablePort[], path: string[] = []) => {
           }
         };
 
-        schema = schema.refine(
+        schema.refine(
           (data) => {
             return wrappedValidator(data[port.key], data);
           },
@@ -209,103 +206,11 @@ export const buildZodSchema = (ports: PortablePort[], path: string[] = []) => {
             path: [pathToName([...path, port.key])],
           },
         );
-
-        console.log("Refined schema with", validator);
       }
     }
   });
 
   return schema;
-};
-
-export const portToValidation = (port: LabellablePort): Yup.AnySchema => {
-  let baseType;
-  switch (port?.kind) {
-    case PortKind.String:
-      baseType = Yup.string().typeError("Please enter a string");
-      break;
-    case PortKind.Int:
-      baseType = Yup.number()
-        .integer("Please enter a valid integer")
-        .typeError(`Please enter a valid integer`)
-        .transform((v) => (v === "" || Number.isNaN(v) ? null : v))
-        .typeError("Please enter a valid integer");
-      break;
-    case PortKind.Float:
-      baseType = Yup.number()
-        .transform((v) => (v === "" || Number.isNaN(v) ? null : v))
-        .typeError(`Please enter a valid number`);
-      break;
-    case PortKind.Structure:
-      baseType = Yup.string().typeError(`Please select a ${port.identifier}`);
-      break;
-    case PortKind.Union:
-      baseType = Yup.object({
-        use: Yup.number().typeError(`Please select a valid choice`),
-        value: Yup.mixed().typeError(`Please select a valid union`),
-      }).typeError(`Please select a valid union`);
-      break;
-    case PortKind.Bool:
-      baseType = Yup.boolean().typeError("Please select true or false");
-      break;
-    case PortKind.Dict:
-      let dictChild = port.children?.at(0);
-      if (!dictChild) {
-        baseType = Yup.array().typeError(
-          "This port is not configured correctly",
-        );
-        break;
-      }
-      baseType = Yup.array()
-        .of(
-          Yup.object({
-            __value: portToValidation(dictChild),
-            __key: Yup.string(),
-          }),
-        )
-        .typeError("The dictionary is not valid");
-      break;
-    case PortKind.List:
-      let child = port.children?.at(0);
-      if (!child) {
-        baseType = Yup.array().typeError(
-          "This port is not configured correctly",
-        );
-        break;
-      }
-      baseType = Yup.array()
-        .of(Yup.object({ __value: portToValidation(child) }))
-        .typeError("The list is not valid");
-      break;
-    case PortKind.Date:
-      baseType = Yup.date().typeError("Please provide a valid date");
-      break;
-    case PortKind.Model:
-      baseType = buildModelSchema(port.children?.filter(notEmpty) || []);
-      break;
-
-    default:
-      baseType = Yup.string();
-      break;
-  }
-  if (port.nullable) {
-    if (!baseType) throw new Error(`Base type for ${port} is not defined`);
-    baseType = baseType.nullable("Please provide a value");
-  }
-
-  return baseType;
-};
-
-export const yupSchemaBuilder = (args: (PortablePort | undefined | null)[]) => {
-  const schema: { [key: string]: any } = {};
-  args.reduce((prev, curr) => {
-    if (curr) {
-      prev[curr?.key] = portToValidation(curr);
-      return prev;
-    }
-    return prev;
-  }, schema);
-  return Yup.object(schema);
 };
 
 export const portToDefaults = (
@@ -316,7 +221,7 @@ export const portToDefaults = (
 };
 
 export const recursiveExtract = (data: any, port: PortablePort): any => {
-  if (!data) return null;
+  if (data == undefined || data == null) return null;
   if (!port) throw new Error("Port is not defined");
 
   if (port.kind == PortKind.List) {
@@ -356,7 +261,6 @@ export const submittedDataToRekuestFormat = (
   data: any,
   ports: PortablePort[],
 ): any => {
-  console.log("Parsing", data);
   return ports.reduce(
     (prev, curr) => {
       prev[curr.key] = recursiveExtract(data[curr.key], curr);

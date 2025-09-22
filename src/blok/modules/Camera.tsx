@@ -1,40 +1,57 @@
-import { Button } from "@/components/ui/button";
-import {
-  build,
-  buildAction,
-  buildModule,
-  buildState,
-  useAgentContext,
-} from "@/hooks/use-metaapp";
-import { StreamWidget } from "@/widgets/StreamWidget";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpIcon } from "lucide-react";
+import { module, state, structure } from "@/hooks/use-metaapp";
+import { MikroImage } from "@/linkers";
+import { AsyncSoloBroadcastWidget } from "@/lovekit/widgets/SoloBroadcastWidget";
+import { useGetImageQuery } from "@/mikro-next/api/graphql";
+import { DelegatingImageRender } from "@/mikro-next/components/render/DelegatingImageRender";
 
-export const CameraModule = buildModule({
+export const CameraModule = module({
+  name: "Camera",
+  description: "Shows a stream from the central camera",
   states: {
-    camera: buildState(
-      {
-        latest_image: build.structure("@mikro/image"),
-        stream: build.structure("@lok/stream"),
+    camera: state({
+      keys: {
+        broadcast: structure("@lovekit/solo_broadcast"),
       },
-      {
-        forceHash:
-          "98827913a754105345839da69433409c43b1000251387ff2a37e174e46f1f7e4",
-      },
-    ),
+    }),
   },
   actions: {},
 });
 
-export const CentralCamera = () => {
-  const { value: camera } = CameraModule.useState("camera");
+export const ImageRender = ({ id }: { id: string }) => {
+  const { data } = useGetImageQuery({
+    variables: {
+      id,
+    },
+  });
 
-  if (!camera) {
-    return <div>Loading</div>;
+  const defaultContext = data?.image?.rgbContexts.at(0);
+
+  return (
+    <MikroImage.DetailLink object={id}>
+      <div className="w-[700px] h-[700px]">
+        {defaultContext && (
+          <DelegatingImageRender context={defaultContext} rois={[]} />
+        )}
+      </div>
+    </MikroImage.DetailLink>
+  );
+};
+
+export const CentralCamera = () => {
+  const { value: camera, errors } = CameraModule.useState("camera");
+
+  if (errors) {
+    return <div>{JSON.stringify(errors)}</div>;
   }
 
   return (
-    <div className="mx-auto max-h-[700px] max-w-[700px] my-auto bg-black">
-      <StreamWidget value={camera.stream} />
+    <div className="bg-black h-full w-full">
+      {camera?.broadcast && <AsyncSoloBroadcastWidget id={camera.broadcast} />}
+      {!camera?.broadcast && (
+        <div className="flex items-center justify-center h-full">
+          <span className="text-white">Loading camera stream...</span>
+        </div>
+      )}
     </div>
   );
 };

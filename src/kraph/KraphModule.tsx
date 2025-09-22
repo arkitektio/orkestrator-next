@@ -1,42 +1,48 @@
 import { NotFound } from "@/app/components/fallbacks/NotFound";
-import { Guard } from "@/arkitekt/Arkitekt";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import { Guard } from "@/lib/arkitekt/Arkitekt";
 import React from "react";
 import { Route, Routes } from "react-router";
+import EntityCategoriesPage from "./pages/EntityCategoriesPage";
 import EntityCategoryPage from "./pages/EntityCategoryPage";
+import EntityPage from "./pages/EntityPage";
 import GraphPage from "./pages/GraphPage";
 import GraphQueryPage from "./pages/GraphQueryPage";
 import GraphsPage from "./pages/GraphsPage";
 import HomePage from "./pages/HomePage";
+import MeasurementCategoriesPage from "./pages/MeasurementCategoriesPage";
+import MeasurementCategoryPage from "./pages/MeasurementCategoryPage";
+import MetricCategoriesPage from "./pages/MetricCategoriesPage";
+import MetricCategoryPage from "./pages/MetricCategoryPage";
+import NaturalEventCategoriesPage from "./pages/NaturalEventCategoriesPage";
 import NaturalEventCategoryPage from "./pages/NaturalEventCategoryPage";
 import NodePage from "./pages/NodePage";
+import NodeQueryPage from "./pages/NodeQueryPage";
+import NodeViewPage from "./pages/NodeViewPage";
+import ProtocolEventCategoriesPage from "./pages/ProtocolEventCategoriesPage";
 import ProtocolEventCategoryPage from "./pages/ProtocolEventCategoryPage";
+import ProtocolEventPage from "./pages/ProtocolEventPage";
+import ReagentCategoriesPage from "./pages/ReagentCategoriesPage";
+import ReagentCategoryPage from "./pages/ReagentCategoryPage";
 import ReagentPage from "./pages/ReagentPage";
 import ReagentsPage from "./pages/ReagentsPage";
+import RelationCategoriesPage from "./pages/RelationCategoriesPage";
+import RelationCategoryPage from "./pages/RelationCategoryPage";
+import StructureCategoriesPage from "./pages/StructureCategoriesPage";
 import {
   default as ExpressionPage,
   default as StructureCategoryPage,
 } from "./pages/StructureCategoryPage";
-import StandardPane from "./panes/StandardPane";
-import EntityPage from "./pages/EntityPage";
-import ReagentCategoryPage from "./pages/ReagentCategoryPage";
-import ReagentCategoriesPage from "./pages/ReagentCategoriesPage";
-import EntityCategoriesPage from "./pages/EntityCategoriesPage";
-import StructureCategoriesPage from "./pages/StructureCategoriesPage";
-import ProtocolEventCategoriesPage from "./pages/ProtocolEventCategoriesPage";
-import MetricCategoryPage from "./pages/MetricCategoryPage";
-import MetricCategoriesPage from "./pages/MetricCategoriesPage";
-import RelationCategoriesPage from "./pages/RelationCategoriesPage";
-import { RelationCategoryFragmentDoc } from "./api/graphql";
-import RelationCategoryPage from "./pages/RelationCategoryPage";
-import MeasurementCategoriesPage from "./pages/MeasurementCategoriesPage";
-import MeasurementCategoryPage from "./pages/MeasurementCategoryPage";
-import NaturalEventCategoriesPage from "./pages/NaturalEventCategoriesPage";
-import NodeQueryPage from "./pages/NodeQueryPage";
-import NodeViewPage from "./pages/NodeViewPage";
 import StructurePage from "./pages/StructurePage";
-import ProtocolEventPage from "./pages/ProtocolEventPage";
-interface Props {}
+import StructureRelationCategoriesPage from "./pages/StructureRelationCategoriesPage";
+import StuctureRelationCategoryPage from "./pages/StructureRelationCategoryPage";
+import StandardPane from "./panes/StandardPane";
+import GraphReagentCategoriesPage from "./pages/graph/GraphReagentCategoriesPage";
+import MetricPage from "./pages/MetricPage";
+import RelationPage from "./pages/RelationPage";
+import StructureRelationPage from "./pages/StructureRelationPage";
+import GraphQueryDesignerPage from "./pages/designer/GraphQueryDesignerPage";
+interface Props { }
 
 export const KraphModule: React.FC<Props> = (props) => {
   return (
@@ -44,14 +50,22 @@ export const KraphModule: React.FC<Props> = (props) => {
       <ModuleLayout pane={<StandardPane />}>
         <Routes>
           <Route index element={<HomePage />} />
+          <Route
+            path="graphs/:id/reagentcategories"
+            element={<GraphReagentCategoriesPage />}
+          />
           <Route path="expressions/:id" element={<ExpressionPage />} />
           <Route path="nodes/:id" element={<NodePage />} />
+          <Route path="relations/:id" element={<RelationPage />} />
+          <Route path="structurerelations/:id" element={<StructureRelationPage />} />
           <Route path="entities/:id" element={<EntityPage />} />
+          <Route path="metrics/:id" element={<MetricPage />} />
           <Route path="structures/:id" element={<StructurePage />} />
           <Route path="protocolevents/:id" element={<ProtocolEventPage />} />
           <Route path="graphs" element={<GraphsPage />} />
           <Route path="graphs/:id" element={<GraphPage />} />
           <Route path="graphqueries/:id" element={<GraphQueryPage />} />
+          <Route path="graphqueries/:id/designer" element={<GraphQueryDesignerPage />} />
           <Route path="nodequeries/:id" element={<NodeQueryPage />} />
           <Route
             path="nodequeries/:id/view/:nodeid"
@@ -60,6 +74,14 @@ export const KraphModule: React.FC<Props> = (props) => {
 
           <Route path="reagentcategories" element={<ReagentCategoriesPage />} />
           <Route path="entitycategories" element={<EntityCategoriesPage />} />
+          <Route
+            path="structurerelationcategories"
+            element={<StructureRelationCategoriesPage />}
+          />
+          <Route
+            path="structurerelationcategories/:id"
+            element={<StuctureRelationCategoryPage />}
+          />
           <Route
             path="structurecategories"
             element={<StructureCategoriesPage />}

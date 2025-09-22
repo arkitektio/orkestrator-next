@@ -1,4 +1,4 @@
-import { useElektro } from "@/arkitekt/Arkitekt";
+import { useElektro } from "@/lib/arkitekt/Arkitekt";
 import { useWidgetRegistry } from "@/rekuest/widgets/WidgetsContext";
 import { gql } from "@apollo/client";
 import { useEffect } from "react";
@@ -25,7 +25,7 @@ export const ElektroWard: React.FC<{
           });
       };
 
-      registry?.registerWard(key, {
+      registry?.registerWard("elektro", {
         search: runFunc,
       });
     }

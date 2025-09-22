@@ -12,13 +12,11 @@ import {
 } from "@/mikro-next/api/graphql";
 import { ViewType } from "@/mikro-next/pages/DatasetPage";
 import { ArrowLeft, ArrowRight, LayoutList, ListIcon } from "lucide-react";
+import { useState } from "react";
 import DatasetCard from "../cards/DatasetCard";
 import FileCard from "../cards/FileCard";
 import ImageCard from "../cards/ImageCard";
 import { ProvenanceSidebar } from "../sidebars/ProvenanceSidebar";
-import { offset } from "@udecode/plate-floating";
-import { useState } from "react";
-
 export type IRepresentationScreenProps = {};
 
 export const DatasetListExplorer = (props: {
@@ -52,6 +50,7 @@ export const DatasetListExplorer = (props: {
             Comments: (
               <Komments identifier="@mikro/dataset" object={props.dataset.id} />
             ),
+            Share: <MikroDataset.Share object={props.dataset.id} />,
             Provenance: <ProvenanceSidebar items={props?.dataset.history} />,
           }}
         />
@@ -116,22 +115,26 @@ export const DatasetListExplorer = (props: {
         </div>
       }
     >
-      <div className="flex-grow">
-        <div className="grid grid-cols-6 rounded-md gap-4 mt-2">
+      <div className="h-full w-full flex flex-col rounded-md">
+        <div className="grid grid-cols-6 rounded-md gap-4 mt-2 flex-initial ">
           {data?.children.map((child) => {
             if (child.__typename === "Dataset") {
-              return <DatasetCard dataset={child} className="h-10" />;
+              return <DatasetCard dataset={child} className="h-20 w-full" />;
             } else if (child.__typename === "Image") {
               return (
                 <ImageCard image={child} className="h-20 w-full  ellipsis" />
               );
             } else if (child.__typename === "File") {
-              return <FileCard file={child} className="h-10" />;
+              return <FileCard file={child} className="h-20 w-full" />;
             } else {
               return <div>Unknown type</div>;
             }
           })}
+          {error && (
+            <div className="col-span-6 text-red-500">{error.message}</div>
+          )}
         </div>
+
         <DropZone
           accepts={["item:@mikro/image", "list:@mikro/image"]}
           className="border border-gray-800 cursor-pointer rounded p-5 text-white bg-gray-900 hover:shadow-lg truncate"

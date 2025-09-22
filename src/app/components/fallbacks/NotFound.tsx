@@ -1,8 +1,11 @@
-import { Arkitekt } from "@/arkitekt/Arkitekt";
+import { useMeQuery } from "@/lok-next/api/graphql";
 import { NavLink, useLocation } from "react-router-dom";
 
 export const NotFound = () => {
-  const { user } = Arkitekt.useLogin();
+  const { data } = useMeQuery({
+    fetchPolicy: "cache-and-network",
+  });
+
   const location = useLocation();
 
   return (
@@ -10,7 +13,7 @@ export const NotFound = () => {
       <div className="flex flex-col">
         <div className="space-y-4">
           <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl text-foreground">
-            Hi {user?.preferred_username || "Stranger"} :)
+            Hi {data?.me?.username || "Stranger"} :)
           </h1>
           <h2 className="text-xl font-light tracking-tighter sm:text-2xl md:text-3xl text-foreground">
             This route does not exist

@@ -17,12 +17,16 @@ export const RekuestAssignation = buildSmart(
 
 export const BlokBlok = buildSmart("@blok/blok", "blok/bloks");
 
-export const RekuestNode = buildSmart("@rekuest/node", "rekuest/nodes");
-export const RekuestTemplate = buildSmart(
-  "@rekuest/template",
-  "rekuest/templates",
+export const RekuestAction = buildSmart("@rekuest/action", "rekuest/actions");
+export const RekuestImplementation = buildSmart(
+  "@rekuest/implementation",
+  "rekuest/implementations",
 );
-export const RekuestPanel = buildSmart("@rekuest/panel", "rekuest/panels");
+export const RekuestBlok = buildSmart("@rekuest/blok", "rekuest/bloks");
+export const RekuestMaterializedBlok = buildSmart(
+  "@rekuest/materialized_blok",
+  "rekuest/materialized_bloks",
+);
 export const RekuestDependency = buildSmart(
   "@rekuest/dependency",
   "rekuest/dependencies",
@@ -31,6 +35,10 @@ export const FlussFlow = buildSmart("@fluss/flow", "fluss/flows");
 export const FlussWorkspace = buildSmart(
   "@fluss/workspace",
   "fluss/workspaces",
+);
+export const FlussReactiveTemplate = buildSmart(
+  "@fluss/reactive_template",
+  "fluss/reactive_templates",
 );
 
 export const FlussRun = buildSmart("@fluss/run", "fluss/runs");
@@ -45,6 +53,10 @@ export const RekuestProvision = buildSmart(
   "rekuest/provisions",
 );
 export const RekuestAgent = buildSmart("@rekuest/agent", "rekuest/agents");
+export const RekuestMemoryShelve = buildSmart(
+  "@rekuest/memoryshelve",
+  "rekuest/memoryshelves",
+);
 
 export const RekuestShortcut = buildSmart(
   "@rekuest/shortcut",
@@ -66,6 +78,7 @@ export const RekuestDashboard = buildSmart(
 );
 
 export const MikroImage = buildSmart("@mikro/image", "mikro/images");
+export const MikroSnapshot = buildSmart("@mikro/snapshot", "mikro/snapshots");
 export const MikroEntityMetric = buildSmart(
   "@mikro/entitymetric",
   "mikro/entitymetric",
@@ -89,13 +102,54 @@ export const MikroRenderTree = buildSmart(
 
 export const MikroDataset = buildSmart("@mikro/dataset", "mikro/datasets");
 
-export const ElektroTrace = buildSmart("@elekto/trace", "elektro/traces");
+export const ElektroTrace = buildSmart("@elektro/trace", "elektro/traces");
+export const ElektroSimulation = buildSmart(
+  "@elektro/simulation",
+  "elektro/simulations",
+);
+export const ElektroModelCollection = buildSmart(
+  "@elektro/model_collection",
+  "elektro/modelcollections",
+);
+export const ElektroRecording = buildSmart(
+  "@elektro/recording",
+  "elektro/recordings",
+);
+export const ElektroStimulus = buildSmart(
+  "@elektro/stimulus",
+  "elektro/stimuli",
+);
+export const ElektroExperiment = buildSmart(
+  "@elektro/experiment",
+  "elektro/experiments",
+);
+
+export const DokumentsFile = buildSmart("@dokuments/file", "dokuments/files");
+
+export const DokumentsDocument = buildSmart(
+  "@dokuments/document",
+  "dokuments/documents",
+);
+
+export const DokumentsPage = buildSmart("@dokuments/page", "dokuments/pages");
+
+export const ElektroNeuronModel = buildSmart(
+  "@elektro/neuronmodel",
+  "elektro/neuronmodels",
+);
 
 export const KraphNode = buildSmart("@kraph/node", "kraph/nodes");
 
 export const KraphExpression = buildSmart(
   "@kraph/expression",
   "kraph/expressions",
+);
+
+export const KraphRelation = buildSmart("@kraph/relation", "kraph/relations");
+
+export const KraphStructureRelation = buildSmart(
+  "@kraph/structurerelation",
+  "kraph/structurerelations",
 );
 
 export const KraphStructureCategory = buildSmart(
@@ -126,6 +180,11 @@ export const KraphMeasurementCategory = buildSmart(
 export const KraphRelationCategory = buildSmart(
   "@kraph/relationcategory",
   "kraph/relationcategories",
+);
+
+export const KraphStructureRelationCategory = buildSmart(
+  "@kraph/structurerelationcategory",
+  "kraph/structurerelationcategories",
 );
 
 export const KraphGenericCategory = buildSmart(
@@ -200,7 +259,7 @@ export const KraphProtocolStepTemplate = buildSmart(
 
 export const OmeroArkProject = buildSmart(
   "@omero-ark/project",
-  "omero-ark/projects",
+  "omero_ark/projects",
 );
 
 export const PortPod = buildSmart("@port-next/pod", "port-next/pod");
@@ -211,10 +270,10 @@ export const PortDefinition = buildSmart(
 
 export const OmeroArkDataset = buildSmart(
   "@omero-ark/dataset",
-  "omero-ark/datasets",
+  "omero_ark/datasets",
 );
 
-export const OmeroArkImage = buildSmart("@omero-ark/image", "omero-ark/images");
+export const OmeroArkImage = buildSmart("@omero-ark/image", "omero_ark/images");
 
 export const MikroHistory = buildSmart("@mikro/history", "mikro/history");
 
@@ -281,7 +340,17 @@ export const MikroChannelView = buildSmart(
   "mikro/channelviews",
 );
 
-export const MikroRGBView = buildSmart("@mikronext/rgbview", "mikro/rgbviews");
+export const MikroMaskView = buildSmart("@mikro/maskview", "mikro/maskviews");
+export const MikroInstanceMaskView = buildSmart(
+  "@mikro/instancemaskview",
+  "mikro/instancemaskviews",
+);
+export const MikroReferenceView = buildSmart(
+  "@mikro/referenceview",
+  "mikro/referenceviews",
+);
+
+export const MikroRGBView = buildSmart("@mikro/rgbview", "mikro/rgbviews");
 
 export const MikroRGBContext = buildSmart(
   "@mikro/rgbcontext",
@@ -291,6 +360,11 @@ export const MikroRGBContext = buildSmart(
 export const MikroOpticsView = buildSmart(
   "@mikro/opticsview",
   "mikro/opticsviews",
+);
+
+export const MikroLightpathView = buildSmart(
+  "@mikro/lightpathview",
+  "mikro/lightpathviews",
 );
 
 export const MikroInstrument = buildSmart(
@@ -312,7 +386,10 @@ export const ReaktionModuleLink = buildModuleLink("fluss");
 export const OmeroArkModuleLink = buildModuleLink("omero-ark");
 
 export const LokUser = buildSmart("@lok/user", "lok/users");
-export const LokRedeemToken = buildSmart("@lok/redeem_token", "lok/users");
+export const LokRedeemToken = buildSmart(
+  "@lok/redeemtoken",
+  "lok/redeemtokens",
+);
 export const LokGroup = buildSmart("@lok/group", "lok/groups");
 export const LokClient = buildSmart("@lok/client", "lok/clients");
 export const LokApp = buildSmart("@lok/app", "lok/apps");
@@ -325,7 +402,21 @@ export const LokServiceInstance = buildSmart(
 );
 export const LokLayer = buildSmart("@lok/layer", "lok/layers");
 
+export const LovekitStream = buildSmart("@lovekit/stream", "lovekit/streams");
+
 export const AlpakaRoom = buildSmart("@alpaka/room", "alpaka/rooms");
+export const AlpakaProvider = buildSmart(
+  "@alpaka/provider",
+  "alpaka/providers",
+);
+export const AlpakaLLMModel = buildSmart(
+  "@alpaka/llmmodel",
+  "alpaka/llmmodels",
+);
+export const AlpakaCollection = buildSmart(
+  "@alpaka/collection",
+  "alpaka/collections",
+);
 export const LokComment = buildSmart("@lok/comment", "lok/comments");
 export const LokMapping = buildSmart("@lok/mapping", "lok/mappings");
 export const LokComposition = buildSmart("@lok/composition", "lok/composition");

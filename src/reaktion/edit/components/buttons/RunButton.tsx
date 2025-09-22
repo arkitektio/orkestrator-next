@@ -4,24 +4,24 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { RekuestAssignation, RekuestTemplate } from "@/linkers";
+import { RekuestAssignation, RekuestImplementation } from "@/linkers";
 import { FlowFragment } from "@/reaktion/api/graphql";
 import { flowToDefinition, flowToDependencies } from "@/reaktion/utils";
 import {
+  ImplementationsDocument,
   ListAgentFragment,
-  TemplatesDocument,
-  useCreateForeignTemplateMutation,
-  useTemplateAtQuery,
-  useTemplatesQuery,
+  useCreateForeignImplementationMutation,
+  useImplementationAtQuery,
+  useImplementationsQuery,
 } from "@/rekuest/api/graphql";
-import { TemplateActionButton } from "@/rekuest/buttons/TemplateActionButton";
+import { ImplementationActionButton } from "@/rekuest/buttons/ImplementationActionButton";
 import { useNavigate } from "react-router-dom";
 
 export const DeployButton = (props: {
   flow: FlowFragment;
   agent: ListAgentFragment;
 }) => {
-  const { data } = useTemplateAtQuery({
+  const { data } = useImplementationAtQuery({
     variables: {
       agent: props.agent.id,
       extension: "reaktion",
@@ -29,12 +29,12 @@ export const DeployButton = (props: {
     },
   });
 
-  const [deploy] = useCreateForeignTemplateMutation({
+  const [deploy] = useCreateForeignImplementationMutation({
     variables: {
       input: {
         agent: props.agent.id,
         extension: "reaktion",
-        template: {
+        implementation: {
           definition: flowToDefinition(props.flow),
           dependencies: flowToDependencies(props.flow),
           interface: props.flow.id,
@@ -44,7 +44,7 @@ export const DeployButton = (props: {
         },
       },
     },
-    refetchQueries: [TemplatesDocument],
+    refetchQueries: [ImplementationsDocument],
   });
 
   const navigate = useNavigate();
@@ -56,8 +56,8 @@ export const DeployButton = (props: {
           deploy().then((result) => {
             result?.data &&
               navigate(
-                RekuestTemplate.linkBuilder(
-                  result?.data?.createForeignTemplate.id,
+                RekuestImplementation.linkBuilder(
+                  result?.data?.createForeignImplementation.id,
                 ),
               );
           }),
@@ -71,7 +71,7 @@ export const DeployButton = (props: {
 };
 
 export const RunButton = (props: { flow: FlowFragment }) => {
-  const { data } = useTemplatesQuery({
+  const { data } = useImplementationsQuery({
     variables: {
       filters: {
         extension: "reaktion",
@@ -93,30 +93,30 @@ export const RunButton = (props: { flow: FlowFragment }) => {
 
   return (
     <>
-      {data?.templates && data.templates.length > 1 && (
+      {data?.implementations && data.implementations.length > 1 && (
         <Popover>
           <PopoverTrigger>
             <Button>Run</Button>
           </PopoverTrigger>
           <PopoverContent>
-            {data?.templates.map((template) => (
+            {data?.implementations.map((template) => (
               <>
-                <TemplateActionButton id={template.id}>
+                <ImplementationActionButton id={template.id}>
                   <Button>Run on {template.agent.name} </Button>
-                </TemplateActionButton>
+                </ImplementationActionButton>
               </>
             ))}
           </PopoverContent>
         </Popover>
       )}
-      {data?.templates && data.templates.length == 1 && (
+      {data?.implementations && data.implementations.length == 1 && (
         <>
-          <TemplateActionButton
-            id={data.templates.at(0).id}
+          <ImplementationActionButton
+            id={data.implementations.at(0)?.id}
             onAssign={navigateToTemplate}
           >
-            <Button>Run on {data.templates.at(0).agent.name} </Button>
-          </TemplateActionButton>
+            <Button>Run on {data.implementations.at(0)?.agent.name} </Button>
+          </ImplementationActionButton>
         </>
       )}
     </>

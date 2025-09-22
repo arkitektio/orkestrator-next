@@ -5,8 +5,11 @@ import {
   CategoryDefintion,
   GraphFragment,
   GraphNodeInput,
+  ListStructureCategoryFragment,
+  StructureCategoryDefinition,
   useUpdateGraphMutation,
 } from "@/kraph/api/graphql";
+import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import { notEmpty } from "@/lib/utils";
 import {
   Connection,
@@ -17,24 +20,22 @@ import {
   useNodesState,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import ELK from "elkjs/lib/elk.bundled.js";
 import React, { useState } from "react";
 import { ClickContextual } from "./contextuals/ClickContextuals";
 import { ConnectContextual } from "./contextuals/ConnectContextual";
+import DescribeEdge from "./edges/DescribeEdge";
 import EntityRoleEdge from "./edges/EntityRoleEdge";
 import MeasurementEdge from "./edges/MeasurementEdge";
 import ReagentRoleEdge from "./edges/ReagentRoleEdge";
 import RelationEdge from "./edges/RelationEdge";
-import StagingMeasurementEdge from "./edges/StagingMeasurementEdge";
-import StagingRelationEdge from "./edges/StagingRelationEdge";
-import StagingStepEdge from "./edges/StagingStepEdge";
-import StepEdge from "./edges/StepEdge";
+import StructureRelationEdge from "./edges/StructureRelationEdge";
 import "./index.css";
-import GenericCategoryNode from "./nodes/GenericCategoryNode";
-import NaturalEventNode from "./nodes/NaturalEventNode";
-import ProtocolEventNode from "./nodes/ProtocolEventNode";
+import GenericCategoryNode from "./nodes/EntityCategoryNode";
+import MetricCategoryNode from "./nodes/MetricCategoryNode";
+import NaturalEventNode from "./nodes/NaturalEventCategoryNode";
+import ProtocolEventNode from "./nodes/ProtocolEventCategoryNode";
 import ReagentCategoryNode from "./nodes/ReagentCategoryNode";
-import StagingGenericNode from "./nodes/StagingGenericNode";
-import StagingStructureNode from "./nodes/StagingStructureNode";
 import StructureCategoryNode from "./nodes/StructureCategoryNode";
 import { OntologyGraphProvider } from "./OntologyGraphProvider";
 import {
@@ -45,10 +46,7 @@ import {
   StagingEdgeParams,
   StagingNodeParams,
 } from "./types";
-import MetricCategoryNode from "./nodes/MetricCategoryNode";
-import DescribeEdge from "./edges/DescribeEdge";
-import ELK from "elkjs/lib/elk.bundled.js";
-
+import { KraphGraph } from "@/linkers";
 
 const ontologyToNodes = (graph: GraphFragment): MyNode[] => {
   const structureNodes = graph.structureCategories.map((cat, index) => ({
@@ -151,16 +149,36 @@ const withCategoryFilter = (category: CategoryDefintion) => {
   };
 };
 
+const withStructureCategoryFilter = (category: StructureCategoryDefinition) => {
+  return (cat: ListStructureCategoryFragment) => {
+    if (category.tagFilters && category.tagFilters.length > 0) {
+      return category.tagFilters.some((tag) =>
+        cat.tags.find((t) => t.value == tag),
+      );
+    }
+    if (category.categoryFilters && category.categoryFilters.length > 0) {
+      return category.categoryFilters.some((id) => id == cat.id);
+    }
+    if (category.identifierFilters && category.identifierFilters.length > 0) {
+      return category.identifierFilters.some(
+        (identifier) => identifier == cat.identifier,
+      );
+    }
+
+    return true;
+  };
+};
+
 const ontologyToEdges = (graph: GraphFragment) => {
-  let edges: MyEdge[] = [];
+  const edges: MyEdge[] = [];
 
   console.log("Relations", graph.relationCategories);
 
   graph.relationCategories.forEach((cat) => {
-    let source_nodes = graph.entityCategories.filter(
+    const source_nodes = graph.entityCategories.filter(
       withCategoryFilter(cat.sourceDefinition),
     );
-    let target_nodes = graph.entityCategories.filter(
+    const target_nodes = graph.entityCategories.filter(
       withCategoryFilter(cat.targetDefinition),
     );
 
@@ -180,13 +198,36 @@ const ontologyToEdges = (graph: GraphFragment) => {
     }
   });
 
-  console.log("Measurements", graph.measurementCategories);
+  graph.structureRelationCategories.forEach((cat) => {
+    const source_nodes = graph.structureCategories.filter(
+      withStructureCategoryFilter(cat.sourceDefinition),
+    );
+
+    const target_nodes = graph.structureCategories.filter(
+      withStructureCategoryFilter(cat.targetDefinition),
+    );
+
+    for (let i = 0; i < source_nodes.length; i++) {
+      for (let j = 0; j < target_nodes.length; j++) {
+        edges.push({
+          id: `${cat.id}-${i}-${j}`,
+          source: source_nodes[i].id,
+          target: target_nodes[j].id,
+          data: cat,
+          type: "structure_relation" as const,
+          markerEnd: {
+            type: MarkerType.Arrow,
+          },
+        });
+      }
+    }
+  });
 
   graph.measurementCategories.forEach((cat) => {
-    let source_nodes = graph.structureCategories.filter(
-      withCategoryFilter(cat.sourceDefinition),
+    const source_nodes = graph.structureCategories.filter(
+      withStructureCategoryFilter(cat.sourceDefinition),
     );
-    let target_nodes = graph.entityCategories.filter(
+    const target_nodes = graph.entityCategories.filter(
       withCategoryFilter(cat.targetDefinition),
     );
 
@@ -207,8 +248,8 @@ const ontologyToEdges = (graph: GraphFragment) => {
   });
 
   graph.metricCategories.forEach((cat) => {
-    let source_nodes = graph.structureCategories.filter(
-      withCategoryFilter(cat.structureDefinition),
+    const source_nodes = graph.structureCategories.filter(
+      (n) => n.id == cat.structureCategory.id,
     );
 
     for (let i = 0; i < source_nodes.length; i++) {
@@ -229,7 +270,7 @@ const ontologyToEdges = (graph: GraphFragment) => {
 
   graph.protocolEventCategories.forEach((cat) => {
     cat.sourceEntityRoles.filter(notEmpty).forEach((role) => {
-      let source_nodes = graph.entityCategories.filter(
+      const source_nodes = graph.entityCategories.filter(
         withCategoryFilter(role.categoryDefinition),
       );
 
@@ -249,7 +290,7 @@ const ontologyToEdges = (graph: GraphFragment) => {
     });
 
     cat.targetEntityRoles.forEach((role) => {
-      let targetNodes = graph.entityCategories.filter(
+      const targetNodes = graph.entityCategories.filter(
         withCategoryFilter(role.categoryDefinition),
       );
 
@@ -268,7 +309,7 @@ const ontologyToEdges = (graph: GraphFragment) => {
     });
 
     cat.sourceReagentRoles.filter(notEmpty).forEach((role) => {
-      let source_nodes = graph.reagentCategories.filter(
+      const source_nodes = graph.reagentCategories.filter(
         withCategoryFilter(role.categoryDefinition),
       );
 
@@ -287,7 +328,7 @@ const ontologyToEdges = (graph: GraphFragment) => {
     });
 
     cat.targetReagentRoles.forEach((role) => {
-      let targetNodes = graph.reagentCategories.filter(
+      const targetNodes = graph.reagentCategories.filter(
         withCategoryFilter(role.categoryDefinition),
       );
 
@@ -305,7 +346,7 @@ const ontologyToEdges = (graph: GraphFragment) => {
 
   graph.naturalEventCategories.forEach((cat) => {
     cat.sourceEntityRoles.filter(notEmpty).forEach((role) => {
-      let source_nodes = graph.entityCategories.filter(
+      const source_nodes = graph.entityCategories.filter(
         withCategoryFilter(role.categoryDefinition),
       );
 
@@ -321,7 +362,7 @@ const ontologyToEdges = (graph: GraphFragment) => {
     });
 
     cat.targetEntityRoles.forEach((role) => {
-      let targetNodes = graph.entityCategories.filter(
+      const targetNodes = graph.entityCategories.filter(
         withCategoryFilter(role.categoryDefinition),
       );
 
@@ -345,8 +386,6 @@ const ontologyToEdges = (graph: GraphFragment) => {
 const nodeTypes = {
   structurecategory: StructureCategoryNode,
   genericcategory: GenericCategoryNode,
-  stagingstructure: StagingStructureNode,
-  staginggeneric: StagingGenericNode,
   naturaleventcategory: NaturalEventNode,
   protocoleventcategory: ProtocolEventNode,
   reagentcategory: ReagentCategoryNode,
@@ -355,14 +394,10 @@ const nodeTypes = {
 
 const edgeTypes = {
   measurement: MeasurementEdge,
-  stagingrelation: StagingRelationEdge,
-  stagingmeasurement: StagingMeasurementEdge,
+  structure_relation: StructureRelationEdge,
   relation: RelationEdge,
-  stagingstep: StagingStepEdge,
-  step: StepEdge,
   entityrole: EntityRoleEdge,
   describe: DescribeEdge,
-
   reagentrole: ReagentRoleEdge,
 };
 
@@ -387,7 +422,6 @@ const nodeToNodeInput = (node: MyNode): GraphNodeInput | null => {
   };
 };
 
-
 const layeredLayout = {
   "elk.algorithm": "layered",
   "elk.layered.nodePlacement.strategy": "SIMPLE",
@@ -397,7 +431,7 @@ const layeredLayout = {
   "elk.spacing.nodeNode": "100",
   "elk.layered.spacing.nodeNodeBetweenLayers": "100",
   "elk.direction": "RIGHT",
-}
+};
 
 const forceLayout = {
   "elk.algorithm": "force",
@@ -410,7 +444,6 @@ const forceLayout = {
   "elk.direction": "RIGHT",
 };
 
-
 const discoLayout = {
   "elk.algorithm": "disco",
   "elk.drawing.strategy": "POLYLINE",
@@ -420,7 +453,7 @@ const discoLayout = {
   "elk.direction": "RIGHT",
   "elk.layered.nodePlacement.strategy": "SIMPLE",
   "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
-}
+};
 
 const treeLayout = {
   "elk.algorithm": "mrtree",
@@ -432,23 +465,37 @@ const treeLayout = {
   "elk.layered.spacing.nodeNodeBetweenLayers": "100",
   "elk.direction": "RIGHT",
   "elk.layered.nodePlacement.bk.fixedAlignment": "LEFT",
-}
+};
 
 const stressLayout = {
   "elk.algorithm": "stress",
   "org.eclipse.elk.stress.desiredEdgeLength": "200",
-  "org.eclipse.elk.stress.dimension" : "XY",
+  "org.eclipse.elk.stress.dimension": "XY",
   "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
   "elk.layered.crossingMinimization.minimize": "LAYER_SWEEP",
   "elk.layered.spacing.nodeNode": "200",
   "elk.spacing.nodeNode": "200",
-  "elk.layered.spacing.nodeNodeBetweenLayrs": "200",
+  "elk.layered.spacing.nodeNodeBetweenLayers": "200",
   "elk.direction": "RIGHT",
   "elk.layered.nodePlacement.bk.fixedAlignment": "LEFT",
-}
+};
 
-export default ({ graph }: { graph: GraphFragment }) => {
+const radialLayout = {
+  "elk.algorithm": "radial",
+  "elk.radial.radius": "200",
+  "elk.radial.compactionStrategy": "NONE",
+  "elk.radial.wedgeToLength": "32",
+  "elk.spacing.nodeNode": "50",
+  "elk.direction": "RIGHT",
+};
+
+const hashGraph = (graph: GraphFragment) => {
+  return JSON.stringify(graph);
+};
+
+export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
   const [update] = useUpdateGraphMutation();
+  const uploadFile = useKraphUpload();
 
   const reactFlowWrapper = React.useRef<HTMLDivElement | null>(null);
 
@@ -469,25 +516,95 @@ export default ({ graph }: { graph: GraphFragment }) => {
   React.useEffect(() => {
     if (reactFlowInstance) {
       reactFlowInstance.fitView({ padding: 0.2 });
+      setNodes(ontologyToNodes(graph));
+      setEdges(ontologyToEdges(graph));
     }
-  }, [reactFlowInstance]);
+  }, [reactFlowInstance, hashGraph(graph)]);
 
-  const save = () => {
+  const captureAndUploadScreenshot = async (): Promise<string | null> => {
+    if (!reactFlowWrapper.current) return null;
+
+    try {
+      // Try to dynamically import html2canvas
+      let html2canvas: typeof import("html2canvas").default;
+      try {
+        html2canvas = (await import("html2canvas")).default;
+      } catch {
+        console.warn("html2canvas not available, skipping screenshot capture");
+        return null;
+      }
+
+      const canvas = await html2canvas(reactFlowWrapper.current, {
+        backgroundColor: "#ffffff",
+        scale: 1,
+        logging: false,
+        useCORS: true,
+      });
+
+      // Convert canvas to blob
+      return new Promise((resolve) => {
+        canvas.toBlob(async (blob: Blob | null) => {
+          if (!blob) {
+            resolve(null);
+            return;
+          }
+
+          try {
+            // Convert blob to file
+            const file = new File(
+              [blob],
+              `graph-${graph.id}-${Date.now()}.png`,
+              {
+                type: "image/png",
+              },
+            );
+
+            // Upload the file
+            const uploadedImageId = await uploadFile(file);
+            resolve(uploadedImageId);
+          } catch (error) {
+            console.error("Failed to upload screenshot:", error);
+            resolve(null);
+          }
+        }, "image/png");
+      });
+    } catch (error) {
+      console.error("Failed to capture screenshot:", error);
+      return null;
+    }
+  };
+
+  const save = async () => {
     const nodes = reactFlowInstance?.getNodes() as MyNode[];
-    const edges = reactFlowInstance?.getEdges() as MyEdge[];
 
     const nodeInputs = nodes
       .map(nodeToNodeInput)
       .filter((n) => n != null) as GraphNodeInput[];
 
+    console.log("Saving graph and capturing screenshot...");
+
+    // Capture and upload screenshot
+    const imageId = await captureAndUploadScreenshot();
+
+    if (imageId) {
+      console.log("Screenshot captured and uploaded successfully");
+    } else {
+      console.log("Screenshot capture skipped or failed");
+    }
+
+    const updateInput = {
+      id: graph.id,
+      nodes: nodeInputs,
+      ...(imageId && { image: imageId }),
+    };
+
     update({
       variables: {
-        input: {
-          id: graph.id,
-          nodes: nodeInputs,
-        },
+        input: updateInput,
       },
     });
+
+    console.log("Graph saved successfully");
   };
 
   const onPaneClick = (event: React.MouseEvent) => {
@@ -522,42 +639,122 @@ export default ({ graph }: { graph: GraphFragment }) => {
     }
   };
 
-  const layout = (layout: {[key: string]: string}) => {
-      const elk = new ELK();
-      const the_nodes = nodes;
-  
-      const graph = {
-        id: "root",
-        layoutOptions: layout,
-        children: the_nodes.map((node) => ({
-          id: node.id,
-          x: node.position.x,
-          y: node.position.y,
-          width: node.width,
-          height: node.height,
-        })),
-        edges: edges.map((edge) => ({
-          id: edge.id,
-          sources: [edge.source],
-          targets: [edge.target],
-        })),
-      };
-  
-      elk.layout(graph).then(({ children }) => {
+  const layout = (layout: { [key: string]: string }) => {
+    const elk = new ELK();
+    const the_nodes = nodes;
+
+    const graph = {
+      id: "root",
+      layoutOptions: layout,
+      children: the_nodes.map((node) => ({
+        id: node.id,
+        x: node.position.x,
+        y: node.position.y,
+        width: node.width,
+        height: node.height,
+      })),
+      edges: edges.map((edge) => ({
+        id: edge.id,
+        sources: [edge.source],
+        targets: [edge.target],
+      })),
+    };
+
+    elk.layout(graph).then(({ children }) => {
+      // By mutating the children in-place we saves ourselves from creating a
+      // needless copy of the nodes array.
+      if (!children) {
+        return;
+      }
+
+      const newNodes = children.map((node) => {
+        const child = the_nodes.find((n) => n.id === node.id);
+        return { ...child, position: { x: node.x, y: node.y } };
+      });
+
+      setNodes(newNodes);
+    });
+  };
+
+  const nodelayout = (layout: { [key: string]: string }, root: string) => {
+    const elk = new ELK();
+    const the_nodes = nodes;
+
+    // Filter out self-referencing edges and duplicate edges to prevent cycles
+    const filteredEdges = edges.filter((edge, index, arr) => {
+      // Remove self-referencing edges
+      if (edge.source === edge.target) {
+        return false;
+      }
+
+      // Remove duplicate edges (same source and target)
+      const firstIndex = arr.findIndex(
+        (e) => e.source === edge.source && e.target === edge.target,
+      );
+      return index === firstIndex;
+    });
+
+    const graph = {
+      id: "root",
+      layoutOptions: {
+        ...layout,
+        "elk.radial.rootNode": root, // Specify the root node for radial layout
+      },
+      children: the_nodes.map((node) => ({
+        id: node.id,
+        x: node.position.x,
+        y: node.position.y,
+        width: node.width,
+        height: node.height,
+      })),
+      edges: filteredEdges.map((edge) => ({
+        id: edge.id,
+        sources: [edge.source],
+        targets: [edge.target],
+      })),
+    };
+
+    elk
+      .layout(graph)
+      .then(({ children }) => {
         // By mutating the children in-place we saves ourselves from creating a
         // needless copy of the nodes array.
         if (!children) {
           return;
         }
-  
+
         const newNodes = children.map((node) => {
           const child = the_nodes.find((n) => n.id === node.id);
           return { ...child, position: { x: node.x, y: node.y } };
         });
-  
+
         setNodes(newNodes);
+      })
+      .catch((error) => {
+        console.error("ELK Layout failed:", error);
+        console.error(
+          "This might be due to circular dependencies or self-referencing nodes",
+        );
+        // Fallback: Just arrange nodes in a simple circle manually
+        const centerX = 400;
+        const centerY = 300;
+        const radius = 200;
+        const angleStep = (2 * Math.PI) / the_nodes.length;
+
+        const fallbackNodes = the_nodes.map((node, index) => {
+          const angle = index * angleStep;
+          return {
+            ...node,
+            position: {
+              x: centerX + radius * Math.cos(angle),
+              y: centerY + radius * Math.sin(angle),
+            },
+          };
+        });
+
+        setNodes(fallbackNodes);
       });
-    }
+  };
 
   const onConnect = (connection: Connection) => {
     console.log("onConnect", connection);
@@ -666,6 +863,7 @@ export default ({ graph }: { graph: GraphFragment }) => {
           edgeTypes={edgeTypes}
           onInit={(r) => setReactFlowInstance(r)}
           fitView
+          proOptions={{ hideAttribution: true }}
         />
         {showClickContextual && showClickContextual.type == "click" && (
           <ClickContextual
@@ -684,16 +882,49 @@ export default ({ graph }: { graph: GraphFragment }) => {
           />
         )}
         <div className="absolute top-0 right-0 p-2">
-          <Button onClick={save} variant={"outline"}>Save</Button>
+          <Button onClick={save} variant={"outline"}>
+            Save
+          </Button>
         </div>
-        <div className="absolute top-0 left-0 p-3 gap-1">
-          <Button onClick={() => layout(stressLayout)} variant={"outline"}>Stress</Button>
-          <Button onClick={() => layout(forceLayout)} variant={"outline"}>Force</Button>
-          <Button onClick={() => layout(discoLayout)} variant={"outline"}>Disco</Button>
-          <Button onClick={() => layout(treeLayout)} variant={"outline"}>Tree</Button>
-          <Button onClick={() => layout(layeredLayout)} variant={"outline"}>Layered</Button>
-          </div>
+        <div className="absolute top-0 left-0 p-3 gap-2 flex flex-row">
+          <Button onClick={() => layout(stressLayout)} variant={"outline"}>
+            Stress
+          </Button>
+          <Button onClick={() => layout(forceLayout)} variant={"outline"}>
+            Force
+          </Button>
+          <Button onClick={() => layout(discoLayout)} variant={"outline"}>
+            Disco
+          </Button>
+          <Button onClick={() => layout(treeLayout)} variant={"outline"}>
+            Tree
+          </Button>
+          <Button onClick={() => layout(layeredLayout)} variant={"outline"}>
+            Layered
+          </Button>
+          <Button
+            onClick={() => {
+              const rootNode = nodes.at(0)?.id;
+              if (rootNode) {
+                nodelayout(radialLayout, rootNode);
+              }
+            }}
+            variant={"outline"}
+          >
+            Circle
+          </Button>
+
+          <KraphGraph.DetailLink
+            object={graph.id}
+            subroute={"reagentcategories"}
+            className="text-sm"
+          >
+            Reagent Categories
+          </KraphGraph.DetailLink>
+        </div>
       </div>
     </OntologyGraphProvider>
   );
 };
+
+export default OntologyGraph; // --- IGNORE ---

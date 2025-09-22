@@ -1,6 +1,6 @@
-import * as THREE from "three";
 import { Canvas, useThree } from "@react-three/fiber";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import * as THREE from "three";
 
 type ImageTileProps = {
   textureUrl: string;

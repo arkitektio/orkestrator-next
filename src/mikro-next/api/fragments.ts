@@ -15,18 +15,24 @@
       "File",
       "Image"
     ],
-    "Plot": [
-      "RenderedPlot"
+    "OpticalElement": [
+      "BeamSplitterElement",
+      "CCDElement",
+      "DetectorElement",
+      "FilterElement",
+      "LampElement",
+      "LaserElement",
+      "LensElement",
+      "MirrorElement",
+      "ObjectiveElement",
+      "OtherElement",
+      "OtherSourceElement",
+      "PinholeElement",
+      "SampleElement"
     ],
     "Render": [
       "Snapshot",
       "Video"
-    ],
-    "RenderNode": [
-      "ContextNode",
-      "GridNode",
-      "OverlayNode",
-      "SplitNode"
     ],
     "View": [
       "AcquisitionView",
@@ -36,15 +42,22 @@
       "DerivedView",
       "FileView",
       "HistogramView",
+      "InstanceMaskView",
       "LabelView",
+      "LightpathView",
+      "MaskView",
       "OpticsView",
-      "PixelView",
       "RGBView",
       "ROIView",
+      "ReferenceView",
       "ScaleView",
-      "StructureView",
       "TimepointView",
       "WellPositionView"
+    ],
+    "_Entity": [
+      "File",
+      "Image",
+      "Table"
     ]
   }
 };

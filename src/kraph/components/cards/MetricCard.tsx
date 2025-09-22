@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
-import { KraphMetric, KraphReagent } from "@/linkers";
+import { KraphMetric } from "@/linkers";
 import { MateFinder } from "@/mates/types";
-import { ListMetricFragment, ListReagentFragment } from "../../api/graphql";
+import { ListMetricFragment } from "../../api/graphql";
 
 interface Props {
   item: ListMetricFragment;

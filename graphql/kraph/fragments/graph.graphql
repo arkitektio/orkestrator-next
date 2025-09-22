@@ -26,13 +26,19 @@ fragment Graph on Graph {
   measurementCategories {
     ...ListMeasurementCategory
   }
-  graphQueries(pagination: { limit: 0 }) {
+  structureRelationCategories {
+    ...ListStructureRelationCategory
+  }
+  graphQueries(pagination: { limit: 5 }) {
     ...GraphQuery
   }
   latestNodes(pagination: { limit: 2 }) {
     ...Node
   }
   pinned
+  store {
+    ...MediaStore
+  }
 }
 
 fragment ListGraph on Graph {
@@ -40,4 +46,7 @@ fragment ListGraph on Graph {
   name
   description
   pinned
+  store {
+    ...MediaStore
+  }
 }

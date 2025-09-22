@@ -20,6 +20,24 @@ fragment Relation on Relation {
   }
 }
 
+fragment StructureRelation on StructureRelation {
+  id
+  leftId
+  rightId
+  left {
+    id
+    label
+  }
+  right {
+    id
+    label
+  }
+  category {
+    id
+    label
+  }
+}
+
 fragment Participant on Participant {
   role
   quantity
@@ -30,11 +48,6 @@ fragment Edge on Edge {
   ...Measurement
   ...Relation
   ...Participant
+  ...StructureRelation
 }
 
-fragment PathEdge on Edge {
-  ...PathMeasurement
-  ...PathRelation
-  ...PathParticipant
-  ...PathDescription
-}

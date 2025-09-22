@@ -14,7 +14,7 @@ export type GraphQLListSearchFieldProps = Omit<
   }) => Promise<{ data?: { options: Option[] }; errors?: any }>;
 };
 
-export const GraphQLSearchField: React.FC<GraphQLListSearchFieldProps> = ({
+export const GraphQLListSearchField: React.FC<GraphQLListSearchFieldProps> = ({
   searchQuery,
   ...props
 }) => {

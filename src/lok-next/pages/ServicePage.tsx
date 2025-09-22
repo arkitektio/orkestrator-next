@@ -4,6 +4,7 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { FormDialogAction } from "@/components/ui/form-dialog-action";
 import { Image } from "@/components/ui/image";
+import { useResolve } from "@/datalayer/hooks/useResolve";
 import { LokService } from "@/linkers";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { PlusIcon } from "lucide-react";
@@ -11,7 +12,6 @@ import { useNavigate } from "react-router-dom";
 import { useGetServiceQuery } from "../api/graphql";
 import ServiceInstanceCard from "../components/cards/ServiceInstanceCard";
 import { CreateServiceInstanceForm } from "../forms/CreateServiceInstance";
-import { useResolve } from "@/datalayer/hooks/useResolve";
 
 export type IRepresentationScreenProps = {};
 

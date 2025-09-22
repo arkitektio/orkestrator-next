@@ -61,3 +61,7 @@ mutation RevertDataset($dataset: ID!, $history: ID!) {
     description
   }
 }
+
+mutation DeleteDataset($id: ID!) {
+  deleteDataset(input: { id: $id })
+}

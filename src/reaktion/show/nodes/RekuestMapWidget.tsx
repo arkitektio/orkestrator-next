@@ -9,9 +9,9 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import {
-  NodeDescription,
-  useNodeDescription,
-} from "@/lib/rekuest/NodeDescription";
+  ActionDescription,
+  useActionDescription,
+} from "@/lib/rekuest/ActionDescription";
 import { cn } from "@/lib/utils";
 import { InStream } from "@/reaktion/base/Instream";
 import { NodeShowLayout } from "@/reaktion/base/NodeShow";
@@ -20,7 +20,7 @@ import { RekuestMapNodeProps } from "@/reaktion/types";
 import { GearIcon } from "@radix-ui/react-icons";
 import React from "react";
 import { useShowRiver } from "../context";
-import { useDependency, useResolvable } from "../hooks/useDependency";
+import { useDependency } from "../hooks/useDependency";
 
 export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
   data: { ins, outs, constants, ...data },
@@ -31,7 +31,7 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
 
   const { template } = useShowRiver();
 
-  const description = useNodeDescription({
+  const description = useActionDescription({
     description: data.description,
     variables: data.constantsMap,
   });
@@ -77,7 +77,7 @@ export const RekuestMapWidget: React.FC<RekuestMapNodeProps> = ({
           </div>
         </CardTitle>
         <CardDescription>
-          <NodeDescription description={description} />
+          <ActionDescription description={description} />
         </CardDescription>
         {expanded && <div className="x">{JSON.stringify(dependency)}</div>}
       </CardHeader>

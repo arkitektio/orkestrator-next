@@ -2,9 +2,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ListCommentType } from "../types";
 import { Comment } from "./Comment";
 
-export const CommentList: React.FunctionComponent<{
+export const CommentList = ({ comments }: {
   comments?: ListCommentType[];
-}> = ({ comments }) => {
+}) => {
   return (
     <>
       <ScrollArea className="mt-4 text-foreground flex flex-col gap-3">

@@ -1,6 +1,6 @@
-import { Arkitekt, useMikro } from "@/arkitekt/Arkitekt";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { Arkitekt, useMikro } from "@/lib/arkitekt/Arkitekt";
 import { Fakts } from "@/lib/fakts";
 import { cn } from "@/lib/utils";
 import {
@@ -304,7 +304,7 @@ export const VivRenderer = ({
                 contrastLimits={
                   autoContrast
                     ? autoContrastLimits ||
-                      context.views.map((v) => [0, maxType])
+                    context.views.map((v) => [0, maxType])
                     : context.views.map((v) => [0, maxType])
                 }
                 loader={source}
@@ -333,7 +333,7 @@ export const VivRenderer = ({
                 contrastLimits={
                   autoContrast
                     ? autoContrastLimits ||
-                      context.views.map((v) => [0, maxType])
+                    context.views.map((v) => [0, maxType])
                     : context.views.map((v) => [0, maxType])
                 }
                 loader={source}

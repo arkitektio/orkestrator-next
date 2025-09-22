@@ -11,6 +11,7 @@ import {
   TimelineTitle,
 } from "@/components/timeline/timeline";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReturnsContainer } from "@/components/widgets/returns/ReturnsContainer";
 import { RekuestAssignation } from "@/linkers";
 import { useRunForAssignationQuery } from "@/reaktion/api/graphql";
@@ -26,7 +27,7 @@ import {
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Timestamp from "react-timestamp";
-import { useNodeAction } from "../hooks/useNodeAction";
+import { useAction } from "../hooks/useAction";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
 export const AssignationFlow = (props: {
@@ -79,6 +80,34 @@ export const LogItem = (props: { event: any }) => {
   );
 };
 
+export const DelegateItem = (props: { event: AssignationEventFragment }) => {
+  return (
+    <TimelineItem className="w-full">
+      <TimelineConnector />
+      <TimelineHeader>
+        <TimelineIcon />
+        <TimelineTitle>{props.event.kind}</TimelineTitle>
+      </TimelineHeader>
+      <TimelineContent>
+        <TimelineDescription>
+          <p className="text-xs mb-1">
+            <Timestamp date={props.event.createdAt} />
+          </p>
+          This assignmenent was delegated to{" "}
+          {props.event.delegatedTo?.implementation.action.name}
+          <RekuestAssignation.DetailLink
+            object={props.event.delegatedTo?.id || ""}
+            className="font-semibold"
+          >
+            {" "}
+            (see details)
+          </RekuestAssignation.DetailLink>
+        </TimelineDescription>
+      </TimelineContent>
+    </TimelineItem>
+  );
+};
+
 export const YieldItem = (props: {
   assignation: DetailAssignationFragment;
   event: AssignationEventFragment;
@@ -90,7 +119,7 @@ export const YieldItem = (props: {
       <TimelineConnector />
       <TimelineHeader>
         <TimelineIcon />
-        <TimelineTitle>{"Yield"}</TimelineTitle>
+        <TimelineTitle>Yielded</TimelineTitle>
       </TimelineHeader>
       <TimelineContent>
         <TimelineDescription>
@@ -99,7 +128,7 @@ export const YieldItem = (props: {
           </p>
           <ReturnsContainer
             registry={registry}
-            ports={props.assignation.node.returns}
+            ports={props.assignation.action.returns}
             values={props.event.returns}
             options={{ labels: false }}
           />
@@ -129,23 +158,17 @@ export const AssignationTimeLine = (props: {
           {e.kind === AssignationEventKind.Yield && (
             <YieldItem assignation={props.assignation} event={e} />
           )}
-          {e.kind !== AssignationEventKind.Yield && <LogItem event={e} />}
+          {e.kind === AssignationEventKind.Delegate && (
+            <DelegateItem event={e} />
+          )}
+
+          {![
+            AssignationEventKind.Yield,
+            AssignationEventKind.Delegate,
+          ].includes(e.kind) && <LogItem event={e} />}
         </>
       ))}
     </Timeline>
-  );
-};
-
-export const WorkflowRender = (props: {
-  assignation: DetailAssignationFragment;
-}) => {
-  return (
-    <div className="w-full h-[500px] overflow-y-scroll">
-      <AssignationFlow
-        id={props?.assignation?.provision?.template?.params["flow"]}
-        assignation={props.assignation}
-      />
-    </div>
   );
 };
 
@@ -154,15 +177,15 @@ export const useReassign = ({
 }: {
   assignation: DetailAssignationFragment;
 }) => {
-  const { assign } = useNodeAction({
-    id: assignation.provision?.template.id || "",
+  const { assign } = useAction({
+    id: assignation?.implementation.id || "",
   });
   const navigate = useNavigate();
 
   const reassign = async () => {
     let x = await assign({
       args: assignation.args,
-      template: assignation.provision?.template.id || "",
+      implementation: assignation?.implementation.id || "",
       hooks: [],
     });
 
@@ -173,10 +196,10 @@ export const useReassign = ({
 };
 
 export const isCancalable = (assignation: DetailAssignationFragment) => {
-  return assignation.status != AssignationEventKind.Done;
+  return assignation.isDone;
 };
 export const isInterruptable = (assignation: DetailAssignationFragment) => {
-  return assignation.status != AssignationEventKind.Done;
+  return assignation.isDone;
 };
 
 export default asDetailQueryRoute(
@@ -193,7 +216,7 @@ export default asDetailQueryRoute(
       <RekuestAssignation.ModelPage
         title={
           <div className="flex flex-row gap-2">
-            {data?.assignation?.node.name}
+            {data?.assignation?.action.name}
             <p className="text-md font-light text-muted-foreground">
               <Timestamp date={data.assignation.createdAt} relative />
             </p>
@@ -250,13 +273,27 @@ export default asDetailQueryRoute(
         }
       >
         <div className="flex h-full w-full relative">
-          {data?.assignation?.provision?.template?.extension === "reaktion" ? (
-            <AssignationFlow
-              id={data?.assignation?.provision.template?.params["flow"]}
-              assignation={data.assignation}
-            />
+          {data?.assignation?.implementation?.extension === "reaktion" ? (
+            <>
+              <Tabs className="flex-grow flex flex-col " defaultValue="flow">
+                <TabsList className="h-8 flex-initial">
+                  <TabsTrigger value="flow">Flow</TabsTrigger>
+                  <TabsTrigger value="logs">Logs</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="flow" className="flex-grow">
+                  <AssignationFlow
+                    id={data?.assignation?.implementation?.interface}
+                    assignation={data.assignation}
+                  />
+                </TabsContent>
+                <TabsContent value="logs" className="h-full w-full">
+                  <AssignationTimeLine assignation={data?.assignation} />
+                </TabsContent>
+              </Tabs>
+            </>
           ) : (
-            <DefaultRenderer assignation={data.assignation} />
+            <DefaultRenderer assignation={data?.assignation} />
           )}
         </div>
       </RekuestAssignation.ModelPage>

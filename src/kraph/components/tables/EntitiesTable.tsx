@@ -35,16 +35,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { GraphQLSearchField } from "@/components/fields/GraphQLListSearchField";
+import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
 import { Form } from "@/components/ui/form";
-import { KraphNode } from "@/linkers";
-import { useForm } from "react-hook-form";
 import {
-  ListEntitiesQueryVariables,
   ListEntityFragment,
   useListEntitiesQuery,
-  useSearchEntityCategoryLazyQuery,
+  useSearchEntityCategoryLazyQuery
 } from "@/kraph/api/graphql";
+import { KraphNode } from "@/linkers";
+import { useForm } from "react-hook-form";
 
 export const columns: ColumnDef<ListEntityFragment>[] = [
   {
@@ -234,13 +233,13 @@ export const EntitiesTable = (props: {
       <div className="flex items-center py-4 gap-2">
         <Form {...form}>
           {!props.linkedExpression && (
-            <GraphQLSearchField
+            <GraphQLListSearchField
               placeholder="Filter Kind"
               searchQuery={searchM}
               name="kinds"
             />
           )}
-          <GraphQLSearchField
+          <GraphQLListSearchField
             placeholder="Add Metric"
             searchQuery={searchM}
             name="metrics"
@@ -292,9 +291,9 @@ export const EntitiesTable = (props: {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   );
                 })}

@@ -1,13 +1,13 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useMeQuery } from "../api/graphql";
 import { useResolve } from "@/datalayer/hooks/useResolve";
+import { useMeQuery, useMyContextQuery } from "../api/graphql";
 
 export const Me = () => {
   const { data } = useMeQuery();
   const resolve = useResolve();
 
   return (
-    <Avatar className="border border-3 border-seperator border-white">
+    <Avatar className="border border-3 border-seperator border-white mx-auto">
       <AvatarImage
         src={resolve(data?.me?.profile.avatar?.presignedUrl)}
         alt={data?.me?.username}
@@ -21,7 +21,11 @@ export const Me = () => {
 };
 
 export const Username = () => {
-  const { data } = useMeQuery();
+  const { data } = useMyContextQuery();
 
-  return <>{data?.me?.username}</>;
+  return (
+    <>
+      {data?.mycontext.user?.username} @ {data?.mycontext.organization.slug}
+    </>
+  );
 };

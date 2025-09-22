@@ -64,8 +64,22 @@ mutation CreateContinousScanView($input: ContinousScanViewInput!) {
   }
 }
 
-mutation CreateStructureView($input: StructureViewInput!) {
-  createStructureView(input: $input) {
-    ...StructureView
+
+mutation CreateMaskView($input: MaskViewInput!) {
+  createMaskView(input: $input) {
+    ...MaskView
+  }
+}
+
+mutation CreateInstanceMaskView($input: InstanceMaskViewInput!) {
+  createInstanceMaskView(input: $input) {
+    ...InstanceMaskView
+  }
+}  
+
+
+mutation UpdateRGBView($input: UpdateRGBViewInput!) {
+  updateRgbView(input: $input) {
+    ...RGBView
   }
 }

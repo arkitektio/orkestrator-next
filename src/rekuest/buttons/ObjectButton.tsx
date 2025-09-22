@@ -1,10 +1,4 @@
-import {
-  Action,
-  ActionState,
-  defaultRegistry,
-  Structure,
-} from "@/actions/action-registry";
-import { useArkitekt } from "@/arkitekt/provider";
+import { useDialog } from "@/app/dialog";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -18,7 +12,6 @@ import {
   ContextMenuContent,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import {
   Popover,
   PopoverContent,
@@ -34,50 +27,126 @@ import {
   ListDefinitionFragment,
   useAllPrimaryDefinitionsQuery,
 } from "@/kabinet/api/graphql";
-import { KabinetDefinition } from "@/linkers";
+import {
+  ListMeasurementCategoryFragment,
+  ListMeasurementCategoryWithGraphFragment,
+  ListRelationCategoryFragment,
+  ListStructureRelationCategoryWithGraphFragment,
+  useCreateEntityMutation,
+  useCreateMeasurementMutation,
+  useCreateRelationMutation,
+  useCreateStructureMutation,
+  useCreateStructureRelationMutation,
+  useListEntityCategoryQuery,
+  useListMeasurmentCategoryQuery,
+  useListRelationCategoryQuery,
+  useListStructureRelationCategoryQuery,
+} from "@/kraph/api/graphql";
+import { Guard, useRekuest } from "@/lib/arkitekt/Arkitekt";
+import { useArkitekt } from "@/lib/arkitekt/provider";
+import { cn } from "@/lib/utils";
+import { LightningBoltIcon } from "@radix-ui/react-icons";
 import { CommandGroup } from "cmdk";
-import React from "react";
+import { PlayIcon } from "lucide-react";
+import React, { useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { v4 as uuidv4 } from "uuid";
 import {
+  AssignationChangeEvent,
+  AssignationEventFragment,
   DemandKind,
+  ListImplementationFragment,
   ListShortcutFragment,
-  ListTemplateFragment,
+  PortDemandInput,
   PortKind,
-  PrimaryNodeFragment,
-  ShortcutFragment,
-  useAllPrimaryNodesQuery,
+  PrimaryActionFragment,
+  useAllPrimaryActionsQuery,
+  useImplementationsQuery,
   useShortcutsQuery,
-  useTemplatesQuery,
 } from "../api/graphql";
-import { NodeAssignForm } from "../forms/NodeAssignForm";
+import { registeredCallbacks } from "../components/functional/AssignationUpdater";
 import { useAssign } from "../hooks/useAssign";
-import { useLiveAssignation } from "../hooks/useAssignations";
-import { useHashAction } from "../hooks/useHashActions";
-import { LightningBoltIcon } from "@radix-ui/react-icons";
+import { useHashActionWithProgress } from "../hooks/useHashActionWithProgress";
+import { Identifier, ObjectID, Structure } from "@/types";
+import { usePerformAction } from "@/app/hooks/useLocalAction";
+import { useMatchingActions } from "@/app/localactions";
+import { Action, ActionState } from "@/lib/localactions/LocalActionProvider";
+import { TinyStructureBox } from "@/kraph/boxes/TinyStructureBox";
+import { use } from "cytoscape";
 
-export const DirectTemplateAssignment = (
-  props: SmartContextProps & { node: PrimaryNodeFragment },
+export type OnDone = (args: {
+  event?: AssignationEventFragment;
+  kind: "local" | "action" | "shortcut" | "relation" | "measurement";
+}) => void;
+export type onError = (args: {
+  event?: AssignationEventFragment;
+  kind: "local" | "action" | "shortcut" | "relation" | "measurement";
+}) => void;
+
+export const DirectImplementationAssignment = (
+  props: SmartContextProps & { action: PrimaryActionFragment },
 ) => {
-  const templates = useTemplatesQuery({
+  const implementations = useImplementationsQuery({
     variables: {
       filters: {
-        nodeHash: props.node.hash,
+        actionHash: props.action.hash,
       },
     },
   });
 
+  const { assign } = useAssign();
+  const { openDialog } = useDialog();
+
+  const onTemplateSelect = async (
+    action: PrimaryActionFragment,
+    implementation: ListImplementationFragment,
+  ) => {
+    let the_key = action.args?.at(0)?.key;
+
+    if (!the_key) {
+      toast.error("No key found");
+      return;
+    }
+
+    if (action.args.length > 1) {
+      openDialog("implementationassign", {
+        id: implementation.id,
+        args: { [the_key]: props.object },
+        hidden: { [the_key]: props.object },
+      });
+      return;
+    }
+
+    try {
+      const reference = uuidv4();
+
+      await assign({
+        implementation: implementation.id,
+        args: {
+          [the_key]: props.object,
+        },
+        reference: reference,
+      });
+
+      registeredCallbacks.set(reference, (event: AssignationChangeEvent) => {
+        props.onDone?.(event);
+      });
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
   return (
     <>
       <div className="flex flex-row text-xs">Run on</div>
       <div className="flex flex-col gap-2">
-        {templates.data?.templates.map((x) => (
+        {implementations.data?.implementations.map((x) => (
           <>
             <Button
               variant={"outline"}
               size={"lg"}
               className="flex flex-col gap-1"
-              onClick={() => props.onSelectTemplate(props.node, x)}
+              onClick={() => onTemplateSelect(props.action, x)}
             >
               <div className="text-md text-gray-100">{x.agent.name}</div>
               <div className="text-xs text-gray-400">{x.interface}</div>
@@ -85,48 +154,170 @@ export const DirectTemplateAssignment = (
           </>
         ))}
       </div>
+      <Button
+        onClick={() =>
+          openDialog("createshortcut", {
+            id: props.action.id,
+            args: { [props.action.args?.at(0)?.key || "object"]: props.object },
+          })
+        }
+        variant={"outline"}
+        className="mt-2"
+      >
+        Create Shortcut
+      </Button>
     </>
   );
 };
 
 export const AssignButton = (
-  props: SmartContextProps & { node: PrimaryNodeFragment },
+  props: SmartContextProps & { action: PrimaryActionFragment },
 ) => {
-  const status = useLiveAssignation({
-    identifier: props.identifier,
-    object: props.object,
-    node: props.node.id,
-  });
+  const [doing, setDoing] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [progress, setProgress] = React.useState<number | null>(0);
+
+  const { assign } = useAssign();
+  const { openDialog } = useDialog();
+
+  const doStuff = useCallback(
+    (event: AssignationEventFragment) => {
+      console.log("Assignation event received:", event);
+      if (event.kind == "DONE") {
+        setDoing(false);
+        setProgress(null);
+        props.onDone?.({ event, kind: "action" });
+      }
+      if (event.kind == "ERROR" || event.kind == "CRITICAL") {
+        setDoing(false);
+        setProgress(null);
+        setError(event.message || "Unknown error");
+        props.onError?.(event.message || "Unknown error");
+      }
+      if (event.kind == "PROGRESS") {
+        setProgress(event.progress || 0);
+      }
+    },
+    [setDoing, setProgress, setError, props.onDone, props.onError],
+  );
+
+  const conditionalAssign = async (action: PrimaryActionFragment) => {
+    const keys = {};
+
+    if (props.objects) {
+      if (props.objects.length === 0) {
+        console.log("No oject passed");
+      }
+      if (props.objects.length === 1) {
+        const the_key = action.args?.at(0)?.key;
+        if (!the_key) {
+          toast.error("No key found for self");
+          return;
+        }
+        keys[the_key] = props.objects[0].object;
+      }
+      if (props.objects.length > 1) {
+        if (action.args.at(0)?.kind != PortKind.List) {
+          toast.error("Should be a list but is not");
+          return;
+        }
+        const the_key = action.args?.at(0)?.key;
+        if (!the_key) {
+          toast.error("No key found for self");
+          return;
+        }
+        keys[the_key] = props.objects.map((obj) => obj.object);
+      }
+    }
+
+    if (props.partners) {
+      if (props.partners.length === 0) {
+        console.log("No oject passed");
+      }
+      if (props.partners.length === 1) {
+        const the_key = action.args?.at(1)?.key;
+        if (!the_key) {
+          toast.error("No key found for self");
+          return;
+        }
+        keys[the_key] = props.partners[0].object;
+      }
+      if (props.partners.length > 1) {
+        if (action.args.at(1)?.kind != PortKind.List) {
+          toast.error("Should be a list but is not");
+          return;
+        }
+        const the_key = action.args?.at(1)?.key;
+        if (!the_key) {
+          toast.error("No key found for self");
+          return;
+        }
+        keys[the_key] = props.partners.map((obj) => obj.object);
+      }
+    }
+
+    const unknownKeys = action.args.filter((arg) => arg.key && !keys[arg.key]);
+
+    if (unknownKeys.length >= 1) {
+      openDialog("actionassign", {
+        id: action.id,
+        args: keys,
+        hidden: keys,
+      });
+      return;
+    }
+
+    try {
+      const reference = uuidv4();
+
+      await assign({
+        action: action.id,
+        args: keys,
+        reference: reference,
+        ephemeral: props.ephemeral,
+      });
+
+      setDoing(true);
+      setError(null);
+
+      registeredCallbacks.set(reference, doStuff);
+    } catch (e) {
+      toast.error(e.message);
+      setDoing(false);
+      setError(e.message || "Unknown error");
+    }
+  };
 
   return (
-    <ContextMenu>
+    <ContextMenu modal={false}>
       <ContextMenuTrigger asChild>
         <CommandItem
-          onSelect={() => props.onSelectNode(props.node)}
-          value={props.node.id}
-          key={props.node.id}
-          className="flex-grow  flex flex-col group cursor-pointer"
+          onSelect={() => conditionalAssign(props.action)}
+          value={props.action.id}
+          key={props.action.id}
+          className={cn(
+            "flex-grow  flex flex-col group cursor-pointer",
+            doing && "animate-pulse",
+            error && "border border-1 border-red-200",
+          )}
           style={{
-            backgroundSize: `${status?.progress || 0}% 100%`,
-            backgroundImage: `linear-gradient(to right, #10b981 ${status?.progress}%, #10b981 ${status?.progress}%)`,
+            backgroundSize: `${progress || 0}% 100%`,
+            backgroundImage: `linear-gradient(to right, #10b981 ${progress}%, #10b981 ${progress}%)`,
             backgroundRepeat: "no-repeat",
             backgroundPosition: "left center",
           }}
         >
           <span className="mr-auto text-md text-gray-100">
-            {props.node.name}
+            {props.action.name}{" "}
+            {error && <span className="text-red-800">{error}</span>}
           </span>
           <span className="mr-auto text-xs text-gray-400">
-            {props.node.description}
+            {props.action.description}
           </span>
         </CommandItem>
       </ContextMenuTrigger>
       <ContextMenuContent className="text-white border-gray-800 px-2 py-2 items-center">
-        <DirectTemplateAssignment
-          {...props}
-          node={props.node}
-          onSelectTemplate={props.onSelectTemplate}
-        />
+        <DirectImplementationAssignment {...props} action={props.action} />
       </ContextMenuContent>
     </ContextMenu>
   );
@@ -135,48 +326,176 @@ export const AssignButton = (
 export const ShortcutButton = (
   props: SmartContextProps & { shortcut: ListShortcutFragment },
 ) => {
-  const status = useLiveAssignation({
-    identifier: props.identifier,
-    object: props.object,
-    node: props.shortcut.node.id,
-  });
+  const { assign } = useAssign();
+  const { openDialog } = useDialog();
+  const [doing, setDoing] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [progress, setProgress] = React.useState<number | null>(0);
+
+  const doStuff = useCallback(
+    (event: AssignationEventFragment) => {
+      console.log("Assignation event received:", event);
+      if (event.kind == "DONE") {
+        setDoing(false);
+        setProgress(null);
+        props.onDone?.({ event, kind: "action" });
+      }
+      if (event.kind == "ERROR" || event.kind == "CRITICAL") {
+        setDoing(false);
+        setProgress(null);
+        setError(event.message || "Unknown error");
+        props.onError?.(event.message || "Unknown error");
+      }
+      if (event.kind == "PROGRESS") {
+        setProgress(event.progress || 0);
+      }
+    },
+    [setDoing, setProgress, setError, props.onDone, props.onError],
+  );
+
+  const conditionalAssign = async (shortcut: ListShortcutFragment) => {
+    const keys = {};
+
+    if (props.objects) {
+      if (props.objects.length === 0) {
+        console.log("No oject passed");
+      }
+      if (props.objects.length === 1) {
+        const the_key = shortcut.args?.at(0)?.key;
+        if (!the_key) {
+          toast.error("No key found for self");
+          return;
+        }
+        keys[the_key] = props.objects[0].object;
+      }
+      if (props.objects.length > 1) {
+        if (shortcut.args.at(0)?.kind != PortKind.List) {
+          toast.error("Should be a list but is not");
+          return;
+        }
+        const the_key = shortcut.args?.at(0)?.key;
+        if (!the_key) {
+          toast.error("No key found for self");
+          return;
+        }
+        keys[the_key] = props.objects.map((obj) => obj.object);
+      }
+    }
+
+    if (props.partners) {
+      if (props.partners.length === 0) {
+        console.log("No oject passed");
+      }
+      if (props.partners.length === 1) {
+        const the_key = shortcut.args?.at(1)?.key;
+        if (!the_key) {
+          toast.error("No key found for self");
+          return;
+        }
+        keys[the_key] = props.partners[0].object;
+      }
+      if (props.partners.length > 1) {
+        if (shortcut.args.at(1)?.kind != PortKind.List) {
+          toast.error("Should be a list but is not");
+          return;
+        }
+        const the_key = shortcut.args?.at(1)?.key;
+        if (!the_key) {
+          toast.error("No key found for self");
+          return;
+        }
+        keys[the_key] = props.partners.map((obj) => obj.object);
+      }
+    }
+
+    const unknownKeys = shortcut.args.filter(
+      (arg) => arg.key && !keys[arg.key],
+    );
+
+    if (unknownKeys.length >= 1) {
+      openDialog("actionassign", {
+        id: shortcut.action.id,
+        args: { keys, ...shortcut.savedArgs },
+        hidden: { keys, ...shortcut.savedArgs },
+      });
+      return;
+    }
+
+    try {
+      const reference = uuidv4();
+
+      await assign({
+        action: shortcut.action.id,
+        args: {
+          ...keys,
+          ...shortcut.savedArgs,
+        },
+      });
+
+      registeredCallbacks.set(reference, doStuff);
+    } catch (e) {
+      toast.error(e.message);
+      props.onError?.(e.message);
+    }
+  };
+
+  useEffect(() => {
+    if (props.shortcut.bindNumber) {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === props.shortcut.bindNumber?.toString()) {
+          e.preventDefault();
+          conditionalAssign(props.shortcut);
+        }
+      };
+
+      window.addEventListener("keydown", handleKeyDown);
+
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+      };
+    }
+
+    return () => {
+      // No cleanup needed if bindNumber is null/undefined
+    };
+  }, [props.shortcut.bindNumber, props.shortcut]);
 
   return (
     <CommandItem
-      onSelect={() => props.onSelectNode(props.shortcut.node)}
+      onSelect={() => conditionalAssign(props.shortcut)}
       value={props.shortcut.id}
       key={props.shortcut.id}
       className="flex-initial flex flex-row group cursor-pointer border border-1 rounded rounded-full bg-slate-800 shadow-xl  h-8 overflow-hidden truncate max-w-[100px] ellipsis px-2"
-      style={{
-        backgroundSize: `${status?.progress || 0}% 100%`,
-        backgroundImage: `linear-gradient(to right, #10b981 ${status?.progress}%, #10b981 ${status?.progress}%)`,
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "left center",
-        borderColor: props.shortcut.allowQuick ? "#10b981" : "#4B5563",
-      }}
     >
       {props.shortcut.allowQuick && <LightningBoltIcon className="w-4 h-4" />}
       <span className="mr-auto text-md text-gray-100 ellipsis truncate w-full">
-        {props.shortcut.name}
+        {props.shortcut.name}{" "}
+        {props.shortcut.bindNumber && `(${props.shortcut.bindNumber})`}
       </span>
     </CommandItem>
   );
 };
 
 export const AutoInstallButton = (props: { definition: string }) => {
-  const { assign, node } = useHashAction({
+  const { assign, progress, doing, installed } = useHashActionWithProgress({
     hash: KABINET_INSTALL_DEFINITION_HASH,
   });
 
   return (
     <Button
-      className="group-hover:block hidden"
+      className="group-hover:opacity-100 opacity-0 transition-opacity duration-300"
       variant={"outline"}
       onClick={(e) => {
         e.preventDefault();
-        assign({ node: node?.id, args: { definition: props.definition } });
+        assign({ definition: props.definition });
       }}
-      disabled={!node}
+      disabled={installed}
+      style={{
+        backgroundSize: `${progress || 0}% 100%`,
+        backgroundImage: `linear-gradient(to right, #10b981 ${progress}%, #10b981 ${progress}%)`,
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "left center",
+      }}
     >
       Auto Install
     </Button>
@@ -189,20 +508,31 @@ export const InstallButton = (props: {
 }) => {
   const navigate = useNavigate();
 
-  const objectAssign = async () => {
-    try {
-      navigate(KabinetDefinition.linkBuilder(props.definition.id));
-    } catch (e) {
-      toast.error(e.message);
-    }
-  };
+  const client = useRekuest();
+
+  const { assign, progress, doing, installed, onDone } =
+    useHashActionWithProgress({
+      hash: KABINET_INSTALL_DEFINITION_HASH,
+      onDone: (event) => {
+        client.refetchQueries({ include: ["AllPrimaryActions"] });
+      },
+    });
 
   return (
     <CommandItem
-      value={props.definition.name}
+      value={props.definition.id}
       key={props.definition.id}
-      onSelect={objectAssign}
+      onSelect={(e) => {
+        assign({ definition: props.definition.id });
+      }}
       className="flex-1 "
+      style={{
+        backgroundSize: `${progress || 0}% 100%`,
+        backgroundImage: `linear-gradient(to right, #10b981 ${progress}%, #10b981 ${progress}%)`,
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "left center",
+      }}
+      disabled={!installed}
     >
       <Tooltip>
         <TooltipTrigger className="flex flex-row group w-full">
@@ -215,7 +545,6 @@ export const InstallButton = (props: {
             </div>
           </div>
           <div className="flex-grow"></div>
-          <AutoInstallButton definition={props.definition.id} />
         </TooltipTrigger>
         <TooltipContent>{props.definition.description}</TooltipContent>
       </Tooltip>
@@ -223,36 +552,95 @@ export const InstallButton = (props: {
   );
 };
 
-export const ApplicableNodes = (props: PassDownProps) => {
-  const demands = [
-    {
-      kind: DemandKind.Args,
-      matches: [
-        { at: 0, kind: PortKind.Structure, identifier: props.identifier },
-      ],
-    },
-  ];
+export const ApplicableActions = (props: PassDownProps) => {
+  const demands: PortDemandInput[] = [];
 
-  let firstPartner = props.partners?.at(0);
+  if (props.objects) {
+    if (props.objects.length === 0) {
+      console.log("No objects");
+    } else if (props.objects.length === 1) {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [
+          {
+            at: 0,
+            kind: PortKind.Structure,
+            identifier: props.objects[0].identifier,
+          },
+        ],
+      });
+    } else {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [
+          {
+            at: 0,
+            kind: PortKind.List,
+            children: [
+              {
+                at: 0,
+                kind: PortKind.Structure,
+                identifier: props.objects[0].identifier,
+              },
+            ],
+          },
+        ],
+      });
+    }
+  }
 
-  if (firstPartner) {
+  if (props.partners) {
+    if (props.partners.length === 0) {
+      console.log("No partners");
+      // Maybe
+    } else if (props.partners.length === 1) {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [
+          {
+            at: 1,
+            kind: PortKind.Structure,
+            identifier: props.partners[0].identifier,
+          },
+        ],
+      });
+    } else {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [
+          {
+            at: 1,
+            kind: PortKind.List,
+            children: [
+              {
+                at: 0,
+                kind: PortKind.Structure,
+                identifier: props.partners[0].identifier,
+              },
+            ],
+          },
+        ],
+      });
+    }
+  }
+
+  if (props.returns) {
     demands.push({
-      kind: DemandKind.Args,
-      matches: [
-        {
-          at: 1,
-          kind: PortKind.Structure,
-          identifier: firstPartner.identifier,
-        },
-      ],
+      kind: DemandKind.Returns,
+      matches: props.returns.map((r, index) => ({
+        at: index,
+        kind: PortKind.Structure,
+        identifier: r,
+      })),
     });
   }
 
-  const { data, error } = useAllPrimaryNodesQuery({
+  const { data, error } = useAllPrimaryActionsQuery({
     variables: {
       filters: {
         demands: demands,
         search: props.filter && props.filter != "" ? props.filter : undefined,
+        inCollection: props.collection,
       },
     },
     fetchPolicy: "cache-and-network",
@@ -269,12 +657,8 @@ export const ApplicableNodes = (props: PassDownProps) => {
     return null;
   }
 
-  if (data.nodes.length === 0) {
-    return (
-      <span className="font-light text-xs w-full items-center ml-2 w-full">
-        No nodes...
-      </span>
-    );
+  if (data.actions.length === 0) {
+    return null;
   }
 
   return (
@@ -285,33 +669,93 @@ export const ApplicableNodes = (props: PassDownProps) => {
         </span>
       }
     >
-      {data?.nodes.map((x) => <AssignButton node={x} {...props} />)}
+      {data?.actions.map((x) => (
+        <AssignButton action={x} {...props} key={x.id} />
+      ))}
     </CommandGroup>
   );
 };
 
-export const AppicableShortcuts = (props: PassDownProps) => {
-  const demands = [
-    {
-      kind: DemandKind.Args,
-      matches: [
-        { at: 0, kind: PortKind.Structure, identifier: props.identifier },
-      ],
-    },
-  ];
+export const ApplicableShortcuts = (props: PassDownProps) => {
+  const demands: PortDemandInput[] = [];
 
-  let firstPartner = props.partners?.at(0);
+  if (props.objects) {
+    if (props.objects.length === 0) {
+      console.log("No objects");
+    } else if (props.objects.length === 1) {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [
+          {
+            at: 0,
+            kind: PortKind.Structure,
+            identifier: props.objects[0].identifier,
+          },
+        ],
+      });
+    } else {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [
+          {
+            at: 0,
+            kind: PortKind.List,
+            children: [
+              {
+                at: 0,
+                kind: PortKind.Structure,
+                identifier: props.objects[0].identifier,
+              },
+            ],
+          },
+        ],
+      });
+    }
+  }
 
-  if (firstPartner) {
+  if (props.partners) {
+    if (props.partners.length === 0) {
+      console.log("No partners");
+      // Maybe
+    } else if (props.partners.length === 1) {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [
+          {
+            at: 1,
+            kind: PortKind.Structure,
+            identifier: props.partners[0].identifier,
+          },
+        ],
+      });
+    } else {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [
+          {
+            at: 0,
+            kind: PortKind.List,
+            children: [
+              {
+                at: 0,
+                kind: PortKind.Structure,
+                identifier: props.partners[0].identifier,
+              },
+            ],
+          },
+        ],
+      });
+    }
+  }
+
+  if (props.returns) {
     demands.push({
-      kind: DemandKind.Args,
-      matches: [
-        {
-          at: 1,
-          kind: PortKind.Structure,
-          identifier: firstPartner.identifier,
-        },
-      ],
+      kind: DemandKind.Returns,
+      matches: props.returns.map((r, index) => ({
+        at: index,
+        kind: PortKind.Structure,
+        identifier: r,
+      })),
     });
   }
 
@@ -337,43 +781,87 @@ export const AppicableShortcuts = (props: PassDownProps) => {
   }
 
   if (data.shortcuts.length === 0) {
-    return (
-      <span className="font-light text-xs w-full items-center ml-2 w-full">
-        No nodes...
-      </span>
-    );
+    return null;
   }
 
   return (
     <div className="flex flex-row gap-2 p-2">
-      {data?.shortcuts.map((x) => <ShortcutButton shortcut={x} {...props} />)}
+      {data?.shortcuts.map((x) => (
+        <ShortcutButton shortcut={x} {...props} key={x.id} />
+      ))}
     </div>
   );
 };
 
 export const ApplicableDefinitions = (props: PassDownProps) => {
-  const demands = [
-    {
-      kind: DemandKind.Args,
-      matches: [
-        { at: 0, kind: PortKind.Structure, identifier: props.identifier },
-      ],
-    },
-  ];
+  const demands: PortDemandInput[] = [];
 
-  let firstPartner = props.partners?.at(0);
+  if (props.objects) {
+    if (props.objects.length === 0) {
+      console.log("No objects");
+    } else if (props.objects.length === 1) {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [
+          {
+            at: 0,
+            kind: PortKind.Structure,
+            identifier: props.objects[0].identifier,
+          },
+        ],
+      });
+    } else {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [
+          {
+            at: 0,
+            kind: PortKind.List,
+            children: [
+              {
+                at: 0,
+                kind: PortKind.Structure,
+                identifier: props.objects[0].identifier,
+              },
+            ],
+          },
+        ],
+      });
+    }
+  }
 
-  if (firstPartner) {
-    demands.push({
-      kind: DemandKind.Args,
-      matches: [
-        {
-          at: 1,
-          kind: PortKind.Structure,
-          identifier: firstPartner.identifier,
-        },
-      ],
-    });
+  if (props.partners) {
+    if (props.partners.length === 0) {
+      console.log("No partners");
+    } else if (props.partners.length === 1) {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [
+          {
+            at: 1,
+            kind: PortKind.Structure,
+            identifier: props.partners[0].identifier,
+          },
+        ],
+      });
+    } else {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [
+          {
+            at: 1,
+            kind: PortKind.List,
+            children: [
+              {
+                at: 1,
+                kind: PortKind.Structure,
+                identifier: props.partners[0].identifier,
+              },
+            ],
+          },
+        ],
+      });
+    }
   }
 
   const { data } = useAllPrimaryDefinitionsQuery({
@@ -403,61 +891,608 @@ export const ApplicableDefinitions = (props: PassDownProps) => {
       }
     >
       {data?.definitions.map((x) => (
-        <InstallButton definition={x}>{x.name}</InstallButton>
+        <InstallButton definition={x} key={x.id}>
+          {x.name}
+        </InstallButton>
       ))}
     </CommandGroup>
   );
 };
 
-export const useAction = (props: { action: Action; state: ActionState }) => {
-  const [progress, setProgress] = React.useState<number | undefined>(0);
-  const [controller, setController] = React.useState<AbortController | null>(
-    null,
-  );
-  const app = useArkitekt();
+export const EntityRelationActions = (props: PassDownProps) => {
+  const firstPartner = props.partners?.at(0);
+  const firstObject = props.objects?.at(0);
 
-  const assign = async () => {
-    if (controller) {
-      controller.abort();
+  if (!firstPartner || !firstObject) {
+    return null;
+  }
+
+  const dialog = useDialog();
+
+  const { data, error } = useListRelationCategoryQuery({
+    variables: {
+      filters: {
+        sourceEntity: firstObject.object,
+        targetEntity: firstPartner.object,
+        search: props.filter && props.filter != "" ? props.filter : undefined,
+      },
+    },
+    fetchPolicy: "network-only",
+  });
+
+  return (
+    <CommandGroup
+      heading={
+        <span className="font-light text-xs w-full items-center ml-2 w-full">
+          Relate Entities
+        </span>
+      }
+    >
+      {data?.relationCategories.map((x) => (
+        <EntityRelateButton
+          relation={x}
+          right={props.partners || []}
+          left={props.objects || []}
+          key={x.id}
+        >
+          {x.label}
+        </EntityRelateButton>
+      ))}
+      {error && (
+        <CommandItem value={"error"} className="flex-1">
+          <span className="text-red-500">Error: {error.message}</span>
+        </CommandItem>
+      )}
+      <CommandItem
+        value={"no-relation"}
+        onSelect={() =>
+          dialog.openDialog("createnewrelation", {
+            left: props.objects || [],
+            right: props.partners || [],
+          })
+        }
+        className="flex-1 "
+      >
+        <Tooltip>
+          <TooltipTrigger className="flex flex-row group w-full">
+            <div className="flex-col">
+              <div className="text-md text-gray-100 text-left">
+                Create new Relation
+              </div>
+              <div className="text-xs text-gray-400 text-left">
+                Will create a new relation
+              </div>
+            </div>
+            <div className="flex-grow"></div>
+          </TooltipTrigger>
+          <TooltipContent>{props.filter}</TooltipContent>
+        </Tooltip>
+      </CommandItem>
+    </CommandGroup>
+  );
+};
+
+export const StructureRelationActions = (props: PassDownProps) => {
+  const firstPartner = props.partners?.at(0);
+  const firstObject = props.objects?.at(0);
+
+  if (!firstPartner || !firstObject) {
+    return null;
+  }
+
+  const dialog = useDialog();
+
+  const { data, error } = useListStructureRelationCategoryQuery({
+    variables: {
+      filters: {
+        sourceIdentifier: firstObject.identifier,
+        targetIdentifier: firstPartner.identifier,
+        search: props.filter && props.filter != "" ? props.filter : undefined,
+      },
+    },
+    fetchPolicy: "network-only",
+  });
+
+  return (
+    <CommandGroup
+      heading={
+        <span className="font-light text-xs w-full items-center ml-2 w-full">
+          Relate...
+        </span>
+      }
+    >
+      {data?.structureRelationCategories.map((x) => (
+        <StructureRelateButton
+          relation={x}
+          right={firstPartner}
+          left={props}
+          key={x.id}
+        >
+          {x.label}
+        </StructureRelateButton>
+      ))}
+      {error && (
+        <CommandItem value={"error"} className="flex-1">
+          <span className="text-red-500">Error: {error.message}</span>
+        </CommandItem>
+      )}
+      <CommandItem
+        value={"no-relation"}
+        onSelect={() =>
+          dialog.openDialog("createnewrelation", {
+            left: props.objects || [],
+            right: props.partners || [],
+          })
+        }
+        className="flex-1 "
+      >
+        <Tooltip>
+          <TooltipTrigger className="flex flex-row group w-full">
+            <div className="flex-col">
+              <div className="text-md text-gray-100 text-left">
+                Create.new Relation
+              </div>
+              <div className="text-xs text-gray-400 text-left">
+                Will create a new relation
+              </div>
+            </div>
+            <div className="flex-grow"></div>
+          </TooltipTrigger>
+          <TooltipContent>{props.filter}</TooltipContent>
+        </Tooltip>
+      </CommandItem>
+    </CommandGroup>
+  );
+};
+
+export const MeasurementActions = (props: PassDownProps) => {
+  const firstObject = props.objects?.at(0);
+  const dialog = useDialog();
+
+  if (!firstObject) {
+    return null;
+  }
+
+  const { data, error } = useListMeasurmentCategoryQuery({
+    variables: {
+      filters: {
+        sourceIdentifier: firstObject.identifier,
+        search: props.filter && props.filter != "" ? props.filter : undefined,
+      },
+    },
+    fetchPolicy: "network-only",
+  });
+
+  return (
+    <CommandGroup
+      heading={
+        <span className="font-light text-xs w-full items-center ml-2 w-full">
+          Relate...
+        </span>
+      }
+    >
+      {data?.measurementCategories.map((x) => (
+        <StructureRelateButton
+          relation={x}
+          right={firstPartner}
+          left={props}
+          key={x.id}
+        >
+          {x.label}
+        </StructureRelateButton>
+      ))}
+      {error && (
+        <CommandItem value={"error"} className="flex-1">
+          <span className="text-red-500">Error: {error.message}</span>
+        </CommandItem>
+      )}
+      <CommandItem
+        value={"no-relation"}
+        onSelect={() =>
+          dialog.openDialog("createnewrelation", {
+            left: props.objects || [],
+            right: props.partners || [],
+          })
+        }
+        className="flex-1 "
+      >
+        <Tooltip>
+          <TooltipTrigger className="flex flex-row group w-full">
+            <div className="flex-col">
+              <div className="text-md text-gray-100 text-left">
+                Create.new Measurement
+              </div>
+              <div className="text-xs text-gray-400 text-left">
+                Will create a a new Measurment
+              </div>
+            </div>
+            <div className="flex-grow"></div>
+          </TooltipTrigger>
+          <TooltipContent>{props.filter}</TooltipContent>
+        </Tooltip>
+      </CommandItem>
+    </CommandGroup>
+  );
+};
+
+export const ApplicableRelations = (props: PassDownProps) => {
+  const firstPartner = props.partners?.at(0);
+  const firstObject = props.objects?.at(0);
+
+  if (!firstPartner && !firstObject) {
+    return null;
+  }
+
+  if (!firstPartner && firstObject) {
+    return <ApplicableMeasurements {...props} />;
+  }
+
+  if (
+    firstPartner?.identifier == "@kraph/entity" &&
+    firstObject?.identifier == "@kraph/entity"
+  ) {
+    return <EntityRelationActions {...props} />;
+  }
+
+  return <StructureRelationActions {...props} />;
+};
+
+export const ApplicableMeasurements = (props: PassDownProps) => {
+  const firstPartner = props.partners?.at(0);
+  const firstObject = props.objects?.at(0);
+
+  if (firstPartner || !firstObject) {
+    return null;
+  }
+
+  const dialog = useDialog();
+
+  const { data, error } = useListMeasurmentCategoryQuery({
+    variables: {
+      filters: {
+        sourceIdentifier: firstObject.identifier,
+        search: props.filter && props.filter != "" ? props.filter : undefined,
+      },
+    },
+    fetchPolicy: "network-only",
+  });
+
+  return (
+    <CommandGroup
+      heading={
+        <span className="font-light text-xs w-full items-center ml-2 w-full">
+          Measures...
+        </span>
+      }
+    >
+      {data?.measurementCategories.map((x) => (
+        <CreateMeasurementButton
+          measurementCategory={x}
+          left={props}
+          key={x.id}
+        >
+          {x.label}
+        </CreateMeasurementButton>
+      ))}
+      {error && (
+        <CommandItem value={"error"} className="flex-1">
+          <span className="text-red-500">Error: {error.message}</span>
+        </CommandItem>
+      )}
+      <CommandItem
+        value={"no-relation"}
+        onSelect={() =>
+          dialog.openDialog("createnewmeasurement", {
+            left: props.objects || [],
+            right: props.partners || [],
+          })
+        }
+        className="flex-1 "
+      >
+        <Tooltip>
+          <TooltipTrigger className="flex flex-row group w-full">
+            <div className="flex-col">
+              <div className="text-md text-gray-100 text-left">
+                Create new Measurement
+              </div>
+              <div className="text-xs text-gray-400 text-left">
+                Will create a new measurement
+              </div>
+            </div>
+            <div className="flex-grow"></div>
+          </TooltipTrigger>
+          <TooltipContent>{props.filter}</TooltipContent>
+        </Tooltip>
+      </CommandItem>
+    </CommandGroup>
+  );
+};
+
+export const StructureRelateButton = (props: {
+  relation: ListStructureRelationCategoryWithGraphFragment;
+  left: PassDownProps;
+  right: Structure;
+  children: React.ReactNode;
+}) => {
+  const [createSRelation] = useCreateStructureRelationMutation({
+    onCompleted: (data) => {
+      console.log("Relation created:", data);
+    },
+    onError: (error) => {
+      console.error("Error creating relation:", error);
+    },
+  });
+
+  const [createStructure] = useCreateStructureMutation({
+    onCompleted: (data) => {
+      console.log("Structure created:", data);
+    },
+    onError: (error) => {
+      console.error("Error creating structure:", error);
+    },
+  });
+
+  const handleRelationCreation = async (
+    category: ListStructureRelationCategoryWithGraphFragment,
+  ) => {
+    for (const obj of props.left.objects) {
+      try {
+        const leftStructureString = `${obj.identifier}:${obj.object}`;
+        const rightStructureString = `${props.right.identifier}:${props.right.object}`;
+
+        const left = await createStructure({
+          variables: {
+            input: {
+              structure: leftStructureString,
+              graph: category.graph.id,
+            },
+          },
+        });
+
+        const right = await createStructure({
+          variables: {
+            input: {
+              structure: rightStructureString,
+              graph: category.graph.id,
+            },
+          },
+        });
+
+        await createSRelation({
+          variables: {
+            input: {
+              source: left.data?.createStructure.id,
+              target: right.data?.createStructure.id,
+              category: category.id,
+            },
+          },
+        });
+
+        toast.success("Relation created successfully!");
+      } catch (error) {
+        toast.error(
+          `Failed to create relation: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
+        console.error("Failed to create relation:", error);
+      }
+    }
+  };
+
+  return (
+    <CommandItem
+      value={props.relation.label}
+      key={props.relation.id}
+      onSelect={() => handleRelationCreation(props.relation)}
+      className="flex-1 "
+    >
+      <Tooltip>
+        <TooltipTrigger className="flex flex-row group w-full">
+          <div className="flex-col">
+            <div className="text-md text-gray-100 text-left">
+              {props.relation.label}
+            </div>
+            <div className="text-xs text-gray-400 text-left">
+              {props.relation.graph.name}
+            </div>
+          </div>
+          <div className="flex-grow"></div>
+        </TooltipTrigger>
+        <TooltipContent>{props.relation.description}</TooltipContent>
+      </Tooltip>
+    </CommandItem>
+  );
+};
+
+export const CreateMeasurementButton = (props: {
+  measurementCategory: ListMeasurementCategoryWithGraphFragment;
+  left: PassDownProps;
+  children: React.ReactNode;
+}) => {
+  const [createMeasurment] = useCreateMeasurementMutation({
+    onCompleted: (data) => {
+      console.log("Relation created:", data);
+    },
+    onError: (error) => {
+      console.error("Error creating relation:", error);
+    },
+  });
+
+  const dialog = useDialog();
+
+  const [createStructure] = useCreateStructureMutation({
+    onCompleted: (data) => {
+      console.log("Structure created:", data);
+    },
+    onError: (error) => {
+      console.error("Error creating structure:", error);
+    },
+  });
+
+  const [createEntity] = useCreateEntityMutation({
+    onCompleted: (data) => {
+      console.log("Entity created:", data);
+    },
+  });
+
+  const defaultNew = props.measurementCategory.targetDefinition.defaultUseNew;
+
+  const handleDirectCreation = async (
+    category: ListMeasurementCategoryWithGraphFragment,
+  ) => {
+    if (!defaultNew) {
+      dialog.openDialog("setasmeasurement", {
+        left: props.left.objects,
+        measurement: props.measurementCategory,
+      });
+      toast.error("No default entity category set for measurement target");
       return;
     }
-    let newController = new AbortController();
 
-    setController(newController);
+    for (const obj of props.left.objects) {
+      try {
+        const leftStructureString = `${obj.identifier}:${obj.object}`;
 
-    try {
-      await props.action.execute({
-        onProgress: (p) => {
-          setProgress(p);
-        },
-        abortSignal: newController.signal,
-        services: app.clients,
-        state: props.state,
-      });
-      setController(null);
-      setProgress(undefined);
-    } catch (e) {
-      setProgress(undefined);
-      setController(null);
-      console.error(e);
+        const left = await createStructure({
+          variables: {
+            input: {
+              structure: leftStructureString,
+              graph: category.graph.id,
+            },
+          },
+        });
+
+        const entityResponse = await createEntity({
+          variables: {
+            input: {
+              entityCategory: defaultNew.id,
+            },
+          },
+        });
+
+        await createMeasurment({
+          variables: {
+            input: {
+              structure: left.data?.createStructure.id,
+              entity: entityResponse.data?.createEntity.id,
+              category: category.id,
+            },
+          },
+        });
+
+        toast.success("Relation created successfully!");
+      } catch (error) {
+        toast.error(
+          `Failed to create relation: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
+        console.error("Failed to create relation:", error);
+      }
     }
   };
 
-  return {
-    progress,
-    assign,
+  return (
+    <CommandItem
+      value={props.measurementCategory.label}
+      key={props.measurementCategory.id}
+      onSelect={() => handleDirectCreation(props.measurementCategory)}
+      className="flex-1 "
+    >
+      <Tooltip>
+        <TooltipTrigger className="flex flex-row group w-full">
+          <div className="flex-1">
+            <div className="text-md text-gray-100 text-left">
+              {props.measurementCategory.label}
+            </div>
+            <div className="text-xs text-gray-400 text-left">
+              {props.measurementCategory.graph.name}
+            </div>
+          </div>
+          {defaultNew?.label && (
+            <div className="flex-col text-xs text-gray-400 mr-2">
+              <div className="text-right">Will create</div>
+
+              <pre className="flex-1 my-auto">{defaultNew?.label}</pre>
+            </div>
+          )}
+        </TooltipTrigger>
+        <TooltipContent>{props.measurementCategory.description}</TooltipContent>
+      </Tooltip>
+    </CommandItem>
+  );
+};
+
+export const EntityRelateButton = (props: {
+  relation: ListRelationCategoryFragment;
+  left: Structure[];
+  right: Structure[];
+  children: React.ReactNode;
+}) => {
+  const [createRelation] = useCreateRelationMutation({
+    onCompleted: (data) => {
+      console.log("Relation created:", data);
+    },
+    onError: (error) => {
+      console.error("Error creating relation:", error);
+    },
+  });
+
+  const handleRelationCreation = async (
+    category: ListRelationCategoryFragment,
+  ) => {
+    for (const left of props.left) {
+      for (const right of props.right) {
+        try {
+          await createRelation({
+            variables: {
+              input: {
+                source: left.object,
+                target: right.object,
+                category: category.id,
+              },
+            },
+          });
+
+          toast.success("Relation created successfully!");
+        } catch (error) {
+          toast.error(
+            `Failed to create relation: ${error instanceof Error ? error.message : "Unknown error"}`,
+          );
+          console.error("Failed to create relation:", error);
+        }
+      }
+    }
   };
+
+  return (
+    <CommandItem
+      value={props.relation.label}
+      key={props.relation.id}
+      onSelect={() => handleRelationCreation(props.relation)}
+      className="flex-1 "
+    >
+      <Tooltip>
+        <TooltipTrigger className="flex flex-row group w-full">
+          <div className="flex-col">
+            <div className="text-md text-gray-100 text-left">
+              {props.relation.label}
+            </div>
+            <div className="text-xs text-gray-400 text-left">
+              {props.relation.description}
+            </div>
+          </div>
+          <div className="flex-grow"></div>
+        </TooltipTrigger>
+        <TooltipContent>{props.relation.description}</TooltipContent>
+      </Tooltip>
+    </CommandItem>
+  );
 };
 
-export const useActions = (props: { state: ActionState; filter?: string }) => {
-  return defaultRegistry.getActionsForState(props.state);
-};
-
-export const LocalActionButton = (props: {
+export const LocalActionCommand = (props: {
   action: Action;
   state: ActionState;
+  onDone?: OnDone;
 }) => {
-  const { assign, progress } = useAction(props);
+  const { assign, progress } = usePerformAction(props);
 
   return (
     <CommandItem
@@ -485,10 +1520,15 @@ export const LocalActionButton = (props: {
   );
 };
 
-export const Actions = (props: { state: ActionState; filter?: string }) => {
-  const actions = useActions(props).filter(
-    (x) => !props.filter || x.title.includes(props.filter),
-  );
+export const Actions = (props: {
+  state: ActionState;
+  filter?: string;
+  onDone?: OnDone;
+}) => {
+  const actions = useMatchingActions({
+    state: props.state,
+    search: props.filter,
+  });
 
   if (actions.length === 0) {
     return null;
@@ -503,31 +1543,51 @@ export const Actions = (props: { state: ActionState; filter?: string }) => {
       }
     >
       {actions.map((x) => (
-        <LocalActionButton action={x} state={props.state} />
+        <LocalActionCommand
+          key={x.title}
+          action={x}
+          state={props.state}
+          onDone={props.onDone}
+        />
       ))}
     </CommandGroup>
   );
 };
 
-export const ApplicableActions = (props: PassDownProps) => {
+export const ApplicableLocalActions = (props: PassDownProps) => {
   return (
     <Actions
       state={{
-        left: [{ object: props.object, identifier: props.identifier }],
+        left: props.objects,
         right: props.partners,
         isCommand: false,
       }}
       filter={props.filter}
+      onDone={props.onDone}
     />
   );
 };
 
-export type ObjectButtonProps = {
-  object: string;
-  identifier: string;
+export type SmartContextProps = {
   children?: React.ReactNode;
   className?: string;
+  objects: Structure[];
   partners?: Structure[];
+  returns?: string[];
+  expect?: string[];
+  collection?: string;
+  onDone?: OnDone;
+  onError?: (error: string) => void;
+  ephemeral?: boolean;
+  disableShortcuts?: boolean;
+  disableKraph?: boolean;
+  disableKabinet?: boolean;
+  disableActions?: boolean;
+};
+
+export type ObjectButtonProps = SmartContextProps & {
+  children?: React.ReactNode;
+  className?: string;
 };
 
 export type PassDownProps = SmartContextProps & {
@@ -535,120 +1595,25 @@ export type PassDownProps = SmartContextProps & {
 };
 
 export const ObjectButton = (props: ObjectButtonProps) => {
-  const [filter, setFilterValue] = React.useState<string | undefined>(
-    undefined,
-  );
-
-  const [dialogNode, setDialogNode] = React.useState<{
-    node: PrimaryNodeFragment;
-    args: { [key: string]: any };
-  } | null>(null);
-
-  const { assign } = useAssign();
-
-  const conditionalAssign = async (node: PrimaryNodeFragment) => {
-    let the_key = node.args?.at(0)?.key;
-
-    let neededAdditionalPorts = node.args.filter(
-      (x) => !x.nullable && x.key != the_key,
-    );
-    if (!the_key) {
-      toast.error("No key found");
-      return;
-    }
-    if (neededAdditionalPorts.length > 0) {
-      setDialogNode({ node: node, args: { [the_key]: props.object } });
-      return;
-    }
-
-    try {
-      await assign({
-        node: node.id,
-        args: {
-          [the_key]: props.object,
-        },
-      });
-    } catch (e) {
-      toast.error(e.message);
-    }
-  };
-
-  const onTemplateSelect = async (
-    node: PrimaryNodeFragment,
-    template: ListTemplateFragment,
-  ) => {
-    let the_key = node.args?.at(0)?.key;
-
-    let neededAdditionalPorts = node.args.filter(
-      (x) => !x.nullable && x.key != the_key,
-    );
-    if (!the_key) {
-      toast.error("No key found");
-      return;
-    }
-    if (neededAdditionalPorts.length > 0) {
-      setDialogNode(node);
-      return;
-    }
-
-    try {
-      await assign({
-        node: node.id,
-        args: {
-          [the_key]: props.object,
-        },
-      });
-    } catch (e) {
-      toast.error(e.message);
-    }
-  };
-
-  if (props.object === "") {
-    return <> Error</>;
-  }
-
   return (
     <>
-      <Dialog
-        open={dialogNode != null}
-        onOpenChange={() => setDialogNode(null)}
-      >
-        <DialogTrigger asChild>
-          <Popover>
-            <PopoverTrigger asChild>
-              {props.children || (
-                <Button variant={"outline"} className="w-6 h-9 text-white">
-                  Do
-                </Button>
-              )}
-            </PopoverTrigger>
-            <PopoverContent className="text-white border-gray-800 px-2 py-2 items-left">
-              <SmartContext
-                {...props}
-                onSelectNode={conditionalAssign}
-                onSelectTemplate={onTemplateSelect}
-              />
-            </PopoverContent>
-          </Popover>
-        </DialogTrigger>
-        <DialogContent>
-          <NodeAssignForm
-            id={dialogNode?.node.id || ""}
-            args={dialogNode?.args}
-            hidden={dialogNode?.args}
-          />
-        </DialogContent>
-      </Dialog>
+      <Popover>
+        <PopoverTrigger asChild>
+          {props.children || (
+            <Button variant={"outline"} className="text-white">
+              <PlayIcon />
+            </Button>
+          )}
+        </PopoverTrigger>
+        <PopoverContent
+          className="text-white border-gray-800 px-2 py-2 items-left"
+          data-nonbreaker
+        >
+          <SmartContext {...props} />
+        </PopoverContent>
+      </Popover>
     </>
   );
-};
-
-export type SmartContextProps = ObjectButtonProps & {
-  onSelectNode: (node: PrimaryNodeFragment) => Promise<void>;
-  onSelectTemplate: (
-    node: PrimaryNodeFragment,
-    template: ListTemplateFragment,
-  ) => Promise<void>;
 };
 
 export const SmartContext = (props: SmartContextProps) => {
@@ -658,6 +1623,21 @@ export const SmartContext = (props: SmartContextProps) => {
 
   return (
     <>
+      <div className="flex flex-row text-xs">
+        {props.objects && props.objects.length > 1 && (
+          <div className="text-slate-500 p-2 text-xs">
+            {props.objects.length}
+          </div>
+        )}
+        {props.partners && props.partners.length >= 1 && (
+          <div className="text-slate-500 p-2 text-xs">
+            {" "}
+            with {props.partners.length}
+          </div>
+        )}
+      </div>
+      <div className="h-2" />
+
       <Command shouldFilter={false}>
         <CommandInput
           placeholder={"Search"}
@@ -669,27 +1649,27 @@ export const SmartContext = (props: SmartContextProps) => {
         />
 
         <CommandList>
-          <AppicableShortcuts
-            {...props}
-            filter={filter}
-            onSelectNode={props.onSelectNode}
-            onSelectTemplate={props.onSelectTemplate}
-          />
           <CommandEmpty>{"No Action available"}</CommandEmpty>
+          <Guard.Rekuest fallback={<></>}>
+            <ApplicableShortcuts {...props} filter={filter} />
+          </Guard.Rekuest>
 
-          <ApplicableActions {...props} filter={filter} />
-          <ApplicableNodes
-            {...props}
-            filter={filter}
-            onSelectNode={props.onSelectNode}
-            onSelectTemplate={props.onSelectTemplate}
-          />
+          <Guard.Kraph fallback={<></>}>
+            {!props.disableKraph && (
+              <ApplicableRelations {...props} filter={filter} />
+            )}
+          </Guard.Kraph>
 
-          <ApplicableDefinitions
-            {...props}
-            partners={props.partners}
-            filter={filter}
-          />
+          <Guard.Rekuest fallback={<></>}>
+            {!props.disableActions && (
+              <ApplicableActions {...props} filter={filter} />
+            )}
+          </Guard.Rekuest>
+
+          <ApplicableLocalActions {...props} filter={filter} />
+          <Guard.Kabinet fallback={<></>}>
+            <ApplicableDefinitions {...props} filter={filter} />
+          </Guard.Kabinet>
         </CommandList>
       </Command>
     </>

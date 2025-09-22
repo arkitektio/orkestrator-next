@@ -1,13 +1,10 @@
-import { useSettings } from "@/providers/settings/SettingsContext";
-import { useCallback } from "react";
+import { toast } from "sonner";
 import {
   AssignInput,
   PostmanAssignationFragment,
-  PrimaryNodeFragment,
-  ReserveMutationVariables,
-  useAssignMutation,
+  PrimaryActionFragment,
+  ReserveMutationVariables
 } from "../api/graphql";
-import { toast } from "sonner";
 
 export type ActionReserveVariables = Omit<
   ReserveMutationVariables,
@@ -28,11 +25,11 @@ export type useActionOptions<T> = {
 export const useAssign = <T extends any>(): useActionReturn<T> => {
   const { assign } = useAssign();
 
-  const onNodeSelect = async (node: PrimaryNodeFragment) => {
+  const onActionSelect = async (action: PrimaryActionFragment) => {
     alert("Conditional Assign");
-    let the_key = node.args?.at(0)?.key;
+    let the_key = action.args?.at(0)?.key;
 
-    let neededAdditionalPorts = node.args.filter(
+    let neededAdditionalPorts = action.args.filter(
       (x) => !x.nullable && x.key != the_key,
     );
     if (!the_key) {
@@ -40,13 +37,13 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
       return;
     }
     if (neededAdditionalPorts.length > 0) {
-      setDialogNode({ node: node, args: { [the_key]: props.object } });
+      setDialogAction({ action: action, args: { [the_key]: props.object } });
       return;
     }
 
     try {
       await assign({
-        node: node.id,
+        action: action.id,
         args: {
           [the_key]: props.object,
         },
@@ -56,13 +53,13 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
     }
   };
 
-  const onTemplateSelect = async (
-    node: PrimaryNodeFragment,
-    template: ListTemplateFragment,
+  const onImplementationSelect = async (
+    action: PrimaryActionFragment,
+    implementation: ListImplementationFragment,
   ) => {
-    let the_key = node.args?.at(0)?.key;
+    let the_key = action.args?.at(0)?.key;
 
-    let neededAdditionalPorts = node.args.filter(
+    let neededAdditionalPorts = action.args.filter(
       (x) => !x.nullable && x.key != the_key,
     );
     if (!the_key) {
@@ -70,13 +67,13 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
       return;
     }
     if (neededAdditionalPorts.length > 0) {
-      setDialogNode(node);
+      setDialogAction(action);
       return;
     }
 
     try {
       await assign({
-        node: node.id,
+        action: action.id,
         args: {
           [the_key]: props.object,
         },
@@ -87,12 +84,12 @@ export const useAssign = <T extends any>(): useActionReturn<T> => {
   };
 
   return {
-    onNodeSelect,
-    onTemplateSelect,
+    onActionSelect,
+    onImplementationSelect,
   };
 };
-function setDialogNode(arg0: {
-  node: PrimaryNodeFragment;
+function setDialogAction(arg0: {
+  action: PrimaryActionFragment;
   args: { [x: string]: any };
 }) {
   throw new Error("Function not implemented.");

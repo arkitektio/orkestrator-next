@@ -1,3 +1,10 @@
+# [1.3.0-dev.2](https://github.com/arkitektio/orkestrator-next/compare/v1.3.0-dev.1...v1.3.0-dev.2) (2025-09-22)
+
+
+### Bug Fixes
+
+* fix the release element ([d27fd34](https://github.com/arkitektio/orkestrator-next/commit/d27fd347b76364f7efe92da819e28476fc08edab))
+
 # [1.3.0-dev.1](https://github.com/arkitektio/orkestrator-next/compare/v1.2.0...v1.3.0-dev.1) (2025-09-22)
 
 

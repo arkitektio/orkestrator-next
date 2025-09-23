@@ -1,3 +1,10 @@
+# [1.0.0-dev.2](https://github.com/arkitektio/orkestrator-next/compare/v1.0.0-dev.1...v1.0.0-dev.2) (2025-09-23)
+
+
+### Features
+
+* add now another little update ([612e296](https://github.com/arkitektio/orkestrator-next/commit/612e296d8f2fcc64649ee0a1506934e3d200681a))
+
 # 1.0.0-dev.1 (2025-09-23)
 
 

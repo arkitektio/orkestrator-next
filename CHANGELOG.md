@@ -1,3 +1,10 @@
+# [1.4.0-dev.2](https://github.com/arkitektio/orkestrator-next/compare/v1.4.0-dev.1...v1.4.0-dev.2) (2025-09-23)
+
+
+### Features
+
+* try with new semantic approach ([78477c6](https://github.com/arkitektio/orkestrator-next/commit/78477c6cd41dfcc8ffa43da89ed339d33c491e55))
+
 # [1.4.0-dev.1](https://github.com/arkitektio/orkestrator-next/compare/v1.3.2...v1.4.0-dev.1) (2025-09-23)
 
 

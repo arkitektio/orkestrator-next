@@ -1,3 +1,10 @@
+# [1.4.0-dev.1](https://github.com/arkitektio/orkestrator-next/compare/v1.3.2...v1.4.0-dev.1) (2025-09-23)
+
+
+### Features
+
+* Made the settings page look nicer ([93b27c6](https://github.com/arkitektio/orkestrator-next/commit/93b27c6d88d71195cdb02fa9f05e8f131b057086))
+
 ## [1.3.2](https://github.com/arkitektio/orkestrator-next/compare/v1.3.1...v1.3.2) (2025-09-22)
 
 

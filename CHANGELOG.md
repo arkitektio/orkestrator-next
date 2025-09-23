@@ -1,3 +1,10 @@
+# [1.0.0-dev.6](https://github.com/arkitektio/orkestrator-next/compare/v1.0.0-dev.5...v1.0.0-dev.6) (2025-09-23)
+
+
+### Bug Fixes
+
+* test the new (we are on the right tag) ([eeb3058](https://github.com/arkitektio/orkestrator-next/commit/eeb3058b77bbfd3074297ecc5ebf9922eef5ea73))
+
 # [1.0.0-dev.5](https://github.com/arkitektio/orkestrator-next/compare/v1.0.0-dev.4...v1.0.0-dev.5) (2025-09-23)
 
 

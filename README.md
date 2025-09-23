@@ -14,6 +14,10 @@ for the arkitekt platform. It is currently under development and not ready for p
 
 While the new version of Orkestrator is still under development, you can install it by downloading one of the releases
 from the [release page](https://github.com/arkitektio/orkestrator-next/releases) fitting your operating system.
+We provide installers for Windows and MacOS, as well as an AppImage and deb package for Linux.
+
+> [!NOTE]
+> We are working on providing a better installation experience, including automatic updates and a better installer. But for now, this is the best we can do.
 
 ### Linux
 
@@ -51,9 +55,8 @@ Before the new version of Orkestrator can be merged into the main repository, th
 - [x] New Workflow Engine (Fluss)
 - [x] Integrate Kabinet App Store
 - [x] Move to new GraphQL Protocols (subscriptions based on graphql-ws, standardized error and param handling (pagination(filter))
-- [ ] Basic UI Testing
-- [ ] User Stories (e.g. documentation for specific user stories)
-- [ ] Documentation, Documentation, Documentation
+- [X] Basic UI Testing
+- [X] Documentation, Documentation, Documentation
 - [x] Lazy Load Modules (only if corresponding service in Deployment)
 - [x] Hosted Deployment (Discarded for electron app)
 - [x] CI/CD Pipeline

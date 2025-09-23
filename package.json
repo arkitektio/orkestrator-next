@@ -1,5 +1,6 @@
 {
   "name": "orkestrator-next",
+  "productName": "Orkestrator",
   "version": "1.3.2",
   "license": "MIT",
   "description": "The client application for the Arkitekt Framework",

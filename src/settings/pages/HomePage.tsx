@@ -1,7 +1,9 @@
+import { SliderField } from "@/components/fields/SliderField";
 import { SwitchField } from "@/components/fields/SwitchField";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
+import { UpdateChecker } from "@/components/ui/update-checker";
 import { Arkitekt } from "@/lib/arkitekt/Arkitekt";
 import { useSettings } from "@/providers/settings/SettingsContext";
 import deepEqual from "deep-equal";
@@ -68,8 +70,22 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
             label="Experimental Cache Mode"
             description="Cache image layers"
           />
+          <SliderField
+            name="defaultZoomLevel"
+            label={`Default Zoom Level (${Math.round((form.watch("defaultZoomLevel") || 1.0) * 100)}%)`}
+            description="Set the default zoom level for the application (25% - 300%)"
+            min={0.25}
+            max={3.0}
+            step={0.05}
+            throttle={100}
+          />
         </form>
       </Form>
+
+      <div className="mt-8 space-y-4">
+        <h3 className="text-lg font-semibold">App Updates</h3>
+        <UpdateChecker />
+      </div>
 
       {services.map((service) => {
         return (

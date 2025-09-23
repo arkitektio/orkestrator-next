@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { SettingsContext } from "./SettingsContext";
 import {
   Settings,
@@ -28,6 +28,25 @@ export const SettingsProvider: React.FC<SettingsProps> = ({
     setLocalSettings(settings);
   };
 
+  // Debounced zoom level application
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const applyZoomLevel = useCallback((zoomLevel: number) => {
+    if (typeof window !== 'undefined' && window.api) {
+      window.api.setZoomLevel(zoomLevel).catch(console.error);
+    }
+  }, []);
+
+  const debouncedApplyZoomLevel = useCallback((zoomLevel: number) => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    debounceTimeoutRef.current = setTimeout(() => {
+      applyZoomLevel(zoomLevel);
+    }, 150); // 150ms debounce delay
+  }, [applyZoomLevel]);
+
   useEffect(() => {
     if (settings?.darkMode) {
       localStorage.setItem("theme", "dark");
@@ -55,6 +74,13 @@ export const SettingsProvider: React.FC<SettingsProps> = ({
   }, [settings?.colorScheme]);
 
   useEffect(() => {
+    // Apply zoom level when settings change (debounced)
+    if (settings?.defaultZoomLevel) {
+      debouncedApplyZoomLevel(settings.defaultZoomLevel);
+    }
+  }, [settings?.defaultZoomLevel, debouncedApplyZoomLevel]);
+
+  useEffect(() => {
     // load settings from local storage
     const loadValidateSettings = async () => {
       let localSettings;
@@ -72,14 +98,31 @@ export const SettingsProvider: React.FC<SettingsProps> = ({
 
       if (localSettings) {
         setSettings(localSettings as Settings);
+        // Apply zoom level immediately when settings are loaded (non-debounced for initial load)
+        if (localSettings.defaultZoomLevel) {
+          applyZoomLevel(localSettings.defaultZoomLevel);
+        }
       } else {
         console.log("Could not load settings from local storage");
         // settings the defaults if no settings are found in local storage
         setSettings(defaultSettings);
+        // Apply default zoom level (non-debounced for initial load)
+        if (defaultSettings.defaultZoomLevel) {
+          applyZoomLevel(defaultSettings.defaultZoomLevel);
+        }
       }
     };
 
     loadValidateSettings();
+  }, [applyZoomLevel]);
+
+  // Cleanup debounce timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
   }, []);
 
   if (!settings) {

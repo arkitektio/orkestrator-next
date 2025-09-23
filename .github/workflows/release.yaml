@@ -51,11 +51,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Fetch full history including all tags
-          ref: ${{ github.sha }}  # Ensure we're on the right commit
+          ref: ${{ github.ref }}  # Use the branch ref, not the specific commit
 
-      - name: Fetch latest tags
+      - name: Pull latest changes from semantic-release
         run: |
-          git fetch --tags --force
+          git pull origin ${{ github.ref_name }}
+          echo "Current commit: $(git rev-parse HEAD)"
           echo "Latest tags:"
           git tag --sort=-version:refname | head -5
 

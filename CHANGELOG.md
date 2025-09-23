@@ -1,3 +1,10 @@
+# [1.0.0-dev.8](https://github.com/arkitektio/orkestrator-next/compare/v1.0.0-dev.7...v1.0.0-dev.8) (2025-09-23)
+
+
+### Bug Fixes
+
+* readd actions ([e5ad543](https://github.com/arkitektio/orkestrator-next/commit/e5ad543c64caaf8c07140e3425cbc2fd618a81b6))
+
 # [1.0.0-dev.7](https://github.com/arkitektio/orkestrator-next/compare/v1.0.0-dev.6...v1.0.0-dev.7) (2025-09-23)
 
 

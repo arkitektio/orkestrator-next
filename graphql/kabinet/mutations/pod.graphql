@@ -1,0 +1,3 @@
+mutation DeletePod($id: ID!) {
+  deletePod(input: { id: $id }) 
+}

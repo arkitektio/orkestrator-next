@@ -1,12 +1,15 @@
-import { Action } from "@/actions/action-registry";
-import { buildDeleteAction } from "@/actions/builders/deleteAction";
-import { KabinetPod } from "@/linkers";
 
-export const KABINET_ACTIONS: Action[] = [
-  buildDeleteAction({
-    title: "Delete Pod",
-    identifier: KabinetPod,
+import { DeletePodDocument } from "@/kabinet/api/graphql";
+import { buildDeleteAction } from "../localactions/builders/deleteAction";
+import { Action } from "../localactions/LocalActionProvider";
+
+export const KABINET_ACTIONS: Record<string, Action> = {
+  "delete-pod": buildDeleteAction({
+    title: "Delete Agent",
+    identifier: "@kabinet/pod",
+    description: "Delete the pod",
     service: "kabinet",
-    mutation: KabinetPod.deleteMutation,
+    typename: "Pod",
+    mutation: DeletePodDocument,
   }),
-];
+} as const;

@@ -55,7 +55,7 @@ const FaktsViewer: React.FC<{ fakts: unknown }> = ({ fakts }) => {
         </div>
       );
     }
-    return <span>The String: {String(value)}</span>;
+    return <span>{String(value)}</span>;
   };
 
   const filterData = (data: unknown, search: string): unknown => {

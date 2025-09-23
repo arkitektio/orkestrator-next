@@ -17,7 +17,7 @@ from the [release page](https://github.com/arkitektio/orkestrator-next/releases)
 We provide installers for Windows and MacOS, as well as an AppImage and deb package for Linux.
 
 > [!NOTE]
-> We are working on providing a better installation experience, including automatic updates and a better installer.
+> We are working on providing a better installation experience, including automatic updates and a better installer. But for now, this is the best we can do.
 
 ### Linux
 

@@ -1,3 +1,10 @@
+# [1.0.0-dev.3](https://github.com/arkitektio/orkestrator-next/compare/v1.0.0-dev.2...v1.0.0-dev.3) (2025-09-23)
+
+
+### Bug Fixes
+
+* test if the release workflow triggers the event ([c88e02c](https://github.com/arkitektio/orkestrator-next/commit/c88e02c2cd9510f85b9cb9bd0bd79e2cbca611f7))
+
 # [1.0.0-dev.2](https://github.com/arkitektio/orkestrator-next/compare/v1.0.0-dev.1...v1.0.0-dev.2) (2025-09-23)
 
 

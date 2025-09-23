@@ -14,6 +14,10 @@ for the arkitekt platform. It is currently under development and not ready for p
 
 While the new version of Orkestrator is still under development, you can install it by downloading one of the releases
 from the [release page](https://github.com/arkitektio/orkestrator-next/releases) fitting your operating system.
+We provide installers for Windows and MacOS, as well as an AppImage and deb package for Linux.
+
+> [!NOTE]
+> We are working on providing a better installation experience, including automatic updates and a better installer.
 
 ### Linux
 

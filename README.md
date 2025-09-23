@@ -51,9 +51,8 @@ Before the new version of Orkestrator can be merged into the main repository, th
 - [x] New Workflow Engine (Fluss)
 - [x] Integrate Kabinet App Store
 - [x] Move to new GraphQL Protocols (subscriptions based on graphql-ws, standardized error and param handling (pagination(filter))
-- [ ] Basic UI Testing
-- [ ] User Stories (e.g. documentation for specific user stories)
-- [ ] Documentation, Documentation, Documentation
+- [X] Basic UI Testing
+- [X] Documentation, Documentation, Documentation
 - [x] Lazy Load Modules (only if corresponding service in Deployment)
 - [x] Hosted Deployment (Discarded for electron app)
 - [x] CI/CD Pipeline

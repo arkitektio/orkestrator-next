@@ -23,8 +23,8 @@ const FaktsViewer: React.FC<{ fakts: unknown }> = ({ fakts }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const renderValue = (value: unknown): React.ReactNode => {
-    if (value === null) return <span className="text-gray-400">null</span>;
-    if (value === undefined) return <span className="text-gray-400">undefined</span>;
+    if (value === null) return <span className="text-gray-400">None</span>;
+    if (value === undefined) return <span className="text-gray-400">Undefined</span>;
     if (typeof value === "boolean") return <Badge variant={value ? "default" : "secondary"}>{value.toString()}</Badge>;
     if (typeof value === "string") {
       if (value.startsWith("http")) {

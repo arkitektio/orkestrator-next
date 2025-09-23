@@ -86,6 +86,17 @@ ipcMain.handle("discover-beacons", async () => {
   }
 });
 
+ipcMain.handle("check-for-updates", async () => {
+  try {
+    const result = await autoUpdater.checkForUpdates();
+    console.log("Manual update check result:", result);
+    return { success: true, result };
+  } catch (error) {
+    console.error("Manual update check failed:", error);
+    return { success: false, error: String(error) };
+  }
+});
+
 function handleOrkestratorUrl(url: string) {
   try {
     const { host: modelIdentifier, pathname } = new URL(url);
@@ -130,6 +141,8 @@ function createWindow(): BrowserWindow {
 
   mainWindow.on("ready-to-show", () => {
     mainWindow?.show();
+    // Set initial zoom level (1.0 = 100%)
+    mainWindow?.webContents.setZoomFactor(1.0);
   });
 
   // HMR for renderer base on electron-vite cli.
@@ -375,12 +388,70 @@ app.whenReady().then(() => {
   // IPC test
   ipcMain.on("ping", () => console.log("pong"));
 
+  // Reload handlers
+  ipcMain.handle("reload-window", () => {
+    const focusedWindow = BrowserWindow.getFocusedWindow();
+    if (focusedWindow) {
+      focusedWindow.reload();
+      return { success: true };
+    } else if (mainWindow) {
+      mainWindow.reload();
+      return { success: true };
+    }
+    return { success: false, error: "No window to reload" };
+  });
+
+  ipcMain.handle("force-reload-window", () => {
+    const focusedWindow = BrowserWindow.getFocusedWindow();
+    if (focusedWindow) {
+      focusedWindow.webContents.reloadIgnoringCache();
+      return { success: true };
+    } else if (mainWindow) {
+      mainWindow.webContents.reloadIgnoringCache();
+      return { success: true };
+    }
+    return { success: false, error: "No window to reload" };
+  });
+
   ipcMain.on("fakts-start", (_: IpcMainEvent, msg) => createFaktsWindow(msg));
   ipcMain.on("oauth-start", (_: IpcMainEvent, url) => createAuthWindow(url));
   ipcMain.on("open-second-window", (_: IpcMainEvent, path) =>
     openSecondaryWindow(path),
   );
 
+  // Zoom level handlers
+  ipcMain.handle("set-zoom-level", (_, zoomLevel: number) => {
+    const focusedWindow = BrowserWindow.getFocusedWindow();
+    if (focusedWindow) {
+      focusedWindow.webContents.setZoomFactor(zoomLevel);
+      return { success: true };
+    } else if (mainWindow) {
+      mainWindow.webContents.setZoomFactor(zoomLevel);
+      return { success: true };
+    }
+    return { success: false, error: "No window to set zoom level" };
+  });
+
+  ipcMain.handle("get-zoom-level", () => {
+    const focusedWindow = BrowserWindow.getFocusedWindow();
+    if (focusedWindow) {
+      return { success: true, zoomLevel: focusedWindow.webContents.getZoomFactor() };
+    } else if (mainWindow) {
+      return { success: true, zoomLevel: mainWindow.webContents.getZoomFactor() };
+    }
+    return { success: false, error: "No window to get zoom level" };
+  });
+
+
+  // Create reload function
+  const reloadCurrentWindow = () => {
+    const focusedWindow = BrowserWindow.getFocusedWindow();
+    if (focusedWindow) {
+      focusedWindow.reload();
+    } else if (mainWindow) {
+      mainWindow.reload();
+    }
+  };
 
   const menu = Menu.buildFromTemplate([
     {
@@ -390,7 +461,32 @@ app.whenReady().then(() => {
           label: "Check for Updates…",
           click: () => autoUpdater.checkForUpdates()
         },
+        { type: "separator" },
         { role: "quit" }
+      ]
+    },
+    {
+      label: "View",
+      submenu: [
+        {
+          label: "Reload",
+          accelerator: "CmdOrCtrl+R",
+          click: reloadCurrentWindow
+        },
+        {
+          label: "Force Reload",
+          accelerator: "CmdOrCtrl+Shift+R",
+          click: () => {
+            const focusedWindow = BrowserWindow.getFocusedWindow();
+            if (focusedWindow) {
+              focusedWindow.webContents.reloadIgnoringCache();
+            } else if (mainWindow) {
+              mainWindow.webContents.reloadIgnoringCache();
+            }
+          }
+        },
+        { type: "separator" },
+        { role: "toggleDevTools" }
       ]
     }
   ]);

@@ -16,6 +16,10 @@ const api = {
     ipcRenderer.send("open-second-window", path);
   },
   discoverBeacons: () => ipcRenderer.invoke("discover-beacons"),
+  reloadWindow: () => ipcRenderer.invoke("reload-window"),
+  forceReloadWindow: () => ipcRenderer.invoke("force-reload-window"),
+  setZoomLevel: (zoomLevel: number) => ipcRenderer.invoke("set-zoom-level", zoomLevel),
+  getZoomLevel: () => ipcRenderer.invoke("get-zoom-level"),
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to
@@ -27,6 +31,7 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld("api", api);
     contextBridge.exposeInMainWorld("electronAPI", api);
     contextBridge.exposeInMainWorld("updates", {
+      checkForUpdates: () => ipcRenderer.invoke("check-for-updates"),
       onStatus: (cb) => ipcRenderer.on("updater:status", (_e, s) => cb(s)),
       onAvailable: (cb) => ipcRenderer.on("updater:available", (_e, info) => cb(info)),
       onNone: (cb) => ipcRenderer.on("updater:none", cb),

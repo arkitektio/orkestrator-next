@@ -35,7 +35,9 @@ jobs:
 
   build-and-publish:
     needs: semantic-release
-    if: needs.semantic-release.outputs.new-release-published == 'true'
+    if: |
+      (github.ref == 'refs/heads/dev') || 
+      (github.ref == 'refs/heads/main' && needs.semantic-release.outputs.new-release-published == 'true')
     continue-on-error: true
     runs-on: ${{ matrix.os }}
 

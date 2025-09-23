@@ -1,8 +1,15 @@
-name: Release
+name: Release and Publish
 
 on:
   push:
     branches: [main, dev]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+env:
+  GH_TOKEN: ${{ github.token }}       # electron-builder reads GH_TOKEN
 
 jobs:
   semantic-release:
@@ -26,18 +33,55 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: npx semantic-release
 
-  trigger-publish:
+  build-and-publish:
     needs: semantic-release
-    runs-on: ubuntu-latest
     if: needs.semantic-release.outputs.new-release-published == 'true'
+    continue-on-error: true
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+      fail-fast: false
+
     steps:
-      - name: Trigger publishall workflow
-        uses: actions/github-script@v7
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
         with:
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'publishall.yaml',
-              ref: context.ref
-            })
+          node-version: 22
+
+      - name: Install Dependencies
+        run: npm install -g yarn
+
+      - name: Install yarn
+        run: yarn install --network-timeout 1000000000
+
+      - name: install-snapcraft
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt update
+          sudo apt install -y snapd
+          sudo snap install core
+          sudo snap install snapcraft --classic
+
+      - name: build-linux
+        if: matrix.os == 'ubuntu-latest'
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_LOGIN }}
+          NODE_OPTIONS: "--max_old_space_size=4096"
+        run: yarn run build:linux
+
+      - name: build-mac
+        if: matrix.os == 'macos-latest'
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+        run: yarn run build:mac
+
+      - name: build-win
+        if: matrix.os == 'windows-latest'
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+        run: yarn run build:win

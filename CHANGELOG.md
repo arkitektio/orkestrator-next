@@ -1,3 +1,10 @@
+# [1.0.0-dev.5](https://github.com/arkitektio/orkestrator-next/compare/v1.0.0-dev.4...v1.0.0-dev.5) (2025-09-23)
+
+
+### Bug Fixes
+
+* update condition for build-and-publish job to include dev branch ([da8ff38](https://github.com/arkitektio/orkestrator-next/commit/da8ff386c3c1afa079dd36333b8986cc3343440c))
+
 # [1.0.0-dev.4](https://github.com/arkitektio/orkestrator-next/compare/v1.0.0-dev.3...v1.0.0-dev.4) (2025-09-23)
 
 

@@ -49,6 +49,15 @@ jobs:
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history including all tags
+          ref: ${{ github.sha }}  # Ensure we're on the right commit
+
+      - name: Fetch latest tags
+        run: |
+          git fetch --tags --force
+          echo "Latest tags:"
+          git tag --sort=-version:refname | head -5
 
       - name: Install Node.js
         uses: actions/setup-node@v4

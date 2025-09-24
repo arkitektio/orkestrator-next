@@ -1,3 +1,17 @@
+# [1.2.0](https://github.com/arkitektio/orkestrator-next/compare/v1.1.3...v1.2.0) (2025-09-24)
+
+
+### Bug Fixes
+
+* add grid option ([98a8565](https://github.com/arkitektio/orkestrator-next/commit/98a8565047c499def37d931a6ca47133f375ac29))
+
+
+### Features
+
+* a few more dataset options ([9a690f1](https://github.com/arkitektio/orkestrator-next/commit/9a690f1e4859bc118c63eb0f68892557eefc58a9))
+* add few more features + multi app connections ([7c87bc7](https://github.com/arkitektio/orkestrator-next/commit/7c87bc7c05290eb1668e21680fc0854e6d6886bb))
+* add graphquery render ([89e86b5](https://github.com/arkitektio/orkestrator-next/commit/89e86b5b4bd221462cb9a0831a197a1b9ec2cdfb))
+
 ## [1.1.3](https://github.com/arkitektio/orkestrator-next/compare/v1.1.2...v1.1.3) (2025-09-24)
 
 

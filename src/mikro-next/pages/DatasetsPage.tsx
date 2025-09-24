@@ -3,7 +3,7 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import React from "react";
-import { useCreateDatasetMutation } from "../api/graphql";
+import { GetDatasetsDocument, useCreateDatasetMutation } from "../api/graphql";
 import DatasetList from "../components/lists/DatasetList";
 
 export type IRepresentationScreenProps = {};
@@ -11,9 +11,9 @@ export type IRepresentationScreenProps = {};
 const Page: React.FC<IRepresentationScreenProps> = () => {
   const [createDataset] = useCreateDatasetMutation({
     variables: {
-      name: "New Dataset",
+      input: { name: "New Dataset" }
     },
-    refetchQueries: ["GetDatasets"],
+    refetchQueries: [GetDatasetsDocument]
   });
 
   return (

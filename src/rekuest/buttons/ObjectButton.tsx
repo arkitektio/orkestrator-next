@@ -1884,6 +1884,7 @@ export const SmartContext = (props: SmartContextProps) => {
         />
 
         <CommandList>
+          <ApplicableLocalActions {...props} filter={filter} />
           <CommandEmpty>{"No Action available"}</CommandEmpty>
           <Guard.Rekuest fallback={<></>}>
             <ApplicableShortcuts {...props} filter={filter} />
@@ -1904,7 +1905,7 @@ export const SmartContext = (props: SmartContextProps) => {
             )}
           </Guard.Rekuest>
 
-          <ApplicableLocalActions {...props} filter={filter} />
+
           <Guard.Kabinet fallback={<></>}>
             <ApplicableDefinitions {...props} filter={filter} />
           </Guard.Kabinet>

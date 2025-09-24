@@ -52,6 +52,13 @@ const GridOverlay = ({
   imageWidth: number;
   imageHeight: number;
 }) => {
+
+  const { showGrid } = useViewerState();
+
+  if (!showGrid) {
+    return null;
+  }
+
   const gridSize = 50; // Grid spacing in image units
 
   return (
@@ -633,8 +640,6 @@ export const FinalRenderInner = (props: RGBDProps) => {
             yStart={props.yStart}
             follow={props.follow || "width"}
           />
-          <ambientLight intensity={0.5} />
-          <pointLight position={[10, 10, 10]} />
           <OrbitControls
             enableRotate={false}
             enablePan={true}

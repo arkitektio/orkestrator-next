@@ -164,7 +164,6 @@ export const ViewerStateProvider: React.FC<ViewerStateProviderProps> = ({
     showGrid,
     enabledScales,
     displayStructures,
-
     allowRoiDrawing,
     roiDrawMode,
 

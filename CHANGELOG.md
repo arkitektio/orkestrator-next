@@ -1,8 +1,32 @@
-# 1.0.0 (2025-09-23)
+# [1.0.0-dev.8](https://github.com/arkitektio/orkestrator-next/compare/v1.0.0-dev.7...v1.0.0-dev.8) (2025-09-23)
 
 
 ### Bug Fixes
 
+* readd actions ([e5ad543](https://github.com/arkitektio/orkestrator-next/commit/e5ad543c64caaf8c07140e3425cbc2fd618a81b6))
+
+# [1.0.0-dev.7](https://github.com/arkitektio/orkestrator-next/compare/v1.0.0-dev.6...v1.0.0-dev.7) (2025-09-23)
+
+
+### Features
+
+* try again ([030436a](https://github.com/arkitektio/orkestrator-next/commit/030436a8747a51718939902bf50cae034a0825fc))
+
+# [1.0.0-dev.6](https://github.com/arkitektio/orkestrator-next/compare/v1.0.0-dev.5...v1.0.0-dev.6) (2025-09-23)
+
+
+### Bug Fixes
+
+* test the new (we are on the right tag) ([eeb3058](https://github.com/arkitektio/orkestrator-next/commit/eeb3058b77bbfd3074297ecc5ebf9922eef5ea73))
+
+# [1.0.0-dev.5](https://github.com/arkitektio/orkestrator-next/compare/v1.0.0-dev.4...v1.0.0-dev.5) (2025-09-23)
+
+
+### Bug Fixes
+
+* update condition for build-and-publish job to include dev branch ([da8ff38](https://github.com/arkitektio/orkestrator-next/commit/da8ff386c3c1afa079dd36333b8986cc3343440c))
+
+# [1.0.0-dev.4](https://github.com/arkitektio/orkestrator-next/compare/v1.0.0-dev.3...v1.0.0-dev.4) (2025-09-23)
 * add colormap changing ([0696457](https://github.com/arkitektio/orkestrator-next/commit/06964579d3d0502671687f921811e4396a8d40a2))
 * add margin to StreamWidget for better layout ([9889197](https://github.com/arkitektio/orkestrator-next/commit/9889197fab5b2a45e0c795b425f7136cdc750165))
 * add margin to StreamWidget for better layout ([6eb8992](https://github.com/arkitektio/orkestrator-next/commit/6eb89926ed71ea0d47d3bcd0d79cb777a620b641))
@@ -42,6 +66,7 @@
 
 ### Features
 
+* Update readme ([1bfdfd7](https://github.com/arkitektio/orkestrator-next/commit/1bfdfd7f9d872ef00298b2a3cd739f1c8e4413ee))
 *  enhance sidebar and layout components; implement LoadingPage for better user experience ([dfe1455](https://github.com/arkitektio/orkestrator-next/commit/dfe1455a404d7d9dd495342e06e014d89abdd622))
 * add actions ([77cf9db](https://github.com/arkitektio/orkestrator-next/commit/77cf9dbebcf341170c871b26a31f201a3dd32d71))
 * add build and release workflow for Electron Dev app ([3cd5e7b](https://github.com/arkitektio/orkestrator-next/commit/3cd5e7b6a2b1048952265c2b3b9b5a5811bdea80))
@@ -127,6 +152,7 @@
 * update navigation paths and improve room creation functionality; refactor HomePage and StandardPane components ([8c71ba5](https://github.com/arkitektio/orkestrator-next/commit/8c71ba5e9213fb3b3ec70b93e8e04b89d02e41e1))
 * update PrivateNavigationBar to use 'Logout' button; enhance hooks for adaptive load and remove functionality; improve NodeCard and AgentCard UI with truncation and wrapping styles ([7b4f19c](https://github.com/arkitektio/orkestrator-next/commit/7b4f19c71c5d9b06fedb28b7e54fcb21f7ff2fc2))
 * update the roadmap ([ad6b0bf](https://github.com/arkitektio/orkestrator-next/commit/ad6b0bfe7977c1c80d5cf3956408600b6424803f))
+
 
 # [1.0.0-dev.3](https://github.com/arkitektio/orkestrator-next/compare/v1.0.0-dev.2...v1.0.0-dev.3) (2025-09-23)
 

@@ -1,12 +1,13 @@
-import { Action } from "@/actions/action-registry";
-import { buildDeleteAction } from "@/actions/builders/deleteAction";
+
 import {
   DeleteAgentDocument,
   DeleteShortcutDocument,
 } from "@/rekuest/api/graphql";
+import { buildDeleteAction } from "../localactions/builders/deleteAction";
+import { Action } from "../localactions/LocalActionProvider";
 
-export const REKUEST_ACTIONS: Action[] = [
-  buildDeleteAction({
+export const REKUEST_ACTIONS: Record<string, Action> = {
+  "rekuest-delete-agent": buildDeleteAction({
     title: "Delete Agent",
     identifier: "@rekuest/agent",
     description: "Delete the agent",
@@ -14,7 +15,7 @@ export const REKUEST_ACTIONS: Action[] = [
     typename: "Agent",
     mutation: DeleteAgentDocument,
   }),
-  buildDeleteAction({
+  "rekuest-delete-shortcut": buildDeleteAction({
     title: "Delete Shortcut",
     identifier: "@rekuest/shortcut",
     description: "Delete the shortcut",
@@ -22,4 +23,4 @@ export const REKUEST_ACTIONS: Action[] = [
     typename: "Shortcut",
     mutation: DeleteShortcutDocument,
   }),
-];
+} as const;

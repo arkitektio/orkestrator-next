@@ -1377,6 +1377,13 @@ export type CudaSelectorFragment = { __typename?: 'CudaSelector', cudaVersion?: 
 
 export type RocmSelectorFragment = { __typename?: 'RocmSelector', apiVersion?: string | null, apiThing?: string | null };
 
+export type DeletePodMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeletePodMutation = { __typename?: 'Mutation', deletePod: string };
+
 export type CreateGithubRepoMutationVariables = Exact<{
   identifier: Scalars['String']['input'];
 }>;
@@ -1952,6 +1959,37 @@ export const ResourceFragmentDoc = gql`
   }
 }
     ${ListPodFragmentDoc}`;
+export const DeletePodDocument = gql`
+    mutation DeletePod($id: ID!) {
+  deletePod(input: {id: $id})
+}
+    `;
+export type DeletePodMutationFn = Apollo.MutationFunction<DeletePodMutation, DeletePodMutationVariables>;
+
+/**
+ * __useDeletePodMutation__
+ *
+ * To run a mutation, you first call `useDeletePodMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeletePodMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deletePodMutation, { data, loading, error }] = useDeletePodMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeletePodMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeletePodMutation, DeletePodMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<DeletePodMutation, DeletePodMutationVariables>(DeletePodDocument, options);
+      }
+export type DeletePodMutationHookResult = ReturnType<typeof useDeletePodMutation>;
+export type DeletePodMutationResult = Apollo.MutationResult<DeletePodMutation>;
+export type DeletePodMutationOptions = Apollo.BaseMutationOptions<DeletePodMutation, DeletePodMutationVariables>;
 export const CreateGithubRepoDocument = gql`
     mutation CreateGithubRepo($identifier: String!) {
   createGithubRepo(input: {identifier: $identifier}) {

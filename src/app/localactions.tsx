@@ -1,10 +1,12 @@
 import { KRAPH_ACTIONS } from "@/kraph/actions";
+import { KABINET_ACTIONS } from "@/lib/kabinet/actions";
 import {
   Action,
   createLocalActionProvider,
 } from "@/lib/localactions/LocalActionProvider";
 import { LOK_ACTIONS } from "@/lib/lok/actions";
 import { MIKRO_ACTIONS } from "@/lib/mikro/actions";
+import { REKUEST_ACTIONS } from "@/lib/rekuest/actions";
 import { linkBuilder } from "@/providers/smart/builder";
 import { smartRegistry } from "@/providers/smart/registry";
 
@@ -39,7 +41,7 @@ const PopOutAction: Action = {
       type: "nopartner",
     },
   ],
-  execute: async ({ state, navigate }) => {
+  execute: async ({ state }) => {
     for (const item of state.left) {
       const identifier = item.identifier;
       const object = item.object;
@@ -62,6 +64,8 @@ export const { LocalActionProvider, useAction, useMatchingActions, registry } =
     ...MIKRO_ACTIONS,
     ...KRAPH_ACTIONS,
     ...LOK_ACTIONS,
+    ...KABINET_ACTIONS,
+    ...REKUEST_ACTIONS,
     popout: PopOutAction,
     navigate: NavigateAction,
   } as const);

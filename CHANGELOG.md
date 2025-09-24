@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/arkitektio/orkestrator-next/compare/v1.1.1...v1.1.2) (2025-09-24)
+
+
+### Bug Fixes
+
+* add pat token ([6b9e59c](https://github.com/arkitektio/orkestrator-next/commit/6b9e59c6ab8e7be8fe034fe81c4f261afde474b9))
+
 ## [1.1.1](https://github.com/arkitektio/orkestrator-next/compare/v1.1.0...v1.1.1) (2025-09-24)
 
 

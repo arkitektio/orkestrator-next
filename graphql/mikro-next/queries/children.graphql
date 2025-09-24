@@ -1,5 +1,5 @@
-query Children($id: ID!, $pagination: ChildrenPaginationInput) {
-  children(parent: $id, pagination: $pagination) {
+query Children($id: ID!, $pagination: ChildrenPaginationInput, $filters: DatasetChildrenFilter) {
+  children(parent: $id, pagination: $pagination, filters: $filters) {
     ...ListFile
     ...ListImage
     ...ListDataset

@@ -6,11 +6,14 @@ import {
   PutDatasetsInDatasetDocument,
   PutDatasetsInDatasetMutation,
   PutDatasetsInDatasetMutationVariables,
+  PutImagesInDatasetDocument,
+  PutImagesInDatasetMutation,
+  PutImagesInDatasetMutationVariables,
 } from "@/mikro-next/api/graphql";
 import { buildDeleteAction } from "@/lib/localactions/builders/deleteAction";
 import { Action, Condition } from "../localactions/LocalActionProvider";
 
-export const MIKRO_ACTIONS = {
+export const MIKRO_ACTIONS: Record<string, Action> = {
   "delete-mikro-image": buildDeleteAction({
     title: "Delete Image",
     identifier: "@mikro/image",
@@ -36,7 +39,7 @@ export const MIKRO_ACTIONS = {
     mutation: DeleteRoiDocument,
   }),
   move_to_dataset: {
-    description: "Move images to a dataset",
+    description: "Move dataset to a dataset",
     title: "Move to Dataset",
     conditions: [
       { type: "identifier", identifier: "@mikro/dataset" },
@@ -54,7 +57,7 @@ export const MIKRO_ACTIONS = {
         throw new Error("No datasets selected for Move to Dataset action");
       }
 
-      const client = services.mikro.client;
+      const client = services.mikro.client
 
       const inside = state.left.at(0);
       if (!inside) {
@@ -73,6 +76,49 @@ export const MIKRO_ACTIONS = {
         mutation: PutDatasetsInDatasetDocument,
         variables: {
           selfs: datasets.map((i) => i.object),
+          other: inside.object, // Assuming 'inside' is the dataset where images will be moved
+        },
+      });
+    },
+  },
+  move_images_to_dataset: {
+    description: "Move images to a dataset",
+    title: "Move Images to Dataset",
+    conditions: [
+      { type: "identifier", identifier: "@mikro/dataset" },
+      { type: "partner", partner: "@mikro/image" },
+    ],
+    collections: ["dataset"],
+    execute: async ({ state, services }) => {
+      if (!state.right || state.right.length === 0) {
+        throw new Error("No partner provided for Move to Dataset action");
+      }
+      const images = state.right.filter(
+        (item) => item.identifier === "@mikro/image",
+      );
+      if (images.length === 0) {
+        throw new Error("No images selected for Move to Dataset action");
+      }
+
+      const client = services.mikro.client
+
+      const inside = state.left.at(0);
+      if (!inside) {
+        throw new Error("No inside item found for Move to Dataset action");
+      }
+      if (inside.identifier !== "@mikro/dataset") {
+        throw new Error(
+          "Inside item must be a dataset for Move to Dataset action",
+        );
+      }
+
+      await client.mutate<
+        PutImagesInDatasetMutation,
+        PutImagesInDatasetMutationVariables
+      >({
+        mutation: PutImagesInDatasetDocument,
+        variables: {
+          selfs: images.map((i) => i.object),
           other: inside.object, // Assuming 'inside' is the dataset where images will be moved
         },
       });

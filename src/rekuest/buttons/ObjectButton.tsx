@@ -74,6 +74,7 @@ import { useMatchingActions } from "@/app/localactions";
 import { Action, ActionState } from "@/lib/localactions/LocalActionProvider";
 import { TinyStructureBox } from "@/kraph/boxes/TinyStructureBox";
 import { use } from "cytoscape";
+import { p } from "node_modules/@udecode/plate-media/dist/BasePlaceholderPlugin-Dmi28cCy";
 
 export type OnDone = (args: {
   event?: AssignationEventFragment;
@@ -285,6 +286,148 @@ export const AssignButton = (
       toast.error(e.message);
       setDoing(false);
       setError(e.message || "Unknown error");
+    }
+  };
+
+  return (
+    <ContextMenu modal={false}>
+      <ContextMenuTrigger asChild>
+        <CommandItem
+          onSelect={() => conditionalAssign(props.action)}
+          value={props.action.id}
+          key={props.action.id}
+          className={cn(
+            "flex-grow  flex flex-col group cursor-pointer",
+            doing && "animate-pulse",
+            error && "border border-1 border-red-200",
+          )}
+          style={{
+            backgroundSize: `${progress || 0}% 100%`,
+            backgroundImage: `linear-gradient(to right, #10b981 ${progress}%, #10b981 ${progress}%)`,
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "left center",
+          }}
+        >
+          <span className="mr-auto text-md text-gray-100">
+            {props.action.name}{" "}
+            {error && <span className="text-red-800">{error}</span>}
+          </span>
+          <span className="mr-auto text-xs text-gray-400">
+            {props.action.description}
+          </span>
+        </CommandItem>
+      </ContextMenuTrigger>
+      <ContextMenuContent className="text-white border-gray-800 px-2 py-2 items-center">
+        <DirectImplementationAssignment {...props} action={props.action} />
+      </ContextMenuContent>
+    </ContextMenu>
+  );
+};
+
+
+export const BatchAssignButton = (
+  props: SmartContextProps & { action: PrimaryActionFragment },
+) => {
+  const [doing, setDoing] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [progress, setProgress] = React.useState<number | null>(0);
+
+  const { assign } = useAssign();
+  const { openDialog } = useDialog();
+
+  const doStuff = useCallback(
+    (event: AssignationEventFragment) => {
+      console.log("Assignation event received:", event);
+      if (event.kind == "DONE") {
+        setDoing(false);
+        setProgress(null);
+        props.onDone?.({ event, kind: "action" });
+      }
+      if (event.kind == "ERROR" || event.kind == "CRITICAL") {
+        setDoing(false);
+        setProgress(null);
+        setError(event.message || "Unknown error");
+        props.onError?.(event.message || "Unknown error");
+      }
+      if (event.kind == "PROGRESS") {
+        setProgress(event.progress || 0);
+      }
+    },
+    [setDoing, setProgress, setError, props.onDone, props.onError],
+  );
+
+  const conditionalAssign = async (action: PrimaryActionFragment) => {
+    const keys = {};
+
+    const the_key = action.args?.at(0)?.key;
+
+
+    for (const obj of props.objects) {
+      if (!the_key) {
+        toast.error("No key found for self");
+        return;
+      }
+      keys[the_key] = obj.object;
+
+
+
+
+      if (props.partners) {
+        if (props.partners.length === 0) {
+          console.log("No oject passed");
+        }
+        if (props.partners.length === 1) {
+          const the_key = action.args?.at(1)?.key;
+          if (!the_key) {
+            toast.error("No key found for self");
+            return;
+          }
+          keys[the_key] = props.partners[0].object;
+        }
+        if (props.partners.length > 1) {
+          if (action.args.at(1)?.kind != PortKind.List) {
+            toast.error("Should be a list but is not");
+            return;
+          }
+          const the_key = action.args?.at(1)?.key;
+          if (!the_key) {
+            toast.error("No key found for self");
+            return;
+          }
+          keys[the_key] = props.partners.map((obj) => obj.object);
+        }
+      }
+
+      const unknownKeys = action.args.filter((arg) => arg.key && !keys[arg.key]);
+
+      if (unknownKeys.length >= 1) {
+        openDialog("actionassign", {
+          id: action.id,
+          args: keys,
+          hidden: keys,
+        });
+        return;
+      }
+
+      try {
+        const reference = uuidv4();
+
+        await assign({
+          action: action.id,
+          args: keys,
+          reference: reference,
+          ephemeral: props.ephemeral,
+        });
+
+        setDoing(true);
+        setError(null);
+
+        registeredCallbacks.set(reference, doStuff);
+      } catch (e) {
+        toast.error(e.message);
+        setDoing(false);
+        setError(e.message || "Unknown error");
+      }
     }
   };
 
@@ -549,6 +692,97 @@ export const InstallButton = (props: {
         <TooltipContent>{props.definition.description}</TooltipContent>
       </Tooltip>
     </CommandItem>
+  );
+};
+
+export const ApplicableBatchActions = (props: PassDownProps) => {
+  const demands: PortDemandInput[] = [];
+
+  if (!props.objects || props.objects.length < 2) {
+    return null;
+  }
+
+  if (props.objects) {
+    demands.push({
+      kind: DemandKind.Args,
+      matches: [
+        {
+          at: 0,
+          kind: PortKind.Structure,
+          identifier: props.objects[0].identifier,
+        },
+      ],
+    });
+  }
+
+
+  if (props.partners) {
+    if (props.partners.length === 0) {
+      console.log("No partners");
+      // Maybe
+    } else {
+      demands.push({
+        kind: DemandKind.Args,
+        matches: [
+          {
+            at: 1,
+            kind: PortKind.Structure,
+            identifier: props.partners[0].identifier,
+          },
+        ],
+      });
+    }
+  }
+
+  if (props.returns) {
+    demands.push({
+      kind: DemandKind.Returns,
+      matches: props.returns.map((r, index) => ({
+        at: index,
+        kind: PortKind.Structure,
+        identifier: r,
+      })),
+    });
+  }
+
+  const { data, error } = useAllPrimaryActionsQuery({
+    variables: {
+      filters: {
+        demands: demands,
+        search: props.filter && props.filter != "" ? props.filter : undefined,
+        inCollection: props.collection,
+      },
+    },
+    fetchPolicy: "cache-and-network",
+  });
+
+  if (error)
+    return (
+      <span className="font-light text-xs w-full items-center ml-2 w-full">
+        Error
+      </span>
+    );
+
+  if (!data) {
+    return null;
+  }
+
+  if (data.actions.length === 0) {
+    return null;
+  }
+
+  return (
+    <CommandGroup
+      heading={
+        <span className="font-light text-xs w-full items-center ml-2 w-full">
+          Batch ..
+        </span>
+      }
+    >
+      {data?.actions.map((x) => (
+        <BatchAssignButton action={x} {...props} key={x.id} />
+      ))}
+    </CommandGroup>
   );
 };
 
@@ -1583,6 +1817,7 @@ export type SmartContextProps = {
   disableKraph?: boolean;
   disableKabinet?: boolean;
   disableActions?: boolean;
+  disableBatchActions?: boolean;
 };
 
 export type ObjectButtonProps = SmartContextProps & {
@@ -1626,13 +1861,13 @@ export const SmartContext = (props: SmartContextProps) => {
       <div className="flex flex-row text-xs">
         {props.objects && props.objects.length > 1 && (
           <div className="text-slate-500 p-2 text-xs">
-            {props.objects.length}
+            {props.objects.length} {props.objects.at(0)?.identifier}
           </div>
         )}
         {props.partners && props.partners.length >= 1 && (
           <div className="text-slate-500 p-2 text-xs">
             {" "}
-            with {props.partners.length}
+            with {props.partners.length} {props.partners.at(0)?.identifier}
           </div>
         )}
       </div>
@@ -1663,6 +1898,9 @@ export const SmartContext = (props: SmartContextProps) => {
           <Guard.Rekuest fallback={<></>}>
             {!props.disableActions && (
               <ApplicableActions {...props} filter={filter} />
+            )}
+            {!props.disableBatchActions && (
+              <ApplicableBatchActions {...props} filter={filter} />
             )}
           </Guard.Rekuest>
 

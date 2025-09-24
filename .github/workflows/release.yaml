@@ -7,9 +7,7 @@ on:
 
 permissions:
   contents: write
-
-env:
-  GH_TOKEN: ${{ github.token }}       # electron-builder reads GH_TOKEN
+      # electron-builder reads GH_TOKEN
 
 jobs:
   semantic-release:
@@ -27,5 +25,5 @@ jobs:
       - name: Run semantic-release
         id: semantic-release
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }} # needs to be pat token
         run: npx semantic-release

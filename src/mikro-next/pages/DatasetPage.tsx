@@ -47,10 +47,10 @@ export default asDetailQueryRoute(useGetDatasetQuery, ({ data }) => {
         />
       }
     >
-      <DatasetListExplorer 
-        dataset={data.dataset} 
+      <DatasetListExplorer
+        dataset={data.dataset}
         setView={setViewType}
-        explorerState={explorerState} 
+        explorerState={explorerState}
       />
     </MikroDataset.ModelPage>
   );

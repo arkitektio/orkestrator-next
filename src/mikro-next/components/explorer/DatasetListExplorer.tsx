@@ -96,7 +96,7 @@ export const DatasetListExplorer = (props: DatasetListExplorerProps) => {
     awaitRefetchQueries: true,
   });
 
-    // Use the explorer state passed from parent
+  // Use the explorer state passed from parent
   const {
     filters,
     viewMode,

@@ -1,3 +1,18 @@
+# [1.1.0-dev.1](https://github.com/arkitektio/orkestrator-next/compare/v1.0.0...v1.1.0-dev.1) (2025-09-24)
+
+
+### Bug Fixes
+
+* readd actions ([e5ad543](https://github.com/arkitektio/orkestrator-next/commit/e5ad543c64caaf8c07140e3425cbc2fd618a81b6))
+* test the new (we are on the right tag) ([eeb3058](https://github.com/arkitektio/orkestrator-next/commit/eeb3058b77bbfd3074297ecc5ebf9922eef5ea73))
+* update condition for build-and-publish job to include dev branch ([da8ff38](https://github.com/arkitektio/orkestrator-next/commit/da8ff386c3c1afa079dd36333b8986cc3343440c))
+
+
+### Features
+
+* try again ([030436a](https://github.com/arkitektio/orkestrator-next/commit/030436a8747a51718939902bf50cae034a0825fc))
+* Update readme ([1bfdfd7](https://github.com/arkitektio/orkestrator-next/commit/1bfdfd7f9d872ef00298b2a3cd739f1c8e4413ee))
+
 # [1.0.0-dev.8](https://github.com/arkitektio/orkestrator-next/compare/v1.0.0-dev.7...v1.0.0-dev.8) (2025-09-23)
 
 

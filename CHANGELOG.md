@@ -1,3 +1,9 @@
+## [1.1.1](https://github.com/arkitektio/orkestrator-next/compare/v1.1.0...v1.1.1) (2025-09-24)
+
+
+### Bug Fixes
+
+* add publish workflow again ([389de5d](https://github.com/arkitektio/orkestrator-next/commit/389de5df19551192396b17730a5deac2c36bfbb8))
 
 # [1.1.0-dev.1](https://github.com/arkitektio/orkestrator-next/compare/v1.0.0...v1.1.0-dev.1) (2025-09-24)
 

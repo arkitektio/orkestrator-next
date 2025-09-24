@@ -5398,6 +5398,54 @@
       },
       {
         "kind": "INPUT_OBJECT",
+        "name": "GraphQueryFilters",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "limit",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "offset",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "search",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
         "name": "GraphQueryInput",
         "description": "Input for creating a new expression",
         "isOneOf": false,
@@ -5542,6 +5590,86 @@
                   "ofType": null
                 }
               }
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "GraphQueryOrder",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "direction",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "field",
+            "description": null,
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "GraphQueryPagination",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "limit",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "offset",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
             },
             "defaultValue": "null",
             "isDeprecated": false,
@@ -13320,6 +13448,38 @@
         ]
       },
       {
+        "kind": "UNION",
+        "name": "PairsPathTableNodeList",
+        "description": null,
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": [
+          {
+            "kind": "OBJECT",
+            "name": "NodeList",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "Pairs",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "Path",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "Table",
+            "ofType": null
+          }
+        ]
+      },
+      {
         "kind": "OBJECT",
         "name": "Participant",
         "description": "A participant edge maps bioentitiy to an event (valid from is not necessary)\n                 ",
@@ -17706,6 +17866,75 @@
                     "ofType": null
                   }
                 }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "renderGraphQuery",
+            "description": "Render a graph query",
+            "args": [
+              {
+                "name": "filters",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "GraphQueryFilters",
+                  "ofType": null
+                },
+                "defaultValue": "null",
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "id",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "ID",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "order",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "GraphQueryOrder",
+                  "ofType": null
+                },
+                "defaultValue": "null",
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "pagination",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "GraphQueryPagination",
+                  "ofType": null
+                },
+                "defaultValue": "null",
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "UNION",
+                "name": "PairsPathTableNodeList",
+                "ofType": null
               }
             },
             "isDeprecated": false,

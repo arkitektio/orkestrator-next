@@ -1,10 +1,9 @@
 name: Publish a Release
 on:
   release:
-    types: [published, prereleased]   # stable from main, prerelease from dev
+    types: [published, prereleased, created]   # stable from main, prerelease from dev
 
-permissions:
-  contents: write-all
+permissions: write-all
 
 env:
   GH_TOKEN: ${{ github.token }}       # electron-builder reads GH_TOKEN

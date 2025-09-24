@@ -409,6 +409,22 @@ export type ChannelViewInput = {
   zMin?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type ChildrenOrder = {
+  direction: ChildrenOrderDirection;
+  field: ChildrenOrderField;
+};
+
+export enum ChildrenOrderDirection {
+  Asc = 'ASC',
+  Desc = 'DESC'
+}
+
+export enum ChildrenOrderField {
+  CreatedAt = 'CREATED_AT',
+  Name = 'NAME',
+  UpdatedAt = 'UPDATED_AT'
+}
+
 export type ChildrenPaginationInput = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
@@ -594,6 +610,7 @@ export type DatasetProvenanceEntriesArgs = {
 };
 
 export type DatasetChildrenFilter = {
+  search?: InputMaybe<Scalars['String']['input']>;
   showChildren?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
@@ -3467,6 +3484,7 @@ export type QueryChannelsForArgs = {
 
 export type QueryChildrenArgs = {
   filters?: InputMaybe<DatasetChildrenFilter>;
+  order?: InputMaybe<ChildrenOrder>;
   pagination?: InputMaybe<ChildrenPaginationInput>;
   parent: Scalars['ID']['input'];
 };
@@ -5054,7 +5072,7 @@ export type EnsureCameraMutationVariables = Exact<{
 export type EnsureCameraMutation = { __typename?: 'Mutation', ensureCamera: { __typename?: 'Camera', id: string, name: string } };
 
 export type CreateDatasetMutationVariables = Exact<{
-  name: Scalars['String']['input'];
+  input: CreateDatasetInput;
 }>;
 
 
@@ -5481,6 +5499,7 @@ export type GetCameraQuery = { __typename?: 'Query', camera: { __typename?: 'Cam
 export type ChildrenQueryVariables = Exact<{
   id: Scalars['ID']['input'];
   pagination?: InputMaybe<ChildrenPaginationInput>;
+  filters?: InputMaybe<DatasetChildrenFilter>;
 }>;
 
 
@@ -6742,8 +6761,8 @@ export type EnsureCameraMutationHookResult = ReturnType<typeof useEnsureCameraMu
 export type EnsureCameraMutationResult = Apollo.MutationResult<EnsureCameraMutation>;
 export type EnsureCameraMutationOptions = Apollo.BaseMutationOptions<EnsureCameraMutation, EnsureCameraMutationVariables>;
 export const CreateDatasetDocument = gql`
-    mutation CreateDataset($name: String!) {
-  createDataset(input: {name: $name}) {
+    mutation CreateDataset($input: CreateDatasetInput!) {
+  createDataset(input: $input) {
     id
     name
   }
@@ -6764,7 +6783,7 @@ export type CreateDatasetMutationFn = Apollo.MutationFunction<CreateDatasetMutat
  * @example
  * const [createDatasetMutation, { data, loading, error }] = useCreateDatasetMutation({
  *   variables: {
- *      name: // value for 'name'
+ *      input: // value for 'input'
  *   },
  * });
  */
@@ -8588,8 +8607,8 @@ export type GetCameraQueryHookResult = ReturnType<typeof useGetCameraQuery>;
 export type GetCameraLazyQueryHookResult = ReturnType<typeof useGetCameraLazyQuery>;
 export type GetCameraQueryResult = Apollo.QueryResult<GetCameraQuery, GetCameraQueryVariables>;
 export const ChildrenDocument = gql`
-    query Children($id: ID!, $pagination: ChildrenPaginationInput) {
-  children(parent: $id, pagination: $pagination) {
+    query Children($id: ID!, $pagination: ChildrenPaginationInput, $filters: DatasetChildrenFilter) {
+  children(parent: $id, pagination: $pagination, filters: $filters) {
     ...ListFile
     ...ListImage
     ...ListDataset
@@ -8613,6 +8632,7 @@ ${ListDatasetFragmentDoc}`;
  *   variables: {
  *      id: // value for 'id'
  *      pagination: // value for 'pagination'
+ *      filters: // value for 'filters'
  *   },
  * });
  */

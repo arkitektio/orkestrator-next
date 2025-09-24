@@ -1,3 +1,4 @@
+import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { ListRender } from "@/components/layout/ListRender";
 import {
   DetailPane,
@@ -5,12 +6,8 @@ import {
   DetailPaneTitle,
 } from "@/components/ui/pane";
 import { OmeroArkDataset } from "@/linkers";
-import { Komments } from "@/lok-next/components/komments/Komments";
-import React from "react";
-import { useParams } from "react-router";
 import { useGetDatasetQuery } from "../api/graphql";
 import ImageCard from "../components/cards/ImageCard";
-import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 
 export type IRepresentationScreenProps = {};
 

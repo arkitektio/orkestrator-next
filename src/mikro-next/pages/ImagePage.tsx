@@ -1,9 +1,9 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
+import { FormSheet } from "@/components/dialog/FormDialog";
 import { ResponsiveContainerGrid } from "@/components/layout/ContainerGrid";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/plate-ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import {
   DetailPane,
@@ -16,47 +16,31 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useResolve } from "@/datalayer/hooks/useResolve";
-import { MikroImage } from "@/linkers";
-import { UserInfo } from "@/lok-next/components/protected/UserInfo";
-import { TwoDViewProvider } from "@/providers/view/ViewProvider";
-import { Matrix4 } from "@math.gl/core";
-import { HobbyKnifeIcon, PlusIcon } from "@radix-ui/react-icons";
-import { Download, DownloadIcon } from "lucide-react";
-import { useEffect, useMemo } from "react";
-import Timestamp from "react-timestamp";
-import {
-  AffineTransformationViewFragment,
-  useGetImageQuery,
-  usePinImageMutation,
-  WatchRoisDocument,
-  WatchRoisSubscription,
-  WatchRoisSubscriptionVariables,
-} from "../api/graphql";
-import AcquisitionViewCard from "../components/cards/AcquisitionViewCard";
-import ChannelViewCard from "../components/cards/ChannelViewCard";
-import DerivedViewCard from "../components/cards/DerivedViewCard";
-import FileViewCard from "../components/cards/FileViewCard";
-import HistogramViewCard from "../components/cards/HistogramViewCard";
-import InstanceMaskViewCard from "../components/cards/InstanceMaskViewCard";
-import LabelViewCard from "../components/cards/LabelViewCard";
-import MaskViewCard from "../components/cards/MaskViewCard";
-import OpticsViewCard from "../components/cards/OpticsViewCard";
-import RGBViewCard from "../components/cards/RGBViewCard";
-import ROIViewCard from "../components/cards/ROIViewCard";
-import TransformationViewCard from "../components/cards/TransformationViewCard";
-import WellPositionViewCard from "../components/cards/WellPositionViewCard";
-import { FinalRender } from "../components/render/FInalRender";
-import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
-import { PinToggle } from "../components/ui/PinToggle";
-import { AddImageViewForm } from "../forms/AddImageViewForm";
-import { UpdateImageForm } from "../forms/UpdateImageForm";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import LightpathViewCard from "../components/cards/LightpathViewCard";
+import { useResolve } from "@/datalayer/hooks/useResolve";
+import { MikroImage } from "@/linkers";
+import { UserInfo } from "@/lok-next/components/protected/UserInfo";
+import { TwoDViewProvider } from "@/providers/view/ViewProvider";
+import { HobbyKnifeIcon } from "@radix-ui/react-icons";
+import { Download, DownloadIcon } from "lucide-react";
+import { useEffect } from "react";
+import Timestamp from "react-timestamp";
+import {
+  useGetImageQuery,
+  usePinImageMutation,
+  WatchRoisDocument,
+  WatchRoisSubscription,
+  WatchRoisSubscriptionVariables
+} from "../api/graphql";
+import RGBViewCard from "../components/cards/RGBViewCard";
+import { FinalRender } from "../components/render/FInalRender";
+import { ProvenanceSidebar } from "../components/sidebars/ProvenanceSidebar";
+import { PinToggle } from "../components/ui/PinToggle";
+import { UpdateImageForm } from "../forms/UpdateImageForm";
 
 export type IRepresentationScreenProps = {};
 

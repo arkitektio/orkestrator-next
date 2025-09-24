@@ -55,6 +55,12 @@
       "Path",
       "Table"
     ],
+    "PairsPathTableNodeList": [
+      "NodeList",
+      "Pairs",
+      "Path",
+      "Table"
+    ],
     "PathPairsTable": [
       "Pairs",
       "Path",

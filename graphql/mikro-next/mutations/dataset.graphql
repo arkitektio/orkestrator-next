@@ -1,5 +1,5 @@
-mutation CreateDataset($name: String!) {
-  createDataset(input: { name: $name }) {
+mutation CreateDataset($input: CreateDatasetInput!) {
+  createDataset(input: $input) {
     id
     name
   }

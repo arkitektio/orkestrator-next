@@ -739,6 +739,12 @@ export type GraphQueryFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type GraphQueryFilters = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
 /** Input for creating a new expression */
 export type GraphQueryInput = {
   /** If true, will check that the query can be rendered. If false, will skip this check. */
@@ -759,6 +765,16 @@ export type GraphQueryInput = {
   query: Scalars['Cypher']['input'];
   /** A list of categories where this query is releveant and should be shown */
   relevantFor?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type GraphQueryOrder = {
+  direction: Scalars['String']['input'];
+  field: Scalars['String']['input'];
+};
+
+export type GraphQueryPagination = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type GraphSequence = {
@@ -1924,6 +1940,8 @@ export type Pairs = {
 
 export type PairsPathTable = Pairs | Path | Table;
 
+export type PairsPathTableNodeList = NodeList | Pairs | Path | Table;
+
 /**
  * A participant edge maps bioentitiy to an event (valid from is not necessary)
  *
@@ -2275,6 +2293,8 @@ export type Query = {
   relationCategories: Array<RelationCategory>;
   relationCategory: RelationCategory;
   relations: Array<Relation>;
+  /** Render a graph query */
+  renderGraphQuery: PairsPathTableNodeList;
   /** Render a node query */
   renderNodeQuery: PairsPathTable;
   scatterPlot: ScatterPlot;
@@ -2565,6 +2585,14 @@ export type QueryRelationCategoryArgs = {
 export type QueryRelationsArgs = {
   filters?: InputMaybe<RelationFilter>;
   pagination?: InputMaybe<GraphPaginationInput>;
+};
+
+
+export type QueryRenderGraphQueryArgs = {
+  filters?: InputMaybe<GraphQueryFilters>;
+  id: Scalars['ID']['input'];
+  order?: InputMaybe<GraphQueryOrder>;
+  pagination?: InputMaybe<GraphQueryPagination>;
 };
 
 
@@ -4647,6 +4675,16 @@ export type GetGraphQueryQueryVariables = Exact<{
 
 
 export type GetGraphQueryQuery = { __typename?: 'Query', graphQuery: { __typename?: 'GraphQuery', id: string, query: string, name: string, description?: string | null, kind: ViewKind, pinned: boolean, graph: { __typename?: 'Graph', id: string, name: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }>, scatterPlots: Array<{ __typename?: 'ScatterPlot', id: string, name: string, xColumn: string, yColumn: string }>, render: { __typename?: 'NodeList', nodes: Array<{ __typename: 'Entity', label: string, id: any, externalId?: string | null } | { __typename?: 'Metric', id: any, externalId?: string | null } | { __typename?: 'NaturalEvent', id: any, externalId?: string | null } | { __typename?: 'ProtocolEvent', id: any, externalId?: string | null } | { __typename?: 'Reagent', id: any, externalId?: string | null } | { __typename?: 'Structure', id: any, externalId?: string | null }> } | { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', source: { __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: string, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }, variables: Array<{ __typename?: 'VariableMapping', role: string, value: string }> } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, target: { __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: string, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }, variables: Array<{ __typename?: 'VariableMapping', role: string, value: string }> } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: string, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }, variables: Array<{ __typename?: 'VariableMapping', role: string, value: string }> } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, edges: Array<{ __typename?: 'Description', id: any, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity?: number | null } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } } | { __typename?: 'StructureRelation', id: any, leftId: string, rightId: string, left: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Metric', id: any, label: string } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Metric', id: any, label: string } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, category: { __typename?: 'StructureRelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } } };
+
+export type RenderGraphQueryQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+  filters?: InputMaybe<GraphQueryFilters>;
+  pagination?: InputMaybe<GraphQueryPagination>;
+  order?: InputMaybe<GraphQueryOrder>;
+}>;
+
+
+export type RenderGraphQueryQuery = { __typename?: 'Query', renderGraphQuery: { __typename?: 'NodeList', nodes: Array<{ __typename: 'Entity', label: string, id: any, externalId?: string | null } | { __typename?: 'Metric', id: any, externalId?: string | null } | { __typename?: 'NaturalEvent', id: any, externalId?: string | null } | { __typename?: 'ProtocolEvent', id: any, externalId?: string | null } | { __typename?: 'Reagent', id: any, externalId?: string | null } | { __typename?: 'Structure', id: any, externalId?: string | null }> } | { __typename?: 'Pairs', pairs: Array<{ __typename?: 'Pair', source: { __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: string, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }, variables: Array<{ __typename?: 'VariableMapping', role: string, value: string }> } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }, target: { __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: string, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }, variables: Array<{ __typename?: 'VariableMapping', role: string, value: string }> } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } }> } | { __typename?: 'Path', nodes: Array<{ __typename?: 'Entity', id: any, externalId?: string | null, label: string, category: { __typename?: 'EntityCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Metric', id: any, value: string, label: string, category: { __typename?: 'MetricCategory', id: string, label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'NaturalEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'NaturalEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'ProtocolEvent', id: any, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'ProtocolEventCategory', label: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null }, variables: Array<{ __typename?: 'VariableMapping', role: string, value: string }> } | { __typename?: 'Reagent', id: any, label: string, category: { __typename?: 'ReagentCategory', label: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } } | { __typename?: 'Structure', id: any, object: string, category: { __typename?: 'StructureCategory', identifier: string, id: string, store?: { __typename?: 'MediaStore', presignedUrl: string } | null } }>, edges: Array<{ __typename?: 'Description', id: any, leftId: string, rightId: string } | { __typename?: 'Measurement', id: any, leftId: string, rightId: string, validFrom?: any | null, validTo?: any | null, category: { __typename?: 'MeasurementCategory', id: string, label: string } } | { __typename?: 'Participant', id: any, leftId: string, rightId: string, role: string, quantity?: number | null } | { __typename?: 'Relation', id: any, leftId: string, rightId: string, category: { __typename?: 'RelationCategory', id: string, label: string } } | { __typename?: 'StructureRelation', id: any, leftId: string, rightId: string, left: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Metric', id: any, label: string } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, right: { __typename?: 'Entity', id: any, label: string } | { __typename?: 'Metric', id: any, label: string } | { __typename?: 'NaturalEvent', id: any, label: string } | { __typename?: 'ProtocolEvent', id: any, label: string } | { __typename?: 'Reagent', id: any, label: string } | { __typename?: 'Structure', id: any, label: string }, category: { __typename?: 'StructureRelationCategory', id: string, label: string } }> } | { __typename?: 'Table', rows: Array<any>, graph: { __typename?: 'Graph', ageName: string }, columns: Array<{ __typename?: 'Column', name: string, kind: ColumnKind, valueKind?: MetricKind | null, label?: string | null, description?: string | null, category?: string | null, searchable?: boolean | null, idfor?: Array<string> | null, preferhidden?: boolean | null }> } };
 
 export type SearchGraphQueriesQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -8615,6 +8653,55 @@ export function useGetGraphQueryLazyQuery(baseOptions?: ApolloReactHooks.LazyQue
 export type GetGraphQueryQueryHookResult = ReturnType<typeof useGetGraphQueryQuery>;
 export type GetGraphQueryLazyQueryHookResult = ReturnType<typeof useGetGraphQueryLazyQuery>;
 export type GetGraphQueryQueryResult = Apollo.QueryResult<GetGraphQueryQuery, GetGraphQueryQueryVariables>;
+export const RenderGraphQueryDocument = gql`
+    query RenderGraphQuery($id: ID!, $filters: GraphQueryFilters, $pagination: GraphQueryPagination, $order: GraphQueryOrder) {
+  renderGraphQuery(
+    id: $id
+    filters: $filters
+    pagination: $pagination
+    order: $order
+  ) {
+    ...Pairs
+    ...Path
+    ...Table
+    ...NodeList
+  }
+}
+    ${PairsFragmentDoc}
+${PathFragmentDoc}
+${TableFragmentDoc}
+${NodeListFragmentDoc}`;
+
+/**
+ * __useRenderGraphQueryQuery__
+ *
+ * To run a query within a React component, call `useRenderGraphQueryQuery` and pass it any options that fit your needs.
+ * When your component renders, `useRenderGraphQueryQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useRenderGraphQueryQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *      filters: // value for 'filters'
+ *      pagination: // value for 'pagination'
+ *      order: // value for 'order'
+ *   },
+ * });
+ */
+export function useRenderGraphQueryQuery(baseOptions: ApolloReactHooks.QueryHookOptions<RenderGraphQueryQuery, RenderGraphQueryQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<RenderGraphQueryQuery, RenderGraphQueryQueryVariables>(RenderGraphQueryDocument, options);
+      }
+export function useRenderGraphQueryLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<RenderGraphQueryQuery, RenderGraphQueryQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<RenderGraphQueryQuery, RenderGraphQueryQueryVariables>(RenderGraphQueryDocument, options);
+        }
+export type RenderGraphQueryQueryHookResult = ReturnType<typeof useRenderGraphQueryQuery>;
+export type RenderGraphQueryLazyQueryHookResult = ReturnType<typeof useRenderGraphQueryLazyQuery>;
+export type RenderGraphQueryQueryResult = Apollo.QueryResult<RenderGraphQueryQuery, RenderGraphQueryQueryVariables>;
 export const SearchGraphQueriesDocument = gql`
     query SearchGraphQueries($search: String, $values: [ID!]) {
   options: graphQueries(

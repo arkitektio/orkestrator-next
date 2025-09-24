@@ -18,9 +18,6 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
-    outputs:
-      new-release-published: ${{ steps.semantic-release.outputs.new-release-published }}
-      new-release-version: ${{ steps.semantic-release.outputs.new-release-version }}
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }         # semantic-release needs full history
@@ -32,68 +29,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: npx semantic-release
-
-  build-and-publish:
-    needs: semantic-release
-    if: |
-      (github.ref == 'refs/heads/dev') || 
-      (github.ref == 'refs/heads/main' && needs.semantic-release.outputs.new-release-published == 'true')
-    continue-on-error: true
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-      fail-fast: false
-
-    steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Fetch full history including all tags
-          ref: ${{ github.ref }}  # Use the branch ref, not the specific commit
-
-      - name: Pull latest changes from semantic-release
-        run: |
-          git pull origin ${{ github.ref_name }}
-          echo "Current commit: $(git rev-parse HEAD)"
-          echo "Latest tags:"
-          git tag --sort=-version:refname | head -5
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install Dependencies
-        run: npm install -g yarn
-
-      - name: Install yarn
-        run: yarn install --network-timeout 1000000000
-
-      - name: install-snapcraft
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt update
-          sudo apt install -y snapd
-          sudo snap install core
-          sudo snap install snapcraft --classic
-
-      - name: build-linux
-        if: matrix.os == 'ubuntu-latest'
-        env:
-          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_LOGIN }}
-          NODE_OPTIONS: "--max_old_space_size=4096"
-        run: yarn run build:linux
-
-      - name: build-mac
-        if: matrix.os == 'macos-latest'
-        env:
-          NODE_OPTIONS: "--max_old_space_size=4096"
-        run: yarn run build:mac
-
-      - name: build-win
-        if: matrix.os == 'windows-latest'
-        env:
-          NODE_OPTIONS: "--max_old_space_size=4096"
-        run: yarn run build:win

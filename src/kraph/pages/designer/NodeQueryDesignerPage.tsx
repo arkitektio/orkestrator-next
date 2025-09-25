@@ -6,24 +6,23 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
-import { Separator } from "@/components/ui/separator";
 import {
   ColumnFragment,
   ColumnInput,
   ColumnKind,
   MetricKind,
-  UpdateGraphQueryMutationVariables,
+  UpdateNodeQueryMutationVariables,
   useGetGraphQuery,
-  useGetGraphQueryQuery,
-  useUpdateGraphQueryMutation,
+  useGetNodeQueryQuery,
+  useUpdateNodeQueryMutation,
   ViewKind,
 } from "@/kraph/api/graphql";
 import { CypherField } from "@/kraph/components/cypher/CypherField";
-import { SelectiveGraphQueryRenderer } from "@/kraph/components/renderers/GraphQueryRenderer";
+import { SelectiveNodeQueryRenderer } from "@/kraph/components/renderers/NodeQueryRenderer";
 import { buildCypherSchemaFromGraph } from "@/kraph/components/renderers/utils";
 import React from "react";
 import { useFieldArray, useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 export type IRepresentationScreenProps = {};
 
@@ -33,26 +32,29 @@ export const columnToInput = (column: ColumnFragment): ColumnInput => ({
 });
 
 const Page: React.FC<IRepresentationScreenProps> = asDetailQueryRoute(
-  useGetGraphQueryQuery,
+  useGetNodeQueryQuery,
   ({ data, id }) => {
     const navigate = useNavigate();
-    const [add] = useUpdateGraphQueryMutation();
+    const [update] = useUpdateNodeQueryMutation();
+
+    const params = useParams<{ node: string }>();
 
     const { data: graphdata } = useGetGraphQuery({
       variables: {
-        id: data.graphQuery.graph.id,
+        id: data.nodeQuery.graph.id,
       },
     });
 
-    const form = useForm<UpdateGraphQueryMutationVariables["input"]>({
+    const form = useForm<UpdateNodeQueryMutationVariables["input"]>({
       defaultValues: {
-        id: data.graphQuery.id,
-        query: data.graphQuery.query,
-        description: data.graphQuery.description || "No Description",
-        name: data.graphQuery.name,
-        kind: data.graphQuery.kind,
-        graph: data.graphQuery.graph.id,
-        columns: data.graphQuery.columns.map(columnToInput),
+        id: data.nodeQuery.id,
+        query: data.nodeQuery.query,
+        description: data.nodeQuery.description || "No Description",
+        name: data.nodeQuery.name,
+        kind: data.nodeQuery.kind,
+        graph: data.nodeQuery.graph.id,
+        columns: data.nodeQuery.columns.map(columnToInput),
+        testAgainst: params.node,
       },
     });
 
@@ -65,7 +67,7 @@ const Page: React.FC<IRepresentationScreenProps> = asDetailQueryRoute(
 
     return (
       <PageLayout
-        title={<>{data.graphQuery.name} - Designer</>}
+        title={<>{data.nodeQuery.name} - Designer</>}
         pageActions={
           <div className="flex flex-row gap-2">
             <></>
@@ -73,11 +75,11 @@ const Page: React.FC<IRepresentationScreenProps> = asDetailQueryRoute(
         }
       >
         <div className="grid grid-cols-12 h-full w-full">
-          <div className="col-span-2 h-full">
+          <div className="col-span-2 h-full px-2 bg-gray-900 rounded-lg py-4 border border-gray-800">
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(async (data) => {
-                  add({
+                  update({
                     variables: {
                       input: {
                         ...data,
@@ -170,7 +172,12 @@ const Page: React.FC<IRepresentationScreenProps> = asDetailQueryRoute(
             </Form>
           </div>
           <div className="col-span-10 ml-2 h-full w-full">
-            <SelectiveGraphQueryRenderer graphQuery={data.graphQuery} />
+            {params.node && (
+              <SelectiveNodeQueryRenderer
+                query={data.nodeQuery}
+                node={params.node}
+              />
+            )}
           </div>
         </div>
       </PageLayout>

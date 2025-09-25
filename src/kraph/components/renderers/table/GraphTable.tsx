@@ -30,7 +30,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { TableFragment, useRenderGraphQueryQuery, GraphQueryFilters, GraphQueryPagination, GraphQueryOrder } from "@/kraph/api/graphql";
+import {
+  TableFragment,
+  useRenderGraphQueryQuery,
+  GraphQueryFilters,
+  GraphQueryPagination,
+  GraphQueryOrder,
+} from "@/kraph/api/graphql";
 import { calculateColumns, calculateRows } from "../utils";
 import { ViewOptions } from "../DelegatingNodeViewRenderer";
 
@@ -40,7 +46,10 @@ export type FormValues = {
   search?: string | null;
 };
 
-export const GraphTable = (props: { table?: TableFragment, options?: ViewOptions }) => {
+export const GraphTable = (props: {
+  table?: TableFragment;
+  options?: ViewOptions;
+}) => {
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize: 20,
@@ -84,13 +93,6 @@ export const GraphTable = (props: { table?: TableFragment, options?: ViewOptions
     <div className="w-full h-full">
       {!props.options?.minimal && (
         <div className="flex items-center py-4 gap-2">
-          <Input
-            placeholder="Search..."
-            onChange={(event) =>
-              table.setGlobalFilter(event.target.value)
-            }
-            className="max-w-sm w-full bg-background"
-          />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="ml-auto">
@@ -130,9 +132,9 @@ export const GraphTable = (props: { table?: TableFragment, options?: ViewOptions
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                     </TableHead>
                   );
                 })}
@@ -201,9 +203,9 @@ export const GraphTable = (props: { table?: TableFragment, options?: ViewOptions
   );
 };
 
-export const RenderGraphQueryTable = (props: { 
-  graphQueryId: string, 
-  options?: ViewOptions 
+export const RenderGraphQueryTable = (props: {
+  graphQueryId: string;
+  options?: ViewOptions;
 }) => {
   const [search, setSearch] = React.useState<string>("");
   const [pagination, setPagination] = React.useState({
@@ -211,8 +213,11 @@ export const RenderGraphQueryTable = (props: {
     pageSize: 20,
   });
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
   // Prepare GraphQL variables
@@ -227,10 +232,13 @@ export const RenderGraphQueryTable = (props: {
     offset: pagination.pageIndex * pagination.pageSize,
   };
 
-  const order: GraphQueryOrder | undefined = sorting.length > 0 ? {
-    field: sorting[0].id,
-    direction: sorting[0].desc ? "DESC" : "ASC",
-  } : undefined;
+  const order: GraphQueryOrder | undefined =
+    sorting.length > 0
+      ? {
+          field: sorting[0].id,
+          direction: sorting[0].desc ? "DESC" : "ASC",
+        }
+      : undefined;
 
   const { data, loading, error } = useRenderGraphQueryQuery({
     variables: {
@@ -242,7 +250,10 @@ export const RenderGraphQueryTable = (props: {
   });
 
   // Extract the Table from the response
-  const table = data?.renderGraphQuery?.__typename === "Table" ? data.renderGraphQuery : undefined;
+  const table =
+    data?.renderGraphQuery?.__typename === "Table"
+      ? data.renderGraphQuery
+      : undefined;
 
   const columns = calculateColumns(table);
   const rows = calculateRows(table);
@@ -272,20 +283,17 @@ export const RenderGraphQueryTable = (props: {
 
   // Handle search with debouncing
   const debouncedSetSearch = React.useCallback(
-    React.useMemo(
-      () => {
-        let timeoutId: NodeJS.Timeout;
-        return (value: string) => {
-          clearTimeout(timeoutId);
-          timeoutId = setTimeout(() => {
-            setSearch(value);
-            setPagination(prev => ({ ...prev, pageIndex: 0 })); // Reset to first page on search
-          }, 300);
-        };
-      },
-      []
-    ),
-    []
+    React.useMemo(() => {
+      let timeoutId: NodeJS.Timeout;
+      return (value: string) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          setSearch(value);
+          setPagination((prev) => ({ ...prev, pageIndex: 0 })); // Reset to first page on search
+        }, 300);
+      };
+    }, []),
+    [],
   );
 
   if (error) {
@@ -340,9 +348,9 @@ export const RenderGraphQueryTable = (props: {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                     </TableHead>
                   );
                 })}

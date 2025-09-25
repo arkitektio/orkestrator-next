@@ -22,8 +22,8 @@ export default memo(({ data, id, selected }: NodeProps<ReagentNode>) => {
       <Handles self={id} />
       <KraphReagentCategory.Smart
         object={data.id}
-        containerClassName="h-full w-full rounded-full  group ring-4 ring-red ring-red-200 overflow-hidden bg-black"
-        className="h-full w-full "
+        containerClassName="h-full w-full rounded-full ring group data-[selected=true]:ring-4 data-[selected=true]:ring-primary data-[selected=true]:ring-4 data-[bselected=true]:ring-red-400  bg-black"
+        className="h-full w-full overflow-hidden rounded-full"
       >
         {/* If handles are conditionally rendered and not present initially, you need to update the node internals https://reactflow.dev/docs/api/hooks/use-update-node-internals/ */}
         {/* In this case we don't need to use useUpdateNodeInternals, since !isConnecting is true at the beginning and all handles are rendered initially. */}

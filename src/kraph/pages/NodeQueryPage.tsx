@@ -4,12 +4,17 @@ import { Button } from "@/components/ui/button";
 import { KraphGraph, KraphGraphView, KraphNodeQuery } from "@/linkers";
 import { useGetNodeQueryQuery } from "../api/graphql";
 
-import { Card } from "@/components/ui/card";
-import { CypherEditor } from "../components/cypher/CypherEditor";
 import { CypherSidebar } from "../components/sidebars/CypherSidebar";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { string } from "zod";
+import {
+  SelectiveNodeQueryRenderer,
+  SelectiveNodeViewRenderer,
+} from "../components/renderers/NodeQueryRenderer";
 
 export default asDetailQueryRoute(useGetNodeQueryQuery, ({ data, refetch }) => {
+  const params = useParams<{ node: string }>();
+
   return (
     <KraphNodeQuery.ModelPage
       object={data.nodeQuery.id}
@@ -24,7 +29,12 @@ export default asDetailQueryRoute(useGetNodeQueryQuery, ({ data, refetch }) => {
               Graph
             </Button>
           </KraphGraph.DetailLink>
-          <KraphNodeQuery.DetailLink object={data.nodeQuery.id}>
+          <KraphNodeQuery.DetailLink
+            object={data.nodeQuery.id}
+            subroute="node"
+            subobject={params.node || ""}
+            deeproute="designer"
+          >
             <Button variant="outline" size="sm">
               Edit Query
             </Button>
@@ -51,7 +61,14 @@ export default asDetailQueryRoute(useGetNodeQueryQuery, ({ data, refetch }) => {
             </KraphGraph.DetailLink>
           </p>
         </div>
-        {params}
+      </div>
+      <div className="min-h-full min-w-full ">
+        {params.node && (
+          <SelectiveNodeQueryRenderer
+            query={data.nodeQuery}
+            node={params.node}
+          />
+        )}
       </div>
     </KraphNodeQuery.ModelPage>
   );

@@ -3,3 +3,32 @@ fragment PathParticipant on Participant {
   leftId
   rightId
 }
+
+fragment Participant on Participant {
+  id
+  role
+  leftId
+  rightId
+  role
+  quantity
+}
+
+fragment DetailParticipant on Participant {
+  ...Participant
+  left {
+    ... on Entity {
+      label
+    }
+    ... on Reagent {
+      label
+    }
+  }
+  right {
+    ... on Entity {
+      label
+    }
+    ... on Reagent {
+      label
+    }
+  }
+}

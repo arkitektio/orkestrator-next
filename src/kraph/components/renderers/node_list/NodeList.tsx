@@ -151,11 +151,6 @@ export const NodeListRender = (props: {
     <div className="w-full h-full">
       {!props.options?.minimal && (
         <div className="flex items-center py-4 gap-2">
-          <Input
-            placeholder="Search..."
-            onChange={(event) => table.setGlobalFilter(event.target.value)}
-            className="max-w-sm w-full bg-background"
-          />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="ml-auto">

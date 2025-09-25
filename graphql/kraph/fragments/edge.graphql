@@ -38,11 +38,6 @@ fragment StructureRelation on StructureRelation {
   }
 }
 
-fragment Participant on Participant {
-  role
-  quantity
-}
-
 fragment Edge on Edge {
   ...BaseEdge
   ...Measurement
@@ -50,4 +45,3 @@ fragment Edge on Edge {
   ...Participant
   ...StructureRelation
 }
-

@@ -1,0 +1,11 @@
+query Members {
+  members {
+    user {
+      sub
+    }
+    datasets(pagination: { limit: 3 }, filters: { parentless: true }) {
+      id
+      name
+    }
+  }
+}

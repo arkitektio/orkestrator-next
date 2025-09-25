@@ -9,11 +9,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { PairsFragment, useRenderGraphQueryQuery, GraphQueryFilters, GraphQueryPagination } from "@/kraph/api/graphql";
+import {
+  PairsFragment,
+  useRenderGraphQueryQuery,
+  GraphQueryFilters,
+  GraphQueryPagination,
+} from "@/kraph/api/graphql";
 import * as React from "react";
 import { ViewOptions } from "../DelegatingNodeViewRenderer";
 import { Input } from "@/components/ui/input";
-import { PairsViewerStateProvider, usePairsViewerState } from "./PairsViewerStateProvider";
+import {
+  PairsViewerStateProvider,
+  usePairsViewerState,
+} from "./PairsViewerStateProvider";
 import { Button } from "@/components/ui/button";
 import { p } from "node_modules/@udecode/plate-media/dist/BasePlaceholderPlugin-Dmi28cCy";
 import { DisplayWidget } from "@/command/Menu";
@@ -27,8 +35,11 @@ export type FormValues = {
   search?: string | null;
 };
 
-export const EntityCell = ({ entity }: { entity: PairsFragment["pairs"][number]["source"] }) => {
-
+export const EntityCell = ({
+  entity,
+}: {
+  entity: PairsFragment["pairs"][number]["source"];
+}) => {
   const { viewerState } = usePairsViewerState();
 
   if (entity.__typename === "Metric") {
@@ -41,14 +52,24 @@ export const EntityCell = ({ entity }: { entity: PairsFragment["pairs"][number][
 
   if (entity.__typename === "Structure") {
     return (
-
       <TableCell>
-        <ObjectButton objects={[{ object: entity.object, identifier: entity.category.identifier }]} ></ObjectButton>
+        <ObjectButton
+          objects={[
+            { object: entity.object, identifier: entity.category.identifier },
+          ]}
+        ></ObjectButton>
         <SmartLink
           identifier={entity.category.identifier}
           object={entity.object}
         >
-          {viewerState.showWidgets ? <DisplayWidget object={entity.object} identifier={entity.category.identifier} /> : <span>Structure {entity.id}</span>}
+          {viewerState.showWidgets ? (
+            <DisplayWidget
+              object={entity.object}
+              identifier={entity.category.identifier}
+            />
+          ) : (
+            <span>Structure {entity.id}</span>
+          )}
         </SmartLink>
       </TableCell>
     );
@@ -63,7 +84,7 @@ export const EntityCell = ({ entity }: { entity: PairsFragment["pairs"][number][
 
 export const PairRow = ({ pair }: { pair: PairsFragment["pairs"][number] }) => {
   return (
-    <TableRow >
+    <TableRow>
       <EntityCell entity={pair.source} />
       <EntityCell entity={pair.target} />
     </TableRow>
@@ -71,7 +92,6 @@ export const PairRow = ({ pair }: { pair: PairsFragment["pairs"][number] }) => {
 };
 
 export const PairsInner = ({ pairs }: { pairs?: PairsFragment }) => {
-
   const { viewerState, setViewerState } = usePairsViewerState();
   return (
     <div className="w-full h-full">
@@ -106,7 +126,6 @@ export const PairsInner = ({ pairs }: { pairs?: PairsFragment }) => {
   );
 };
 
-
 export const Pairs = (props: { pairs?: PairsFragment }) => {
   return (
     <PairsViewerStateProvider>
@@ -115,9 +134,9 @@ export const Pairs = (props: { pairs?: PairsFragment }) => {
   );
 };
 
-export const RenderGraphQueryPairs = (props: { 
-  graphQueryId: string, 
-  options?: ViewOptions 
+export const RenderGraphQueryPairs = (props: {
+  graphQueryId: string;
+  options?: ViewOptions;
 }) => {
   const [search, setSearch] = React.useState<string>("");
   const [page, setPage] = React.useState(0);
@@ -144,24 +163,24 @@ export const RenderGraphQueryPairs = (props: {
   });
 
   // Extract the Pairs from the response
-  const pairs = data?.renderGraphQuery?.__typename === "Pairs" ? data.renderGraphQuery : undefined;
+  const pairs =
+    data?.renderGraphQuery?.__typename === "Pairs"
+      ? data.renderGraphQuery
+      : undefined;
 
   // Handle search with debouncing
   const debouncedSetSearch = React.useCallback(
-    React.useMemo(
-      () => {
-        let timeoutId: NodeJS.Timeout;
-        return (value: string) => {
-          clearTimeout(timeoutId);
-          timeoutId = setTimeout(() => {
-            setSearch(value);
-            setPage(0); // Reset to first page on search
-          }, 300);
-        };
-      },
-      []
-    ),
-    []
+    React.useMemo(() => {
+      let timeoutId: NodeJS.Timeout;
+      return (value: string) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          setSearch(value);
+          setPage(0); // Reset to first page on search
+        }, 300);
+      };
+    }, []),
+    [],
   );
 
   if (error) {
@@ -203,7 +222,7 @@ export const RenderGraphQueryPairs = (props: {
                 variant="outline"
                 size="sm"
                 onClick={() => setPage(page + 1)}
-                disabled={loading || (pairs.pairs.length < pageSize)}
+                disabled={loading || pairs.pairs.length < pageSize}
               >
                 Next
               </Button>

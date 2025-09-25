@@ -1,4 +1,10 @@
-import { PathFragment, useRenderGraphQueryQuery, GraphQueryFilters } from "@/kraph/api/graphql.js";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  GraphQueryFilters,
+  PathFragment,
+  useRenderGraphQueryQuery,
+} from "@/kraph/api/graphql.js";
 import {
   ReactFlow,
   ReactFlowInstance,
@@ -8,10 +14,16 @@ import {
 import "@xyflow/react/dist/style.css";
 import ELK from "elkjs/lib/elk.bundled.js";
 import React, { useEffect } from "react";
+import { ViewOptions } from "../DelegatingNodeViewRenderer";
+import {
+  PathViewerStateProvider,
+  usePathViewerState,
+} from "./PathViewerStateProvider";
 import DescribeEdge from "./edges/DescribeEdge";
 import EntityRoleEdge from "./edges/EntityRoleEdge";
 import MeasurementEdge from "./edges/MeasurementEdge";
 import RelationEdge from "./edges/RelationEdge";
+import StructureRelationEdge from "./edges/StructureRelationEdge";
 import EntityNode from "./nodes/EntityNode";
 import MetricNode from "./nodes/MetricNode";
 import NaturalEventNode from "./nodes/NaturalEventNode";
@@ -21,15 +33,6 @@ import StructureNode from "./nodes/StructureNode";
 import ThisNode from "./nodes/ThisNode";
 import { PathEdge, PathNode } from "./types";
 import { entityNodesToNodes, entityRelationToEdges } from "./utils";
-import { ViewOptions } from "../DelegatingNodeViewRenderer";
-import { Input } from "@/components/ui/input";
-import { hash } from "crypto";
-import { Button } from "@/components/ui/button";
-import {
-  PathViewerStateProvider,
-  usePathViewerState,
-} from "./PathViewerStateProvider";
-import StructureRelationEdge from "./edges/StructureRelationEdge";
 
 export type Props = {
   path: PathFragment;
@@ -183,9 +186,9 @@ export const PathGraph = (props: Props) => {
   );
 };
 
-export const RenderGraphQueryPath = (props: { 
-  graphQueryId: string, 
-  options?: ViewOptions 
+export const RenderGraphQueryPath = (props: {
+  graphQueryId: string;
+  options?: ViewOptions;
 }) => {
   const [search, setSearch] = React.useState<string>("");
 
@@ -202,23 +205,23 @@ export const RenderGraphQueryPath = (props: {
   });
 
   // Extract the Path from the response
-  const path = data?.renderGraphQuery?.__typename === "Path" ? data.renderGraphQuery : undefined;
+  const path =
+    data?.renderGraphQuery?.__typename === "Path"
+      ? data.renderGraphQuery
+      : undefined;
 
   // Handle search with debouncing
   const debouncedSetSearch = React.useCallback(
-    React.useMemo(
-      () => {
-        let timeoutId: NodeJS.Timeout;
-        return (value: string) => {
-          clearTimeout(timeoutId);
-          timeoutId = setTimeout(() => {
-            setSearch(value);
-          }, 300);
-        };
-      },
-      []
-    ),
-    []
+    React.useMemo(() => {
+      let timeoutId: NodeJS.Timeout;
+      return (value: string) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          setSearch(value);
+        }, 300);
+      };
+    }, []),
+    [],
   );
 
   if (error) {

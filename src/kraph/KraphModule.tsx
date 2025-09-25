@@ -42,7 +42,8 @@ import MetricPage from "./pages/MetricPage";
 import RelationPage from "./pages/RelationPage";
 import StructureRelationPage from "./pages/StructureRelationPage";
 import GraphQueryDesignerPage from "./pages/designer/GraphQueryDesignerPage";
-interface Props { }
+import NodeQueryDesignerPage from "./pages/designer/NodeQueryDesignerPage";
+interface Props {}
 
 export const KraphModule: React.FC<Props> = (props) => {
   return (
@@ -57,7 +58,10 @@ export const KraphModule: React.FC<Props> = (props) => {
           <Route path="expressions/:id" element={<ExpressionPage />} />
           <Route path="nodes/:id" element={<NodePage />} />
           <Route path="relations/:id" element={<RelationPage />} />
-          <Route path="structurerelations/:id" element={<StructureRelationPage />} />
+          <Route
+            path="structurerelations/:id"
+            element={<StructureRelationPage />}
+          />
           <Route path="entities/:id" element={<EntityPage />} />
           <Route path="metrics/:id" element={<MetricPage />} />
           <Route path="structures/:id" element={<StructurePage />} />
@@ -65,7 +69,18 @@ export const KraphModule: React.FC<Props> = (props) => {
           <Route path="graphs" element={<GraphsPage />} />
           <Route path="graphs/:id" element={<GraphPage />} />
           <Route path="graphqueries/:id" element={<GraphQueryPage />} />
-          <Route path="graphqueries/:id/designer" element={<GraphQueryDesignerPage />} />
+          <Route
+            path="nodequeries/:id/node/:node"
+            element={<NodeQueryPage />}
+          />
+          <Route
+            path="nodequeries/:id/node/:node/designer"
+            element={<NodeQueryDesignerPage />}
+          />
+          <Route
+            path="graphqueries/:id/designer"
+            element={<GraphQueryDesignerPage />}
+          />
           <Route path="nodequeries/:id" element={<NodeQueryPage />} />
           <Route
             path="nodequeries/:id/view/:nodeid"

@@ -4,15 +4,24 @@ query GetGraphQuery($id: ID!) {
   }
 }
 
-query RenderGraphQuery($id: ID!, $filters: GraphQueryFilters, $pagination: GraphQueryPagination, $order: GraphQueryOrder) {
-  renderGraphQuery(id: $id, filters:  $filters, pagination: $pagination, order: $order) {
+query RenderGraphQuery(
+  $id: ID!
+  $filters: GraphQueryFilters
+  $pagination: GraphQueryPagination
+  $order: GraphQueryOrder
+) {
+  renderGraphQuery(
+    id: $id
+    filters: $filters
+    pagination: $pagination
+    order: $order
+  ) {
     ...Pairs
     ...Path
     ...Table
     ...NodeList
   }
 }
-
 
 query SearchGraphQueries($search: String, $values: [ID!]) {
   options: graphQueries(

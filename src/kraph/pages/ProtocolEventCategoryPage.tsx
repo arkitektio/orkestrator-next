@@ -1,51 +1,21 @@
-import { Plate } from "@udecode/plate-common/react";
-
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
-import { ChoicesField } from "@/components/fields/ChoicesField";
-import { GraphQLListSearchField } from "@/components/fields/GraphQLListSearchField";
-import { StringField } from "@/components/fields/StringField";
+import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
-import { CommentsPopover } from "@/components/plate-ui/comments-popover";
-import { Editor } from "@/components/plate-ui/editor";
-import { FixedToolbar } from "@/components/plate-ui/fixed-toolbar";
-import { FixedToolbarButtons } from "@/components/plate-ui/fixed-toolbar-buttons";
-import { FloatingToolbar } from "@/components/plate-ui/floating-toolbar";
-import { FloatingToolbarButtons } from "@/components/plate-ui/floating-toolbar-buttons";
-import { TooltipProvider } from "@/components/plate-ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Form } from "@/components/ui/form";
 import { DragZone } from "@/components/upload/drag";
 import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
 import {
   KraphProtocolEventCategory,
-  KraphProtocolStepTemplate
+  KraphProtocolStepTemplate,
 } from "@/linkers";
-import { editor } from "@/plate/plugins";
 import {
-  useEditorReadOnly,
-  useEditorRef,
-  usePlateEditor,
-} from "@udecode/plate-common/react";
-import { useMemo, useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
-import {
-  MetricKind,
-  NaturalEventCategoryFragment,
-  ProtocolEventCategoryFragment,
-  UpdateProtocolEventCategoryMutationVariables,
   useGetProtocolEventCategoryQuery,
-  useSearchEntityCategoryLazyQuery,
-  useSearchTagsLazyQuery,
-  useUpdateProtocolEventCategoryMutation
+  useUpdateProtocolEventCategoryMutation,
 } from "../api/graphql";
-import { RoleProvider } from "../providers/RoleProvider";
-import { FormDialog } from "@/components/dialog/FormDialog";
-import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryRenderer";
-
-
+import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
+import LoadingCreateProtocolEventForm from "../forms/LoadingCreateProtocolEventForm";
 
 export default asDetailQueryRoute(
   useGetProtocolEventCategoryQuery,
@@ -78,6 +48,22 @@ export default asDetailQueryRoute(
           <KraphProtocolEventCategory.Actions
             object={data.protocolEventCategory.id}
           />
+        }
+        pageActions={
+          <FormSheet
+            trigger={
+              <Button variant="outline" size="sm">
+                {" "}
+                Perform {data.protocolEventCategory.label}
+              </Button>
+            }
+            onSubmit={() => refetch()}
+          >
+            <LoadingCreateProtocolEventForm
+              rolemap={{}}
+              id={data.protocolEventCategory.id}
+            />
+          </FormSheet>
         }
         sidebars={
           <MultiSidebar
@@ -143,9 +129,6 @@ export default asDetailQueryRoute(
             </div>
           )}
         </div>
-
-
-
       </KraphProtocolEventCategory.ModelPage>
     );
   },

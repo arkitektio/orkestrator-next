@@ -2,7 +2,10 @@ import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Button } from "@/components/ui/button";
 import { KraphGraph, KraphGraphQuery, KraphGraphView } from "@/linkers";
-import { useGetGraphQueryQuery } from "../api/graphql";
+import {
+  useGetGraphQueryQuery,
+  usePinGraphQueryMutation,
+} from "../api/graphql";
 
 import { Card } from "@/components/ui/card";
 import { CypherEditor } from "../components/cypher/CypherEditor";
@@ -12,6 +15,12 @@ import { CypherSidebar } from "../components/sidebars/CypherSidebar";
 export default asDetailQueryRoute(
   useGetGraphQueryQuery,
   ({ data, refetch }) => {
+    const [pin] = usePinGraphQueryMutation({
+      onCompleted: () => {
+        refetch();
+      },
+    });
+
     return (
       <KraphGraphQuery.ModelPage
         object={data.graphQuery.id}
@@ -26,6 +35,23 @@ export default asDetailQueryRoute(
                 Graph
               </Button>
             </KraphGraph.DetailLink>
+            <Button
+              onClick={() => {
+                pin({
+                  variables: {
+                    input: {
+                      id: data.graphQuery.id,
+                      pin: !data.graphQuery.pinned,
+                    },
+                  },
+                });
+              }}
+              size="sm"
+              variant={"outline"}
+            >
+              {data.graphQuery.pinned ? "Unpin" : "Pin"}
+            </Button>
+
             <KraphGraphQuery.DetailLink
               object={data.graphQuery.id}
               subroute="designer"
@@ -66,10 +92,7 @@ export default asDetailQueryRoute(
           </Card>
         </div>
 
-        <SelectiveGraphQueryRenderer
-          graphQuery={data.graphQuery}
-          interactive={true}
-        />
+        <SelectiveGraphQueryRenderer graphQuery={data.graphQuery} />
       </KraphGraphQuery.ModelPage>
     );
   },

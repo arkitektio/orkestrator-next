@@ -61,7 +61,7 @@ The main renderer now supports an `interactive` prop to enable server-side rende
 
 ### Option 1: Using convenience components
 ```tsx
-import { 
+import {
   RenderGraphQuery,
   RenderGraphQueryAsTable,
   RenderGraphQueryAsPairs,
@@ -73,13 +73,13 @@ function MyPage() {
     <div>
       {/* Default (NodeList) */}
       <RenderGraphQuery id="your-graph-query-id" />
-      
+
       {/* As Table */}
       <RenderGraphQueryAsTable id="your-graph-query-id" />
-      
+
       {/* As Pairs */}
       <RenderGraphQueryAsPairs id="your-graph-query-id" />
-      
+
       {/* As Path */}
       <RenderGraphQueryAsPath id="your-graph-query-id" />
     </div>
@@ -87,15 +87,15 @@ function MyPage() {
 }
 ```
 
-### Option 2: Using SelectiveGraphQueryRenderer with interactive mode  
+### Option 2: Using SelectiveGraphQueryRenderer with interactive mode
 ```tsx
 import { SelectiveGraphQueryRenderer } from "@/kraph/components/renderers/GraphQueryRenderer";
 
 function MyPage({ graphQuery }) {
   return (
-    <SelectiveGraphQueryRenderer 
-      graphQuery={graphQuery} 
-      interactive={true} 
+    <SelectiveGraphQueryRenderer
+      graphQuery={graphQuery}
+      interactive={true}
     />
   );
 }
@@ -111,22 +111,22 @@ import { RenderGraphQueryPath } from "@/kraph/components/renderers/graph/PathGra
 function MyPage() {
   return (
     <div>
-      <RenderGraphQueryNodeList 
+      <RenderGraphQueryNodeList
         graphQueryId="your-graph-query-id"
         options={{ minimal: false }}
       />
-      
-      <RenderGraphQueryTable 
+
+      <RenderGraphQueryTable
         graphQueryId="your-graph-query-id"
         options={{ minimal: false }}
       />
-      
-      <RenderGraphQueryPairs 
+
+      <RenderGraphQueryPairs
         graphQueryId="your-graph-query-id"
         options={{ minimal: false }}
       />
-      
-      <RenderGraphQueryPath 
+
+      <RenderGraphQueryPath
         graphQueryId="your-graph-query-id"
         options={{ minimal: false }}
       />

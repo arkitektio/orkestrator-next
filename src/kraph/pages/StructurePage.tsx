@@ -71,6 +71,15 @@ export default asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
         </Card>
       </KraphStructure.Drop>
 
+      <div>
+        {data.structure.metrics?.map((metric) => (
+          <div key={metric.id} className="px-6">
+            <span className="font-semibold">{metric.category.label}:</span>{" "}
+            {metric.value}
+          </div>
+        ))}
+      </div>
+
       <div className="flex flex-row p-6">
         {data.structure.relevantQueries.map((query) => (
           <Card key={query.id} className="p-2 m-2 flex-row gap-2 flex">

@@ -4,11 +4,24 @@ query GetNodeQuery($id: ID!) {
   }
 }
 
-query RenderNodeQuery($id: ID!, $nodeId: ID!) {
-  renderNodeQuery(id: $id, nodeId: $nodeId) {
+query RenderNodeQuery(
+  $id: ID!
+  $nodeId: ID!
+  $filters: NodeQueryFilters
+  $pagination: NodeQueryPagination
+  $order: NodeQueryOrder
+) {
+  renderNodeQuery(
+    id: $id
+    nodeId: $nodeId
+    filters: $filters
+    pagination: $pagination
+    order: $order
+  ) {
     ...Path
     ...Table
     ...Pairs
+    ...NodeList
   }
 }
 

@@ -9,6 +9,7 @@ export type ModelLinkProps = OmitedNavLinkProps & {
   object: string;
   subroute?: string;
   subobject?: string;
+  deeproute?: string;
 };
 
 export type ClassNameOptions = {

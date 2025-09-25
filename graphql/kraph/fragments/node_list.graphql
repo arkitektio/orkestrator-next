@@ -2,6 +2,7 @@ fragment NodeList on NodeList {
   nodes {
     id
     externalId
+    label
     ... on Entity {
       __typename
       label

@@ -52,7 +52,6 @@ const GridOverlay = ({
   imageWidth: number;
   imageHeight: number;
 }) => {
-
   const { showGrid } = useViewerState();
 
   if (!showGrid) {
@@ -83,7 +82,6 @@ const GridOverlay = ({
           </mesh>
         );
       })}
-
     </group>
   );
 };
@@ -174,7 +172,7 @@ export const ActiveImageViews = (props: {
             .filter(notEmpty),
         },
       },
-      exclude: [ViewKind.Rgb]
+      exclude: [ViewKind.Rgb],
     },
   });
 
@@ -515,9 +513,6 @@ export const RGBContextRender = (props: {
   if (!chunk_shape) {
     return <div>Chunk shape not found</div>;
   }
-
-  console.log("Views", props.context.views);
-
   return (
     <>
       {props.context.views.map((view, viewIndex) => {
@@ -580,8 +575,6 @@ export const FinalRenderInner = (props: RGBDProps) => {
   if (version != "3") {
     return <div>Rendering not implemented for Zarr Version other than 3</div>;
   }
-
-  console.log("Views", props.context.views);
 
   // Handle Alt+scroll for z-stack navigation
   const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
@@ -654,12 +647,7 @@ export const FinalRenderInner = (props: RGBDProps) => {
           <RGBContextRender context={props.context} />
 
           {/* Grid overlay with milestone positions */}
-          {showGrid && (
-            <GridOverlay
-              imageWidth={xSize}
-              imageHeight={ySize}
-            />
-          )}
+          {showGrid && <GridOverlay imageWidth={xSize} imageHeight={ySize} />}
 
           {/* Clickable background plane for creating panels */}
           <EventPlane xSize={xSize} ySize={ySize} />

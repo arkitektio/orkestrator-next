@@ -304,13 +304,7 @@ export const useShouldRender = ({
 
       // Debug logging (only occasionally to avoid spam)
       if (frame.current % 30 === 0) {
-        console.log(
-          `Chunk ${currentScaleX}x: basePixel=${basePixelUnit.toFixed(2)}, ` +
-            `thisScaled=${thisChunkScaledPixelSize.toFixed(2)}, ` +
-            `optimalScale=${optimalScaleX}x, optimalScaled=${optimalScaledPixelSize.toFixed(2)}, ` +
-            `diff=${pixelSizeDifference.toFixed(2)}, threshold=${relativeThreshold.toFixed(2)}, ` +
-            `render=${isBestLOD}`,
-        );
+        // console.log( --- IGNORE ---
       }
     }
 
@@ -527,7 +521,6 @@ export const ChunkBitmapTexture = ({
 
   const isSelected =
     selected.find((id: string) => id === view.id) !== undefined;
-  console.log("Is selected:", isSelected);
 
   // Get edge color and thickness based on scale
   const edgeProperties = getEdgePropertiesForScale(scaleX);
@@ -535,8 +528,6 @@ export const ChunkBitmapTexture = ({
   cLimMax = view.contrastLimitMax || texture?.max;
   cLimMin = view.contrastLimitMin || texture?.min;
   const gamma = view.gamma || 1;
-
-  console.log("cLimMax", cLimMax, "cLimMin", cLimMin, "texture", texture);
 
   // Calculate z-position based on scale: higher resolution (lower scaleX) should be on top
   // Use negative values so 1x is at z=0, 2x at z=-0.001, 4x at z=-0.002, etc.

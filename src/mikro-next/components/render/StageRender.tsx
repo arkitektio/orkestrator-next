@@ -5,7 +5,7 @@ import {
   useGetStageQuery,
   WatchTransformationViewsDocument,
   WatchTransformationViewsSubscription,
-  WatchTransformationViewsSubscriptionVariables
+  WatchTransformationViewsSubscriptionVariables,
 } from "@/mikro-next/api/graphql";
 import { OrbitControls, Select } from "@react-three/drei";
 import { Canvas as ThreeCanvas } from "@react-three/fiber";
@@ -96,7 +96,7 @@ export const StageRender = ({ stage, onRectangleDrawn }: StageRenderProps) => {
       }}
     >
       <div
-        style={{ width: "100%", height: "100%", }}
+        style={{ width: "100%", height: "100%" }}
         className="relative bg-black"
         ref={containerRef}
       >
@@ -122,7 +122,6 @@ export const StageRender = ({ stage, onRectangleDrawn }: StageRenderProps) => {
                   (acc, row) => acc.concat(row),
                   [],
                 );
-                console.log("Flattened Matrix", flattenMatrix);
 
                 const matrix = new THREE.Matrix4();
                 matrix.set(...flattenMatrix);

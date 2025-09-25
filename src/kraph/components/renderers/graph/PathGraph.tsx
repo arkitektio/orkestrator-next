@@ -1,4 +1,4 @@
-import { PathFragment } from "@/kraph/api/graphql.js";
+import { PathFragment, useRenderGraphQueryQuery, GraphQueryFilters } from "@/kraph/api/graphql.js";
 import {
   ReactFlow,
   ReactFlowInstance,
@@ -22,6 +22,7 @@ import ThisNode from "./nodes/ThisNode";
 import { PathEdge, PathNode } from "./types";
 import { entityNodesToNodes, entityRelationToEdges } from "./utils";
 import { ViewOptions } from "../DelegatingNodeViewRenderer";
+import { Input } from "@/components/ui/input";
 import { hash } from "crypto";
 import { Button } from "@/components/ui/button";
 import {
@@ -179,5 +180,67 @@ export const PathGraph = (props: Props) => {
     <PathViewerStateProvider>
       <PathGraphInner {...props} key={hashPash(props.path)} />
     </PathViewerStateProvider>
+  );
+};
+
+export const RenderGraphQueryPath = (props: { 
+  graphQueryId: string, 
+  options?: ViewOptions 
+}) => {
+  const [search, setSearch] = React.useState<string>("");
+
+  // Prepare GraphQL variables
+  const filters: GraphQueryFilters = {
+    search: search || undefined,
+  };
+
+  const { data, loading, error } = useRenderGraphQueryQuery({
+    variables: {
+      id: props.graphQueryId,
+      filters,
+    },
+  });
+
+  // Extract the Path from the response
+  const path = data?.renderGraphQuery?.__typename === "Path" ? data.renderGraphQuery : undefined;
+
+  // Handle search with debouncing
+  const debouncedSetSearch = React.useCallback(
+    React.useMemo(
+      () => {
+        let timeoutId: NodeJS.Timeout;
+        return (value: string) => {
+          clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => {
+            setSearch(value);
+          }, 300);
+        };
+      },
+      []
+    ),
+    []
+  );
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <div className="w-full h-full">
+      {!props.options?.minimal && (
+        <div className="flex items-center py-4 gap-2">
+          <Input
+            placeholder="Search path..."
+            onChange={(event) => debouncedSetSearch(event.target.value)}
+            className="max-w-sm w-full bg-background"
+          />
+        </div>
+      )}
+      {path && <PathGraph path={path} options={props.options} />}
+    </div>
   );
 };

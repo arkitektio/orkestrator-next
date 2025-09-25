@@ -87,9 +87,8 @@ export const useCachedArray = (props: { store: ZarrStoreFragment }) => {
         await tx.done;
 
         setDb(database);
-        console.log("IndexedDB initialized for chunk caching");
       } catch (error) {
-        console.error("Failed to initialize IndexedDB:", error);
+        console.error("Failed to open IndexedDB:", error);
       }
     };
 

@@ -26,7 +26,10 @@ export default asDetailQueryRoute(
                 Graph
               </Button>
             </KraphGraph.DetailLink>
-            <KraphGraphQuery.DetailLink object={data.graphQuery.id} subroute="designer">
+            <KraphGraphQuery.DetailLink
+              object={data.graphQuery.id}
+              subroute="designer"
+            >
               <Button variant="outline" size="sm">
                 Edit Query
               </Button>
@@ -46,13 +49,16 @@ export default asDetailQueryRoute(
         <div className="grid md:grid-cols-12 gap-4 md:gap-8 xl:gap-20 md:items-center px-6 py-2">
           <div className="col-span-5">
             <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-              <KraphGraph.DetailLink object={data.graphQuery.graph.id} className={"text-slate-400 mr-2"}>
+              <KraphGraph.DetailLink
+                object={data.graphQuery.graph.id}
+                className={"text-slate-400 mr-2"}
+              >
                 {data.graphQuery.graph.name}
-              </KraphGraph.DetailLink>{data.graphQuery.name}
+              </KraphGraph.DetailLink>
+              {data.graphQuery.name}
             </h1>
             <p className="mt-3 text-xl text-muted-foreground">
               {data.graphQuery.description || "No Description"}
-
             </p>
           </div>
           <Card className="p-6 h-96 col-span-7">
@@ -60,7 +66,10 @@ export default asDetailQueryRoute(
           </Card>
         </div>
 
-        <SelectiveGraphQueryRenderer graphQuery={data.graphQuery} />
+        <SelectiveGraphQueryRenderer
+          graphQuery={data.graphQuery}
+          interactive={true}
+        />
       </KraphGraphQuery.ModelPage>
     );
   },

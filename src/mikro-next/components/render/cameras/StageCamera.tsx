@@ -4,8 +4,6 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
-
-
 const calculateImageDims = (stage: StageFragment) => {
   if (!stage.affineViews || stage.affineViews.length === 0) {
     // Return default values if no views
@@ -23,33 +21,55 @@ const calculateImageDims = (stage: StageFragment) => {
       return; // Skip if no shape data
     }
 
-
     // Get image dimensions - shape is typically [t, c, z, y, x] or similar
     const shape = view.image.store.shape;
     const imageHeight = shape[shape.length - 2]; // Y dimension
-    const imageWidth = shape[shape.length - 1];  // X dimension
+    const imageWidth = shape[shape.length - 1]; // X dimension
 
     // Create transformation matrix from the affine matrix
     const matrix = new THREE.Matrix4();
-    const flatMatrix = view.affineMatrix.reduce((acc, row) => acc.concat(row), []);
+    const flatMatrix = view.affineMatrix.reduce(
+      (acc, row) => acc.concat(row),
+      [],
+    );
     matrix.set(
-      flatMatrix[0], flatMatrix[1], flatMatrix[2], flatMatrix[3],
-      flatMatrix[4], flatMatrix[5], flatMatrix[6], flatMatrix[7],
-      flatMatrix[8], flatMatrix[9], flatMatrix[10], flatMatrix[11],
-      flatMatrix[12], flatMatrix[13], flatMatrix[14], flatMatrix[15]
+      flatMatrix[0],
+      flatMatrix[1],
+      flatMatrix[2],
+      flatMatrix[3],
+      flatMatrix[4],
+      flatMatrix[5],
+      flatMatrix[6],
+      flatMatrix[7],
+      flatMatrix[8],
+      flatMatrix[9],
+      flatMatrix[10],
+      flatMatrix[11],
+      flatMatrix[12],
+      flatMatrix[13],
+      flatMatrix[14],
+      flatMatrix[15],
     );
 
-    if (flatMatrix[3] == 0 && flatMatrix[7] == 0 && flatMatrix[11] == 0 && stage.affineViews.length > 1) {
-      console.warn("Skipping view with invalid affine matrix:", view.affineMatrix);
+    if (
+      flatMatrix[3] == 0 &&
+      flatMatrix[7] == 0 &&
+      flatMatrix[11] == 0 &&
+      stage.affineViews.length > 1
+    ) {
+      console.warn(
+        "Skipping view with invalid affine matrix:",
+        view.affineMatrix,
+      );
       return;
     }
 
     // Define the four corners of the image in image space
     const corners = [
-      new THREE.Vector3(0, 0, 0),                    // Top-left
-      new THREE.Vector3(imageWidth, 0, 0),          // Top-right  
-      new THREE.Vector3(0, imageHeight, 0),         // Bottom-left
-      new THREE.Vector3(imageWidth, imageHeight, 0) // Bottom-right
+      new THREE.Vector3(0, 0, 0), // Top-left
+      new THREE.Vector3(imageWidth, 0, 0), // Top-right
+      new THREE.Vector3(0, imageHeight, 0), // Bottom-left
+      new THREE.Vector3(imageWidth, imageHeight, 0), // Bottom-right
     ];
 
     // Transform each corner to world space and track bounds
@@ -74,24 +94,22 @@ const calculateImageDims = (stage: StageFragment) => {
   const centerY = (minY + maxY) / 2;
 
   const dims = { width, height, centerX, centerY };
-  console.log("DIms", dims);
   return dims;
-}
+};
 
-
-export const StageCamera = ({
-  stage,
-}: {
-  stage: StageFragment
-}) => {
+export const StageCamera = ({ stage }: { stage: StageFragment }) => {
   const cameraRef = useRef<THREE.OrthographicCamera | null>(null);
   const { size } = useThree();
 
   // Store the camera's offset from the image center to maintain panning
   const offsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
-
-  const { width: imageWidth, height: imageHeight, centerX: imageCenterX, centerY: imageCenterY } = useMemo(() => calculateImageDims(stage), [stage]);
+  const {
+    width: imageWidth,
+    height: imageHeight,
+    centerX: imageCenterX,
+    centerY: imageCenterY,
+  } = useMemo(() => calculateImageDims(stage), [stage]);
 
   // Initial setup only - run once to center the camera on the image
   useEffect(() => {

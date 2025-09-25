@@ -83,15 +83,6 @@ export class HTTPError extends Error {
   }
 }
 
-
-
-
-
-
-
-
-
-
 export class KeyError extends Error {
   __zarr__: string;
 
@@ -158,12 +149,10 @@ export class S3Store extends FetchStore {
 
   async get(key: AbsolutePath, options: RequestInit = {}) {
     const cacheKey = key + this.url;
-    console.log("getting", cacheKey);
 
     // Check cache first
     const cached = this.cache.get(cacheKey);
     if (cached) {
-      console.log("Cache hit for", cacheKey);
       return new Uint8Array(cached);
     }
 
@@ -181,15 +170,19 @@ export class S3Store extends FetchStore {
 
       if (result) {
         // Cache the result - convert to ArrayBuffer if it's not already
-        const bufferToCache = result instanceof Uint8Array ? result.buffer.slice(result.byteOffset, result.byteOffset + result.byteLength) : result;
+        const bufferToCache =
+          result instanceof Uint8Array
+            ? result.buffer.slice(
+                result.byteOffset,
+                result.byteOffset + result.byteLength,
+              )
+            : result;
         this.cache.set(cacheKey, bufferToCache as ArrayBuffer);
       }
 
       return result;
     });
   }
-
-
 
   // Cache management methods
   clearCache(): void {
@@ -199,7 +192,7 @@ export class S3Store extends FetchStore {
   getCacheStats(): { size: number; maxSize: number } {
     return {
       size: this.cache.size(),
-      maxSize: this.cache.getMaxSize()
+      maxSize: this.cache.getMaxSize(),
     };
   }
 
@@ -271,8 +264,6 @@ export async function openZarrArray(
   // If the loader fails to load, handle the error (show an error snackbar).
   // Otherwise load.
   try {
-    console.log(url);
-
     let aws = new AwsClient({
       accessKeyId: "kBcG6sCIlQvOWPOpzJhu",
       secretAccessKey: "FjiprDl3qHwIMR7azM2M",
@@ -283,11 +274,8 @@ export async function openZarrArray(
     let xarray_metadata = (await x.json()) as XArrayMetadata;
 
     const store = new S3Store(url, aws);
-    console.log(store);
     const grp = await openGroup(store, "", "r");
     const rootAttrs = await grp.attrs.asObject();
-
-    console.log(grp, rootAttrs, xarray_metadata);
 
     let data = (await grp.getItem("data")) as ZarrArray;
 

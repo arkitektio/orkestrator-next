@@ -1,14 +1,14 @@
-import { Action } from "@/actions/action-registry";
-import { buildDeleteAction } from "@/actions/builders/deleteAction";
-import { DeleteRoomDocument } from "@/alpaka/api/graphql";
+import { DeleteBlockDocument } from "@/elektro/api/graphql";
+import { Action } from "../localactions/LocalActionProvider";
+import { buildDeleteAction } from "../localactions/builders/deleteAction";
 
-export const ALPAKA_ACTIONS: Action[] = [
-  buildDeleteAction({
-    title: "Delete Room",
-    identifier: "@alpaka/room",
-    description: "Delete the Graph",
-    service: "alpaka",
-    typename: "Room",
-    mutation: DeleteRoomDocument,
+export const ELEKTRO_ACTIONS: Record<string, Action> = {
+  deleteElektroBlock: buildDeleteAction({
+    title: "Delete Block",
+    identifier: "@elektro/block",
+    description: "Delete the Block",
+    service: "elektro",
+    typename: "Block",
+    mutation: DeleteBlockDocument,
   }),
-];
+};

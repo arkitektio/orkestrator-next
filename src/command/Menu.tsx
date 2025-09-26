@@ -30,15 +30,31 @@ import { LocalActionExtensions } from "./extensions/LocalActionExtension";
 import { SearchExtensions } from "./extensions/SearchExtensions";
 import { ShortcutExtensions } from "./extensions/ShortcutExtensions";
 import { useDisplayComponent } from "@/app/display";
+import { SmartLink } from "@/providers/smart/builder";
 
 export const DisplayWidget = (props: {
   identifier: string;
   object: string;
+  link?: boolean;
 }) => {
   const Widget = useDisplayComponent(props.identifier);
 
   if (Widget == undefined) {
     return <>No widget found</>;
+  }
+
+  if (props.link) {
+    return (
+      <SmartLink identifier={props.identifier} object={props.object}>
+        <Suspense>
+          <Widget
+            small={true}
+            object={props.object}
+            identifier={props.identifier}
+          />
+        </Suspense>
+      </SmartLink>
+    );
   }
 
   return (

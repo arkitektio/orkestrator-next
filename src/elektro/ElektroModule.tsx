@@ -16,7 +16,10 @@ import StimulusPage from "./pages/StimulusPage";
 import TracePage from "./pages/TracePage";
 import TracesPage from "./pages/TracesPage";
 import StandardPane from "./panes/StandardPane";
-interface Props { }
+import AnalogSignalPage from "./pages/AnalogSignalPage";
+import BlockPage from "./pages/BlockPage";
+import AnalogSignalChannelPage from "./pages/AnalogSignalChannelPage";
+interface Props {}
 
 export const ElektroModule: React.FC<Props> = (props) => {
   return (
@@ -26,6 +29,12 @@ export const ElektroModule: React.FC<Props> = (props) => {
           <Route path="traces/:id" element={<TracePage />} />
           <Route path="simulations/:id" element={<SimulationPage />} />
           <Route path="experiments/:id" element={<ExperimentPage />} />
+          <Route path="blocks/:id" element={<BlockPage />} />
+          <Route path="analogsignals/:id" element={<AnalogSignalPage />} />
+          <Route
+            path="analogsignalchannels/:id"
+            element={<AnalogSignalChannelPage />}
+          />
           <Route path="recordings/:id" element={<RecordingPage />} />
           <Route path="stimulus/:id" element={<StimulusPage />} />
           <Route path="neuronmodels/:id" element={<NeuronModelPage />} />

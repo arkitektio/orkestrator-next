@@ -8,6 +8,7 @@ import {
   KraphEntity,
   KraphProtocolEvent,
   KraphProtocolEventCategory,
+  KraphReagent,
 } from "@/linkers";
 import { RoleValueProvider } from "@/plate/value/ValueProvider";
 import { valueEditor } from "@/plate/valueEditor";
@@ -128,22 +129,6 @@ export default asDetailQueryRoute(
         </KraphEntity.Drop>
 
         <div className="flex flex-col p-6 h-full">
-          {data.protocolEvent.bestView ? (
-            <SelectiveNodeViewRenderer view={data.protocolEvent.bestView} />
-          ) : (
-            <div className="h-ful w-ull flex flex-col items-center justify-center">
-              <p className="text-sm font-light mb-3">
-                No Node Query yet for this event
-              </p>
-              <FormDialog
-                trigger={<Button variant="outline">Create Query</Button>}
-                onSubmit={() => refetch()}
-              >
-                <CreateNodeQueryForm entity={data.protocolEvent} />
-              </FormDialog>
-            </div>
-          )}
-
           {data.protocolEvent.variables.length > 0 && (
             <div className="mt-2">
               <h2 className="text-2xl font-bold mb-2">Variables</h2>
@@ -181,13 +166,13 @@ export default asDetailQueryRoute(
                       </KraphEntity.DetailLink>
                     )}
                     {variable.left.__typename == "Reagent" && (
-                      <KraphEntity.DetailLink
+                      <KraphReagent.DetailLink
                         key={variable.id}
                         object={variable.leftId}
                         className="px-3 py-1 rounded-full text-sm"
                       >
                         {variable.left.label}
-                      </KraphEntity.DetailLink>
+                      </KraphReagent.DetailLink>
                     )}
                   </Card>
                 ))}
@@ -225,6 +210,23 @@ export default asDetailQueryRoute(
                   </Card>
                 ))}
               </div>
+            </div>
+          )}
+        </div>
+        <div className="flex-grow flex h-full w-full">
+          {data.protocolEvent.bestView ? (
+            <SelectiveNodeViewRenderer view={data.protocolEvent.bestView} />
+          ) : (
+            <div className="h-full w-full flex flex-col items-center justify-start">
+              <p className="text-sm font-light mb-3">
+                No Node Query yet for this event
+              </p>
+              <FormDialog
+                trigger={<Button variant="outline">Create Query</Button>}
+                onSubmit={() => refetch()}
+              >
+                <CreateNodeQueryForm entity={data.protocolEvent} />
+              </FormDialog>
             </div>
           )}
         </div>

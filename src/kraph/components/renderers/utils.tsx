@@ -69,7 +69,7 @@ const columnToDef = (
           <div className="text-center">{column.label || column.name}</div>
         ),
         cell: ({ row, getValue }) => {
-          const label = row.getValue(column.name) as string;
+          const label = row.getValue(column.name) as int;
 
           if (!label) {
             return <div className="text-center font-medium">No Date</div>;
@@ -77,7 +77,7 @@ const columnToDef = (
 
           return (
             <div className="text-center font-medium">
-              <Timestamp date={label.replaceAll('"', "")} relative />
+              <Timestamp date={new Date(parseInt(label))} relative />
             </div>
           );
         },

@@ -121,6 +121,7 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
               <DisplayWidget
                 identifier={measurement.source.identifier}
                 object={measurement.source.object}
+                link={true}
               />
             )}
             <pre>{measurement.category.label}</pre>
@@ -202,16 +203,36 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
       <div className="flex flex-row gap-2 p-6">
         {data.entity.targetedBy.map((targeted) => (
           <Card key={`${targeted.id}`} className="p-2 flex-row gap-2 flex w-96">
-            <pre>{targeted.role}</pre>
-
+            <div className="my-auto border border-1 rounded  px-2 py-1">
+              {targeted.role}
+            </div>
             {targeted.source.__typename == "ProtocolEvent" && (
-              <KraphProtocolEvent.DetailLink object={targeted.source.id}>
-                {targeted.source.label}
-
-                {targeted.source.validFrom}
-
-                {targeted.source.validTo}
-              </KraphProtocolEvent.DetailLink>
+              <div className="flex flex-col">
+                <KraphProtocolEvent.DetailLink
+                  object={targeted.source.id}
+                  className={"text-xl font-bold"}
+                >
+                  {targeted.source.category.label}
+                </KraphProtocolEvent.DetailLink>
+                <div className="text-sm text-muted-foreground flex flex-row gap-2">
+                  {targeted.source.validFrom && (
+                    <Timestamp date={targeted.source.validFrom} relative />
+                  )}
+                  {targeted.source.validTo && targeted.source.validFrom && (
+                    <div>
+                      (~
+                      {calculateDuration(
+                        targeted.source.validFrom,
+                        targeted.source.validTo,
+                      )}
+                      )
+                    </div>
+                  )}
+                  {!targeted.source.validTo && !targeted.source.validFrom && (
+                    <div>No validity</div>
+                  )}
+                </div>
+              </div>
             )}
           </Card>
         ))}

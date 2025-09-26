@@ -1,12 +1,13 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
 import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
 import { DragZone } from "@/components/upload/drag";
 import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import { useResolve } from "@/datalayer/hooks/useResolve";
-import { KraphEntity, KraphEntityCategory } from "@/linkers";
+import { KraphEntityCategory } from "@/linkers";
 import {
   useCreateEntityMutation,
   useGetEntityCategoryQuery,
@@ -16,10 +17,6 @@ import { SelectiveGraphQueryRenderer } from "../components/renderers/GraphQueryR
 import { StructureQueriesPlanner } from "../components/StructureQueriesPlanner";
 import CreateGraphQueryForm from "../forms/CreateGraphQueryForm";
 import UpdateEntityCategoryForm from "../forms/UpdateEntityCategoryForm";
-import { ActionButton } from "@/components/ui/action";
-import { LocalActionButton } from "@/components/ui/localactionbutton";
-import { DialogButton, LocalDialogButton } from "@/components/ui/dialogbutton";
-import { Badge } from "@/components/ui/badge";
 
 export default asDetailQueryRoute(
   useGetEntityCategoryQuery,
@@ -144,9 +141,9 @@ export default asDetailQueryRoute(
           </div>
         </div>
         <DragZone uploadFile={uploadFile} createFile={createFile} />
-
-        <StructureQueriesPlanner category={data.entityCategory} />
-
+        <div className="flex flex-col p-6 h-full">
+          <StructureQueriesPlanner category={data.entityCategory} />
+        </div>
 
         <div className="flex flex-col p-6 h-full">
           {data.entityCategory.bestQuery ? (

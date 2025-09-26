@@ -7,7 +7,7 @@ import {
   ListGraphQueryFragment,
   ListNodeQueryFragment,
   usePinGraphQueryMutation,
-  usePinNodeQueryMutation
+  usePinNodeQueryMutation,
 } from "../api/graphql";
 import { Badge } from "@/components/ui/badge";
 import { Pin, UnplugIcon } from "lucide-react";
@@ -22,17 +22,21 @@ export const StructureQueriesPlanner = ({
 
   return (
     <>
-      <div className="flex flex-row ">
+      <div className="flex flex-row">
         {category.relevantQueries.map((query) => (
-          <Card
-            key={query.id}
-            className="p-2 m-2 flex-row gap-2 flex"
-          >
+          <Card key={query.id} className="p-2 m-2 flex-row gap-2 flex">
             <div className="flex flex-col">
-              <KraphGraphQuery.DetailLink object={query.id} className="w-full font-light">
+              <KraphGraphQuery.DetailLink
+                object={query.id}
+                className="w-full font-light"
+              >
                 {query.name}
               </KraphGraphQuery.DetailLink>
-              {query.description && <p className="text-sm text-muted-foreground">{query.description}</p>}
+              {query.description && (
+                <p className="text-sm text-muted-foreground">
+                  {query.description}
+                </p>
+              )}
             </div>
             <Button
               onClick={() => {

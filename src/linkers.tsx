@@ -103,6 +103,16 @@ export const MikroRenderTree = buildSmart(
 export const MikroDataset = buildSmart("@mikro/dataset", "mikro/datasets");
 
 export const ElektroTrace = buildSmart("@elektro/trace", "elektro/traces");
+export const ElektroBlock = buildSmart("@elektro/block", "elektro/blocks");
+export const ElektroAnalogSignal = buildSmart(
+  "@elektro/analogsignal",
+  "elektro/analogsignals",
+);
+export const ElektroAnalogSignalChannel = buildSmart(
+  "@elektro/analogsignalchannel",
+  "elektro/analogsignalchannels",
+);
+
 export const ElektroSimulation = buildSmart(
   "@elektro/simulation",
   "elektro/simulations",

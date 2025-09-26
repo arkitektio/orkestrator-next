@@ -1,0 +1,14 @@
+query ListMaterializedEdges(
+  $filters: MaterializedEdgeFilter
+  $pagination: OffsetPaginationInput
+) {
+  materializedEdges(filters: $filters, pagination: $pagination) {
+    ...ListMaterializedEdge
+  }
+}
+
+query GetMaterializedEdge($id: ID!) {
+  materializedEdge(id: $id) {
+    ...MaterializedEdge
+  }
+}

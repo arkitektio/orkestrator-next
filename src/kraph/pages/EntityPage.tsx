@@ -9,6 +9,7 @@ import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import {
   KraphEntity,
   KraphEntityCategory,
+  KraphMeasurement,
   KraphProtocolEvent,
 } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
@@ -111,21 +112,25 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
       </KraphEntity.Drop>
       <div className="p-2">Measured by</div>
 
-      <div className="flex flex-row gap-2 p-6">
+      <div className="flex flex-row gap-2 p-6 w-full">
         {data.entity.measuredBy.map((measurement) => (
-          <Card
+          <KraphMeasurement.Smart
+            object={measurement.id}
             key={`${measurement.id}`}
-            className="p-2 flex-col gap-2 flex w-96"
+            className="w-96"
+
           >
-            {measurement.source.__typename == "Structure" && (
-              <DisplayWidget
-                identifier={measurement.source.identifier}
-                object={measurement.source.object}
-                link={true}
-              />
-            )}
-            <pre>{measurement.category.label}</pre>
-          </Card>
+            <Card className="p-2 flex flex-col flex-1 w-96">
+              {measurement.source.__typename == "Structure" && (
+                <DisplayWidget
+                  identifier={measurement.source.identifier}
+                  object={measurement.source.object}
+                  link={true}
+                />
+              )}
+              <pre>{measurement.category.label}</pre>
+            </Card>
+          </KraphMeasurement.Smart>
         ))}
       </div>
 

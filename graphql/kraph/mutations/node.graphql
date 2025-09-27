@@ -1,0 +1,7 @@
+mutation DeleteNode($id: ID!) {
+  deleteNode(input: {id: $id}) 
+}
+
+mutation DetachDeleteNode($id: ID!) {
+  detachDeleteNode(input: {id: $id}) 
+}

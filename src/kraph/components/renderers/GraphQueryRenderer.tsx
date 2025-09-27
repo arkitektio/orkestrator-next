@@ -1,23 +1,19 @@
-import React from "react";
+import { Button } from "@/components/ui/button";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
+import { Input } from "@/components/ui/input";
+import { Toggle } from "@/components/ui/toggle";
 import {
   GraphQueryFragment,
-  useGetGraphQueryQuery,
   useRenderGraphQueryQuery,
-  ViewKind,
+  ViewKind
 } from "@/kraph/api/graphql";
+import { Calendar, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
+import React from "react";
+import { ViewOptions } from "./DelegatingNodeViewRenderer";
 import { PathGraph } from "./graph/PathGraph";
-import { NodeListRender, RenderGraphQueryNodeList } from "./node_list/NodeList";
-import { RenderGraphQueryTable } from "./table/GraphTable";
-import { RenderGraphQueryPairs } from "./pairs/Pairs";
-import { RenderGraphQueryPath } from "./graph/PathGraph";
+import { NodeListRender } from "./node_list/NodeList";
 import { Pairs } from "./pairs/Pairs";
 import { GraphTable } from "./table/GraphTable";
-import { ViewOptions } from "./DelegatingNodeViewRenderer";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Toggle } from "@/components/ui/toggle";
-import { DateTimePicker } from "@/components/ui/datetime-picker";
-import { Search, Calendar, X, ChevronLeft, ChevronRight } from "lucide-react";
 
 export const SelectiveGraphQueryRenderer = (props: {
   graphQuery: GraphQueryFragment;

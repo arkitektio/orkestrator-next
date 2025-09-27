@@ -227,6 +227,7 @@ export const KraphNaturalEvent = buildSmart(
   "kraph/naturalevents",
 );
 export const KraphEntity = buildSmart("@kraph/entity", "kraph/entities");
+export const KraphMeasurement = buildSmart("@kraph/measurement", "kraph/measurements");
 export const KraphStructure = buildSmart(
   "@kraph/structure",
   "kraph/structures",

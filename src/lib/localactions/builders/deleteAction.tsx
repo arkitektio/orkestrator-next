@@ -17,7 +17,7 @@ export type DeleteActionParams = {
   identifier: Smart | string;
   title: string;
   mutation: TypedDocumentNode<any, { id: string }>;
-  typename: string;
+  typename: string | string[];
   service: string;
   description?: string;
 };
@@ -50,12 +50,25 @@ export const buildDeleteAction = (params: DeleteActionParams): Action => ({
       });
 
       // Evict the item from the cache
-      service.cache.evict({
-        id: service.cache.identify({
-          __typename: params.typename,
-          id: state.left[i].object,
-        }),
-      });
+      if (Array.isArray(params.typename)) {
+        for (const typename of params.typename) {
+          service.cache.evict({
+            id: service.cache.identify({
+              __typename: typename,
+              id: state.left[i].object,
+            }),
+          });
+        }
+      } else {
+
+
+        service.cache.evict({
+          id: service.cache.identify({
+            __typename: params.typename,
+            id: state.left[i].object,
+          }),
+        });
+      }
     }
 
     service.cache.gc();

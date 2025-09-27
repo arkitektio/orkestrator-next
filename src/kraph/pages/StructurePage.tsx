@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DelegatingStructureWidget } from "@/components/widgets/returns/DelegatingStructureWidget";
 import { useMediaUpload } from "@/datalayer/hooks/useUpload";
-import { KraphNodeQuery, KraphStructure } from "@/linkers";
+import { KraphNodeQuery, KraphStructure, KraphStructureCategory } from "@/linkers";
 import { PortKind } from "@/rekuest/api/graphql";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
 import { useGetStructureQuery } from "../api/graphql";
@@ -48,13 +48,12 @@ export default asDetailQueryRoute(useGetStructureQuery, ({ data, refetch }) => {
       >
         <div>
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-            {data.structure.category.identifier}
+            <KraphStructureCategory.DetailLink object={data.structure.category.id} className="font-light text-muted-foreground">
+              {data.structure.category.identifier}
+            </KraphStructureCategory.DetailLink>{" "}{data.structure.object}
           </h1>
           <p className="mt-3 text-xl text-muted-foreground">
-            {data.structure.category.description}
-          </p>
-          <p className="mt-3 text-xl text-muted-foreground">
-            <Badge>{data.structure.id}</Badge>
+            {data.structure.label}
           </p>
         </div>
         <Card className="flex flex-row gap-2 p-4">

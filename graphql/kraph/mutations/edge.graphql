@@ -1,0 +1,3 @@
+mutation DeleteEdge($id: ID!) {
+  deleteEdge(input: {id: $id}) 
+}

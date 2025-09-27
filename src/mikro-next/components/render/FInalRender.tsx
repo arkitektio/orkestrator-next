@@ -693,9 +693,16 @@ export const FinalRender = (props: RGBDProps) => {
     new Set([1, ...allLayers.map((layer) => layer.scaleX)]),
   ).sort((a, b) => a - b);
 
+  const onCoordinatedClick = (x: number, y: number, z: number) => {
+    console.log(`Clicked at image coordinates: x=${x}, y=${y}, z=${z}`);
+    // You can extend this to call props.onValueClick if needed
+    // or add custom coordinate handling logic here
+  };
+
   return (
     <ViewerStateProvider
       availableScales={availableScales}
+      onCoordinatedClick={onCoordinatedClick}
       initialState={{
         // Only most downscaled version enabled by default
         enabledScales: new Set([Math.max(...availableScales)]),

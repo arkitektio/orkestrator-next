@@ -25,13 +25,14 @@ import NodeDisplay from "@/rekuest/components/displays/NodeDisplay";
 import { AgentUpdater } from "@/rekuest/components/functional/AgentUpdater";
 import { AssignationUpdater } from "@/rekuest/components/functional/AssignationUpdater";
 import { WidgetRegistryProvider } from "@/rekuest/widgets/WidgetsProvider";
-import React from "react";
+import React, { useEffect } from "react";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import { useNavigate } from "react-router-dom";
 import { THE_WIDGET_REGISTRY } from "./shadCnWidgetRegistry";
 import { DisplayRegistryProvider } from "@/lib/display/registry";
 import { displayRegistry } from "./displayRegistry";
 import { DisplayProvider } from "./display";
+import { prewarmDuckDB } from "@/lib/duckdb";
 
 function fallbackRender({ error, resetErrorBoundary }: FallbackProps) {
   // Call resetErrorBoundary() to reset the error boundary and retry the render.

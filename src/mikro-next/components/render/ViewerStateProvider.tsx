@@ -53,6 +53,9 @@ export interface ViewerStateActions {
   setAllowRoiDrawing: (allow: boolean) => void;
   setRoiDrawMode: (mode: RoiKind) => void;
 
+  // Event
+  onCoordinatedClick?: (x: number, y: number, z: number) => void;
+
   // Scale management
   setEnabledScales: (scales: Set<number>) => void;
   toggleScale: (scale: number) => void;
@@ -65,7 +68,7 @@ export interface ViewerStateActions {
 
 export interface ViewerStateContextType
   extends ViewerState,
-  ViewerStateActions { }
+    ViewerStateActions {}
 
 const ViewerStateContext = createContext<ViewerStateContextType | undefined>(
   undefined,
@@ -75,12 +78,14 @@ export interface ViewerStateProviderProps {
   children: ReactNode;
   availableScales: number[];
   initialState?: Partial<ViewerState>;
+  onCoordinatedClick?: (x: number, y: number, z: number) => void;
 }
 
 export const ViewerStateProvider: React.FC<ViewerStateProviderProps> = ({
   children,
   availableScales,
   initialState = {},
+  onCoordinatedClick,
 }) => {
   // Initialize state with defaults, overridden by initialState
   const [z, setZ] = useState(initialState.z ?? 0);
@@ -187,6 +192,7 @@ export const ViewerStateProvider: React.FC<ViewerStateProviderProps> = ({
     addDisplayStructure,
     removeDisplayStructure,
     clearDisplayStructures,
+    onCoordinatedClick,
   };
 
   return (

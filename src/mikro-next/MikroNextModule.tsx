@@ -20,6 +20,7 @@ import StagesPage from "./pages/StagesPage";
 import TablePage from "./pages/TablePage";
 import TablesPage from "./pages/TablesPage";
 import StandardPane from "./panes/StandardPane";
+import InstanceMaskViewLabelPage from "./pages/InstanceMaskViewLabelPage";
 
 export const MikroNextModule: React.FC<Props> = (props) => {
   return (
@@ -29,6 +30,10 @@ export const MikroNextModule: React.FC<Props> = (props) => {
           <Route index element={<HomePage />} />
           <Route path="images/:id" element={<ImagePage />} />
           <Route path="lightpathviews/:id" element={<LightpathViewPage />} />
+          <Route
+            path="instancemaskviewlabels/:id"
+            element={<InstanceMaskViewLabelPage />}
+          />
           <Route path="images" element={<ImagesPage />} />
           <Route path="datasets/:id" element={<DatasetPage />} />
           <Route path="datasets" element={<DatasetsPage />} />

@@ -16,7 +16,6 @@ import { download } from "electron-dl";
 import { autoUpdater } from "electron-updater";
 import log from "electron-log";
 
-
 app.commandLine.appendSwitch("ignore-certificate-errors", "true");
 
 let mainWindow: BrowserWindow | null = null;
@@ -34,7 +33,6 @@ ipcMain.handle("download-from-url", async (event, { url }: { url: string }) => {
   }
 });
 
-
 function setupAutoUpdater() {
   // Logging helps a LOT when debugging user update issues
   log.transports.file.level = "info";
@@ -49,18 +47,28 @@ function setupAutoUpdater() {
   autoUpdater.autoInstallOnAppQuit = true;
 
   // Events -> wire to your UI
-  autoUpdater.on("checking-for-update", () => mainWindow?.webContents.send("updater:status", "Checking…"));
-  autoUpdater.on("update-available", (info) => mainWindow?.webContents.send("updater:available", info));
-  autoUpdater.on("update-not-available", () => mainWindow?.webContents.send("updater:none"));
-  autoUpdater.on("download-progress", (p) => mainWindow?.webContents.send("updater:progress", p));
-  autoUpdater.on("error", (err) => mainWindow?.webContents.send("updater:error", String(err)));
+  autoUpdater.on("checking-for-update", () =>
+    mainWindow?.webContents.send("updater:status", "Checking…"),
+  );
+  autoUpdater.on("update-available", (info) =>
+    mainWindow?.webContents.send("updater:available", info),
+  );
+  autoUpdater.on("update-not-available", () =>
+    mainWindow?.webContents.send("updater:none"),
+  );
+  autoUpdater.on("download-progress", (p) =>
+    mainWindow?.webContents.send("updater:progress", p),
+  );
+  autoUpdater.on("error", (err) =>
+    mainWindow?.webContents.send("updater:error", String(err)),
+  );
   autoUpdater.on("update-downloaded", async (info) => {
     const r = await dialog.showMessageBox({
       type: "info",
       buttons: ["Restart now", "Later"],
       defaultId: 0,
       message: `Update ${info.version} downloaded`,
-      detail: "Restart to install."
+      detail: "Restart to install.",
     });
     if (r.response === 0) autoUpdater.quitAndInstall();
   });
@@ -132,6 +140,7 @@ function createWindow(): BrowserWindow {
     webPreferences: {
       preload: fileURLToPath(new URL("../preload/index.mjs", import.meta.url)),
       sandbox: false,
+      nodeIntegrationInWorker: false,
     },
   });
 
@@ -435,13 +444,18 @@ app.whenReady().then(() => {
   ipcMain.handle("get-zoom-level", () => {
     const focusedWindow = BrowserWindow.getFocusedWindow();
     if (focusedWindow) {
-      return { success: true, zoomLevel: focusedWindow.webContents.getZoomFactor() };
+      return {
+        success: true,
+        zoomLevel: focusedWindow.webContents.getZoomFactor(),
+      };
     } else if (mainWindow) {
-      return { success: true, zoomLevel: mainWindow.webContents.getZoomFactor() };
+      return {
+        success: true,
+        zoomLevel: mainWindow.webContents.getZoomFactor(),
+      };
     }
     return { success: false, error: "No window to get zoom level" };
   });
-
 
   // Create reload function
   const reloadCurrentWindow = () => {
@@ -459,11 +473,11 @@ app.whenReady().then(() => {
       submenu: [
         {
           label: "Check for Updates…",
-          click: () => autoUpdater.checkForUpdates()
+          click: () => autoUpdater.checkForUpdates(),
         },
         { type: "separator" },
-        { role: "quit" }
-      ]
+        { role: "quit" },
+      ],
     },
     {
       label: "View",
@@ -471,7 +485,7 @@ app.whenReady().then(() => {
         {
           label: "Reload",
           accelerator: "CmdOrCtrl+R",
-          click: reloadCurrentWindow
+          click: reloadCurrentWindow,
         },
         {
           label: "Force Reload",
@@ -483,12 +497,12 @@ app.whenReady().then(() => {
             } else if (mainWindow) {
               mainWindow.webContents.reloadIgnoringCache();
             }
-          }
+          },
         },
         { type: "separator" },
-        { role: "toggleDevTools" }
-      ]
-    }
+        { role: "toggleDevTools" },
+      ],
+    },
   ]);
   Menu.setApplicationMenu(menu);
 });

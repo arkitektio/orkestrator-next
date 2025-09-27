@@ -227,7 +227,10 @@ export const KraphNaturalEvent = buildSmart(
   "kraph/naturalevents",
 );
 export const KraphEntity = buildSmart("@kraph/entity", "kraph/entities");
-export const KraphMeasurement = buildSmart("@kraph/measurement", "kraph/measurements");
+export const KraphMeasurement = buildSmart(
+  "@kraph/measurement",
+  "kraph/measurements",
+);
 export const KraphStructure = buildSmart(
   "@kraph/structure",
   "kraph/structures",
@@ -258,6 +261,12 @@ export const MikroExperiment = buildSmart(
   "@mikro/experiment",
   "mikro/experiments",
 );
+
+export const MikroInstanceMaskViewLabel = buildSmart(
+  "@mikro/instancemaskviewlabel",
+  "mikro/instancemaskviewlabels",
+);
+
 export const KraphProtocol = buildSmart("@kraph/protocol", "kraph/protocols");
 export const KraphProtocolStep = buildSmart(
   "@kraph/protocolstep",

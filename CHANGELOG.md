@@ -1,3 +1,18 @@
+# [1.3.0](https://github.com/arkitektio/orkestrator-next/compare/v1.2.0...v1.3.0) (2025-09-28)
+
+
+### Bug Fixes
+
+* wrong order of panels ([12a7545](https://github.com/arkitektio/orkestrator-next/commit/12a7545872a302083db707d3590a3c542cc6a7ad))
+
+
+### Features
+
+* add search functionatliy ([868217e](https://github.com/arkitektio/orkestrator-next/commit/868217e2caf1e97b21db21926981d2ba1ab957ed))
+* create elektro modules ([fab05bd](https://github.com/arkitektio/orkestrator-next/commit/fab05bdbe0fac940467bfd941acf8b2a0a8c3d9d))
+* new searchers ([6935c49](https://github.com/arkitektio/orkestrator-next/commit/6935c49b04403de98d1dd70a69b7ca0e51cc7c8d))
+* now with duckdb and labels ;) ([0349701](https://github.com/arkitektio/orkestrator-next/commit/034970170fcb1219c2ef873afdc2e71d8c3fe9ee))
+
 # [1.2.0](https://github.com/arkitektio/orkestrator-next/compare/v1.1.3...v1.2.0) (2025-09-24)
 
 

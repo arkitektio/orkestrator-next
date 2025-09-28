@@ -19,13 +19,33 @@ export const UserAvatar = (props: { sub: string }) => {
       <AvatarImage
         src={
           resolve(data?.user?.profile.avatar?.presignedUrl) as
-          | string
-          | undefined
+            | string
+            | undefined
         }
         alt={data?.user?.username}
       />
       <AvatarFallback>{data?.user.username.slice(0, 2)}</AvatarFallback>
     </Avatar>
+  );
+};
+
+export const UserUsername = (props: { sub: string }) => {
+  const { data } = useUserQuery({
+    variables: {
+      id: props.sub,
+    },
+  });
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <LokUser.DetailLink object={props.sub}>
+          <span className="cursor-pointer">{data?.user.username}</span>
+        </LokUser.DetailLink>
+      </TooltipTrigger>
+
+      <TooltipContent>{data?.user.username}</TooltipContent>
+    </Tooltip>
   );
 };
 
@@ -47,8 +67,8 @@ export const UserAvatarUsername = (props: { sub: string }) => {
               className="rounded-md"
               src={
                 resolve(data?.user?.profile.avatar?.presignedUrl) as
-                | string
-                | undefined
+                  | string
+                  | undefined
               }
               alt={data?.user?.username}
             />

@@ -1,0 +1,5 @@
+query GetInstanceMaskViewLabel($id: ID!) {
+  instanceMaskViewLabel(id: $id) {
+    ...InstanceMaskViewLabel
+  }
+}

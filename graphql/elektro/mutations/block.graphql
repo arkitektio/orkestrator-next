@@ -1,0 +1,3 @@
+mutation DeleteBlock($id: ID!) {
+  deleteBlock(input: { id: $id })
+}

@@ -8,11 +8,11 @@ fragment ProtocolEvent on ProtocolEvent {
     label
     plateChildren
   }
-  leftEdges {
-    ...Edge
+  sourceParticipants {
+    ...DetailParticipant
   }
-  rightEdges {
-    ...Edge
+  targetParticipants {
+    ...DetailParticipant
   }
   variables {
     role

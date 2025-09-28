@@ -1,6 +1,6 @@
 import { asDetailQueryRoute } from "@/app/routes/DetailQueryRoute";
+import { DisplayWidget } from "@/command/Menu";
 import { FormDialog, FormSheet } from "@/components/dialog/FormDialog";
-import { ListRender } from "@/components/layout/ListRender";
 import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,18 +9,37 @@ import { useMediaUpload } from "@/datalayer/hooks/useUpload";
 import {
   KraphEntity,
   KraphEntityCategory,
+  KraphMeasurement,
   KraphProtocolEvent,
-  KraphProtocolEventCategory,
 } from "@/linkers";
 import { HobbyKnifeIcon } from "@radix-ui/react-icons";
+import Timestamp from "react-timestamp";
 import { useGetEntityQuery } from "../api/graphql";
+import { NodeQueriesPlanner } from "../components/NodeQueriesPlanner";
 import { SelectiveNodeViewRenderer } from "../components/renderers/NodeQueryRenderer";
 import CreateNodeQueryForm from "../forms/CreateNodeQueryForm";
 import LoadingCreateProtocolEventForm from "../forms/LoadingCreateProtocolEventForm";
 import { UpdateEntityForm } from "../forms/UpdateEntityForm";
-import { DisplayWidget } from "@/command/Menu";
-import { StructureQueriesPlanner } from "../components/StructureQueriesPlanner";
-import { NodeQueriesPlanner } from "../components/NodeQueriesPlanner";
+
+export const calculateDuration = (start?: string, end?: string) => {
+  if (!start) return null;
+  const startDate = new Date(start);
+  const endDate = end ? new Date(end) : new Date();
+  const durationMs = endDate.getTime() - startDate.getTime();
+
+  const seconds = Math.floor((durationMs / 1000) % 60);
+  const minutes = Math.floor((durationMs / (1000 * 60)) % 60);
+  const hours = Math.floor((durationMs / (1000 * 60 * 60)) % 24);
+  const days = Math.floor(durationMs / (1000 * 60 * 60 * 24));
+
+  let durationStr = "";
+  if (days > 0) durationStr += `${days}d `;
+  if (hours > 0) durationStr += `${hours}h `;
+  if (minutes > 0) durationStr += `${minutes}m `;
+  if (seconds > 0 || durationStr === "") durationStr += `${seconds}s`;
+
+  return durationStr.trim();
+};
 
 export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
   const uploadFile = useMediaUpload();
@@ -91,26 +110,57 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
           {data.entity.pinned && <>Pinned</>}
         </div>
       </KraphEntity.Drop>
-      <div className="p-6">Measured by</div>
+      <div className="p-2">Measured by</div>
+
+      <div className="flex flex-row gap-2 p-6 w-full">
+        {data.entity.measuredBy.map((measurement) => (
+          <KraphMeasurement.Smart
+            object={measurement.id}
+            key={`${measurement.id}`}
+            className="w-96"
+
+          >
+            <Card className="p-2 flex flex-col flex-1 w-96">
+              {measurement.source.__typename == "Structure" && (
+                <DisplayWidget
+                  identifier={measurement.source.identifier}
+                  object={measurement.source.object}
+                  link={true}
+                />
+              )}
+              <pre>{measurement.category.label}</pre>
+            </Card>
+          </KraphMeasurement.Smart>
+        ))}
+      </div>
+
+      <div className="p-6">Subjectable to</div>
 
       <div className="flex flex-row gap-2 p-6">
-        {data.entity.measuredBy.map((measurement) => (
+        {data.entity.subjectableTo.map((protocol) => (
           <Card
-            key={`${measurement.id}`}
+            key={`${protocol.role}`}
             className="p-2 flex-col gap-2 flex w-96"
           >
-            {measurement.source.__typename == "Structure" && (
-              <DisplayWidget
-                identifier={measurement.source.identifier}
-                object={measurement.source.object}
+            <FormSheet
+              trigger={
+                <div variant="outline" size="sm">
+                  {" "}
+                  Subject as <pre>{protocol.role}</pre> in{" "}
+                  {protocol.category.label}
+                </div>
+              }
+            >
+              <LoadingCreateProtocolEventForm
+                rolemap={{ [protocol.role]: data.entity.id }}
+                id={protocol.category.id}
               />
-            )}
-            <pre>{measurement.category.label}</pre>
+            </FormSheet>
           </Card>
         ))}
       </div>
 
-      <div className="p-6">Subjected to</div>
+      <div className="p-2">Subjected to</div>
 
       <div className="flex flex-row gap-2 p-6">
         {data.entity.subjectedTo.map((subjected) => (
@@ -118,17 +168,36 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
             key={`${subjected.id}`}
             className="p-2 flex-row gap-2 flex w-96"
           >
-            subjected as <pre>{subjected.role}</pre> in
-
-
+            <div className="my-auto border border-1 rounded  px-2 py-1">
+              {subjected.role}
+            </div>
             {subjected.target.__typename == "ProtocolEvent" && (
-              <KraphProtocolEvent.DetailLink object={subjected.target.id}>
-                {subjected.target.category.label}
-
-                {subjected.target.validFrom}
-
-                {subjected.target.validTo}
-              </KraphProtocolEvent.DetailLink>
+              <div className="flex flex-col">
+                <KraphProtocolEvent.DetailLink
+                  object={subjected.target.id}
+                  className={"text-xl font-bold"}
+                >
+                  {subjected.target.category.label}
+                </KraphProtocolEvent.DetailLink>
+                <div className="text-sm text-muted-foreground flex flex-row gap-2">
+                  {subjected.target.validFrom && (
+                    <Timestamp date={subjected.target.validFrom} relative />
+                  )}
+                  {subjected.target.validTo && subjected.target.validFrom && (
+                    <div>
+                      (~
+                      {calculateDuration(
+                        subjected.target.validFrom,
+                        subjected.target.validTo,
+                      )}
+                      )
+                    </div>
+                  )}
+                  {!subjected.target.validTo && !subjected.target.validFrom && (
+                    <div>No validity</div>
+                  )}
+                </div>
+              </div>
             )}
           </Card>
         ))}
@@ -139,16 +208,36 @@ export default asDetailQueryRoute(useGetEntityQuery, ({ data, refetch }) => {
       <div className="flex flex-row gap-2 p-6">
         {data.entity.targetedBy.map((targeted) => (
           <Card key={`${targeted.id}`} className="p-2 flex-row gap-2 flex w-96">
-            <pre>{targeted.role}</pre>
-
+            <div className="my-auto border border-1 rounded  px-2 py-1">
+              {targeted.role}
+            </div>
             {targeted.source.__typename == "ProtocolEvent" && (
-              <KraphProtocolEvent.DetailLink object={targeted.source.id}>
-                {targeted.source.label}
-
-                {targeted.source.validFrom}
-
-                {targeted.source.validTo}
-              </KraphProtocolEvent.DetailLink>
+              <div className="flex flex-col">
+                <KraphProtocolEvent.DetailLink
+                  object={targeted.source.id}
+                  className={"text-xl font-bold"}
+                >
+                  {targeted.source.category.label}
+                </KraphProtocolEvent.DetailLink>
+                <div className="text-sm text-muted-foreground flex flex-row gap-2">
+                  {targeted.source.validFrom && (
+                    <Timestamp date={targeted.source.validFrom} relative />
+                  )}
+                  {targeted.source.validTo && targeted.source.validFrom && (
+                    <div>
+                      (~
+                      {calculateDuration(
+                        targeted.source.validFrom,
+                        targeted.source.validTo,
+                      )}
+                      )
+                    </div>
+                  )}
+                  {!targeted.source.validTo && !targeted.source.validFrom && (
+                    <div>No validity</div>
+                  )}
+                </div>
+              </div>
             )}
           </Card>
         ))}

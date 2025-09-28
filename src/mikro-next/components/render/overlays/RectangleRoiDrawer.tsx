@@ -44,8 +44,6 @@ export const RectangleRoiDrawer = ({
         z,
       );
 
-      console.log("Converted vectors for ROI:", vectors);
-
       const result = await createRoi({
         variables: {
           input: {
@@ -58,7 +56,6 @@ export const RectangleRoiDrawer = ({
 
       if (result.data) {
         toast.success("Rectangle ROI created successfully!");
-        console.log("Created ROI:", result.data.createRoi);
       }
     } catch (error) {
       console.error("Error creating ROI:", error);

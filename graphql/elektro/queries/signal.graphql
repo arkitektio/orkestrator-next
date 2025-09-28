@@ -1,0 +1,14 @@
+query DetailAnalogSignal($id: ID!) {
+  analogSignal(id: $id) {
+    ...AnalogSignal
+  }
+}
+
+query ListAnalogSignal(
+  $pagination: OffsetPaginationInput
+  $filters: AnalogSignalFilter
+) {
+  analogSignals(pagination: $pagination, filters: $filters) {
+    ...ListAnalogSignal
+  }
+}

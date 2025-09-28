@@ -90,11 +90,24 @@ export const SelectionProvider: React.FC<ArkitektProps> = ({ children }) => {
         }
       });
 
-      setSelection((selection) =>
-        selectables
-          .map((item) => item.structure)
-          .filter((_, index) => indexesToSelect.includes(index)),
+      const selectedStructures = selectables
+        .map((item) => item.structure)
+        .filter((_, index) => indexesToSelect.includes(index));
+
+      setSelection(selectedStructures);
+
+      // Remove any of the selected items from B selection to maintain mutual exclusivity
+      setBSelection((bOld) =>
+        bOld.filter(
+          (bItem) =>
+            !selectedStructures.some(
+              (selectedItem) =>
+                selectedItem.identifier === bItem.identifier &&
+                selectedItem.object === bItem.object,
+            ),
+        ),
       );
+
       setIsMultiSelecting(true);
     }
   };
@@ -115,10 +128,20 @@ export const SelectionProvider: React.FC<ArkitektProps> = ({ children }) => {
           );
           return filtered;
         }
+
+        // Remove from B selection if it exists there
+        setBSelection((bOld) =>
+          bOld.filter(
+            (item) =>
+              item.identifier !== structure.identifier ||
+              item.object !== structure.object,
+          ),
+        );
+
         return [...old, structure];
       });
     },
-    [setSelection],
+    [setSelection, setBSelection],
   );
 
   const toggleBSelection = useCallback(
@@ -137,10 +160,20 @@ export const SelectionProvider: React.FC<ArkitektProps> = ({ children }) => {
           );
           return filtered;
         }
+
+        // Remove from A selection if it exists there
+        setSelection((aOld) =>
+          aOld.filter(
+            (item) =>
+              item.identifier !== structure.identifier ||
+              item.object !== structure.object,
+          ),
+        );
+
         return [...old, structure];
       });
     },
-    [setBSelection],
+    [setBSelection, setSelection],
   );
 
   const removeSelection = useCallback(() => {

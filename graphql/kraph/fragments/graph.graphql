@@ -1,3 +1,36 @@
+fragment MaterializedEdge on MaterializedEdge {
+  source {
+    id
+  }
+  target {
+    id
+  }
+  relation {
+    id
+    label
+  }
+}
+
+fragment ListMaterializedEdge on MaterializedEdge {
+  id
+  source {
+    id
+  }
+  target {
+    id
+    label
+  }
+  relation {
+    id
+    label
+    description
+  }
+  graph {
+    id
+    name
+  }
+}
+
 fragment Graph on Graph {
   id
   name
@@ -38,6 +71,9 @@ fragment Graph on Graph {
   pinned
   store {
     ...MediaStore
+  }
+  materializedEdges {
+    ...MaterializedEdge
   }
 }
 

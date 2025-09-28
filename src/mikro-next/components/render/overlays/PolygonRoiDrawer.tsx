@@ -18,8 +18,6 @@ export const PolygonRoiDrawer = ({
   const createRoi = useRoiCreation(image.id);
 
   const onPolygonDrawn = async (points: THREE.Vector3[]) => {
-    console.log("Polygon drawn:", points);
-
     try {
       const polygonPoints: [number, number][] = points.map((p) => [p.x, p.y]);
 

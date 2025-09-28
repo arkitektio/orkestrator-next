@@ -2,10 +2,12 @@ import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { DroppableNavLink } from "@/components/ui/link";
 import {
   KraphEntityCategory,
+  KraphGraphQuery,
+  KraphNode,
   KraphProtocolEventCategory,
   KraphReagentCategory,
   KraphRelationCategory,
-  KraphStructureCategory
+  KraphStructureCategory,
 } from "@/linkers";
 import {
   CatIcon,
@@ -14,7 +16,7 @@ import {
   Home,
   Notebook,
   Ruler,
-  SparkleIcon
+  SparkleIcon,
 } from "lucide-react";
 import * as React from "react";
 import { BsRecord } from "react-icons/bs";
@@ -27,7 +29,7 @@ import {
 } from "../api/graphql";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
 
-interface IDataSidebarProps { }
+interface IDataSidebarProps {}
 
 export const NavigationPane = (props: {}) => {
   const { data } = useStartPaneQuery();
@@ -131,7 +133,10 @@ export const NavigationPane = (props: {}) => {
               Pinned Entities
             </div>
             {data.entityCategories.map((i) => (
-              <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
+              <div
+                className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground"
+                key={key}
+              >
                 <KraphEntityCategory.DetailLink
                   object={i.id}
                   className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
@@ -197,6 +202,38 @@ export const NavigationPane = (props: {}) => {
             ))}
           </>
         )}
+        {data?.graphQueries && data.graphQueries.length > 0 && (
+          <>
+            {data.graphQueries.map((i) => (
+              <>
+                <KraphGraphQuery.DetailLink
+                  className="text-muted-foreground text-xs font-semibold uppercase mt-6 mb-4"
+                  object={i.id}
+                >
+                  {i.name}
+                </KraphGraphQuery.DetailLink>
+                {i.render.__typename == "NodeList" && (
+                  <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground">
+                    {i.render.nodes.map((entity) => (
+                      <KraphNode.Smart key={entity.id} object={entity.id}>
+                        <div className="flex flex-col  gap-4 rounded-lg ml-2 text-muted-foreground w-full">
+                          <KraphNode.DetailLink
+                            object={entity.id}
+                            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+                          >
+                            <SparkleIcon className="h-4 w-4" />
+                            {entity.label}
+                          </KraphNode.DetailLink>
+                        </div>
+                      </KraphNode.Smart>
+                    ))}
+                  </div>
+                )}
+              </>
+            ))}
+          </>
+        )}
+
         {data?.protocolEventCategories &&
           data.protocolEventCategories.length > 0 && (
             <>

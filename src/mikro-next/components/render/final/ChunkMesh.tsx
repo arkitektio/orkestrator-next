@@ -1,7 +1,7 @@
-import { Edges, Text, useSelect } from "@react-three/drei";
+import { Edges, Text } from "@react-three/drei";
 
 import { ColorMap, RgbViewFragment } from "@/mikro-next/api/graphql";
-import { useFrame, useThree } from "@react-three/fiber";
+import { useFrame, useThree, ThreeEvent } from "@react-three/fiber";
 import { useRef, useState, useMemo } from "react";
 import * as THREE from "three";
 import type { Chunk, DataType } from "zarrita";
@@ -304,13 +304,7 @@ export const useShouldRender = ({
 
       // Debug logging (only occasionally to avoid spam)
       if (frame.current % 30 === 0) {
-        console.log(
-          `Chunk ${currentScaleX}x: basePixel=${basePixelUnit.toFixed(2)}, ` +
-            `thisScaled=${thisChunkScaledPixelSize.toFixed(2)}, ` +
-            `optimalScale=${optimalScaleX}x, optimalScaled=${optimalScaledPixelSize.toFixed(2)}, ` +
-            `diff=${pixelSizeDifference.toFixed(2)}, threshold=${relativeThreshold.toFixed(2)}, ` +
-            `render=${isBestLOD}`,
-        );
+        // console.log( --- IGNORE ---
       }
     }
 
@@ -503,8 +497,6 @@ export const ChunkBitmapTexture = ({
 
   const colormapTexture = getColormapForView(view);
 
-  const selected = useSelect().map((sel) => sel.userData.viewId);
-
   const box_shape_3d = chunk_shape?.slice(3, 5);
   // The geometry should be scaled by the scale factor to maintain proper alignment
   const box_shape = [box_shape_3d[0] * scaleX, box_shape_3d[1] * scaleY, 1];
@@ -525,18 +517,12 @@ export const ChunkBitmapTexture = ({
     box_position_3d[0] * baseChunkHeight * scaleY -
     (baseChunkHeight * scaleY) / 2;
 
-  const isSelected =
-    selected.find((id: string) => id === view.id) !== undefined;
-  console.log("Is selected:", isSelected);
-
   // Get edge color and thickness based on scale
   const edgeProperties = getEdgePropertiesForScale(scaleX);
 
   cLimMax = view.contrastLimitMax || texture?.max;
   cLimMin = view.contrastLimitMin || texture?.min;
   const gamma = view.gamma || 1;
-
-  console.log("cLimMax", cLimMax, "cLimMin", cLimMin, "texture", texture);
 
   // Calculate z-position based on scale: higher resolution (lower scaleX) should be on top
   // Use negative values so 1x is at z=0, 2x at z=-0.001, 4x at z=-0.002, etc.
@@ -548,6 +534,24 @@ export const ChunkBitmapTexture = ({
     config: { duration: 8000 },
   });
 
+  const { onCoordinatedClick, z: currentZ } = useViewerState();
+
+  const handleClick = (event: ThreeEvent<MouseEvent>) => {
+    if (onCoordinatedClick) {
+      // Get the intersection point in world coordinates from the event
+      const worldX = event.point.x;
+      const worldY = event.point.y;
+
+      // Convert from world coordinates to image coordinates
+      // World coordinates are centered, so we need to add half the image dimensions
+      const imageX = worldX + imageWidth / 2;
+      const imageY = imageHeight / 2 - worldY;
+
+      // Call the callback with image coordinates and current z
+      onCoordinatedClick(imageX, imageY, currentZ);
+    }
+  };
+
   return (
     <a.mesh
       renderOrder={1}
@@ -555,6 +559,7 @@ export const ChunkBitmapTexture = ({
       position={[xPosition, yPosition, zPosition]}
       userData={{ viewId: view.id }}
       visible={shouldRender}
+      onClick={handleClick}
     >
       <planeGeometry args={[box_shape[1], box_shape[0]]} />
 

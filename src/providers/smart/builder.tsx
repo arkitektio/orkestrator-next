@@ -36,9 +36,21 @@ const buildBaseLink = (to: string) => {
   };
 };
 
-
-export const SmartLink = ({ identifier, object, subroute, subobject, children, ...props }: { identifier: string, object: string, subroute?: string, subobject?: string } & OmitedNavLinkProps) => {
-
+export const SmartLink = ({
+  identifier,
+  object,
+  subroute,
+  subobject,
+  deeproute,
+  children,
+  ...props
+}: {
+  identifier: string;
+  object: string;
+  subroute?: string;
+  subobject?: string;
+  deeproute?: string;
+} & OmitedNavLinkProps) => {
   const model = smartRegistry.findModel(identifier);
   if (!model) {
     return null;
@@ -47,7 +59,7 @@ export const SmartLink = ({ identifier, object, subroute, subobject, children, .
   return (
     <NavLink
       {...props}
-      to={`/${model.path}/${object}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}`}
+      to={`/${model.path}/${object}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}${deeproute ? `/${deeproute}` : ""}`}
       title="Open"
       className={props.className}
     >
@@ -56,12 +68,18 @@ export const SmartLink = ({ identifier, object, subroute, subobject, children, .
   );
 };
 
-const buildModelLink = (to: string) => {
-  return ({ children, subroute, subobject, ...props }: ModelLinkProps) => {
+export const buildModelLink = (to: string) => {
+  return ({
+    children,
+    subroute,
+    subobject,
+    deeproute,
+    ...props
+  }: ModelLinkProps) => {
     return (
       <NavLink
         {...props}
-        to={`/${to}/${props.object}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}`}
+        to={`/${to}/${props.object}${subroute ? `/${subroute}` : ""}${subobject ? `/${subobject}` : ""}${deeproute ? `/${deeproute}` : ""}`}
         title="Open"
         className={props.className}
       >

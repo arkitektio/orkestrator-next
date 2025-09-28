@@ -7,6 +7,11 @@ fragment NodeQuery on NodeQuery {
   name
   pinned
   query
+  description
+  columns {
+    ...Column
+  }
+  kind
 }
 
 fragment ListNodeQuery on NodeQuery {

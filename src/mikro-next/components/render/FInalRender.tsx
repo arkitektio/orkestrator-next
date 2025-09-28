@@ -52,7 +52,6 @@ const GridOverlay = ({
   imageWidth: number;
   imageHeight: number;
 }) => {
-
   const { showGrid } = useViewerState();
 
   if (!showGrid) {
@@ -83,7 +82,6 @@ const GridOverlay = ({
           </mesh>
         );
       })}
-
     </group>
   );
 };
@@ -174,7 +172,7 @@ export const ActiveImageViews = (props: {
             .filter(notEmpty),
         },
       },
-      exclude: [ViewKind.Rgb]
+      exclude: [ViewKind.Rgb],
     },
   });
 
@@ -368,7 +366,7 @@ export const Controls = ({
   );
 };
 
-export const Panels = (props: {}) => {
+export const Panels = () => {
   const {
     openPanels,
     setOpenPanels,
@@ -515,9 +513,6 @@ export const RGBContextRender = (props: {
   if (!chunk_shape) {
     return <div>Chunk shape not found</div>;
   }
-
-  console.log("Views", props.context.views);
-
   return (
     <>
       {props.context.views.map((view, viewIndex) => {
@@ -581,8 +576,6 @@ export const FinalRenderInner = (props: RGBDProps) => {
     return <div>Rendering not implemented for Zarr Version other than 3</div>;
   }
 
-  console.log("Views", props.context.views);
-
   // Handle Alt+scroll for z-stack navigation
   const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
     if (event.altKey) {
@@ -614,13 +607,7 @@ export const FinalRenderInner = (props: RGBDProps) => {
 
   return (
     <div style={{ width: "100%", height: "100%" }} className="relative">
-      {!props.hideControls && (
-        <Controls
-          zSize={zSize}
-          tSize={tSize}
-          availableScales={availableScales}
-        />
-      )}
+
 
       <Suspense
         fallback={<div className="w-full h-full bg-gray-100"> Loading</div>}
@@ -654,12 +641,7 @@ export const FinalRenderInner = (props: RGBDProps) => {
           <RGBContextRender context={props.context} />
 
           {/* Grid overlay with milestone positions */}
-          {showGrid && (
-            <GridOverlay
-              imageWidth={xSize}
-              imageHeight={ySize}
-            />
-          )}
+          {showGrid && <GridOverlay imageWidth={xSize} imageHeight={ySize} />}
 
           {/* Clickable background plane for creating panels */}
           <EventPlane xSize={xSize} ySize={ySize} />
@@ -692,6 +674,14 @@ export const FinalRenderInner = (props: RGBDProps) => {
         )}
 
         <Panels />
+
+        {!props.hideControls && (
+          <Controls
+            zSize={zSize}
+            tSize={tSize}
+            availableScales={availableScales}
+          />
+        )}
       </Suspense>
     </div>
   );
@@ -705,14 +695,21 @@ export const FinalRender = (props: RGBDProps) => {
     new Set([1, ...allLayers.map((layer) => layer.scaleX)]),
   ).sort((a, b) => a - b);
 
+  const onCoordinatedClick = (x: number, y: number, z: number) => {
+    console.log(`Clicked at image coordinates: x=${x}, y=${y}, z=${z}`);
+    // You can extend this to call props.onValueClick if needed
+    // or add custom coordinate handling logic here
+  };
+
   return (
     <ViewerStateProvider
       availableScales={availableScales}
+      onCoordinatedClick={onCoordinatedClick}
       initialState={{
         // Only most downscaled version enabled by default
         enabledScales: new Set([Math.max(...availableScales)]),
         showRois: true,
-        showGrid: true,
+        showGrid: false,
         z: props.z || 0,
         t: props.t || 0,
         allowRoiDrawing: false,

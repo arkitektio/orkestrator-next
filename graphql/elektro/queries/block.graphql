@@ -1,0 +1,11 @@
+query DetailBlock($id: ID!) {
+  block(id: $id) {
+    ...Block
+  }
+}
+
+query ListBlocks($pagination: OffsetPaginationInput, $filters: BlockFilter) {
+  blocks(pagination: $pagination, filters: $filters) {
+    ...ListBlock
+  }
+}

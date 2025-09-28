@@ -1,4 +1,6 @@
 import { useDialog } from "@/app/dialog";
+import { usePerformAction } from "@/app/hooks/useLocalAction";
+import { useMatchingActions } from "@/app/localactions";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -28,7 +30,7 @@ import {
   useAllPrimaryDefinitionsQuery,
 } from "@/kabinet/api/graphql";
 import {
-  ListMeasurementCategoryFragment,
+  ListMaterializedEdgeFragment,
   ListMeasurementCategoryWithGraphFragment,
   ListRelationCategoryFragment,
   ListStructureRelationCategoryWithGraphFragment,
@@ -37,14 +39,15 @@ import {
   useCreateRelationMutation,
   useCreateStructureMutation,
   useCreateStructureRelationMutation,
-  useListEntityCategoryQuery,
+  useListMaterializedEdgesQuery,
   useListMeasurmentCategoryQuery,
   useListRelationCategoryQuery,
   useListStructureRelationCategoryQuery,
 } from "@/kraph/api/graphql";
 import { Guard, useRekuest } from "@/lib/arkitekt/Arkitekt";
-import { useArkitekt } from "@/lib/arkitekt/provider";
+import { Action, ActionState } from "@/lib/localactions/LocalActionProvider";
 import { cn } from "@/lib/utils";
+import { Structure } from "@/types";
 import { LightningBoltIcon } from "@radix-ui/react-icons";
 import { CommandGroup } from "cmdk";
 import { PlayIcon } from "lucide-react";
@@ -68,13 +71,6 @@ import {
 import { registeredCallbacks } from "../components/functional/AssignationUpdater";
 import { useAssign } from "../hooks/useAssign";
 import { useHashActionWithProgress } from "../hooks/useHashActionWithProgress";
-import { Identifier, ObjectID, Structure } from "@/types";
-import { usePerformAction } from "@/app/hooks/useLocalAction";
-import { useMatchingActions } from "@/app/localactions";
-import { Action, ActionState } from "@/lib/localactions/LocalActionProvider";
-import { TinyStructureBox } from "@/kraph/boxes/TinyStructureBox";
-import { use } from "cytoscape";
-import { p } from "node_modules/@udecode/plate-media/dist/BasePlaceholderPlugin-Dmi28cCy";
 
 export type OnDone = (args: {
   event?: AssignationEventFragment;
@@ -324,7 +320,6 @@ export const AssignButton = (
   );
 };
 
-
 export const BatchAssignButton = (
   props: SmartContextProps & { action: PrimaryActionFragment },
 ) => {
@@ -361,16 +356,12 @@ export const BatchAssignButton = (
 
     const the_key = action.args?.at(0)?.key;
 
-
     for (const obj of props.objects) {
       if (!the_key) {
         toast.error("No key found for self");
         return;
       }
       keys[the_key] = obj.object;
-
-
-
 
       if (props.partners) {
         if (props.partners.length === 0) {
@@ -398,7 +389,9 @@ export const BatchAssignButton = (
         }
       }
 
-      const unknownKeys = action.args.filter((arg) => arg.key && !keys[arg.key]);
+      const unknownKeys = action.args.filter(
+        (arg) => arg.key && !keys[arg.key],
+      );
 
       if (unknownKeys.length >= 1) {
         openDialog("actionassign", {
@@ -714,7 +707,6 @@ export const ApplicableBatchActions = (props: PassDownProps) => {
       ],
     });
   }
-
 
   if (props.partners) {
     if (props.partners.length === 0) {
@@ -1381,7 +1373,7 @@ export const ApplicableMeasurements = (props: PassDownProps) => {
 
   const dialog = useDialog();
 
-  const { data, error } = useListMeasurmentCategoryQuery({
+  const { data, error } = useListMaterializedEdgesQuery({
     variables: {
       filters: {
         sourceIdentifier: firstObject.identifier,
@@ -1399,13 +1391,9 @@ export const ApplicableMeasurements = (props: PassDownProps) => {
         </span>
       }
     >
-      {data?.measurementCategories.map((x) => (
-        <CreateMeasurementButton
-          measurementCategory={x}
-          left={props}
-          key={x.id}
-        >
-          {x.label}
+      {data?.materializedEdges.map((x) => (
+        <CreateMeasurementButton edge={x} left={props} key={x.id}>
+          {x.relation.label} - {x.target.label}
         </CreateMeasurementButton>
       ))}
       {error && (
@@ -1538,7 +1526,7 @@ export const StructureRelateButton = (props: {
 };
 
 export const CreateMeasurementButton = (props: {
-  measurementCategory: ListMeasurementCategoryWithGraphFragment;
+  edge: ListMaterializedEdgeFragment;
   left: PassDownProps;
   children: React.ReactNode;
 }) => {
@@ -1568,15 +1556,13 @@ export const CreateMeasurementButton = (props: {
     },
   });
 
-  const defaultNew = props.measurementCategory.targetDefinition.defaultUseNew;
+  const defaultNew = false;
 
-  const handleDirectCreation = async (
-    category: ListMeasurementCategoryWithGraphFragment,
-  ) => {
+  const handleDirectCreation = async (edge: ListMaterializedEdgeFragment) => {
     if (!defaultNew) {
       dialog.openDialog("setasmeasurement", {
         left: props.left.objects,
-        measurement: props.measurementCategory,
+        edge: props.edge,
       });
       toast.error("No default entity category set for measurement target");
       return;
@@ -1590,7 +1576,7 @@ export const CreateMeasurementButton = (props: {
           variables: {
             input: {
               structure: leftStructureString,
-              graph: category.graph.id,
+              graph: edge.graph.id,
             },
           },
         });
@@ -1608,7 +1594,7 @@ export const CreateMeasurementButton = (props: {
             input: {
               structure: left.data?.createStructure.id,
               entity: entityResponse.data?.createEntity.id,
-              category: category.id,
+              category: edge.relation.id,
             },
           },
         });
@@ -1625,30 +1611,24 @@ export const CreateMeasurementButton = (props: {
 
   return (
     <CommandItem
-      value={props.measurementCategory.label}
-      key={props.measurementCategory.id}
-      onSelect={() => handleDirectCreation(props.measurementCategory)}
+      value={props.edge.id}
+      key={props.edge.id}
+      onSelect={() => handleDirectCreation(props.edge)}
       className="flex-1 "
     >
       <Tooltip>
         <TooltipTrigger className="flex flex-row group w-full">
           <div className="flex-1">
-            <div className="text-md text-gray-100 text-left">
-              {props.measurementCategory.label}
+            <div className="text-md text-gray-100 text-left flex flex-row gap-2">
+              {props.edge.relation.label}{" "}
+              <pre className="my-auto">{props.edge.target.label}</pre>
             </div>
             <div className="text-xs text-gray-400 text-left">
-              {props.measurementCategory.graph.name}
+              {props.edge.graph.name}
             </div>
           </div>
-          {defaultNew?.label && (
-            <div className="flex-col text-xs text-gray-400 mr-2">
-              <div className="text-right">Will create</div>
-
-              <pre className="flex-1 my-auto">{defaultNew?.label}</pre>
-            </div>
-          )}
         </TooltipTrigger>
-        <TooltipContent>{props.measurementCategory.description}</TooltipContent>
+        <TooltipContent>{props.edge.relation.description}</TooltipContent>
       </Tooltip>
     </CommandItem>
   );
@@ -1904,7 +1884,6 @@ export const SmartContext = (props: SmartContextProps) => {
               <ApplicableBatchActions {...props} filter={filter} />
             )}
           </Guard.Rekuest>
-
 
           <Guard.Kabinet fallback={<></>}>
             <ApplicableDefinitions {...props} filter={filter} />

@@ -38,12 +38,6 @@ export const useAsyncChunk = (props: {
       return;
     }
 
-    console.log(
-      "Rendering chunk with coords",
-      props.chunk_coords,
-      "shouldRender:",
-      props.shouldRender,
-    );
     const abortController = new AbortController();
 
     const calculateImageData = async () => {

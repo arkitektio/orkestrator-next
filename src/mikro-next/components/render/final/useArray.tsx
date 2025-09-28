@@ -60,7 +60,6 @@ export const useArray = (props: { store: ZarrStoreFragment }) => {
           service: "s3",
         });
 
-        console.log("Path", path);
         const store = new S3Store(path, aws);
         const loadedArray = await open.v3(store, { kind: "array" });
 
@@ -116,8 +115,6 @@ export const useArray = (props: { store: ZarrStoreFragment }) => {
           step: 1,
         },
       ];
-
-      console.log("Selection", selection);
 
       const chunk = (await get(loadedArray, selection, {
         opts: { signal: signal },

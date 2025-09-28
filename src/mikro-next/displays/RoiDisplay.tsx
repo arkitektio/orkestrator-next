@@ -24,8 +24,8 @@ export const RoiDisplay = (props: DisplayWidgetProps) => {
         <FinalRender
           context={context}
           rois={[data.roi]}
-          z={data.roi.vectors.at(0).at(2)}
-          t={data.roi.vectors.at(0).at(0)}
+          z={data.roi.vectors.at(0)?.at(2)}
+          t={data.roi.vectors.at(0)?.at(0)}
           hideControls={true}
         />
       )}

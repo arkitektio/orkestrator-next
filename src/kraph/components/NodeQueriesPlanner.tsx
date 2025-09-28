@@ -25,6 +25,8 @@ export const NodeQueriesPlanner = ({ entity }: { entity: EntityFragment }) => {
             <div className="flex flex-col">
               <KraphNodeQuery.DetailLink
                 object={query.id}
+                subroute="node"
+                subobject={entity.id}
                 className="w-full font-light"
               >
                 {query.name}

@@ -32,10 +32,10 @@ export default (props: { category: BaseCategoryFragment }) => {
   const form = useForm<CreateGraphQueryMutationVariables["input"]>({
     defaultValues: {
       query: `MATCH (n:${props.category.ageName})
-RETURN id(n), n.__created_at`,
+RETURN n`,
       description: "No Description",
-      name: "New Step",
-      kind: ViewKind.Table,
+      name: "Default View for " + props.category.label,
+      kind: ViewKind.NodeList,
       graph: props.category.graph.id,
       columns: [
         {

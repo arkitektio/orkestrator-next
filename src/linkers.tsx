@@ -103,6 +103,16 @@ export const MikroRenderTree = buildSmart(
 export const MikroDataset = buildSmart("@mikro/dataset", "mikro/datasets");
 
 export const ElektroTrace = buildSmart("@elektro/trace", "elektro/traces");
+export const ElektroBlock = buildSmart("@elektro/block", "elektro/blocks");
+export const ElektroAnalogSignal = buildSmart(
+  "@elektro/analogsignal",
+  "elektro/analogsignals",
+);
+export const ElektroAnalogSignalChannel = buildSmart(
+  "@elektro/analogsignalchannel",
+  "elektro/analogsignalchannels",
+);
+
 export const ElektroSimulation = buildSmart(
   "@elektro/simulation",
   "elektro/simulations",
@@ -217,6 +227,10 @@ export const KraphNaturalEvent = buildSmart(
   "kraph/naturalevents",
 );
 export const KraphEntity = buildSmart("@kraph/entity", "kraph/entities");
+export const KraphMeasurement = buildSmart(
+  "@kraph/measurement",
+  "kraph/measurements",
+);
 export const KraphStructure = buildSmart(
   "@kraph/structure",
   "kraph/structures",
@@ -247,6 +261,12 @@ export const MikroExperiment = buildSmart(
   "@mikro/experiment",
   "mikro/experiments",
 );
+
+export const MikroInstanceMaskViewLabel = buildSmart(
+  "@mikro/instancemaskviewlabel",
+  "mikro/instancemaskviewlabels",
+);
+
 export const KraphProtocol = buildSmart("@kraph/protocol", "kraph/protocols");
 export const KraphProtocolStep = buildSmart(
   "@kraph/protocolstep",

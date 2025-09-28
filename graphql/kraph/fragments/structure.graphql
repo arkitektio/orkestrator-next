@@ -8,6 +8,13 @@ fragment Structure on Structure {
     identifier
     description
   }
+  metrics {
+    id
+    category {
+      label
+    }
+    value
+  }
 }
 
 fragment ListStructure on Structure {

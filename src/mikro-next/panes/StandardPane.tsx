@@ -16,63 +16,113 @@ import * as React from "react";
 import {
   GlobalSearchQueryVariables,
   useGlobalSearchQuery,
+  useMembersQuery,
 } from "../api/graphql";
 import DatasetCard from "../components/cards/DatasetCard";
 import FileCard from "../components/cards/FileCard";
 import ImageCard from "../components/cards/ImageCard";
+import {
+  UserAvatarUsername,
+  UserUsername,
+} from "@/lok-next/components/UserAvatar";
 
-export const NavigationPane = () => (
-  <div className="flex-1 flex-col">
-    <nav className="grid items-start px-1 text-sm font-medium lg:px-2">
-      <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
-        Explore
-      </div>
-      <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-4">
-        <DroppableNavLink
-          to="/mikro"
-          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
-        >
-          <Home className="h-4 w-4" />
-          Dashboard
-        </DroppableNavLink>
-      </div>
+export const NavigationPane = () => {
+  const { data, error } = useMembersQuery();
 
-      <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
-        Data
-      </div>
-      <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-5">
-        <DroppableNavLink to="/mikro/images" className="flex gap-3 w-full hover:text-primary">
-          <Image className="h-4 w-4" />
-          Images
-        </DroppableNavLink>
-        <DroppableNavLink to="/mikro/tables" className="flex gap-3 w-full hover:text-primary">
-          <Home className="h-4 w-4" />
-          Tables
-        </DroppableNavLink>
-        <DroppableNavLink to="/mikro/stages" className="flex gap-3 w-full hover:text-primary">
-          <CubeIcon className="h-4 w-4" />
-          Stages
-        </DroppableNavLink>
-        <DroppableNavLink to="/mikro/meshes" className="flex gap-3 w-full hover:text-primary">
-          <CubeIcon className="h-4 w-4" />
-          Meshes
-        </DroppableNavLink>
-        <DroppableNavLink to="/mikro/rois" className="flex gap-3 w-full hover:text-primary">
-          <CubeIcon className="h-4 w-4" />
-          Rois
-        </DroppableNavLink>
-        <DroppableNavLink to="/mikro/datasets" className="flex gap-3 w-full hover:text-primary">
-          <Folder className="h-4 w-4" />
-          Datasets
-        </DroppableNavLink>
-        <DroppableNavLink to="/mikro/files" className="flex gap-3 w-full hover:text-primary">
-          <File className="h-4 w-4" />
-          Files
-        </DroppableNavLink>
-      </div>
-    </nav>
-  </div>
-);
+  return (
+    <div className="flex-1 flex-col">
+      <nav className="grid items-start px-1 text-sm font-medium lg:px-2">
+        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
+          Explore
+        </div>
+        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-4">
+          <DroppableNavLink
+            to="/mikro"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <Home className="h-4 w-4" />
+            Dashboard
+          </DroppableNavLink>
+        </div>
+
+        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
+          Data
+        </div>
+        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-5">
+          <DroppableNavLink
+            to="/mikro/images"
+            className="flex gap-3 w-full hover:text-primary"
+          >
+            <Image className="h-4 w-4" />
+            Images
+          </DroppableNavLink>
+          <DroppableNavLink
+            to="/mikro/tables"
+            className="flex gap-3 w-full hover:text-primary"
+          >
+            <Home className="h-4 w-4" />
+            Tables
+          </DroppableNavLink>
+          <DroppableNavLink
+            to="/mikro/stages"
+            className="flex gap-3 w-full hover:text-primary"
+          >
+            <CubeIcon className="h-4 w-4" />
+            Stages
+          </DroppableNavLink>
+          <DroppableNavLink
+            to="/mikro/meshes"
+            className="flex gap-3 w-full hover:text-primary"
+          >
+            <CubeIcon className="h-4 w-4" />
+            Meshes
+          </DroppableNavLink>
+          <DroppableNavLink
+            to="/mikro/rois"
+            className="flex gap-3 w-full hover:text-primary"
+          >
+            <CubeIcon className="h-4 w-4" />
+            Rois
+          </DroppableNavLink>
+          <DroppableNavLink
+            to="/mikro/datasets"
+            className="flex gap-3 w-full hover:text-primary"
+          >
+            <Folder className="h-4 w-4" />
+            Datasets
+          </DroppableNavLink>
+          <DroppableNavLink
+            to="/mikro/files"
+            className="flex gap-3 w-full hover:text-primary"
+          >
+            <File className="h-4 w-4" />
+            Files
+          </DroppableNavLink>
+        </div>
+        {data?.members.map((i) => (
+          <>
+            <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
+              <UserUsername sub={i.user.sub} />
+            </div>
+            <div className="flex flex-col items-start gap-4 rounded-lg ml-5 text-muted-foreground">
+              {i.datasets.map((dataset) => (
+                <DroppableNavLink
+                  to={`/mikro/datasets/${dataset.id}`}
+                  key={dataset.id}
+                  className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+                >
+                  <Folder className="h-4 w-4" />
+                  {dataset.name}
+                </DroppableNavLink>
+              ))}
+            </div>
+          </>
+        ))}
+        {error && <div>Error: {JSON.stringify(error)}</div>}
+      </nav>
+    </div>
+  );
+};
 
 const Pane: React.FunctionComponent = () => {
   const [search, setSearch] = React.useState("");

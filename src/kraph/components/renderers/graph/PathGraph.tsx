@@ -1,4 +1,10 @@
-import { PathFragment } from "@/kraph/api/graphql.js";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  GraphQueryFilters,
+  PathFragment,
+  useRenderGraphQueryQuery,
+} from "@/kraph/api/graphql.js";
 import {
   ReactFlow,
   ReactFlowInstance,
@@ -8,10 +14,16 @@ import {
 import "@xyflow/react/dist/style.css";
 import ELK from "elkjs/lib/elk.bundled.js";
 import React, { useEffect } from "react";
+import { ViewOptions } from "../DelegatingNodeViewRenderer";
+import {
+  PathViewerStateProvider,
+  usePathViewerState,
+} from "./PathViewerStateProvider";
 import DescribeEdge from "./edges/DescribeEdge";
 import EntityRoleEdge from "./edges/EntityRoleEdge";
 import MeasurementEdge from "./edges/MeasurementEdge";
 import RelationEdge from "./edges/RelationEdge";
+import StructureRelationEdge from "./edges/StructureRelationEdge";
 import EntityNode from "./nodes/EntityNode";
 import MetricNode from "./nodes/MetricNode";
 import NaturalEventNode from "./nodes/NaturalEventNode";
@@ -21,14 +33,6 @@ import StructureNode from "./nodes/StructureNode";
 import ThisNode from "./nodes/ThisNode";
 import { PathEdge, PathNode } from "./types";
 import { entityNodesToNodes, entityRelationToEdges } from "./utils";
-import { ViewOptions } from "../DelegatingNodeViewRenderer";
-import { hash } from "crypto";
-import { Button } from "@/components/ui/button";
-import {
-  PathViewerStateProvider,
-  usePathViewerState,
-} from "./PathViewerStateProvider";
-import StructureRelationEdge from "./edges/StructureRelationEdge";
 
 export type Props = {
   path: PathFragment;
@@ -179,5 +183,67 @@ export const PathGraph = (props: Props) => {
     <PathViewerStateProvider>
       <PathGraphInner {...props} key={hashPash(props.path)} />
     </PathViewerStateProvider>
+  );
+};
+
+export const RenderGraphQueryPath = (props: {
+  graphQueryId: string;
+  options?: ViewOptions;
+}) => {
+  const [search, setSearch] = React.useState<string>("");
+
+  // Prepare GraphQL variables
+  const filters: GraphQueryFilters = {
+    search: search || undefined,
+  };
+
+  const { data, loading, error } = useRenderGraphQueryQuery({
+    variables: {
+      id: props.graphQueryId,
+      filters,
+    },
+  });
+
+  // Extract the Path from the response
+  const path =
+    data?.renderGraphQuery?.__typename === "Path"
+      ? data.renderGraphQuery
+      : undefined;
+
+  // Handle search with debouncing
+  const debouncedSetSearch = React.useCallback(
+    React.useMemo(() => {
+      let timeoutId: NodeJS.Timeout;
+      return (value: string) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          setSearch(value);
+        }, 300);
+      };
+    }, []),
+    [],
+  );
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <div className="w-full h-full">
+      {!props.options?.minimal && (
+        <div className="flex items-center py-4 gap-2">
+          <Input
+            placeholder="Search path..."
+            onChange={(event) => debouncedSetSearch(event.target.value)}
+            className="max-w-sm w-full bg-background"
+          />
+        </div>
+      )}
+      {path && <PathGraph path={path} options={props.options} />}
+    </div>
   );
 };

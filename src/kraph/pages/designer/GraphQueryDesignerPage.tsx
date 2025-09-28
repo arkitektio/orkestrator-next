@@ -7,7 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
-import { ColumnFragment, ColumnInput, ColumnKind, MetricKind, UpdateGraphQueryMutationVariables, useGetGraphQuery, useGetGraphQueryQuery, useUpdateGraphQueryMutation, ViewKind } from "@/kraph/api/graphql";
+import {
+  ColumnFragment,
+  ColumnInput,
+  ColumnKind,
+  MetricKind,
+  UpdateGraphQueryMutationVariables,
+  useGetGraphQuery,
+  useGetGraphQueryQuery,
+  useUpdateGraphQueryMutation,
+  ViewKind,
+} from "@/kraph/api/graphql";
 import { CypherField } from "@/kraph/components/cypher/CypherField";
 import { SelectiveGraphQueryRenderer } from "@/kraph/components/renderers/GraphQueryRenderer";
 import { buildCypherSchemaFromGraph } from "@/kraph/components/renderers/utils";
@@ -17,12 +27,10 @@ import { useNavigate } from "react-router-dom";
 
 export type IRepresentationScreenProps = {};
 
-
 export const columnToInput = (column: ColumnFragment): ColumnInput => ({
   ...column,
-  __typename: undefined
-})
-
+  __typename: undefined,
+});
 
 const Page: React.FC<IRepresentationScreenProps> = asDetailQueryRoute(
   useGetGraphQueryQuery,
@@ -30,10 +38,9 @@ const Page: React.FC<IRepresentationScreenProps> = asDetailQueryRoute(
     const navigate = useNavigate();
     const [add] = useUpdateGraphQueryMutation();
 
-
     const { data: graphdata } = useGetGraphQuery({
       variables: {
-        id: data.graphQuery.graph.id
+        id: data.graphQuery.graph.id,
       },
     });
 
@@ -56,15 +63,12 @@ const Page: React.FC<IRepresentationScreenProps> = asDetailQueryRoute(
 
     const kind = form.watch("kind");
 
-
-
     return (
       <PageLayout
         title={<>{data.graphQuery.name} - Designer</>}
         pageActions={
           <div className="flex flex-row gap-2">
-            <>
-            </>
+            <></>
           </div>
         }
       >
@@ -155,22 +159,21 @@ const Page: React.FC<IRepresentationScreenProps> = asDetailQueryRoute(
                   )}
                 </div>
 
-                <Button type="submit" className="w-full mt-2" variant={"outline"}>Render</Button>
-
+                <Button
+                  type="submit"
+                  className="w-full mt-2"
+                  variant={"outline"}
+                >
+                  Render
+                </Button>
               </form>
             </Form>
-
-
           </div>
           <div className="col-span-10 ml-2 h-full w-full">
             <SelectiveGraphQueryRenderer graphQuery={data.graphQuery} />
           </div>
-
         </div>
-
-
-
-      </PageLayout >
+      </PageLayout>
     );
   },
 );

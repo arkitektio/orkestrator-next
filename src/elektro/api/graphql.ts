@@ -1,6 +1,6 @@
-import * as ApolloReactHooks from '@/lib/elektro/funcs';
-import * as Apollo from '@apollo/client';
 import { gql } from '@apollo/client';
+import * as Apollo from '@apollo/client';
+import * as ApolloReactHooks from '@/lib/elektro/funcs';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -35,6 +35,78 @@ export type AccessCredentials = {
   sessionToken: Scalars['String']['output'];
 };
 
+export type AnalogSignal = Signal & {
+  __typename?: 'AnalogSignal';
+  channels: Array<AnalogSignalChannel>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  samplingRate: Scalars['Float']['output'];
+  segment: BlockSegment;
+  timeTrace: Trace;
+  unit?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type AnalogSignalChannelsArgs = {
+  filters?: InputMaybe<AnalogSignalChannelFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+export type AnalogSignalChannel = {
+  __typename?: 'AnalogSignalChannel';
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  index: Scalars['Int']['output'];
+  label?: Maybe<Scalars['String']['output']>;
+  name?: Maybe<Scalars['String']['output']>;
+  signal: AnalogSignal;
+  trace: Trace;
+  unit?: Maybe<Scalars['String']['output']>;
+};
+
+export type AnalogSignalChannelFilter = {
+  AND?: InputMaybe<AnalogSignalChannelFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<AnalogSignalChannelFilter>;
+  OR?: InputMaybe<AnalogSignalChannelFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  label?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  session?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type AnalogSignalChannelInput = {
+  color?: InputMaybe<Array<Scalars['Int']['input']>>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  index: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
+  trace: Scalars['TraceLike']['input'];
+  unit?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AnalogSignalFilter = {
+  AND?: InputMaybe<AnalogSignalFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<AnalogSignalFilter>;
+  OR?: InputMaybe<AnalogSignalFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  label?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  session?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type AnalogSignalInput = {
+  channels: Array<AnalogSignalChannelInput>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  samplingRate: Scalars['Float']['input'];
+  tStart: Scalars['Float']['input'];
+  timeTrace: Scalars['TraceLike']['input'];
+  unit?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type AssociateInput = {
   other: Scalars['ID']['input'];
   selfs: Array<Scalars['ID']['input']>;
@@ -56,6 +128,166 @@ export type Biophysics = {
 
 export type BiophysicsInput = {
   compartments?: Array<CompartmentInput>;
+};
+
+export type Block = {
+  __typename?: 'Block';
+  acquiredAt?: Maybe<Scalars['DateTime']['output']>;
+  /** Who created this recording session */
+  creator?: Maybe<User>;
+  description?: Maybe<Scalars['String']['output']>;
+  /** The groups in this recording session */
+  groups: Array<BlockGroup>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  provenanceEntries: Array<ProvenanceEntry>;
+  /** The segments in this recording session */
+  segments: Array<BlockSegment>;
+  trace: Trace;
+};
+
+
+export type BlockGroupsArgs = {
+  filters?: InputMaybe<BlockGroupFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type BlockProvenanceEntriesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type BlockSegmentsArgs = {
+  filters?: InputMaybe<BlockSegmentFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+export type BlockFilter = {
+  AND?: InputMaybe<BlockFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<BlockFilter>;
+  OR?: InputMaybe<BlockFilter>;
+  groups?: InputMaybe<Array<Scalars['ID']['input']>>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  label?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  trace?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type BlockGroup = {
+  __typename?: 'BlockGroup';
+  /** The analog signals in this group */
+  analogSignals: Array<AnalogSignal>;
+  block: Block;
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  /** The irregularly sampled signals in this group */
+  irregularlySampledSignals: Array<IrregularlySampledSignal>;
+  name: Scalars['String']['output'];
+  /** The spike trains in this group */
+  spikeTrains: Array<SpikeTrain>;
+};
+
+
+export type BlockGroupAnalogSignalsArgs = {
+  filters?: InputMaybe<AnalogSignalFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type BlockGroupIrregularlySampledSignalsArgs = {
+  filters?: InputMaybe<IrregularlySampledSignalFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type BlockGroupSpikeTrainsArgs = {
+  filters?: InputMaybe<SpikeTrainFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+export type BlockGroupFilter = {
+  AND?: InputMaybe<BlockGroupFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<BlockGroupFilter>;
+  OR?: InputMaybe<BlockGroupFilter>;
+  description?: InputMaybe<StrFilterLookup>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type BlockSegment = {
+  __typename?: 'BlockSegment';
+  /** The analog signals in this group */
+  analogSignals: Array<AnalogSignal>;
+  block: Block;
+  /** Who created this segment */
+  creator?: Maybe<User>;
+  description?: Maybe<Scalars['String']['output']>;
+  endTime: Scalars['Float']['output'];
+  /** The groups that this segment belongs to */
+  groups: Array<BlockGroup>;
+  id: Scalars['ID']['output'];
+  /** The irregularly sampled signals in this group */
+  irregularlySampledSignals: Array<IrregularlySampledSignal>;
+  label: Scalars['String']['output'];
+  provenanceEntries: Array<ProvenanceEntry>;
+  /** The spike trains in this group */
+  spikeTrains: Array<SpikeTrain>;
+  startTime: Scalars['Float']['output'];
+};
+
+
+export type BlockSegmentAnalogSignalsArgs = {
+  filters?: InputMaybe<AnalogSignalFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type BlockSegmentGroupsArgs = {
+  filters?: InputMaybe<BlockGroupFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type BlockSegmentIrregularlySampledSignalsArgs = {
+  filters?: InputMaybe<IrregularlySampledSignalFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type BlockSegmentProvenanceEntriesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type BlockSegmentSpikeTrainsArgs = {
+  filters?: InputMaybe<SpikeTrainFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+export type BlockSegmentFilter = {
+  AND?: InputMaybe<BlockSegmentFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<BlockSegmentFilter>;
+  OR?: InputMaybe<BlockSegmentFilter>;
+  description?: InputMaybe<StrFilterLookup>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  name?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type BlockSegmentInput = {
+  analogSignals?: Array<AnalogSignalInput>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  irregularlySampledSignals?: Array<IrregularlySampledSignalInput>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  spikeTrains?: Array<SpikeTrainInput>;
 };
 
 export type Cell = {
@@ -143,6 +375,13 @@ export type CoordInput = {
   x: Scalars['Float']['input'];
   y: Scalars['Float']['input'];
   z: Scalars['Float']['input'];
+};
+
+export type CreateBlockInput = {
+  file?: InputMaybe<Scalars['ID']['input']>;
+  name: Scalars['String']['input'];
+  recordingTime?: InputMaybe<Scalars['DateTime']['input']>;
+  segments?: Array<BlockSegmentInput>;
 };
 
 export type CreateDatasetInput = {
@@ -239,6 +478,10 @@ export type DatasetFilter = {
   OR?: InputMaybe<DatasetFilter>;
   id?: InputMaybe<Scalars['ID']['input']>;
   name?: InputMaybe<StrFilterLookup>;
+};
+
+export type DeleteBlockInput = {
+  id: Scalars['ID']['input'];
 };
 
 export type DeleteDatasetInput = {
@@ -398,6 +641,35 @@ export enum HistoryKind {
   Update = 'UPDATE'
 }
 
+export type IrregularlySampledSignal = Signal & {
+  __typename?: 'IrregularlySampledSignal';
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  segment: BlockSegment;
+  trace: Trace;
+  unit?: Maybe<Scalars['String']['output']>;
+};
+
+export type IrregularlySampledSignalFilter = {
+  AND?: InputMaybe<IrregularlySampledSignalFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<IrregularlySampledSignalFilter>;
+  OR?: InputMaybe<IrregularlySampledSignalFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  label?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  session?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type IrregularlySampledSignalInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  times: Scalars['TraceLike']['input'];
+  trace: Scalars['TraceLike']['input'];
+  unit?: InputMaybe<Scalars['String']['input']>;
+};
+
 /** A change made to a model. */
 export type ModelChange = {
   __typename?: 'ModelChange';
@@ -439,9 +711,9 @@ export type ModelConfig = {
   cells: Array<Cell>;
   celsius: Scalars['Float']['output'];
   label?: Maybe<Scalars['String']['output']>;
-  netConnections: Array<NetConnection>;
-  netStimulators: Array<NetStimulator>;
-  netSynapses: Array<NetSynapse>;
+  netConnections?: Maybe<Array<NetConnection>>;
+  netStimulators?: Maybe<Array<NetStimulator>>;
+  netSynapses?: Maybe<Array<NetSynapse>>;
   vInit: Scalars['Float']['output'];
 };
 
@@ -457,6 +729,8 @@ export type ModelConfigInput = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  /** Create a new block */
+  createBlock: Block;
   /** Create a new dataset to organize data */
   createDataset: Dataset;
   /** Create a new experiment */
@@ -469,6 +743,8 @@ export type Mutation = {
   createRoi: Roi;
   /** Create a new simulsation */
   createSimulation: Simulation;
+  /** Delete an existing block */
+  deleteBlock: Scalars['ID']['output'];
   /** Delete an existing dataset */
   deleteDataset: Scalars['ID']['output'];
   /** Delete an existing file */
@@ -522,6 +798,11 @@ export type Mutation = {
 };
 
 
+export type MutationCreateBlockArgs = {
+  input: CreateBlockInput;
+};
+
+
 export type MutationCreateDatasetArgs = {
   input: CreateDatasetInput;
 };
@@ -549,6 +830,11 @@ export type MutationCreateRoiArgs = {
 
 export type MutationCreateSimulationArgs = {
   input: CreateSimulationInput;
+};
+
+
+export type MutationDeleteBlockArgs = {
+  input: DeleteBlockInput;
 };
 
 
@@ -684,11 +970,13 @@ export type NetConnection = {
 };
 
 export type NetConnectionInput = {
+  delay?: InputMaybe<Scalars['Float']['input']>;
   id?: Scalars['ID']['input'];
-  interval?: InputMaybe<Scalars['Float']['input']>;
   kind?: ConnectionKind;
-  number?: Scalars['Int']['input'];
-  start?: Scalars['Float']['input'];
+  netStimulator: Scalars['ID']['input'];
+  synapse: Scalars['ID']['input'];
+  threshold?: InputMaybe<Scalars['Float']['input']>;
+  weight?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type NetStimulator = {
@@ -714,11 +1002,14 @@ export type NetSynapse = {
 };
 
 export type NetSynapseInput = {
+  cell: Scalars['ID']['input'];
+  e: Scalars['Float']['input'];
   id: Scalars['ID']['input'];
-  interval?: InputMaybe<Scalars['Float']['input']>;
   kind?: SynapseKind;
-  number?: Scalars['Int']['input'];
-  start?: Scalars['Float']['input'];
+  location: Scalars['ID']['input'];
+  position?: Scalars['Float']['input'];
+  tau1: Scalars['Float']['input'];
+  tau2: Scalars['Float']['input'];
 };
 
 export type NeuronModel = {
@@ -776,6 +1067,12 @@ export enum Ordering {
   DescNullsLast = 'DESC_NULLS_LAST'
 }
 
+export type Organization = {
+  __typename?: 'Organization';
+  id: Scalars['String']['output'];
+  slug: Scalars['String']['output'];
+};
+
 export type PinDatasetInput = {
   id: Scalars['ID']['input'];
   pin: Scalars['Boolean']['input'];
@@ -825,6 +1122,14 @@ export type ProvenanceEntry = {
 
 export type Query = {
   __typename?: 'Query';
+  /** Returns a list of images */
+  analogSignal: AnalogSignal;
+  /** Returns a list of images */
+  analogSignalChannel: AnalogSignalChannel;
+  analogSignalChannels: Array<AnalogSignalChannel>;
+  analogSignals: Array<AnalogSignal>;
+  block: Block;
+  blocks: Array<Block>;
   /** Returns a list of cells in a model */
   cells: Array<Cell>;
   dataset: Dataset;
@@ -856,6 +1161,39 @@ export type Query = {
   /** Returns a single image by ID */
   trace: Trace;
   traces: Array<Trace>;
+};
+
+
+export type QueryAnalogSignalArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryAnalogSignalChannelArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryAnalogSignalChannelsArgs = {
+  filters?: InputMaybe<AnalogSignalChannelFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryAnalogSignalsArgs = {
+  filters?: InputMaybe<AnalogSignalFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryBlockArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryBlocksArgs = {
+  filters?: InputMaybe<BlockFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -1022,9 +1360,9 @@ export type RoiFilter = {
   OR?: InputMaybe<RoiFilter>;
   id?: InputMaybe<Scalars['ID']['input']>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
-  image?: InputMaybe<Scalars['ID']['input']>;
   kind?: InputMaybe<RoiKindChoices>;
   search?: InputMaybe<Scalars['String']['input']>;
+  trace?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type Recording = {
@@ -1070,7 +1408,7 @@ export type RecordingViewInput = {
   duration?: InputMaybe<Scalars['Float']['input']>;
   label?: InputMaybe<Scalars['String']['input']>;
   offset?: InputMaybe<Scalars['Float']['input']>;
-  recording?: InputMaybe<Scalars['ID']['input']>;
+  recording: Scalars['ID']['input'];
 };
 
 export type RequestAccessInput = {
@@ -1179,6 +1517,12 @@ export type SectionParamMapInput = {
   value: Scalars['Float']['input'];
 };
 
+/** A signal recorded during a recording session */
+export type Signal = {
+  name: Scalars['String']['output'];
+  segment: BlockSegment;
+};
+
 export type Simulation = {
   __typename?: 'Simulation';
   createdAt: Scalars['DateTime']['output'];
@@ -1216,6 +1560,36 @@ export type SimulationFilter = {
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   name?: InputMaybe<StrFilterLookup>;
   search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type SpikeTrain = Signal & {
+  __typename?: 'SpikeTrain';
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  segment: BlockSegment;
+  trace: Trace;
+};
+
+export type SpikeTrainFilter = {
+  AND?: InputMaybe<SpikeTrainFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<SpikeTrainFilter>;
+  OR?: InputMaybe<SpikeTrainFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  ids?: InputMaybe<Array<Scalars['ID']['input']>>;
+  label?: InputMaybe<StrFilterLookup>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  session?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type SpikeTrainInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  leftSweep?: InputMaybe<Scalars['Float']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  tStart: Scalars['Float']['input'];
+  tStop: Scalars['Float']['input'];
+  times: Scalars['TraceLike']['input'];
+  waveforms?: InputMaybe<Scalars['TraceLike']['input']>;
 };
 
 export type Stimulus = {
@@ -1259,7 +1633,7 @@ export type StimulusViewInput = {
   duration?: InputMaybe<Scalars['Float']['input']>;
   label?: InputMaybe<Scalars['String']['input']>;
   offset?: InputMaybe<Scalars['Float']['input']>;
-  stimulus?: InputMaybe<Scalars['ID']['input']>;
+  stimulus: Scalars['ID']['input'];
 };
 
 export type StrFilterLookup = {
@@ -1406,8 +1780,8 @@ export type UpdateTraceInput = {
 
 export type User = {
   __typename?: 'User';
+  activeOrganization?: Maybe<Organization>;
   preferredUsername: Scalars['String']['output'];
-  roles: Array<Scalars['String']['output']>;
   sub: Scalars['String']['output'];
 };
 
@@ -1435,6 +1809,24 @@ export type StimulusFragment = { __typename?: 'Stimulus', id: string, label: str
 export type DetailStimulusFragment = { __typename?: 'Stimulus', id: string, label: string, simulation: { __typename?: 'Simulation', id: string, name: string, duration: number, dt: number, createdAt: any, model: { __typename?: 'NeuronModel', id: string, name: string, config: { __typename?: 'ModelConfig', cells: Array<{ __typename?: 'Cell', id: string, biophysics: { __typename?: 'Biophysics', compartments: Array<{ __typename?: 'Compartment', id: string, mechanisms: Array<string>, globalParams: Array<{ __typename?: 'GlobalParamMap', param: string, value: number }>, sectionParams: Array<{ __typename?: 'SectionParamMap', param: string, value: number }> }> }, topology: { __typename?: 'Topology', sections: Array<{ __typename?: 'Section', id: string, diam: number, length?: number | null, category: string, coords?: Array<{ __typename?: 'Coord', x: number, y: number, z: number }> | null, connections: Array<{ __typename?: 'Connection', parent: string, location: number }> }> } }> }, comparisons: Array<{ __typename?: 'Comparison', collection: { __typename?: 'ModelCollection', id: string, name: string }, changes: Array<{ __typename?: 'Change', type: ChangeType, path: Array<string>, valueA?: any | null, valueB?: any | null }> }>, simulations: Array<{ __typename?: 'Simulation', id: string, name: string, duration: number }> }, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } }, recordings: Array<{ __typename?: 'Recording', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null }, rois: Array<{ __typename?: 'ROI', id: string, vectors: Array<any>, label?: string | null, kind: RoiKind }> } }>, stimuli: Array<{ __typename?: 'Stimulus', id: string, label: string, cell: string, location: string, position: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }>, creator?: { __typename?: 'User', sub: string } | null } };
 
 export type ListStimulusFragment = { __typename?: 'Stimulus', id: string, label: string, cell: string, simulation: { __typename?: 'Simulation', id: string } };
+
+export type BlockGroupFragment = { __typename?: 'BlockGroup', id: string, name: string };
+
+export type AnalogSignalChannelFragment = { __typename?: 'AnalogSignalChannel', id: string, name?: string | null, index: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } };
+
+export type DetailAnalogSignalChannelFragment = { __typename?: 'AnalogSignalChannel', id: string, name?: string | null, index: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } }, signal: { __typename?: 'AnalogSignal', id: string, name: string, unit?: string | null, channels: Array<{ __typename?: 'AnalogSignalChannel', id: string, name?: string | null, index: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }>, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } } };
+
+export type AnalogSignalFragment = { __typename?: 'AnalogSignal', id: string, name: string, unit?: string | null, channels: Array<{ __typename?: 'AnalogSignalChannel', id: string, name?: string | null, index: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }>, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } };
+
+export type ListAnalogSignalFragment = { __typename?: 'AnalogSignal', id: string, name: string, segment: { __typename?: 'BlockSegment', id: string } };
+
+export type ListAnalogSignalChannelFragment = { __typename?: 'AnalogSignalChannel', id: string, name?: string | null, signal: { __typename?: 'AnalogSignal', id: string } };
+
+export type BlockSegmentFragment = { __typename?: 'BlockSegment', id: string, analogSignals: Array<{ __typename?: 'AnalogSignal', id: string, name: string, unit?: string | null, channels: Array<{ __typename?: 'AnalogSignalChannel', id: string, name?: string | null, index: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }>, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> };
+
+export type BlockFragment = { __typename?: 'Block', id: string, name: string, description?: string | null, segments: Array<{ __typename?: 'BlockSegment', id: string, analogSignals: Array<{ __typename?: 'AnalogSignal', id: string, name: string, unit?: string | null, channels: Array<{ __typename?: 'AnalogSignalChannel', id: string, name?: string | null, index: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }>, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> }>, groups: Array<{ __typename?: 'BlockGroup', id: string, name: string }> };
+
+export type ListBlockFragment = { __typename?: 'Block', id: string, name: string };
 
 export type CredentialsFragment = { __typename?: 'Credentials', accessKey: string, status: string, secretKey: string, bucket: string, key: string, sessionToken: string, store: string };
 
@@ -1478,6 +1870,13 @@ export type DetailTraceFragment = { __typename?: 'Trace', id: string, name: stri
 
 export type ListTraceFragment = { __typename?: 'Trace', id: string, name: string };
 
+export type DeleteBlockMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteBlockMutation = { __typename?: 'Mutation', deleteBlock: string };
+
 export type RequestUploadMutationVariables = Exact<{
   key: Scalars['String']['input'];
   datalayer: Scalars['String']['input'];
@@ -1493,6 +1892,21 @@ export type RequestAccessMutationVariables = Exact<{
 
 
 export type RequestAccessMutation = { __typename?: 'Mutation', requestAccess: { __typename?: 'AccessCredentials', accessKey: string, secretKey: string, bucket: string, key: string, sessionToken: string, path: string } };
+
+export type DetailBlockQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DetailBlockQuery = { __typename?: 'Query', block: { __typename?: 'Block', id: string, name: string, description?: string | null, segments: Array<{ __typename?: 'BlockSegment', id: string, analogSignals: Array<{ __typename?: 'AnalogSignal', id: string, name: string, unit?: string | null, channels: Array<{ __typename?: 'AnalogSignalChannel', id: string, name?: string | null, index: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }>, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }> }>, groups: Array<{ __typename?: 'BlockGroup', id: string, name: string }> } };
+
+export type ListBlocksQueryVariables = Exact<{
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<BlockFilter>;
+}>;
+
+
+export type ListBlocksQuery = { __typename?: 'Query', blocks: Array<{ __typename?: 'Block', id: string, name: string }> };
 
 export type DetailExperimentQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1558,6 +1972,36 @@ export type GlobalSearchQueryVariables = Exact<{
 
 
 export type GlobalSearchQuery = { __typename?: 'Query', traces: Array<{ __typename?: 'Trace', id: string, name: string }> };
+
+export type DetailAnalogSignalQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DetailAnalogSignalQuery = { __typename?: 'Query', analogSignal: { __typename?: 'AnalogSignal', id: string, name: string, unit?: string | null, channels: Array<{ __typename?: 'AnalogSignalChannel', id: string, name?: string | null, index: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }>, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } } };
+
+export type ListAnalogSignalQueryVariables = Exact<{
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<AnalogSignalFilter>;
+}>;
+
+
+export type ListAnalogSignalQuery = { __typename?: 'Query', analogSignals: Array<{ __typename?: 'AnalogSignal', id: string, name: string, segment: { __typename?: 'BlockSegment', id: string } }> };
+
+export type DetailAnalogSignalChannelQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DetailAnalogSignalChannelQuery = { __typename?: 'Query', analogSignalChannel: { __typename?: 'AnalogSignalChannel', id: string, name?: string | null, index: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } }, signal: { __typename?: 'AnalogSignal', id: string, name: string, unit?: string | null, channels: Array<{ __typename?: 'AnalogSignalChannel', id: string, name?: string | null, index: number, trace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } }>, timeTrace: { __typename?: 'Trace', id: string, name: string, store: { __typename?: 'ZarrStore', id: string, key: string, bucket: string, path?: string | null, shape?: Array<number> | null, dtype?: string | null } } } } };
+
+export type ListAnalogSignalChannelQueryVariables = Exact<{
+  pagination?: InputMaybe<OffsetPaginationInput>;
+  filters?: InputMaybe<AnalogSignalChannelFilter>;
+}>;
+
+
+export type ListAnalogSignalChannelQuery = { __typename?: 'Query', analogSignalChannels: Array<{ __typename?: 'AnalogSignalChannel', id: string, name?: string | null, signal: { __typename?: 'AnalogSignal', id: string } }> };
 
 export type DetailSimulationQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1783,6 +2227,105 @@ export const ListStimulusFragmentDoc = gql`
   }
 }
     `;
+export const DetailTraceFragmentDoc = gql`
+    fragment DetailTrace on Trace {
+  id
+  name
+  store {
+    ...ZarrStore
+  }
+}
+    ${ZarrStoreFragmentDoc}`;
+export const AnalogSignalChannelFragmentDoc = gql`
+    fragment AnalogSignalChannel on AnalogSignalChannel {
+  id
+  name
+  index
+  trace {
+    ...DetailTrace
+  }
+}
+    ${DetailTraceFragmentDoc}`;
+export const AnalogSignalFragmentDoc = gql`
+    fragment AnalogSignal on AnalogSignal {
+  id
+  name
+  unit
+  channels {
+    ...AnalogSignalChannel
+  }
+  timeTrace {
+    ...DetailTrace
+  }
+}
+    ${AnalogSignalChannelFragmentDoc}
+${DetailTraceFragmentDoc}`;
+export const DetailAnalogSignalChannelFragmentDoc = gql`
+    fragment DetailAnalogSignalChannel on AnalogSignalChannel {
+  id
+  name
+  index
+  trace {
+    ...DetailTrace
+  }
+  signal {
+    ...AnalogSignal
+  }
+}
+    ${DetailTraceFragmentDoc}
+${AnalogSignalFragmentDoc}`;
+export const ListAnalogSignalFragmentDoc = gql`
+    fragment ListAnalogSignal on AnalogSignal {
+  id
+  name
+  segment {
+    id
+  }
+}
+    `;
+export const ListAnalogSignalChannelFragmentDoc = gql`
+    fragment ListAnalogSignalChannel on AnalogSignalChannel {
+  id
+  name
+  signal {
+    id
+  }
+}
+    `;
+export const BlockSegmentFragmentDoc = gql`
+    fragment BlockSegment on BlockSegment {
+  id
+  analogSignals {
+    ...AnalogSignal
+  }
+}
+    ${AnalogSignalFragmentDoc}`;
+export const BlockGroupFragmentDoc = gql`
+    fragment BlockGroup on BlockGroup {
+  id
+  name
+}
+    `;
+export const BlockFragmentDoc = gql`
+    fragment Block on Block {
+  id
+  name
+  description
+  segments {
+    ...BlockSegment
+  }
+  groups {
+    ...BlockGroup
+  }
+}
+    ${BlockSegmentFragmentDoc}
+${BlockGroupFragmentDoc}`;
+export const ListBlockFragmentDoc = gql`
+    fragment ListBlock on Block {
+  id
+  name
+}
+    `;
 export const CredentialsFragmentDoc = gql`
     fragment Credentials on Credentials {
   accessKey
@@ -1893,21 +2436,43 @@ export const ListRecordingFragmentDoc = gql`
   }
 }
     `;
-export const DetailTraceFragmentDoc = gql`
-    fragment DetailTrace on Trace {
-  id
-  name
-  store {
-    ...ZarrStore
-  }
-}
-    ${ZarrStoreFragmentDoc}`;
 export const ListTraceFragmentDoc = gql`
     fragment ListTrace on Trace {
   id
   name
 }
     `;
+export const DeleteBlockDocument = gql`
+    mutation DeleteBlock($id: ID!) {
+  deleteBlock(input: {id: $id})
+}
+    `;
+export type DeleteBlockMutationFn = Apollo.MutationFunction<DeleteBlockMutation, DeleteBlockMutationVariables>;
+
+/**
+ * __useDeleteBlockMutation__
+ *
+ * To run a mutation, you first call `useDeleteBlockMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteBlockMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteBlockMutation, { data, loading, error }] = useDeleteBlockMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteBlockMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteBlockMutation, DeleteBlockMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<DeleteBlockMutation, DeleteBlockMutationVariables>(DeleteBlockDocument, options);
+      }
+export type DeleteBlockMutationHookResult = ReturnType<typeof useDeleteBlockMutation>;
+export type DeleteBlockMutationResult = Apollo.MutationResult<DeleteBlockMutation>;
+export type DeleteBlockMutationOptions = Apollo.BaseMutationOptions<DeleteBlockMutation, DeleteBlockMutationVariables>;
 export const RequestUploadDocument = gql`
     mutation RequestUpload($key: String!, $datalayer: String!) {
   requestUpload(input: {key: $key, datalayer: $datalayer}) {
@@ -1936,9 +2501,9 @@ export type RequestUploadMutationFn = Apollo.MutationFunction<RequestUploadMutat
  * });
  */
 export function useRequestUploadMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestUploadMutation, RequestUploadMutationVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useMutation<RequestUploadMutation, RequestUploadMutationVariables>(RequestUploadDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<RequestUploadMutation, RequestUploadMutationVariables>(RequestUploadDocument, options);
+      }
 export type RequestUploadMutationHookResult = ReturnType<typeof useRequestUploadMutation>;
 export type RequestUploadMutationResult = Apollo.MutationResult<RequestUploadMutation>;
 export type RequestUploadMutationOptions = Apollo.BaseMutationOptions<RequestUploadMutation, RequestUploadMutationVariables>;
@@ -1970,12 +2535,83 @@ export type RequestAccessMutationFn = Apollo.MutationFunction<RequestAccessMutat
  * });
  */
 export function useRequestAccessMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<RequestAccessMutation, RequestAccessMutationVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useMutation<RequestAccessMutation, RequestAccessMutationVariables>(RequestAccessDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<RequestAccessMutation, RequestAccessMutationVariables>(RequestAccessDocument, options);
+      }
 export type RequestAccessMutationHookResult = ReturnType<typeof useRequestAccessMutation>;
 export type RequestAccessMutationResult = Apollo.MutationResult<RequestAccessMutation>;
 export type RequestAccessMutationOptions = Apollo.BaseMutationOptions<RequestAccessMutation, RequestAccessMutationVariables>;
+export const DetailBlockDocument = gql`
+    query DetailBlock($id: ID!) {
+  block(id: $id) {
+    ...Block
+  }
+}
+    ${BlockFragmentDoc}`;
+
+/**
+ * __useDetailBlockQuery__
+ *
+ * To run a query within a React component, call `useDetailBlockQuery` and pass it any options that fit your needs.
+ * When your component renders, `useDetailBlockQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useDetailBlockQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDetailBlockQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailBlockQuery, DetailBlockQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailBlockQuery, DetailBlockQueryVariables>(DetailBlockDocument, options);
+      }
+export function useDetailBlockLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailBlockQuery, DetailBlockQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailBlockQuery, DetailBlockQueryVariables>(DetailBlockDocument, options);
+        }
+export type DetailBlockQueryHookResult = ReturnType<typeof useDetailBlockQuery>;
+export type DetailBlockLazyQueryHookResult = ReturnType<typeof useDetailBlockLazyQuery>;
+export type DetailBlockQueryResult = Apollo.QueryResult<DetailBlockQuery, DetailBlockQueryVariables>;
+export const ListBlocksDocument = gql`
+    query ListBlocks($pagination: OffsetPaginationInput, $filters: BlockFilter) {
+  blocks(pagination: $pagination, filters: $filters) {
+    ...ListBlock
+  }
+}
+    ${ListBlockFragmentDoc}`;
+
+/**
+ * __useListBlocksQuery__
+ *
+ * To run a query within a React component, call `useListBlocksQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListBlocksQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListBlocksQuery({
+ *   variables: {
+ *      pagination: // value for 'pagination'
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useListBlocksQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListBlocksQuery, ListBlocksQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListBlocksQuery, ListBlocksQueryVariables>(ListBlocksDocument, options);
+      }
+export function useListBlocksLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListBlocksQuery, ListBlocksQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListBlocksQuery, ListBlocksQueryVariables>(ListBlocksDocument, options);
+        }
+export type ListBlocksQueryHookResult = ReturnType<typeof useListBlocksQuery>;
+export type ListBlocksLazyQueryHookResult = ReturnType<typeof useListBlocksLazyQuery>;
+export type ListBlocksQueryResult = Apollo.QueryResult<ListBlocksQuery, ListBlocksQueryVariables>;
 export const DetailExperimentDocument = gql`
     query DetailExperiment($id: ID!) {
   experiment(id: $id) {
@@ -2001,13 +2637,13 @@ export const DetailExperimentDocument = gql`
  * });
  */
 export function useDetailExperimentQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailExperimentQuery, DetailExperimentQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<DetailExperimentQuery, DetailExperimentQueryVariables>(DetailExperimentDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailExperimentQuery, DetailExperimentQueryVariables>(DetailExperimentDocument, options);
+      }
 export function useDetailExperimentLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailExperimentQuery, DetailExperimentQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<DetailExperimentQuery, DetailExperimentQueryVariables>(DetailExperimentDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailExperimentQuery, DetailExperimentQueryVariables>(DetailExperimentDocument, options);
+        }
 export type DetailExperimentQueryHookResult = ReturnType<typeof useDetailExperimentQuery>;
 export type DetailExperimentLazyQueryHookResult = ReturnType<typeof useDetailExperimentLazyQuery>;
 export type DetailExperimentQueryResult = Apollo.QueryResult<DetailExperimentQuery, DetailExperimentQueryVariables>;
@@ -2037,13 +2673,13 @@ export const ListExperimentsDocument = gql`
  * });
  */
 export function useListExperimentsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListExperimentsQuery, ListExperimentsQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<ListExperimentsQuery, ListExperimentsQueryVariables>(ListExperimentsDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListExperimentsQuery, ListExperimentsQueryVariables>(ListExperimentsDocument, options);
+      }
 export function useListExperimentsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListExperimentsQuery, ListExperimentsQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<ListExperimentsQuery, ListExperimentsQueryVariables>(ListExperimentsDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListExperimentsQuery, ListExperimentsQueryVariables>(ListExperimentsDocument, options);
+        }
 export type ListExperimentsQueryHookResult = ReturnType<typeof useListExperimentsQuery>;
 export type ListExperimentsLazyQueryHookResult = ReturnType<typeof useListExperimentsLazyQuery>;
 export type ListExperimentsQueryResult = Apollo.QueryResult<ListExperimentsQuery, ListExperimentsQueryVariables>;
@@ -2072,13 +2708,13 @@ export const DetailModelCollectionDocument = gql`
  * });
  */
 export function useDetailModelCollectionQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailModelCollectionQuery, DetailModelCollectionQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<DetailModelCollectionQuery, DetailModelCollectionQueryVariables>(DetailModelCollectionDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailModelCollectionQuery, DetailModelCollectionQueryVariables>(DetailModelCollectionDocument, options);
+      }
 export function useDetailModelCollectionLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailModelCollectionQuery, DetailModelCollectionQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<DetailModelCollectionQuery, DetailModelCollectionQueryVariables>(DetailModelCollectionDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailModelCollectionQuery, DetailModelCollectionQueryVariables>(DetailModelCollectionDocument, options);
+        }
 export type DetailModelCollectionQueryHookResult = ReturnType<typeof useDetailModelCollectionQuery>;
 export type DetailModelCollectionLazyQueryHookResult = ReturnType<typeof useDetailModelCollectionLazyQuery>;
 export type DetailModelCollectionQueryResult = Apollo.QueryResult<DetailModelCollectionQuery, DetailModelCollectionQueryVariables>;
@@ -2108,13 +2744,13 @@ export const ListModelCollectionsDocument = gql`
  * });
  */
 export function useListModelCollectionsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListModelCollectionsQuery, ListModelCollectionsQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<ListModelCollectionsQuery, ListModelCollectionsQueryVariables>(ListModelCollectionsDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListModelCollectionsQuery, ListModelCollectionsQueryVariables>(ListModelCollectionsDocument, options);
+      }
 export function useListModelCollectionsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListModelCollectionsQuery, ListModelCollectionsQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<ListModelCollectionsQuery, ListModelCollectionsQueryVariables>(ListModelCollectionsDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListModelCollectionsQuery, ListModelCollectionsQueryVariables>(ListModelCollectionsDocument, options);
+        }
 export type ListModelCollectionsQueryHookResult = ReturnType<typeof useListModelCollectionsQuery>;
 export type ListModelCollectionsLazyQueryHookResult = ReturnType<typeof useListModelCollectionsLazyQuery>;
 export type ListModelCollectionsQueryResult = Apollo.QueryResult<ListModelCollectionsQuery, ListModelCollectionsQueryVariables>;
@@ -2143,13 +2779,13 @@ export const DetailNeuronModelDocument = gql`
  * });
  */
 export function useDetailNeuronModelQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailNeuronModelQuery, DetailNeuronModelQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<DetailNeuronModelQuery, DetailNeuronModelQueryVariables>(DetailNeuronModelDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailNeuronModelQuery, DetailNeuronModelQueryVariables>(DetailNeuronModelDocument, options);
+      }
 export function useDetailNeuronModelLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailNeuronModelQuery, DetailNeuronModelQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<DetailNeuronModelQuery, DetailNeuronModelQueryVariables>(DetailNeuronModelDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailNeuronModelQuery, DetailNeuronModelQueryVariables>(DetailNeuronModelDocument, options);
+        }
 export type DetailNeuronModelQueryHookResult = ReturnType<typeof useDetailNeuronModelQuery>;
 export type DetailNeuronModelLazyQueryHookResult = ReturnType<typeof useDetailNeuronModelLazyQuery>;
 export type DetailNeuronModelQueryResult = Apollo.QueryResult<DetailNeuronModelQuery, DetailNeuronModelQueryVariables>;
@@ -2177,13 +2813,13 @@ export const ListNeuronModelsDocument = gql`
  * });
  */
 export function useListNeuronModelsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListNeuronModelsQuery, ListNeuronModelsQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<ListNeuronModelsQuery, ListNeuronModelsQueryVariables>(ListNeuronModelsDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListNeuronModelsQuery, ListNeuronModelsQueryVariables>(ListNeuronModelsDocument, options);
+      }
 export function useListNeuronModelsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListNeuronModelsQuery, ListNeuronModelsQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<ListNeuronModelsQuery, ListNeuronModelsQueryVariables>(ListNeuronModelsDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListNeuronModelsQuery, ListNeuronModelsQueryVariables>(ListNeuronModelsDocument, options);
+        }
 export type ListNeuronModelsQueryHookResult = ReturnType<typeof useListNeuronModelsQuery>;
 export type ListNeuronModelsLazyQueryHookResult = ReturnType<typeof useListNeuronModelsLazyQuery>;
 export type ListNeuronModelsQueryResult = Apollo.QueryResult<ListNeuronModelsQuery, ListNeuronModelsQueryVariables>;
@@ -2212,13 +2848,13 @@ export const DetailRecordingDocument = gql`
  * });
  */
 export function useDetailRecordingQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailRecordingQuery, DetailRecordingQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<DetailRecordingQuery, DetailRecordingQueryVariables>(DetailRecordingDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailRecordingQuery, DetailRecordingQueryVariables>(DetailRecordingDocument, options);
+      }
 export function useDetailRecordingLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailRecordingQuery, DetailRecordingQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<DetailRecordingQuery, DetailRecordingQueryVariables>(DetailRecordingDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailRecordingQuery, DetailRecordingQueryVariables>(DetailRecordingDocument, options);
+        }
 export type DetailRecordingQueryHookResult = ReturnType<typeof useDetailRecordingQuery>;
 export type DetailRecordingLazyQueryHookResult = ReturnType<typeof useDetailRecordingLazyQuery>;
 export type DetailRecordingQueryResult = Apollo.QueryResult<DetailRecordingQuery, DetailRecordingQueryVariables>;
@@ -2248,13 +2884,13 @@ export const ListRecordingsDocument = gql`
  * });
  */
 export function useListRecordingsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListRecordingsQuery, ListRecordingsQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<ListRecordingsQuery, ListRecordingsQueryVariables>(ListRecordingsDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListRecordingsQuery, ListRecordingsQueryVariables>(ListRecordingsDocument, options);
+      }
 export function useListRecordingsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListRecordingsQuery, ListRecordingsQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<ListRecordingsQuery, ListRecordingsQueryVariables>(ListRecordingsDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListRecordingsQuery, ListRecordingsQueryVariables>(ListRecordingsDocument, options);
+        }
 export type ListRecordingsQueryHookResult = ReturnType<typeof useListRecordingsQuery>;
 export type ListRecordingsLazyQueryHookResult = ReturnType<typeof useListRecordingsLazyQuery>;
 export type ListRecordingsQueryResult = Apollo.QueryResult<ListRecordingsQuery, ListRecordingsQueryVariables>;
@@ -2284,16 +2920,158 @@ export const GlobalSearchDocument = gql`
  * });
  */
 export function useGlobalSearchQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
+      }
 export function useGlobalSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
+        }
 export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>;
 export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>;
 export type GlobalSearchQueryResult = Apollo.QueryResult<GlobalSearchQuery, GlobalSearchQueryVariables>;
+export const DetailAnalogSignalDocument = gql`
+    query DetailAnalogSignal($id: ID!) {
+  analogSignal(id: $id) {
+    ...AnalogSignal
+  }
+}
+    ${AnalogSignalFragmentDoc}`;
+
+/**
+ * __useDetailAnalogSignalQuery__
+ *
+ * To run a query within a React component, call `useDetailAnalogSignalQuery` and pass it any options that fit your needs.
+ * When your component renders, `useDetailAnalogSignalQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useDetailAnalogSignalQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDetailAnalogSignalQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailAnalogSignalQuery, DetailAnalogSignalQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailAnalogSignalQuery, DetailAnalogSignalQueryVariables>(DetailAnalogSignalDocument, options);
+      }
+export function useDetailAnalogSignalLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailAnalogSignalQuery, DetailAnalogSignalQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailAnalogSignalQuery, DetailAnalogSignalQueryVariables>(DetailAnalogSignalDocument, options);
+        }
+export type DetailAnalogSignalQueryHookResult = ReturnType<typeof useDetailAnalogSignalQuery>;
+export type DetailAnalogSignalLazyQueryHookResult = ReturnType<typeof useDetailAnalogSignalLazyQuery>;
+export type DetailAnalogSignalQueryResult = Apollo.QueryResult<DetailAnalogSignalQuery, DetailAnalogSignalQueryVariables>;
+export const ListAnalogSignalDocument = gql`
+    query ListAnalogSignal($pagination: OffsetPaginationInput, $filters: AnalogSignalFilter) {
+  analogSignals(pagination: $pagination, filters: $filters) {
+    ...ListAnalogSignal
+  }
+}
+    ${ListAnalogSignalFragmentDoc}`;
+
+/**
+ * __useListAnalogSignalQuery__
+ *
+ * To run a query within a React component, call `useListAnalogSignalQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListAnalogSignalQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListAnalogSignalQuery({
+ *   variables: {
+ *      pagination: // value for 'pagination'
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useListAnalogSignalQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListAnalogSignalQuery, ListAnalogSignalQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListAnalogSignalQuery, ListAnalogSignalQueryVariables>(ListAnalogSignalDocument, options);
+      }
+export function useListAnalogSignalLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListAnalogSignalQuery, ListAnalogSignalQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListAnalogSignalQuery, ListAnalogSignalQueryVariables>(ListAnalogSignalDocument, options);
+        }
+export type ListAnalogSignalQueryHookResult = ReturnType<typeof useListAnalogSignalQuery>;
+export type ListAnalogSignalLazyQueryHookResult = ReturnType<typeof useListAnalogSignalLazyQuery>;
+export type ListAnalogSignalQueryResult = Apollo.QueryResult<ListAnalogSignalQuery, ListAnalogSignalQueryVariables>;
+export const DetailAnalogSignalChannelDocument = gql`
+    query DetailAnalogSignalChannel($id: ID!) {
+  analogSignalChannel(id: $id) {
+    ...DetailAnalogSignalChannel
+  }
+}
+    ${DetailAnalogSignalChannelFragmentDoc}`;
+
+/**
+ * __useDetailAnalogSignalChannelQuery__
+ *
+ * To run a query within a React component, call `useDetailAnalogSignalChannelQuery` and pass it any options that fit your needs.
+ * When your component renders, `useDetailAnalogSignalChannelQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useDetailAnalogSignalChannelQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDetailAnalogSignalChannelQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailAnalogSignalChannelQuery, DetailAnalogSignalChannelQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailAnalogSignalChannelQuery, DetailAnalogSignalChannelQueryVariables>(DetailAnalogSignalChannelDocument, options);
+      }
+export function useDetailAnalogSignalChannelLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailAnalogSignalChannelQuery, DetailAnalogSignalChannelQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailAnalogSignalChannelQuery, DetailAnalogSignalChannelQueryVariables>(DetailAnalogSignalChannelDocument, options);
+        }
+export type DetailAnalogSignalChannelQueryHookResult = ReturnType<typeof useDetailAnalogSignalChannelQuery>;
+export type DetailAnalogSignalChannelLazyQueryHookResult = ReturnType<typeof useDetailAnalogSignalChannelLazyQuery>;
+export type DetailAnalogSignalChannelQueryResult = Apollo.QueryResult<DetailAnalogSignalChannelQuery, DetailAnalogSignalChannelQueryVariables>;
+export const ListAnalogSignalChannelDocument = gql`
+    query ListAnalogSignalChannel($pagination: OffsetPaginationInput, $filters: AnalogSignalChannelFilter) {
+  analogSignalChannels(pagination: $pagination, filters: $filters) {
+    ...ListAnalogSignalChannel
+  }
+}
+    ${ListAnalogSignalChannelFragmentDoc}`;
+
+/**
+ * __useListAnalogSignalChannelQuery__
+ *
+ * To run a query within a React component, call `useListAnalogSignalChannelQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListAnalogSignalChannelQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListAnalogSignalChannelQuery({
+ *   variables: {
+ *      pagination: // value for 'pagination'
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useListAnalogSignalChannelQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListAnalogSignalChannelQuery, ListAnalogSignalChannelQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListAnalogSignalChannelQuery, ListAnalogSignalChannelQueryVariables>(ListAnalogSignalChannelDocument, options);
+      }
+export function useListAnalogSignalChannelLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListAnalogSignalChannelQuery, ListAnalogSignalChannelQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListAnalogSignalChannelQuery, ListAnalogSignalChannelQueryVariables>(ListAnalogSignalChannelDocument, options);
+        }
+export type ListAnalogSignalChannelQueryHookResult = ReturnType<typeof useListAnalogSignalChannelQuery>;
+export type ListAnalogSignalChannelLazyQueryHookResult = ReturnType<typeof useListAnalogSignalChannelLazyQuery>;
+export type ListAnalogSignalChannelQueryResult = Apollo.QueryResult<ListAnalogSignalChannelQuery, ListAnalogSignalChannelQueryVariables>;
 export const DetailSimulationDocument = gql`
     query DetailSimulation($id: ID!) {
   simulation(id: $id) {
@@ -2319,13 +3097,13 @@ export const DetailSimulationDocument = gql`
  * });
  */
 export function useDetailSimulationQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailSimulationQuery, DetailSimulationQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<DetailSimulationQuery, DetailSimulationQueryVariables>(DetailSimulationDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailSimulationQuery, DetailSimulationQueryVariables>(DetailSimulationDocument, options);
+      }
 export function useDetailSimulationLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailSimulationQuery, DetailSimulationQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<DetailSimulationQuery, DetailSimulationQueryVariables>(DetailSimulationDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailSimulationQuery, DetailSimulationQueryVariables>(DetailSimulationDocument, options);
+        }
 export type DetailSimulationQueryHookResult = ReturnType<typeof useDetailSimulationQuery>;
 export type DetailSimulationLazyQueryHookResult = ReturnType<typeof useDetailSimulationLazyQuery>;
 export type DetailSimulationQueryResult = Apollo.QueryResult<DetailSimulationQuery, DetailSimulationQueryVariables>;
@@ -2353,13 +3131,13 @@ export const ListSimulationsDocument = gql`
  * });
  */
 export function useListSimulationsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListSimulationsQuery, ListSimulationsQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<ListSimulationsQuery, ListSimulationsQueryVariables>(ListSimulationsDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListSimulationsQuery, ListSimulationsQueryVariables>(ListSimulationsDocument, options);
+      }
 export function useListSimulationsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListSimulationsQuery, ListSimulationsQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<ListSimulationsQuery, ListSimulationsQueryVariables>(ListSimulationsDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListSimulationsQuery, ListSimulationsQueryVariables>(ListSimulationsDocument, options);
+        }
 export type ListSimulationsQueryHookResult = ReturnType<typeof useListSimulationsQuery>;
 export type ListSimulationsLazyQueryHookResult = ReturnType<typeof useListSimulationsLazyQuery>;
 export type ListSimulationsQueryResult = Apollo.QueryResult<ListSimulationsQuery, ListSimulationsQueryVariables>;
@@ -2388,13 +3166,13 @@ export const DetailStimulusDocument = gql`
  * });
  */
 export function useDetailStimulusQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailStimulusQuery, DetailStimulusQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<DetailStimulusQuery, DetailStimulusQueryVariables>(DetailStimulusDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailStimulusQuery, DetailStimulusQueryVariables>(DetailStimulusDocument, options);
+      }
 export function useDetailStimulusLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailStimulusQuery, DetailStimulusQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<DetailStimulusQuery, DetailStimulusQueryVariables>(DetailStimulusDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailStimulusQuery, DetailStimulusQueryVariables>(DetailStimulusDocument, options);
+        }
 export type DetailStimulusQueryHookResult = ReturnType<typeof useDetailStimulusQuery>;
 export type DetailStimulusLazyQueryHookResult = ReturnType<typeof useDetailStimulusLazyQuery>;
 export type DetailStimulusQueryResult = Apollo.QueryResult<DetailStimulusQuery, DetailStimulusQueryVariables>;
@@ -2424,13 +3202,13 @@ export const ListStimuliDocument = gql`
  * });
  */
 export function useListStimuliQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListStimuliQuery, ListStimuliQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<ListStimuliQuery, ListStimuliQueryVariables>(ListStimuliDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListStimuliQuery, ListStimuliQueryVariables>(ListStimuliDocument, options);
+      }
 export function useListStimuliLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListStimuliQuery, ListStimuliQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<ListStimuliQuery, ListStimuliQueryVariables>(ListStimuliDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListStimuliQuery, ListStimuliQueryVariables>(ListStimuliDocument, options);
+        }
 export type ListStimuliQueryHookResult = ReturnType<typeof useListStimuliQuery>;
 export type ListStimuliLazyQueryHookResult = ReturnType<typeof useListStimuliLazyQuery>;
 export type ListStimuliQueryResult = Apollo.QueryResult<ListStimuliQuery, ListStimuliQueryVariables>;
@@ -2459,13 +3237,13 @@ export const DetailTraceDocument = gql`
  * });
  */
 export function useDetailTraceQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailTraceQuery, DetailTraceQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<DetailTraceQuery, DetailTraceQueryVariables>(DetailTraceDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailTraceQuery, DetailTraceQueryVariables>(DetailTraceDocument, options);
+      }
 export function useDetailTraceLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailTraceQuery, DetailTraceQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<DetailTraceQuery, DetailTraceQueryVariables>(DetailTraceDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailTraceQuery, DetailTraceQueryVariables>(DetailTraceDocument, options);
+        }
 export type DetailTraceQueryHookResult = ReturnType<typeof useDetailTraceQuery>;
 export type DetailTraceLazyQueryHookResult = ReturnType<typeof useDetailTraceLazyQuery>;
 export type DetailTraceQueryResult = Apollo.QueryResult<DetailTraceQuery, DetailTraceQueryVariables>;
@@ -2493,13 +3271,13 @@ export const TracesDocument = gql`
  * });
  */
 export function useTracesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<TracesQuery, TracesQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<TracesQuery, TracesQueryVariables>(TracesDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<TracesQuery, TracesQueryVariables>(TracesDocument, options);
+      }
 export function useTracesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<TracesQuery, TracesQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<TracesQuery, TracesQueryVariables>(TracesDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<TracesQuery, TracesQueryVariables>(TracesDocument, options);
+        }
 export type TracesQueryHookResult = ReturnType<typeof useTracesQuery>;
 export type TracesLazyQueryHookResult = ReturnType<typeof useTracesLazyQuery>;
 export type TracesQueryResult = Apollo.QueryResult<TracesQuery, TracesQueryVariables>;

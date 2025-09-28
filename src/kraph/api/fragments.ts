@@ -50,11 +50,6 @@
       "ReagentCategory",
       "StructureCategory"
     ],
-    "PairsPathTable": [
-      "Pairs",
-      "Path",
-      "Table"
-    ],
     "PairsPathTableNodeList": [
       "NodeList",
       "Pairs",

@@ -1,11 +1,14 @@
 import { buildDeleteAction } from "@/lib/localactions/builders/deleteAction";
 import { Action } from "@/lib/localactions/LocalActionProvider";
 import {
+  DeleteEdgeDocument,
   DeleteEntityCategoryDocument,
   DeleteGraphDocument,
   DeleteMeasurementCategoryDocument,
   DeleteNaturalEventCategoryDocument,
+  DeleteNodeDocument,
   DeleteProtocolEventCategoryDocument,
+  DetachDeleteNodeDocument,
 } from "./api/graphql";
 
 export const NewEntityAction: Action = {
@@ -77,6 +80,50 @@ export const KRAPH_ACTIONS = {
     typename: "MeasurementCategory",
     mutation: DeleteMeasurementCategoryDocument,
   }),
+  "delete-edge": buildDeleteAction({
+    title: "Delete Edge",
+    identifier: "@kraph/edge",
+    description: "Delete the Edge",
+    service: "kraph",
+    typename: "Edge",
+    mutation: DeleteEdgeDocument,
+  }),
+  "delete-entity": buildDeleteAction({
+    title: "Delete Entity",
+    identifier: "@kraph/entity",
+    description: "Delete the Entity",
+    service: "kraph",
+    typename: ["Entity", "Node"],
+    mutation: DeleteNodeDocument,
+  }),
+  "detach-delete-entity": buildDeleteAction({
+    title: "Detach and Delete Entity",
+    identifier: "@kraph/entity",
+    description: "will also delete all connected edges",
+    service: "kraph",
+    typename: ["Entity", "Node"],
+    mutation: DetachDeleteNodeDocument,
+  }),
+  "delete-measurement": buildDeleteAction({
+    title: "Delete Measurment",
+    identifier: "@kraph/measurement",
+    description: "Delete the Measurment",
+    service: "kraph",
+    typename: "Measurement",
+    mutation: DeleteEdgeDocument,
+  }),
+  "delete-node": buildDeleteAction({
+    title: "Delete Node",
+    identifier: "@kraph/node",
+    description: "Delete the Node",
+    service: "kraph",
+    typename: "Node",
+    mutation: DeleteNodeDocument,
+  }),
+  // Custom Actions
+
+
+
   "create-protocol-event-category": {
     title: "Create Protocol Event Category",
     description: "Create a new Protocol Event Category",

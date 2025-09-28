@@ -14,6 +14,7 @@ fragment ParquetStore on ParquetStore {
   key
   bucket
   path
+  presignedUrl
 }
 
 fragment BigFileStore on BigFileStore {

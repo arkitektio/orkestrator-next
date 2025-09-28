@@ -366,7 +366,7 @@ export const Controls = ({
   );
 };
 
-export const Panels = (props: {}) => {
+export const Panels = () => {
   const {
     openPanels,
     setOpenPanels,
@@ -607,13 +607,7 @@ export const FinalRenderInner = (props: RGBDProps) => {
 
   return (
     <div style={{ width: "100%", height: "100%" }} className="relative">
-      {!props.hideControls && (
-        <Controls
-          zSize={zSize}
-          tSize={tSize}
-          availableScales={availableScales}
-        />
-      )}
+
 
       <Suspense
         fallback={<div className="w-full h-full bg-gray-100"> Loading</div>}
@@ -680,6 +674,14 @@ export const FinalRenderInner = (props: RGBDProps) => {
         )}
 
         <Panels />
+
+        {!props.hideControls && (
+          <Controls
+            zSize={zSize}
+            tSize={tSize}
+            availableScales={availableScales}
+          />
+        )}
       </Suspense>
     </div>
   );
@@ -707,7 +709,7 @@ export const FinalRender = (props: RGBDProps) => {
         // Only most downscaled version enabled by default
         enabledScales: new Set([Math.max(...availableScales)]),
         showRois: true,
-        showGrid: true,
+        showGrid: false,
         z: props.z || 0,
         t: props.t || 0,
         allowRoiDrawing: false,

@@ -80,6 +80,13 @@ export const NavigationPane = () => {
             Toolboxes
           </DroppableNavLink>
           <DroppableNavLink
+            to="/rekuest/structurepackages"
+            className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+          >
+            <Box className="h-4 w-4" />
+            Structure Packages
+          </DroppableNavLink>
+          <DroppableNavLink
             to="/rekuest/dashboards"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
           >

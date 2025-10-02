@@ -66,6 +66,40 @@ export const RekuestToolbox = buildSmart(
   "@rekuest/toolbox",
   "rekuest/toolboxes",
 );
+export const RekuestInputStructureUsage = buildSmart(
+  "@rekuest/inputstructureusage",
+  "rekuest/inputstructureusages",
+);
+
+export const RekuestOutputStructureUsage = buildSmart(
+  "@rekuest/outputstructureusage",
+  "rekuest/outputstructureusages",
+);
+
+export const RekuestInputInterfaceUsage = buildSmart(
+  "@rekuest/inputinterfaceusage",
+  "rekuest/inputinterfaceusages",
+);
+
+export const RekuestOutputInterfaceUsage = buildSmart(
+  "@rekuest/inputstructureusage",
+  "rekuest/inputstructureusages",
+);
+
+export const RekuestStructurePackage = buildSmart(
+  "@rekuest/structurepackage",
+  "rekuest/structurepackages",
+);
+
+export const RekuestStructure = buildSmart(
+  "@rekuest/structure",
+  "rekuest/structures",
+);
+
+export const RekuestInterface = buildSmart(
+  "@rekuest/interface",
+  "rekuest/interfaces",
+);
 
 export const RekuestDescriptor = buildSmart(
   "@rekuest/descriptor",

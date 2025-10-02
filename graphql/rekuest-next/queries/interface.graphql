@@ -1,0 +1,14 @@
+query GetInterface($id: ID!) {
+  interface(id: $id) {
+    ...Interface
+  }
+}
+
+query ListInterfaces(
+  $filters: InterfaceFilter
+  $pagination: OffsetPaginationInput
+) {
+  interfaces(filters: $filters, pagination: $pagination) {
+    ...ListInterface
+  }
+}

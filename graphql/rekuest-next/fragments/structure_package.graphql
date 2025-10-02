@@ -1,0 +1,98 @@
+fragment ListOutputStructureUsage on OutputStructureUsage {
+  id
+  portKey
+  action {
+    id
+    name
+    description
+  }
+}
+
+fragment ListInputStructureUsage on InputStructureUsage {
+  id
+  portKey
+  action {
+    id
+    name
+    description
+  }
+}
+
+fragment ListInputInterfaceUsage on InputInterfaceUsage {
+  id
+  portKey
+  action {
+    id
+    name
+    description
+  }
+}
+
+fragment ListOutputInterfaceUsage on OutputInterfaceUsage {
+  id
+  portKey
+  action {
+    id
+    name
+    description
+  }
+}
+
+fragment Structure on Structure {
+  id
+  key
+  description
+  implements {
+    ...Interface
+  }
+  outputUsages {
+    ...ListOutputStructureUsage
+  }
+  inputUsages {
+    ...ListInputStructureUsage
+  }
+}
+
+fragment ListStructure on Structure {
+  id
+  key
+  description
+  implements {
+    ...Interface
+  }
+}
+
+fragment ListInterface on Interface {
+  id
+  key
+  description
+}
+
+fragment Interface on Interface {
+  id
+  key
+  description
+  outputUsages {
+    ...ListOutputInterfaceUsage
+  }
+  inputUsages {
+    ...ListInputInterfaceUsage
+  }
+}
+
+fragment StructurePackage on StructurePackage {
+  id
+  key
+  structures {
+    ...ListStructure
+  }
+  interfaces {
+    ...ListInterface
+  }
+}
+
+fragment ListStructurePackage on StructurePackage {
+  id
+  key
+  description
+}

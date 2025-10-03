@@ -21,8 +21,14 @@ import Shortcuts from "./pages/Shortcuts";
 import Toolbox from "./pages/Toolbox";
 import Toolboxes from "./pages/Toolboxes";
 import Standardpane from "./panes/StandardPane";
+import StructurePackages from "./pages/StructurePackages";
+import StructurePackage from "./pages/StructurePackage";
+import StructurePage from "./pages/StructurePage";
+import InterfacePage from "./pages/InterfacePage";
+import InterfacesPage from "./pages/InterfacesPage";
+import StructuresPage from "./pages/StructuresPage";
 
-interface Props { }
+interface Props {}
 /**
  *
  * The Rekuest Module is the entrypoint to all specfic rekuest functionality.
@@ -44,6 +50,13 @@ const Module: React.FC<Props> = () => {
           <Route path="actions" element={<Actions />} />
           <Route path="dashboards" element={<Dashboards />} />
           <Route path="dashboards/:id" element={<Dashboard />} />
+          <Route path="structurepackages" element={<StructurePackages />} />
+          <Route path="structurepackages/:id" element={<StructurePackage />} />
+
+          <Route path="structures/:id" element={<StructurePage />} />
+          <Route path="structures" element={<StructuresPage />} />
+          <Route path="interfaces/:id" element={<InterfacePage />} />
+          <Route path="interfaces" element={<InterfacesPage />} />
           <Route path="memoryshelves/:id" element={<MemoryShelve />} />
           <Route path="bloks/:id" element={<Blok />} />
           <Route path="bloks" element={<Bloks />} />

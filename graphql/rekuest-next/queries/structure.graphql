@@ -1,0 +1,14 @@
+query GetStructure($id: ID!) {
+  structure(id: $id) {
+    ...Structure
+  }
+}
+
+query ListStructures(
+  $filters: StructureFilter
+  $pagination: OffsetPaginationInput
+) {
+  structures(filters: $filters, pagination: $pagination) {
+    ...ListStructure
+  }
+}

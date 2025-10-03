@@ -1,9 +1,9 @@
 import { ListRender } from "@/components/layout/ListRender";
-import { MikroDataset } from "@/linkers";
+import { KraphGraph, MikroDataset } from "@/linkers";
 import {
   OffsetPaginationInput,
   OntologyFilter,
-  useListGraphsQuery
+  useListGraphsQuery,
 } from "../../api/graphql";
 import GraphCard from "../cards/GraphCard";
 
@@ -21,7 +21,7 @@ const List = ({ filters, pagination }: Props) => {
     <ListRender
       array={data?.graphs}
       title={
-        <MikroDataset.ListLink className="flex-0">Graphs</MikroDataset.ListLink>
+        <KraphGraph.ListLink className="flex-0">Graphs</KraphGraph.ListLink>
       }
       refetch={refetch}
     >

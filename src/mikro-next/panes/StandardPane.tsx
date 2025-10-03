@@ -22,9 +22,13 @@ import DatasetCard from "../components/cards/DatasetCard";
 import FileCard from "../components/cards/FileCard";
 import ImageCard from "../components/cards/ImageCard";
 import {
+  JustUsername,
   UserAvatarUsername,
   UserUsername,
 } from "@/lok-next/components/UserAvatar";
+import { SubTreeTitle } from "@/components/explorer/SubTreeTitle";
+import { SubTree } from "@/components/explorer/SubTree";
+import { Separator } from "@/components/ui/separator";
 
 export const NavigationPane = () => {
   const { data, error } = useMembersQuery();
@@ -32,10 +36,8 @@ export const NavigationPane = () => {
   return (
     <div className="flex-1 flex-col">
       <nav className="grid items-start px-1 text-sm font-medium lg:px-2">
-        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
-          Explore
-        </div>
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-4">
+        <SubTreeTitle>Explore</SubTreeTitle>
+        <SubTree>
           <DroppableNavLink
             to="/mikro"
             className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
@@ -43,12 +45,10 @@ export const NavigationPane = () => {
             <Home className="h-4 w-4" />
             Dashboard
           </DroppableNavLink>
-        </div>
+        </SubTree>
 
-        <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
-          Data
-        </div>
-        <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-5">
+        <SubTreeTitle>Data</SubTreeTitle>
+        <SubTree>
           <DroppableNavLink
             to="/mikro/images"
             className="flex gap-3 w-full hover:text-primary"
@@ -98,13 +98,21 @@ export const NavigationPane = () => {
             <File className="h-4 w-4" />
             Files
           </DroppableNavLink>
-        </div>
+        </SubTree>
+
+        <Separator className="my-5" />
+
         {data?.members.map((i) => (
           <>
-            <div className="text-muted-foreground text-xs font-semibold uppercase mb-4">
-              <UserUsername sub={i.user.sub} />
-            </div>
-            <div className="flex flex-col items-start gap-4 rounded-lg ml-5 text-muted-foreground">
+            <SubTreeTitle>
+              <DroppableNavLink
+                to={`/mikro/peerhome/${i.user.sub}`}
+                className="text-muted-foreground text-xs font-semibold uppercase "
+              >
+                <JustUsername sub={i.user.sub} />
+              </DroppableNavLink>
+            </SubTreeTitle>
+            <SubTree>
               {i.datasets.map((dataset) => (
                 <DroppableNavLink
                   to={`/mikro/datasets/${dataset.id}`}
@@ -115,7 +123,7 @@ export const NavigationPane = () => {
                   {dataset.name}
                 </DroppableNavLink>
               ))}
-            </div>
+            </SubTree>
           </>
         ))}
         {error && <div>Error: {JSON.stringify(error)}</div>}

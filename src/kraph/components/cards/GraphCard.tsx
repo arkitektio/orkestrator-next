@@ -19,8 +19,8 @@ const TheCard = ({ item, mates }: Props) => {
         {item?.store?.presignedUrl && (
           <Image
             src={s3resolve(item?.store?.presignedUrl)}
-            style={{ filter: "brightness(0.2)" }}
-            className="z-3 object-cover h-full w-full absolute top-0 left-0 rounded rounded-lg"
+            style={{ filter: "brightness(0.7)" }}
+            className="z-3 object-cover h-full w-full absolute top-0 left-0 rounded rounded-lg p-1 bg-black/30"
           />
         )}
         <div className="p-3 h-full w-full bg-opacity-20 hover:bg-opacity-10 transition-all ease-in-out duration-200 flex flex-col break-all overflow-y-hidden truncate">

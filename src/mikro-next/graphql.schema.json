@@ -4634,6 +4634,18 @@
                 "deprecationReason": null
               },
               {
+                "name": "order",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "FileOrder",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
                 "name": "pagination",
                 "description": null,
                 "type": {
@@ -5002,6 +5014,18 @@
               "ofType": null
             },
             "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "owner",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
+              "ofType": null
+            },
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -6201,6 +6225,18 @@
             "deprecationReason": null
           },
           {
+            "name": "BIGINT_ARRAY",
+            "description": "Array of large integers",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "BIGINT_ARRAY_ARRAY",
+            "description": "2D Array of large integers",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "BLOB",
             "description": "Binary large object for storing binary data",
             "isDeprecated": false,
@@ -6213,8 +6249,20 @@
             "deprecationReason": null
           },
           {
+            "name": "BOOLEAN_ARRAY",
+            "description": "Array of boolean values",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "DATE",
             "description": "Specific date (year, month, day)",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DATE_ARRAY",
+            "description": "Array of dates",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -6227,6 +6275,12 @@
           {
             "name": "DOUBLE",
             "description": "Double-precision floating point number",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "DOUBLE_ARRAY",
+            "description": "Array of double-precision floating point numbers",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -6303,6 +6357,12 @@
             "deprecationReason": null
           },
           {
+            "name": "TIME_ARRAY",
+            "description": "Array of times",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "TINYINT",
             "description": "Very small integer (-128 to 127)",
             "isDeprecated": false,
@@ -6317,6 +6377,12 @@
           {
             "name": "VARCHAR",
             "description": "Variable-length string (text)",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "VARCHAR_ARRAY",
+            "description": "Array of variable-length strings",
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -7398,6 +7464,18 @@
             "deprecationReason": null
           },
           {
+            "name": "owner",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "scope",
             "description": null,
             "type": {
@@ -7433,6 +7511,30 @@
         "isOneOf": null,
         "fields": null,
         "inputFields": null,
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "FileOrder",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "createdAt",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
         "interfaces": null,
         "enumValues": null,
         "possibleTypes": null
@@ -10944,6 +11046,18 @@
             "type": {
               "kind": "SCALAR",
               "name": "Boolean",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "owner",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
               "ofType": null
             },
             "defaultValue": "null",
@@ -26238,6 +26352,18 @@
                 "deprecationReason": null
               },
               {
+                "name": "order",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "FileOrder",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
                 "name": "pagination",
                 "description": null,
                 "type": {
@@ -26888,6 +27014,18 @@
                 "type": {
                   "kind": "INPUT_OBJECT",
                   "name": "FileFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "order",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "FileOrder",
                   "ofType": null
                 },
                 "defaultValue": null,
@@ -29667,6 +29805,18 @@
               "ofType": null
             },
             "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "owner",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
+              "ofType": null
+            },
+            "defaultValue": "null",
             "isDeprecated": false,
             "deprecationReason": null
           },

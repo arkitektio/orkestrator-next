@@ -1,0 +1,9 @@
+query HomePage {
+  blocks: blocks(pagination: { limit: 1 }, order: { createdAt: DESC }) {
+    ...ListBlock
+  }
+
+  models: neuronModels(pagination: { limit: 1 }, order: { createdAt: DESC }) {
+    ...ListNeuronModel
+  }
+}

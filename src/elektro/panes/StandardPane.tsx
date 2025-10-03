@@ -15,7 +15,7 @@ import {
 import TraceCard from "../components/cards/TraceCard";
 import GlobalSearchFilter from "../forms/filter/GlobalSearchFilter";
 
-interface IDataSidebarProps { }
+interface IDataSidebarProps {}
 
 export const NavigationPane = (props: {}) => {
   return (
@@ -31,7 +31,7 @@ export const NavigationPane = (props: {}) => {
         </DroppableNavLink>
       </SubTree>
 
-      <SubTreeTitle>NEURON</SubTreeTitle>
+      <SubTreeTitle>Neuron</SubTreeTitle>
       <SubTree>
         <DroppableNavLink
           to="/elektro/simulations"
@@ -60,6 +60,17 @@ export const NavigationPane = (props: {}) => {
         >
           <CubeIcon className="h-4 w-4" />
           Model Collections
+        </DroppableNavLink>
+      </SubTree>
+
+      <SubTreeTitle>Ephys</SubTreeTitle>
+      <SubTree>
+        <DroppableNavLink
+          to="/elektro/blocks"
+          className="flex flex-row w-full gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary"
+        >
+          <Network className="h-4 w-4" />
+          Blocks
         </DroppableNavLink>
       </SubTree>
     </Tree>

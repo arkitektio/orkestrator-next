@@ -21,6 +21,7 @@ import TablePage from "./pages/TablePage";
 import TablesPage from "./pages/TablesPage";
 import StandardPane from "./panes/StandardPane";
 import InstanceMaskViewLabelPage from "./pages/InstanceMaskViewLabelPage";
+import PeerHomePage from "./pages/PeerHomePage";
 
 export const MikroNextModule: React.FC<Props> = (props) => {
   return (
@@ -39,6 +40,7 @@ export const MikroNextModule: React.FC<Props> = (props) => {
           <Route path="datasets" element={<DatasetsPage />} />
           <Route path="files" element={<FilesPage />} />
           <Route path="rois" element={<RoisPage />} />
+          <Route path="peerhome/:id" element={<PeerHomePage />} />
           <Route path="rois/:id" element={<RoiPage />} />
           <Route path="files/:id" element={<FilePage />} />
           <Route path="tables" element={<TablesPage />} />

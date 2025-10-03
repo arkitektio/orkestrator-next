@@ -49,6 +49,16 @@ export const UserUsername = (props: { sub: string }) => {
   );
 };
 
+export const JustUsername = (props: { sub: string }) => {
+  const { data } = useUserQuery({
+    variables: {
+      id: props.sub,
+    },
+  });
+
+  return data?.user.username;
+};
+
 export const UserAvatarUsername = (props: { sub: string }) => {
   const { data } = useUserQuery({
     variables: {

@@ -10,8 +10,13 @@ interface Props {
 
 const TheCard = ({ file, className }: Props) => {
   return (
-    <MikroFile.Smart object={file?.id} >
-      <Card className={cn("px-2 py-2 aspect-[5/3] justify-center flex items-center ", className)}>
+    <MikroFile.Smart object={file?.id}>
+      <Card
+        className={cn(
+          "px-2 py-2 aspect-[20/3] max-h-20 justify-center flex items-center ",
+          className,
+        )}
+      >
         <CardTitle className="line-clamp-2 break-words">
           <MikroFile.DetailLink object={file.id}>
             {file.name}

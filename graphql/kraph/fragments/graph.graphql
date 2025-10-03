@@ -35,6 +35,7 @@ fragment Graph on Graph {
   id
   name
   description
+  ageName
   structureCategories {
     ...ListStructureCategory
   }

@@ -1838,6 +1838,30 @@
         "possibleTypes": null
       },
       {
+        "kind": "INPUT_OBJECT",
+        "name": "BlockOrder",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "createdAt",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
         "kind": "OBJECT",
         "name": "BlockSegment",
         "description": null,
@@ -2528,7 +2552,7 @@
                 "ofType": null
               }
             },
-            "defaultValue": "\"94bf302c-853d-45f3-bdd1-33fa758b95a1\"",
+            "defaultValue": "\"d2c6f899-1653-45da-8d43-5ec8e0971ea5\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -2938,7 +2962,7 @@
                 "ofType": null
               }
             },
-            "defaultValue": "\"fd046db7-4efa-4210-942f-41f9fd0b8fa3\"",
+            "defaultValue": "\"ceb62ecc-57cd-4842-a0ce-925fc7b4360a\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -6079,6 +6103,18 @@
                 "deprecationReason": null
               },
               {
+                "name": "order",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "NeuronModelOrder",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
                 "name": "pagination",
                 "description": null,
                 "type": {
@@ -7731,7 +7767,7 @@
                 "ofType": null
               }
             },
-            "defaultValue": "\"b4f17f6f-f88b-40a0-92df-fab7b588284c\"",
+            "defaultValue": "\"c9cbe9e2-d5a9-4769-9972-6b606700467c\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -7903,7 +7939,7 @@
                 "ofType": null
               }
             },
-            "defaultValue": "\"a90945e1-897f-464f-84e1-3a769d512eeb\"",
+            "defaultValue": "\"d884fcdf-d9c9-4561-bb69-e2564580e830\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -8522,6 +8558,30 @@
             "type": {
               "kind": "SCALAR",
               "name": "String",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "NeuronModelOrder",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "createdAt",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "Ordering",
               "ofType": null
             },
             "defaultValue": null,
@@ -9293,6 +9353,18 @@
                 "deprecationReason": null
               },
               {
+                "name": "order",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "BlockOrder",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
                 "name": "pagination",
                 "description": null,
                 "type": {
@@ -9867,6 +9939,18 @@
                 "type": {
                   "kind": "INPUT_OBJECT",
                   "name": "NeuronModelFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "order",
+                "description": null,
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "NeuronModelOrder",
                   "ofType": null
                 },
                 "defaultValue": null,

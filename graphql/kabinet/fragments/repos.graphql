@@ -1,0 +1,7 @@
+fragment ListRepo on GithubRepo {
+  id
+  name
+  branch
+  user
+  repo
+}

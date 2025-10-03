@@ -24,14 +24,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { KABINET_INSTALL_DEFINITION_HASH } from "@/constants";
 import {
   ListDefinitionFragment,
   useAllPrimaryDefinitionsQuery,
 } from "@/kabinet/api/graphql";
 import {
   ListMaterializedEdgeFragment,
-  ListMeasurementCategoryWithGraphFragment,
   ListRelationCategoryFragment,
   ListStructureRelationCategoryWithGraphFragment,
   useCreateEntityMutation,
@@ -64,6 +62,7 @@ import {
   PortDemandInput,
   PortKind,
   PrimaryActionFragment,
+  useAllActionsQuery,
   useAllPrimaryActionsQuery,
   useImplementationsQuery,
   useShortcutsQuery,
@@ -613,10 +612,6 @@ export const ShortcutButton = (
 };
 
 export const AutoInstallButton = (props: { definition: string }) => {
-  const { assign, progress, doing, installed } = useHashActionWithProgress({
-    hash: KABINET_INSTALL_DEFINITION_HASH,
-  });
-
   return (
     <Button
       className="group-hover:opacity-100 opacity-0 transition-opacity duration-300"
@@ -640,6 +635,7 @@ export const AutoInstallButton = (props: { definition: string }) => {
 
 export const InstallButton = (props: {
   definition: ListDefinitionFragment;
+  action: PrimaryActionFragment;
   children: React.ReactNode;
 }) => {
   const navigate = useNavigate();
@@ -648,7 +644,7 @@ export const InstallButton = (props: {
 
   const { assign, progress, doing, installed, onDone } =
     useHashActionWithProgress({
-      hash: KABINET_INSTALL_DEFINITION_HASH,
+      hash: props.action.hash,
       onDone: (event) => {
         client.refetchQueries({ include: ["AllPrimaryActions"] });
       },
@@ -656,8 +652,8 @@ export const InstallButton = (props: {
 
   return (
     <CommandItem
-      value={props.definition.id}
-      key={props.definition.id}
+      value={`install-${props.definition.id}-${props.action.id}`}
+      key={`install-${props.definition.id}-${props.action.id}`}
       onSelect={(e) => {
         assign({ definition: props.definition.id });
       }}
@@ -677,7 +673,7 @@ export const InstallButton = (props: {
               {props.definition.name}
             </div>
             <div className="text-xs text-gray-400 text-left">
-              {props.definition.description}
+              {props.definition.description} on{" "}
             </div>
           </div>
           <div className="flex-grow"></div>
@@ -1022,6 +1018,36 @@ export const ApplicableShortcuts = (props: PassDownProps) => {
 export const ApplicableDefinitions = (props: PassDownProps) => {
   const demands: PortDemandInput[] = [];
 
+  const { data: enginesData } = useAllActionsQuery({
+    variables: {
+      filters: {
+        demands: [
+          {
+            kind: DemandKind.Args,
+            matches: [
+              {
+                at: 0,
+                kind: PortKind.Structure,
+                identifier: "@kabinet/definition",
+              },
+            ],
+          },
+          {
+            kind: DemandKind.Returns,
+            matches: [
+              {
+                at: 0,
+                kind: PortKind.Structure,
+                identifier: "@kabinet/pod",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    fetchPolicy: "cache-first",
+  });
+
   if (props.objects) {
     if (props.objects.length === 0) {
       console.log("No objects");
@@ -1108,6 +1134,10 @@ export const ApplicableDefinitions = (props: PassDownProps) => {
     return null;
   }
 
+  if (!enginesData || enginesData.actions.length === 0) {
+    return <>No install action found</>;
+  }
+
   return (
     <CommandGroup
       heading={
@@ -1117,9 +1147,17 @@ export const ApplicableDefinitions = (props: PassDownProps) => {
       }
     >
       {data?.definitions.map((x) => (
-        <InstallButton definition={x} key={x.id}>
-          {x.name}
-        </InstallButton>
+        <>
+          {enginesData?.actions.map((action) => (
+            <InstallButton
+              definition={x}
+              key={`${x.id}-${action.id}`}
+              action={action}
+            >
+              {x.name}
+            </InstallButton>
+          ))}{" "}
+        </>
       ))}
     </CommandGroup>
   );

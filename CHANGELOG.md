@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/arkitektio/orkestrator-next/compare/v1.3.0...v1.4.0) (2025-10-03)
+
+
+### Features
+
+* add GraphQL fragments for actions and implementations, enhance InstallButton with action prop ([a30f01b](https://github.com/arkitektio/orkestrator-next/commit/a30f01bebc82d1c76b1a21f70a336d03fe83a01b))
+
 # [1.3.0](https://github.com/arkitektio/orkestrator-next/compare/v1.2.0...v1.3.0) (2025-09-28)
 
 

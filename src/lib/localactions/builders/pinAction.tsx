@@ -16,13 +16,15 @@ export const identifierFromSmartOrString = (identifier: Smart | string) => {
 export type DeleteActionParams = {
   identifier: Smart | string;
   title: string;
-  mutation: TypedDocumentNode<any, { input: { id: string, pin?: boolean | undefined } }>;
+  mutation: TypedDocumentNode<
+    any,
+    { input: { id: string; pin?: boolean | undefined } }
+  >;
   service: string;
   description?: string;
 };
 
 export const buildDeleteAction = (params: DeleteActionParams): Action => ({
-
   title: params.title,
   description: params.description || "Delete the structure",
   conditions: [
@@ -43,7 +45,7 @@ export const buildDeleteAction = (params: DeleteActionParams): Action => ({
         mutation: params.mutation,
         variables: {
           input: {
-            state.left[i].object,
+            id: state.left[i].object,
             pin: false,
           },
         },

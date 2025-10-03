@@ -4,8 +4,18 @@ query ConstantAction($id: ID!) {
   }
 }
 
-query AssignAction($reservation: ID, $implementation: ID, $id: ID, $hash: ActionHash) {
-  action(reservation: $reservation, implementation: $implementation, id: $id, hash: $hash) {
+query AssignAction(
+  $reservation: ID
+  $implementation: ID
+  $id: ID
+  $hash: ActionHash
+) {
+  action(
+    reservation: $reservation
+    implementation: $implementation
+    id: $id
+    hash: $hash
+  ) {
     name
     id
     description
@@ -55,7 +65,7 @@ query AllPrimaryActions(
 
 query ActionSearch($filters: ActionFilter, $pagination: OffsetPaginationInput) {
   actions: actions(filters: $filters, pagination: $pagination) {
-    ...ListAction
+    ...SearchAction
   }
 }
 

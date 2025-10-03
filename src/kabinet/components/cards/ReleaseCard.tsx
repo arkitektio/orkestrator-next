@@ -61,7 +61,7 @@ export const AssignButton = (props: {
 };
 
 const InstallDialog = (props: { item: ListReleaseFragment }) => {
-  const { data } = useImplementationsQuery({
+  const { data, error } = useImplementationsQuery({
     variables: {
       filters: {
         action: {
@@ -103,6 +103,7 @@ const InstallDialog = (props: { item: ListReleaseFragment }) => {
         {data?.implementations.length === 0 && (
           <>No installers found. Please install an engine...</>
         )}
+        {error && <div>Error: {error.message}</div>}
         {data?.implementations.map((t) => (
           <AssignButton template={t} release={props.item.id} />
         ))}

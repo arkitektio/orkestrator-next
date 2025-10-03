@@ -14,6 +14,15 @@ fragment ListAction on Action {
   }
 }
 
+fragment SearchAction on Action {
+  id
+  name
+  description
+  hash
+  kind
+  scope
+}
+
 fragment GraphNodeAction on Action {
   name
   description

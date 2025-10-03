@@ -7,11 +7,14 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import {
   CreateGraphMutationVariables,
+  HomePageDocument,
   useCreateGraphMutation,
 } from "../api/graphql";
 
 export default (props) => {
-  const [add] = useCreateGraphMutation();
+  const [add] = useCreateGraphMutation({
+    refetchQueries: [HomePageDocument],
+  });
 
   const dialog = useGraphQlFormDialog(add);
 

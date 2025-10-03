@@ -9,6 +9,12 @@ import {
   StructureCategoryDefinition,
   useUpdateGraphMutation,
 } from "@/kraph/api/graphql";
+import {
+  Panel,
+  useReactFlow,
+  getNodesBounds,
+  getViewportForBounds,
+} from "@xyflow/react";
 import { useKraphUpload } from "@/datalayer/hooks/useKraphUpload";
 import { notEmpty } from "@/lib/utils";
 import {
@@ -47,6 +53,7 @@ import {
   StagingNodeParams,
 } from "./types";
 import { KraphGraph } from "@/linkers";
+import { toPng } from "html-to-image";
 
 const ontologyToNodes = (graph: GraphFragment): MyNode[] => {
   const structureNodes = graph.structureCategories.map((cat, index) => ({
@@ -525,49 +532,46 @@ export const OntologyGraph = ({ graph }: { graph: GraphFragment }) => {
     if (!reactFlowWrapper.current) return null;
 
     try {
-      // Try to dynamically import html2canvas
-      let html2canvas: typeof import("html2canvas").default;
-      try {
-        html2canvas = (await import("html2canvas")).default;
-      } catch {
-        console.warn("html2canvas not available, skipping screenshot capture");
-        return null;
-      }
+      const imageWidth = 800;
+      const imageHeight = 800;
+      // Dynamically import html2canvas to avoid SSR issues
+      const nodesBounds = getNodesBounds(nodes);
+      const viewport = getViewportForBounds(
+        nodesBounds,
+        imageWidth,
+        imageHeight,
+        0.5,
+        2,
+        2,
+      );
 
-      const canvas = await html2canvas(reactFlowWrapper.current, {
-        backgroundColor: "#ffffff",
-        scale: 1,
-        logging: false,
-        useCORS: true,
+      const pngPromise = toPng(
+        document.querySelector(".react-flow__viewport") as HTMLElement,
+        {
+          backgroundColor: "transparent",
+          width: imageWidth,
+          height: imageHeight,
+          style: {
+            width: imageWidth,
+            height: imageHeight,
+            transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+          },
+        },
+      );
+
+      const dataUrl = await pngPromise;
+
+      // Convert data URL to Blob
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+
+      // Create a File object from the Blob
+      const file = new File([blob], `graph-screenshot${graph.id}.png`, {
+        type: "image/png",
       });
 
-      // Convert canvas to blob
-      return new Promise((resolve) => {
-        canvas.toBlob(async (blob: Blob | null) => {
-          if (!blob) {
-            resolve(null);
-            return;
-          }
-
-          try {
-            // Convert blob to file
-            const file = new File(
-              [blob],
-              `graph-${graph.id}-${Date.now()}.png`,
-              {
-                type: "image/png",
-              },
-            );
-
-            // Upload the file
-            const uploadedImageId = await uploadFile(file);
-            resolve(uploadedImageId);
-          } catch (error) {
-            console.error("Failed to upload screenshot:", error);
-            resolve(null);
-          }
-        }, "image/png");
-      });
+      // Upload the file using your existing upload function
+      return await uploadFile(file);
     } catch (error) {
       console.error("Failed to capture screenshot:", error);
       return null;

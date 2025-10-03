@@ -88,7 +88,8 @@ export default asDetailQueryRoute(useGetGraphQuery, ({ data, refetch }) => {
             {data.graph.name}
           </h1>
           <p className="mt-3 text-xl text-muted-foreground">
-            {data.graph.description}
+            {data.graph.description}{" "}
+            {data.graph.ageName && `· ${data.graph.ageName}`}
           </p>
         </div>
         <div className="col-span-7 flex justify-end"></div>

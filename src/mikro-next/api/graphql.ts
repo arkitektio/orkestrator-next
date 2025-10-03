@@ -595,6 +595,7 @@ export type DatasetChildrenArgs = {
 
 export type DatasetFilesArgs = {
   filters?: InputMaybe<FileFilter>;
+  order?: InputMaybe<FileOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -623,6 +624,7 @@ export type DatasetFilter = {
   id?: InputMaybe<Scalars['ID']['input']>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   name?: InputMaybe<StrFilterLookup>;
+  owner?: InputMaybe<Scalars['ID']['input']>;
   parentless?: InputMaybe<Scalars['Boolean']['input']>;
   scope?: InputMaybe<ScopeFilter>;
   search?: InputMaybe<Scalars['String']['input']>;
@@ -770,16 +772,26 @@ export type DjangoModelType = {
 export enum DuckDbDataType {
   /** Large integer for large numeric values */
   Bigint = 'BIGINT',
+  /** Array of large integers */
+  BigintArray = 'BIGINT_ARRAY',
+  /** 2D Array of large integers */
+  BigintArrayArray = 'BIGINT_ARRAY_ARRAY',
   /** Binary large object for storing binary data */
   Blob = 'BLOB',
   /** Represents a True/False value */
   Boolean = 'BOOLEAN',
+  /** Array of boolean values */
+  BooleanArray = 'BOOLEAN_ARRAY',
   /** Specific date (year, month, day) */
   Date = 'DATE',
+  /** Array of dates */
+  DateArray = 'DATE_ARRAY',
   /** Exact decimal number with defined precision and scale */
   Decimal = 'DECIMAL',
   /** Double-precision floating point number */
   Double = 'DOUBLE',
+  /** Array of double-precision floating point numbers */
+  DoubleArray = 'DOUBLE_ARRAY',
   /** Enumeration of predefined values */
   Enum = 'ENUM',
   /** Single-precision floating point number */
@@ -804,12 +816,16 @@ export enum DuckDbDataType {
   Time = 'TIME',
   /** Date and time with precision */
   Timestamp = 'TIMESTAMP',
+  /** Array of times */
+  TimeArray = 'TIME_ARRAY',
   /** Very small integer (-128 to 127) */
   Tinyint = 'TINYINT',
   /** Universally Unique Identifier used to uniquely identify objects */
   Uuid = 'UUID',
   /** Variable-length string (text) */
-  Varchar = 'VARCHAR'
+  Varchar = 'VARCHAR',
+  /** Array of variable-length strings */
+  VarcharArray = 'VARCHAR_ARRAY'
 }
 
 export enum ElementKind {
@@ -951,8 +967,13 @@ export type FileFilter = {
   id?: InputMaybe<Scalars['ID']['input']>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   name?: InputMaybe<StrFilterLookup>;
+  owner?: InputMaybe<Scalars['ID']['input']>;
   scope?: InputMaybe<ScopeKind>;
   search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type FileOrder = {
+  createdAt?: InputMaybe<Ordering>;
 };
 
 export type FileView = View & {
@@ -1370,6 +1391,7 @@ export type ImageFilter = {
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   name?: InputMaybe<StrFilterLookup>;
   notDerived?: InputMaybe<Scalars['Boolean']['input']>;
+  owner?: InputMaybe<Scalars['ID']['input']>;
   scope?: InputMaybe<ScopeFilter>;
   search?: InputMaybe<Scalars['String']['input']>;
   store?: InputMaybe<ZarrStoreFilter>;
@@ -3576,6 +3598,7 @@ export type QueryFileArgs = {
 
 export type QueryFilesArgs = {
   filters?: InputMaybe<FileFilter>;
+  order?: InputMaybe<FileOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -3648,6 +3671,7 @@ export type QueryMyerasArgs = {
 
 export type QueryMyfilesArgs = {
   filters?: InputMaybe<FileFilter>;
+  order?: InputMaybe<FileOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -3956,6 +3980,7 @@ export type RoiFilter = {
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   image?: InputMaybe<Scalars['ID']['input']>;
   kind?: InputMaybe<RoiKindChoices>;
+  owner?: InputMaybe<Scalars['ID']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -5602,6 +5627,18 @@ export type ImagesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type ImagesQuery = { __typename?: 'Query', images: Array<{ __typename?: 'Image', id: string }> };
+
+export type HomePageQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type HomePageQuery = { __typename?: 'Query', images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }> };
+
+export type PeerHomePageQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type PeerHomePageQuery = { __typename?: 'Query', images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }> };
 
 export type GetImageQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -8945,6 +8982,91 @@ export function useImagesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookO
 export type ImagesQueryHookResult = ReturnType<typeof useImagesQuery>;
 export type ImagesLazyQueryHookResult = ReturnType<typeof useImagesLazyQuery>;
 export type ImagesQueryResult = Apollo.QueryResult<ImagesQuery, ImagesQueryVariables>;
+export const HomePageDocument = gql`
+    query HomePage {
+  images: images(pagination: {limit: 1}, order: {createdAt: DESC}) {
+    ...ListImage
+  }
+  files: files(pagination: {limit: 1}, order: {createdAt: DESC}) {
+    ...ListFile
+  }
+}
+    ${ListImageFragmentDoc}
+${ListFileFragmentDoc}`;
+
+/**
+ * __useHomePageQuery__
+ *
+ * To run a query within a React component, call `useHomePageQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHomePageQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHomePageQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useHomePageQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<HomePageQuery, HomePageQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<HomePageQuery, HomePageQueryVariables>(HomePageDocument, options);
+      }
+export function useHomePageLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<HomePageQuery, HomePageQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<HomePageQuery, HomePageQueryVariables>(HomePageDocument, options);
+        }
+export type HomePageQueryHookResult = ReturnType<typeof useHomePageQuery>;
+export type HomePageLazyQueryHookResult = ReturnType<typeof useHomePageLazyQuery>;
+export type HomePageQueryResult = Apollo.QueryResult<HomePageQuery, HomePageQueryVariables>;
+export const PeerHomePageDocument = gql`
+    query PeerHomePage($id: ID!) {
+  images: images(
+    pagination: {limit: 1}
+    filters: {owner: $id}
+    order: {createdAt: DESC}
+  ) {
+    ...ListImage
+  }
+  files: files(
+    pagination: {limit: 1}
+    filters: {owner: $id}
+    order: {createdAt: DESC}
+  ) {
+    ...ListFile
+  }
+}
+    ${ListImageFragmentDoc}
+${ListFileFragmentDoc}`;
+
+/**
+ * __usePeerHomePageQuery__
+ *
+ * To run a query within a React component, call `usePeerHomePageQuery` and pass it any options that fit your needs.
+ * When your component renders, `usePeerHomePageQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = usePeerHomePageQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function usePeerHomePageQuery(baseOptions: ApolloReactHooks.QueryHookOptions<PeerHomePageQuery, PeerHomePageQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<PeerHomePageQuery, PeerHomePageQueryVariables>(PeerHomePageDocument, options);
+      }
+export function usePeerHomePageLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<PeerHomePageQuery, PeerHomePageQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<PeerHomePageQuery, PeerHomePageQueryVariables>(PeerHomePageDocument, options);
+        }
+export type PeerHomePageQueryHookResult = ReturnType<typeof usePeerHomePageQuery>;
+export type PeerHomePageLazyQueryHookResult = ReturnType<typeof usePeerHomePageLazyQuery>;
+export type PeerHomePageQueryResult = Apollo.QueryResult<PeerHomePageQuery, PeerHomePageQueryVariables>;
 export const GetImageDocument = gql`
     query GetImage($id: ID!) {
   image(id: $id) {

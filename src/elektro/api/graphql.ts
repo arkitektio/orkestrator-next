@@ -220,6 +220,10 @@ export type BlockGroupFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type BlockOrder = {
+  createdAt?: InputMaybe<Ordering>;
+};
+
 export type BlockSegment = {
   __typename?: 'BlockSegment';
   /** The analog signals in this group */
@@ -692,6 +696,7 @@ export type ModelCollection = {
 
 export type ModelCollectionModelsArgs = {
   filters?: InputMaybe<NeuronModelFilter>;
+  order?: InputMaybe<NeuronModelOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1053,6 +1058,10 @@ export type NeuronModelFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type NeuronModelOrder = {
+  createdAt?: InputMaybe<Ordering>;
+};
+
 export type OffsetPaginationInput = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: Scalars['Int']['input'];
@@ -1193,6 +1202,7 @@ export type QueryBlockArgs = {
 
 export type QueryBlocksArgs = {
   filters?: InputMaybe<BlockFilter>;
+  order?: InputMaybe<BlockOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1267,6 +1277,7 @@ export type QueryNeuronModelArgs = {
 
 export type QueryNeuronModelsArgs = {
   filters?: InputMaybe<NeuronModelFilter>;
+  order?: InputMaybe<NeuronModelOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1922,6 +1933,11 @@ export type ListExperimentsQueryVariables = Exact<{
 
 
 export type ListExperimentsQuery = { __typename?: 'Query', experiments: Array<{ __typename?: 'Experiment', id: string, name: string }> };
+
+export type HomePageQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type HomePageQuery = { __typename?: 'Query', blocks: Array<{ __typename?: 'Block', id: string, name: string }>, models: Array<{ __typename?: 'NeuronModel', id: string, name: string }> };
 
 export type DetailModelCollectionQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2683,6 +2699,44 @@ export function useListExperimentsLazyQuery(baseOptions?: ApolloReactHooks.LazyQ
 export type ListExperimentsQueryHookResult = ReturnType<typeof useListExperimentsQuery>;
 export type ListExperimentsLazyQueryHookResult = ReturnType<typeof useListExperimentsLazyQuery>;
 export type ListExperimentsQueryResult = Apollo.QueryResult<ListExperimentsQuery, ListExperimentsQueryVariables>;
+export const HomePageDocument = gql`
+    query HomePage {
+  blocks: blocks(pagination: {limit: 1}, order: {createdAt: DESC}) {
+    ...ListBlock
+  }
+  models: neuronModels(pagination: {limit: 1}, order: {createdAt: DESC}) {
+    ...ListNeuronModel
+  }
+}
+    ${ListBlockFragmentDoc}
+${ListNeuronModelFragmentDoc}`;
+
+/**
+ * __useHomePageQuery__
+ *
+ * To run a query within a React component, call `useHomePageQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHomePageQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHomePageQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useHomePageQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<HomePageQuery, HomePageQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<HomePageQuery, HomePageQueryVariables>(HomePageDocument, options);
+      }
+export function useHomePageLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<HomePageQuery, HomePageQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<HomePageQuery, HomePageQueryVariables>(HomePageDocument, options);
+        }
+export type HomePageQueryHookResult = ReturnType<typeof useHomePageQuery>;
+export type HomePageLazyQueryHookResult = ReturnType<typeof useHomePageLazyQuery>;
+export type HomePageQueryResult = Apollo.QueryResult<HomePageQuery, HomePageQueryVariables>;
 export const DetailModelCollectionDocument = gql`
     query DetailModelCollection($id: ID!) {
   modelCollection(id: $id) {

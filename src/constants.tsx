@@ -3,7 +3,6 @@
 import { BrowserRouter, HashRouter } from "react-router-dom";
 import { Manifest } from "./lib/arkitekt/fakts/manifestSchema";
 
-
 declare global {
   interface Window {
     __ORKESTRATOR_BASE_NAME__: string;
@@ -74,4 +73,4 @@ export const KABINET_INSTALL_POD_HASH =
   "fad7fa309e1409bf301467286dad304dd729801155dd4d38899a470257859dc8";
 
 export const KABINET_INSTALL_DEFINITION_HASH =
-  "35001d8ae75bd3075cfb212a1cf9bef539ca42ab6f3ca40c4e7bc64da16ca52b";
+  "c73166761996596ea36f8bcccc4e09c6954e6134d22bfab6c117df62e8bcdaff";

@@ -551,6 +551,7 @@ export type GithubRepo = {
   flavours: Array<Flavour>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
+  organization: Organization;
   repo: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
   user: Scalars['String']['output'];
@@ -1369,6 +1370,8 @@ export type ReleaseFragment = { __typename?: 'Release', id: string, version: str
 
 export type ListReleaseFragment = { __typename?: 'Release', id: string, version: string, installed: boolean, scopes: Array<string>, colour: string, description: string, app: { __typename?: 'App', identifier: string }, flavours: Array<{ __typename?: 'Flavour', id: string, name: string, release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } }, selectors: Array<{ __typename?: 'CPUSelector' } | { __typename?: 'CudaSelector', cudaVersion?: string | null, cudaCores?: number | null } | { __typename?: 'RocmSelector', apiVersion?: string | null, apiThing?: string | null }> }> };
 
+export type ListRepoFragment = { __typename?: 'GithubRepo', id: string, name: string, branch: string, user: string, repo: string };
+
 export type ResourceFragment = { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string }, pods: Array<{ __typename?: 'Pod', id: string, podId: string, clientId?: string | null, status: PodStatus, backend: { __typename?: 'Backend', name: string, user: { __typename?: 'User', sub: string }, client: { __typename?: 'Client', clientId: string } }, deployment: { __typename?: 'Deployment', id: string, flavour: { __typename?: 'Flavour', release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } } } }, resource?: { __typename?: 'Resource', id: string, name: string } | null }> };
 
 export type ListResourceFragment = { __typename?: 'Resource', id: string, name: string, qualifiers?: any | null, backend: { __typename?: 'Backend', id: string, name: string } };
@@ -1450,6 +1453,11 @@ export type GetFlavourQueryVariables = Exact<{
 
 
 export type GetFlavourQuery = { __typename?: 'Query', flavour: { __typename?: 'Flavour', description: string, id: string, name: string, release: { __typename?: 'Release', id: string, version: string, app: { __typename?: 'App', identifier: string } }, selectors: Array<{ __typename?: 'CPUSelector' } | { __typename?: 'CudaSelector', cudaVersion?: string | null, cudaCores?: number | null } | { __typename?: 'RocmSelector', apiVersion?: string | null, apiThing?: string | null }> } };
+
+export type HomePageQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type HomePageQuery = { __typename?: 'Query', repos: Array<{ __typename?: 'GithubRepo', id: string, name: string, branch: string, user: string, repo: string }> };
 
 export type ListPodQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1945,6 +1953,15 @@ export const ListReleaseFragmentDoc = gql`
   description
 }
     ${ListFlavourFragmentDoc}`;
+export const ListRepoFragmentDoc = gql`
+    fragment ListRepo on GithubRepo {
+  id
+  name
+  branch
+  user
+  repo
+}
+    `;
 export const ResourceFragmentDoc = gql`
     fragment Resource on Resource {
   id
@@ -2341,6 +2358,40 @@ export function useGetFlavourLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryH
 export type GetFlavourQueryHookResult = ReturnType<typeof useGetFlavourQuery>;
 export type GetFlavourLazyQueryHookResult = ReturnType<typeof useGetFlavourLazyQuery>;
 export type GetFlavourQueryResult = Apollo.QueryResult<GetFlavourQuery, GetFlavourQueryVariables>;
+export const HomePageDocument = gql`
+    query HomePage {
+  repos: githubRepos {
+    ...ListRepo
+  }
+}
+    ${ListRepoFragmentDoc}`;
+
+/**
+ * __useHomePageQuery__
+ *
+ * To run a query within a React component, call `useHomePageQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHomePageQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHomePageQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useHomePageQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<HomePageQuery, HomePageQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<HomePageQuery, HomePageQueryVariables>(HomePageDocument, options);
+      }
+export function useHomePageLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<HomePageQuery, HomePageQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<HomePageQuery, HomePageQueryVariables>(HomePageDocument, options);
+        }
+export type HomePageQueryHookResult = ReturnType<typeof useHomePageQuery>;
+export type HomePageLazyQueryHookResult = ReturnType<typeof useHomePageLazyQuery>;
+export type HomePageQueryResult = Apollo.QueryResult<HomePageQuery, HomePageQueryVariables>;
 export const ListPodDocument = gql`
     query ListPod {
   pods {

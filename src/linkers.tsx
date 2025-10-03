@@ -152,7 +152,7 @@ export const ElektroSimulation = buildSmart(
   "elektro/simulations",
 );
 export const ElektroModelCollection = buildSmart(
-  "@elektro/model_collection",
+  "@elektro/modelcollection",
   "elektro/modelcollections",
 );
 export const ElektroRecording = buildSmart(

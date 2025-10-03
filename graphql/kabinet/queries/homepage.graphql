@@ -1,0 +1,5 @@
+query HomePage {
+  repos: githubRepos {
+    ...ListRepo
+  }
+}

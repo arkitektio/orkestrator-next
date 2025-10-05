@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/arkitektio/orkestrator-next/compare/v1.4.0...v1.5.0) (2025-10-05)
+
+
+### Features
+
+* Implement issue reporting feature in Electron app ([0086d63](https://github.com/arkitektio/orkestrator-next/commit/0086d63cae931d14976a614daab714b30617e5bd))
+
 # [1.4.0](https://github.com/arkitektio/orkestrator-next/compare/v1.3.0...v1.4.0) (2025-10-03)
 
 

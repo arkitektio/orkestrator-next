@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/arkitektio/orkestrator-next/compare/v1.5.0...v1.5.1) (2025-10-05)
+
+
+### Bug Fixes
+
+* add debounce to set window zoomfactor ([5ac80fb](https://github.com/arkitektio/orkestrator-next/commit/5ac80fbd7c1aa8db5f38a407606ec22828fe46ba))
+
 # [1.5.0](https://github.com/arkitektio/orkestrator-next/compare/v1.4.0...v1.5.0) (2025-10-05)
 
 

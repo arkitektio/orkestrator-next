@@ -24,6 +24,23 @@ app.commandLine.appendSwitch("ignore-certificate-errors", "true");
 
 let mainWindow: BrowserWindow | null = null;
 
+// Debounce helper function
+function debounce<T extends (...args: any[]) => void>(
+  func: T,
+  delay: number
+): (...args: Parameters<T>) => void {
+  let timeoutId: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+}
+
+// Debounced zoom factor setter
+const debouncedSetZoomFactor = debounce((zoomLevel: number, window: BrowserWindow) => {
+  window.webContents.setZoomFactor(zoomLevel);
+}, 150); // 150ms debounce delay
+
 ipcMain.handle("download-from-url", async (event, { url }: { url: string }) => {
   // Check if the URL is valid
   const win = BrowserWindow.getFocusedWindow();
@@ -167,6 +184,7 @@ function createWindow(): BrowserWindow {
 
   mainWindow.on("resize", () => {
     const [width, height] = mainWindow?.getSize() || [900, 670];
+    mainWindow?.webContents.setZoomFactor(store.get("zoomFactor", 0.7));
   });
 
   mainWindow.on("ready-to-show", () => {
@@ -454,12 +472,16 @@ app.whenReady().then(() => {
   ipcMain.handle("set-zoom-level", (_, zoomLevel: number) => {
     const focusedWindow = BrowserWindow.getFocusedWindow();
     if (focusedWindow) {
+      // Store immediately for consistency
       store.set("zoomFactor", zoomLevel);
-      focusedWindow.webContents.setZoomFactor(zoomLevel);
+      // Apply zoom factor with debouncing to avoid excessive updates
+      debouncedSetZoomFactor(zoomLevel, focusedWindow);
       return { success: true };
     } else if (mainWindow) {
+      // Store immediately for consistency
       store.set("zoomFactor", zoomLevel);
-      mainWindow.webContents.setZoomFactor(zoomLevel);
+      // Apply zoom factor with debouncing to avoid excessive updates
+      debouncedSetZoomFactor(zoomLevel, mainWindow);
       return { success: true };
     }
     return { success: false, error: "No window to set zoom level" };

@@ -14,7 +14,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   const navigate = useNavigate();
 
   return (
-    <PageLayout
+    <KraphEntityCategory.ListPage
       title="Entity Categories"
       pageActions={
         <div className="flex flex-row gap-2">
@@ -61,7 +61,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
 
         <EntityCategoryList pagination={{ limit: 30 }} />
       </div>
-    </PageLayout>
+    </KraphEntityCategory.ListPage>
   );
 };
 

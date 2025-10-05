@@ -1,6 +1,6 @@
-import * as ApolloReactHooks from '@/lib/fluss/hooks';
-import * as Apollo from '@apollo/client';
 import { gql } from '@apollo/client';
+import * as Apollo from '@apollo/client';
+import * as ApolloReactHooks from '@/lib/fluss/hooks';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -250,6 +250,15 @@ export type GlobalArgInput = {
   key: Scalars['String']['input'];
   port: PortInput;
 };
+
+export enum Granularity {
+  Day = 'DAY',
+  Hour = 'HOUR',
+  Month = 'MONTH',
+  Quarter = 'QUARTER',
+  Week = 'WEEK',
+  Year = 'YEAR'
+}
 
 export type Graph = {
   __typename?: 'Graph';
@@ -534,6 +543,7 @@ export type Query = {
   snapshot: Snapshot;
   snapshots: Array<Snapshot>;
   workspace: Workspace;
+  workspaceStats: WorkspaceStats;
   workspaces: Array<Workspace>;
 };
 
@@ -596,6 +606,11 @@ export type QuerySnapshotsArgs = {
 
 export type QueryWorkspaceArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryWorkspaceStatsArgs = {
+  filters?: InputMaybe<WorkspaceFilter>;
 };
 
 
@@ -955,6 +970,17 @@ export type SubscriptionEventsArgs = {
   run: Scalars['ID']['input'];
 };
 
+export type TimeBucket = {
+  __typename?: 'TimeBucket';
+  avg?: Maybe<Scalars['Float']['output']>;
+  count: Scalars['Int']['output'];
+  distinctCount: Scalars['Int']['output'];
+  max?: Maybe<Scalars['Float']['output']>;
+  min?: Maybe<Scalars['Float']['output']>;
+  sum?: Maybe<Scalars['Float']['output']>;
+  ts: Scalars['DateTime']['output'];
+};
+
 export type TrackInput = {
   causedBy?: Array<Scalars['ID']['input']>;
   exception?: InputMaybe<Scalars['String']['input']>;
@@ -1026,6 +1052,11 @@ export type WorkspaceFlowsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+/** Numeric/aggregatable fields of Workspace */
+export enum WorkspaceField {
+  CreatedAt = 'CREATED_AT'
+}
+
 export type WorkspaceFilter = {
   AND?: InputMaybe<WorkspaceFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1039,6 +1070,61 @@ export type WorkspaceFilter = {
 export type WorkspaceOrder = {
   createdAt?: InputMaybe<Ordering>;
 };
+
+export type WorkspaceStats = {
+  __typename?: 'WorkspaceStats';
+  /** Average */
+  avg?: Maybe<Scalars['Float']['output']>;
+  /** Total number of items in the selection */
+  count: Scalars['Int']['output'];
+  /** Number of distinct values for the field */
+  distinctCount: Scalars['Int']['output'];
+  /** Maximum */
+  max?: Maybe<Scalars['Float']['output']>;
+  /** Minimum */
+  min?: Maybe<Scalars['Float']['output']>;
+  /** Time-bucketed stats over a datetime field. */
+  series: Array<TimeBucket>;
+  /** Sum */
+  sum?: Maybe<Scalars['Float']['output']>;
+};
+
+
+export type WorkspaceStatsAvgArgs = {
+  field: WorkspaceField;
+};
+
+
+export type WorkspaceStatsDistinctCountArgs = {
+  field: WorkspaceField;
+};
+
+
+export type WorkspaceStatsMaxArgs = {
+  field: WorkspaceField;
+};
+
+
+export type WorkspaceStatsMinArgs = {
+  field: WorkspaceField;
+};
+
+
+export type WorkspaceStatsSeriesArgs = {
+  by: Granularity;
+  field: WorkspaceField;
+  timestampField: WorkspaceTimestampField;
+};
+
+
+export type WorkspaceStatsSumArgs = {
+  field: WorkspaceField;
+};
+
+/** Datetime fields of Workspace for bucketing */
+export enum WorkspaceTimestampField {
+  CreatedAt = 'CREATED_AT'
+}
 
 type BaseGraphNode_ArgNode_Fragment = { __typename: 'ArgNode', globalsMap: any, constantsMap: any, title: string, description: string, kind: GraphNodeKind, ins: Array<Array<{ __typename: 'Port', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, dependencies: Array<string>, hook: string, ward: string } | { __typename: 'HideEffect', kind: EffectKind, dependencies: Array<string> } | { __typename: 'MessageEffect', kind: EffectKind, dependencies: Array<string>, message: string }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null, children?: Array<{ __typename: 'Port', kind: PortKind, identifier?: any | null, key: string, nullable: boolean, children?: Array<{ __typename: 'Port', key: string, kind: PortKind, identifier?: any | null, nullable: boolean, children?: Array<{ __typename?: 'Port', key: string, kind: PortKind, identifier?: any | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null }> | null }>>, outs: Array<Array<{ __typename: 'Port', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, dependencies: Array<string>, hook: string, ward: string } | { __typename: 'HideEffect', kind: EffectKind, dependencies: Array<string> } | { __typename: 'MessageEffect', kind: EffectKind, dependencies: Array<string>, message: string }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null, children?: Array<{ __typename: 'Port', kind: PortKind, identifier?: any | null, key: string, nullable: boolean, children?: Array<{ __typename: 'Port', key: string, kind: PortKind, identifier?: any | null, nullable: boolean, children?: Array<{ __typename?: 'Port', key: string, kind: PortKind, identifier?: any | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null }> | null }>>, constants: Array<{ __typename: 'Port', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, dependencies: Array<string>, hook: string, ward: string } | { __typename: 'HideEffect', kind: EffectKind, dependencies: Array<string> } | { __typename: 'MessageEffect', kind: EffectKind, dependencies: Array<string>, message: string }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null, children?: Array<{ __typename: 'Port', kind: PortKind, identifier?: any | null, key: string, nullable: boolean, children?: Array<{ __typename: 'Port', key: string, kind: PortKind, identifier?: any | null, nullable: boolean, children?: Array<{ __typename?: 'Port', key: string, kind: PortKind, identifier?: any | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null }> | null }>, voids: Array<{ __typename: 'Port', key: string, label?: string | null, nullable: boolean, description?: string | null, kind: PortKind, identifier?: any | null, default?: any | null, effects?: Array<{ __typename: 'CustomEffect', kind: EffectKind, dependencies: Array<string>, hook: string, ward: string } | { __typename: 'HideEffect', kind: EffectKind, dependencies: Array<string> } | { __typename: 'MessageEffect', kind: EffectKind, dependencies: Array<string>, message: string }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null, children?: Array<{ __typename: 'Port', kind: PortKind, identifier?: any | null, key: string, nullable: boolean, children?: Array<{ __typename: 'Port', key: string, kind: PortKind, identifier?: any | null, nullable: boolean, children?: Array<{ __typename?: 'Port', key: string, kind: PortKind, identifier?: any | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, assignWidget?: { __typename: 'ChoiceAssignWidget', kind: AssignWidgetKind, choices?: Array<{ __typename?: 'Choice', value: string, label: string, description?: string | null }> | null } | { __typename: 'CustomAssignWidget', kind: AssignWidgetKind, ward: string, hook: string } | { __typename: 'SearchAssignWidget', kind: AssignWidgetKind, query: string, ward: string } | { __typename: 'SliderAssignWidget', kind: AssignWidgetKind, min?: number | null, max?: number | null } | { __typename: 'StateChoiceAssignWidget', kind: AssignWidgetKind } | { __typename: 'StringAssignWidget', kind: AssignWidgetKind, placeholder: string, asParagraph: boolean } | null, returnWidget?: { __typename: 'ChoiceReturnWidget', kind: ReturnWidgetKind, choices?: Array<{ __typename?: 'Choice', label: string, value: string, description?: string | null }> | null } | { __typename: 'CustomReturnWidget', kind: ReturnWidgetKind, hook: string, ward: string } | null }> | null, validators?: Array<{ __typename?: 'Validator', function: any, dependencies?: Array<string> | null }> | null }> };
 
@@ -1224,6 +1310,11 @@ export type FlowsQueryVariables = Exact<{
 
 
 export type FlowsQuery = { __typename?: 'Query', flows: Array<{ __typename?: 'Flow', id: string, title: string, createdAt: any, workspace: { __typename?: 'Workspace', id: string } }> };
+
+export type HomePageStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type HomePageStatsQuery = { __typename?: 'Query', workspaceStats: { __typename?: 'WorkspaceStats', count: number } };
 
 export type ReactiveTemplatesQueryVariables = Exact<{
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -1915,9 +2006,9 @@ export type UpdateWorkspaceMutationFn = Apollo.MutationFunction<UpdateWorkspaceM
  * });
  */
 export function useUpdateWorkspaceMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateWorkspaceMutation, UpdateWorkspaceMutationVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useMutation<UpdateWorkspaceMutation, UpdateWorkspaceMutationVariables>(UpdateWorkspaceDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<UpdateWorkspaceMutation, UpdateWorkspaceMutationVariables>(UpdateWorkspaceDocument, options);
+      }
 export type UpdateWorkspaceMutationHookResult = ReturnType<typeof useUpdateWorkspaceMutation>;
 export type UpdateWorkspaceMutationResult = Apollo.MutationResult<UpdateWorkspaceMutation>;
 export type UpdateWorkspaceMutationOptions = Apollo.BaseMutationOptions<UpdateWorkspaceMutation, UpdateWorkspaceMutationVariables>;
@@ -1948,9 +2039,9 @@ export type CreateWorkspaceMutationFn = Apollo.MutationFunction<CreateWorkspaceM
  * });
  */
 export function useCreateWorkspaceMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<CreateWorkspaceMutation, CreateWorkspaceMutationVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useMutation<CreateWorkspaceMutation, CreateWorkspaceMutationVariables>(CreateWorkspaceDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useMutation<CreateWorkspaceMutation, CreateWorkspaceMutationVariables>(CreateWorkspaceDocument, options);
+      }
 export type CreateWorkspaceMutationHookResult = ReturnType<typeof useCreateWorkspaceMutation>;
 export type CreateWorkspaceMutationResult = Apollo.MutationResult<CreateWorkspaceMutation>;
 export type CreateWorkspaceMutationOptions = Apollo.BaseMutationOptions<CreateWorkspaceMutation, CreateWorkspaceMutationVariables>;
@@ -1979,13 +2070,13 @@ export const FlowDocument = gql`
  * });
  */
 export function useFlowQuery(baseOptions: ApolloReactHooks.QueryHookOptions<FlowQuery, FlowQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<FlowQuery, FlowQueryVariables>(FlowDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<FlowQuery, FlowQueryVariables>(FlowDocument, options);
+      }
 export function useFlowLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<FlowQuery, FlowQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<FlowQuery, FlowQueryVariables>(FlowDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<FlowQuery, FlowQueryVariables>(FlowDocument, options);
+        }
 export type FlowQueryHookResult = ReturnType<typeof useFlowQuery>;
 export type FlowLazyQueryHookResult = ReturnType<typeof useFlowLazyQuery>;
 export type FlowQueryResult = Apollo.QueryResult<FlowQuery, FlowQueryVariables>;
@@ -2014,16 +2105,50 @@ export const FlowsDocument = gql`
  * });
  */
 export function useFlowsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<FlowsQuery, FlowsQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<FlowsQuery, FlowsQueryVariables>(FlowsDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<FlowsQuery, FlowsQueryVariables>(FlowsDocument, options);
+      }
 export function useFlowsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<FlowsQuery, FlowsQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<FlowsQuery, FlowsQueryVariables>(FlowsDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<FlowsQuery, FlowsQueryVariables>(FlowsDocument, options);
+        }
 export type FlowsQueryHookResult = ReturnType<typeof useFlowsQuery>;
 export type FlowsLazyQueryHookResult = ReturnType<typeof useFlowsLazyQuery>;
 export type FlowsQueryResult = Apollo.QueryResult<FlowsQuery, FlowsQueryVariables>;
+export const HomePageStatsDocument = gql`
+    query HomePageStats {
+  workspaceStats {
+    count
+  }
+}
+    `;
+
+/**
+ * __useHomePageStatsQuery__
+ *
+ * To run a query within a React component, call `useHomePageStatsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHomePageStatsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHomePageStatsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useHomePageStatsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<HomePageStatsQuery, HomePageStatsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<HomePageStatsQuery, HomePageStatsQueryVariables>(HomePageStatsDocument, options);
+      }
+export function useHomePageStatsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<HomePageStatsQuery, HomePageStatsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<HomePageStatsQuery, HomePageStatsQueryVariables>(HomePageStatsDocument, options);
+        }
+export type HomePageStatsQueryHookResult = ReturnType<typeof useHomePageStatsQuery>;
+export type HomePageStatsLazyQueryHookResult = ReturnType<typeof useHomePageStatsLazyQuery>;
+export type HomePageStatsQueryResult = Apollo.QueryResult<HomePageStatsQuery, HomePageStatsQueryVariables>;
 export const ReactiveTemplatesDocument = gql`
     query ReactiveTemplates($pagination: OffsetPaginationInput) {
   reactiveTemplates(pagination: $pagination) {
@@ -2049,13 +2174,13 @@ export const ReactiveTemplatesDocument = gql`
  * });
  */
 export function useReactiveTemplatesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ReactiveTemplatesQuery, ReactiveTemplatesQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<ReactiveTemplatesQuery, ReactiveTemplatesQueryVariables>(ReactiveTemplatesDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ReactiveTemplatesQuery, ReactiveTemplatesQueryVariables>(ReactiveTemplatesDocument, options);
+      }
 export function useReactiveTemplatesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ReactiveTemplatesQuery, ReactiveTemplatesQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<ReactiveTemplatesQuery, ReactiveTemplatesQueryVariables>(ReactiveTemplatesDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ReactiveTemplatesQuery, ReactiveTemplatesQueryVariables>(ReactiveTemplatesDocument, options);
+        }
 export type ReactiveTemplatesQueryHookResult = ReturnType<typeof useReactiveTemplatesQuery>;
 export type ReactiveTemplatesLazyQueryHookResult = ReturnType<typeof useReactiveTemplatesLazyQuery>;
 export type ReactiveTemplatesQueryResult = Apollo.QueryResult<ReactiveTemplatesQuery, ReactiveTemplatesQueryVariables>;
@@ -2084,13 +2209,13 @@ export const ReactiveTemplateDocument = gql`
  * });
  */
 export function useReactiveTemplateQuery(baseOptions: ApolloReactHooks.QueryHookOptions<ReactiveTemplateQuery, ReactiveTemplateQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<ReactiveTemplateQuery, ReactiveTemplateQueryVariables>(ReactiveTemplateDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ReactiveTemplateQuery, ReactiveTemplateQueryVariables>(ReactiveTemplateDocument, options);
+      }
 export function useReactiveTemplateLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ReactiveTemplateQuery, ReactiveTemplateQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<ReactiveTemplateQuery, ReactiveTemplateQueryVariables>(ReactiveTemplateDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ReactiveTemplateQuery, ReactiveTemplateQueryVariables>(ReactiveTemplateDocument, options);
+        }
 export type ReactiveTemplateQueryHookResult = ReturnType<typeof useReactiveTemplateQuery>;
 export type ReactiveTemplateLazyQueryHookResult = ReturnType<typeof useReactiveTemplateLazyQuery>;
 export type ReactiveTemplateQueryResult = Apollo.QueryResult<ReactiveTemplateQuery, ReactiveTemplateQueryVariables>;
@@ -2118,13 +2243,13 @@ export const SnapshotsDocument = gql`
  * });
  */
 export function useSnapshotsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<SnapshotsQuery, SnapshotsQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<SnapshotsQuery, SnapshotsQueryVariables>(SnapshotsDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<SnapshotsQuery, SnapshotsQueryVariables>(SnapshotsDocument, options);
+      }
 export function useSnapshotsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SnapshotsQuery, SnapshotsQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<SnapshotsQuery, SnapshotsQueryVariables>(SnapshotsDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<SnapshotsQuery, SnapshotsQueryVariables>(SnapshotsDocument, options);
+        }
 export type SnapshotsQueryHookResult = ReturnType<typeof useSnapshotsQuery>;
 export type SnapshotsLazyQueryHookResult = ReturnType<typeof useSnapshotsLazyQuery>;
 export type SnapshotsQueryResult = Apollo.QueryResult<SnapshotsQuery, SnapshotsQueryVariables>;
@@ -2153,13 +2278,13 @@ export const DetailSnapshotDocument = gql`
  * });
  */
 export function useDetailSnapshotQuery(baseOptions: ApolloReactHooks.QueryHookOptions<DetailSnapshotQuery, DetailSnapshotQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<DetailSnapshotQuery, DetailSnapshotQueryVariables>(DetailSnapshotDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<DetailSnapshotQuery, DetailSnapshotQueryVariables>(DetailSnapshotDocument, options);
+      }
 export function useDetailSnapshotLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<DetailSnapshotQuery, DetailSnapshotQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<DetailSnapshotQuery, DetailSnapshotQueryVariables>(DetailSnapshotDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<DetailSnapshotQuery, DetailSnapshotQueryVariables>(DetailSnapshotDocument, options);
+        }
 export type DetailSnapshotQueryHookResult = ReturnType<typeof useDetailSnapshotQuery>;
 export type DetailSnapshotLazyQueryHookResult = ReturnType<typeof useDetailSnapshotLazyQuery>;
 export type DetailSnapshotQueryResult = Apollo.QueryResult<DetailSnapshotQuery, DetailSnapshotQueryVariables>;
@@ -2188,13 +2313,13 @@ export const RunForAssignationDocument = gql`
  * });
  */
 export function useRunForAssignationQuery(baseOptions: ApolloReactHooks.QueryHookOptions<RunForAssignationQuery, RunForAssignationQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<RunForAssignationQuery, RunForAssignationQueryVariables>(RunForAssignationDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<RunForAssignationQuery, RunForAssignationQueryVariables>(RunForAssignationDocument, options);
+      }
 export function useRunForAssignationLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<RunForAssignationQuery, RunForAssignationQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<RunForAssignationQuery, RunForAssignationQueryVariables>(RunForAssignationDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<RunForAssignationQuery, RunForAssignationQueryVariables>(RunForAssignationDocument, options);
+        }
 export type RunForAssignationQueryHookResult = ReturnType<typeof useRunForAssignationQuery>;
 export type RunForAssignationLazyQueryHookResult = ReturnType<typeof useRunForAssignationLazyQuery>;
 export type RunForAssignationQueryResult = Apollo.QueryResult<RunForAssignationQuery, RunForAssignationQueryVariables>;
@@ -2225,13 +2350,13 @@ export const EventsBetweenDocument = gql`
  * });
  */
 export function useEventsBetweenQuery(baseOptions: ApolloReactHooks.QueryHookOptions<EventsBetweenQuery, EventsBetweenQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<EventsBetweenQuery, EventsBetweenQueryVariables>(EventsBetweenDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<EventsBetweenQuery, EventsBetweenQueryVariables>(EventsBetweenDocument, options);
+      }
 export function useEventsBetweenLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<EventsBetweenQuery, EventsBetweenQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<EventsBetweenQuery, EventsBetweenQueryVariables>(EventsBetweenDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<EventsBetweenQuery, EventsBetweenQueryVariables>(EventsBetweenDocument, options);
+        }
 export type EventsBetweenQueryHookResult = ReturnType<typeof useEventsBetweenQuery>;
 export type EventsBetweenLazyQueryHookResult = ReturnType<typeof useEventsBetweenLazyQuery>;
 export type EventsBetweenQueryResult = Apollo.QueryResult<EventsBetweenQuery, EventsBetweenQueryVariables>;
@@ -2261,13 +2386,13 @@ export const ListRunsDocument = gql`
  * });
  */
 export function useListRunsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<ListRunsQuery, ListRunsQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<ListRunsQuery, ListRunsQueryVariables>(ListRunsDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<ListRunsQuery, ListRunsQueryVariables>(ListRunsDocument, options);
+      }
 export function useListRunsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListRunsQuery, ListRunsQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<ListRunsQuery, ListRunsQueryVariables>(ListRunsDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<ListRunsQuery, ListRunsQueryVariables>(ListRunsDocument, options);
+        }
 export type ListRunsQueryHookResult = ReturnType<typeof useListRunsQuery>;
 export type ListRunsLazyQueryHookResult = ReturnType<typeof useListRunsLazyQuery>;
 export type ListRunsQueryResult = Apollo.QueryResult<ListRunsQuery, ListRunsQueryVariables>;
@@ -2296,13 +2421,13 @@ export const GetRunDocument = gql`
  * });
  */
 export function useGetRunQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetRunQuery, GetRunQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<GetRunQuery, GetRunQueryVariables>(GetRunDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetRunQuery, GetRunQueryVariables>(GetRunDocument, options);
+      }
 export function useGetRunLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRunQuery, GetRunQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<GetRunQuery, GetRunQueryVariables>(GetRunDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetRunQuery, GetRunQueryVariables>(GetRunDocument, options);
+        }
 export type GetRunQueryHookResult = ReturnType<typeof useGetRunQuery>;
 export type GetRunLazyQueryHookResult = ReturnType<typeof useGetRunLazyQuery>;
 export type GetRunQueryResult = Apollo.QueryResult<GetRunQuery, GetRunQueryVariables>;
@@ -2333,13 +2458,13 @@ export const RunCarouselDocument = gql`
  * });
  */
 export function useRunCarouselQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<RunCarouselQuery, RunCarouselQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<RunCarouselQuery, RunCarouselQueryVariables>(RunCarouselDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<RunCarouselQuery, RunCarouselQueryVariables>(RunCarouselDocument, options);
+      }
 export function useRunCarouselLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<RunCarouselQuery, RunCarouselQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<RunCarouselQuery, RunCarouselQueryVariables>(RunCarouselDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<RunCarouselQuery, RunCarouselQueryVariables>(RunCarouselDocument, options);
+        }
 export type RunCarouselQueryHookResult = ReturnType<typeof useRunCarouselQuery>;
 export type RunCarouselLazyQueryHookResult = ReturnType<typeof useRunCarouselLazyQuery>;
 export type RunCarouselQueryResult = Apollo.QueryResult<RunCarouselQuery, RunCarouselQueryVariables>;
@@ -2369,13 +2494,13 @@ export const GlobalSearchDocument = gql`
  * });
  */
 export function useGlobalSearchQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
+      }
 export function useGlobalSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GlobalSearchQuery, GlobalSearchQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GlobalSearchQuery, GlobalSearchQueryVariables>(GlobalSearchDocument, options);
+        }
 export type GlobalSearchQueryHookResult = ReturnType<typeof useGlobalSearchQuery>;
 export type GlobalSearchLazyQueryHookResult = ReturnType<typeof useGlobalSearchLazyQuery>;
 export type GlobalSearchQueryResult = Apollo.QueryResult<GlobalSearchQuery, GlobalSearchQueryVariables>;
@@ -2404,13 +2529,13 @@ export const WorkspaceDocument = gql`
  * });
  */
 export function useWorkspaceQuery(baseOptions: ApolloReactHooks.QueryHookOptions<WorkspaceQuery, WorkspaceQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<WorkspaceQuery, WorkspaceQueryVariables>(WorkspaceDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<WorkspaceQuery, WorkspaceQueryVariables>(WorkspaceDocument, options);
+      }
 export function useWorkspaceLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<WorkspaceQuery, WorkspaceQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<WorkspaceQuery, WorkspaceQueryVariables>(WorkspaceDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<WorkspaceQuery, WorkspaceQueryVariables>(WorkspaceDocument, options);
+        }
 export type WorkspaceQueryHookResult = ReturnType<typeof useWorkspaceQuery>;
 export type WorkspaceLazyQueryHookResult = ReturnType<typeof useWorkspaceLazyQuery>;
 export type WorkspaceQueryResult = Apollo.QueryResult<WorkspaceQuery, WorkspaceQueryVariables>;
@@ -2439,13 +2564,13 @@ export const WorkspacesDocument = gql`
  * });
  */
 export function useWorkspacesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<WorkspacesQuery, WorkspacesQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<WorkspacesQuery, WorkspacesQueryVariables>(WorkspacesDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<WorkspacesQuery, WorkspacesQueryVariables>(WorkspacesDocument, options);
+      }
 export function useWorkspacesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<WorkspacesQuery, WorkspacesQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<WorkspacesQuery, WorkspacesQueryVariables>(WorkspacesDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<WorkspacesQuery, WorkspacesQueryVariables>(WorkspacesDocument, options);
+        }
 export type WorkspacesQueryHookResult = ReturnType<typeof useWorkspacesQuery>;
 export type WorkspacesLazyQueryHookResult = ReturnType<typeof useWorkspacesLazyQuery>;
 export type WorkspacesQueryResult = Apollo.QueryResult<WorkspacesQuery, WorkspacesQueryVariables>;
@@ -2476,13 +2601,13 @@ export const WorkspaceCarouselDocument = gql`
  * });
  */
 export function useWorkspaceCarouselQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<WorkspaceCarouselQuery, WorkspaceCarouselQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useQuery<WorkspaceCarouselQuery, WorkspaceCarouselQueryVariables>(WorkspaceCarouselDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<WorkspaceCarouselQuery, WorkspaceCarouselQueryVariables>(WorkspaceCarouselDocument, options);
+      }
 export function useWorkspaceCarouselLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<WorkspaceCarouselQuery, WorkspaceCarouselQueryVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useLazyQuery<WorkspaceCarouselQuery, WorkspaceCarouselQueryVariables>(WorkspaceCarouselDocument, options);
-}
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<WorkspaceCarouselQuery, WorkspaceCarouselQueryVariables>(WorkspaceCarouselDocument, options);
+        }
 export type WorkspaceCarouselQueryHookResult = ReturnType<typeof useWorkspaceCarouselQuery>;
 export type WorkspaceCarouselLazyQueryHookResult = ReturnType<typeof useWorkspaceCarouselLazyQuery>;
 export type WorkspaceCarouselQueryResult = Apollo.QueryResult<WorkspaceCarouselQuery, WorkspaceCarouselQueryVariables>;
@@ -2511,8 +2636,8 @@ export const EventsDocument = gql`
  * });
  */
 export function useEventsSubscription(baseOptions: ApolloReactHooks.SubscriptionHookOptions<EventsSubscription, EventsSubscriptionVariables>) {
-  const options = { ...defaultOptions, ...baseOptions }
-  return ApolloReactHooks.useSubscription<EventsSubscription, EventsSubscriptionVariables>(EventsDocument, options);
-}
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useSubscription<EventsSubscription, EventsSubscriptionVariables>(EventsDocument, options);
+      }
 export type EventsSubscriptionHookResult = ReturnType<typeof useEventsSubscription>;
 export type EventsSubscriptionResult = Apollo.SubscriptionResult<EventsSubscription>;

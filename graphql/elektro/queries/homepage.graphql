@@ -7,3 +7,9 @@ query HomePage {
     ...ListNeuronModel
   }
 }
+
+query HomePageStats {
+  blockStats {
+    count
+  }
+}

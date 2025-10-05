@@ -1,13 +1,14 @@
-import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
+import { RekuestDashboard } from "@/linkers";
 import { useCreateDashboardMutation } from "../api/graphql";
 import DashboardList from "../components/lists/DashboardList";
+
 
 const Page = () => {
   const [createDashboard] = useCreateDashboardMutation();
 
   return (
-    <PageLayout
+    <RekuestDashboard.ListPage
       title={"Dashboards"}
       pageActions={
         <Button
@@ -42,7 +43,7 @@ const Page = () => {
 
         <DashboardList />
       </div>
-    </PageLayout>
+    </RekuestDashboard.ListPage>
   );
 };
 

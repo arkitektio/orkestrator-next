@@ -1,18 +1,18 @@
 import { AlpakaWard } from "@/alpaka/AlpakaWard";
 import { DialogProvider } from "@/app/dialog";
-import { CommandMenu } from "@/command/Menu";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { baseName, Router } from "@/constants";
 import { ElektroWard } from "@/elektro/ElektroWard";
+import { useFatalReport } from "@/hooks/use-report";
 import { KabinetWard } from "@/kabinet/KabinetWard";
 import { KraphWard } from "@/kraph/KraphWard";
 import { Arkitekt, Guard } from "@/lib/arkitekt/Arkitekt";
 import { MikroNextWard } from "@/mikro-next/MikroNextWard";
-import ImageDisplay from "@/mikro-next/displays/ImageDisplay";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { CommandProvider } from "@/providers/command/CommandProvider";
 import { DebugProvider } from "@/providers/debug/DebugProvider";
@@ -21,24 +21,22 @@ import { SettingsProvider } from "@/providers/settings/SettingsProvider";
 import { SmartProvider } from "@/providers/smart/provider";
 import { FlussWard } from "@/reaktion/FlussWard";
 import { RekuestNextWard } from "@/rekuest/RekuestNextWard";
-import NodeDisplay from "@/rekuest/components/displays/NodeDisplay";
 import { AgentUpdater } from "@/rekuest/components/functional/AgentUpdater";
 import { AssignationUpdater } from "@/rekuest/components/functional/AssignationUpdater";
 import { WidgetRegistryProvider } from "@/rekuest/widgets/WidgetsProvider";
-import React, { useEffect } from "react";
+import React from "react";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import { useNavigate } from "react-router-dom";
-import { THE_WIDGET_REGISTRY } from "./shadCnWidgetRegistry";
-import { DisplayRegistryProvider } from "@/lib/display/registry";
-import { displayRegistry } from "./displayRegistry";
 import { DisplayProvider } from "./display";
-import { prewarmDuckDB } from "@/lib/duckdb";
+import { THE_WIDGET_REGISTRY } from "./shadCnWidgetRegistry";
 
 function fallbackRender({ error, resetErrorBoundary }: FallbackProps) {
   // Call resetErrorBoundary() to reset the error boundary and retry the render.
 
+  const reportBug = useFatalReport();
+
   return (
-    <ModuleLayout pane={<>ohhhh boy, this is embarrassing</>}>
+    <ModuleLayout pane={<div className="flex items-center justify-center h-full w-full"><div className="text-6xl text-muted-foreground mb-3">😬</div></div>}>
       <PageLayout title="Test">
         <div className="h-full w-full flex flex-col items-center justify-center">
           <div className="text-6xl text-muted-foreground mb-3">😬</div>
@@ -55,9 +53,17 @@ function fallbackRender({ error, resetErrorBoundary }: FallbackProps) {
             You can try to go back and try again. But please let us know about
             this...
           </p>
-          <Button variant={"outline"} onClick={resetErrorBoundary}>
-            Go back again
-          </Button>
+          <ButtonGroup>
+            <Button variant={"outline"} onClick={resetErrorBoundary}>
+              Go back again
+            </Button>
+            <Button className="ml-2"
+              variant={"destructive"}
+              onClick={() => reportBug(error)}
+            >
+              Report Bug
+            </Button>
+          </ButtonGroup>
         </div>
       </PageLayout>
     </ModuleLayout>

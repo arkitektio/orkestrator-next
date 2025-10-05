@@ -25,3 +25,26 @@ query PeerHomePage($id: ID!) {
     ...ListFile
   }
 }
+
+
+query HomePageStats{
+  imagesStats(filters: {
+    owner: null
+  }) {
+    count
+    series(by: DAY, field: PK, timestampField: CREATED_AT) {
+      count
+    }
+  }
+}
+
+query PeerHomePageStats($id: ID!){
+  imagesStats(filters: {
+    owner: $id
+  }) {
+    count
+    series(by: DAY, field: PK, timestampField: CREATED_AT) {
+      count
+    }
+  }
+}

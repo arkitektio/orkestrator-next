@@ -19,6 +19,7 @@ import { ChatBubbleIcon, DashIcon, HomeIcon } from "@radix-ui/react-icons";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import {
   Bug,
+  ChevronUp,
   Database,
   Podcast,
   Settings,
@@ -36,6 +37,8 @@ import { TbBugOff } from "react-icons/tb";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ArkitektLogo } from "../logos/ArkitektLogo";
 import { BackLogo } from "../logos/BackLogo";
+import { PopoverTrigger, Popover, PopoverContent } from "@/components/ui/popover";
+import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 
 export type INavigationBarProps = {
   children?: React.ReactNode;
@@ -100,117 +103,146 @@ const PrivateNavigationBar: React.FC<INavigationBarProps> = ({ children }) => {
     }
   };
 
-  const linkChildren =
-    services.map((s) => {
-      if (s.key == "self") return null;
-      if (s.key == "datalayer") return null;
-      if (s.key == "livekit") return null;
-      return (
-        <DroppableNavLink key={s.key} to={`/${s.key}`}>
-          {({ isActive }) => (
-            <Tooltip>
-              <TooltipTrigger>
-                <NavigationMenuLink active={isActive}>
-                  {matchIcon(s.key)}
-                </NavigationMenuLink>
-              </TooltipTrigger>
-              <TooltipContent side="right">{s.key}</TooltipContent>
-            </Tooltip>
-          )}
-        </DroppableNavLink>
-      );
-    }) || [];
-
   return (
-    <NavigationMenu
-      className=" px-1 w-full sm:flex-col flex-row gap-8 h-full overflow-hidden py-3"
-      orientation="vertical"
-    >
-      <IconContext.Provider
-        value={{
-          size: "2em",
-          style: { stroke: "0.3px" },
-        }}
-      >
-        <div className="flex-initial h-12 w-12 border-b-gray-600 mt-2 mx-auto my-auto md:block hidden">
-          <div onClick={onClick} className="cursor-pointer">
-            {location.pathname == "/" ? (
-              <ArkitektLogo
-                width={"100%"}
-                height={"100%"}
-                cubeColor={"hsl(var(--primary))"}
-                aColor={"hsl(var(--foreground))"}
-                strokeColor={"hsl(var(--foreground))"}
-              />
-            ) : (
-              <BackLogo
-                width={"100%"}
-                height={"100%"}
-                cubeColor={"hsl(var(--primary))"}
-                aColor={"hsl(var(--foreground))"}
-                strokeColor={"hsl(var(--foreground))"}
-              />
-            )}
-          </div>
-        </div>
-        <div className="flex-grow flex-row md:flex-col justify-center flex gap-8 ">
-          {linkChildren}
-        </div>
-        <div className="flex-initial flex-row md:flex-col justify-center items-center  gap-2 flex ">
-          <Button
-            variant="ghost"
-            className={cn(
-              "md:block text-foreground hidden mx-auto h-12 w-12",
-              debug && "bg-red-500",
-            )}
-            onClick={() => setDebug(!debug)}
-          >
-            {debug ? <Bug /> : <TbBugOff />}
-          </Button>
-          <DroppableNavLink key={"Settings"} to={"settings"} className={""}>
-            {({ isActive }) => (
-              <NavigationMenuLink active={isActive}>
-                <Settings />
-              </NavigationMenuLink>
-            )}
-          </DroppableNavLink>
-          <DropdownMenu>
-            <DropdownMenuTrigger className="text-foreground  mx-auto h-12 w-12">
-              <Guard.Lok fallback={<div className="h-8">No lok?</div>}>
-                <Me />
-              </Guard.Lok>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              side="right"
-              className="p-2 mb-2 border-seperator"
-            >
-              <DropdownMenuLabel>
-                <Guard.Lok fallback={<div>No lok?</div>}>
-                  <Username />
-                </Guard.Lok>
-              </DropdownMenuLabel>
+    <>
+      <div className="flex-initial h-12 w-12 justify-center items-center flex cursor-pointer " onClick={onClick}>
+        {location.pathname == "/" ? (
+          <ArkitektLogo
+            width={"100%"}
+            height={"100%"}
+            cubeColor={"hsl(var(--primary))"}
+            aColor={"hsl(var(--foreground))"}
+            strokeColor={"hsl(var(--foreground))"}
+          />
+        ) : (
+          <BackLogo
 
-              <div className="flex flex-row gap-2 w-full">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => disconnect()}
-                >
-                  Disconnect
-                </Button>{" "}
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => reconnect()}
-                >
-                  Reconnect
-                </Button>{" "}
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </IconContext.Provider>
-    </NavigationMenu>
+            width={"100%"}
+            height={"100%"}
+            cubeColor={"hsl(var(--primary))"}
+            aColor={"hsl(var(--foreground))"}
+            strokeColor={"hsl(var(--foreground))"}
+          />
+        )}
+      </div>
+      <div className="flex-grow flex-row md:flex-col flex justify-center  md:gap-6 items-center gap-2 overflow-hidden md:flex hidden">
+        {services.map((s) => {
+          if (s.key == "self") return null;
+          if (s.key == "datalayer") return null;
+          if (s.key == "livekit") return null;
+          if (s.key == "lovekit") return null;
+          if (s.key == "dokuments") return null;
+          return (
+            <DroppableNavLink key={s.key} to={`/${s.key}`} >
+              {({ isActive }) => (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <NavigationMenuLink active={isActive}>
+                      {matchIcon(s.key)}
+                    </NavigationMenuLink>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{s.key}</TooltipContent>
+                </Tooltip>
+              )}
+            </DroppableNavLink>
+          );
+        })}
+      </div>
+      <div className="flex-grow block md:hidden">
+        <Drawer>
+          <DrawerTrigger className="flex w-full h-full justify-center items-center">
+            <IconContext.Provider
+              value={{ className: "w-8 h-8 mx-auto  text-foreground" }}
+            >
+              <Button variant="ghost" className="w-full h-full">
+                <ChevronUp />
+              </Button>
+            </IconContext.Provider>
+          </DrawerTrigger>
+          <DrawerContent
+            className="p-2 mb-2 border-seperator grid grid-cols-1 gap-2"
+          >
+            {services.map((s) => {
+              if (s.key == "self") return null;
+              if (s.key == "datalayer") return null;
+              if (s.key == "livekit") return null;
+              return (
+                <DroppableNavLink key={s.key} to={`/${s.key}`} >
+                  {({ isActive }) => (
+                    <Tooltip>
+                      <TooltipTrigger className="flex flex-col items-center">
+                        <NavigationMenuLink active={isActive} className="flex-1">
+                          {matchIcon(s.key)} {/* Show the name of the service below the icon */}
+                        </NavigationMenuLink>
+                        <div className="text-xs">{s.key}</div>
+
+                      </TooltipTrigger>
+                      <TooltipContent side="top">{s.key}</TooltipContent>
+                    </Tooltip>
+                  )}
+                </DroppableNavLink>
+              );
+            })}
+          </DrawerContent>
+        </Drawer>
+
+      </div>
+
+      <div className="flex-initial h-12 w-12 items-center flex justify-center items-center">
+        <DropdownMenu>
+          <DropdownMenuTrigger className="text-foreground h-12 w-12">
+            <Guard.Lok fallback={<div className="h-12 w-12"></div>}>
+              <Me />
+            </Guard.Lok>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            side="right"
+            className="p-2 mb-2 border-seperator"
+          >
+            <DropdownMenuLabel>
+              <Guard.Lok fallback={<div>No lok?</div>}>
+                <Username />
+              </Guard.Lok>
+            </DropdownMenuLabel>
+
+            <Button
+              variant="ghost"
+              className={cn(
+                "md:block text-foreground hidden mx-auto h-12 w-12",
+                debug && "bg-red-500",
+              )}
+              onClick={() => setDebug(!debug)}
+            >
+              {debug ? <Bug /> : <TbBugOff />}
+            </Button>
+            <DroppableNavLink key={"Settings"} to={"settings"} className={""}>
+              {({ isActive }) => (
+                <NavigationMenuLink active={isActive}>
+                  <Settings />
+                </NavigationMenuLink>
+              )}
+            </DroppableNavLink>
+
+            <div className="flex flex-row gap-2 w-full">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => disconnect()}
+              >
+                Disconnect
+              </Button>{" "}
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => reconnect()}
+              >
+                Reconnect
+              </Button>{" "}
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </>
   );
 };
 

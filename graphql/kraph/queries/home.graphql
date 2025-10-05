@@ -3,3 +3,10 @@ query HomePage {
     ...ListGraph
   }
 }
+
+
+query HomePageStats {
+  graphStats {
+    count
+  }
+}

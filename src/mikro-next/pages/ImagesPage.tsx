@@ -10,7 +10,7 @@ export type IRepresentationScreenProps = {};
 
 const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
   return (
-    <PageLayout
+    <MikroImage.ListPage
       title="Images"
       pageActions={
         <>
@@ -30,7 +30,7 @@ const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
         />
         <ImageList pagination={{ limit: 30 }} />
       </div>
-    </PageLayout>
+    </MikroImage.ListPage>
   );
 };
 

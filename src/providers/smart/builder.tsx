@@ -25,6 +25,7 @@ import {
   ModelLinkProps,
   OmitedNavLinkProps,
 } from "./types";
+import { ListPageLayout, ListPageLayoutProps } from "@/components/layout/ListPageLayout";
 
 const buildBaseLink = (to: string) => {
   return ({ children, ...props }: BaseLinkProps) => {
@@ -150,6 +151,7 @@ const buildTinyKnowledge = (model: Identifier) => {
 };
 
 export type SmartModelPage = Omit<ModelPageLayoutProps, "identifier">;
+export type SmartListPageProps = Omit<ListPageLayoutProps, "identifier">
 
 const buildModelPage = (model: Identifier) => {
   return ({ ...props }: SmartModelPage) => {
@@ -160,6 +162,16 @@ const buildModelPage = (model: Identifier) => {
     );
   };
 };
+
+const buildListPage = (model: Identifier) => {
+  return ({ ...props }: SmartListPageProps) => {
+    return (
+      <ListPageLayout identifier={model} {...props}>
+        {props.children}
+      </ListPageLayout>
+    );
+  };
+}
 
 const buildUseNodesQuery = (model: Identifier) => {
   return usePrimaryActionsQuery({
@@ -228,6 +240,7 @@ export const buildSmart = (
     TinyKnowledge: buildTinyKnowledge(model),
     identifier: model,
     ModelPage: buildModelPage(model),
+    ListPage: buildListPage(model),
     useNodes: () => buildUseNodesQuery(model),
     ObjectButton: buildObjectButton(model),
     NewButton: buildNewButton(model),

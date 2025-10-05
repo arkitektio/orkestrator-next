@@ -2,12 +2,14 @@ import { Identifier } from "@/types";
 import { PageLayout, PageVariant } from "./PageLayout";
 import { ContextMenu } from "../ui/context-menu";
 import { CommandMenu } from "@/command/Menu";
+import { MultiSidebar } from "./MultiSidebar";
+import { HelpSidebar } from "../sidebars/help";
 
-export type ModelPageLayoutProps = {
+export type ListPageLayoutProps = {
   children: React.ReactNode;
   identifier: Identifier;
-  object: string;
   title?: React.ReactNode;
+  help?: React.ReactNode;
   sidebars?: React.ReactNode;
   actions?: React.ReactNode;
   pageActions?: React.ReactNode;
@@ -20,21 +22,20 @@ export const ListPageLayout = ({
   title,
   children,
   identifier,
-  object,
   variant,
   actions,
   pageActions,
-}: ModelPageLayoutProps) => {
+}: ListPageLayoutProps) => {
   return (
     <div className="h-full w-full">
       <PageLayout
         title={title}
-        sidebars={<>{sidebars}</>}
+        sidebars={sidebars || <MultiSidebar map={{ Help: <HelpSidebar /> }} />}
         actions={actions}
         variant={variant}
         pageActions={pageActions}
       >
-        <CommandMenu returns={{ identifier, object }} />
+        <CommandMenu returns={[identifier]} />
         {children}
       </PageLayout>
     </div>

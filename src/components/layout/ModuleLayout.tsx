@@ -20,8 +20,11 @@ export const ModuleLayout = ({ pane, children }: ModuleLayoutProps) => {
         <>
           <ResizablePanel
             defaultSize={10}
+            minSize={10}
+            order={1}
+            maxSize={80}
             className="border-r dark:border-gray-700 bg-sidebar"
-            id="sidebar"
+            id="sidebar-module"
           >
             <ScrollArea className="flex flex-col h-full overflow-y-hidden">
               {pane}
@@ -31,7 +34,7 @@ export const ModuleLayout = ({ pane, children }: ModuleLayoutProps) => {
         </>
       )}
 
-      <ResizablePanel defaultSize={90} id="module">
+      <ResizablePanel defaultSize={90} id="module" order={2}>
         {children}
       </ResizablePanel>
     </ResizablePanelGroup>

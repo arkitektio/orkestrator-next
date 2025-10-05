@@ -10,7 +10,7 @@ export type IRepresentationScreenProps = {};
 
 const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
   return (
-    <PageLayout
+    <ElektroNeuronModel.ListPage
       title="Neuron models"
       pageActions={
         <>
@@ -30,7 +30,7 @@ const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
         />
         <NeuronModelList pagination={{ limit: 30 }} />
       </div>
-    </PageLayout>
+    </ElektroNeuronModel.ListPage>
   );
 };
 

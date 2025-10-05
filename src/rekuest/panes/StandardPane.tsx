@@ -59,13 +59,6 @@ export const NavigationPane = () => {
         </div>
         <div className="flex flex-col items-start gap-4 rounded-lg ml-2 text-muted-foreground mb-5">
           <DroppableNavLink
-            to="/rekuest/reservations"
-            className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
-          >
-            <CubeIcon className="h-4 w-4" />
-            Reservations
-          </DroppableNavLink>
-          <DroppableNavLink
             to="/rekuest/actions"
             className="flex flex-row w-full gap-3 rounded-lg  text-muted-foreground transition-all hover:text-primary"
           >

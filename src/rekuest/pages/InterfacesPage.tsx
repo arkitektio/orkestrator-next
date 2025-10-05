@@ -1,8 +1,9 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import InterfaceList from "../components/lists/InterfaceList";
+import { RekuestInterface } from "@/linkers";
 const Page = () => {
   return (
-    <PageLayout title={"Interfaces"}>
+    <RekuestInterface.ListPage title={"Interfaces"}>
       <div className="p-6">
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center mb-3">
           <div>
@@ -17,7 +18,7 @@ const Page = () => {
 
         <InterfaceList />
       </div>
-    </PageLayout>
+    </RekuestInterface.ListPage>
   );
 };
 

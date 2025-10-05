@@ -1,16 +1,16 @@
 import { cn } from "@/lib/utils";
 import { Separator } from "@radix-ui/react-dropdown-menu";
-import { GearIcon } from "@radix-ui/react-icons";
-import { PanelLeft } from "lucide-react";
+import { ChevronDownIcon, PanelLeft, PanelRight } from "lucide-react";
 import { useCallback } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import BreadCrumbs from "../navigation/BreadCrumbs";
 import { Button } from "../ui/button";
+import { ButtonGroup } from "../ui/button-group";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "../ui/dropdown-menu";
 import {
   ResizableHandle,
@@ -18,7 +18,7 @@ import {
   ResizablePanelGroup,
 } from "../ui/resizable";
 import { Actionbar } from "./Actionbar";
-import { CommandMenu } from "@/command/Menu";
+import { useReport } from "@/hooks/use-report";
 
 export type PageVariant = "black" | "default";
 
@@ -46,6 +46,9 @@ export const PageLayout = ({
 
   const location = useLocation();
 
+
+  const reportBug = useReport();
+
   const popOut = useCallback(() => {
     window.api.openSecondWindow(location.pathname);
   }, []);
@@ -66,7 +69,7 @@ export const PageLayout = ({
 
   return (
     <ResizablePanelGroup autoSaveId="page" direction="horizontal">
-      <ResizablePanel className="" defaultSize={80} id="page">
+      <ResizablePanel className="" defaultSize={80} id="page" order={1}>
         <div
           className={cn(
             "h-full w-full flex flex-col  relative",
@@ -83,7 +86,7 @@ export const PageLayout = ({
           >
             <Button onClick={toggleSidebar} variant={"ghost"}>
               <PanelLeft />
-              <span className="sr-only">Toggle Sidebar</span>
+              <span className="sr-only">Toggle ModulePane</span>
             </Button>
             <Separator dir="vertical" className="w-2" />
             <div className="flex-grow flex flex-col truncate">
@@ -94,27 +97,34 @@ export const PageLayout = ({
                 <BreadCrumbs />
               </div>
             </div>
-            <div className="flex-initial text-foreground flex flex-row items-center">
+            <div className="flex-initial text-foreground flex flex-row items-center gap-1">
+
               {pageActions}
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant={"ghost"}>
-                    <GearIcon />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onSelect={togglePageSidebar}>
-                    {params.get("pageSidebar") == "true" ? "Hide" : "Show"} Page
-                    Sidebar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={toggleSidebar}>
-                    {params.get("sidebar") == "true" ? "Hide" : "Show"} Sidebar
-                  </DropdownMenuItem>
+              <ButtonGroup>
+                <Button variant="ghost" onClick={togglePageSidebar} className="!pl-2 !pr-2"><PanelRight /></Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="!pl-2 !pr-2">
+                      <ChevronDownIcon />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="[--radius:1rem]">
+                    <DropdownMenuItem onSelect={togglePageSidebar}>
+                      {params.get("pageSidebar") == "true" ? "Hide" : "Show"} Page
+                      Sidebar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={toggleSidebar}>
+                      {params.get("sidebar") == "true" ? "Hide" : "Show"} Sidebar
+                    </DropdownMenuItem>
 
-                  <DropdownMenuItem onSelect={popOut}> Popout</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <DropdownMenuItem onSelect={popOut}> Popout</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={reportBug}> Report Bug</DropdownMenuItem>
+
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </ButtonGroup>
+
             </div>
           </div>
 
@@ -124,16 +134,19 @@ export const PageLayout = ({
           <Actionbar>{actions}</Actionbar>
         </div>
       </ResizablePanel>
-      {sidebars && params.get("pageSidebar") == "true" && (
+      {params.get("pageSidebar") == "true" && (
         <>
           <ResizableHandle className="h-full w-1 opacity-0 hover:opacity-80 bg-seperator" />
           <ResizablePanel
             minSize={10}
+            maxSize={80}
             defaultSize={20}
+            order={2}
             className={cn(
               "border-l-1 border bg-pane dark:border-gray-700 dark:bg-sidebar",
               variant == "default" ? "" : "border-0 bg-black",
             )}
+            id="sidebar"
           >
             {sidebars}
           </ResizablePanel>

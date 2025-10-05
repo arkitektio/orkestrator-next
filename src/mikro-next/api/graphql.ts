@@ -1138,6 +1138,15 @@ export type FromParquetLike = {
   origins?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
+export enum Granularity {
+  Day = 'DAY',
+  Hour = 'HOUR',
+  Month = 'MONTH',
+  Quarter = 'QUARTER',
+  Week = 'WEEK',
+  Year = 'YEAR'
+}
+
 export type HistogramView = View & {
   __typename?: 'HistogramView';
   /** The accessor */
@@ -1382,6 +1391,11 @@ export type ImageEvent = {
   update?: Maybe<Image>;
 };
 
+/** Numeric/aggregatable fields of Image */
+export enum ImageField {
+  Pk = 'PK'
+}
+
 export type ImageFilter = {
   AND?: InputMaybe<ImageFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1402,6 +1416,61 @@ export type ImageFilter = {
 export type ImageOrder = {
   createdAt?: InputMaybe<Ordering>;
 };
+
+export type ImageStats = {
+  __typename?: 'ImageStats';
+  /** Average */
+  avg?: Maybe<Scalars['Float']['output']>;
+  /** Total number of items in the selection */
+  count: Scalars['Int']['output'];
+  /** Number of distinct values for the field */
+  distinctCount: Scalars['Int']['output'];
+  /** Maximum */
+  max?: Maybe<Scalars['Float']['output']>;
+  /** Minimum */
+  min?: Maybe<Scalars['Float']['output']>;
+  /** Time-bucketed stats over a datetime field. */
+  series: Array<TimeBucket>;
+  /** Sum */
+  sum?: Maybe<Scalars['Float']['output']>;
+};
+
+
+export type ImageStatsAvgArgs = {
+  field: ImageField;
+};
+
+
+export type ImageStatsDistinctCountArgs = {
+  field: ImageField;
+};
+
+
+export type ImageStatsMaxArgs = {
+  field: ImageField;
+};
+
+
+export type ImageStatsMinArgs = {
+  field: ImageField;
+};
+
+
+export type ImageStatsSeriesArgs = {
+  by: Granularity;
+  field: ImageField;
+  timestampField: ImageTimestampField;
+};
+
+
+export type ImageStatsSumArgs = {
+  field: ImageField;
+};
+
+/** Datetime fields of Image for bucketing */
+export enum ImageTimestampField {
+  CreatedAt = 'CREATED_AT'
+}
 
 export type InstanceMaskView = View & {
   __typename?: 'InstanceMaskView';
@@ -3462,6 +3531,8 @@ export type Query = {
   image: Image;
   imageAccessors: Array<ImageAccessor>;
   images: Array<Image>;
+  /** Get statistics about images */
+  imagesStats: ImageStats;
   instanceMaskViewLabel: InstanceMaskViewLabel;
   instrument: Instrument;
   instruments: Array<Instrument>;
@@ -3612,6 +3683,11 @@ export type QueryImagesArgs = {
   filters?: InputMaybe<ImageFilter>;
   order?: InputMaybe<ImageOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryImagesStatsArgs = {
+  filters?: InputMaybe<ImageFilter>;
 };
 
 
@@ -4552,6 +4628,17 @@ export type TableRow = {
 export type TableRowFilter = {
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type TimeBucket = {
+  __typename?: 'TimeBucket';
+  avg?: Maybe<Scalars['Float']['output']>;
+  count: Scalars['Int']['output'];
+  distinctCount: Scalars['Int']['output'];
+  max?: Maybe<Scalars['Float']['output']>;
+  min?: Maybe<Scalars['Float']['output']>;
+  sum?: Maybe<Scalars['Float']['output']>;
+  ts: Scalars['DateTime']['output'];
 };
 
 export type TimepointView = View & {
@@ -5639,6 +5726,18 @@ export type PeerHomePageQueryVariables = Exact<{
 
 
 export type PeerHomePageQuery = { __typename?: 'Query', images: Array<{ __typename?: 'Image', id: string, name: string, latestSnapshot?: { __typename?: 'Snapshot', id: string, store: { __typename?: 'MediaStore', key: string, presignedUrl: string } } | null }>, files: Array<{ __typename?: 'File', id: string, name: string }> };
+
+export type HomePageStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type HomePageStatsQuery = { __typename?: 'Query', imagesStats: { __typename?: 'ImageStats', count: number, series: Array<{ __typename?: 'TimeBucket', count: number }> } };
+
+export type PeerHomePageStatsQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type PeerHomePageStatsQuery = { __typename?: 'Query', imagesStats: { __typename?: 'ImageStats', count: number, series: Array<{ __typename?: 'TimeBucket', count: number }> } };
 
 export type GetImageQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -9067,6 +9166,81 @@ export function usePeerHomePageLazyQuery(baseOptions?: ApolloReactHooks.LazyQuer
 export type PeerHomePageQueryHookResult = ReturnType<typeof usePeerHomePageQuery>;
 export type PeerHomePageLazyQueryHookResult = ReturnType<typeof usePeerHomePageLazyQuery>;
 export type PeerHomePageQueryResult = Apollo.QueryResult<PeerHomePageQuery, PeerHomePageQueryVariables>;
+export const HomePageStatsDocument = gql`
+    query HomePageStats {
+  imagesStats(filters: {owner: null}) {
+    count
+    series(by: DAY, field: PK, timestampField: CREATED_AT) {
+      count
+    }
+  }
+}
+    `;
+
+/**
+ * __useHomePageStatsQuery__
+ *
+ * To run a query within a React component, call `useHomePageStatsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHomePageStatsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHomePageStatsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useHomePageStatsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<HomePageStatsQuery, HomePageStatsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<HomePageStatsQuery, HomePageStatsQueryVariables>(HomePageStatsDocument, options);
+      }
+export function useHomePageStatsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<HomePageStatsQuery, HomePageStatsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<HomePageStatsQuery, HomePageStatsQueryVariables>(HomePageStatsDocument, options);
+        }
+export type HomePageStatsQueryHookResult = ReturnType<typeof useHomePageStatsQuery>;
+export type HomePageStatsLazyQueryHookResult = ReturnType<typeof useHomePageStatsLazyQuery>;
+export type HomePageStatsQueryResult = Apollo.QueryResult<HomePageStatsQuery, HomePageStatsQueryVariables>;
+export const PeerHomePageStatsDocument = gql`
+    query PeerHomePageStats($id: ID!) {
+  imagesStats(filters: {owner: $id}) {
+    count
+    series(by: DAY, field: PK, timestampField: CREATED_AT) {
+      count
+    }
+  }
+}
+    `;
+
+/**
+ * __usePeerHomePageStatsQuery__
+ *
+ * To run a query within a React component, call `usePeerHomePageStatsQuery` and pass it any options that fit your needs.
+ * When your component renders, `usePeerHomePageStatsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = usePeerHomePageStatsQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function usePeerHomePageStatsQuery(baseOptions: ApolloReactHooks.QueryHookOptions<PeerHomePageStatsQuery, PeerHomePageStatsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<PeerHomePageStatsQuery, PeerHomePageStatsQueryVariables>(PeerHomePageStatsDocument, options);
+      }
+export function usePeerHomePageStatsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<PeerHomePageStatsQuery, PeerHomePageStatsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<PeerHomePageStatsQuery, PeerHomePageStatsQueryVariables>(PeerHomePageStatsDocument, options);
+        }
+export type PeerHomePageStatsQueryHookResult = ReturnType<typeof usePeerHomePageStatsQuery>;
+export type PeerHomePageStatsLazyQueryHookResult = ReturnType<typeof usePeerHomePageStatsLazyQuery>;
+export type PeerHomePageStatsQueryResult = Apollo.QueryResult<PeerHomePageStatsQuery, PeerHomePageStatsQueryVariables>;
 export const GetImageDocument = gql`
     query GetImage($id: ID!) {
   image(id: $id) {

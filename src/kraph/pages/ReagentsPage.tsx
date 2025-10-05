@@ -14,7 +14,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   const navigate = useNavigate();
 
   return (
-    <PageLayout
+    <KraphReagent.ListPage
       title="Reagents"
       pageActions={
         <div className="flex flex-row gap-2">
@@ -48,7 +48,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
         />
         <ReagentList pagination={{ limit: 30 }} />
       </div>
-    </PageLayout>
+    </KraphReagent.ListPage>
   );
 };
 

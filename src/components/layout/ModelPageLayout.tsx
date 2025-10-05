@@ -1,8 +1,7 @@
-import { Identifier } from "@/types";
-import { PageLayout, PageVariant } from "./PageLayout";
-import { ContextMenu } from "../ui/context-menu";
 import { CommandMenu } from "@/command/Menu";
+import { Identifier } from "@/types";
 import { useMemo } from "react";
+import { PageLayout, PageVariant } from "./PageLayout";
 
 export type ModelPageLayoutProps = {
   children: React.ReactNode;

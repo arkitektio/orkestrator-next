@@ -1,7 +1,7 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Card } from "@/components/ui/card";
 import { FormDialogAction } from "@/components/ui/form-dialog-action";
-import { KraphGraph } from "@/linkers";
+import { KraphGraph, KraphMeasurementCategory } from "@/linkers";
 import { PlusIcon } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
@@ -14,7 +14,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   const navigate = useNavigate();
 
   return (
-    <PageLayout
+    <KraphMeasurementCategory.ListPage
       title="Measurement Categories"
       pageActions={
         <div className="flex flex-row gap-2">
@@ -62,7 +62,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
 
         <MeasurementCategoryList pagination={{ limit: 30 }} />
       </div>
-    </PageLayout>
+    </KraphMeasurementCategory.ListPage>
   );
 };
 

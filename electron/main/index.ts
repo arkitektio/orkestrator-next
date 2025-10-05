@@ -15,6 +15,10 @@ import { fileURLToPath } from "url";
 import { download } from "electron-dl";
 import { autoUpdater } from "electron-updater";
 import log from "electron-log";
+import Store from "electron-store";
+import { registerIssueIpc } from "./issue-reporter";
+
+const store = new Store();
 
 app.commandLine.appendSwitch("ignore-certificate-errors", "true");
 
@@ -105,6 +109,14 @@ ipcMain.handle("check-for-updates", async () => {
   }
 });
 
+ipcMain.handle("open-webbrowser", async (_, url: string) => {
+  try {
+    await shell.openExternal(url);
+  } catch (error) {
+    console.error("Failed to open URL in web browser:", error);
+  }
+});
+
 function handleOrkestratorUrl(url: string) {
   try {
     const { host: modelIdentifier, pathname } = new URL(url);
@@ -144,8 +156,17 @@ function createWindow(): BrowserWindow {
     },
   });
 
+  mainWindow.webContents.setZoomFactor(store.get("zoomFactor", 0.7));
+
+
   mainWindow.webContents.setWindowOpenHandler((details) => {
     return { action: "deny" };
+  });
+
+
+
+  mainWindow.on("resize", () => {
+    const [width, height] = mainWindow?.getSize() || [900, 670];
   });
 
   mainWindow.on("ready-to-show", () => {
@@ -360,6 +381,7 @@ if (!gotTheLock) {
 
   // Create mainWindow, load the rest of the app, etc...
   app.whenReady().then(() => {
+    registerIssueIpc();
     createWindow();
   });
 }
@@ -432,9 +454,11 @@ app.whenReady().then(() => {
   ipcMain.handle("set-zoom-level", (_, zoomLevel: number) => {
     const focusedWindow = BrowserWindow.getFocusedWindow();
     if (focusedWindow) {
+      store.set("zoomFactor", zoomLevel);
       focusedWindow.webContents.setZoomFactor(zoomLevel);
       return { success: true };
     } else if (mainWindow) {
+      store.set("zoomFactor", zoomLevel);
       mainWindow.webContents.setZoomFactor(zoomLevel);
       return { success: true };
     }
@@ -446,12 +470,12 @@ app.whenReady().then(() => {
     if (focusedWindow) {
       return {
         success: true,
-        zoomLevel: focusedWindow.webContents.getZoomFactor(),
+        zoomLevel: store.get("zoomFactor", 0.7),
       };
     } else if (mainWindow) {
       return {
         success: true,
-        zoomLevel: mainWindow.webContents.getZoomFactor(),
+        zoomLevel: store.get("zoomFactor", 0.7),
       };
     }
     return { success: false, error: "No window to get zoom level" };
@@ -466,6 +490,15 @@ app.whenReady().then(() => {
       mainWindow.reload();
     }
   };
+
+
+  const stayOnTop = () => {
+    const focusedWindow = BrowserWindow.getFocusedWindow();
+    if (focusedWindow) {
+      const isAlwaysOnTop = focusedWindow.isAlwaysOnTop();
+      focusedWindow.setAlwaysOnTop(!isAlwaysOnTop);
+    }
+  }
 
   const menu = Menu.buildFromTemplate([
     {
@@ -499,6 +532,7 @@ app.whenReady().then(() => {
             }
           },
         },
+        { label: "Toggle Always on Top", click: stayOnTop },
         { type: "separator" },
         { role: "toggleDevTools" },
       ],

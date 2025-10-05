@@ -13,6 +13,14 @@ declare global {
       forceReloadWindow: () => Promise<{ success: boolean; error?: string }>;
       setZoomLevel: (zoomLevel: number) => Promise<{ success: boolean; error?: string }>;
       getZoomLevel: () => Promise<{ success: boolean; zoomLevel?: number; error?: string }>;
+      openWebbrowser: (url: string) => Promise<void>;
+      reportIssue: (opts: {
+        title?: string;
+        extra?: string;
+        includeScreenshot?: boolean;
+        labels?: string[];
+        template?: string;
+      }) => Promise<void>;
     };
     updates: {
       checkForUpdates: () => Promise<{ success: boolean; result?: any; error?: string }>;

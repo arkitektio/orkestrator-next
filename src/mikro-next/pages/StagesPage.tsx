@@ -2,12 +2,13 @@ import { Explainer } from "@/components/explainer/Explainer";
 import { PageLayout } from "@/components/layout/PageLayout";
 import React from "react";
 import StageList from "../components/lists/StageList";
+import { MikroMesh, MikroStage } from "@/linkers";
 
 export type IRepresentationScreenProps = {};
 
 const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
   return (
-    <PageLayout actions={<></>} title="Stages">
+    <MikroStage.ListPage actions={<></>} title="Stages">
       <div className="p-3">
         <Explainer
           title="Stages"
@@ -16,7 +17,7 @@ const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
         />
         <StageList pagination={{ limit: 30 }} />
       </div>
-    </PageLayout>
+    </MikroStage.ListPage>
   );
 };
 

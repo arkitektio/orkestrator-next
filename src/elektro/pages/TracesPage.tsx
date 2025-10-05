@@ -1,7 +1,7 @@
 import { Explainer } from "@/components/explainer/Explainer";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
-import { ElektroSimulation } from "@/linkers";
+import { ElektroSimulation, ElektroTrace } from "@/linkers";
 import { UploadIcon } from "lucide-react";
 import React from "react";
 import TraceList from "../components/lists/TraceList";
@@ -10,16 +10,16 @@ export type IRepresentationScreenProps = {};
 
 const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
   return (
-    <PageLayout
+    <ElektroTrace.ListPage
       title="Traces"
       pageActions={
         <>
-          <ElektroSimulation.NewButton>
+          <ElektroTrace.NewButton>
             <Button variant="outline" size="sm">
               <UploadIcon className="h-4 w-4 mr-2" />
               New
             </Button>
-          </ElektroSimulation.NewButton>
+          </ElektroTrace.NewButton>
         </>
       }
     >
@@ -30,7 +30,7 @@ const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
         />
         <TraceList pagination={{ limit: 30 }} />
       </div>
-    </PageLayout>
+    </ElektroTrace.ListPage>
   );
 };
 

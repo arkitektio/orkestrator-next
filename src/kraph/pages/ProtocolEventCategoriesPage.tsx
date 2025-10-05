@@ -15,7 +15,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   const navigate = useNavigate();
 
   return (
-    <PageLayout
+    <KraphProtocolEventCategory.ListPage
       title="Protocol Event Categories"
       pageActions={
         <div className="flex flex-row gap-2">
@@ -65,7 +65,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
 
         <ProtocolEventCategoryList pagination={{ limit: 30 }} />
       </div>
-    </PageLayout>
+    </KraphProtocolEventCategory.ListPage>
   );
 };
 

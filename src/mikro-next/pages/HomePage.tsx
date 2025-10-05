@@ -14,9 +14,12 @@ import { UploadDialog } from "../components/dialogs/UploadDialog";
 import DatasetList from "../components/lists/DatasetList";
 import FileList from "../components/lists/FileList";
 import ImageList from "../components/lists/ImageList";
+import { HelpSidebar } from "@/components/sidebars/help";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { StatisticsSidebar } from "../components/sidebars/StatisticsSidebar";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface IRepresentationScreenProps {}
+export interface IRepresentationScreenProps { }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Page = asParamlessRoute(useHomePageQuery, ({ data, refetch }) => {
@@ -51,6 +54,12 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data, refetch }) => {
             Upload Files
           </PageActionButton>
         </UploadDialog>
+      }
+      sidebars={
+        <MultiSidebar map={{
+          Statistics: <StatisticsSidebar />,
+          Help: <HelpSidebar />
+        }} />
       }
       title="Home"
     >

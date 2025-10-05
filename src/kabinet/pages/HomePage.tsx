@@ -24,6 +24,9 @@ import { Button } from "@/components/ui/button";
 import { PopularCarousel } from "../components/PopularCarousel";
 import DefinitionList from "../components/lists/DefinitionList";
 import ReleasesList from "../components/lists/ReleasesList";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
+import { HelpSidebar } from "@/components/sidebars/help";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Page = asParamlessRoute(useHomePageQuery, ({ data }: { data: any }) => {
@@ -32,6 +35,12 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }: { data: any }) => {
   });
   return (
     <PageLayout
+      sidebars={
+        <MultiSidebar map={{
+          Statistics: <HomePageStatisticsSidebar />,
+          Help: <HelpSidebar />
+        }} />
+      }
       pageActions={
         <div className="flex flex-row gap-1">
           <>
@@ -90,7 +99,7 @@ const Page = asParamlessRoute(useHomePageQuery, ({ data }: { data: any }) => {
             {/* Action Section */}
             <div className="mt-12 space-y-6">
               <div className="space-y-4">
-                <Button variant="primary" size="lg" onClick={() => {}}>
+                <Button variant="primary" size="lg" onClick={() => { }}>
                   Add your first Repo
                 </Button>
               </div>

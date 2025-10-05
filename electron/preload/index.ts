@@ -20,6 +20,14 @@ const api = {
   forceReloadWindow: () => ipcRenderer.invoke("force-reload-window"),
   setZoomLevel: (zoomLevel: number) => ipcRenderer.invoke("set-zoom-level", zoomLevel),
   getZoomLevel: () => ipcRenderer.invoke("get-zoom-level"),
+  openWebbrowser: (url: string) => ipcRenderer.invoke("open-webbrowser", url),
+  reportIssue: (opts: {
+    title?: string;
+    extra?: string;
+    includeScreenshot?: boolean;
+    labels?: string[];
+    template?: string;
+  }) => ipcRenderer.invoke("arkitekt.reportIssue", opts),
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

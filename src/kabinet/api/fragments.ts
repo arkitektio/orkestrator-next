@@ -16,6 +16,7 @@
     ],
     "Effect": [
       "CustomEffect",
+      "HideEffect",
       "MessageEffect"
     ],
     "ReturnWidget": [

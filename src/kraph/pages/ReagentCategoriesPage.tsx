@@ -1,7 +1,7 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Card } from "@/components/ui/card";
 import { FormDialogAction } from "@/components/ui/form-dialog-action";
-import { KraphGraph } from "@/linkers";
+import { KraphGraph, KraphReagentCategory } from "@/linkers";
 import { PlusIcon } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
@@ -14,7 +14,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   const navigate = useNavigate();
 
   return (
-    <PageLayout
+    <KraphReagentCategory.ListPage
       title="Reagent Categories"
       pageActions={
         <div className="flex flex-row gap-2">
@@ -59,7 +59,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
 
         <ReagentCategoryList pagination={{ limit: 30 }} />
       </div>
-    </PageLayout>
+    </KraphReagentCategory.ListPage>
   );
 };
 

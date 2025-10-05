@@ -5,6 +5,7 @@ import { PlusIcon } from "lucide-react";
 import React from "react";
 import { GetDatasetsDocument, useCreateDatasetMutation } from "../api/graphql";
 import DatasetList from "../components/lists/DatasetList";
+import { MikroDataset } from "@/linkers";
 
 export type IRepresentationScreenProps = {};
 
@@ -17,7 +18,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   });
 
   return (
-    <PageLayout
+    <MikroDataset.ListPage
       title="Datasets"
       pageActions={
         <>
@@ -35,7 +36,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
         />
         <DatasetList pagination={{ limit: 30 }} filters={{ parentless: true }} />
       </div>
-    </PageLayout>
+    </MikroDataset.ListPage>
   );
 };
 

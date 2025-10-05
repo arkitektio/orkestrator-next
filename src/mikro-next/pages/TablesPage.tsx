@@ -8,7 +8,7 @@ export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
   return (
-    <PageLayout
+    <MikroTable.ListPage
       title="Tables"
       pageActions={
         <>
@@ -23,7 +23,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
         />
         <TableList pagination={{ limit: 30 }} />
       </div>
-    </PageLayout>
+    </MikroTable.ListPage>
   );
 };
 

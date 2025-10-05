@@ -163,6 +163,11 @@ export type BlockSegmentsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+/** Numeric/aggregatable fields of Block */
+export enum BlockField {
+  CreatedAt = 'CREATED_AT'
+}
+
 export type BlockFilter = {
   AND?: InputMaybe<BlockFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
@@ -293,6 +298,61 @@ export type BlockSegmentInput = {
   name?: InputMaybe<Scalars['String']['input']>;
   spikeTrains?: Array<SpikeTrainInput>;
 };
+
+export type BlockStats = {
+  __typename?: 'BlockStats';
+  /** Average */
+  avg?: Maybe<Scalars['Float']['output']>;
+  /** Total number of items in the selection */
+  count: Scalars['Int']['output'];
+  /** Number of distinct values for the field */
+  distinctCount: Scalars['Int']['output'];
+  /** Maximum */
+  max?: Maybe<Scalars['Float']['output']>;
+  /** Minimum */
+  min?: Maybe<Scalars['Float']['output']>;
+  /** Time-bucketed stats over a datetime field. */
+  series: Array<TimeBucket>;
+  /** Sum */
+  sum?: Maybe<Scalars['Float']['output']>;
+};
+
+
+export type BlockStatsAvgArgs = {
+  field: BlockField;
+};
+
+
+export type BlockStatsDistinctCountArgs = {
+  field: BlockField;
+};
+
+
+export type BlockStatsMaxArgs = {
+  field: BlockField;
+};
+
+
+export type BlockStatsMinArgs = {
+  field: BlockField;
+};
+
+
+export type BlockStatsSeriesArgs = {
+  by: Granularity;
+  field: BlockField;
+  timestampField: BlockTimestampField;
+};
+
+
+export type BlockStatsSumArgs = {
+  field: BlockField;
+};
+
+/** Datetime fields of Block for bucketing */
+export enum BlockTimestampField {
+  CreatedAt = 'CREATED_AT'
+}
 
 export type Cell = {
   __typename?: 'Cell';
@@ -637,6 +697,15 @@ export type GlobalParamMapInput = {
   param: Scalars['String']['input'];
   value: Scalars['Float']['input'];
 };
+
+export enum Granularity {
+  Day = 'DAY',
+  Hour = 'HOUR',
+  Month = 'MONTH',
+  Quarter = 'QUARTER',
+  Week = 'WEEK',
+  Year = 'YEAR'
+}
 
 /** The type of change that was made. */
 export enum HistoryKind {
@@ -1138,6 +1207,7 @@ export type Query = {
   analogSignalChannels: Array<AnalogSignalChannel>;
   analogSignals: Array<AnalogSignal>;
   block: Block;
+  blockStats: BlockStats;
   blocks: Array<Block>;
   /** Returns a list of cells in a model */
   cells: Array<Cell>;
@@ -1197,6 +1267,11 @@ export type QueryAnalogSignalsArgs = {
 
 export type QueryBlockArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryBlockStatsArgs = {
+  filters?: InputMaybe<BlockFilter>;
 };
 
 
@@ -1707,6 +1782,17 @@ export type SynapticConnection = NetConnection & {
   weight?: Maybe<Scalars['Float']['output']>;
 };
 
+export type TimeBucket = {
+  __typename?: 'TimeBucket';
+  avg?: Maybe<Scalars['Float']['output']>;
+  count: Scalars['Int']['output'];
+  distinctCount: Scalars['Int']['output'];
+  max?: Maybe<Scalars['Float']['output']>;
+  min?: Maybe<Scalars['Float']['output']>;
+  sum?: Maybe<Scalars['Float']['output']>;
+  ts: Scalars['DateTime']['output'];
+};
+
 export type Topology = {
   __typename?: 'Topology';
   sections: Array<Section>;
@@ -1933,6 +2019,11 @@ export type ListExperimentsQueryVariables = Exact<{
 
 
 export type ListExperimentsQuery = { __typename?: 'Query', experiments: Array<{ __typename?: 'Experiment', id: string, name: string }> };
+
+export type HomePageStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type HomePageStatsQuery = { __typename?: 'Query', blockStats: { __typename?: 'BlockStats', count: number } };
 
 export type HomePageQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -2699,6 +2790,40 @@ export function useListExperimentsLazyQuery(baseOptions?: ApolloReactHooks.LazyQ
 export type ListExperimentsQueryHookResult = ReturnType<typeof useListExperimentsQuery>;
 export type ListExperimentsLazyQueryHookResult = ReturnType<typeof useListExperimentsLazyQuery>;
 export type ListExperimentsQueryResult = Apollo.QueryResult<ListExperimentsQuery, ListExperimentsQueryVariables>;
+export const HomePageStatsDocument = gql`
+    query HomePageStats {
+  blockStats {
+    count
+  }
+}
+    `;
+
+/**
+ * __useHomePageStatsQuery__
+ *
+ * To run a query within a React component, call `useHomePageStatsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHomePageStatsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHomePageStatsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useHomePageStatsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<HomePageStatsQuery, HomePageStatsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<HomePageStatsQuery, HomePageStatsQueryVariables>(HomePageStatsDocument, options);
+      }
+export function useHomePageStatsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<HomePageStatsQuery, HomePageStatsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<HomePageStatsQuery, HomePageStatsQueryVariables>(HomePageStatsDocument, options);
+        }
+export type HomePageStatsQueryHookResult = ReturnType<typeof useHomePageStatsQuery>;
+export type HomePageStatsLazyQueryHookResult = ReturnType<typeof useHomePageStatsLazyQuery>;
+export type HomePageStatsQueryResult = Apollo.QueryResult<HomePageStatsQuery, HomePageStatsQueryVariables>;
 export const HomePageDocument = gql`
     query HomePage {
   blocks: blocks(pagination: {limit: 1}, order: {createdAt: DESC}) {

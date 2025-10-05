@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/button";
 import { UploadIcon } from "lucide-react";
 import React from "react";
 import FileList from "../components/lists/FileList";
+import { MikroFile } from "@/linkers";
 
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
   return (
-    <PageLayout
+    <MikroFile.ListPage
       title="Datasets"
       pageActions={
         <>
@@ -20,7 +21,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       }
     >
       <FileList pagination={{ limit: 30 }} />
-    </PageLayout>
+    </MikroFile.ListPage>
   );
 };
 

@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/button";
 import { UploadIcon } from "lucide-react";
 import React from "react";
 import MeshList from "../components/lists/MeshList";
+import { MikroMesh } from "@/linkers";
 
 export type IRepresentationScreenProps = {};
 
 const Page: React.FC<IRepresentationScreenProps> = () => {
   return (
-    <PageLayout
+    <MikroMesh.ListPage
       title="Meshes"
       pageActions={
         <>
@@ -20,7 +21,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
       }
     >
       <MeshList pagination={{ limit: 30 }} />
-    </PageLayout>
+    </MikroMesh.ListPage>
   );
 };
 

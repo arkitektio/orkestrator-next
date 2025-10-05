@@ -6,6 +6,9 @@ import { CreateWorkspaceForm } from "../components/forms/CreateWorkspaceForm";
 import RunList from "../components/lists/RunList";
 import WorkspaceList from "../components/lists/WorkspaceList";
 import WorkspaceCarousel from "../edit/carousels/WorkspaceCarousel";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
+import { HelpSidebar } from "@/components/sidebars/help";
 
 const Page = () => {
   const navigate = useNavigate();
@@ -25,6 +28,12 @@ const Page = () => {
             <CreateWorkspaceForm />
           </FormDialogAction>
         </>
+      }
+      sidebars={
+        <MultiSidebar map={{
+          Statistics: <HomePageStatisticsSidebar />,
+          Help: <HelpSidebar />
+        }} />
       }
     >
       <WorkspaceCarousel />

@@ -10,6 +10,9 @@ import CollectionList from "../components/lists/CollectionList";
 import LLMModelList from "../components/lists/LLMModelList";
 import ProviderList from "../components/lists/ProviderList";
 import RoomList from "../components/lists/RoomList";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
+import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
+import { HelpSidebar } from "@/components/sidebars/help";
 
 export type IRepresentationScreenProps = {};
 
@@ -37,6 +40,12 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   return (
     <PageLayout
       title="Alpaka"
+      sidebars={
+        <MultiSidebar map={{
+          Statistics: <HomePageStatisticsSidebar />,
+          Help: <HelpSidebar />
+        }} />
+      }
       pageActions={
         <>
           <ActionButton

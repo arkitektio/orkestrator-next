@@ -162,6 +162,15 @@ export type FunctionDefinitionInput = {
   parameters?: InputMaybe<Scalars['JSON']['input']>;
 };
 
+export enum Granularity {
+  Day = 'DAY',
+  Hour = 'HOUR',
+  Month = 'MONTH',
+  Quarter = 'QUARTER',
+  Week = 'WEEK',
+  Year = 'YEAR'
+}
+
 /** A LLM model to chage with */
 export type LlmModel = {
   __typename?: 'LLMModel';
@@ -338,7 +347,7 @@ export type ProviderInput = {
   apiKey?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   kind: ProviderKind;
-  name: Scalars['String']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** The kind of LLM provider */
@@ -380,6 +389,7 @@ export type Query = {
   provider: Provider;
   providers: Array<Provider>;
   room: Room;
+  roomStats: RoomStats;
   rooms: Array<Room>;
 };
 
@@ -430,6 +440,11 @@ export type QueryRoomArgs = {
 };
 
 
+export type QueryRoomStatsArgs = {
+  filters?: InputMaybe<RoomFilter>;
+};
+
+
 export type QueryRoomsArgs = {
   filters?: InputMaybe<RoomFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -444,25 +459,27 @@ export enum Role {
   User = 'USER'
 }
 
-/** Room(id, title, description, creator) */
+/** Room(id, title, description, creator, organization, created_at) */
 export type Room = {
   __typename?: 'Room';
   agents: Array<Agent>;
   description: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   messages: Array<Message>;
+  /** The organization this room belongs to */
+  organization: Organization;
   /** The Title of the Room */
   title: Scalars['String']['output'];
 };
 
 
-/** Room(id, title, description, creator) */
+/** Room(id, title, description, creator, organization, created_at) */
 export type RoomAgentsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
-/** Room(id, title, description, creator) */
+/** Room(id, title, description, creator, organization, created_at) */
 export type RoomMessagesArgs = {
   filters?: InputMaybe<MessageFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -475,7 +492,12 @@ export type RoomEvent = {
   message?: Maybe<Message>;
 };
 
-/** Room(id, title, description, creator) */
+/** Numeric/aggregatable fields of Room */
+export enum RoomField {
+  CreatedAt = 'CREATED_AT'
+}
+
+/** Room(id, title, description, creator, organization, created_at) */
 export type RoomFilter = {
   AND?: InputMaybe<RoomFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
@@ -484,6 +506,61 @@ export type RoomFilter = {
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type RoomStats = {
+  __typename?: 'RoomStats';
+  /** Average */
+  avg?: Maybe<Scalars['Float']['output']>;
+  /** Total number of items in the selection */
+  count: Scalars['Int']['output'];
+  /** Number of distinct values for the field */
+  distinctCount: Scalars['Int']['output'];
+  /** Maximum */
+  max?: Maybe<Scalars['Float']['output']>;
+  /** Minimum */
+  min?: Maybe<Scalars['Float']['output']>;
+  /** Time-bucketed stats over a datetime field. */
+  series: Array<TimeBucket>;
+  /** Sum */
+  sum?: Maybe<Scalars['Float']['output']>;
+};
+
+
+export type RoomStatsAvgArgs = {
+  field: RoomField;
+};
+
+
+export type RoomStatsDistinctCountArgs = {
+  field: RoomField;
+};
+
+
+export type RoomStatsMaxArgs = {
+  field: RoomField;
+};
+
+
+export type RoomStatsMinArgs = {
+  field: RoomField;
+};
+
+
+export type RoomStatsSeriesArgs = {
+  by: Granularity;
+  field: RoomField;
+  timestampField: RoomTimestampField;
+};
+
+
+export type RoomStatsSumArgs = {
+  field: RoomField;
+};
+
+/** Datetime fields of Room for bucketing */
+export enum RoomTimestampField {
+  CreatedAt = 'CREATED_AT'
+}
 
 export type SendMessageInput = {
   agentId: Scalars['String']['input'];
@@ -530,6 +607,17 @@ export type ThinkingBlock = {
 export enum ThinkingBlockType {
   Thinking = 'THINKING'
 }
+
+export type TimeBucket = {
+  __typename?: 'TimeBucket';
+  avg?: Maybe<Scalars['Float']['output']>;
+  count: Scalars['Int']['output'];
+  distinctCount: Scalars['Int']['output'];
+  max?: Maybe<Scalars['Float']['output']>;
+  min?: Maybe<Scalars['Float']['output']>;
+  sum?: Maybe<Scalars['Float']['output']>;
+  ts: Scalars['DateTime']['output'];
+};
 
 /** A function definition for a large language model */
 export type ToolCall = {
@@ -693,6 +781,11 @@ export type QueryDocumentsQueryVariables = Exact<{
 
 
 export type QueryDocumentsQuery = { __typename?: 'Query', documents: Array<{ __typename?: 'Document', id: string, content: string, metadata?: any | null, distance?: number | null, structure?: { __typename?: 'Structure', identifier: string, object: string } | null }> };
+
+export type HomePageStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type HomePageStatsQuery = { __typename?: 'Query', roomStats: { __typename?: 'RoomStats', count: number } };
 
 export type GetLlmModelQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1381,6 +1474,40 @@ export function useQueryDocumentsLazyQuery(baseOptions?: ApolloReactHooks.LazyQu
 export type QueryDocumentsQueryHookResult = ReturnType<typeof useQueryDocumentsQuery>;
 export type QueryDocumentsLazyQueryHookResult = ReturnType<typeof useQueryDocumentsLazyQuery>;
 export type QueryDocumentsQueryResult = Apollo.QueryResult<QueryDocumentsQuery, QueryDocumentsQueryVariables>;
+export const HomePageStatsDocument = gql`
+    query HomePageStats {
+  roomStats {
+    count
+  }
+}
+    `;
+
+/**
+ * __useHomePageStatsQuery__
+ *
+ * To run a query within a React component, call `useHomePageStatsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHomePageStatsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHomePageStatsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useHomePageStatsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<HomePageStatsQuery, HomePageStatsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<HomePageStatsQuery, HomePageStatsQueryVariables>(HomePageStatsDocument, options);
+      }
+export function useHomePageStatsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<HomePageStatsQuery, HomePageStatsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<HomePageStatsQuery, HomePageStatsQueryVariables>(HomePageStatsDocument, options);
+        }
+export type HomePageStatsQueryHookResult = ReturnType<typeof useHomePageStatsQuery>;
+export type HomePageStatsLazyQueryHookResult = ReturnType<typeof useHomePageStatsLazyQuery>;
+export type HomePageStatsQueryResult = Apollo.QueryResult<HomePageStatsQuery, HomePageStatsQueryVariables>;
 export const GetLlmModelDocument = gql`
     query GetLLMModel($id: ID!) {
   llmModel(id: $id) {

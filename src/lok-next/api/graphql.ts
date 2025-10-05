@@ -278,6 +278,15 @@ export type DjangoModelType = {
   pk: Scalars['ID']['output'];
 };
 
+export enum Granularity {
+  Day = 'DAY',
+  Hour = 'HOUR',
+  Month = 'MONTH',
+  Quarter = 'QUARTER',
+  Week = 'WEEK',
+  Year = 'YEAR'
+}
+
 /**
  *
  * A Group is the base unit of Role Based Access Control. A Group can have many users and many permissions. A user can have many groups. A user with a group that has a permission can perform the action that the permission allows.
@@ -784,6 +793,7 @@ export type Query = {
   stashItems: Array<StashItem>;
   stashes: Array<Stash>;
   user: User;
+  userStats: UserStats;
   users: Array<User>;
 };
 
@@ -943,6 +953,11 @@ export type QueryStashesArgs = {
 
 export type QueryUserArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryUserStatsArgs = {
+  filters?: InputMaybe<UserFilter>;
 };
 
 
@@ -1314,6 +1329,17 @@ export type SystemMessage = {
   user: User;
 };
 
+export type TimeBucket = {
+  __typename?: 'TimeBucket';
+  avg?: Maybe<Scalars['Float']['output']>;
+  count: Scalars['Int']['output'];
+  distinctCount: Scalars['Int']['output'];
+  max?: Maybe<Scalars['Float']['output']>;
+  min?: Maybe<Scalars['Float']['output']>;
+  sum?: Maybe<Scalars['Float']['output']>;
+  ts: Scalars['DateTime']['output'];
+};
+
 export type UpdateGroupProfileInput = {
   avatar: Scalars['ID']['input'];
   id: Scalars['ID']['input'];
@@ -1429,6 +1455,11 @@ export type UserMembershipsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+/** Numeric/aggregatable fields of User */
+export enum UserField {
+  CreatedAt = 'CREATED_AT'
+}
+
 /**
  * A User of the System
  *
@@ -1445,6 +1476,61 @@ export type UserFilter = {
   /** Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only. */
   username?: InputMaybe<StrFilterLookup>;
 };
+
+export type UserStats = {
+  __typename?: 'UserStats';
+  /** Average */
+  avg?: Maybe<Scalars['Float']['output']>;
+  /** Total number of items in the selection */
+  count: Scalars['Int']['output'];
+  /** Number of distinct values for the field */
+  distinctCount: Scalars['Int']['output'];
+  /** Maximum */
+  max?: Maybe<Scalars['Float']['output']>;
+  /** Minimum */
+  min?: Maybe<Scalars['Float']['output']>;
+  /** Time-bucketed stats over a datetime field. */
+  series: Array<TimeBucket>;
+  /** Sum */
+  sum?: Maybe<Scalars['Float']['output']>;
+};
+
+
+export type UserStatsAvgArgs = {
+  field: UserField;
+};
+
+
+export type UserStatsDistinctCountArgs = {
+  field: UserField;
+};
+
+
+export type UserStatsMaxArgs = {
+  field: UserField;
+};
+
+
+export type UserStatsMinArgs = {
+  field: UserField;
+};
+
+
+export type UserStatsSeriesArgs = {
+  by: Granularity;
+  field: UserField;
+  timestampField: UserTimestampField;
+};
+
+
+export type UserStatsSumArgs = {
+  field: UserField;
+};
+
+/** Datetime fields of User for bucketing */
+export enum UserTimestampField {
+  CreatedAt = 'CREATED_AT'
+}
 
 export type _Service = {
   __typename?: '_Service';
@@ -1779,6 +1865,11 @@ export type GroupsQueryVariables = Exact<{
 
 
 export type GroupsQuery = { __typename?: 'Query', groups: Array<{ __typename?: 'Group', id: string, name: string, profile?: { __typename?: 'GroupProfile', id: string, bio?: string | null, avatar?: { __typename?: 'MediaStore', presignedUrl: string } | null } | null }> };
+
+export type HomePageStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type HomePageStatsQuery = { __typename?: 'Query', userStats: { __typename?: 'UserStats', count: number } };
 
 export type LayersQueryVariables = Exact<{
   filters?: InputMaybe<LayerFilter>;
@@ -3678,6 +3769,40 @@ export function useGroupsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookO
 export type GroupsQueryHookResult = ReturnType<typeof useGroupsQuery>;
 export type GroupsLazyQueryHookResult = ReturnType<typeof useGroupsLazyQuery>;
 export type GroupsQueryResult = Apollo.QueryResult<GroupsQuery, GroupsQueryVariables>;
+export const HomePageStatsDocument = gql`
+    query HomePageStats {
+  userStats {
+    count
+  }
+}
+    `;
+
+/**
+ * __useHomePageStatsQuery__
+ *
+ * To run a query within a React component, call `useHomePageStatsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHomePageStatsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHomePageStatsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useHomePageStatsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<HomePageStatsQuery, HomePageStatsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<HomePageStatsQuery, HomePageStatsQueryVariables>(HomePageStatsDocument, options);
+      }
+export function useHomePageStatsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<HomePageStatsQuery, HomePageStatsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<HomePageStatsQuery, HomePageStatsQueryVariables>(HomePageStatsDocument, options);
+        }
+export type HomePageStatsQueryHookResult = ReturnType<typeof useHomePageStatsQuery>;
+export type HomePageStatsLazyQueryHookResult = ReturnType<typeof useHomePageStatsLazyQuery>;
+export type HomePageStatsQueryResult = Apollo.QueryResult<HomePageStatsQuery, HomePageStatsQueryVariables>;
 export const LayersDocument = gql`
     query Layers($filters: LayerFilter, $pagination: OffsetPaginationInput) {
   layers(filters: $filters, pagination: $pagination) {

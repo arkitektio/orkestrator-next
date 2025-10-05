@@ -3,3 +3,10 @@ query HomePage {
     ...ListRepo
   }
 }
+
+
+query HomePageStats {
+  githubRepoStats {
+    count
+  }
+}

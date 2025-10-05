@@ -1,9 +1,10 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import StructurePackageList from "../components/lists/StructurePackageList";
 import StructureList from "../components/lists/StructureList";
+import { RekuestStructure } from "@/linkers";
 const Page = () => {
   return (
-    <PageLayout title={"Structures"}>
+    <RekuestStructure.ListPage title={"Structures"}>
       <div className="p-6">
         <div className="col-span-4 grid md:grid-cols-2 gap-4 md:gap-8 xl:gap-20 md:items-center mb-3">
           <div>
@@ -18,7 +19,7 @@ const Page = () => {
 
         <StructureList />
       </div>
-    </PageLayout>
+    </RekuestStructure.ListPage>
   );
 };
 

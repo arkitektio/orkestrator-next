@@ -1,24 +1,29 @@
+import { asParamlessRoute } from "@/app/routes/ParamlessRoute";
+import { MultiSidebar } from "@/components/layout/MultiSidebar";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { HelpSidebar } from "@/components/sidebars/help";
+import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@radix-ui/react-dropdown-menu";
-import React from "react";
+import { BarChart3, Network, TrendingUp } from "lucide-react";
+import { BsLightning } from "react-icons/bs";
+import { useNavigate } from "react-router-dom";
+import { useHomePageQuery } from "../api/graphql";
+import BlockList from "../components/lists/BlockList";
 import ExperimentList from "../components/lists/ExperimentList";
 import NeuronModelList from "../components/lists/NeuronModelList";
 import SimulationList from "../components/lists/SimulationList";
-import BlockList from "../components/lists/BlockList";
-import { asParamlessRoute } from "@/app/routes/ParamlessRoute";
-import { useHomePageQuery } from "../api/graphql";
-import { useNavigate } from "react-router-dom";
-import { FormDialogAction } from "@/components/ui/form-dialog-action";
-import { BarChart3, Network, PlusIcon, TrendingUp } from "lucide-react";
-import { ElektroNeuronModel } from "@/linkers";
-import { BsLightning } from "react-icons/bs";
-import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { HomePageStatisticsSidebar } from "../sidebars/HomePageStatisticsSidebar";
 
 const Page = asParamlessRoute(useHomePageQuery, ({ data }) => {
   const navigate = useNavigate();
 
   return (
-    <PageLayout pageActions={<></>} title="Kraph">
+    <PageLayout pageActions={<></>} title="Elektro" sidebars={
+      <MultiSidebar map={{
+        Statistics: <HomePageStatisticsSidebar />,
+        Help: <HelpSidebar />
+      }} />
+    }>
       {data?.blocks.length == 0 ? (
         // Empty State with Hero Design
         <div className="min-h-full w-full bg-gradient-to-br from-slate-50/20 to-slate-100/20 dark:from-slate-900/30 dark:to-slate-800/30 flex items-center justify-center rounded-lg">

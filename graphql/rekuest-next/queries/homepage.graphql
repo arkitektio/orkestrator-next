@@ -1,0 +1,9 @@
+query HomePageStats{
+  actionStats {
+    count
+  }
+
+  assignationStats {
+    count
+  }
+}

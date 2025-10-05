@@ -535,6 +535,15 @@ export enum ExpressionKind {
   Structure = 'STRUCTURE'
 }
 
+export enum Granularity {
+  Day = 'DAY',
+  Hour = 'HOUR',
+  Month = 'MONTH',
+  Quarter = 'QUARTER',
+  Week = 'WEEK',
+  Year = 'YEAR'
+}
+
 /** A graph, that contains entities and relations. */
 export type Graph = {
   __typename?: 'Graph';
@@ -670,6 +679,11 @@ export type GraphStructureRelationCategoriesArgs = {
   filters?: InputMaybe<StructureRelationCategoryFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
+/** Numeric/aggregatable fields of Graph */
+export enum GraphField {
+  CreatedAt = 'CREATED_AT'
+}
 
 export type GraphFilter = {
   AND?: InputMaybe<GraphFilter>;
@@ -819,6 +833,61 @@ export type GraphSequenceFilter = {
   /** Search by text */
   search?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type GraphStats = {
+  __typename?: 'GraphStats';
+  /** Average */
+  avg?: Maybe<Scalars['Float']['output']>;
+  /** Total number of items in the selection */
+  count: Scalars['Int']['output'];
+  /** Number of distinct values for the field */
+  distinctCount: Scalars['Int']['output'];
+  /** Maximum */
+  max?: Maybe<Scalars['Float']['output']>;
+  /** Minimum */
+  min?: Maybe<Scalars['Float']['output']>;
+  /** Time-bucketed stats over a datetime field. */
+  series: Array<TimeBucket>;
+  /** Sum */
+  sum?: Maybe<Scalars['Float']['output']>;
+};
+
+
+export type GraphStatsAvgArgs = {
+  field: GraphField;
+};
+
+
+export type GraphStatsDistinctCountArgs = {
+  field: GraphField;
+};
+
+
+export type GraphStatsMaxArgs = {
+  field: GraphField;
+};
+
+
+export type GraphStatsMinArgs = {
+  field: GraphField;
+};
+
+
+export type GraphStatsSeriesArgs = {
+  by: Granularity;
+  field: GraphField;
+  timestampField: GraphTimestampField;
+};
+
+
+export type GraphStatsSumArgs = {
+  field: GraphField;
+};
+
+/** Datetime fields of Graph for bucketing */
+export enum GraphTimestampField {
+  CreatedAt = 'CREATED_AT'
+}
 
 export enum InstanceKind {
   Entity = 'ENTITY',
@@ -2339,6 +2408,8 @@ export type Query = {
   graphSequence: GraphSequence;
   /** List of all graph sequences */
   graphSequences: Array<GraphSequence>;
+  /** Stats about knowledge graphs */
+  graphStats: GraphStats;
   /** List of all knowledge graphs */
   graphs: Array<Graph>;
   knowledgeViews: Array<KnowledgeView>;
@@ -2482,6 +2553,11 @@ export type QueryGraphSequenceArgs = {
 export type QueryGraphSequencesArgs = {
   filters?: InputMaybe<GraphSequenceFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryGraphStatsArgs = {
+  filters?: InputMaybe<GraphFilter>;
 };
 
 
@@ -3632,6 +3708,17 @@ export type TagFilter = {
 export type TagInput = {
   graph: Scalars['ID']['input'];
   value: Scalars['String']['input'];
+};
+
+export type TimeBucket = {
+  __typename?: 'TimeBucket';
+  avg?: Maybe<Scalars['Float']['output']>;
+  count: Scalars['Int']['output'];
+  distinctCount: Scalars['Int']['output'];
+  max?: Maybe<Scalars['Float']['output']>;
+  min?: Maybe<Scalars['Float']['output']>;
+  sum?: Maybe<Scalars['Float']['output']>;
+  ts: Scalars['DateTime']['output'];
 };
 
 /** Input type for creating a new entity */
@@ -4891,6 +4978,11 @@ export type HomePageQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type HomePageQuery = { __typename?: 'Query', graphs: Array<{ __typename?: 'Graph', id: string, name: string, description?: string | null, pinned: boolean, store?: { __typename?: 'MediaStore', id: string, presignedUrl: string, key: string } | null }> };
+
+export type HomePageStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type HomePageStatsQuery = { __typename?: 'Query', graphStats: { __typename?: 'GraphStats', count: number } };
 
 export type ListMaterializedEdgesQueryVariables = Exact<{
   filters?: InputMaybe<MaterializedEdgeFilter>;
@@ -9253,6 +9345,40 @@ export function useHomePageLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHoo
 export type HomePageQueryHookResult = ReturnType<typeof useHomePageQuery>;
 export type HomePageLazyQueryHookResult = ReturnType<typeof useHomePageLazyQuery>;
 export type HomePageQueryResult = Apollo.QueryResult<HomePageQuery, HomePageQueryVariables>;
+export const HomePageStatsDocument = gql`
+    query HomePageStats {
+  graphStats {
+    count
+  }
+}
+    `;
+
+/**
+ * __useHomePageStatsQuery__
+ *
+ * To run a query within a React component, call `useHomePageStatsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHomePageStatsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHomePageStatsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useHomePageStatsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<HomePageStatsQuery, HomePageStatsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<HomePageStatsQuery, HomePageStatsQueryVariables>(HomePageStatsDocument, options);
+      }
+export function useHomePageStatsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<HomePageStatsQuery, HomePageStatsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<HomePageStatsQuery, HomePageStatsQueryVariables>(HomePageStatsDocument, options);
+        }
+export type HomePageStatsQueryHookResult = ReturnType<typeof useHomePageStatsQuery>;
+export type HomePageStatsLazyQueryHookResult = ReturnType<typeof useHomePageStatsLazyQuery>;
+export type HomePageStatsQueryResult = Apollo.QueryResult<HomePageStatsQuery, HomePageStatsQueryVariables>;
 export const ListMaterializedEdgesDocument = gql`
     query ListMaterializedEdges($filters: MaterializedEdgeFilter, $pagination: OffsetPaginationInput) {
   materializedEdges(filters: $filters, pagination: $pagination) {

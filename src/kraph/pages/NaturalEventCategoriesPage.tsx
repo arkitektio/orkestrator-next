@@ -14,7 +14,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
   const navigate = useNavigate();
 
   return (
-    <PageLayout
+    <KraphNaturalEventCategory.ListPage
       title="Natural Event Categories"
       pageActions={
         <div className="flex flex-row gap-2">
@@ -64,7 +64,7 @@ const Page: React.FC<IRepresentationScreenProps> = () => {
 
         <NaturalEventCategoryList pagination={{ limit: 30 }} />
       </div>
-    </PageLayout>
+    </KraphNaturalEventCategory.ListPage>
   );
 };
 

@@ -3,6 +3,7 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { useCreateBlokMutation } from "../api/graphql";
 import BlokList from "../components/lists/BlokList";
+import { RekuestBlok } from "@/linkers";
 
 const Page = () => {
   const [createBlok] = useCreateBlokMutation();
@@ -36,7 +37,7 @@ const Page = () => {
   };
 
   return (
-    <PageLayout
+    <RekuestBlok.ListPage
       title={"Bloks"}
       pageActions={
         <Button onClick={() => createBloks()} variant={"outline"}>
@@ -57,7 +58,7 @@ const Page = () => {
         </div>
       </div>
       <BlokList />
-    </PageLayout>
+    </RekuestBlok.ListPage>
   );
 };
 

@@ -10,7 +10,7 @@ export type IRepresentationScreenProps = {};
 
 const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
   return (
-    <PageLayout
+    <ElektroSimulation.ListPage
       title="Simulations"
       pageActions={
         <>
@@ -30,7 +30,7 @@ const ImagesPage: React.FC<IRepresentationScreenProps> = () => {
         />
         <SimulationList pagination={{ limit: 30 }} />
       </div>
-    </PageLayout>
+    </ElektroSimulation.ListPage>
   );
 };
 

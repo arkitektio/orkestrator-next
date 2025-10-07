@@ -2773,6 +2773,18 @@
             "deprecationReason": null
           },
           {
+            "name": "dependencies",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Args",
+              "ofType": null
+            },
+            "defaultValue": "null",
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "ephemeral",
             "description": null,
             "type": {
@@ -2896,7 +2908,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"9adae455-6e68-4ab8-a791-cd99631efaca\"",
+            "defaultValue": "\"a8faec35-168e-4450-86c3-31499cdac822\"",
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -6846,6 +6858,18 @@
             "deprecationReason": null
           },
           {
+            "name": "description",
+            "description": "Optional description of the dependency.",
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "id",
             "description": "Unique ID of the dependency.",
             "args": [],
@@ -9004,6 +9028,30 @@
                   "ofType": null
                 }
               }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "resolvableFor",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "ID",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "search",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
             },
             "defaultValue": null,
             "isDeprecated": false,
@@ -16678,7 +16726,7 @@
               "name": "String",
               "ofType": null
             },
-            "defaultValue": "\"c33b035b-8524-4084-bc87-ac856f3a3073\"",
+            "defaultValue": "\"e06162c0-9459-451b-9e30-36b4d162ad13\"",
             "isDeprecated": false,
             "deprecationReason": null
           },

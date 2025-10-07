@@ -10,6 +10,13 @@ query Implementations($filters: ImplementationFilter, $pagination: OffsetPaginat
   }
 }
 
+query ImplementationOptions($search: String, $values: [ID!], $dependency: ID) {
+  options: implementations(filters: { resolvableFor: $dependency , search: $search, ids: $values}, pagination: { limit: 50 }) {
+    value: id,
+    label: name
+  }
+}
+
 query ImplementationAt($agent: ID!, $extension: String, $interface: String, $demand: ActionDemandInput) {
   implementationAt(agent: $agent, extension: $extension, interface: $interface, demand: $demand) {
     ...DetailImplementation

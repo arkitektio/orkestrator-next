@@ -20,6 +20,7 @@ export type ActionAssignVariables = Omit<AssignInput, "instanceId">;
 
 export type UseImplementationActionReturn<T> = {
   implementation?: DetailImplementationFragment;
+  error?: any;
   assign: (
     variables: ActionAssignVariables,
   ) => Promise<PostmanAssignationFragment>;
@@ -38,7 +39,7 @@ export const useImplementationAction = <T extends any>(
 ): UseImplementationActionReturn<T> => {
   const { settings } = useSettings();
 
-  const { data, variables, refetch } = useImplementationQuery({
+  const { data, variables, refetch, error } = useImplementationQuery({
     variables: {
       id: options.id,
     },
@@ -139,5 +140,6 @@ export const useImplementationAction = <T extends any>(
     cancel,
     assignations,
     implementation: data?.implementation,
+    error,
   };
 };

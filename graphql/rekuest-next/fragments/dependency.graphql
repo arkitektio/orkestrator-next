@@ -14,4 +14,5 @@ fragment DetailDependency on Dependency {
 fragment ListDependency on Dependency {
   id
   key
+  description
 }

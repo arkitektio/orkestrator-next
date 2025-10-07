@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import Zod from "zod";
 import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -8,6 +9,7 @@ import {
   portToDefaults,
   submittedDataToRekuestFormat,
 } from "../widgets/utils";
+import { DetailImplementationFragment } from "../api/graphql";
 
 export const portHash = (port: Port[]) => {
   return port
@@ -15,26 +17,29 @@ export const portHash = (port: Port[]) => {
     .join("-");
 };
 
-export const usePortForm = (props: {
-  ports: Port[];
-  overwrites?: { [key: string]: any };
 
+
+export const useImplementationForm = (props: {
+  implementation?: DetailImplementationFragment;
+  overwrites?: { [key: string]: unknown };
   doNotAutoReset?: boolean;
-  additionalSchema?: Zod.ZodObject<any>;
+  additionalSchema?: Zod.ZodObject<unknown>;
   mode?: "onChange" | "onBlur" | "onSubmit" | "onTouched" | "all";
   reValidateMode?: "onChange" | "onBlur" | "onSubmit";
 }) => {
-  const hash = portHash(props.ports);
+  const hash = portHash(props.implementation?.action.args || []);
 
   const defaultValues = useCallback(async () => {
-    return portToDefaults(props.ports, props.overwrites || {});
+    return portToDefaults(props.implementation?.action.args || [], props.overwrites || {});
   }, [hash, props.overwrites]);
 
   const myResolver = useCallback(() => {
-    const zodSchema = buildZodSchema(props.ports);
-    if (props.additionalSchema) {
-      return zodResolver(zodSchema.merge(props.additionalSchema));
-    }
+    const argsSchema = buildZodSchema(props.implementation?.action.args || []);
+
+    const zodSchema = Zod.object({
+      args: argsSchema,
+      dependencies: Zod.record(Zod.string()).optional(),
+    });
     return zodResolver(zodSchema);
   }, [hash, props.additionalSchema]);
 
@@ -48,16 +53,10 @@ export const usePortForm = (props: {
     (onSubmit: any) => {
       return handleSubmit(
         (data) => {
-          const additionalData = Object.keys(data).reduce((acc, key) => {
-            if (props.additionalSchema?.shape[key]) {
-              acc[key] = data[key];
-            }
-            return acc;
-          }, {});
 
           onSubmit({
-            ...submittedDataToRekuestFormat(data, props.ports),
-            ...additionalData,
+            args: submittedDataToRekuestFormat(data.args, props.implementation?.action.args || []),
+            dependencies: data.dependencies,
           });
         },
         (errors) => {
@@ -70,7 +69,7 @@ export const usePortForm = (props: {
 
   useEffect(() => {
     if (props.doNotAutoReset) return;
-    form.reset(portToDefaults(props.ports, props.overwrites || {}));
+    form.reset(portToDefaults(props.implementation?.action.args || [], props.overwrites || {}));
   }, [hash]);
 
   return { ...form, handleSubmit: overWrittenHandleSubmit, };

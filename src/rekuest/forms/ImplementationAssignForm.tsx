@@ -1,3 +1,4 @@
+import { GraphQLSearchField } from "@/components/fields/GraphQLSearchField";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
@@ -6,9 +7,9 @@ import { useActionDescription } from "@/lib/rekuest/ActionDescription";
 import { cn } from "@/lib/utils";
 import { ApolloError } from "@apollo/client";
 import { toast } from "sonner";
-import { PostmanAssignationFragment } from "../api/graphql";
+import { ListDependencyFragment, PostmanAssignationFragment, useImplementationOptionsLazyQuery } from "../api/graphql";
 import { useImplementationAction } from "../hooks/useImplementationAction";
-import { usePortForm } from "../hooks/usePortForm";
+import { useImplementationForm } from "../hooks/useImplementationForm";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 
 export type ImplementationAssignFormProps = {
@@ -19,8 +20,23 @@ export type ImplementationAssignFormProps = {
   hidden?: { [key: string]: any };
 };
 
+
+export const DependencyWidget = ({ dependency }: { dependency: ListDependencyFragment }) => {
+
+  const [search] = useImplementationOptionsLazyQuery({
+    variables: { dependency: dependency.id },
+  });
+
+
+  return (
+    <div className="p-2 border border-1 border-gray-200 rounded-md bg-muted overflow-hidden" >
+      <GraphQLSearchField name={`dependencies.${dependency.key}`} searchQuery={search} label={dependency.key} description={dependency.description || ""} />
+    </div >
+  );
+}
+
 export const ImplementationAssignForm = (props: ImplementationAssignFormProps) => {
-  const { assign, latestAssignation, cancel, implementation } = useImplementationAction({
+  const { assign, latestAssignation, cancel, implementation, error } = useImplementationAction({
     id: props.id,
   });
 
@@ -28,20 +44,23 @@ export const ImplementationAssignForm = (props: ImplementationAssignFormProps) =
     description: implementation?.action.description || "",
   });
 
-  const form = usePortForm({
-    ports: implementation?.action.args || [],
+  const form = useImplementationForm({
+    implementation: implementation,
     overwrites: { ...latestAssignation?.args, ...props.args },
     reValidateMode: "onChange",
   });
 
 
-  const onSubmit = async (data: any) => {
+
+
+  const onSubmit = async (data: { args: Record<string, unknown>, dependencies: Record<string, string> }) => {
     console.log("Submitting");
     console.log(data);
     try {
-      let assignation = await assign({
+      const assignation = await assign({
         implementation: props.id,
-        args: data,
+        args: data.args,
+        dependencies: data.dependencies,
         hooks: [],
       });
 
@@ -60,7 +79,12 @@ export const ImplementationAssignForm = (props: ImplementationAssignFormProps) =
     }
   };
 
+
+
   const { registry } = useWidgetRegistry();
+
+  if (error) { return <p className="text-red-500">{error.message}</p> }
+
 
   return (
     <>
@@ -75,11 +99,16 @@ export const ImplementationAssignForm = (props: ImplementationAssignFormProps) =
           <ArgsContainer
             registry={registry}
             ports={implementation?.action.args || []}
-            path={[]}
+            path={["args"]}
             bound={implementation?.id}
             groups={implementation?.action.portGroups}
             hidden={props.hidden}
           />
+          <div className="space-y-2 grid grid-cols-3 gap-2">
+            {implementation?.dependencies.map(dep => (
+              <DependencyWidget dependency={dep} key={dep.id} />
+            ))}
+          </div>
 
           <DialogFooter>
             <Button type="submit" className={cn(form.formState.isSubmitting && "bg-red-200")}>

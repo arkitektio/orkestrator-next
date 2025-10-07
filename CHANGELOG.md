@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/arkitektio/orkestrator-next/compare/v1.5.1...v1.6.0) (2025-10-07)
+
+
+### Features
+
+* add implementation depedencies assignment ([163f9d4](https://github.com/arkitektio/orkestrator-next/commit/163f9d460d0ac6e99253f6360b8be51337f34125))
+
 ## [1.5.1](https://github.com/arkitektio/orkestrator-next/compare/v1.5.0...v1.5.1) (2025-10-05)
 
 

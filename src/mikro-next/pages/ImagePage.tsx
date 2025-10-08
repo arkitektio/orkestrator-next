@@ -159,19 +159,14 @@ export default asDetailQueryRoute(
         variant="black"
       >
         <TwoDViewProvider initialC={0} initialT={0} initialZ={0}>
-          <div className="grid grid-cols-12 grid-reverse flex-col rounded-md gap-4 mt-2 h-full">
+          <div className="grid grid-cols-12 grid-reverse flex-col rounded-md  h-full flex relative">
             <div className="absolute w-full h-full overflow-hidden border-0">
               {defautContext && (
-                <div
-                  className={"h-full w-full mt-0 rounded rounded-md relative"}
-                >
-                  <div className="w-full h-full items-center flex justify-center flex-col">
-                    <FinalRender
-                      context={defautContext}
-                      rois={data.image.rois}
-                    />
-                  </div>
-                </div>
+                <FinalRender
+                  context={defautContext}
+                  rois={data.image.rois}
+
+                />
               )}
             </div>
             <div className="lg:col-span-3 col-span-12 flex flex-row items-end lg:items-start">

@@ -72,7 +72,7 @@ export const PageLayout = ({
       <ResizablePanel className="" defaultSize={80} id="page" order={1}>
         <div
           className={cn(
-            "h-full w-full flex flex-col  relative",
+            "h-full w-full flex flex-col relative",
             variant == "default" ? "" : "bg-black text-gray-300",
           )}
         >
@@ -128,10 +128,9 @@ export const PageLayout = ({
             </div>
           </div>
 
-          <div className="p-3 flex-grow @container flex flex-col overflow-y-auto overflow-x-hidden">
+          <div className="p-3 flex-grow @container flex flex-col overflow-y-auto ">
             {children}
           </div>
-          <Actionbar>{actions}</Actionbar>
         </div>
       </ResizablePanel>
       {params.get("pageSidebar") == "true" && (

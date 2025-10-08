@@ -328,7 +328,7 @@ export const Controls = ({
   const { z, t, setZ, setT } = useViewerState();
 
   return (
-    <div className="absolute bottom-0 z-10 w-full mb-4 px-6 bg-gradient-to-t from-black to-transparent py-3">
+    <div className="absolute z-100 w-full bottom-0 px-6 bg-gradient-to-t from-black to-transparent py-3">
       <div className="flex flex-col gap-2">
         <div className="flex flex-row items-center justify-between">
           <div className="my-auto mx-2 w-12">z: {z}</div>

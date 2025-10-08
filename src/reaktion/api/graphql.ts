@@ -17,6 +17,7 @@ export type Scalars = {
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
   AnyDefault: { input: any; output: any; }
+  Arg: { input: any; output: any; }
   DateTime: { input: any; output: any; }
   EventValue: { input: any; output: any; }
   Identifier: { input: any; output: any; }
@@ -183,6 +184,17 @@ export type DeleteRunInput = {
 
 export type DeleteSnapshotInput = {
   snapshot: Scalars['ID']['input'];
+};
+
+export type Descriptor = {
+  __typename?: 'Descriptor';
+  key: Scalars['String']['output'];
+  value: Scalars['Arg']['output'];
+};
+
+export type DescriptorInput = {
+  key: Scalars['String']['input'];
+  value: Scalars['Arg']['input'];
 };
 
 export type Effect = {
@@ -457,6 +469,7 @@ export type Port = {
   choices?: Maybe<Array<Choice>>;
   default?: Maybe<Scalars['AnyDefault']['output']>;
   description?: Maybe<Scalars['String']['output']>;
+  descriptors?: Maybe<Array<Descriptor>>;
   effects?: Maybe<Array<Effect>>;
   identifier?: Maybe<Scalars['Identifier']['output']>;
   key: Scalars['String']['output'];
@@ -493,6 +506,7 @@ export type PortInput = {
   choices?: InputMaybe<Array<ChoiceInput>>;
   default?: InputMaybe<Scalars['AnyDefault']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  descriptors?: InputMaybe<Array<DescriptorInput>>;
   effects?: InputMaybe<Array<EffectInput>>;
   identifier?: InputMaybe<Scalars['String']['input']>;
   key: Scalars['String']['input'];
@@ -511,6 +525,7 @@ export enum PortKind {
   Enum = 'ENUM',
   Float = 'FLOAT',
   Int = 'INT',
+  Interface = 'INTERFACE',
   List = 'LIST',
   MemoryStructure = 'MEMORY_STRUCTURE',
   Model = 'MODEL',

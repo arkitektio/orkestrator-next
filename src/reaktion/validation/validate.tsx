@@ -10,7 +10,7 @@ const validateNoEdgeWithItself = (
   let validatedEdges: FlowEdge[] = [];
   let solvedErrors: SolvedError[] = [];
 
-  for (let edge of previous.edges) {
+  for (const edge of previous.edges) {
     if (edge.source == edge.target) {
       solvedErrors.push({
         type: "edge",
@@ -295,7 +295,6 @@ function noDoubleEdgeForOutput(previous: ValidationResult) {
 }
 
 const validators = [
-  validateNoEdgeWithItself,
   validateMatchingPorts,
   validateNoUnconnectedNodes,
   validateGraphIsConnected,

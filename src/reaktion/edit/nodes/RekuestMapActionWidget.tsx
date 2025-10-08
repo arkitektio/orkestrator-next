@@ -56,6 +56,7 @@ const TemplateSelector = (props: {
     <div>
       {templates.map((template) => (
         <Button
+          key={template.id}
           onClick={() => props.bind(template.id)}
           data-active={props.data.binds.implementations.includes(template.id) && true}
           className=" hover:bg-green-300 data-[active=true]:bg-green-300"
@@ -168,7 +169,7 @@ export const RekuestMapActionWidget: React.FC<RekuestMapNodeProps> = ({
 
       <div className="absolute top-0 left-[50%] translate-y-[-100%] translate-x-[-50%] opacity-0 group-hover:opacity-100">
         {data.binds?.implementations.map((template) => (
-          <TemplateTag template={template} />
+          <TemplateTag template={template} key={template.id} />
         ))}
       </div>
       <CardHeader className="p-4">
@@ -193,8 +194,34 @@ export const RekuestMapActionWidget: React.FC<RekuestMapNodeProps> = ({
                   <SheetHeader>
                     <SheetTitle>These are advanced settings</SheetTitle>
                     <SheetDescription>
-                      You can change the settings here but be aware that they
-                      might smeellll
+                      <div className="w-full @container">
+                        {ins.at(0) && ins.at(0).length > 0 && (
+                          <>
+                            <div className="text-xs text-muted-foreground inline ">
+                              Args
+                            </div>
+                            <Args
+                              instream={ins.at(0) || []}
+                              id={0}
+                              onClick={onClickIn}
+                              constream={[]}
+                            />
+                          </>
+                        )}
+
+                        <div className="text-xs text-muted-foreground inline ">
+                          Constants
+                        </div>
+                        <Constants
+                          ports={constants.filter((x) => !(x.key in data.globalsMap))}
+                          overwrites={data.constantsMap}
+                          onToArg={onToArg}
+                          onToGlobal={onToGlobal}
+                          onSubmit={(values) => updateData({ constantsMap: values }, id)}
+                          path={[]}
+                          bound={bound}
+                        />
+                      </div>
                     </SheetDescription>
                   </SheetHeader>
                 </SheetContent>

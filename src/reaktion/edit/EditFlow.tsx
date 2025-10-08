@@ -370,7 +370,7 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         return state;
       }
 
-      let new_instream = node.data.ins.map((s, index) => {
+      const new_instream = node.data.ins.map((s, index) => {
         if (index == instream) {
           return [...s, constant];
         }
@@ -379,15 +379,39 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
 
       console.log("new_instream", new_instream);
 
-      let new_constants = node.data.constants.filter(
+      const new_constants = node.data.constants.filter(
         (i, index) => index != conindex,
       );
 
       console.log("new_constants", new_constants);
 
-      let new_data = {
+      const targetStreamIndex = instream;
+      const updatedEdges = state.edges.map((edge) => {
+        if (
+          edge.target === nodeId &&
+          handleToStream(edge.targetHandle) === targetStreamIndex &&
+          edge.data
+        ) {
+          const streamItems = new_instream[targetStreamIndex]?.map((port) => ({
+            __typename: "StreamItem" as const,
+            kind: port.kind,
+            label: port.label ?? port.key,
+          }));
+          if (!streamItems) return edge;
+          return {
+            ...edge,
+            data: {
+              ...edge.data,
+              stream: streamItems,
+            },
+          };
+        }
+        return edge;
+      });
+
+      const new_data = {
         ...node.data,
-        ins: new_instream, //TODO: This is not correct
+        ins: new_instream,
         constants: new_constants,
         constantsMap: { ...node.data.constantsMap, [constant.key]: undefined },
         globalsMap: { ...node.data.globalsMap, [constant.key]: undefined },
@@ -397,12 +421,13 @@ export const EditFlow: React.FC<Props> = ({ flow, onSave }) => {
         ...state,
         nodes: state.nodes.map((n) => {
           if (n.id === nodeId) {
-            n.data = new_data;
-            console.log("found node", n);
-            return n;
+            const updatedNode = { ...n, data: new_data };
+            console.log("found node", updatedNode);
+            return updatedNode;
           }
           return n;
         }),
+        edges: updatedEdges,
       });
     });
   };

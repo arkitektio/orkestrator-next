@@ -1,3 +1,10 @@
+## [1.7.1](https://github.com/arkitektio/orkestrator-next/compare/v1.7.0...v1.7.1) (2025-10-08)
+
+
+### Bug Fixes
+
+* Slider for z or t dimension is missing ([4869ec4](https://github.com/arkitektio/orkestrator-next/commit/4869ec40cfb3ee601358fc3e01a39ad212b52b10)), closes [#49](https://github.com/arkitektio/orkestrator-next/issues/49)
+
 # [1.7.0](https://github.com/arkitektio/orkestrator-next/compare/v1.6.0...v1.7.0) (2025-10-08)
 
 

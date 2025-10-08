@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/arkitektio/orkestrator-next/compare/v1.6.0...v1.7.0) (2025-10-08)
+
+
+### Features
+
+* upload ([7ba0d87](https://github.com/arkitektio/orkestrator-next/commit/7ba0d87d92d8ed7ea05fd86456abfb2e293d9aa4))
+
 # [1.6.0](https://github.com/arkitektio/orkestrator-next/compare/v1.5.1...v1.6.0) (2025-10-07)
 
 

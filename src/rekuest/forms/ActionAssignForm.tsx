@@ -14,6 +14,9 @@ import { useAction } from "../hooks/useAction";
 import { usePortForm } from "../hooks/usePortForm";
 import { useWidgetRegistry } from "../widgets/WidgetsContext";
 import { useDialog } from "@/app/dialog";
+import { v4 as uuidv4 } from "uuid";
+
+
 
 export const SelectHooks = (props: {}) => {
   const [search, _] = useHooksSearchLazyQuery();
@@ -40,10 +43,17 @@ export const ActionAssignForm = (props: {
   const onSubmit = async (data: any) => {
     console.log("Submitting");
     console.log(data);
+
+    const reference = uuidv4()
+
+
+
     await assign({
       action: props.id,
       args: data,
+      reference: reference,
       hooks: [],
+      ephemeral: false
     });
     dialog.closeDialog();
   };

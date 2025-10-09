@@ -265,6 +265,7 @@ export const AssignButton = (
 
     try {
       const reference = uuidv4();
+      registeredCallbacks.set(reference, doStuff);
 
       await assign({
         action: action.id,
@@ -276,7 +277,7 @@ export const AssignButton = (
       setDoing(true);
       setError(null);
 
-      registeredCallbacks.set(reference, doStuff);
+
     } catch (e) {
       toast.error(e.message);
       setDoing(false);

@@ -153,8 +153,7 @@ export const streamItemToInput = (
 };
 
 export const bindsToInput = (node: BindsFragment): BindsInput => {
-  const { __typename, ...rest } = node;
-  return { ...rest };
+  return { implementations: node.implementations.map(implementation => implementation) || [], clients: [] };
 };
 
 export const flowEdgeToInput = (edge: FlowEdge): EdgeInput => {

@@ -16,10 +16,11 @@ const Page = () => {
   return (
     <PageLayout
       title="Fluss Home"
-      actions={
+      pageActions={
         <>
           <FormDialogAction
             label="Create"
+            variant={"outline"}
             onSubmit={(item) => {
               console.log(item);
               navigate(FlussWorkspace.linkBuilder(item.createWorkspace.id));

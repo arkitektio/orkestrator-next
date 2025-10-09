@@ -1,3 +1,10 @@
+## [1.7.2](https://github.com/arkitektio/orkestrator-next/compare/v1.7.1...v1.7.2) (2025-10-09)
+
+
+### Bug Fixes
+
+* scheduler + fluss page ([285b029](https://github.com/arkitektio/orkestrator-next/commit/285b029319c1634285506f0504812f862924a85a))
+
 ## [1.7.1](https://github.com/arkitektio/orkestrator-next/compare/v1.7.0...v1.7.1) (2025-10-08)
 
 

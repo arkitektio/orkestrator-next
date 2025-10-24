@@ -65,8 +65,10 @@ export const portToLabel = (port: LabellablePort): string => {
   return "Unknown";
 };
 
-export const portToZod = (port: LabellablePort): any => {
+export const portToZod = (port: LabellablePort & { default?: any }): any => {
   let baseType;
+  const hasDefault = port.default !== undefined && port.default !== null;
+  
   switch (port?.kind) {
     case PortKind.String:
       baseType = z.string({ message: "Please enter a string" });
@@ -78,17 +80,55 @@ export const portToZod = (port: LabellablePort): any => {
       );
       break;
     case PortKind.Int:
-      baseType = z.coerce.number({ message: "Please enter a valid integer" });
+      if (hasDefault) {
+        // Allow empty values for fields with defaults
+        baseType = z
+          .union([z.number(), z.string(), z.undefined(), z.null()])
+          .transform((val) => {
+            if (val === undefined || val === null || val === "") {
+              return undefined;
+            }
+            const num = typeof val === "string" ? parseInt(val, 10) : val;
+            if (isNaN(num)) {
+              return undefined;
+            }
+            return num;
+          })
+          .refine((val) => val === undefined || typeof val === "number", {
+            message: "Please enter a valid integer",
+          });
+      } else {
+        baseType = z.coerce.number({ message: "Please enter a valid integer" });
+      }
       break;
     case PortKind.MemoryStructure:
       baseType = z.string({ message: "Please enter a valid memory structure" });
       break;
     case PortKind.Float:
-      baseType = z.coerce
-        .number({ message: "Please enter a valid float" })
-        .refine((val) => !isNaN(val), {
-          message: "Please enter a valid float",
-        });
+      if (hasDefault) {
+        // Allow empty values for fields with defaults
+        baseType = z
+          .union([z.number(), z.string(), z.undefined(), z.null()])
+          .transform((val) => {
+            if (val === undefined || val === null || val === "") {
+              return undefined;
+            }
+            const num = typeof val === "string" ? parseFloat(val) : val;
+            if (isNaN(num)) {
+              return undefined;
+            }
+            return num;
+          })
+          .refine((val) => val === undefined || typeof val === "number", {
+            message: "Please enter a valid float",
+          });
+      } else {
+        baseType = z.coerce
+          .number({ message: "Please enter a valid float" })
+          .refine((val) => !isNaN(val), {
+            message: "Please enter a valid float",
+          });
+      }
       break;
     case PortKind.Structure:
       baseType = z.string({ message: "Please enter a valid structure" });
@@ -145,6 +185,12 @@ export const portToZod = (port: LabellablePort): any => {
   if (port.nullable) {
     if (!baseType) throw new Error(`Base type for ${port} is not defined`);
     baseType = z.nullable(baseType, { message: "Please provide a value" });
+  }
+
+  // Make the field optional if it has a default value
+  if (hasDefault) {
+    if (!baseType) throw new Error(`Base type for ${port} is not defined`);
+    baseType = baseType.optional();
   }
 
   return baseType;
@@ -271,7 +317,10 @@ export const submittedDataToRekuestFormat = (
 };
 
 export const recursiveSet = (data: any, port: PortablePort): any => {
-  if (!data) return null;
+  // Use default value if data is not provided
+  if (data === undefined || data === null) {
+    return port.default !== undefined ? port.default : null;
+  }
   if (!port) throw new Error("Port is not defined");
 
   if (port.kind == PortKind.List) {
